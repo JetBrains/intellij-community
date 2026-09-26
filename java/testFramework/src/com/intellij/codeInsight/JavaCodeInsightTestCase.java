@@ -214,11 +214,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
         Map<VirtualFile, EditorInfo> editorInfos1;
         if (rawProjectRoot != null) {
           FileUtil.copyDir(rawProjectRoot, toDir.toNioPath().toFile());
-          File projectRoot = rawProjectRoot.getCanonicalFile();
-          VirtualFile aNull = Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(projectRoot.getAbsolutePath()));
-          editorInfos1 = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
-            return s.getPath().substring(projectRoot.getPath().length());
-          }));
+          var projectRoot = Objects.requireNonNull(StandardFileSystems.local().refreshAndFindFileByPath(
+            FileUtil.toSystemIndependentName(rawProjectRoot.getAbsolutePath())));
+          editorInfos1 = copyFilesFillingEditorInfos(projectRoot, toDir, ContainerUtil.map2Array(reversed, String.class, file ->
+            Objects.requireNonNull(VfsUtilCore.getRelativePath(file, projectRoot), file.getPath())));
 
           toDir.refresh(false, true);
         }
