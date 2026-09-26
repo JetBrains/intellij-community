@@ -117,7 +117,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public @NonNls @Nullable String suggestHomePath() {
+  public @NonNls @Nullable String suggestHomePath(@NotNull Path path) {
     return null;
   }
 

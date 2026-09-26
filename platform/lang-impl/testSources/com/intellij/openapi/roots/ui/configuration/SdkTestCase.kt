@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
@@ -78,7 +78,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       override fun getPresentableName(): String = name
       override fun isValidSdkHome(path: String): Boolean = true
       override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = TestSdkGenerator.findTestSdk(sdkHome)!!.name
-      override fun suggestHomePath(): String? = null
+      override fun suggestHomePath(path: Path): String? = null
       override fun suggestHomePaths(): Collection<String> = TestSdkGenerator.getAllTestSdks().map { it.homePath!! }
       override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
       override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
@@ -109,7 +109,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     override fun getPresentableName(): String = name
     override fun isValidSdkHome(path: String): Boolean = true
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = "dependent-sdk-name"
-    override fun suggestHomePath(): String? = null
+    override fun suggestHomePath(path: Path): String? = null
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
     override fun getBinPath(sdk: Sdk) = getParentPath(sdk, "bin")
     override fun getToolsPath(sdk: Sdk) = getParentPath(sdk, "lib/tools.jar")
