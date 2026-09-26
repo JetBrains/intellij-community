@@ -5,6 +5,7 @@ import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.StringTable
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.CellRendererReader
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -12,8 +13,10 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
 import javax.swing.JTable
+import kotlin.time.Duration
 
 fun Finder.table(@Language("xpath") xpath: String? = null) =
   x(xpath ?: xQuery { byType(JTable::class.java) }, JTableUiComponent::class.java)
@@ -49,6 +52,22 @@ open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
     val targetItem = filteredItems.singleOrNull() ?: error("cell not found, found items: $filteredItems")
     return targetItem.first to targetItem.second
   }
+
+  /**
+   * Waits for exactly one cell that matches [predicate] and returns its row and column.
+   */
+  fun findCell(timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (String) -> Boolean): Pair<Int, Int> {
+    return waitForOne(
+      message = "Find the single matching cell in the table",
+      timeout = timeout,
+      getter = {
+        content().flatMap { (row, columns) ->
+          columns.mapNotNull { (column, text) -> if (predicate(text)) row to column else null }
+        }
+      },
+    )
+  }
+
   fun rightClickCell(row: Int, column: Int) = fixture.rightClickCell(row, column)
   fun doubleClickCell(row: Int, column: Int) = fixture.doubleClickCell(row, column)
   fun replaceCellRendererReader(readerSupplier: (JTableFixtureRef) -> CellRendererReader) {

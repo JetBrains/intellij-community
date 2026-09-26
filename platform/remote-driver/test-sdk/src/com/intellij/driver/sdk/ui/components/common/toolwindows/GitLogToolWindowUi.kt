@@ -9,12 +9,14 @@ import java.awt.event.KeyEvent
 
 class GitLogToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   fun selectCommitAndGetInfo(commit: String): List<CommitId> {
-    vcsLogGraphTable().clickCell { it.contains(commit) }
+    val table = vcsLogGraphTable()
+    val (row, column) = table.findCell { it.contains(commit) }
+    table.clickCell(row, column)
     return vcsLogGraphTable().logTable.getSelection().commits
   }
 
   fun openContextMenuForCommit(partialCommitText: String): PopupMenuUiComponent {
-    vcsLogGraphTable { findRowColumn { it.contains(partialCommitText) }.apply { rightClickCell(first, second) } }
+    vcsLogGraphTable { findCell { it.contains(partialCommitText) }.apply { rightClickCell(first, second) } }
     return driver.ui.popupMenu()
   }
 
@@ -23,10 +25,8 @@ class GitLogToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
    * Right-clicks on the last selected row and returns the context menu.
    */
   fun selectMultipleCommitsAndOpenContextMenu(firstCommit: String, extraRows: Int = 1): PopupMenuUiComponent {
-    val table = vcsLogGraphTable {
-      waitFound()
-    }
-    val (row, column) = table.findRowColumn { it.contains(firstCommit) }
+    val table = vcsLogGraphTable()
+    val (row, column) = table.findCell { it.contains(firstCommit) }
     table.clickCell(row, column)
     driver.ui.keyboard {
       pressing(KeyEvent.VK_SHIFT) {
