@@ -6,11 +6,11 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.impl.include.FileIncludeManager;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.XmlName;
@@ -26,7 +26,8 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.idea.devkit.inspections.DescriptorTopologyKt;
+import org.jetbrains.idea.devkit.inspections.ProductionXIncludeEdge;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -120,15 +121,11 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
       return result;
     }
 
-    final VirtualFile[] includingFiles = FileIncludeManager.getManager(project).getIncludingFiles(currentFile, false);
-
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Set<VirtualFile> includingAndDependsFiles = new HashSet<>();
-    for (VirtualFile virtualFile : includingFiles) {
-      if (!fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION)) {
-        continue;
+    if (PsiManager.getInstance(project).findFile(currentFile) instanceof XmlFile xmlFile) {
+      for (ProductionXIncludeEdge edge : DescriptorTopologyKt.findProductionXIncludeEdges(xmlFile)) {
+        ContainerUtil.addIfNotNull(includingAndDependsFiles, edge.getIncluder().getVirtualFile());
       }
-      includingAndDependsFiles.add(virtualFile);
     }
 
     final Collection<VirtualFile> dependsToFiles = PluginIdDependenciesIndex.findDependsTo(project, currentFile);
