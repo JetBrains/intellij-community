@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +14,13 @@ import org.jetbrains.annotations.Nullable;
  *   The hashCode() contract conforms to the hashCode() contract of the {@link java.util.Map} interface:
  *   it's the sum of hash codes of its entries, which in turn is calculated as {@code key.hashCode() ^ value.hashCode()}
  * </p>
- *
- * @author peter
  */
+@Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "KeyFMapRenderer.childrenArray(this)")
 public interface KeyFMap {
   /**
    * An empty {@code KeyFMap}. No additional instances of empty {@code KeyFMap} should be created as they are indistinguishable.
    */
-  KeyFMap EMPTY_MAP = new EmptyFMap();
+  KeyFMap EMPTY_MAP = EmptyFMap.create();
 
   /**
    * Returns a {@code KeyFMap} which consists of the same elements as this {@code KeyFMap}, but
@@ -79,8 +65,7 @@ public interface KeyFMap {
   /**
    * @return an array of all keys present in this {@code KeyFMap}, in no particular order. The length of the array equals to KeyFMap size.
    */
-  @NotNull
-  Key[] getKeys();
+  @NotNull Key<?> @NotNull [] getKeys();
 
   /**
    * @return true if this {@code KeyFMap} is empty.
@@ -98,5 +83,5 @@ public interface KeyFMap {
    * @param other {@code KeyFMap} to compare with
    * @return true if other map equals to this map.
    */
-  boolean equalsByReference(KeyFMap other);
+  boolean equalsByReference(@NotNull KeyFMap other);
 }

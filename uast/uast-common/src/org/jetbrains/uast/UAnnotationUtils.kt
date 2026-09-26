@@ -1,6 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("UAnnotationUtils")
-@file:ApiStatus.Experimental
 
 package org.jetbrains.uast
 
@@ -8,11 +7,9 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.ApiStatus
 
 /*
  * This file contains utility methods to workaround problems with nested annotation in Uast (IDEA-185890).
- * This is an experimental API and it could be dramatically changed or even removed when the bug is fixed.
  */
 
 /**
@@ -73,35 +70,40 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
  * @param uElement an element that occurs in annotation
  * @return the annotation in which this element occurs and a corresponding parameter name if available
  */
-fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
+fun getContainingUAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
+  if (uElement == null) return null
 
-  fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<PsiAnnotation, String?>? {
-    val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
-    val javaPsi = uAnnotation.javaPsi ?: return null
-    return javaPsi to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === uElement.sourcePsi }?.name)
-  }
+  val sourcePsi = uElement.sourcePsi
+  if (sourcePsi == null) return null
 
-  tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<PsiAnnotation, String?>? {
-    if (uElement == null) return null
-    val parent = uElement.uastParent ?: return null
-    return when (parent) {
-      is UAnnotation -> parent.javaPsi?.let { it to name }
-      is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
-      is UCallExpression ->
-        if (parent.kind == UastCallKind.NESTED_ARRAY_INITIALIZER)
-          retrievePsiAnnotationEntry(parent, null)
-        else
-          tryConvertToEntry(uElement, parent, name)
-      is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
-      else -> null
+  val plugin = UastLanguagePlugin.byLanguage(sourcePsi.language) ?: return null
+  val entry = plugin.getContainingAnnotationEntry(uElement, annotationsHint)
+
+  if (entry != null && annotationsHint.isNotEmpty()) {
+    val qualifiedName = entry.first.qualifiedName ?: return null
+    if (!annotationsHint.contains(qualifiedName)) {
+      return null
     }
   }
 
-  return retrievePsiAnnotationEntry(uElement, null)
+  return entry
 }
 
+/**
+ * @param uElement an element that occurs in annotation
+ * @return the annotation in which this element occurs and a corresponding parameter name if available
+ */
+fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+  return getContainingUAnnotationEntry(uElement, emptyList())
+}
+
+fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
+  val (uAnnotation, name) = getContainingUAnnotationEntry(uElement) ?: return null
+  val psiAnnotation = uAnnotation.javaPsi ?: return null
+  return psiAnnotation to name
+}
 
 private fun isResolvedToAnnotation(reference: UReferenceExpression?) = (reference?.resolve() as? PsiClass)?.isAnnotationType == true
 
 private val UElement.parentAnyway
-  get() = uastParent ?: generateSequence(sourcePsi?.parent, { it.parent }).mapNotNull { it.toUElement() }.firstOrNull()
+  get() = uastParent ?: generateSequence(sourcePsi?.parent) { it.parent }.mapNotNull { it.toUElement() }.firstOrNull()

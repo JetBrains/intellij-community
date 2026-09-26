@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,16 +19,16 @@ import org.jetbrains.idea.svn.info.Info;
 import java.io.File;
 
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class RelocateAction extends BasicAction {
 
   private static final Logger LOG = Logger.getInstance(RelocateAction.class);
 
-  @NotNull
   @Override
-  protected String getActionName() {
-    return "Relocate working copy to a different URL";
+  protected @NotNull String getActionName() {
+    return message("action.Subversion.Relocate.description");
   }
 
   @Override
@@ -58,7 +44,7 @@ public class RelocateAction extends BasicAction {
       return;
     }
 
-    RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getURL());
+    RelocateDialog dlg = new RelocateDialog(vcs.getProject(), info.getUrl());
     if (!dlg.showAndGet()) {
       return;
     }
@@ -79,16 +65,23 @@ public class RelocateAction extends BasicAction {
       }
       catch (VcsException e) {
         runOrInvokeLaterAboveProgress(
-          () -> Messages.showErrorDialog(vcs.getProject(), "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy"),
-          null, vcs.getProject());
+          () -> Messages.showErrorDialog(
+            vcs.getProject(),
+            message("dialog.message.error.relocating.working.copy", e.getMessage()),
+            message("dialog.title.relocate.working.copy")
+          ),
+          null,
+          vcs.getProject()
+        );
       }
-    }, "Relocating Working Copy", false, vcs.getProject());
+    }, message("progress.title.relocating.working.copy"), false, vcs.getProject());
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
   }
 
+  @Override
   protected boolean isBatchAction() {
     return false;
   }

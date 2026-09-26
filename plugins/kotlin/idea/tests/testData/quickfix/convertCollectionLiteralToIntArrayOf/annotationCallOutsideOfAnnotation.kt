@@ -1,0 +1,11 @@
+// "Replace with 'arrayOf'" "true"
+// K2_ERROR: ARGUMENT_TYPE_MISMATCH
+// K2_ERROR: UNSUPPORTED_ARRAY_LITERAL_OUTSIDE_OF_ANNOTATION_ERROR
+// K2_ERROR: UNSUPPORTED_FEATURE
+annotation class Ann(val x: IntArray)
+
+fun test() {
+    Ann([1, <caret>2, 3])
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionLiteralToIntArrayOfFix

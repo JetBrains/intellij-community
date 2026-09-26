@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -23,16 +9,16 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CollapsedGraph {
-
+public final class CollapsedGraph {
   public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet matchedNodeId) {
     return new CollapsedGraph(delegateGraph, matchedNodeId, matchedNodeId.clone(), new EdgeStorage());
   }
@@ -42,13 +28,13 @@ public class CollapsedGraph {
     return new CollapsedGraph(newDelegateGraph, prevCollapsedGraph.myMatchedNodeId, visibleNodesId, prevCollapsedGraph.myEdgeStorage);
   }
 
-  @NotNull private final LinearGraph myDelegatedGraph;
-  @NotNull private final UnsignedBitSet myMatchedNodeId;
-  @NotNull private final GraphNodesVisibility myDelegateNodesVisibility;
-  @NotNull private final UpdatableIntToIntMap myNodesMap;
-  @NotNull private final EdgeStorage myEdgeStorage;
-  @NotNull private final CompiledGraph myCompiledGraph;
-  @NotNull private final AtomicReference<Modification> myCurrentModification = new AtomicReference<>(null);
+  private final @NotNull LinearGraph myDelegatedGraph;
+  private final @NotNull UnsignedBitSet myMatchedNodeId;
+  private final @NotNull GraphNodesVisibility myDelegateNodesVisibility;
+  private final @NotNull UpdatableIntToIntMap myNodesMap;
+  private final @NotNull EdgeStorage myEdgeStorage;
+  private final @NotNull CompiledGraph myCompiledGraph;
+  private final @NotNull AtomicReference<Modification> myCurrentModification = new AtomicReference<>(null);
 
 
   private CollapsedGraph(@NotNull LinearGraph delegatedGraph,
@@ -63,8 +49,7 @@ public class CollapsedGraph {
     myCompiledGraph = new CompiledGraph();
   }
 
-  @NotNull
-  public LinearGraph getDelegatedGraph() {
+  public @NotNull LinearGraph getDelegatedGraph() {
     return myDelegatedGraph;
   }
 
@@ -72,8 +57,7 @@ public class CollapsedGraph {
     return myDelegateNodesVisibility.isVisible(delegateNodeIndex);
   }
 
-  @NotNull
-  public Modification startModification() {
+  public @NotNull Modification startModification() {
     Modification modification = new Modification();
     if (myCurrentModification.compareAndSet(null, modification)) {
       return modification;
@@ -81,8 +65,7 @@ public class CollapsedGraph {
     throw new RuntimeException("Can not start a new modification while the other one is still running.");
   }
 
-  @NotNull
-  public LinearGraph getCompiledGraph() {
+  public @NotNull LinearGraph getCompiledGraph() {
     assertNotUnderModification();
     return myCompiledGraph;
   }
@@ -92,8 +75,7 @@ public class CollapsedGraph {
     return myNodesMap.getLongIndex(compiledNodeIndex);
   }
 
-  @NotNull
-  public UnsignedBitSet getMatchedNodeId() {
+  public @NotNull UnsignedBitSet getMatchedNodeId() {
     return myMatchedNodeId;
   }
 
@@ -108,10 +90,10 @@ public class CollapsedGraph {
     private static final int APPLYING = 1;
     private static final int DONE = 2;
 
-    @NotNull private final EdgeStorageWrapper myEdgesToAdd = EdgeStorageWrapper.createSimpleEdgeStorage();
-    @NotNull private final EdgeStorageWrapper myEdgesToRemove = EdgeStorageWrapper.createSimpleEdgeStorage();
-    @NotNull private final TIntHashSet myNodesToHide = new TIntHashSet();
-    @NotNull private final TIntHashSet myNodesToShow = new TIntHashSet();
+    private final @NotNull EdgeStorageWrapper myEdgesToAdd = EdgeStorageWrapper.createSimpleEdgeStorage();
+    private final @NotNull EdgeStorageWrapper myEdgesToRemove = EdgeStorageWrapper.createSimpleEdgeStorage();
+    private final @NotNull IntSet myNodesToHide = new IntOpenHashSet();
+    private final @NotNull IntSet myNodesToShow = new IntOpenHashSet();
     private boolean myClearEdges = false;
     private boolean myClearVisibility = false;
 
@@ -207,13 +189,13 @@ public class CollapsedGraph {
         myEdgeStorage.removeAll();
       }
 
-      TIntIterator toShow = myNodesToShow.iterator();
+      IntIterator toShow = myNodesToShow.iterator();
       while (toShow.hasNext()) {
-        myDelegateNodesVisibility.show(toShow.next());
+        myDelegateNodesVisibility.show(toShow.nextInt());
       }
-      TIntIterator toHide = myNodesToHide.iterator();
+      IntIterator toHide = myNodesToHide.iterator();
       while (toHide.hasNext()) {
-        myDelegateNodesVisibility.hide(toHide.next());
+        myDelegateNodesVisibility.hide(toHide.nextInt());
       }
 
       EdgeStorageWrapper edgeStorageWrapper = new EdgeStorageWrapper(myEdgeStorage, getDelegatedGraph());
@@ -240,8 +222,8 @@ public class CollapsedGraph {
     }
   }
 
-  private class CompiledGraph implements LinearGraph {
-    @NotNull private final EdgeStorageWrapper myEdgeStorageWrapper;
+  private final class CompiledGraph implements LinearGraph {
+    private final @NotNull EdgeStorageWrapper myEdgeStorageWrapper;
 
     private CompiledGraph() {
       myEdgeStorageWrapper = new EdgeStorageWrapper(myEdgeStorage, this);
@@ -253,13 +235,11 @@ public class CollapsedGraph {
       return myNodesMap.shortSize();
     }
 
-    @NotNull
-    private GraphEdge createEdge(@NotNull GraphEdge delegateEdge, @Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex) {
+    private static @NotNull GraphEdge createEdge(@NotNull GraphEdge delegateEdge, @Nullable Integer upNodeIndex, @Nullable Integer downNodeIndex) {
       return new GraphEdge(upNodeIndex, downNodeIndex, delegateEdge.getTargetId(), delegateEdge.getType());
     }
 
-    @Nullable
-    private Integer compiledNodeIndex(@Nullable Integer delegateNodeIndex) {
+    private @Nullable Integer compiledNodeIndex(@Nullable Integer delegateNodeIndex) {
       if (delegateNodeIndex == null) return null;
       if (myDelegateNodesVisibility.isVisible(delegateNodeIndex)) {
         return myNodesMap.getShortIndex(delegateNodeIndex);
@@ -269,17 +249,16 @@ public class CollapsedGraph {
       }
     }
 
-    private boolean isVisibleEdge(@Nullable Integer compiledUpNode, @Nullable Integer compiledDownNode) {
+    private static boolean isVisibleEdge(@Nullable Integer compiledUpNode, @Nullable Integer compiledDownNode) {
       if (compiledUpNode != null && compiledUpNode == -1) return false;
       if (compiledDownNode != null && compiledDownNode == -1) return false;
       return true;
     }
 
-    @NotNull
     @Override
-    public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+    public @NotNull List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
       assertNotUnderModification();
-      List<GraphEdge> result = ContainerUtil.newSmartList();
+      List<GraphEdge> result = new SmartList<>();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
 
       // add delegate edges
@@ -294,9 +273,8 @@ public class CollapsedGraph {
       return result;
     }
 
-    @NotNull
     @Override
-    public GraphNode getGraphNode(int nodeIndex) {
+    public @NotNull GraphNode getGraphNode(int nodeIndex) {
       assertNotUnderModification();
       int delegateIndex = myNodesMap.getLongIndex(nodeIndex);
       GraphNode graphNode = myDelegatedGraph.getGraphNode(delegateIndex);
@@ -311,8 +289,7 @@ public class CollapsedGraph {
     }
 
     @Override
-    @Nullable
-    public Integer getNodeIndex(int nodeId) {
+    public @Nullable Integer getNodeIndex(int nodeId) {
       assertNotUnderModification();
       Integer delegateIndex = myDelegatedGraph.getNodeIndex(nodeId);
       if (delegateIndex == null) return null;

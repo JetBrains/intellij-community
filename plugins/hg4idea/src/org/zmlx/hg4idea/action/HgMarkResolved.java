@@ -23,15 +23,15 @@ import org.zmlx.hg4idea.command.HgResolveCommand;
 
 import java.util.List;
 
-public class HgMarkResolved extends HgAbstractFilesAction {
-
+final class HgMarkResolved extends HgAbstractFilesAction {
+  @Override
   protected boolean isEnabled(Project project, HgVcs vcs, VirtualFile file) {
     final FileStatus fileStatus = ChangeListManager.getInstance(project).getStatus(file);
     return FileStatus.MERGED_WITH_CONFLICTS.equals(fileStatus);
   }
 
-  protected void batchPerform(Project project, HgVcs activeVcs,
-    List<VirtualFile> files, DataContext context) {
+  @Override
+  protected void batchPerform(Project project, HgVcs activeVcs, List<VirtualFile> files, DataContext context) {
     HgResolveCommand resolveCommand = new HgResolveCommand(project);
     for (VirtualFile file : files) {
       VirtualFile root = VcsUtil.getVcsRootFor(project, file);
@@ -41,5 +41,4 @@ public class HgMarkResolved extends HgAbstractFilesAction {
       resolveCommand.markResolved(root, file);
     }
   }
-
 }

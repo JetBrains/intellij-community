@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +24,7 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
 
   private static final Logger LOG = Logger.getInstance(BaseDiffFromHistoryHandler.class);
 
-  @NotNull protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected BaseDiffFromHistoryHandler(@NotNull Project project) {
     myProject = project;
@@ -79,35 +68,34 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
     }
   }
 
-  protected void showChangesBetweenRevisions(@NotNull final FilePath path, @NotNull final T older, @Nullable final T newer) {
-    new CollectChangesTask("Comparing revisions...") {
+  protected void showChangesBetweenRevisions(final @NotNull FilePath path, final @NotNull T older, final @Nullable T newer) {
+    if (newer == null) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
+    new CollectChangesTask(VcsBundle.message("file.history.diff.handler.comparing.process")) {
 
-      @NotNull
       @Override
-      public List<Change> getChanges() throws VcsException {
+      public @NotNull List<Change> getChanges() throws VcsException {
         return getChangesBetweenRevisions(path, older, newer);
       }
 
-      @NotNull
       @Override
-      public String getDialogTitle() {
+      public @NotNull String getDialogTitle() {
         return getChangesBetweenRevisionsDialogTitle(path, older, newer);
       }
     }.queue();
   }
 
-  protected void showAffectedChanges(@NotNull final FilePath path, @NotNull final T rev) {
-    new CollectChangesTask("Collecting affected changes...") {
+  protected void showAffectedChanges(final @NotNull FilePath path, final @NotNull T rev) {
+    new CollectChangesTask(VcsBundle.message("file.history.diff.handler.collecting.affected.process")) {
 
-      @NotNull
       @Override
-      public List<Change> getChanges() throws VcsException {
+      public @NotNull List<Change> getChanges() throws VcsException {
         return getAffectedChanges(path, rev);
       }
 
-      @NotNull
       @Override
-      public String getDialogTitle() {
+      public @NotNull String getDialogTitle() {
         return getAffectedChangesDialogTitle(path, rev);
       }
     }.queue();
@@ -115,44 +103,41 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
 
   // rev2 == null -> compare rev1 with local
   // rev2 != null -> compare rev1 with rev2
-  @NotNull
-  protected abstract List<Change> getChangesBetweenRevisions(@NotNull final FilePath path, @NotNull final T rev1, @Nullable final T rev2)
+  protected abstract @NotNull List<Change> getChangesBetweenRevisions(final @NotNull FilePath path, final @NotNull T rev1, final @Nullable T rev2)
     throws VcsException;
 
-  @NotNull
-  protected abstract List<Change> getAffectedChanges(@NotNull final FilePath path, @NotNull final T rev) throws VcsException;
+  protected abstract @NotNull List<Change> getAffectedChanges(final @NotNull FilePath path, final @NotNull T rev) throws VcsException;
 
-  @NotNull
-  protected abstract String getPresentableName(@NotNull T revision);
+  protected abstract @NotNull String getPresentableName(@NotNull T revision);
 
-  protected void showChangesDialog(@NotNull String title, @NotNull List<Change> changes) {
+  protected void showChangesDialog(@NotNull @Nls String title, @NotNull List<? extends Change> changes) {
     VcsDiffUtil.showChangesDialog(myProject, title, changes);
   }
 
-  protected void showError(@NotNull VcsException e, @NotNull String logMessage) {
+  protected void showError(@NotNull VcsException e, @NotNull @Nls String logMessage) {
     LOG.info(logMessage, e);
     VcsBalloonProblemNotifier.showOverVersionControlView(myProject, e.getMessage(), MessageType.ERROR);
   }
 
-  @NotNull
-  protected String getChangesBetweenRevisionsDialogTitle(@NotNull final FilePath path, @NotNull final T rev1, @Nullable final T rev2) {
+  protected @Nls @NotNull String getChangesBetweenRevisionsDialogTitle(final @NotNull FilePath path, final @NotNull T rev1, final @Nullable T rev2) {
     String rev1Title = getPresentableName(rev1);
+    if (rev2 == null) {
+      return VcsBundle.message("file.history.diff.handler.paths.diff.with.local.title", rev1Title, path.getName());
+    }
 
-    return rev2 != null
-           ? String.format("Difference between %s and %s in %s", rev1Title, getPresentableName(rev2), path.getName())
-           : String.format("Difference between %s and local version in %s", rev1Title, path.getName());
+    String rev2Title = getPresentableName(rev2);
+    return VcsBundle.message("file.history.diff.handler.paths.diff.title", rev1Title, rev2Title, path.getName());
   }
 
-  @NotNull
-  protected String getAffectedChangesDialogTitle(@NotNull final FilePath path, @NotNull final T rev) {
-    return String.format("Initial commit %s in %s", getPresentableName(rev), path.getName());
+  protected @Nls @NotNull String getAffectedChangesDialogTitle(final @NotNull FilePath path, final @NotNull T rev) {
+    return VcsBundle.message("file.history.diff.handler.affected.changes.title", getPresentableName(rev), path.getName());
   }
 
   protected abstract class CollectChangesTask extends Task.Backgroundable {
 
     private List<Change> myChanges;
 
-    public CollectChangesTask(@NotNull String title) {
+    public CollectChangesTask(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
       super(BaseDiffFromHistoryHandler.this.myProject, title);
     }
 
@@ -162,15 +147,13 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
         myChanges = getChanges();
       }
       catch (VcsException e) {
-        showError(e, "Error during task: " + getDialogTitle());
+        showError(e, VcsBundle.message("file.history.diff.handler.process.error", getDialogTitle()));
       }
     }
 
-    @NotNull
-    public abstract List<Change> getChanges() throws VcsException;
+    public abstract @NotNull List<Change> getChanges() throws VcsException;
 
-    @NotNull
-    public abstract String getDialogTitle();
+    public abstract @Nls @NotNull String getDialogTitle();
 
     @Override
     public void onSuccess() {

@@ -5,9 +5,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.MovePackagingElementAction;
 import com.intellij.packaging.artifacts.Artifact;
 
-/**
- * @author nik
- */
 public class MoveElementActionTest extends ArtifactEditorActionTestCase {
   public void testSimple() {
     createEditor(addArtifact(root()
@@ -20,9 +17,10 @@ public class MoveElementActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("a");
     perform();
-    assertLayout("<root>\n" +
-                 " b/\n" +
-                 " a/");
+    assertLayout("""
+                   <root>
+                    b/
+                    a/""");
   }
 
   public void testMoveIncludedArtifact() {
@@ -34,9 +32,10 @@ public class MoveElementActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("included");
     perform();
-    assertLayout("<root>\n" +
-                 " b/\n" +
-                 " artifact:included");
+    assertLayout("""
+                   <root>
+                    b/
+                    artifact:included""");
   }
 
   public void testDoNotMoveInIncludedArtifact() {

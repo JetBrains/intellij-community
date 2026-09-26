@@ -20,26 +20,21 @@ import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface LibraryEditor {
-  String getName();
+  @NlsSafe String getName();
 
-  @NotNull
-  String[] getUrls(@NotNull OrderRootType rootType);
+  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
-  @NotNull
-  VirtualFile[] getFiles(@NotNull OrderRootType rootType);
+  VirtualFile @NotNull [] getFiles(@NotNull OrderRootType rootType);
 
-  @NotNull
-  String[] getExcludedRootUrls();
+  String @NotNull [] getExcludedRootUrls();
 
   void setName(String name);
 

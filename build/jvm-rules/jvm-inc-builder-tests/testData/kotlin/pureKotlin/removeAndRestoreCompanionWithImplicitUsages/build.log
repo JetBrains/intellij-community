@@ -1,0 +1,44 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeAndRestoreCompanionWithImplicitUsages-a.kotlin_module
+  foo/A$Companion.class
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeAndRestoreCompanionWithImplicitUsages-a.kotlin_module
+  use/GetACompanionKt.class
+  use/GetACompanionShortKt.class
+  use/UseACompanionImplicitlyKt.class
+  use/UseACompanionShortImplicitlyKt.class
+  use/UseAbarWithImplicitReceiverKt.class
+  use/UseAfooWithImplicitReceiverKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/getACompanion.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/getACompanionShort.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useACompanionImplicitly.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useACompanionShortImplicitly.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useAbarWithImplicitReceiver.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useAfooWithImplicitReceiver.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeAndRestoreCompanionWithImplicitUsages-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/A.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/getACompanion.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/getACompanionShort.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useACompanionImplicitly.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useACompanionShortImplicitly.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useAbarWithImplicitReceiver.kt
+  kotlin/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/a/useAfooWithImplicitReceiver.kt
+End of files
+------------------------------------------
+Exit code: OK

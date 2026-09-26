@@ -1,64 +1,42 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.content.Content;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-public class ContentManagerWatcher {
-  private final ToolWindow myToolWindow;
-  private final ContentManager myContentManager;
-  private final PropertyChangeListener myPropertyChangeListener;
-
-  public ContentManagerWatcher(ToolWindow toolWindow,ContentManager contentManager) {
-    myToolWindow = toolWindow;
-    myContentManager = contentManager;
-    myToolWindow.setAvailable(contentManager.getContentCount()>0,null);
-
-    myPropertyChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent e) {
-      }
-    };
-
-    contentManager.addContentManagerListener(
-      new ContentManagerAdapter(){
-        public void contentAdded(ContentManagerEvent e) {
-          e.getContent().addPropertyChangeListener(myPropertyChangeListener);
-          myToolWindow.setAvailable(true,null);
-        }
-
-        public void contentRemoved(ContentManagerEvent e) {
-          e.getContent().removePropertyChangeListener(myPropertyChangeListener);
-          myToolWindow.setAvailable(myContentManager.getContentCount()>0,null);
-        }
-      }
-    );
-
-    // Synchonize title with current state of manager
-
-    for(int i=0;i<myContentManager.getContentCount();i++){
-      Content content=myContentManager.getContent(i);
-      content.addPropertyChangeListener(myPropertyChangeListener);
-    }
+@SuppressWarnings("UtilityClassWithPublicConstructor")
+public final class ContentManagerWatcher {
+  /**
+   * @deprecated Use {@link #watchContentManager}
+   */
+  @Deprecated(forRemoval = true)
+  public ContentManagerWatcher(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
+    watchContentManager(toolWindow, contentManager);
   }
 
+  public static void watchContentManager(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
+    toolWindow.setAvailable(!contentManager.isEmpty());
+
+    contentManager.addContentManagerListener(new ContentManagerListener() {
+      @Override
+      public void contentAdded(@NotNull ContentManagerEvent e) {
+        toolWindow.setAvailable(true);
+      }
+
+      @Override
+      public void contentRemoved(@NotNull ContentManagerEvent e) {
+        if ((!(toolWindow instanceof ToolWindowEx)
+             || ApplicationManager.getApplication().isHeadlessEnvironment()
+             || !((ToolWindowEx)toolWindow).getDecorator().isSplitUnsplitInProgress())
+            && contentManager.isEmpty()) {
+          toolWindow.setAvailable(false);
+        }
+      }
+    });
+  }
 }

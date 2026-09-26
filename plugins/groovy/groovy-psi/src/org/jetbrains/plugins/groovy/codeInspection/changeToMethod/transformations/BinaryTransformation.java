@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations;
 
 import org.jetbrains.annotations.NotNull;
@@ -26,19 +12,16 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.
 
 abstract class BinaryTransformation extends Transformation<GrBinaryExpression> {
 
-  @NotNull
-  protected GrExpression getLhs(@NotNull GrBinaryExpression expression) {
+  protected @NotNull GrExpression getLhs(@NotNull GrBinaryExpression expression) {
     return unparenthesize(Objects.requireNonNull(expression.getLeftOperand()));
   }
 
-  @NotNull
-  protected GrExpression getRhs(@NotNull GrBinaryExpression expression) {
+  protected @NotNull GrExpression getRhs(@NotNull GrBinaryExpression expression) {
     return unparenthesize(Objects.requireNonNull(expression.getRightOperand()));
   }
 
-  @Nullable
   @Override
-  protected GrBinaryExpression checkCast(@NotNull GrExpression expression) {
+  protected @Nullable GrBinaryExpression checkCast(@NotNull GrExpression expression) {
     return expression instanceof GrBinaryExpression ? (GrBinaryExpression) expression : null;
   }
 

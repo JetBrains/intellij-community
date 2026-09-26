@@ -1,0 +1,13 @@
+<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="revert_dark" clip-path="url(#clip0_0_7139)">
+<g id="Group">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M4.24264 0.667106L3.53553 -0.0400009L0 3.49553L0.000786424 3.49632L0 3.49711L3.53553 7.03264L4.24264 6.32553L1.41343 3.49632L4.24264 0.667106Z" fill="#AFB1B3"/>
+<path id="Combined Shape_2" fill-rule="evenodd" clip-rule="evenodd" d="M1 3H8C10.2091 3 12 4.79086 12 7C12 9.20914 10.2091 11 8 11H5V10H8C9.65685 10 11 8.65685 11 7C11 5.34315 9.65685 4 8 4H1V3Z" fill="#AFB1B3"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_7139">
+<rect width="12" height="12" fill="white"/>
+</clipPath>
+</defs>
+</svg>

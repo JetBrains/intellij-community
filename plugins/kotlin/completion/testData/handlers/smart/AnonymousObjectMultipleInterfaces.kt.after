@@ -1,0 +1,27 @@
+interface InterfaceA {
+    fun fromA()
+}
+
+interface InterfaceB {
+    fun fromB()
+}
+
+interface Child : InterfaceA, InterfaceB {
+    fun fromChild()
+}
+
+val child : Child = object : Child {
+    override fun fromChild() {
+        TODO("Not yet implemented")
+    }
+
+    override fun fromA() {
+        TODO("Not yet implemented")
+    }
+
+    override fun fromB() {
+        TODO("Not yet implemented")
+    }
+}
+
+// ELEMENT: object

@@ -1,46 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.util.indexing.DumbModeAccessType;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
+  @Contract(pure = true)
   public abstract boolean canGeneratePrototypeFor(PsiField field);
-  public abstract PsiMethod[] generateGetters(PsiField field); 
+  public abstract PsiMethod[] generateGetters(PsiField field);
   public abstract PsiMethod[] generateSetters(PsiField field);
+  @Contract(pure = true)
   public PsiMethod[] findGetters(PsiClass psiClass, String propertyName) {
     return null;
   }
 
+  @Contract(pure = true)
   public String suggestGetterName(String propertyName) {
     return null;
   }
 
+  @Contract(pure = true)
   public boolean isSimpleGetter(PsiMethod method, String oldPropertyName) {
     return false;
   }
 
+  @Contract(pure = true)
   public abstract boolean isReadOnly(PsiField field);
 
   public static PsiMethod[] generateGetterSetters(PsiField field, boolean generateGetter) {
@@ -50,27 +42,34 @@ public abstract class GetterSetterPrototypeProvider {
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
                                                   boolean ignoreInvalidTemplate) {
-    for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
+    return generateGetterSetters(field, generateGetter, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
+  }
+
+  public static PsiMethod[] generateGetterSetters(PsiField field,
+                                                  boolean generateGetter,
+                                                  boolean ignoreInvalidTemplate,
+                                                  @NotNull GetterSetterGenerationOptions options) {
+    for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, ignoreInvalidTemplate) :
-                           GenerateMembersUtil.generateSetterPrototype(field, ignoreInvalidTemplate)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, ignoreInvalidTemplate, options) :
+                           GenerateMembersUtil.generateSetterPrototype(field, ignoreInvalidTemplate, options)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {
-    for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.canGeneratePrototypeFor(field)) {
-        return provider.isReadOnly(field);
-      }
-    }
-    return field.hasModifierProperty(PsiModifier.FINAL);
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+        for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
+          if (provider.canGeneratePrototypeFor(field)) return provider.isReadOnly(field);
+        }
+        return field.hasModifierProperty(PsiModifier.FINAL);
+      });
   }
 
   public static PsiMethod[] findGetters(PsiClass aClass, String propertyName, boolean isStatic) {
     if (!isStatic) {
-      for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
+      for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
         final PsiMethod[] getterSetter = provider.findGetters(aClass, propertyName);
         if (getterSetter != null) return getterSetter;
       }
@@ -79,11 +78,11 @@ public abstract class GetterSetterPrototypeProvider {
     if (propertyGetterSetter != null) {
       return new PsiMethod[] {propertyGetterSetter};
     }
-    return null; 
+    return null;
   }
 
   public static String suggestNewGetterName(String oldPropertyName, String newPropertyName, PsiMethod method) {
-    for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
       if (provider.isSimpleGetter(method, oldPropertyName)) {
         return provider.suggestGetterName(newPropertyName);
       }

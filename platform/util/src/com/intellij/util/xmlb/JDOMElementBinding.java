@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Tag;
+import kotlinx.serialization.json.JsonArray;
+import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonObject;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,71 +13,148 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
-  private final String myTagName;
+import static com.intellij.util.xmlb.JsonDomKt.jdomToJson;
+import static com.intellij.util.xmlb.JsonDomKt.jsonDomToXml;
 
-  public JDOMElementBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
+final class JDOMElementBinding implements MultiNodeBinding, NestedBinding {
+  private final String tagName;
+  private final MutableAccessor accessor;
 
-    Tag tag = myAccessor.getAnnotation(Tag.class);
-    assert tag != null : "jdom.Element property without @Tag annotation: " + accessor;
+  JDOMElementBinding(@NotNull MutableAccessor accessor) {
+    this.accessor = accessor;
 
-    String tagName = tag.value();
-    if (StringUtil.isEmpty(tagName)) {
-      tagName = myAccessor.getName();
-    }
-    myTagName = tagName;
+    Tag tag = this.accessor.getAnnotation(Tag.class);
+    String tagName = tag == null ? null : tag.value();
+    this.tagName = tagName == null || tagName.isEmpty() ? this.accessor.getName() : tagName;
   }
 
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
+  public @NotNull JsonElement deserializeToJson(@NotNull Element element) {
+    return jdomToJson(element);
+  }
+
+  @Override
+  public @NotNull MutableAccessor getAccessor() {
+    return accessor;
+  }
+
+  @Override
+  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
     if (value == null) {
       return null;
     }
 
     if (value instanceof Element) {
-      Element targetElement = ((Element)value).clone();
-      assert targetElement != null;
-      targetElement.setName(myTagName);
-      return targetElement;
+      Element element = (Element)value;
+      if (!element.getName().equals(tagName)) {
+        element = ((Element)value).clone().setName(tagName);
+      }
+      return jdomToJson(element);
     }
     if (value instanceof Element[]) {
-      ArrayList<Element> result = new ArrayList<Element>();
-      for (Element element : ((Element[])value)) {
-        result.add(element.clone().setName(myTagName));
+      Element[] elements = (Element[])value;
+      if (elements.length == 0) {
+        return null;
       }
-      return result;
-    }
-    throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
-  }
-
-  @Nullable
-  @Override
-  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
-    if (myAccessor.getValueClass().isArray()) {
-      myAccessor.set(context, elements.toArray(new Element[0]));
+      else {
+        List<JsonElement> result = new ArrayList<>();
+        for (Element element : elements) {
+          result.add(jdomToJson(element.getName().equals(tagName) ? element : element.clone().setName(tagName)));
+        }
+        return new JsonArray(result);
+      }
     }
     else {
-      myAccessor.set(context, elements.get(0));
+      return null;
     }
-    return context;
+  }
+
+  @Override
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
+    if (element instanceof JsonObject) {
+      accessor.set(bean, jsonDomToXml((JsonObject)element));
+    }
+    else if (element instanceof JsonArray) {
+      JsonArray jsonArray = (JsonArray)element;
+      List<Element> result = new ArrayList<>(jsonArray.getSize());
+      for (JsonElement o : jsonArray) {
+        result.add(jsonDomToXml((JsonObject)o));
+      }
+      accessor.set(bean, result.toArray(new Element[0]));
+    }
+  }
+
+  @Override
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
+    if (value == null) {
+      return;
+    }
+
+    if (value instanceof Element) {
+      parent.addContent(((Element)value).clone().setName(tagName));
+    }
+    else if (value instanceof Element[]) {
+      Element[] elements = (Element[])value;
+      if (elements.length != 0) {
+        List<Element> result = new ArrayList<>(elements.length);
+        for (Element element : elements) {
+          result.add(element.clone().setName(tagName));
+        }
+        parent.addContent(result);
+      }
+    }
+    else {
+      throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
+    }
+  }
+
+  @Override
+  public boolean isSurroundWithTag() {
+    return false;
+  }
+
+  @Override
+  public <T> @NotNull Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    assert currentValue != null;
+    if (adapter != JdomAdapter.INSTANCE) {
+      throw new UnsupportedOperationException("XmlElement is not supported by JDOMElementBinding");
+    }
+
+    if (accessor.getValueClass().isArray()) {
+      //noinspection SuspiciousToArrayCall
+      accessor.set(currentValue, elements.toArray(new Element[0]));
+    }
+    else {
+      accessor.set(currentValue, elements.get(0));
+    }
+    return currentValue;
+  }
+
+  @Override
+  public @NotNull JsonElement doDeserializeListToJson(@NotNull List<? extends Element> elements) {
+    List<JsonElement> result = new ArrayList<>(elements.size());
+    for (Element element : elements) {
+      result.add(jdomToJson(element));
+    }
+    return new JsonArray(result);
   }
 
   @Override
   public boolean isMulti() {
-    return true;
+    return accessor.getValueClass().isArray();
   }
 
   @Override
-  @NotNull
-  public Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull Element element) {
-    myAccessor.set(context, element);
+  public @NotNull <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+    assert context != null;
+    accessor.set(context, element);
     return context;
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
-    return element.getName().equals(myTagName);
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
+    return adapter.getName(element).equals(tagName);
   }
 }

@@ -19,13 +19,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 
 public interface TreeClassChooser extends TreeChooser<PsiClass> {
+  @Override
   PsiClass getSelected();
 
+  @Override
   void select(final PsiClass aClass);
 
+  @Override
   void selectDirectory(final PsiDirectory directory);
 
+  @Override
   void showDialog();
 
+  @Override
   void showPopup();
 }

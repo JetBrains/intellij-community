@@ -35,7 +35,7 @@ public class StringSearcherTest extends TestCase {
   public void testCaseInsensitiveWithUnicode() {
     String pattern = "SİL";
     final String text = "SİL SIL";
-    final int firstPos = text.indexOf(pattern);
+    final int firstPos = 0;
     final int secondPos = text.indexOf("SIL");
 
     StringSearcher searcher = new StringSearcher(pattern, false, true);
@@ -56,5 +56,26 @@ public class StringSearcherTest extends TestCase {
 
     assertEquals(secondPos, index);
     assertEquals(firstPos, searcher.scan(text, 0, index - 1));
+  }
+
+  public void testSearchBackwardLastOne() {
+    final String pattern = "c";
+    final String text = "aabc";
+    final int pos = text.lastIndexOf(pattern);
+    final StringSearcher searcher = new StringSearcher(pattern, true, false);
+    final int index = searcher.scan(text);
+
+    assertEquals(pos, index);
+  }
+
+  public void testOneElementPatternAndBackward() {
+    assertEquals(-1, new StringSearcher("1", false, false).scan("SIL"));
+    assertEquals(0, new StringSearcher("S", false, false).scan("SIL"));
+    assertEquals(2, new StringSearcher("L", false, false).scan("SIL"));
+    assertEquals(0, new StringSearcher("SI", false, false).scan("SIL"));
+    assertEquals(-1, new StringSearcher("SL", false, false).scan("SIL"));
+    assertEquals(1, new StringSearcher("IL", false, false).scan("SIL"));
+    assertEquals(0, new StringSearcher("SIL", false, false).scan("SIL"));
+    assertEquals(-1, new StringSearcher("0SIL", false, false).scan("SIL"));
   }
 }

@@ -1,0 +1,3 @@
+MODE SinglePlatform
+MODULE jvm { platform=[JVM] }
+MODULE main { platform=[JVM (1.8)] }

@@ -1,0 +1,14 @@
+LineBreakpoint created at smartStepIntoFunWithContext.kt:11 lambdaOrdinal = -1
+LineBreakpoint created at smartStepIntoFunWithContext.kt:16 lambdaOrdinal = -1
+LineBreakpoint created at smartStepIntoFunWithContext.kt:32
+Run Java
+Connected to the target VM
+smartStepIntoFunWithContext.kt:11
+smartStepIntoFunWithContext.kt:4
+smartStepIntoFunWithContext.kt:16
+smartStepIntoFunWithContext.kt:16
+smartStepIntoFunWithContext.kt:32
+smartStepIntoFunWithContext.kt:24
+Disconnected from the target VM
+
+Process finished with exit code 0

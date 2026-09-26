@@ -2,15 +2,15 @@
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/patchTextDetection/")
-class PatchTextDetectionTest : PlatformTestCase() {
+class PatchTextDetectionTest : HeavyPlatformTestCase() {
   fun testClassicalContextDiff() {
     doTest(true)
   }
@@ -39,11 +39,11 @@ class PatchTextDetectionTest : PlatformTestCase() {
     val testDataPath = getTestDir(getTestName(true))
     createTestProjectStructure(testDataPath)
     val patchPath = "$testDataPath/test.patch"
-    val patchFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
+    val patchFile = StandardFileSystems.local().refreshAndFindFileByPath(patchPath.replace(File.separatorChar, '/'))
 
     val patchContents = patchFile!!.contentsToByteArray()
-    val patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, patchFile);
-    assertEquals(expected, PatchReader.isPatchContent((patchText.toString())));
+    val patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, patchFile)
+    assertEquals(expected, PatchReader.isPatchContent((patchText.toString())))
   }
 
   private fun getTestDir(@TestDataFile dirName: String): String {

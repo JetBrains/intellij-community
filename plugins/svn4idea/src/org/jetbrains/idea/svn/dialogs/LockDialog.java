@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsShowSettingOption;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 /**
  * @author alex
@@ -35,27 +27,26 @@ public class LockDialog extends OptionsDialog {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
-  @NonNls private static final String HELP_ID = "reference.VCS.subversion.lockFile";
+  private static final @NonNls String HELP_ID = "reference.VCS.subversion.lockFile";
+  private final VcsShowSettingOption myOption;
 
-  public LockDialog(Project project, boolean canBeParent, boolean multiple) {
+  public LockDialog(Project project, boolean canBeParent, boolean multiple, @NonNls VcsShowSettingOption option) {
     super(project, canBeParent);
+    myOption = option;
+
     setTitle(multiple ? SvnBundle.message("dialog.title.lock.files") : SvnBundle.message("dialog.title.lock.file"));
     setResizable(true);
 
     getHelpAction().setEnabled(true);
     init();
-
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  @Override
+  protected String getHelpId() {
+    return HELP_ID;
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HELP_ID);
-  }
-
+  @Override
   public boolean shouldCloseOnCross() {
     return true;
   }
@@ -68,6 +59,7 @@ public class LockDialog extends OptionsDialog {
     return myForceCheckBox.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -92,7 +84,8 @@ public class LockDialog extends OptionsDialog {
 
     myLockTextArea = new JTextArea(7, 25);
     JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(myLockTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      ScrollPaneFactory.createScrollPane(myLockTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setMinimumSize(scrollPane.getPreferredSize());
     panel.add(scrollPane, gc);
     commentLabel.setLabelFor(myLockTextArea);
@@ -113,22 +106,27 @@ public class LockDialog extends OptionsDialog {
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.lockDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myLockTextArea;
   }
 
+  @Override
   protected boolean isToBeShown() {
     return true;
   }
 
+  @Override
   protected void setToBeShown(final boolean value, final boolean onOk) {
-    SvnVcs.getInstance(myProject).getCheckoutOptions().setValue(value);
+    myOption.setValue(value);
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return false;
   }

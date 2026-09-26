@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -28,22 +14,37 @@ import com.intellij.uiDesigner.actions.SplitAction;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.properties.*;
+import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.IndentProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MarginProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty;
+import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   private GridLayoutColumnProperties myPropertiesPanel;
 
+  @Override
   public String getName() {
     return UIFormXmlConstants.LAYOUT_INTELLIJ;
   }
 
+  @Override
   public LayoutManager createLayout() {
     return new GridLayoutManager(1, 1);
   }
@@ -61,6 +62,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     container.setLayoutManager(this, new GridLayoutManager(1, Math.max(1, components.size())));
   }
 
+  @Override
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
     GridLayoutManager layout = (GridLayoutManager) radContainer.getLayout();
 
@@ -73,6 +75,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     RadXYLayoutManager.INSTANCE.writeLayout(writer, radContainer);
   }
 
+  @Override
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     super.addComponentToContainer(container, component, index);
     container.getDelegee().add(component.getDelegee(), component.getConstraints());
@@ -89,6 +92,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     super.updateConstraints(component);
   }
 
+  @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writeGridConstraints(writer, child);
   }
@@ -135,11 +139,13 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return grid.getVerticalGridLines();
   }
 
+  @Override
   public int[] getGridCellCoords(RadContainer container, boolean isRow) {
     GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     return isRow ? grid.getYs() : grid.getXs();
   }
 
+  @Override
   public int[] getGridCellSizes(RadContainer container, boolean isRow) {
     GridLayoutManager grid = (GridLayoutManager) container.getLayout();
     return isRow ? grid.getHeights() : grid.getWidths();
@@ -174,6 +180,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return gridLayoutManager.getCellSizePolicy(isRow, cellIndex) == maxSizePolicy;
   }
 
+  @Override
   public void processCellResized(RadContainer container, final boolean isRow, final int cell, final int newSize) {
     int cellCount = isRow ? container.getGridRowCount() : container.getGridColumnCount();
     if (container.getParent().isXY()  && cell == cellCount-1) {
@@ -215,6 +222,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     parentDelegee.revalidate();
   }
 
+  @Override
   public void copyGridSection(final RadContainer source, final RadContainer destination, final Rectangle rc) {
     destination.setLayout(new GridLayoutManager(rc.height, rc.width));
   }

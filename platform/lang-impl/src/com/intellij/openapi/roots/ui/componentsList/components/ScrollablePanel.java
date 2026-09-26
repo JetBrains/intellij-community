@@ -16,12 +16,17 @@
 
 package com.intellij.openapi.roots.ui.componentsList.components;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
 
 public class ScrollablePanel extends JPanel implements Scrollable {
   private int myUnitHeight = -1;
-  private final int myUnitWidth = 10;
+  private static final int myUnitWidth = 10;
 
   public ScrollablePanel() {
   }

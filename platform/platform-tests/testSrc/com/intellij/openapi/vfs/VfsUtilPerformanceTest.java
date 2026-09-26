@@ -1,74 +1,67 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.JITSensitive;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static java.util.Objects.requireNonNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
-@JITSensitive
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void testFindChildByNamePerformance() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = this.tempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -84,13 +77,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(theChild);
     UIUtil.pump(); // wait for all event handlers to calm down
 
-    LOG.debug("Start searching...");
-    PlatformTestUtil.startPerformanceTest("finding child", 1500, () -> {
+    Logger.getInstance(VfsUtilPerformanceTest.class).debug("Start searching...");
+    Benchmark.newBenchmark("finding child", () -> {
       for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
         assertEquals(theChild, child);
       }
-    }).assertTiming();
+    }).start();
 
     WriteCommandAction.writeCommandAction(null).run(() -> {
       for (VirtualFile file : vDir.getChildren()) {
@@ -100,70 +93,74 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRootPerformance() throws IOException {
-    File tempJar = IoTestUtil.createTestJar(myTempDir.newFile("test.jar"));
+  public void testFindRootPerformance() {
+    File tempJar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     VirtualFile jar = LocalFileSystem.getInstance().findFileByIoFile(tempJar);
     assertNotNull(jar);
 
     JarFileSystem fs = JarFileSystem.getInstance();
     String path = jar.getPath() + "!/";
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest("finding root", 10_000,
-        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-        Collections.nCopies(500, null), null, 
-        __ -> {
-          for (int i = 0; i < 20_000; i++) {
-            NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
-            assertNotNull(rootJar);
-            assertSame(root, rootJar);
-          }
-          return true;
-        })).assertTiming();
+    ManagingFS managingFS = ManagingFS.getInstance();
+    NewVirtualFile root = managingFS.findRoot(path, fs);
+    Benchmark.newBenchmark("finding root",
+                           () -> {
+      ProgressManager.getInstance().runProcess(()->
+                                                 JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(
+                                                   Collections.nCopies(500, null),
+                                                   _ -> {
+                                                     for (int i = 0; i < 100_000; i++) {
+                                                       NewVirtualFile rootJar = managingFS.findRoot(path, fs);
+                                                       assertNotNull(rootJar);
+                                                       assertSame(root, rootJar);
+                                                     }
+                                                     return true;
+                                                   }), new EmptyProgressIndicator());
+                           }).start();
   }
 
   @Test
   public void testGetParentPerformance() throws IOException {
-    File tempDir = myTempDir.newFolder();
-    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
-    assertNotNull(vDir);
-    assertTrue(vDir.isDirectory());
+    VirtualFile root = tempDir.getVirtualFileRoot();
     int depth = 10;
+    int N = 5_000_000;
+
     WriteCommandAction.writeCommandAction(null).run(() -> {
-      VirtualFile dir = vDir;
+      VirtualFile dir = root;
       for (int i = 0; i < depth; i++) {
         dir = dir.createChildDirectory(this, "foo");
       }
       VirtualFile leafDir = dir;
-      ThrowableRunnable checkPerformance = new ThrowableRunnable() {
-        private VirtualFile findRoot(VirtualFile file) {
+      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<>() {
+        @Override
+        public void run() {
+          for (int i = 0; i < N; i++) checkRootReached();
+        }
+
+        private void checkRootReached() {
+          assertTrue(findRoot(leafDir, root));
+        }
+
+        private static boolean findRoot(VirtualFile file, VirtualFile root) {
           while (true) {
             VirtualFile parent = file.getParent();
-            if (parent == null) {
-              return file;
-            }
+            if (parent == null) return false;
+            if (root.equals(parent)) return true;
             file = parent;
           }
         }
-
-        @Override
-        public void run() {
-          for (int i = 0; i < 5_000_000; i++) {
-            checkRootsEqual();
-          }
-        }
-
-        private void checkRootsEqual() {
-          assertEquals(findRoot(vDir), findRoot(leafDir));
-        }
       };
-      int time = 1500;
-      PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
-      VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
-      VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
-      for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
+
+      Benchmark.newBenchmark("getParent before movement", checkPerformance)
+        .start(getQualifiedTestMethodName() + " - getParent before movement");
+
+      VirtualFile dir1 = root.createChildDirectory(this, "dir1");
+      VirtualFile dir2 = root.createChildDirectory(this, "dir2");
+      for (int i = 0; i < 13; i++) {  // 13 is max length with THashMap capacity of 17, we get plenty of collisions then
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+
+      Benchmark.newBenchmark("getParent after movement", checkPerformance)
+        .start(getQualifiedTestMethodName() + " - getParent after movement");
     });
   }
 
@@ -171,14 +168,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testGetPathPerformance() throws Exception {
     LightTempDirTestFixtureImpl fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
-    Disposer.register(getTestRootDisposable(), () -> {
+    Disposer.register(getTestRootDisposable(), () -> EdtTestUtil.runInEdtAndWait(() -> {
       try {
         fixture.tearDown();
       }
       catch (Exception e) {
         ExceptionUtil.rethrowAllAsUnchecked(e);
       }
-    });
+    }));
 
     EdtTestUtil.runInEdtAndWait(() -> {
       String path = "unitTest_testGetPathPerformance_6542623412414351229/" +
@@ -187,100 +184,94 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
                     "fff.txt";
       VirtualFile file = fixture.findOrCreateDir(path);
 
-      PlatformTestUtil.startPerformanceTest("VF.getPath()", 10_000, () -> {
+      Benchmark.newBenchmark("VF.getPath()", () -> {
         for (int i = 0; i < 1_000_000; ++i) {
           file.getPath();
         }
-      }).assertTiming();
+      }).start(getQualifiedTestMethodName());
     });
   }
 
   @Test
   public void testAsyncRefresh() throws Throwable {
-    Ref<Throwable> ex = Ref.create();
-    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), 
-      o -> {
+    var ex = new AtomicReference<Throwable>();
+    var tasks = IntStream.range(0, JobSchedulerImpl.getJobPoolParallelism()).boxed().toList();
+    ProgressManager.getInstance().runProcess(()-> {
+      var success = JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(tasks, task -> {
         try {
-          doAsyncRefreshTest();
+          doAsyncRefreshTest(task);
         }
         catch (Throwable t) {
           ex.set(t);
         }
         return true;
       });
-
-    if (!ex.isNull()) throw ex.get();
-    if (!success) fail("!success");
+      assertTrue(success);
+    }, new EmptyProgressIndicator());
+    if (ex.get() != null) throw ex.get();
   }
 
-  private void doAsyncRefreshTest() throws Exception {
-    int N = 1000;
-    byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
-
-    File temp = myTempDir.newFolder();
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile vTemp = fs.findFileByIoFile(temp);
-    assertNotNull(vTemp);
-
-    VirtualFile[] children = new VirtualFile[N];
-    long[] timestamp = new long[N];
+  private void doAsyncRefreshTest(int task) throws Exception {
+    var N = 1_000;
+    var vFiles = new VirtualFile[N];
+    var modStamps = new long[N];
+    var temp = tempDir.newDirectoryPath("dir" + task);
+    var fs = LocalFileSystem.getInstance();
 
     for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, data);
-      VirtualFile child = fs.refreshAndFindFileByIoFile(file);
-      assertNotNull(child);
-      children[i] = child;
-      timestamp[i] = file.lastModified();
+      var file = Files.writeString(temp.resolve(i + ".txt"), "xxx");
+      vFiles[i] = requireNonNull(fs.refreshAndFindFileByNioFile(file));
+      modStamps[i] = Files.getLastModifiedTime(file).toMillis();
     }
 
-    vTemp.refresh(false, true);
+    vFiles[0].getParent().refresh(false, true);
 
     for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      assertEquals(timestamp[i], file.lastModified());
-      VirtualFile child = fs.findFileByIoFile(file);
-      assertNotNull(child);
-      IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
+      var file = temp.resolve(i + ".txt");
+      assertEquals(modStamps[i], Files.getLastModifiedTime(file).toMillis());
+      var vFile = requireNonNull(fs.refreshAndFindFileByNioFile(file));
+      assertEquals(modStamps[i], vFile.getTimeStamp());
     }
 
     for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, data);
-      assertTrue(file.setLastModified(timestamp[i] - 2000));
-      long modified = file.lastModified();
-      assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
-      timestamp[i] = modified;
-      IoTestUtil.assertTimestampsNotEqual(children[i].getTimeStamp(), modified);
+      var file = temp.resolve(i + ".txt");
+      Files.setLastModifiedTime(file, FileTime.fromMillis(modStamps[i] - 2_000));
+      var newModStamp = Files.getLastModifiedTime(file).toMillis();
+      assertNotEquals(modStamps[i], newModStamp);
+      modStamps[i] = newModStamp;
+      assertNotEquals(vFiles[i].getTimeStamp(), newModStamp);
     }
 
-    CountDownLatch latch = new CountDownLatch(N);
-    for (VirtualFile child : children) {
-      child.refresh(true, true, latch::countDown);
-      TimeoutUtil.sleep(10);
+    var latch = new CountDownLatch(N);
+    var refreshEngaged = Disposer.newDisposable();
+    try {
+      FrequentEventDetector.disableUntil(refreshEngaged);
+      for (VirtualFile vFile : vFiles) {
+        vFile.refresh(true, true, latch::countDown);
+      }
     }
-    while (latch.getCount() > 0) {
-      latch.await(100, TimeUnit.MILLISECONDS);
-      UIUtil.pump();
+    finally {
+      Disposer.dispose(refreshEngaged);
     }
+    assertTrue(latch.await(2, TimeUnit.MINUTES));
 
     for (int i = 0; i < N; i++) {
-      VirtualFile child = children[i];
-      IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
+      assertEquals(vFiles[i].getPresentableUrl(), modStamps[i], vFiles[i].getTimeStamp());
     }
   }
 
   @Test
-  public void PersistentFS_performance_ofManyFilesCreateDelete() throws IOException {
+  public void PersistentFS_performance_ofManyFilesCreateDelete() {
+    //RC: adding .warmupIterations(1-2) reduce execution time 5-10x! Probably,
+    //    because of JITing -- if that is true, then times after warm up are
+    //    better represent real-life performance?
     int N = 30_000;
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Benchmark.newBenchmark("many files creations", () -> {
         assertEquals(N, events.size());
-        assertTrue(!temp.allChildrenLoaded());
         processEvents(events);
         assertEquals(N, temp.getCachedChildren().size());
       })
@@ -292,9 +283,9 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         eventsForCreating(events, N, temp);
         assertEquals(N, TempFileSystem.getInstance().list(temp).length); // do not call getChildren which caches everything
       })
-      .assertTiming();
+      .start(getQualifiedTestMethodName() + " - many files creations");
 
-      PlatformTestUtil.startPerformanceTest("many files deletions", 3_300, () -> {
+      Benchmark.newBenchmark("many files deletions", () -> {
         assertEquals(N, events.size());
         processEvents(events);
         assertEquals(0, temp.getCachedChildren().size());
@@ -311,49 +302,38 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         eventsForDeleting(events, temp);
         assertEquals(N, TempFileSystem.getInstance().list(temp).length); // do not call getChildren which caches everything
       })
-      .assertTiming();
+      .start(getQualifiedTestMethodName() + " - many files deletions");
       }
     );
   }
 
-  private VirtualDirectoryImpl createTempFsDirectory() throws IOException {
-    VirtualDirectoryImpl temp = WriteAction.computeAndWait(() ->
-         (VirtualDirectoryImpl)TempFileSystem.getInstance().findFileByPath("/").createChildDirectory(this, "temp"));
-    Disposer.register(getTestRootDisposable(), () -> {
-      try {
-        WriteAction.runAndWait(() -> temp.delete(this));
-      }
-      catch (IOException e) {
-        throw new RuntimeException();
-      }
-    });
+  private VirtualDirectoryImpl createTempFsDirectory() {
+    VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
+    VirtualDirectoryImpl temp = (VirtualDirectoryImpl)VfsTestUtil.createDir(root, "temp");
+    Disposer.register(getTestRootDisposable(), () -> VfsTestUtil.deleteFile(temp));
     return temp;
   }
 
   private static void processEvents(List<VFileEvent> events) {
-    WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
+    WriteCommandAction.runWriteCommandAction(null, () -> RefreshQueue.getInstance().processEvents(false, events));
   }
 
-  private void eventsForCreating(List<VFileEvent> events, int N, VirtualDirectoryImpl temp) {
+  private void eventsForCreating(List<VFileEvent> events, int N, VirtualDirectoryImpl temp) throws IOException {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
-    IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, false))
-      .peek(event -> {
-        if (fs.findModelChild(temp, event.getChildName()) == null) {
-          fs.createChildFile(this, temp, event.getChildName());
-        }
-      })
-      .forEach(events::add);
-    List<CharSequence> names = events.stream().map(e -> ((VFileCreateEvent)e).getChildName()).collect(Collectors.toList());
-    temp.removeChildren(new TIntHashSet(), names);
+    for (int i = 0; i < N; i++) {
+      String childName = i + ".txt";
+      fs.createIfNotExists(temp, childName);
+      events.add(new VFileCreateEvent(this, temp, childName, false, null, null, null));
+    }
+    List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
+    temp.removeChildren(IntSets.emptySet(), names);
   }
 
   private void eventsForDeleting(List<VFileEvent> events, VirtualDirectoryImpl temp) {
     events.clear();
     temp.getCachedChildren().stream()
-      .map(v->new VFileDeleteEvent(this, v, false))
+      .map(v->new VFileDeleteEvent(this, v))
       .forEach(events::add);
   }
-
 }

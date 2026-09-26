@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_topLevelMembersInTwoFiles-a.kotlin_module
+  test/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/topLevelMembersInTwoFiles/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

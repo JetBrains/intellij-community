@@ -1,69 +1,49 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
+import org.jetbrains.annotations.Nls;
 
-/**
-* @author Max Medvedev
-*/
-class InlineGroovyFieldDialog extends InlineOptionsDialog {
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
-
+final class InlineGroovyFieldDialog extends InlineOptionsDialog {
   private final PsiField myField;
 
-  public InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {
+  InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {
     super(project, true, field);
     myField = field;
     myInvokedOnReference = invokedOnReference;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     init();
   }
 
   @Override
   protected String getNameLabelText() {
-    @SuppressWarnings("StaticFieldReferencedViaSubclass")
-    String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
-    return RefactoringBundle.message("inline.field.field.name.label", fieldText);
-  }
-
-  @Override
-  protected String getBorderTitle() {
-    return RefactoringBundle.message("inline.field.border.title");
+    int options = myInvokedOnReference
+                  ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME 
+                  : PsiFormatUtilBase.SHOW_NAME;
+    String fieldText = PsiFormatUtil.formatVariable(myField, options, PsiSubstitutor.EMPTY);
+    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
   }
 
   @Override
   protected String getInlineThisText() {
-    return RefactoringBundle.message("this.reference.only.and.keep.the.field");
+    return JavaRefactoringBundle.message("this.reference.only.and.keep.the.field");
   }
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.the.field");
+    return JavaRefactoringBundle.message("all.references.and.remove.the.field");
   }
 
   @Override
@@ -83,7 +63,11 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.INLINE_FIELD);
+  protected String getHelpId() {
+    return HelpID.INLINE_FIELD;
+  }
+
+  public static @Nls(capitalization = Title) String getRefactoringName() {
+    return JavaRefactoringBundle.message("inline.field.title");
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
@@ -25,24 +11,23 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class HtmlConditionalCommentInjector implements MultiHostInjector {
 
   /**
    * Allows to check if given element is a
    * <a href="http://msdn.microsoft.com/en-us/library/ms537512(v=vs.85).aspx">conditional comment</a>.
-   * 
+   *
    * @param host  target element to check
    * @return      {@code true} if given element is conditional comment; {@code false} otherwise
    */
@@ -52,13 +37,12 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
 
   /**
    * Tries to parse given element as <a href="http://msdn.microsoft.com/en-us/library/ms537512(v=vs.85).aspx">conditional comment</a>.
-   * 
+   *
    * @param host  target element to parse
    * @return      {@code null} if given element is not a conditional comment;
    *              pair like {@code (conditional comment start element; conditional comment end element)} otherwise
    */
-  @Nullable
-  private static Pair<ASTNode, ASTNode> parseConditionalCommentBoundaries(@NotNull PsiElement host) {
+  private static @Nullable Pair<ASTNode, ASTNode> parseConditionalCommentBoundaries(@NotNull PsiElement host) {
     if (!(host instanceof XmlComment)) {
       return null;
     }
@@ -77,9 +61,9 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     final ASTNode endOfEnd = comment.findChildByType(TokenSet.create(XmlTokenType.XML_CONDITIONAL_COMMENT_END));
     return endOfEnd == null ? null : Pair.create(conditionalStart, conditionalEnd);
   }
-  
+
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, final @NotNull PsiElement host) {
     Pair<ASTNode, ASTNode> pair = parseConditionalCommentBoundaries(host);
     if (pair == null) {
       return;
@@ -91,13 +75,26 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
     ASTNode conditionalEnd = pair.second;
     TextRange range = new UnfairTextRange(conditionalStart.getTextRange().getEndOffset() - startOffset, conditionalEnd.getStartOffset() - startOffset);
     if (range.getStartOffset() < range.getEndOffset()) {
-      registrar.startInjecting(language).addPlace(null, null, (PsiLanguageInjectionHost)host, range).doneInjecting();
+      ASTNode current = conditionalStart.getTreeNext();
+      List<TextRange> injectionsRanges = new ArrayList<>();
+      while (current != conditionalEnd) {
+        if (!(current.getPsi() instanceof OuterLanguageElement)) {
+          injectionsRanges.add(current.getTextRange().shiftLeft(startOffset));
+        }
+        current = current.getTreeNext();
+      }
+      if (!injectionsRanges.isEmpty()) {
+        registrar.startInjecting(language);
+        for (TextRange injectionsRange : injectionsRanges) {
+          registrar.addPlace(null, null, (PsiLanguageInjectionHost)host, injectionsRange);
+        }
+        registrar.doneInjecting();
+      }
     }
   }
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(PsiComment.class);
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+    return Collections.singletonList(PsiComment.class);
   }
 }

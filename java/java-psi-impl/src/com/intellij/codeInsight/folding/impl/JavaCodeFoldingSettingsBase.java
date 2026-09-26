@@ -29,6 +29,8 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   private boolean COLLAPSE_I18N_MESSAGES = true;
   private boolean COLLAPSE_SUPPRESS_WARNINGS = true;
   private boolean COLLAPSE_END_OF_LINE_COMMENTS;
+  private boolean COLLAPSE_MULTILINE_COMMENTS;
+  private boolean REPLACE_VAR_WITH_INFERRED_TYPE = false;
 
   @Override
   public boolean isCollapseImports() {
@@ -165,7 +167,27 @@ public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
   }
 
   @Override
+  public void setCollapseMultilineComments(boolean value) {
+    COLLAPSE_MULTILINE_COMMENTS = value;
+  }
+
+  @Override
+  public boolean isCollapseMultilineComments() {
+    return COLLAPSE_MULTILINE_COMMENTS;
+  }
+
+  @Override
   public void setCollapseEndOfLineComments(boolean value) {
     COLLAPSE_END_OF_LINE_COMMENTS = value;
+  }
+
+  @Override
+  public boolean isReplaceVarWithInferredType() {
+    return REPLACE_VAR_WITH_INFERRED_TYPE;
+  }
+
+  @Override
+  public void setReplaceVarWithInferredType(boolean value) {
+    REPLACE_VAR_WITH_INFERRED_TYPE = value;
   }
 }

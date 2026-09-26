@@ -36,9 +36,9 @@ class ExtendsList {
   }
 
   {
-    I<?, ? extends String> n = () -> null;
-    I<?, ?> n1 = () -> null;
-    I<?, String> n2 = () -> null;
+    I<?, ? extends String> n = <error descr="Cannot infer functional interface type">() -> null</error>;
+    I<?, ?> n1 = <error descr="Cannot infer functional interface type">() -> null</error>;
+    I<?, String> n2 = <error descr="Cannot infer functional interface type">() -> null</error>;
 
 
     I<? extends List<?>, String> e1 = <error descr="Cannot infer functional interface type">() -> null</error>;
@@ -59,7 +59,7 @@ class MultipleBounds {
   interface LC<K> extends List<K>, Comparable<K> {}
 
   {
-    I<?, String> n = () -> null;
+    I<?, String> n = <error descr="Cannot infer functional interface type">() -> null</error>;
 
     I<? extends List<String>, ? extends String> e1 = <error descr="Cannot infer functional interface type">() -> null</error>;
     I<? extends Comparable<String>, ? extends String> e2 = <error descr="Cannot infer functional interface type">() -> null</error>;
@@ -77,7 +77,7 @@ class FirstIndependentBound {
   interface LC<K> extends List<String>, Comparable<K> {}
 
   {
-    I<?, String> n = () -> null;
+    I<?, String> n = <error descr="Cannot infer functional interface type">() -> null</error>;
 
     I<? extends List<String>, ? extends String> e1 = <error descr="Cannot infer functional interface type">() -> null</error>;
     I<? extends Comparable<String>, ? extends String> e2 = <error descr="Cannot infer functional interface type">() -> null</error>;
@@ -96,7 +96,7 @@ class SecondIndependentBound {
   interface LC<K> extends List<String>, Comparable<K> {}
 
   {
-    I<?, String> n = () -> null;
+    I<?, String> n = <error descr="Cannot infer functional interface type">() -> null</error>;
 
     I<? extends List<String>, ? extends String> e1 = <error descr="Cannot infer functional interface type">() -> null</error>;
     I<? extends Comparable<String>, ? extends String> e2 = <error descr="Cannot infer functional interface type">() -> null</error>;
@@ -104,5 +104,14 @@ class SecondIndependentBound {
     I<? extends LC<String>, String> e4 = () -> null;
     I<? extends LC<? extends String>, String> e5 = <error descr="Cannot infer functional interface type">()  -> null</error>;
     I<? extends LC<? extends String>, ? extends String> e6 = <error descr="Cannot infer functional interface type">()  -> null</error>;
+  }
+}
+
+interface Unbound<A extends Number, B extends A> {
+  void accept();
+
+  static void m() {
+    Unbound<?, ?> s = <error descr="Cannot infer functional interface type">() -> {}</error>;
+    Unbound<?, ? extends Number> s1 = () -> {};
   }
 }

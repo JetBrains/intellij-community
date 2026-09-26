@@ -1,181 +1,100 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.DocumentUtil;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.ui.DebuggerColors;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
 import java.io.File;
 
-/**
- * @author nik
- */
-public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
+@ApiStatus.Internal
+public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
-  @Nullable private RangeHighlighter myHighlighter;
+
   private final XLineBreakpointType<P> myType;
-  private XSourcePosition mySourcePosition;
+  private volatile XSourcePosition mySourcePosition;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type,
                              XBreakpointManagerImpl breakpointManager,
-                             @Nullable final P properties, LineBreakpointState<P> state) {
+                             final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
   }
 
-  XLineBreakpointImpl(final XLineBreakpointType<P> type,
-                      XBreakpointManagerImpl breakpointManager,
-                      final LineBreakpointState<P> breakpointState) {
-    super(type, breakpointManager, breakpointState);
-    myType = type;
-  }
-
+  /**
+   * @deprecated The platform handles Breakpoint UI update on the frontend
+   */
+  @Deprecated
   public void updateUI() {
-    if (isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    Document document = getDocument();
-    if (document == null) {
-      return;
-    }
-
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-
-    if (!isEnabled()) {
-      attributes = attributes.clone();
-      attributes.setBackgroundColor(null);
-    }
-
-    RangeHighlighter highlighter = myHighlighter;
-    if (highlighter != null &&
-        (!highlighter.isValid()
-         || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), document)
-         || !Comparing.equal(highlighter.getTextAttributes(), attributes)
-         // it seems that this check is not needed - we always update line number from the highlighter
-         // and highlighter is removed on line and file change anyway
-         /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
-      removeHighlighter();
-      highlighter = null;
-    }
-
-    MarkupModelEx markupModel;
-    if (highlighter == null) {
-      markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-      TextRange range = myType.getHighlightRange(this);
-      if (range != null && !range.isEmpty()) {
-        TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
-        if (range.intersects(lineRange)) {
-          highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                        DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                                                        HighlighterTargetArea.EXACT_RANGE);
-        }
-      }
-      if (highlighter == null) {
-        highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
-      }
-      if (highlighter == null) {
-        return;
-      }
-
-      highlighter.setGutterIconRenderer(createGutterIconRenderer());
-      highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-      highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
-      myHighlighter = highlighter;
-    }
-    else {
-      markupModel = null;
-    }
-
-    updateIcon();
-
-    if (markupModel == null) {
-      markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), false);
-      if (markupModel != null) {
-        // renderersChanged false - we don't change gutter size
-        markupModel.fireAttributesChanged((RangeHighlighterEx)highlighter, false, false);
-      }
-    }
   }
 
-  @Nullable
-  private Document getDocument() {
-    VirtualFile file = getFile();
-    if (file == null) return null;
-    return FileDocumentManager.getInstance().getDocument(file);
-  }
-
-  @Nullable
-  public VirtualFile getFile() {
+  public @Nullable VirtualFile getFile() {
     return VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
   }
 
   @Override
-  @NotNull
-  public XLineBreakpointType<P> getType() {
+  public @NotNull XLineBreakpointType<P> getType() {
     return myType;
   }
 
   @Override
+  public @NotNull XLineBreakpointVerticalPlacement getPlacement() {
+    return withStateLock(() -> myState.getPlacement());
+  }
+
+  @Override
   public int getLine() {
-    return myState.getLine();
+    return withStateLock(() -> myState.getLine());
   }
 
   @Override
   public String getFileUrl() {
-    return myState.getFileUrl();
+    return withStateLock(() -> myState.getFileUrl());
   }
 
   @Override
   public String getPresentableFilePath() {
     String url = getFileUrl();
-    if (url != null && LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
-      return FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url));
+    if (LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
+      String path = VfsUtilCore.urlToPath(url);
+
+      // Try to get the path relative to the project directory to make the result easier to read.
+      VirtualFile project = ProjectUtil.guessProjectDir(getProject());
+      String relativePath = project != null
+                            ? FileUtil.getRelativePath(project.getPath(), path, '/')
+                            : null;
+
+      String presentablePath = relativePath != null ? relativePath : path;
+      return FileUtil.toSystemDependentName(presentablePath);
     }
-    return url != null ? url : "";
+    return url;
   }
 
   @Override
   public String getShortFilePath() {
-    final String path = getPresentableFilePath();
-    if (path.isEmpty()) return "";
-    return new File(path).getName();
+    return new File(VfsUtilCore.urlToPath(getFileUrl())).getName();
   }
 
-  @Nullable
-  public RangeHighlighter getHighlighter() {
-    return myHighlighter;
+  /**
+   * @deprecated This method always returns null, since the backend's breakpoint doesn't have a highlighter.
+   */
+  @Deprecated
+  public @Nullable RangeHighlighter getHighlighter() {
+    return null;
   }
 
   @Override
@@ -190,120 +109,105 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     return mySourcePosition;
   }
 
+  @SuppressWarnings("deprecation") // for API compatibility
+  @Deprecated
   @Override
   public boolean isValid() {
-    return myHighlighter != null && myHighlighter.isValid();
+    return super.isValid();
   }
 
-  @Override
-  protected void doDispose() {
-    removeHighlighter();
-  }
-
-  private void removeHighlighter() {
-    if (myHighlighter != null) {
-      myHighlighter.dispose();
-      myHighlighter = null;
-    }
-  }
-
-  @Override
-  protected GutterDraggableObject createBreakpointDraggableObject() {
-    return new GutterDraggableObject() {
-      @Override
-      public boolean copy(int line, VirtualFile file, int actionId) {
-        if (canMoveTo(line, file)) {
-          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-          if (isCopyAction(actionId)) {
-            WriteAction
-              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
-          }
-          else {
-            setFileUrl(file.getUrl());
-            setLine(line, true);
-          }
-          return true;
-        }
-        return false;
-      }
-
-      public void remove() {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(getProject(), XLineBreakpointImpl.this);
-      }
-
-      @Override
-      public Cursor getCursor(int line, int actionId) {
-        if (canMoveTo(line, getFile())) {
-          return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
-        }
-
-        return DragSource.DefaultMoveNoDrop;
-      }
-
-      private boolean isCopyAction(int actionId) {
-        return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
-      }
-    };
-  }
-
-  private boolean canMoveTo(int line, VirtualFile file) {
-    if (file != null && myType.canPutAt(file, line, getProject())) {
-      XLineBreakpoint<P> existing = getBreakpointManager().findBreakpointAtLine(myType, file, line);
-      return existing == null || existing == this;
-    }
-    return false;
-  }
-
+  /**
+   * @deprecated This method does nothing, since the backend's breakpoint doesn't have a range marker used in the update position.
+   */
+  @Deprecated
   public void updatePosition() {
-    if (myHighlighter != null && myHighlighter.isValid()) {
-      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
+  }
+
+  void resetSourcePosition() {
+    resetSourcePosition(-1);
+  }
+
+  public void resetSourcePosition(long requestId) {
+    resetSourcePosition(requestId, null);
+  }
+
+  /**
+   * Drops the cached source position after a document edit.
+   * The frontend sends the range its marker tracks with the position request.
+   * The type sees the range in {@link XLineBreakpointType#highlightRangeMoved} before the change event fires.
+   *
+   * @param requestId      the frontend request id, or {@code -1} for a local call
+   * @param highlightRange the range the frontend marker tracks, or {@code null} when no marker exists
+   */
+  public void resetSourcePosition(long requestId, @Nullable TextRange highlightRange) {
+    if (highlightRange != null) {
+      myType.highlightRangeMoved(this, highlightRange);
+    }
+    mySourcePosition = null;
+    if (getBreakpointManager().getRequestCounter().setRequestCompleted(getBreakpointId(), requestId)) {
+      fireBreakpointChanged();
     }
   }
 
   public void setFileUrl(final String newUrl) {
-    if (!Comparing.equal(getFileUrl(), newUrl)) {
-      myState.setFileUrl(newUrl);
-      mySourcePosition = null;
-      removeHighlighter();
-      fireBreakpointChanged();
-    }
+    setFileUrl(-1, newUrl);
   }
 
-  private void setLine(final int line, boolean removeHighlighter) {
-    if (getLine() != line) {
+  public void setFileUrl(long requestId, String newUrl) {
+    updateStateIfNeededAndNotify(requestId, newUrl, this::getFileUrl, (url) -> {
+      myState.setFileUrl(url);
+      resetSourcePosition();
+    });
+  }
+
+  @ApiStatus.Internal
+  public void setPlacement(@NotNull XLineBreakpointVerticalPlacement placement) {
+    setPlacement(-1, placement);
+  }
+
+  public void setPlacement(long requestId, @NotNull XLineBreakpointVerticalPlacement placement) {
+    updateStateIfNeededAndNotify(requestId, placement, this::getPlacement, (newPlacement) -> {
+      myState.setPlacement(newPlacement);
+    });
+  }
+
+  @ApiStatus.Internal
+  public void setLine(final int line) {
+    setLine(-1, line);
+  }
+
+  public void setLine(long requestId, int line) {
+    setLine(requestId, line, null);
+  }
+
+  /**
+   * Moves the breakpoint to {@code line} after a document edit.
+   * The frontend sends the range its marker tracks with the set-line request.
+   * The type sees the range in {@link XLineBreakpointType#highlightRangeMoved} before the change event fires.
+   *
+   * @param requestId      the frontend request id, or {@code -1} for a local call
+   * @param line           the new zero-based line
+   * @param highlightRange the range the frontend marker tracks, or {@code null} when no marker exists
+   */
+  public void setLine(long requestId, int line, @Nullable TextRange highlightRange) {
+    if (highlightRange != null) {
+      myType.highlightRangeMoved(this, highlightRange);
+    }
+    updateStateIfNeededAndNotify(requestId, line, this::getLine, (l) -> {
       myState.setLine(line);
-      mySourcePosition = null;
-      if (removeHighlighter) {
-        removeHighlighter();
-      }
-      fireBreakpointChanged();
-    }
+      resetSourcePosition();
+    });
   }
 
-  @Override
-  public boolean isTemporary() {
-    return myState.isTemporary();
-  }
-
-  @Override
-  public void setTemporary(boolean temporary) {
-    if (isTemporary() != temporary) {
-      myState.setTemporary(temporary);
-      fireBreakpointChanged();
-    }
-  }
-
-  @Override
-  protected void updateIcon() {
-    Icon icon = calculateSpecialIcon();
-    if (icon == null) {
-      icon = isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon();
-    }
-    setIcon(icon);
+  /**
+   * @deprecated This method does nothing, since the backend's breakpoint doesn't have a UI.
+   */
+  @Deprecated
+  public void doUpdateUI(Runnable callOnUpdate) {
   }
 
   @Override
   public String toString() {
-    return "XLineBreakpointImpl(" + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
+    return "XLineBreakpointImpl(id = " + getBreakpointId() + ", " + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
   }
 }

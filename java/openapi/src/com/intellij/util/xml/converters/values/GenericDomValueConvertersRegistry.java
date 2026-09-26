@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.converters.values;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
@@ -32,27 +18,21 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class GenericDomValueConvertersRegistry {
 
   public interface Provider {
-    Converter getConverter();
-    Condition<Pair<PsiType, GenericDomValue>> getCondition();
+    Converter<?> getConverter();
+    Condition<Pair<PsiType, GenericDomValue<?>>> getCondition();
   }
 
-  public void registerFromExtensions(ExtensionPointName<Provider> extensionPointName) {
-    Provider[] providers = Extensions.getExtensions(extensionPointName);
-    for (Provider provider : providers) {
-      registerConverter(provider.getConverter(), provider.getCondition());
-    }
-  }
-
-  private final Map<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>> myConditionConverters =
+  private final Map<Condition<Pair<PsiType, GenericDomValue<?>>>, Converter<?>> myConditionConverters =
     new LinkedHashMap<>();
 
   public void registerDefaultConverters() {
     registerBooleanConverters();
-    
+
     registerCharacterConverter();
 
     registerNumberValueConverters();
@@ -61,7 +41,7 @@ public class GenericDomValueConvertersRegistry {
   }
 
   private void registerBooleanConverters() {
-    registerConverter(new BooleanValueConverter(false), PsiType.BOOLEAN);
+    registerConverter(new BooleanValueConverter(false), PsiTypes.booleanType());
     registerConverter(new BooleanValueConverter(true), Boolean.class);
   }
 
@@ -80,45 +60,53 @@ public class GenericDomValueConvertersRegistry {
   }
 
   public void registerCharacterConverter() {
-    registerConverter(new CharacterValueConverter(false), PsiType.CHAR);
+    registerConverter(new CharacterValueConverter(false), PsiTypes.charType());
     registerConverter(new CharacterValueConverter(true), Character.class);
   }
 
   public void registerNumberValueConverters() {
-    registerConverter(new NumberValueConverter(byte.class, false), PsiType.BYTE);
-    registerConverter(new NumberValueConverter(Byte.class, true), Byte.class);
+    registerConverter(new NumberValueConverter<>(byte.class, false), PsiTypes.byteType());
+    registerConverter(new NumberValueConverter<>(Byte.class, true), Byte.class);
 
-    registerConverter(new NumberValueConverter(short.class, false), PsiType.SHORT);
-    registerConverter(new NumberValueConverter(Short.class, true), Short.class);
+    registerConverter(new NumberValueConverter<>(short.class, false), PsiTypes.shortType());
+    registerConverter(new NumberValueConverter<>(Short.class, true), Short.class);
 
-    registerConverter(new NumberValueConverter(int.class, false), PsiType.INT);
-    registerConverter(new NumberValueConverter(Integer.class, true), Integer.class);
+    registerConverter(new NumberValueConverter<>(int.class, false), PsiTypes.intType());
+    registerConverter(new NumberValueConverter<>(Integer.class, true), Integer.class);
 
-    registerConverter(new NumberValueConverter(long.class, false), PsiType.LONG);
-    registerConverter(new NumberValueConverter(Long.class, true), Long.class);
+    registerConverter(new NumberValueConverter<>(long.class, false), PsiTypes.longType());
+    registerConverter(new NumberValueConverter<>(Long.class, true), Long.class);
 
-    registerConverter(new NumberValueConverter(float.class, false), PsiType.FLOAT);
-    registerConverter(new NumberValueConverter(Float.class, true), Float.class);
+    registerConverter(new NumberValueConverter<>(float.class, false), PsiTypes.floatType());
+    registerConverter(new NumberValueConverter<>(Float.class, true), Float.class);
 
-    registerConverter(new NumberValueConverter(double.class, false), PsiType.DOUBLE);
-    registerConverter(new NumberValueConverter(Double.class, true), Double.class);
+    registerConverter(new NumberValueConverter<>(double.class, false), PsiTypes.doubleType());
+    registerConverter(new NumberValueConverter<>(Double.class, true), Double.class);
 
-    registerConverter(new NumberValueConverter(BigDecimal.class, true), BigDecimal.class);
-    registerConverter(new NumberValueConverter(BigInteger.class, true), BigInteger.class);
+    registerConverter(new NumberValueConverter<>(BigDecimal.class, true), BigDecimal.class);
+    registerConverter(new NumberValueConverter<>(BigInteger.class, true), BigInteger.class);
   }
 
-  public void registerConverter(@NotNull Converter<?> provider, @NotNull final PsiType type) {
+  public void registerConverter(@NotNull Converter<?> provider, final @NotNull PsiType type) {
     registerConverter(provider, pair -> Comparing.equal(pair.getFirst(), type));
   }
 
-  public void registerConverter(@NotNull Converter<?> provider, @NotNull Condition<Pair<PsiType, GenericDomValue>> condition) {
+  public void registerConverter(@NotNull Converter<?> provider, @NotNull Condition<Pair<PsiType, GenericDomValue<?>>> condition) {
     myConditionConverters.put(condition, provider);
   }
 
-  @Nullable
-  public Converter<?> getConverter(@NotNull GenericDomValue domValue, @Nullable PsiType type) {
-    final Pair<PsiType, GenericDomValue> pair = Pair.create(type, domValue);
-    for (@NotNull Condition<Pair<PsiType, GenericDomValue>> condition : myConditionConverters.keySet()) {
+  public final @Nullable Converter<?> getConverter(@NotNull GenericDomValue<?> domValue, @Nullable PsiType type) {
+    final Pair<PsiType, GenericDomValue<?>> pair = Pair.create(type, domValue);
+    final Converter<?> converter = getRegisteredConverter(pair);
+    return converter != null?  converter : getCustomConverter(pair);
+  }
+
+  protected @Nullable Converter<?> getCustomConverter(Pair<PsiType, GenericDomValue<?>> pair) {
+    return null;
+  }
+
+    protected @Nullable Converter<?> getRegisteredConverter(Pair<PsiType, GenericDomValue<?>> pair) {
+    for (@NotNull Condition<Pair<PsiType, GenericDomValue<?>>> condition : myConditionConverters.keySet()) {
       if (condition.value(pair)) {
         return myConditionConverters.get(condition);
       }
@@ -126,8 +114,8 @@ public class GenericDomValueConvertersRegistry {
     return null;
   }
 
-  public void registerConverter(@NotNull Converter<?> provider, @NotNull Class type) {
+  public void registerConverter(@NotNull Converter<?> provider, @NotNull Class<?> type) {
     final String name = type.getCanonicalName();
-    registerConverter(provider, pair -> pair.first != null && Comparing.equal(name, pair.first.getCanonicalText()));
+    registerConverter(provider, pair -> pair.first != null && Objects.equals(name, pair.first.getCanonicalText()));
   }
 }

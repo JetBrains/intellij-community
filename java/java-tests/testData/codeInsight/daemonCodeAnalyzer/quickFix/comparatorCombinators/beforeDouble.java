@@ -1,10 +1,10 @@
-// "Replace with Comparator.comparingDouble" "true"
+// "Replace with 'Comparator.comparingDouble'" "true-preview"
 
 import java.util.*;
 
 public class Main {
   void sort(List<Person> persons) {
-    persons.sort((first, second) -> Double.com<caret>pare(first.getName().length(), second.getName().length()));
+    persons.sort((first, second) -> (Double.com<caret>pare(first.getName().length(), second.getName().length())));
   }
 
   interface Person {

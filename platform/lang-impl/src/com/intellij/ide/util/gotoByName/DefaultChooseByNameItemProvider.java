@@ -1,56 +1,108 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.codeStyle.MatcherWithFallback;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.PreferStartMatchMatcherWrapper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.util.*;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import com.intellij.util.SynchronizedCollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.text.EditDistance;
+import com.intellij.util.text.matching.MatchedFragment;
+import com.intellij.util.text.matching.MatchingMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.function.Supplier;
 
-public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameIdea");
-  private static final String UNIVERSAL_SEPARATOR = "\u0000";
-  private final SmartPsiElementPointer myContext;
+public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemProvider {
+  private static final Logger LOG = Logger.getInstance(DefaultChooseByNameItemProvider.class);
+  private static final char UNIVERSAL_SEPARATOR_CHAR = '\u0000';
+  private static final String UNIVERSAL_SEPARATOR = String.valueOf(UNIVERSAL_SEPARATOR_CHAR);
+
+  @ApiStatus.Internal
+  public static final int EXACT_MATCH_BONUS = 5000;
+  @ApiStatus.Internal
+  public static final int EXACT_MATCH_DEGREE = PreferStartMatchMatcherWrapper.START_MATCH_WEIGHT + EXACT_MATCH_BONUS;
+  private static final String EXACT_MATCH_REGISTRY_KEY = "search.everywhere.qualified.symbols.exact.match.priority";
+
+  private final SmartPsiElementPointer<PsiElement> myContext;
 
   public DefaultChooseByNameItemProvider(@Nullable PsiElement context) {
     myContext = context == null ? null : SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(context);
   }
 
   @Override
-  public boolean filterElements(@NotNull final ChooseByNameBase base,
-                                @NotNull final String pattern,
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                @NotNull String pattern,
                                 boolean everywhere,
-                                @NotNull final ProgressIndicator indicator,
-                                @NotNull final Processor<Object> consumer) {
-    return filterElements(base, pattern, everywhere, indicator,
-                          myContext == null ? null : myContext.getElement(),
-                          () -> base.getNames(everywhere), consumer);
+                                @NotNull ProgressIndicator indicator,
+                                @NotNull Processor<Object> consumer) {
+    return filterElementsWithWeights(base, createParameters(base, pattern, everywhere), indicator,
+                                     res -> consumer.process(res.getItem()));
+  }
+
+  @Override
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                @NotNull FindSymbolParameters parameters,
+                                @NotNull ProgressIndicator indicator,
+                                @NotNull Processor<Object> consumer) {
+    return filterElementsWithWeights(base, parameters, indicator, res -> consumer.process(res.getItem()));
+  }
+
+  @Override
+  public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
+                                           @NotNull String pattern,
+                                           boolean everywhere,
+                                           @NotNull ProgressIndicator indicator,
+                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
+    return filterElementsWithWeights(base, createParameters(base, pattern, everywhere), indicator, consumer);
+  }
+
+  @Override
+  public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
+                                           @NotNull FindSymbolParameters parameters,
+                                           @NotNull ProgressIndicator indicator,
+                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
+    return ProgressManager.getInstance().computePrioritized(
+      () -> filterElements(base, indicator, myContext == null ? null : myContext.getElement(),
+                           () -> base.getModel().getNames(parameters.isSearchInLibraries()), consumer, parameters));
   }
 
   /**
    * Filters and sorts elements in the given choose by name popup according to the given pattern.
    *
-   * @param everywhere If true, also return non-project items
    * @param indicator Progress indicator which can be used to cancel the operation
    * @param context The PSI element currently open in the editor (used for proximity ordering of returned results)
    * @param consumer The consumer to which the results (normally NavigationItem instances) are passed
@@ -62,155 +114,208 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                        @NotNull ProgressIndicator indicator,
                                        @Nullable PsiElement context,
                                        @NotNull Processor<Object> consumer) {
-    return filterElements(base, pattern, everywhere, indicator, context, null, consumer);
-  }
-
-  private static boolean filterElements(@NotNull ChooseByNameViewModel base,
-                                       @NotNull String pattern,
-                                       boolean everywhere,
-                                       @NotNull ProgressIndicator indicator,
-                                       @Nullable PsiElement context,
-                                       @Nullable Producer<String[]> allNamesProducer,
-                                       @NotNull Processor<Object> consumer) {
-    if (base.getProject() != null) base.getProject().putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern);
-
-    String namePattern = getNamePattern(base, pattern);
-    boolean preferStartMatches = !pattern.startsWith("*");
-
-    List<MatchResult> namesList =
-      getSortedNamesForAllWildcards(base, pattern, everywhere, indicator, allNamesProducer, namePattern, preferStartMatches);
-
-    indicator.checkCanceled();
-
-    return processByNames(base, everywhere, indicator, context, consumer, preferStartMatches, namesList,
+    return filterElements(base, indicator, context, null,
+                          res -> consumer.process(res.getItem()),
                           createParameters(base, pattern, everywhere));
   }
 
-  @NotNull
-  private static List<MatchResult> getSortedNamesForAllWildcards(@NotNull ChooseByNameViewModel base,
-                                                                 @NotNull String pattern,
-                                                                 boolean everywhere,
-                                                                 @NotNull ProgressIndicator indicator,
-                                                                 @Nullable Producer<String[]> allNamesProducer,
-                                                                 String namePattern, boolean preferStartMatches) {
-    String matchingPattern = convertToMatchingPattern(base, namePattern);
-    if (matchingPattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
+  private static boolean filterElements(@NotNull ChooseByNameViewModel base,
+                                        @NotNull ProgressIndicator indicator,
+                                        @Nullable PsiElement context,
+                                        @Nullable Supplier<String[]> allNamesProducer,
+                                        @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                        @NotNull FindSymbolParameters parameters) {
+    boolean everywhere = parameters.isSearchInLibraries();
+    String pattern = parameters.getCompletePattern();
+    if (base.getProject() != null) {
+      base.getProject().putUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern);
+    }
 
-    List<MatchResult> result = getSortedNames(base, pattern, everywhere, indicator, allNamesProducer, matchingPattern, preferStartMatches);
-    if (!namePattern.contains("*")) return result;
-    
-    Set<String> allNames = new HashSet<>(ContainerUtil.map(result, mr -> mr.elementName));
-    for (int i = 1; i < namePattern.length() - 1; i++) {
-      if (namePattern.charAt(i) == '*') {
-        List<MatchResult> namesForSuffix = getSortedNames(base, pattern, everywhere, indicator, allNamesProducer,
-                                                          convertToMatchingPattern(base, namePattern.substring(i + 1)),
-                                                          preferStartMatches);
-        for (MatchResult mr : namesForSuffix) {
-          if (allNames.add(mr.elementName)) {
-            result.add(mr);
-          }
+    boolean preferStartMatches = !pattern.startsWith("*");
+
+    List<MatchResult> namesList = getSortedNamesForAllWildcards(base, parameters, indicator, allNamesProducer, preferStartMatches);
+
+    indicator.checkCanceled();
+
+    return processByNames(base, everywhere, indicator, context, consumer, namesList, parameters);
+  }
+
+  private static @NotNull List<MatchResult> getSortedNamesForAllWildcards(@NotNull ChooseByNameViewModel base,
+                                                                          @NotNull FindSymbolParameters parameters,
+                                                                          @NotNull ProgressIndicator indicator,
+                                                                          @Nullable Supplier<String[]> allNamesProducer,
+                                                                          boolean preferStartMatches) {
+    final var rawPattern = parameters.getCompletePattern();
+    final var qualifiedNamePattern = buildQualifiedNamePattern(base,rawPattern);
+    final var qualifiedMatchingPattern = convertToMatchingPattern(base, qualifiedNamePattern);
+    final var namePattern = buildNamePattern(base, rawPattern);
+    final var matchingPattern = convertToMatchingPattern(base, namePattern);
+    if (qualifiedMatchingPattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
+
+    // eskr: what if we returned an ordered set here? Microbenchmark required!
+    // can essentially check only the qualified name pattern here
+    final var result = getSortedNames(base, parameters, indicator, allNamesProducer, rawPattern, matchingPattern, qualifiedMatchingPattern, preferStartMatches);
+    if (!qualifiedNamePattern.contains("*")) return result;
+
+    final Set<String> allNames = new HashSet<>(ContainerUtil.map(result, mr -> mr.elementName));
+    for (int i = 1; i < qualifiedNamePattern.length() - 1; i++) {
+      if (qualifiedNamePattern.charAt(i) != '*') continue;
+
+      final var matchingSubPattern = convertToMatchingPattern(base, qualifiedNamePattern.substring(i + 1));
+      final var resultForSuffix = getSortedNames(base, parameters, indicator, allNamesProducer, rawPattern, matchingSubPattern, preferStartMatches);
+
+      for (final var singleMatch : resultForSuffix) {
+        if (allNames.add(singleMatch.elementName)) {
+          result.add(singleMatch);
         }
       }
     }
     return result;
   }
 
-  @NotNull
-  private static List<MatchResult> getSortedNames(@NotNull ChooseByNameViewModel base,
-                                                  @NotNull String pattern,
-                                                  boolean everywhere,
-                                                  @NotNull ProgressIndicator indicator,
-                                                  @Nullable Producer<String[]> allNamesProducer,
-                                                  String namePattern, boolean preferStartMatches) {
-    List<MatchResult> namesList = getAllNames(base, pattern, everywhere, indicator, allNamesProducer, namePattern);
+  private static @NotNull List<MatchResult> getSortedNames(@NotNull ChooseByNameViewModel base,
+                                                           @NotNull FindSymbolParameters parameters,
+                                                           @NotNull ProgressIndicator indicator,
+                                                           @Nullable Supplier<String[]> allNamesProducer,
+                                                           @NotNull String rawPattern,
+                                                           @NotNull String namePattern,
+                                                           boolean preferStartMatches) {
+    return getSortedNames(base, parameters, indicator, allNamesProducer, rawPattern, namePattern, null, preferStartMatches);
+  }
+
+  private static @NotNull List<MatchResult> getSortedNames(@NotNull ChooseByNameViewModel base,
+                                                           @NotNull FindSymbolParameters parameters,
+                                                           @NotNull ProgressIndicator indicator,
+                                                           @Nullable Supplier<String[]> allNamesProducer,
+                                                           @NotNull String rawPattern,
+                                                           @NotNull String namePattern,
+                                                           @Nullable String qualifiedNamePattern,
+                                                           boolean preferStartMatches) {
+    final var namesList = getAllNames(base, parameters, indicator, allNamesProducer, namePattern, qualifiedNamePattern, preferStartMatches);
 
     indicator.checkCanceled();
 
-    long started = System.currentTimeMillis();
-    Collections.sort(namesList, Comparator.comparing((MatchResult mr) -> !pattern.equalsIgnoreCase(mr.elementName))
-                                          .thenComparing((MatchResult mr) -> !namePattern.equalsIgnoreCase(mr.elementName))
-                                          .thenComparing((mr1, mr2) -> mr1.compareWith(mr2, preferStartMatches)));
+    final var started = System.currentTimeMillis();
+    final var comparingPattern = qualifiedNamePattern != null ? qualifiedNamePattern : namePattern;
+    final Comparator<MatchResult> byNameEquality =
+      Comparator.comparing((MatchResult mr) -> !rawPattern.equalsIgnoreCase(mr.elementName))
+        .thenComparing((MatchResult mr) -> !comparingPattern.equalsIgnoreCase(mr.elementName))
+        .thenComparing(Comparator.naturalOrder());
+    namesList.sort(cancellable(byNameEquality));
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + namesList.size());
     }
     return namesList;
   }
 
-  @NotNull
-  private static List<MatchResult> getAllNames(@NotNull ChooseByNameViewModel base,
-                                               @NotNull String fullPattern,
-                                               boolean everywhere,
-                                               @NotNull ProgressIndicator indicator,
-                                               @Nullable Producer<String[]> allNamesProducer,
-                                               String namePattern) {
-    List<MatchResult> namesList = new ArrayList<>();
+  /**
+   * Makes a sort cancellable without paying for {@link ProgressManager#checkCanceled()} on every comparison:
+   * sorting ~100k names performs millions of comparisons, so the check is done once per {@code 1024} of them.
+   * The returned comparator is stateful and must be used for a single-threaded sort only.
+   */
+  @ApiStatus.Internal
+  protected static @NotNull <T> Comparator<T> cancellable(@NotNull Comparator<? super T> delegate) {
+    int[] counter = {0};
+    return (o1, o2) -> {
+      if ((++counter[0] & 0x3FF) == 0) {
+        ProgressManager.checkCanceled();
+      }
+      return delegate.compare(o1, o2);
+    };
+  }
 
-    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<>(namesList);
-
-    ChooseByNameModel model = base.getModel();
-    if (model instanceof ChooseByNameModelEx) {
+  private static @NotNull List<MatchResult> getAllNames(@NotNull ChooseByNameViewModel base,
+                                                        @NotNull FindSymbolParameters parameters,
+                                                        @NotNull ProgressIndicator indicator,
+                                                        @Nullable Supplier<String[]> allNamesProducer,
+                                                        @NotNull String namePattern,
+                                                        @Nullable String qualifiedNamePattern,
+                                                        boolean preferStartMatches) {
+    final List<MatchResult> namesList = new ArrayList<>();
+    final CollectConsumer<MatchResult> collector = new SynchronizedCollectConsumer<>(namesList);
+    if (base.getModel() instanceof ChooseByNameModelEx chooseByNameModelEx) {
       indicator.checkCanceled();
-      long started = System.currentTimeMillis();
-      MinusculeMatcher matcher = buildPatternMatcher(namePattern);
-      ((ChooseByNameModelEx)model).processNames(sequence -> {
+      final var started = System.currentTimeMillis();
+      final var qualifiedNameMatcher = qualifiedNamePattern != null && !qualifiedNamePattern.equals(namePattern)
+                                       ? buildPatternMatcher(qualifiedNamePattern, preferStartMatches) : null;
+      final var nameMatcher = buildPatternMatcher(namePattern, preferStartMatches);
+      chooseByNameModelEx.processNames(name -> {
         indicator.checkCanceled();
-        MatchResult result = matches(base, fullPattern, matcher, sequence);
+        final var result = matches(base, namePattern, nameMatcher, qualifiedNamePattern, qualifiedNameMatcher, name);
         if (result != null) {
-          collect.consume(result);
+          collector.consume(result);
           return true;
         }
+        if (base.getModel() instanceof MatchResultCustomizerModel customizerModel) {
+          for (final var altName : customizerModel.getAltNames(name)) {
+            final var altResult = matches(base, namePattern, nameMatcher, qualifiedNamePattern, qualifiedNameMatcher, altName, name);
+            if (altResult != null) {
+              collector.consume(altResult);
+              return true;
+            }
+          }
+        }
         return false;
-      }, everywhere);
+      }, parameters);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
+        LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collector.getResult().size());
       }
-    } else {
+    }
+    else {
       if (allNamesProducer == null) {
         throw new IllegalArgumentException("Need to specify allNamesProducer when using a model which isn't a ChooseByNameModelEx");
       }
-      String[] names = allNamesProducer.produce();
-      long started = System.currentTimeMillis();
-      processNamesByPattern(base, names, namePattern, indicator, collect);
+      final var names = allNamesProducer.get();
+      final var started = System.currentTimeMillis();
+      processNamesByPattern(base, names, namePattern, collector, preferStartMatches);
       if (LOG.isDebugEnabled()) {
         LOG.debug("matched:"+ (System.currentTimeMillis() - started)+ "," + names.length);
       }
     }
-    return namesList;
+    synchronized (collector) {
+      return new ArrayList<>(namesList);
+    }
   }
 
-  @NotNull
-  private static FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
+  private static @NotNull FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
     ChooseByNameModel model = base.getModel();
-    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere) : null;
+    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? IdFilter.getProjectIdFilter(
+      ((ContributorsBasedGotoByModel)model).getProject(), everywhere) : null;
     GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere);
-    return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
+    return new FindSymbolParameters(pattern, buildNamePattern(base, pattern), searchScope, idFilter);
   }
 
-  private static boolean processByNames(@NotNull ChooseByNameViewModel base,
+  protected static boolean processByNames(@NotNull ChooseByNameViewModel base,
                                         boolean everywhere,
                                         @NotNull ProgressIndicator indicator,
                                         @Nullable PsiElement context,
-                                        @NotNull Processor<Object> consumer,
-                                        boolean preferStartMatches,
-                                        List<MatchResult> namesList, 
-                                        FindSymbolParameters parameters) {
-    List<Object> sameNameElements = new SmartList<>();
-    final Map<Object, MatchResult> qualifierMatchResults = ContainerUtil.newIdentityTroveMap();
+                                        @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                        @NotNull List<? extends MatchResult> namesList,
+                                        @NotNull  FindSymbolParameters parameters) {
+    List<Candidate> sameNameElements = new SmartList<>();
 
     ChooseByNameModel model = base.getModel();
-    Comparator<Object> weightComparator = new Comparator<Object>() {
-      @SuppressWarnings("unchecked")
+    Comparator<Candidate> weightComparator = new Comparator<>() {
+      @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);
 
       @Override
-      public int compare(Object o1, Object o2) {
-        int result = modelComparator.compare(o1, o2);
-        return result != 0 ? result : qualifierMatchResults.get(o1).compareWith(qualifierMatchResults.get(o2), preferStartMatches);
+      public int compare(Candidate o1, Candidate o2) {
+        int result = modelComparator.compare(o1.element(), o2.element());
+        return result != 0 ? result : o1.qualifiedResult().compareTo(o2.qualifiedResult());
       }
     };
 
-    MinusculeMatcher fullMatcher = getFullMatcher(parameters, base);
+    MinusculeMatcher fullMatcher = buildFullMatcher(parameters, base);
+    // Null when the search text cannot express an exact qualified match. See buildExactMatchPattern.
+    String exactMatchPattern = buildExactMatchPattern(base, parameters.getCompletePattern());
+    // An exact match goes first inside one name group. The plain Goto Class and Goto Symbol popups
+    // drop the weight and keep the emission order, so the sort is what fixes them.
+    // The order across name groups comes from namesList and stays as it is.
+    Comparator<Candidate> groupComparator =
+      exactMatchPattern == null ? weightComparator
+                                : Comparator.comparing((Candidate c) -> !c.exactMatch()).thenComparing(weightComparator);
 
     for (MatchResult result : namesList) {
       indicator.checkCanceled();
@@ -219,52 +324,154 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       // use interruptible call if possible
       Object[] elements = model instanceof ContributorsBasedGotoByModel
                           ? ((ContributorsBasedGotoByModel)model).getElementsByName(name, parameters, indicator)
-                          : model.getElementsByName(name, everywhere, getNamePattern(base, parameters.getCompletePattern()));
+                          : model.getElementsByName(name, everywhere, buildNamePattern(base, parameters.getCompletePattern()));
       if (elements.length > 1) {
         sameNameElements.clear();
-        qualifierMatchResults.clear();
         for (final Object element : elements) {
           indicator.checkCanceled();
-          MatchResult qualifierResult = matchQualifiedName(model, fullMatcher, element);
-          if (qualifierResult != null) {
-            sameNameElements.add(element);
-            qualifierMatchResults.put(element, qualifierResult);
+          MatchResult qualifiedResult = matchQualifiedName(model, fullMatcher, element);
+          if (qualifiedResult != null) {
+            sameNameElements.add(new Candidate(element, qualifiedResult, isExactQualifiedMatch(exactMatchPattern, qualifiedResult)));
           }
         }
-        Collections.sort(sameNameElements, weightComparator);
-        if (!ContainerUtil.process(sameNameElements, consumer)) return false;
+        sameNameElements.sort(groupComparator);
+        List<FoundItemDescriptor<?>> processedItems =
+          ContainerUtil.map(sameNameElements, c -> new FoundItemDescriptor<>(c.element(), weightOf(result, c.exactMatch())));
+        if (!ContainerUtil.process(processedItems, consumer)) return false;
       }
-      else if (elements.length == 1 && matchQualifiedName(model, fullMatcher, elements[0]) != null) {
-        if (!consumer.process(elements[0])) return false;
+      else if (elements.length == 1) {
+        MatchResult qualifiedResult = matchQualifiedName(model, fullMatcher, elements[0]);
+        if (qualifiedResult != null) {
+          int weight = weightOf(result, isExactQualifiedMatch(exactMatchPattern, qualifiedResult));
+          if (!consumer.process(new FoundItemDescriptor<>(elements[0], weight))) return false;
+        }
       }
     }
     return true;
   }
 
-  @NotNull
-  protected PathProximityComparator getPathProximityComparator() {
+  /** One element of a group of elements that share a short name. */
+  private record Candidate(@NotNull Object element, @NotNull MatchResult qualifiedResult, boolean exactMatch) { }
+
+  private static int weightOf(@NotNull MatchResult nameResult, boolean exactMatch) {
+    return exactMatch ? nameResult.matchingDegree + EXACT_MATCH_BONUS : nameResult.matchingDegree;
+  }
+
+  private static boolean isExactQualifiedMatch(@Nullable String exactMatchPattern, @NotNull MatchResult qualifiedResult) {
+    return exactMatchPattern != null && isExactQualifiedMatch(exactMatchPattern, qualifiedResult.elementName);
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull PathProximityComparator getPathProximityComparator() {
     return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
 
-  @NotNull
-  private static MinusculeMatcher getFullMatcher(FindSymbolParameters parameters, ChooseByNameViewModel base) {
-    String fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), base.transformPattern(parameters.getCompletePattern()));
-    for (String separator : base.getModel().getSeparators()) {
+  private static @NotNull MinusculeMatcher buildFullMatcher(@NotNull FindSymbolParameters parameters, @NotNull ChooseByNameViewModel base) {
+    final var fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
+    final var fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
+
+    final var matcherFactory = ChooseByNameMatcherFactory.Companion.tryGetInstance();
+    if (matcherFactory != null) {
+      final var fullNameMatcher = matcherFactory.createMatcher(fullNamePattern, false);
+      final var fullRawMatcher = matcherFactory.createMatcher(fullRawPattern, false);
+      if (fullNameMatcher != null && fullRawMatcher != null) {
+        return fullNamePattern.equals(fullRawPattern) ? fullNameMatcher : new MatcherWithFallback(fullNameMatcher, fullRawMatcher);
+      }
+    }
+
+    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, MatchingMode.IGNORE_CASE);
+  }
+
+  private static @NotNull String buildFullPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    var fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern);
+    for (final var separator : base.getModel().getSeparators()) {
       fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*");
     }
-    return NameUtil.buildMatcher(fullPattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return fullPattern;
   }
 
-  @NotNull
-  private static String getNamePattern(@NotNull ChooseByNameViewModel base, String pattern) {
-    String transformedPattern = base.transformPattern(pattern);
-    return getNamePattern(base.getModel(), transformedPattern);
+  private static @NotNull String buildQualifiedNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    return removeModelSpecificMarkup(base.getModel(), base.transformPattern(pattern));
   }
 
-  private static String getNamePattern(ChooseByNameModel model, String pattern) {
-    final String[] separators = model.getSeparators();
-    int lastSeparatorOccurrence = 0;
+  /**
+   * The normalized qualified name an element must end with to count as an exact match,or null when the search text cannot express one.
+   */
+  private static @Nullable String buildExactMatchPattern(@NotNull ChooseByNameViewModel base, @NotNull String rawPattern) {
+    if (!Registry.is(EXACT_MATCH_REGISTRY_KEY, true)) return null;
+
+    ChooseByNameModel model = base.getModel();
+    String transformedPattern = buildQualifiedNamePattern(base, rawPattern);
+    if (!keepsTheLastName(model, removeModelSpecificMarkup(model, rawPattern), transformedPattern)) return null;
+
+    return normalizeExactMatchPattern(model.getSeparators(), transformedPattern);
+  }
+
+  /**
+   * True when {@link ChooseByNameViewModel#transformPattern} keeps the last name of the search text.
+   * <p>
+   * A model can drop the end of the search text. {@link GotoClassModel2} drops "#member", because the
+   * Classes tab opens the class first and goes to the member after that. The class alone then answers
+   * a part of the search text, so it is not an exact match. {@link GotoSymbolModel2} keeps "#member"
+   * and drops only a method signature, which is not a name.
+   */
+  private static boolean keepsTheLastName(@NotNull ChooseByNameModel model,
+                                          @NotNull String rawPattern,
+                                          @NotNull String transformedPattern) {
+    // A signature is not a part of a name. "pkg.Cls#method(int)" comes from Copy Reference.
+    int signatureStart = rawPattern.indexOf('(');
+    String rawName = signatureStart < 0 ? rawPattern : rawPattern.substring(0, signatureStart);
+    return buildNamePattern(model, rawName).equals(buildNamePattern(model, transformedPattern));
+  }
+
+  /** @see #buildExactMatchPattern */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable String normalizeExactMatchPattern(String @NotNull [] separators, @NotNull String rawPattern) {
+    String pattern = rawPattern.stripTrailing();
+    if (pattern.isEmpty() || pattern.indexOf('*') >= 0) return null;
+
+    boolean hasSeparator = false;
     for (String separator : separators) {
+      if (pattern.contains(separator)) {
+        hasSeparator = true;
+        pattern = StringUtil.replace(pattern, separator, UNIVERSAL_SEPARATOR);
+      }
+    }
+    return hasSeparator ? pattern : null;
+  }
+
+  /**
+   * True when the search text names the element exactly.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static boolean isExactQualifiedMatch(@NotNull String normalizedPattern, @NotNull String normalizedFullName) {
+    int offset = normalizedFullName.length() - normalizedPattern.length();
+    if (offset < 0) return false;
+    if (!normalizedFullName.regionMatches(offset, normalizedPattern, 0, normalizedPattern.length())) return false;
+    if (offset == 0) return true;
+
+    char preceding = normalizedFullName.charAt(offset - 1);
+    return preceding == UNIVERSAL_SEPARATOR_CHAR || !Character.isJavaIdentifierPart(preceding);
+  }
+
+  /**
+   * True when the weight holds the {@link #EXACT_MATCH_BONUS} bonus.
+   */
+  @ApiStatus.Internal
+  public static boolean isInExactMatchDegreeRange(int degree) {
+    return degree >= EXACT_MATCH_DEGREE - 1000;
+  }
+
+  private static @NotNull String buildNamePattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    String transformedPattern = base.transformPattern(pattern);
+    return buildNamePattern(base.getModel(), transformedPattern);
+  }
+
+  private static @NotNull String buildNamePattern(@NotNull ChooseByNameModel model, @NotNull String pattern) {
+    var lastSeparatorOccurrence = 0;
+    for (final var separator : model.getSeparators()) {
       int idx = pattern.lastIndexOf(separator);
       if (idx == pattern.length() - 1) {  // avoid empty name
         idx = pattern.lastIndexOf(separator, idx - 1);
@@ -275,110 +482,159 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return pattern.substring(lastSeparatorOccurrence);
   }
 
-  @Nullable
-  private static MatchResult matchQualifiedName(ChooseByNameModel model, MinusculeMatcher fullMatcher, Object element) {
+  private static @Nullable MatchResult matchQualifiedName(@NotNull ChooseByNameModel model, @NotNull MinusculeMatcher fullMatcher, @NotNull Object element) {
     String fullName = model.getFullName(element);
     if (fullName == null) return null;
-    
+
     for (String separator : model.getSeparators()) {
       fullName = StringUtil.replace(fullName, separator, UNIVERSAL_SEPARATOR);
     }
-    return matchName(fullMatcher, fullName);
+    MatchResult result = matchName(fullMatcher, fullName);
+    if (Registry.is("search.everywhere.fuzzy.class.search.enabled", false) && result == null) {
+      LevenshteinCalculator levenshteinMatcher = new LevenshteinCalculator(fullMatcher.getPattern());
+      float distance = levenshteinMatcher.distanceToStringPath(fullName, true, true, model);
+      result = distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE
+               ? new MatchResult(fullName, LevenshteinCalculator.weightFromDistance(distance), false) : null;
+    }
+    return result;
   }
 
-  @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
+  public @NotNull List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
+    boolean preferStartMatches = pattern.startsWith("*");
     pattern = convertToMatchingPattern(base, pattern);
     if (pattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
 
     final List<String> filtered = new ArrayList<>();
-    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), result -> {
+    processNamesByPattern(base, names, pattern, result -> {
       synchronized (filtered) {
         filtered.add(result.elementName);
       }
-    });
+    }, preferStartMatches);
     synchronized (filtered) {
       return filtered;
     }
   }
 
-  private static void processNamesByPattern(@NotNull final ChooseByNameViewModel base,
-                                            @NotNull final String[] names,
-                                            @NotNull final String pattern,
-                                            final ProgressIndicator indicator,
-                                            @NotNull final Consumer<MatchResult> consumer) {
-    MinusculeMatcher matcher = buildPatternMatcher(pattern);
-    Processor<String> processor = name -> {
+  private static void processNamesByPattern(final @NotNull ChooseByNameViewModel base,
+                                            final String @NotNull [] names,
+                                            final @NotNull String namePattern,
+                                            final @NotNull Consumer<? super MatchResult> consumer,
+                                            final boolean preferStartMatches) {
+    final var nameMatcher = buildPatternMatcher(namePattern, preferStartMatches);
+    final Processor<String> nameProcessor = name -> {
       ProgressManager.checkCanceled();
-      MatchResult result = matches(base, pattern, matcher, name);
+      MatchResult result = matches(base, namePattern, nameMatcher, name);
       if (result != null) {
         consumer.consume(result);
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(names), nameProcessor)) {
       throw new ProcessCanceledException();
     }
   }
 
-  @NotNull
-  private static String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
-    return addSearchAnywherePatternDecorationIfNeeded(base, removeModelSpecificMarkup(base.getModel(), pattern));
+  private static @NotNull String convertToMatchingPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    return addSearchPatternInEntireQueryDecorationIfNeeded(base, removeModelSpecificMarkup(base.getModel(), pattern));
   }
 
-  @NotNull
-  private static String addSearchAnywherePatternDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
-    String trimmedPattern;
-    if (base.isSearchInAnyPlace() && !(trimmedPattern = pattern.trim()).isEmpty() && trimmedPattern.length() > 1) {
-      pattern = "*" + pattern;
+  private static @NotNull String addSearchPatternInEntireQueryDecorationIfNeeded(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
+    final var trimmedPattern = pattern.trim();
+    if (base.isSearchInAnyPlace() && trimmedPattern.length() > 1) {
+      return "*" + pattern;
     }
     return pattern;
   }
 
-  @NotNull
-  private static String removeModelSpecificMarkup(@NotNull ChooseByNameModel model, @NotNull String pattern) {
+  private static @NotNull String removeModelSpecificMarkup(@NotNull ChooseByNameModel model, @NotNull String pattern) {
     if (model instanceof ContributorsBasedGotoByModel) {
       pattern = ((ContributorsBasedGotoByModel)model).removeModelSpecificMarkup(pattern);
     }
     return pattern;
   }
 
-  @Nullable
-  protected static MatchResult matches(@NotNull ChooseByNameViewModel base,
-                                     @NotNull String pattern,
-                                     @NotNull MinusculeMatcher matcher,
-                                     @Nullable String name) {
+  protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
+                                                 @NotNull String namePattern,
+                                                 @NotNull MinusculeMatcher nameMatcher,
+                                                 @Nullable String name) {
+    return matches(base, namePattern, nameMatcher, null, null, name, null);
+  }
+
+  protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
+                                                 @NotNull String namePattern,
+                                                 @NotNull MinusculeMatcher nameMatcher,
+                                                 @Nullable String qualifiedNamePattern,
+                                                 @Nullable MinusculeMatcher qualifiedNameMatcher,
+                                                 @Nullable String name) {
+    return matches(base, namePattern, nameMatcher, qualifiedNamePattern, qualifiedNameMatcher, name, null);
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable MatchResult matches(@NotNull ChooseByNameViewModel base,
+                                                 @NotNull String namePattern,
+                                                 @NotNull MinusculeMatcher nameMatcher,
+                                                 @Nullable String qualifiedNamePattern,
+                                                 @Nullable MinusculeMatcher qualifiedNameMatcher,
+                                                 @Nullable String name,
+                                                 @Nullable String nameForMatch) {
     if (name == null) {
       return null;
     }
     if (base.getModel() instanceof CustomMatcherModel) {
       try {
-        return ((CustomMatcherModel)base.getModel()).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
+        //noinspection CastToIncompatibleInterface
+        // The only usage in monorepo so far is in rider, it just returns TRUE here. So, pointless?
+        final var customMatch = ((CustomMatcherModel)base.getModel()).matches(name, namePattern) ? new MatchResult(name, 0, true) : null;
+        //if (LOG.isDebugEnabled() && customMatch != null) {
+        //  LOG.debug("custom result weight for name [" + name + "] = " + customMatch.matchingDegree);
+        //}
+        return customMatch;
       }
       catch (Exception e) {
         LOG.info(e);
         return null; // no matches appears valid result for "bad" pattern
       }
     }
-    return matchName(matcher, name);
+    final var qualifiedMatch = qualifiedNameMatcher != null ? matchName(qualifiedNameMatcher, name, nameForMatch) : null;
+    final var defaultMatch = qualifiedMatch != null ? qualifiedMatch : matchName(nameMatcher, name, nameForMatch);
+    //if (LOG.isDebugEnabled() && defaultMatch != null) {
+    //  LOG.debug("default result weight for name [" + name + "] = " + defaultMatch.matchingDegree);
+    //}
+    return defaultMatch;
   }
 
-  @Nullable
-  private static MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
-    FList<TextRange> fragments = matcher.matchingFragments(name);
-    return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
+  private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name, @Nullable String nameForMatch) {
+    @Nullable List<@NotNull MatchedFragment> fragments = matcher.match(name);
+    return fragments != null ? new MatchResult(nameForMatch != null ? nameForMatch : name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
   }
 
-  @NotNull
-  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+  private static @Nullable MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
+    return matchName(matcher, name, null);
   }
 
-  protected static class PathProximityComparator implements Comparator<Object> {
-    @NotNull private final PsiProximityComparator myProximityComparator;
+  protected static @NotNull MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
+    final var customProductByNameMatcherFactory = ChooseByNameMatcherFactory.Companion.tryGetInstance();
+    if (customProductByNameMatcherFactory != null) {
+      final var customProductMatcher = customProductByNameMatcherFactory.createMatcher(pattern, preferStartMatches);
+      if (customProductMatcher != null) {
+        return customProductMatcher;
+      }
+    }
 
-    private PathProximityComparator(@Nullable final PsiElement context) {
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withMatchingMode(MatchingMode.IGNORE_CASE);
+    if (preferStartMatches) {
+      builder.preferringStartMatches();
+    }
+
+    return builder.build();
+  }
+
+  @ApiStatus.Internal
+  protected static final class PathProximityComparator implements Comparator<Object> {
+    private final @NotNull PsiProximityComparator myProximityComparator;
+
+    private PathProximityComparator(final @Nullable PsiElement context) {
       myProximityComparator = new PsiProximityComparator(context);
     }
 
@@ -394,6 +650,158 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       int o1Weight = isCompiledWithoutSource(o1) ? 1 : 0;
       int o2Weight = isCompiledWithoutSource(o2) ? 1 : 0;
       return o1Weight - o2Weight;
+    }
+  }
+
+  /*
+   * Checks whether each component of a given pattern appears in a file path,
+   * verifying for approximate matches using the Levenshtein distance.
+   */
+  @ApiStatus.Internal
+  protected static final class LevenshteinCalculator {
+    private final List<String> patternComponents;
+    private final @Nullable List<String> invertedPatternComponents;
+    public static final float MIN_ACCEPTABLE_DISTANCE = 0.7f;
+    private static final String SEPARATOR_CHARACTERS = "[ /*\u0000]+";
+
+    private static final int MIN_WEIGHT = 1;
+    private static final int MAX_WEIGHT = 5000;
+
+    public LevenshteinCalculator(@NotNull String pattern) {
+      this.patternComponents = normalizeString(pattern);
+      this.invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+    }
+
+    public LevenshteinCalculator(@NotNull List<String> patternComponents) {
+      this.patternComponents = patternComponents;
+      this.invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+    }
+
+    /**
+     * Returns the average Levenshtein distance between the pattern and the file path.
+     * Average distance is calculated as an average distance between
+     * file path and pattern components that have a match, that is, between those with
+     * a Levenshtein distance at least {@link #MIN_ACCEPTABLE_DISTANCE}.
+     * Returns 0 if there is a component in the pattern that does not have a match.
+     * <p>
+     * Assumes that all components of the pattern appear in the file path in the same order.
+     * If the pattern consists of two parts, it also considers that the user may have entered them in reverse order.
+     *
+     * @param file {@link VirtualFile}, the path to which is compared with the pattern
+     * @param lastMatches a flag indicating whether the last elements in path and pattern should be compared directly
+     * @param inverted a flag indicating whether the pattern can be in reverse order
+     * @return the distance as the average distance of all the matches
+     */
+    public float distanceToVirtualFile(VirtualFile file, boolean lastMatches, boolean inverted, ChooseByNameModel model) {
+      return distanceToStringPath(file.getPath(), lastMatches, inverted, model);
+    }
+
+    /**
+     * Returns the average Levenshtein distance between the pattern and the path.
+     * Average distance is calculated as an average distance between
+     * path and pattern components that have a match, that is, between those with
+     * a Levenshtein distance at least {@link #MIN_ACCEPTABLE_DISTANCE}.
+     * Returns 0 if there is a component in the pattern that does not have a match.
+     * <p>
+     * Assumes that all components of the pattern appear in the file path in the same order.
+     * If the pattern consists of two parts and {@code inverted} is true, it also considers that the user may have entered them in reverse order.
+     *
+     * @param path        path which is compared with the pattern
+     * @param lastMatches a flag indicating whether the last elements in path and pattern should be compared directly
+     * @param inverted    a flag indicating whether the pattern can be in reverse order
+     * @return the distance as the average distance of all the matches
+     */
+    public float distanceToStringPath(String path, boolean lastMatches, boolean inverted, ChooseByNameModel model) {
+      List<String> pathComponents = normalizeString(path);
+      return Math.max(distanceBetweenComponents(patternComponents, pathComponents, lastMatches, model),
+                      (!inverted && invertedPatternComponents == null)
+                      ? 0
+                      : distanceBetweenComponents(invertedPatternComponents, pathComponents, lastMatches, model));
+    }
+
+    public static List<String> normalizeString(String string) {
+      String trimmedString = string.replaceAll("^" + SEPARATOR_CHARACTERS, "");
+      if (trimmedString.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Arrays.asList(trimmedString.split(SEPARATOR_CHARACTERS));
+    }
+
+    public static float distanceBetweenStrings(String string, String other) {
+      int maxLength = Math.max(string.length(), other.length());
+      int limit = (int)((1 - MIN_ACCEPTABLE_DISTANCE) * maxLength);
+      int distance = EditDistance.optimalAlignment(string.toLowerCase(Locale.ROOT), other.toLowerCase(Locale.ROOT), true, limit, false);
+      if (distance > limit) {
+        return 0;
+      }
+      return 1.0f - ((float)distance / maxLength);
+    }
+
+    private static float distanceBetweenComponents(List<String> patternComponents, List<String> pathComponents, boolean lastMatches, ChooseByNameModel model) {
+      if (pathComponents.isEmpty() || patternComponents.isEmpty()) {
+        return 0;
+      }
+
+      int pathCompIndex = pathComponents.size() - 1;
+      int patternCompIndex = patternComponents.size() - 1;
+      float distance;
+      float avgDistance = 0;
+      boolean hasUnmatchedPatternComp = false;
+      MinusculeMatcher matcher;
+
+      String lastPatternComp = patternComponents.get(patternCompIndex);
+      String lastFileComp = pathComponents.get(pathCompIndex);
+
+      if (lastMatches) {
+        matcher = buildPatternMatcher(lastPatternComp, true);
+        if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
+          distance = 1;
+        }
+        else {
+          distance = distanceBetweenStrings(lastPatternComp, lastFileComp);
+        }
+        if (distance < MIN_ACCEPTABLE_DISTANCE) {
+          return 0;
+        }
+        else {
+          avgDistance += distance;
+          patternCompIndex--;
+          pathCompIndex--;
+        }
+      }
+
+      while (patternCompIndex >= 0 && pathCompIndex >= 0 && !hasUnmatchedPatternComp) {
+        while (pathCompIndex >= 0) {
+          String lowerCasePatternComp = patternComponents.get(patternCompIndex).toLowerCase(Locale.ROOT);
+          String lowerCasePathComp = pathComponents.get(pathCompIndex).toLowerCase(Locale.ROOT);
+          matcher = buildPatternMatcher(lowerCasePatternComp, true);
+          if (matcher.matches(lowerCasePathComp)) {
+            distance = 1;
+          }
+          else {
+            distance = distanceBetweenStrings(lowerCasePatternComp, lowerCasePathComp);
+          }
+          if (distance >= MIN_ACCEPTABLE_DISTANCE) {
+            avgDistance += distance;
+            pathCompIndex--;
+            break;
+          }
+          else if (pathCompIndex == 0) {
+            hasUnmatchedPatternComp = true;
+            break;
+          }
+          pathCompIndex--;
+        }
+        patternCompIndex--;
+      }
+
+      hasUnmatchedPatternComp |= patternCompIndex >= 0;
+
+      return hasUnmatchedPatternComp ? 0 : avgDistance / patternComponents.size();
+    }
+
+    public static int weightFromDistance(double distance) {
+      return (int)(MIN_WEIGHT + distance * (MAX_WEIGHT - MIN_WEIGHT));
     }
   }
 }

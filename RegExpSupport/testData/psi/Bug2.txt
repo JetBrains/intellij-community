@@ -53,7 +53,7 @@ REGEXP_FILE
           RegExpCharImpl: <~>
             PsiElement(CHARACTER)('~')
           RegExpCharImpl: <->
-            PsiElement(MINUS)('-')
+            PsiElement(CHARACTER)('-')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <+>
           PsiElement(PLUS)('+')

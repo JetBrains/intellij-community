@@ -19,25 +19,31 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.segments.*;
+import com.intellij.lang.ant.segments.DeferredActionsQueue;
+import com.intellij.lang.ant.segments.DeferredActionsQueueImpl;
+import com.intellij.lang.ant.segments.InputConsumer;
+import com.intellij.lang.ant.segments.OutputPacketProcessor;
+import com.intellij.lang.ant.segments.SegmentReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.rt.ant.execution.IdeaAntLogger2;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.rt.ant.execution.AntLoggerConstants;
 import com.intellij.rt.ant.execution.PacketProcessor;
+import org.jetbrains.annotations.Nls;
 
 import java.io.IOException;
 
 final class OutputParser2 extends OutputParser implements PacketProcessor, InputConsumer, OutputPacketProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser2");
+  private static final Logger LOG = Logger.getInstance(OutputParser2.class);
   private int myLastPacketIndex = -1;
 
   private OutputParser2(Project project,
                         OSProcessHandler processHandler,
                         AntBuildMessageView errorsView,
                         ProgressIndicator progress,
-                        String buildName) {
+                        @Nls String buildName) {
     super(project, processHandler, errorsView, progress, buildName);
   }
 
@@ -46,6 +52,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     printable.printOn(null);
   }
 
+  @Override
   public void processPacket(String packet) {
     SegmentReader reader = new SegmentReader(packet);
     int index = reader.readInt();
@@ -55,7 +62,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     if (myLastPacketIndex + 1 > index) return;
     myLastPacketIndex++;
     char id = reader.readChar();
-    if (id == IdeaAntLogger2.INPUT_REQUEST) {
+    if (id == AntLoggerConstants.INPUT_REQUEST) {
       try {
         InputRequestHandler.processInput(getProject(), reader, getProcessHandler());
       }
@@ -64,23 +71,23 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
       }
     }
     else {
-      int priority = reader.readInt();
+      int priority = fixPriority(reader.readInt());
       char contentType = reader.readChar();
       String message = reader.readLimitedString();
-      switch (id) {
-        case IdeaAntLogger2.BUILD_END:
-          if (contentType == IdeaAntLogger2.EXCEPTION_CONTENT) {
-            processTag(IdeaAntLogger2.EXCEPTION, message, priority);
-          }
-          break;
-        default:
-          processTag(id, message, priority);
+      if (id == AntLoggerConstants.BUILD_END) {
+        if (contentType == AntLoggerConstants.EXCEPTION_CONTENT) {
+          processTag(AntLoggerConstants.EXCEPTION, message, priority);
+        }
+      }
+      else {
+        processTag(id, message, priority);
       }
     }
   }
 
-  public void onOutput(String text, ConsoleViewContentType contentType) {
-    if (text.length() == 0) return;
+  @Override
+  public void onOutput(@NlsSafe String text, ConsoleViewContentType contentType) {
+    if (text.isEmpty()) return;
     if (myLastPacketIndex != -1) return;
     if (contentType == ConsoleViewContentType.ERROR_OUTPUT) readErrorOutput(text);
   }

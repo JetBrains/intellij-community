@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
@@ -12,11 +13,7 @@ import java.io.IOException;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
-/**
- * @author nik
- */
 public class CorruptedBuildCachesTest extends BaseCompilerTestCase {
-
   public void testTimestampsStorage() {
     VirtualFile a = createFile("src/A.java", "class A{}");
     Module m = addModule("m", a.getParent());
@@ -58,10 +55,8 @@ public class CorruptedBuildCachesTest extends BaseCompilerTestCase {
   }
 
   private static void corruptCaches(File file) {
-    try {
-      DataOutputStream stream = new DataOutputStream(new FileOutputStream(file.getAbsolutePath()));
+    try (DataOutputStream stream = new DataOutputStream(new FileOutputStream(file.getAbsolutePath()))) {
       stream.writeInt(-1);
-      stream.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);

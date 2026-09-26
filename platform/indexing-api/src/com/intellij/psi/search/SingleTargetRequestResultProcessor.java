@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,12 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class SingleTargetRequestResultProcessor extends RequestResultProcessor {
-  private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiElement myTarget;
+  private final PsiReferenceService myService = PsiReferenceService.getService();
 
   public SingleTargetRequestResultProcessor(@NotNull PsiElement target) {
     super(target);
@@ -24,14 +21,15 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
   }
 
   @Override
-  public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean processTextOccurrence(@NotNull PsiElement element,
+                                       int offsetInElement,
+                                       @NotNull Processor<? super PsiReference> consumer) {
     if (!myTarget.isValid()) {
       return false;
     }
 
-    final List<PsiReference> references = ourReferenceService.getReferences(element,
-                                                                            new PsiReferenceService.Hints(myTarget, offsetInElement));
-    //noinspection ForLoopReplaceableByForEach
+    PsiReferenceService.Hints hints = new PsiReferenceService.Hints(myTarget, offsetInElement);
+    List<PsiReference> references = myService.getReferences(element, hints);
     for (int i = 0; i < references.size(); i++) {
       PsiReference ref = references.get(i);
       ProgressManager.checkCanceled();
@@ -42,7 +40,6 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
     return true;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String toString() {
     return "SingleTarget: " + myTarget;

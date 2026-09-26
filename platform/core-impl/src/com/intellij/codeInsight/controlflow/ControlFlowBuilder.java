@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
@@ -25,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +19,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author oleg
- */
 public class ControlFlowBuilder {
-  
+
+  /**
+   * @deprecated Use your own logger like {@code Logger.getInstance(MyClass.class)}
+   */
+  @Deprecated
+  @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
-  
+
   // Here we store all the instructions
   public List<Instruction> instructions;
 
@@ -53,42 +42,37 @@ public class ControlFlowBuilder {
   public int transparentInstructionCount;
 
   public ControlFlowBuilder() {
-    instructions = ContainerUtil.newArrayList();
-    pending = ContainerUtil.newArrayList();
+    instructions = new ArrayList<>();
+    pending = new ArrayList<>();
     instructionCount = 0;
     transparentInstructionCount = 0;
   }
 
-  @Nullable
-  public Instruction findInstructionByElement(final PsiElement element) {
-    for (int i = instructions.size() - 1; i >= 0; i--) {
-      final Instruction instruction = instructions.get(i);
-      if (element.equals(instruction.getElement())) {
-        return instruction;
-      }
-    }
-    return null;
+  public @Nullable Instruction findInstructionByElement(final PsiElement element) {
+    return ContainerUtil.findLast(instructions, instruction -> element.equals(instruction.getElement()));
   }
 
   /**
    * @return "raw" current state of control flow
    */
-  @NotNull
-  public ControlFlow getControlFlow() {
-    return new ControlFlowImpl(instructions.toArray(new Instruction[0]));
+  public final @NotNull ControlFlow getControlFlow() {
+    return new ControlFlowImpl(instructions.toArray(Instruction.EMPTY_ARRAY));
   }
 
   /**
+   * Mutates instructions in place.
+   *
    * @return control flow without transparent instructions
    */
-  @NotNull
-  public ControlFlow getCompleteControlFlow() {
-    ArrayList<Instruction> result = ContainerUtil.newArrayList();
+  public final @NotNull ControlFlow completeControlFlow() {
+    if (transparentInstructionCount == 0) return getControlFlow();
+
+    ArrayList<Instruction> result = new ArrayList<>(instructionCount);
     int processedTransparentInstructions = 0;
     for (Instruction instruction : instructions) {
       if (instruction instanceof TransparentInstruction) {
         processedTransparentInstructions++;
-        
+
         Collection<Instruction> predecessors = instruction.allPred();
         Collection<Instruction> successors = instruction.allSucc();
 
@@ -99,20 +83,24 @@ public class ControlFlowBuilder {
         for (Instruction successor : successors) {
           successor.replacePred(instruction, predecessors);
         }
-
       }
       else {
         result.add(instruction);
       }
     }
-    
+
     if (result.size() != instructionCount || processedTransparentInstructions != transparentInstructionCount) {
       LOG.error("Control flow graph is inconsistent. Instructions: (" + result.size() + ", " + instructionCount + ")\n" +
                 "Transparent instructions: (" + processedTransparentInstructions + ", " + transparentInstructionCount + ")");
     }
 
-    return new ControlFlowImpl(result.toArray(new Instruction[0]));
+    if (!pending.isEmpty()) {
+      LOG.error("Control flow is used incorrectly. All pending node must be connected to fake exit point. Pending: " + pending);
+    }
+
+    return new ControlFlowImpl(result.toArray(Instruction.EMPTY_ARRAY));
   }
+
 
   /**
    * Adds edge between 2 edges
@@ -120,7 +108,7 @@ public class ControlFlowBuilder {
    * @param beginInstruction Begin of new edge
    * @param endInstruction   End of new edge
    */
-  public void addEdge(@Nullable final Instruction beginInstruction, @Nullable final Instruction endInstruction) {
+  public void addEdge(final @Nullable Instruction beginInstruction, final @Nullable Instruction endInstruction) {
     if (beginInstruction == null || endInstruction == null) {
       return;
     }
@@ -133,7 +121,7 @@ public class ControlFlowBuilder {
    *
    * @param instruction new instruction
    */
-  public void addNode(@NotNull final Instruction instruction) {
+  public final void addNode(final @NotNull Instruction instruction) {
     instructions.add(instruction);
     if (prevInstruction != null) {
       addEdge(prevInstruction, instruction);
@@ -146,16 +134,18 @@ public class ControlFlowBuilder {
    *
    * @param instruction new instruction
    */
-  public void addNodeAndCheckPending(final Instruction instruction) {
+  public final void addNodeAndCheckPending(final Instruction instruction) {
     addNode(instruction);
     checkPending(instruction);
   }
 
   /**
    * Stops control flow, used for break, next, redo, continue
+   *
+   * @apiNote please make sure that the prev instruction will be connected to exit point if it doesn't have any successors
    */
   @SuppressWarnings("SpellCheckingInspection")
-  public void flowAbrupted() {
+  public final void flowAbrupted() {
     prevInstruction = null;
   }
 
@@ -167,7 +157,7 @@ public class ControlFlowBuilder {
    * @param pendingScope Scope for instruction / null if expected scope = exit point
    * @param instruction  "Last" pending instruction
    */
-  public void addPendingEdge(@Nullable final PsiElement pendingScope, @Nullable final Instruction instruction) {
+  public void addPendingEdge(final @Nullable PsiElement pendingScope, final @Nullable Instruction instruction) {
     if (instruction == null) {
       return;
     }
@@ -195,7 +185,7 @@ public class ControlFlowBuilder {
    *
    * @param instruction target instruction for pending edges
    */
-  public void checkPending(@NotNull final Instruction instruction) {
+  public final void checkPending(final @NotNull Instruction instruction) {
     final PsiElement element = instruction.getElement();
     if (element == null) {
       // if element is null (fake element, we just process all pending)
@@ -230,22 +220,21 @@ public class ControlFlowBuilder {
    * @param element Element to create instruction for
    * @return new instruction
    */
-  @NotNull
-  public Instruction startNode(@Nullable final PsiElement element) {
+  public @NotNull Instruction startNode(final @Nullable PsiElement element) {
     final Instruction instruction = new InstructionImpl(this, element);
     addNodeAndCheckPending(instruction);
     return instruction;
   }
 
   /**
-   * Creates transparent instruction for given element, and adds it to the instructions stack
-   * Transparent instruction will be removed in the result control flow
+   * Creates transparent instruction for given element, and adds it to the instructions list
+   * Transparent instruction will be replaced in the result control flow by direct connection between predecessors and successors
    *
    * @param element Element to create instruction for
+   * @param markerName name for debug information
    * @return new transparent instruction
    */
-  @NotNull
-  public TransparentInstruction startTransparentNode(@Nullable final PsiElement element, String markerName) {
+  public final @NotNull TransparentInstruction startTransparentNode(final @Nullable PsiElement element, String markerName) {
     final TransparentInstruction instruction = new TransparentInstructionImpl(this, element, markerName);
     addNodeAndCheckPending(instruction);
     return instruction;
@@ -258,22 +247,25 @@ public class ControlFlowBuilder {
    * @return new instruction
    */
   @SuppressWarnings("UnusedReturnValue")
-  public Instruction startConditionalNode(final PsiElement element, final PsiElement condition, final boolean result) {
+  public final Instruction startConditionalNode(final PsiElement element, final PsiElement condition, final boolean result) {
     final ConditionalInstruction instruction = new ConditionalInstructionImpl(this, element, condition, result);
     addNodeAndCheckPending(instruction);
     return instruction;
   }
 
-  public ControlFlow build(final PsiElementVisitor visitor, final PsiElement element) {
+  public final @NotNull ControlFlow build(@NotNull PsiElementVisitor visitor, @NotNull PsiElement element) {
+    visitFor(visitor, element);
+    return completeControlFlow();
+  }
+
+  public final void visitFor(@NotNull PsiElementVisitor visitor, @NotNull PsiElement element) {
     addEntryPointNode(element);
 
     element.acceptChildren(visitor);
 
     // create end pseudo node and close all pending edges
-    checkPending(startNode(null));
-
-    final List<Instruction> result = instructions;
-    return new ControlFlowImpl(result.toArray(new Instruction[0]));
+    Instruction exitInstruction = startNode(null);
+    checkPending(exitInstruction);
   }
 
   protected void addEntryPointNode(final PsiElement startElement) {
@@ -281,8 +273,8 @@ public class ControlFlowBuilder {
     startNode(null);
   }
 
-  public void updatePendingElementScope(@NotNull PsiElement parentForScope,
-                                        @NotNull PsiElement newParentScope) {
+  public final void updatePendingElementScope(@NotNull PsiElement parentForScope,
+                                        @Nullable PsiElement newParentScope) {
     processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(parentForScope, pendingScope, false)) {
         addPendingEdge(newParentScope, instruction);
@@ -299,7 +291,7 @@ public class ControlFlowBuilder {
     void process(@Nullable PsiElement pendingScope, @NotNull Instruction instruction);
   }
 
-  public void processPending(final PendingProcessor processor) {
+  public void processPending(@NotNull PendingProcessor processor) {
     final List<Pair<PsiElement, Instruction>> pending = this.pending;
     this.pending = new ArrayList<>();
     for (Pair<PsiElement, Instruction> pair : pending) {

@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+fun produce(): Int = 1
+
+fun test() {
+    val r = run {
+        val inner = context("x") {
+            return@context produce()
+        }
+        inner
+    }
+}

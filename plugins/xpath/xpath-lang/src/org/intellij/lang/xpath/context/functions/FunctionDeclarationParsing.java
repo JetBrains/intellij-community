@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.lexer.FilterLexer;
@@ -33,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionDeclarationParsing {
+public final class FunctionDeclarationParsing {
   public static final String FUNCTION_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
 
   private FunctionDeclarationParsing() {
@@ -119,8 +105,7 @@ public class FunctionDeclarationParsing {
     return XPathType.fromString(type);
   }
 
-  @Nullable
-  public static XPath2SequenceType.Cardinality parseCardinality(Lexer lexer) {
+  public static @Nullable XPath2SequenceType.Cardinality parseCardinality(Lexer lexer) {
     if (lexer.getTokenType() == XPath2TokenTypes.QUEST) {
       lexer.advance();
       return XPath2SequenceType.Cardinality.OPTIONAL;
@@ -141,8 +126,7 @@ public class FunctionDeclarationParsing {
     return s;
   }
 
-  @Nullable
-  public static String parseType(Lexer lexer) {
+  public static @Nullable String parseType(Lexer lexer) {
     String type = parseQName(lexer);
     if (type == null) {
       if (lexer.getTokenType() == XPath2TokenTypes.ITEM || lexer.getTokenType() == XPathTokenTypes.FUNCTION_NAME || lexer.getTokenType() == XPathTokenTypes.NODE_TYPE) {
@@ -158,8 +142,7 @@ public class FunctionDeclarationParsing {
     return type;
   }
 
-  @Nullable
-  public static String parseQName(Lexer lexer) {
+  public static @Nullable String parseQName(Lexer lexer) {
     String name;
     if (lexer.getTokenType() == XPathTokenTypes.NCNAME) {
       name = lexer.getTokenText();
@@ -180,7 +163,7 @@ public class FunctionDeclarationParsing {
     final Pair<String, ? extends Function> pair = parseFuntionDeclaration(s);
     final Function func = pair.second;
 
-    final boolean fn = pair.first.equals("fn") || pair.first.length() == 0;
+    final boolean fn = pair.first.equals("fn") || pair.first.isEmpty();
     final boolean xs = pair.first.equals("xs");
     final Pair<QName, Integer> key = Pair.create(new QName(fn ? FUNCTION_NAMESPACE : (xs ? XPath2Type.XMLSCHEMA_NS : null), func.getName()), func.getParameters().length);
     assert !decls.containsKey(key) : key;

@@ -1,0 +1,116 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.gradle.statistics
+
+import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.kotlin.idea.gradle.statistics.v2.flow.KotlinBuildToolFusFlowProcessor
+import org.junit.jupiter.api.Named.named
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.stream.Stream
+import kotlin.test.assertContains
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+
+@TestApplication
+class KotlinBuildToolsFusFlowTest {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getFilesToExpectedMetrics")
+    fun testFusFlowProcessor(fusProfileFile: List<Path>, buildId: String, expectedFusMetrics: Set<String>, checkExactMatch: Boolean) {
+        val aggregatedFusMetric = KotlinBuildToolFusFlowProcessor.aggregateMetricsForBuildId(buildId, fusProfileFile)
+
+        val actualFusMetric = aggregatedFusMetric?.map {
+            when {
+                // PROJECT_PATH is anonymized with a salt (see EventLogConfiguration.anonymize)
+                it.metric.metricRawName == "PROJECT_PATH" -> "${it.metric.metricRawName}=$PROJECT_PATH_PLACEHOLDER"
+                else -> "${it.metric.metricRawName}=${it.value}"
+            }
+        }?.toSet()
+        if (actualFusMetric == null) {
+            assertFails { "aggregatedFusMetric should not be null" }
+            return
+        }
+
+        if (checkExactMatch) {
+            assertEquals(
+                expectedFusMetrics, actualFusMetric
+            )
+        } else {
+            expectedFusMetrics.forEach {
+                assertContains(
+                    actualFusMetric,
+                    it,
+                    "Metric $it is expected for build id: $buildId, but actual metrics are ${actualFusMetric.joinToString()}"
+                )
+            }
+
+        }
+    }
+
+
+    companion object {
+        @JvmStatic
+        private fun getFilesToExpectedMetrics() = Stream.of(
+            TestData(
+                listOf(mapProfileNameToPathInResourcesSrc("unknown_build.plugin-profile")),
+                "unknown_build",
+                setOf("BUILD_FINISH_TIME=80000000", "COMPILATION_STARTED=true"),
+                true
+            ).toArguments("testMetricValidation"),
+
+            TestData(
+                listOf(
+                    "build_id_1.plugin-profile",
+                    "build_id_1_part2.plugin-profile",
+                    "build_id_2.plugin-profile"
+                ).map(::mapProfileNameToPathInResourcesSrc),
+                "build_id_1",
+                setOf("CONFIGURATION_API_COUNT=2"),
+                false
+            ).toArguments("testAggregateMetrics"),
+
+            TestData(
+                listOf(
+                    "build_id.finish-profile",
+                    "build_id-empty-file.plugin-profile",
+                ).map(::mapProfileNameToPathInResourcesSrc),
+                "build_id",
+                emptySet(),
+                true
+            ).toArguments("testEmptyFiles"),
+
+            TestData(
+                listOf(
+                    "build_id-invalid_metrics.plugin-profile",
+                    "build_id.finish-profile",
+                ).map(::mapProfileNameToPathInResourcesSrc),
+                "build_id",
+                setOf(
+                    "PROJECT_PATH=$PROJECT_PATH_PLACEHOLDER",
+                    "BUILD_FAILED=false",
+                    "BUILD_FINISH_TIME=10000000",
+                    "BUILD_SRC_EXISTS=false",
+                    "CONFIGURATION_API_COUNT=1"
+                ),
+                true
+            ).toArguments("testMetricValidation"),
+        )
+
+        private const val PROJECT_PATH_PLACEHOLDER = "<PROJECT_PATH>"
+    }
+}
+
+private data class TestData(
+    val fusFiles: List<Path>,
+    val buildId: String,
+    val expectedFusMetrics: Set<String>,
+    val checkExactMatch: Boolean = false,
+) {
+    fun toArguments(name: String): Arguments = Arguments.of(named(name, fusFiles), buildId, expectedFusMetrics, checkExactMatch)
+}
+
+internal fun mapProfileNameToPathInResourcesSrc(name: String): Path =
+    Paths.get(PathManager.getCommunityHomePath(), "plugins/kotlin/gradle/gradle/tests/resources/kotlin-profile/$name")

@@ -19,10 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- * @since 11/21/12 12:54 PM
- */
 public interface ArrangementCallback {
 
   /**

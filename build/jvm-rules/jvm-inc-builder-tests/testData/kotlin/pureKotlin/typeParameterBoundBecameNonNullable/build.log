@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  DeclKt.class
+  META-INF/kotlin_pureKotlin_typeParameterBoundBecameNonNullable-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/typeParameterBoundBecameNonNullable/a/decl.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typeParameterBoundBecameNonNullable-a.kotlin_module
+  UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typeParameterBoundBecameNonNullable/a/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

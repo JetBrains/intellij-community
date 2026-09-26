@@ -1,0 +1,13 @@
+// "Add 'abstract fun foo()' to 'I'" "true"
+// K2_ERROR: NOTHING_TO_OVERRIDE
+annotation class A(vararg val names: String)
+annotation class B(val i: Int)
+
+interface I
+
+class C : I {
+    @A("x", "y")
+    @B(1)
+    <caret>override fun foo() {}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddFunctionToSupertypeFix

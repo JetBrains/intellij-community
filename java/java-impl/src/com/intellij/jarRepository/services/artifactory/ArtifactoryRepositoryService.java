@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.artifactory;
 
 import com.google.gson.Gson;
@@ -20,35 +6,46 @@ import com.google.gson.JsonSyntaxException;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.MavenRepositoryService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Url;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gregory.Shrago
  */
+
+//use some endpoints from http://repo.jfrog.org/artifactory/api/
 public class ArtifactoryRepositoryService extends MavenRepositoryService {
-  @NotNull
+
+  private final Gson gson = new Gson();
+
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "Artifactory";
   }
 
-  @NotNull
   @Override
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      final Gson gson = new Gson();
-      final InputStreamReader stream =
-        new InputStreamReader(new Endpoint.Repositories(url).getRepositoryDetailsListJson(null).getInputStream());
-      final ArtifactoryModel.RepositoryType[] repos = gson.fromJson(stream, ArtifactoryModel.RepositoryType[].class);
+      ArtifactoryModel.RepositoryType[] repos = gson.fromJson(
+        HttpRequests.request(toUrl(url, "repositories"))
+          .productNameAsUserAgent()
+          .readString(),
+        ArtifactoryModel.RepositoryType[].class
+      );
       final List<RemoteRepositoryDescription> result = new ArrayList<>(repos.length);
       for (ArtifactoryModel.RepositoryType repo : repos) {
         result.add(convert(repo));
@@ -64,45 +61,23 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
   }
 
   private static RemoteRepositoryDescription convert(ArtifactoryModel.RepositoryType repo) {
-    return new RemoteRepositoryDescription(repo.key, repo.description, repo.url);
+    return new RemoteRepositoryDescription(repo.key, ObjectUtils.notNull(repo.description, repo.key), repo.url);
   }
 
-  @NotNull
   @Override
-  public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template) throws IOException {
+  public @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+    throws IOException {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      final String packaging = StringUtil.notNullize(template.getPackaging());
-      final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();
-      final Gson gson = new Gson();
-      final String className = template.getClassNames();
-      if (className == null || className.length() == 0) {
-        final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
-        final InputStream stream = new Endpoint.Search.Artifact(url).getArtifactSearchResultJson(name, null).getInputStream();
 
-        final ArtifactoryModel.GavcResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.GavcResults.class);
-        if (results != null && results.results != null) {
-          for (ArtifactoryModel.GavcResult result : results.results) {
-            if (!result.uri.endsWith(packaging)) continue;
-            artifacts.add(convertArtifactInfo(result.uri, url, null));
-          }
-        }
+
+      final String className = template.getClassNames();
+      if (className == null || className.isEmpty()) {
+        return searchArtifacts(url, template);
       }
       else {
-        // IDEA-58225
-        final String searchString = className.endsWith("*") || className.endsWith("?") ? className : className + ".class";
-        final InputStream stream = new Endpoint.Search.Archive(url).getArchiveSearchResultJson(searchString, null).getInputStream();
-
-        final ArtifactoryModel.ArchiveResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.ArchiveResults.class);
-        if (results != null && results.results != null) {
-          for (ArtifactoryModel.ArchiveResult result : results.results) {
-            for (String uri : result.archiveUris) {
-              if (!uri.endsWith(packaging)) continue;
-              artifacts.add(convertArtifactInfo(uri, url, result.entry));
-            }
-          }
-        }
+        return searchArchives(url, template);
       }
-      return artifacts;
     }
     catch (JsonSyntaxException e) {
       return Collections.emptyList();
@@ -112,7 +87,61 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     }
   }
 
-  private static RepositoryArtifactDescription convertArtifactInfo(String uri, String baseUri, String className) throws IOException {
+  private @NotNull List<RepositoryArtifactDescription> searchArchives(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+    throws IOException {
+    final String packaging = StringUtil.notNullize(template.getPackaging());
+    final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();
+
+    String className = template.getClassNames();
+    final String searchString = className.endsWith("*") || className.endsWith("?") ? className : className + ".class";
+    Url requestUrl = toUrl(url, "search/archive", "name=" + URLEncoder.encode(searchString.trim(), StandardCharsets.UTF_8));
+    ArtifactoryModel.ArchiveResults results = gson.fromJson(
+      HttpRequests.request(requestUrl)
+        .productNameAsUserAgent().readString(),
+      ArtifactoryModel.ArchiveResults.class
+    );
+
+    if (results != null && results.results != null) {
+      for (ArtifactoryModel.ArchiveResult result : results.results) {
+        for (String uri : result.archiveUris) {
+          if (!uri.endsWith(packaging)) continue;
+          artifacts.add(convertArtifactInfo(uri, url, result.entry));
+        }
+      }
+    }
+
+    return artifacts;
+  }
+
+  private @NotNull List<RepositoryArtifactDescription> searchArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+    throws IOException {
+    final String packaging = StringUtil.notNullize(template.getPackaging());
+    final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();
+
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put("g", template.getGroupId());
+    params.put("a", template.getArtifactId());
+    params.put("v", template.getVersion());
+    params.put("repos", "");
+    Url requestUrl = toUrl(url, "search/gavc", mapToParamString(params));
+    ArtifactoryModel.GavcResults results = gson.fromJson(
+      HttpRequests.request(requestUrl)
+        .productNameAsUserAgent()
+        .readString(),
+      ArtifactoryModel.GavcResults.class
+    );
+
+    if (results != null && results.results != null) {
+      for (ArtifactoryModel.GavcResult result : results.results) {
+        if (!result.uri.endsWith(packaging)) continue;
+        artifacts.add(convertArtifactInfo(result.uri, url, null));
+      }
+    }
+
+    return artifacts;
+  }
+
+  private static RepositoryArtifactDescription convertArtifactInfo(String uri, String baseUri, String className) {
     final String repoPathFile = uri.substring((baseUri + "storage/").length());
     final int repoIndex = repoPathFile.indexOf('/');
     final String repoString = repoPathFile.substring(0, repoIndex);

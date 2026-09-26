@@ -1,103 +1,121 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsActions;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorFactory;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
+import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Window;
 
-/**
- * @author max
- */
-public class ChangeListViewerDialog extends DialogWrapper implements DataProvider {
-  private Project myProject;
-  private CommittedChangeList myChangeList;
-  private CommittedChangesBrowser myChangesBrowser;
-  private JEditorPane myCommitMessageArea;
-  // do not related to local data/changes etc
-  private final boolean myInAir;
-  private Change[] myChanges;
-  private JScrollPane commitMessageScroll;
-  private VirtualFile myToSelect;
+public final class ChangeListViewerDialog extends DialogWrapper {
+  private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
+  public static final String DIMENSION_SERVICE_KEY = "VCS.ChangeListViewerDialog";
 
-  public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
-    super(project, true);
-    myInAir = false;
-    initCommitMessageArea(project, changeList);
-    initDialog(project, changeList);
+  public static void show(@NotNull Project project,
+                          @Nullable @Nls String title,
+                          @NotNull LoadingCommittedChangeListPanel loadingPanel) {
+    show(project, title, loadingPanel, null, AbstractVcsHelperImpl.showCommittedChangesAsTab());
   }
 
-  public ChangeListViewerDialog(Project project, CommittedChangeList changeList, VirtualFile toSelect) {
-    super(project, true);
-    myInAir = false;
-    myToSelect = toSelect;
-    initCommitMessageArea(project, changeList);
-    initDialog(project, changeList);
+  public static void show(@NotNull Project project,
+                          @Nullable @Nls String title,
+                          @NotNull LoadingCommittedChangeListPanel loadingPanel,
+                          @Nullable BackgroundableActionLock lock,
+                          boolean showAsTab) {
+    if (showAsTab) {
+      showAsTab(project, title, loadingPanel);
+    }
+    else {
+      showDialog(project, title, loadingPanel, lock);
+    }
   }
 
-  public ChangeListViewerDialog(Component parent, Project project, Collection<Change> changes, final boolean inAir) {
-    super(parent, true);
-    myInAir = inAir;
-    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
+  private static void showAsTab(@NotNull Project project,
+                                @Nullable @NlsContexts.TabTitle String title,
+                                @NotNull LoadingCommittedChangeListPanel loadingPanel) {
+    loadingPanel.hideSideBorders();
+
+    ChangesBrowserBase changesBrowser = loadingPanel.getChangesBrowser();
+    DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, loadingPanel);
+    changesBrowser.setShowDiffActionPreview(diffPreview);
+
+    Content content = ContentFactory.getInstance().createContent(loadingPanel.getContent(), title, false);
+    content.setPreferredFocusableComponent(loadingPanel.getPreferredFocusedComponent());
+    content.setDisposer(loadingPanel);
+    ChangesBrowserToolWindow.showTab(project, content);
   }
 
-  public ChangeListViewerDialog(Project project, Collection<Change> changes, final boolean inAir) {
-    super(project, true);
-    myInAir = inAir;
-    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
+  public static void showDialog(@NotNull Project project,
+                                @Nullable @NlsContexts.DialogTitle String title,
+                                @NotNull LoadingCommittedChangeListPanel loadingPanel) {
+    showDialog(project, title, loadingPanel, null);
   }
 
-  private void initDialog(final Project project, final CommittedChangeList changeList) {
-    myProject = project;
-    myChangeList = changeList;
-    final Collection<Change> changes = myChangeList.getChanges();
-    myChanges = changes.toArray(new Change[0]);
+  private static void showDialog(@NotNull Project project,
+                                 @Nullable @NlsContexts.DialogTitle String title,
+                                 @NotNull LoadingCommittedChangeListPanel loadingPanel,
+                                 @Nullable BackgroundableActionLock lock) {
+    ChangeListViewerDialog dlg = new ChangeListViewerDialog(project, loadingPanel);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+
+    if (lock != null) {
+      lock.lock();
+      ClientProperty.put(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
+      Disposer.register(dlg.getDisposable(), lock::unlock);
+    }
+
+    dlg.show();
+  }
+
+  public static boolean tryFocusExistingDialog(@Nullable BackgroundableActionLock lock) {
+    if (lock == null || !lock.isLocked()) {
+      return false;
+    }
+
+    for (Window window : Window.getWindows()) {
+      Object windowLock = ClientProperty.get(window, CHANGES_DETAILS_WINDOW_KEY);
+      if (lock.equals(windowLock)) {
+        UIUtil.toFront(window);
+        return true;
+      }
+    }
+    return true; // lock is being held, do not show another dialog anyway
+  }
+
+
+  private final @NotNull LoadingCommittedChangeListPanel myLoadingPanel;
+
+  public ChangeListViewerDialog(@NotNull Project project,
+                                @NotNull LoadingCommittedChangeListPanel loadingPanel) {
+    this(project, null, loadingPanel);
+  }
+
+  public ChangeListViewerDialog(@NotNull Project project,
+                                @Nullable Component parentComponent,
+                                @NotNull LoadingCommittedChangeListPanel loadingPanel) {
+    super(project, parentComponent, true, IdeModalityType.IDE);
+
+    myLoadingPanel = loadingPanel;
+    Disposer.register(getDisposable(), myLoadingPanel);
 
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.message("close.action.name"));
@@ -106,100 +124,25 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     init();
   }
 
-  private void initCommitMessageArea(final Project project, final CommittedChangeList changeList) {
-    myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
-    myCommitMessageArea.setBorder(JBUI.Borders.empty(3));
-    myCommitMessageArea.setEditable(false);
-    @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment().trim());
-    myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
-    myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    commitMessageScroll = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
-    myCommitMessageArea.setText(text);
-    myCommitMessageArea.setCaretPosition(0);
-  }
-
-
-  protected String getDimensionServiceKey() {
-    return "VCS.ChangeListViewerDialog";
-  }
-
-  public Object getData(@NonNls final String dataId) {
-    if (VcsDataKeys.CHANGES.is(dataId)) {
-      return myChanges;
-    }
-    if (VcsDataKeys.VCS.is(dataId)) {
-      AbstractVcs vcs = myChangeList.getVcs();
-      return vcs == null ? null : vcs.getKeyInstanceMethod();
-    }
-
-    return null;
-  }
-
-  public JComponent createCenterPanel() {
-    final JPanel mainPanel = new JPanel();
-    mainPanel.setLayout(new BorderLayout());
-    final Splitter splitter = new Splitter(true, 0.8f);
-    myChangesBrowser = new CommittedChangesBrowser(myProject) {
-      @NotNull
-      @Override
-      protected List<AnAction> createPopupMenuActions() {
-        return ContainerUtil.append(
-          super.createPopupMenuActions(),
-          ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)
-        );
-      }
-
-      @Override
-      public Object getData(String dataId) {
-        if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-          return new ChangeList[]{myChangeList};
-        }
-        return super.getData(dataId);
-      }
-    };
-    myChangesBrowser.setChangesToDisplay(myChangeList.getChanges());
-    if (myToSelect != null) myChangesBrowser.getViewer().selectFile(myToSelect);
-
-    myChangesBrowser.setUseCase(myInAir ? CommittedChangesBrowserUseCase.IN_AIR : null);
-    splitter.setFirstComponent(myChangesBrowser);
-
-    if (myCommitMessageArea != null) {
-      JPanel commitPanel = new JPanel(new BorderLayout());
-      JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
-      commitPanel.add(separator, BorderLayout.NORTH);
-      commitPanel.add(commitMessageScroll, BorderLayout.CENTER);
-
-      splitter.setSecondComponent(commitPanel);
-    }
-    mainPanel.add(splitter, BorderLayout.CENTER);
-
-    final String description = getDescription();
-    if (description != null) {
-      JPanel descPanel = new JPanel();
-      descPanel.add(new JLabel(XmlStringUtil.wrapInHtml(description)));
-      descPanel.setBorder(BorderFactory.createEtchedBorder());
-      mainPanel.add(descPanel, BorderLayout.NORTH);
-    }
-    return mainPanel;
-  }
-
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected String getDimensionServiceKey() {
+    return DIMENSION_SERVICE_KEY;
+  }
+
+  @Override
+  public JComponent createCenterPanel() {
+    return myLoadingPanel.getContent();
+  }
+
+  @Override
+  protected Action @NotNull [] createActions() {
     Action cancelAction = getCancelAction();
     cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
-    return new Action[] {cancelAction};
+    return new Action[]{cancelAction};
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myChangesBrowser.getPreferredFocusedComponent();
-  }
-
-  /**
-   * @return description that is added to the top of this dialog. May be null - then no description is shown.
-   */
-  protected @Nullable String getDescription() {
-    return null;
+    return myLoadingPanel.getPreferredFocusedComponent();
   }
 }

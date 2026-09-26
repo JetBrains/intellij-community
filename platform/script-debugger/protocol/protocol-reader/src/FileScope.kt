@@ -5,5 +5,5 @@ internal fun FileScope(globalScope: GlobalScope, stringBuilder: StringBuilder) =
 internal open class FileScope(val output: TextOutput, globalScope: GlobalScope) : GlobalScope(globalScope.state) {
   fun newClassScope() = ClassScope(this, asClassScope())
 
-  open protected fun asClassScope(): ClassScope? = null
+  protected open fun asClassScope(): ClassScope? = null
 }

@@ -1,17 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
-import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.QuotingPolicy;
+import com.jetbrains.python.debugger.SortingPolicy;
+import com.jetbrains.python.debugger.ValuesPolicy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -19,15 +19,18 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-
-public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> implements Getter<PyDebuggerSettings> {
+public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> {
   private boolean myLibrariesFilterEnabled;
   private boolean mySteppingFiltersEnabled;
   private @NotNull List<PySteppingFilter> mySteppingFilters;
   public static final String FILTERS_DIVIDER = ";";
   private boolean myWatchReturnValues = false;
   private boolean mySimplifiedView = true;
-  private volatile PyDebugValue.ValuesPolicy myValuesPolicy = PyDebugValue.ValuesPolicy.ASYNC;
+  private volatile ValuesPolicy myValuesPolicy = ValuesPolicy.ASYNC;
+  private volatile QuotingPolicy myQuotingPolicy = QuotingPolicy.SINGLE;
+  private volatile SortingPolicy mySortingPolicy = SortingPolicy.DO_NOT_SORT;
+  private boolean myAlwaysDoSmartStepIntoEnabled = true;
+  private boolean myDebugpyLoggingEnabled = false;
 
   public PyDebuggerSettings() {
     super("python");
@@ -50,12 +53,28 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
     mySimplifiedView = simplifiedView;
   }
 
-  public PyDebugValue.ValuesPolicy getValuesPolicy() {
+  public ValuesPolicy getValuesPolicy() {
     return myValuesPolicy;
   }
 
-  public void setValuesPolicy(PyDebugValue.ValuesPolicy valuesPolicy) {
+  public void setValuesPolicy(ValuesPolicy valuesPolicy) {
     myValuesPolicy = valuesPolicy;
+  }
+
+  public QuotingPolicy getQuotingPolicy() {
+    return myQuotingPolicy;
+  }
+
+  public void setQuotingPolicy(QuotingPolicy copyQuotingPolicy) {
+    myQuotingPolicy = copyQuotingPolicy;
+  }
+
+  public SortingPolicy getSortingPolicy() {
+    return mySortingPolicy;
+  }
+
+  public void setSortingPolicy(SortingPolicy sortingPolicy) {
+    mySortingPolicy = sortingPolicy;
   }
 
   public static PyDebuggerSettings getInstance() {
@@ -78,13 +97,27 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
     mySteppingFiltersEnabled = steppingFiltersEnabled;
   }
 
-  @NotNull
-  public List<PySteppingFilter> getSteppingFilters() {
+  public void setAlwaysDoSmartStepIntoEnabled(boolean alwaysDoSmartStepIntoEnabled) {
+    myAlwaysDoSmartStepIntoEnabled = alwaysDoSmartStepIntoEnabled;
+  }
+
+  public boolean isAlwaysDoSmartStepInto() {
+    return myAlwaysDoSmartStepIntoEnabled;
+  }
+
+  public boolean isDebugpyLoggingEnabled() {
+    return myDebugpyLoggingEnabled;
+  }
+
+  public void setDebugpyLoggingEnabled(boolean enabled) {
+    myDebugpyLoggingEnabled = enabled;
+  }
+
+  public @NotNull List<PySteppingFilter> getSteppingFilters() {
     return mySteppingFilters;
   }
 
-  @NotNull
-  public String getSteppingFiltersForProject(@NotNull Project project) {
+  public @NotNull String getSteppingFiltersForProject(@NotNull Project project) {
     StringBuilder sb = new StringBuilder();
     for (PySteppingFilter filter : mySteppingFilters) {
       if (filter.isEnabled()) {
@@ -98,9 +131,8 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
     mySteppingFilters = steppingFilters;
   }
 
-  @Nullable
   @Override
-  public PyDebuggerSettings getState() {
+  public @NotNull PyDebuggerSettings getState() {
     return this;
   }
 
@@ -114,20 +146,12 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
-    switch (category) {
-      case STEPPING:
-        return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python",
-                                                       PyDebuggerSteppingConfigurableUi.class, this));
-      default:
-        return Collections.emptyList();
+  public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+    if (category == DebuggerSettingsCategory.STEPPING) {
+      return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python", //NON-NLS
+                                                     PyDebuggerSteppingConfigurableUi.class, () -> this));
     }
-  }
-
-  @Override
-  public PyDebuggerSettings get() {
-    return this;
+    return Collections.emptyList();
   }
 }

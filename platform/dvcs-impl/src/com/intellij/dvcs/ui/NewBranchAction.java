@@ -18,32 +18,38 @@ package com.intellij.dvcs.ui;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.Icon;
 import java.util.List;
 
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {
+  public static final Icon icon = AllIcons.General.Add;
+
   protected final List<T> myRepositories;
   protected final Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super("New Branch", "Create and checkout new branch", AllIcons.General.Add);
+    super(DvcsBundle.messagePointer("new.branch.action.text"),
+          DvcsBundle.messagePointer("new.branch.action.description"), icon);
     myRepositories = repositories;
     myProject = project;
   }
 
-
   @Override
-  public void update(AnActionEvent e) {
-    if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit");
-    }
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public abstract void actionPerformed(AnActionEvent e);
+  public void update(@NotNull AnActionEvent e) {
+    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
+  }
+
+  @Override
+  public abstract void actionPerformed(@NotNull AnActionEvent e);
 }

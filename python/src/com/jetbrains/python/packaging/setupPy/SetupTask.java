@@ -1,40 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.util.gotoByName.ChooseByNameItem;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author yole
-*/
 public class SetupTask implements ChooseByNameItem {
-  private final String name;
-  private String description;
+  private final @NlsSafe String name;
+  private @NlsSafe String description;
   private final List<Option> options = new ArrayList<>();
 
-  SetupTask(String name) {
+  SetupTask(@NotNull @NlsSafe String name) {
     this.name = name;
     description = name;
   }
 
-  public String getDescription() {
+  @Override
+  public @NlsSafe String getDescription() {
     return description;
   }
 
@@ -42,7 +28,8 @@ public class SetupTask implements ChooseByNameItem {
     this.description = description;
   }
 
-  public String getName() {
+  @Override
+  public @NotNull @NlsSafe String getName() {
     return name;
   }
 
@@ -56,11 +43,11 @@ public class SetupTask implements ChooseByNameItem {
 
   public static class Option {
     public final String name;
-    public final String description;
+    public final @NlsSafe String description;
     public final boolean checkbox;
     public final boolean negative;
 
-    public Option(String name, String description, boolean checkbox, boolean negative) {
+    public Option(String name, @NlsSafe String description, boolean checkbox, boolean negative) {
       this.name = name;
       this.description = description;
       this.checkbox = checkbox;

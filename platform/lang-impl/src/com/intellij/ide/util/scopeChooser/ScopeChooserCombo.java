@@ -1,109 +1,140 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.packageDependencies.ChangeListsScopesProvider;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Instances of {@code ScopeChooserCombo} <b>must be disposed</b> when the corresponding dialog or settings page is closed. Otherwise,
+ * listeners registered in {@code init()} cause memory leak.<br/><br/>
+ * Example: if {@code ScopeChooserCombo} is used in a
+ * {@code DialogWrapper} subclass, call {@code Disposer.register(getDisposable(), myScopeChooserCombo)}, where
+ * {@code getDisposable()} is {@code DialogWrapper}'s method.
+ */
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
+
+  private static final @NotNull Logger LOG = Logger.getInstance(ScopeChooserCombo.class);
   private Project myProject;
-  private boolean mySuggestSearchInLibs;
-  private boolean myPrevSearchFiles;
-  private NamedScopesHolder.ScopeListener myScopeListener;
-  private NamedScopeManager myNamedScopeManager;
-  private DependencyValidationManager myValidationManager;
-  private boolean myCurrentSelection = true;
-  private boolean myUsageView = true;
-  private Condition<ScopeDescriptor> myScopeFilter;
-  private boolean myShowEmptyScopes;
-  private BrowseListener myBrowseListener = null;
+  private @Nullable Condition<? super ScopeDescriptor> myScopeFilter;
+  private BrowseListener myBrowseListener;
+  private @Nullable AbstractScopeModel scopeModel = null;
+  private final @NotNull HashMap<ScopeOption, Boolean> postponedOptions = new HashMap<>();
+  private @Nullable ScopesSnapshot scopes = null;
+  private @Nullable AsyncPromise<?> initPromise = null;
+  private @Nullable Object selection;
+
+  private @Nullable PreselectedScopeLazy preselectedScopeLazy = null;
 
   public ScopeChooserCombo() {
-    super(new IgnoringComboBox(){
-      @Override
-      protected boolean isIgnored(Object item) {
-        return item instanceof ScopeSeparator;
-      }
-    });
+    super(new ComboBox<>());
   }
 
-  public ScopeChooserCombo(final Project project, boolean suggestSearchInLibs, boolean prevSearchWholeFiles, String preselect) {
+  public ScopeChooserCombo(final Project project, boolean suggestSearchInLibs, boolean prevSearchWholeFiles, @Nls String preselect) {
     this();
-    init(project, suggestSearchInLibs, prevSearchWholeFiles,  preselect);
-  }
-
-  public void init(final Project project, final String preselect){
-    init(project, false, true, preselect);
-  }
-
-  public void init(final Project project, final boolean suggestSearchInLibs, final boolean prevSearchWholeFiles, final String preselect) {
     init(project, suggestSearchInLibs, prevSearchWholeFiles, preselect, null);
+  }
+
+  public void init(final Project project, final @Nls String preselect) {
+    init(project, false, true, preselect, null);
   }
 
   public void init(final Project project,
                    final boolean suggestSearchInLibs,
                    final boolean prevSearchWholeFiles,
-                   final String preselect,
-                   @Nullable Condition<ScopeDescriptor> scopeFilter) {
-    mySuggestSearchInLibs = suggestSearchInLibs;
-    myPrevSearchFiles = prevSearchWholeFiles;
+                   final Object selection,
+                   @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
+    initialize(project, suggestSearchInLibs, prevSearchWholeFiles, selection, scopeFilter);
+  }
+
+  public @NotNull Promise<?> initialize(@NotNull Project project,
+                                        final boolean suggestSearchInLibs,
+                                        final boolean prevSearchWholeFiles,
+                                        @Nullable Object selection,
+                                        @Nullable Condition<? super ScopeDescriptor> scopeFilter) {
+    if (myProject != null) {
+      throw new IllegalStateException("scope chooser combo already initialized");
+    }
+
+    LOG.debug("Initializing scope chooser combo");
+    scopeModel = project.getService(ScopeService.class)
+      .createModel(EnumSet.of(
+        ScopeOption.FROM_SELECTION,
+        ScopeOption.USAGE_VIEW,
+        ScopeOption.LIBRARIES,
+        ScopeOption.SEARCH_RESULTS
+      ));
+    Disposer.register(this, scopeModel);
+    for (Map.Entry<ScopeOption, Boolean> entry : postponedOptions.entrySet()) {
+      scopeModel.setOption(entry.getKey(), entry.getValue());
+    }
+    postponedOptions.clear();
+    scopeModel.setFilter(descriptor -> myScopeFilter == null || myScopeFilter.value(descriptor));
+    scopeModel.addScopeModelListener(new MyScopeModelListener());
     myProject = project;
-    myScopeListener = () -> {
-      final SearchScope selectedScope = getSelectedScope();
-      rebuildModel();
-      if (selectedScope != null) {
-        selectScope(selectedScope.getDisplayName());
-      }
+
+    NamedScopesHolder.ScopeListener scopeListener = () -> {
+      SearchScope selectedScope = getSelectedScope();
+      rebuildModelAndSelectScopeOnSuccess(selectedScope);
     };
     myScopeFilter = scopeFilter;
-    myNamedScopeManager = NamedScopeManager.getInstance(project);
-    myNamedScopeManager.addScopeListener(myScopeListener);
-    myValidationManager = DependencyValidationManager.getInstance(project);
-    myValidationManager.addScopeListener(myScopeListener);
-    addActionListener(createScopeChooserListener());
+    NamedScopeManager.getInstance(project).addScopeListener(scopeListener, this);
+    DependencyValidationManager.getInstance(project).addScopeListener(scopeListener, this);
+    addActionListener(this::handleScopeChooserAction);
 
-    final ComboBox<ScopeDescriptor> combo = (ComboBox<ScopeDescriptor>)getComboBox();
-    combo.setMinimumAndPreferredWidth(JBUI.scale(300));
-    combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
+    ComboBox<ScopeDescriptor> combo = getComboBox();
+    combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
+    combo.setRenderer(
+      ScopeSeparatorKt.createScopeDescriptorRenderer(scopes == null ? null : (descriptor) -> scopes.getSeparatorFor(descriptor), ""));
+    combo.setSwingPopup(false);
 
-    rebuildModel();
+    if (selection != null) {
+      preselectedScopeLazy = new PreselectedScopeLazy(
+        project,
+        suggestSearchInLibs,
+        prevSearchWholeFiles,
+        selection
+      );
+    }
 
-    selectScope(preselect);
-    new ComboboxSpeedSearch(combo) {
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof ScopeDescriptor) {
-          final ScopeDescriptor descriptor = (ScopeDescriptor)element;
-          return descriptor.getDisplay();
-        }
-        return null;
-      }
-    };
+    initPromise = new AsyncPromise<>();
+    rebuildModelAndSelectScopeOnSuccess(selection);
+    return initPromise;
+  }
+
+  @Override
+  public ComboBox<ScopeDescriptor> getComboBox() {
+    //noinspection unchecked
+    return (ComboBox<ScopeDescriptor>)super.getComboBox();
   }
 
   public void setBrowseListener(BrowseListener browseListener) {
@@ -111,93 +142,64 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setCurrentSelection(boolean currentSelection) {
-    myCurrentSelection = currentSelection;
+    setModelOption(ScopeOption.FROM_SELECTION, currentSelection);
   }
 
   public void setUsageView(boolean usageView) {
-    myUsageView = usageView;
+    setModelOption(ScopeOption.USAGE_VIEW, usageView);
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-    if (myValidationManager != null) {
-      myValidationManager.removeScopeListener(myScopeListener);
-      myValidationManager = null;
+  private void setModelOption(ScopeOption option, boolean value) {
+    var model = scopeModel;
+    if (model == null) {
+      postponedOptions.put(option, value);
     }
-    if (myNamedScopeManager != null) {
-      myNamedScopeManager.removeScopeListener(myScopeListener);
-      myNamedScopeManager = null;
+    else {
+      model.setOption(option, value);
     }
-    myScopeListener = null;
   }
 
-  private void selectScope(String preselect) {
-    if (preselect != null) {
-      final JComboBox combo = getComboBox();
-      DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
-      for (int i = 0; i < model.getSize(); i++) {
-        ScopeDescriptor descriptor = (ScopeDescriptor)model.getElementAt(i);
-        if (preselect.equals(descriptor.getDisplay())) {
-          combo.setSelectedIndex(i);
-          break;
-        }
+  public void selectItem(@Nullable Object selection) {
+    if (selection == null) return;
+    JComboBox<ScopeDescriptor> combo = getComboBox();
+    DefaultComboBoxModel<ScopeDescriptor> model = (DefaultComboBoxModel<ScopeDescriptor>)combo.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      ScopeDescriptor descriptor = model.getElementAt(i);
+      if (selection instanceof String && selection.equals(descriptor.getDisplayName()) ||
+          selection instanceof SearchScope && descriptor.scopeEquals((SearchScope)selection)) {
+        combo.setSelectedIndex(i);
+        break;
       }
     }
   }
 
-  private ActionListener createScopeChooserListener() {
-    return e -> {
-      final String selection = getSelectedScopeName();
-      if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
-      final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
-      if (dlg.isOK()){
-        rebuildModel();
-        final NamedScope namedScope = dlg.getSelectedScope();
-        if (namedScope != null) {
-          selectScope(namedScope.getName());
-        }
-      }
-      if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
-    };
+  private void handleScopeChooserAction(ActionEvent ignore) {
+    String selection = getSelectedScopeName();
+    if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
+    EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
+    if (dlg.isOK()) {
+      NamedScope namedScope = dlg.getSelectedScope();
+      rebuildModelAndSelectScopeOnSuccess(namedScope == null ? null : namedScope.getScopeId());
+    }
+    if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }
 
-  private void rebuildModel() {
-    getComboBox().setModel(createModel());
+  private void rebuildModelAndSelectScopeOnSuccess(@Nullable Object selection) {
+    this.selection = selection;
+    var model = scopeModel;
+    if (model != null) {
+      scopeModel.refreshScopes(null);
+    }
   }
 
-  @NotNull
-  private DefaultComboBoxModel<ScopeDescriptor> createModel() {
-    final DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
-
-    createPredefinedScopeDescriptors(model);
-
-    final List<NamedScope> changeLists = ChangeListsScopesProvider.getInstance(myProject).getFilteredScopes();
-    if (!changeLists.isEmpty()) {
-      model.addElement(new ScopeSeparator("VCS Scopes"));
-      for (NamedScope changeListScope : changeLists) {
-        final GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(myProject, changeListScope);
-        addScopeDescriptor(model, new ScopeDescriptor(scope));
+  @RequiresEdt
+  protected void updateModel(@NotNull DefaultComboBoxModel<ScopeDescriptor> model,
+                             @NotNull List<? extends ScopeDescriptor> descriptors) {
+    for (ScopeDescriptor descriptor : descriptors) {
+      if (!(descriptor instanceof ScopeSeparator)) {
+        model.addElement(descriptor);
       }
     }
-
-    final List<ScopeDescriptor> customScopes = new ArrayList<>();
-    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
-    for (NamedScopesHolder holder : holders) {
-      final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
-      for (NamedScope scope : scopes) {
-        final GlobalSearchScope searchScope = GlobalSearchScopesCore.filterScope(myProject, scope);
-        customScopes.add(new ScopeDescriptor(searchScope));
-      }
-    }
-    if (!customScopes.isEmpty()) {
-      model.addElement(new ScopeSeparator("Custom Scopes"));
-      for (ScopeDescriptor scope : customScopes) {
-        addScopeDescriptor(model, scope);
-      }
-    }
-
-    return model;
   }
 
   @Override
@@ -218,75 +220,64 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return new Dimension(Math.min(200, minimumSize.width), minimumSize.height);
   }
 
-  private void createPredefinedScopeDescriptors(@NotNull DefaultComboBoxModel<ScopeDescriptor> model) {
-    @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    for (SearchScope scope : PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(myProject, context, mySuggestSearchInLibs,
-                                                                                             myPrevSearchFiles, myCurrentSelection,
-                                                                                             myUsageView, myShowEmptyScopes)) {
-      addScopeDescriptor(model, new ScopeDescriptor(scope));
-    }
-    for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
-      for (ScopeDescriptor scopeDescriptor : provider.getScopeDescriptors(myProject)) {
-        if(myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
-          model.addElement(scopeDescriptor);
-        }
-      }
-    }
-  }
-
-  private void addScopeDescriptor(DefaultComboBoxModel<ScopeDescriptor> model, ScopeDescriptor scopeDescriptor) {
-    if (myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
-      model.addElement(scopeDescriptor);
-    }
-  }
-
   public void setShowEmptyScopes(boolean showEmptyScopes) {
-    myShowEmptyScopes = showEmptyScopes;
+    setModelOption(ScopeOption.EMPTY_SCOPES, showEmptyScopes);
   }
 
-  @Nullable
-  public SearchScope getSelectedScope() {
-    final JComboBox combo = getComboBox();
-    int idx = combo.getSelectedIndex();
-    return idx < 0 ? null : ((ScopeDescriptor)combo.getSelectedItem()).getScope();
+  public @Nullable SearchScope getSelectedScope() {
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    return item == null ? getPreselectedScope() : item.getScope();
   }
 
-  @Nullable
-  public String getSelectedScopeName() {
-    final JComboBox combo = getComboBox();
-    int idx = combo.getSelectedIndex();
-    return idx < 0 ? null : ((ScopeDescriptor)combo.getSelectedItem()).getDisplay();
-  }
-
-  private static class ScopeSeparator extends ScopeDescriptor {
-    private final String myText;
-
-    ScopeSeparator(@NotNull String text) {
-      super(null);
-      myText = text;
+  public @Nullable @Nls String getSelectedScopeName() {
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    if (item == null) {
+      SearchScope preselectedScope = getPreselectedScope();
+      return preselectedScope == null ? null : preselectedScope.getDisplayName();
     }
-
-    @Override
-    public String getDisplay() {
-      return myText;
-    }
+    return item.getDisplayName();
   }
 
-  private static class ScopeDescriptionWithDelimiterRenderer extends ListCellRendererWrapper<ScopeDescriptor> {
-    @Override
-    public void customize(JList list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
-      if (value != null) {
-        setIcon(value.getDisplayIcon());
-        setText(value.getDisplay());
-      }
-      if (value instanceof ScopeSeparator) {
-        setSeparator();
-      }
+  private @Nullable SearchScope getPreselectedScope() {
+    return ObjectUtils.doIfNotNull(preselectedScopeLazy, PreselectedScopeLazy::get);
+  }
+
+  public @Nullable @NonNls String getSelectedScopeId() {
+    String scopeName = getSelectedScopeName();
+    return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
+  }
+
+  @ApiStatus.Internal
+  public void waitWithModalProgressUntilInitialized() {
+    if (myProject != null && initPromise != null) {
+      ScopeServiceKt.waitForPromiseWithModalProgress(myProject, initPromise);
     }
   }
 
   public interface BrowseListener {
     void onBeforeBrowseStarted();
+
     void onAfterBrowseFinished();
+  }
+
+  private class MyScopeModelListener implements ScopeModelListener {
+    @Override
+    public void scopesUpdated(@NotNull ScopesSnapshot scopes) {
+      LOG.debug("Scope chooser combo updated, scheduling EDT update");
+      SwingUtilities.invokeLater(() -> {
+        ScopeChooserCombo.this.scopes = scopes;
+        DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
+        updateModel(model, scopes.getScopeDescriptors());
+        getComboBox().setModel(model);
+        selectItem(selection);
+        preselectedScopeLazy = null;
+        var promise = initPromise;
+        if (promise != null) {
+          LOG.debug("Scope chooser combo initialized");
+          promise.setResult(null);
+          initPromise = null;
+        }
+      });
+    }
   }
 }

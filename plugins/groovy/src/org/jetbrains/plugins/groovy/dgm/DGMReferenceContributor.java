@@ -18,7 +18,11 @@ package org.jetbrains.plugins.groovy.dgm;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
 import com.intellij.util.ProcessingContext;
@@ -30,16 +34,15 @@ import java.util.ArrayList;
 /**
  * @author Max Medvedev
  */
-public class DGMReferenceContributor extends PsiReferenceContributor {
+public final class DGMReferenceContributor extends PsiReferenceContributor {
 
   private final JavaClassReferenceProvider myProvider = new JavaClassReferenceProvider();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(PropertiesTokenTypes.VALUE_CHARACTERS), new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         if (!DGMUtil.isInDGMFile(element)) return PsiReference.EMPTY_ARRAY;
 
         IProperty parent = (IProperty)element.getParent();

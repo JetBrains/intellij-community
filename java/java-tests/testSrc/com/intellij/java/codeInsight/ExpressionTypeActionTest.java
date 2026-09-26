@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.hint.ShowExpressionTypeHandler;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -31,8 +32,23 @@ public class ExpressionTypeActionTest extends JavaCodeInsightFixtureTestCase {
   public void testSimpleFun2() { doSimpleTest("<selection>f(firstArg, 12)</selection><caret>", "int"); }
   public void testSimpleBad1() { doSimpleTest("something_missing<caret>", "&lt;unknown&gt;, int"); }
 
+  @TestFor(issues = "IJPL-248690")
+  public void testSelectionWithTrailingWhitespace() { doStatementTest("<selection>111 </selection><caret>", "int"); }
+
+  @TestFor(issues = "IJPL-248690")
+  public void testSelectionWithLeadingWhitespace() { doStatementTest("<selection> 111</selection><caret>", "int"); }
+
+  @TestFor(issues = "IJPL-248690")
+  public void testSelectionWithSurroundingWhitespace() { doStatementTest("<selection> 111 </selection><caret>", "int"); }
+
   private void doSimpleTest(@NotNull String param, @NotNull String expected) {
     doTest("class A { int f(long[] firstArg, Object s) { f(p, " + param + ");}}", expected);
+  }
+
+  private void doStatementTest(@NotNull String param, @NotNull String expected) {
+    // a statement context, unlike the f(p, ...) wrapper above, has no enclosing expression to absorb the
+    // surrounding whitespace, reproducing the original "No expression found" scenario from the issue
+    doTest("class A { void m() { int x = " + param + "; } }", expected);
   }
 
   private void doTest(@NotNull String text, @NotNull String expected) {

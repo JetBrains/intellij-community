@@ -1,61 +1,82 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 /**
- * Provides access to the {@code Application}.
+ * Provides access to the {@link Application}.
  */
 public class ApplicationManager {
-  protected static Application ourApplication;
+  @Internal protected static volatile Application ourApplication;
 
-  /**
-   * Gets Application.
-   *
-   * @return {@code Application}
-   */
   public static Application getApplication() {
     return ourApplication;
   }
 
-  private static void setApplication(@NotNull Application instance) {
+  /** @noinspection StaticNonFinalField*/
+  @Internal
+  public static boolean logSetApplication = true;
+
+  @Internal
+  public static void setApplication(@Nullable Application instance) {
+    if (logSetApplication) {
+      Application old = ourApplication;
+      if ((old != null && old.isUnitTestMode()) || (instance != null && instance.isUnitTestMode())) {
+        Logger.getInstance(ApplicationManager.class).info("Switching application instance: " + old + " -> " + instance, new Throwable());
+      }
+    }
+
     ourApplication = instance;
-    CachedSingletonsRegistry.cleanupCachedFields();
+    for (Runnable cleaner : cleaners) {
+      cleaner.run();
+    }
   }
 
   public static void setApplication(@NotNull Application instance, @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        if (old != null) { // to prevent NPEs in threads still running
-          setApplication(old);
-        }
+    Application old = ourApplication;
+    Disposer.register(parent, () -> {
+      Application current = ourApplication;
+      if (current != instance) {
+        throw new IllegalStateException("Application was changes unexpectedly. Expected:" + instance + " actual:" + current);
       }
+      setApplication(old);
     });
     setApplication(instance);
   }
 
-  public static void setApplication(@NotNull Application instance,
-                                    @NotNull Getter<FileTypeRegistry> fileTypeRegistryGetter,
-                                    @NotNull Disposable parent) {
-    final Application old = ourApplication;
-    final Getter<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        if (old != null) { // to prevent NPEs in threads still running
-          setApplication(old);
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          FileTypeRegistry.ourInstanceGetter = oldFileTypeRegistry;
-        }
+  public static void setApplication(
+    @NotNull Application instance,
+    @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
+    @NotNull Disposable parent
+  ) {
+    Application old = ourApplication;
+    setApplication(instance);
+    FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter, parent);
+    Disposer.register(parent, () -> {
+      if (old != null) {
+        // to prevent NPEs in threads still running
+        setApplication(old);
       }
     });
-    setApplication(instance);
-    FileTypeRegistry.ourInstanceGetter = fileTypeRegistryGetter;
+  }
+
+  private static final List<Runnable> cleaners = new CopyOnWriteArrayList<>();
+
+  /**
+   * Registers a cleaning operation to be run when the application instance is reset (for example, in tests).
+   */
+  @Internal
+  public static void registerCleaner(Runnable cleaner) {
+    cleaners.add(cleaner);
   }
 }

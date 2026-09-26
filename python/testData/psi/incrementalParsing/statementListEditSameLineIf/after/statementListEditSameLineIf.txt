@@ -1,0 +1,14 @@
+Original text:
+---------------
+def foo():
+    if True: print(1)
+    if False: print(2)
+    return
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    if True: print(1)
+    if False: <reparse>print(3)</reparse>
+    return
+---------------

@@ -1,0 +1,386 @@
+:root,
+html[data-theme="dark"] {
+  --bg: #1e1f22;
+  --bg-elev: #2b2d30;
+  --bg-elev-2: #393b40;
+  --line: #393b40;
+  --line-soft: #2b2d30;
+  --fg: #dfe1e5;
+  --fg-dim: #9da0a8;
+  --fg-very-dim: #6f737a;
+  --accent: #3574f0;
+  --kind-plugin: #cc7832;
+  --kind-moduleV2: #6897bb;
+  --kind-productModuleV2: #9876aa;
+  --kind-pluginAlias: #629755;
+  /* Scope axis — orthogonal to "kind". Carries the lib/ vs plugins/X/lib/
+     distinction in the row icons; "kind" chips are kept for the legend. */
+  --scope-core: #4ec9b0;
+  --scope-plugin: #6897bb;
+  --shared-jar-stripe: rgba(255, 255, 255, 0.06);
+  --load-required: #4f9d4f;
+  --load-embedded: #c97a40;
+  --load-optional: #9da0a8;
+  --load-on-demand: #8b6db8;
+  --warn: #f0a000;
+  --err: #d9534f;
+}
+
+html[data-theme="light"] {
+  --bg: #fafafa;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #ebecf0;
+  --line: #d3d5db;
+  --line-soft: #ebecf0;
+  --fg: #1f2126;
+  --fg-dim: #5d6068;
+  --fg-very-dim: #8a8d94;
+  --accent: #3574f0;
+  --kind-plugin: #b8651f;
+  --kind-moduleV2: #336894;
+  --kind-productModuleV2: #6f4f88;
+  --kind-pluginAlias: #4a7a3a;
+  --scope-core: #2c8174;
+  --scope-plugin: #336894;
+  --shared-jar-stripe: rgba(0, 0, 0, 0.06);
+  --load-required: #3a7f3a;
+  --load-embedded: #b46228;
+  --load-optional: #6f737a;
+  --load-on-demand: #6f50a8;
+  --warn: #c98000;
+  --err: #b53f3b;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "JetBrains Mono", "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+
+header.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elev);
+}
+.brand { font-weight: 600; font-size: 14px; letter-spacing: 0.2px; }
+.brand .product { color: var(--fg); }
+.brand .build { color: var(--fg-dim); margin-left: 8px; font-weight: 400; }
+nav.tabs { display: flex; gap: 4px; margin-left: auto; }
+nav.tabs button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-dim);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+nav.tabs button:hover { color: var(--fg); background: var(--bg-elev-2); }
+nav.tabs button.active { color: var(--fg); background: var(--bg-elev-2); border-color: var(--line); }
+
+button.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg-dim);
+  width: 28px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+}
+button.theme-toggle:hover { color: var(--fg); background: var(--bg-elev-2); }
+
+main.content { overflow: hidden; position: relative; }
+section.view { position: absolute; inset: 0; overflow: auto; padding: 16px 20px; }
+section.view.hidden { display: none; }
+
+/* --- chips / badges --- */
+.chip {
+  display: inline-block;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  text-transform: lowercase;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.chip-kind-plugin { color: var(--kind-plugin); }
+.chip-kind-moduleV2 { color: var(--kind-moduleV2); }
+.chip-kind-productModuleV2 { color: var(--kind-productModuleV2); }
+.chip-kind-pluginAlias { color: var(--kind-pluginAlias); }
+.chip-load-required { color: var(--load-required); }
+.chip-load-embedded { color: var(--load-embedded); font-weight: 600; }
+.chip-load-optional { color: var(--load-optional); }
+.chip-load-on-demand { color: var(--load-on-demand); }
+.chip-vis-public { color: var(--load-required); }
+.chip-vis-internal { color: var(--warn); }
+.chip-vis-private { color: var(--fg-very-dim); }
+.chip-essential { color: var(--err); }
+.chip-bundled { color: var(--accent); }
+.chip-on { background: currentColor; color: var(--bg-elev) !important; border-color: transparent; }
+.chip-ns-legacy { color: var(--fg-very-dim); border-style: dashed; }
+.chip-ns { color: var(--fg-dim); }
+
+/* --- node icons (scope + extraction iconography) --- */
+.node-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  vertical-align: -3px;
+  margin-right: 6px;
+  flex: none;
+  color: var(--fg-dim);
+}
+.node-icon.scope-core { color: var(--scope-core); }
+.node-icon.scope-plugin { color: var(--scope-plugin); }
+.node-icon.scope-alias { color: var(--kind-pluginAlias); }
+.node-icon.scope-plugin-descriptor { color: var(--kind-plugin); }
+
+/* Host-jar chip — shows where the module's classes are actually packed. */
+.chip-host {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  color: var(--fg-dim);
+  border-color: var(--line);
+  cursor: pointer;
+}
+.chip-host.shared { color: var(--load-embedded); border-style: dashed; }
+.chip-host:hover { color: var(--fg); border-color: var(--accent); }
+
+/* Hatched fill for "shared / embedded" surfaces (treemap leaves, cards). */
+.hatched {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--shared-jar-stripe) 0,
+    var(--shared-jar-stripe) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* --- stat cards --- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.card .label { color: var(--fg-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+.card .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+.card .sub { color: var(--fg-dim); font-size: 11px; margin-top: 4px; }
+
+h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-dim);
+  font-weight: 600;
+  margin: 8px 0 10px;
+}
+
+/* --- toolbar (search + filters) --- */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.toolbar input[type="search"] {
+  flex: 1 1 240px;
+  min-width: 200px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  outline: none;
+}
+.toolbar input[type="search"]:focus { border-color: var(--accent); }
+.toolbar .filter {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--fg-dim);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.toolbar .filter.on { color: var(--fg); border-color: var(--accent); background: var(--bg-elev-2); }
+.toolbar .filter-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.toolbar .filter-with-icon .node-icon {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+  vertical-align: 0;
+}
+.toolbar .filter-group-label {
+  color: var(--fg-very-dim);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0 2px 0 6px;
+}
+.toolbar .count { color: var(--fg-dim); font-size: 11px; margin-left: auto; }
+
+/* --- lists --- */
+.list { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.row {
+  display: grid;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  align-items: center;
+}
+.row:hover { background: var(--bg-elev); }
+.row:last-child { border-bottom: none; }
+.row .name { font-weight: 500; word-break: break-all; }
+.row .meta { color: var(--fg-dim); font-size: 11px; }
+.row .size { color: var(--fg-dim); font-variant-numeric: tabular-nums; font-size: 11px; text-align: right; }
+.row.is-open { background: var(--bg-elev); }
+
+.row-plugin {
+  grid-template-columns:
+    1fr      /* name */
+    78px     /* essential/bundled (or empty) */
+    104px    /* "N modules" */
+    72px     /* "N jars" */
+    88px;    /* size */
+}
+.row-container {
+  grid-template-columns:
+    24px     /* icon */
+    1fr      /* jar path */
+    104px    /* tenants chip */
+    88px;    /* size */
+}
+.row-module {
+  grid-template-columns:
+    1fr      /* name */
+    74px     /* loading */
+    minmax(180px, 240px) /* host jar chip */
+    62px     /* visibility */
+    160px    /* owner plugin */
+    88px;    /* size */
+}
+.row-plugin .chip,
+.row-module .chip { justify-self: start; }
+.row > * { min-width: 0; }
+.row .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-boot   { grid-template-columns: 28px 1fr auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.row-boot .idx { color: var(--fg-very-dim); font-variant-numeric: tabular-nums; }
+
+.expand {
+  background: var(--bg);
+  border-top: 1px dashed var(--line);
+  padding: 10px 14px 12px;
+}
+.expand h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--fg-dim);
+  margin: 8px 0 4px;
+  font-weight: 600;
+}
+.expand h3:first-child { margin-top: 0; }
+.expand ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.expand ul.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 2px 12px;
+}
+.expand li { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--fg); padding: 2px 0; }
+.expand li > .chip { vertical-align: middle; margin-right: 6px; }
+.expand li .dim { color: var(--fg-dim); }
+.expand .pill { display: inline-block; margin-right: 6px; }
+
+a.link, .crosslink {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+}
+a.link:hover, .crosslink:hover { text-decoration: underline; }
+
+/* --- echarts views --- */
+.chart-wrap { width: 100%; height: calc(100vh - 160px); border: 1px solid var(--line); border-radius: 8px; background: var(--bg-elev); }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: center;
+  color: var(--fg-dim);
+  font-size: 11px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.legend .swatch { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend .line { width: 22px; height: 0; border-top: 2px solid currentColor; display: inline-block; }
+.legend .sep { color: var(--fg-very-dim); }
+.chart-controls { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+.chart-controls select, .chart-controls input {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+/* --- empty / hint --- */
+.hint { color: var(--fg-dim); font-size: 12px; padding: 8px 0; }
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg-elev);
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+
+/* large lists — keep DOM lean via virtual rendering, but rows are still styled normally */
+.virtual { position: relative; }
+.virtual .spacer { width: 1px; }
+.virtual .row { position: absolute; left: 0; right: 0; }

@@ -21,5 +21,5 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 public interface ConsoleFilterProviderEx extends ConsoleFilterProvider {
-  Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope);
+  Filter @NotNull [] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope);
 }

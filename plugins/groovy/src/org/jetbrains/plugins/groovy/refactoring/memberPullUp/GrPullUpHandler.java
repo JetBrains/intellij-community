@@ -1,16 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -20,6 +26,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -31,12 +38,13 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfoStorage
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 /**
  * @author Max Medvedev
  */
 public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog.Callback, ElementsHandler {
   private static final Logger LOG = Logger.getInstance(GrPullUpHandler.class);
-  public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
 
   private PsiClass mySubclass;
   private Project myProject;
@@ -51,7 +59,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
       if (element == null || element instanceof PsiFile) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
         return;
       }
 
@@ -69,15 +77,14 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;
 
     PsiElement element = elements[0];
 
-    if (element instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition)element;
+    if (element instanceof GrTypeDefinition aClass) {
       invokeImpl(project, dataContext, aClass, null);
     }
     else if (element instanceof GrMethod || element instanceof GrField) {
@@ -90,8 +97,9 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
-        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
+                                                                             getRefactoringName()));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -107,13 +115,13 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
 
     mySubclass = aClass;
-    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<GrMember>() {
+    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<>() {
       @Override
       public boolean includeMember(GrMember element) {
         return true;
@@ -142,7 +150,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, infos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
       final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
       final PsiPackage targetPackage =
         targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
@@ -175,5 +183,9 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
+
+  public static @Nls(capitalization = Title) String getRefactoringName() {
+    return RefactoringBundle.message("pull.members.up.title");
   }
 }

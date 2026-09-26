@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+class MyClass<T>
+
+fun <T> MyClass<T>.ext() = ""
+
+fun foo(t: MyClass<*>) {
+    t.<caret>
+}
+
+// EXIST: ext

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class HighlightTestInfo implements Disposable {
-  @NotNull protected final String[] filePaths;
+  protected final String @NotNull [] filePaths;
   protected boolean checkWarnings;
   protected boolean checkInfos;
   protected boolean checkSymbolNames;
@@ -30,7 +30,7 @@ public abstract class HighlightTestInfo implements Disposable {
   private boolean tested;
   private final String myPlace;
 
-  public HighlightTestInfo(@NotNull Disposable parentDisposable, @NonNls @NotNull String... filePaths) {
+  public HighlightTestInfo(@NotNull Disposable parentDisposable, @NonNls String @NotNull ... filePaths) {
     this.filePaths = filePaths;
     // disposer here for catching the case of not calling test()
     Disposer.register(parentDisposable, this);

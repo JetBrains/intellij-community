@@ -1,13 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,21 +24,20 @@ import java.util.Map;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
-  private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
+public final class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
+  private static final Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
 
-  public final static String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
-  public final static String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-  public final static String JAVA_OPTIONAL = "java.util.Optional";
+  public static final @NonNls String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
+  public static final @NonNls String GUAVA_OPTIONAL = "com.google.common.base.Optional";
+  public static final @NonNls String JAVA_OPTIONAL = "java.util.Optional";
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForMethod(@Nullable PsiType from,
-                                                                 @Nullable PsiType to,
-                                                                 @NotNull PsiMethod method,
-                                                                 @NotNull String methodName,
-                                                                 PsiExpression context,
-                                                                 TypeMigrationLabeler labeler) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForMethod(@Nullable PsiType from,
+                                                                           @Nullable PsiType to,
+                                                                           @NotNull PsiMethod method,
+                                                                           @NotNull String methodName,
+                                                                           PsiExpression context,
+                                                                           TypeMigrationLabeler labeler) {
     if (!(context instanceof PsiMethodCallExpression)) {
       if ("or".equals(methodName)) {
         PsiMethodCallExpression methodCallExpression = null;
@@ -96,9 +103,8 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
            (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
   }
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
     if (GuavaOptionalConversionUtil.isOptionalOrContext(context)) {
       return new TypeConversionDescriptor("$o$", "com.google.common.base." + OPTIONAL_CONVERTOR_PATTERN);
     }
@@ -114,7 +120,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   }
 
   @Override
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
+  protected void fillSimpleDescriptors(Map<@NonNls String, TypeConversionDescriptorBase> descriptorsMap) {
     descriptorsMap.put("absent", new TypeConversionDescriptor("'_Optional?.absent()", "java.util.Optional.empty()") {
       @Override
       public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
@@ -144,15 +150,13 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
                                                              "$val$.map(java.util.Collections::singleton).orElse(java.util.Collections.emptySet())"));
   }
 
-  @NotNull
   @Override
-  public String ruleFromClass() {
+  public @NotNull String ruleFromClass() {
     return GUAVA_OPTIONAL;
   }
 
-  @NotNull
   @Override
-  public String ruleToClass() {
+  public @NotNull String ruleToClass() {
     return JAVA_OPTIONAL;
   }
 

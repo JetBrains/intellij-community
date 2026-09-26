@@ -1,0 +1,9 @@
+// "Replace with safe (?.) call" "true"
+// WITH_STDLIB
+// K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'String?'.
+fun foo(a: String?) {
+    val b = a
+        ?.length
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix

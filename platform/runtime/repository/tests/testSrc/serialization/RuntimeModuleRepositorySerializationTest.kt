@@ -1,0 +1,263 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.runtime.repository.serialization
+
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleId.DEFAULT_NAMESPACE
+import com.intellij.platform.runtime.repository.RuntimeModuleId.raw
+import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
+import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
+import com.intellij.platform.runtime.repository.RuntimePluginHeader
+import com.intellij.platform.runtime.repository.createModuleDescriptor
+import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
+import com.intellij.platform.runtime.repository.impl.RuntimePluginHeaderImpl
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor.create
+import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
+import com.intellij.platform.runtime.repository.xml
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.util.io.DirectoryContentBuilder
+import com.intellij.util.io.DirectoryContentSpec
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.jarFile
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Path
+import java.time.LocalDateTime
+import java.util.zip.ZipFile
+
+class RuntimeModuleRepositorySerializationTest {
+  @JvmField
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
+
+  @Test
+  fun `empty module`() {
+    check(listOf(createModuleDescriptor("ij.platform.util", emptyList(), emptyList()))) {
+      xml("ij.platform.util.xml", """
+        <module name="ij.platform.util" namespace="jetbrains" visibility="public">
+        </module>
+      """.trimIndent())
+    }
+  }
+  
+  @Test
+  fun `single module`() {
+    check(listOf(createModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
+      xml("ij.platform.util.xml", """
+          <module name="ij.platform.util" namespace="jetbrains" visibility="public">
+            <resources>
+              <resource-root path="ij-util.jar"/>
+            </resources>
+          </module>
+        """.trimIndent())
+    }
+  }
+  
+  @Test
+  fun `jar entries have a fixed time`() {
+    val jarFilePath = tempDirectory.rootPath.resolve("module-descriptors.jar")
+    val descriptors = listOf(createModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))
+    RuntimeModuleRepositorySerialization.saveToJar(descriptors, emptyList(), null, jarFilePath, 0)
+    val entryTimes = ZipFile(jarFilePath.toFile()).use { zip -> zip.entries().toList().associate { it.name to it.timeLocal } }
+    assertThat(entryTimes).containsOnlyKeys("META-INF/MANIFEST.MF", "ij.platform.util.xml")
+    assertThat(entryTimes.values).containsOnly(LocalDateTime.of(1980, 2, 1, 0, 0))
+  }
+
+  @Test
+  fun `two modules`() {
+    check(listOf(
+      create(raw("ij.platform.util.rt", "custom"), listOf("ij-util-rt.jar"), emptyList()),
+      create(raw("ij.platform.util", "jetbrains"), RuntimeModuleVisibility.INTERNAL, emptyList(), listOf(raw("ij.platform.util.rt", "custom"))),
+    )) {
+      xml("ij.platform.util.xml", """
+          <module name="ij.platform.util" namespace="jetbrains" visibility="internal">
+            <dependencies>
+              <module name="ij.platform.util.rt" namespace="custom"/>
+            </dependencies>
+          </module>
+        """.trimIndent())
+      xml("ij.platform.util.rt_custom.xml", """
+          <module name="ij.platform.util.rt" namespace="custom" visibility="public">
+            <resources>
+              <resource-root path="ij-util-rt.jar"/>
+            </resources>
+          </module>
+        """.trimIndent())
+    }
+  }
+
+  @Test
+  fun `bootstrap module classpath`() {
+    check(listOf(
+      createModuleDescriptor("foo", listOf("foo.jar"), emptyList()),
+      create(raw("bar", RuntimeModuleId.LEGACY_JPS_MODULE_NAMESPACE_SUFFIX), listOf("bar.jar"),
+      listOf(raw("foo", DEFAULT_NAMESPACE))),
+    ), emptyList(), "bar", "bar.jar foo.jar") {
+      xml("foo.xml", """
+          <module name="foo" namespace="jetbrains" visibility="public">
+            <resources>
+              <resource-root path="foo.jar"/>
+            </resources>
+          </module>
+        """.trimIndent())
+      xml($$"bar_$legacy_jps_module.xml", $$"""
+          <module name="bar" namespace="$legacy_jps_module" visibility="public">
+            <dependencies>
+              <module name="foo"/>
+            </dependencies>
+            <resources>
+              <resource-root path="bar.jar"/>
+            </resources>
+          </module>
+        """.trimIndent())
+    }
+  }
+  
+  @Test
+  fun `unresolved dependency`() {
+    val descriptors = listOf(
+      createModuleDescriptor("ij.foo", emptyList(), emptyList()),
+      createModuleDescriptor("ij.bar", emptyList(), listOf("ij.foo", "unresolved")),
+    )
+    check(descriptors) {
+      xml("ij.foo.xml", """
+          <module name="ij.foo" namespace="jetbrains" visibility="public">
+          </module>
+      """.trimIndent())
+      xml("ij.bar.xml", """
+        <module name="ij.bar" namespace="jetbrains" visibility="public">
+          <dependencies>
+            <module name="ij.foo"/>
+            <module name="unresolved"/>
+          </dependencies>
+        </module>
+      """.trimIndent())
+    }
+  }
+
+  @Test
+  fun `plugin header`() {
+    val descriptors = listOf(
+      createModuleDescriptor("ij.plugin", emptyList(), emptyList()),
+      createModuleDescriptor("ij.optional", emptyList(), emptyList()),
+      createModuleDescriptor("ij.required", emptyList(), emptyList()),
+      createModuleDescriptor("ij.embedded", emptyList(), emptyList()),
+      createModuleDescriptor("ij.required.backend", emptyList(), emptyList()),
+    )
+    val pluginHeader = RuntimePluginHeaderImpl(
+      "plugin.id",
+      raw("ij.plugin", "jetbrains"),
+      listOf(
+        IncludedRuntimeModuleImpl(raw("ij.optional", "jetbrains"), RuntimeModuleLoadingRule.OPTIONAL, null),
+        IncludedRuntimeModuleImpl(raw("ij.required", "jetbrains"), RuntimeModuleLoadingRule.REQUIRED, null),
+        IncludedRuntimeModuleImpl(raw("ij.embedded", "jetbrains"), RuntimeModuleLoadingRule.EMBEDDED, null),
+        IncludedRuntimeModuleImpl(raw("ij.on_demand", "jetbrains"), RuntimeModuleLoadingRule.ON_DEMAND, null),
+        IncludedRuntimeModuleImpl(raw("ij.required.backend", "jetbrains"),
+                                  RuntimeModuleLoadingRule.OPTIONAL,
+                                  raw("intellij.platform.backend", "jetbrains")),
+      )
+    )
+    check(descriptors, listOf(pluginHeader)) {
+      xml("ij.plugin.xml", """
+        <module name="ij.plugin" namespace="jetbrains" visibility="public">
+        </module>
+      """.trimIndent())
+      xml("ij.optional.xml", """
+        <module name="ij.optional" namespace="jetbrains" visibility="public">
+        </module>
+      """.trimIndent())
+      xml("ij.required.xml", """
+        <module name="ij.required" namespace="jetbrains" visibility="public">
+        </module>
+      """.trimIndent())
+      xml("ij.embedded.xml", """
+        <module name="ij.embedded" namespace="jetbrains" visibility="public">
+        </module>
+      """.trimIndent())
+      xml("ij.required.backend.xml", """
+        <module name="ij.required.backend" namespace="jetbrains" visibility="public">
+        </module>
+      """.trimIndent())
+      dir("plugins") {
+        xml("ij.plugin.xml", """
+         <!-- The IDE doesn't use this file; it takes data from module-descriptors.dat instead -->
+         <plugin id="plugin.id">
+           <plugin-descriptor-module name="ij.plugin" namespace="jetbrains"/>
+           <module name="ij.optional" namespace="jetbrains" loading="optional"/>
+           <module name="ij.required" namespace="jetbrains" loading="required"/>
+           <module name="ij.embedded" namespace="jetbrains" loading="embedded"/>
+           <module name="ij.on_demand" namespace="jetbrains" loading="on-demand"/>
+           <module name="ij.required.backend" namespace="jetbrains" loading="optional" required-if-available="intellij.platform.backend"/>
+         </plugin>
+        """.trimIndent())
+      }
+    }
+  }
+
+  private fun check(
+    moduleDescriptors: List<RawRuntimeModuleDescriptor>,
+    pluginHeaders: List<RuntimePluginHeader> = emptyList(),
+    bootstrapModuleName: String? = null,
+    bootstrapClassPath: String? = null,
+    content: DirectoryContentBuilder.() -> Unit,
+  ) {
+    val baseManifestText = """
+          |Manifest-Version: 1.0
+          |Specification-Title: ${JarFileSerializer.SPECIFICATION_TITLE}
+          |Specification-Version: ${JarFileSerializer.SPECIFICATION_VERSION}
+          |Implementation-Version: ${JarFileSerializer.SPECIFICATION_VERSION}.0
+        """.trimMargin()
+    val manifestText = if (bootstrapModuleName != null) {
+      """
+        |$baseManifestText
+        |Bootstrap-Module-Name: $bootstrapModuleName
+        |Bootstrap-Class-Path: $bootstrapClassPath
+      """.trimMargin()
+    }
+    else baseManifestText
+    val jarFile = jarFile { 
+      dir("META-INF") {
+        file("MANIFEST.MF", manifestText.replace("\n", "\r\n") + "\r\n\r\n")
+      }
+      content()
+    }
+    val out = tempDirectory.rootPath
+    val jarFilePath = out.resolve("module-descriptors.jar")
+    RuntimeModuleRepositorySerialization.saveToJar(moduleDescriptors, pluginHeaders, bootstrapModuleName, jarFilePath, 0)
+    jarFilePath.assertMatches(jarFile)
+
+    val compactFilePath = out.resolve("module-descriptors.dat")
+    RuntimeModuleRepositorySerialization.saveToCompactFile(moduleDescriptors, pluginHeaders, bootstrapModuleName, compactFilePath, 0)
+    checkLoadingFromCompactFile(compactFilePath, moduleDescriptors, pluginHeaders)
+    checkLoadingFromJar(jarFile, moduleDescriptors)
+  }
+
+  private fun checkLoadingFromCompactFile(
+    filePath: Path,
+    expectedDescriptors: List<RawRuntimeModuleDescriptor>,
+    expectedPluginHeaders: List<RuntimePluginHeader>
+  ) {
+    val repositoryData = RuntimeModuleRepositorySerialization.loadFromCompactFile(filePath)
+    val actualDescriptors = repositoryData.allModuleIds.map { repositoryData.findDescriptor(it)!! }
+    assertThat(actualDescriptors).containsExactlyInAnyOrderElementsOf(expectedDescriptors)
+
+    val actualPluginHeaders = repositoryData.pluginHeaders
+    assertThat(actualPluginHeaders.map { it.pluginId }).containsExactlyElementsOf(expectedPluginHeaders.map { it.pluginId })
+    for (actualPluginHeader in actualPluginHeaders) {
+      val expectedPluginHeader = expectedPluginHeaders.find { it.pluginId == actualPluginHeader.pluginId }!!
+      assertThat(actualPluginHeader.pluginDescriptorModuleId).isEqualTo(expectedPluginHeader.pluginDescriptorModuleId)
+      assertThat(actualPluginHeader.includedModules.map { it.moduleId }).containsExactlyElementsOf(expectedPluginHeader.includedModules.map { it.moduleId })
+      for (actualIncludedModule in actualPluginHeader.includedModules) {
+        val expectedIncludedModule = expectedPluginHeader.includedModules.find { it.moduleId == actualIncludedModule.moduleId }!!
+        assertThat(actualIncludedModule.loadingRule).isEqualTo(expectedIncludedModule.loadingRule)
+        assertThat(actualIncludedModule.requiredIfAvailableId).isEqualTo(expectedIncludedModule.requiredIfAvailableId)
+      }
+    }
+  }
+
+  private fun checkLoadingFromJar(zipFileSpec: DirectoryContentSpec, expectedDescriptors: List<RawRuntimeModuleDescriptor>) {
+    val repositoryData = RuntimeModuleRepositorySerialization.loadFromJar(zipFileSpec.generateInTempDir())
+    val actualDescriptors = repositoryData.allModuleIds.map { repositoryData.findDescriptor(it)!! }
+    assertThat(actualDescriptors).containsExactlyInAnyOrderElementsOf(expectedDescriptors)
+  }
+}

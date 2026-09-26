@@ -15,12 +15,15 @@
  */
 package com.intellij.ui.treeStructure;
 
+import org.jetbrains.annotations.NotNull;
+
 public class NullNode extends SimpleNode {
   public NullNode() {
     super();
   }
 
-  public SimpleNode[] getChildren() {
+  @Override
+  public SimpleNode @NotNull [] getChildren() {
     return NO_CHILDREN;
   }
 }

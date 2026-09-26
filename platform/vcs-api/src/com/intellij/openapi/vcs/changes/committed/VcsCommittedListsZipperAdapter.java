@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.Pair;
@@ -20,10 +6,11 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +26,8 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     myGroupCreator = groupCreator;
   }
 
-  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
+  @Override
+  public @NotNull Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
 
@@ -64,13 +52,14 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     return Pair.create(groups, singles);
   }
 
-  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+  @Override
+  public @NotNull CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
     if (lists.size() == 1) {
       return lists.get(0);
     }
     final CommittedChangeList result = lists.get(0);
 
-    Set<Change> processed = new THashSet<>(result.getChanges());
+    Set<Change> processed = new HashSet<>(result.getChanges());
 
     for (int i = 1; i < lists.size(); i++) {
       for (Change change : lists.get(i).getChanges()) {
@@ -82,7 +71,8 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     return result;
   }
 
-  public long getNumber(final CommittedChangeList list) {
+  @Override
+  public long getNumber(@NotNull CommittedChangeList list) {
     return list.getNumber();
   }
 }

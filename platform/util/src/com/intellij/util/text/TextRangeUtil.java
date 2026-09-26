@@ -1,42 +1,29 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * @author Rustam Vishnyakov
+ * Miscellaneous utility methods to manipulate lists of text ranges.
+ * @see TextRange
  */
-public class TextRangeUtil {
+public final class TextRangeUtil {
 
-  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange range1, TextRange range2) {
-      int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
-      return startOffsetDiff != 0 ? startOffsetDiff : range1.getEndOffset() - range2.getEndOffset();
-    }
+  public static final Comparator<TextRange> RANGE_COMPARATOR = (range1, range2) -> {
+    int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
+    return startOffsetDiff != 0 ? startOffsetDiff : range1.getEndOffset() - range2.getEndOffset();
   };
-  
+
   private TextRangeUtil() {
   }
 
@@ -44,18 +31,18 @@ public class TextRangeUtil {
    * Excludes ranges from the original range. For example, if the original range is [30..100] and ranges to exclude are
    * [20..50] and [60..90], resulting ranges will be [50..60] and [90..100]. The ranges may overlap and follow in any order. In the latter
    * case the original list of excluded ranges is sorted by start/end offset.
-   * 
+   *
    * @param original The original range to exclude the ranges from.
    * @param excludedRanges The list of ranges to exclude.
    * @return A list of ranges after excluded ranges have been applied.
    */
-  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<TextRange> excludedRanges) {
+  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull @Unmodifiable List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
-        Collections.sort(excludedRanges, RANGE_COMPARATOR);
+        excludedRanges = ContainerUtil.sorted(excludedRanges, RANGE_COMPARATOR);
       }
       int enabledRangeStart = original.getStartOffset();
-      List<TextRange> enabledRanges = new ArrayList<TextRange>();
+      List<TextRange> enabledRanges = new ArrayList<>();
       for (TextRange excludedRange : excludedRanges) {
         if (excludedRange.getEndOffset() < enabledRangeStart) continue;
         int excludedRangeStart = excludedRange.getStartOffset();
@@ -79,8 +66,7 @@ public class TextRangeUtil {
    * @param textRanges The list of ranges to process
    * @return least text range that contains all of passed text ranges
    */
-  @NotNull
-  public static TextRange getEnclosingTextRange(@NotNull List<TextRange> textRanges) {
+  public static @NotNull TextRange getEnclosingTextRange(@NotNull List<? extends TextRange> textRanges) {
     if(textRanges.isEmpty())
       return TextRange.EMPTY_RANGE;
     int lowerBound = textRanges.get(0).getStartOffset();
@@ -93,11 +79,81 @@ public class TextRangeUtil {
     return new TextRange(lowerBound, upperBound);
   }
 
+  /**
+   * Merges intersecting (including adjacent) text ranges into one.
+   * For example, [[0, 5], [4, 9], [9, 13], [17, 29], [25, 31]] will be merged to [[0, 13], [17, 31]].
+   *
+   * @param sortedRanges The list of ranges, must be sorted by start offset.
+   */
+  public static List<TextRange> mergeRanges(List<TextRange> sortedRanges) {
+    return mergeRanges(sortedRanges, 0);
+  }
+
+  /**
+   * Merges intersecting (including adjacent) text ranges into one.
+   * For example, [[0, 5], [4, 9], [9, 13], [17, 29], [25, 31]] will be merged to [[0, 13], [17, 31]].
+   *
+   * @param sortedRanges The list of ranges, must be sorted by start offset.
+   * @param maxDistance The maximum distance between ranges to consider them as adjacent.
+   */
+  public static List<TextRange> mergeRanges(List<TextRange> sortedRanges, int maxDistance) {
+    if (sortedRanges.size() <= 1) return sortedRanges;
+    ArrayDeque<TextRange> mergedRanges = new ArrayDeque<>();
+    mergedRanges.add(sortedRanges.get(0));
+    for (int i = 1; i < sortedRanges.size(); i++) {
+      TextRange range = sortedRanges.get(i);
+      TextRange leftNeighbour = mergedRanges.peek();
+      if (intersects(leftNeighbour, range, maxDistance)) {
+        mergedRanges.pop();
+        mergedRanges.push(leftNeighbour.union(range));
+      }
+      else {
+        mergedRanges.push(range);
+      }
+    }
+    return new ArrayList<>(mergedRanges);
+  }
+
+  /**
+   * Checks that the given range intersects one of the ranges in the list by performing a binary search.
+   * @param range     The range to check.
+   * @param rangeList The range list. <b>The list must be ordered by range start offset.</b>
+   * @return True if the range intersects at least one range in the list.
+   */
+  public static boolean intersectsOneOf(TextRange range, List<? extends TextRange> rangeList) {
+    return rangesContain(rangeList, range.getStartOffset()) || rangesContain(rangeList, range.getEndOffset());
+  }
+
+  /**
+   * Checks that the given offset is contained in one of the ranges in the list by performing a binary search.
+   *
+   * @param rangeList The range list. <b>The list must be ordered by range start offset.</b>
+   * @return {@code true} if the offset intersects at least one range in the list.
+   */
+  public static boolean rangesContain(List<? extends TextRange> rangeList, int offset) {
+    return rangesContain(rangeList, 0, rangeList.size() - 1, offset);
+  }
+
+  static boolean rangesContain(List<? extends TextRange> ranges, int startIndex, int endIndex, int offset) {
+    if (endIndex < startIndex || ranges.size() <= startIndex || ranges.size() <= endIndex) return false;
+    int startOffset = ranges.get(startIndex).getStartOffset();
+    int endOffset = ranges.get(endIndex).getEndOffset();
+    if (offset < startOffset || offset > endOffset) return false;
+    if (startIndex == endIndex) return true;
+    int midIndex = (endIndex + startIndex) / 2;
+    return rangesContain(ranges, startIndex, midIndex, offset)  || rangesContain(ranges, midIndex  + 1, endIndex, offset);
+  }
+
   public static int getDistance(@NotNull Segment r2, @NotNull Segment r1) {
     int s1 = r1.getStartOffset();
     int e1 = r1.getEndOffset();
     int s2 = r2.getStartOffset();
     int e2 = r2.getEndOffset();
     return Math.max(s1, s2) <= Math.min(e1, e2) ? 0 : Math.min(Math.abs(s1 - e2), Math.abs(s2 - e1));
+  }
+
+  private static boolean intersects(TextRange range1, TextRange range2, int maxDistance) {
+    if (range1.intersects(range2)) return true;
+    return maxDistance > 0 && range1.getEndOffset() + maxDistance >= range2.getStartOffset();
   }
 }

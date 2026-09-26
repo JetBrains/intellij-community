@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,30 +8,39 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 import static org.junit.Assume.assumeFalse;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 @SkipInHeadlessEnvironment
 public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
   private static final String OUR_KEYMAP_NAME = "IdeMouseEventDispatcherTestKeymap";
   private static final String OUR_TEST_ACTION = "IdeMouseEventDispatcherTestAction";
   private static final MouseShortcut OUR_SHORTCUT = new MouseShortcut(MouseEvent.BUTTON2, 0, 1);
-  private static final MouseShortcut OUR_SHORTCUT_WITH_MODIFIER = new MouseShortcut(MouseEvent.BUTTON1, InputEvent.CTRL_MASK, 1);
+  private static final @JdkConstants.InputEventMask int MODIFIERS = InputEvent.CTRL_MASK;
+  private static final @JdkConstants.InputEventMask int NEW_MODIFIERS = InputEvent.CTRL_DOWN_MASK;
+  private static final @JdkConstants.InputEventMask int EXPECTED_MODIFIERS = MODIFIERS | NEW_MODIFIERS;
+  private static final MouseShortcut OUR_SHORTCUT_WITH_MODIFIER = new MouseShortcut(MouseEvent.BUTTON1, MODIFIERS, 1);
 
   private final IdeMouseEventDispatcher myDispatcher = new IdeMouseEventDispatcher();
   private KeymapImpl keymap;
   private Keymap mySavedKeymap;
   private JFrame myEventSource;
   private int myActionExecutionCount;
+  private int myActionActualModifiers;
 
+  @Override
   public void setUp() throws Exception {
     assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
 
@@ -59,6 +68,9 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
       KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
       ActionManager.getInstance().unregisterAction(OUR_TEST_ACTION);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -70,6 +82,24 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     assertTrue(!myDispatcher.dispatchMouseEvent(mouseEvent) && mouseEvent.isConsumed());
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     assertEquals(1, myActionExecutionCount);
+  }
+
+  public void testActionTriggeringWithModifiers() {
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, MODIFIERS, 0, 0, 1, false, MouseEvent.BUTTON1)));
+    MouseEvent mouseEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, MODIFIERS, 0, 0, 1, false, MouseEvent.BUTTON1);
+    assertTrue(!myDispatcher.dispatchMouseEvent(mouseEvent) && mouseEvent.isConsumed());
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, MODIFIERS, 0, 0, 1, false, MouseEvent.BUTTON1)));
+    assertEquals(1, myActionExecutionCount);
+    assertEquals(EXPECTED_MODIFIERS, myActionActualModifiers & EXPECTED_MODIFIERS);
+  }
+
+  public void testActionTriggeringWithNewModifiers() {
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, NEW_MODIFIERS, 0, 0, 1, false, MouseEvent.BUTTON1)));
+    MouseEvent mouseEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, NEW_MODIFIERS, 0, 0, 1, false, MouseEvent.BUTTON1);
+    assertTrue(!myDispatcher.dispatchMouseEvent(mouseEvent) && mouseEvent.isConsumed());
+    assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, NEW_MODIFIERS, 0, 0, 1, false, MouseEvent.BUTTON1)));
+    assertEquals(1, myActionExecutionCount);
+    assertEquals(EXPECTED_MODIFIERS, myActionActualModifiers & EXPECTED_MODIFIERS);
   }
 
   public void testActionBlocking() {
@@ -87,13 +117,14 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     assertEquals(0, myActionExecutionCount);
   }
 
-  private class EmptyAction extends AnAction {
+  private final class EmptyAction extends AnAction {
     private EmptyAction() {
       setEnabledInModalContext(true);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e){
+      myActionActualModifiers = e.getModifiers();
       myActionExecutionCount++;
     }
   }

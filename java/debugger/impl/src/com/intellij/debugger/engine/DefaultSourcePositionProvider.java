@@ -1,8 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
@@ -10,6 +9,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.CurrentMethodReturnValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -17,58 +17,77 @@ import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ClassNotPreparedException;
 import com.sun.jdi.Location;
+import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultSourcePositionProvider extends SourcePositionProvider {
-  @Nullable
+public final class DefaultSourcePositionProvider extends SourcePositionProvider {
   @Override
-  protected SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,
-                                                 @NotNull Project project,
-                                                 @NotNull DebuggerContextImpl context,
-                                                 boolean nearest) {
+  protected @Nullable SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,
+                                                           @NotNull Project project,
+                                                           @NotNull DebuggerContextImpl context,
+                                                           boolean nearest) {
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (frame == null) {
       return null;
     }
 
-    if (descriptor instanceof FieldDescriptor) {
-      return getSourcePositionForField((FieldDescriptor)descriptor, project, context, nearest);
+    if (descriptor instanceof FieldDescriptor fieldDescriptor) {
+      return getSourcePositionForField(fieldDescriptor, project, context, nearest);
     }
     else if (descriptor instanceof LocalVariableDescriptor) {
       return getSourcePositionForLocalVariable(descriptor.getName(), project, context, nearest);
     }
-    else if (descriptor instanceof ArgumentValueDescriptorImpl) {
-      Collection<String> names = ((ArgumentValueDescriptorImpl)descriptor).getVariable().getMatchedNames();
+    else if (descriptor instanceof ArgumentValueDescriptorImpl argumentValueDescriptor) {
+      Collection<String> names = argumentValueDescriptor.getVariable().getMatchedNames();
       if (!names.isEmpty()) {
         return getSourcePositionForLocalVariable(names.iterator().next(), project, context, nearest);
       }
     }
-    else if (descriptor instanceof MethodReturnValueDescriptorImpl) {
+    else if (descriptor instanceof CurrentMethodReturnValueDescriptorImpl) {
+      var suspendContext = context.getSuspendContext();
+      if (suspendContext != null && suspendContext.getCurrentMethodExitEvent() != null) {
+        return context.getSourcePosition();
+      }
+    }
+    else if (descriptor instanceof MethodReturnValueDescriptorImpl valueDescriptor) {
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess != null) {
-        return debugProcess.getPositionManager().getSourcePosition(((MethodReturnValueDescriptorImpl)descriptor).getMethod().location());
+        return debugProcess.getPositionManager().getSourcePosition(valueDescriptor.getMethod().location());
       }
     }
     return null;
   }
 
-  @Nullable
-  private static SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
-                                                          @NotNull Project project,
-                                                          @NotNull DebuggerContextImpl context,
-                                                          boolean nearest) {
+  private static @Nullable SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
+                                                                    @NotNull Project project,
+                                                                    @NotNull DebuggerContextImpl context,
+                                                                    boolean nearest) {
     final ReferenceType type = descriptor.getField().declaringType();
     final String fieldName = descriptor.getField().name();
     if (fieldName.startsWith(FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
@@ -83,10 +102,10 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
         return null;
       }
       PsiElement navigationElement = aClass.getNavigationElement();
-      if (!(navigationElement instanceof PsiClass)) {
+      if (!(navigationElement instanceof PsiClass psiClass)) {
         return null;
       }
-      aClass = (PsiClass)navigationElement;
+      aClass = psiClass;
       PsiVariable psiVariable = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(varName, aClass);
       if (psiVariable == null) {
         return null;
@@ -101,10 +120,15 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess != null) {
         try {
-          List<Location> locations = type.allLineLocations();
-          if (!locations.isEmpty()) {
-            // important: use the last location to be sure the position will be within the anonymous class
-            aClass = JVMNameUtil.getClassAt(debugProcess.getPositionManager().getSourcePosition(ContainerUtil.getLastItem(locations)));
+          // important: use the last location to be sure the position will be within the anonymous class
+          // and do not use type.allLineLocations as it fetches line tables for all methods
+          List<Method> methods = type.methods();
+          for (Method m : methods.reversed()) {
+            List<Location> locations = m.allLineLocations();
+            if (!locations.isEmpty()) {
+              aClass = JVMNameUtil.getClassAt(debugProcess.getPositionManager().getSourcePosition(ContainerUtil.getLastItem(locations)));
+              break;
+            }
           }
         }
         catch (AbsentInformationException | ClassNotPreparedException ignored) {
@@ -121,7 +145,7 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
         PsiField field = aClass.findFieldByName(fieldName, false);
         if (field == null) return null;
         if (nearest) {
-          return DebuggerContextUtil.findNearest(context, field.getNavigationElement(), aClass.getContainingFile());
+          return DebuggerContextUtil.findNearest(context, aClass.getContainingFile(), searchScope -> findThisFieldUsages(field, searchScope));
         }
         return SourcePosition.createFromElement(field);
       }
@@ -129,11 +153,25 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
     }
   }
 
-  @Nullable
-  private static SourcePosition getSourcePositionForLocalVariable(String name,
-                                                                  @NotNull Project project,
-                                                                  @NotNull DebuggerContextImpl context,
-                                                                  boolean nearest) {
+  private static @NotNull Collection<TextRange> findThisFieldUsages(@NotNull PsiField field, @NotNull PsiElement searchScope) {
+    Collection<TextRange> ranges = new ArrayList<>();
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(searchScope)).findAll()) {
+      PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiReferenceExpression.class, false);
+      if (expression == null) {
+        continue;
+      }
+      PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        HighlightUsagesHandler.collectHighlightRanges(reference, ranges);
+      }
+    }
+    return ranges;
+  }
+
+  private static @Nullable SourcePosition getSourcePositionForLocalVariable(String name,
+                                                                            @NotNull Project project,
+                                                                            @NotNull DebuggerContextImpl context,
+                                                                            boolean nearest) {
     PsiElement place = PositionUtil.getContextElement(context);
     if (place == null) return null;
 
@@ -141,7 +179,7 @@ public class DefaultSourcePositionProvider extends SourcePositionProvider {
     if (psiVariable == null) return null;
 
     PsiFile containingFile = psiVariable.getContainingFile();
-    if(containingFile == null) return null;
+    if (containingFile == null) return null;
     try {
       if (nearest) {
         return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);

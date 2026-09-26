@@ -16,15 +16,19 @@
 
 package org.zmlx.hg4idea.repo;
 
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
-import org.zmlx.hg4idea.provider.HgLocalIgnoredHolder;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public interface HgRepository extends Repository {
@@ -86,5 +90,6 @@ public interface HgRepository extends Repository {
 
   void updateConfig();
 
-  HgLocalIgnoredHolder getLocalIgnoredHolder();
+  @NotNull
+  VcsRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
 }

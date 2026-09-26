@@ -17,6 +17,6 @@ package com.intellij.debugger.ui.tree.render;
 
 import java.util.EventListener;
 
-public interface NodeRendererSettingsListener extends EventListener{
+public interface NodeRendererSettingsListener extends EventListener {
   void renderersChanged();
 }

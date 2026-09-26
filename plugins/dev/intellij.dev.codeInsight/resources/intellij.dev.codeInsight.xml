@@ -1,0 +1,20 @@
+<idea-plugin package="com.intellij.dev.codeInsight">
+  <resource-bundle>messages.DevCodeInsightBundle</resource-bundle>
+  
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.dev.lang.goodCodeRedVisitor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>

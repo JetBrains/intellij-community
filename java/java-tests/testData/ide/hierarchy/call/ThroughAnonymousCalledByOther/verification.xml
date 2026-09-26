@@ -1,0 +1,7 @@
+<node text="returnSomething() (x.AcmClientImpl)" base="true">
+  <node text="getUser() (x.AcmClientImpl)">
+    <node text="exec(Object) (x.SomeServiceImpl.doSomething())">
+      <node text="doOutside() (x.OuterService)"/>
+    </node>
+  </node>
+</node>

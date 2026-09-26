@@ -1,0 +1,33 @@
+================ Step #1 =================
+Cleaning output files:
+  A$Companion.class
+  A.class
+  META-INF/kotlin_classHierarchyAffected_companionObjectNameChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/A.kt
+End of files
+Cleaning output files:
+  CompanionExtensionKt.class
+  CompanionReferenceExplicitKt.class
+  CompanionReferenceImplicitKt.class
+  META-INF/kotlin_classHierarchyAffected_companionObjectNameChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/companionExtension.kt
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/companionReferenceExplicit.kt
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/companionReferenceImplicit.kt
+End of files
+------------------------------------------
+Exit code: ERROR
+================ Step #2 =================
+Cleaning output files:
+  META-INF/kotlin_classHierarchyAffected_companionObjectNameChanged-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/companionExtension.kt
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/companionReferenceExplicit.kt
+  kotlin/classHierarchyAffected/companionObjectNameChanged/a/companionReferenceImplicit.kt
+End of files
+------------------------------------------
+Exit code: OK

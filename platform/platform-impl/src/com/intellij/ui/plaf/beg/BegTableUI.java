@@ -1,23 +1,30 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.CellEditor;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTableUI;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-/**
- * @author mike
- */
-public class BegTableUI extends BasicTableUI {
+@ApiStatus.Internal
+public final class BegTableUI extends BasicTableUI {
   private final KeyAdapter myAdapter= new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           if (table.isEditing()) {
@@ -31,12 +38,13 @@ public class BegTableUI extends BasicTableUI {
         }
       }
     };
-  @NonNls public static final String START_EDITING_ACTION_KEY = "startEditing";
+  public static final @NonNls String START_EDITING_ACTION_KEY = "startEditing";
 
   public static ComponentUI createUI(JComponent c) {
     return new BegTableUI();
   }
 
+  @Override
   public void installUI(JComponent c) {
     super.installUI(c);
     c.getActionMap().put(START_EDITING_ACTION_KEY, new StartEditingAction());
@@ -44,11 +52,23 @@ public class BegTableUI extends BasicTableUI {
     c.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("pressed ESCAPE"), "cancel");
   }
 
+  @Override
+  public void installDefaults() {
+    super.installDefaults();
+
+    int rowHeight = UIManager.getInt("Table.rowHeight");
+    if (rowHeight > 0) {
+      LookAndFeel.installProperty(table, "rowHeight", rowHeight);
+    }
+  }
+
+  @Override
   protected KeyListener createKeyListener() {
     return myAdapter;
   }
 
-  private class StartEditingAction extends AbstractAction {
+  private final class StartEditingAction extends AbstractAction {
+    @Override
     public void actionPerformed(ActionEvent e) {
       JTable table = (JTable)e.getSource();
       if (!table.hasFocus()) {
@@ -56,9 +76,7 @@ public class BegTableUI extends BasicTableUI {
         if (cellEditor != null && !cellEditor.stopCellEditing()) {
           return;
         }
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         return;
       }
       ListSelectionModel rsm = table.getSelectionModel();
@@ -69,9 +87,7 @@ public class BegTableUI extends BasicTableUI {
       Component editorComp = table.getEditorComponent();
       if (editorComp != null) {
         editorComp.addKeyListener(myAdapter);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true));
       }
     }
   }

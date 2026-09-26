@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.embedding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.DelegateMarker;
@@ -38,7 +23,7 @@ import java.util.List;
  * @see MasqueradingLexer
  */
 public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
-  private final static Logger LOG = Logger.getInstance(MasqueradingPsiBuilderAdapter.class);
+  private static final Logger LOG = Logger.getInstance(MasqueradingPsiBuilderAdapter.class);
 
   private List<MyShiftedToken> myShrunkSequence;
 
@@ -50,24 +35,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   private final MasqueradingLexer myLexer;
 
-  public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
-                        @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final MasqueradingLexer lexer,
-                        @NotNull final ASTNode chameleon,
-                        @NotNull final CharSequence text) {
-    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
-  }
-
-  public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
-                        @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final MasqueradingLexer lexer,
-                        @NotNull final LighterLazyParseableNode chameleon,
-                        @NotNull final CharSequence text) {
-    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
-  }
-
-  private MasqueradingPsiBuilderAdapter(PsiBuilderImpl builder) {
-    super(builder);
+  public MasqueradingPsiBuilderAdapter(@NotNull PsiBuilder delegate) {
+    super(delegate);
 
     LOG.assertTrue(myDelegate instanceof PsiBuilderImpl);
     myBuilderDelegate = ((PsiBuilderImpl)myDelegate);
@@ -78,9 +47,16 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     initShrunkSequence();
   }
 
-  @NotNull
+  public MasqueradingPsiBuilderAdapter(final @NotNull Project project,
+                                       final @NotNull ParserDefinition parserDefinition,
+                                       final @NotNull MasqueradingLexer lexer,
+                                       final @NotNull ASTNode chameleon,
+                                       final @NotNull CharSequence text) {
+    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
+  }
+
   @Override
-  public CharSequence getOriginalText() {
+  public @NotNull CharSequence getOriginalText() {
     return myShrunkCharSequence;
   }
 
@@ -171,6 +147,22 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   @Override
+  public void rawAdvanceLexer(int steps) {
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    // Be permissive as advanceLexer() and don't throw error if advancing beyond eof state
+    myLexPosition += steps;
+    if (myLexPosition > myShrunkSequence.size() || myLexPosition < 0 /* int overflow */ ) {
+      myLexPosition = myShrunkSequence.size();
+    }
+    skipWhitespace();
+    synchronizePositions(false);
+  }
+
+  @Override
   public int rawTokenTypeStart(int steps) {
     int cur = myLexPosition + steps;
     if (cur < 0) return -1;
@@ -188,9 +180,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).shrunkStart : myShrunkCharSequence.length();
   }
 
-  @Nullable
   @Override
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (eof()) {
       return null;
     }
@@ -199,9 +190,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).elementType : null;
   }
 
-  @Nullable
   @Override
-  public String getTokenText() {
+  public @Nullable String getTokenText() {
     if (eof()) {
       return null;
     }
@@ -226,9 +216,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return true;
   }
 
-  @NotNull
   @Override
-  public Marker mark() {
+  public @NotNull Marker mark() {
     Marker originalPositionMarker = null;
     // In the case of the topmost node all should be inserted
     if (myLexPosition != 0) {
@@ -252,7 +241,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   private boolean isWhiteSpaceOnPos(int pos) {
-    return myBuilderDelegate.whitespaceOrComment(myShrunkSequence.get(pos).elementType);
+    return myBuilderDelegate.isWhitespaceOrComment(myShrunkSequence.get(pos).elementType);
   }
 
   protected void initShrunkSequence() {
@@ -312,27 +301,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
 
-  private static class MyShiftedToken {
-    public final IElementType elementType;
-
-    public final int realStart;
-    public final int realEnd;
-
-    public final int shrunkStart;
-    public final int shrunkEnd;
-
-    public MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
-      this.elementType = elementType;
-      this.realStart = realStart;
-      this.realEnd = realEnd;
-      this.shrunkStart = shrunkStart;
-      this.shrunkEnd = shrunkEnd;
-    }
-
-    @Override
-    public String toString() {
-      return "MSTk: [" + realStart + ", " + realEnd + "] -> [" + shrunkStart + ", " + shrunkEnd + "]: " + elementType.toString();
-    }
+  private record MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
   }
 
   private class MyMarker extends DelegateMarker {
@@ -341,7 +310,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     private final Marker myOriginalPositionMarker;
 
-    public MyMarker(Marker delegate, Marker originalPositionMarker, int builderPosition) {
+    MyMarker(Marker delegate, Marker originalPositionMarker, int builderPosition) {
       super(delegate);
 
       myBuilderPosition = builderPosition;
@@ -367,7 +336,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
+    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage) {
       if (myOriginalPositionMarker != null) {
         myOriginalPositionMarker.drop();
       }
@@ -399,15 +368,14 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void error(String message) {
+    public void error(@NotNull String message) {
       if (myOriginalPositionMarker != null) {
         myOriginalPositionMarker.drop();
       }
       super.error(message);
     }
 
-    @NotNull
-    private Marker getDelegateOrThis(@NotNull Marker marker) {
+    private static @NotNull Marker getDelegateOrThis(@NotNull Marker marker) {
       if (marker instanceof DelegateMarker) {
         return ((DelegateMarker)marker).getDelegate();
       }

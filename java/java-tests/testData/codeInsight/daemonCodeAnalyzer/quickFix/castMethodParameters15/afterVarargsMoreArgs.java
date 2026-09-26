@@ -1,8 +1,8 @@
-// "Cast 1st parameter to 'long'" "true"
+// "Convert 1st argument to 'long'" "true-preview"
 class a {
     void f(Long l, String... s) {}
     void g() {
-        f((long) 0, "", "");
+        f(0L, "", "");
     }
 }
 

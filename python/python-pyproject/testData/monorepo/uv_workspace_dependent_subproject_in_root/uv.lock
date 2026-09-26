@@ -1,0 +1,25 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[manifest]
+members = [
+    "pythonproject",
+    "subinroot",
+]
+
+[[package]]
+name = "pythonproject"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "subinroot" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "subinroot", editable = "subinroot" }]
+
+[[package]]
+name = "subinroot"
+version = "0.1.0"
+source = { editable = "subinroot" }

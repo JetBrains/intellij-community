@@ -1,0 +1,467 @@
+<problems>
+  <problem>
+    <file>variableStringFartherScope.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="variableStringFartherScope.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>fourLiterals.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="fourLiterals.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>literalStringWithClass.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="literalStringWithClass.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>lambdaType.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="lambdaType.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>literalAny.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="literalAny.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>literalString.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="literalString.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>variablesAndLiterals.kt</file>
+    <line>10</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="variablesAndLiterals.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>literalsWhenTypeArgHasTypeArg.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="literalsWhenTypeArgHasTypeArg.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>variableString.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="variableString.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>variableString2.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="variableString2.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  
+  <problem>
+    <file>twoLiteralValues.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="twoLiteralValues.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>returnCallWithUnnecessaryTypeArgs.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="returnCallWithUnnecessaryTypeArgs.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>propertyInitializerIsCallWithUnnecessaryTypeArgs.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="propertyInitializerIsCallWithUnnecessaryTypeArgs.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>functionBodyIsCallWithUnnecessaryTypeArgs.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="functionBodyIsCallWithUnnecessaryTypeArgs.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>mapGet.kt</file>
+    <line>10</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="mapGet.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>insideOtherCall.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="insideOtherCall.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>insideDeepOtherCall.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="insideDeepOtherCall.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>insideDeepOtherCall.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="insideDeepOtherCall.kt" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>twoArguments.kt</file>
+    <line>10</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="twoArguments.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>twoArguments.kt</file>
+    <line>10</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="twoArguments.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>qualified.kt</file>
+    <line>7</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="qualified.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>getterBody.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="getterBody.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>defaultParamValue.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="defaultParamValue.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>blockValue.kt</file>
+    <line>7</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="blockValue.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>lambdaValue.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <entry_point TYPE="file" FQNAME="lambdaValue.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>kt29735.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <package>kt29735</package>
+    <entry_point TYPE="file" FQNAME="kt29735.kt" />
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>betweenLambdaArguments.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>betweenLambdaArguments</package>
+    <entry_point TYPE="method" FQNAME="betweenLambdaArguments.A void test()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>unnecessaryDefinitelyNonNullableTypeArg.kt</file>
+    <line>3</line>
+    <module>light_idea_test_case</module>
+    <package>unnecessaryDefinitelyNonNullableTypeArg</package>
+    <entry_point TYPE="method" FQNAME="unnecessaryDefinitelyNonNullableTypeArg.kt"/>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>unresolvedUnrelatedReference.kt</file>
+    <line>11</line>
+    <module>light_idea_test_case</module>
+    <package>unresolvedUnrelatedReference</package>
+    <entry_point TYPE="method" FQNAME="unresolvedUnrelatedReference.UnresolvedUnrelatedReferenceKt void foo()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>7</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
+    <file>KTIJ-31286.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>KTIJ-31286</package>
+    <entry_point TYPE="method" FQNAME="KTIJ-31286.kt" />
+    <problem_class severity="WEAK WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+
+  <problem>
+    <file>valueDeclaration.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclaration</package>
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  <problem>
+    <file>valueDeclaration.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclaration</package>
+    <entry_point TYPE="method" FQNAME="valueDeclaration.ValueDeclarationKt void testMe(java.util.List&lt;java.lang.String&gt; list)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  <problem>
+    <file>valueDeclaration.kt</file>
+    <line>10</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclaration</package>
+    <entry_point TYPE="method" FQNAME="valueDeclaration.ValueDeclarationKt void testMe(java.util.List&lt;java.lang.String&gt; list)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+  </problem>
+  <problem>
+    <file>script.kts</file>
+    <line>1</line>
+    <module>light_idea_test_case</module>
+    <package>&lt;default&gt;</package>
+    <entry_point TYPE="file" FQNAME="script.kts" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>6</offset>
+    <length>8</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInInnerClassNecessary.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInInnerClassNecessary</package>
+    <entry_point TYPE="field" FQNAME="valueDeclarationWithReceiverInInnerClassNecessary.Outer.Inner inner" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Inner&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>23</offset>
+    <length>7</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInInnerClassUnnecessary.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInInnerClassUnnecessary</package>
+    <entry_point TYPE="field" FQNAME="valueDeclarationWithReceiverInInnerClassUnnecessary.Outer.Inner inner" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Inner&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>23</offset>
+    <length>7</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInMemberExtensionNecessary.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInMemberExtensionNecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverInMemberExtensionNecessary.Main void test(int $this$test)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverInMemberExtensionUnnecessary.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverInMemberExtensionUnnecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverInMemberExtensionUnnecessary.Main void test(int $this$test)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverNecessary.kt</file>
+    <line>8</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverNecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverNecessary.ValueDeclarationWithReceiverNecessaryKt void testMeToo(java.lang.String $this$testMeToo)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>valueDeclarationWithReceiverUnnecessary.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>valueDeclarationWithReceiverUnnecessary</package>
+    <entry_point TYPE="method" FQNAME="valueDeclarationWithReceiverUnnecessary.ValueDeclarationWithReceiverUnnecessaryKt void testMeToo(java.lang.String $this$testMeToo)" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Int&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>19</offset>
+    <length>5</length>
+  </problem>
+  <problem>
+    <file>getterBodyInsideClass.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>getterBodyInsideClass</package>
+    <entry_point TYPE="method" FQNAME="getterBodyInsideClass.Main java.util.List&lt;getterBodyInsideClass.Main&gt; getX()" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Main&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>22</offset>
+    <length>6</length>
+  </problem>
+
+  <problem>
+    <file>setterBody.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <package>setterBody</package>
+    <entry_point TYPE="field" FQNAME="temp:///src/setterBody.kt x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>28</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
+    <file>setterBody.kt</file>
+    <line>6</line>
+    <module>light_idea_test_case</module>
+    <package>setterBody</package>
+    <entry_point TYPE="field" FQNAME="temp:///src/setterBody.kt x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;String&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>22</offset>
+    <length>8</length>
+  </problem>
+
+  <problem>
+    <file>setterBodyInsideClass.kt</file>
+    <line>5</line>
+    <module>light_idea_test_case</module>
+    <package>setterBodyInsideClass</package>
+    <entry_point TYPE="field" FQNAME="setterBodyInsideClass.Main x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Main&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>30</offset>
+    <length>6</length>
+  </problem>
+
+  <problem>
+    <file>setterBodyInsideClass.kt</file>
+    <line>7</line>
+    <module>light_idea_test_case</module>
+    <package>setterBodyInsideClass</package>
+    <entry_point TYPE="field" FQNAME="setterBodyInsideClass.Main x" />
+    <problem_class id="RemoveExplicitTypeArguments" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Unnecessary type argument</problem_class>
+    <description>Explicit type arguments can be inferred</description>
+    <highlighted_element>&lt;Main&gt;</highlighted_element>
+    <language>kotlin</language>
+    <offset>26</offset>
+    <length>6</length>
+  </problem>
+</problems>

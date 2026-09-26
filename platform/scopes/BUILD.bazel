@@ -1,0 +1,99 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.scopes` start
+content_module_jar(module = ":scopes")
+### auto-generated section `dev intellij.platform.scopes` end
+
+### auto-generated section `build intellij.platform.scopes` start
+jvm_library(
+    name = "scopes",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.scopes",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/kernel/rpc.lite",
+        "//platform/runtime/product",
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/ide-core",
+        "//platform/platform-impl/rpc",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/lang-impl",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/platform-impl:ide-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util:util-ui",
+        "//platform/project/shared:project",
+        "//platform/kernel/shared:kernel",
+        "//platform/util/coroutines",
+        "//platform/util/concurrency",
+        "//fleet/rhizomedb",
+        "//platform/platform-api:ide",
+        "//platform/editor-ui-api:editor-ui",
+    ],
+)
+
+jvm_library(
+    name = "scopes_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.scopes",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":scopes",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//platform/runtime/product:product_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.scopes` end
+
+### auto-generated section `iml intellij.platform.scopes` start
+exports_files(
+    [
+        "intellij.platform.scopes.iml",
+        "resources/intellij.platform.scopes.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.scopes` end

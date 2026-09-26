@@ -1,0 +1,18 @@
+// EXPECTED_TEXT: println("Hi from leaf")
+
+// FILE: gotoImportedScript.main.kts
+@file:Import("level1.main.kts")
+fooFrom<caret>Leaf()
+
+// FILE: level1.main.kts
+@file:Import("level2.main.kts")
+
+// FILE: level2.main.kts
+@file:Import("leaf.kts")
+
+// FILE: leaf.kts
+println("Hi from leaf")
+
+fun fooFromLeaf() {
+
+}

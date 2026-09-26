@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "nativelib",
+    srcs = ["nativelib.go"],
+    importpath = "jetbrains.com/content-module-packer/internal/nativelib",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "nativelib_test",
+    srcs = ["nativelib_test.go"],
+    embed = [":nativelib"],
+    pure = "on",
+)

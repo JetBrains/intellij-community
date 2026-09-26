@@ -1,40 +1,30 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 public abstract class PatternDialectProvider {
   public static final ExtensionPointName<PatternDialectProvider> EP_NAME = ExtensionPointName.create("com.intellij.patternDialectProvider");
 
   public static PatternDialectProvider getInstance(String shortName) {
-    for (PatternDialectProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (PatternDialectProvider provider : EP_NAME.getExtensionList()) {
       if (Comparing.strEqual(provider.getShortName(), shortName)) return provider;
     }
     return ProjectPatternProvider.FILE.equals(shortName) ? null : getInstance(ProjectPatternProvider.FILE);
@@ -42,31 +32,43 @@ public abstract class PatternDialectProvider {
 
   public abstract TreeModel createTreeModel(Project project, Marker marker);
 
-  public abstract TreeModel createTreeModel(Project project, Set<PsiFile> deps, Marker marker,
+  public abstract TreeModel createTreeModel(Project project, Set<? extends PsiFile> deps, Marker marker,
                                             final DependenciesPanel.DependencyPanelSettings settings);
 
-  public abstract String getDisplayName();
+  @Contract(pure = true)
+  public abstract @NlsActions.ActionText String getDisplayName();
 
-  @NonNls @NotNull
-  public abstract String getShortName();
+  @Contract(pure = true)
+  public abstract @NonNls @NotNull String getShortName();
 
   public abstract AnAction[] createActions(Project project, final Runnable update);
 
-  @Nullable
-  public abstract PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively);
+  public abstract @Nullable PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively);
 
-  @Nullable
-  protected static String getModulePattern(final PackageDependenciesNode node) {
+  protected static @Nullable String getModulePattern(final PackageDependenciesNode node) {
     final ModuleNode moduleParent = getModuleParent(node);
     return moduleParent != null ? moduleParent.getModuleName() : null;
   }
 
-  @Nullable
-  protected static ModuleNode getModuleParent(PackageDependenciesNode node) {
+  protected static @Nullable ModuleNode getModuleParent(PackageDependenciesNode node) {
     if (node instanceof ModuleNode) return (ModuleNode)node;
     if (node == null || node instanceof RootNode) return null;
     return getModuleParent((PackageDependenciesNode)node.getParent());
   }
 
   public abstract Icon getIcon();
+
+  public @Nls @NotNull String getHintMessage() {
+    return "";
+  }
+
+  @ApiStatus.Internal
+  protected static @NotNull String getGroupModulePattern(ModuleGroupNode node) {
+    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
+      return node.getModuleGroup().getQualifiedName() + "*";
+    }
+    else {
+      return "group:" + node.getModuleGroup().toString();
+    }
+  }
 }

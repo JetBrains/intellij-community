@@ -1,0 +1,5 @@
+class `Foo-Bar` {
+}
+
+fun `Foo-Bar`.<caret>doSomething(bar: Int) {
+}

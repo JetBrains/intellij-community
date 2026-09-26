@@ -1,0 +1,111 @@
+PsiJavaFile:IncorrectModifier.java
+  PsiImportList
+    <empty list>
+  PsiClass:IncorrectModifier
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:IncorrectModifier('IncorrectModifier')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiField:x
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:X
+        PsiJavaCodeReferenceElement:X
+          PsiIdentifier:X('X')
+          PsiReferenceParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:x('x')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:EQ('=')
+      PsiWhiteSpace(' ')
+      PsiLambdaExpression
+        PsiParameterList:(sealed var y)
+          PsiJavaToken:LPARENTH('(')
+          PsiParameter:y
+            PsiModifierList:sealed
+              PsiKeyword:sealed('sealed')
+            PsiWhiteSpace(' ')
+            PsiTypeElement:var
+              PsiKeyword:var('var')
+            PsiWhiteSpace(' ')
+            PsiIdentifier:y('y')
+          PsiJavaToken:RPARENTH(')')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:ARROW('->')
+        PsiWhiteSpace(' ')
+        PsiMethodCallExpression:System.out.println()
+          PsiReferenceExpression:System.out.println
+            PsiReferenceExpression:System.out
+              PsiReferenceExpression:System
+                PsiReferenceParameterList
+                  <empty list>
+                PsiIdentifier:System('System')
+              PsiJavaToken:DOT('.')
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:out('out')
+            PsiJavaToken:DOT('.')
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:println('println')
+          PsiExpressionList
+            PsiJavaToken:LPARENTH('(')
+            PsiJavaToken:RPARENTH(')')
+      PsiErrorElement:';' expected
+        <empty list>
+    PsiWhiteSpace(' \n  \n  ')
+    PsiClass:X
+      PsiModifierList:
+        <empty list>
+      PsiKeyword:interface('interface')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:X('X')
+      PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace('\n    ')
+      PsiMethod:x
+        PsiModifierList:
+          <empty list>
+        PsiTypeParameterList
+          <empty list>
+        PsiTypeElement:void
+          PsiKeyword:void('void')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:x('x')
+        PsiParameterList:(String s)
+          PsiJavaToken:LPARENTH('(')
+          PsiParameter:s
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:String
+              PsiJavaCodeReferenceElement:String
+                PsiIdentifier:String('String')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:s('s')
+          PsiJavaToken:RPARENTH(')')
+        PsiReferenceList
+          <empty list>
+        PsiJavaToken:SEMICOLON(';')
+      PsiWhiteSpace('\n  ')
+      PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

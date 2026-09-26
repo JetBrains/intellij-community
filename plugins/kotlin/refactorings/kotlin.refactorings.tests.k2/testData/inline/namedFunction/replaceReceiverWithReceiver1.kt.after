@@ -1,0 +1,12 @@
+class Foo {
+
+    fun String.newFun() {}
+}
+
+fun foo(init: Foo.() -> Unit) {}
+
+fun test() {
+    foo {
+        "a".newFun()
+    }
+}

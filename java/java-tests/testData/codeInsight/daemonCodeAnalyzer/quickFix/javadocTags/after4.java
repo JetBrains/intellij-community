@@ -1,6 +1,6 @@
-// "Add tag @param <T>" "true"
+// "Add tag @param <T>" "true-preview"
 /**
  * @param <T>
  */
-class a<T> {
+public class a<T> {
 }

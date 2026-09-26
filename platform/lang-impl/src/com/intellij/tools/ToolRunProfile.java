@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
@@ -26,24 +11,35 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class ToolRunProfile implements ModuleRunProfile{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tools.ToolRunProfile");
+  private static final Logger LOG = Logger.getInstance(ToolRunProfile.class);
   private final Tool myTool;
   private final DataContext myContext;
   private final GeneralCommandLine myCommandLine;
@@ -60,19 +56,21 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return expandMacrosInName(myTool, myContext);
   }
 
-  public static String expandMacrosInName(Tool tool, DataContext context) {
+  public static @NlsSafe String expandMacrosInName(Tool tool, DataContext context) {
     String name = tool.getName();
-    try {
-      return MacroManager.getInstance().expandMacrosInString(name, true, context);
+    if (name != null && name.contains("$")) {
+      try {
+        return MacroManager.getInstance().expandMacrosInString(name, true, context);
+      }
+      catch (Macro.ExecutionCancelledException e) {
+        LOG.info(e);
+      }
     }
-    catch (Macro.ExecutionCancelledException e) {
-      LOG.info(e);
-      return name;
-    }
+    return name;
   }
 
   @Override
@@ -81,7 +79,7 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
     final Project project = env.getProject();
     if (myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
@@ -94,8 +92,7 @@ public class ToolRunProfile implements ModuleRunProfile{
       }
 
       @Override
-      @NotNull
-      protected OSProcessHandler startProcess() throws ExecutionException {
+      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
         final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
@@ -103,18 +100,19 @@ public class ToolRunProfile implements ModuleRunProfile{
       }
 
       @Override
-      @NotNull
-      public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+      public @NotNull ExecutionResult execute(final @NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
         final ExecutionResult result = super.execute(executor, runner);
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));
-          processHandler.addProcessListener(new ProcessAdapter() {
+          processHandler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-              if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
-                || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
-                ExecutionManager.getInstance(project).getContentManager().toFrontRunContent(executor, processHandler);
+              if ((ProcessOutputType.isStdout(outputType) && myTool.isShowConsoleOnStdOut())
+                || (ProcessOutputType.isStderr(outputType) && myTool.isShowConsoleOnStdErr())) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  RunContentManager.getInstance(project).toFrontRunContent(executor, processHandler);
+                }, project.getDisposed());
               }
             }
           });

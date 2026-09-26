@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -32,53 +17,43 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author yole
- */
-public class RefactoringUIUtil {
-  private RefactoringUIUtil() {
+
+public final class RefactoringUIUtil {
+  private RefactoringUIUtil() { }
+
+  public static @Nls String getDescription(@NotNull PsiElement element, boolean includeParent) {
+    RefactoringDescriptionLocation location = includeParent ? RefactoringDescriptionLocation.WITH_PARENT : RefactoringDescriptionLocation.WITHOUT_PARENT;
+    return ElementDescriptionUtil.getElementDescription(element, location);
   }
 
-  public static String getDescription(@NotNull PsiElement element, boolean includeParent) {
-    return ElementDescriptionUtil.getElementDescription(element, includeParent
-                                                                 ? RefactoringDescriptionLocation.WITH_PARENT
-                                                                 : RefactoringDescriptionLocation.WITHOUT_PARENT);
-  }
-
-  public static void processIncorrectOperation(final Project project, IncorrectOperationException e) {
-    @NonNls String message = e.getMessage();
-    final int index = message != null ? message.indexOf("java.io.IOException") : -1;
+  public static void processIncorrectOperation(Project project, IncorrectOperationException e) {
+    String message = e.getMessage();
+    int index = message != null ? message.indexOf("java.io.IOException") : -1;
     if (index > 0) {
       message = message.substring(index + "java.io.IOException".length());
     }
 
-    final String s = message;
+    String s = message;
     ApplicationManager.getApplication().invokeLater(
       () -> Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
   }
 
-  public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
-    final Function<PsiElement, String> presentationFun = element -> UsageViewUtil.getType(element) +
-                                                                    " " +
-                                                                    DescriptiveNameUtil.getDescriptiveName(element);
+  public static @NotNull String calculatePsiElementDescriptionList(@NotNull PsiElement @NotNull [] elements) {
+    Function<PsiElement, String> presentationFun = e -> UsageViewUtil.getType(e) + ' ' + DescriptiveNameUtil.getDescriptiveName(e);
     return StringUtil.join(ContainerUtil.map2LinkedSet(Arrays.asList(elements), presentationFun), ", ");
   }
 
   public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = editor -> editor.addFocusListener(new FocusChangeListener() {
     @Override
-    public void focusGained(Editor editor) {
+    public void focusGained(@NotNull Editor editor) {
       if (LookupManager.getActiveLookup(editor) == null) {
         editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
       }
-    }
-
-    @Override
-    public void focusLost(Editor editor) {
     }
   });
 }

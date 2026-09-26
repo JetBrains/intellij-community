@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jackson-datatype-joda" type="repository">
+        <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.22.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.22.2/jackson-datatype-joda-2.22.2.jar">
+              <sha256sum>b01a58d9a14319349de51d520599ba87dcfda228debde5064264a8c3c6cf4b00</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/joda-time/joda-time/2.12.7/joda-time-2.12.7.jar">
+              <sha256sum>385282b005818cfaccdbe8bd2429811e7e641782f2b88932a6b8ff51d668f616</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.22.2/jackson-datatype-joda-2.22.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.12.7/joda-time-2.12.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.22.2/jackson-datatype-joda-2.22.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.12.7/joda-time-2.12.7-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

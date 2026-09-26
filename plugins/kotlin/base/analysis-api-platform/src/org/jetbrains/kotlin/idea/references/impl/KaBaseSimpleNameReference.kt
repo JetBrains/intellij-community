@@ -1,0 +1,175 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.references.impl
+
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentsOfType
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtImportAlias
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
+import org.jetbrains.kotlin.resolution.KtResolvableCall
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
+import org.jetbrains.kotlin.psi.lookupLocally as lookupLocallyImpl
+
+@OptIn(KaImplementationDetail::class)
+internal class KaBaseSimpleNameReference(
+    expression: KtSimpleNameExpression,
+    val isRead: Boolean,
+) : KaSimpleNameReferenceBase(expression), KaBaseReference {
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KaBaseReference>.isReferenceToImportAlias(alias)
+    }
+
+    override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
+        // Resolved calls are preferable for navigation since they provide a more precise location.
+        // For instance, it is the case for constructor calls
+        // A special handling for `KtOperationReferenceExpression` is required to preserve the legacy behavior.
+        // It could be adjusted in the future.
+        val symbolsFromCall = (element as? KtResolvableCall)?.takeUnless { it is KtOperationReferenceExpression }
+            ?.tryResolveCall()
+            ?.calls
+            ?.flatMap(KaSimpleOrMultiCall::symbols)
+            ?.takeUnless(List<KaSymbol>::isEmpty)
+
+        return symbolsFromCall ?: element.tryResolveSymbols()?.symbols.orEmpty()
+    }
+
+    context(session: KaSession)
+    override fun getResolvedToPsi(): Collection<PsiElement> {
+        if (expression is KtLabelReferenceExpression) {
+            when (val loopJumpExpression = expression.parent?.parent) {
+                // continue/break expressions might reference only loops,
+                // so the default flow won't work for them as the target is not a declaration
+                is KtContinueExpression, is KtBreakExpression -> {
+                    return listOfNotNull(findRelevantLoopForExpression(loopJumpExpression))
+                }
+
+                else -> {}
+            }
+        }
+
+        expression.lookupLocally()?.let { return listOf(it) }
+
+        val referenceTargetSymbols = resolveToSymbols()
+        val psiOfReferenceTarget = super.getResolvedToPsi(referenceTargetSymbols)
+        if (psiOfReferenceTarget.isNotEmpty()) return psiOfReferenceTarget
+        return referenceTargetSymbols.flatMap { symbol ->
+            when (symbol) {
+                is KaSyntheticJavaPropertySymbol ->
+                    if (isRead) {
+                        listOfNotNull(symbol.javaGetterSymbol.psi)
+                    } else {
+                        if (symbol.javaSetterSymbol == null) listOfNotNull(symbol.javaGetterSymbol.psi)
+                        else listOfNotNull(symbol.javaSetterSymbol?.psi)
+                    }
+                else -> listOfNotNull(symbol.psi)
+            }
+        }
+    }
+
+    override fun canBeReferenceTo(candidateTarget: PsiElement): Boolean {
+        return true // TODO
+    }
+
+    // Extension point used for deprecated Android Extensions. Not going to implement for FIR.
+    override fun isReferenceToViaExtension(element: PsiElement): Boolean {
+        return false
+    }
+
+    override fun getImportAlias(): KtImportAlias? {
+        val name = element.getReferencedName()
+        val file = element.containingKtFile
+        return getImportAlias(file.findImportByAlias(name))
+    }
+
+    class Provider : KotlinPsiReferenceProviderContributor<KtSimpleNameExpression> {
+        override val elementClass: Class<KtSimpleNameExpression>
+            get() = KtSimpleNameExpression::class.java
+
+        override val referenceProvider: KotlinPsiReferenceProviderContributor.ReferenceProvider<KtSimpleNameExpression>
+            get() = { nameReferenceExpression ->
+                when (nameReferenceExpression.readWriteAccess(useResolveForReadWrite = true)) {
+                    ReferenceAccess.READ -> listOf(KaBaseSimpleNameReference(nameReferenceExpression, isRead = true))
+                    ReferenceAccess.WRITE -> listOf(KaBaseSimpleNameReference(nameReferenceExpression, isRead = false))
+                    ReferenceAccess.READ_WRITE -> listOf(
+                        KaBaseSimpleNameReference(nameReferenceExpression, isRead = true),
+                        KaBaseSimpleNameReference(nameReferenceExpression, isRead = false),
+                    )
+                }
+            }
+    }
+}
+
+/**
+ * THE CODE IS COPY-PASTED FROM THE INTELLIJ KOTLIN PLUGIN AND SHOULD BE DROPPED ONCE REFERENCES ARE MIGRATED TO THE PLUGIN
+ *
+ * Finds the nearest loop expression that contains the given expression, taking into account any labels
+ * and outer loops.
+ *
+ * Returns null if no relevant loop is found.
+ */
+private fun findRelevantLoopForExpression(expression: KtExpressionWithLabel): KtLoopExpression? {
+    val expressionLabelName = expression.getLabelName()
+    for (loopExpression in expression.parentsOfType<KtLoopExpression>(withSelf = true)) {
+        if (loopExpression == expression)
+            return loopExpression
+
+        if (expressionLabelName != null && (loopExpression.parent as? KtLabeledExpression)?.getLabelName() == expressionLabelName)
+            return loopExpression
+
+        if (expressionLabelName == null && expression.doesBelongToLoop(loopExpression))
+            return loopExpression
+    }
+
+    return null
+}
+
+private fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean {
+    val structureBodies = PsiTreeUtil.collectParents(
+        /* element = */ this,
+        /* parent = */ KtContainerNodeForControlStructureBody::class.java,
+        /* includeMyself = */ false
+    ) {
+        when (val p = it.parent) {
+            is KtProperty if p.isLocal -> false
+            is KtDeclaration -> p !is KtFunctionLiteral
+            else -> false
+        }
+    }
+
+    // expression belongs to the loop when it is inside the loop body
+    return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
+}
+
+private val isLocalLookupRegistryEnabled by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    Registry.`is`("kotlin.analysis.enableLocalLookupOptimization")
+}
+
+private fun KtSimpleNameExpression.lookupLocally(): PsiElement? {
+    if (!isLocalLookupRegistryEnabled) return null
+
+    return lookupLocallyImpl()
+}

@@ -1,33 +1,27 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.errorTreeView.*;
+import com.intellij.ide.errorTreeView.EditableMessageElement;
+import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JEditorPane;
+import javax.swing.JTree;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
@@ -38,18 +32,19 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.TreeCellEditor;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/24/2014
  */
+@ApiStatus.Internal
 public class EditableNotificationMessageElement extends NotificationMessageElement implements EditableMessageElement {
 
-  @NotNull private final TreeCellEditor myRightTreeCellEditor;
-  @NotNull private final Notification myNotification;
-  @NotNull private final Map<String/*url*/, String/*link text to replace*/> disabledLinks;
+  private final @NotNull TreeCellEditor myRightTreeCellEditor;
+  private final @NotNull Notification myNotification;
+  private final @NotNull Map<String/*url*/, String/*link text to replace*/> disabledLinks;
 
   public EditableNotificationMessageElement(@NotNull Notification notification,
                                             @NotNull ErrorTreeElementKind kind,
@@ -59,7 +54,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
                                             String exportText, String rendererTextPrefix) {
     super(kind, parent, message, navigatable, exportText, rendererTextPrefix);
     myNotification = notification;
-    disabledLinks = ContainerUtil.newHashMap();
+    disabledLinks = new HashMap<>();
     myRightTreeCellEditor = new MyCellEditor();
   }
 
@@ -68,9 +63,8 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     disabledLinks.put(url, text);
   }
 
-  @NotNull
   @Override
-  public TreeCellEditor getRightSelfEditor() {
+  public @NotNull TreeCellEditor getRightSelfEditor() {
     return myRightTreeCellEditor;
   }
 
@@ -83,7 +77,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     disableLink(event, null);
   }
 
-  private static void disableLink(@NotNull final HyperlinkEvent event, @Nullable final String linkText) {
+  private static void disableLink(final @NotNull HyperlinkEvent event, final @Nullable String linkText) {
     if (event.getSource() instanceof MyJEditorPane) {
       UIUtil.invokeLaterIfNeeded(() -> {
         final MyJEditorPane editorPane = (MyJEditorPane)event.getSource();
@@ -93,6 +87,7 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
     }
   }
 
+  @Override
   protected void updateStyle(@NotNull JEditorPane editorPane, @Nullable JTree tree, Object value, boolean selected, boolean hasFocus) {
     super.updateStyle(editorPane, tree, value, selected, hasFocus);
 
@@ -127,18 +122,16 @@ public class EditableNotificationMessageElement extends NotificationMessageEleme
   }
 
   private static class MyJEditorPane extends JEditorPane {
-    @NotNull
-    private final EditableNotificationMessageElement myElement;
+    private final @NotNull EditableNotificationMessageElement myElement;
 
-    public MyJEditorPane(@NotNull EditableNotificationMessageElement element) {
+    MyJEditorPane(@NotNull EditableNotificationMessageElement element) {
       myElement = element;
     }
   }
 
-  private class MyCellEditor extends AbstractCellEditor implements TreeCellEditor {
+  private final class MyCellEditor extends AbstractCellEditor implements TreeCellEditor {
     private final JEditorPane editorComponent;
-    @Nullable
-    private JTree myTree;
+    private @Nullable JTree myTree;
 
     private MyCellEditor() {
       editorComponent = installJep(new MyJEditorPane(EditableNotificationMessageElement.this));

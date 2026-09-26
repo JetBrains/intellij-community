@@ -1,36 +1,40 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+
+import java.util.function.BiPredicate;
 
 /**
  * Provides services to build project, modules, files or artifacts and execute Run Configuration.
  * <p>
  *
  * @author Vladislav.Soroka
- * @since 4/29/2016
  */
+@ApiStatus.NonExtendable
 public abstract class ProjectTaskManager {
+  public interface Result {
+    @NotNull
+    ProjectTaskContext getContext();
+
+    boolean isAborted();
+
+    boolean hasErrors();
+
+    @ApiStatus.Experimental
+    boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate);
+  }
+
+  public static final ProjectTask[] EMPTY_TASKS_ARRAY = new ProjectTask[0];
+
   protected final @NotNull Project myProject;
 
   public ProjectTaskManager(@NotNull Project project) {
@@ -38,113 +42,59 @@ public abstract class ProjectTaskManager {
   }
 
   public static ProjectTaskManager getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectTaskManager.class);
+    return project.getService(ProjectTaskManager.class);
   }
 
-  public abstract void run(@NotNull ProjectTask projectTask, @Nullable ProjectTaskNotification callback);
+  public abstract Promise<Result> run(@NotNull ProjectTask projectTask);
 
-  public abstract void run(@NotNull ProjectTaskContext context,
-                           @NotNull ProjectTask projectTask,
-                           @Nullable ProjectTaskNotification callback);
-
-  /**
-   * Build all modules with modified files and all modules with files that depend on them all over the project.
-   *
-   * @param callback a notification callback, or null if no notifications needed
-   */
-  public abstract void buildAllModules(@Nullable ProjectTaskNotification callback);
+  public abstract Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask);
 
   /**
    * Build all modules with modified files and all modules with files that depend on them all over the project.
    */
-  public void buildAllModules() {
-    buildAllModules(null);
-  }
-
-  /**
-   * Rebuild the whole project modules from scratch.
-   *
-   * @param callback a notification callback, or null if no notifications needed
-   */
-  public abstract void rebuildAllModules(@Nullable ProjectTaskNotification callback);
+  public abstract Promise<Result> buildAllModules();
 
   /**
    * Rebuild the whole project modules from scratch.
    */
-  public void rebuildAllModules() {
-    rebuildAllModules(null);
-  }
-
-  /**
-   * Build modules and all modules these modules depend on recursively.
-   *
-   * @param modules  modules to build
-   * @param callback a notification callback, or null if no notifications needed
-   */
-  public abstract void build(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback);
+  public abstract Promise<Result> rebuildAllModules();
 
   /**
    * Build modules and all modules these modules depend on recursively.
    *
    * @param modules modules to build
    */
-  public void build(@NotNull Module... modules) {
-    build(modules, null);
-  }
+  public abstract Promise<Result> build(Module @NotNull ... modules);
 
-  public abstract void rebuild(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback);
-
-  public void rebuild(@NotNull Module... modules) {
-    rebuild(modules, null);
-  }
-
-  /**
-   * Compile a set of files.
-   *
-   * @param files    a list of files to compile. If a VirtualFile is a directory, all containing files should be processed.
-   * @param callback a notification callback, or null if no notifications needed.
-   */
-  public abstract void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback);
+  public abstract Promise<Result> rebuild(Module @NotNull ... modules);
 
   /**
    * Compile a set of files.
    *
    * @param files a list of files to compile. If a VirtualFile is a directory, all containing files should be processed.
    */
-  public void compile(@NotNull VirtualFile... files) {
-    compile(files, null);
-  }
+  public abstract Promise<Result> compile(VirtualFile @NotNull ... files);
 
-  public abstract void build(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback);
+  public abstract Promise<Result> build(ProjectModelBuildableElement @NotNull ... buildableElements);
 
-  public void build(@NotNull ProjectModelBuildableElement... buildableElements) {
-    build(buildableElements, null);
-  }
-
-  public abstract void rebuild(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback);
-
-  public void rebuild(@NotNull ProjectModelBuildableElement... buildableElements) {
-    rebuild(buildableElements, null);
-  }
+  public abstract Promise<Result> rebuild(ProjectModelBuildableElement @NotNull ... buildableElements);
 
   public abstract ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project);
 
-  public abstract ProjectTask createModulesBuildTask(Module module,
-                                                     boolean isIncrementalBuild,
-                                                     boolean includeDependentModules,
-                                                     boolean includeRuntimeDependencies);
+  public ProjectTask createModulesBuildTask(Module module, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    return createModulesBuildTask(new Module[]{module}, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
+  }
 
-  public abstract ProjectTask createModulesBuildTask(Module[] modules,
-                                                     boolean isIncrementalBuild,
-                                                     boolean includeDependentModules,
-                                                     boolean includeRuntimeDependencies);
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies) {
+    return createModulesBuildTask(modules, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, true);
+  }
+
+  public abstract ProjectTask createModulesBuildTask(
+    Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests
+  );
 
   public abstract ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts);
 
-  /**
-   * @deprecated use {@link #createBuildTask(boolean, ProjectModelBuildableElement...)}
-   */
-  public ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts) {
-    return createBuildTask(isIncrementalBuild, artifacts);
-  }
+  @ApiStatus.Experimental
+  public abstract @Nullable ExecutionEnvironment createProjectTaskExecutionEnvironment(@NotNull ProjectTask projectTask);
 }

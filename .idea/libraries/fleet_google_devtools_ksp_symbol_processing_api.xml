@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="fleet:google.devtools.ksp.symbol.processing.api" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.google.devtools.ksp:symbol-processing-api:2.3.6">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-api/2.3.6/symbol-processing-api-2.3.6.jar">
+          <sha256sum>55df837d54b1bfdd7cdbe53bd84deeae374677ec4a729a9af154d3fee3c00230</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-api/2.3.6/symbol-processing-api-2.3.6.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-api/2.3.6/symbol-processing-api-2.3.6-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/devtools/ksp/symbol-processing-api/2.3.6/symbol-processing-api-2.3.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

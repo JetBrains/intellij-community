@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+kotlin {
+    jvmToolchain(11)
+}

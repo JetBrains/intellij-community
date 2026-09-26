@@ -1,0 +1,17 @@
+package main
+
+import dependency.Base
+import dependency.Extra
+import dependency.anyExtension
+import dependency.baseExtension
+import dependency.extraExtension
+
+fun test(a: Base) {
+    if (a is Extra) {
+        // a: Base & Extra
+
+        a.anyExtension()
+        a.baseExtension()
+        a.extraExtension()
+    }
+}<caret>

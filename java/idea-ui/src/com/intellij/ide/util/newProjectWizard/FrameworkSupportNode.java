@@ -21,15 +21,12 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 
-/**
-* @author nik
-*/
 public class FrameworkSupportNode extends FrameworkSupportNodeBase<FrameworkSupportInModuleProvider> {
   private FrameworkSupportInModuleConfigurable myConfigurable;
   private final FrameworkSupportModelBase myModel;
   private final Disposable myParentDisposable;
 
-  public FrameworkSupportNode(final FrameworkSupportInModuleProvider provider, final FrameworkSupportNodeBase parentNode, final FrameworkSupportModelBase model,
+  public FrameworkSupportNode(final FrameworkSupportInModuleProvider provider, final FrameworkSupportNodeBase<?> parentNode, final FrameworkSupportModelBase model,
                               Disposable parentDisposable) {
     super(provider, parentNode);
     myParentDisposable = parentDisposable;

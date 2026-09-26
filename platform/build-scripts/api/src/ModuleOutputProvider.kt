@@ -1,0 +1,87 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
+
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Path
+
+interface ModuleOutputProvider {
+  val useTestCompilationOutput: Boolean
+
+  /** Whether descriptor lookup and explicit test-output reads may use [module]'s test compilation output. */
+  fun isTestCompilationOutputEnabled(module: JpsModule): Boolean = useTestCompilationOutput
+
+  /**
+   * Returns all modules from the project model if available.
+   * Used for graph enrichment in analysis-only flows.
+   */
+  fun getAllModules(): List<JpsModule> = emptyList()
+
+  fun findModule(name: String): JpsModule?
+
+  /**
+   * Returns the path to the module's .iml file.
+   */
+  fun getModuleImlFile(module: JpsModule): Path
+
+  fun findRequiredModule(name: String): JpsModule
+
+  /**
+   * The file at [relativePath] in the source roots of [module], or `null` when no root holds it.
+   *
+   * The answer is the one [org.jetbrains.intellij.build.findFileInModuleSources] gives. A provider answers from its
+   * index, so a search that asks many modules for one file costs no file system call per module. Build code calls
+   * this method and not the file system function, so every search goes through the same index.
+   */
+  fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean = false): Path?
+
+  /**
+   * The modules whose production sources hold [relativePath], in the order of [getAllModules].
+   *
+   * A search that no declared module answers asks the whole project. This is the one answer to that question, so a
+   * provider can compute it once per path.
+   */
+  fun findModulesWithSourceFile(relativePath: String): List<JpsModule> {
+    return getAllModules().filter { findFileInModuleSources(module = it, relativePath = relativePath, onlyProductionSources = true) != null }
+  }
+
+  fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path>
+
+  /**
+   * The roots of a library a **probe** may read - a descriptor search asking many candidates for one file.
+   *
+   * Defaults to [findLibraryRoots]. A build assembling from an explicit Bazel input manifest narrows it to the jars it
+   * declares, because resolving a jar is what declares it there and a probe must not turn "does anyone have this file?"
+   * into an input of the fragment that asked. An unknown library is empty rather than an error for the same reason.
+   */
+  fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path> =
+    findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
+
+  /**
+   * One stable identity per jar of a library, read from the project model and not from a file.
+   *
+   * Two libraries that name the same artifact report the same identity for it. The packer decides with these whether a
+   * library still contributes a file to a jar, so a library whose every jar another library already packed is never
+   * resolved. That matters under an explicit Bazel input manifest: resolving a library declares it, and a build that
+   * packs nothing of a library must not need it declared.
+   *
+   * Defaults to the resolved roots. A provider that can answer from its model overrides this.
+   */
+  fun getLibraryJarIdentities(libraryName: String, moduleLibraryModuleName: String? = null): List<String> =
+    findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName).map { it.toString() }
+
+  fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
+
+  /**
+   * Searches for a file across module outputs.
+   * Used for xi:include resolution where the included file may be in any module, not just dependencies.
+   * Returns the file content if found, or null if the file doesn't exist in any module output.
+   *
+   * @param moduleNamePrefix if specified, only searches in modules whose name starts with this prefix
+   * @param processedModules if specified, skips modules that are already in this set (and adds searched modules to it)
+   */
+  fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String? = null, processedModules: MutableSet<String>? = null): ByteArray? = null
+
+  @Experimental
+  fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
+}

@@ -1,0 +1,54 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.kotlin.base.analysis"/>
+    <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
+    <module name="intellij.kotlin.base.projectStructure"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.base.util"/>
+    <module name="intellij.kotlin.references"/>
+    <module name="intellij.kotlin.searching.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="kotlin.fir.frontend-independent"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.directKotlinClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassDelegatedSearcher"/>
+    
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingMethodSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingMethodDelegatedSearcher"/>
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.searching.inheritors.KotlinFirDefinitionsSearcher"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2FindUsagesSupport"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2SearchUsagesSupport"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.ExpectActualSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.searching.kmp.KotlinK2ExpectActualSupport"/>
+    <usageTypeProvider implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2UsageTypeProvider"/>
+
+      <elementDescriptionProvider
+            implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2ElementDescriptionProvider"
+            order="first"/>
+  </extensions>
+</idea-plugin>

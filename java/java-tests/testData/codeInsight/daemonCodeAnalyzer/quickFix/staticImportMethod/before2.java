@@ -1,4 +1,4 @@
-// "Import static method..." "true"
+// "Import static method..." "true-preview"
 package p;
 public class X {
   public void test() throws Exception {

@@ -1,0 +1,16 @@
+// "Initialize with constructor parameter" "true"
+// K2_ERROR: MUST_BE_INITIALIZED
+open class A(s: String) {
+    <caret>var n: Int
+        get() = 1
+
+    constructor(): this("")
+    constructor(a: Int): this("" + a)
+}
+
+class B : A("")
+
+fun test() {
+    val a = A("")
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializeWithConstructorParameterFix

@@ -4,11 +4,9 @@ Copyright: Brainwy Software Ltda.
 License: EPL.
 =============
 
-Works for Windows relying on a fork of winappdbg which works in py2/3 (at least for the part we're interested in).
+Works for Windows by using an executable that'll inject a dll to a process and call a function.
 
-See: https://github.com/fabioz/winappdbg (py3 branch).
-Note that the official branch for winappdbg is: https://github.com/MarioVilas/winappdbg, which should be used when it works in Py3.
-A private copy is added here to make deployment easier, but changes should always be done upstream first.
+Note: https://github.com/fabioz/winappdbg is used just to determine if the target process is 32 or 64 bits.
 
 Works for Linux relying on gdb.
 
@@ -31,8 +29,8 @@ Other implementations:
 - pyrasite.com:
     GPL
     Windows/linux (in Linux it also uses gdb to connect -- although specifics are different as we use a dll to execute
-    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with 
-    Python 3 if threading is disabled. 
+    code with other threads stopped). It's Windows approach is more limited because it doesn't seem to deal properly with
+    Python 3 if threading is disabled.
 
 - https://github.com/google/pyringe:
     Apache v2.
@@ -77,364 +75,344 @@ import struct
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
+import platform
+import traceback
 
+try:
+    TimeoutError = TimeoutError  # @ReservedAssignment
+except NameError:
 
-SHOW_DEBUG_INFO = 0
-
-
-def stderr_write(message):
-    sys.stderr.write(message)
-    sys.stderr.write("\n")
-
-
-def debug(message):
-    if SHOW_DEBUG_INFO > 0:
-        stderr_write(message)
-
-
-class AutoExit(object):
-
-    def __init__(self, on_exit):
-        self.on_exit = on_exit
-
-    def __enter__(self):
+    class TimeoutError(RuntimeError):  # @ReservedAssignment
         pass
 
-    def __exit__(self, *args):
-        self.on_exit()
+
+@contextmanager
+def _create_win_event(name):
+    from winappdbg.win32.kernel32 import CreateEventA, WaitForSingleObject, CloseHandle
+
+    manual_reset = False  # i.e.: after someone waits it, automatically set to False.
+    initial_state = False
+    if not isinstance(name, bytes):
+        name = name.encode('utf-8')
+    event = CreateEventA(None, manual_reset, initial_state, name)
+    if not event:
+        raise ctypes.WinError()
+
+    class _WinEvent(object):
+
+        def wait_for_event_set(self, timeout=None):
+            '''
+            :param timeout: in seconds
+            '''
+            if timeout is None:
+                timeout = 0xFFFFFFFF
+            else:
+                timeout = int(timeout * 1000)
+            ret = WaitForSingleObject(event, timeout)
+            if ret in (0, 0x80):
+                return True
+            elif ret == 0x102:
+                # Timed out
+                return False
+            else:
+                raise ctypes.WinError()
+
+    try:
+        yield _WinEvent()
+    finally:
+        CloseHandle(event)
 
 
-class GenShellCodeHelper(object):
+IS_WINDOWS = sys.platform == 'win32'
+IS_LINUX = sys.platform in ('linux', 'linux2')
+IS_MAC = sys.platform == 'darwin'
 
-    def __init__(self, is_64):
-        from winappdbg import compat
-        self.is_64 = is_64
-        self._code = []
-        if not is_64:
-            self._translations = {
-                'push esi': compat.b('\x56'),
-                'push eax': compat.b('\x50'),
-                'push ebp': compat.b('\x55'),
-                'push ebx': compat.b('\x53'),
-
-                'pop esi': compat.b('\x5E'),
-                'pop eax': compat.b('\x58'),
-                'pop ebp': compat.b('\x5D'),
-                'pop ebx': compat.b('\x5B'),
-
-                'mov esi': compat.b('\xBE'),
-                'mov eax': compat.b('\xB8'),
-                'mov ebp': compat.b('\xBD'),
-                'mov ebx': compat.b('\xBB'),
-
-                'call ebp': compat.b('\xFF\xD5'),
-                'call eax': compat.b('\xFF\xD0'),
-                'call ebx': compat.b('\xFF\xD3'),
-
-                'mov ebx,eax': compat.b('\x89\xC3'),
-                'mov eax,ebx': compat.b('\x89\xD8'),
-                'mov ebp,esp': compat.b('\x89\xE5'),
-                'mov esp,ebp': compat.b('\x89\xEC'),
-                'push dword': compat.b('\x68'),
-
-                'mov ebp,eax': compat.b('\x89\xC5'),
-                'mov eax,ebp': compat.b('\x89\xE8'),
-
-                'ret': compat.b('\xc3'),
-            }
-        else:
-            # Translate 64 bits
-            self._translations = {
-                'push rsi': compat.b('\x56'),
-                'push rax': compat.b('\x50'),
-                'push rbp': compat.b('\x55'),
-                'push rbx': compat.b('\x53'),
-                'push rsp': compat.b('\x54'),
-                'push rdi': compat.b('\x57'),
-
-                'pop rsi': compat.b('\x5E'),
-                'pop rax': compat.b('\x58'),
-                'pop rbp': compat.b('\x5D'),
-                'pop rbx': compat.b('\x5B'),
-                'pop rsp': compat.b('\x5C'),
-                'pop rdi': compat.b('\x5F'),
-
-                'mov rsi': compat.b('\x48\xBE'),
-                'mov rax': compat.b('\x48\xB8'),
-                'mov rbp': compat.b('\x48\xBD'),
-                'mov rbx': compat.b('\x48\xBB'),
-                'mov rdi': compat.b('\x48\xBF'),
-                'mov rcx': compat.b('\x48\xB9'),
-                'mov rdx': compat.b('\x48\xBA'),
-
-                'call rbp': compat.b('\xFF\xD5'),
-                'call rax': compat.b('\xFF\xD0'),
-                'call rbx': compat.b('\xFF\xD3'),
-
-                'mov rbx,rax': compat.b('\x48\x89\xC3'),
-                'mov rax,rbx': compat.b('\x48\x89\xD8'),
-                'mov rbp,rsp': compat.b('\x48\x89\xE5'),
-                'mov rsp,rbp': compat.b('\x48\x89\xEC'),
-                'mov rcx,rbp': compat.b('\x48\x89\xE9'),
-
-                'mov rbp,rax': compat.b('\x48\x89\xC5'),
-                'mov rax,rbp': compat.b('\x48\x89\xE8'),
-
-                'mov rdi,rbp': compat.b('\x48\x89\xEF'),
-
-                'ret': compat.b('\xc3'),
-            }
-
-    def push_addr(self, addr):
-        self._code.append(self.translate('push dword'))
-        self._code.append(addr)
-
-    def push(self, register):
-        self._code.append(self.translate('push %s' % register))
-        return AutoExit(lambda: self.pop(register))
-
-    def pop(self, register):
-        self._code.append(self.translate('pop %s' % register))
-
-    def mov_to_register_addr(self, register, addr):
-        self._code.append(self.translate('mov %s' % register))
-        self._code.append(addr)
-
-    def mov_register_to_from(self, register_to, register_from):
-        self._code.append(self.translate('mov %s,%s' % (register_to, register_from)))
-
-    def call(self, register):
-        self._code.append(self.translate('call %s' % register))
-
-    def preserve_stack(self):
-        self.mov_register_to_from('ebp', 'esp')
-        return AutoExit(lambda: self.restore_stack())
-
-    def restore_stack(self):
-        self.mov_register_to_from('esp', 'ebp')
-
-    def ret(self):
-        self._code.append(self.translate('ret'))
-
-    def get_code(self):
-        from winappdbg import compat
-        return compat.b('').join(self._code)
-
-    def translate(self, code):
-        return self._translations[code]
-
-    def pack_address(self, address):
-        if self.is_64:
-            return struct.pack('<q', address)
-        else:
-            return struct.pack('<L', address)
-
-    def convert(self, code):
-        '''
-        Note:
-
-        If the shellcode starts with '66' controls, it needs to be changed to add [BITS 32] or
-        [BITS 64] to the start.
-
-        To use:
-
-        convert("""
-            55
-            53
-            50
-            BDE97F071E
-            FFD5
-            BDD67B071E
-            FFD5
-            5D
-            5B
-            58
-            C3
-            """)
-        '''
-        code = code.replace(' ', '')
-        lines = []
-        for l in code.splitlines(False):
-            lines.append(l)
-        code = ''.join(lines)  # Remove new lines
-        return code.decode('hex')
-
-def resolve_label(process, label):
-    for i in range(3):
-        try:
-            address = process.resolve_label(label)
-            assert address
-            return address
-        except:
-            try:
-                process.scan_modules()
-            except:
-                pass
-            if i == 2:
-                raise
-            time.sleep(2)
 
 def is_python_64bit():
-    return (struct.calcsize('P') == 8)
+    return struct.calcsize('P') == 8
 
-def is_mac():
-    import platform
-    return platform.system() == 'Darwin'
+
+def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
+    # Note: we have an independent (and similar -- but not equal) version of this method in
+    # `pydevd_tracing.py` which should be kept synchronized with this one (we do a copy
+    # because the `pydevd_attach_to_process` is mostly independent and shouldn't be imported in the
+    # debugger -- the only situation where it's imported is if the user actually does an attach to
+    # process, through `attach_pydevd.py`, but this should usually be called from the IDE directly
+    # and not from the debugger).
+    libdir = os.path.dirname(__file__)
+
+    if is_target_process_64 is None:
+        if IS_WINDOWS:
+            # i.e.: On windows the target process could have a different bitness (32bit is emulated on 64bit).
+            raise AssertionError("On windows it's expected that the target bitness is specified.")
+
+        # For other platforms, just use the the same bitness of the process we're running in.
+        is_target_process_64 = is_python_64bit()
+
+    arch = ''
+    if IS_WINDOWS:
+        # prefer not using platform.machine() when possible (it's a bit heavyweight as it may
+        # spawn a subprocess).
+        arch = os.environ.get("PROCESSOR_ARCHITEW6432", os.environ.get('PROCESSOR_ARCHITECTURE', ''))
+
+    if not arch:
+        arch = platform.machine()
+        if not arch:
+            print('platform.machine() did not return valid value.')  # This shouldn't happen...
+            return None
+
+    arch = arch.lower()
+
+    if IS_WINDOWS:
+        if not extension:
+            extension = '.dll'
+        suffix_64 = 'amd64'
+        suffix_32 = 'x86'
+
+    elif IS_LINUX:
+        if not extension:
+            extension = '.so'
+        suffix_64 = 'amd64'
+        suffix_32 = 'x86'
+
+    elif IS_MAC:
+        if not extension:
+            extension = '.dylib'
+        suffix_64 = suffix_32 = ''  # universal binary
+
+    else:
+        print('Unable to attach to process in platform: %s', sys.platform)
+        return None
+
+    if arch not in ('amd64', 'x86', 'x86_64', 'i386', 'x86', 'aarch64', 'arm64'):
+        # We don't support this processor by default. Still, let's support the case where the
+        # user manually compiled it himself with some heuristics.
+        #
+        # Ideally the user would provide a library in the format: "attach_<arch>.<extension>"
+        # based on the way it's currently compiled -- see:
+        # - windows/compile_windows.bat
+        # - linux_and_mac/compile_linux.sh
+        # - linux_and_mac/compile_mac.sh
+
+        try:
+            found = [name for name in os.listdir(libdir) if name.startswith('attach_') and name.endswith(extension)]
+        except:
+            print('Error listing dir: %s' % (libdir,))
+            traceback.print_exc()
+            return None
+
+        if prefix:
+            expected_name = prefix + arch + extension
+            expected_name_linux = prefix + 'linux_' + arch + extension
+        else:
+            # Default is looking for the attach_ / attach_linux
+            expected_name = 'attach_' + arch + extension
+            expected_name_linux = 'attach_linux_' + arch + extension
+
+        filename = None
+        if expected_name in found:  # Heuristic: user compiled with "attach_<arch>.<extension>"
+            filename = os.path.join(libdir, expected_name)
+
+        elif IS_LINUX and expected_name_linux in found:  # Heuristic: user compiled with "attach_linux_<arch>.<extension>"
+            filename = os.path.join(libdir, expected_name_linux)
+
+        elif len(found) == 1:  # Heuristic: user removed all libraries and just left his own lib.
+            filename = os.path.join(libdir, found[0])
+
+        else:  # Heuristic: there's one additional library which doesn't seem to be our own. Find the odd one.
+            filtered = [name for name in found if not name.endswith((suffix_64 + extension, suffix_32 + extension))]
+            if len(filtered) == 1:  # If more than one is available we can't be sure...
+                filename = os.path.join(libdir, found[0])
+
+        if filename is None:
+            print(
+                'Unable to attach to process in arch: %s (did not find %s in %s).' % (
+                    arch, expected_name, libdir
+                )
+            )
+            return None
+
+        print('Using %s in arch: %s.' % (filename, arch))
+
+    else:
+        if is_target_process_64:
+            if arch == 'aarch64':
+                suffix = 'aarch64'  # Linux AArch64
+            else:
+                suffix = suffix_64
+        else:
+            suffix = suffix_32
+
+        if not prefix:
+            if IS_WINDOWS:
+                prefix = 'attach_'
+            elif IS_MAC:
+                prefix = 'attach'
+            elif IS_LINUX:
+                prefix = 'attach_linux_'  # historically it has a different name
+            else:
+                print('Unable to attach to process in platform: %s' % (sys.platform,))
+                return None
+
+        filename = os.path.join(libdir, '%s%s%s' % (prefix, suffix, extension))
+
+    if not os.path.exists(filename):
+        print('Expected: %s to exist.' % (filename,))
+        return None
+
+    return filename
+
 
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
-    from winappdbg import compat
-    from winappdbg.process import Process
-    if not isinstance(python_code, compat.bytes):
-        python_code = compat.b(python_code)
+
+    # Suppress winappdbg warning about sql package missing.
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ImportWarning)
+        from winappdbg.process import Process
+
+    if not isinstance(python_code, bytes):
+        python_code = python_code.encode('utf-8')
 
     process = Process(pid)
     bits = process.get_bits()
-    is_64 = bits == 64
+    is_target_process_64 = bits == 64
 
-    if is_64 != is_python_64bit():
-        raise RuntimeError("The architecture of the Python used to connect doesn't match the architecture of the target.\n"
-        "Target 64 bits: %s\n"
-        "Current Python 64 bits: %s" % (is_64, is_python_64bit()))
+    # Note: this restriction no longer applies (we create a process with the proper bitness from
+    # this process so that the attach works).
+    # if is_target_process_64 != is_python_64bit():
+    #     raise RuntimeError("The architecture of the Python used to connect doesn't match the architecture of the target.\n"
+    #     "Target 64 bits: %s\n"
+    #     "Current Python 64 bits: %s" % (is_target_process_64, is_python_64bit()))
 
-    debug('Connecting to %s bits target' % (bits,))
-    assert resolve_label(process, compat.b('PyGILState_Ensure'))
+    with _acquire_mutex('_pydevd_pid_attach_mutex_%s' % (pid,), 10):
+        print('--- Connecting to %s bits target (current process is: %s) ---' % (bits, 64 if is_python_64bit() else 32))
+        sys.stdout.flush()
 
+        with _win_write_to_shared_named_memory(python_code, pid):
 
-    filedir = os.path.dirname(__file__)
-    if is_64:
-        suffix = 'amd64'
-    else:
-        suffix = 'x86'
-    target_dll = os.path.join(filedir, 'attach_%s.dll' % suffix)
-    if not os.path.exists(target_dll):
-        raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
-    debug('Injecting dll')
-    process.inject_dll(target_dll.encode('mbcs'))
-    debug('Dll injected')
+            target_executable = get_target_filename(is_target_process_64, 'inject_dll_', '.exe')
+            if not target_executable:
+                raise RuntimeError('Could not find expected .exe file to inject dll in attach to process.')
 
-    process.scan_modules()
-    attach_func = resolve_label(process, compat.b('AttachAndRunPythonCode'))
-    assert attach_func
+            target_dll = get_target_filename(is_target_process_64)
+            if not target_dll:
+                raise RuntimeError('Could not find expected .dll file in attach to process.')
 
-    debug('Allocating code in target process')
-    code_address = process.malloc(len(python_code))
-    assert code_address
-    debug('Writing code in target process')
-    process.write(code_address, python_code)
+            print('\n--- Injecting attach dll: %s into pid: %s ---' % (os.path.basename(target_dll), pid))
+            sys.stdout.flush()
+            args = [target_executable, str(pid), target_dll]
+            subprocess.check_call(args)
 
-    debug('Allocating return value memory in target process')
-    return_code_address = process.malloc(ctypes.sizeof(ctypes.c_int))
-    assert return_code_address
+            # Now, if the first injection worked, go on to the second which will actually
+            # run the code.
+            target_dll_run_on_dllmain = get_target_filename(is_target_process_64, 'run_code_on_dllmain_', '.dll')
+            if not target_dll_run_on_dllmain:
+                raise RuntimeError('Could not find expected .dll in attach to process.')
 
-    CONNECT_DEBUGGER = 2
+            with _create_win_event('_pydevd_pid_event_%s' % (pid,)) as event:
+                print('\n--- Injecting run code dll: %s into pid: %s ---' % (os.path.basename(target_dll_run_on_dllmain), pid))
+                sys.stdout.flush()
+                args = [target_executable, str(pid), target_dll_run_on_dllmain]
+                subprocess.check_call(args)
 
-    startup_info = 0
-    if show_debug_info:
-        SHOW_DEBUG_INFO = 1
-        startup_info |= SHOW_DEBUG_INFO # Uncomment to show debug info
+                if not event.wait_for_event_set(15):
+                    print('Timeout error: the attach may not have completed.')
+                    sys.stdout.flush()
+            print('--- Finished dll injection ---\n')
+            sys.stdout.flush()
 
-    if connect_debugger_tracing:
-        startup_info |= CONNECT_DEBUGGER
-
-    process.write_int(return_code_address, startup_info)
-
-    helper = GenShellCodeHelper(is_64)
-    if is_64:
-        # Interesting read: http://msdn.microsoft.com/en-us/library/ms235286.aspx
-        # Overview of x64 Calling Conventions (for windows: Linux is different!)
-        # Register Usage: http://msdn.microsoft.com/en-us/library/9z1stfyw.aspx
-        # The registers RAX, RCX, RDX, R8, R9, R10, R11 are considered volatile and must be considered destroyed on function calls (unless otherwise safety-provable by analysis such as whole program optimization).
-        #
-        # The registers RBX, RBP, RDI, RSI, RSP, R12, R13, R14, and R15 are considered nonvolatile and must be saved and restored by a function that uses them.
-        #
-        # Important: RCX: first int argument
-
-        with helper.push('rdi'):  # This one REALLY must be pushed/poped
-            with helper.push('rsp'):
-                with helper.push('rbp'):
-                    with helper.push('rbx'):
-
-                        with helper.push('rdi'):  # Note: pop is automatic.
-                            helper.mov_to_register_addr('rcx', helper.pack_address(code_address))
-                            helper.mov_to_register_addr('rdx', helper.pack_address(return_code_address))
-                            helper.mov_to_register_addr('rbx', helper.pack_address(attach_func))
-                            helper.call('rbx')
-
-    else:
-        with helper.push('eax'):  # Note: pop is automatic.
-            with helper.push('ebp'):
-                with helper.push('ebx'):
-
-                    with helper.preserve_stack():
-                        # Put our code as a parameter in the stack (on x86, we push parameters to
-                        # the stack)
-                        helper.push_addr(helper.pack_address(return_code_address))
-                        helper.push_addr(helper.pack_address(code_address))
-                        helper.mov_to_register_addr('ebx', helper.pack_address(attach_func))
-                        helper.call('ebx')
-
-    helper.ret()
-
-    code = helper.get_code()
+    return 0
 
 
-    # Uncomment to see the disassembled version of what we just did...
-#     with open('f.asm', 'wb') as stream:
-#         stream.write(code)
-#
-#     exe = r'x:\nasm\nasm-2.07-win32\nasm-2.07\ndisasm.exe'
-#     if is_64:
-#         arch = '64'
-#     else:
-#         arch = '32'
-#
-#     subprocess.call((exe + ' -b %s f.asm' % arch).split())
+@contextmanager
+def _acquire_mutex(mutex_name, timeout):
+    '''
+    Only one process may be attaching to a pid, so, create a system mutex
+    to make sure this holds in practice.
+    '''
+    from winappdbg.win32.kernel32 import CreateMutex, GetLastError, CloseHandle
+    from winappdbg.win32.defines import ERROR_ALREADY_EXISTS
 
-    debug('Injecting code to target process')
-    thread, _thread_address = process.inject_code(code, 0)
+    initial_time = time.time()
+    while True:
+        mutex = CreateMutex(None, True, mutex_name)
+        acquired = GetLastError() != ERROR_ALREADY_EXISTS
+        if acquired:
+            break
+        if time.time() - initial_time > timeout:
+            raise TimeoutError('Unable to acquire mutex to make attach before timeout.')
+        time.sleep(.2)
 
-    timeout = None  # Could receive timeout in millis.
-    debug('Waiting for code to complete')
-    thread.wait(timeout)
+    try:
+        yield
+    finally:
+        CloseHandle(mutex)
 
-    return_code = process.read_int(return_code_address)
-    if return_code == 0:
-        print('Attach finished successfully.')
-    else:
-        print('Error when injecting code in target process. Error code: %s (on windows)' % (return_code,))
 
-    process.free(thread.pInjectedMemory)
-    process.free(code_address)
-    process.free(return_code_address)
-    return return_code
+@contextmanager
+def _win_write_to_shared_named_memory(python_code, pid):
+    # Use the definitions from winappdbg when possible.
+    from winappdbg.win32 import defines
+    from winappdbg.win32.kernel32 import (
+        CreateFileMapping,
+        MapViewOfFile,
+        CloseHandle,
+        UnmapViewOfFile,
+    )
+
+    memmove = ctypes.cdll.msvcrt.memmove
+    memmove.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        defines.SIZE_T,
+    ]
+    memmove.restype = ctypes.c_void_p
+
+    # Note: BUFSIZE must be the same from run_code_in_memory.hpp
+    BUFSIZE = 2048
+    assert isinstance(python_code, bytes)
+    assert len(python_code) > 0, 'Python code must not be empty.'
+    # Note: -1 so that we're sure we'll add a \0 to the end.
+    assert len(python_code) < BUFSIZE - 1, 'Python code must have at most %s bytes (found: %s)' % (BUFSIZE - 1, len(python_code))
+
+    python_code += b'\0' * (BUFSIZE - len(python_code))
+    assert python_code.endswith(b'\0')
+
+    INVALID_HANDLE_VALUE = -1
+    PAGE_READWRITE = 0x4
+    FILE_MAP_WRITE = 0x2
+    filemap = CreateFileMapping(
+        INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, BUFSIZE, u"__pydevd_pid_code_to_run__%s" % (pid,))
+
+    if filemap == INVALID_HANDLE_VALUE or filemap is None:
+        raise Exception("Failed to create named file mapping (ctypes: CreateFileMapping): %s" % (filemap,))
+    try:
+        view = MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0)
+        if not view:
+            raise Exception("Failed to create view of named file mapping (ctypes: MapViewOfFile).")
+
+        try:
+            memmove(view, python_code, BUFSIZE)
+            yield
+        finally:
+            UnmapViewOfFile(view)
+    finally:
+        CloseHandle(filemap)
 
 
 def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
-    filedir = os.path.dirname(__file__)
 
-    # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
-    #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
-    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
+    target_dll = get_target_filename()
+    if not target_dll:
+        raise RuntimeError('Could not find .so for attach to process.')
+    target_dll_name = os.path.splitext(os.path.basename(target_dll))[0]
 
-    if is_python_64bit():
-        suffix = 'amd64'
-        arch = 'i386:x86-64'
-    else:
-        suffix = 'x86'
-        arch = 'i386'
-
-    debug('Attaching with arch: %s'% (arch,))
-
-    target_dll = os.path.join(filedir, 'attach_linux_%s.so' % suffix)
-    target_dll = os.path.abspath(os.path.normpath(target_dll))
-    if not os.path.exists(target_dll):
-        raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
-
-    gdb_threads_settrace_file = find_helper_script(filedir, 'gdb_threads_settrace.py')
-
-    # Note: we currently don't support debug builds 
+    # Note: we currently don't support debug builds
     is_debug = 0
     # Note that the space in the beginning of each line in the multi-line is important!
     cmd = [
@@ -449,77 +427,80 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 #         '--batch-silent',
     ]
 
+    # PYDEVD_GDB_SCAN_SHARED_LIBRARIES can be a list of strings with the shared libraries
+    # which should be scanned by default to make the attach to process (i.e.: libdl, libltdl, libc, libfreebl3).
+    #
+    # The default is scanning all shared libraries, but on some cases this can be in the 20-30
+    # seconds range for some corner cases.
+    # See: https://github.com/JetBrains/intellij-community/pull/1608
+    #
+    # By setting PYDEVD_GDB_SCAN_SHARED_LIBRARIES (to a comma-separated string), it's possible to
+    # specify just a few libraries to be loaded (not many are needed for the attach,
+    # but it can be tricky to pre-specify for all Linux versions as this may change
+    # across different versions).
+    #
+    # See: https://github.com/microsoft/debugpy/issues/762#issuecomment-947103844
+    # for a comment that explains the basic steps on how to discover what should be available
+    # in each case (mostly trying different versions based on the output of gdb).
+    #
+    # The upside is that for cases when too many libraries are loaded the attach could be slower
+    # and just specifying the one that is actually needed for the attach can make it much faster.
+    #
+    # The downside is that it may be dependent on the Linux version being attached to (which is the
+    # reason why this is no longer done by default -- see: https://github.com/microsoft/debugpy/issues/882).
+    gdb_load_shared_libraries = os.environ.get('PYDEVD_GDB_SCAN_SHARED_LIBRARIES', '').strip()
+    if gdb_load_shared_libraries:
+        print('PYDEVD_GDB_SCAN_SHARED_LIBRARIES set: %s.' % (gdb_load_shared_libraries,))
+        cmd.extend(["--init-eval-command='set auto-solib-add off'"])  # Don't scan all libraries.
+
+        for lib in gdb_load_shared_libraries.split(','):
+            lib = lib.strip()
+            cmd.extend(["--eval-command='sharedlibrary %s'" % (lib,)])  # Scan the specified library
+    else:
+        print('PYDEVD_GDB_SCAN_SHARED_LIBRARIES not set (scanning all libraries for needed symbols).')
+
     cmd.extend(["--eval-command='set scheduler-locking off'"])  # If on we'll deadlock.
 
-    cmd.extend(["--eval-command='set architecture %s'" % arch])
+    # Leave auto by default (it should do the right thing as we're attaching to a process in the
+    # current host).
+    cmd.extend(["--eval-command='set architecture auto'"])
 
     cmd.extend([
-        "--eval-command='call dlopen(\"%s\", 2)'" % target_dll,
-        "--eval-command='call DoAttach(%s, \"%s\", %s)'" % (
+        "--eval-command='call (void*)dlopen(\"%s\", 2)'" % target_dll,
+        "--eval-command='sharedlibrary %s'" % target_dll_name,
+        "--eval-command='call (int)DoAttach(%s, \"%s\", %s)'" % (
             is_debug, python_code, show_debug_info)
     ])
 
-
-    if connect_debugger_tracing:
-        cmd.extend([
-            "--command='%s'" % (gdb_threads_settrace_file,),
-        ])
-
-    #print ' '.join(cmd)
+    # print ' '.join(cmd)
 
     env = os.environ.copy()
     # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
     # have the PYTHONPATH for a different python version or some forced encoding).
     env.pop('PYTHONIOENCODING', None)
     env.pop('PYTHONPATH', None)
-    debug('Running: %s' % (' '.join(cmd)))
-    p = subprocess.Popen(
-        ' '.join(cmd),
-        shell=True,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    debug('Running gdb in target process.')
-    out, err = p.communicate()
-    debug('stdout: %s' % (out,))
-    debug('stderr: %s' % (err,))
-    return out, err
+    print('Running: %s' % (' '.join(cmd)))
+    subprocess.check_call(' '.join(cmd), shell=True, env=env)
 
 
 def find_helper_script(filedir, script_name):
-    lldb_threads_settrace_file = os.path.join(filedir, 'linux', script_name)
-    lldb_threads_settrace_file = os.path.normpath(lldb_threads_settrace_file)
-    if not os.path.exists(lldb_threads_settrace_file):
-        raise RuntimeError('Could not find file to settrace: %s' % lldb_threads_settrace_file)
+    target_filename = os.path.join(filedir, 'linux_and_mac', script_name)
+    target_filename = os.path.normpath(target_filename)
+    if not os.path.exists(target_filename):
+        raise RuntimeError('Could not find helper script: %s' % target_filename)
 
-    return lldb_threads_settrace_file
+    return target_filename
 
 
 def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
-    filedir = os.path.dirname(__file__)
 
-    # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
-    #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
-    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
+    target_dll = get_target_filename()
+    if not target_dll:
+        raise RuntimeError('Could not find .dylib for attach to process.')
 
-    if is_python_64bit():
-        suffix = 'x86_64.dylib'
-        arch = 'i386:x86-64'
-    else:
-        suffix = 'x86.dylib'
-        arch = 'i386'
-
-    debug('Attaching with arch: %s'% (arch,))
-
-    target_dll = os.path.join(filedir, 'attach_%s' % suffix)
-    target_dll = os.path.normpath(target_dll)
-    if not os.path.exists(target_dll):
-        raise RuntimeError('Could not find dll file to inject: %s' % target_dll)
-
-    lldb_threads_settrace_file = find_helper_script(filedir, 'lldb_threads_settrace.py')
-    lldb_prepare_file = find_helper_script(filedir, 'lldb_prepare.py')
+    libdir = os.path.dirname(__file__)
+    lldb_prepare_file = find_helper_script(libdir, 'lldb_prepare.py')
     # Note: we currently don't support debug builds
 
     is_debug = 0
@@ -536,54 +517,40 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         #         '--batch-silent',
     ]
 
-
     cmd.extend([
-        "-o 'process attach --pid %d'"%pid,
+        "-o 'process attach --pid %d'" % pid,
         "-o 'command script import \"%s\"'" % (lldb_prepare_file,),
         "-o 'load_lib_and_attach \"%s\" %s \"%s\" %s'" % (target_dll,
             is_debug, python_code, show_debug_info),
     ])
 
-
-    if connect_debugger_tracing:
-        cmd.extend([
-            # "-o 'expr (int) SetSysTraceFunc(0, 0);'",
-            "-o 'command script import \"%s\"'" % (lldb_threads_settrace_file,),
-            ])
-
     cmd.extend([
         "-o 'process detach'",
-        "-o 'script import os; os._exit(1)'",
+        "-o 'script import os; os._exit(0)'",
     ])
 
-    #print ' '.join(cmd)
+    # print ' '.join(cmd)
 
     env = os.environ.copy()
-    # Remove the PYTHONPATH (if gdb has a builtin Python it could fail if we
+    # Remove the PYTHONPATH (if lldb has a builtin Python it could fail if we
     # have the PYTHONPATH for a different python version or some forced encoding).
     env.pop('PYTHONIOENCODING', None)
     env.pop('PYTHONPATH', None)
-    debug('Running: %s' % (' '.join(cmd)))
-    p = subprocess.Popen(
-        ' '.join(cmd),
-        shell=True,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        )
-    debug('Running lldb in target process.')
-    out, err = p.communicate()
-    debug('stdout: %s' % (out,))
-    debug('stderr: %s' % (err,))
-    return out, err
+    print('Running: %s' % (' '.join(cmd)))
+    subprocess.check_call(' '.join(cmd), shell=True, env=env)
 
 
-if sys.platform == 'win32':
+if IS_WINDOWS:
     run_python_code = run_python_code_windows
-elif is_mac():
+elif IS_MAC:
     run_python_code = run_python_code_mac
-else:
+elif IS_LINUX:
     run_python_code = run_python_code_linux
+else:
+
+    def run_python_code(*args, **kwargs):
+        print('Unable to attach to process in platform: %s', sys.platform)
+
 
 def test():
     print('Running with: %s' % (sys.executable,))
@@ -606,10 +573,13 @@ if __name__ == '__main__':
         # Real code will be something as:
         # code = '''import sys;sys.path.append(r'X:\winappdbg-code\examples'); import imported;'''
         run_python_code(p.pid, python_code=code)
+        print('\nRun a 2nd time...\n')
+        run_python_code(p.pid, python_code=code)
 
         time.sleep(3)
     finally:
         p.kill()
+
 
 def main(args):
     # Otherwise, assume the first parameter is the pid and anything else is code to be executed
@@ -621,6 +591,7 @@ def main(args):
     # Note: on Linux the python code may not have a single quote char: '
     run_python_code(pid, python_code)
 
+
 if __name__ == '__main__':
     args = sys.argv[1:]
     if not args:
@@ -630,5 +601,4 @@ if __name__ == '__main__':
             test()
         else:
             main(args)
-
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields.valueEditors;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -21,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 
 public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
   private int myMinValue;
@@ -32,9 +18,8 @@ public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
     super(field, valueName, defaultValue);
   }
 
-  @NotNull
   @Override
-  public Integer parseValue(@Nullable String text) {
+  public @NotNull Integer parseValue(@Nullable String text) throws InvalidDataException {
     try {
       if (StringUtil.isEmpty(text)) {
         if (!myCanBeEmpty) {
@@ -88,5 +73,13 @@ public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
 
   public void setCanBeEmpty(boolean canBeEmpty) {
     myCanBeEmpty = canBeEmpty;
+  }
+
+  @Override
+  protected boolean isShowError(@Nullable String errorText) {
+    if (StringUtil.isEmpty(getValueText())) {
+      return false;
+    }
+    return super.isShowError(errorText);
   }
 }

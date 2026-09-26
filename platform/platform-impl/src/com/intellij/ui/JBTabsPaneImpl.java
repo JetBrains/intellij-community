@@ -1,143 +1,141 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.MouseListener;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
-  private final JBTabsImpl myTabs;
-  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
+// used externally - cannot be final
+public class JBTabsPaneImpl implements TabbedPane {
+  private final JBEditorTabs tabs;
+  private final CopyOnWriteArraySet<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
-    myTabs = new JBEditorTabs(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent) {
-      @Override
-      public boolean isAlphabeticalMode() {
-        return false;
-      }
+    tabs = new JBEditorTabs(project, parent);
+    tabs.getPresentation()
+      .setAlphabeticalMode(false)
+      .setPaintFocus(true)
+      .setFirstTabOffset(10);
 
-      @Override
-      public boolean supportsCompression() {
-        return false;
-      }
-
-      @Override
-      protected Color getEmptySpaceColor() {
-        return UIUtil.getBgFillColor(getParent());
-      }
-    };
-    myTabs.setFirstTabOffset(10);
-
-    myTabs.addListener(new TabsListener() {
+    tabs.addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        fireChanged(new ChangeEvent(myTabs));
+        fireChanged(new ChangeEvent(tabs));
       }
-    }).getPresentation()
-      .setPaintBorder(1, 1, 1, 1)
-      .setTabSidePaintBorder(2)
-      .setPaintFocus(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
-      .setAlwaysPaintSelectedTab(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())
-      .setGhostsAlwaysVisible(true);
+    });
 
     setTabPlacement(tabPlacement);
   }
 
   private void fireChanged(ChangeEvent event) {
-    for (ChangeListener each : myListeners) {
+    for (ChangeListener each : listeners) {
       each.stateChanged(event);
     }
   }
 
+  @Override
   public JComponent getComponent() {
-    return myTabs.getComponent();
+    return tabs.getComponent();
   }
 
-  public void putClientProperty(Object key, Object value) {
-    myTabs.getComponent().putClientProperty(key, value);
+  @Override
+  public void putClientProperty(@NotNull Object key, Object value) {
+    tabs.getComponent().putClientProperty(key, value);
   }
 
-  public void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation) {
-    myTabs.setNavigationActionBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
+  @Override
+  public void setKeyboardNavigation(@NotNull PrevNextActionsDescriptor installKeyboardNavigation) {
+    tabs.setNavigationActionBinding(installKeyboardNavigation.getPrevActionId(), installKeyboardNavigation.getNextActionId());
   }
 
-  public void addChangeListener(ChangeListener listener) {
-    myListeners.add(listener);
+  @Override
+  public void addChangeListener(@NotNull ChangeListener listener) {
+    listeners.add(listener);
   }
 
+  @Override
   public int getTabCount() {
-    return myTabs.getTabCount();
+    return tabs.getTabCount();
   }
 
-  public void insertTab(String title, Icon icon, Component c, String tip, int index) {
+  @Override
+  public void insertTab(@NotNull String title, Icon icon, @NotNull Component c, String tip, int index) {
     assert c instanceof JComponent;
-    myTabs.addTab(new TabInfo((JComponent)c).setText(title).setTooltipText(tip).setIcon(icon), index);
+    tabs.addTab(new TabInfo((JComponent)c).setText(title).setTooltipText(tip).setIcon(icon), index);
   }
 
+  @Override
   public void setTabPlacement(int tabPlacement) {
-    final JBTabsPresentation presentation = myTabs.getPresentation();
-    switch (tabPlacement) {
-      case TOP:
-        presentation.setTabsPosition(JBTabsPosition.top);
-        break;
-      case BOTTOM:
-        presentation.setTabsPosition(JBTabsPosition.bottom);
-        break;
-      case LEFT:
-        presentation.setTabsPosition(JBTabsPosition.left);
-        break;
-      case RIGHT:
-        presentation.setTabsPosition(JBTabsPosition.right);
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid tab placement code=" + tabPlacement);
-    }
+    JBTabsPosition position = swingConstantToEnum(tabPlacement);
+    tabs.setTabsPosition(position);
   }
 
-  public void addMouseListener(MouseListener listener) {
-    myTabs.getComponent().addMouseListener(listener);
+  @ApiStatus.Internal
+  public static @NotNull JBTabsPosition swingConstantToEnum(int tabPlacement) {
+    return switch (tabPlacement) {
+      case SwingConstants.TOP -> JBTabsPosition.top;
+      case SwingConstants.BOTTOM -> JBTabsPosition.bottom;
+      case SwingConstants.LEFT -> JBTabsPosition.left;
+      case SwingConstants.RIGHT -> JBTabsPosition.right;
+      default -> throw new IllegalArgumentException("Invalid tab placement code=" + tabPlacement);
+    };
   }
 
+  @Override
+  public void addMouseListener(@NotNull MouseListener listener) {
+    tabs.getComponent().addMouseListener(listener);
+  }
+
+  @Override
   public int getSelectedIndex() {
-    return myTabs.getIndexOf(myTabs.getSelectedInfo());
+    TabInfo tab = tabs.getSelectedInfo();
+    return tab == null ? -1 : tabs.getIndexOf(tab);
   }
 
+  @Override
   public Component getSelectedComponent() {
-    final TabInfo selected = myTabs.getSelectedInfo();
-    return selected != null ? selected.getComponent() : null;
+    TabInfo selected = tabs.getSelectedInfo();
+    return selected == null ? null : selected.getComponent();
   }
 
+  @Override
   public void setSelectedIndex(int index) {
-    myTabs.select(getTabAt(index), false);
+    tabs.select(getTabAt(index), false);
   }
 
   @Override
   public Component getTabComponentAt(int index) {
-    final TabInfo tabInfo = myTabs.getTabAt(index);
-    return myTabs.getTabLabel(tabInfo);
+    final TabInfo tabInfo = tabs.getTabAt(index);
+    return tabs.getTabLabel(tabInfo);
   }
 
+  @Override
   public void removeTabAt(int index) {
-    myTabs.removeTab(getTabAt(index));
+    tabs.removeTab(getTabAt(index));
   }
 
   private TabInfo getTabAt(int index) {
     checkIndex(index);
-    return myTabs.getTabAt(index);
+    return tabs.getTabAt(index);
   }
 
   private void checkIndex(int index) {
@@ -146,83 +144,91 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
     }
   }
 
+  @Override
   public void revalidate() {
-    myTabs.getComponent().revalidate();
+    tabs.getComponent().revalidate();
   }
 
+  @Override
   public Color getForegroundAt(int index) {
     return getTabAt(index).getDefaultForeground();
   }
 
+  @Override
   public void setForegroundAt(int index, Color color) {
     getTabAt(index).setDefaultForeground(color);
   }
 
+  @Override
   public Component getComponentAt(int i) {
     return getTabAt(i).getComponent();
   }
 
-  public void setTitleAt(int index, String title) {
+  @Override
+  public void setTitleAt(int index, @NotNull String title) {
     getTabAt(index).setText(title);
   }
 
+  @Override
   public void setToolTipTextAt(int index, String toolTipText) {
     getTabAt(index).setTooltipText(toolTipText);
   }
 
+  @Override
   public void setComponentAt(int index, Component c) {
     getTabAt(index).setComponent(c);
   }
 
+  @Override
   public void setIconAt(int index, Icon icon) {
     getTabAt(index).setIcon(icon);
   }
 
+  @Override
   public void setEnabledAt(int index, boolean enabled) {
     getTabAt(index).setEnabled(enabled);
   }
 
+  @Override
   public int getTabLayoutPolicy() {
-    return myTabs.getPresentation().isSingleRow() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT;
+    return tabs.isSingleRow() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT;
   }
 
+  @Override
   public void setTabLayoutPolicy(int policy) {
-    switch (policy) {
-      case JTabbedPane.SCROLL_TAB_LAYOUT:
-        myTabs.getPresentation().setSingleRow(true);
-        break;
-      case JTabbedPane.WRAP_TAB_LAYOUT:
-        myTabs.getPresentation().setSingleRow(false);
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
-    }
+    boolean singleRow = switch (policy) {
+      case JTabbedPane.SCROLL_TAB_LAYOUT -> true;
+      case JTabbedPane.WRAP_TAB_LAYOUT -> false;
+      default -> throw new IllegalArgumentException("Unsupported tab layout policy: " + policy);
+    };
+    tabs.getPresentation().setSingleRow(singleRow);
   }
 
+  @Override
   public void scrollTabToVisible(int index) {
   }
 
-  public String getTitleAt(int i) {
+  @Override
+  public @Nls String getTitleAt(int i) {
     return getTabAt(i).getText();
   }
 
+  @Override
   public void removeAll() {
-    myTabs.removeAllTabs();
+    tabs.removeAllTabs();
   }
 
+  @Override
   public void updateUI() {
-    myTabs.getComponent().updateUI();
+    tabs.getComponent().updateUI();
   }
 
+  @Override
   public void removeChangeListener(ChangeListener listener) {
-    myListeners.remove(listener);
+    listeners.remove(listener);
   }
 
-  public JBTabs getTabs() {
-    return myTabs;
-  }
-
-  public boolean isDisposed() {
-    return myTabs.isDisposed();
+  public @NotNull JBTabs getTabs() {
+    return tabs;
   }
 }

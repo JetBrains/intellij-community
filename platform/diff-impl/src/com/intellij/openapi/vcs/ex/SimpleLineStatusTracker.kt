@@ -20,12 +20,28 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class SimpleLineStatusTracker(project: Project?,
-                              document: Document,
-                              rendererBuilder: (SimpleLineStatusTracker) -> LineStatusMarkerRenderer
-) : LineStatusTrackerBase<Range>(project, document) {
-  override val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
+class SimpleLineStatusTracker(project: Project?, document: Document) : LineStatusTrackerBase<Range>(project, document) {
+
+  constructor(project: Project?, document: Document, rendererBuilder: (SimpleLineStatusTracker) -> LineStatusMarkerRenderer)
+    : this(project, document) {
+    val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
+    listeners.addListener(object : LineStatusTrackerListener {
+      override fun onRangesChanged() {
+        renderer.scheduleUpdate()
+      }
+    })
+  }
+
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, null)
+
+  override val Block.ourData: DocumentTracker.BlockData
+    get() = DocumentTracker.BlockData.Empty
+
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevisionContent(vcsContent, null)
+  }
 }

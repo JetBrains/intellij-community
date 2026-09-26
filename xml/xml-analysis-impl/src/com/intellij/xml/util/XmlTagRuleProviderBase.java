@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
-import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +18,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlTagRuleProvider;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +35,8 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
   public static Rule unusedIfPresent(String attrPresent, String ... attrUnused) {
     Effect[] effects = new Effect[attrUnused.length];
     for (int i = 0; i < effects.length; i++) {
-      effects[i] = unused(attrUnused[i], "The attribute '" + attrUnused[i] + "' is unused because the attribute '" + attrPresent + "' is present");
+      effects[i] = unused(
+        attrUnused[i], XmlAnalysisBundle.message("xml.inspections.attribute.unused.because.other.attribute.present", attrUnused[i], attrPresent));
     }
 
     return new ConditionRule(ifAttrPresent(attrPresent), effects);
@@ -55,33 +44,33 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   public static Rule unusedAllIfPresent(String attrPresent, String ... attrUnused) {
     return new ConditionRule(ifAttrPresent(attrPresent),
-                             new InvalidAllExpectSome("The attribute is unused because the attribute " + attrPresent + " is present",
-                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                                      ArrayUtil.append(attrUnused, attrPresent)));
+                             new InvalidAllExpectSome(
+                               XmlAnalysisBundle.message("xml.inspections.all.attributes.unused.because.an.attribute.present", attrPresent),
+                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               ArrayUtil.append(attrUnused, attrPresent)));
   }
 
-  public static Effect invalid(String attrName, String text) {
+  public static Effect invalid(String attrName, @InspectionMessage String text) {
     return new InvalidAttrEffect(attrName, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   public static Effect unused(String attrName) {
-    return new InvalidAttrEffect(attrName, "Attribute '" + attrName + "' is unused", ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    return new InvalidAttrEffect(attrName, XmlAnalysisBundle.message("xml.inspections.attribute.unused", attrName), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
-  public static Effect unused(String attrName, String text) {
+  public static Effect unused(String attrName, @InspectionMessage String text) {
     return new InvalidAttrEffect(attrName, text, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
-  public static Effect unusedAll(String text, String... attrNames) {
+  public static Effect unusedAll(@InspectionMessage String text, String... attrNames) {
     return new InvalidAllExpectSome(text, ProblemHighlightType.LIKE_UNUSED_SYMBOL, attrNames);
   }
 
-  public static Rule rule(Condition<XmlTag> condition, Effect ... effect) {
+  public static Rule rule(Condition<? super XmlTag> condition, Effect ... effect) {
     return new ConditionRule(condition, effect);
   }
 
-  @Nullable
-  public static PsiElement getXmlElement(RoleFinder roleFinder, XmlElement tag) {
+  public static @Nullable PsiElement getXmlElement(RoleFinder roleFinder, XmlElement tag) {
     ASTNode tagNode = tag.getNode();
     if (tagNode == null) return null;
 
@@ -91,13 +80,11 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
     return nameElement.getPsi();
   }
 
-  @Nullable
-  public static PsiElement getTagNameElement(XmlTag tag) {
+  public static @Nullable PsiElement getTagNameElement(XmlTag tag) {
     return getXmlElement(XmlChildRole.START_TAG_NAME_FINDER, tag);
   }
 
-  @Nullable
-  public static PsiElement getAttributeNameElement(XmlAttribute attribute) {
+  public static @Nullable PsiElement getAttributeNameElement(XmlAttribute attribute) {
     return getXmlElement(XmlChildRole.ATTRIBUTE_NAME_FINDER, attribute);
   }
 
@@ -117,10 +104,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   public static class InvalidAttrEffect extends Effect {
     private final String myAttrName;
-    private final String myText;
+    private final @InspectionMessage String myText;
     private final ProblemHighlightType myType;
 
-    public InvalidAttrEffect(String attrName, String text, ProblemHighlightType type) {
+    public InvalidAttrEffect(String attrName, @InspectionMessage String text, ProblemHighlightType type) {
       myAttrName = attrName;
       myText = text;
       myType = type;
@@ -140,10 +127,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   public static class InvalidAllExpectSome extends Effect {
     private final String[] myAttrNames;
-    private final String myText;
+    private final @InspectionMessage String myText;
     private final ProblemHighlightType myType;
 
-    public InvalidAllExpectSome(String text, ProblemHighlightType type, String... attrNames) {
+    public InvalidAllExpectSome(@InspectionMessage String text, ProblemHighlightType type, String... attrNames) {
       myAttrNames = attrNames;
       myText = text;
       myType = type;
@@ -164,10 +151,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
   }
 
   public static class ConditionRule extends Rule {
-    private final Condition<XmlTag> myCondition;
+    private final Condition<? super XmlTag> myCondition;
     private final Effect[] myEffect;
 
-    public ConditionRule(Condition<XmlTag> condition, Effect ... effect) {
+    public ConditionRule(Condition<? super XmlTag> condition, Effect ... effect) {
       this.myCondition = condition;
       this.myEffect = effect;
     }
@@ -229,7 +216,8 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
         }
       }
 
-      holder.registerProblem(tagNameElement, "Tag should have one of following attributes: " + StringUtil.join(myAttributeNames, ", "),
+      holder.registerProblem(tagNameElement,
+                             XmlAnalysisBundle.message("xml.inspections.tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
                              myProblemHighlightType,
                              fixes);
     }

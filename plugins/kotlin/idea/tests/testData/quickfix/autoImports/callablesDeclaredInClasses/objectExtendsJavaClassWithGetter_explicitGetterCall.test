@@ -1,0 +1,29 @@
+// FILE: first.before.kt
+// "Import function 'MyObject.getJavaProperty'" "true"
+// ERROR: Unresolved reference: getJavaProperty
+package test
+
+val f = <caret>getJavaProperty()
+
+// FILE: javadep/JavaClassWithGetter.java
+package javadep;
+
+public class JavaClassWithGetter {
+    public String getJavaProperty() { return null; }
+}
+
+// FILE: second.kt
+package second
+
+import javadep.JavaClassWithGetter
+
+object MyObject : JavaClassWithGetter()
+
+// FILE: first.after.kt
+// "Import function 'MyObject.getJavaProperty'" "true"
+// ERROR: Unresolved reference: getJavaProperty
+package test
+
+import second.MyObject.getJavaProperty
+
+val f = <caret>getJavaProperty()

@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  api/Service.class
+End of files
+Compiling files:
+  java/java9-features/serviceInterfaceRenamed/a/api/Service2.java
+End of files
+Cleaning output files:
+  impl/Impl.class
+  module-info.class
+End of files
+Compiling files:
+  java/java9-features/serviceInterfaceRenamed/b/impl/Impl.java
+  java/java9-features/serviceInterfaceRenamed/b/module-info.java
+End of files
+------------------------------------------
+Exit code: ERROR

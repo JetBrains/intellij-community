@@ -21,21 +21,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2014
  */
 public class ExternalSystemJdkException extends ExternalSystemException {
 
-  @Deprecated
-  public ExternalSystemJdkException(@Nullable String message,
-                                    @Nullable String filePath,
-                                    @Nullable Throwable cause,
-                                    @NotNull String... quickFixes) {
-    this(message, cause, quickFixes);
-  }
-
   public ExternalSystemJdkException(@Nullable String message,
                                     @Nullable Throwable cause,
-                                    @NotNull String... quickFixes) {
+                                    String @NotNull ... quickFixes) {
     super(message, cause, quickFixes);
   }
 }

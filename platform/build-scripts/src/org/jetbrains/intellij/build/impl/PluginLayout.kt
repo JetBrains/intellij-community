@@ -1,0 +1,844 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
+package org.jetbrains.intellij.build.impl
+
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.CustomAssetDescriptor
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.CompatibleBuildRange
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
+import java.nio.file.Files
+import java.nio.file.Path
+
+typealias ResourceGenerator = (Path, BuildContext) -> Unit
+
+typealias DeprecatedPostScrambleProcessor = (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
+
+/**
+ * Describes layout of a plugin in the product distribution.
+ *
+ * [auto] controls one thing in `JarPackager`: the direct dependencies of [mainModule] in the same module group are packed
+ * (`inferModuleSources`). No plugin module packs a project library implicitly; the platform or the plugin layout declares it.
+ */
+class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean = false) : BaseLayout() {
+  private val mainJarNameWithoutExtension: String = convertModuleNameToFileName(mainModule)
+  private var mainJarName = "$mainJarNameWithoutExtension.jar"
+
+  /** module name to file names of that module's own libraries which must not be packed */
+  @JvmField
+  internal val excludedModuleLibraries: MutableMap<String, MutableList<String>> = HashMap()
+
+  var directoryName: String = mainJarNameWithoutExtension
+    private set
+
+  var versionEvaluator: PluginVersionEvaluator = DEFAULT_PLUGIN_VERSION
+
+  @Internal
+  @JvmField
+  var rawPluginXmlPatcher: (String, BuildContext) -> String = IDENTITY_DESCRIPTOR_PATCHER
+
+  var pluginXmlPatcher: (String, BuildContext) -> String = IDENTITY_DESCRIPTOR_PATCHER
+
+  /**
+   * Whether the layout replaces the raw descriptor text before the stamps run - see [rawPluginXmlPatcher].
+   *
+   * A reader cannot compare the field against the default itself, because the default is one shared instance a caller
+   * outside this file cannot name. The dev-distribution descriptor plan needs the answer: a plugin whose raw text is
+   * patched by code cannot be produced by an action that reads a plan.
+   */
+  val hasRawPluginXmlPatcher: Boolean
+    get() = rawPluginXmlPatcher !== IDENTITY_DESCRIPTOR_PATCHER
+
+  /** [hasRawPluginXmlPatcher] for [pluginXmlPatcher], the post-stamp half. */
+  val hasPluginXmlPatcher: Boolean
+    get() = pluginXmlPatcher !== IDENTITY_DESCRIPTOR_PATCHER
+
+  /**
+   * The raw text patch as data, or `null` when the layout states it as code - see [DescriptorMarkerPatcher].
+   *
+   * The dev-distribution descriptor plan states a marker list and holds a plugin out when this answer is `null`.
+   *
+   * The empty list for a layout that patches nothing, because that is the table such a layout states.
+   */
+  val descriptorMarkers: List<DescriptorMarker>?
+    get() = when {
+      !hasRawPluginXmlPatcher -> emptyList()
+      else -> (rawPluginXmlPatcher as? DescriptorMarkerPatcher)?.markers
+    }
+
+  /** Whether the layout stamps a version of its own instead of the IDE build version - see [versionEvaluator]. */
+  val hasCustomVersion: Boolean
+    get() = versionEvaluator !== DEFAULT_PLUGIN_VERSION
+
+  /**
+   * The custom version as data, or `null` when the layout states it as code - see [DataPluginVersionEvaluator].
+   *
+   * The empty string for a layout that takes the IDE build version, because that is the suffix such a layout appends.
+   */
+  val versionSuffix: String?
+    get() = when {
+      !hasCustomVersion -> ""
+      else -> (versionEvaluator as? DataPluginVersionEvaluator)?.versionSuffix
+    }
+
+  val compatibleBuildRange: CompatibleBuildRange?
+    get() = (versionEvaluator as? DataPluginVersionEvaluator)?.compatibleBuildRange
+
+  var directoryNameSetExplicitly: Boolean = false
+  var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+    internal set
+
+  var pathsToScramble: PersistentList<String> = persistentListOf()
+    private set
+
+  var scrambleSkipStatements: PersistentList<Pair<String, String>> = persistentListOf()
+    private set
+
+  data class ScrambleClasspathPluginEntry(@JvmField val pluginMainModuleName: String, @JvmField val relativePath: String?)
+
+  var scrambleClasspathPlugins: PersistentList<ScrambleClasspathPluginEntry> = persistentListOf()
+    private set
+
+  var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
+
+  /**
+   * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.zkmScriptStub]
+   */
+  var zkmScriptStub: String? = null
+    set(value) {
+      if (value != null) {
+        check(coScrambleZkmScriptInclude == null) {
+          "zkmScriptStub(...) cannot be used with coScrambleZkmScriptInclude(...): " +
+          "per-plugin ZKM stubs are not merged into the platform co-scramble run"
+        }
+        check(!scrambleWithPlatform) {
+          "zkmScriptStub(...) cannot be used with scrambleWithPlatform(): " +
+          "per-plugin ZKM stubs are ignored for co-scramble plugins"
+        }
+      }
+      field = value
+    }
+
+  /**
+   * See [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.coScrambleZkmScriptInclude]
+   */
+  var coScrambleZkmScriptInclude: String? = null
+    set(value) {
+      if (value != null) {
+        check(zkmScriptStub == null) {
+          "coScrambleZkmScriptInclude(...) cannot be used with zkmScriptStub(...): " +
+          "use zkmScriptStub(...) for per-plugin scrambling or coScrambleZkmScriptInclude(...) for platform co-scrambling"
+        }
+      }
+      field = value
+    }
+
+  /**
+   * If `true`, this plugin's [pathsToScramble] are scrambled in the same ZKM run as the platform,
+   * so cross-references between the plugin and the platform get one consistent mapping. Set via
+   * [PluginLayoutSpec.scrambleWithPlatform].
+   */
+  var scrambleWithPlatform: Boolean = false
+    set(value) {
+      if (value) {
+        check(zkmScriptStub == null) {
+          "scrambleWithPlatform() cannot be used with zkmScriptStub(...): " +
+          "per-plugin ZKM stubs are ignored for co-scramble plugins"
+        }
+      }
+      field = value
+    }
+  var pluginCompatibilityExactVersion: Boolean = false
+  var retainProductDescriptorForBundledPlugin: Boolean = false
+  var enableSymlinksAndExecutableResources: Boolean = false
+
+  /**
+   * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
+   * Then the plugin version will be checked against [com.intellij.util.text.SemVer].
+   */
+  var semanticVersioning: Boolean = true
+    private set
+
+  @JvmField
+  internal var modulesWithExcludedModuleLibraries: Set<String> = emptySet()
+
+  /**
+   * Modules whose module libraries this layout packs itself - see `doNotCopyModuleLibrariesAutomatically`.
+   *
+   * A declared-input question, which is why it is readable from outside. `JarPackager` does not copy these libraries
+   * into the module's jar, so nothing about the module's own bytes says they are needed; a custom asset or generator
+   * reads them instead (`layoutDatabaseDialects` zips the dialect jars this way). A dev-distribution action must
+   * therefore still declare them.
+   */
+  @Internal
+  fun getModulesWithExcludedModuleLibraries(): Set<String> = modulesWithExcludedModuleLibraries
+
+  /**
+   * The module libraries `excludeModuleLibrary` takes out of a member's jar, by member module name.
+   *
+   * A declared-input question, like [getModulesWithExcludedModuleLibraries]: the dev-distribution layout tables state
+   * it, so that the JPS-to-Bazel converter derives the library set a member's jar really merges.
+   */
+  @Internal
+  fun getExcludedModuleLibraries(): Map<String, List<String>> = excludedModuleLibraries
+
+  @ApiStatus.Internal
+  var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
+    private set
+
+  /** Project libraries that [PluginLayoutBuilder.withLibraryResources] unpacks into the plugin directory. */
+  @Internal
+  fun getResourceGeneratorProjectLibraries(): Set<String> {
+    return resourceGenerators.mapNotNullTo(LinkedHashSet()) { (it as? LibraryResourceGenerator)?.libraryName }
+  }
+
+  @ApiStatus.Internal
+  var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
+    private set
+
+  /**
+   * The platform resource generators. The dev-distribution generator plans each one from its [DevPluginLayoutAssetSpec].
+   * [DeclaredPluginLayoutResourceGenerator.run] states where each one runs. See [PluginLayoutBuilder.withGeneratedPlatformResources].
+   */
+  @ApiStatus.Internal
+  var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<DeclaredPluginLayoutResourceGenerator>> = persistentMapOf()
+    private set
+
+  @ApiStatus.Internal
+  var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
+    private set
+
+  /**
+   * The patterns [PluginLayoutBuilder.withPlatformExecutable] registered, one list per distribution it named.
+   *
+   * A plain map, unlike [executablePatterns]: a caller outside the layout builders is not expected to know
+   * `kotlinx.collections.immutable`.
+   */
+  @Internal
+  fun getExecutablePatterns(): Map<SupportedDistribution, List<String>> = executablePatterns
+
+  val hasPlatformSpecificResources: Boolean
+    get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
+
+  fun getMainJarName(): String = mainJarName
+
+  internal var deprecatedPostProcessor: PersistentList<DeprecatedPostScrambleProcessor> = persistentListOf()
+
+  fun getDeprecatedPostScrambleProcessor(): List<DeprecatedPostScrambleProcessor> = deprecatedPostProcessor
+
+  companion object {
+    /**
+     * Creates the plugin layout description.
+     * The default plugin layout is composed of a jar with name [mainModuleName].jar containing
+     * production output of [mainModuleName] module, and the module libraries of [mainModuleName] with scopes 'Compile' and 'Runtime'
+     * placed under 'lib' directory in a directory with name [mainModuleName].
+     * If you need to include additional resources or modules in the plugin layout, specify them in the [body] parameter.
+     * If you don't need to change the default layout, there is no need to call this method at all;
+     * it's enough to specify the plugin module in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules],
+     * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules],
+     * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] list.
+     *
+     * Note that a project-level library on which a plugin module depends is not packed implicitly - it must be provided
+     * by the platform or by a library module (`intellij.libraries.*`) declared in the plugin content, otherwise the build fails.
+     *
+     * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
+     */
+    @JvmStatic
+    @Deprecated("Please use `pluginAuto` or `pluginAutoWithCustomDirName`")
+    fun plugin(mainModuleName: String, auto: Boolean = false, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      val layout = PluginLayout(mainModuleName, auto = auto)
+
+      val spec = PluginLayoutSpec(layout)
+      body(spec)
+
+      layout.mainJarName = spec.mainJarName
+      layout.directoryName = spec.directoryName
+      layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
+      layout.bundlingRestrictions = spec.bundlingRestrictions.build()
+      layout.withModule(mainModuleName)
+
+      return layout
+    }
+
+    // we cannot break compatibility / risk to change the existing plugin dir name
+    @Suppress("DEPRECATION")
+    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName = mainModuleName, auto = true, body = body)
+    }
+
+    // we cannot break compatibility / risk to change the existing plugin dir name
+    @Suppress("DEPRECATION")
+    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true) { spec ->
+        spec.directoryName = dirName
+        spec.mainJarName = "${dirName}.jar"
+        body(spec)
+      }
+    }
+
+    fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
+
+    fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
+      layout.withModules(moduleNames)
+      val spec = SimplePluginLayoutSpec(layout)
+      body(spec)
+      layout.bundlingRestrictions = spec.bundlingRestrictions.build()
+      return layout
+    }
+
+    @Deprecated("Please use pluginAuto")
+    fun plugin(moduleNames: List<String>): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first())
+      layout.withModules(moduleNames)
+      return layout
+    }
+
+    /**
+     * Direct main module dependencies in the same module group are included automatically.
+     * Project-level libraries are not - see the note in [plugin].
+     */
+    fun pluginAuto(moduleNames: List<String>): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
+      layout.withModules(moduleNames)
+      return layout
+    }
+
+    fun plugin(mainModule: String): PluginLayout {
+      val layout = PluginLayout(mainModule = mainModule)
+      layout.withModule(mainModule)
+      return layout
+    }
+  }
+
+  override fun toString(): String {
+    return "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  }
+
+  override fun getRelativeJarPath(moduleName: String): String {
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+      // must be in a separate JAR
+      return "${convertModuleNameToFileName(moduleName)}.jar"
+    }
+    else {
+      return mainJarName
+    }
+  }
+
+  @Internal
+  fun patchSinceUntilRange(
+    customSinceValue: String? = System.getProperty("$mainModule.plugin.build.sinceValue")?.takeUnless { it.isBlank() },
+    customUntilValue: String? = System.getProperty("$mainModule.plugin.build.untilValue")?.takeUnless { it.isBlank() },
+  ) {
+    require((customSinceValue == null) == (customUntilValue == null)) {
+      "$mainModule: custom since and until values cannot be set independently. Either both or neither should be provided."
+    }
+    val originalEvaluator = versionEvaluator
+    versionEvaluator = PluginVersionEvaluator { pluginXmlSupplier, context ->
+      val version = originalEvaluator.evaluate(pluginXmlSupplier, context)
+      val sinceUntil = if (customSinceValue != null && customUntilValue != null) {
+        customSinceValue to customUntilValue
+      }
+      else {
+        version.sinceUntil
+      }
+      PluginVersionEvaluatorResult(version.pluginVersion, sinceUntil)
+    }
+  }
+
+  sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
+    /**
+     * Returns [PluginBundlingRestrictions] instance which can be used to exclude the plugin from some distributions.
+     */
+    val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
+
+    /**
+     * Excludes a module-level library from the plugin. This shouldn't be used in new code; mark the dependency as 'Provided' instead.
+     */
+    @Obsolete
+    fun excludeModuleLibrary(libraryName: String, moduleName: String) {
+      layout.excludedModuleLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
+    }
+
+    /**
+     * @param resourcePath path to a resource file or directory relative to the plugin's main module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     *
+     * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
+     * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+     * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
+     */
+    fun withResource(resourcePath: String, relativeOutputPath: String) {
+      layout.withResourceFromModule(moduleName = layout.mainModule, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
+    }
+
+    /**
+     * A resource generator that states its own development layout, such as `CidrDependencyResource`.
+     * A generator that is code only takes the overload with a [DevPluginLayoutAssetSpec].
+     */
+    fun <T> withGeneratedResources(resource: T) where T : ResourceGenerator, T : DevPluginLayoutAssetOwner {
+      layout.resourceGenerators += resource
+    }
+
+    /**
+     * A resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
+     * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * [run] states whether classic dev mode also runs [generator].
+     */
+    fun withGeneratedResources(
+      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
+      generator: ResourceGenerator,
+    ) {
+      layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
+    }
+
+    /** Copies a module resource tree through the same declaration in production and development. */
+    fun withResourceTree(
+      moduleName: String,
+      resourcePath: String,
+      relativeOutputPath: String,
+      excludes: List<String> = emptyList(),
+      directoryExcludes: List<String> = emptyList(),
+    ) {
+      layout.resourceGenerators += ModuleResourceTree(moduleName, resourcePath, relativeOutputPath, excludes, directoryExcludes)
+    }
+
+    /**
+     * Unpacks the single jar of the project library [libraryName] into [relativeOutputPath] under the plugin directory.
+     * The dev-distribution generator plans this declaration from the library name.
+     */
+    fun withLibraryResources(libraryName: String, relativeOutputPath: String) {
+      layout.resourceGenerators += LibraryResourceGenerator(libraryName = libraryName, targetPath = relativeOutputPath)
+    }
+
+    fun withCustomAsset(layoutAssetSpec: DevPluginLayoutAssetSpec, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+      layout.customAssets += DeclaredPluginLayoutCustomAsset(layoutAssetSpec, customAsset(platform = null, lazySourceSupplier))
+    }
+
+    fun withCustomAsset(
+      platform: SupportedDistribution,
+      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      lazySourceSupplier: (context: BuildContext) -> LazySource?,
+    ) {
+      layout.customAssets += DeclaredPluginLayoutCustomAsset(layoutAssetSpec, customAsset(platform, lazySourceSupplier))
+    }
+
+    private fun customAsset(platform: SupportedDistribution?, lazySourceSupplier: (context: BuildContext) -> LazySource?): CustomAssetDescriptor {
+      return object : CustomAssetDescriptor {
+        override val platformSpecific: SupportedDistribution?
+          get() = platform
+
+        override fun getSources(context: BuildContext): Sequence<LazySource>? {
+          return sequenceOf(lazySourceSupplier(context) ?: return null)
+        }
+      }
+    }
+
+    /**
+     * A platform resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
+     * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * [run] states whether classic dev mode also runs [generator]. See [platformResourceGenerators].
+     */
+    fun withGeneratedPlatformResources(
+      platform: SupportedDistribution,
+      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      run: DeclaredResourceGeneratorRun = DeclaredResourceGeneratorRun.BUNDLED_AND_DEV,
+      generator: ResourceGenerator,
+    ) {
+      val declared = DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator, run)
+      layout.platformResourceGenerators += platform to (layout.platformResourceGenerators.get(platform) ?: persistentListOf()) + declared
+    }
+
+    /**
+     * Add platform-specific executable file pattern.
+     * Pattern is relative to plugin root directory.
+     */
+    fun withPlatformExecutable(platform: SupportedDistribution, pattern: String) {
+      val existing = layout.executablePatterns.get(platform) ?: persistentListOf()
+      layout.executablePatterns = layout.executablePatterns.putting(platform, existing.adding(pattern))
+    }
+
+    /**
+     * @param resourcePath path to a resource file or directory relative to `moduleName` module content root
+     * @param relativeOutputPath target path relative to the plugin root directory
+     *
+     * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
+     * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+     * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
+     */
+    fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
+      layout.withResourceFromModule(moduleName = moduleName, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
+    }
+
+    fun withRawPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
+      layout.rawPluginXmlPatcher = pluginXmlPatcher
+    }
+
+    fun withDeprecatedPostProcessor(
+      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      layoutPatcher: LayoutPatcher,
+      pluginXmlPatcher: DeprecatedPostScrambleProcessor,
+    ) {
+      require(layoutAssetSpec.omitted) { "A declared layout patcher supports only an explicit development omission" }
+      val conditionalPatcher: LayoutPatcher = { moduleOutputPatcher, platformLayout, context ->
+        if (context.proprietaryBuildTools.scrambleTool == null || context.isStepSkipped(BuildOptions.SCRAMBLING_STEP)) {
+          layoutPatcher(moduleOutputPatcher, platformLayout, context)
+        }
+      }
+      layout.withPatch(DeclaredPluginLayoutPatcher(layoutAssetSpec, conditionalPatcher))
+      layout.deprecatedPostProcessor += persistentListOf(pluginXmlPatcher)
+    }
+  }
+
+  class SimplePluginLayoutSpec internal constructor(layout: PluginLayout) : PluginLayoutBuilder(layout)
+
+  // as a builder for PluginLayout, that ideally should be immutable
+  class PluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout) {
+    var directoryName: String = convertModuleNameToFileName(layout.mainModule)
+      /**
+       * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
+       * (with stripped `intellij` prefix and dots replaced by dashes).
+       * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
+       */
+      set(value) {
+        field = value
+        directoryNameSetExplicitly = true
+      }
+
+    var directoryNameSetExplicitly: Boolean = false
+      private set
+
+    val mainModule: String
+      get() = layout.mainModule
+
+    /**
+     * @see [PluginLayout.semanticVersioning]
+     */
+    @Suppress("unused")
+    var semanticVersioning: Boolean
+      get() = layout.semanticVersioning
+      set(value) {
+        layout.semanticVersioning = value
+      }
+
+    var mainJarName: String
+      get() = layout.mainJarName
+      /**
+       * Custom name of the main plugin JAR file.
+       * By default, the main module name with 'jar' an extension is used (with stripped `intellij`
+       * prefix and dots replaced by dashes).
+       * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
+       */
+      set(value) {
+        layout.mainJarName = value
+      }
+
+    /**
+     * @param resourcePath path to a resource file or directory relative to `moduleName` module content root
+     * @param relativeOutputFile target path relative to the plugin root directory
+     *
+     * The path stays inside the Bazel package of the module, the directory that holds its `BUILD.bazel`. It uses no `..`
+     * and crosses no nested package. The dev-distribution generator derives `//<package>:dev_dist_resources` from the
+     * declaration and refuses a layout that breaks the rule. Declare a resource against the module whose package holds it.
+     */
+    fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
+      layout.resourcePaths = layout.resourcePaths.adding(ModuleResourceData(
+        moduleName = moduleName,
+        resourcePath = resourcePath,
+        relativeOutputPath = relativeOutputFile,
+        packToZip = true,
+      ))
+    }
+
+    /**
+     * By default, a version of a plugin is equal to [org.jetbrains.intellij.build.BuildContext.pluginBuildNumber].
+     * This method allows specifying custom version evaluator.
+     */
+    fun withCustomVersion(versionEvaluator: PluginVersionEvaluator) {
+      layout.versionEvaluator = versionEvaluator
+    }
+
+    /**
+     * This plugin will be compatible only with exactly the same IDE version.
+     * See [org.jetbrains.intellij.build.CompatibleBuildRange.EXACT]
+     */
+    fun pluginCompatibilityExactVersion() {
+      layout.pluginCompatibilityExactVersion = true
+    }
+
+    /**
+     * `<product-description>` is usually removed for bundled plugins.
+     * Call this method to retain it in plugin.xml
+     */
+    fun retainProductDescriptorForBundledPlugin() {
+      layout.retainProductDescriptorForBundledPlugin = true
+    }
+
+    /**
+     * Do not automatically include module libraries from `moduleNames`
+     * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
+     */
+    @Obsolete
+    fun doNotCopyModuleLibrariesAutomatically(moduleNames: List<String>) {
+      layout.modulesWithExcludedModuleLibraries += moduleNames
+    }
+
+    /**
+     * Specifies a relative path to a plugin jar that should be scrambled.
+     * Scrambling is performed by the [org.jetbrains.intellij.build.ProprietaryBuildTools.scrambleTool]
+     * If scramble tool is not defined, scrambling will not be performed
+     * Multiple invocations of this method will add corresponding paths to a list of paths to be scrambled
+     *
+     * @param relativePath a path to a .jar file relative to the plugin root directory
+     */
+    fun scramble(relativePath: String) {
+      layout.pathsToScramble += relativePath
+    }
+
+    /**
+     * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHomeDir] path to a zkm script stub file.
+     * If scramble tool is not defined, scramble toot will expect to find the script stub file at "[org.jetbrains.intellij.build.BuildPaths.projectHome]/plugins/`pluginName`/build/script.zkm.stub".
+     * Project home cannot be used since it is not constant (for example, for Rider).
+     *
+     * @param communityRelativePath - a path to a jar file relative to the community project home directory
+     */
+    fun zkmScriptStub(communityRelativePath: String) {
+      layout.zkmScriptStub = communityRelativePath
+    }
+
+    /**
+     * Specifies a fragment to inject into the platform ZKM script when [scrambleWithPlatform] is used.
+     * The path is relative to [org.jetbrains.intellij.build.BuildPaths.communityHomeDir].
+     */
+    fun coScrambleZkmScriptInclude(communityRelativePath: String) {
+      layout.coScrambleZkmScriptInclude = communityRelativePath
+    }
+
+    /**
+     * Scrambles this plugin's [pathsToScramble] in the same ZKM run as the platform, producing one
+     * consistent renaming across both. Use this when the plugin contains code (typically reflection)
+     * that calls into platform classes scrambled by the platform pass — separate runs cannot
+     * guarantee identical method-parameter changes / reflection rewrites.
+     */
+    fun scrambleWithPlatform() {
+      layout.scrambleWithPlatform = true
+    }
+
+    /**
+     * Specifies a dependent plugin name to be added to the scrambled classpath
+     * Scrambling is performed by the [org.jetbrains.intellij.build.ProprietaryBuildTools.scrambleTool]
+     * If scramble tool is not defined, scrambling will not be performed.
+     * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
+     *
+     * @param pluginMainModuleName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
+     */
+    fun scrambleClasspathPlugin(pluginMainModuleName: String) {
+      layout.scrambleClasspathPlugins += ScrambleClasspathPluginEntry(pluginMainModuleName = pluginMainModuleName, relativePath = null)
+    }
+
+    /**
+     * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
+     */
+    fun scrambleClasspathPlugin(pluginId: String, relativePath: String) {
+      layout.scrambleClasspathPlugins += ScrambleClasspathPluginEntry(pluginMainModuleName = pluginId, relativePath = relativePath)
+    }
+
+    /**
+     * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
+     * By default, all platform jars are added to the 'scramble classpath'
+     */
+    fun filterScrambleClasspath(filter: (BuildContext, Path) -> Boolean) {
+      layout.scrambleClasspathFilter = filter
+    }
+
+    /**
+     * Adds a "skip" element to the open statement. See: [Open Statement documentation](https://www.zelix.com/klassmaster/docs/openStatement.html)
+     *
+     * Note: zkm open statement for the jar must be declared.
+     *
+     * @param jar - name of the jar file
+     * @param classFilter - in the following format: `com/acme/MyClass.class`
+     */
+    fun scrambleSkip(jar: String, classFilter: String) {
+      layout.scrambleSkipStatements += Pair(jar, classFilter)
+    }
+
+    /**
+     * Concatenates `META-INF/services` files with the same name from different modules together.
+     * By default, the first service file silently wins.
+     *
+     * The dev distribution omits the merge. Its jar writer keeps the first service file of a name and reports the
+     * collision, which is the default this method replaces.
+     */
+    fun mergeServiceFiles() {
+      layout.withPatch(DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED) { patcher, _, context ->
+        val discoveredServiceFiles = LinkedHashMap<String, LinkedHashSet<Pair<String, Path>>>()
+
+        for (moduleName in layout.includedModules.asSequence().filter { it.relativeOutputFile == layout.mainJarName }.map { it.moduleName }.distinct()) {
+          val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
+          Files.newDirectoryStream(path).use { dirStream ->
+            dirStream
+              .asSequence()
+              .filter { Files.isRegularFile(it) }
+              .forEach { serviceFile ->
+                discoveredServiceFiles.computeIfAbsent(serviceFile.fileName.toString()) { LinkedHashSet() }
+                  .add(Pair(moduleName, serviceFile))
+              }
+          }
+        }
+
+        for ((serviceFileName, serviceFiles) in discoveredServiceFiles) {
+          if (serviceFiles.size <= 1) {
+            continue
+          }
+
+          val content = serviceFiles.joinToString(separator = "\n") { Files.readString(it.second) }
+          Span.current().addEvent("merge service file)", Attributes.of(
+            AttributeKey.stringKey("serviceFile"), serviceFileName,
+            AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
+          ))
+          patcher.patchModuleOutput(
+            moduleName = serviceFiles.first().first, // the first one wins
+            path = "META-INF/services/$serviceFileName",
+            content = content,
+          )
+        }
+      })
+    }
+
+    /**
+     * Enables support for symlinks and files with a posix executable bit set, such as required by macOS.
+     */
+    fun enableSymlinksAndExecutableResources() {
+      layout.enableSymlinksAndExecutableResources = true
+    }
+  }
+}
+
+private val DEFAULT_PLUGIN_VERSION = PluginVersionEvaluator { _, context -> PluginVersionEvaluatorResult(pluginVersion = context.pluginBuildNumber) }
+
+/**
+ * The default of both descriptor patchers, as one instance.
+ *
+ * One instance and not a lambda per layout, so that [PluginLayout.hasRawPluginXmlPatcher] can tell a layout that
+ * declares no patcher from one whose patcher happens to return its input.
+ */
+private val IDENTITY_DESCRIPTOR_PATCHER: (String, BuildContext) -> String = { s, _ -> s }
+
+private const val OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER: String = "<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->"
+
+/**
+ * One replacement of the raw descriptor text: the text that must be there, and what takes its place.
+ *
+ * A pair of strings and not a lambda, so that the dev-distribution descriptor plan can state the replacement as data.
+ * Both producers of a patched descriptor then apply the same pair, and neither runs the layout's Kotlin.
+ */
+class DescriptorMarker(@JvmField val literal: String, @JvmField val replacement: String)
+
+/**
+ * A [PluginLayout.rawPluginXmlPatcher] that states its replacements as [DescriptorMarker] pairs.
+ *
+ * A class and not a lambda, because [PluginLayout.descriptorMarkers] reads the pairs off the layout. A layout whose raw
+ * patch is not a list of replacements keeps a lambda, and the descriptor plan holds that plugin out by name.
+ */
+class DescriptorMarkerPatcher(@JvmField val markers: List<DescriptorMarker>) : (String, BuildContext) -> String {
+  override fun invoke(text: String, context: BuildContext): String {
+    var result = text
+    for (marker in markers) {
+      result = checkedReplace(oldText = result, regex = marker.literal, newText = marker.replacement)
+    }
+    return result
+  }
+}
+
+/**
+ * The `<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->` replacement of one (os, arch) plugin variant.
+ *
+ * The one owner of the replacement text. The descriptor plan states `os-arch:<osId>:<marketplaceName>` and both
+ * producers rebuild the text from this function's shape, so a change here reaches every producer at once.
+ */
+fun osArchDescriptorMarker(os: OsFamily, arch: JvmArchitecture): DescriptorMarker = DescriptorMarker(
+  literal = OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER,
+  replacement = """
+        |<plugin id="com.intellij.modules.os.${os.osId}"/>
+        |<plugin id="com.intellij.modules.arch.${arch.marketplaceName}"/>
+      """.trimMargin(),
+)
+
+fun patchOsSpecificPluginXml(
+  spec: PluginLayout.PluginLayoutSpec,
+  os: OsFamily,
+  arch: JvmArchitecture,
+) {
+  spec.withRawPluginXmlPatcher(DescriptorMarkerPatcher(listOf(osArchDescriptorMarker(os, arch))))
+}
+
+/**
+ * The version of one (os, arch) plugin variant: the IDE build number, then the marketplace os and arch names.
+ *
+ * The one owner of that suffix. Marketplace expects linux/macos/windows for the os and x86_64/x86/arm64/arm32 for the
+ * architecture, which is what [OsFamily.osId] and [JvmArchitecture.marketplaceName] answer.
+ */
+fun osArchPluginVersion(os: OsFamily, arch: JvmArchitecture): DataPluginVersionEvaluator =
+  SuffixedPluginVersion("-${os.osId}-${arch.marketplaceName}")
+
+data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @JvmField val sinceUntil: Pair<String, String>? = null)
+
+/**
+ * Think twice before using this API.
+ *
+ * Use [BuildContext.buildNumber] as the IDE build version.
+ * Use [BuildContext.pluginBuildNumber] as the default plugin version.
+ */
+fun interface PluginVersionEvaluator {
+  fun evaluate(pluginXmlSupplier: () -> String, context: BuildContext): PluginVersionEvaluatorResult
+}
+
+/**
+ * A [PluginVersionEvaluator] whose answer is the IDE build version plus a fixed suffix.
+ *
+ * The dev-distribution descriptor plan holds no build context and cannot run an evaluator. It reads [versionSuffix]
+ * instead, and both producers of the patched descriptor append that string to the build number they compute.
+ */
+interface DataPluginVersionEvaluator : PluginVersionEvaluator {
+  /** What this evaluator appends to the IDE build version. */
+  val versionSuffix: String
+  val compatibleBuildRange: CompatibleBuildRange? get() = null
+}
+
+/** [DataPluginVersionEvaluator] with nothing beyond the suffix and an optional range override. */
+class SuffixedPluginVersion(
+  override val versionSuffix: String,
+  override val compatibleBuildRange: CompatibleBuildRange? = null,
+) : DataPluginVersionEvaluator {
+  override fun evaluate(
+    pluginXmlSupplier: () -> String,
+    context: BuildContext,
+  ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(
+    pluginVersion = context.pluginBuildNumber + versionSuffix,
+    sinceUntil = compatibleBuildRange?.let {
+      getCompatiblePlatformVersionRange(it, context.buildNumber)
+    }
+  )
+}
+
+internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

@@ -1,0 +1,10 @@
+package filtering;
+
+import one.util.streamex.StreamEx;
+
+public class RemoveByNoExtraCalls {
+  public static void main(String[] args) {
+    // Breakpoint! lambdaOrdinal(-1)
+    StreamEx.of(1, 2, 3, 4).removeBy(x -> x * x, 16).forEach(System.out::print);
+  }
+}

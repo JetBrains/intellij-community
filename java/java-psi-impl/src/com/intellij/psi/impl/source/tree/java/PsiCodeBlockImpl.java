@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -7,24 +7,42 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
+public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCodeBlock {
+  private static final Logger LOG = Logger.getInstance(PsiCodeBlockImpl.class);
 
   public PsiCodeBlockImpl(CharSequence text) {
     super(JavaElementType.CODE_BLOCK, text);
@@ -39,8 +57,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   @Override
-  @NotNull
-  public PsiStatement[] getStatements() {
+  public PsiStatement @NotNull [] getStatements() {
     return PsiImplUtil.getChildStatements(this);
   }
 
@@ -101,20 +118,19 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   private volatile boolean myConflict;
 
   // return Pair(classes, locals) or null if there was conflict
-  @Nullable
-  private Couple<Set<String>> buildMaps() {
+  private @Nullable Couple<Set<String>> buildMaps() {
     Set<String> set1 = myClassesSet;
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
     if (set1 == null || set2 == null) {
-      final Set<String> localsSet = new THashSet<>();
-      final Set<String> classesSet = new THashSet<>();
+      final Set<String> localsSet = new HashSet<>();
+      final Set<String> classesSet = new HashSet<>();
       final Ref<Boolean> conflict = new Ref<>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new PsiScopeProcessor() {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-          if (element instanceof PsiLocalVariable) {
-            final PsiLocalVariable variable = (PsiLocalVariable)element;
+          if (element instanceof PsiLocalVariable || element instanceof PsiPatternVariable) {
+            final PsiVariable variable = (PsiVariable)element;
             final String name = variable.getName();
             if (!localsSet.add(name)) {
               conflict.set(Boolean.TRUE);
@@ -133,7 +149,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
           }
           return !conflict.get();
         }
-      }, ResolveState.initial(), this, this);
+      }, PatternResolveState.WHEN_BOTH.putInto(ResolveState.initial()), this, this);
 
       myClassesSet = set1 = classesSet.isEmpty() ? Collections.emptySet() : classesSet;
       myVariablesSet = set2 = localsSet.isEmpty() ? Collections.emptySet() : localsSet;
@@ -180,14 +196,14 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.LBRACE:
         return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, JavaTokenType.RBRACE);
+
+      default:
+        return null;
     }
   }
 
@@ -216,6 +232,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCodeBlock";
   }
@@ -237,21 +254,42 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
       final String name = hint.getName(state);
       if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) && classesSet.contains(name)) {
-        return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+        return walkChildren(processor, state, lastParent, place);
       }
       if ((elementClassHint == null || elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) && variablesSet.contains(name)) {
-        return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+        return walkChildren(processor, state, lastParent, place);
       }
     }
     else {
-      return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+      return walkChildren(processor, state, lastParent, place);
     }
     return true;
   }
 
-  @Override
-  public boolean shouldChangeModificationCount(PsiElement place) {
-    PsiElement parent = getParent();
-    return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);
+  private boolean walkChildren(@NotNull PsiScopeProcessor processor,
+                               @NotNull ResolveState state,
+                               PsiElement lastParent,
+                               @NotNull PsiElement place) {
+    if (!(getParent() instanceof PsiSwitchBlock)) {
+      return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
+    }
+    PsiElement child = null;
+    if (lastParent != null && lastParent.getParent() == this) {
+      child = lastParent.getPrevSibling();
+      if (child == null) return true; // first element
+    }
+
+    if (child == null) {
+      child = this.getLastChild();
+    }
+
+    while (child != null) {
+      if (child instanceof PsiSwitchLabelStatementBase) {
+        state = PatternResolveState.WHEN_NONE.putInto(state);
+      }
+      if (!child.processDeclarations(processor, state, null, place)) return false;
+      child = child.getPrevSibling();
+    }
+    return true;
   }
 }

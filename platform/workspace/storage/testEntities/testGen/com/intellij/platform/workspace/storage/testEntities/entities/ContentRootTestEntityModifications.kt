@@ -1,0 +1,51 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("ContentRootTestEntityModifications")
+
+package com.intellij.platform.workspace.storage.testEntities.entities
+
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.testEntities.entities.impl.ContentRootTestEntityImpl
+
+@GeneratedCodeApiVersion(3)
+interface ContentRootTestEntityBuilder : WorkspaceEntityBuilder<ContentRootTestEntity> {
+  override var entitySource: EntitySource
+  var module: ModuleTestEntityBuilder
+  var sourceRootOrder: SourceRootTestOrderEntityBuilder?
+  var sourceRoots: List<SourceRootTestEntityBuilder>
+}
+
+internal object ContentRootTestEntityType : EntityType<ContentRootTestEntity, ContentRootTestEntityBuilder>() {
+  override val entityImplClass: Class<*> get() = ContentRootTestEntityImpl::class.java
+  override val entityImplBuilderClass: Class<*> get() = ContentRootTestEntityImpl.Builder::class.java
+  operator fun invoke(
+    entitySource: EntitySource,
+    init: (ContentRootTestEntityBuilder.() -> Unit)? = null,
+  ): ContentRootTestEntityBuilder {
+    val builder = builder()
+    builder.entitySource = entitySource
+    init?.invoke(builder)
+    return builder
+  }
+}
+
+fun MutableEntityStorage.modifyContentRootTestEntity(
+  entity: ContentRootTestEntity,
+  modification: ContentRootTestEntityBuilder.() -> Unit,
+): ContentRootTestEntity = modifyEntity(ContentRootTestEntityBuilder::class.java, entity, modification)
+
+@Parent
+var ContentRootTestEntityBuilder.projectModelTestEntity: ProjectModelTestEntityBuilder?
+  by WorkspaceEntity.extensionBuilder(ProjectModelTestEntity::class.java)
+
+@JvmOverloads
+@JvmName("createContentRootTestEntity")
+fun ContentRootTestEntity(
+  entitySource: EntitySource,
+  init: (ContentRootTestEntityBuilder.() -> Unit)? = null,
+): ContentRootTestEntityBuilder = ContentRootTestEntityType(entitySource, init)

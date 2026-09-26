@@ -1,34 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
- * @since 14.1
  */
 public interface TabbedContent extends Content {
   String SPLIT_PROPERTY_PREFIX = "tabbed.toolwindow.expanded.";
 
-  void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab);
+  void addContent(@NotNull JComponent content, @NlsContexts.TabTitle @NotNull String name, boolean selectTab);
+
+  default void addContent(@NotNull TabDescriptor tab, boolean selectTab) {
+    addContent(tab.getComponent(), tab.getDisplayName(), selectTab);
+  }
 
   void removeContent(@NotNull JComponent content);
 
@@ -47,15 +39,20 @@ public interface TabbedContent extends Content {
    */
   void selectContent(int index);
 
-  List<Pair<String, JComponent>> getTabs();
+  @NotNull
+  @Unmodifiable
+  List<Pair<@Nls String, JComponent>> getTabs();
 
   default boolean hasMultipleTabs() {
     return getTabs().size() > 1;
   }
 
-  String getTitlePrefix();
+  default @NotNull TabGroupId getId() {
+    return new TabGroupId(getTitlePrefix(), getTitlePrefix());
+  }
 
-  void setTitlePrefix(String titlePrefix);
+  @Nls
+  String getTitlePrefix();
 
   void split();
 }

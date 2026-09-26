@@ -1,0 +1,21 @@
+com.intellij.credentialStore.CredentialStoreFactory
+- sf:CREDENTIAL_STORE_FACTORY:com.intellij.openapi.extensions.ExtensionPointName
+- a:create():com.intellij.credentialStore.CredentialStore
+f:com.intellij.credentialStore.CredentialStoreKt
+- sf:createSecureRandom():java.security.SecureRandom
+com.intellij.credentialStore.CredentialStoreUiService
+- sf:Companion:com.intellij.credentialStore.CredentialStoreUiService$Companion
+- a:notify(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.notification.NotificationAction):V
+- a:openSettings(com.intellij.openapi.project.Project):V
+- a:showChangeMainPasswordDialog(java.awt.Component,kotlin.jvm.functions.Function2):Z
+- a:showErrorMessage(java.awt.Component,java.lang.String,java.lang.String):V
+- a:showRequestMainPasswordDialog(java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1):Z
+- bs:showRequestMainPasswordDialog$default(com.intellij.credentialStore.CredentialStoreUiService,java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1,I,java.lang.Object):Z
+f:com.intellij.credentialStore.CredentialStoreUiService$Companion
+- f:getInstance():com.intellij.credentialStore.CredentialStoreUiService
+f:com.intellij.credentialStore.EncryptionSupportKt
+- sf:toByteArrayAndClear(C[]):B[]
+com.intellij.credentialStore.PasswordSafeSettingsListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- credentialStoreCleared():V
+- typeChanged(com.intellij.credentialStore.ProviderType,com.intellij.credentialStore.ProviderType):V

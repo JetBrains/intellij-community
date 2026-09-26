@@ -1,0 +1,19 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": "getPerson"
+// "EXPECTED-SUGGESTION": "person"
+plugins {
+    id("java")
+}
+
+data class Person(val fullName: String, val age: Int)
+val person = Person("Jan", 35)
+
+fun myPrint(p: Person) {
+    println("${p.fullName} ${p.age}")
+}
+
+myPrint(pers<caret>)
+
+repositories {
+    mavenCentral()
+}

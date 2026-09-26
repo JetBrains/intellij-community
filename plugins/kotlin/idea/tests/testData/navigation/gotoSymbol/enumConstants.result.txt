@@ -1,0 +1,17 @@
+NavigationItem:
+    name: BAR
+ItemPresentation:
+    presentableText: BAR
+    locationString: (in Foo)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/enumKotlin.svg, Public])
+TargetElement: BAR,
+QualifiedName: Foo.BAR
+
+NavigationItem:
+    name: BAZ
+ItemPresentation:
+    presentableText: BAZ
+    locationString: (in Foo)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/enumKotlin.svg, Public])
+TargetElement: BAZ
+QualifiedName: Foo.BAZ

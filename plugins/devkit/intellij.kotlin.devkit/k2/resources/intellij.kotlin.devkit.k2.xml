@@ -1,0 +1,34 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.kotlin"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.psi"/>
+    <module name="intellij.kotlin.codeInsight.intentions"/>
+    <module name="intellij.kotlin.devkit"/>
+    <module name="intellij.kotlin.refactorings"/>
+    <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.refactoring"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport"
+      serviceImplementation="org.jetbrains.idea.devkit.kotlin.k2.K2CompanionObjectInExtensionInspectionSupport"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="DevKit.lang">
+    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.k2.K2AppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
+  </extensions>
+
+</idea-plugin>

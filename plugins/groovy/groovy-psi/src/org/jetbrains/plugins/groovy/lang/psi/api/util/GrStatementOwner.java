@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
-/**
- * @author ilyas
- */
 public interface GrStatementOwner extends GroovyPsiElement {
 
   @NotNull
@@ -33,6 +30,5 @@ public interface GrStatementOwner extends GroovyPsiElement {
 
   void removeElements(PsiElement[] elements) throws IncorrectOperationException;
 
-  @NotNull
-  GrStatement[] getStatements();
+  GrStatement @NotNull [] getStatements();
 }

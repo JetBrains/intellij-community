@@ -1,0 +1,148 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.refactoring.extractMethodObject.reflect;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
+/**
+ * @author Vitaliy.Bibaev
+ */
+public final class FieldDescriptor implements ItemToReplaceDescriptor {
+  private static final Logger LOG = Logger.getInstance(FieldDescriptor.class);
+
+  private final PsiField myField;
+  private final PsiReferenceExpression myExpression;
+  private final String myAccessibleType;
+
+  private FieldDescriptor(@NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
+    myField = field;
+    myExpression = expression;
+    String fieldType = PsiReflectionAccessUtil.getAccessibleReturnType(myExpression, resolveFieldType(myField, myExpression));
+    if (fieldType == null) {
+      LOG.warn("Could not resolve field type. java.lang.Object will be used instead");
+      fieldType = CommonClassNames.JAVA_LANG_OBJECT;
+    }
+    myAccessibleType = fieldType;
+  }
+
+  public static @Nullable ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiReferenceExpression expression) {
+    final PsiElement resolved = expression.resolve();
+    if (resolved instanceof PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+
+      if (!Objects.equals(containingClass, outerClass) && needReplace(outerClass, field, expression)) {
+        return new FieldDescriptor(field, expression);
+      }
+    }
+
+    return null;
+  }
+
+  public boolean isUpdate() {
+    return myExpression.getParent() instanceof PsiAssignmentExpression parentAssignment && parentAssignment.getLExpression() == myExpression;
+  }
+
+  @Override
+  public void replace(@NotNull PsiClass outerClass,
+                      @NotNull PsiElementFactory elementFactory,
+                      @NotNull PsiMethodCallExpression callExpression) {
+    if (isUpdate()) {
+      grantUpdateAccess((PsiAssignmentExpression)myExpression.getParent(), outerClass, callExpression, elementFactory);
+    }
+    else {
+      grantReadAccess(outerClass, callExpression, elementFactory);
+    }
+  }
+
+  private void grantReadAccess(@NotNull PsiClass outerClass,
+                               @NotNull PsiMethodCallExpression generatedCall,
+                               @NotNull PsiElementFactory elementFactory) {
+    PsiMethod newMethod = createPsiMethod(FieldAccessType.GET, outerClass, elementFactory);
+    if (newMethod == null) return;
+
+    outerClass.add(newMethod);
+
+    String object = MemberQualifierUtil.findObjectExpression(myExpression, myField, outerClass, generatedCall, elementFactory);
+    String methodCall = newMethod.getName() + "(" + object + ")";
+    myExpression.replace(elementFactory.createExpressionFromText(methodCall, myExpression));
+  }
+
+  private void grantUpdateAccess(@NotNull PsiAssignmentExpression assignmentExpression,
+                                 @NotNull PsiClass outerClass,
+                                 @NotNull PsiMethodCallExpression generatedCall,
+                                 @NotNull PsiElementFactory elementFactory) {
+    PsiMethod newMethod = createPsiMethod(FieldAccessType.SET, outerClass, elementFactory);
+    if (newMethod == null) return;
+
+    outerClass.add(newMethod);
+    PsiExpression rightExpression = assignmentExpression.getRExpression();
+    if (rightExpression == null) {
+      LOG.warn("Expression representing a new field value not found");
+      return;
+    }
+
+    String newValue = rightExpression.getText();
+    String objectForReference = MemberQualifierUtil.findObjectExpression(myExpression, myField, outerClass, generatedCall, elementFactory);
+    String methodCallExpression = newMethod.getName() + "(" + objectForReference + ", " + newValue + ")";
+
+    PsiExpression newMethodCallExpression = elementFactory.createExpressionFromText(methodCallExpression, myExpression);
+    assignmentExpression.replace(newMethodCallExpression);
+  }
+
+  private @Nullable PsiMethod createPsiMethod(FieldAccessType accessType, PsiClass outerClass, PsiElementFactory elementFactory) {
+    PsiClass containingClass = myField.getContainingClass();
+    String className = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
+    String fieldName = myField.getName();
+    if (className == null) {
+      LOG.warn("Code is incomplete. Class name or field name not found");
+      return null;
+    }
+
+    String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
+    ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
+    if (FieldAccessType.GET.equals(accessType)) {
+      methodBuilder.accessedField(className, fieldName);
+    }
+    else {
+      methodBuilder.updatedField(className, fieldName);
+    }
+
+    methodBuilder
+      .setReturnType(myAccessibleType)
+      .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
+      .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object");
+
+    if (!FieldAccessType.GET.equals(accessType)) {
+      methodBuilder.addParameter(myAccessibleType, "value");
+    }
+
+    return methodBuilder.build(elementFactory, outerClass);
+  }
+
+  private static boolean needReplace(@NotNull PsiClass outerClass, @NotNull PsiField field, @NotNull PsiReferenceExpression expression) {
+    return !PsiReflectionAccessUtil.isAccessibleMember(field, outerClass, expression.getQualifierExpression());
+  }
+
+  private static @NotNull PsiType resolveFieldType(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
+    PsiType rawType = field.getType();
+    return referenceExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
+  }
+}

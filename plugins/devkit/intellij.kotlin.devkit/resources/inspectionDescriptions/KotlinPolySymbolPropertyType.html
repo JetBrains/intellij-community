@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports Kotlin properties and fields annotated with <code>@PolySymbol.Property</code> where the declared type
+is not assignable to the expected PolySymbol property type.
+<p>
+  PolySymbol properties must return a type that is assignable to the type parameter of the corresponding
+  <code>PolySymbolProperty</code> class.
+</p>
+<p>
+  For example, if <code>JSPropertySignatureProperty</code> expects <code>PropertySignature</code>,
+  then the annotated property must return <code>PropertySignature</code> or a subtype of it.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  @PolySymbol.Property(JSPropertySignatureProperty::class)
+  private val propertySignature: TypeScriptTypeMember // Error: TypeScriptTypeMember is not assignable to PropertySignature
+    get() = source
+</code></pre>
+</body>
+</html>

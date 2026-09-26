@@ -1,0 +1,31 @@
+<html>
+<body>
+Reports calls to <code>equals()</code>, <code>compareTo()</code> or similar, that compare an object for equality
+with itself.
+The method contracts of these methods specify that such calls will always return
+<code>true</code> for <code>equals()</code> or <code>0</code> for <code>compareTo()</code>.
+The inspection also checks
+calls to <code>Objects.equals()</code>, <code>Objects.deepEquals()</code>,
+<code>Arrays.equals()</code>, <code>Comparator.compare()</code>, <code>assertEquals()</code> methods of
+test frameworks (JUnit, TestNG, AssertJ), <code>Integer.compare()</code>, <code>Integer.compareUnsigned()</code> and similar methods.
+<p>
+  Note that in rare cases, the inspection may report <code>equals()</code> calls that return false, because while the expressions
+  on the both sides are the same, they produce separate objects, and comparison is performed on references, rather than on content. 
+  The simplest example is <code>new Object().equals(new Object())</code>. In any case, such calls are suspicious, and likely 
+  something else was intended.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo {
+    boolean foo(Object o) {
+        return o.equals(o); // warning
+    }
+
+    boolean bar(String[] ss) {
+        return Arrays.equals(ss, ss); // warning
+    }
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

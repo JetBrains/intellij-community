@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Collapse loop with stream 'collect()'" "true-preview"
 import java.util.*;
 
 public class Collect {
@@ -13,6 +13,7 @@ public class Collect {
     for (Person person : pers<caret>ons) {
       names.add(person.getName());
     }
-    Collections.sort(names, Comparator.comparing(Person::getName));
+    Collections.// comment
+                 sort(names, Comparator.comparing(/*c2*/Person::getName));
   }
 }

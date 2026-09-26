@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-server-content-negotiation" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-content-negotiation-jvm:3.6.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.6.0/ktor-server-content-negotiation-jvm-3.6.0.jar">
+              <sha256sum>b0a2d3b38abacd5783833d76e75b2961293e5835cacda221d765df89ed829413</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.6.0/ktor-server-content-negotiation-jvm-3.6.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3.6.0/ktor-server-content-negotiation-jvm-3.6.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-server-routing-openapi" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-server-routing-openapi-jvm:3.6.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-server-routing-openapi-jvm/3.6.0/ktor-server-routing-openapi-jvm-3.6.0.jar">
+              <sha256sum>dab7e4ab162a8b6128da624618af95ae698ddfbe76c23fd03d65c4910d6eea71</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-routing-openapi-jvm/3.6.0/ktor-server-routing-openapi-jvm-3.6.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-server-routing-openapi-jvm/3.6.0/ktor-server-routing-openapi-jvm-3.6.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.cio" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" scope="RUNTIME" />
+  </component>
+</module>

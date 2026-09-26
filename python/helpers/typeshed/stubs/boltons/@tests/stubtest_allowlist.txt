@@ -1,0 +1,2 @@
+boltons.funcutils.CachedInstancePartial.__partialmethod__
+boltons.funcutils.InstancePartial.__partialmethod__

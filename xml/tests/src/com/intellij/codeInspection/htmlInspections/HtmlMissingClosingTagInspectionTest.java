@@ -23,18 +23,17 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Bas Leijdekkers
  */
-public class HtmlMissingClosingTagInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class HtmlMissingClosingTagInspectionTest extends BasePlatformTestCase {
 
   public void testImgElement() {
     highlightTest("<html><body><img></body></html>");
@@ -48,7 +47,9 @@ public class HtmlMissingClosingTagInspectionTest extends LightPlatformCodeInsigh
     quickfixTest("<html><<warning descr=\"Element <p> is missing an end tag\">p</warning><caret>>Behold!</html>", "<html><p>Behold!</p></html>", "Add </p>");
   }
 
-
+  public void testCollapsedEmptyTag() {
+    highlightTest("<html><body><App/></body></html>");
+  }
 
   @NotNull
   protected LocalInspectionTool getInspection() {
@@ -80,7 +81,7 @@ public class HtmlMissingClosingTagInspectionTest extends LightPlatformCodeInsigh
   protected IntentionAction findIntention(@NotNull final String hint) {
     final List<IntentionAction> allIntentions = myFixture.getAvailableIntentions();
     final List<IntentionAction> intentions =
-      allIntentions.stream().filter(action -> action.getText().startsWith(hint)).limit(2).collect(Collectors.toList());
+      allIntentions.stream().filter(action -> action.getText().startsWith(hint)).limit(2).toList();
     Assert.assertFalse("\"" + hint + "\" not in " + intentions, intentions.isEmpty());
     Assert.assertFalse("Too many quickfixes found for \"" + hint + "\": " + intentions + "]", intentions.size() > 1);
     return intentions.get(0);

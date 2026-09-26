@@ -13,6 +13,8 @@ Groovy script
       <empty list>
     Implements clause
       <empty list>
+    Permits clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -21,10 +23,10 @@ Groovy script
         Modifiers
           <empty list>
         PsiElement(identifier)('foo')
-        PsiElement(()('(')
-        PsiWhiteSpace('\n')
         Parameter list
-          PsiErrorElement:')' or identifier expected, got '}'
+          PsiElement(()('(')
+          PsiElement(new line)('\n')
+          PsiErrorElement:identifier expected, got '}'
             <empty list>
         Throw clause
           <empty list>

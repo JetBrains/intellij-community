@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
-public class ModuleCompilerUtilTest extends ModuleTestCase {
+public class ModuleCompilerUtilTest extends JavaModuleTestCase {
   private TempDirTestFixture myTempDirTestFixture;
 
   @Override
@@ -43,8 +40,15 @@ public class ModuleCompilerUtilTest extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myTempDirTestFixture.tearDown();
-    super.tearDown();
+    try {
+      myTempDirTestFixture.tearDown();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testNoCyclicDependencies() throws IOException {

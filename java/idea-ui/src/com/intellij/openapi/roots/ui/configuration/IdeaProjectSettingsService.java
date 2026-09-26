@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.actions.ArtifactAwareProjectSettingsService;
-import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.util.projectWizard.JdkChooserPanel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -28,13 +15,19 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
+import static com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt.findLibraryBridge;
+
+
+public final class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
   private final Project myProject;
 
   public IdeaProjectSettingsService(final Project project) {
@@ -54,7 +47,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public void openLibrary(@NotNull final Library library) {
+  public void openLibrary(final @NotNull Library library) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> config.selectProjectOrGlobalLibrary(library, true));
   }
@@ -76,7 +69,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
 
   @Override
   public void openModuleLibrarySettings(final Module module) {
-    ModulesConfigurator.showDialog(myProject, module.getName(), ClasspathEditor.NAME);
+    ModulesConfigurator.showDialog(myProject, module.getName(), ClasspathEditor.getName());
   }
 
   @Override
@@ -86,7 +79,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
 
   @Override
   public void openContentEntriesSettings(final Module module) {
-    ModulesConfigurator.showDialog(myProject, module.getName(), CommonContentEntriesEditor.NAME);
+    ModulesConfigurator.showDialog(myProject, module.getName(), CommonContentEntriesEditor.getName());
   }
 
   @Override
@@ -95,7 +88,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public void openModuleDependenciesSettings(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+  public void openModuleDependenciesSettings(final @NotNull Module module, final @Nullable OrderEntry orderEntry) {
     ShowSettingsUtil.getInstance().editConfigurable(myProject, ProjectStructureConfigurable.getInstance(myProject), () -> ProjectStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry));
   }
 
@@ -105,7 +98,20 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
+  public boolean canOpenLibrarySettings(LibraryEntity library) {
+    ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
+    var moduleEntity = SequencesKt.firstOrNull(snapshot.referrers(library.getSymbolicId(), ModuleEntity.class));
+    if (moduleEntity != null) {
+      var module = ModuleBridges.findModule(moduleEntity, snapshot);
+      if (module != null) {
+        return getLibrarySettingsConfigurable(library, module.getProject(),  snapshot) != null;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -117,11 +123,11 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
-    final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
+  public boolean processModulesMoved(final Module[] modules, final @Nullable String targetGroupName) {
+    final ModuleStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getModulesConfig();
     if (rootConfigurable.updateProjectTree(modules)) { //inside project root editor
-      if (targetGroup != null) {
-        rootConfigurable.selectNodeInTree(targetGroup.toString());
+      if (targetGroupName != null) {
+        rootConfigurable.selectNodeInTree(targetGroupName);
       }
       else {
         rootConfigurable.selectNodeInTree(modules[0].getName());
@@ -136,13 +142,51 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     ModulesConfigurator.showDialog(myProject, moduleToSelect, editorNameToSelect);
   }
 
+  private Sdk myDeprecatedChosenSdk = null;
+
+  /**
+   * @deprecated Please use {@link SdkPopupFactory} instead.
+   *
+   * Many usages of that API are too bogus and do duplicate similar code all other the place.
+   * It is not even possible to filter unneeded SDK types or SDK instances in the dialog.
+   *
+   * This method is no longer supported and behaves a bit broken: the first call returns {@code null},
+   * the second call may return a chosen SDK from the first call (only once). This is the way to
+   * avoid breaking the older code scenarios.
+   */
   @Override
+  @Deprecated(forRemoval = true)
   public Sdk chooseAndSetSdk() {
-    return JdkChooserPanel.chooseAndSetJDK(myProject);
+    Logger
+      .getInstance(getClass())
+      .error("Call to the deprecated ProjectSettingsService#chooseAndSetSdk method. Please use new API instead");
+
+    if (myDeprecatedChosenSdk != null) {
+      Sdk chosenSdk = myDeprecatedChosenSdk;
+      myDeprecatedChosenSdk = null;
+      return chosenSdk;
+    }
+
+    SdkPopupFactory
+      .newBuilder()
+      .withProject(myProject)
+      .withSdkType(JavaSdk.getInstance())
+      .updateProjectSdkFromSelection()
+      .onSdkSelected(sdk -> myDeprecatedChosenSdk = sdk)
+      .buildPopup()
+      .showInFocusCenter();
+
+    return null;
   }
 
   @Override
   public void openArtifactSettings(@Nullable Artifact artifact) {
     ModulesConfigurator.showArtifactSettings(myProject, artifact);
+  }
+
+  private static @Nullable Configurable getLibrarySettingsConfigurable(LibraryEntity libraryEntity, Project project, ImmutableEntityStorage storage) {
+    var lib = findLibraryBridge(libraryEntity, storage);
+    if (lib == null) return null;
+    return getLibrarySettingsConfigurable(lib, project);
   }
 }

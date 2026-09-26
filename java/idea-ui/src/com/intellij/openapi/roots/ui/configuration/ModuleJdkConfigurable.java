@@ -1,72 +1,62 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.function.Predicate;
 
 public abstract class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
   private JPanel myJdkPanel;
   private ClasspathEditor myModuleEditor;
   private final ProjectSdksModel myJdksModel;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
   private boolean myFreeze = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
-    public void sdkAdded(Sdk sdk) {
+    public void sdkAdded(@NotNull Sdk sdk) {
       reloadModel();
     }
 
     @Override
-    public void beforeSdkRemove(Sdk sdk) {
+    public void beforeSdkRemove(@NotNull Sdk sdk) {
       reloadModel();
     }
 
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       reloadModel();
     }
 
     @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+    public void sdkHomeSelected(@NotNull Sdk sdk, @NotNull String newSdkHome) {
       reloadModel();
     }
   };
 
-  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ProjectSdksModel jdksModel) {
+  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ProjectStructureConfigurable projectStructureConfigurable) {
     myModuleEditor = moduleEditor;
-    myJdksModel = jdksModel;
+    myJdksModel = projectStructureConfigurable.getProjectJdksModel();
+    myProjectStructureConfigurable = projectStructureConfigurable;
     myJdksModel.addListener(myListener);
     init();
   }
@@ -77,7 +67,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
 
   private void reloadModel() {
     myFreeze = true;
-    myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), getRootModel().getModule().getProject());
+    myCbModuleJdk.reloadModel();
     reset();
     myFreeze = false;
   }
@@ -85,9 +75,26 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   protected abstract ModifiableRootModel getRootModel();
 
   private void init() {
-    myJdkPanel = new JPanel(new GridBagLayout());
-    myCbModuleJdk = new JdkComboBox(myJdksModel);
-    myCbModuleJdk.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
+    final Project project = getRootModel().getModule().getProject();
+
+    Predicate<SdkTypeId> predicate = SimpleJavaSdkType.notSimpleJavaSdkType();
+    // TODO Use EelApi here.
+    myCbModuleJdk = new JdkComboBox(project, myJdksModel, predicate::test,
+                                    WslSdkFilter.filterSdkByWsl(project), WslSdkFilter.filterSdkSuggestionByWsl(project),
+                                    null, jdk -> {
+      final Sdk projectJdk = myJdksModel.getProjectSdk();
+      if (projectJdk == null) {
+        final int res =
+          Messages.showYesNoDialog(myJdkPanel,
+                                   JavaUiBundle.message("project.roots.no.jdk.on.project.message"),
+                                   JavaUiBundle.message("project.roots.no.jdk.on.project.title"),
+                                   Messages.getInformationIcon());
+        if (res == Messages.YES) {
+          myJdksModel.setProjectSdk(jdk);
+        }
+      }
+    });
+    myCbModuleJdk.showProjectSdkItem();
     myCbModuleJdk.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -99,46 +106,14 @@ public abstract class ModuleJdkConfigurable implements Disposable {
         clearCaches();
       }
     });
-    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
-                   new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                          JBUI.insetsRight(6), 0, 0));
-    myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
-                                                         GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                         JBUI.insetsRight(4), 0, 0));
-    final Project project = getRootModel().getModule().getProject();
-    final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
-    myCbModuleJdk
-      .setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), jdk -> {
-        final Sdk projectJdk = myJdksModel.getProjectSdk();
-        if (projectJdk == null) {
-          final int res =
-            Messages.showYesNoDialog(myJdkPanel,
-                                     ProjectBundle.message("project.roots.no.jdk.on.project.message"),
-                                     ProjectBundle.message("project.roots.no.jdk.on.project.title"),
-                                     Messages.getInformationIcon());
-          if (res == Messages.YES) {
-            myJdksModel.setProjectSdk(jdk);
-            return true;
-          }
-        }
-        return false;
-      }, true);
-    myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
-                                                       GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                       JBUI.insetsRight(4), 0, 0));
     final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
     myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), () -> getRootModel().getSdk());
-    myJdkPanel.add(editButton,
-                   new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                          JBUI.emptyInsets(), 0, 0));
-
-    myJdkPanel.setBorder(JBUI.Borders.empty(6));
+    myJdkPanel = new ModuleJdkConfigurableUi(myCbModuleJdk, editButton).getPanel();
   }
 
   private void clearCaches() {
     final Module module = getRootModel().getModule();
-    final Project project = module.getProject();
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    final StructureConfigurableContext context = myProjectStructureConfigurable.getContext();
     context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
   }
 

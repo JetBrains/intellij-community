@@ -1,17 +1,24 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.IdeaTestUtil
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
-  fun testRightMargin() {
-    codeStyleBean.apply {
-      isWrapLongLines = true
-      rightMargin = 35
+  
+  private fun doTextTestIdempotent(before: String, after: String) {
+    doTextTest(before, after)
+    doTextTest(after, after)
+  }
+  
+  
+  fun testRIGHT_MARGIN() {
+    settings.apply {
+      WRAP_LONG_LINES = true
+      RIGHT_MARGIN = 35
     }
     doTextTest(
       "/** Here is one-line java-doc comment */" +
@@ -47,9 +54,9 @@ class X {
   }
 
   fun testDoNotWrapLink() {
-    codeStyleBean.apply {
-      isWrapLongLines = true
-      rightMargin = 70
+    settings.apply {
+      WRAP_LONG_LINES = true
+      RIGHT_MARGIN = 70
     }
 
     doTextTest(
@@ -68,9 +75,9 @@ class X {
   }
 
   fun testNoWrapInALink() {
-    codeStyleBean.apply {
-      isWrapLongLines = true
-      rightMargin = 70
+    settings.apply {
+      WRAP_LONG_LINES = true
+      RIGHT_MARGIN = 70
     }
 
     doTextTest(
@@ -159,10 +166,10 @@ public class T {
   }
 
   fun testEA49739() {
-    codeStyleBean.apply {
-      isWrapLongLines = true
-      rightMargin = 35
-      isWrapComments = true
+    settings.apply {
+      WRAP_LONG_LINES = true
+      RIGHT_MARGIN = 35
+      WRAP_COMMENTS = true
     }
 
     doTextTest(
@@ -177,7 +184,7 @@ public class T {
 
       "class A {\n" +
       "    /**\n" +
-      "     * @return a is one line \n" +
+      "     * @return a is one line\n" +
       "     * javadoc\n" +
       "     */\n" +
       "    public int get(int a) {\n" +
@@ -186,13 +193,13 @@ public class T {
       "}")
   }
 
-  fun testOneLineCommentWrappedByRightMarginIntoMultiLine() {
-    codeStyleBean.apply {
-      isWrapComments = true
-      isEnableJavadocFormatting = true
-      isJavaDocDoNotWrapOneLineComments = true
-      rightMargin = 35
+  fun testOneLineCommentWrappedByRIGHT_MARGINIntoMultiLine() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 35
     }
+    javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    javaSettings.JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
 
     doTextTest(
       """/** Here is one-line java-doc comment */class Foo {
@@ -208,11 +215,11 @@ class Foo {
 
   fun testLineFeedsArePreservedDuringWrap() {
     // Inspired by IDEA-61895
-    codeStyleBean.apply {
-      isWrapComments = true
-      isJavaDocPreserveLineFeeds = true
-      rightMargin = 48
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 48
     }
+    javaSettings.JD_PRESERVE_LINE_FEEDS = true
 
     doTextTest(
       """/**
@@ -232,22 +239,24 @@ class Test {
   }
 
   fun testSCR11296() {
-    codeStyleBean.apply {
-      rightMargin = 50
-      isWrapComments = true
-      isEnableJavadocFormatting = true
-      isJavaDocPAtEmptyLines = false
-      isJavaDocKeepEmptyLines = false
+    settings.apply {
+      RIGHT_MARGIN = 50
+      WRAP_COMMENTS = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_P_AT_EMPTY_LINES = false
+      JD_KEEP_EMPTY_LINES = false
     }
     doTest()
   }
 
   fun testSCR2632() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isWrapComments = true
-      rightMargin = 20
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 20
     }
+    javaSettings.ENABLE_JAVADOC_FORMATTING = true
 
     doTextTest(
       """/**
@@ -259,7 +268,8 @@ class A{}""",
       """/**
  * <p/>
  * Another paragraph
- * of the description
+ * of the
+ * description
  * placed after
  * blank line.
  */
@@ -268,8 +278,8 @@ class A {
   }
 
   fun testPreserveExistingSelfClosingTagsAndGenerateOnlyPTag() {
-    codeStyleBean.isEnableJavadocFormatting = true
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
+    javaSettings.ENABLE_JAVADOC_FORMATTING = true
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doTextTest(
       """/**
@@ -293,11 +303,11 @@ class T {
 
   fun testParagraphTagGeneration() {
     // Inspired by IDEA-61811
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocPAtEmptyLines = true
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_P_AT_EMPTY_LINES = true
     }
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doTextTest(
       """/**
@@ -329,9 +339,9 @@ class Test {
 
   fun testParameterDescriptionNotOnNewLine() {
     // IDEA-107383
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocAlignParamComments = true
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_ALIGN_PARAM_COMMENTS = true
     }
 
     doClassTest(
@@ -354,11 +364,11 @@ public void register(int protocolId, int connectedUserIdHandlerFromServer) {
 
   fun testWrappedParameterDescription() {
     // Inspired by IDEA-13072
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isWrapComments = true
-      isJavaDocParamDescriptionOnNewLine = true
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_PARAM_DESCRIPTION_ON_NEW_LINE = true
     }
+    settings.WRAP_COMMENTS = true
 
     doClassTest(
       """/**
@@ -389,9 +399,9 @@ void test(int first, int second, int third, int forth) {
   }
 
   fun testExceptionAlignmentCorrect() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocAlignExceptionComments = true
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_ALIGN_EXCEPTION_COMMENTS = true
     }
 
     doTextTest(
@@ -425,9 +435,9 @@ void test(int first, int second, int third, int forth) {
   }
 
   fun testDoNotWrapMultiLineCommentIntoOneLine() {
-    codeStyleBean.apply{
-      isEnableJavadocFormatting = true
-      isJavaDocDoNotWrapOneLineComments = true
+    javaSettings.apply{
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
     }
 
     val test = """/**
@@ -440,9 +450,9 @@ public Object next() {
   }
 
   fun testLeaveOneLineComment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocDoNotWrapOneLineComments = true
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
     }
 
     val test = """/** foo */
@@ -453,9 +463,9 @@ public Object next() {
   }
 
   fun testWrapOneLineComment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocDoNotWrapOneLineComments = false
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false
     }
 
     doClassTest(
@@ -473,9 +483,9 @@ public Object next() {
   }
 
   fun testWrapStrangeComment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocDoNotWrapOneLineComments = false
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false
     }
 
     doClassTest(
@@ -493,9 +503,9 @@ public Object next() {
   }
 
   fun testWrapStrangeCommentIfNotWrapOneLines() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocDoNotWrapOneLineComments = true
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
     }
     doClassTest(
       """/** foo
@@ -512,12 +522,14 @@ public Object next() {
   }
 
   fun testReturnTagAlignment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      rightMargin = 80
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isWrapComments = true
-      isWrapLongLines = true
+    settings.apply {
+      RIGHT_MARGIN = 80
+      WRAP_COMMENTS = true
+      WRAP_LONG_LINES = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doClassTest(
@@ -542,40 +554,44 @@ public int method(int parameter) {
   }
 
   fun testReturnTagAlignmentWithPreTagOnFirstLine() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      rightMargin = 80
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isWrapComments = true
-      isWrapLongLines = true
+    settings.apply {
+      RIGHT_MARGIN = 80
+      WRAP_COMMENTS = true
+      WRAP_LONG_LINES = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doClassTest(
       """
-    /**
-     * @return <pre>this is a return value documentation with a very long description
-     * that is longer than the right margin.</pre>
-     */
-    public int method(int parameter) {
-        return 0;
-    }""",
+      /**
+       * @return <pre>this is a return value documentation with a very long description
+       * that is longer than the right margin.</pre>
+       */
+      public int method(int parameter) {
+          return 0;
+      }""".trimIndent(),
 
-"\n/**\n" +
-" * @return <pre>this is a return value documentation with a very long " +
-"""
- * description
- * that is longer than the right margin.</pre>
- */
-public int method(int parameter) {
-    return 0;
-}""")
+      """
+      /**
+       * @return <pre>this is a return value documentation with a very long description
+       * that is longer than the right margin.</pre>
+       */
+      public int method(int parameter) {
+          return 0;
+      }""".trimIndent())
   }
 
   fun testDoNotMergeCommentLines() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      isJavaDocPreserveLineFeeds = true
-      isWrapComments = true
+    settings.apply {
+      WRAP_COMMENTS = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_PRESERVE_LINE_FEEDS = true
+      JD_KEEP_EMPTY_LINES = false
     }
 
     doClassTest(
@@ -598,12 +614,14 @@ public class TestCase {
   }
 
   fun testSeeTagAlignment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      rightMargin = 80
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isWrapComments = true
-      isWrapLongLines = true
+    settings.apply {
+      RIGHT_MARGIN = 80
+      WRAP_COMMENTS = true
+      WRAP_LONG_LINES = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doClassTest(
@@ -626,12 +644,14 @@ public int method(int parameter) {
   }
 
   fun testDummySinceTagAlignment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      rightMargin = 80
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isWrapComments = true
-      isWrapLongLines = true
+    settings.apply {
+      RIGHT_MARGIN = 80
+      WRAP_COMMENTS = true
+      WRAP_LONG_LINES = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doClassTest(
@@ -654,12 +674,14 @@ public int method(int parameter) {
   }
 
   fun testDummyDeprecatedTagAlignment() {
-    codeStyleBean.apply {
-      isEnableJavadocFormatting = true
-      rightMargin = 80
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isWrapComments = true
-      isWrapLongLines = true
+    settings.apply {
+      RIGHT_MARGIN = 80
+      WRAP_COMMENTS = true
+      WRAP_LONG_LINES = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doClassTest(
@@ -682,14 +704,16 @@ public int method(int parameter) {
   }
 
   fun testJavadocFormattingIndependentOfMethodIndentation() {
-    codeStyleBean.apply {
-      rightMargin = 50
-      isEnableJavadocFormatting = true
-      isWrapComments = true
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isJavaDocPAtEmptyLines = false
-      isJavaDocKeepEmptyLines = false
-      isJavaDocAddBlankAfterDescription = false
+    settings.apply {
+      RIGHT_MARGIN = 50
+      WRAP_COMMENTS = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
+      JD_P_AT_EMPTY_LINES = false
+      JD_KEEP_EMPTY_LINES = false
+      JD_ADD_BLANK_AFTER_DESCRIPTION = false
     }
 
     formatEveryoneAndCheckIfResultEqual(
@@ -723,11 +747,13 @@ void foo() {
   }
 
   fun testJavadocAlignmentForInnerClasses() {
-    codeStyleBean.apply {
-      rightMargin = 40
-      isEnableJavadocFormatting = true
-      isWrapComments = true
-      isJavaDocLeadingAsterisksAreEnabled = true
+    settings.apply {
+      RIGHT_MARGIN = 40
+      WRAP_COMMENTS = true
+    }
+    javaSettings.apply {
+      ENABLE_JAVADOC_FORMATTING = true
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doTextTest(
@@ -775,11 +801,13 @@ public int innerMagic() {
   }
 
   fun testAlignmentWithNoTopClassMembersIndentation() {
-    codeStyleBean.apply {
-      rightMargin = 40
-      isWrapComments = true
-      isJavaDocLeadingAsterisksAreEnabled = true
-      isDoNotIndentTopLevelClassMembers = true
+    settings.apply {
+      RIGHT_MARGIN = 40
+      WRAP_COMMENTS = true
+      DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true
+    }
+    javaSettings.apply {
+      JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
     doTextTest(
       """public class Outer {
@@ -849,10 +877,10 @@ public static void main(String[] args) {
   }
 
   fun testDoNotWrapLongLineCommentWithSpaceInStart() {
-    codeStyleBean.apply {
-      isKeepFirstColumnComment = true
-      isWrapLongLines = true
-      rightMargin = 200
+    settings.apply {
+      KEEP_FIRST_COLUMN_COMMENT = true
+      WRAP_LONG_LINES = true
+      RIGHT_MARGIN = 200
     }
 
     val test = """public class JiraIssue {
@@ -865,9 +893,9 @@ public static void main(String[] args) {
   }
 
   fun testNotGenerateSelfClosingPTagIfLanguageLevelJava8() {
-    codeStyleBean.apply {
-      isJavaDocPAtEmptyLines = true
-      isEnableJavadocFormatting = true
+    javaSettings.apply {
+      JD_P_AT_EMPTY_LINES = true
+      ENABLE_JAVADOC_FORMATTING = true
     }
 
     doClassTest(
@@ -891,11 +919,11 @@ public void voo() {
   }
 
   fun testPTagIfLanguageLevelNotJava8() {
-    codeStyleBean.apply {
-      isJavaDocPAtEmptyLines = true
-      isEnableJavadocFormatting = true
+    javaSettings.apply {
+      JD_P_AT_EMPTY_LINES = true
+      ENABLE_JAVADOC_FORMATTING = true
     }
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doClassTest(
       """/**
@@ -918,9 +946,9 @@ public void voo() {
   }
 
   fun testDoNotTouchSingleLineComments() {
-    codeStyleBean.apply {
-      isJavaDocDoNotWrapOneLineComments = true
-      isEnableJavadocFormatting = true
+    javaSettings.apply {
+      JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true
+      ENABLE_JAVADOC_FORMATTING = true
     }
 
     doClassTest(
@@ -936,9 +964,9 @@ public void t() {
   }
 
   fun testKeepPTags() {
-    codeStyleBean.apply {
-      isJavaDocPAtEmptyLines = true
-      isEnableJavadocFormatting = true
+    javaSettings.apply {
+      JD_P_AT_EMPTY_LINES = true
+      ENABLE_JAVADOC_FORMATTING = true
     }
 
     doClassTest(
@@ -991,10 +1019,10 @@ public void test() {
   fun testContinuationDescriptionFormatting() {
     currentCodeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 40)
     currentCodeStyleSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
-    getJavaSettings().JD_INDENT_ON_CONTINUATION = true
-    getJavaSettings().JD_ALIGN_PARAM_COMMENTS = false
-    getJavaSettings().JD_ALIGN_EXCEPTION_COMMENTS = false
-    getSettings().WRAP_COMMENTS = true
+    javaSettings.JD_INDENT_ON_CONTINUATION = true
+    javaSettings.JD_ALIGN_PARAM_COMMENTS = false
+    javaSettings.JD_ALIGN_EXCEPTION_COMMENTS = false
+    settings.WRAP_COMMENTS = true
 
     doClassTest(
       """/**
@@ -1034,6 +1062,7 @@ String test(int aParameter, int bParameter) {
   }
 
   fun testJavadocWithTabs() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
     doClassTest(
       "\t/**\n" +
       "\t \t *\n" +
@@ -1043,7 +1072,6 @@ String test(int aParameter, int bParameter) {
       "\t}",
 
       "/**\n" +
-      " *\n" +
       " *\n" +
       " */\n" +
       "void check() {\n" +
@@ -1086,29 +1114,29 @@ module M {
   }
 
   fun testRichHtml() {
-    codeStyleBean.apply {
-      isWrapComments = true
-      rightMargin = 50
-      isJavaDocAddBlankAfterDescription = false
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 50
     }
+    javaSettings.JD_ADD_BLANK_AFTER_DESCRIPTION = false
     doTextTest(
       """public class Test {
     /**
      * <h1>A description containing HTML tags</h1>
      * <p>
-     *     There might be lists in descriptions like this one:
-     *     <ul>
-     *         <li>Item one</li>
-     *         <li>Item two</li>
-     *         <li>Item three</li>
-     *     </ul>
-     *     which should be left as is, without any tags merged.
+     * There might be lists in descriptions like this one:
+     * <ul>
+     *     <li>Item one</li>
+     *     <li>Item two</li>
+     *     <li>Item three</li>
+     * </ul>
+     * which should be left as is, without any tags merged.
      * </p>
      * @param a Parameter descriptions can also be long but tag
      *          content should be left intact:
      *          <ol>
-     *          <li>Another item one</li>
-     *          <li>Item two</li>
+     *              <li>Another item one</li>
+     *              <li>Item two</li>
      *          </ol>
      */
     void test(int a) {
@@ -1124,19 +1152,18 @@ module M {
      * There might be lists in descriptions like
      * this one:
      * <ul>
-     * <li>Item one</li>
-     * <li>Item two</li>
-     * <li>Item three</li>
+     *     <li>Item one</li>
+     *     <li>Item two</li>
+     *     <li>Item three</li>
      * </ul>
-     * which should be left as is, without any
-     * tags merged.
+     * which should be left as is, without any tags merged.
      * </p>
      * @param a Parameter descriptions can also be
      *          long but tag content should be
      *          left intact:
      *          <ol>
-     *          <li>Another item one</li>
-     *          <li>Item two</li>
+     *              <li>Another item one</li>
+     *              <li>Item two</li>
      *          </ol>
      */
     void test(int a) {
@@ -1150,7 +1177,7 @@ module M {
    * See [IDEA-153768](https://youtrack.jetbrains.com/issue/IDEA-153768)
    */
   fun testPTagsBeforeTags() {
-    codeStyleBean.isJavaDocPAtEmptyLines = true
+    javaSettings.JD_P_AT_EMPTY_LINES = true
     doTextTest(
 """
 package com.company;
@@ -1198,9 +1225,9 @@ public class Test {
    * See [IDEA-21623](https://youtrack.jetbrains.com/issue/IDEA-21623)
    */
   fun testPreTagWithAttributes() {
-    codeStyleBean.apply {
-      isWrapComments = true
-      rightMargin = 60
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 60
     }
 
     doTextTest(
@@ -1249,10 +1276,10 @@ interface Test {
 
 
   fun testIdea175161() {
-    codeStyleBean.apply {
-      rightMargin = 160
-      isWrapComments = true
-      isKeepLineBreaks = false
+    settings.apply {
+      RIGHT_MARGIN = 160
+      WRAP_COMMENTS = true
+      KEEP_LINE_BREAKS = false
     }
 
     doTextTest(
@@ -1275,8 +1302,8 @@ public class Test {
 public class Test {
 
     /**
-     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to {@link #test2(Object, Object, Object, Object,
-     * Object)}. Make sure the dto item returns a non-null id.
+     * Shortcut method for EntryDto items. This method will fetch the id from {@code item} and pass it to
+     * {@link #test2(Object, Object, Object, Object, Object)}. Make sure the dto item returns a non-null id.
      */
     public void test() {
     }
@@ -1287,4 +1314,1138 @@ public class Test {
 """
     )
   }
+
+  fun testIdea180882() {
+    javaSettings.apply {
+      JD_KEEP_EMPTY_PARAMETER = false
+    }
+    doTextTest(
+"""
+public class Test {
+
+    /**
+     * @param a
+     * @param b
+     */
+    public void foo(boolean a, boolean b) {
+
+    }
+}
+""",
+
+"""
+public class Test {
+
+    /**
+     *
+     */
+    public void foo(boolean a, boolean b) {
+
+    }
+}
+"""
+    )
+  }
+
+  fun testIdea205110() {
+    doTextTest(
+      """
+      package com.test;
+
+      import java.util.HashMap;
+      import java.util.Map;
+
+      public class GeneralTest {
+
+          /**
+           * @return Map<String, string>
+           */
+          private Map<String, String> test() {
+              return new HashMap<>();
+          }
+
+      }
+      """.trimIndent(),
+
+      """
+      package com.test;
+
+      import java.util.HashMap;
+      import java.util.Map;
+
+      public class GeneralTest {
+
+          /**
+           * @return Map<String, string>
+           */
+          private Map<String, String> test() {
+              return new HashMap<>();
+          }
+
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea147601() {
+    doTextTest(
+      """
+      public class Idea147601 {
+      /**
+       * <table summary="">
+       *     <thead>
+       *         <tr>
+       *             <td>ABC</td>
+       *             <td>DEF</td>
+       *         </tr>
+       *     </thead>
+       *     <tbody>
+       *         <tr>
+       *             <td>some data here</td>
+       *             <td>some more</td>
+       *         </tr>
+       *     </tbody>
+       * </table>
+       */
+      void docTest() {}
+      }
+      """.trimIndent(),
+
+      """
+      public class Idea147601 {
+          /**
+           * <table summary="">
+           *     <thead>
+           *         <tr>
+           *             <td>ABC</td>
+           *             <td>DEF</td>
+           *         </tr>
+           *     </thead>
+           *     <tbody>
+           *         <tr>
+           *             <td>some data here</td>
+           *             <td>some more</td>
+           *         </tr>
+           *     </tbody>
+           * </table>
+           */
+          void docTest() {
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea221827() {
+    settings.apply {
+      RIGHT_MARGIN = 40
+      WRAP_LONG_LINES = true
+    }
+
+    doTextTest(
+      """
+      /**
+       * <pre>
+       *     ScheduledFuture<?> future = executor.scheduleAtFixedRate(runnable, interval + delta, interval + delta, MILLISECONDS);
+       * </pre>
+       */
+      final class Temp { }
+      """.trimIndent(),
+
+      """
+      /**
+       * <pre>
+       *     ScheduledFuture<?> future = executor.scheduleAtFixedRate(runnable, interval + delta, interval + delta, MILLISECONDS);
+       * </pre>
+       */
+      final class Temp {
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea219194() {
+    doTextTest(
+      """
+      public class Test {
+          /**
+           * @implNote Some leading implNote sentence.
+           *
+           *     <p>That means that the the thing is like this.
+           *
+           *     <ol></ol>
+           */
+          void foo() {
+          }
+      }
+      """.trimIndent(),
+
+      """
+      public class Test {
+          /**
+           * @implNote Some leading implNote sentence.
+           *
+           * <p>That means that the the thing is like this.
+           *
+           * <ol></ol>
+           */
+          void foo() {
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea186041() {
+    doTextTest(
+      """
+      import java.util.function.Function;
+
+      public class Test {
+          /**
+           * @param node the node to get the path for
+           * @param getParent a function to get a parent node for the given one
+           * @param converter  a function to convert path components
+           * @return a tree path with the converted path components or {@code null}
+           * if the specified collection is empty
+           * or a path component is {@code null}
+           * or a path component is converted to {@code null}
+           * Returns the path from the root, to get to this node.  The last
+           * element in the path is this node.
+           *
+           * @return an array of TreeNode objects giving the path, where the
+           *         first element in the path is the root and the last
+           *         element is this node.
+           */
+          public TreeNode[] foo(String node, Function<TreeNode,TreeNode> getParent, Function<String,String> converter) {
+              return new TreeNode[0];
+          }
+
+          private static class TreeNode {}
+      }
+      """.trimIndent(),
+
+      """
+      import java.util.function.Function;
+
+      public class Test {
+          /**
+           * @param node      the node to get the path for
+           * @param getParent a function to get a parent node for the given one
+           * @param converter a function to convert path components
+           * @return a tree path with the converted path components or {@code null}
+           * if the specified collection is empty
+           * or a path component is {@code null}
+           * or a path component is converted to {@code null}
+           * Returns the path from the root, to get to this node.  The last
+           * element in the path is this node.
+           * @return an array of TreeNode objects giving the path, where the
+           * first element in the path is the root and the last
+           * element is this node.
+           */
+          public TreeNode[] foo(String node, Function<TreeNode, TreeNode> getParent, Function<String, String> converter) {
+              return new TreeNode[0];
+          }
+      
+          private static class TreeNode {
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea198240() {
+    val config = TodoConfiguration.getInstance()
+    val currFlag = config.isMultiLine
+    try {
+      config.isMultiLine = true
+      doTextTest(
+        """
+        public class Test {
+            /**
+             * TODO This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             *   @param i Parameter
+             */
+            void foo(int i) { }
+        }
+        """.trimIndent(),
+
+        """
+        public class Test {
+            /**
+             * TODO This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             * @param i Parameter
+             */
+            void foo(int i) {
+            }
+        }
+        """.trimIndent()
+      )
+    }
+    finally {
+      config.isMultiLine = currFlag
+    }
+  }
+
+  fun testIdea277973() {
+    val config = TodoConfiguration.getInstance()
+    val currFlag = config.isMultiLine
+    try {
+      config.isMultiLine = true
+      doTextTest(
+        """
+        public class Test {
+            /**
+             * FIXME This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             *   @param i Parameter
+             */
+            void foo(int i) { }
+        }
+        """.trimIndent(),
+
+        """
+        public class Test {
+            /**
+             * FIXME This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             * @param i Parameter
+             */
+            void foo(int i) {
+            }
+        }
+        """.trimIndent()
+      )
+    }
+    finally {
+      config.isMultiLine = currFlag
+    }
+  }
+
+  fun testIdea122233() {
+    settings.apply {
+      RIGHT_MARGIN = 60
+      WRAP_COMMENTS = true
+    }
+      doTextTest(
+        """
+        /**
+         * object that can be loaded into a {@link javax.sound.midi.Synthesizer}.
+         */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * object that can be loaded into a
+         * {@link javax.sound.midi.Synthesizer}.
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testEmptyJavadoc() {
+      doTextTest(
+        """
+        /**
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         *
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testJavadoc() {
+      doTextTest(
+        """
+        /**
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         *
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testSnippet() {
+      doTextTest(
+        """
+        /** {@snippet:
+          *   void foo() {
+          *       int x;     
+          *   }
+          * }
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *       int x;
+         *   }
+         * }
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testSnippetInBeginning() {
+      doTextTest(
+        """
+        /** {@snippet:
+          *   void foo() {
+          *       int x;     
+          *   }
+          * }
+          *    should
+          *       be 
+          *     on first column
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *       int x;
+         *   }
+         * }
+         * should
+         * be
+         * on first column
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+  fun testSnippet2() {
+      doTextTest(
+        """
+        /** {@snippet:
+          *   void foo() {
+          *       int x;     
+          *   }
+          * }
+          *    should
+          *       be 
+          *     on first column
+          *  {@snippet:
+          *   void bar() {
+          *       int y;     
+          *   }
+          *  }
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+        """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *       int x;
+         *   }
+         * }
+         * should
+         * be
+         * on first column
+         * {@snippet:
+         *   void bar() {
+         *       int y;
+         *   }
+         * }
+         */
+        public class Main {
+        }
+        """.trimIndent()
+      )
+  }
+
+
+  fun testSnippetWithEmptyLine() {
+    doTextTest(
+      """
+        /** {@snippet:
+          *   void foo() {
+          *   
+          *       int x;     
+          *   }
+          * }
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+      """
+        /**
+         * {@snippet:
+         *   void foo() {
+         *
+         *       int x;
+         *   }
+         * }
+         */
+        public class Main {
+        }
+        """.trimIndent()
+    )
+  }
+
+  fun testSnippetHasSpacesBetweenSnippetAttributes() {
+    doTextTest(
+      """
+        /** 
+          * {@snippet class = ExternalSnippets region = join2}
+          */
+        public class Main {
+        }
+        """.trimIndent(),
+
+      """
+        /**
+         * {@snippet class = ExternalSnippets region = join2}
+         */
+        public class Main {
+        }
+        """.trimIndent()
+    )
+  }
+
+  fun testMarkdownAlignment(){
+    doTextTest("""
+      /// Oh hello there
+        /// I'm misaligned on purpose
+          /// Think you can fix me ?
+      public class Main {}
+    """.trimIndent(), """
+      /// Oh hello there
+      /// I'm misaligned on purpose
+      /// Think you can fix me ?
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavaDocNoKeepEmptyLinesWithDescriptionAndParam() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      /**
+       *
+       *
+       * description
+       *
+       *
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+       void f(int a) {
+       }
+    """.trimIndent(), """
+      /**
+       * description
+       * after blank line between
+       *
+       * @param a method param
+       */
+      void f(int a) {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavaDocKeepEmptyLinesWithDescriptionAndParam() {
+    doTextTest("""
+      /**
+       *
+       *
+       * description
+       *
+       *
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+       void f(int a) {
+       }
+    """.trimIndent(), """
+      /**
+       *
+       *
+       * description
+       * <p>
+       * <p>
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+      void f(int a) {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoKeepEmptyLinesWithDescriptionAndParam() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent(), """
+       /// description
+       /// after blank line
+       ///
+       /// @param a
+       void f(int a) {
+       }
+    """.trimIndent())
+  }
+
+
+  fun testMarkdownKeepEmptyLinesWithDescriptionAndParam() {
+    doTextTest("""
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent(), """
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent())
+  }
+
+  fun testJavadocNoKeepEmptyLinesOnlyEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      /**
+       * 
+       * 
+       * 
+       *
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       *
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavadocKeepEmptyLinesOnlyEmptyLines() {
+    doTextTest("""
+      /**
+       * 
+       * 
+       * 
+       *
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       *
+       *
+       *
+       *
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoKeepEmptyLinesOnlyEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      ///
+      ///
+      ///
+      public class Main {}
+    """.trimIndent(), """
+      ///
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownKeepEmptyLinesOnlyEmptyLines() {
+    doTextTest("""
+      ///
+      ///
+      ///
+      public class Main {}
+    """.trimIndent(), """
+      ///
+      ///
+      ///
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownSpacing(){
+    doTextTest("""
+      ///I'm stuck to the leading slashes !
+      public class Main {}
+    """.trimIndent(), """
+      /// I'm stuck to the leading slashes !
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownSpacing2() {
+    doTextTest("""
+      ///
+      ///     Purposefully misaaligned stuff
+      public class Main {}
+    """.trimIndent(), """
+      ///
+      ///     Purposefully misaaligned stuff
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoTagInsert() {
+    doTextTest("""
+    /// Method blabla bla
+    /// 
+    /// @param toto imagine
+    /// 
+    /// @param titi      imagine 2
+    /// @return The processed value.
+    /// @throws RuntimeException yeah catch this
+    /// @see RuntimeException
+    public class Main {
+    }
+    """.trimIndent(),
+               """
+    /// Method blabla bla
+    ///
+    /// @param toto imagine
+    /// @param titi imagine 2
+    /// @return The processed value.
+    /// @throws RuntimeException yeah catch this
+    /// @see RuntimeException
+    public class Main {
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownRemoveSpaces() {
+    doTextTest("""
+    public class Main {
+      /// Method blabla bla 
+      ///  
+      /// @param toto  imagine
+      /// @param titi      imagine 2
+      /// @return The processed value.
+      /// @throws RuntimeException     yeah catch this
+      /// @see RuntimeException
+      boolean toto(int toto, int titi) {
+        return true;
+      }
+    }
+    """.trimIndent(), """
+      public class Main {
+          /// Method blabla bla
+          ///
+          /// @param toto imagine
+          /// @param titi imagine 2
+          /// @return The processed value.
+          /// @throws RuntimeException yeah catch this
+          /// @see RuntimeException
+          boolean toto(int toto, int titi) {
+              return true;
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun testBracketsInReferenceLink(){
+    doTextTest("""
+      /// [String#copyValueOf(char\[\], int, int)]
+      public class Main {
+        void test(char[] foo) {}
+      }
+    """.trimIndent(), """
+      /// [String#copyValueOf(char\[\], int, int)]
+      public class Main {
+          void test(char[] foo) {
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun testSpacesInReferenceLinkLookalike() {
+    doTextTest("""
+      /// [Hello, world] fake link with a comma
+      /// \format[WrapFileLinks(\i. \d (\p))]{\file}
+      public class Main {}
+    """.trimIndent(), """
+      /// [Hello, world] fake link with a comma
+      /// \format[WrapFileLinks(\i. \d (\p))]{\file}
+      public class Main {
+      }""".trimIndent())
+  }
+
+  fun testListItemIndentBeingPreserved() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /// This method is
+    /// supported for the benefit of hash tables such as those provided by
+    /// [java.util.HashMap].
+    ///
+    /// The general contract of `hashCode` is:
+    ///
+    ///   - Whenever it is invoked on the same object more than once during
+    ///     an execution of a Java application, the `hashCode` method abusively long line that will force the line feed to be cut nonetheless, what will you do in the situation
+    ///     This integer need not remain consistent from one execution of an
+    ///     application to another execution of the same application.
+    ///   + If two objects are equal according to the
+    ///     [equals][#equals(Object)] method
+    ///   * It is _not_ required that if two objects are unequal
+    ///     according to the [equals][#equals(Object)] method
+    ///
+    ///      @param toto As a tag, it should be brought back to the left
+    class C {}
+    """.trimIndent(), """
+    /// This method is supported for the benefit of hash tables such as those provided by [java.util.HashMap].
+    ///
+    /// The general contract of `hashCode` is:
+    ///
+    ///   - Whenever it is invoked on the same object more than once during an execution of a Java application, the
+    /// `hashCode` method abusively long line that will force the line feed to be cut nonetheless, what will you do in the
+    /// situation This integer need not remain consistent from one execution of an application to another execution of the
+    /// same application.
+    ///   + If two objects are equal according to the [equals][#equals(Object)] method
+    ///   * It is _not_ required that if two objects are unequal according to the [equals][#equals(Object)] method
+    ///
+    /// @param toto As a tag, it should be brought back to the left
+    class C {
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownConstructsImmuneToWrapping() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /// 
+    ///         | Latin | Greek |
+    ///         |-------|-------|
+    ///         | a     | alpha |
+    ///         | b     | beta  |
+    ///         | c     | gamma |
+    /// 
+    /// > Nice blockquote
+    /// - Single list item
+    ///    + Sub element
+    ///    * Another sub element
+    /// ---
+    ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    /// 
+    """.trimIndent(), """
+    ///
+    ///         | Latin | Greek |
+    ///         |-------|-------|
+    ///         | a     | alpha |
+    ///         | b     | beta  |
+    ///         | c     | gamma |
+    ///
+    /// > Nice blockquote
+    /// - Single list item
+    ///    + Sub element
+    ///    * Another sub element
+    /// ---
+    ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    ///
+    """.trimIndent())
+  }
+
+  fun testMarkdownConstructsNoAffectedInLegacy() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /**         | Latin | Greek |
+     *          |-------|-------|
+     *          | a     | alpha |
+     *          | b     | beta  |
+     *          | c     | gamma |
+     *  
+     *  > Nice blockquote
+     *  - Single list item
+     *     + Sub element
+     *     * Another sub element
+     *  ---
+     *   # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+     */  
+    """.trimIndent(), """
+      /**
+       * | Latin | Greek | |-------|-------| | a     | alpha | | b     | beta  | | c     | gamma |
+       * <p>
+       * > Nice blockquote - Single list item + Sub element * Another sub element --- # Title, but I have a long text, so
+       * loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down
+       * for a game of Minecraft ?
+       */  
+    """.trimIndent())
+  }
+
+  fun testMarkdownTags() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+
+    doTextTest("""
+      class Test {
+          ///  @param  arg  description
+          ///     @return   description
+          ///@throws AssertionError description
+          public boolean foo(Boolean arg) {
+              return !arg;
+          }
+      }""".trimIndent(), """
+      class Test {
+          /// @param arg description
+          /// @return description
+          /// @throws AssertionError description
+          public boolean foo(Boolean arg) {
+              return !arg;
+          }
+      }""".trimIndent())
+  }
+
+  fun testMarkdownSplitToParagraphs() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 40
+    }
+
+    doTextTest("""
+    class Main {
+        /// @return Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+        public int foo() { return 0; }
+    }
+    """.trimIndent(), """
+    class Main {
+        /// @return Lorem ipsum dolor sit
+        /// amet, consectetur adipiscing
+        /// elit, sed do eiusmod tempor
+        public int foo() {
+            return 0;
+        }
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownCodeBlocksNotAffected() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+
+    val before = """
+      ///    only this should be reformated
+        ///  ```java
+          ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ```
+      public class Foo {
+      }
+      """.trimIndent()
+
+    val after = """
+      /// only this should be reformated
+      ///  ```java
+      ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ```
+      public class Foo {
+      }
+      """.trimIndent()
+
+    doTextTest(before, after)
+    doTextTest(after, after)
+  }
+
+  fun testMarkdownTildeCodeBlock() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+
+    val before = """
+      ///    only this should be reformated
+        ///  ~~~java ~
+          ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ~~~
+      public class Foo {
+      }
+      """.trimIndent()
+    val after = """
+      /// only this should be reformated
+      ///  ~~~java ~
+      ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ~~~
+      public class Foo {
+      }
+      """.trimIndent()
+    doTextTest(before, after)
+    doTextTest(after, after)
+  }
+  
+  fun `test markdown inside tags`() {
+    // One line is misaligned on purpose. With Markdown the spaces have meaning
+    val before = """
+    public class Foo {
+        /// @param param Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of
+        ///              classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin
+        ///  professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words,
+        ///              consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical
+        ///              literature, discovered the undoubtable source
+        void foo(int param) {
+        }
+    }
+    """.trimIndent()
+    doTextTest(before, before)
+  }
+
+  /** See IDEA-389658 */
+  fun testMarkdownSnippetWithAnnotation() {
+    doTextTestIdempotent("""
+      /// {@snippet :
+      ///   @NullMarked
+      ///   final class Example {
+      ///     void example() {
+      ///       // Do nothing...
+      ///     }
+      ///   }}
+      class Foo {}
+      """.trimIndent(),
+               """
+      /// {@snippet :
+      ///   @NullMarked
+      ///   final class Example {
+      ///     void example() {
+      ///       // Do nothing...
+      ///     }
+      ///   }}
+      class Foo {
+      }
+      """.trimIndent())
+  }
+  
+  /** See IDEA-389658 */
+  fun testSnippetWithAnnotation() {
+    doTextTestIdempotent("""
+      /**
+       * {@snippet :
+       *@NullMarked
+       *   final class Example {
+       *     void example() {
+       *       // Do nothing...
+       *     }
+       *   }}
+       */
+       class Foo {}""".trimIndent(),"""
+      /**
+       * {@snippet :
+       * @NullMarked
+       *   final class Example {
+       *     void example() {
+       *       // Do nothing...
+       *     }
+       * }}
+       */
+      class Foo {
+      }""".trimIndent())
+  }
+  
 }

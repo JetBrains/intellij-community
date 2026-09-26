@@ -17,18 +17,27 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiDoWhileStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiDoWhileStatementImpl");
+public class PsiDoWhileStatementImpl extends PsiLoopStatementImpl implements PsiDoWhileStatement, Constants {
+  private static final Logger LOG = Logger.getInstance(PsiDoWhileStatementImpl.class);
 
   public PsiDoWhileStatementImpl() {
     super(DO_WHILE_STATEMENT);
@@ -63,9 +72,6 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.DO_KEYWORD:
         return findChildByType(DO_KEYWORD);
 
@@ -86,6 +92,9 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);
+
+      default:
+        return null;
     }
   }
 
@@ -131,6 +140,18 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
     }
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (lastParent != null) return true;
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    return PsiWhileStatementImpl.processDeclarationsInLoopCondition(processor, state, place, this);
+  }
+
+  @Override
   public String toString(){
     return "PsiDoWhileStatement";
   }

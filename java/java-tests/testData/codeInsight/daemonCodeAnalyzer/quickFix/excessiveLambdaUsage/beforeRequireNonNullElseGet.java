@@ -1,4 +1,4 @@
-// "Use 'requireNonNullElse' method without lambda" "true"
+// "Use 'requireNonNullElse' method without lambda" "true-preview"
 
 import java.util.*;
 

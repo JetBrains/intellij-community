@@ -8,6 +8,6 @@ interface B extends E,F { }
 
 class User {
     void x(B a) {
-        String o  = a.<ref>o();
+        String o  = a.<caret>o();
     }
 }

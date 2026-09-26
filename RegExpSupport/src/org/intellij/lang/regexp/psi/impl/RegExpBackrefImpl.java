@@ -19,98 +19,130 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
-
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpElement;
-import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpBackref;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
 
 public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackref {
     public RegExpBackrefImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     public int getIndex() {
-        final String s = getUnescapedText();
-        assert s.charAt(0) == '\\';
-        return Integer.parseInt(s.substring(1));
+        return Integer.parseInt(getIndexNumberText());
     }
 
+    private @NotNull String getIndexNumberText() {
+        final ASTNode node = getNode().findChildByType(RegExpTT.NUMBER);
+        if (node != null) {
+            return node.getText();
+        }
+        final String s = getUnescapedText();
+        boolean pcreBackReference = s.charAt(1) == 'g';
+        boolean pcreNumberedGroup = s.startsWith("(?");
+        assert s.charAt(0) == '\\' || pcreNumberedGroup;
+        return pcreBackReference ? getPcreBackrefIndexNumberText(s.substring(2)) :
+               pcreNumberedGroup ? getPcreNumberedGroupIndexNumberText(s.substring(2)) :
+               s.substring(1);
+    }
+
+    @Override
+    public boolean isRecursiveGroup() {
+        return getUnescapedText().startsWith("(?");
+    }
+
+    private static @NotNull String getPcreNumberedGroupIndexNumberText(String s) {
+      return trimEnd(s, ")");
+    }
+
+    private static @NotNull String getPcreBackrefIndexNumberText(String s) {
+        return trimEnd(trimStart(s, "{"), "}");
+    }
+
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpBackref(this);
     }
 
+    @Override
     public RegExpGroup resolve() {
-        final int index = getIndex();
-
-        final PsiElementProcessor.FindFilteredElement<RegExpElement> processor =
-          new PsiElementProcessor.FindFilteredElement<>(new PsiElementFilter() {
-            int groupCount;
-
-            public boolean isAccepted(PsiElement element) {
-              if (element instanceof RegExpGroup) {
-                if (((RegExpGroup)element).isCapturing() && ++groupCount == index) {
-                  return true;
-                }
-              }
-              return element == RegExpBackrefImpl.this;
-            }
-          });
-
-        PsiTreeUtil.processElements(getContainingFile(), processor);
-        if (processor.getFoundElement() instanceof RegExpGroup) {
-            return (RegExpGroup)processor.getFoundElement();
-        }
-        return null;
+        return resolve(getIndex(), getContainingFile());
     }
 
+    static RegExpGroup resolve(int index, PsiFile file) {
+        if (index < 0) {
+            return resolveRelativeGroup(Math.abs(index), file);
+        }
+
+        return SyntaxTraverser.psiTraverser(file)
+          .filter(RegExpGroup.class)
+          .filter(RegExpGroup::isCapturing)
+          .skip(index - 1)
+          .first();
+    }
+
+    private static @Nullable RegExpGroup resolveRelativeGroup(int index, PsiFile file) {
+        List<RegExpGroup> groups = SyntaxTraverser.psiTraverser(file)
+          .filter(RegExpGroup.class)
+          .filter(RegExpGroup::isCapturing)
+          .toList();
+        return index <= groups.size() ? groups.get(groups.size() - index) : null;
+    }
+
+    @Override
     public PsiReference getReference() {
         return new PsiReference() {
-            @NotNull
-            public PsiElement getElement() {
+            @Override
+            public @NotNull PsiElement getElement() {
                 return RegExpBackrefImpl.this;
             }
 
-            @NotNull
-            public TextRange getRangeInElement() {
+            @Override
+            public @NotNull TextRange getRangeInElement() {
                 return TextRange.from(0, getElement().getTextLength());
             }
 
-            @NotNull
-            public String getCanonicalText() {
+            @Override
+            public @NotNull String getCanonicalText() {
                 return getElement().getText();
             }
 
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            @Override
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 
+            @Override
             public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 
-            public boolean isReferenceTo(PsiElement element) {
+            @Override
+            public boolean isReferenceTo(@NotNull PsiElement element) {
                 return Comparing.equal(element, resolve());
             }
 
+            @Override
             public boolean isSoft() {
                 return false;
             }
 
+            @Override
             public PsiElement resolve() {
                 return RegExpBackrefImpl.this.resolve();
-            }
-            
-            @NotNull
-            public Object[] getVariants() {
-                return ArrayUtil.EMPTY_OBJECT_ARRAY;
             }
         };
     }

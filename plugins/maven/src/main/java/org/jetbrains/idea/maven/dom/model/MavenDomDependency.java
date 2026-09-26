@@ -20,6 +20,7 @@
 package org.jetbrains.idea.maven.dom.model;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
@@ -40,6 +41,7 @@ import org.jetbrains.idea.maven.dom.model.presentation.MavenArtifactCoordinatesP
  */
 @Presentation(typeName = "Dependency", icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
 public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoordinates {
+  @Override
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getVersion();
 
@@ -121,4 +123,10 @@ public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoo
   @NotNull
   @Required(value = false, nonEmpty = true)
   GenericDomValue<Boolean> getOptional();
+
+
+
+  @Override
+  @NlsSafe
+  String toString();
 }

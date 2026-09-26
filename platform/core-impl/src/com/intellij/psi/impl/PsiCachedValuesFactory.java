@@ -1,71 +1,81 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.CachedValue;
-import com.intellij.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.util.CachedValuesFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- */
-public class PsiCachedValuesFactory implements CachedValuesFactory {
+@ApiStatus.Internal
+public final class PsiCachedValuesFactory implements CachedValuesFactory {
 
-  private final Project myProject;
+  private static final boolean preferHardRefsForPsiCachedValue =
+    !"false".equalsIgnoreCase(System.getProperty("ide.prefer.hard.refs.psi.cached.value"));
+
   private final PsiManager myManager;
 
-  public PsiCachedValuesFactory(PsiManager manager) {
-    myManager = manager;
-    myProject = manager.getProject();
+  public PsiCachedValuesFactory(@NotNull Project project) {
+    myManager = PsiManager.getInstance(project);
   }
 
   @Override
-  public <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    return trackValue ? new PsiCachedValueImpl<T>(myManager, provider) {
-      @Override
-      protected Object[] getDependencies(CachedValueProvider.Result<T> result) {
-        return getDependenciesPlusValue(result);
-      }
-    } : new PsiCachedValueImpl<>(myManager, provider);
+  public @NotNull <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
+    if (trackValue) {
+      return new PsiCachedValueImpl.SoftTracked<>(myManager, provider);
+    }
+
+    return new PsiCachedValueImpl.Soft<>(myManager, provider);
   }
 
   @Override
-  public <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
-                                                                              boolean trackValue) {
-    return trackValue ? new PsiParameterizedCachedValue<T, P>(myManager, provider) {
-      @Override
-      public boolean isFromMyProject(Project project) {
-        return myProject == project;
-      }
+  public @NotNull <T> CachedValue<T> createCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                       @NotNull CachedValueProvider<T> provider,
+                                                       boolean trackValue) {
+    if (preferHardRefs(userDataHolder)) {
 
-      @Override
-      protected Object[] getDependencies(CachedValueProvider.Result<T> tResult) {
-        return getDependenciesPlusValue(tResult);
-      }
-    } : new PsiParameterizedCachedValue<T, P>(myManager, provider) {
-      @Override
-      public boolean isFromMyProject(Project project) {
-        return myProject == project;
-      }
-    };
+      return trackValue ?
+             new PsiCachedValueImpl.DirectTracked<>(myManager, provider) :
+             new PsiCachedValueImpl.Direct<>(myManager, provider);
+    }
+
+    return createCachedValue(provider, trackValue);
   }
+
+  @Override
+  public @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T, P> provider,
+                                                                                       boolean trackValue) {
+    return trackValue ?
+           new PsiParameterizedCachedValue.SoftTracked<>(myManager, provider) :
+           new PsiParameterizedCachedValue.Soft<>(myManager, provider);
+  }
+
+  @Override
+  public @NotNull <T, P> ParameterizedCachedValue<T, P> createParameterizedCachedValue(@NotNull UserDataHolder userDataHolder,
+                                                                                       @NotNull ParameterizedCachedValueProvider<T, P> provider,
+                                                                                       boolean trackValue) {
+    if (preferHardRefs(userDataHolder)) {
+      return trackValue ?
+             new PsiParameterizedCachedValue.DirectTracked<>(myManager, provider) :
+             new PsiParameterizedCachedValue.Direct<>(myManager, provider);
+    }
+
+    return createParameterizedCachedValue(provider, trackValue);
+  }
+
+  private static boolean preferHardRefs(@NotNull UserDataHolder userDataHolder) {
+    return preferHardRefsForPsiCachedValue
+           && userDataHolder instanceof PsiElement
+           && !(userDataHolder instanceof StubBasedPsiElement) // StubBasedPsiElement cache may outlive the loaded content of a file
+           && !(userDataHolder instanceof PsiFile);
+  }
+
 }

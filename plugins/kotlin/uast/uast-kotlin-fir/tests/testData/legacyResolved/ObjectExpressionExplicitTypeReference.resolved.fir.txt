@@ -1,0 +1,18 @@
+UTypeReferenceExpression (name = AClass) -> USimpleNameReferenceExpression (identifier = AClass) -> Kotlin_Light_Class:ClassOrObject: AClass
+UField (name = field1) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UField (name = field1) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = AClass) -> Kotlin_Light_Class:ClassOrObject: AClass
+UTypeReferenceExpression (name = I1) -> USimpleNameReferenceExpression (identifier = I1) -> Kotlin_Light_Class:Interface: I1
+UTypeReferenceExpression (name = I2) -> USimpleNameReferenceExpression (identifier = I2) -> Kotlin_Light_Class:Interface: I2
+UTypeReferenceExpression (name = I1) -> USimpleNameReferenceExpression (identifier = I1) -> Kotlin_Light_Class:Interface: I1
+UField (name = field2) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UField (name = field2) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = AClass) -> Kotlin_Light_Class:ClassOrObject: AClass
+UTypeReferenceExpression (name = I1) -> USimpleNameReferenceExpression (identifier = I1) -> Kotlin_Light_Class:Interface: I1
+UTypeReferenceExpression (name = I2) -> USimpleNameReferenceExpression (identifier = I2) -> Kotlin_Light_Class:Interface: I2
+UTypeReferenceExpression (name = I2) -> USimpleNameReferenceExpression (identifier = I2) -> Kotlin_Light_Class:Interface: I2
+UField (name = field3) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UField (name = field3) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = AClass) -> Kotlin_Light_Class:ClassOrObject: AClass
+UTypeReferenceExpression (name = I1) -> USimpleNameReferenceExpression (identifier = I1) -> Kotlin_Light_Class:Interface: I1
+UTypeReferenceExpression (name = I2) -> USimpleNameReferenceExpression (identifier = I2) -> Kotlin_Light_Class:Interface: I2

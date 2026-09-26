@@ -1,0 +1,22 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# Pack the source file into a srcjar to simulate a generator-rule output
+# that emits a .srcjar (standard Bazel idiom for delivering generated sources).
+genrule(
+    name = "gen_sources",
+    srcs = ["gen/Generated.kt"],
+    outs = ["gen-sources.srcjar"],
+    cmd = "$(location @bazel_tools//tools/zip:zipper) c $@ Generated.kt=$(location gen/Generated.kt)",
+    tools = ["@bazel_tools//tools/zip:zipper"],
+)
+
+jvm_library(
+    name = "a",
+    srcs = [
+        ":gen_sources",
+        "Main.kt",
+    ],
+    deps = [
+        "@rules_jvm//:kotlin-stdlib_import",
+    ],
+)

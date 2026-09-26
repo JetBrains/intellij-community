@@ -1,0 +1,32 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.maven.utils
+
+import com.intellij.application.options.PathMacrosImpl
+import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.EelProviderUtil
+import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.idea.maven.utils.MavenUtil.resolveDefaultLocalRepositoryForJpsMacros
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Maven home path depends on an environment where the project is located.
+ * On one hand, we have an application-wide macros in `path.macros.xml`. The data from these macros is inapplicable to non-local projects,
+ * such as WSL and Docker based. Here we decide the location by project.
+ */
+internal class MavenProjectPathMacroContributor : ProjectWidePathMacroContributor {
+  private val repositoryByDescriptor = ConcurrentHashMap<EelDescriptor, String>()
+
+  override fun getProjectPathMacros(projectFilePath: @SystemIndependent String): Map<String, String> {
+    return mapOf(PathMacrosImpl.MAVEN_REPOSITORY to getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath))
+  }
+
+  fun getPathToDefaultMavenLocalRepositoryOnSpecificEnv(projectFilePath: @SystemIndependent String): String {
+    val projectFile = Path.of(projectFilePath)
+    val descriptor = EelProviderUtil.getEelDescriptor(projectFile)
+    return repositoryByDescriptor.computeIfAbsent(descriptor) {
+      resolveDefaultLocalRepositoryForJpsMacros(it).toAbsolutePath().toString()
+    }
+  }
+}

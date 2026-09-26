@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-interface i <error descr="No implements clause allowed for interface">implements Runnable</error> {}
+interface i <error descr="'implements' not allowed on interface">implements</error> Runnable {}
 
 interface ii {}
 class cs extends <error descr="No interface expected here">ii</error> {}

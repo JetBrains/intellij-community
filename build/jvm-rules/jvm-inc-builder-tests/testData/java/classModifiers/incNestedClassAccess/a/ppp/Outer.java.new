@@ -1,0 +1,2 @@
+package ppp;
+public class Outer { public static class Nested { static int f() { return 1; } } }  // Nested widened package-private -> public

@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+
+private val _items = ArrayList<String>(10)
+val items: List<String>
+    get() = _items

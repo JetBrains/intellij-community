@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
+import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
-import com.intellij.diff.actions.impl.SetEditorSettingsAction;
+import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -30,41 +18,54 @@ import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
-import com.intellij.diff.util.*;
+import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineCol;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> {
-  @Nullable private List<? extends EditorEx> myEditors;
-  @NotNull private final List<? extends EditorEx> myEditableEditors;
+public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
+  private @Nullable List<? extends EditorEx> myEditors;
+  private final @NotNull List<? extends EditorEx> myEditableEditors;
 
-  @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
-  @NotNull private final MyVisibleAreaListener myVisibleAreaListener2 = new MyVisibleAreaListener(Side.RIGHT);
-  @Nullable protected ThreesideSyncScrollSupport mySyncScrollSupport;
+  private final @NotNull MyVisibleAreaListener myVisibleAreaListener = new MyVisibleAreaListener();
+  protected @Nullable ThreesideSyncScrollSupport mySyncScrollSupport;
 
-  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
+  protected final @NotNull SetEditorSettingsActionGroup myEditorSettingsAction;
 
   public ThreesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
-    //new MyFocusOppositePaneAction().setupAction(myPanel, this); // TODO
+    new MyFocusOppositePaneAction(true).install(myPanel);
+    new MyFocusOppositePaneAction(false).install(myPanel);
 
-    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
+    myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
@@ -73,28 +74,33 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
-    for (ThreeSide side : ThreeSide.values()) {
+    for (ThreeSide side : ThreeSide.getEntries()) {
       DiffUtil.installLineConvertor(getEditor(side), getContent(side));
+    }
+
+    if (getProject() != null) {
+      for (ThreeSide side : ThreeSide.getEntries()) {
+        myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
+      }
     }
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     installEditorListeners();
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorListeners();
     super.onDispose();
   }
 
-  @NotNull
   @Override
-  protected List<TextEditorHolder> createEditorHolders(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
+  protected @NotNull List<TextEditorHolder> createEditorHolders(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
     List<TextEditorHolder> holders = super.createEditorHolders(factory);
 
     boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
@@ -111,27 +117,27 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     return holders;
   }
 
-  @NotNull
   @Override
-  protected List<JComponent> createTitles() {
-    return DiffUtil.createSyncHeightComponents(DiffUtil.createTextTitles(myRequest, getEditors()));
+  protected @NotNull List<JComponent> createTitles() {
+    return DiffUtil.createTextTitles(this, myRequest, getEditors());
   }
 
   //
   // Listeners
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installEditorListeners() {
-    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
+    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
+    ActionGroup gutterActionGroup =
+      TextDiffViewerUtil.createEditorGutterActionGroup(myEditorSettingsAction, createAdditionalEditorGutterActions());
+    TextDiffViewerUtil.installGutterPopup(getEditors(), gutterActionGroup);
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
 
-    getEditor(ThreeSide.LEFT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
-    getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
-
-    getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
-    getEditor(ThreeSide.RIGHT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(ThreeSide.LEFT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.RIGHT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
 
     SyncScrollSupport.SyncScrollable scrollable1 = getSyncScrollable(Side.LEFT);
     SyncScrollSupport.SyncScrollable scrollable2 = getSyncScrollable(Side.RIGHT);
@@ -141,13 +147,11 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void destroyEditorListeners() {
-    getEditor(ThreeSide.LEFT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
-    getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
-
-    getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
-    getEditor(ThreeSide.RIGHT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(ThreeSide.LEFT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+    getEditor(ThreeSide.RIGHT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
 
     mySyncScrollSupport = null;
   }
@@ -166,15 +170,20 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   //
   // Diff
   //
-
-  @NotNull
-  public TextDiffSettings getTextSettings() {
+  public @NotNull TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 
-  @NotNull
-  protected List<AnAction> createEditorPopupActions() {
-    return TextDiffViewerUtil.createEditorPopupActions();
+  protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
+    List<AnAction> actions = new ArrayList<>();
+    actions.add(new MyToggleAutoScrollAction());
+    return actions;
+  }
+
+  protected @NotNull List<AnAction> createEditorPopupActions() {
+    List<AnAction> result = new ArrayList<>();
+    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
+    return result;
   }
 
   @Override
@@ -187,47 +196,41 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   // Getters
   //
 
-  @NotNull
-  public EditorEx getCurrentEditor() {
+  @Override
+  public @NotNull EditorEx getCurrentEditor() {
     return getEditor(getCurrentSide());
   }
 
-  @NotNull
-  public DocumentContent getCurrentContent() {
+  public @NotNull DocumentContent getCurrentContent() {
     return getContent(getCurrentSide());
   }
 
-  @NotNull
-  protected List<? extends DocumentContent> getContents() {
-    //noinspection unchecked
+  public @NotNull List<? extends DocumentContent> getContents() {
+    //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 
-  @NotNull
-  public List<? extends EditorEx> getEditors() {
+  @Override
+  public @NotNull List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
       myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
     }
     return myEditors;
   }
 
-  @NotNull
-  protected List<? extends EditorEx> getEditableEditors() {
+  protected @NotNull List<? extends EditorEx> getEditableEditors() {
     return myEditableEditors;
   }
 
-  @NotNull
-  public EditorEx getEditor(@NotNull ThreeSide side) {
+  public @NotNull EditorEx getEditor(@NotNull ThreeSide side) {
     return side.select(getEditors());
   }
 
-  @NotNull
-  public DocumentContent getContent(@NotNull ThreeSide side) {
+  public @NotNull DocumentContent getContent(@NotNull ThreeSide side) {
     return side.select(getContents());
   }
 
-  @Nullable
-  public ThreeSide getEditorSide(@Nullable Editor editor) {
+  public @Nullable ThreeSide getEditorSide(@Nullable Editor editor) {
     if (getEditor(ThreeSide.BASE) == editor) return ThreeSide.BASE;
     if (getEditor(ThreeSide.RIGHT) == editor) return ThreeSide.RIGHT;
     if (getEditor(ThreeSide.LEFT) == editor) return ThreeSide.LEFT;
@@ -238,20 +241,18 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
     DiffUtil.scrollEditor(getEditor(side), line, false);
     setCurrentSide(side);
   }
 
-  @Nullable
-  protected abstract SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
+  protected abstract @Nullable SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
 
-  @CalledInAwt
-  @NotNull
-  protected LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
-                                             @NotNull ThreeSide targetSide,
-                                             @NotNull LogicalPosition position) {
+  @RequiresEdt
+  public @NotNull LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
+                                                   @NotNull ThreeSide targetSide,
+                                                   @NotNull LogicalPosition position) {
     if (mySyncScrollSupport == null) return position;
     if (baseSide == targetSide) return position;
 
@@ -287,14 +288,13 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   // Misc
   //
 
-  @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getCurrentContent().getNavigatable(LineCol.fromCaret(getCurrentEditor()));
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return ThreesideDiffViewer.canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
+    return canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
   }
 
   //
@@ -321,33 +321,24 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return getCurrentEditor();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_EDITOR, getCurrentEditor());
   }
-  
+
   private class MyVisibleAreaListener implements VisibleAreaListener {
-    @NotNull Side mySide;
-
-    public MyVisibleAreaListener(@NotNull Side side) {
-      mySide = side;
-    }
-
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
       myContentPanel.repaint();
     }
   }
 
+  @ApiStatus.Internal
   protected abstract class MyInitialScrollPositionHelper extends InitialScrollPositionSupport.ThreesideInitialScrollHelper {
-    @NotNull
     @Override
-    protected List<? extends Editor> getEditors() {
+    protected @NotNull List<? extends Editor> getEditors() {
       return ThreesideTextDiffViewer.this.getEditors();
     }
 
@@ -365,14 +356,14 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
   }
 
+  @ApiStatus.Internal
   protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
     public TextShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
       super(mode, hasFourSides);
     }
 
-    @NotNull
     @Override
-    protected SimpleDiffRequest createRequest() {
+    protected @NotNull SimpleDiffRequest createRequest() {
       SimpleDiffRequest request = super.createRequest();
 
       ThreeSide currentSide = getCurrentSide();
@@ -393,6 +384,31 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
       }
 
       return request;
+    }
+  }
+
+  private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
+    MyFocusOppositePaneAction(boolean scrollToPosition) {
+      super(scrollToPosition);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ThreeSide currentSide = getCurrentSide();
+      ThreeSide targetSide = currentSide.select(ThreeSide.BASE, ThreeSide.RIGHT, ThreeSide.LEFT); // cycle right
+
+      EditorEx targetEditor = getEditor(targetSide);
+
+      if (myScrollToPosition) {
+        LogicalPosition currentPosition = DiffUtil.getCaretPosition(getCurrentEditor());
+        LogicalPosition position = transferPosition(currentSide, targetSide, currentPosition);
+        targetEditor.getCaretModel().moveToLogicalPosition(position);
+      }
+
+      setCurrentSide(targetSide);
+      targetEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+      DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
   }
 }

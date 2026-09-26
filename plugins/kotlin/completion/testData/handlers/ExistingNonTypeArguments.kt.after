@@ -1,0 +1,11 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+fun <T> test() {
+
+}
+
+fun main(): Boolean {
+    return test<<caret>>()< 5
+}
+
+// ELEMENT: test

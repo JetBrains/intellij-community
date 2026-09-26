@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jettison" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.codehaus.jettison:jettison:1.5.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1.5.7/jettison-1.5.7.jar">
+              <sha256sum>0fa0f1144fe37925e3568f8f5413ba5c0a551a243c47ec2d1885505e76a7b186</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1.5.7/jettison-1.5.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1.5.7/jettison-1.5.7-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

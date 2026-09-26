@@ -1,0 +1,67 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.searchEverywhereMl.ranking.java` start
+content_module_jar(module = ":java")
+### auto-generated section `dev intellij.searchEverywhereMl.ranking.java` end
+
+### auto-generated section `build intellij.searchEverywhereMl.ranking.java` start
+jvm_library(
+    name = "java",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.ranking.java",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//plugins/search-everywhere-ml/ranking/core",
+        "//platform/lang-impl",
+        "//platform/statistics",
+        "//java/java-psi-api:psi",
+    ],
+)
+
+jvm_library(
+    name = "java_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.searchEverywhereMl.ranking.java",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":java",
+        "//platform/core-api:core_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+    ],
+)
+### auto-generated section `build intellij.searchEverywhereMl.ranking.java` end
+
+### auto-generated section `iml intellij.searchEverywhereMl.ranking.java` start
+exports_files(
+    [
+        "intellij.searchEverywhereMl.ranking.java.iml",
+        "resources/intellij.searchEverywhereMl.ranking.java.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.searchEverywhereMl.ranking.java` end

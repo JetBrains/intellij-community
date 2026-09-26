@@ -1,0 +1,17 @@
+<html>
+<body>
+Detects explicit backing fields.
+<p>A quick-fix replaces an explicit backing field with a private property and a getter.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  val items: Set&lt;Int&gt;
+    field = mutableSetOf&lt;Int&gt;()
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  private val _items = mutableSetOf&lt;Int&gt;()
+  val items: Set&lt;Int&gt;
+    get() = _items
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="java.functional.expression.search.fail.fast.in.dumb.mode" defaultValue="true"
+                 description="When true (default), JavaFunctionalExpressionSearcher throws IndexNotReadyException immediately in dumb mode instead of waiting for smart mode. When false, falls back to the legacy behavior of waiting for smart mode."/>
+  </extensions>
+</idea-plugin>

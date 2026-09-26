@@ -24,19 +24,19 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.indexing.FindSymbolParameters;
 
-import javax.swing.*;
+import javax.swing.JRootPane;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class ClassChooserTest extends LightCodeInsightFixtureTestCase {
+public class ClassChooserTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testSubclassModel() {
-
     myFixture.addClass("class Foo extends Exception {}");
     myFixture.addClass("class Bar {}");
     PsiClass aClass =
@@ -60,7 +60,7 @@ public class ClassChooserTest extends LightCodeInsightFixtureTestCase {
 
     ChooseByNameModelEx model = (ChooseByNameModelEx)ref.get();
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
-    model.processNames(processor, false);
+    model.processNames(processor, FindSymbolParameters.simple(getProject(), false));
     List<String> results = (List<String>)processor.getResults();
     assertEquals(1, results.size());
   }

@@ -1,12 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.project;
 
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.BaseProjectDirectories;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
+import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 
 public interface ProjectFileNode {
+  /**
+   * Returns one of the following identifiers for the node:
+   * <dl>
+   * <dt>Module</dt><dd>a module to which this file belongs;</dd>
+   * <dt>Project</dt><dd>a project indicates that a file does not belong to any module, but is located under the project directory;</dd>
+   * <dt>VirtualFile</dt><dd>a topmost directory that contains this file (specifies a tree view without modules).</dd>
+   * </dl>
+   */
   @NotNull
   Object getRootID();
 
@@ -16,6 +34,22 @@ public interface ProjectFileNode {
   default boolean contains(@NotNull VirtualFile file, @NotNull AreaInstance area, boolean strict) {
     Object id = getRootID();
     if (id instanceof AreaInstance && !id.equals(area)) return false;
-    return VfsUtilCore.isAncestor(getVirtualFile(), file, strict);
+    return isAncestor(getVirtualFile(), file, strict);
+  }
+
+  /**
+   * Returns a {@link Module} to which the specified {@code file} belongs;
+   * or a {@link Project} if the specified {@code file} does not belong to any module, but is located under the base project directory;
+   * or {@code null} if the specified {@code file} does not correspond to the given {@code project}
+   */
+  static @Nullable AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
+    checkCanceled(); // ProcessCanceledException if current task is interrupted
+    if (project == null || project.isDisposed() || !file.isValid()) return null;
+    if (FileTypeRegistry.getInstance().isFileIgnored(file)) return null; // hide ignored files
+    if (ScratchFileService.getInstance().getRootType(file) != null) return ApplicationManager.getApplication();
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
+    if (module != null) return module.isDisposed() ? null : module;
+    // file does not belong to any content root, but it is located under the project directory
+    return BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file) == null ? null : project;
   }
 }

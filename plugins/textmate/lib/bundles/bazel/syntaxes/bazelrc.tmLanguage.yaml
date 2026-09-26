@@ -1,0 +1,466 @@
+---
+name: bazelrc
+scopeName: source.bazelrc
+fileTypes:
+- bazelrc
+patterns:
+- include: "#comment"
+- include: "#flagset"
+- match: "\\s*\\S+(?<!\\\\\\\\)"
+  name: invalid
+repository:
+  line_continuation:
+    patterns:
+    - match: "(\\\\)$"
+      captures:
+        '1':
+          name: constant.character.escape.line-continuation.shell
+  escaped_char:
+    patterns:
+    - match: \\[ "]
+      name: constant.character.escape.shell
+  comment:
+    patterns:
+    - begin: "(#)"
+      end: "(?<!\\\\\\n?)$"
+      name: comment.line.number-sign.shell
+      beginCaptures:
+        '1':
+          name: punctuation.definition.comment.shell
+      patterns:
+      - include: "#line_continuation"
+  target:
+    comment: |-
+      Build target labels.
+      Only absolute targets (containing //) are considered, because one probably shouldn't be including other kinds in a .bazelrc.
+    patterns:
+    - name: meta.class.target.wild
+      match: "(@@?(?:[a-zA-Z_][a-zA-Z0-9_-]*)?)?(//)([^:=-][^:=]*)?(:)(all)"
+      captures:
+        '1':
+          name: entity.name.namespace.workspace
+        '2':
+          name: entity.name.namespace.workspace punctuation.separator.slash.root
+        '3':
+          name: entity.name.class.package
+        '4':
+          name: entity.name.class.target punctuation.separator.colon.package
+        '5':
+          name: keyword.operator.wordlike.all
+    - name: meta.class.target.wild.recursive
+      match: "(@@?(?:[a-zA-Z_][a-zA-Z0-9_-]*)?)?(//)([^-:=][^:=]*/)?(\\.\\.\\.)"
+      captures:
+        '1':
+          name: entity.name.namespace.workspace
+        '2':
+          name: entity.name.namespace.workspace punctuation.separator.slash.root
+        '3':
+          name: entity.name.class.package
+        '4':
+          name: keyword.operator.wordlike.all.recursive
+    - name: meta.class.target
+      match: "(@@?(?:[a-zA-Z_][a-zA-Z0-9_-]*)?)?(//)([^-:=][^:=]*)?(?:(:)([^/: =]+))?"
+      captures:
+        '1':
+          name: entity.name.namespace.workspace
+        '2':
+          name: entity.name.namespace.workspace punctuation.separator.slash.root
+        '3':
+          name: entity.name.class.package
+        '4':
+          name: entity.name.class.target punctuation.separator.colon.package
+        '5':
+          name: entity.name.class.target
+  boolean:
+    patterns:
+    - match: "\\b(true|false|yes|no)\\b"
+      name: constant.language.boolean
+  numeric:
+    patterns:
+    - match: "-?(?:(?:[0-9]*\\.[0-9]+)|(?:[0-9]+\\.?))\\b"
+      name: constant.numeric
+  computed:
+    comment: Meant to capture patterns like HOST_CPUS*0.5 in e.g. --jobs
+    patterns:
+    - match: "\\b(?:([A-Z_]+)\\s*([*-])\\s*(-?[0-9.]+))|(auto)\\b"
+      captures:
+        '1':
+          name: meta.variable.parameter.computed variable.language
+        '2':
+          name: meta.variable.parameter.computed keyword.operator.minus
+        '3':
+          name: meta.variable.parameter.computed
+          patterns:
+          - include: "#numeric"
+        '4':
+          name: variable.language
+  double_quoted_flag:
+    patterns:
+    - name: string.quoted.double.argument
+      match: (")(--(?:[^"]|\")*)(")
+      captures:
+        '1':
+          name: punctuation.definition.quote.begin
+        '2':
+          patterns:
+          - include: "#quoted_flag"
+        '3':
+          name: punctuation.definition.quote.end
+  single_quoted_flag:
+    patterns:
+    - name: string.quoted.single.argument
+      match: "(')(--[^']*)(')"
+      captures:
+        '1':
+          name: punctuation.definition.quote.begin
+        '2':
+          patterns:
+          - include: "#quoted_flag"
+        '3':
+          name: punctuation.definition.quote.end
+  literal:
+    patterns:
+    - include: "#boolean"
+    - include: "#numeric"
+    - include: "#computed"
+    - match: "(.*)"
+      name: string.unquoted.argument
+      captures:
+        '1':
+          patterns:
+          - include: "#escaped_char"
+  unquoted_value:
+    patterns:
+    - match: "([a-zA-Z_-][^ =]*)(=)(.*)"
+      captures:
+        '1':
+          name: support.variable
+        '2':
+          name: punctuation.separator.equal
+        '3':
+          name: string.unquoted.argument
+          patterns:
+          - include: "#unquoted_value"
+    - include: "#target"
+    - include: "#literal"
+  double_quoted:
+    patterns:
+    - name: string.quoted.double.argument
+      match: (")((?:[^"]|\")*)(")
+      captures:
+        '1':
+          name: punctuation.definition.quote.begin
+        '2':
+          patterns:
+          - include: "#unquoted_value"
+        '3':
+          name: punctuation.definition.quote.end
+  single_quoted:
+    patterns:
+    - name: string.quoted.single.argument
+      match: "(')([^']*)(')"
+      captures:
+        '1':
+          name: punctuation.definition.quote.begin
+        '2':
+          patterns:
+          - include: "#unquoted_value"
+        '3':
+          name: punctuation.definition.quote.end
+  flag_value:
+    patterns:
+    - include: "#target"
+    - include: "#double_quoted"
+    - include: "#single_quoted"
+    - include: "#unquoted_value"
+  short_flag:
+    patterns:
+    - name: meta.group.flag.short
+      match: (-)([a-z])(?:\s+((?:"")|(?:'')|(?:"[^"-](?:[^"]|\")*")|(?:'[^'-][^']*')|(?:[^-]\S*)))?
+      captures:
+        '1':
+          name: punctuation.definition.dash.flag entity.name.class.flag.short
+        '2':
+          name: entity.name.class.flag.short
+        '3':
+          name: meta.string.flag_value
+          patterns:
+          - include: "#flag_value"
+  config_flag:
+    patterns:
+    - name: meta.group.flag.config
+      match: (--)(config)(=|\s+)(?:([a-zA-Z_](?:[a-zA-Z0-9_-]|(?:\\ ))*)|(?:(")([^"]+)("))|(?:(')([^']+)(')))
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+        '3':
+          name: punctuation.separator.equal
+        '4':
+          name: variable.other.config
+          patterns:
+          - include: "#escaped_char"
+        '5':
+          name: string.quoted.double.argument punctuation.definition.quote.begin
+        '6':
+          name: string.quoted.double.argument variable.other.config
+        '7':
+          name: string.quoted.double.argument punctuation.definition.quote.end
+        '8':
+          name: string.quoted.single.argument punctuation.definition.quote.begin
+        '9':
+          name: string.quoted.single.argument variable.other.config
+        '10':
+          name: string.quoted.single.argument punctuation.definition.quote.end
+  target_flag:
+    patterns:
+    - name: meta.group.flag.target.space_value
+      match: '(--)((?:@@?(?:[a-zA-Z_][a-zA-Z0-9_-]*)?)?//(?:[^:=@-][^:=]*)?(?::[^/:
+        =]+)?)\s+((?:"(?:(?:\"|[^"-])(?:[^"]|\")*)?")|(?:''(?:[^''-][^'']*)?'')|(?:[^"''-]\S*))\b'
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag.target
+          patterns:
+          - include: "#target"
+        '3':
+          name: meta.string.flag_value
+          patterns:
+          - include: "#flag_value"
+    - name: meta.group.flag.target
+      match: '(--)((?:@@?(?:[a-zA-Z_][a-zA-Z0-9_-]*)?)?//(?:[^-:=][^:=]*)?(?::[^/:
+        =]+)?)\b(?:(=)((?:"(?:[^"]|\")*")|(?:''[^'']*'')|\S*))?'
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag.target
+          patterns:
+          - include: "#target"
+        '3':
+          name: punctuation.separator.equal
+        '4':
+          name: meta.string.flag_value
+          patterns:
+          - include: "#flag_value"
+    - name: meta.group.flag.negated.target
+      match: "(--)(no)((?:@@?(?:[a-zA-Z_][a-zA-Z0-9_-]*)?)?//(?:[^-:=][^:=]*)?(?::[^/:
+        =]+)?)\\b"
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: keyword.control.negation
+        '3':
+          name: entity.name.class.flag.target
+          patterns:
+          - include: "#target"
+  spaced_flag:
+    comment: Flag with a value after a space.
+    patterns:
+    - name: meta.group.flag.space_value
+      match: (--)([a-z_]\w*)\s+((?:"(?:(?:\"|[^"-])(?:[^"]|\")*)?")|(?:'(?:[^'-][^']*)?')|(?:[^"'\\-](?:(?:\\
+        )|\S)*))
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+        '3':
+          name: meta.string.flag_value
+          patterns:
+          - include: "#flag_value"
+    - name: meta.group.flag.space_value
+      begin: "(--)([a-z_]\\w*)\\s*(\\\\$)"
+      end: "(?<!^|\\\\|\\s)(?=\\s)"
+      beginCaptures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+        '3':
+          patterns:
+          - include: "#line_continuation"
+      patterns:
+      - match: "^\\s*"
+      - match: \b("(?:(?:\"|[^"-])(?:[^"]|\")*)?")\b
+        captures:
+          '1':
+            name: meta.string.flag_value
+            patterns:
+            - include: "#flag_value"
+      - match: "\\b('(?:[^'-][^']*)?')\\b"
+        captures:
+          '1':
+            name: meta.string.flag_value
+            patterns:
+            - include: "#flag_value"
+      - match: \b(?<!["'-])([^"' \\-](?:(?:\\ )|\S)*)\b
+        captures:
+          '1':
+            name: meta.string.flag_value
+            patterns:
+            - include: "#flag_value"
+  negated_flag:
+    patterns:
+    - name: entity.name.class.flag.negated
+      match: "(--)(no)[a-z_]\\w*"
+      captures:
+        '1':
+          name: punctuation.definition.dash.flag
+        '2':
+          name: keyword.control.negation
+  regex_flag:
+    patterns:
+    - name: meta.group.flag.regex
+      comment: Special case for filter regexps.
+      match: (--)((?:(?:instrumentation|output)_filter)|(?:(?:experimental_)?remote_download_regex))(=)(?:(?:(")([^"]*)("))|(?:(')([^']*)('))|(\S*))
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+        '3':
+          name: punctuation.separator.equal
+        '4':
+          name: string.quoted.double.argument punctuation.definition.string.begin
+        '5':
+          name: string.quoted.double.argument string.regexp.filter
+        '6':
+          name: string.quoted.double.argument punctuation.definition.string.end
+        '7':
+          name: string.quoted.single.argument punctuation.definition.string.begin
+        '8':
+          name: string.quoted.single.argument string.regexp.filter
+        '9':
+          name: string.quoted.single.argument punctuation.definition.string.end
+        '10':
+          name: string.regexp.filter
+  flag:
+    patterns:
+    - include: "#config_flag"
+    - include: "#target_flag"
+    - include: "#negated_flag"
+    - include: "#regex_flag"
+    - name: meta.group.flag.valued
+      match: (--)([a-z_]\w*)\b(=)((?:"(?:[^"]|\")*")|(?:'[^']*')|(?:(?:(?:\\ )|\S)*))
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+        '3':
+          name: punctuation.separator.equal
+        '4':
+          name: meta.string.flag_value
+          patterns:
+          - include: "#flag_value"
+    - name: meta.group.flag.bare
+      match: "(--)([a-z_]\\w*)\\b"
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+  quoted_flag:
+    patterns:
+    - include: "#config_flag"
+    - include: "#target_flag"
+    - include: "#negated_flag"
+    - include: "#regex_flag"
+    - name: meta.group.flag.valued
+      match: "(--)([a-z_]\\w*)\\b(=)(.*)"
+      captures:
+        '1':
+          name: entity.name.class.flag punctuation.definition.dash.flag
+        '2':
+          name: entity.name.class.flag
+        '3':
+          name: punctuation.separator.equal
+        '4':
+          name: meta.string.flag_value
+          patterns:
+          - include: "#flag_value"
+  flagset:
+    commnet: A single line from a .bazelrc file.
+    patterns:
+    - match: ^\s*((?:try-)?import)(?:(:)((?:[a-zA-Z_](?:[a-zA-Z0-9_-]|(?:\\ ))*)|(?:"[a-zA-Z_][^"]*")|(?:'[a-zA-Z_][^']*'))?)?\s*(%workspace%)?(\S*)\s*$
+      comment: Special handling for import.
+      captures:
+        '1':
+          name: keyword.control.import
+        '2':
+          name: punctuation.separator.colon.config
+        '3':
+          name: entity.name.tag.config
+        '4':
+          name: support.variable
+        '5':
+          name: string.value.filename
+          patterns:
+          - include: "#escaped_char"
+    - begin: "^\\s*(startup)(?:(:)(\\S+)?)?\\s+"
+      end: "(?<!\\\\\\n?)$"
+      beginCaptures:
+        '1':
+          name: keyword.control.subcommand.startup
+        '2':
+          name: punctuation.separator.colon.config
+        '3':
+          name: invalid.config
+          comment: startup lines with configs are ignored
+      contentName: meta.group.args
+      patterns:
+      - include: "#comment"
+      - include: "#single_quoted_flag"
+      - include: "#double_quoted_flag"
+      - include: "#spaced_flag"
+      - include: "#flag"
+      - include: "#short_flag"
+      - include: "#line_continuation"
+      - match: "\\s+"
+        name: punctuation.separator.space
+      - match: "\\S+"
+        name: invalid.flag
+      comment: Config sets are not supported for startup commands. It also doesn't
+        make sense to supply a build target here.
+    - begin: ^\s*(common|always|analyze-profile|aquery|build|canonicalize-flags|clean|coverage|cquery|dump|fetch|help|info|license|mobile-install|mod|print_action|query|run|shutdown|sync|test|vendor|version)(?:(:)(?:([a-zA-Z_](?:[a-zA-Z0-9_-]|(?:\\
+        ))*)|(?:(")([a-zA-Z_][^"]*)("))|(?:(')([a-zA-Z_][^']*)(')))?)?\s+
+      end: "(?<!\\\\\\n?)$"
+      beginCaptures:
+        '1':
+          name: keyword.control.subcommand
+        '2':
+          name: punctuation.separator.colon.config
+        '3':
+          name: entity.name.tag.config
+          patterns:
+          - include: "#escaped_char"
+        '4':
+          name: string.quoted.double.argument punctuation.definition.quote.begin
+        '5':
+          name: string.quoted.double.argument entity.name.tag.config
+        '6':
+          name: string.quoted.double.argument punctuation.definition.quote.end
+        '7':
+          name: string.quoted.single.argument punctuation.definition.quote.begin
+        '8':
+          name: string.quoted.single.argument entity.name.tag.config
+        '9':
+          name: string.quoted.single.argument punctuation.definition.quote.end
+      contentName: meta.group.args
+      patterns:
+      - include: "#comment"
+      - include: "#single_quoted_flag"
+      - include: "#double_quoted_flag"
+      - include: "#spaced_flag"
+      - include: "#flag"
+      - include: "#short_flag"
+      - include: "#target"
+      - include: "#line_continuation"
+      - match: "\\s+(?!$)"
+        name: punctuation.separator.space
+      - match: "\\S+"
+        name: invalid.flag

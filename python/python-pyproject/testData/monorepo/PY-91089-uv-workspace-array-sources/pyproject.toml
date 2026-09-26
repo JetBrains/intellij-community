@@ -1,0 +1,19 @@
+[project]
+name = "orgwiki"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "orgwiki-core",
+    "orgwiki-test",
+]
+
+[tool.uv.workspace]
+members = ["orgwiki-core", "orgwiki-test"]
+
+# PY-91089: `tool.uv.sources` is written as an array of tables (`[[...]]`) instead of a
+# table (`[...]`). This is a common double-bracket typo; uv ignores non-member files so
+# `uv lock`/`uv sync` still succeed, but the IDE must not let it abort member discovery.
+[[tool.uv.sources]]
+orgwiki-core = { workspace = true }
+orgwiki-test = { workspace = true }

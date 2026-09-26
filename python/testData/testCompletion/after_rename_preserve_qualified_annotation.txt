@@ -1,0 +1,11 @@
+import types
+import pytest
+
+
+@pytest.fixture()
+def abc():
+    return types.SimpleNamespace(get=lambda: None)
+
+
+def test(abc: types.SimpleNamespace):
+    assert True

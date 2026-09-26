@@ -1,0 +1,15 @@
+Original text:
+---------------
+try:
+    print("try")
+finally:
+    print("finally")
+---------------
+Subtree: Language: Python
+---------------
+try:
+    print("try")
+finally:
+    <reparse>print("finally")
+    print("cleanup")</reparse>
+---------------

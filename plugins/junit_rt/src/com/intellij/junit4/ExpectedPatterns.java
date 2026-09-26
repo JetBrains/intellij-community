@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -22,26 +8,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ExpectedPatterns extends AbstractExpectedPatterns {
-  private static final List PATTERNS = new ArrayList();
+public final class ExpectedPatterns extends AbstractExpectedPatterns {
+  private static final List<Pattern> PATTERNS = new ArrayList<>();
 
-  private static final Pattern ASSERT_EQUALS_PATTERN = Pattern.compile("expected:<(.*)> but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-  private static final Pattern ASSERT_EQUALS_CHAINED_PATTERN = Pattern.compile("but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-  
   private static final String[] PATTERN_STRINGS = new String[]{
     "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
-    "\nexpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
+    "\nexpected: is \"(.*)\"\n\\s*but:\\s+was \"(.*)\"",
     "\nexpected: (.*)\n\\s*got: (.*)",
     "expected same:<(.*)> was not:<(.*)>",
     "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "expected: (.*)\\s*but: was (.*)",
-    "expected: (.*)\\s*but was: (.*)",
-    "expecting:\\s*<(.*)> to be equal to:\\s*<(.*)>\\s*but was not"
+    "expected: (.*)\n\\s*but: was (.*)",
+    "expected: (.*)\\s+but was: (.*)",
+    "expecting:\\s+<(.*)> to be equal to:\\s+<(.*)>\\s+but was not"
   };
-
-  private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
-  private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = "junit.framework.ComparisonFailure";
-  private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
 
   static {
     registerPatterns(PATTERN_STRINGS, PATTERNS);
@@ -65,44 +44,14 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     }
 
     final String message = assertion.getMessage();
-    if (message != null  && acceptedByThreshold(message.length())) {
-      try {
-        ComparisonFailureData assertEqualsNotification = createExceptionNotification(message, ASSERT_EQUALS_PATTERN);
-        if (assertEqualsNotification != null) {
-          return ASSERT_EQUALS_CHAINED_PATTERN.matcher(assertEqualsNotification.getExpected()).find() ? null : assertEqualsNotification;
-        }
-        return createExceptionNotification(message);
-      }
-      catch (Throwable ignored) {}
+    if (message != null) {
+      return createExceptionNotification(message);
     }
     return null;
   }
 
   private static boolean isComparisonFailure(Throwable throwable) {
     if (throwable == null) return false;
-    return isComparisonFailure(throwable.getClass());
-  }
-
-  private static boolean isComparisonFailure(Class aClass) {
-    if (aClass == null) return false;
-    final String throwableClassName = aClass.getName();
-    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME)) return true;
-    return isComparisonFailure(aClass.getSuperclass());
-  }
-
-  
-  private static boolean acceptedByThreshold(int messageLength) {
-    int threshold = 10000;
-    try {
-      final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
-      if (property != null) {
-        try {
-          threshold = Integer.parseInt(property);
-        }
-        catch (NumberFormatException ignore) {}
-      }
-    }
-    catch (SecurityException ignored) {}
-    return messageLength < threshold;
+    return ComparisonFailureData.isComparisonFailure(throwable.getClass());
   }
 }

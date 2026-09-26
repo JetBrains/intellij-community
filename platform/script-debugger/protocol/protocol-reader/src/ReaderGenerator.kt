@@ -1,11 +1,10 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
-import gnu.trove.THashMap
 import java.nio.file.Paths
-import java.util.*
 
 class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: List<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
-  val basePackagesMap: List<Map<Class<*>, String>> = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
+  val basePackagesMap: List<Map<Class<*>, String>> = if (basePackagesMap == null) listOf() else listOf(basePackagesMap)
 
   internal val typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
   internal val root = ReaderRoot(readerRootClass, typeToTypeHandler)
@@ -63,7 +62,7 @@ private class StringParam {
 fun buildParserMap(configuration: GenerateConfiguration<*>): Map<Class<*>, String> {
   val fileScope = generate(configuration, StringBuilder())
 
-  val typeToImplClassName = THashMap<Class<*>, String>()
+  val typeToImplClassName = HashMap<Class<*>, String>()
   for (typeWriter in configuration.typeToTypeHandler.values) {
     typeToImplClassName.put(typeWriter!!.typeClass, "${configuration.packageName}.${configuration.className}.${fileScope.getTypeImplShortName(typeWriter)}")
   }

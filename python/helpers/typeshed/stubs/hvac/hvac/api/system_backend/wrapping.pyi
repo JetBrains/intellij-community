@@ -1,0 +1,6 @@
+from hvac.api.system_backend.system_backend_mixin import SystemBackendMixin
+from requests._types import JsonType
+
+class Wrapping(SystemBackendMixin):
+    def unwrap(self, token=None): ...
+    def wrap(self, payload: JsonType = None, ttl: int = 60): ...

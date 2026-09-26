@@ -1,0 +1,107 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.debugger.impl.frontend
+
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.frontend.breakpoints.CommonBreakpointGutterIconRenderer
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import javax.swing.Icon
+
+internal class FrontendXLightLineBreakpoint(
+  override val project: Project,
+  parentCs: CoroutineScope,
+  override val type: XLineBreakpointTypeProxy,
+  private val installationInfo: XLineBreakpointInstallationInfo,
+  private val breakpointManager: FrontendXBreakpointManager,
+) : FrontendXLineBreakpointVisualizable {
+  private val cs = parentCs.childScope("FrontendXLightLineBreakpoint")
+
+  override val visualRepresentation = XBreakpointVisualRepresentation(cs, this)
+
+  init {
+    // TODO IJPL-185322: let's add loading icon if light breakpoint is alive for more than ~300ms
+    cs.launch(Dispatchers.EDT) {
+      breakpointManager.getLineBreakpointVisualizationManager().breakpointChanged(this@FrontendXLightLineBreakpoint)
+    }
+  }
+
+  suspend fun awaitDispose() {
+    cs.coroutineContext.job.join()
+  }
+
+  fun dispose() {
+    cs.cancel()
+  }
+
+  override fun isDisposed(): Boolean {
+    return !cs.isActive
+  }
+
+  override fun getFile(): VirtualFile? {
+    return installationInfo.position.file
+  }
+
+  // TODO IJPL-185322: line might be changed, when document is modified.
+  //  Should we support it?
+  override fun getLine(): Int {
+    return installationInfo.position.line
+  }
+
+  override fun getPlacement(): XLineBreakpointVerticalPlacement {
+    return installationInfo.placement
+  }
+
+  override fun getHighlightRange(): XLineBreakpointHighlighterRange {
+    return XLineBreakpointHighlighterRange.Available(null)
+  }
+
+  override fun isEnabled(): Boolean {
+    return true
+  }
+
+  override fun updateIcon() {
+    // Do nothing for light breakpoint
+  }
+
+  override fun getGutterIconRenderer(): GutterIconRenderer {
+    return FrontendXLightBreakpointGutterIconRenderer(this)
+  }
+
+  private class FrontendXLightBreakpointGutterIconRenderer(
+    private val lightBreakpoint: FrontendXLightLineBreakpoint,
+  ) : CommonBreakpointGutterIconRenderer() {
+    override fun getVerticalAlignment(): VerticalAlignment {
+      return if (lightBreakpoint.getPlacement() == XLineBreakpointVerticalPlacement.INTER_LINE) {
+        VerticalAlignment.BETWEEN_LINES
+      }
+      else {
+        VerticalAlignment.ON_LINE
+      }
+    }
+
+    override fun equals(obj: Any?): Boolean {
+      return obj is FrontendXLightBreakpointGutterIconRenderer
+             && lightBreakpoint == obj.lightBreakpoint
+    }
+
+    override fun hashCode(): Int {
+      return lightBreakpoint.hashCode()
+    }
+
+    override fun getIcon(): Icon {
+      return lightBreakpoint.type.enabledIcon
+    }
+  }
+}

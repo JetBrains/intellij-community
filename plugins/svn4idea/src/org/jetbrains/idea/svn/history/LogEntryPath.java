@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +6,11 @@ import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.XmlValue;
 
 public class LogEntryPath extends BaseNodeDescription {
 
@@ -53,11 +43,6 @@ public class LogEntryPath extends BaseNodeDescription {
     return myType;
   }
 
-  @NotNull
-  public NodeKind getKind() {
-    return myKind;
-  }
-
   @XmlAccessorType(XmlAccessType.NONE)
   // type explicitly specified not to conflict with LogEntry.Builder
   @XmlType(name = "logentrypath")
@@ -84,38 +69,32 @@ public class LogEntryPath extends BaseNodeDescription {
       return path;
     }
 
-    @NotNull
-    public Builder setKind(@NotNull NodeKind kind) {
+    public @NotNull Builder setKind(@NotNull NodeKind kind) {
       this.kind = kind;
       return this;
     }
 
-    @NotNull
-    public Builder setType(char type) {
+    public @NotNull Builder setType(char type) {
       this.action = String.valueOf(type);
       return this;
     }
 
-    @NotNull
-    public Builder setCopyFromPath(String copyFromPath) {
+    public @NotNull Builder setCopyFromPath(String copyFromPath) {
       this.copyFromPath = copyFromPath;
       return this;
     }
 
-    @NotNull
-    public Builder setCopyFromRevision(long copyFromRevision) {
+    public @NotNull Builder setCopyFromRevision(long copyFromRevision) {
       this.copyFromRevision = copyFromRevision;
       return this;
     }
 
-    @NotNull
-    public Builder setPath(String path) {
+    public @NotNull Builder setPath(String path) {
       this.path = path;
       return this;
     }
 
-    @NotNull
-    public LogEntryPath build() {
+    public @NotNull LogEntryPath build() {
       return new LogEntryPath(this);
     }
   }

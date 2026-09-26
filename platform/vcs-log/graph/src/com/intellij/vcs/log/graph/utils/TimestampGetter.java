@@ -15,12 +15,12 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author erokhins
  */
+@ApiStatus.Internal
 public interface TimestampGetter {
-
-  int size();
-
   long getTimestamp(int index);
 }

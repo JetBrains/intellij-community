@@ -1,42 +1,35 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * @author anna
- * @since 13-Mar-2008
  */
-public class PushDownTest extends LightRefactoringTestCase {
+public class PushDownTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/pushDown/";
 
   public void testTypeParameter() { doTest(); }
@@ -66,6 +59,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testFunctionalExpression() { doTest(true);}
   public void testFunctionalInterface() { doTest(true);}
   public void testFunctionalExpressionDefaultMethod() { doTest();}
+  public void testInlineSuperMethodCall() { BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());}
   public void testRenameTypeParametersToAvoidHiding() { doTest();}
   public void testNoRenameTypeParametersToAvoidHidingForStatic() { doTest();}
 
@@ -79,9 +73,13 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testDefaultMethodToClassKeepAbstract() { doTestImplements(true); }
   public void testInterfaceStaticMethodToInterface() { doTest(); }
   public void testInterfaceStaticMethodToClass() { doTest(); }
+  public void testInterfaceInnerRecordToClass() { doTest(); }
+  public void testInterfaceInnerClassToClass() { doTest(); }
   public void testThisSuperExpressions() {doTest();}
   public void testMethodsInheritedFromSuper() {doTest();}
+  public void testMethodsInheritedFromSuper1() {doTest();}
   public void testCopyAnnotationsFromSuper() {doTest();}
+  public void testKeepBodyFromInterfaceMethod() {doTest();}
 
   public void testInterfaceMethodToClass() { doTest();}
 
@@ -118,31 +116,24 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   public void testClassShouldBeAbstractConflict() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(), Collections.singletonList("Non abstract class <b><code>B</code></b> will miss implementation of method <b><code>foo()</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Non abstract class <b><code>B</code></b> will miss implementation of method <b><code>foo()</code></b>")));
   }
 
   public void testClassInheritsUnrelatedDefaultsConflict() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>I</code></b> and interface <b><code>A</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>A</code></b> and interface <b><code>I</code></b>")));
   }
 
   public void testStaticToLocal() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(), Collections.singletonList("Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
-    });
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(conflicts -> assertSameElements(conflicts.values(),
+                                           Collections.singletonList("Static method <b><code>foo()</code></b> can't be pushed to non-static local class <b><code>FooExt</code></b>")));
   }
 
   public void testStaticToLocalWithReferenceUpdate() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(),
-                         Arrays.asList("Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
-                                       "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
-                                       "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt1</code></b>",
-                                       "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(new HashSet<>(conflicts.values()),
+                                           ContainerUtil.newHashSet(
+                                             "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                             "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down")));
   }
 
   private void doTest() {
@@ -157,7 +148,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     });
   }
 
-  private void doTest(final Consumer<MultiMap<PsiElement, String>> checkConflicts) {
+  private void doTest(final Consumer<? super MultiMap<PsiElement, String>> checkConflicts) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
@@ -189,8 +180,8 @@ public class PushDownTest extends LightRefactoringTestCase {
     memberInfo.setChecked(true);
     membersToMove.add(memberInfo);
 
-    new PushDownProcessor<MemberInfo, PsiMember, PsiClass>(currentClass, membersToMove,
-                          new DocCommentPolicy(DocCommentPolicy.ASIS)) {
+    new PushDownProcessor<>(currentClass, membersToMove,
+                            new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         checkConflicts.accept(conflicts);
@@ -218,12 +209,12 @@ public class PushDownTest extends LightRefactoringTestCase {
     for (MemberInfo member : members) {
       member.setChecked(true);
       if (toAbstract) {
-        member.setToAbstract(toAbstract);
+        member.setToAbstract(true);
       }
     }
 
-    new PushDownProcessor<MemberInfo, PsiMember, PsiClass>(currentClass, members,
-                          new DocCommentPolicy(DocCommentPolicy.ASIS)) {
+    new PushDownProcessor<>(currentClass, members,
+                            new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         if (failure == conflicts.isEmpty()) {

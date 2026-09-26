@@ -1,29 +1,36 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UElement;
 
 import java.util.Collection;
 
 public interface RefJavaElement extends RefElement {
-   /**
+
+  @Override
+  @Deprecated
+  default PsiElement getElement() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default PsiElement getPsiElement() {
+    return getElement();
+  }
+
+  /**
+   * Returns the UAST element corresponding to the node.
+   *
+   * @return the UAST element.
+   */
+  default UElement getUastElement() {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Returns the collection of references used in this element.
    * @return the collection of used types
    */
@@ -46,18 +53,18 @@ public interface RefJavaElement extends RefElement {
   boolean isStatic();
 
   /**
-   * Checks if the element directly references any elements marked as deprecated.
-   *
-   * @return true if the element references any deprecated elements, false otherwise.
-   */
-  boolean isUsesDeprecatedApi();
-
-  /**
    * Checks if the element is, or belongs to, a synthetic class or method created for a JSP page.
    *
    * @return true if the element is a synthetic JSP element, false otherwise.
+   * @deprecated Use {@link #isSynthetic()}.
    */
+  @Deprecated
   boolean isSyntheticJSP();
+
+  /** Returns whether the element belongs to a synthetic class or method. */
+  default boolean isSynthetic() {
+    return isSyntheticJSP();
+  }
 
   /**
    * Returns the access modifier for the element, as one of the keywords from the

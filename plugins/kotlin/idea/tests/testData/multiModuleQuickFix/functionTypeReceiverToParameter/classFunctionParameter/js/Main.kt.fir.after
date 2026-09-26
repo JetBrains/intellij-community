@@ -1,0 +1,7 @@
+// "Convert 'String.() -> Unit' to '(String) -> Unit'" "true"
+
+external class C {
+    fun boo(p: (St<selection><caret></selection>ring) -> Unit): String.() -> Unit
+}
+
+// ERROR: Function types with receiver are prohibited in external declarations

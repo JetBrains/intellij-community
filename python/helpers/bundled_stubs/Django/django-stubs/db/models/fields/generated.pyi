@@ -1,0 +1,55 @@
+from collections.abc import Iterable
+from typing import Any, ClassVar, Literal
+
+from django.core.validators import _ValidatorCallable
+from django.db import models
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.models.expressions import Expression
+from django.db.models.fields import _ErrorMessagesMapping
+from django.db.models.sql import Query
+from django.utils.choices import _ChoicesInput
+from django.utils.datastructures import DictWrapper
+from django.utils.functional import _StrOrPromise, cached_property
+from typing_extensions import override
+
+class GeneratedField(models.Field[Any, Any]):
+    generated: ClassVar[Literal[True]]
+    db_returning: Literal[True]
+    _query: Query | None
+    output_field: models.Field[Any, Any] | None
+
+    def __init__(
+        self,
+        *,
+        expression: Expression,
+        output_field: models.Field[Any, Any],
+        db_persist: bool,
+        verbose_name: _StrOrPromise | None = ...,
+        name: str | None = ...,
+        primary_key: bool = ...,
+        unique: bool = ...,
+        blank: bool = ...,
+        null: bool = ...,
+        default: Any = ...,
+        editable: bool = ...,
+        auto_created: bool = ...,
+        serialize: bool = ...,
+        unique_for_date: str | None = ...,
+        unique_for_month: str | None = ...,
+        unique_for_year: str | None = ...,
+        choices: _ChoicesInput | None = ...,
+        help_text: _StrOrPromise = ...,
+        db_column: str | None = ...,
+        db_comment: str | None = ...,
+        db_tablespace: str | None = ...,
+        validators: Iterable[_ValidatorCallable] = ...,
+        error_messages: _ErrorMessagesMapping | None = ...,
+        **kwargs: Any,
+    ) -> None: ...
+    def generated_sql(self, connection: BaseDatabaseWrapper) -> tuple[str, Any]: ...
+    @cached_property
+    def referenced_fields(self) -> frozenset[models.Field[Any, Any]]: ...
+    @override
+    def db_type_parameters(self, connection: BaseDatabaseWrapper) -> DictWrapper[Any]: ...
+
+__all__ = ["GeneratedField"]

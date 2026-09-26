@@ -19,7 +19,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 public class DottedBorder implements Border {
   private final int myTop, myBottom, myLeft, myRight;
@@ -37,16 +40,19 @@ public class DottedBorder implements Border {
     this(JBUI.insets(1), color);
   }
 
+  @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     g.setColor(myColor);
     UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
   }
 
+  @Override
   public Insets getBorderInsets(Component c) {
     //return a copy, otherwise someone could change our insets from outside
     return new Insets(myTop, myLeft, myBottom, myRight);
   }
 
+  @Override
   public boolean isBorderOpaque() {
     return true;
   }

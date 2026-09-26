@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.OutputChecker;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -28,85 +16,123 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class ExecutionTestCase extends IdeaTestCase {
+/**
+ * Provides a framework for compiling Java code, for running or debugging it, and for capturing the output.
+ * <p>
+ * The output is recorded using {@link #print(String, Key)} and {@link #println(String, Key)},
+ * and at the end of the test, it can be validated against prerecorded output files, as described in {@link OutputChecker}.
+ * This validation needs to be triggered explicitly using {@link #getChecker()} and {@link OutputChecker#checkValid(Sdk)};
+ * by default, the output is discarded.
+ */
+public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
-  private int myTimeout;
-  private static File ourOutputRoot;
-  private File myModuleOutputDir;
-  private CompilerTester myCompilerTester;
+  private int myTimeoutMillis = 300_000;
+  private static Path ourOutputRoot;
+  private Path myModuleOutputDir;
 
-  public ExecutionTestCase() {
-    setTimeout(300000); //30 seconds
-  }
+  protected static final String SOURCES_DIRECTORY_NAME = "src";
 
-  public void setTimeout(int timeout) {
-    myTimeout = timeout;
+  public final void setTimeout(int timeoutMillis) {
+    myTimeoutMillis = timeoutMillis;
   }
 
   protected abstract OutputChecker initOutputChecker();
 
   protected abstract String getTestAppPath();
 
+  protected boolean areLogErrorsIgnored() {
+    return false;
+  }
+
   @Override
   protected void setUp() throws Exception {
+    setupTempDir();
+
     if (ourOutputRoot == null) {
-      ourOutputRoot = FileUtil.createTempDirectory("ExecutionTestCase", null, true);
+      ourOutputRoot = getTempDir().newPath();
     }
-    myModuleOutputDir = new File(ourOutputRoot, PathUtil.getFileName(getTestAppPath()));
+
     myChecker = initOutputChecker();
     EdtTestUtil.runInEdtAndWait(() -> super.setUp());
-    if (!myModuleOutputDir.exists()) {
-      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
-      assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
-      vDir.getChildren();//we need this to load children to VFS to fire VFileCreatedEvent for the output directory
+    myModuleOutputDir = getModuleOutputDir();
+    if (!Files.exists(myModuleOutputDir)) {
+      Files.createDirectories(myModuleOutputDir);
+      if (FileUtil.isAncestor(ourOutputRoot.toFile(), myModuleOutputDir.toFile(), false)) {
+        VirtualFile vDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(ourOutputRoot);
+        assertNotNull(ourOutputRoot.toString(), vDir);
+      }
 
-      myCompilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
-      List<CompilerMessage> messages = myCompilerTester.rebuild();
-      for (CompilerMessage message : messages) {
-        if (message.getCategory() == CompilerMessageCategory.ERROR) {
-          FileUtil.delete(myModuleOutputDir);
-          fail("Compilation failed: " + message);
-        }
+      compileProject();
+    }
+  }
+
+  protected void compileProject() throws Exception {
+    // JDK added by compilerTester is used after compilation, so, we don't dispose compilerTester after rebuild
+    CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()),
+                                                       getTestRootDisposable(), overrideCompileJdkAndOutput());
+    List<CompilerMessage> messages = compilerTester.rebuild();
+    for (CompilerMessage message : messages) {
+      if (message.getCategory() == CompilerMessageCategory.ERROR) {
+        FileUtil.delete(myModuleOutputDir);
+        fail("Compilation failed: " + message + " " + message.getVirtualFile());
       }
     }
+  }
+
+  protected @NotNull Path getModuleOutputDir() {
+    return ourOutputRoot.resolve(PathUtil.getFileName(getTestAppPath()));
+  }
+
+  protected boolean overrideCompileJdkAndOutput() {
+    return true;
   }
 
   @Override
   protected void setUpModule() {
     super.setUpModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final String modulePath = getTestAppPath();
-      final String srcPath = modulePath + File.separator + "src";
-      VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
-      VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
+      setupModuleRoots();
 
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-      PsiTestUtil.removeAllRoots(myModule, rootManager.getSdk());
-      PsiTestUtil.addContentRoot(myModule, moduleDir);
-      PsiTestUtil.addSourceRoot(myModule, srcDir);
       IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
-      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(myModuleOutputDir.getAbsolutePath())), false);
+
+      Path outputDir = getModuleOutputDir();
+      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(outputDir.toString()), false);
     });
   }
 
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
+  /** Adds the message to a buffer that can later be validated using {@link #getChecker()}. */
+  protected final void systemPrintln(@NotNull @NonNls String msg) {
+    println(msg, ProcessOutputType.SYSTEM);
   }
 
   public void println(@NonNls String s, Key outputType) {
@@ -117,31 +143,26 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     myChecker.print(s, outputType);
   }
 
+  @SuppressWarnings("CallToPrintStackTrace")
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
+    int errorLoggingHappened = TestLoggerFactory.getRethrowErrorNumber();
+    if (errorLoggingHappened != 0 && !areLogErrorsIgnored()) {
+      assertEquals("No ignored errors should happen during execution tests", 0, errorLoggingHappened);
+    }
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     myChecker.init(getTestName(true));
-    super.runTest();
+    super.runTestRunnable(testRunnable);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    if (myCompilerTester != null) {
-      myCompilerTester.tearDown();
-      myCompilerTester = null;
-    }
     myChecker = null;
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
-    //myChecker.checkValid(getTestProjectJdk());
-    //probably some thread is destroyed right now because of log exception
-    //wait a little bit
-    synchronized (this) {
-      wait(300);
-    }
   }
 
   protected JavaParameters createJavaParameters(String mainClass) {
@@ -151,6 +172,23 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     parameters.setJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
     parameters.setWorkingDirectory(getTestAppPath());
     return parameters;
+  }
+
+  @RequiresWriteLock
+  protected void setupModuleRoots() {
+    setupModuleRoots(myModule);
+  }
+
+  protected final void setupModuleRoots(Module module) {
+    final String modulePath = getTestAppPath();
+    final String srcPath = getSrcPath(modulePath);
+    VirtualFile moduleDir = StandardFileSystems.local().findFileByPath(modulePath.replace(File.separatorChar, '/'));
+    VirtualFile srcDir = StandardFileSystems.local().findFileByPath(srcPath.replace(File.separatorChar, '/'));
+
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    PsiTestUtil.removeAllRoots(module, rootManager.getSdk());
+    PsiTestUtil.addContentRoot(module, moduleDir);
+    PsiTestUtil.addSourceRoot(module, srcDir);
   }
 
   protected OutputChecker getChecker() {
@@ -166,49 +204,41 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   protected String getAppOutputPath() {
-    return myModuleOutputDir.getAbsolutePath();
+    return getModuleOutputDir().toString();
   }
 
-  public void waitProcess(@NotNull final ProcessHandler processHandler) {
+  protected @NotNull String getSrcPath(String modulePath) {
+    return modulePath + File.separator + SOURCES_DIRECTORY_NAME;
+  }
+
+  public void waitProcess(@NotNull ProcessHandler processHandler) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
 
-    final boolean[] isRunning = {true};
+    AtomicBoolean isRunning = new AtomicBoolean(true);
     alarm.addRequest(() -> {
-      boolean b;
-      synchronized (isRunning) {
-        b = isRunning[0];
-      }
-      if (b) {
+      if (isRunning.get()) {
         processHandler.destroyProcess();
-        LOG.error("process was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
+        LOG.error("process was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
-    }, myTimeout);
+    }, myTimeoutMillis);
     processHandler.waitFor();
-    synchronized (isRunning) {
-      isRunning[0] = false;
-    }
+    isRunning.set(false);
     Disposer.dispose(alarm);
   }
 
   public void waitFor(Runnable r) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    final Thread thread = Thread.currentThread();
-
-    final boolean[] isRunning = {true};
+    Thread thread = Thread.currentThread();
+    AtomicBoolean isRunning = new AtomicBoolean(true);
     alarm.addRequest(() -> {
-      boolean b;
-      synchronized (isRunning) {
-        b = isRunning[0];
-      }
-      if (b) {
+      if (isRunning.get()) {
         thread.interrupt();
-        LOG.error("test was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
+        LOG.error("test was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
-    }, myTimeout);
+    }, myTimeoutMillis);
     r.run();
-    synchronized (isRunning) {
-      isRunning[0] = false;
-    }
+    isRunning.set(false);
     Thread.interrupted();
+    Disposer.dispose(alarm);
   }
 }

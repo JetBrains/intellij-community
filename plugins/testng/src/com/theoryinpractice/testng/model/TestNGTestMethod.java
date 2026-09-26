@@ -21,10 +21,19 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -42,10 +51,10 @@ public class TestNGTestMethod extends TestNGTestObject {
       .findPsiClass(PsiManager.getInstance(myConfig.getProject()), data.getMainClassName().replace('/', '.'), null, true,
                     getSearchScope()));
     if (psiClass == null) {
-      throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
+      throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.class", data.getMainClassName()));
     }
     if (null == ReadAction.compute(() -> psiClass.getQualifiedName())) {
-      throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
+      throw new CantRunException(TestngBundle.message("dialog.message.cannot.test.anonymous.or.local.class", data.getMainClassName()));
     }
     collectTestMethods(classes, psiClass, data.getMethodName(), getSearchScope());
   }
@@ -66,19 +75,26 @@ public class TestNGTestMethod extends TestNGTestObject {
     final TestData data = myConfig.getPersistantData();
     final SourceScope scope = data.getScope().getSourceScope(myConfig);
     if (scope == null) {
-      throw new RuntimeConfigurationException("Invalid scope specified");
+      throw new RuntimeConfigurationException(TestngBundle.message("testng.dialog.message.invalid.scope.specified.exception"));
     }
-    PsiClass psiClass = JavaPsiFacade.getInstance(myConfig.getProject()).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
-    if (psiClass == null) throw new RuntimeConfigurationException("Class '" + data.getMainClassName() + "' not found");
-    PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
-    if (methods.length == 0) {
-      throw new RuntimeConfigurationException("Method '" + data.getMethodName() + "' not found");
-    }
-    for (PsiMethod method : methods) {
-      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-        throw new RuntimeConfigurationException("Non public method '" + data.getMethodName() + "'specified");
-      }
-    }
+    FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY,
+                                                () -> {
+                                                  PsiClass psiClass = JavaPsiFacade.getInstance(myConfig.getProject()).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
+                                                  if (psiClass == null) throw new RuntimeConfigurationException(TestngBundle
+                                                      .message("testng.dialog.message.class.not.found.exception", data.getMainClassName()));
+                                                  PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
+                                                  if (methods.length == 0) {
+                                                    throw new RuntimeConfigurationException(TestngBundle
+                                                        .message("testng.dialog.message.method.not.found.exception", data.getMethodName()));
+                                                  }
+                                                  for (PsiMethod method : methods) {
+                                                    if (!TestNGUtil.hasTest(method)) {
+                                                      throw new RuntimeConfigurationException(TestngBundle.message("testng.dialog.message.method.doesn.t.contain.test.exception",
+                                                                             data.getMethodName()));
+                                                    }
+                                                  }
+                                                  return true;
+                                                });
   }
 
   @Override

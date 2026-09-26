@@ -1,70 +1,131 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 
-public class UnusedImportsTest extends DaemonAnalyzerTestCase {
-  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports";
+public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports/";
+
+  @Override
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new UnusedImportInspection());
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.enableInspections(new UnusedDeclarationInspection());
   }
 
-  public void test1() throws Exception { doTest(); }
-  public void test2() throws Exception { doTest(); }
+  public void test1() { doTest(); }
+  public void test2() { doTest(); }
 
-  public void testWithHighlightingOff() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+  public void testWithHighlightingOff() {
+    myFixture.configureByFile(getTestName(false) + ".java");
     final PsiFile file = getFile();
-    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myProject);
+    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(getProject());
     final FileHighlightingSetting oldSetting = settingsPerFile.getHighlightingSettingForRoot(file);
     try {
       settingsPerFile.setHighlightingSettingForRoot(file, FileHighlightingSetting.NONE);
-      doDoTest(true, false, false);
+      myFixture.checkHighlighting(true, false, false);
     }
     finally {
       settingsPerFile.setHighlightingSettingForRoot(file, oldSetting);
     }
   }
 
-  public void testUnclosed() throws Exception { doTest(); }
+  public void testUnclosed() { doTest(); }
 
-  public void testQualified() throws Exception { doTest(); }
+  public void testQualified() { doTest(); }
 
-  public void testInnersOnDemand1() throws Exception { doTest(); }
-  public void testInnersOnDemand2() throws Exception { doTest(); }
-  public void testStaticImportingInner() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", BASE_PATH, true, false);
+  public void testInnersOnDemand1() { doTest(); }
+  public void testInnersOnDemand2() { doTest(); }
+  public void testStaticImportingInner() {
+    myFixture.addClass("""
+                         package package1;
+                         /** @noinspection ALL*/ public interface c
+                         {
+                             public interface MyInner
+                             {
+                                 int a = 1;
+                                 int b = 2;
+                             }
+                         }""");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testImportFromSamePackage1() throws Exception {
-    doTest(BASE_PATH+"/package1/a.java", BASE_PATH,true,false);
+  public void testImportFromSamePackage1() {
+    myFixture.addClass("""
+                         package package1;
+                         import package1.*;class b {
+                          a a = null;
+                         }""");
+    myFixture.configureByFile("/package1/a.java");
+    myFixture.checkHighlighting(true,false, false);
   }
-  public void testImportFromSamePackage2() throws Exception {
-    doTest(BASE_PATH+"/package1/b.java", BASE_PATH,true,false);
+  public void testImportFromSamePackage2() {
+    myFixture.addClass("""
+                         package package1;
+                         import package1.b;
+                         class a {
+                          b b = null;
+                         }""");
+    myFixture.configureByFile("/package1/b.java");
+    myFixture.checkHighlighting(true,false, false);
   }
 
-  protected void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+  public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
+    myFixture.addClass("""
+                         package a; public class A {
+                          public static void foo(Object o) {}
+                          public static void foo(String s) {}
+                         }""");
+    doTest();
+  }
+
+  public void testUnresolvedReferenceAsVariableAndClass() {
+    doTest();
+  }
+
+  public void testImportsForUsesAndProvidesInModuleInfo() {
+    myFixture.addClass("""
+                         package pkg.main.api;
+                         public interface Api {}
+                         """);
+    myFixture.addClass("""
+                         package pkg.main.impl;
+                         import module my.module;
+                         public class Impl implements Api {}
+                         """);
+
+    @Language("JAVA")
+    String moduleInfo = """
+      import pkg.main.api.Api;
+      import pkg.main.impl.Impl;
+      
+      module my.module {
+         exports pkg.main.api;
+      
+         uses Api;
+         provides Api with Impl;
+      }
+      """;
+    myFixture.addFileToProject("module-info.java", moduleInfo);
+    myFixture.configureByFile("module-info.java");
+    myFixture.checkHighlighting(true,false, false);
+  }
+
+  private void doTest() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting(true, false, false);
   }
 }

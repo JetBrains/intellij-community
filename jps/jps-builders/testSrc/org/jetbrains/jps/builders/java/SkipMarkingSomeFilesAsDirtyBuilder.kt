@@ -23,4 +23,6 @@ class SkipMarkingSomeFilesAsDirtyBuilder : ModuleLevelBuilder(BuilderCategory.SO
     JavaBuilderUtil.registerFilterToSkipMarkingAffectedFileDirty(context, { it.nameWithoutExtension.endsWith(DO_NOT_MARK_DIRTY_SUFFIX)})
     return ExitCode.OK
   }
+
+  override fun getCompilableFileExtensions(): List<String> = emptyList()
 }

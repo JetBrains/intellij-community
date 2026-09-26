@@ -1,0 +1,3 @@
+package lib
+
+typealias Name = Int

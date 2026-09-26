@@ -1,0 +1,2 @@
+Could not resolve <unknown coordinates> for :consumer:linuxX64Main
+Could not resolve <unknown coordinates> for :consumer:linuxX64Test

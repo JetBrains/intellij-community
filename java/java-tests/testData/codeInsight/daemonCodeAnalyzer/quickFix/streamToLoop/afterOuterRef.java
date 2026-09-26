@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.ArrayList;
 
@@ -8,7 +8,7 @@ public class Test extends ArrayList<String> {
       @Override
       public void run() {
           int sum = 0;
-          for (String s: Test.this) {
+          for (String s : Test.this) {
               int length = s.length();
               sum += length;
           }

@@ -2,12 +2,12 @@
 import sys
 import time
 
-
-
+from teamcity.output import TeamCityMessagesPrinter
 
 if sys.version_info < (3, ):
     # Python 2
-    text_type = unicode  # flake8: noqa
+    # flake8: noqa
+    text_type = unicode
 else:
     # Python 3
     text_type = str
@@ -19,18 +19,16 @@ _strftime = time.strftime
 
 _quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]'}
 
+
 def escape_value(value):
     return "".join(_quote.get(x, x) for x in value)
 
 
 class TeamcityServiceMessages(object):
-    def __init__(self, output=None, now=_time, encoding='auto'):
-        if output is None:
-            output = sys.stdout
-        if sys.version_info < (3, ) or not hasattr(output, 'buffer'):
-            self.output = output
-        else:
-            self.output = output.buffer
+    def __init__(self, output=None, now=_time, encoding='auto', output_handler=None):
+        if output_handler is None:
+            output_handler = TeamCityMessagesPrinter(output)
+        self.output_handler = output_handler
         self.now = now
 
         if encoding and encoding != 'auto':
@@ -45,7 +43,7 @@ class TeamcityServiceMessages(object):
 
     def encode(self, value):
         if self.encoding and isinstance(value, text_type):
-            value = value.encode(self.encoding)
+            value = value.encode(self.encoding, errors='backslashreplace')
         return value
 
     def decode(self, value):
@@ -77,16 +75,12 @@ class TeamcityServiceMessages(object):
 
         message += ("]\n")
 
-        # Python may buffer it for a long time, flushing helps to see real-time result
-        self.output.write(self.encode(message))
-        self.output.flush()
+        self.output_handler.send_message(self.encode(message))
 
     def _single_value_message(self, messageName, value):
         message = ("##teamcity[%s '%s']\n" % (messageName, self.escapeValue(value)))
 
-        # Python may buffer it for a long time, flushing helps to see real-time result
-        self.output.write(self.encode(message))
-        self.output.flush()
+        self.output_handler.send_message(self.encode(message))
 
     def blockOpened(self, name, flowId=None):
         self.message('blockOpened', name=name, flowId=flowId)
@@ -122,12 +116,12 @@ class TeamcityServiceMessages(object):
         import teamcity.context_managers as cm
         return cm.testSuite(self, name=name)
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, metainfo=None):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, metainfo=None, **properties):
         """
 
         :param metainfo: Used to pass any payload from test runner to Intellij. See IDEA-176950
         """
-        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId, metainfo=metainfo)
+        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId, metainfo=metainfo, **properties)
 
     def testFinished(self, testName, testDuration=None, flowId=None):
         if testDuration is not None:
@@ -148,6 +142,9 @@ class TeamcityServiceMessages(object):
 
     def testIgnored(self, testName, message='', flowId=None):
         self.message('testIgnored', name=testName, message=message, flowId=flowId)
+
+    def testStopped(self, testName, message='', flowId=None):
+        self.message('testIgnored', name=testName, message=message, flowId=flowId, stopped="true")
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         if not comparison_failure:
@@ -222,4 +219,3 @@ class TeamcityServiceMessages(object):
 
     def customMessage(self, text, status, errorDetails='', flowId=None):
         self.message('message', text=text, status=status, errorDetails=errorDetails, flowId=flowId)
-

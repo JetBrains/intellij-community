@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -31,17 +18,21 @@ import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.dnd.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 class DesignDropTargetListener implements DropTargetListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.DesignDropTargetListener");
+  private static final Logger LOG = Logger.getInstance(DesignDropTargetListener.class);
 
   private DraggedComponentList myDraggedComponentList;
   private ComponentDragObject myComponentDragObject;
@@ -51,33 +42,36 @@ class DesignDropTargetListener implements DropTargetListener {
   private final GridInsertProcessor myGridInsertProcessor;
   private boolean myUseDragDelta = false;
 
-  public DesignDropTargetListener(final GuiEditor editor) {
+  DesignDropTargetListener(final GuiEditor editor) {
     myEditor = editor;
     myGridInsertProcessor = new GridInsertProcessor(editor);
   }
 
+  @Override
   public void dragEnter(DropTargetDragEvent dtde) {
-    try {
-      DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      if (dcl != null) {
-        myDraggedComponentList = dcl;
-        myComponentDragObject = dcl;
-        processDragEnter(dcl, dtde.getLocation(), dtde.getDropAction());
-        dtde.acceptDrag(dtde.getDropAction());
-        myLastPoint = dtde.getLocation();
-      }
-      else {
-        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-        if (componentItem != null) {
-          myComponentDragObject = new ComponentItemDragObject(componentItem);
+    WriteIntentReadAction.run(() -> {
+      try {
+        DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+        if (dcl != null) {
+          myDraggedComponentList = dcl;
+          myComponentDragObject = dcl;
+          processDragEnter(dcl, dtde.getLocation(), dtde.getDropAction());
           dtde.acceptDrag(dtde.getDropAction());
           myLastPoint = dtde.getLocation();
         }
+        else {
+          ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+          if (componentItem != null) {
+            myComponentDragObject = new ComponentItemDragObject(componentItem);
+            dtde.acceptDrag(dtde.getDropAction());
+            myLastPoint = dtde.getLocation();
+          }
+        }
       }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private void processDragEnter(final DraggedComponentList draggedComponentList, final Point location, final int dropAction) {
@@ -130,6 +124,7 @@ class DesignDropTargetListener implements DropTargetListener {
     }
   }
 
+  @Override
   public void dragOver(DropTargetDragEvent dtde) {
     try {
       if (myComponentDragObject == null) {
@@ -170,6 +165,7 @@ class DesignDropTargetListener implements DropTargetListener {
     }
   }
 
+  @Override
   public void dropActionChanged(DropTargetDragEvent dtde) {
     DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
     if (dcl != null) {
@@ -177,6 +173,7 @@ class DesignDropTargetListener implements DropTargetListener {
     }
   }
 
+  @Override
   public void dragExit(DropTargetEvent dte) {
     try {
       ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
@@ -198,45 +195,46 @@ class DesignDropTargetListener implements DropTargetListener {
     }
   }
 
+  @Override
   public void drop(final DropTargetDropEvent dtde) {
-    try {
-      ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
-      if (componentTree != null) {
-        componentTree.setDropTargetComponent(null);
-      }
-
-
-      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      if (dcl != null) {
-        CommandProcessor.getInstance().executeCommand(myEditor.getProject(),
-                                                      () -> {
-                                                        if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
-                                                          myEditor.refreshAndSave(true);
-                                                        }
-                                                      }, UIDesignerBundle.message("command.drop.components"), null);
-      }
-      else {
-        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-        if (componentItem != null) {
-          myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
-          new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
-          ApplicationManager.getApplication().invokeLater(() -> {
-            PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
-            myEditor.getActiveDecorationLayer().removeFeedback();
-            myEditor.getLayeredPane().setCursor(null);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true);
-            });
-            myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
-          });
+    WriteIntentReadAction.run(() -> {
+      try {
+        ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
+        if (componentTree != null) {
+          componentTree.setDropTargetComponent(null);
         }
+
+
+        final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+        if (dcl != null) {
+          CommandProcessor.getInstance().executeCommand(myEditor.getProject(),
+                                                        () -> {
+                                                          if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
+                                                            myEditor.refreshAndSave(true);
+                                                          }
+                                                        }, UIDesignerBundle.message("command.drop.components"), null);
+        }
+        else {
+          ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+          if (componentItem != null) {
+            myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
+            new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
+              myEditor.getActiveDecorationLayer().removeFeedback();
+              myEditor.getLayeredPane().setCursor(null);
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true));
+              myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
+            });
+          }
+        }
+        myDraggedComponentsCopy = null;
+        myEditor.repaintLayeredPane();
       }
-      myDraggedComponentsCopy = null;
-      myEditor.repaintLayeredPane();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private boolean processDrop(final DraggedComponentList dcl, final Point dropPoint, final int dropAction) {

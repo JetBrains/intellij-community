@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -10,19 +11,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.NativeLibraryOrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderRootsEnumerator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
-import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class JavaParameters extends SimpleJavaParameters {
   private static final Logger LOG = Logger.getInstance(JavaParameters.class);
@@ -70,25 +75,25 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(module.getProject());
     configureEnumerator(OrderEnumerator.orderEntries(module).recursively(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(module).recursively());
-    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(module).recursively(), jdk);
+    configureJavaEnablePreviewProperty(module, jdk);
   }
 
-  private void configureJavaEnablePreviewProperty(OrderEnumerator orderEnumerator, Sdk jdk) {
-    ParametersList vmParameters = getVMParametersList();
-    if (vmParameters.hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY) || !JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11)) {
-      return;
+  private void configureJavaEnablePreviewProperty(Module module, Sdk jdk) {
+    if (needsJavaEnablePreviewProperty(jdk) && JavaExecutionUtil.compilesPreviewFeatures(module)) {
+      getVMParametersList().add(JAVA_ENABLE_PREVIEW_PROPERTY);
     }
-    orderEnumerator.forEachModule(module -> {
-      LanguageLevelModuleExtension moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
-      if (moduleExtension != null) {
-        LanguageLevel languageLevel = moduleExtension.getLanguageLevel();
-        if (languageLevel != null && languageLevel.isPreview()) {
-          vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
-          return false;
-        }
-      }
-      return true;
-    });
+  }
+
+  private void configureJavaEnablePreviewProperty(Project project, Sdk jdk) {
+    if (needsJavaEnablePreviewProperty(jdk) && JavaExecutionUtil.compilesPreviewFeatures(project)) {
+      getVMParametersList().add(JAVA_ENABLE_PREVIEW_PROPERTY);
+    }
+  }
+
+  /** Whether the flag is still missing, and whether the JDK is new enough to accept it. */
+  private boolean needsJavaEnablePreviewProperty(Sdk jdk) {
+    return !getVMParametersList().hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY) &&
+           JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11);
   }
 
   private void configureJavaLibraryPath(OrderEnumerator enumerator) {
@@ -116,26 +121,19 @@ public class JavaParameters extends SimpleJavaParameters {
     configureByModule(module, classPathType, getValidJdkToRunModule(module, (classPathType & TESTS_ONLY) == 0));
   }
 
-  /** @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead */
-  public static Sdk getModuleJdk(final Module module) throws CantRunException {
-    return getValidJdkToRunModule(module, false);
-  }
-
-  @NotNull
-  public static Sdk getValidJdkToRunModule(final Module module, boolean productionOnly) throws CantRunException {
+  public static @NotNull Sdk getValidJdkToRunModule(final Module module, boolean productionOnly) throws CantRunException {
     Sdk jdk = getJdkToRunModule(module, productionOnly);
     if (jdk == null) {
       throw CantRunException.noJdkForModule(module);
     }
-    final VirtualFile homeDirectory = jdk.getHomeDirectory();
+    VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null || !homeDirectory.isValid()) {
-      throw CantRunException.jdkMisconfigured(jdk, module);
+      throw CantRunException.jdkMisconfigured(jdk);
     }
     return jdk;
   }
 
-  @Nullable
-  public static Sdk getJdkToRunModule(Module module, boolean productionOnly) {
+  public static @Nullable Sdk getJdkToRunModule(Module module, boolean productionOnly) {
     final Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
     if (moduleSdk == null) {
       return null;
@@ -153,18 +151,7 @@ public class JavaParameters extends SimpleJavaParameters {
       }
       return true;
     });
-    return findLatestVersion(moduleSdk, sdksFromDependencies);
-  }
-
-  @NotNull
-  private static Sdk findLatestVersion(@NotNull Sdk mainSdk, @NotNull Set<Sdk> sdks) {
-    Sdk result = mainSdk;
-    for (Sdk sdk : sdks) {
-      if (VersionComparatorUtil.compare(result.getVersionString(), sdk.getVersionString()) < 0) {
-        result = sdk;
-      }
-    }
-    return result;
+    return sdksFromDependencies.stream().max(moduleSdk.getSdkType().versionComparator()).orElse(moduleSdk);
   }
 
   public void configureByProject(Project project,
@@ -183,7 +170,7 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(project);
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(project));
-    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(project), jdk);
+    configureJavaEnablePreviewProperty(project, jdk);
   }
 
   private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
@@ -198,8 +185,7 @@ public class JavaParameters extends SimpleJavaParameters {
     }
     OrderRootsEnumerator rootsEnumerator = enumerator.classes();
     if ((classPathType & JDK_ONLY) != 0) {
-      rootsEnumerator = rootsEnumerator.usingCustomRootProvider(
-        e -> e instanceof JdkOrderEntry ? jdkRoots(jdk) : e.getFiles(OrderRootType.CLASSES));
+      rootsEnumerator = rootsEnumerator.usingCustomSdkRootProvider(_ -> jdkRoots(jdk));
     }
     return rootsEnumerator;
   }

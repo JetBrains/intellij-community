@@ -1,0 +1,8 @@
+OPEN_QUOTE ('"')
+$ ('$')
+{ ('{')
+word ('A')
+param_separator ('%')
+word ('<')
+} ('}')
+CLOSE_QUOTE ('"')

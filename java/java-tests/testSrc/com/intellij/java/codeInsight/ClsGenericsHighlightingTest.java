@@ -17,26 +17,28 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
-  private Module myModule;
 
   @Override
   public void setUp() throws Exception {
@@ -46,11 +48,11 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     myFixture.setTestDataPath(PathManagerEx.getTestDataPath() + "/codeInsight/clsHighlighting");
     JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setLanguageLevel(getLanguageLevel());
-    builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+    builder.addJdkVersion(LanguageLevel.JDK_1_8);
     myFixture.setUp();
-    myModule = builder.getFixture().getModule();
   }
 
+  @NotNull
   protected abstract LanguageLevel getLanguageLevel();
 
   @Override
@@ -58,9 +60,11 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
-      myModule = null;
       super.tearDown();
     }
   }
@@ -72,23 +76,24 @@ public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
-  protected void addLibrary(@NotNull final String... libraryPath) {
-    ModuleRootModificationUtil.updateModel(myModule, model -> {
+  protected void addLibrary(final String @NotNull ... libraryPath) {
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
       commitLibraryModel(model, myFixture.getTestDataPath(), libraryPath);
 
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
-  protected static void commitLibraryModel(ModifiableRootModel model, String testDataPath, @NotNull String... libraryPath) {
+  protected static void commitLibraryModel(ModifiableRootModel model, String testDataPath, String @NotNull ... libraryPath) {
     LibraryTable libraryTable = model.getModuleLibraryTable();
     Library library = libraryTable.createLibrary("test");
 
     Library.ModifiableModel libraryModel = library.getModifiableModel();
     for (String annotationsDir : libraryPath) {
       String path = testDataPath + "/libs/" + annotationsDir;
-      VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByPath(path);
+      VirtualFile libJarLocal = StandardFileSystems.local().findFileByPath(path);
       assertNotNull(libJarLocal);
       VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(libJarLocal);
       assertNotNull(jarRoot);

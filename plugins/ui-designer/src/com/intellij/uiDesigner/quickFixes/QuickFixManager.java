@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,18 +22,15 @@ import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JViewport;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class QuickFixManager <T extends JComponent>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.quickFixes.QuickFixManager");
+  private static final Logger LOG = Logger.getInstance(QuickFixManager.class);
 
   private GuiEditor myEditor;
   /** Component on which hint will be shown */
@@ -65,7 +49,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private LightweightHint myHint;
   private Rectangle myLastHintBounds;
 
-  public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component, @NotNull final JViewport viewPort) {
+  public QuickFixManager(final @Nullable GuiEditor editor, final @NotNull T component, final @NotNull JViewport viewPort) {
     myEditor = editor;
     myComponent = component;
     myAlarm = new Alarm();
@@ -75,9 +59,10 @@ public abstract class QuickFixManager <T extends JComponent>{
     myComponent.addFocusListener(new FocusListenerImpl(this));
 
     // Alt+Enter
-    new ShowHintAction(this, component);
+    new ShowHintAction(this).registerShortcutSet(component);
 
     viewPort.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         updateIntentionHintPosition(viewPort);
       }
@@ -95,8 +80,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * @return error info for the current {@link #myComponent} state.
    */
-  @NotNull
-  protected abstract ErrorInfo[] getErrorInfos();
+  protected abstract ErrorInfo @NotNull [] getErrorInfos();
 
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
@@ -104,8 +88,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    * returned non empty list of error infos. {@code null} means that
    * error bounds are not defined.
    */
-  @Nullable
-  protected abstract Rectangle getErrorBounds();
+  protected abstract @Nullable Rectangle getErrorBounds();
 
   public void refreshIntentionHint() {
     if(!myComponent.isShowing() || !IJSwingUtilities.hasFocus(myComponent)){
@@ -254,7 +237,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   }
 
   private static class ErrorWithFix extends Pair<ErrorInfo, QuickFix> {
-    public ErrorWithFix(final ErrorInfo first, final QuickFix second) {
+    ErrorWithFix(final ErrorInfo first, final QuickFix second) {
       super(first, second);
     }
   }
@@ -262,19 +245,20 @@ public abstract class QuickFixManager <T extends JComponent>{
   private class QuickFixPopupStep extends BaseListPopupStep<ErrorWithFix> {
     private final boolean myShowSuppresses;
 
-    public QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
+    QuickFixPopupStep(final ArrayList<ErrorWithFix> fixList, boolean showSuppresses) {
       super(null, fixList);
       myShowSuppresses = showSuppresses;
     }
 
-    @NotNull
-    public String getTextFor(final ErrorWithFix value) {
+    @Override
+    public @NotNull String getTextFor(final ErrorWithFix value) {
       return value.second.getName();
     }
 
-    public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
-      if (selectedValue.second instanceof PopupQuickFix) {
-        return ((PopupQuickFix) selectedValue.second).getPopupStep();
+    @Override
+    public PopupStep<?> onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
+      if (selectedValue.second instanceof PopupQuickFix<?> fix) {
+        return fix.getPopupStep();
       }
       if (finalChoice || !myShowSuppresses) {
         return doFinalStep(
@@ -289,6 +273,7 @@ public abstract class QuickFixManager <T extends JComponent>{
       return FINAL_CHOICE;
     }
 
+    @Override
     public boolean hasSubstep(final ErrorWithFix selectedValue) {
       return (myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
         !(selectedValue.second instanceof SuppressFix)) || selectedValue.second instanceof PopupQuickFix;
@@ -302,26 +287,28 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static class SuppressFix extends QuickFix {
     private final String myInspectionId;
 
-    public SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
+    SuppressFix(final GuiEditor editor, final @IntentionName String name, final String inspectionId, final RadComponent component) {
       super(editor, name, component);
       myInspectionId = inspectionId;
     }
 
+    @Override
     public void run() {
       if (!myEditor.ensureEditable()) return;
       myEditor.getRootContainer().suppressInspection(myInspectionId, myComponent);
       myEditor.refreshAndSave(true);
-      DaemonCodeAnalyzer.getInstance(myEditor.getProject()).restart();
+      DaemonCodeAnalyzer.getInstance(myEditor.getProject()).restart(this);
     }
   }
 
-  private final class MyShowHintRequest implements Runnable{
-    private final QuickFixManager myManager;
+  private static final class MyShowHintRequest implements Runnable{
+    private final QuickFixManager<?> myManager;
 
-    public MyShowHintRequest(@NotNull final QuickFixManager manager) {
+    MyShowHintRequest(final @NotNull QuickFixManager<?> manager) {
       myManager = manager;
     }
 
+    @Override
     public void run() {
       myManager.showIntentionHint();
     }

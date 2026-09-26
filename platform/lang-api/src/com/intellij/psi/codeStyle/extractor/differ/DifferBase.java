@@ -21,10 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.extractor.Utils;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 
-/**
- * @author Roman.Shein
- * @since 30.07.2015.
- */
 public abstract class DifferBase implements Differ {
   protected final Project myProject;
   protected final String myOrigText;

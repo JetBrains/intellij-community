@@ -1,0 +1,6 @@
+// PROBLEM: Nullable value 'hashCode()' can be simplified
+// FIX: Use 'hashCode()' extension on a nullable receiver
+
+// WITH_STDLIB
+
+fun test(value: String?): Int = (1 + (value?.hash<caret>Code() ?: 0)) * 31

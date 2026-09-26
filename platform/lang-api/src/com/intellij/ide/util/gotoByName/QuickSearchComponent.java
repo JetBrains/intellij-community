@@ -2,14 +2,11 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.ui.popup.JBPopup;
-
-import java.awt.*;
+import org.jetbrains.annotations.NotNull;
 
 public interface QuickSearchComponent {
 
-  void registerHint(JBPopup h);
+  void registerHint(@NotNull JBPopup h);
 
   void unregisterHint();
-
-  Component asComponent();
 }

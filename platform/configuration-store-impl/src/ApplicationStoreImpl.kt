@@ -1,105 +1,137 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.application.options.PathMacrosImpl
+import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.PathManager.getSystemDir
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.BasePathMacroManager
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.delete
-import com.intellij.util.io.outputStream
-import com.intellij.util.write
-import org.jdom.Element
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.util.LineSeparator
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Files
+import java.nio.file.Path
 
-private class ApplicationPathMacroManager : BasePathMacroManager(null)
+@Internal
+const val APP_CONFIG: String = $$"$APP_CONFIG$"
 
-const val APP_CONFIG: String = "\$APP_CONFIG$"
-private const val FILE_STORAGE_DIR = "options"
-private const val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
+@Internal
+const val APP_CACHE_FILENAME: String = "app-cache.xml"
 
-class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreWithExtraComponents() {
-  override val storageManager: ApplicationStorageManager = ApplicationStorageManager(application, pathMacroManager)
+@Internal
+@VisibleForTesting
+@Suppress("NonDefaultConstructor")
+open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
+  override val storageManager: StateStorageManagerImpl = ApplicationStateStorageManager(
+    pathMacroManager = app.service<PathMacroManager>(),
+    controller = app.getService(SettingsController::class.java),
+  )
 
-  // number of app components require some state, so, we load default state in test mode
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
+
+  override val allowSavingWithoutModifications: Boolean
+    get() = true
+
+  override val serviceContainer: ComponentManagerEx
+    get() = app as ComponentManagerEx
+
+  // a number of app components require some state, so we load the default state in test mode
   override val loadPolicy: StateLoadPolicy
-    get() = if (application.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+    get() = if (app.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
-  override fun setPath(path: String) {
-    // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
-    storageManager.addMacro(APP_CONFIG, "$path/${FILE_STORAGE_DIR}")
-    storageManager.addMacro(ROOT_CONFIG, path)
+  final override fun setPath(path: Path) {
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    storageManager.setMacros(java.util.List.of(
+      // app config must be first, because collapseMacros collapse from fist to last, so,
+      // at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
+      Macro(APP_CONFIG, path.resolve(PathManager.OPTIONS_DIRECTORY)),
+      Macro(ROOT_CONFIG, path),
+      Macro(StoragePathMacros.CACHE_FILE, getSystemDir().resolve(APP_CACHE_FILENAME))
+    ))
+    isStoreInitialized = true
+  }
 
-    val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-    if (configDir != null) {
-      invokeAndWaitIfNeed {
-        // not recursive, config directory contains various data - for example, ICS or shelf should not be refreshed,
-        // but we refresh direct children to avoid refreshAndFindFile in SchemeManager (to find schemes directory)
-        VfsUtil.markDirtyAndRefresh(false, false, true, configDir)
-        val optionsDir = configDir.findChild(FILE_STORAGE_DIR)
-        if (optionsDir != null) {
-          // not recursive, options directory contains only files
-          VfsUtil.markDirtyAndRefresh(false, false, true, optionsDir)
+  final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
+    (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)?.saveGlobalEntities()
+
+    coroutineScope {
+      launch {
+        super.doSave(saveResult, forceSavingAllSettings)
+      }
+
+      val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
+      @Suppress("TestOnlyProblems")
+      if (projectManager.isDefaultProjectInitialized) {
+        launch {
+          (projectManager.defaultProject.stateStore as ComponentStoreImpl).doSave(saveResult, forceSavingAllSettings)
         }
       }
     }
   }
 
-  override fun saveAdditionalComponents(isForce: Boolean) {
-    // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
-    service<DefaultProjectExportableAndSaveTrigger>().save(isForce)
-  }
+  final override fun createContentWriter(): JpsAppFileContentWriter = AppStorageContentWriter(createSaveSessionProducerManager())
+
+  final override fun createContentReader(): JpsFileContentReader = AppStorageContentReader()
+
+  final override fun toString(): String = "app"
 }
 
-class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
-
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-    return if (component is NamedJDOMExternalizable) {
-      "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
-    }
-    else {
-      DEFAULT_STORAGE_SPEC
-    }
-  }
-
-  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
+@Internal
+@VisibleForTesting
+class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
+  : StateStorageManagerImpl(rootTagName = "application", macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller = controller)
+{
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.NON_ROAMABLE_FILE
 
   override val isUseXmlProlog: Boolean
     get() = false
 
-  override val isUseVfsForWrite: Boolean
-    get() = false
-
-  override fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
-    // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
-    if (storage.fileSpec != "path.macros.xml") {
-      return
-    }
-
-    LOG.runAndLogException {
-      if (element == null) {
-        storage.file.delete()
-      }
-      else {
-        element.write(storage.file.outputStream())
-      }
+  override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
+    if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
+      runCatching {
+        @Suppress("IfThenToElvis")
+        if (writer == null) {
+          Files.deleteIfExists(storage.file)
+        }
+        else {
+          writer.writeTo(file = storage.file, requestor = null, lineSeparator = LineSeparator.LF, useXmlProlog = isUseXmlProlog)
+        }
+      }.getOrLogException(LOG)
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
 
-  override fun expandMacros(path: String): String = if (path[0] == '$') {
-    super.expandMacros(path)
-  }
-  else {
-    "${expandMacro(APP_CONFIG)}/$path"
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
+    }
+    else {
+      // APP_CONFIG is the first macro
+      return macros[0].value.resolve(collapsedPath)
+    }
   }
 }
+
+internal class ApplicationPathMacroManager : PathMacroManager(null)
+
+@Internal
+fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")

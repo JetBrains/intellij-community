@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -21,75 +7,124 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**
- * @author nik
+ * @see XDebuggerManagerListener
  */
+@ApiStatus.NonExtendable
 public abstract class XDebuggerManager {
+
+  @Topic.ProjectLevel
   public static final Topic<XDebuggerManagerListener> TOPIC =
     new Topic<>("XDebuggerManager events", XDebuggerManagerListener.class);
 
   public static XDebuggerManager getInstance(@NotNull Project project) {
-    return project.getComponent(XDebuggerManager.class);
+    return project.getService(XDebuggerManager.class);
   }
 
-  @NotNull
-  public abstract XBreakpointManager getBreakpointManager();
+  public abstract @NotNull XBreakpointManager getBreakpointManager();
 
 
-  @NotNull
-  public abstract XDebugSession[] getDebugSessions();
+  public abstract XDebugSession @NotNull [] getDebugSessions();
 
-  @Nullable
-  public abstract XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole);
+  public abstract @Nullable XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole);
 
-  @NotNull
-  public abstract <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass);
+  public abstract @NotNull <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass);
 
-  @Nullable
-  public abstract XDebugSession getCurrentSession();
+  public abstract @Nullable XDebugSession getCurrentSession();
+
+
+  /**
+   * Creates a new builder for configuring and launching a debugging session.
+   *
+   * @param starter an instance of {@link XDebugProcessStarter} responsible for providing the debug process to be used in the session.
+   * @return a {@link XDebugSessionBuilder} instance allowing further configuration before starting the debugging session.
+   */
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSessionBuilder newSessionBuilder(@NotNull XDebugProcessStarter starter);
 
   /**
    * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called
-   * from {@link com.intellij.execution.runners.ProgramRunner#execute} method. Otherwise use {@link #startSessionAndShowTab} method
+   * from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method.
+   * Otherwise, use {@link XDebuggerManager#newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+   * and {@link XDebugSessionBuilder#startSession()}.
+   *
+   * @deprecated Use {@link #newSessionBuilder} and {@link XDebugSessionBuilder#startSession()} instead
    */
-  @NotNull
-  public abstract XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
+  @Deprecated
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSession(@NotNull ExecutionEnvironment environment,
+                                                      @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
+   *
    * @param sessionName title of 'Debug' tool window
+   *
+   * @deprecated Use {@link #newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+   * and {@link XDebugSessionBuilder#startSession()} instead
    */
-  @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName,
-                                                       @Nullable RunContentDescriptor contentToReuse,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+  @Deprecated
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                                @Nullable RunContentDescriptor contentToReuse,
+                                                                @NotNull XDebugProcessStarter starter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
+   *
    * @param sessionName title of 'Debug' tool window
+   *
+   * @deprecated Use {@link #newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+   * and {@link XDebugSessionBuilder#startSession()} instead
+   */
+  @Deprecated
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                                @NotNull XDebugProcessStarter starter,
+                                                                @NotNull ExecutionEnvironment environment) throws ExecutionException;
+
+  /**
+   * Start a new debugging session and open 'Debug' tool window
+   *
+   * @param sessionName                 title of 'Debug' tool window
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
+   *
+   * @deprecated Use {@link #newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+   * and {@link XDebugSessionBuilder#startSession()} instead
    */
-  @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                                       boolean showToolWindowOnSuspendOnly,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+  @Deprecated
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                                @Nullable RunContentDescriptor contentToReuse,
+                                                                boolean showToolWindowOnSuspendOnly,
+                                                                @NotNull XDebugProcessStarter starter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
-   * @param sessionName title of 'Debug' tool window
-   * @param icon icon of 'Debug' tool window
+   *
+   * @param sessionName                 title of 'Debug' tool window
+   * @param icon                        icon of 'Debug' tool window
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
+   *
+   * @deprecated Use {@link #newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+   * and {@link XDebugSessionBuilder#startSession()} instead
    */
-  @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable Icon icon,
-                                                       @Nullable RunContentDescriptor contentToReuse, boolean showToolWindowOnSuspendOnly,
-                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+  @Deprecated
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                                @Nullable Icon icon,
+                                                                @Nullable RunContentDescriptor contentToReuse,
+                                                                boolean showToolWindowOnSuspendOnly,
+                                                                @NotNull XDebugProcessStarter starter) throws ExecutionException;
 }

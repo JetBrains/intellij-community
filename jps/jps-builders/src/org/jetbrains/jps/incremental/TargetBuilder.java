@@ -16,7 +16,11 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -24,7 +28,6 @@ import java.util.Collection;
 /**
  * Produced the output of a single build target. Use {@link BuilderService} to register implementations of this class.
  *
- * @author nik
  * @see BuilderService#createBuilders()
  */
 public abstract class TargetBuilder<R extends BuildRootDescriptor, T extends BuildTarget<R>> extends Builder {

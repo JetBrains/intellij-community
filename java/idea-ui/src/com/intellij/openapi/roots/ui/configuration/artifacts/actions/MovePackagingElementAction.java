@@ -1,51 +1,48 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class MovePackagingElementAction extends DumbAwareAction {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private final int myDirection;
 
-  public MovePackagingElementAction(LayoutTreeComponent layoutTreeComponent, String text, String description, Icon icon, int direction) {
+  public MovePackagingElementAction(LayoutTreeComponent layoutTreeComponent,
+                                    @Nullable @NlsActions.ActionText String text,
+                                    @Nullable @NlsActions.ActionDescription String description,
+                                    @Nullable Icon icon,
+                                    int direction) {
     super(text, description, icon);
     myLayoutTreeComponent = layoutTreeComponent;
     myDirection = direction;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final boolean b = isEnabled();
     e.getPresentation().setEnabled(b);
-    e.getPresentation().setText(getTemplatePresentation().getText() + " (disabled if elements are sorted)");
+    e.getPresentation().setText(JavaUiBundle.message("action.text.0.disabled.if.elements.are.sorted", getTemplatePresentation().getText()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private boolean isEnabled() {
@@ -68,7 +65,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final PackagingElementNode<?> node = myLayoutTreeComponent.getSelection().getNodeIfSingle();
     if (node == null) return;
     final CompositePackagingElementNode parent = node.getParentNode();
@@ -79,7 +76,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
     if (parentElement == null || element == null) return;
 
 
-    if (!myLayoutTreeComponent.checkCanModifyChildren(parentElement, parent, Arrays.asList(node))) return;
+    if (!myLayoutTreeComponent.checkCanModifyChildren(parentElement, parent, Collections.singletonList(node))) return;
 
     final List<PackagingElement<?>> toSelect = new ArrayList<>();
     myLayoutTreeComponent.editLayout(() -> {

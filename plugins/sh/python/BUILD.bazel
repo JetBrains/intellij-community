@@ -1,0 +1,64 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.sh.python` start
+content_module_jar(module = ":python")
+### auto-generated section `dev intellij.sh.python` end
+
+### auto-generated section `build intellij.sh.python` start
+jvm_library(
+    name = "python",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.python",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//python/python-psi-api:psi",
+        "//plugins/sh/core",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/backend",
+    ],
+)
+
+jvm_library(
+    name = "python_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.sh.python",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":python",
+        "//python/python-psi-api:psi_test_lib",
+        "//plugins/sh/core:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.sh.python` end
+
+### auto-generated section `iml intellij.sh.python` start
+exports_files(
+    [
+        "intellij.sh.python.iml",
+        "resources/intellij.sh.python.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.sh.python` end

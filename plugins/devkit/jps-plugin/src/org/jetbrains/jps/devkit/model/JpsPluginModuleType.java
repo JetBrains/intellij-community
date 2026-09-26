@@ -19,9 +19,6 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import org.jetbrains.jps.model.module.JpsModuleType;
 
-/**
- * @author nik
- */
 public class JpsPluginModuleType extends JpsElementTypeBase<JpsSimpleElement<JpsPluginModuleProperties>> implements JpsModuleType<JpsSimpleElement<JpsPluginModuleProperties>> {
   public static final JpsPluginModuleType INSTANCE = new JpsPluginModuleType();
 

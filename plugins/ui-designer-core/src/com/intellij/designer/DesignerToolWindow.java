@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.designer.componentTree.ComponentTree;
@@ -29,12 +15,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -130,26 +122,28 @@ public final class DesignerToolWindow implements DesignerToolWindowContent {
     return myToolWindowPanel;
   }
 
-  AnAction[] createActions() {
-    AnAction expandAll = new AnAction("Expand All", null, AllIcons.Actions.Expandall) {
+  @NotNull List<AnAction> createActions() {
+    AnAction expandAll =
+      new AnAction(UIBundle.messagePointer("action.DesignerToolWindow.Anonymous.text.expand.all"), AllIcons.Actions.Expandall) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {
           TreeUtil.expandAll(myComponentTree);
         }
       }
     };
 
-    AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.Actions.Collapseall) {
+    AnAction collapseAll =
+      new AnAction(UIBundle.messagePointer("action.DesignerToolWindow.Anonymous.text.collapse.all"), AllIcons.Actions.Collapseall) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (myTreeBuilder != null) {
           TreeUtil.collapseAll(myComponentTree, 1);
         }
       }
     };
 
-    return new AnAction[]{expandAll, collapseAll};
+    return Arrays.asList(expandAll, collapseAll);
   }
 
   public ComponentTree getComponentTree() {

@@ -1,8 +1,6 @@
 class A {
     {
-        int result;
         try {
-            result = 0;
         } catch (Error e) {
             throw e;
         }

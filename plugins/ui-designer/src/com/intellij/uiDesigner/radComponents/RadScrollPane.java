@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,26 +11,25 @@ import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadScrollPane");
+  private static final Logger LOG = Logger.getInstance(RadScrollPane.class);
 
   public static class Factory extends RadComponentFactory {
+    @Override
     public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadScrollPane(module, aClass, id);
     }
 
+    @Override
     public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
       return new RadScrollPane(componentClass, id, palette);
     }
@@ -58,11 +43,12 @@ public final class RadScrollPane extends RadContainer {
     super(componentClass, id, palette);
   }
 
-  @Nullable @Override
-  protected RadLayoutManager createInitialLayoutManager() {
+  @Override
+  protected @NotNull RadLayoutManager createInitialLayoutManager() {
     return new RadScrollPaneLayoutManager();
   }
 
+  @Override
   public void write(final XmlWriter writer) {
     writer.startElement(UIFormXmlConstants.ELEMENT_SCROLLPANE);
     try {
@@ -76,36 +62,27 @@ public final class RadScrollPane extends RadContainer {
     return this;
   }
 
-  @Override
-  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    JScrollPane scrollPane = (JScrollPane) component;
-    final Component view = scrollPane.getViewport().getView();
-    if (view instanceof JComponent) {
-      RadComponent childComponent = createSnapshotComponent(context, (JComponent) view);
-      if (childComponent != null) {
-        addComponent(childComponent);
-      }
-    }
-  }
-
   private class RadScrollPaneLayoutManager extends RadLayoutManager {
     private MyDropLocation myDropLocation = null;
 
-    @Nullable public String getName() {
+    @Override
+    public @Nullable String getName() {
       return null;
     }
 
+    @Override
     public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     }
 
-    @Override @NotNull
-    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    @Override
+    public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
       if (myDropLocation == null) {
         myDropLocation = new MyDropLocation();
       }
       return myDropLocation;
     }
 
+    @Override
     public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
       try {
         final JScrollPane scrollPane = (JScrollPane)container.getDelegee();
@@ -128,18 +105,22 @@ public final class RadScrollPane extends RadContainer {
   }
 
   private class MyDropLocation implements ComponentDropLocation {
+    @Override
     public RadContainer getContainer() {
       return RadScrollPane.this;
     }
 
+    @Override
     public boolean canDrop(ComponentDragObject dragObject) {
       return dragObject.getComponentCount() == 1 && getComponentCount() == 0;
     }
 
+    @Override
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       feedbackLayer.putFeedback(getDelegee(), new Rectangle(0, 0, getWidth(), getHeight()), getDisplayName());
     }
 
+    @Override
     public void processDrop(GuiEditor editor,
                             RadComponent[] components,
                             GridConstraints[] constraintsToAdjust,
@@ -147,8 +128,8 @@ public final class RadScrollPane extends RadContainer {
       addComponent(components[0]);
     }
 
-    @Nullable
-    public ComponentDropLocation getAdjacentLocation(Direction direction) {
+    @Override
+    public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

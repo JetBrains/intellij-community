@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
-import com.intellij.util.io.StringRef;
+import com.intellij.psi.stubs.Stub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,22 +12,20 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class AttributeStub extends DomStub {
-
+public final class AttributeStub extends DomStub {
   private final String myValue;
 
-  public AttributeStub(DomStub parent, StringRef name, StringRef namespace, String value) {
+  public AttributeStub(DomStub parent, @NotNull String name, @Nullable String namespace, @NotNull String value) {
     super(parent, name, namespace);
     myValue = value;
   }
 
-  public String getValue() {
+  public @NotNull String getValue() {
     return myValue;
   }
 
-  @NotNull
   @Override
-  public List<DomStub> getChildrenStubs() {
+  public @NotNull List<DomStub> getChildrenStubs() {
     return Collections.emptyList();
   }
 
@@ -50,8 +35,8 @@ public class AttributeStub extends DomStub {
   }
 
   @Override
-  public ObjectStubSerializer getStubType() {
-    return AttributeStubSerializer.INSTANCE;
+  public ObjectStubSerializer<?, Stub> getStubType() {
+    return DomElementTypeHolder.AttributeStub;
   }
 
   @Override

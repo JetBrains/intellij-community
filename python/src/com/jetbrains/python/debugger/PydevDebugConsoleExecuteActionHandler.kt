@@ -1,42 +1,38 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger
 
+import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.xdebugger.XDebugSessionListener
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.console.pydev.ConsoleCommunication
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
-/**
- * @author traff
- */
-class PydevDebugConsoleExecuteActionHandler(consoleView: LanguageConsoleView,
-                                            myProcessHandler: ProcessHandler,
-                                            consoleCommunication: ConsoleCommunication) : PydevConsoleExecuteActionHandler(consoleView, myProcessHandler, consoleCommunication), XDebugSessionListener {
+open class PydevDebugConsoleExecuteActionHandler(private val myConsole: PythonDebugLanguageConsoleView,
+                                                 myProcessHandler: ProcessHandler,
+                                                 consoleCommunication: ConsoleCommunication) : PydevConsoleExecuteActionHandler(myConsole.pydevConsoleView, myProcessHandler, consoleCommunication), XDebugSessionListener {
+  override val isCommandQueueEnabled: Boolean
+    @ApiStatus.Internal
+    get() = PyDebuggerOptionsProvider.getInstance(myConsole.pydevConsoleView.project).isDebugConsoleCommandQueueEnabled
 
-  override val consoleIsNotEnabledMessage: String
-    get() = "Pause the process to use command-line."
+  override val consoleIsNotEnabledMessage: @Nls String
+    get() = PyBundle.message("debugger.pydev.console.pause.the.process.to.use.command.line")
 
   override fun sessionPaused() {
     isEnabled = true
+    // The start script needs a stack frame, so the first pause is the earliest moment it can run.
+    myConsole.executeStartScriptIfNeeded()
   }
 
   override fun sessionResumed() {
-    isEnabled = false
+    if (!consoleCommunication.isWaitingForInput) {
+      isEnabled = false
+    }
   }
 
   override fun sessionStopped() {
@@ -47,5 +43,11 @@ class PydevDebugConsoleExecuteActionHandler(consoleView: LanguageConsoleView,
   }
 
   override fun beforeSessionResume() {
+  }
+
+  override fun beforeExecution(consoleView: LanguageConsoleView) {
+    super.beforeExecution(consoleView)
+    val text = (consoleView as LanguageConsoleImpl).currentEditor.document.text
+    myConsole.primaryConsoleView.print(text + '\n', ConsoleViewContentType.NORMAL_OUTPUT)
   }
 }

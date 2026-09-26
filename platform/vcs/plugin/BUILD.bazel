@@ -1,0 +1,69 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.platform.vcs.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.platform.vcs",
+        "intellij.platform.vcs.impl",
+        "intellij.platform.vcs.impl.exec",
+        "intellij.platform.vcs.impl.debugger",
+        "intellij.platform.vcs.impl.lang",
+        "intellij.platform.vcs.impl.lang.actions",
+        "intellij.platform.vcs.log",
+        "intellij.platform.vcs.log.impl",
+        "intellij.platform.sqlite",
+        "intellij.platform.vcs.log.graph",
+        "intellij.platform.vcs.log.graph.impl",
+        "intellij.platform.vcs.dvcs",
+        "intellij.platform.vcs.dvcs.impl",
+        "intellij.platform.vcs.impl.frontend",
+        "intellij.libraries.sqlite.native",
+    ],
+    main_module = "intellij.platform.vcs.plugin",
+)
+
+exports_files(
+    ["intellij.platform.vcs.plugin.dev-plan.json"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `dev intellij.platform.vcs.plugin` end
+
+### auto-generated section `build intellij.platform.vcs.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.vcs.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.platform.vcs.plugin` end
+
+### auto-generated section `iml intellij.platform.vcs.plugin` start
+exports_files(
+    [
+        "intellij.platform.vcs.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.vcs.plugin` end

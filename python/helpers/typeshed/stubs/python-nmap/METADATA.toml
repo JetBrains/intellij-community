@@ -1,0 +1,2 @@
+version = "0.7.*"
+upstream-repository = "https://bitbucket.org/xael/python-nmap"

@@ -3,9 +3,12 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/helpers">
-      <sourceFolder url="file://$MODULE_DIR$/helpers" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/helpers/pydev" isTestSource="false" packagePrefix="pydev" />
+      <sourceFolder url="file://$MODULE_DIR$/helpers" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/helpers/env" />
       <excludeFolder url="file://$MODULE_DIR$/helpers/pydev/build" />
+      <excludeFolder url="file://$MODULE_DIR$/helpers/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/helpers/debugpy/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/helpers/debugpy/_vendored/pydevd/.venv" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

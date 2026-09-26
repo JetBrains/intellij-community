@@ -1,0 +1,95 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
+
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
+import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
+import org.jetbrains.intellij.build.productLayout.DEFAULT_BUNDLED_PLUGINS
+
+/**
+ * Default bundled plugins for all editions of IntelliJ IDEA.
+ * See also [org.jetbrains.intellij.build.productLayout.DEFAULT_BUNDLED_PLUGINS].
+ */
+val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + persistentListOf(
+  JavaPluginLayout.MAIN_MODULE_NAME,
+  "intellij.java.ide.customization",
+  "intellij.copyright",
+  "intellij.properties",
+  "intellij.terminal",
+  "intellij.textmate.plugin",
+  "intellij.editorconfig.plugin",
+  "intellij.configurationScript",
+  "intellij.json",
+  "intellij.yaml",
+  "intellij.html.tools",
+  "intellij.maven.plugin",
+  "intellij.gradle.plugin",
+  "intellij.android.gradle.declarative.lang.ide",
+  "intellij.android.gradle.dsl",
+  "intellij.gradle.java.plugin",
+  "intellij.vcs.git",
+  "intellij.vcs.git.commit.modal",
+  "intellij.vcs.github",
+  "intellij.vcs.gitlab",
+  "intellij.groovy.scripting",
+  "intellij.groovy",
+  "intellij.groovy.live.templates",
+  "intellij.junit",
+  "intellij.testng",
+  "intellij.java.i18n",
+  "intellij.java.byteCodeViewer",
+  "intellij.java.coverage",
+  "intellij.java.decompiler",
+  "intellij.eclipse",
+  "intellij.sh.plugin",
+  "intellij.markdown",
+  "intellij.mermaid",
+  "intellij.mcpserver.plugin",
+  "intellij.webp",
+  "intellij.grazie",
+  "intellij.featuresTrainer",
+  "intellij.toml",
+  KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
+  "intellij.keymap.eclipse",
+  "intellij.keymap.visualStudio",
+  "intellij.keymap.netbeans",
+  "intellij.performanceTesting",
+  "intellij.compose.ide.plugin",
+)
+
+val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
+  "" to "25",
+  "lib/idea_rt.jar" to "1.8",
+  "lib/forms_rt.jar" to "1.8",
+  "lib/intellij.libraries.jetbrains.annotations.jar" to "1.8",
+  "lib/util_rt.jar" to "1.8",
+  "lib/util-8.jar" to "1.8",
+  "lib/external-system-rt.jar" to "1.8",
+  "plugins/java-coverage/lib/intellij.java.coverage.rt.jar" to "1.8",
+  "plugins/java-coverage/lib/modules/intellij.java.coverage.rt.junit.jar" to "1.8",
+  "plugins/java-coverage/lib/modules/intellij.java.coverage.rt.testng.jar" to "1.8",
+  "plugins/junit/lib/junit-rt.jar" to "1.8",
+  "plugins/junit/lib/junit5-rt.jar" to "1.8",
+  "plugins/gradle-plugin/lib/gradle-tooling-extension-api.jar" to "1.8",
+  "plugins/gradle-plugin/lib/gradle-tooling-extension-impl.jar" to "1.8",
+  "plugins/maven-plugin/lib/maven-server.jar" to "1.8",
+  "plugins/maven-plugin/lib/intellij.maven.server3/maven3-server-common.jar" to "1.8",
+  "plugins/maven-plugin/lib/intellij.maven.server3/maven3-server.jar" to "1.8",
+  "plugins/maven-plugin/lib/artifact-resolver-m31.jar" to "1.8",
+  "plugins/java/lib/sa-jdwp" to "",  // ignored
+  "plugins/Groovy/lib/groovy-rt.jar" to "1.8",
+  "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.8",
+)
+
+fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProductProperties) {
+  properties.productLayout.addPlatformSpec { layout ->
+    //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
+    layout.withModule("intellij.java.rt", "idea_rt.jar")
+  }
+
+  properties.productLayout.compatiblePluginsToIgnore += persistentListOf(
+    JavaPluginLayout.MAIN_MODULE_NAME,
+  )
+  properties.modulesToCompileTests += persistentListOf("intellij.platform.jps.build.tests")
+}

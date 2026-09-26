@@ -1,0 +1,11 @@
+JsonFile: n_array_colon_instead_of_comma.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('""')
+    PsiErrorElement:',' or ']' expected, got ':'
+      PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(])(']')

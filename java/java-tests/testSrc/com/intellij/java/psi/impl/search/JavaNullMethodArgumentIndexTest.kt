@@ -15,18 +15,15 @@
  */
 package com.intellij.java.psi.impl.search
 
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.indexing.IndexingDataKeys
-import org.intellij.lang.annotations.Language
 
-class JavaNullMethodArgumentIndexTest : LightPlatformCodeInsightFixtureTestCase() {
+class JavaNullMethodArgumentIndexTest : BasePlatformTestCase() {
 
   fun testIndex() {
-    @Language("JAVA")
-    val file = myFixture.configureByText(StdFileTypes.JAVA, """
+    val file = myFixture.configureByText(JavaFileType.INSTANCE, """
             package org.some;
 
             class Main111 {
@@ -42,9 +39,13 @@ class JavaNullMethodArgumentIndexTest : LightPlatformCodeInsightFixtureTestCase(
                 }
 
                 public static void main(String[] args) {
-                    staticMethod(null, "", "");
-                    org.some.Main111.staticMethod("", "", null);
-                    new Main111(null).someMethod("", "", null);
+                    staticMethod(null
+, "", "");
+                    org.some.Main111.staticMethod("", "", null""" + '\t' +  """);
+                    new Main111(null).someMethod("", "", null  );
+
+                    String s = null;
+
                     Main111 m = new Main111(null);
                     m.someMethod(null, "", "");
                 }
@@ -85,8 +86,7 @@ class JavaNullMethodArgumentIndexTest : LightPlatformCodeInsightFixtureTestCase(
                 }
             }
     """).virtualFile
-    val content = FileContentImpl.createByFile(file)
-    content.putUserData(IndexingDataKeys.PROJECT, project)
+    val content = FileContentImpl.createByFile(file, project)
     val data = JavaNullMethodArgumentIndex().indexer.map(content).keys
 
     assertSize(8, data)

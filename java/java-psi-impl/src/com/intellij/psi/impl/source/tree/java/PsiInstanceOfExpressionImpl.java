@@ -1,39 +1,39 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiPrimaryPattern;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements PsiInstanceOfExpression, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInstanceOfExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiInstanceOfExpressionImpl.class);
 
   public PsiInstanceOfExpressionImpl() {
     super(INSTANCE_OF_EXPRESSION);
   }
 
   @Override
-  @NotNull
-  public PsiExpression getOperand() {
+  public @NotNull PsiExpression getOperand() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.OPERAND);
   }
 
@@ -44,16 +44,13 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
   @Override
   public PsiType getType() {
-    return PsiType.BOOLEAN;
+    return PsiTypes.booleanType();
   }
 
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.OPERAND:
         return findChildByType(EXPRESSION_BIT_SET);
 
@@ -62,6 +59,9 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
       case ChildRole.TYPE:
         return findChildByType(TYPE);
+
+      default:
+        return null;
     }
   }
 
@@ -75,12 +75,15 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
     else if (i == INSTANCEOF_KEYWORD) {
       return ChildRole.INSTANCEOF_KEYWORD;
     }
-    else {
-      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
-        return ChildRole.OPERAND;
-      }
-      return ChildRoleBase.NONE;
+    if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      return ChildRole.OPERAND;
     }
+    return ChildRoleBase.NONE;
+  }
+
+  @Override
+  public @Nullable PsiPrimaryPattern getPattern() {
+    return PsiTreeUtil.getChildOfType(this, PsiPrimaryPattern.class);
   }
 
   @Override
@@ -93,8 +96,31 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    return processDeclarationsWithPattern(processor, state, lastParent, place, this::getPattern);
+  }
+
+  public static boolean processDeclarationsWithPattern(@NotNull PsiScopeProcessor processor,
+                                                       @NotNull ResolveState state,
+                                                       PsiElement lastParent,
+                                                       @NotNull PsiElement place,
+                                                       @NotNull Computable<? extends @Nullable PsiElement> patternGetter) {
+    if (lastParent != null) return true;
+    if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_FALSE) return true;
+    PsiElement pattern = patternGetter.compute();
+    if (pattern == null) return true;
+    return pattern.processDeclarations(processor, state, null, place);
+  }
+
+  @Override
   public String toString() {
-    return "PsiInstanceofExpression:" + getText();
+    return "PsiInstanceofExpression";
   }
 }
 

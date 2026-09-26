@@ -1,0 +1,99 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.completion.ml` start
+content_module_jar(module = ":completion-ml")
+### auto-generated section `dev intellij.kotlin.completion.ml` end
+
+### auto-generated section `build intellij.kotlin.completion.ml` start
+create_kotlinc_options(
+    name = "custom_completion-ml",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "completion-ml",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_completion-ml",
+    module_name = "intellij.kotlin.completion.ml",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/preferences",
+        "//platform/projectModel-api:projectModel",
+        "//platform/lang-api:lang",
+        "//platform/platform-impl:ide-impl",
+        "//plugins/completion-ml-ranking",
+        "//platform/platform-impl/internal",
+        "//libraries/completion-ranking-kotlin",
+        "//plugins/kotlin/base/code-insight",
+    ],
+)
+
+jvm_library(
+    name = "completion-ml_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_completion-ml",
+    module_name = "intellij.kotlin.completion.ml",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":completion-ml",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//plugins/kotlin/base/util:util_test_lib",
+        "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//plugins/kotlin/preferences:preferences_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
+        "//libraries/completion-ranking-kotlin:completion-ranking-kotlin_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.completion.ml` end
+
+### auto-generated section `iml intellij.kotlin.completion.ml` start
+exports_files(
+    [
+        "intellij.kotlin.completion.ml.iml",
+        "resources/intellij.kotlin.completion.ml.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.completion.ml` end

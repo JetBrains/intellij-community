@@ -1,0 +1,58 @@
+MODULES
+project
+
+project.consumer
+
+project.consumer.androidHostTest
+    consumer/src/androidHostTest/kotlin (Java, Test)
+
+project.consumer.androidMain
+    consumer/src/androidMain/kotlin (Java)
+    consumer/src/main/kotlin (Java)
+
+project.consumer.commonMain
+    consumer/src/commonMain/kotlin
+
+project.consumer.commonTest
+    consumer/src/commonTest/kotlin (Test)
+
+project.consumer.jvmAndAndroidMain
+    consumer/src/jvmAndAndroidMain/kotlin (Java)
+
+project.consumer.jvmMain
+    consumer/src/jvmMain/java (Java)
+    consumer/src/jvmMain/kotlin (Java)
+
+project.consumer.jvmTest
+    consumer/src/jvmTest/java (Java, Test)
+    consumer/src/jvmTest/kotlin (Java, Test)
+
+project.producer
+
+project.producer.androidHostTest
+    producer/src/androidHostTest/kotlin (Java, Test)
+
+project.producer.androidMain
+    producer/src/androidMain/kotlin (Java)
+    producer/src/main/kotlin (Java)
+
+project.producer.commonMain
+    producer/src/commonMain/kotlin
+
+project.producer.commonTest
+    producer/src/commonTest/kotlin (Test)
+
+project.producer.jvmAndAndroidMain
+    producer/src/jvmAndAndroidMain/kotlin (Java)
+
+project.producer.jvmMain
+    producer/src/jvmMain/java (Java)
+    producer/src/jvmMain/kotlin (Java)
+
+project.producer.jvmTest
+    producer/src/jvmTest/java (Java, Test)
+    producer/src/jvmTest/kotlin (Java, Test)
+
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated

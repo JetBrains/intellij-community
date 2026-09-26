@@ -16,20 +16,18 @@
 package org.jetbrains.jps.model.module;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Interface for convenient processing dependencies of a module or a project
  * <p/>
  * Use {@link org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator JpsJavaDependenciesEnumerator} for java-specific dependencies processing
  * <p/>
- * Note that all configuration methods modify {@link org.jetbrains.jps.model.module.JpsDependenciesEnumerator} instance instead of creating a new one.
- *
- * @author nik
+ * Note that all configuration methods modify {@link JpsDependenciesEnumerator} instance instead of creating a new one.
  */
 public interface JpsDependenciesEnumerator {
   @NotNull
@@ -57,7 +55,7 @@ public interface JpsDependenciesEnumerator {
    * @return this instance
    */
   @NotNull
-  JpsDependenciesEnumerator satisfying(@NotNull Condition<JpsDependencyElement> condition);
+  JpsDependenciesEnumerator satisfying(@NotNull Condition<? super JpsDependencyElement> condition);
 
   /**
    * @return all modules processed by enumerator
@@ -73,16 +71,37 @@ public interface JpsDependenciesEnumerator {
 
   /**
    * Runs {@code consumer.consume()} for each module processed by this enumerator
+   * @deprecated use {@link #forEachModule(Consumer)} instead in new code.
    */
-  void processModules(@NotNull Consumer<JpsModule> consumer);
+  @Deprecated
+  void processModules(@NotNull com.intellij.util.Consumer<? super JpsModule> consumer);
+
+  /**
+   * Runs {@code consumer.accept()} for each module processed by this enumerator
+   */
+  void forEachModule(@NotNull Consumer<? super JpsModule> consumer);
 
   /**
    * Runs {@code consumer.consume()} for each library processed by this enumerator
+   * @deprecated use {@link #forEachLibrary(Consumer)} instead
    */
-  void processLibraries(@NotNull Consumer<JpsLibrary> consumer);
+  @Deprecated
+  void processLibraries(@NotNull com.intellij.util.Consumer<? super JpsLibrary> consumer);
+
+  /**
+   * Runs {@code consumer.accept()} for each library processed by this enumerator
+   */
+  void forEachLibrary(@NotNull Consumer<? super JpsLibrary> consumer);
 
   /**
    * Runs {@code moduleConsumer.consume()} for each module and {@code libraryConsumer.consume()} for each library processed by this enumerator
+   * @deprecated use {@link #forEachModuleAndLibrary(Consumer, Consumer)} instead in new code.
    */
-  void processModuleAndLibraries(@NotNull Consumer<JpsModule> moduleConsumer, @NotNull Consumer<JpsLibrary> libraryConsumer);
+  @Deprecated
+  void processModuleAndLibraries(@NotNull com.intellij.util.Consumer<? super JpsModule> moduleConsumer, @NotNull com.intellij.util.Consumer<? super JpsLibrary> libraryConsumer);
+
+  /**
+   * Runs {@code moduleConsumer.accept()} for each module and {@code libraryConsumer.accept()} for each library processed by this enumerator
+   */
+  void forEachModuleAndLibrary(@NotNull Consumer<? super JpsModule> moduleConsumer, @NotNull Consumer<? super JpsLibrary> libraryConsumer);
 }

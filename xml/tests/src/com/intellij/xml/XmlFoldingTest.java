@@ -16,11 +16,11 @@
 package com.intellij.xml;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.File;
 
-public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlFoldingTest extends BasePlatformTestCase {
 
   public void testTagFolding() { doTest(); }
 
@@ -28,6 +28,8 @@ public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testStyleAttributeFolding2() { doTest(".xml"); }
 
   public void testEntities() { doTest(); }
+
+  public void testHtmlInHtml() { doTest(); }
 
   public void testDataUri() { doTest(); }
 

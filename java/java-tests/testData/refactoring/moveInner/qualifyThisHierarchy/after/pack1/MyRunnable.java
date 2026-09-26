@@ -1,7 +1,7 @@
 package pack1;
 
 public class MyRunnable {
-    private DImpl d;
+    private final DImpl d;
 
     public MyRunnable(DImpl d) {
         this.d = d;

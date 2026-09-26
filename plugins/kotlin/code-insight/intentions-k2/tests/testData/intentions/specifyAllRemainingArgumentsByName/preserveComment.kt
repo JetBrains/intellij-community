@@ -1,0 +1,14 @@
+// SKIP_ERRORS_BEFORE
+// SKIP_WARNINGS_AFTER
+// SKIP_ERRORS_AFTER
+// LANGUAGE_VERSION: 2.3
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// COMPILER_ARGUMENTS: -Xexplicit-context-arguments
+
+fun foo(a: Int, b: Int, c: Int) {}
+
+fun test() {
+    foo(b = 1,
+        //preserve this
+        c = 2<caret>)
+}

@@ -15,27 +15,28 @@
  */
 package com.jetbrains.python.quickFixes;
 
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyCallingNonCallableInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveCallQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRemoveCallQuickFixTest extends PyQuickFixTestCase {
 
   public void testExpression() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
-    doQuickFixTest(PyCallingNonCallableInspection.class, PyBundle.message("QFIX.NAME.remove.call"));
+    doQuickFixTest(PyCallingNonCallableInspection.class, PyPsiBundle.message("QFIX.NAME.remove.call"));
   }
 
   public void testDecorator() {
-    doQuickFixTest(PyCallingNonCallableInspection.class, PyBundle.message("QFIX.NAME.remove.call"));
+    doQuickFixTest(PyCallingNonCallableInspection.class, PyPsiBundle.message("QFIX.NAME.remove.call"));
   }
 
   public void testClass() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
-    doQuickFixTest(PyCallingNonCallableInspection.class, PyBundle.message("QFIX.NAME.remove.call"));
+    doQuickFixTest(PyCallingNonCallableInspection.class, PyPsiBundle.message("QFIX.NAME.remove.call"));
   }
 
 }

@@ -15,7 +15,8 @@
  */
 package com.intellij.util.ui.table;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTable;
 
 public interface JBTableRowRenderer {
   JComponent getRowRendererComponent(JTable table, int row, boolean selected, boolean focused);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -44,7 +30,8 @@ public class GitVersionTest {
     new TestGitVersion("git version 1.6.4.msysgit.0", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3.msysgit.1", 1, 7, 3, 3),
     new TestGitVersion("git version 1.7.3.2.msysgit", 1, 7, 3, 2),
-    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5)
+    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5),
+    new TestGitVersion("git version 2.19.1.windows.1", 2, 19, 1, 0),
   };
 
   /**
@@ -128,7 +115,7 @@ public class GitVersionTest {
     private final int rev;
     private final int patch;
 
-    public TestGitVersion(String output, int major, int minor, int rev, int patch) {
+    TestGitVersion(String output, int major, int minor, int rev, int patch) {
       this.output = output;
       this.major = major;
       this.minor = minor;

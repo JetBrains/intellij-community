@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
@@ -8,15 +7,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
-/**
- * @author ilyas
- */
 public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPropertySelection {
   private static final Logger LOG = Logger.getInstance(GrPropertySelectionImpl.class);
 
@@ -29,33 +24,25 @@ public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPrope
     visitor.visitPropertySelection(this);
   }
 
+  @Override
   public String toString() {
     return "Property selection";
   }
 
-  @NotNull
   @Override
-  public PsiElement getDotToken() {
-    return findNotNullChildByType(TokenSets.DOTS);
-  }
-
-  @NotNull
-  @Override
-  public GrExpression getQualifier() {
+  public @NotNull GrExpression getQualifier() {
     return findNotNullChildByClass(GrExpression.class);
   }
 
-  @NotNull
   @Override
-  public PsiElement getReferenceNameElement() {
+  public @NotNull PsiElement getReferenceNameElement() {
     final PsiElement last = getLastChild();
     LOG.assertTrue(last != null);
     return last;
   }
 
-  @Nullable
   @Override
-  public PsiType getType() {
+  public @Nullable PsiType getType() {
     return null;
   }
 }

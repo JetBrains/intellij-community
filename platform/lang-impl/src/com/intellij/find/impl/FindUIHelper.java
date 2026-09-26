@@ -1,21 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindSettings;
+import com.intellij.find.FindUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,23 +13,28 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.function.Consumer;
 
+@ApiStatus.Internal
 @SuppressWarnings("WeakerAccess")
-public class FindUIHelper implements Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private  FindModel myModel;
-   FindModel myPreviousModel;
-  @NotNull private Runnable myOkHandler;
+public final class FindUIHelper implements Disposable {
+  private final @NotNull Project myProject;
+  private @NotNull FindModel myModel;
+  FindModel myPreviousModel;
+  private @NotNull Runnable myOkHandler;
+  private @Nullable Consumer<Integer> myFinishHandler;
 
   FindUI myUI;
 
-  FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
+  @ApiStatus.Internal
+  public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
     myModel = model;
     myOkHandler = okHandler;
@@ -48,31 +43,17 @@ public class FindUIHelper implements Disposable {
   }
 
   private FindUI getOrCreateUI() {
-    boolean newInstanceRequired = myUI instanceof FindPopupPanel && !showAsPopup() ||
-                                  myUI instanceof FindDialog && showAsPopup() ||
-                                  myUI == null;
-    if (newInstanceRequired) {
+    if (myUI == null) {
       JComponent component;
-      if (showAsPopup()) {
-        FindPopupPanel panel = new FindPopupPanel(this);
-        component = panel;
-        myUI = panel;
-      }
-      else {
-        FindDialog findDialog = new FindDialog(this);
-        component = ((JDialog)findDialog.getWindow()).getRootPane();
-        myUI = findDialog;
-      }
-      
+      FindPopupPanel panel = new FindPopupPanel(this);
+      component = panel;
+      myUI = panel;
+
       registerAction("ReplaceInPath", true, component, myUI);
       registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
     }
     return myUI;
-  }
-
-  private static boolean showAsPopup() {
-    return Registry.is("ide.find.as.popup") && SystemInfo.isJetBrainsJvm;
   }
 
   private void registerAction(String actionName, boolean replace, JComponent component, FindUI ui) {
@@ -86,28 +67,11 @@ public class FindUIHelper implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ui.saveSettings();
+        myModel.copyFrom(FindManager.getInstance(myProject).getFindInProjectModel());
         FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
         myModel.setReplaceState(replace);
         ui.initByModel();
       }
-      //@NotNull
-      //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
-      //  DataContext dataContext = e.getDataContext();
-      //  Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      //  Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      //  final String selection = editor != null ? editor.getSelectionModel().getSelectedText() : null;
-      //
-      //  return new DataContextWrapper(dataContext) {
-      //    @Nullable
-      //    @Override
-      //    public Object getData(@NonNls String dataId) {
-      //      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      //      if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return selection;
-      //      return super.getData(dataId);
-      //    }
-      //  };
-      //}
-
     }.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
@@ -117,13 +81,11 @@ public class FindUIHelper implements Disposable {
   }
 
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public FindModel getModel() {
+  public @NotNull FindModel getModel() {
     return myModel;
   }
 
@@ -139,6 +101,12 @@ public class FindUIHelper implements Disposable {
   public void showUI() {
     myUI = getOrCreateUI();
     myUI.showUI();
+  }
+
+  public void closeUI() {
+    if (myUI != null) {
+      myUI.closeIfPossible();
+    }
   }
 
   @Override
@@ -158,12 +126,11 @@ public class FindUIHelper implements Disposable {
     }
 
     findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
-    boolean saveContextBetweenRestarts = false;
-    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
-    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
-    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
-    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
-    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
+    findSettings.setInStringLiteralsOnly(false);
+    findSettings.setInCommentsOnly(false);
+    findSettings.setExceptComments(false);
+    findSettings.setExceptStringLiterals(false);
+    findSettings.setExceptCommentsAndLiterals(false);
 
     findSettings.setRegularExpressions(myModel.isRegularExpressions());
     if (!myModel.isMultipleFiles()){
@@ -187,27 +154,7 @@ public class FindUIHelper implements Disposable {
     findSettings.setFileMask(myModel.getFileFilter());
   }
 
-  boolean isUseSeparateView() {
-    return FindSettings.getInstance().isShowResultsInSeparateView();
-  }
-
-  boolean isSkipResultsWithOneUsage() {
-    return FindSettings.getInstance().isSkipResultsWithOneUsage();
-  }
-
-  void setUseSeparateView(boolean separateView) {
-    if (!myModel.isOpenInNewTabEnabled()) throw new IllegalStateException("'Open in new Tab' is not enabled");
-    myModel.setOpenInNewTab(separateView);
-    FindSettings.getInstance().setShowResultsInSeparateView(separateView);
-  }
-
-  void setSkipResultsWithOneUsage(boolean skip) {
-    if (!isReplaceState()) {
-      FindSettings.getInstance().setSkipResultsWithOneUsage(skip);
-    }
-  }
-
-  String getTitle() {
+  @Nls String getTitle() {
     if (myModel.isReplaceState()){
       return myModel.isMultipleFiles()
              ? FindBundle.message("find.replace.in.project.dialog.title")
@@ -222,13 +169,23 @@ public class FindUIHelper implements Disposable {
     return myModel.isReplaceState();
   }
 
-  @NotNull
-  public Runnable getOkHandler() {
+  public @NotNull Runnable getOkHandler() {
     return myOkHandler;
   }
 
   public void doOKAction() {
-    updateFindSettings();
     myOkHandler.run();
+  }
+
+  @ApiStatus.Internal
+  public void setFinishHandler(@Nullable Consumer<Integer> finishHandler) {
+    myFinishHandler = finishHandler;
+  }
+
+  @ApiStatus.Internal
+  public void onSearchFinish(int count) {
+    if (myFinishHandler != null) {
+      myFinishHandler.accept(count);
+    }
   }
 }

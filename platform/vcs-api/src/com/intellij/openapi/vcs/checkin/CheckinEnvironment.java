@@ -1,80 +1,109 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
  *
- * @author lesya
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
-public interface CheckinEnvironment extends VcsProviderMarker {
-  @Nullable
-  RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel, PairConsumer<Object, Object> additionalDataConsumer);
+public interface CheckinEnvironment {
 
-  @Nullable
-  String getDefaultMessageFor(FilePath[] filesToCheckin);
+  default @Nullable RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+    //noinspection deprecation
+    return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
+  }
+
+  /**
+   * @deprecated use {@link #createCommitOptions(CheckinProjectPanel, CommitContext)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  default @Nullable RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
+                                                              @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
+    return null;
+  }
+
+  /**
+   * @deprecated implementations returning non-null messages should be replaced with
+   * {@link com.intellij.openapi.vcs.changes.ui.CommitMessageProvider}.
+   */
+  @Deprecated(forRemoval = true)
+  default @Nullable @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
+    return null;
+  }
 
   @Nullable
   @NonNls
   String getHelpId();
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getCheckinOperationName();
 
-  @Nullable
-  List<VcsException> commit(List<Change> changes, String preparedComment);
+  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes, @NotNull @NlsSafe String preparedComment) {
+    return commit(changes, preparedComment, new CommitContext(), new HashSet<>());
+  }
+
+  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                              @NotNull @NlsSafe String commitMessage,
+                                              @NotNull CommitContext commitContext,
+                                              @NotNull Set<? super @DetailedDescription String> feedback) {
+    //noinspection deprecation
+    return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
+  }
+
+  /**
+   * @deprecated use {@link #commit(List, String, CommitContext, Set)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  default @Nullable List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                    @NotNull String preparedComment,
+                                    @NotNull NullableFunction<Object, Object> parametersHolder,
+                                    @NotNull Set<? super @DetailedDescription String> feedback) {
+    return null;
+  }
 
   @Nullable
-  List<VcsException> commit(List<Change> changes,
-                            String preparedComment,
-                            @NotNull NullableFunction<Object, Object> parametersHolder,
-                            Set<String> feedback);
+  List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files);
 
   @Nullable
-  List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
-
-  @Nullable
-  List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
+  List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files);
 
   /**
    * @deprecated use {@link com.intellij.openapi.vcs.VcsConfiguration#REMOVE_EMPTY_INACTIVE_CHANGELISTS}
    */
-  @Deprecated
-  default boolean keepChangeListAfterCommit(ChangeList changeList) {return false;}
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
+  default boolean keepChangeListAfterCommit(ChangeList changeList) { return false; }
 
   /**
    * @return true if VFS refresh has to be performed after commit, because files might have changed during commit
    * (for example, due to keyword substitution in SVN or read-only status in Perforce).
    */
   boolean isRefreshAfterCommitNeeded();
+
+  default @Nullable PostCommitChangeConverter getPostCommitChangeConverter() {
+    return null;
+  }
 }

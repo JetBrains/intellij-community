@@ -1,79 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.LayeredIcon;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 public class AsyncProcessIcon extends AnimatedIcon {
-  public static final int COUNT = 12;
-  public static final int CYCLE_LENGTH = 800;
+  private static final Icon[] SMALL_ICONS = com.intellij.ui.AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
 
-  private static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
-  private boolean myUseMask;
+  public static final int COUNT = SMALL_ICONS.length;
+  public static final int CYCLE_LENGTH = com.intellij.ui.AnimatedIcon.Default.DELAY * SMALL_ICONS.length;
 
   public AsyncProcessIcon(@NonNls String name) {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
-  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
-    super(name, icons, passive, CYCLE_LENGTH);
-    setUseMask(false);
+  public AsyncProcessIcon(@NotNull CoroutineScope coroutineScope) {
+    this(null, SMALL_ICONS, AllIcons.Process.Step_passive, coroutineScope);
   }
 
-  public AsyncProcessIcon setUseMask(boolean useMask) {
-    myUseMask = useMask;
-    return this;
+  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
+    super(name, icons, passive, CYCLE_LENGTH);
+  }
+
+  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive, @NotNull CoroutineScope coroutineScope) {
+    super(name, icons, passive, CYCLE_LENGTH, coroutineScope);
   }
 
   @Override
-  protected void paintIcon(Graphics g, Icon icon, int x, int y) {
-    if (icon instanceof ProcessIcon) {
-      ((ProcessIcon)icon).setLayerEnabled(0, myUseMask);
-    }
-    super.paintIcon(g, icon, x, y);
-
-    if (icon instanceof ProcessIcon) {
-      ((ProcessIcon)icon).setLayerEnabled(0, false);
-    }
+  protected Dimension calcPreferredSize() {
+    return new Dimension(passiveIcon.getIconWidth(), passiveIcon.getIconHeight());
   }
 
-  private static Icon[] findIcons(String prefix, String maskIconPath) {
-    Icon maskIcon = maskIconPath != null ? IconLoader.getIcon(maskIconPath) : null;
-    Icon[] icons = new Icon[COUNT];
-    for (int i = 0; i <= COUNT - 1; i++) {
-      Icon eachIcon = IconLoader.getIcon(prefix + (i + 1) + ".png");
-      if (maskIcon != null) {
-        icons[i] = new ProcessIcon(maskIcon, eachIcon);
-      } else {
-        icons[i] = eachIcon;
-      }
-    }
-    return icons;
-  }
-
-  public void updateLocation(final JComponent container) {
-    final Rectangle newBounds = calculateBounds(container);
+  public void updateLocation(@NotNull JComponent container) {
+    Rectangle newBounds = calculateBounds(container);
     if (!newBounds.equals(getBounds())) {
       setBounds(newBounds);
       // painting problems with scrollpane
@@ -82,41 +49,41 @@ public class AsyncProcessIcon extends AnimatedIcon {
     }
   }
 
-  @NotNull
-  protected Rectangle calculateBounds(@NotNull JComponent container) {
+  protected @NotNull Rectangle calculateBounds(@NotNull JComponent container) {
     Rectangle rec = container.getVisibleRect();
     Dimension iconSize = getPreferredSize();
     return new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
   }
 
-  private static class ProcessIcon extends LayeredIcon {
-    private ProcessIcon(Icon mask, Icon stepIcon) {
-      super(mask, stepIcon);
-    }
+  public static @NotNull AnimatedIcon createBig(@NonNls String name) {
+    return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
+  }
+
+  public static @NotNull AnimatedIcon createBig(@NotNull CoroutineScope coroutineScope) {
+    return new AsyncProcessIcon(null, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive, coroutineScope);
   }
 
   public static class Big extends AsyncProcessIcon {
-    private static final Icon[] BIG_ICONS = {
-      AllIcons.Process.Big.Step_1,
-      AllIcons.Process.Big.Step_2,
-      AllIcons.Process.Big.Step_3,
-      AllIcons.Process.Big.Step_4,
-      AllIcons.Process.Big.Step_5,
-      AllIcons.Process.Big.Step_6,
-      AllIcons.Process.Big.Step_7,
-      AllIcons.Process.Big.Step_8,
-      AllIcons.Process.Big.Step_9,
-      AllIcons.Process.Big.Step_10,
-      AllIcons.Process.Big.Step_11,
-      AllIcons.Process.Big.Step_12
-    };
-
-    public Big(@NonNls final String name) {
-      super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);
+    public Big(@NonNls String name) {
+      super(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
     }
   }
 
+  public static class BigCentered extends Big {
+    public BigCentered(@NonNls String name) {
+      super(name);
+    }
+
+    @Override
+    protected @NotNull Rectangle calculateBounds(@NotNull JComponent container) {
+      Dimension size = container.getSize();
+      Dimension iconSize = getPreferredSize();
+      return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);
+    }
+  }
+
+
   public boolean isDisposed() {
-    return myAnimator.isDisposed();
+    return animator.isDisposed();
   }
 }

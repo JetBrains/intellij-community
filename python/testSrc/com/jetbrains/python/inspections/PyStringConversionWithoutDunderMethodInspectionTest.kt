@@ -1,0 +1,413 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.inspections
+
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
+import com.intellij.idea.TestFor
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.fixtures.PyInspectionTestCase
+
+@Subsystems.Inspections
+@Layers.Functional
+class PyStringConversionWithoutDunderMethodInspectionTest : PyInspectionTestCase() {
+
+  override fun getInspectionClass() = PyStringConversionWithoutDunderMethodInspection::class.java
+
+  fun `test None`() = doTestByText("""
+    f"{None}"  
+  """.trimIndent())
+
+  fun `test generator`() = doTestByText("""
+    f"{<weak_warning descr="Type 'Generator[int, Unknown, None]' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">(_ for _ in range(10))</weak_warning>}"
+  """.trimIndent())
+
+  fun `test function`() = doTestByText("""
+    def f(): ...
+    f"{<weak_warning descr="Type 'FunctionType' string value might not be useful">f</weak_warning>}"
+  """.trimIndent())
+
+  fun `test zip`() = doTestByText("""
+    def f(): ...
+    f"{<weak_warning descr="Type 'zip[Any]' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">zip()</weak_warning>}"
+  """.trimIndent())
+
+  fun `test super`() = doTestByText("""
+    def f(): ...
+    f"{super()}"
+  """.trimIndent())
+
+  fun `test str call without dunder methods`() = doTestByText("""
+    class A:
+        pass
+
+    str(<weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>)
+    """.trimIndent())
+
+  fun `test str call with dunder str`() = doTestByText("""
+    class A:
+        def __str__(self):
+            return "A instance"
+
+    str(A())
+    """.trimIndent())
+
+  fun `test str call with dunder repr`() = doTestByText("""
+    class A:
+        def __repr__(self):
+            return "A()"
+
+    str(A())
+    """.trimIndent())
+
+  fun `test str call with dunder format`() = doTestByText("""
+    class A:
+        def __format__(self, format_spec):
+            return f"A formatted with {format_spec}"
+
+    str(<weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>)
+    """.trimIndent())
+
+  fun `test format call without dunder methods`() = doTestByText("""
+    class A:
+        pass
+
+    format(<weak_warning descr="Type 'A' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">A()</weak_warning>)
+    """.trimIndent())
+
+  fun `test format call with repr method`() = doTestByText("""
+    class A:
+        def __repr__(self): ...
+
+    format(A())
+    """.trimIndent())
+
+  fun `test format call with str method`() = doTestByText("""
+    class A:
+        def __str__(self): ...
+
+    format(A())
+    """.trimIndent())
+
+  fun `test inherited dunder methods`() = doTestByText("""
+    class Base:
+        def __str__(self):
+            return "Base"
+
+    class Derived(Base):
+        pass
+
+    str(Derived())
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91292"])
+  fun `test should not warn for builtin types`() = doTestByText("""
+    repr(42)
+    repr((1, 2, 3))
+    repr([1, 2, 3])
+    repr({"key": "value"})
+    repr(None)
+    repr(True)
+    repr("asdf")
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-89082"])
+  fun `test should not warn for pathlib`() = doTestByText("""
+    from pathlib import PurePath
+
+    repr(PurePath())
+    str(PurePath())
+    format(PurePath())
+    """.trimIndent())
+
+  fun `test should warn for object`() = doTestByText("""
+    repr(<weak_warning descr="Type 'object' string value might not be useful">object()</weak_warning>)
+    """.trimIndent())
+
+  fun `test should warn for type`() = doTestByText("""
+    str(<weak_warning descr="Type 'type' string value might not be useful">int</weak_warning>)
+    """.trimIndent())
+
+  fun `test repr call without dunder methods`() = doTestByText("""
+    class A:
+        pass
+
+    repr(<weak_warning descr="Type 'A' doesn't define '__repr__', so the result might not be useful">A()</weak_warning>)
+    """.trimIndent())
+
+  fun `test repr call with dunder repr`() = doTestByText("""
+    class A:
+        def __repr__(self):
+            return "A()"
+
+    repr(A())
+    """.trimIndent())
+
+  fun `test repr call with dunder str`() = doTestByText("""
+    class A:
+        def __str__(self):
+            return "A instance"
+
+    repr(<weak_warning descr="Type 'A' doesn't define '__repr__', so the result might not be useful">A()</weak_warning>)
+    """.trimIndent())
+
+  fun `test f-string without dunder methods`() = doTestByText("""
+    class A:
+        pass
+
+    f"{<weak_warning descr="Type 'A' doesn't define '__str__', '__repr__', or '__format__', so the result might not be useful">A()</weak_warning>}"
+    """.trimIndent())
+
+  fun `test f-string string`() = doTestByText("""
+    class A:
+        def __format__(self, format_spec): ...
+
+    f"{<weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>!s}"
+    """.trimIndent())
+
+  fun `test f-string repr`() = doTestByText("""
+    class A:
+        def __str__(self): ...
+        
+        def __format__(self, format_spec): ...
+
+    f"{<weak_warning descr="Type 'A' doesn't define '__repr__', so the result might not be useful">A()</weak_warning>!r}"
+    """.trimIndent())
+
+  fun `test f-string debug`() = doTestByText("""
+    class A:
+        def __str__(self): ...
+        
+        def __format__(self, format_spec): ...
+
+    f"{<weak_warning descr="Type 'A' doesn't define '__repr__', so the result might not be useful">A()</weak_warning>=}"
+    """.trimIndent())
+
+  fun `test f-string with dunder str`() = doTestByText("""
+    class A:
+        def __str__(self):
+            return "A instance"
+
+    f"{A()}"
+    """.trimIndent())
+
+  fun `test f-string with dunder repr`() = doTestByText("""
+    class A:
+        def __repr__(self):
+            return "A()"
+
+    f"{A()}"
+    """.trimIndent())
+
+  fun `test f-string with dunder format`() = doTestByText("""
+    class A:
+        def __format__(self):
+            return "A()"
+
+    f"{A()}"
+    """.trimIndent())
+
+  fun `test print call without dunder methods`() = doTestByText("""
+    class A:
+        pass
+
+    print(<weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>, <weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>)
+    """.trimIndent())
+
+  fun `test print call with dunder str`() = doTestByText("""
+    class A:
+        def __str__(self):
+            return "A instance"
+
+    print(A())
+    """.trimIndent())
+
+  fun `test print with keyword arguments`() = doTestByText("""
+    class A:
+        pass
+
+    print(
+        <weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>,
+        file=A(),
+    )
+    """.trimIndent())
+
+  fun `test union reports`() = doTestByText("""
+    class A:
+        def __str__(self): pass
+    
+    class B:
+        pass
+    
+    def f(ab: A | B):
+        str(<weak_warning descr="Type 'B' doesn't define '__str__' or '__repr__', so the result might not be useful">ab</weak_warning>)
+    """.trimIndent())
+
+  fun `test union doesn't report`() = doTestByText("""
+    class A:
+        def __str__(self): pass
+    
+    class B:
+        def __str__(self): pass
+    
+    def f(ab: A | B):
+        str(ab)
+    """.trimIndent())
+
+  fun `test intersection reports`() = doTestByText("""
+    class A:
+        pass
+    
+    class B:
+        pass
+    
+    def f(ab: A & B):
+        str(<weak_warning descr="Type 'A & B' doesn't define '__str__' or '__repr__', so the result might not be useful">ab</weak_warning>)
+    """.trimIndent())
+
+  fun `test intersection doesn't report`() = doTestByText("""
+    class A:
+        def __str__(self): pass
+    
+    class B:
+        pass
+    
+    def f(ab: A & B):
+        str(ab)
+    """.trimIndent())
+
+  fun `test derived from a builtin`() = doTestByText("""
+    class A(int): ...
+    
+    str(A())    
+    """.trimIndent())
+
+  // The MRO puts a base of the subclass after `zip`, so the walk must not stop at `zip`.
+  // A parameter gives the type `MyZip`, because `zip.__new__` in typeshed returns a plain `zip`.
+  @TestFor(issues = ["PY-89986"])
+  fun `test derived from a reported type and a base with dunder str`() = doTestByText("""
+    class Named:
+        def __str__(self): ...
+
+    class MyZip(zip, Named): ...
+
+    class PlainZip(zip): ...
+
+    def f(named: MyZip, plain: PlainZip):
+        str(named)
+        str(<weak_warning descr="Type 'PlainZip' doesn't define '__str__' or '__repr__', so the result might not be useful">plain</weak_warning>)
+    """.trimIndent())
+
+  fun `test quickfix add to ignored types removes warning`() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      class A: ...
+      
+      str(<caret>A())
+    """.trimIndent())
+    myFixture.enableInspections(getAllInspectionClasses())
+
+    val action = myFixture.findSingleIntention(
+      PyPsiBundle.message("INSP.string.conversion.add.to.ignored.types", "A"))
+    myFixture.launchAction(action)
+
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  fun `test quickfix remove from reported types removes warning`() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      def f(): ...
+      f"{<caret>f}"
+    """.trimIndent())
+    myFixture.enableInspections(getAllInspectionClasses())
+
+    val action = myFixture.findSingleIntention(
+      PyPsiBundle.message("INSP.string.conversion.remove.from.reported.types", "FunctionType"))
+    myFixture.launchAction(action)
+
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  fun `test dataclass reports`() = doTestByText("""
+    from dataclasses import dataclass
+
+    @dataclass(repr=False)
+    class ReprFalse: ...
+
+    print(<weak_warning descr="Type 'ReprFalse' doesn't define '__str__' or '__repr__', so the result might not be useful">ReprFalse()</weak_warning>)
+    """.trimIndent())
+
+  fun `test dataclass doesn't report`() = doTestByText("""
+    from dataclasses import dataclass
+
+    @dataclass
+    class ReprTrue: ...
+
+    print(ReprTrue())
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-91292"])
+  fun `test should not warn for a string literal`() = doTestByText("""
+    print("hello world")
+    str(123456)
+    f"{1.5}"
+    print([1, 2, 3])
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-89218"])
+  fun `test should not warn for a regular expression`() = doTestByText("""
+    import re
+
+    regex = re.compile("")
+    print(regex)
+    print(regex.search(""))
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-89986"])
+  fun `test should not warn for an ip address`() = doTestByText("""
+    from ipaddress import IPv4Address, IPv6Address
+
+    str(IPv4Address("127.0.0.1"))
+    str(IPv6Address("::1"))
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-89483"])
+  fun `test dunder new call is not a string conversion`() = doTestByText("""
+    class A(str):
+        def __new__(cls):
+            return super().__new__(cls)
+
+    str.__new__(A)
+    """.trimIndent())
+
+  // A class declared in a .pyi stub usually omits __str__/__repr__/__format__ that the runtime .py defines.
+  @TestFor(issues = ["PY-89004"])
+  fun testStubMethodResolvedToImplementation() = doMultiFileTestByText("""
+      from mod import A, B
+    
+      class C(B): ...
+    
+      str(A())
+      str(B())
+      str(C())
+    """.trimIndent())
+
+  // A .pyi stub often flattens a private base that only the runtime .py declares.
+  @TestFor(issues = ["PY-89986"])
+  fun testStubHidesImplementationBase() = doMultiFileTestByText("""
+      from mod import A
+
+      str(A())
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-89004"])
+  fun testStubMethodMissingInImplementation() = doMultiFileTestByText("""
+    from mod import A, B
+    
+    class C(B): ...
+    
+    str(<weak_warning descr="Type 'A' doesn't define '__str__' or '__repr__', so the result might not be useful">A()</weak_warning>)
+    str(<weak_warning descr="Type 'B' doesn't define '__str__' or '__repr__', so the result might not be useful">B()</weak_warning>)
+    str(<weak_warning descr="Type 'C' doesn't define '__str__' or '__repr__', so the result might not be useful">C()</weak_warning>)
+    """.trimIndent())
+}

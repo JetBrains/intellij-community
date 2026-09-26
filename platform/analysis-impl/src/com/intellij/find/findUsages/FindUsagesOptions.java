@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindSettings;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class FindUsagesOptions implements Cloneable {
-  @NotNull
-  public SearchScope searchScope;
+  public @NotNull SearchScope searchScope;
+  @ApiStatus.Internal
+  public boolean isMaximalScope = false;
 
   public boolean isSearchForTextOccurrences = true;
 
@@ -42,30 +32,31 @@ public class FindUsagesOptions implements Cloneable {
     this(project, null);
   }
 
-  public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
-    this(calcScope(project, dataContext));
-  }
-
-  @NotNull
-  private static SearchScope calcScope(@NotNull Project project, @Nullable DataContext dataContext) {
-    String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();
-    List<SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(project, dataContext, true, false, false,
-                                                                                                   false);
-    SearchScope resultScope = null;
-    for (SearchScope scope : predefined) {
-      if (scope.getDisplayName().equals(defaultScopeName)) {
-        resultScope = scope;
-        break;
-      }
-    }
-    if (resultScope == null) {
-      resultScope = ProjectScope.getProjectScope(project);
-    }
-    return resultScope;
+  public FindUsagesOptions(@NotNull Project project, final @Nullable DataContext dataContext) {
+    this(findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()));
   }
 
   public FindUsagesOptions(@NotNull SearchScope searchScope) {
     this.searchScope = searchScope;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull SearchScope findScopeByName(@NotNull Project project,
+                                                     @Nullable DataContext dataContext,
+                                                     @Nullable String scopeName) {
+    List<? extends SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+      project, dataContext, true, false, false, false, false);
+    for (SearchScope scope : predefined) {
+      if (scope.getDisplayName().equals(scopeName)) {
+        return scope;
+      }
+    }
+    return getDefaultScope(project);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull SearchScope getDefaultScope(@NotNull Project project) {
+    return ProjectScope.getProjectScope(project);
   }
 
   @Override
@@ -98,9 +89,8 @@ public class FindUsagesOptions implements Cloneable {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return getClass().getSimpleName() + "{" +
            "searchScope=" + searchScope +
            ", isSearchForTextOccurrences=" + isSearchForTextOccurrences +
@@ -108,8 +98,7 @@ public class FindUsagesOptions implements Cloneable {
            '}';
   }
 
-  @NotNull
-  public String generateUsagesString() {
-    return "Usages";
+  public @NotNull @Nls String generateUsagesString() {
+    return AnalysisBundle.message("find.usages.panel.title.usages");
   }
 }

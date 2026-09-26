@@ -1,0 +1,30 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.uiDesigner"/>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.designer"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.text.matching"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+  <!-- todo IDEA-282478
+  <actions>
+    <action class="org.jetbrains.idea.devkit.formConversion.ConvertFormToDslAction"
+            text="Convert Form to UI DSL"/>
+  </actions>
+  -->
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.uiDesigner.ConvertFormNotificationProvider"/>
+  </extensions>
+</idea-plugin>

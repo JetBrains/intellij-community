@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 class MyTest2<X> {
     MyTest2(X x) {
     }

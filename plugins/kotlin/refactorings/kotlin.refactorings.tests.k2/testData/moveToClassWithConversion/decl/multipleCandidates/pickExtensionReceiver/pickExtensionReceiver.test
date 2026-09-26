@@ -1,0 +1,7 @@
+{
+  "mainFile": "sample/Source.kt",
+  "enabledInK2": true,
+  "targetClassFqName": "sample.Receiver",
+  "candidateKind": "EXTENSION_RECEIVER",
+  "candidateDisplayName": "<extension receiver>"
+}

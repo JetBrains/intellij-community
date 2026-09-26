@@ -17,105 +17,104 @@ package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
+import org.intellij.plugins.xpathView.XPathBundle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class FileAssociationsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-    private final Project myProject;
-    private final UIState myState;
-    private AssociationsEditor myEditor;
+public final class FileAssociationsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
-    public FileAssociationsConfigurable(Project project) {
-        myProject = project;
-        myState = ServiceManager.getService(project, UIState.class);
-    }
+  private final @NotNull Project myProject;
+  private final @NotNull UIState myState;
+  private AssociationsEditor myEditor;
 
-    @Override
-    public String getDisplayName() {
-        return "XSLT File Associations";
-    }
+  public FileAssociationsConfigurable(@NotNull Project project) {
+    myProject = project;
+    myState = project.getService(UIState.class);
+  }
 
   @Override
-  @NotNull
-    public String getHelpTopic() {
-        return "xslt.associations";
+  public @NotNull @Nls String getDisplayName() {
+    return XPathBundle.message("configurable.FileAssociationsConfigurable.display.name");
+  }
+
+  @Override
+  public @NotNull @NonNls String getHelpTopic() {
+    return "xslt.associations";
+  }
+
+  @Override
+  public @NotNull JComponent createComponent() {
+    myEditor = new AssociationsEditor(myProject, myState.state);
+    return myEditor.getComponent();
+  }
+
+  @Override
+  public boolean isModified() {
+    return myEditor != null && myEditor.isModified();
+  }
+
+  @Override
+  public void apply() {
+    myEditor.apply();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
+  }
+
+  @Override
+  public void reset() {
+    myEditor.reset();
+  }
+
+  @Override
+  public void disposeUIResources() {
+    if (myEditor != null) {
+      myState.state = myEditor.getState();
+      Disposer.dispose(myEditor);
+      myEditor = null;
+    }
+  }
+
+  public static void editAssociations(@NotNull Project project,
+                                      @Nullable PsiFile file) {
+    FileAssociationsConfigurable instance = new FileAssociationsConfigurable(project);
+
+    ShowSettingsUtil.getInstance().editConfigurable(project, instance, () -> {
+      if (file != null) {
+        instance.myEditor.select(file);
+      }
+    });
+  }
+
+  @State(name = "XSLT-Support.FileAssociations.UIState", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+  public static class UIState implements PersistentStateComponent<TreeState> {
+    private TreeState state;
+
+    @Override
+    public TreeState getState() {
+      return state != null ? state : TreeState.createFrom(null);
     }
 
     @Override
-    public JComponent createComponent() {
-      myEditor = ReadAction.compute(() -> new AssociationsEditor(myProject, myState.state));
-        return myEditor.getComponent();
+    public void loadState(@NotNull TreeState state) {
+      this.state = state;
     }
+  }
 
-    @Override
-    public synchronized boolean isModified() {
-        return myEditor != null && myEditor.isModified();
-    }
-
-    @Override
-    public void apply() throws ConfigurationException {
-        myEditor.apply();
-        DaemonCodeAnalyzer.getInstance(myProject).restart();
-    }
-
-    @Override
-    public void reset() {
-        myEditor.reset();
-    }
-
-    @Override
-    public synchronized void disposeUIResources() {
-        if (myEditor != null) {
-            myState.state = myEditor.getState();
-            myEditor.dispose();
-            myEditor = null;
-        }
-    }
-
-    public AssociationsEditor getEditor() {
-        return myEditor;
-    }
-
-    public static void editAssociations(Project project, final PsiFile file) {
-        final FileAssociationsConfigurable instance = new FileAssociationsConfigurable(project);
-
-        ShowSettingsUtil.getInstance().editConfigurable(project, instance, () -> {
-            final AssociationsEditor editor = instance.getEditor();
-            if (file != null) {
-                editor.select(file);
-            }
-        });
-    }
-
-    @State(name = "XSLT-Support.FileAssociations.UIState",
-            storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-    )
-    public static class UIState implements PersistentStateComponent<TreeState> {
-        private TreeState state;
-
-        @Override
-        public TreeState getState() {
-            return state != null ? state : TreeState.createFrom(null);
-        }
-
-        @Override
-        public void loadState(@NotNull TreeState state) {
-            this.state = state;
-        }
-    }
-
-    @Override
-    @NotNull
-    public String getId() {
-        return getHelpTopic();
-    }
+  @Override
+  public @NotNull String getId() {
+    return getHelpTopic();
+  }
 }

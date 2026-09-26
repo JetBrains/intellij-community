@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.util.zip` start
+jvm_library(
+    name = "zip",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.util.zip",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//libraries/jetbrains/annotations",
+        "//platform/util/rt-java8",
+    ],
+)
+
+jvm_library(
+    name = "zip_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.platform.util.zip",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":zip",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//platform/util/rt-java8:rt-java8_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.util.zip` end
+
+### auto-generated section `iml intellij.platform.util.zip` start
+exports_files(
+    [
+        "intellij.platform.util.zip.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.util.zip` end

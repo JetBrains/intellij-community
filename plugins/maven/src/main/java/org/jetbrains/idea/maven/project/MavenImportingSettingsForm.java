@@ -1,178 +1,148 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.project.ExternalStorageConfigurationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.projectImport.ProjectFormatPanel;
-import com.intellij.ui.EnumComboBoxModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.DialogPanel;
+import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MavenImportingSettingsForm {
-  private JPanel myPanel;
 
-  private JCheckBox mySearchRecursivelyCheckBox;
+  private final MavenImportingSettings settings;
+  private final MavenImportingSettingsUi ui;
 
-  private JLabel myProjectFormatLabel;
-  private JComboBox myProjectFormatComboBox;
-  private ProjectFormatPanel myProjectFormatPanel;
-  private JCheckBox mySeparateModulesDirCheckBox;
-  private TextFieldWithBrowseButton mySeparateModulesDirChooser;
+  private final ComponentValidator myImporterJdkValidator;
+  private volatile boolean myMuteJdkValidation = false;
 
-  private JCheckBox myImportAutomaticallyBox;
-  private JCheckBox myCreateModulesForAggregators;
-  private JCheckBox myCreateGroupsCheckBox;
-  private JComboBox myUpdateFoldersOnImportPhaseComboBox;
-  private JCheckBox myKeepSourceFoldersCheckBox;
-  private JCheckBox myUseMavenOutputCheckBox;
-  private JCheckBox myDownloadSourcesCheckBox;
-  private JCheckBox myDownloadDocsCheckBox;
+  public MavenImportingSettingsForm(Project project, @NotNull Disposable disposable, @NotNull MavenImportingSettingsUi ui) {
+    settings = MavenProjectsManager.getInstance(project).getImportingSettings();
+    this.ui = ui;
 
-  private JPanel myAdditionalSettingsPanel;
-  private JComboBox myGeneratedSourcesComboBox;
-  private JCheckBox myExcludeTargetFolderCheckBox;
-  private JTextField myDependencyTypes;
-  private JCheckBox myStoreProjectFilesExternally;
-
-  public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
-    mySearchRecursivelyCheckBox.setVisible(isImportStep);
-    myProjectFormatLabel.setVisible(isImportStep && isCreatingNewProject);
-    myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
-
-    ActionListener listener = new ActionListener() {
+    ui.jdkForImporterComboBox.setProject(project);
+    ui.searchRecursivelyCheckBox.setVisible(project.isDefault());
+    ui.jdkForImporterComboBox.setHighlightInternalJdk(false);
+    ActionListener validatorListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        updateControls();
+        validateImporterJDK();
       }
     };
-    mySeparateModulesDirCheckBox.addActionListener(listener);
+    ui.jdkForImporterComboBox.addActionListener(validatorListener);
 
-    mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
-                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
-
-    myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
-
-    myGeneratedSourcesComboBox.setModel(new EnumComboBoxModel<>(MavenImportingSettings.GeneratedSourcesFolder.class));
-    myGeneratedSourcesComboBox.setRenderer(new ListCellRendererWrapper() {
-      @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof MavenImportingSettings.GeneratedSourcesFolder) {
-          setText(((MavenImportingSettings.GeneratedSourcesFolder)value).title);
+    myImporterJdkValidator = new ComponentValidator(disposable)
+      .withValidator(() -> {
+        if (JavaSdkVersionUtil.isAtLeast(ui.jdkForImporterComboBox.getSelectedJdk(), JavaSdkVersion.JDK_17)) {
+          return null;
         }
-      }
-    });
+        var settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
+        MavenHomeType type = settings.getGeneralSettings().getMavenHomeType();
+        if (type instanceof StaticResolvedMavenHomeType staticResolvedMavenHomeType) {
+          var version = MavenUtil.getMavenVersion(staticResolvedMavenHomeType);
+          if (version != null && version.startsWith("4")) {
+            return new ValidationInfo(MavenConfigurableBundle.message("maven.settings.importing.jdk.too.old.error.4"),
+                                      ui.jdkForImporterComboBox);
+          }
+        }
+        if (!JavaSdkVersionUtil.isAtLeast(ui.jdkForImporterComboBox.getSelectedJdk(), JavaSdkVersion.JDK_1_8)) {
+          return new ValidationInfo(MavenConfigurableBundle.message("maven.settings.importing.jdk.too.old.error"),
+                                    ui.jdkForImporterComboBox);
+        }
+        return null;
+      })
+      .installOn(ui.jdkForImporterComboBox);
 
-    LabelTextReplacingUtil.replaceText(myPanel);
+    ui.importerJdkWarning.setVisible(false);
   }
 
-  private void createUIComponents() {
-    myProjectFormatPanel = new ProjectFormatPanel();
-    myProjectFormatComboBox = myProjectFormatPanel.getStorageFormatComboBox();
+  private void updateModuleDirControls() {
+    validateImporterJDK();
   }
 
-  private void updateControls() {
-    boolean useSeparateDir = mySeparateModulesDirCheckBox.isSelected();
-    mySeparateModulesDirChooser.setEnabled(useSeparateDir);
-    if (useSeparateDir && StringUtil.isEmptyOrSpaces(mySeparateModulesDirChooser.getText())) {
-      mySeparateModulesDirChooser.setText(FileUtil.toSystemDependentName(getDefaultModuleDir()));
-    }
-  }
-
-  public String getDefaultModuleDir() {
-    return "";
-  }
-
-  public JComponent createComponent() {
-    return myPanel;
+  public DialogPanel createComponent() {
+    return ui.panel;
   }
 
   public void getData(@NotNull MavenImportingSettings data) {
-    data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
-    data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
+    data.setLookForNested(ui.searchRecursivelyCheckBox.isSelected());
+    LookForNestedToggleAction.setSelected(ui.searchRecursivelyCheckBox.isSelected());
 
-    data.setImportAutomatically(myImportAutomaticallyBox.isSelected());
-    data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
-    data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
+    data.setExcludeTargetFolder(ui.excludeTargetFolderCheckBox.isSelected());
+    data.setUseMavenOutput(ui.useMavenOutputCheckBox.isSelected());
 
-    data.setKeepSourceFolders(myKeepSourceFoldersCheckBox.isSelected());
-    data.setExcludeTargetFolder(myExcludeTargetFolderCheckBox.isSelected());
-    data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
+    data.setUpdateFoldersOnImportPhase((String)ui.updateFoldersOnImportPhaseComboBox.getSelectedItem());
+    data.setGeneratedSourcesFolder((MavenImportingSettings.GeneratedSourcesFolder)ui.generatedSourcesComboBox.getSelectedItem());
 
-    data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
-    data.setGeneratedSourcesFolder((MavenImportingSettings.GeneratedSourcesFolder)myGeneratedSourcesComboBox.getSelectedItem());
+    data.setDownloadSourcesAutomatically(ui.downloadSourcesCheckBox.isSelected());
+    data.setDownloadDocsAutomatically(ui.downloadDocsCheckBox.isSelected());
+    data.setDownloadAnnotationsAutomatically(ui.downloadAnnotationsCheckBox.isSelected());
+    data.setAutoDetectCompiler(ui.autoDetectCompilerCheckBox.isSelected());
+    data.setRunPluginsCompatibilityOnSyncAndBuild(ui.runPluginsCompat.isSelected());
 
-    data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
-    data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
+    data.setVmOptionsForImporter(ui.vmOptionsForImporter.getText());
+    data.setJdkForImporter(ui.jdkForImporterComboBox.getSelectedValue());
 
-    data.setDependencyTypes(myDependencyTypes.getText());
+    data.setDependencyTypes(ui.dependencyTypes.getText());
   }
 
-  public void setData(MavenImportingSettings data, @Nullable Project project) {
-    mySearchRecursivelyCheckBox.setSelected(data.isLookForNested());
-
-    mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
-    mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
-
-    myImportAutomaticallyBox.setSelected(data.isImportAutomatically());
-    myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
-    myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
-
-    myKeepSourceFoldersCheckBox.setSelected(data.isKeepSourceFolders());
-    if (project == null) {
-      // yes, during new project creation there is no ability to set "do not store externally"
-      myStoreProjectFilesExternally.setVisible(false);
-    }
-    else {
-      myStoreProjectFilesExternally.setVisible(true);
-      myStoreProjectFilesExternally.setSelected(isCurrentlyStoredExternally(project));
-    }
-    myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
-    myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
-
-    myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
-    myGeneratedSourcesComboBox.setSelectedItem(data.getGeneratedSourcesFolder());
-
-    myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
-    myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
-
-    myDependencyTypes.setText(data.getDependencyTypes());
-
-    updateControls();
+  public void apply() {
+    getData(settings);
   }
 
-  private static boolean isCurrentlyStoredExternally(@Nullable Project project) {
-    return project == null || ExternalStorageConfigurationManager.getInstance(project).isEnabled();
+  public void reset() {
+    ui.searchRecursivelyCheckBox.setSelected(LookForNestedToggleAction.isSelected());
+
+    ui.excludeTargetFolderCheckBox.setSelected(settings.isExcludeTargetFolder());
+    ui.useMavenOutputCheckBox.setSelected(settings.isUseMavenOutput());
+
+    ui.updateFoldersOnImportPhaseComboBox.setSelectedItem(settings.getUpdateFoldersOnImportPhase());
+    ui.generatedSourcesComboBox.setSelectedItem(settings.getGeneratedSourcesFolder());
+
+    ui.downloadSourcesCheckBox.setSelected(settings.isDownloadSourcesAutomatically());
+    ui.downloadDocsCheckBox.setSelected(settings.isDownloadDocsAutomatically());
+    ui.downloadAnnotationsCheckBox.setSelected(settings.isDownloadAnnotationsAutomatically());
+    ui.autoDetectCompilerCheckBox.setSelected(settings.isAutoDetectCompiler());
+    ui.runPluginsCompat.setSelected(settings.isRunPluginsCompatibilityOnSyncAndBuild());
+
+    ui.dependencyTypes.setText(settings.getDependencyTypes());
+
+    ui.vmOptionsForImporter.setText(settings.getVmOptionsForImporter());
+    skipValidationDuring(() -> ui.jdkForImporterComboBox.refreshData(settings.getJdkForImporter()));
+
+    updateModuleDirControls();
   }
 
-  public boolean isModified(@NotNull MavenImportingSettings settings, @Nullable Project project) {
-    if (project != null && isCurrentlyStoredExternally(project) != isStoreExternally()) {
-      return true;
-    }
 
+  private void skipValidationDuring(Runnable r) {
+    myMuteJdkValidation = true;
+    try {
+      r.run();
+    }
+    finally {
+      myMuteJdkValidation = false;
+      validateImporterJDK();
+    }
+  }
+
+  public boolean isModified() {
     MavenImportingSettings formData = new MavenImportingSettings();
     getData(formData);
     return !formData.equals(settings);
   }
 
-  boolean isStoreExternally() {
-    return !myStoreProjectFilesExternally.isVisible() || myStoreProjectFilesExternally.isSelected();
-  }
-
-  public void updateData(WizardContext wizardContext) {
-    myProjectFormatPanel.updateData(wizardContext);
-  }
-
-  public JPanel getAdditionalSettingsPanel() {
-    return myAdditionalSettingsPanel;
+  private void validateImporterJDK() {
+    if (myMuteJdkValidation) {
+      return;
+    }
+    myImporterJdkValidator.revalidate();
+    ui.importerJdkWarning.setVisible(myImporterJdkValidator.getValidationInfo() != null);
   }
 }

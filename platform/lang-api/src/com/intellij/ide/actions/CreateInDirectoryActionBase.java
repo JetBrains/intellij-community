@@ -1,60 +1,68 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.function.Supplier;
 
 /**
  * The base abstract class for actions which create new file elements in IDE view
- *
- * @since 15.1
  */
 public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase() {
   }
 
-  protected CreateInDirectoryActionBase(String text, String description, Icon icon) {
+  protected CreateInDirectoryActionBase(@NlsActions.ActionText String text,
+                                        @NlsActions.ActionDescription String description,
+                                        Icon icon) {
     super(text, description, icon);
   }
 
-  @Override
-  public void update(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Presentation presentation = e.getPresentation();
+  protected CreateInDirectoryActionBase(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                                        @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                                        Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
 
-    final boolean enabled = isAvailable(dataContext);
-
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
+  protected CreateInDirectoryActionBase(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                                        @Nullable Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                                        @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Override
-  public boolean startInTransaction() {
-    return true;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
+    boolean enabled = isAvailable(e);
+
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
   public boolean isDumbAware() {
     return false;
+  }
+
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    return isAvailable(dataContext);
   }
 
   protected boolean isAvailable(final DataContext dataContext) {

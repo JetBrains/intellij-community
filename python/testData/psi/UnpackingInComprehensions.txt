@@ -1,0 +1,99 @@
+PyFile:UnpackingInComprehensions.py
+  PyExpressionStatement
+    PyListCompExpression
+      PsiElement(Py:LBRACKET)('[')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+        PyReferenceExpression: it
+          PsiElement(Py:IDENTIFIER)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: it
+        PsiElement(Py:IDENTIFIER)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: its
+        PsiElement(Py:IDENTIFIER)('its')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PySetCompExpression
+      PsiElement(Py:LBRACE)('{')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+        PyReferenceExpression: it
+          PsiElement(Py:IDENTIFIER)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: it
+        PsiElement(Py:IDENTIFIER)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: its
+        PsiElement(Py:IDENTIFIER)('its')
+      PsiElement(Py:RBRACE)('}')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyDictCompExpression
+      PsiElement(Py:LBRACE)('{')
+      PyDoubleStarExpression
+        PsiElement(Py:EXP)('**')
+        PyReferenceExpression: d
+          PsiElement(Py:IDENTIFIER)('d')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: d
+        PsiElement(Py:IDENTIFIER)('d')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: dicts
+        PsiElement(Py:IDENTIFIER)('dicts')
+      PsiElement(Py:RBRACE)('}')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyGeneratorExpression
+      PsiElement(Py:LPAR)('(')
+      PyStarExpression
+        PsiElement(Py:MULT)('*')
+        PyReferenceExpression: it
+          PsiElement(Py:IDENTIFIER)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: it
+        PsiElement(Py:IDENTIFIER)('it')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: its
+        PsiElement(Py:IDENTIFIER)('its')
+      PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyCallExpression: foo
+      PyReferenceExpression: foo
+        PsiElement(Py:IDENTIFIER)('foo')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PyGeneratorExpression
+          PyStarExpression
+            PsiElement(Py:MULT)('*')
+            PyReferenceExpression: it
+              PsiElement(Py:IDENTIFIER)('it')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:FOR_KEYWORD)('for')
+          PsiWhiteSpace(' ')
+          PyTargetExpression: it
+            PsiElement(Py:IDENTIFIER)('it')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:IN_KEYWORD)('in')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: its
+            PsiElement(Py:IDENTIFIER)('its')
+        PsiElement(Py:RPAR)(')')

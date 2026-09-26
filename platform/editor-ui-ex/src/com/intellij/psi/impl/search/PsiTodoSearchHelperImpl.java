@@ -1,117 +1,125 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.todo.TodoIndexPatternProvider;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.search.IndexPatternOccurrence;
+import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.searches.IndexPatternSearch;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
+@ApiStatus.Internal
 public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
-  private final PsiManagerEx myManager;
-  private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
-  public PsiTodoSearchHelperImpl(PsiManagerEx manager) {
-    myManager = manager;
+  private final Project myProject;
+
+  public PsiTodoSearchHelperImpl(@NotNull Project project) {
+    myProject = project;
   }
 
   @Override
-  @NotNull
-  public PsiFile[] findFilesWithTodoItems() {
-    return TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
+  public @NotNull PsiFile @NotNull [] findFilesWithTodoItems() {
+    Set<@NotNull PsiFile> files = new HashSet<>();
+    processFilesWithTodoItems(new CommonProcessors.CollectProcessor<>(files));
+    return PsiUtilCore.toPsiFileArray(files);
   }
 
   @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file) {
+  public boolean processFilesWithTodoItems(@NotNull Processor<? super @NotNull PsiFile> processor) {
+    return TodoCacheManager.getInstance(myProject).processFilesWithTodoItems(processor);
+  }
+
+  @Override
+  public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file) {
     return findTodoItems(file, 0, file.getTextLength());
   }
 
   @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
-    if (occurrences.isEmpty()) {
-      return EMPTY_TODO_ITEMS;
-    }
-
-    return processTodoOccurences(startOffset, endOffset, occurrences);
-  }
-
-  @NotNull
-  private static TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<IndexPatternOccurrence> occurrences) {
-    List<TodoItem> items = new ArrayList<>(occurrences.size());
-    TextRange textRange = new TextRange(startOffset, endOffset);
-    final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-    for(IndexPatternOccurrence occurrence: occurrences) {
-      TextRange occurrenceRange = occurrence.getTextRange();
-      if (textRange.contains(occurrenceRange)) {
-        items.add(todoItemsCreator.createTodo(occurrence));
+  public @NotNull TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
+    List<TodoItem> occurrences = new ArrayList<>();
+    TodoItemCreator todoItemCreator = new TodoItemCreator();
+    boolean multiLine = TodoConfiguration.getInstance().isMultiLine();
+    for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
+      Collection<IndexPatternOccurrence> collection = IndexPatternSearch.search(file, provider, startOffset, endOffset, multiLine).findAll();
+      for (IndexPatternOccurrence occurrence : collection) {
+        if (occurrence.getTextRange().intersects(startOffset, endOffset)) {
+          occurrences.add(todoItemCreator.createTodo(occurrence));
+        }
       }
     }
-
-    return items.toArray(new TodoItem[0]);
+    return occurrences.isEmpty() ? TodoItem.EMPTY_ARRAY : occurrences.toArray(TodoItem.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
+  public @NotNull TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file) {
     return findTodoItemsLight(file, 0, file.getTextLength());
   }
 
-  @NotNull
   @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
-    final Collection<IndexPatternOccurrence> occurrences =
-      LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance())).findAll();
-
-    if (occurrences.isEmpty()) {
-      return EMPTY_TODO_ITEMS;
+  public @NotNull TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+    Collection<TodoItem> occurrences = new ArrayList<>();
+    TodoItemCreator todoItemCreator = new TodoItemCreator();
+    for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
+      Collection<IndexPatternOccurrence> collection = LightIndexPatternSearch.SEARCH.createQuery(
+        new IndexPatternSearch.SearchParameters(file, provider, TodoConfiguration.getInstance().isMultiLine())
+      ).findAll();
+      for (IndexPatternOccurrence occurrence : collection) {
+        if (occurrence.getTextRange().intersects(startOffset, endOffset)) {
+          occurrences.add(todoItemCreator.createTodo(occurrence));
+        }
+      }
     }
-
-    return processTodoOccurences(startOffset, endOffset, occurrences);
+    return occurrences.isEmpty() ? TodoItem.EMPTY_ARRAY : occurrences.toArray(TodoItem.EMPTY_ARRAY);
   }
 
   @Override
   public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
-    if (count != -1) return count;
-    return findTodoItems(file).length;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return 0;
+    }
+
+    int total = 0;
+    for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
+      int count = TodoCacheManager.getInstance(myProject).getTodoCount(virtualFile, provider);
+      if (count == -1) {
+        return findTodoItems(file).length;
+      }
+
+      total += count;
+    }
+
+    return total;
   }
 
   @Override
   public int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern) {
-    int count = TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
-    if (count != -1) return count;
+    VirtualFile virtualFile = file.getVirtualFile();
+    int count = 0;
+    if (virtualFile != null) {
+      count = TodoCacheManager.getInstance(myProject).getTodoCount(virtualFile, pattern.getIndexPattern());
+      if (count != -1) return count;
+    }
     TodoItem[] items = findTodoItems(file);
-    count = 0;
     for (TodoItem item : items) {
-      if (item.getPattern().equals(pattern)) count++;
+      if (Objects.equals(item.getPattern(), pattern)) count++;
     }
     return count;
   }
@@ -120,7 +128,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   /**
    * Returns if td items should be highlighted in editor
    *
-   * @param file    the file to return the to do count for.
+   * @param file the file to return the to do count for.
    * @return if td items should be highlighted in editor. True by default
    */
   public boolean shouldHighlightInEditor(@NotNull PsiFile file) {

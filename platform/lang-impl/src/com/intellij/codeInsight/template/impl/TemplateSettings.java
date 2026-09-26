@@ -1,90 +1,112 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
+import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
+import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.JdomKt;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.Lazy;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
+import static com.intellij.codeInsight.template.impl.TemplateContext.contextsEqual;
 
 @State(
   name = "TemplateSettings",
-  storages = {
-    @Storage("templates.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
-  additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
+  storages = @Storage("templates.xml"),
+  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH,
+  category = SettingsCategory.CODE
 )
-public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
+public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
+  private static final ExtensionPointName<DefaultLiveTemplateEP> EP_NAME = new ExtensionPointName<>("com.intellij.defaultLiveTemplates");
 
-  @NonNls public static final String USER_GROUP_NAME = "user";
-  @NonNls private static final String TEMPLATE_SET = "templateSet";
-  @NonNls private static final String GROUP = "group";
-  @NonNls public static final String TEMPLATE = "template";
+  public static final @NonNls String USER_GROUP_NAME = "user";
+  private static final @NonNls String TEMPLATE_SET = "templateSet";
+  private static final @NonNls String GROUP = "group";
+  public static final @NonNls String TEMPLATE = "template";
 
-  public static final char SPACE_CHAR = ' ';
-  public static final char TAB_CHAR = '\t';
-  public static final char ENTER_CHAR = '\n';
-  public static final char DEFAULT_CHAR = 'D';
-  public static final char CUSTOM_CHAR = 'C';
-  public static final char NONE_CHAR = 'N';
+  public static final char SPACE_CHAR = TemplateConstants.SPACE_CHAR;
+  public static final char TAB_CHAR = TemplateConstants.TAB_CHAR;
+  public static final char ENTER_CHAR = TemplateConstants.ENTER_CHAR;
+  public static final char DEFAULT_CHAR = TemplateConstants.DEFAULT_CHAR;
+  public static final char CUSTOM_CHAR = TemplateConstants.CUSTOM_CHAR;
+  public static final char NONE_CHAR = TemplateConstants.NONE_CHAR;
 
-  @NonNls private static final String SPACE = "SPACE";
-  @NonNls private static final String TAB = "TAB";
-  @NonNls private static final String ENTER = "ENTER";
-  @NonNls private static final String CUSTOM = "CUSTOM";
-  @NonNls private static final String NONE = "NONE";
+  private static final @NonNls String SPACE = "SPACE";
+  private static final @NonNls String TAB = "TAB";
+  private static final @NonNls String ENTER = "ENTER";
+  private static final @NonNls String CUSTOM = "CUSTOM";
+  private static final @NonNls String NONE = "NONE";
 
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String SHORTCUT = "shortcut";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String SHORTCUT = "shortcut";
 
-  @NonNls private static final String VARIABLE = "variable";
-  @NonNls private static final String EXPRESSION = "expression";
-  @NonNls private static final String DEFAULT_VALUE = "defaultValue";
-  @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
+  private static final @NonNls String VARIABLE = "variable";
+  private static final @NonNls String EXPRESSION = "expression";
+  private static final @NonNls String DEFAULT_VALUE = "defaultValue";
+  private static final @NonNls String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  @NonNls static final String CONTEXT = "context";
-  @NonNls private static final String TO_REFORMAT = "toReformat";
-  @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
-  @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
+  static final @NonNls String CONTEXT = TemplateConstants.CONTEXT;
+  private static final @NonNls String TO_REFORMAT = "toReformat";
+  private static final @NonNls String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
+  private static final @NonNls String USE_STATIC_IMPORT = "useStaticImport";
 
-  @NonNls private static final String DEACTIVATED = "deactivated";
+  private static final @NonNls String DEACTIVATED = "deactivated";
 
-  @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
-  @NonNls private static final String KEY = "key";
-  @NonNls private static final String ID = "id";
+  private static final @NonNls String RESOURCE_BUNDLE = "resource-bundle";
+  private static final @NonNls String KEY = "key";
+  private static final @NonNls String ID = "id";
 
-  static final String TEMPLATES_DIR_PATH = "templates";
+  static final @NonNls String TEMPLATES_DIR_PATH = "templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
@@ -95,11 +117,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
+  private final Map<Pair<String, String>, PluginInfo> myPredefinedTemplates = new HashMap<>();
 
   static final class ShortcutConverter extends Converter<Character> {
-    @Nullable
     @Override
-    public Character fromString(@NotNull String shortcut) {
+    public @NotNull Character fromString(@NotNull String shortcut) {
       return TAB.equals(shortcut) ? TAB_CHAR :
              ENTER.equals(shortcut) ? ENTER_CHAR :
              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
@@ -107,9 +129,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
              SPACE_CHAR;
     }
 
-    @NotNull
     @Override
-    public String toString(@NotNull Character shortcut) {
+    public @NotNull String toString(@NotNull Character shortcut) {
       return shortcut == TAB_CHAR ? TAB :
              shortcut == ENTER_CHAR ? ENTER :
              shortcut == CUSTOM_CHAR ? CUSTOM :
@@ -118,14 +139,16 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  final static class State {
+  @ApiStatus.Internal
+  public static final class State {
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
-    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
+    public final List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
-  public static class TemplateKey {
+  @ApiStatus.Internal
+  public static final class TemplateKey {
     private String groupName;
     private String key;
 
@@ -141,14 +164,16 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return new TemplateKey(template.getGroupName(), template.getKey());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       TemplateKey that = (TemplateKey)o;
-      return Comparing.equal(groupName, that.groupName) && Comparing.equal(key, that.key);
+      return Objects.equals(groupName, that.groupName) && Objects.equals(key, that.key);
     }
 
+    @Override
     public int hashCode() {
       int result = groupName != null ? groupName.hashCode() : 0;
       result = 31 * result + (key != null ? key.hashCode() : 0);
@@ -180,12 +205,17 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private TemplateKey myLastSelectedTemplate;
 
-  public TemplateSettings(@NotNull SchemeManagerFactory schemeManagerFactory) {
-    mySchemeManager = schemeManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
-      @Nullable
+  public TemplateSettings() {
+    this(SchemeManagerFactory.getInstance());
+  }
+
+  @NonInjectable
+  public TemplateSettings(@NotNull SchemeManagerFactory factory) {
+    mySchemeManager = factory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
       @Override
-      public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
-        TemplateGroup group = readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+      public @Nullable TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
+        TemplateGroup readGroup = parseTemplateGroup(element, element.getAttributeValue("group"), getClass().getClassLoader());
+        TemplateGroup group = readGroup == null ? null : mergeParsedGroup(element, false, false, readGroup);
         if (group != null) {
           group.setModified(false);
         }
@@ -203,41 +233,36 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
       @Override
       public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
-        for (TemplateGroup group : groups) {
-          for (TemplateImpl template : group.getElements()) {
-            addTemplateImpl(template);
-          }
-        }
-        loadDefaultLiveTemplates();
+        doLoadTemplates(groups);
       }
 
-      @NotNull
       @Override
-      public SchemeState getState(@NotNull TemplateGroup template) {
+      public @NotNull SchemeState getState(@NotNull TemplateGroup template) {
         if (template.isModified()) {
           return SchemeState.POSSIBLY_CHANGED;
         }
+        LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
 
         for (TemplateImpl t : template.getElements()) {
-          if (differsFromDefault(t)) {
+          if (differsFromDefault(allContexts, t)) {
             return SchemeState.POSSIBLY_CHANGED;
           }
         }
         return SchemeState.NON_PERSISTENT;
       }
 
-      @NotNull
       @Override
-      public Element writeScheme(@NotNull TemplateGroup template) {
+      public @NotNull Element writeScheme(@NotNull TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);
 
         List<TemplateImpl> elements = template.getElements();
         if (!elements.isEmpty()) {
           boolean isGroupAttributeAdded = false;
           Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
+          LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
           for (TemplateImpl t : elements) {
             TemplateImpl defaultTemplate = getDefaultTemplate(t);
-            if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+            if (defaultTemplate == null || !t.equals(defaultTemplate) || !contextsEqual(allContexts, t, defaultTemplate)) {
               if (!isGroupAttributeAdded) {
                 isGroupAttributeAdded = true;
                 // add attribute only if not empty to avoid empty file (due to group attribute element will be not considered as empty)
@@ -254,47 +279,57 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
 
       @Override
-      public void initScheme(@NotNull final TemplateGroup scheme) {
+      public void onSchemeAdded(final @NotNull TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
         }
       }
 
       @Override
-      public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
-        for (TemplateImpl template : scheme.getElements()) {
-          addTemplateImpl(template);
-        }
-      }
-
-      @Override
-      public void onSchemeDeleted(@NotNull final TemplateGroup scheme) {
+      public void onSchemeDeleted(final @NotNull TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
         }
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
-    for (TemplateGroup group : mySchemeManager.loadSchemes()) {
+    doLoadTemplates(mySchemeManager.loadSchemes());
+
+    Macro.EP_NAME.addChangeListener(() -> {
+      for (TemplateImpl template : myTemplates.values()) {
+        template.dropParsedData();
+      }
+      for (TemplateImpl template : myDefaultTemplates.values()) {
+        template.dropParsedData();
+      }
+    }, ApplicationManager.getApplication());
+
+    EP_NAME.addChangeListener(mySchemeManager::reload, ApplicationManager.getApplication());
+  }
+
+  private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
+    for (TemplateGroup group : groups) {
       for (TemplateImpl template : group.getElements()) {
         addTemplateImpl(template);
       }
     }
-
     loadDefaultLiveTemplates();
   }
 
   public static TemplateSettings getInstance() {
-    return ServiceManager.getService(TemplateSettings.class);
+    return ApplicationManager.getApplication().getService(TemplateSettings.class);
   }
 
-  private boolean differsFromDefault(TemplateImpl t) {
+  private boolean differsFromDefault(@NotNull LiveTemplateContextsSnapshot allContexts, @NotNull TemplateImpl t) {
     TemplateImpl def = getDefaultTemplate(t);
-    return def == null || !t.equals(def) || !t.contextsEqual(def);
+    return def == null || !t.equals(def) || !contextsEqual(allContexts, t, def);
   }
 
-  @Nullable
-  public TemplateImpl getDefaultTemplate(TemplateImpl t) {
+  boolean differsFromDefault(@NotNull TemplateImpl t) {
+    return differsFromDefault(LiveTemplateContextService.getInstance().getSnapshot(), t);
+  }
+
+  public @Nullable TemplateImpl getDefaultTemplate(@NotNull TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
@@ -326,13 +361,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  @Nullable
-  public String getLastSelectedTemplateKey() {
+  public @Nullable String getLastSelectedTemplateKey() {
     return myLastSelectedTemplate != null ? myLastSelectedTemplate.key : null;
   }
 
-  @Nullable
-  public String getLastSelectedTemplateGroup() {
+  public @Nullable String getLastSelectedTemplateGroup() {
     return myLastSelectedTemplate != null ? myLastSelectedTemplate.groupName : null;
   }
 
@@ -358,12 +391,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     myState.defaultShortcut = defaultShortcutChar;
   }
 
-  public Collection<TemplateImpl> getTemplates(@NonNls String key) {
+  public @NotNull Collection<TemplateImpl> getTemplates(@NotNull String key) {
     return myTemplates.get(key);
   }
 
-  @Nullable
-  public TemplateImpl getTemplate(@NonNls String key, String group) {
+  public @Nullable TemplateImpl getTemplate(@NonNls String key, String group) {
     final Collection<TemplateImpl> templates = myTemplates.get(key);
     for (TemplateImpl template : templates) {
       if (template.getGroupName().equals(group)) {
@@ -441,8 +473,12 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  @NotNull
-  private static TemplateImpl createTemplate(@NotNull String key, String string, @NotNull String group, String description, @Nullable String shortcut, String id) {
+  private static @NotNull TemplateImpl createTemplate(@NotNull @NlsSafe String key,
+                                                      @NlsSafe String string,
+                                                      @NotNull @NonNls String group,
+                                                      @NlsContexts.DetailedDescription String description,
+                                                      @Nullable @NlsSafe String shortcut,
+                                                      @NonNls String id) {
     TemplateImpl template = new TemplateImpl(key, string, group, false);
     template.setId(id);
     template.setDescription(description);
@@ -466,31 +502,92 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private void loadDefaultLiveTemplates() {
     try {
-      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensions()) {
-        for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-          readDefTemplate(provider, defTemplate, true);
-        }
-        try {
-          String[] hidden = provider.getHiddenLiveTemplateFiles();
-          if (hidden != null) {
-            for (String s : hidden) {
-              readDefTemplate(provider, s, false);
-            }
-          }
-        }
-        catch (AbstractMethodError ignore) {
-        }
+      myPredefinedTemplates.clear();
+      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
+        loadDefaultLiveTemplatesFromProvider(provider);
       }
+
+      EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
+        String file = ep.file;
+        if (file == null) {
+          return Unit.INSTANCE;
+        }
+
+        try {
+          ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
+          readDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+        }
+        catch (Exception e) {
+          LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+        }
+        return Unit.INSTANCE;
+      });
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
     }
   }
 
-  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
-    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
-    if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JdomKt.loadElement(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
+  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException {
+    for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
+      readDefTemplate(defTemplate, true, provider.getClass().getClassLoader(),
+                      PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+    }
+    try {
+      String[] hidden = provider.getHiddenLiveTemplateFiles();
+      if (hidden != null) {
+        for (String s : hidden) {
+          readDefTemplate(s, false, provider.getClass().getClassLoader(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+        }
+      }
+    }
+    catch (AbstractMethodError ignore) {
+    }
+  }
+
+  private void readDefTemplate(@NotNull String defTemplate,
+                               boolean registerTemplate,
+                               @NotNull ClassLoader loader,
+                               PluginInfo info) throws JDOMException {
+    String pluginId = info.getId();
+    Element element;
+    try {
+      byte[] data;
+      if (defTemplate.startsWith("/")) {
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate.substring(1)), loader);
+      }
+      else {
+        data = ResourceUtil.getResourceAsBytes(appendExt(defTemplate), loader);
+      }
+      if (data == null) {
+        LOG.error(new PluginException("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info,
+                                      pluginId == null ? null : PluginId.getId(pluginId)));
+        return;
+      }
+
+      element = JDOMUtil.load(data);
+    }
+    catch (IOException e) {
+      LOG.error(
+        new PluginException("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e,
+                            pluginId == null ? null : PluginId.getId(pluginId)));
+      return;
+    }
+
+    TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
+    if (defGroup != null) {
+      for (TemplateImpl template : defGroup.getElements()) {
+        String key = template.getKey();
+        String groupName = template.getGroupName();
+        if (Strings.isNotEmpty(key) && Strings.isNotEmpty(groupName)) {
+          myPredefinedTemplates.put(new Pair<>(key, groupName), info);
+        }
+      }
+
+      TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
       if (group != null && group.getReplace() != null) {
         for (TemplateImpl template : myTemplates.get(group.getReplace())) {
           removeTemplate(template);
@@ -499,36 +596,54 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
+  private static String appendExt(@NotNull String head) {
+    return head.endsWith(ComponentStorageUtil.DEFAULT_EXT) ? head : head + ComponentStorageUtil.DEFAULT_EXT;
+  }
+
+  public @Nullable PluginInfo findPluginForPredefinedTemplate(TemplateImpl template) {
+    return myPredefinedTemplates.get(Pair.create(template.getKey(), template.getGroupName()));
+  }
+
   private static String getDefaultTemplateName(String defTemplate) {
     return defTemplate.substring(defTemplate.lastIndexOf('/') + 1);
   }
 
-  @Nullable
-  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) {
+
+  private static @Nullable TemplateGroup parseTemplateGroup(@NotNull Element element,
+                                                            @NonNls String defGroupName,
+                                                            @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
       LOG.error("Ignore invalid template scheme: " + JDOMUtil.writeElement(element));
       return null;
     }
 
     String groupName = element.getAttributeValue(GROUP);
-    if (StringUtil.isEmpty(groupName)) {
+    if (Strings.isEmpty(groupName)) {
       groupName = defGroupName;
     }
 
+    LiveTemplateContextService ltContextService = LiveTemplateContextService.getInstance();
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
-
-    Map<String, TemplateImpl> created = new LinkedHashMap<>();
-
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template;
       try {
-        template = readTemplateFromElement(groupName, child, classLoader);
+        result.addElement(readTemplateFromElement(groupName, child, classLoader, ltContextService));
       }
       catch (Exception e) {
         LOG.warn("failed to load template " + element.getAttributeValue(NAME), e);
-        continue;
       }
+    }
+    return result;
+  }
 
+  private @Nullable TemplateGroup mergeParsedGroup(@NotNull Element element,
+                                                   boolean isDefault,
+                                                   boolean registerTemplate,
+                                                   TemplateGroup parsedGroup) {
+    TemplateGroup result = new TemplateGroup(parsedGroup.getName(), element.getAttributeValue("REPLACE"));
+
+    Map<String, TemplateImpl> created = new LinkedHashMap<>();
+
+    for (TemplateImpl template : parsedGroup.getElements()) {
       if (isDefault) {
         myDefaultTemplates.put(TemplateKey.keyOf(template), template);
       }
@@ -572,7 +687,20 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return result.isEmpty() ? null : result;
   }
 
-  public static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
+  /**
+   * @deprecated Use {@link com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils} if needed for postfix templates.
+   */
+  @Deprecated
+  public static TemplateImpl readTemplateFromElement(String groupName,
+                                                     @NotNull Element element,
+                                                     @NotNull ClassLoader classLoader) {
+    return readTemplateFromElement(groupName, element, classLoader, LiveTemplateContextService.getInstance());
+  }
+
+  public static TemplateImpl readTemplateFromElement(String groupName,
+                                                     @NotNull Element element,
+                                                     @NotNull ClassLoader classLoader,
+                                                     @NotNull LiveTemplateContextService ltContextService) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -580,11 +708,11 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = AbstractBundle.getResourceBundle(resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(classLoader, resourceBundle);
       description = bundle.getString(key);
     }
     else {
-      description = element.getAttributeValue(DESCRIPTION);
+      description = element.getAttributeValue(DESCRIPTION); //NON-NLS
     }
 
     String shortcut = element.getAttributeValue(SHORTCUT);
@@ -609,14 +737,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     Element context = element.getChild(CONTEXT);
     if (context != null) {
-      template.getTemplateContext().readTemplateContext(context);
+      template.getTemplateContext().readTemplateContext(context, ltContextService);
     }
 
     return template;
   }
 
-  @NotNull
-  public static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+  public static @NotNull Element serializeTemplate(@NotNull TemplateImpl template,
+                                                   @Nullable TemplateImpl defaultTemplate,
+                                                   @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -689,8 +818,12 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return mySchemeManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
+  public @NotNull List<TemplateImpl> collectMatchingCandidates(@NotNull String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
+    if (templates.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {

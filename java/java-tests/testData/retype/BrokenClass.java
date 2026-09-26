@@ -1,0 +1,5 @@
+class BrockenClass {
+  void foo() {
+    (
+  }
+}

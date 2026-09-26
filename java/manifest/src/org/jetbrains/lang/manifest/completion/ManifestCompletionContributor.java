@@ -24,7 +24,13 @@
  */
 package org.jetbrains.lang.manifest.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -41,16 +47,16 @@ import org.jetbrains.lang.manifest.psi.ManifestTokenType;
  * @author <a href="mailto:janthomae@janthomae.de">Jan Thom&auml;</a>
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class ManifestCompletionContributor extends CompletionContributor {
-  public ManifestCompletionContributor(@NotNull final HeaderParserRepository repository) {
+final class ManifestCompletionContributor extends CompletionContributor {
+  ManifestCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement(ManifestTokenType.HEADER_NAME).withLanguage(ManifestLanguage.INSTANCE),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              public void addCompletions(@NotNull CompletionParameters parameters,
-                                        ProcessingContext context,
+                                        @NotNull ProcessingContext context,
                                         @NotNull CompletionResultSet resultSet) {
-               for (String header : repository.getAllHeaderNames()) {
+               for (String header : HeaderParserRepository.getInstance().getAllHeaderNames()) {
                  resultSet.addElement(LookupElementBuilder.create(header).withInsertHandler(HEADER_INSERT_HANDLER));
                }
              }
@@ -58,9 +64,9 @@ public class ManifestCompletionContributor extends CompletionContributor {
     );
   }
 
-  private static final InsertHandler<LookupElement> HEADER_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+  private static final InsertHandler<LookupElement> HEADER_INSERT_HANDLER = new InsertHandler<>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       context.setAddCompletionChar(false);
       EditorModificationUtil.insertStringAtCaret(context.getEditor(), ": ");
       context.commitDocument();

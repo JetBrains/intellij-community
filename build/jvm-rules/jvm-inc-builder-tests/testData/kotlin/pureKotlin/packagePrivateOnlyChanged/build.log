@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packagePrivateOnlyChanged-a.kotlin_module
+  test/PkgKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/packagePrivateOnlyChanged/a/pkg.kt
+End of files
+------------------------------------------
+Exit code: OK

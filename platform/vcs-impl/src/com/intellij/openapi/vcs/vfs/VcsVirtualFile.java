@@ -1,33 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,39 +20,34 @@ import java.nio.charset.Charset;
  * author: lesya
  */
 public class VcsVirtualFile extends AbstractVcsVirtualFile {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.vfs.VcsVirtualFile");
+  private static final Logger LOG = Logger.getInstance(VcsVirtualFile.class);
 
-  private byte[] myContent;
   private final VcsFileRevision myFileRevision;
-  private boolean myContentLoadFailed = false;
-  private Charset myCharset;
 
-  public VcsVirtualFile(@NotNull String path,
-                        @Nullable VcsFileRevision revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    super(path, fileSystem);
+  private volatile byte[] myContent;
+  private volatile boolean myContentLoadFailed;
+  private volatile Charset myCharset;
+  private final Object LOCK = new Object();
+
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
+    super(parent, name);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem fileSystem) {
-    super(parent, name, fileSystem);
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(parent, path);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(@NotNull String path,
-                        @NotNull byte[] content,
-                        @Nullable String revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    this(path, null, fileSystem);
-    myContent = content;
-    setRevision(revision);
+  public VcsVirtualFile(@NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(path);
+    myFileRevision = revision;
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
-    if (myContentLoadFailed || myProcessingBeforeContentsChange) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+  public byte @NotNull [] contentsToByteArray() throws IOException {
+    if (myContentLoadFailed) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     if (myContent == null) {
       loadContent();
@@ -78,68 +55,54 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     return myContent;
   }
 
-  private void loadContent() throws IOException {
-    if (myContent != null) return;
+  /**
+   * Note that {@link com.intellij.openapi.vcs.vfs.VcsVirtualFile#contentsToByteArray()} can be called from any thread, while
+   * loading content is performed from the disc.
+   * To prevent slow operations on EDT, this method should be called preemptively from a background thread.
+   */
+  @ApiStatus.Internal
+  public void loadContent() throws IOException {
     assert myFileRevision != null;
-
-    final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
+    if (myContent != null) return;
 
     try {
-      myFileRevision.loadContent();
-      fireBeforeContentsChange();
+      byte[] content = myFileRevision.loadContent();
 
-      myModificationStamp++;
-      final VcsRevisionNumber revisionNumber = myFileRevision.getRevisionNumber();
-      setRevision(VcsUtil.getShortRevisionString(revisionNumber));
-      myContent = myFileRevision.getContent();
-      myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireContentsChanged(this, VcsVirtualFile.this, 0);
+      synchronized (LOCK) {
+        setRevision(VcsUtil.getShortRevisionString(myFileRevision.getRevisionNumber()));
+        myContent = content;
+        myContentLoadFailed = false;
+        if (myContent != null && myContent.length !=0) {
+          myCharset = new CharsetToolkit(myContent, Charset.defaultCharset(), false).guessEncoding(myContent.length);
         }
-      });
-
+      }
     }
     catch (VcsException e) {
-      myContentLoadFailed = true;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireBeforeFileDeletion(this, VcsVirtualFile.this);
-        }
-      });
-      myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
-      setRevision("0");
+      synchronized (LOCK) {
+        myContentLoadFailed = true;
+        myContent = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+        setRevision("0");
+      }
 
-      Messages.showMessageDialog(
-        VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
-                                 VcsBundle.message("message.title.could.not.load.content"),
-                                 Messages.getInformationIcon());
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          vcsFileSystem.fireFileDeleted(this, VcsVirtualFile.this, getName(), getParent());
-        }
-      });
-
+      showLoadingContentFailedMessage(e);
     }
-    catch (ProcessCanceledException ex) {
-      myContent = null;
-    }
-
   }
 
-  @Nullable
-  public VcsFileRevision getFileRevision() {
+  public void setContent(byte[] content) {
+    myContent = content;
+  }
+
+  public @Nullable VcsFileRevision getFileRevision() {
     return myFileRevision;
   }
 
-  @NotNull
   @Override
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     if (myCharset != null) return myCharset;
     return super.getCharset();
   }
 
+  @Override
   public boolean isDirectory() {
     return false;
   }

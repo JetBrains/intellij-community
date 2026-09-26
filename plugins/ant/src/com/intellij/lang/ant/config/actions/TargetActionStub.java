@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.AntDisposable;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.Disposable;
@@ -24,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -36,38 +25,41 @@ public class TargetActionStub extends AnAction implements Disposable {
   private final AtomicBoolean myActionInvoked = new AtomicBoolean(false);
 
   public TargetActionStub(String actionId, Project project) {
-    super("ant target action stub");
+    super(AntBundle.message("action.ant.target.action.stub.text"));
     myActionId = actionId;
     myProject = project;
-    Disposer.register(project, this);
+    Disposer.register(AntDisposable.getInstance(project), this);
   }
 
+  @Override
   public void dispose() {
     ActionManager.getInstance().unregisterAction(myActionId);
     myProject = null;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     if (myProject == null) {
       return;
     }
     try {
       final AntConfiguration config = AntConfiguration.getInstance(myProject);  // this call will also lead to ant configuration loading
       final AntConfigurationListener listener = new AntConfigurationListener() {
+        @Override
         public void configurationLoaded() {
           config.removeAntConfigurationListener(this);
           invokeAction(e);
         }
       };
       config.addAntConfigurationListener(listener);
-      Disposer.register(myProject, new ListenerRemover(config, listener));
+      Disposer.register(AntDisposable.getInstance(myProject), new ListenerRemover(config, listener));
     }
     finally {
       invokeAction(e);
       Disposer.dispose(this);
     }
   }
-  
+
   private void invokeAction(final AnActionEvent e) {
     final AnAction action = ActionManager.getInstance().getAction(myActionId);
     if (action == null || action instanceof TargetActionStub) {
@@ -83,8 +75,8 @@ public class TargetActionStub extends AnAction implements Disposable {
       action.actionPerformed(e);
     }
   }
-  
-  private static class ListenerRemover implements Disposable {
+
+  private static final class ListenerRemover implements Disposable {
     private AntConfiguration myConfig;
     private AntConfigurationListener myListener;
 
@@ -93,6 +85,7 @@ public class TargetActionStub extends AnAction implements Disposable {
       myListener = listener;
     }
 
+    @Override
     public void dispose() {
       final AntConfiguration configuration = myConfig;
       final AntConfigurationListener listener = myListener;

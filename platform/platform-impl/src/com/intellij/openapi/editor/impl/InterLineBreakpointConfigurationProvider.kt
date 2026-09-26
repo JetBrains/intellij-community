@@ -1,0 +1,227 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl
+
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.event.InputEvent
+import java.util.concurrent.ConcurrentHashMap
+import javax.swing.Icon
+
+/**
+ * Key for caching inter-line breakpoint configurations per editor.
+ * Configs are calculated asynchronously and stored via [Editor.putUserData].
+ */
+private val INTER_LINE_BREAKPOINT_CONFIGS_KEY: Key<Map<String, InterLineBreakpointConfiguration>> = Key.create("editor.inter.line.breakpoint.configs")
+
+/**
+ * Configuration for inter-line hit detection and rendering.
+ *
+ * @param icon the icon of the breakpoint, at the ordinary gutter size
+ * @param smallIcon the icon of the breakpoint, reduced to fit between the lines
+ * @param hoverTooltip tooltip to show on hover
+ * @param breakpointProperties properties for the breakpoint (e.g., logging)
+ * @param animator optional animator for line shift effects (null for no animation)
+ * @param hitArea size of the hit area for inter-line placement
+ * @param availableFor predicate to check if this config applies to the given line (for inter-line placement)
+ */
+@ApiStatus.Internal
+class InterLineBreakpointConfiguration(
+  val icon: Icon,
+  val smallIcon: Icon,
+  val hoverTooltip: @Nls String,
+  val breakpointProperties: InterLineBreakpointProperties,
+  val animator: InterLineShiftAnimator? = null,
+  val hitArea: InterLineBreakpointHitArea = InterLineBreakpointHitArea.LARGE,
+  val availableFor: (line: Int) -> Boolean = { false },
+)
+
+/**
+ * Size of the hit area for inter-line placement.
+ */
+@ApiStatus.Internal
+enum class InterLineBreakpointHitArea {
+  /**
+   * The inter-line area takes about 50% of the gutter.
+   */
+  LARGE,
+
+  /**
+   * The inter-line area takes about 20-25% of the gutter.
+   */
+  MEDIUM,
+}
+
+@ApiStatus.Internal
+data class InterLineBreakpointProperties(
+  val isLogging: Boolean,
+) {
+  companion object {
+    val KEY: DataKey<InterLineBreakpointProperties> = DataKey.create("interLineBreakpointProperties")
+  }
+}
+
+/**
+ * Provides configuration for inter-line hit detection in the gutter.
+ *
+ * Inter-line hit detection allows distinguishing clicks/hovers between lines from those on line numbers.
+ *
+ * Configurations are collected once per editor and cached. The [InterLineBreakpointConfiguration.availableFor]
+ * predicate is used to determine if a config applies to a specific line during hover/click detection.
+ */
+@ApiStatus.Internal
+interface InterLineBreakpointConfigurationProvider {
+
+  /**
+   * Unique identifier for this provider, used as a key when caching configurations per editor.
+   *
+   * Must be stable and unique across all providers to avoid collisions in the configuration map.
+   */
+  val uniqueId: String
+
+  /**
+   * Returns a flow of configurations for the given [editor].
+   *
+   * The flow should emit:
+   * - A non-null [InterLineBreakpointConfiguration] when inter-line breakpoints are available
+   * - `null` when inter-line breakpoints should be disabled
+   *
+   * The flow is collected for the lifetime of the editor.
+   * Each emission updates the cached configuration used by [findConfigurationForLine].
+   *
+   * @param editor the editor to provide configuration for
+   * @return a flow that emits configuration updates
+   */
+  fun getConfiguration(editor: Editor): Flow<InterLineBreakpointConfiguration?>
+
+  companion object {
+    private val EP: ExtensionPointName<InterLineBreakpointConfigurationProvider> =
+      ExtensionPointName.create("com.intellij.editor.interLineBreakpointConfigurationProvider")
+
+    /**
+     * Finds the first configuration that applies to the given [line] in the given [editor].
+     *
+     * @param editor the editor to check
+     * @param line the logical line to check
+     * @return the first config where [InterLineBreakpointConfiguration.availableFor] returns true, or null
+     */
+    @JvmStatic
+    fun findConfigurationForLine(editor: Editor, line: Int): InterLineBreakpointConfiguration? {
+      return findFirstConfiguration(editor) { it.availableFor(line) }
+    }
+
+    private fun findFirstConfiguration(editor: Editor, predicate: (InterLineBreakpointConfiguration) -> Boolean): InterLineBreakpointConfiguration? {
+      val project = editor.project ?: return null
+
+      if (editor.getUserData(INTER_LINE_BREAKPOINT_CONFIGS_KEY) == null) {
+        val configs = ConcurrentHashMap<String, InterLineBreakpointConfiguration>()
+        editor.putUserData(INTER_LINE_BREAKPOINT_CONFIGS_KEY, configs)
+        val editorScope = EditorScopeProvider.getInstance(project).getEditorScope(editor)
+        editorScope.launch(Dispatchers.Default) {
+          for (configurationProvider in EP.extensionList) {
+            launch {
+              configurationProvider.getConfiguration(editor).collectLatest {
+                val id = configurationProvider.uniqueId
+                if (it == null) {
+                  configs.remove(id)
+                }
+                else {
+                  configs[id] = it
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return editor.getUserData(INTER_LINE_BREAKPOINT_CONFIGS_KEY)?.values?.find { predicate(it) }
+    }
+  }
+}
+
+/**
+ * Result of mapping a Y coordinate to a logical line with inter-line detection.
+ *
+ * Used by [EditorUtil.yToLogicalLineWithInterLineDetection] to distinguish between
+ * clicks/hovers on a line vs between lines (for features like interline breakpoints).
+ *
+ * @param line the logical line number
+ * @param keyModifier a modifier key that is used to toggle the breakpoint on/off. When pressed,
+ *  the IDE only suggests placement/removal of a breakpoint of that type.
+ */
+@ApiStatus.Internal
+sealed class BreakpointArea(open val line: Int, val keyModifier: Int) {
+
+  abstract val isBetweenLines: Boolean
+
+  @ApiStatus.Internal
+  data class OnLine(override val line: Int) : BreakpointArea(line, MODIFIER) {
+    override val isBetweenLines: Boolean get() = false
+
+    companion object {
+      internal val MODIFIER: Int = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+    }
+  }
+
+  @ApiStatus.Internal
+  data class InterLine(
+    override val line: Int,
+    val configuration: InterLineBreakpointConfiguration,
+  ) : BreakpointArea(line, MODIFIER) {
+    override val isBetweenLines: Boolean get() = true
+
+    companion object {
+      internal const val MODIFIER: Int = InputEvent.SHIFT_DOWN_MASK
+    }
+  }
+
+  @ApiStatus.Internal
+  enum class CursorSuggestion {
+    ON_LINE,
+    ABOVE_LINE,
+    BELOW_LINE,
+  }
+
+  companion object {
+    @JvmField
+    val INVALID: BreakpointArea = OnLine(-1)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun from(logicalLine: Int,
+             nextLogicalLine: Int,
+             documentLineCount: Int,
+             keyModifiers: Int,
+             cursorSuggestion: CursorSuggestion,
+             configuration: InterLineBreakpointConfiguration): BreakpointArea {
+      // intentional: if both keys are pressed for some reason, suggest the regular breakpoint
+      val onlyInterLine: Boolean = keyModifiers == InterLine.MODIFIER
+      val onlyOnLine: Boolean = (keyModifiers and OnLine.MODIFIER) != 0
+      if (onlyOnLine || !onlyInterLine && cursorSuggestion == CursorSuggestion.ON_LINE) {
+        return OnLine(logicalLine)
+      }
+
+      if ((onlyInterLine || cursorSuggestion == CursorSuggestion.ABOVE_LINE) && logicalLine > 0) {
+        return InterLine(logicalLine, configuration)
+      }
+
+      if (onlyInterLine || cursorSuggestion == CursorSuggestion.BELOW_LINE) {
+        if (nextLogicalLine >= documentLineCount) {
+          return INVALID
+        }
+        return InterLine(nextLogicalLine, configuration)
+      }
+
+      return INVALID
+    }
+  }
+}

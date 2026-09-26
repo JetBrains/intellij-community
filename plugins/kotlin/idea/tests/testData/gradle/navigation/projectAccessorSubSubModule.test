@@ -1,0 +1,29 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "this is module1/a-module11/module111/build.gradle.kts"
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(projects.module1.aModule11.<caret>module111)
+}
+
+// FILE: settings.gradle.kts
+include("module1", ":module1:a-module11", ":module1:a-module11:module111")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+// FILE: module1/a-module11/module111/build.gradle.kts
+
+// this is module1/a-module11/module111/build.gradle.kts
+
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}

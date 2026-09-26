@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasBecamePublicCapture-a.kotlin_module
+  lib/AliasKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasBecamePublicCapture/a/lib/alias.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_typealiasBecamePublicCapture-a.kotlin_module
+  lib/UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/typealiasBecamePublicCapture/a/lib/use.kt
+End of files
+------------------------------------------
+Exit code: ERROR

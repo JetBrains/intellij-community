@@ -1,0 +1,18 @@
+// FILE: buildSrc/src/main/kotlin/conventions.gradle.kts
+// "EXPECTED-SUGGESTION": "getRuntimeClasspath"
+// "EXPECTED-SUGGESTION": "runtimeClasspath"
+// "EXPECTED-SUGGESTION": "runtimeElements"
+// "EXPECTED-SUGGESTION": "getRuntimeElements"
+// "EXPECTED-SUGGESTION": "runtimeOnly"
+// "EXPECTED-SUGGESTION": "getRuntimeOnly"
+// "EXPECTED-SUGGESTION": "getTestRuntimeClasspath"
+// "EXPECTED-SUGGESTION": "testRuntimeClasspath"
+// "EXPECTED-SUGGESTION": "getTestRuntimeOnly"
+// "EXPECTED-SUGGESTION": "testRuntimeOnly"
+plugins {
+    application
+}
+
+tasks.register("") {
+  project.configurations.runtime<caret>
+}

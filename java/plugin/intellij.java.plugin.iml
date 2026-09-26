@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.frontback.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl.shared" scope="RUNTIME" />
+  </component>
+</module>

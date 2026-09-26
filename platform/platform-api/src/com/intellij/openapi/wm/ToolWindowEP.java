@@ -1,47 +1,47 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class ToolWindowEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ToolWindowEP");
+public class ToolWindowEP implements PluginAware {
+  public static final ExtensionPointName<ToolWindowEP> EP_NAME = new ExtensionPointName<>("com.intellij.toolWindow");
 
-  public static final ExtensionPointName<ToolWindowEP> EP_NAME = ExtensionPointName.create("com.intellij.toolWindow");
+  private PluginDescriptor pluginDescriptor;
 
-  @Attribute("id")
+  @RequiredElement
+  @Attribute
   public String id;
 
   /**
    * The side of the screen on which the toolwindow is displayed ("left", "right" or "bottom").
    */
-  @Attribute("anchor")
+  @Attribute
   public String anchor;
+
+  /**
+   * @deprecated Not used
+   */
+  @Attribute
+  @Deprecated(forRemoval = true)
+  public String largeStripeAnchor;
+
+  /**
+   * @deprecated Use {@link #secondary}
+   */
+  @Attribute
+  @Deprecated
+  public boolean side;
 
   /**
    * The resource path of the icon displayed on the toolwindow button. Toolwindow icons must have the size of 13x13 pixels.
@@ -50,65 +50,78 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   public String icon;
 
   /**
+   * Tool window saves its state on project close and restore on when project opens.
+   * In some cases, it is useful to postpone its activation until the user explicitly activates it.
+   * Example: Tool Window initialization takes a huge amount of time and makes project loading slower.
+   *
+   * {@code true} if Tool Window should not be activated on start even if was opened previously.
+   * {@code false} otherwise. Please note that active (visible and focused) tool window would be activated on start in any case.
+   */
+  @Attribute("doNotActivateOnStart")
+  public boolean isDoNotActivateOnStart;
+
+  /**
    * The name of the class implementing {@link ToolWindowFactory}, used to create the toolwindow contents.
    */
-  @Attribute("factoryClass")
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  @RequiredElement
+  @Attribute
   public String factoryClass;
 
-  @Attribute("conditionClass")
+  /**
+   * @deprecated Implement {@link ToolWindowFactory#isApplicableAsync} instead.
+   */
+  @Attribute
+  @Deprecated
   public String conditionClass;
 
-  @Attribute("secondary")
+  @Attribute
   public boolean secondary;
 
-  @Attribute("canCloseContents")
+  @Attribute
   public boolean canCloseContents;
 
-  private Class<? extends ToolWindowFactory> myFactoryClass;
-  private ToolWindowFactory myFactory;
+  private volatile ToolWindowFactory factory;
 
-  public ToolWindowFactory getToolWindowFactory() {
-    if (myFactory == null) {
-      try {
-        myFactory = instantiate(getFactoryClass(), ApplicationManager.getApplication().getPicoContainer());
-      }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-    return myFactory;
+  @Transient
+  public final @NotNull PluginDescriptor getPluginDescriptor() {
+    return pluginDescriptor;
   }
 
-  public Class<? extends ToolWindowFactory> getFactoryClass() {
-    if (myFactoryClass == null) {
-      if (factoryClass == null) {
-        LOG.error(new PluginException("No toolwindow factory specified for " + id, getPluginId()));
-        return null;
-      }
-
-      try {
-        myFactoryClass = findClass(factoryClass);
-      }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-    return myFactoryClass;
+  @Override
+  public final void setPluginDescriptor(@NotNull PluginDescriptor value) {
+    pluginDescriptor = value;
   }
 
-  @Nullable
-  public Condition<Project> getCondition() {
-    if (conditionClass != null) {
-      try {
-        return instantiate(conditionClass, ApplicationManager.getApplication().getPicoContainer());
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+  public @NotNull ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
+    ToolWindowFactory factory = this.factory;
+    if (factory != null) {
+      return factory;
     }
-    return null;
+
+    if (factoryClass == null) {
+      throw new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId());
+    }
+
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      factory = this.factory;
+      if (factory != null) {
+        return factory;
+      }
+
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      factory = ApplicationManager.getApplication().instantiateClass(factoryClass, pluginDescriptor);
+      this.factory = factory;
+    }
+    return factory;
+  }
+
+  public @Nullable Condition<Project> getCondition(@NotNull PluginDescriptor pluginDescriptor) {
+    if (conditionClass == null) {
+      return null;
+    }
+    return ApplicationManager.getApplication().instantiateClass(conditionClass, pluginDescriptor);
   }
 
   @Override

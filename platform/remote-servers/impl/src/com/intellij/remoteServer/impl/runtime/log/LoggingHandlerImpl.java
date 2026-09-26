@@ -1,7 +1,9 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.execution.filters.BrowserHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
@@ -14,17 +16,25 @@ import com.intellij.openapi.util.Key;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
- * @author nik
- */
 public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHandler {
   private final ConsoleView myConsole;
+  private boolean myClosed = false;
 
   public LoggingHandlerImpl(String presentableName, @NotNull Project project) {
+    this(presentableName, project, false);
+  }
+
+  public LoggingHandlerImpl(String presentableName, @NotNull Project project, boolean isViewer) {
     super(presentableName);
-    myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+
+    final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+
+    builder.setViewer(isViewer);
+
+    myConsole = builder.getConsole();
+
     Disposer.register(this, myConsole);
   }
 
@@ -33,8 +43,7 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
     return myConsole.getComponent();
   }
 
-  @NotNull
-  public ConsoleView getConsole() {
+  public @NotNull ConsoleView getConsole() {
     return myConsole;
   }
 
@@ -67,13 +76,23 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   }
 
   @Override
+  public void scrollTo(int offset) {
+    myConsole.scrollTo(offset);
+  }
+
+  @Override
   public void clear() {
     myConsole.clear();
   }
 
   @Override
   public boolean isClosed() {
-    return false;
+    return myClosed;
+  }
+
+  @Override
+  public void close() {
+    myClosed = true;
   }
 
   public static class Colored extends LoggingHandlerImpl {
@@ -82,6 +101,10 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
 
     public Colored(String presentableName, @NotNull Project project) {
       super(presentableName, project);
+    }
+
+    public Colored(String presentableName, @NotNull Project project, boolean isViewer) {
+      super(presentableName, project, isViewer);
     }
 
     @Override

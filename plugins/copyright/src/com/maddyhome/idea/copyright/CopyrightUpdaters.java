@@ -1,30 +1,54 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.util.KeyedLazyInstance;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * @see com.maddyhome.idea.copyright.options.Options Options for storing language settings
  */
-public class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
-  public static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
+public final class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
+  public static final ExtensionPointName<KeyedLazyInstance<UpdateCopyrightsProvider>> EP_NAME =
+    new ExtensionPointName<>("com.intellij.copyright.updater");
+  public static final CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {
-    super("com.intellij.copyright.updater");
+    super(EP_NAME);
+  }
+
+  @Override
+  public UpdateCopyrightsProvider forFileType(@NotNull FileType type) {
+    FileType acceptable = getRegisteredFileTypeFromLanguageHierarchy(type);
+    return acceptable == null ? null : super.forFileType(acceptable);
+  }
+
+  public @Nullable FileType getRegisteredFileTypeFromLanguageHierarchy(@NotNull FileType type) {
+    if (super.forFileType(type) != null) return type;
+
+    while (type instanceof LanguageFileType lft) {
+      Language language = lft.getLanguage();
+      if (!lft.isSecondary()) {
+        language = language.getBaseLanguage();
+      }
+      if (language == null) {
+        break;
+      }
+
+      FileType primaryFileType = FileTypeRegistry.getInstance().findFileTypeByLanguage(language);
+      if (primaryFileType == null) break;
+      if (super.forFileType(primaryFileType) != null) return primaryFileType;
+
+      type = primaryFileType;
+    }
+
+    return null;
   }
 }

@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface Foo {
+    <caret>fun String.foo() {
+    }
+}
+
+context(c1: String)
+fun bar(instance: Foo) {
+    with(instance) {
+        c1.foo()
+    }
+}

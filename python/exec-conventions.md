@@ -1,0 +1,127 @@
+# PyCharm Exec — Conventions
+
+Conventions for work in python exec modules. It includes at least all modules
+under "PyCharm Exec Experts" ownership.
+
+## Avoid instance checks as much as possible
+
+When you should do some check on a sealed interface/class, avoid doing
+`if (foo is Foo)`. You should always use exhaustive `when` or avoid
+instance checks altogether.
+
+In other cases you should prefer polymorphism rather than casting. One
+example would be `FileSystem` which generally shouldn't be used like this:
+
+```kotlin
+(fileSystem as? TargetFileSystem).someTargetOnlyLogic()
+```
+
+## Prefer extension points for potentially extendable behavior (especially around tools)
+
+When fixing/implementing something, avoid doing something like `isUv`/`isHatch`/etc. In
+cases when behavior should be different - an extension point should be used. This also
+applies for working with targets. In most cases there shouldn't be casting
+`TargetEnvironmentRequest` to some WSL/Docker/etc specific request.
+
+## Avoid using String (or its typealiases) for paths
+
+You should always prefer using either NIO Path or `EelPath` for representing paths. The only
+exception is paths on targets because they represent "local" paths there.
+
+## Visibility of symbols should be as private as possible
+
+Unless there's a specific intention to expose some API publicly, symbols should be as
+private as possible. Mark them `internal` if needed in this module only, otherwise use
+`@ApiStatus.Internal` and `@PyInternalExecApi`. You can skip using the second one only if
+it's an internal API that is deliberately exposed to use by others in monorepo.
+
+## Creating new module rules
+
+When adding a new exec module:
+
+* add `OWNERSHIP` for exec subteam (unless there's one somewhere up the tree)
+* add `-Werror` to compiler options
+* add opt-in for `PyInternalExecApi` to compiler options.
+
+## Don't use warnings suppression
+
+Avoid using `@Suppress` as much as possible, you should always try to find a better way
+of implementing things. Warnings are there for a reason. Use it only if absolutely
+necessary (or avoiding it creates a huge overhead).
+
+## API rules
+
+Any non-private symbol is an API, even when only the PyCharm Exec team uses it.
+An API must always be consistent and logical:
+
+* Never add a parameter whose value another parameter already gives. A module always gives its project.
+* To implement a union (a function accepts either A or B), use a sealed class.
+* When a caller can provide a project or a module, use `ModuleOrProject`.
+
+## Threading rules
+
+* If a function is IO bound or CPU bound, call it on a background thread.
+* If a function needs Swing access, call it on the EDT.
+* If a function is a hotspot or private, you can mark it with `@RequiresBackgroundThread` or `@RequiresEdt`.
+  The annotation only asserts the thread, so the caller must still switch to it.
+* Otherwise, use the "main-safe rule": make the function `suspend`, and choose the appropriate `Dispatcher` inside it.
+
+## Test assertions
+
+Use AssertJ for every assertion. Import `org.assertj.core.api.Assertions.assertThat`.
+Do not use `assertEquals`, `assertTrue` or another JUnit assertion. Do not use the
+Kotlin `assert`.
+
+To check a type and then a property of the value, use one chain with `asInstanceOf`
+and a factory from `org.assertj.core.api.InstanceOfAssertFactories`. Do not cast the
+value again.
+
+```kotlin
+// Good
+assertThat(output.error)
+  .asInstanceOf(type(ExecError::class.java))
+  .extracting { it.exe }
+  .asInstanceOf(type(Exe.OnEel::class.java))
+  .extracting { it.eelPath.asNioPath() }
+  .isEqualTo(binary)
+
+// Bad
+val err = output.error as ExecError
+assertEquals(binary, (err.exe as Exe.OnEel).eelPath.asNioPath())
+```
+
+`asInstanceOf` also asserts that the value is not null, and a failure reports the
+full chain. A cast reports only a `ClassCastException`.
+
+## Don't catch broadly
+
+* Never catch `Exception`, `Throwable`, or `RuntimeException`. Catch the type that the KDoc
+  of the callee documents with `@throws`.
+* Never use `runCatching`. It also catches `CancellationException` and breaks cancellation.
+* If you cannot avoid a broad catch, rethrow the exception after you handle it.
+* For a failure that the caller can expect, return `PyResult` instead of a throw.
+  See `com.jetbrains.python.errorProcessing.PyResult`.
+* To return an error one level up, use `getOr`. Give it a bundle message, they build a readable chain.
+
+Use these rules for an exception that you caught:
+
+* The user can correct the cause: Report the failure to the user and do not rethrow.
+* The user cannot correct the cause: Do not catch the exception. Let it propagate, because
+  Diogen must record it. Diogen is the internal system that aggregates exceptions.
+
+```kotlin
+// Wrong: this hides the cause and stops cancellation.
+val sdk = runCatching { createSdkForNewEnv(context, ref) }.getOrNull()
+
+// Right: the caller gets the documented failure, with the context added.
+val sdk = createSdkForNewEnv(context, ref)
+  .getOr(PyBundle.message("sdk.configuration.path.cant.create.sdk", python)) { return it }
+```
+
+## PyCharm must be Eel-enabled
+
+A project can be on any eel. Never assume that the project is on the local eel.
+
+* Do not use `localEel`. Get the eel from the project or from the path.
+* Use `EelApi` to run processes and to connect to the network.
+* Use NIO `Path` or `EelPath` to work with the file system.

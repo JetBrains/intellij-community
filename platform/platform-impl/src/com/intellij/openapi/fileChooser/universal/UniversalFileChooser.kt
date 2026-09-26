@@ -1,0 +1,1582 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileChooser.universal
+
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.dnd.DroppedFileCopy
+import com.intellij.ide.ui.ProductIcons
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDialog
+import com.intellij.openapi.fileChooser.FileSaverDescriptor
+import com.intellij.openapi.fileChooser.PathChooserDialog
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
+import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.putUserData
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.Consumer
+import com.intellij.util.SystemProperties
+import com.intellij.util.containers.toArray
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
+import java.awt.CardLayout
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Toolkit
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.BooleanSupplier
+import java.util.function.Supplier
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeWillExpandListener
+import javax.swing.tree.ExpandVetoException
+import javax.swing.tree.TreePath
+import javax.swing.tree.TreeSelectionModel
+import kotlin.coroutines.CoroutineContext
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
+import kotlin.time.Duration.Companion.seconds
+
+private const val leftPanel: Boolean = false
+
+/**
+ * The size of the browser panel when nothing is stored in the dimension service yet.
+ * A half of the screen is used only when the screen is too small to fit these values.
+ */
+private const val defaultWidth: Int = 700
+private const val defaultHeight: Int = 500
+
+@ApiStatus.Internal
+object UniversalFileChooser {
+  @JvmStatic
+  fun canUseIn(project: Project?): Boolean {
+    return Registry.`is`("universal.file.chooser.is.enabled")
+           && SystemProperties.getBooleanProperty("universal.file.chooser.is.enabled", true) != false
+  }
+
+  @JvmStatic
+  fun create(project: Project?, parent: Component?, descriptor: FileChooserDescriptor): Dialog {
+    val currProject = project ?: ProjectManager.getInstance().defaultProject
+    return Dialog(currProject, parent, descriptor)
+  }
+
+  /**
+   * Capable of choosing files in a local file system and in Docker/WSL containers.
+   */
+  class Dialog(
+    val project: Project,
+    parent: Component? = null,
+    private val descriptor: FileChooserDescriptor,
+    private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
+    private val persistLocation: Boolean = true,
+    private val preselectPath: Path? = null
+  ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
+    private lateinit var mainPanel: Panel
+
+    init {
+      init()
+      title = descriptor.title ?: UIBundle.message("file.chooser.default.title")
+    }
+
+    override fun getDimensionServiceKey(): String? = if (persistLocation) "UniversalFileChooserDialog" else null
+
+    override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
+      val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
+      mainPanel.preselect(explicit)
+      if (this.showAndGet()) {
+        return toVirtualFiles(descriptor, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
+      }
+      return emptyArray()
+    }
+
+    override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
+      val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
+      mainPanel.preselect(explicit)
+      if (showAndGet()) {
+        val mutableList = mutableListOf<VirtualFile>()
+        mutableList.addAll(toVirtualFiles(descriptor, mainPanel.getSelectedFiles()))
+        callback.consume(mutableList)
+      }
+    }
+
+    override fun createCenterPanel(): JComponent {
+      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled, contributors, preselectPath = preselectPath)
+      return mainPanel
+    }
+
+    override fun getPreferredFocusedComponent(): JComponent? =
+      if (::mainPanel.isInitialized) mainPanel.getPreferredFocusedComponent() else null
+
+    fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
+
+    override fun doOKAction() {
+      // Before confirming, resolve the path typed in the text field when it diverges from the tree selection
+      mainPanel.confirmOk {
+        getSelectedFiles().firstOrNull()?.let { lastSelected ->
+          FileChooserUtil.setLastOpenedFile(project, lastSelected)
+        }
+        performOkAction()
+      }
+    }
+
+    private fun performOkAction() {
+      super.doOKAction()
+    }
+  }
+
+  private fun toVirtualFiles(descriptor: FileChooserDescriptor, paths: List<Path>): List<VirtualFile> {
+    // Mirror FileChooserDialogImpl.doOKAction: after resolving NIO paths to VirtualFiles, run each
+    // result through `descriptor.getFileToSelect(...)` (via FileChooserUtil.getChosenFiles) so that,
+    // e.g., an archive file is returned as its `jar://…!/` JarFileSystem VirtualFile when the
+    // descriptor has `isChooseJarContents = true` (see IJPL-250874).
+    val resolved = paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+    return FileChooserUtil.getChosenFiles(descriptor, resolved)
+  }
+
+  class Panel @JvmOverloads constructor(
+    disposable: Disposable,
+    private val descriptor: FileChooserDescriptor,
+    private val project: Project,
+    okAction: Runnable,
+    private val okEnabledUpdater: (Boolean) -> Unit = {},
+    private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
+    private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
+    private val extraPopupActions: ActionGroup = DefaultActionGroup(),
+    preselectPath: Path? = null
+  ) : JPanel(), FileBrowserPanel {
+
+    companion object {
+      private val FILE_VIEW_KEY: Key<FileView?> = Key.create<FileView>("universalFileChooser.fileView")
+      private const val LOCATIONS_PROPORTION_KEY = "universalFileChooser.locationsProportion"
+      private const val LOCATIONS_DEFAULT_PROPORTION = 0.2f
+      private const val SHOW_HIDDEN_FILES_KEY = "universalFileChooser.showHiddenFiles"
+    }
+
+    private val tabbedPane: JBTabbedPane
+    private val fileViews: MutableList<FileView> = mutableListOf()
+
+    @Suppress("OPT_IN_USAGE")
+    private val scope = GlobalScope.childScope("UniversalFileChooser")
+
+    private val renameAction = RenameFileAction(::getActiveFileView)
+
+    private val topToolbar: ActionToolbar
+    private val toolbarActionGroup: DefaultActionGroup
+    private val popupActionGroup: DefaultActionGroup
+    private val effectiveContributors: Collection<UniversalFileChooserContributor>
+
+    init {
+      layout = BorderLayout()
+      val properties = PropertiesComponent.getInstance()
+      if (properties.isValueSet(SHOW_HIDDEN_FILES_KEY)) {
+        descriptor.withShowHiddenFiles(properties.getBoolean(SHOW_HIDDEN_FILES_KEY, descriptor.isShowHiddenFiles))
+      }
+      val (toolbar, group) = createTopToolbar()
+      topToolbar = toolbar
+      toolbarActionGroup = group
+      popupActionGroup = DefaultActionGroup(toolbarActionGroup, Separator.getInstance(), extraPopupActions)
+      val screenSize = Toolkit.getDefaultToolkit().screenSize
+      preferredSize = Dimension(
+        minOf(screenSize.width / 2, JBUI.scale(defaultWidth)),
+        minOf(screenSize.height / 2, JBUI.scale(defaultHeight)),
+      )
+      tabbedPane = JBTabbedPane()
+      val projectContrib = projectContributor(project, contributors)
+      val localContrib = localContributor(contributors)
+      val restrictedContributors: Set<UniversalFileChooserContributor>
+      effectiveContributors = if (descriptor.isEnvironmentRestricted) {
+        val restricted = projectContrib ?: localContrib
+        val primary = restricted?.let { listOf(it) } ?: contributors
+        if (descriptor.isLocalFileSystem && localContrib != null && localContrib !in primary) {
+          restrictedContributors = primary.toSet()
+          primary + localContrib
+        }
+        else {
+          restrictedContributors = primary.toSet()
+          primary
+        }
+      }
+      else {
+        restrictedContributors = emptySet()
+        contributors
+      }
+      for (contributor in effectiveContributors) {
+        val restrictRoots = contributor in restrictedContributors
+        val fileView = FileView(contributor, descriptor, disposable, project, okAction, scope, topToolbar, popupActionGroup, ::updateOkEnabled, restrictRoots,
+                                foreignPathNavigator = { text -> navigateToForeignPath(contributor, text) })
+        fileView.fileTree.onFilesDropped = { dropTarget, paths -> handleFilesDropped(fileView, dropTarget, paths) }
+        fileViews.add(fileView)
+      }
+      // If there is a single tab available, don't show the tab itself, only its content panel.
+      val contentComponent: JComponent = if (fileViews.size == 1) {
+        fileViews[0].topComponent
+      }
+      else {
+        for (fileView in fileViews) {
+          tabbedPane.addTab(fileView.contributor.tabTitle, fileView.topComponent)
+        }
+        tabbedPane.addChangeListener { updateOkEnabled() }
+        tabbedPane
+      }
+
+      preselect(preselectPath)
+      updateOkEnabled()
+
+      if (leftPanel) {
+        val splitter = OnePixelSplitter(false, LOCATIONS_PROPORTION_KEY, LOCATIONS_DEFAULT_PROPORTION)
+        splitter.firstComponent = createLocationsPanel(project)
+        splitter.secondComponent = contentComponent
+        add(splitter, BorderLayout.CENTER)
+      }
+      else {
+        val description = descriptor.description?.takeIf { it.isNotBlank() }
+        val topPanel = panel {
+          if (description != null) {
+            row {
+              cell(JBLabel(description).apply {
+                foreground = UIUtil.getContextHelpForeground()
+              }).align(AlignX.FILL)
+            }
+            separator()
+          }
+          row {
+            cell(topToolbar.component).align(AlignX.LEFT)
+          }
+        }
+        add(topPanel, BorderLayout.NORTH)
+        topToolbar.targetComponent = this
+        add(contentComponent, BorderLayout.CENTER)
+      }
+
+      disposable.whenDisposed {
+        scope.cancel()
+      }
+
+      registerFocusPathAction(disposable)
+      // The action already holds the shortcut of the platform Rename action.
+      renameAction.registerCustomShortcutSet(this, disposable)
+    }
+
+    private fun registerFocusPathAction(disposable: Disposable) {
+      val action = ActionManager.getInstance().getAction("UniversalFileChooser.FocusPath") ?: return
+      val shortcutSet = action.shortcutSet
+      if (shortcutSet.shortcuts.isEmpty()) return
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+          getActiveFileView()?.focusPathField()
+        }
+      }.registerCustomShortcutSet(shortcutSet, this, disposable)
+    }
+
+    private fun createTopToolbar(): Pair<ActionToolbar, DefaultActionGroup> {
+      val homeAction = object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.home.text"),
+        IdeBundle.message("universal.file.chooser.action.home.description"),
+        AllIcons.Nodes.HomeFolder
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun actionPerformed(e: AnActionEvent) {
+          navigateToHome()
+        }
+      }
+
+      val desktopAction = object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.desktop.text"),
+        IdeBundle.message("universal.file.chooser.action.desktop.description"),
+        AllIcons.Nodes.Desktop
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun update(e: AnActionEvent) {
+          // Use the cached Desktop path resolved on Dispatchers.IO in FileView.init to avoid calling
+          // read-lock-forbidden native lookups from the EDT (see IJPL-252593).
+          e.presentation.isVisible = fileViews.any { it.desktopPath != null }
+          e.presentation.isEnabled = true
+        }
+
+        override fun actionPerformed(e: AnActionEvent) {
+          navigateToDesktop()
+        }
+      }
+
+      val projectAction = if (!project.isDefault) object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.project.text"),
+        IdeBundle.message("universal.file.chooser.action.project.description"),
+        ProductIcons.getInstance().getProjectIcon()
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun actionPerformed(e: AnActionEvent) {
+          navigateToProject()
+        }
+      } else null
+
+      val showHiddenAction = object : ToggleAction(
+        IdeBundle.message("universal.file.chooser.action.show.hidden.text"),
+        IdeBundle.message("universal.file.chooser.action.show.hidden.description"),
+        AllIcons.Actions.ToggleVisibility
+      ) {
+        override fun isSelected(e: AnActionEvent): Boolean = getActiveFileView()?.fileTree?.areHiddensShown() == true
+
+        override fun setSelected(e: AnActionEvent, state: Boolean) {
+          getActiveFileView()?.fileTree?.showHiddens(state)
+          PropertiesComponent.getInstance().setValue(SHOW_HIDDEN_FILES_KEY, state)
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+      }
+
+      val createDirectoryAction = object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.create.directory.text"),
+        IdeBundle.message("universal.file.chooser.action.create.directory.description"),
+        AllIcons.Actions.NewFolder
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+        override fun update(e: AnActionEvent) {
+          val fileView = getActiveFileView()
+          if (fileView == null) { e.presentation.isEnabled = false; return }
+          val parent = fileView.fileTree.getNewFileParent()
+          e.presentation.isEnabled = parent != null && parent.parent != null && Files.isDirectory(parent) && Files.isWritable(parent)
+        }
+
+        override fun actionPerformed(e: AnActionEvent) {
+          val fileView = getActiveFileView() ?: return
+          val parent = fileView.fileTree.getNewFileParent() ?: return
+          val newFolderName = Messages.showInputDialog(
+            UIBundle.message("create.new.folder.enter.new.folder.name.prompt.text"),
+            UIBundle.message("new.folder.dialog.title"),
+            Messages.getQuestionIcon(),
+            "",
+            null
+          ) ?: return
+          val failReason = fileView.fileTree.createNewFolder(parent, newFolderName)
+          if (failReason != null) {
+            Messages.showMessageDialog(
+              UIBundle.message("create.new.folder.could.not.create.folder.error.message", newFolderName),
+              UIBundle.message("error.dialog.title"),
+              Messages.getErrorIcon()
+            )
+          }
+        }
+      }
+
+      val deleteAction = object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.delete.text"),
+        IdeBundle.message("universal.file.chooser.action.delete.description"),
+        AllIcons.General.Delete
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+        override fun update(e: AnActionEvent) {
+          e.presentation.isEnabled = getActiveFileView()?.canDeleteSelectedFile() == true
+        }
+
+        override fun actionPerformed(e: AnActionEvent) {
+          getActiveFileView()?.deleteSelectedFile()
+        }
+      }
+
+      val refreshAction = object : AnAction(
+        IdeBundle.message("universal.file.chooser.action.refresh.text"),
+        IdeBundle.message("universal.file.chooser.action.refresh.description"),
+        AllIcons.Actions.Refresh
+      ) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun actionPerformed(e: AnActionEvent) {
+          getActiveFileView()?.fileTree?.updateTree()
+        }
+      }
+
+      val actionGroup = DefaultActionGroup().apply {
+        add(homeAction)
+        add(desktopAction)
+        if (projectAction != null) add(projectAction)
+        addSeparator()
+        add(createDirectoryAction)
+        add(renameAction)
+        add(deleteAction)
+        addSeparator()
+        add(refreshAction)
+        add(showHiddenAction)
+      }
+
+      val toolbarGroup = DefaultActionGroup(actionGroup, Separator.getInstance(), extraToolbarActions)
+      val toolbar = ActionManager.getInstance().createActionToolbar("UniversalFileChooserTopToolbar", toolbarGroup, true)
+      return toolbar to actionGroup
+    }
+
+    private fun projectContributor(
+      project: Project,
+      contributors: Collection<UniversalFileChooserContributor> = this.contributors,
+    ): UniversalFileChooserContributor? {
+      val projectPath = project.guessedProjectPath() ?: return null
+      return contributors.findOwner(projectPath)
+    }
+
+    private fun Project.guessedProjectPath(): Path? {
+      if (this.isDefault) return null
+      return this.guessProjectDir()?.toNioPathOrNull()
+    }
+
+    private fun localContributor(contributors: Collection<UniversalFileChooserContributor>): UniversalFileChooserContributor? {
+      val localHome = runCatching { Path.of(SystemProperties.getUserHome()) }.getOrNull() ?: return null
+      return contributors.firstOrNull { it.ownsPath(localHome) }
+    }
+
+    private fun preselectProjectTab(project: Project) {
+      if (fileViews.size <= 1) return
+      val projectContributor = projectContributor(project, contributors)
+      projectContributor?.let { contributor ->
+        tabbedPane.indexOfTab(contributor.tabTitle)
+          .takeIf { it >= 0 }?.let { tabbedPane.selectedIndex = it }
+      }
+    }
+
+    fun preselect(toSelect: Path?) {
+      scope.launch {
+        withContext(Dispatchers.IO) {
+          val target = pathToSelect(toSelect) ?: return@withContext
+          val effective = if (descriptor is FileSaverDescriptor && Files.exists(target) && !Files.isDirectory(target)) {
+            target?.parent ?: target
+          }
+          else {
+            target
+          }
+          runOnEdt {
+            navigateToFile(effective, preselectPathText = true)
+            if (toSelect == null) {
+              preselectProjectTab(project)
+            }
+          }
+        }
+      }
+    }
+
+    private suspend fun pathToSelect(toSelect: Path?): Path? {
+      // Use the last opened path only when one of the shown contributors owns it. The last path is
+      // stored per project, and for the default project it can come from an unrelated chooser
+      // whose environment is not shown here (see IJPL-254193).
+      val last = NioFileChooserUtil.getLastOpenedPath(project)?.takeIf { effectiveContributors.findOwner(it) != null }
+      if (last != null && (toSelect == null || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == true)) {
+        return last
+      }
+      if (toSelect != null) {
+        return toSelect
+      }
+      if (!project.isDefault) {
+        val projectPath = project.guessedProjectPath()
+        if (projectPath != null) {
+          return projectPath
+        }
+      }
+      return getHomeDirectory()
+    }
+
+
+    override fun getSelectedFiles(): List<Path> {
+      val fileView = getActiveFileView()
+      return fileView?.getSelectedFiles() ?: emptyList()
+    }
+
+    /**
+     * Confirms the current selection on OK. Delegates to the active [FileView], which resolves the
+     * path typed in the text field when it diverges from the tree selection and only then runs
+     * [proceed] (see [FileView.confirmSelection]).
+     */
+    fun confirmOk(proceed: () -> Unit) {
+      val activeView = getActiveFileView()
+      if (activeView == null) {
+        proceed()
+        return
+      }
+      activeView.confirmSelection(proceed)
+    }
+
+    /**
+     * Finds the tab that owns [text] and navigates that tab to the path. [source] is the contributor
+     * of the tab that holds the text, and it is skipped. Returns the path, or null when no other tab
+     * owns the text.
+     *
+     * Call it on a background thread, because a contributor parses the text. The navigation itself
+     * runs on the EDT.
+     */
+    private fun navigateToForeignPath(source: UniversalFileChooserContributor, text: String): Path? {
+      for (fileView in fileViews) {
+        val contributor = fileView.contributor
+        if (contributor === source) continue
+        val path = runCatching { contributor.parsePresentablePath(text) }.getOrNull() ?: continue
+        if (!runCatching { contributor.ownsPath(path) }.getOrDefault(false)) continue
+        runOnEdt { navigateToFile(path) }
+        return path
+      }
+      return null
+    }
+
+    fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
+      val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
+      if (index < 0) return
+      if (fileViews.size > 1) {
+        tabbedPane.selectedIndex = index
+      }
+      val targetView = fileViews[index]
+      if (preselectPathText) {
+        targetView.requestPathTextPreselection()
+      }
+      targetView.fileToSelect = file
+      targetView.fileTree.select(file) { targetView.fileTree.expand(file, null) }
+    }
+
+    /**
+     * Handles an OS file drop on [fileView].
+     *
+     * When the dropped files and the drop destination share a file system, the drop only navigates
+     * to the first dropped file. When they differ, for example a local drop onto a non-local (WSL or
+     * Docker) view, the files are copied to the destination directory through the EEL API.
+     *
+     * [dropTarget] is the tree node under the drop point, or null for a drop on an empty area.
+     */
+    private fun handleFilesDropped(fileView: FileView, dropTarget: Path?, paths: List<Path>) {
+      if (paths.isEmpty()) return
+      // Capture the destination candidate on the EDT before the background work starts.
+      val candidate = dropTarget ?: fileView.fileTree.getSelectedFile()
+      scope.launch {
+        val destinationDir = withContext(Dispatchers.IO) { resolveDestinationDir(fileView, candidate) }
+                             ?: return@launch
+        val foreign = withContext(Dispatchers.IO) { DroppedFileCopy.isAcrossEnvironments(paths, destinationDir) }
+        if (!foreign) {
+          runOnEdt { navigateToFile(paths.first()) }
+          return@launch
+        }
+        copyDroppedFiles(fileView, destinationDir, paths)
+      }
+    }
+
+    private suspend fun resolveDestinationDir(fileView: FileView, candidate: Path?): Path? {
+      if (candidate != null) {
+        return if (Files.isDirectory(candidate)) candidate else candidate.parent
+      }
+      return runCatching { fileView.contributor.getRoots().firstOrNull()?.path }.getOrNull()
+    }
+
+    private suspend fun copyDroppedFiles(fileView: FileView, destinationDir: Path, paths: List<Path>) {
+      var copied: List<Path> = emptyList()
+      try {
+        copied = DroppedFileCopy.copy(project, destinationDir, paths)
+      }
+      finally {
+        // The tree must show the result also when the user cancels the copy, because the copy can
+        // stop after some files.
+        val done = copied
+        runOnEdt {
+          fileView.fileTree.updateTree()
+          done.firstOrNull()?.let { navigateToFile(it) }
+        }
+      }
+    }
+
+    fun getPreferredFocusedComponent(): JComponent? = getActiveFileView()?.pathTextField
+
+    private fun getActiveFileView(): FileView? {
+      if (fileViews.size == 1) return fileViews[0]
+      val component = tabbedPane.selectedComponent as? JComponent ?: return null
+      return component.getUserData(FILE_VIEW_KEY)
+    }
+
+    private fun updateOkEnabled() {
+      val activeView = getActiveFileView()
+      okEnabledUpdater(activeView?.isOkEnabled() ?: false)
+    }
+
+    private data class LocationData(
+      val icon: Icon,
+      val text: @Nls String,
+      val action: Runnable,
+    )
+
+    private fun createLocationsPanel(project: Project): JComponent {
+      val locations = buildList {
+        add(LocationData(
+          icon = AllIcons.Nodes.HomeFolder,
+          text = IdeBundle.message("universal.file.chooser.action.home.text"),
+          action = { navigateToHome() }
+        ))
+        add(LocationData(
+          icon = AllIcons.Nodes.Desktop,
+          text = IdeBundle.message("universal.file.chooser.action.desktop.text"),
+          action = { navigateToDesktop() }
+        ))
+        if (!project.isDefault) {
+          add(LocationData(
+            icon = AllIcons.Nodes.Project,
+            text = IdeBundle.message("universal.file.chooser.location.project"),
+            action = { navigateToProject() }
+          ))
+        }
+      }
+      val locationList = JBList(locations)
+      locationList.selectionMode = ListSelectionModel.SINGLE_SELECTION
+      locationList.cellRenderer = object : ColoredListCellRenderer<LocationData>() {
+        override fun customizeCellRenderer(
+          list: JList<out LocationData>,
+          value: LocationData,
+          index: Int,
+          selected: Boolean,
+          hasFocus: Boolean,
+        ) {
+          icon = value.icon
+          append(value.text)
+        }
+      }
+      locationList.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          val index = locationList.locationToIndex(e.point)
+          if (index >= 0) {
+            locationList.model.getElementAt(index).action.run()
+            locationList.clearSelection()
+          }
+        }
+      })
+      return panel {
+        row {
+          cell(locationList).align(AlignX.FILL)
+        }
+      }
+    }
+
+    private suspend fun getHomeDirectory(): Path? {
+      val basePath = project.guessedProjectPath()
+                     ?: findNonProjectBasePath()
+                     ?: return null
+      return basePath.asEelPath().descriptor.toEelApi().userInfo.home.asNioPath()
+    }
+
+    private fun navigateToHome() {
+      val activeView = getActiveFileView() ?: return
+      activeView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+      scope.launch {
+        withContext(Dispatchers.IO) {
+          val homePath = getHomeDirectory() ?: return@withContext
+          runOnEdt {
+            activeView.topComponent.cursor = Cursor.getDefaultCursor()
+            navigateToFile(homePath)
+          }
+        }
+      }
+    }
+
+    private suspend fun findNonProjectBasePath(): Path? {
+      val localHome = Path.of(SystemProperties.getUserHome())
+      if (effectiveContributors.find { c -> c.ownsPath(localHome) } != null) return localHome
+      val activeView = getActiveFileView() ?: return null
+      // The roots come from an asynchronous loadRoots() pass. Wait for it, because on a fresh
+      // remote connection the preselection runs before the roots exist (see IJPL-254193).
+      activeView.rootsLoaded.await()
+      return activeView.roots.asSequence()
+        .mapNotNull { runCatching { Path.of(it) }.getOrNull() }
+        .firstOrNull()
+    }
+
+    private fun navigateToProject() {
+      scope.launch {
+        withContext(Dispatchers.IO) {
+          val projectPath = project.guessedProjectPath() ?: return@withContext
+          runOnEdt {
+            navigateToFile(projectPath)
+          }
+        }
+      }
+    }
+
+    private fun navigateToDesktop() {
+      val targetView = getActiveFileView()?.takeIf { it.desktopPath != null }
+                       ?: fileViews.firstOrNull { it.desktopPath != null }
+                       ?: return
+      targetView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+      scope.launch {
+        withContext(Dispatchers.IO) {
+          val desktopPath = targetView.desktopPath ?: targetView.contributor.getDesktopPath()
+          if (desktopPath != null) {
+            runOnEdt {
+              targetView.topComponent.cursor = Cursor.getDefaultCursor()
+              navigateToFile(desktopPath)
+            }
+          }
+          else {
+            runOnEdt { targetView.topComponent.cursor = Cursor.getDefaultCursor() }
+          }
+        }
+      }
+    }
+
+
+    class FileView(
+      val contributor: UniversalFileChooserContributor,
+      descriptor: FileChooserDescriptor,
+      disposable: Disposable,
+      internal val project: Project,
+      okAction: Runnable,
+      val scope: CoroutineScope,
+      private val topToolbar: ActionToolbar,
+      popupActionGroup: ActionGroup,
+      private val okEnabledUpdater: () -> Unit = {},
+      restrictRootsToProjectEnvironment: Boolean = descriptor.isEnvironmentRestricted,
+      /**
+       * Hands a path that this tab does not own over to the tab that owns it. Returns the path when
+       * another tab took it. Called on a background thread.
+       */
+      private val foreignPathNavigator: (String) -> Path? = { null },
+    ) {
+      val topComponent: JComponent
+      val fileTree: NioFileSystemTree
+      val roots: MutableList<String> = mutableListOf()
+      private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
+      private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
+      private val chooseFiles: Boolean = descriptor.isChooseFiles || descriptor.isChooseJarContents
+      private val chooseFolders: Boolean = descriptor.isChooseFolders
+
+      var fileToSelect: Path? = null
+
+      /** Completed when the first [loadRoots] pass has populated [roots]. */
+      val rootsLoaded: CompletableDeferred<Unit> = CompletableDeferred()
+
+      internal val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
+
+      /**
+       * One-shot flag (EDT only): when set, the next non-empty path-field update selects the whole
+       * text so the user can type over the preselected path. Consumed on first apply. See IJPL-247112.
+       */
+      private var preselectPathText: Boolean = false
+
+      /** Requests that the path field text be preselected on its next (initial) update. */
+      fun requestPathTextPreselection() {
+        preselectPathText = true
+      }
+
+      @Volatile
+      private var pathTextFieldInvalid: Boolean = false
+
+      /** The running path resolution started from the text field. Only the last one is kept. */
+      @Volatile
+      private var pathNavigationJob: Job? = null
+
+      /**
+       * EDT only: set while [updatePathField] writes the tree selection into the path field, so that
+       * such a write does not start a new navigation (see IJPL-247114).
+       */
+      private var updatingPathFieldFromTree: Boolean = false
+
+      companion object {
+        private const val LOADING_CARD = "loading"
+        private const val TREE_CARD = "tree"
+      }
+
+      private val cardLayout = CardLayout()
+      private val contentPanel = JPanel(cardLayout)
+      private val tree = Tree()
+      val mountStatusCache: MutableMap<String, MountStatus> = ConcurrentHashMap()
+      private val presentationCache: MutableMap<String, UniversalFileChooserContributor.Presentation> = ConcurrentHashMap()
+
+      @Volatile
+      var cacheUpdateJob: Job? = null
+
+      @Volatile
+      var isMountActionInProgress: Boolean = false
+
+      /**
+       * Cached Desktop directory path for the contributor.
+       */
+      @Volatile
+      var desktopPath: Path? = null
+        private set
+
+      init {
+        val descriptorCopy = FileChooserDescriptor(descriptor)
+
+        // Resolve the Desktop directory eagerly on a background thread so that EDT action updates
+        // never call into the read-lock-forbidden native lookup.
+        scope.launch(Dispatchers.IO) {
+          desktopPath = runCatching { contributor.getDesktopPath() }.getOrNull()
+        }
+
+        tree.isRootVisible = false
+        tree.showsRootHandles = true
+        tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
+        contributor.getNoEntriesText()?.let { tree.emptyText.text = it }
+        tree.addTreeWillExpandListener(object : TreeWillExpandListener {
+          override fun treeWillExpand(event: TreeExpansionEvent) {
+            val virtualRoot = fileTree.getVirtualRoot(event.path)
+            if (virtualRoot != null) {
+              mountVirtualRootAndReload(virtualRoot)
+              throw ExpandVetoException(event)
+            }
+            val isUnmounted = isUnderUnmountedRoot(event.path)
+            if (isUnmounted ?: true) {
+              val nioPath = NioFileSystemTree.getNioPath(event.path)
+              if (nioPath != null && isUnmounted != null) {
+                mountUnmountedRootAndReload(nioPath.root)
+              }
+              throw ExpandVetoException(event)
+            }
+          }
+
+          override fun treeWillCollapse(event: TreeExpansionEvent) {}
+        })
+        fileTree = NioFileSystemTree(project, descriptorCopy, tree, contributor, scope)
+        Disposer.register(disposable, fileTree)
+        fileTree.addOkAction(okAction)
+        fileTree.addListener(object : NioFileSystemTree.Listener {
+          override fun selectionChanged(selection: List<Path?>) {
+            updatePathField(selection)
+            okEnabledUpdater()
+          }
+        }, disposable)
+        val scrollPane = ScrollPaneFactory.createScrollPane(fileTree.getTree())
+
+        pathTextField.showHiddenSupplier = BooleanSupplier { fileTree.areHiddensShown() }
+        pathTextField.pathParser = contributor::parsePresentablePath
+        ComponentValidator(disposable)
+          .withValidator(Supplier<ValidationInfo?> {
+            if (pathTextFieldInvalid)
+              ValidationInfo(IdeBundle.message("universal.file.chooser.invalid.path"), pathTextField)
+            else null
+          })
+          .installOn(pathTextField)
+        pathTextField.document.addDocumentListener(object : DocumentListener {
+          override fun insertUpdate(e: DocumentEvent) {
+            setPathTextFieldError(false)
+            // A paste (or a text drop) inserts more than one character at once. Resolve it at once and
+            // navigate the tree to it, without waiting for Enter (see IJPL-247114).
+            if (e.length > 1) {
+              navigateToPastedPath()
+            }
+          }
+
+          override fun removeUpdate(e: DocumentEvent) { setPathTextFieldError(false) }
+          override fun changedUpdate(e: DocumentEvent) {}
+        })
+        pathTextField.addKeyListener(object : KeyAdapter() {
+          override fun keyPressed(e: KeyEvent) {
+            if (e.isConsumed) return
+            // Esc is intentionally not consumed here: it must close the dialog, like everywhere
+            // else in the IDE, instead of only moving the focus to the tree (see IJPL-255128).
+            if (e.keyCode == KeyEvent.VK_ENTER) {
+              navigateToTextFieldPath(); e.consume()
+            }
+          }
+        })
+        pathTextField.addFocusListener(object : FocusAdapter() {
+          override fun focusLost(e: FocusEvent) {
+            if (e.isTemporary) return
+            if (pathTextField.isCompletionPopupVisible) return
+            // Only a move to the tree reverts the edited text. A move to a button, such as OK,
+            // must keep the text, because the button acts on it.
+            if (e.oppositeComponent !== fileTree.getTree()) return
+            syncPathFieldWithTreeSelection()
+          }
+        })
+
+        tree.addTreeSelectionListener {
+          topToolbar.updateActionsAsync()
+        }
+
+        PopupHandler.installPopupMenu(tree, popupActionGroup, "UniversalFileChooserTreePopup")
+
+        tree.addKeyListener(object : KeyAdapter() {
+          override fun keyPressed(e: KeyEvent) {
+            if (e.isConsumed) return
+            if (e.modifiersEx != 0) return
+            if (e.keyCode == KeyEvent.VK_DELETE && canDeleteSelectedFile()) {
+              deleteSelectedFile()
+              e.consume()
+            }
+          }
+        })
+
+        val loadingLabel = JBLabel(
+          contributor.getCustomLoadingText() ?: IdeBundle.message("universal.file.chooser.label.loading"),
+          SwingConstants.CENTER)
+        contentPanel.add(loadingLabel, LOADING_CARD)
+        contentPanel.add(scrollPane, TREE_CARD)
+
+        val mainPanel = panel {
+          row {
+            cell(pathTextField)
+              .align(AlignX.FILL)
+              .resizableColumn()
+          }
+          row {
+            cell(contentPanel)
+              .align(AlignX.FILL)
+              .align(AlignY.FILL)
+              .resizableColumn()
+          }.resizableRow()
+        }
+
+        topComponent = mainPanel
+        topComponent.putUserData(FILE_VIEW_KEY, this)
+
+        loadRoots()
+
+      }
+
+      fun loadRoots() {
+        cardLayout.show(contentPanel, LOADING_CARD)
+        scope.launch {
+          withContext(Dispatchers.IO) {
+            val allRoots = if (environmentRestricted && !project.isDefault) {
+              val basePath = project.guessProjectDir()?.toNioPathOrNull()
+              if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
+            }
+            else {
+              contributor.getRoots()
+            }
+            val realRoots = allRoots.filter { it.path != null }
+            val presentations = mutableMapOf<String, UniversalFileChooserContributor.Presentation>()
+            val mountStatuses = mutableMapOf<String, MountStatus>()
+            for (root in realRoots) {
+              val rootKey = root.path!!.invariantSeparatorsPathString
+              val presentation = contributor.getPresentation(root.path!!)
+              if (presentation != null) {
+                presentations[rootKey] = presentation
+              }
+              mountStatuses[rootKey] = contributor.getMountStatus(root.path!!)
+            }
+            runOnEdt {
+              roots.clear()
+              roots.addAll(realRoots.map { it.path!!.invariantSeparatorsPathString })
+              presentationCache.clear()
+              presentationCache.putAll(presentations)
+              mountStatusCache.clear()
+              mountStatusCache.putAll(mountStatuses)
+              fileTree.setRoots(allRoots)
+              fileTree.updateTree()
+              cardLayout.show(contentPanel, TREE_CARD)
+              fileToSelect?.let {
+                val selection = if (it.root == it) {
+                  allRoots.firstOrNull { root ->
+                    root.path?.invariantSeparatorsPathString == it.invariantSeparatorsPathString
+                  }?.path
+                } else it
+                if (selection != null) {
+                  fileTree.select(selection) { fileTree.expand(selection, null) }
+                }
+              }
+              fileToSelect = null
+              okEnabledUpdater()
+              startCacheUpdates()
+              rootsLoaded.complete(Unit)
+            }
+          }
+        }
+      }
+
+      fun startCacheUpdates() {
+        cacheUpdateJob?.cancel()
+        val changed = mutableSetOf<String>()
+        cacheUpdateJob = scope.launch {
+          while (true) {
+            changed.clear()
+            withContext(Dispatchers.IO) {
+              for (root in roots) {
+                val oldStatus = mountStatusCache[root]
+                val newStatus = contributor.getMountStatus(Path.of(root))
+                if (oldStatus != newStatus) {
+                  mountStatusCache[root] = newStatus
+                  if (oldStatus != null) {
+                    changed.add(root)
+                  }
+                }
+              }
+            }
+            changed.forEach { handleMountStatusChange(Path.of(it)) }
+            delay(3.seconds)
+          }
+        }
+      }
+
+      private fun handleMountStatusChange(root: Path) {
+        when (mountStatusCache[root.invariantSeparatorsPathString]) {
+          MountStatus.Unmounted -> {
+            runOnEdt {
+              collapseUnmountedRoot(root)
+              topToolbar.updateActionsAsync()
+            }
+            loadRoots()
+          }
+          MountStatus.Mounted -> {
+            loadRoots()
+            runOnEdt {
+              topToolbar.updateActionsAsync()
+            }
+          }
+          else -> {}
+        }
+      }
+
+      fun getSelectedFiles(): List<Path> {
+        return fileTree.getSelectedFiles().filterNotNull().filter { file ->
+          isUnmountedRoot(file) == false
+        }
+      }
+
+      fun isOkEnabled(): Boolean {
+        // The path typed in the text field failed validation on the last OK attempt: keep OK
+        // disabled until the user edits the field (see IJPL-253095 and setPathTextFieldError).
+        if (pathTextFieldInvalid) return false
+        val selected = getSelectedFiles()
+        return selected.isNotEmpty() && selected.all { file ->
+          if (file.parent == null) return@all false
+          val isDir = Files.isDirectory(file)
+          if (isDir) {
+            if (!chooseFolders) return@all false
+            if (hasExtensionFilter) return@all false
+          }
+          else {
+            if (!chooseFiles) return@all false
+          }
+          true
+        }
+      }
+
+      fun canDeleteSelectedFile(): Boolean {
+        val selected = fileTree.getSelectedFile() ?: return false
+        if (roots.contains(selected.invariantSeparatorsPathString)) return false
+        if (!Files.isWritable(selected)) return false
+        return true
+      }
+
+      fun deleteSelectedFile() {
+        val selected = fileTree.getSelectedFile() ?: return
+        val confirmMessage = if (Files.isDirectory(selected) && !runCatching { Files.list(selected).use { it.findAny().isPresent } }.getOrElse { false }) {
+          IdeBundle.message("universal.file.chooser.action.delete.confirm.directory", selected.name)
+        }
+        else {
+          IdeBundle.message("universal.file.chooser.action.delete.confirm", selected.name)
+        }
+        if (Messages.showYesNoDialog(
+            confirmMessage,
+            IdeBundle.message("universal.file.chooser.action.delete.text"),
+            Messages.getWarningIcon()
+          ) != Messages.YES) return
+
+        val nextSelection = fileTree.computeSelectionAfterDeletion()
+
+        scope.launch {
+          var failure: Exception? = null
+          try {
+            withBackgroundProgress(project, IdeBundle.message("universal.file.chooser.action.delete.progress.title", selected.name)) {
+              withContext(Dispatchers.IO) {
+                val deletionContext = currentCoroutineContext()
+                reportRawProgress { reporter ->
+                  deleteRecursively(selected, reporter, deletionContext)
+                }
+              }
+            }
+          }
+          catch (e: CancellationException) {
+            // The user cancelled the progress (or the dialog was disposed): reflect the partial deletion, then propagate.
+            runOnEdt { fileTree.updateTree() }
+            throw e
+          }
+          catch (e: Exception) {
+            failure = e
+          }
+          runOnEdt {
+            fileTree.updateTree()
+            when {
+              failure != null -> Messages.showErrorDialog(failure.message ?: "", IdeBundle.message("universal.file.chooser.action.delete.text"))
+              nextSelection != null -> fileTree.select(nextSelection, null)
+            }
+          }
+        }
+      }
+
+      private fun deleteRecursively(path: Path, reporter: RawProgressReporter, context: CoroutineContext) {
+        context.ensureActive()
+        if (Files.isDirectory(path) && !Files.isSymbolicLink(path)) {
+          Files.newDirectoryStream(path).use { children ->
+            for (child in children) {
+              deleteRecursively(child, reporter, context)
+            }
+          }
+        }
+        reporter.text(IdeBundle.message("universal.file.chooser.action.delete.progress.deleting", path.fileName?.toString() ?: path.toString()))
+        Files.delete(path)
+      }
+
+      private fun findRootPath(nioPath: Path): String? {
+        return roots.firstOrNull { root -> nioPath.startsWith(root) }
+      }
+
+      private fun isUnmountedRoot(nioPath: Path): Boolean? {
+        val rootPath = findRootPath(nioPath) ?: return false
+        return mountStatusCache[rootPath]?.let{ it == MountStatus.Unmounted }
+      }
+
+      private fun isUnderUnmountedRoot(treePath: TreePath): Boolean? {
+        val nioPath = NioFileSystemTree.getNioPath(treePath) ?: return false
+        return isUnmountedRoot(nioPath)
+      }
+
+      private fun collapseUnmountedRoot(path: Path) {
+        val rootPath = findRootPath(path) ?: return
+        val rowCount = tree.rowCount
+        for (i in 0 until rowCount) {
+          val treePath = tree.getPathForRow(i) ?: continue
+          val nioPath = NioFileSystemTree.getNioPath(treePath) ?: continue
+          if (nioPath.invariantSeparatorsPathString == rootPath) {
+            tree.collapsePath(treePath)
+            return
+          }
+        }
+      }
+
+      private fun focusTree() {
+        fileTree.getTree().requestFocusInWindow()
+      }
+
+      fun focusPathField() {
+        if (!pathTextField.isShowing) return
+        pathTextField.requestFocusInWindow()
+        pathTextField.selectAll()
+      }
+
+      /**
+       * Confirms the current selection when the user clicks OK.
+       */
+      fun confirmSelection(proceed: () -> Unit) {
+        val text = getPathFieldText()
+        val selectedPresentable = fileTree.getSelectedFile()?.let { contributor.getPresentablePath(it) }
+        if (text.isEmpty() || text == selectedPresentable) {
+          proceed()
+          return
+        }
+        scope.launch {
+          withContext(Dispatchers.IO) {
+            val path = contributor.parsePresentablePath(text)?.takeIf { parsed ->
+              runCatching { contributor.ownsPath(parsed) }.getOrDefault(false)
+            }
+            val exists = path != null && runCatching { Files.exists(path) }.getOrDefault(false)
+            if (path == null || !exists) {
+              // Another tab can own the path. Switch to that tab and let the user confirm there.
+              if (foreignPathNavigator(text) != null) {
+                runOnEdt { setPathTextFieldError(false) }
+                return@withContext
+              }
+            }
+            runOnEdt {
+              if (path == null || !exists) {
+                setPathTextFieldError(true)
+                if (pathTextField.isShowing) {
+                  pathTextField.requestFocusInWindow()
+                }
+              }
+              else {
+                setPathTextFieldError(false)
+                fileTree.select(path) {
+                  fileTree.expand(path, null)
+                  proceed()
+                }
+              }
+            }
+          }
+        }
+      }
+
+      private fun navigateToTextFieldPath() {
+        val text = getPathFieldText()
+        if (text.isEmpty()) {
+          setPathTextFieldError(false)
+          updatePathField(fileTree.getSelectedFile()?.let { listOf(it) } ?: emptyList())
+          focusTree()
+          return
+        }
+        startPathNavigation(text, moveFocusToTree = true)
+      }
+
+      /**
+       * Resolves the pasted text and navigates the tree to it. The focus stays in the path field, so
+       * that the user can go on editing the pasted path.
+       */
+      private fun navigateToPastedPath() {
+        if (updatingPathFieldFromTree) return
+        val text = getPathFieldText()
+        if (text.isEmpty()) return
+        if (pathTextField.text != text) {
+          // The document is locked while it notifies the listeners, so replace the text later.
+          runOnEdt {
+            if (getPathFieldText() == text) pathTextField.text = text
+          }
+        }
+        startPathNavigation(text, moveFocusToTree = false)
+      }
+
+      /**
+       * Returns the path field text without the leading and trailing spaces and double quotes. A
+       * file manager, such as Windows Explorer, copies a path with double quotes around it.
+       */
+      private fun getPathFieldText(): String {
+        val text = pathTextField.text.trim()
+        if (text.length >= 2 && text.first() == '"' && text.last() == '"') {
+          return text.substring(1, text.length - 1).trim()
+        }
+        return text
+      }
+
+      /**
+       * Resolves [text] on [Dispatchers.IO] and selects the resulting path in the tree. An earlier
+       * resolution is cancelled, because only the last text matters.
+       */
+      private fun startPathNavigation(text: String, moveFocusToTree: Boolean) {
+        pathNavigationJob?.cancel()
+        pathNavigationJob = scope.launch {
+          withContext(Dispatchers.IO) {
+            val path = contributor.parsePresentablePath(text)?.takeIf { parsed ->
+              runCatching { contributor.ownsPath(parsed) }.getOrDefault(false)
+            }
+            val exists = path != null && runCatching { Files.exists(path) }.getOrDefault(false)
+            if (path == null || !exists) {
+              // Another tab can own the path, for example a WSL path pasted into the Local tab.
+              // Switch to that tab instead of reporting an invalid path.
+              if (foreignPathNavigator(text) != null) {
+                runOnEdt { setPathTextFieldError(false) }
+                return@withContext
+              }
+              runOnEdt {
+                if (getPathFieldText() != text) return@runOnEdt
+                setPathTextFieldError(true)
+                if (moveFocusToTree && pathTextField.isShowing) {
+                  pathTextField.requestFocusInWindow()
+                }
+              }
+              return@withContext
+            }
+            val forceShowHidden = !fileTree.areHiddensShown() && hasHiddenSegment(path)
+            runOnEdt {
+              if (getPathFieldText() != text) return@runOnEdt
+              setPathTextFieldError(false)
+              if (moveFocusToTree) {
+                focusTree()
+              }
+              if (forceShowHidden) {
+                fileTree.showHiddens(true)
+                PropertiesComponent.getInstance().setValue(SHOW_HIDDEN_FILES_KEY, true)
+                topToolbar.updateActionsAsync()
+              }
+              fileTree.select(path) { fileTree.expand(path, null) }
+            }
+          }
+        }
+      }
+
+      private fun setPathTextFieldError(isError: Boolean) {
+        if (pathTextFieldInvalid == isError) return
+        pathTextFieldInvalid = isError
+        ComponentValidator.getInstance(pathTextField).ifPresent { it.revalidate() }
+        // Reflect the new validity in the OK button: disable it while the path is invalid, and
+        // re-enable it (subject to the tree selection) once the user edits the field.
+        okEnabledUpdater()
+      }
+
+      private fun hasHiddenSegment(path: Path): Boolean {
+        var current: Path? = path
+        while (current != null && current.parent != null) {
+          if (runCatching { NioFileChooserUtil.isHidden(current) }.getOrDefault(false)) {
+            return true
+          }
+          current = current.parent
+        }
+        return false
+      }
+
+      /**
+       * Restores the path field text from the tree selection when the user leaves the field without
+       * applying the edited text. A click on the node that is already selected fires no selection
+       * change, so the field keeps the stale text (see IJPL-248859).
+       */
+      private fun syncPathFieldWithTreeSelection() {
+        if (updatingPathFieldFromTree) return
+        if (pathNavigationJob?.isActive == true) return
+        val selection = fileTree.getSelectedFiles()
+        val selected = selection.firstOrNull() ?: return
+        if (getPathFieldText() == contributor.getPresentablePath(selected)) return
+        setPathTextFieldError(false)
+        updatePathField(selection)
+      }
+
+      private fun updatePathField(selection: List<Path?>) {
+        val file = selection.firstOrNull()
+        val text = file?.let { contributor.getPresentablePath(it) } ?: ""
+        updatingPathFieldFromTree = true
+        try {
+          pathTextField.text = text
+        }
+        finally {
+          updatingPathFieldFromTree = false
+        }
+        // On the initial preselection, select the whole text so the user can immediately type over
+        // it (the field also receives the focus on dialog open, see IJPL-247112). The text is filled
+        // asynchronously after navigation, so the selection is applied here, once, on the first
+        // non-empty update rather than eagerly in getPreferredFocusedComponent().
+        if (preselectPathText && text.isNotEmpty()) {
+          preselectPathText = false
+          pathTextField.selectAll()
+        }
+        else {
+          pathTextField.caretPosition = text.length
+        }
+      }
+
+      fun mountVirtualRootAndReload(virtualRoot: UniversalFileChooserContributor.Root) {
+        if (isMountActionInProgress) return
+        isMountActionInProgress = true
+        cacheUpdateJob?.cancel()
+        topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+        scope.launch {
+          try {
+            val mountedPath = withContext(Dispatchers.IO) {
+              contributor.mountVirtualRoot(virtualRoot)
+            }
+            if (mountedPath != null) {
+              fileToSelect = mountedPath
+            }
+          }
+          finally {
+            topComponent.cursor = Cursor.getDefaultCursor()
+            isMountActionInProgress = false
+            loadRoots()
+          }
+        }
+      }
+
+      fun mountUnmountedRootAndReload(root: Path) {
+        if (isMountActionInProgress) return
+        isMountActionInProgress = true
+        cacheUpdateJob?.cancel()
+        topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+        scope.launch {
+          try {
+            withContext(Dispatchers.IO) {
+              val status = contributor.getMountStatus(root)
+              if (status == MountStatus.Unmounted) {
+                contributor.mount(root)
+              }
+            }
+            fileToSelect = root
+            isMountActionInProgress = false
+            startCacheUpdates()
+            loadRoots()
+            runOnEdt {
+              fileTree.updateTree()
+            }
+          }
+          catch (e: Exception) {
+            isMountActionInProgress = false
+            fileTree.setRootError(root, e.localizedMessage ?: e.message ?: e.javaClass.simpleName)
+          }
+          finally {
+            topComponent.cursor = Cursor.getDefaultCursor()
+          }
+        }
+      }
+
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod") // ModalityState.any() is required.
+  internal fun runOnEdt(runnable: Runnable) {
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+  }
+
+}
+
+@ApiStatus.Experimental
+interface FileBrowserPanel {
+  /**
+   * Returns the files and/or directories currently selected in the active tab of the panel.
+   */
+  fun getSelectedFiles(): List<Path>
+}
+
+object FileBrowser {
+  /**
+   * Entry point for building an embeddable [FileBrowserPanel].
+   *
+   * The [parentDisposable] owns the panel's lifecycle: background loaders, listeners, and the
+   * internal coroutine scope are released when it is disposed. Callers should not rely on any
+   * dialog-close events.
+   *
+   * Typical usage:
+   * ```
+   * val panel = FileBrowser.builder(descriptor, parentDisposable)
+   *   .forProject(myProject)
+   *   .contributors(listOf(myContributor))
+   *   .onDefaultAction { openSelected() }
+   *   .toolbarActions(myToolbarGroup)
+   *   .popupActions(myPopupGroup)
+   *   .build()
+   * ```
+   *
+   * @param descriptor        file chooser descriptor
+   * @param parentDisposable  disposable owning the returned panel
+   */
+  @ApiStatus.Experimental
+  @JvmStatic
+  fun builder(descriptor: FileChooserDescriptor, parentDisposable: Disposable): Builder =
+    Builder(descriptor, parentDisposable)
+
+  /**
+   * Fluent builder for an embeddable [FileBrowserPanel].
+   *
+   * Only [project], [descriptor], and [parentDisposable] are required; all other parameters have
+   * reasonable defaults. Use [contributors] or [root] to restrict which tabs are shown, and
+   * [toolbarActions] / [popupActions] to inject additional actions.
+   *
+   * @see FileBrowser.builder
+   */
+  @ApiStatus.Experimental
+  class Builder internal constructor(
+    private val descriptor: FileChooserDescriptor,
+    private val parentDisposable: Disposable,
+  ) {
+    private var contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList
+    private var onDefaultAction: Runnable = Runnable {}
+    private var toolbarActions: ActionGroup = DefaultActionGroup()
+    private var popupActions: ActionGroup = DefaultActionGroup()
+    private var project: Project = ProjectManager.getInstance().defaultProject
+
+    /**
+     * Sets the project for the builder.
+     *
+     * @param project the project to be associated with the builder, defaults to `ProjectManager.getInstance().defaultProject`
+     */
+    fun forProject(project: Project) {
+      this.project = project
+    }
+
+    /**
+     * Restricts the tabs shown in the panel to the given [contributors]. By default all registered
+     * [UniversalFileChooserContributor] extensions are used.
+     */
+    fun contributors(contributors: Collection<UniversalFileChooserContributor>): Builder = apply {
+      this.contributors = contributors
+    }
+
+    /**
+     * Shortcut for a single contributor rooted at [root]: the panel will show only that contributor's
+     * subtree starting at [root]. Returns `false` if no [UniversalFileChooserContributor] owns [root];
+     * in that case the builder is left unchanged so callers can decide how to react.
+     */
+    fun root(root: Path): Boolean {
+      val contributor = contributors.findOwner(root) ?: return false
+      this.contributors = listOf(SingleRootContributor(contributor, root))
+      return true
+    }
+
+    /**
+     * Callback invoked when the user triggers the default action on the current selection
+     * (Enter / double-click).
+     */
+    fun onDefaultAction(action: Runnable): Builder = apply {
+      this.onDefaultAction = action
+    }
+
+    /**
+     * Additional actions appended to the panel's top toolbar (after the built-in navigation actions).
+     */
+    fun toolbarActions(actions: ActionGroup): Builder = apply {
+      this.toolbarActions = actions
+    }
+
+    /**
+     * Additional actions appended to the tree's context popup (after the toolbar actions).
+     */
+    fun popupActions(actions: ActionGroup): Builder = apply {
+      this.popupActions = actions
+    }
+
+    fun build(): FileBrowserPanel =
+      Panel(parentDisposable, descriptor, project, onDefaultAction, {}, contributors, toolbarActions, popupActions)
+  }
+}

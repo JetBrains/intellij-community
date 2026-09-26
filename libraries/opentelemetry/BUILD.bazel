@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.opentelemetry` start
+content_module_jar(
+    libraries = ["@lib//:libraries-opentelemetry-opentelemetry"],
+    module = ":opentelemetry",
+)
+### auto-generated section `dev intellij.libraries.opentelemetry` end
+
+### auto-generated section `build intellij.libraries.opentelemetry` start
+jvm_library(
+    name = "opentelemetry",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.opentelemetry",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-opentelemetry-opentelemetry"],
+    runtime_deps = ["@lib//:libraries-opentelemetry-opentelemetry"],
+)
+
+jvm_library(
+    name = "opentelemetry_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.opentelemetry",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-opentelemetry-opentelemetry"],
+    runtime_deps = [":opentelemetry"],
+)
+### auto-generated section `build intellij.libraries.opentelemetry` end
+
+### auto-generated section `iml intellij.libraries.opentelemetry` start
+exports_files(
+    [
+        "intellij.libraries.opentelemetry.iml",
+        "resources/intellij.libraries.opentelemetry.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.opentelemetry` end

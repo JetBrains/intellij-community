@@ -1,0 +1,57 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.devkit.apiDump"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.ApiDumpLangBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType language="ADLanguage"
+              name="ADLanguage"
+              fileNames="api-dump.txt;api-dump-unreviewed.txt;api-dump-experimental.txt"
+              patterns="actual_api-dump*.txt"
+              implementationClass="com.intellij.devkit.apiDump.lang.ADFileType"
+              fieldName="INSTANCE"/>
+
+    <lang.parserDefinition language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.ADParserDefinition"/>
+
+    <methodReferencesSearch implementation="com.intellij.devkit.apiDump.lang.search.ADConstructorReferenceSearcher"/>
+
+    <lang.elementManipulator forClass="com.intellij.devkit.apiDump.lang.psi.impl.ADTypeReferenceImplGen"
+                             implementationClass="com.intellij.devkit.apiDump.lang.reference.ADTypeReferenceManipulator"/>
+
+    <registryKey defaultValue="false" description="Enable find usages for references in api dump" key="intellij.devkit.api.dump.find.usages"/>
+
+    <lang.foldingBuilder language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.folding.ADFoldingBuilder"/>
+    <lang.psiStructureViewFactory language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.structure.ADFileStructureFactory"/>
+    <fileStructureGroupRuleProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADFileStructureGroupRuleProvider"/>
+    <usageTypeProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADUsageTypeProvider"/>
+    <usageFilteringRuleProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADUsageFilteringRuleProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.ApiDumpLangBundle">
+    <group id="UsageFilteringActionGroup.ApiDump">
+      <action id="UsageFiltering.ApiDump"
+              icon="com.intellij.devkit.apiDump.icons.DevkitApiDumpIcons.ApiDump"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <add-to-group group-id="UsageFilteringActionGroup" anchor="last"/>
+    </group>
+  </actions>
+
+</idea-plugin>

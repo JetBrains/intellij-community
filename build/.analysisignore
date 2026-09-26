@@ -1,0 +1,14 @@
+/dependencies/build/
+/jdk/
+/restApiDocGenerator/node_modules/
+/protobuf/cache/
+/protobuf/bin/
+/download/
+/jps-bootstrap-work/
+/jvm-rules/.bazelbsp/
+/jvm-rules/.idea/
+/jvm-rules/bazel-bin/
+/jvm-rules/bazel-jvm-rules/
+/jvm-rules/bazel-out/
+/jvm-rules/bazel-testlogs/
+/mcp-servers/ij-proxy/dist/

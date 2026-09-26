@@ -8,6 +8,7 @@ public class ConditionalThrowToInstruction extends ConditionalBranchingInstructi
     super(offset, null, Role.END);
   }
 
+  @Override
   public String toString() {
     return "COND_THROW_TO " + offset;
   }

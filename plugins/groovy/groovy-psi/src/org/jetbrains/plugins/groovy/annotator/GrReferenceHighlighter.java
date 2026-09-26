@@ -1,15 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.util.ArrayList;
@@ -21,26 +19,24 @@ import static org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFacto
  * @author Max Medvedev
  */
 public class GrReferenceHighlighter extends TextEditorHighlightingPass {
-  private final GroovyFileBase myFile;
-  private List<HighlightInfo> myInfos = null;
+  private final PsiFile myPsiFile;
+  private final GroovyFileBase myGroovyBaseFile;
 
-  public GrReferenceHighlighter(@Nullable Document document, @NotNull GroovyFileBase file) {
-    super(file.getProject(), document);
-    myFile = file;
+  GrReferenceHighlighter(@NotNull PsiFile psiFile, @NotNull GroovyFileBase groovyBaseFile, @NotNull Document document) {
+    super(groovyBaseFile.getProject(), document);
+    myPsiFile = psiFile;
+    myGroovyBaseFile = groovyBaseFile;
   }
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!shouldHighlight(myFile)) return;
-    myInfos = new ArrayList<>();
-
-    myFile.accept(new ResolveHighlightingVisitor(myFile, myProject, (e, info) -> myInfos.add(info)));
-    myFile.accept(new InaccessibleElementVisitor(myFile, myProject, (e, info) -> myInfos.add(info)));
+    if (!shouldHighlight(myGroovyBaseFile)) return;
+    List<HighlightInfo> myInfos = new ArrayList<>();
+    myGroovyBaseFile.accept(new InaccessibleElementVisitor(myGroovyBaseFile, myProject, (_, info) -> myInfos.add(info)));
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myPsiFile, myDocument, 0, myGroovyBaseFile.getTextLength(), myInfos, getId());
   }
 
   @Override
   public void doApplyInformationToEditor() {
-    if (myInfos == null || myDocument == null) return;
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), myInfos, getColorsScheme(), getId());
   }
 }

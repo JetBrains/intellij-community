@@ -1,0 +1,32 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.diagnostic.telemetry.impl"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <projectPreInit
+      id="initialProjectSynchronizer"
+      implementation="com.intellij.platform.backend.workspace.impl.InitialProjectSynchronizer"
+      order="before workspaceFileIndexInitializer"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.platform.backend.workspace.impl.DelayedProjectSynchronizer"/>
+
+  </extensions>
+</idea-plugin>

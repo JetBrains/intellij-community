@@ -1,0 +1,19 @@
+<html>
+<body>
+<p>Reports <code>value?.hashCode() ?: 0</code> and suggests replacing it with <code>value.hashCode()</code>.</p>
+<!-- tooltip end -->
+<p>Since Kotlin 1.3, the standard library provides <code>Any?.hashCode()</code>, which returns <code>0</code> for <code>null</code>
+and delegates to the receiver's <code>hashCode()</code> otherwise.</p>
+<pre><code>
+fun hash(value: String?): Int {
+    return value?.hashCode() ?: 0
+}
+</code></pre>
+<p>After the quick-fix:</p>
+<pre><code>
+fun hash(value: String?): Int {
+    return value.hashCode()
+}
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,7 @@
+package sealed;
+
+sealed interface RootWithInterfaceInner {
+   public static final class Inner implements RootWithInterfaceInner {
+   }
+}
+

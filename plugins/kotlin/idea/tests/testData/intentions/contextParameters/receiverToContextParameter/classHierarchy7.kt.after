@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface IFace {
+    context(string: String)
+    val foo: String
+        get() = "ha"
+}
+
+open class OpenClass : IFace {
+    context(string: String)
+    override val foo: String
+        get() = "hi"
+}
+
+class FinalClass : OpenClass(), IFace {
+    context(string: String)
+    override val foo: String
+        get() = "hu"
+}

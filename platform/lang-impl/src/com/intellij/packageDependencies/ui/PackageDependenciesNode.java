@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -28,13 +15,15 @@ import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
-import java.awt.*;
+import java.awt.Color;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +44,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     myProject = project;
   }
 
+  /**
+   * Called in background to perform potentially slow updates.
+   */
+  @ApiStatus.Experimental
+  public void update() {
+  }
+
   public void setEquals(final boolean equals) {
     myEquals = equals;
   }
@@ -63,7 +59,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myEquals;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile vFile : getRegisteredFiles()) {
       final PsiFile psiFile = psiManager.findFile(vFile);
@@ -94,13 +90,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myHasMarked;
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return null;
   }
 
-  @Nullable
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myColor;
   }
 
@@ -116,9 +110,9 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return result;
   }
 
-  public String getPresentableFilesCount(){
+  public @Nls String getPresentableFilesCount(){
     final int filesCount = getContainingFiles();
-    return filesCount > 0 ? " (" + AnalysisScopeBundle.message("package.dependencies.node.items.count", filesCount) + ")" : "";
+    return filesCount > 0 ? " (" + CodeInsightBundle.message("package.dependencies.node.items.count", filesCount) + ")" : "";
   }
 
   @Override
@@ -181,8 +175,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myRegisteredFiles;
   }
 
-  @Nullable
-  public String getComment() {
+  public @Nullable @NlsSafe String getComment() {
     return null;
   }
 
@@ -194,6 +187,12 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return mySorted;
   }
 
+  @Override
+  public @NlsSafe String toString() {
+    @NlsSafe String presentableName = super.toString();
+    return presentableName;
+  }
+
   public void setSorted(boolean sorted) {
     mySorted = sorted;
   }
@@ -202,5 +201,16 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     if (isSorted()) return;
     TreeUtil.sortChildren(this, new DependencyNodeComparator());
     setSorted(true);
+  }
+
+  public void updateAndSortChildren() {
+    if (isSorted()) return;
+    update();
+    TreeUtil.listChildren(this).forEach(node -> {
+      if (node instanceof PackageDependenciesNode packageDependenciesNode) {
+        packageDependenciesNode.update();
+      }
+    });
+    sortChildren();
   }
 }

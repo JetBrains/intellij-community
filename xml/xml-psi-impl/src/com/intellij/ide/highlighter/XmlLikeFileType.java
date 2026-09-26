@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.lang.Language;
@@ -26,13 +12,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public abstract class XmlLikeFileType extends LanguageFileType {
-  public XmlLikeFileType(Language language) {
+  protected XmlLikeFileType(@NotNull Language language) {
     super(language);
   }
+
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     String charset =
       guessed.hardCodedCharset != null
@@ -42,13 +30,11 @@ public abstract class XmlLikeFileType extends LanguageFileType {
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(final Project project, @Nullable final VirtualFile file, @NotNull final CharSequence content) {
+  public Charset extractCharsetFromFileContent(final Project project,
+                                               final @Nullable VirtualFile file,
+                                               final @NotNull CharSequence content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
-    return charset == null ? CharsetToolkit.UTF8_CHARSET : charset;
-  }
-
-  public boolean isCaseSensitive() {
-    return false;
+    return charset == null ? StandardCharsets.UTF_8 : charset;
   }
 }

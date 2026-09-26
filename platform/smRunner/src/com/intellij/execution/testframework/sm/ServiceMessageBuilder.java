@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +30,7 @@ public class ServiceMessageBuilder {
     myText.append(command);
   }
 
-  public ServiceMessageBuilder addAttribute(String name, String value) {
+  public ServiceMessageBuilder addAttribute(@NonNls String name, String value) {
     myText.append(' ').append(name).append("='").append(replaceEscapeSymbols(value)).append('\'');
     return this;
   }
@@ -41,6 +42,10 @@ public class ServiceMessageBuilder {
 
   private static String replaceEscapeSymbols(String text) {
     return MapSerializerUtil.escapeStr(text, MapSerializerUtil.STD_ESCAPER);
+  }
+
+  public static ServiceMessageBuilder testsStarted() {
+    return new ServiceMessageBuilder("enteredTheMatrix");
   }
 
   public static ServiceMessageBuilder testSuiteStarted(@NotNull String name) {

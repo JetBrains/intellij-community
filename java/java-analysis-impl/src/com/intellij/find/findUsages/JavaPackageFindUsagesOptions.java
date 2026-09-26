@@ -15,16 +15,14 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindBundle;
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isClassesUsages;
   public boolean isIncludeSubpackages = true;
@@ -39,18 +37,35 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull LinkedHashSet<String> to) {
+  protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.setDefaults(properties, prefix);
+    isClassesUsages = properties.getBoolean(prefix + "isClassesUsages");
+    isIncludeSubpackages = properties.getBoolean(prefix + "isIncludeSubpackages", true);
+    isSkipPackageStatements = properties.getBoolean(prefix + "isSkipPackageStatements");
+  }
+
+  @Override
+  protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.storeDefaults(properties, prefix);
+    properties.setValue(prefix + "isClassesUsages", isClassesUsages);
+    properties.setValue(prefix + "isIncludeSubpackages", isIncludeSubpackages, true);
+    properties.setValue(prefix + "isSkipPackageStatements", isSkipPackageStatements);
+  }
+
+  @Override
+  protected void addUsageTypes(@NotNull List<? super String> to) {
     if (this.isUsages || this.isClassesUsages) {
-      to.add(FindBundle.message("find.usages.panel.title.usages"));
+      to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
   }
 
-  public boolean equals(final Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o) return true;
-    if (!super.equals(this)) return false;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+    if (getClass() != o.getClass()) return false;
 
-    final JavaPackageFindUsagesOptions that = (JavaPackageFindUsagesOptions)o;
+    JavaPackageFindUsagesOptions that = (JavaPackageFindUsagesOptions)o;
 
     if (isClassesUsages != that.isClassesUsages) return false;
     if (isIncludeSubpackages != that.isIncludeSubpackages) return false;
@@ -59,6 +74,7 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (isClassesUsages ? 1 : 0);

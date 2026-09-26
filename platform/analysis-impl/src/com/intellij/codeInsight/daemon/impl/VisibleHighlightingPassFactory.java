@@ -1,42 +1,35 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.JScrollPane;
+import java.awt.Dimension;
+import java.awt.Point;
 
-public abstract class VisibleHighlightingPassFactory  {
-  @NotNull
-  public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
-    Rectangle rect = editor.getScrollingModel().getVisibleArea();
-    LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
+@ApiStatus.Internal
+public abstract class VisibleHighlightingPassFactory {
 
-    int visibleStart = editor.logicalPositionToOffset(startPosition);
-    LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
+  public static void setVisibleRangeForHeadlessMode(@NotNull Editor editor, @NotNull ProperTextRange range) {
+    assert ApplicationManager.getApplication().isHeadlessEnvironment() : "Must be called in headless mode only";
+    if (range.getEndOffset() > editor.getDocument().getTextLength()) {
+      throw new IllegalArgumentException("Invalid range: " + range + "; document length: " + editor.getDocument().getTextLength());
+    }
 
-    int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-
-    return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+    Point viewPositionStart = editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getStartOffset()));
+    Point viewPositionEnd = editor.logicalPositionToXY(editor.offsetToLogicalPosition(range.getEndOffset()));
+    JScrollPane scrollPane = ComponentUtil.getScrollPane(editor.getContentComponent());
+    scrollPane.getViewport().setSize(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y));
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    scrollPane.getViewport().setViewPosition(viewPositionStart);
+    scrollPane.getViewport().setExtentSize(new Dimension(editor.getContentComponent().getWidth(), Math.max(100, viewPositionEnd.y - viewPositionStart.y)));
+    UIUtil.markAsFocused(editor.getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
   }
 }

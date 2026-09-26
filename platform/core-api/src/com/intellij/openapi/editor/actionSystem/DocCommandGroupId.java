@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.NotNull;
 
-public class DocCommandGroupId {
+public final class DocCommandGroupId {
   private final Document myDocument;
   private final Object myGroupId;
 
-  public static DocCommandGroupId noneGroupId(Document doc) {
+  public static @NotNull DocCommandGroupId noneGroupId(@NotNull Document doc) {
     return new DocCommandGroupId(doc, new Object());
   }
 
-  public static DocCommandGroupId withGroupId(Document doc, Object groupId) {
+  public static @NotNull DocCommandGroupId withGroupId(@NotNull Document doc, @NotNull Object groupId) {
     return new DocCommandGroupId(doc, groupId);
   }
 
-  private DocCommandGroupId(Document document, Object groupId) {
+  private DocCommandGroupId(@NotNull Document document, @NotNull Object groupId) {
     myDocument = document;
     myGroupId = groupId;
   }
 
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
@@ -56,5 +43,12 @@ public class DocCommandGroupId {
     int result = myDocument.hashCode();
     result = 31 * result + myGroupId.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "DocCommandGroupId{" + myDocument +
+           ", " + myGroupId +
+           '}';
   }
 }

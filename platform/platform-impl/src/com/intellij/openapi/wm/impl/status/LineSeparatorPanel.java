@@ -1,57 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.LineSeparator;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
-  public LineSeparatorPanel(@NotNull Project project) {
-    super(project);
+  protected LineSeparatorPanel(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, true, scope);
   }
 
-  @NotNull
   @Override
-  protected WidgetState getWidgetState(@Nullable VirtualFile file) {
+  protected @NotNull WidgetState getWidgetState(@Nullable VirtualFile file) {
     if (file == null) {
       return WidgetState.HIDDEN;
     }
-    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    String toolTipText;
-    String panelText;
-    if (lineSeparator != null) {
-      toolTipText = String.format("Line separator: %s", StringUtil.escapeLineBreak(lineSeparator));
-      panelText = LineSeparator.fromString(lineSeparator).toString();
-    }
-    else {
-      toolTipText = "No line separator";
-      panelText = "n/a";
-    }
-
-    return new WidgetState(toolTipText, panelText, lineSeparator != null);
+    String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, getProject());
+    String toolTipText = IdeBundle.message("tooltip.line.separator", StringUtil.escapeLineBreak(lineSeparator));
+    String panelText = LineSeparator.fromString(lineSeparator).toString();
+    return new WidgetState(toolTipText, panelText, true);
   }
 
-  @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected @Nullable ListPopup createPopup(@NotNull DataContext context) {
     AnAction group = ActionManager.getInstance().getAction("ChangeLineSeparators");
     if (!(group instanceof ActionGroup)) {
       return null;
     }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
-      "Line Separator",
+      UIBundle.message("status.bar.line.separator.widget.name"),
       (ActionGroup)group,
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
@@ -60,19 +53,12 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
   }
 
   @Override
-  protected void registerCustomListeners() {
-    // nothing
+  protected @NotNull StatusBarWidget createInstance(@NotNull Project project) {
+    return new LineSeparatorPanel(project, getScope());
   }
 
-  @NotNull
   @Override
-  protected StatusBarWidget createInstance(Project project) {
-    return new LineSeparatorPanel(project);
-  }
-
-  @NotNull
-  @Override
-  public String ID() {
-    return "LineSeparator";
+  public @NotNull String ID() {
+    return StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
   }
 }

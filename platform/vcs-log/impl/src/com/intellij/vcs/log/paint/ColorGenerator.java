@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.paint;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author erokhins

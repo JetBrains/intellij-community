@@ -1,53 +1,39 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.rollback;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Interface for performing VCS rollback / revert operations.
- *
- * @author yole
- * @since 7.0
  */
-public interface RollbackEnvironment extends VcsProviderMarker {
+public interface RollbackEnvironment {
   /**
    * Returns the name of operation which is shown in the UI (in menu item name, dialog title and button text).
    *
    * @return the user-readable name of operation (for example, "Rollback" or "Revert").
    */
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @NotNull
   String getRollbackOperationName();
 
   /**
    * Rolls back the specified changes.
    *
-   * @param changes the changes to roll back.
-   * @param vcsExceptions
-   * @param listener
-   * @return list of errors occurred, or an empty list if no errors occurred.
+   * @param changes    the changes to roll back.
+   * @param exceptions list of errors occurred during rollback
    */
-  void rollbackChanges(List<Change> changes, final List<VcsException> vcsExceptions, @NotNull final RollbackProgressListener listener);
+  void rollbackChanges(List<? extends Change> changes, final List<VcsException> vcsExceptions, final @NotNull RollbackProgressListener listener);
 
   /**
    * Rolls back the deletion of files which have been deleted locally but not scheduled for deletion
@@ -55,24 +41,22 @@ public interface RollbackEnvironment extends VcsProviderMarker {
    * You do not need to implement this method if you never report such files to
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processLocallyDeletedFile}.
    *
-   * @param files the files to rollback deletion of.
-   * @param exceptions
-   * @param listener @return list of errors occurred, or an empty list if no errors occurred.
+   * @param files      the files to rollback deletion of.
+   * @param exceptions list of errors occurred during rollback
    */
-  void rollbackMissingFileDeletion(List<FilePath> files, final List<VcsException> exceptions,
-                                                 final RollbackProgressListener listener);
+  void rollbackMissingFileDeletion(List<? extends FilePath> files, final List<? super VcsException> exceptions,
+                                   final RollbackProgressListener listener);
 
   /**
    * Rolls back the modifications of files which have been made writable but not properly checked out from VCS.
    * You do not need to implement this method if you never report such files to
    * {@link com.intellij.openapi.vcs.changes.ChangelistBuilder#processModifiedWithoutCheckout}.
    *
-   * @param files the files to rollback.
-   * @param exceptions
-   * @param listener @return list of errors occurred, or an empty list if no errors occurred.
+   * @param files      the files to rollback.
+   * @param exceptions list of errors occurred during rollback
    */
-  void rollbackModifiedWithoutCheckout(List<VirtualFile> files, final List<VcsException> exceptions,
-                                                     final RollbackProgressListener listener);
+  void rollbackModifiedWithoutCheckout(List<? extends VirtualFile> files, final List<? super VcsException> exceptions,
+                                       final RollbackProgressListener listener);
 
   /**
    * This is called when the user performs an undo that returns a file to a state in which it was
@@ -82,5 +66,13 @@ public interface RollbackEnvironment extends VcsProviderMarker {
    *
    * @param file the file to rollback.
    */
-  void rollbackIfUnchanged(VirtualFile file);
+  default void rollbackIfUnchanged(VirtualFile file) {
+  }
+
+  /**
+   * @return the list of VCS-specific rollback-flavoured actions to show in Commit dialog
+   */
+  default Collection<? extends AnAction> createCustomRollbackActions() {
+    return Collections.emptyList();
+  }
 }

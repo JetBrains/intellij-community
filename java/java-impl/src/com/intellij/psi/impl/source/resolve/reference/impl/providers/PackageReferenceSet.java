@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -29,9 +13,11 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -40,39 +26,37 @@ import java.util.Set;
 public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
   private final GlobalSearchScope mySearchScope;
 
-  public PackageReferenceSet(@NotNull final String str, @NotNull final PsiElement element, final int startInElement) {
+  public PackageReferenceSet(final @NotNull String str, final @NotNull PsiElement element, final int startInElement) {
     this(str, element, startInElement, element.getResolveScope());
   }
 
-  public PackageReferenceSet(@NotNull final String str, @NotNull final PsiElement element, final int startInElement, @NotNull GlobalSearchScope scope) {
+  public PackageReferenceSet(final @NotNull String str, final @NotNull PsiElement element, final int startInElement, @NotNull GlobalSearchScope scope) {
     super(str, element, startInElement, DOT_SEPARATOR);
     mySearchScope=scope;
   }
 
   @Override
-  @NotNull
-  protected PsiPackageReference createReference(final TextRange range, final int index) {
+  protected @NotNull PsiPackageReference createReference(final TextRange range, final int index) {
     return new PsiPackageReference(this, range, index);
   }
 
-  public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
+  public @Unmodifiable Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
     if (context != null) {
-      return ContainerUtil.filter(context.getSubPackages(getResolveScope()), aPackage -> Comparing.equal(aPackage.getName(), packageName));
+      return ContainerUtil.filter(context.getSubPackages(getResolveScope()), aPackage -> Objects.equals(aPackage.getName(), packageName));
     }
     return Collections.emptyList();
   }
 
-  @NotNull
-  protected GlobalSearchScope getResolveScope() {
+  protected @NotNull GlobalSearchScope getResolveScope() {
     return mySearchScope;
   }
 
-  public Collection<PsiPackage> resolvePackage() {
+  public @Unmodifiable Collection<PsiPackage> resolvePackage() {
     final PsiPackageReference packageReference = getLastReference();
     if (packageReference == null) {
       return Collections.emptyList();
     }
-    return ContainerUtil.map2List(packageReference.multiResolve(false),
+    return ContainerUtil.map(packageReference.multiResolve(false),
                                   (NullableFunction<ResolveResult, PsiPackage>)resolveResult -> (PsiPackage)resolveResult.getElement());
   }
 

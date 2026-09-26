@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -23,37 +8,47 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
+/**
+ * An extension point for 'Import Module from Existing Sources'.
+ * See {@link com.intellij.ide.actions.ImportModuleAction#createImportWizard}.
+ */
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
   protected ProjectImportBuilder myBuilder;
 
-  protected ProjectImportProvider(final ProjectImportBuilder builder) {
+  protected ProjectImportProvider(ProjectImportBuilder builder) {
     myBuilder = builder;
   }
 
-  public ProjectImportBuilder getBuilder() {
+  protected ProjectImportProvider() {
+    myBuilder = null;
+  }
+
+  protected ProjectImportBuilder doGetBuilder() {
     return myBuilder;
   }
 
-  @NonNls @NotNull
-  public String getId(){
+  public final ProjectImportBuilder getBuilder() {
+    return doGetBuilder();
+  }
+
+  public @NonNls @NotNull String getId(){
     return getBuilder().getName();
   }
 
-  @NotNull
-  public String getName(){
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getName(){
     return getBuilder().getName();
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getBuilder().getIcon();
   }
 
@@ -86,20 +81,25 @@ public abstract class ProjectImportProvider {
     return true;
   }
 
-  public void addSteps(StepSequence sequence, WizardContext context, String id) {
+  /**
+   * Adds the {@link ModuleWizardStep}-s from {@link ProjectImportProvider#createSteps(WizardContext)} to the import wizard.
+   */
+  public void addSteps(@NotNull StepSequence sequence, @NotNull WizardContext context, @NotNull String id) {
     ModuleWizardStep[] steps = createSteps(context);
     for (ModuleWizardStep step : steps) {
       sequence.addSpecificStep(id, step);
     }
   }
 
+  /**
+   * Returns the {@link ModuleWizardStep}-s to be added to the import wizard.
+   */
   public ModuleWizardStep[] createSteps(WizardContext context) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Language("HTML")
-  public String getFileSample() {
+  public @Nullable @Nls String getFileSample() {
     return null;
   }
 }

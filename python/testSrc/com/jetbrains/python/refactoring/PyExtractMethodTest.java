@@ -1,33 +1,44 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodHandler;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
+import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
-/**
- * @author oleg
- */
+import java.io.File;
+
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyExtractMethodTest extends LightMarkedTestCase {
-  private void doTest(String newName, LanguageLevel level) {
-    runWithLanguageLevel(level, () -> doTest(newName));
-  }
 
   private void doTest(String newName) {
     final String testName = getTestName(false);
-    final String beforeName = testName + ".before.py";
-    final String afterName = testName + ".after.py";
     final String dir = "refactoring/extractmethod/";
+    final String beforeName = dir + testName + ".before.py";
+    final String afterName = dir + testName + ".after.py";
+    final String afterWithTypesName = dir + testName + ".after.withTypes.py";
+    final boolean withTypeExists = new File(myFixture.getTestDataPath(), afterWithTypesName).isFile();
 
-    myFixture.configureByFile(dir + beforeName);
-    final RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance());
-    assertNotNull(provider);
-    final RefactoringActionHandler handler = provider.getExtractMethodHandler();
-    assertNotNull(handler);
+    // perform without type annotations
+    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
+    performExtractMethod(newName, beforeName, afterName);
+
+    // perform with type annotations
+    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()), myFixture.getProject());
+    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), true);
+    performExtractMethod(newName, beforeName, withTypeExists ? afterWithTypesName : afterName);
+    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
+  }
+
+  private void performExtractMethod(@NotNull String newName, @NotNull String beforeName, @NotNull String afterName) {
+    myFixture.configureByFile(beforeName);
+    final RefactoringActionHandler handler = new PyExtractMethodHandler();
     System.setProperty(PyExtractMethodUtil.NAME, newName);
     try {
       refactorUsingHandler(handler);
@@ -35,7 +46,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     finally {
       System.clearProperty(PyExtractMethodUtil.NAME);
     }
-    myFixture.checkResultByFile(dir + afterName);
+    myFixture.checkResultByFile(afterName);
   }
 
   private void doFail(String newName, String message) {
@@ -47,6 +58,41 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
       return;
     }
     fail("No exception was thrown");
+  }
+
+  // PY-34626 
+  public void testMethodInnerFunc() {
+    doTest("extracted");
+  }
+
+  // PY-34626 
+  public void testMethodInnerFuncWithOwnParam() {
+    doTest("extracted");
+  }
+
+  // PY-34626
+  public void testMethodInnerFuncWithMethodParam() {
+    doTest("extracted");
+  }
+
+  // PY-34626
+  public void testMethodInnerFuncRecursive() {
+    doTest("extracted");
+  }
+
+  // PY-34626
+  public void testMethodInnerFuncCombined() {
+    doTest("extracted");
+  }
+
+  // PY-53711
+  public void testStartInArgumentListOfMultiLineFunctionCall() {
+    doTest("extracted");
+  }
+
+  // PY-53711
+  public void testStartOnMultiLineFunctionCall() {
+    doTest("extracted");
   }
 
   public void testParameter() {
@@ -82,11 +128,15 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testNameCollisionFile() {
-    doFail("hello", "Method name clashes with already existing name");
+    doFail("hello", "The method name clashes with an already existing name");
   }
 
   public void testNameCollisionSuperClass() {
-    doFail("hello", "Method name clashes with already existing name");
+    doFail("hello", "The method name clashes with an already existing name");
+  }
+
+  public void testNameCollisionOuterFunction() {
+    doFail("bar", "The method name clashes with an already existing name");
   }
 
   public void testOutNotEmptyStatements() {
@@ -114,11 +164,11 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testWrongSelectionIfPart() {
-    doFail("bar", "Cannot perform extract method using selected element(s)");
+    doFail("bar", "Cannot perform the Extract Function refactoring using the selected elements");
   }
 
   public void testWrongSelectionFromImportStar() {
-    doFail("bar", "Cannot perform refactoring with star import statement inside code block");
+    doFail("bar", "Cannot perform refactoring with a star import statement inside a code block");
   }
 
   public void testPy479() {
@@ -211,22 +261,24 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-6625
   public void testNonlocal() {
-    doTest("baz", LanguageLevel.PYTHON34);
+    doTest("baz");
   }
 
   // PY-7381
   public void testYield() {
-    doFail("bar", "Cannot perform refactoring with 'yield' statement inside code block");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doFail("bar", "Cannot perform refactoring with a 'yield' statement inside a code block");
+    });
   }
 
   // PY-7382
   public void testYield33() {
-    doTest("bar", LanguageLevel.PYTHON34);
+    doTest("bar");
   }
 
   // PY-7399
   public void testYieldFrom33() {
-    doTest("bar", LanguageLevel.PYTHON34);
+    doTest("bar");
   }
 
   public void testDuplicateSingleLine() {
@@ -256,15 +308,34 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-6620
   public void testProhibitedAtClassLevel() {
-    doFail("foo", "Cannot perform refactoring at class level");
+    doFail("foo", "Cannot perform refactoring at a class level");
+  }
+
+  // PY-9045
+  public void testIfConditionExpression() {
+    doTest("bar");
+  }
+
+  // PY-9045
+  public void testIfElseConditionExpression() {
+    doTest("bar");
+  }
+
+  // PY-9045
+  public void testConditionOfConditionalExpression() {
+    doTest("bar");
+  }
+
+  public void testSimilarBinaryExpressions() {
+    doTest("bar");
   }
 
   public void testAsyncDef() {
-    doTest("bar", LanguageLevel.PYTHON35);
+    doTest("bar");
   }
 
   public void testAwaitExpression() {
-    doTest("bar", LanguageLevel.PYTHON35);
+    doTest("bar");
   }
 
   public void testCommentsPrecedingSourceStatement() {
@@ -274,5 +345,84 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   // PY-28972
   public void testInterruptedOuterLoop() {
     doFail("foo", "Cannot perform refactoring when execution flow is interrupted");
+  }
+
+  // PY-83001
+  public void testExtractCompleteBody() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport1() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport2() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport3() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport4() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport5() {
+    doTest("body");
+  }
+
+  // PY-35287
+  public void testTypedStatements() {
+    doTest("greeting");
+  }
+
+  public void testPreserveWhitespaceBetweenStatements() {
+    doTest("extracted");
+  }
+
+  // PY-61591
+  public void testMethodNameCanShadowModuleFunction() {
+    doTest("_require_instance");
+  }
+
+  // PY-61591
+  public void testInnerFunctionWithSameNameAsOuterMethod() {
+    doTest("foo");
+  }
+
+  // PY-54512
+  public void testLineBreakOutsideBraces() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testLineBreakOutsideBraces2() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testLineBreakInsideBraces() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testExplicitLineJoining() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testGeneratorNoParens() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testGeneratorParenthesized() {
+    doTest("bar");
   }
 }

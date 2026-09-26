@@ -13,47 +13,42 @@
 package org.zmlx.hg4idea.status;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 
 public class HgChangesetStatus {
 
-  private final String myName;
+  private final @Nls String myName;
   private int numChanges;
-  private String toolTip;
+  private @Nls String toolTip;
 
-  public HgChangesetStatus(String name) {
+  public HgChangesetStatus(@NotNull @Nls String name) {
     myName = name;
   }
 
   public void setChanges(final int count, final ChangesetWriter formatter) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (count == 0) {
-        numChanges = 0;
-        toolTip = "";
-        return;
-      }
-
       numChanges = count;
-      toolTip = formatter.asString();
+      toolTip = count != 0 ? formatter.asString() : "";
     });
   }
 
-  public String getStatusName() {
+  public @Nls String getStatusName() {
     return myName;
   }
-
 
   public int getNumChanges() {
     return numChanges;
   }
 
-
-  public String getToolTip() {
+  public @Nls String getToolTip() {
     return toolTip;
   }
 
 
   public interface ChangesetWriter {
+    @Nls
     String asString();
   }
 

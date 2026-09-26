@@ -2,7 +2,7 @@ import java.util.Arrays;
 
 class Test {
   {
-    Arrays.asList<error descr="Formal varargs element type  is inaccessible here">(new Outer.B(), new Outer.C())</error>;
+    Arrays.asList<error descr="Formal varargs element type Outer.A is inaccessible from here">(new Outer.B(), new Outer.C())</error>;
   }
 }
 
@@ -19,6 +19,6 @@ class An {
 
 class C {
   {
-    An.foo<error descr="Formal varargs element type  is inaccessible here">()</error>;
+    An.foo<error descr="Formal varargs element type An.B is inaccessible from here">()</error>;
   }
 }

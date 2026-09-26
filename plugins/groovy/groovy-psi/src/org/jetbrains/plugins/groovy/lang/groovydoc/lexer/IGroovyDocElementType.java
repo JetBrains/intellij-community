@@ -16,8 +16,5 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-/**
- * @author ilyas
- */
 public interface IGroovyDocElementType {
 }

@@ -16,19 +16,20 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- *  @author dsl
- */
+@ApiStatus.NonExtendable
 public interface LibraryOrderEntry extends LibraryOrSdkOrderEntry, ExportableOrderEntry {
   @Nullable
   Library getLibrary();
   
   boolean isModuleLevel();
 
-  String getLibraryLevel();
+  @NonNls String getLibraryLevel();
 
   @Nullable
-  String getLibraryName();
+  @NlsSafe String getLibraryName();
 }

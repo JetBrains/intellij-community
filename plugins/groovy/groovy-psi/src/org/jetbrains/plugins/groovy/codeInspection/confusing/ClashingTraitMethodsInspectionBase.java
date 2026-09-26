@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.PsiClass;
@@ -27,6 +15,8 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -34,23 +24,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection {
   protected static final Logger LOG = Logger.getInstance(ClashingTraitMethodsInspectionBase.class);
 
-  @NotNull
-  protected static List<ClashingMethod> collectClassingMethods(@NotNull GrTypeDefinition typeDefinition) {
+  protected static @NotNull List<ClashingMethod> collectClassingMethods(@NotNull GrTypeDefinition typeDefinition) {
     Collection<HierarchicalMethodSignature> visibleSignatures = typeDefinition.getVisibleSignatures();
 
-    List<ClashingMethod> clashingMethods = ContainerUtil.newArrayList();
+    List<ClashingMethod> clashingMethods = new ArrayList<>();
     for (HierarchicalMethodSignature signature : visibleSignatures) {
       PsiMethod method = signature.getMethod();
       if (method instanceof GrTraitMethod && method.getContainingClass() == typeDefinition) {
         List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
         if (superSignatures.size() > 1) {
-          List<GrTypeDefinition> traits = ContainerUtil.newArrayList();
+          List<GrTypeDefinition> traits = new ArrayList<>();
           for (HierarchicalMethodSignature superSignature : superSignatures) {
             PsiMethod superMethod = superSignature.getMethod();
             PsiClass superClass = superMethod.getContainingClass();
@@ -70,14 +60,12 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
     return clashingMethods;
   }
 
-  @NotNull
-  private static List<PsiClass> collectImplementedTraits(@NotNull GrTypeDefinition typeDefinition) {
+  private static @NotNull @Unmodifiable List<PsiClass> collectImplementedTraits(@NotNull GrTypeDefinition typeDefinition) {
     return ContainerUtil.findAll(typeDefinition.getSupers(), aClass -> GrTraitUtil.isTrait(aClass));
   }
 
-  @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
@@ -94,28 +82,25 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
         }
       }
 
-      @NotNull
-      private String buildWarning(@NotNull ClashingMethod entry) {
-        return "Traits " + buildTraitString(entry) + " contain clashing methods with signature " + buildSignatureString(entry);
+      private @NotNull @InspectionMessage String buildWarning(@NotNull ClashingMethod entry) {
+        return GroovyBundle.message("inspection.message.traits.0.contain.clashing.methods.with.signature.1", buildTraitString(entry),
+                                    buildSignatureString(entry));
       }
 
-      @NotNull
-      private String buildSignatureString(@NotNull ClashingMethod entry) {
+      private static @NotNull @NlsSafe String buildSignatureString(@NotNull ClashingMethod entry) {
         HierarchicalMethodSignature signature = entry.getSignature();
         return PsiFormatUtil.formatMethod(signature.getMethod(), signature.getSubstitutor(),
                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                           PsiFormatUtilBase.SHOW_TYPE);
       }
 
-      @NotNull
-      private String buildTraitString(@NotNull ClashingMethod entry) {
+      private static @NotNull @NlsSafe String buildTraitString(@NotNull ClashingMethod entry) {
         return StringUtil.join(entry.getSuperTraits(), tr -> tr.getName(), ", ");
       }
     };
   }
 
-  @NotNull
-  protected LocalQuickFix getFix(){
+  protected @NotNull LocalQuickFix getFix(){
     return GroovyFix.EMPTY_FIX;
   }
 
@@ -128,13 +113,11 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
       mySuperTraits = superTraits;
     }
 
-    @NotNull
-    public HierarchicalMethodSignature getSignature() {
+    public @NotNull HierarchicalMethodSignature getSignature() {
       return mySignature;
     }
 
-    @NotNull
-    public List<GrTypeDefinition> getSuperTraits() {
+    public @NotNull List<GrTypeDefinition> getSuperTraits() {
       return mySuperTraits;
     }
   }

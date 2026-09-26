@@ -1,0 +1,6 @@
+Generic.GENERIC_DIAGRAM ('architecture-beta')
+EOL ('\n')
+WHITE_SPACE ('  ')
+Generic.GENERIC_TEXT ('group')
+WHITE_SPACE (' ')
+Generic.GENERIC_TEXT ('api(cloud)[API]')

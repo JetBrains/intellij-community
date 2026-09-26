@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
@@ -25,11 +12,13 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterListStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStub> implements PsiParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiParameterListImpl.class);
 
   public PsiParameterListImpl(@NotNull PsiParameterListStub stub) {
     super(stub, JavaStubElementTypes.PARAMETER_LIST);
@@ -40,38 +29,79 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
   }
 
   @Override
-  @NotNull
-  public PsiParameter[] getParameters() {
+  public PsiParameter @NotNull [] getParameters() {
     return getStubOrPsiChildren(JavaStubElementTypes.PARAMETER, PsiParameter.ARRAY_FACTORY);
   }
 
   @Override
   public int getParameterIndex(@NotNull PsiParameter parameter) {
-    LOG.assertTrue(parameter.getParent() == this);
+    PsiElement parent = parameter.getParent();
+    if (parent != this) {
+      LOG.error("Not my parameter; parameter class = " + parameter.getClass() + "; " +
+                "this class = " + getClass() + "; " +
+                "parameter parent class = " + (parent == null ? null : parent.getClass()));
+    }
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
   @Override
-  @NotNull
-  public CompositeElement getNode() {
+  public @NotNull CompositeElement getNode() {
     return (CompositeElement)super.getNode();
   }
 
   @Override
   public int getParametersCount() {
-    final PsiParameterListStub stub = getGreenStub();
+    PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
-      return (int)stub.getChildrenStubs().stream().filter(child -> child.getStubType() == JavaStubElementTypes.PARAMETER).count();
+      int count = 0;
+      for (StubElement<?> child : stub.getChildrenStubs()) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
+          count++;
+        }
+      }
+      return count;
     }
 
     return getNode().countChildren(Constants.PARAMETER_BIT_SET);
   }
 
   @Override
-  public boolean isEmpty() {
-    final PsiParameterListStub stub = getGreenStub();
+  public @Nullable PsiParameter getParameter(int index) {
+    if (index < 0) {
+      throw new IllegalArgumentException("index is negative: " + index);
+    }
+    PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenStubs().stream().noneMatch(child -> child.getStubType() == JavaStubElementTypes.PARAMETER);
+      int count = 0;
+      for (StubElement<?> child : stub.getChildrenStubs()) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
+          if (count == index) return (PsiParameter)child.getPsi(); 
+          count++;
+        }
+      }
+    } else {
+      CompositeElement node = getNode();
+      int count = 0;
+      for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
+          if (count == index) return (PsiParameter)child.getPsi();
+          count++;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    PsiParameterListStub stub = getGreenStub();
+    if (stub != null) {
+      for (StubElement<?> child : stub.getChildrenStubs()) {
+        if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
+          return false;
+        }
+      }
+      return true;
     }
 
     return getNode().findChildByType(Constants.PARAMETER_BIT_SET) == null;
@@ -87,8 +117,8 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     }
   }
 
-  @NonNls
-  public String toString(){
+  @Override
+  public @NonNls String toString(){
     return "PsiParameterList:" + getText();
   }
 }

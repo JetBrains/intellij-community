@@ -1,155 +1,216 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.vcs.log.graph.GraphCommit;
-import gnu.trove.THashSet;
+import com.intellij.vcs.log.util.StopWatch;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
- * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
+ * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
  *
  * @author Stanislav Erokhin
  * @author Kirill Likhodedov
  */
-public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
-
-  public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
+@ApiStatus.Internal
+public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
+  private static final Logger LOG = Logger.getInstance(VcsLogJoiner.class);
+  
+  public static final @NonNls String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
-   * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
+   * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
    *
-   * @param savedLog     currently available part of the log.
+   * @param savedLog     the previously computed log, as currently displayed/cached; some of its commits may need
+   *                     to be replaced with fresher data from {@code firstBlock}, or removed entirely if they are
+   *                     no longer reachable from any ref.
    * @param previousRefs references saved from the previous refresh.
-   * @param firstBlock   the first n commits read from the VCS.
+   * @param firstBlock   the freshly re-read head of the log from the VCS (the most recent commits, newest first);
+   *                     overlaps with the head of {@code savedLog} and may contain updated versions of commits
+   *                     already present there (e.g. with changed parents), as well as genuinely new commits.
    * @param newRefs      all references (branches) of the repository.
    * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
-  @NotNull
-  public Pair<List<Commit>, Integer> addCommits(@NotNull List<? extends Commit> savedLog,
-                                                @NotNull Collection<CommitId> previousRefs,
-                                                @NotNull List<? extends Commit> firstBlock,
-                                                @NotNull Collection<CommitId> newRefs) {
-    Pair<Integer, Set<Commit>> newCommitsAndSavedGreenIndex =
-      getNewCommitsAndSavedGreenIndex(savedLog, previousRefs, firstBlock, newRefs);
-    Pair<Integer, Set<CommitId>> redCommitsAndSavedRedIndex =
-      getRedCommitsAndSavedRedIndex(savedLog, previousRefs, firstBlock, newRefs);
+  public @NotNull Pair<List<Commit>, Integer> addCommits(@NotNull List<? extends Commit> savedLog,
+                                                         @NotNull Collection<? extends CommitId> previousRefs,
+                                                         @NotNull List<? extends Commit> firstBlock,
+                                                         @NotNull Collection<? extends CommitId> newRefs) {
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.addCommits");
+    try {
+      Pair<Integer, Set<Commit>> newCommitsAndSavedGreenIndex =
+        getNewCommitsAndSavedGreenIndex(savedLog, previousRefs, firstBlock, newRefs);
+      Pair<Integer, Set<CommitId>> redCommitsAndSavedRedIndex =
+        getRedCommitsAndSavedRedIndex(savedLog, previousRefs, firstBlock, newRefs);
 
-    Set<CommitId> removeCommits = redCommitsAndSavedRedIndex.second;
-    Set<Commit> allNewsCommits = newCommitsAndSavedGreenIndex.second;
+      Set<CommitId> removeCommits = redCommitsAndSavedRedIndex.second;
+      Set<Commit> allNewsCommits = newCommitsAndSavedGreenIndex.second;
 
-    int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
-    List<Commit> unsafePartSavedLog = new ArrayList<>();
-    for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
-      if (!removeCommits.contains(commit.getId())) {
-        unsafePartSavedLog.add(commit);
-      }
+      int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
+
+      List<Commit> unsafePartSavedLog = buildUnsafePartSavedLog(savedLog, unsafeBlockSize, removeCommits, firstBlock);
+
+      unsafePartSavedLog = new NewCommitIntegrator<>(unsafePartSavedLog, allNewsCommits).getResultList();
+
+      return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
+                         unsafePartSavedLog.size() - unsafeBlockSize);
     }
-    unsafePartSavedLog = new NewCommitIntegrator<>(unsafePartSavedLog, allNewsCommits).getResultList();
+    finally {
+      stopWatch.report(LOG);
+    }
+  }
 
-    return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
-                       unsafePartSavedLog.size() - unsafeBlockSize);
+  /**
+   * Builds the "unsafe" prefix of the log to be rebuilt: drops removed (red) commits from {@code savedLog},
+   * and for any commit that was re-fetched in {@code firstBlock}, replaces the stale saved copy with the
+   * up-to-date one (so its current parents, not the parents from the previous refresh, are used downstream).
+   */
+  private @NotNull List<Commit> buildUnsafePartSavedLog(@NotNull List<? extends Commit> savedLog,
+                                                         int unsafeBlockSize,
+                                                         @NotNull Set<CommitId> removeCommits,
+                                                         @NotNull List<? extends Commit> firstBlock) {
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.buildUnsafePartSavedLog");
+    try {
+      Map<CommitId, Commit> recentCommitsById = new HashMap<>();
+      for (Commit commit : firstBlock) {
+        recentCommitsById.put(commit.getId(), commit);
+      }
+
+      List<Commit> unsafePartSavedLog = new ArrayList<>();
+      for (Commit commit : savedLog.subList(0, unsafeBlockSize)) {
+        if (!removeCommits.contains(commit.getId())) {
+          unsafePartSavedLog.add(recentCommitsById.getOrDefault(commit.getId(), commit));
+        }
+      }
+      return unsafePartSavedLog;
+    }
+    finally {
+      stopWatch.report(LOG);
+    }
   }
 
 
-  @NotNull
-  private Pair<Integer, Set<Commit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends Commit> savedLog,
-                                                                     @NotNull Collection<CommitId> previousRefs,
-                                                                     @NotNull List<? extends Commit> firstBlock,
-                                                                     @NotNull Collection<CommitId> newRefs) {
-    Set<CommitId> allUnresolvedLinkedHashes = new THashSet<>(newRefs);
-    allUnresolvedLinkedHashes.removeAll(previousRefs);
-    // at this moment allUnresolvedLinkedHashes contains only NEW refs
-    for (Commit commit : firstBlock) {
-      allUnresolvedLinkedHashes.add(commit.getId());
-      allUnresolvedLinkedHashes.addAll(commit.getParents());
-    }
-    for (Commit commit : firstBlock) {
-      if (commit.getParents().size() != 0) {
-        allUnresolvedLinkedHashes.remove(commit.getId());
+  private @NotNull Pair<Integer, Set<Commit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends Commit> savedLog,
+                                                                              @NotNull Collection<? extends CommitId> previousRefs,
+                                                                              @NotNull List<? extends Commit> firstBlock,
+                                                                              @NotNull Collection<? extends CommitId> newRefs) {
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getNewCommitsAndSavedGreenIndex");
+    try {
+      Set<CommitId> allUnresolvedLinkedHashes = new HashSet<>(newRefs);
+      allUnresolvedLinkedHashes.removeAll(previousRefs);
+      // at this moment allUnresolvedLinkedHashes contains only NEW refs
+      for (Commit commit : firstBlock) {
+        allUnresolvedLinkedHashes.add(commit.getId());
+        allUnresolvedLinkedHashes.addAll(commit.getParents());
       }
-    }
-    int saveGreenIndex = getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
+      for (Commit commit : firstBlock) {
+        if (!commit.getParents().isEmpty()) {
+          allUnresolvedLinkedHashes.remove(commit.getId());
+        }
+      }
+      int saveGreenIndex = getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
 
-    return new Pair<>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
+      return new Pair<>(saveGreenIndex, getAllNewCommits(savedLog.subList(0, saveGreenIndex), firstBlock));
+    }
+    finally {
+      stopWatch.report(LOG);
+    }
   }
 
   private int getFirstUnTrackedIndex(@NotNull List<? extends Commit> commits, @NotNull Set<CommitId> searchHashes) {
-    int lastIndex;
-    for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
-      Commit commit = commits.get(lastIndex);
-      if (searchHashes.size() == 0) {
-        return lastIndex;
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getFirstUnTrackedIndex");
+    try {
+      int lastIndex;
+      for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
+        Commit commit = commits.get(lastIndex);
+        if (searchHashes.isEmpty()) {
+          return lastIndex;
+        }
+        searchHashes.remove(commit.getId());
       }
-      searchHashes.remove(commit.getId());
+      if (!searchHashes.isEmpty()) {
+        throw new VcsLogRefreshNotEnoughDataException();
+      }
+      return lastIndex;
     }
-    if (searchHashes.size() != 0) {
-      throw new VcsLogRefreshNotEnoughDataException();
+    finally {
+      stopWatch.report(LOG);
     }
-    return lastIndex;
   }
 
   private Set<Commit> getAllNewCommits(@NotNull List<? extends Commit> unsafeGreenPartSavedLog,
                                        @NotNull List<? extends Commit> firstBlock) {
-    Set<CommitId> existedCommitHashes = ContainerUtil.newHashSet();
-    for (Commit commit : unsafeGreenPartSavedLog) {
-      existedCommitHashes.add(commit.getId());
-    }
-    Set<Commit> allNewsCommits = ContainerUtil.newHashSet();
-    for (Commit newCommit : firstBlock) {
-      if (!existedCommitHashes.contains(newCommit.getId())) {
-        allNewsCommits.add(newCommit);
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getAllNewCommits");
+    try {
+      Set<CommitId> existedCommitHashes = new HashSet<>();
+      for (Commit commit : unsafeGreenPartSavedLog) {
+        existedCommitHashes.add(commit.getId());
       }
+      Set<Commit> allNewsCommits = new HashSet<>();
+      for (Commit newCommit : firstBlock) {
+        if (!existedCommitHashes.contains(newCommit.getId())) {
+          allNewsCommits.add(newCommit);
+        }
+      }
+      return allNewsCommits;
     }
-    return allNewsCommits;
+    finally {
+      stopWatch.report(LOG);
+    }
   }
 
-  @NotNull
-  private Pair<Integer, Set<CommitId>> getRedCommitsAndSavedRedIndex(@NotNull List<? extends Commit> savedLog,
-                                                                     @NotNull Collection<CommitId> previousRefs,
-                                                                     @NotNull List<? extends Commit> firstBlock,
-                                                                     @NotNull Collection<CommitId> newRefs) {
-    Set<CommitId> startRedCommits = new THashSet<>(previousRefs);
-    startRedCommits.removeAll(newRefs);
-    Set<CommitId> startGreenNodes = new THashSet<>(newRefs);
-    for (Commit commit : firstBlock) {
-      startGreenNodes.add(commit.getId());
-      startGreenNodes.addAll(commit.getParents());
-    }
-    RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog);
-    int saveRegIndex = sorter.getFirstSaveIndex();
+  private @NotNull Pair<Integer, Set<CommitId>> getRedCommitsAndSavedRedIndex(@NotNull List<? extends Commit> savedLog,
+                                                                              @NotNull Collection<? extends CommitId> previousRefs,
+                                                                              @NotNull List<? extends Commit> firstBlock,
+                                                                              @NotNull Collection<? extends CommitId> newRefs) {
+    StopWatch stopWatch = StopWatch.start("VcsLogJoiner.getRedCommitsAndSavedRedIndex");
+    try {
+      Set<CommitId> startRedCommits = new HashSet<>(previousRefs);
+      startRedCommits.removeAll(newRefs);
+      Set<CommitId> startGreenNodes = new HashSet<>(newRefs);
+      Map<CommitId, List<CommitId>> recentCommitParents = new HashMap<>();
+      for (Commit commit : firstBlock) {
+        recentCommitParents.put(commit.getId(), commit.getParents());
+        startGreenNodes.add(commit.getId());
+        startGreenNodes.addAll(commit.getParents());
+      }
+      RedGreenSorter<CommitId, Commit> sorter = new RedGreenSorter<>(startRedCommits, startGreenNodes, savedLog, recentCommitParents);
+      int saveRegIndex = sorter.getFirstSaveIndex();
 
-    return new Pair<>(saveRegIndex, sorter.getAllRedCommit());
+      return new Pair<>(saveRegIndex, sorter.getAllRedCommit());
+    }
+    finally {
+      stopWatch.report(LOG);
+    }
   }
 
-  private static class RedGreenSorter<CommitId, Commit extends GraphCommit<CommitId>> {
-    private final Set<CommitId> currentRed;
-    private final Set<CommitId> currentGreen;
-    private final Set<CommitId> allRedCommit = new THashSet<>();
+  private static final class RedGreenSorter<CommitId, Commit extends GraphCommit<CommitId>> {
+    private final Set<? super CommitId> currentRed;
+    private final Set<? super CommitId> currentGreen;
+    private final Set<CommitId> allRedCommit = new HashSet<>();
 
     private final List<? extends Commit> savedLog;
+    private final Map<CommitId, List<CommitId>> recentCommitParents;
 
-    private RedGreenSorter(Set<CommitId> startRedNodes, Set<CommitId> startGreenNodes, List<? extends Commit> savedLog) {
+    private RedGreenSorter(Set<? super CommitId> startRedNodes, Set<? super CommitId> startGreenNodes, List<? extends Commit> savedLog,
+                           Map<CommitId, List<CommitId>> recentCommitParents) {
       this.currentRed = startRedNodes;
       this.currentGreen = startGreenNodes;
       this.savedLog = savedLog;
+      this.recentCommitParents = recentCommitParents;
     }
 
     private void markRealRedNode(@NotNull CommitId node) {
@@ -160,23 +221,42 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
     }
 
     private int getFirstSaveIndex() {
-      for (int lastIndex = 0; lastIndex < savedLog.size(); lastIndex++) {
-        Commit commit = savedLog.get(lastIndex);
-        boolean isGreen = currentGreen.contains(commit.getId());
-        if (isGreen) {
-          currentRed.remove(commit.getId());
-          currentGreen.addAll(commit.getParents());
-        }
-        else {
-          markRealRedNode(commit.getId());
-          currentRed.addAll(commit.getParents());
-        }
+      StopWatch stopWatch = StopWatch.start("VcsLogJoiner.RedGreenSorter.getFirstSaveIndex");
+      try {
+        for (int lastIndex = 0; lastIndex < savedLog.size(); lastIndex++) {
+          Commit commit = savedLog.get(lastIndex);
+          boolean isGreen = currentGreen.contains(commit.getId());
+          if (isGreen) {
+            currentRed.remove(commit.getId());
+            // For a commit that was re-fetched in firstBlock, its updated parents are already
+            // in currentGreen (seeded when the sorter was built). Propagating its parents from
+            // savedLog here would incorrectly resurrect parents that were dropped in the update;
+            // instead, only such dropped parents become (tentative) red candidates.
+            // updatedParents can legitimately be empty (e.g. the commit was re-fetched as an orphan/root) -
+            // in that case every old parent counts as dropped and becomes a red candidate below.
+            List<CommitId> updatedParents = recentCommitParents.get(commit.getId());
+            if (updatedParents == null) {
+              currentGreen.addAll(commit.getParents());
+            } else {
+              Set<CommitId> droppedParents = new HashSet<>(commit.getParents());
+              droppedParents.removeAll(new HashSet<>(updatedParents));
+              currentRed.addAll(droppedParents);
+            }
+          }
+          else {
+            markRealRedNode(commit.getId());
+            currentRed.addAll(commit.getParents());
+          }
 
-        if (currentRed.isEmpty()) {
-          return lastIndex + 1;
+          if (currentRed.isEmpty()) {
+            return lastIndex + 1;
+          }
         }
+        throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL); // see VcsLogJoinerTest#illegalStateExceptionTest
       }
-      throw new IllegalStateException(ILLEGAL_DATA_RELOAD_ALL); // see VcsLogJoinerTest#illegalStateExceptionTest
+      finally {
+        stopWatch.report(LOG);
+      }
     }
 
     public Set<CommitId> getAllRedCommit() {
@@ -191,9 +271,9 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private final Stack<Commit> commitsStack;
 
-    public NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
+    NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
       this.list = list;
-      newCommitsMap = ContainerUtil.newHashMap();
+      newCommitsMap = new HashMap<>();
       for (Commit commit : newCommits) {
         newCommitsMap.put(commit.getId(), commit);
       }
@@ -201,45 +281,54 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
     }
 
     private void insertAllUseStack() {
-      while (!newCommitsMap.isEmpty()) {
-        commitsStack.push(newCommitsMap.values().iterator().next());
-        while (!commitsStack.isEmpty()) {
-          Commit currentCommit = commitsStack.peek();
-          boolean allParentsWereAdded = true;
-          for (CommitId parentHash : currentCommit.getParents()) {
-            Commit parentCommit = newCommitsMap.get(parentHash);
-            if (parentCommit != null) {
-              commitsStack.push(parentCommit);
-              allParentsWereAdded = false;
-              break;
+      StopWatch stopWatch = StopWatch.start("VcsLogJoiner.NewCommitIntegrator.insertAllUseStack");
+      try {
+        while (!newCommitsMap.isEmpty()) {
+          visitCommit(Objects.requireNonNull(ContainerUtil.getFirstItem(newCommitsMap.values())));
+          while (!commitsStack.isEmpty()) {
+            Commit currentCommit = commitsStack.peek();
+            boolean allParentsWereAdded = true;
+            for (CommitId parentHash : currentCommit.getParents()) {
+              Commit parentCommit = newCommitsMap.get(parentHash);
+              if (parentCommit != null) {
+                visitCommit(parentCommit);
+                allParentsWereAdded = false;
+                break;
+              }
             }
-          }
 
-          if (!allParentsWereAdded) {
-            continue;
-          }
-
-          int insertIndex;
-          Set<CommitId> parents = new THashSet<>(currentCommit.getParents());
-          for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
-            Commit someCommit = list.get(insertIndex);
-            if (parents.contains(someCommit.getId())) {
-              break;
+            if (!allParentsWereAdded) {
+              continue;
             }
-            if (someCommit.getTimestamp() < currentCommit.getTimestamp()) {
-              break;
-            }
-          }
 
-          list.add(insertIndex, currentCommit);
-          newCommitsMap.remove(currentCommit.getId());
-          commitsStack.pop();
+            int insertIndex;
+            Set<CommitId> parents = new HashSet<>(currentCommit.getParents());
+            for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
+              Commit someCommit = list.get(insertIndex);
+              if (parents.contains(someCommit.getId())) {
+                break;
+              }
+              if (someCommit.getTimestamp() < currentCommit.getTimestamp()) {
+                break;
+              }
+            }
+
+            list.add(insertIndex, currentCommit);
+            commitsStack.pop();
+          }
         }
+      }
+      finally {
+        stopWatch.report(LOG);
       }
     }
 
-    @NotNull
-    public List<Commit> getResultList() {
+    private void visitCommit(@NotNull Commit commit) {
+      commitsStack.push(commit);
+      newCommitsMap.remove(commit.getId());
+    }
+
+    public @NotNull List<Commit> getResultList() {
       insertAllUseStack();
       return list;
     }

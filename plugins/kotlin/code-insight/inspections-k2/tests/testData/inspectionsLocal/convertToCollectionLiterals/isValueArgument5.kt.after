@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+fun <T> foo(t1: T, t2: T) = Unit
+
+fun test() {
+    foo([], arrayOf<String>())
+}

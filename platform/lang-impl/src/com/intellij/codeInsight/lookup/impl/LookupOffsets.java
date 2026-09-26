@@ -1,67 +1,86 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
-public class LookupOffsets implements DocumentListener {
-  @NotNull private String myAdditionalPrefix = "";
-  private String myInitialPrefix;
+public final class LookupOffsets implements DocumentListener {
+  private static final Logger LOG = Logger.getInstance(LookupOffsets.class);
+
+  private @NotNull String myAdditionalPrefix = "";
 
   private boolean myStableStart;
-  private String myStartDisposeTrace;
-  @NotNull private RangeMarker myLookupStartMarker;
+  private @Nullable Throwable myStartMarkerDisposeTrace = null;
+  private @NotNull RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
-  private final RangeMarker myLookupOriginalStartMarker;
-  private final Editor myEditor;
+  private @NotNull RangeMarker myLookupOriginalStartMarker;
+  private final @NotNull Editor myEditor;
 
-  public LookupOffsets(Editor editor) {
+  public LookupOffsets(@NotNull Editor editor) {
     myEditor = editor;
-    int caret = getPivotOffset();
+    int caret = LookupImplUtil.getPivotOffset(myEditor);
     myLookupOriginalStartMarker = createLeftGreedyMarker(caret);
     myLookupStartMarker = createLeftGreedyMarker(caret);
     myEditor.getDocument().addDocumentListener(this);
   }
 
   @Override
-  public void documentChanged(DocumentEvent e) {
-    if (myStartDisposeTrace == null && !myLookupStartMarker.isValid()) {
-      myStartDisposeTrace = e + "\n" + DebugUtil.currentStackTrace();
+  public void documentChanged(@NotNull DocumentEvent e) {
+    if (!myLookupStartMarker.isValid()) {
+      // in the scenario of concurrent document modifications by many remote clients (CWM) there may be a situation
+      // when one client (or host) has created a lookup and the another client immediately deleted a text under the offset
+      // so the range marker became invalid because it's out of the document bounds
+      // here we try to recreate the range marker recalculating the start offset within the new document bounds
+      int start = calculateStartOffset(0, true);
+      myLookupStartMarker.dispose();
+      myLookupStartMarker = createLeftGreedyMarker(start);
+      myStartMarkerDisposeTrace = null;
+    }
+
+    if (!myLookupOriginalStartMarker.isValid()) {
+      // the original marker shouldn't take into account myAdditionalPrefix and myRemovedPrefix values
+      int start = calculateStartOffset(0, false);
+      myLookupOriginalStartMarker.dispose();
+      myLookupOriginalStartMarker = createLeftGreedyMarker(start);
+    }
+    // capture the trace in the case when range marker is still invalid by some reasons
+    if (myStartMarkerDisposeTrace == null && !myLookupStartMarker.isValid()) {
+      myStartMarkerDisposeTrace = new Throwable("the lookup start marker is invalid after " + e);
     }
   }
 
-  private RangeMarker createLeftGreedyMarker(int start) {
+  private @NotNull RangeMarker createLeftGreedyMarker(int start) {
     RangeMarker marker = myEditor.getDocument().createRangeMarker(start, start);
     marker.setGreedyToLeft(true);
     return marker;
   }
 
-  private int getPivotOffset() {
-    return myEditor.getSelectionModel().hasSelection()
-                 ? myEditor.getSelectionModel().getSelectionStart()
-                 : myEditor.getCaretModel().getOffset();
-  }
-
-  @NotNull
-  public String getAdditionalPrefix() {
+  /**
+   * An additional prefix is a prefix a part of completion prefix that was typed after the completion process had been started.
+   * It is stored separately because we don't always restart completion process, and in this case we have a base prefix and additional prefix.
+   */
+  public @NotNull String getAdditionalPrefix() {
     return myAdditionalPrefix;
   }
 
   public void appendPrefix(char c) {
+    LOG.debug("Append prefix :: char=" + c + ", myAdditionalPrefix: " + myAdditionalPrefix);
     myAdditionalPrefix += c;
-    myInitialPrefix = null;
   }
 
+  /**
+   * @return {code true} if truncating of the additional prefix was successful. Returns {@code false} if additional prefix was empty, so
+   * we need to restart completion with truncated base prefix.
+   */
   public boolean truncatePrefix() {
     final int len = myAdditionalPrefix.length();
     if (len == 0) {
@@ -69,7 +88,6 @@ public class LookupOffsets implements DocumentListener {
       return false;
     }
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
-    myInitialPrefix = null;
     return true;
   }
 
@@ -77,7 +95,7 @@ public class LookupOffsets implements DocumentListener {
     myStableStart = false;
   }
 
-  void checkMinPrefixLengthChanges(Collection<LookupElement> items, LookupImpl lookup) {
+  void checkMinPrefixLengthChanges(@NotNull Collection<? extends LookupElement> items, @NotNull LookupImpl lookup) {
     if (myStableStart) return;
     if (!lookup.isCalculating() && !items.isEmpty()) {
       myStableStart = true;
@@ -90,54 +108,64 @@ public class LookupOffsets implements DocumentListener {
       }
     }
 
-    int start = getPivotOffset() - minPrefixLength - myAdditionalPrefix.length() + myRemovedPrefix;
-    start = Math.max(Math.min(start, myEditor.getDocument().getTextLength()), 0);
+    int start = calculateStartOffset(minPrefixLength, true);
     if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
       return;
     }
-    
+
     myLookupStartMarker.dispose();
     myLookupStartMarker = createLeftGreedyMarker(start);
-    myStartDisposeTrace = null;
+    myStartMarkerDisposeTrace = null;
   }
 
-  int getLookupStart(String disposeTrace) {
+  private int calculateStartOffset(int minLookupItemPrefixLength, boolean considerPrefixes) {
+    int start = LookupImplUtil.getPivotOffset(myEditor) - minLookupItemPrefixLength;
+    if (considerPrefixes) {
+      start = start - myAdditionalPrefix.length() + myRemovedPrefix;
+    }
+    start = MathUtil.clamp(start, 0, myEditor.getDocument().getTextLength());
+    return start;
+  }
+
+  int getLookupStart(@Nullable Throwable lookupDisposeTrace) {
     if (!myLookupStartMarker.isValid()) {
-      throw new AssertionError("Invalid lookup start: " + myLookupStartMarker + ", " + myEditor + ", disposeTrace=" + disposeTrace + ";\n" + myStartDisposeTrace);
+      throw invalidStartError("Invalid lookup start: " + myLookupStartMarker + ", " + myEditor, lookupDisposeTrace);
     }
     return myLookupStartMarker.getStartOffset();
+  }
+
+  /**
+   * Makes the error for an invalid lookup start marker.
+   * The message holds one line. Each trace goes to the suppressed exceptions, because a trace in a message is hard to read.
+   *
+   * @param lookupDisposeTrace the place where the lookup was disposed, or {@code null} if the lookup is alive
+   */
+  private @NotNull AssertionError invalidStartError(@NotNull String message, @Nullable Throwable lookupDisposeTrace) {
+    AssertionError error = new AssertionError(message + " (see the suppressed exceptions)");
+    if (lookupDisposeTrace != null) {
+      error.addSuppressed(lookupDisposeTrace);
+    }
+    if (myStartMarkerDisposeTrace != null) {
+      error.addSuppressed(myStartMarkerDisposeTrace);
+    }
+    return error;
   }
 
   int getLookupOriginalStart() {
     return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
   }
 
-  boolean performGuardedChange(Runnable change) {
+  boolean performGuardedChange(@NotNull Runnable change) {
     if (!myLookupStartMarker.isValid()) {
-      throw new AssertionError("Invalid start: " + myEditor + ", trace=" + myStartDisposeTrace);
+      throw invalidStartError("Invalid start: " + myEditor, null);
     }
     change.run();
     return myLookupStartMarker.isValid();
   }
 
-  void setInitialPrefix(String presentPrefix, boolean explicitlyInvoked) {
-    if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
-      myInitialPrefix = presentPrefix;
-    }
-    else {
-      myInitialPrefix = null;
-    }
-  }
-
   void clearAdditionalPrefix() {
     myAdditionalPrefix = "";
     myRemovedPrefix = 0;
-  }
-
-  void restorePrefix() {
-    if (myInitialPrefix == null || !myLookupStartMarker.isValid()) return;
-
-    myEditor.getDocument().replaceString(myLookupStartMarker.getStartOffset(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
   }
 
   void disposeMarkers() {
@@ -146,7 +174,7 @@ public class LookupOffsets implements DocumentListener {
     myLookupOriginalStartMarker.dispose();
   }
 
-  public int getPrefixLength(LookupElement item, LookupImpl lookup) {
+  public int getPrefixLength(@NotNull LookupElement item, @NotNull LookupImpl lookup) {
     return lookup.itemPattern(item).length() - myRemovedPrefix;
   }
 }

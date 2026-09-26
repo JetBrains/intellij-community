@@ -1,55 +1,46 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 import static com.intellij.diff.util.DiffUtil.createMessagePanel;
 
 public class UnifiedDiffPanel extends DiffPanelBase {
-  private static final String GOOD_CONTENT = "GoodContent";
-  private static final String LOADING_CONTENT = "LoadingContent";
-  private static final String TOO_BIG_CONTENT = "TooBigContent";
-  private static final String OPERATION_CANCELED_CONTENT = "OperationCanceledContent";
-  private static final String ERROR_CONTENT = "ErrorContent";
+  private static final @NonNls String GOOD_CONTENT = "GoodContent";
+  private static final @NonNls String LOADING_CONTENT = "LoadingContent";
+  private static final @NonNls String TOO_BIG_CONTENT = "TooBigContent";
+  private static final @NonNls String OPERATION_CANCELED_CONTENT = "OperationCanceledContent";
+  private static final @NonNls String ERROR_CONTENT = "ErrorContent";
 
-  @NotNull private final AsyncProcessIcon.Big myBusyIcon;
+  private final @NotNull AsyncProcessIcon.Big myBusyIcon;
 
-  public UnifiedDiffPanel(@Nullable Project project,
-                          @NotNull UnifiedContentPanel content,
-                          @NotNull DataProvider provider,
-                          @NotNull DiffContext context) {
-    super(project, provider, context);
+  @ApiStatus.Internal
+  public UnifiedDiffPanel(@Nullable Project project, @NotNull JComponent content) {
+    this(project, content, null);
+  }
+
+  public UnifiedDiffPanel(@Nullable Project project, @NotNull JComponent content, @Nullable DiffContext context) {
+    super(project, context);
     myBusyIcon = new AsyncProcessIcon.Big("UnifiedDiff");
-    JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel);
+    JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel).andTransparent();
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(myBusyIcon, LOADING_CONTENT);
-    myContentPanel.add(createMessagePanel("Can not calculate diff. " + DiffTooBigException.MESSAGE), TOO_BIG_CONTENT);
-    myContentPanel.add(createMessagePanel("Can not calculate diff. Operation canceled."), OPERATION_CANCELED_CONTENT);
-    myContentPanel.add(createMessagePanel("Error"), ERROR_CONTENT);
+    myContentPanel.add(createMessagePanel(DiffBundle.message("error.can.not.calculate.diff.file.too.big")), TOO_BIG_CONTENT);
+    myContentPanel.add(createMessagePanel(DiffBundle.message("error.can.not.calculate.diff.operation.canceled")), OPERATION_CANCELED_CONTENT);
+    myContentPanel.add(createMessagePanel(CommonBundle.message("title.error")), ERROR_CONTENT);
 
     setCurrentCard(LOADING_CONTENT, false);
   }
@@ -80,7 +71,7 @@ public class UnifiedDiffPanel extends DiffPanelBase {
 
   @Override
   protected void setCurrentCard(@NotNull String card) {
-    if (card == LOADING_CONTENT) {
+    if (card.equals(LOADING_CONTENT)) {
       myBusyIcon.resume();
     }
     else {
@@ -95,6 +86,6 @@ public class UnifiedDiffPanel extends DiffPanelBase {
   //
 
   public boolean isGoodContent() {
-    return myCurrentCard == GOOD_CONTENT;
+    return myCurrentCard.equals(GOOD_CONTENT);
   }
 }

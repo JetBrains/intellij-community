@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.Disposable;
@@ -21,25 +7,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Url;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * @author nik
- */
-public class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
+@ApiStatus.Internal
+public final class RemoteFileManagerImpl extends RemoteFileManager implements Disposable {
   private final LocalFileStorage myStorage;
 
-  private final Map<Url, HttpVirtualFileImpl> remoteFiles = new THashMap<>();
-  private final Map<Url, HttpVirtualFileImpl> remoteDirectories = new THashMap<>();
+  private final Map<Url, HttpVirtualFileImpl> remoteFiles = new HashMap<>();
+  private final Map<Url, HttpVirtualFileImpl> remoteDirectories = new HashMap<>();
 
   private final EventDispatcher<HttpVirtualFileListener> myDispatcher = EventDispatcher.create(HttpVirtualFileListener.class);
-  private final List<RemoteContentProvider> myProviders = new ArrayList<>();
+  private final List<RemoteContentProvider> myProviders = new CopyOnWriteArrayList<>();
   private final DefaultRemoteContentProvider myDefaultRemoteContentProvider;
 
   public RemoteFileManagerImpl() {
@@ -47,8 +32,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     myDefaultRemoteContentProvider = new DefaultRemoteContentProvider();
   }
 
-  @NotNull
-  public RemoteContentProvider findContentProvider(final @NotNull Url url) {
+  public @NotNull RemoteContentProvider findContentProvider(final @NotNull Url url) {
     for (RemoteContentProvider provider : myProviders) {
       if (provider.canProvideContent(url)) {
         return provider;
@@ -80,7 +64,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   }
 
   @Override
-  public void addRemoteContentProvider(@NotNull final RemoteContentProvider provider, @NotNull Disposable parentDisposable) {
+  public void addRemoteContentProvider(final @NotNull RemoteContentProvider provider, @NotNull Disposable parentDisposable) {
     addRemoteContentProvider(provider);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -101,7 +85,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   }
 
   @Override
-  public void addFileListener(@NotNull final HttpVirtualFileListener listener) {
+  public void addFileListener(final @NotNull HttpVirtualFileListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -111,7 +95,7 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
   }
 
   @Override
-  public void removeFileListener(@NotNull final HttpVirtualFileListener listener) {
+  public void removeFileListener(final @NotNull HttpVirtualFileListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -128,15 +112,15 @@ public class RemoteFileManagerImpl extends RemoteFileManager implements Disposab
     myStorage.deleteDownloadedFiles();
   }
 
-  private class MyDownloadingListener extends FileDownloadingAdapter {
+  private final class MyDownloadingListener extends FileDownloadingAdapter {
     private final HttpVirtualFileImpl myFile;
 
-    public MyDownloadingListener(final HttpVirtualFileImpl file) {
+    MyDownloadingListener(final HttpVirtualFileImpl file) {
       myFile = file;
     }
 
     @Override
-    public void fileDownloaded(final VirtualFile localFile) {
+    public void fileDownloaded(final @NotNull VirtualFile localFile) {
       fireFileDownloaded(myFile);
     }
   }

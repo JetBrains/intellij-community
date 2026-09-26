@@ -33,7 +33,6 @@ public interface ConflictResolutionPolicy {
      * Inject the policy to use when inserting a new method.
      *
      * @param strategy  the policy to use.
-     * @since 3.18
      */
     void setNewMethodStrategy(InsertNewMethodStrategy strategy);
 
@@ -43,7 +42,6 @@ public interface ConflictResolutionPolicy {
      * @param clazz          PSIClass.
      * @param existingMethod existing method if one exists.
      * @param newMethod      new method.
-     * @param editor
      * @return if the policy was executed normally (not cancelled)
      * @throws IncorrectOperationException is thrown if there is an IDEA error.
      */

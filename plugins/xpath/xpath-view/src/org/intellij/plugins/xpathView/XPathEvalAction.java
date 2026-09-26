@@ -15,19 +15,18 @@
  */
 package org.intellij.plugins.xpathView;
 
-import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.FileViewProvider;
@@ -46,9 +44,15 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
-import icons.XpathIcons;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
@@ -62,9 +66,8 @@ import org.jaxen.saxpath.SAXPathException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -119,15 +122,13 @@ import java.util.List;
  */
 public class XPathEvalAction extends XPathAction {
 
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.XPathEvalAction");
+    private static final Logger LOG = Logger.getInstance(XPathEvalAction.class);
 
   @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
-        if (XpathIcons.Xml != null) {
-            event.getPresentation().setIcon(XpathIcons.Xml);
-        }
-    }
+    event.getPresentation().setIcon(AllIcons.FileTypes.Xml);
+  }
 
     @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {
@@ -135,7 +136,7 @@ public class XPathEvalAction extends XPathAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
         final Project project = event.getProject();
         if (project == null) {
             // no active project
@@ -143,7 +144,7 @@ public class XPathEvalAction extends XPathAction {
             return;
         }
 
-        Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = event.getData(CommonDataKeys.EDITOR);
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();
@@ -227,9 +228,8 @@ public class XPathEvalAction extends XPathAction {
             LOG.debug("result = " + result);
             LOG.assertTrue(result != null, "null result?");
 
-            if (result instanceof List<?>) {
-                final List<?> list = (List<?>)result;
-                if (!list.isEmpty()) {
+            if (result instanceof List<?> list) {
+              if (!list.isEmpty()) {
                     if (cfg.HIGHLIGHT_RESULTS) {
                         highlightResult(contextNode, editor, list);
                     }
@@ -237,29 +237,38 @@ public class XPathEvalAction extends XPathAction {
                         showUsageView(editor, xpath, contextNode, list);
                     }
                     if (!cfg.SHOW_USAGE_VIEW && !cfg.HIGHLIGHT_RESULTS) {
-                        final String s = StringUtil.pluralize("match", list.size());
-                        Messages.showInfoMessage(project, "Expression produced " + list.size() + " " + s, "XPath Result");
+                        final String s = StringUtil.pluralize(XPathBundle.message("dialog.message.match"), list.size());
+                        Messages.showInfoMessage(project, XPathBundle.message("dialog.message.expression.produced") + list.size() + " " + s,
+                                                 XPathBundle.message("dialog.title.xpath.result"));
                     }
                 } else {
-                    return Messages.showOkCancelDialog(project, "Sorry, your expression did not return any result", "XPath Result",
-                                                       "OK", "Edit Expression", Messages.getInformationIcon()) != Messages.OK;
+                    return Messages.showOkCancelDialog(project,
+                                                       XPathBundle.message("dialog.message.sorry.your.expression.did.not.return.any.result"),
+                                                       XPathBundle.message("dialog.title.xpath.result"),
+                                                       XPathBundle.message("button.ok"),
+                                                       XPathBundle.message("button.edit.expression"), Messages.getInformationIcon()) != Messages.OK;
                 }
             } else if (result instanceof String) {
-                Messages.showMessageDialog("'" + result.toString() + "'", "XPath result (String)", Messages.getInformationIcon());
+                Messages.showMessageDialog("'" + result + "'", XPathBundle.message("dialog.title.xpath.result.string"), Messages.getInformationIcon());
             } else if (result instanceof Number) {
-                Messages.showMessageDialog(result.toString(), "XPath result (Number)", Messages.getInformationIcon());
+              final String s = result.toString(); //NON-NLS
+              Messages.showMessageDialog(s, XPathBundle.message("dialog.title.xpath.result.number"), Messages.getInformationIcon());
             } else if (result instanceof Boolean) {
-                Messages.showMessageDialog(result.toString(), "XPath result (Boolean)", Messages.getInformationIcon());
+              final String s = result.toString(); //NON-NLS
+              Messages.showMessageDialog(s, XPathBundle.message("dialog.title.xpath.result.boolean"), Messages.getInformationIcon());
             } else {
               LOG.error("Unknown XPath result: " + result);
             }
         } catch (XPathSyntaxException e) {
             LOG.debug(e);
             // TODO: Better layout of the error message with non-fixed size fonts
-            return Messages.showOkCancelDialog(project, e.getMultilineMessage(), "XPath syntax error", "Edit Expression", "Cancel", Messages.getErrorIcon()) == Messages.OK;
+          return Messages.showOkCancelDialog(project, e.getMultilineMessage(), //NON-NLS
+                                             XPathBundle.message("dialog.title.xpath.syntax.error"),
+                                             XPathBundle.message("button.edit.expression"),
+                                             XPathBundle.message("button.cancel"), Messages.getErrorIcon()) == Messages.OK;
         } catch (SAXPathException e) {
             LOG.debug(e);
-            Messages.showMessageDialog(project, e.getMessage(), "XPath error", Messages.getErrorIcon());
+            Messages.showMessageDialog(project, e.getMessage(), XPathBundle.message("dialog.title.xpath.error"), Messages.getErrorIcon());
         }
         return false;
     }
@@ -282,28 +291,26 @@ public class XPathEvalAction extends XPathAction {
         });
     }
 
-    public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
+    public static void showUsageView(final @NotNull Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText("XPath Expression");
+        presentation.setTargetsNodeText(XPathBundle.message("list.item.xpath.expression"));
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Found Matches");
-        presentation.setNonCodeUsagesString("Result");
-        presentation.setUsagesString("XPath Result");
-        presentation.setUsagesWord("match");
+        presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches"));
+        presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
+        presentation.setUsagesString(XPathBundle.message("xpath.result"));
         final ItemPresentation targetPresentation = usageTarget.getPresentation();
         if (targetPresentation != null) {
           presentation
-            .setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + targetPresentation.getPresentableText() + '\'', 60, 0, true));
+            .setTabText(StringUtil.shortenTextWithEllipsis(XPathBundle.message("tab.title.xpath", targetPresentation.getPresentableText()), 60, 0, true));
         }
         else {
-          presentation.setTabText("XPath");
+          presentation.setTabText("XPath"); //NON-NLS
         }
         presentation.setScopeText("XML Files");
 
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
 
         final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
-        processPresentation.setProgressIndicatorFactory(() -> new FindProgressIndicator(project, "XML Document(s)"));
         processPresentation.setShowPanelIfOnlyOneUsage(true);
         processPresentation.setShowNotFoundMessage(true);
         final UsageTarget[] usageTargets = { usageTarget };
@@ -316,7 +323,7 @@ public class XPathEvalAction extends XPathAction {
                 new UsageViewManager.UsageViewStateListener() {
                     @Override
                     public void usageViewCreated(@NotNull UsageView usageView) {
-                        usageView.addButtonToLowerPane(editAction, "&Edit Expression");
+                        usageView.addButtonToLowerPane(editAction, XPathBundle.message("button.edit.expression.with.mnemonic"));
                     }
 
                     @Override
@@ -331,8 +338,7 @@ public class XPathEvalAction extends XPathAction {
      * @return The expression or {@code null} if the user hits the cancel button
      * @param project The project to take the history from
      */
-    @Nullable
-    private EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
+    private static @Nullable EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
         final XPathProjectComponent pc = XPathProjectComponent.getInstance(project);
         LOG.assertTrue(pc != null);
 
@@ -363,7 +369,7 @@ public class XPathEvalAction extends XPathAction {
      *
      * @param editor The editor object to apply the highlighting to
      */
-    private void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
+    private static void highlightResult(XmlElement contextNode, final @NotNull Editor editor, final List<?> list) {
 
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         int lowestOffset = Integer.MAX_VALUE;
@@ -371,10 +377,9 @@ public class XPathEvalAction extends XPathAction {
         for (final Object o : list) {
             LOG.assertTrue(o != null, "null element?");
 
-            if (o instanceof PsiElement) {
-                final PsiElement element = (PsiElement)o;
+            if (o instanceof PsiElement element) {
 
-                if (element.getContainingFile() == contextNode.getContainingFile()) {
+              if (element.getContainingFile() == contextNode.getContainingFile()) {
                     lowestOffset = highlightElement(editor, element, cfg, lowestOffset);
                 }
             } else {
@@ -389,9 +394,9 @@ public class XPathEvalAction extends XPathAction {
         }
 
         SwingUtilities.invokeLater(() -> {
-            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
-            final String s = StringUtil.pluralize("match", list.size());
-            statusBar.setInfo(list.size() + " XPath " + s + " found (press Escape to remove the highlighting)");
+          final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
+          statusBar.setInfo(XPathBundle.message("status.bar.text.xpath.choice.match.matches.found.press.escape.to.remove.highlighting",
+                                                list.size(), list.size() == 1 ? 0 : 1));
         });
     }
 
@@ -416,35 +421,10 @@ public class XPathEvalAction extends XPathAction {
             throw new IllegalArgumentException();
         }
 
-        @Override
-        public void findUsagesInEditor(@NotNull FileEditor editor) {
-            throw new IllegalArgumentException();
-        }
-
-      @Override
-      public void highlightUsages(@NotNull PsiFile file, @NotNull Editor editor, boolean clearHighlights) {
-        throw new UnsupportedOperationException();
-      }
-
       @Override
       public boolean isValid() {
             // re-run will become unavailable if the context node is invalid
             return myContextNode == null || myContextNode.isValid();
-        }
-
-        @Override
-        public boolean isReadOnly() {
-            return true;
-        }
-
-        @Override
-        @Nullable
-        public VirtualFile[] getFiles() {
-            return null;
-        }
-
-        @Override
-        public void update() {
         }
 
         @Override
@@ -456,20 +436,6 @@ public class XPathEvalAction extends XPathAction {
         public ItemPresentation getPresentation() {
             return myItemPresentation;
         }
-
-        @Override
-        public void navigate(boolean requestFocus) {
-        }
-
-        @Override
-        public boolean canNavigate() {
-            return false;
-        }
-
-        @Override
-        public boolean canNavigateToSource() {
-            return false;
-        }
     }
 
     private static class MyUsageSearcher implements UsageSearcher {
@@ -477,14 +443,14 @@ public class XPathEvalAction extends XPathAction {
         private final XPath myXPath;
         private final XmlElement myContextNode;
 
-        public MyUsageSearcher(List<?> result, XPath xPath, XmlElement contextNode) {
+        MyUsageSearcher(List<?> result, XPath xPath, XmlElement contextNode) {
             myResult = result;
             myXPath = xPath;
             myContextNode = contextNode;
         }
 
         @Override
-        public void generate(@NotNull final Processor<Usage> processor) {
+        public void generate(final @NotNull Processor<? super Usage> processor) {
             Runnable runnable = () -> {
                 final List<?> list;
                 if (myResult.isEmpty()) {
@@ -492,7 +458,8 @@ public class XPathEvalAction extends XPathAction {
                         list = (List<?>)myXPath.selectNodes(myContextNode);
                     } catch (JaxenException e) {
                         LOG.debug(e);
-                        Messages.showMessageDialog(myContextNode.getProject(), e.getMessage(), "XPath error", Messages.getErrorIcon());
+                        Messages.showMessageDialog(myContextNode.getProject(), e.getMessage(),
+                                                   XPathBundle.message("dialog.title.xpath.error"), Messages.getErrorIcon());
                         return;
                     }
                 } else {
@@ -501,29 +468,29 @@ public class XPathEvalAction extends XPathAction {
 
                 final int size = list.size();
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-                indicator.setText("Collecting matches...");
+                indicator.setText(XPathBundle.message("progress.text.collecting.matches"));
 
-                Collections.sort(list, (Comparator)(o1, o2) -> {
-                    indicator.checkCanceled();
-                    if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
-                        return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
-                    } else {
-                        return String.valueOf(o1).compareTo(String.valueOf(o2));
-                    }
+                list.sort((Comparator)(o1, o2) -> {
+                  indicator.checkCanceled();
+                  if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
+                    return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
+                  }
+                  else {
+                    return String.valueOf(o1).compareTo(String.valueOf(o2));
+                  }
                 });
                 for (int i = 0; i < size; i++) {
                     indicator.checkCanceled();
                     Object o = list.get(i);
-                    if (o instanceof PsiElement) {
-                        final PsiElement element = (PsiElement)o;
-                        processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+                    if (o instanceof PsiElement element) {
+                      processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
                         indicator.setText2(element.getContainingFile().getName());
                     }
                     indicator.setFraction(i / (double)size);
                 }
                 list.clear();
             };
-            ApplicationManager.getApplication().runReadAction(runnable);
+          ReadAction.runBlocking(runnable::run);
         }
     }
 

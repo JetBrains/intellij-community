@@ -2,12 +2,22 @@ import sys
 import unittest
 from nose_helper.config import Config
 from nose_helper.util import resolve_name, try_run
-import imp
+import importlib.util
+
+
+def find_module_path(module_name):
+    spec = importlib.util.find_spec(module_name)
+    if spec is None:
+        raise ImportError
+
+    return spec.origin
+
 
 class Test(unittest.TestCase):
     """The universal test case wrapper.
     """
-    __test__ = False # do not collect
+    __test__ = False  # do not collect
+
     def __init__(self, test, config=None):
         if not hasattr(test, '__call__'):
             raise TypeError("Test called with argument %r that "
@@ -39,8 +49,9 @@ class Test(unittest.TestCase):
         except AttributeError:
             pass
         return None
+
     context = property(_context, None, None,
-                      """Get the context object of this test.""")
+                       """Get the context object of this test.""")
 
     def run(self, result):
         try:
@@ -59,18 +70,19 @@ class Test(unittest.TestCase):
 class TestBase(unittest.TestCase):
     """Common functionality for FunctionTestCase and MethodTestCase.
     """
-    __test__ = False # do not collect
+    __test__ = False  # do not collect
 
     class Suite:
-      pass
+        pass
 
     def runTest(self):
-      self.test(*self.arg)
+        self.test(*self.arg)
+
 
 class FunctionTestCase(TestBase):
     """TestCase wrapper for test functions.
     """
-    __test__ = False # do not collect
+    __test__ = False  # do not collect
 
     def __init__(self, test, setUp=None, tearDown=None, arg=tuple(),
                  descriptor=None):
@@ -80,27 +92,28 @@ class FunctionTestCase(TestBase):
         self.arg = arg
         self.descriptor = descriptor
         TestBase.__init__(self)
-        
+
         self.suite = TestBase.Suite()
         self.suite.__module__ = self.__get_module()
         self.suite.__name__ = ""
         has_module = True
         try:
-          imp.find_module(self.suite.__module__)[1]
+            find_module_path(self.suite.__module__)
         except ImportError:
-          has_module  = False
+            has_module = False
         if sys.version.find("IronPython") != -1 or not has_module:
-          # Iron Python doesn't fully support imp
-          self.suite.abs_location = ""
-          self.suite.location = ""
+            # Iron Python doesn't fully support imp
+            self.suite.abs_location = ""
+            self.suite.location = ""
         else:
-          self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
-          self.suite.location = "file://" + imp.find_module(self.suite.__module__)[1]
+            self.suite.abs_location = "file://" + find_module_path(self.suite.__module__)
+            self.suite.location = "file://" + find_module_path(self.suite.__module__)
 
     def _context(self):
         return resolve_name(self.test.__module__)
+
     context = property(_context, None, None,
-                      """Get context (module) of this test""")
+                       """Get context (module) of this test""")
 
     def setUp(self):
         """Run any setup function attached to the test function
@@ -129,6 +142,7 @@ class FunctionTestCase(TestBase):
         if arg:
             name = "%s%s" % (name, arg)
         return name
+
     __repr__ = __str__
 
     def __get_module(self):
@@ -136,7 +150,7 @@ class FunctionTestCase(TestBase):
         if hasattr(func, "__module__"):
             return func.__module__
         else:
-            #TODO[kate]: get module of function in jython < 2.2
+            # TODO[kate]: get module of function in jython < 2.2
             return "Unknown module."
 
     def _descriptors(self):
@@ -154,7 +168,7 @@ class FunctionTestCase(TestBase):
 class MethodTestCase(TestBase):
     """Test case wrapper for test methods.
     """
-    __test__ = False # do not collect
+    __test__ = False  # do not collect
 
     def __init__(self, method, test=None, arg=tuple(), descriptor=None):
         """Initialize the MethodTestCase.
@@ -169,32 +183,32 @@ class MethodTestCase(TestBase):
             method_name = self.method.__name__
             self.test = getattr(self.inst, method_name)
         TestBase.__init__(self)
-        
+
         self.suite = TestBase.Suite()
         self.suite.__module__, self.suite.__name__ = self.__get_module()
 
         has_module = True
         try:
-          imp.find_module(self.suite.__module__)[1]
+            find_module_path(self.suite.__module__)
         except ImportError:
-          has_module  = False
+            has_module = False
         if sys.version.find("IronPython") != -1 or not has_module:
-          # Iron Python doesn't fully support imp
-          self.suite.abs_location = ""
+            # Iron Python doesn't fully support imp
+            self.suite.abs_location = ""
         else:
-          self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
+            self.suite.abs_location = "file://" + find_module_path(self.suite.__module__)
         self.suite.location = "python_uttestid://" + self.suite.__module__ + "." + self.suite.__name__
 
     def __get_module(self):
-      def get_class_that_defined_method(meth):
-        import inspect
-        obj = meth.im_self
-        for cls in inspect.getmro(meth.im_class):
-          if meth.__name__ in cls.__dict__: return (cls.__module__, cls.__name__)
-        return ("Unknown module", "")
+        def get_class_that_defined_method(meth):
+            import inspect
+            obj = meth.im_self
+            for cls in inspect.getmro(meth.im_class):
+                if meth.__name__ in cls.__dict__: return (cls.__module__, cls.__name__)
+            return ("Unknown module", "")
 
-      func, arg = self._descriptors()
-      return get_class_that_defined_method(func)
+        func, arg = self._descriptors()
+        return get_class_that_defined_method(func)
 
     def __str__(self):
         func, arg = self._descriptors()
@@ -205,12 +219,14 @@ class MethodTestCase(TestBase):
         if arg:
             name = "%s%s" % (name, arg)
         return name
+
     __repr__ = __str__
 
     def _context(self):
         return self.cls
+
     context = property(_context, None, None,
-                      """Get context (class) of this test""")
+                       """Get context (class) of this test""")
 
     def setUp(self):
         try_run(self.inst, ('setup', 'setUp'))

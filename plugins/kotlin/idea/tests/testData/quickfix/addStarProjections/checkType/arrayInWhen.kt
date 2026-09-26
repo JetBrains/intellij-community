@@ -1,0 +1,8 @@
+// "Change type arguments to <*>" "true"
+// K2_ERROR: CANNOT_CHECK_FOR_ERASED
+fun test(a: Any) = when (a) {
+    is <caret>Array<String> -> 1
+    else -> 2
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

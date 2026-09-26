@@ -1,0 +1,9 @@
+// WITH_COROUTINES
+// PROBLEM: Getter returns a new 'MutableStateFlow' on each access
+// FIX: Convert property getter to initializer
+
+import kotlinx.coroutines.flow.MutableStateFlow
+
+class Service {
+    val state <caret>get() = MutableStateFlow(0)
+}

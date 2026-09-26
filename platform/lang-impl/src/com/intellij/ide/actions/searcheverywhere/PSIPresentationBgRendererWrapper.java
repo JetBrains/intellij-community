@@ -1,0 +1,501 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions.searcheverywhere;
+
+import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.backend.navigation.NavigationTarget;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.render.RendererPanelsUtils;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.IconUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Insets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ */
+@Deprecated
+public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                               PossibleSlowContributor, EssentialContributor,
+                                                               SearchEverywhereExtendedInfoProvider, SearchEverywherePreviewProvider,
+                                                               SearchEverywhereContributorWrapper, PossibleInternalCommandsContributor {
+  private static final Logger LOG = Logger.getInstance(PSIPresentationBgRendererWrapper.class);
+
+  private final WeightedSearchEverywhereContributor<Object> myDelegate;
+  private final Object myDelegateRendererLock = new Object();
+  private volatile ListCellRenderer<? super Object> myDelegateRenderer;
+
+  public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) {
+    this((WeightedSearchEverywhereContributor<Object>)delegate);
+  }
+
+  public PSIPresentationBgRendererWrapper(WeightedSearchEverywhereContributor<Object> delegate) { myDelegate = delegate; }
+
+  @Override
+  public boolean isSlow() {
+    return PossibleSlowContributor.checkSlow(myDelegate);
+  }
+
+  @Override
+  public boolean isEssentialByDefault() {
+    return EssentialContributor.checkEssentialByDefault(myDelegate);
+  }
+
+  @Override
+  public @NotNull SearchEverywhereContributor<?> getEffectiveContributor() {
+    return myDelegate;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean shouldTreatAsACommandQuery(@NotNull String string) {
+    if (myDelegate instanceof PossibleInternalCommandsContributor) {
+      return ((PossibleInternalCommandsContributor)myDelegate).shouldTreatAsACommandQuery(string);
+    }
+    return false;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean shouldTreatAsACommandQueryWithArg(@NotNull String string) {
+    if (myDelegate instanceof PossibleInternalCommandsContributor) {
+      return ((PossibleInternalCommandsContributor)myDelegate).shouldTreatAsACommandQueryWithArg(string);
+    }
+    return false;
+  }
+
+  public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
+    return wrapIfNecessary((WeightedSearchEverywhereContributor<Object>)delegate);
+  }
+
+  public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(WeightedSearchEverywhereContributor<Object> delegate) {
+    return new PSIPresentationBgRendererWrapper(delegate);
+  }
+
+  @Override
+  public void fetchWeightedElements(@NotNull String pattern,
+                                    @NotNull ProgressIndicator progressIndicator,
+                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
+    Function<PsiElement, TargetPresentation> psiCalculator = createPSICalculator();
+    myDelegate.fetchWeightedElements(pattern, progressIndicator, descriptor -> {
+      FoundItemDescriptor<Object> presentationDescriptor = element2presentation(descriptor, psiCalculator);
+      return consumer.process(presentationDescriptor);
+    });
+  }
+
+  private static TargetPresentation convertPresentation(ItemPresentation presentation) {
+    return TargetPresentation.builder(Objects.requireNonNullElse(presentation.getPresentableText(), ""))
+      .icon(presentation.getIcon(true))
+      .locationText(presentation.getLocationString())
+      .presentation();
+  }
+
+  /**
+   * Creates the delegate renderer and keeps it for the later calls.
+   * <p>
+   * The renderer is a Swing component, so its constructor takes the AWT tree lock. A background thread must not
+   * take that lock, because the EDT can hold it and wait for the write-intent lock. Call this method on the EDT
+   * before a background search starts. See IJPL-211777.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  public void initElementsRenderer() {
+    getDelegateRenderer();
+  }
+
+  private @NotNull ListCellRenderer<? super Object> getDelegateRenderer() {
+    ListCellRenderer<? super Object> renderer = myDelegateRenderer;
+    if (renderer != null) return renderer;
+
+    synchronized (myDelegateRendererLock) {
+      renderer = myDelegateRenderer;
+      if (renderer == null) {
+        renderer = myDelegate.getElementsRenderer();
+        myDelegateRenderer = renderer;
+      }
+      return renderer;
+    }
+  }
+
+  private Function<PsiElement, TargetPresentation> createPSICalculator() {
+    SearchEverywherePsiRenderer renderer = (SearchEverywherePsiRenderer)getDelegateRenderer();
+    return element -> renderer.computePresentation(element);
+  }
+
+  @Override
+  public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)getDelegateRenderer();
+    return new WrapperRenderer((list, o) -> renderer.getItemMatchers(list, o));
+  }
+
+  @ApiStatus.Internal
+  public PsiElementListCellRenderer.ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, PsiElementListCellRenderer.ItemMatchers> matcherProvider, @NotNull Object value) {
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)getDelegateRenderer();
+    return renderer.getNonComponentItemMatchers(matcherProvider, value);
+  }
+
+  private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
+                                                                  Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator) {
+    if (elementDescriptor.getItem() instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
+      TargetPresentation presentation = calcPresentationSafely(itemWithSimilarity.getValue(), psiPresentationCalculator);
+      PsiItemWithSimilarity<?> newItemWithSimilarity = new PsiItemWithSimilarity<>(itemWithSimilarity.getValue(), itemWithSimilarity.getSimilarityScore());
+      return new FoundItemDescriptor<>(new ItemWithPresentation<>(newItemWithSimilarity, presentation), elementDescriptor.getWeight());
+    }
+
+    TargetPresentation presentation = calcPresentationSafely(elementDescriptor.getItem(), psiPresentationCalculator);
+
+    if (elementDescriptor.getItem() instanceof PsiElement psi) {
+      return new FoundItemDescriptor<>(new PsiItemWithPresentation(psi, presentation), elementDescriptor.getWeight());
+    }
+
+    if (elementDescriptor.getItem() instanceof PsiElementNavigationItem psiElementNavigationItem) {
+      var realElement = psiElementNavigationItem.getTargetElement();
+      return new FoundItemDescriptor<>(new PsiItemWithPresentation(realElement, presentation), elementDescriptor.getWeight());
+    }
+
+    return new FoundItemDescriptor<>(new ItemWithPresentation<>(elementDescriptor.getItem(), presentation), elementDescriptor.getWeight());
+  }
+
+  /**
+   * A presentation failure of one item must not abort the whole search:
+   * the item degrades to a name-only presentation instead.
+   */
+  private static TargetPresentation calcPresentationSafely(Object item,
+                                                           Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator) {
+    try {
+      return calcPresentation(item, psiPresentationCalculator);
+    }
+    catch (CancellationException | IndexNotReadyException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.warnWithDebug("Cannot compute the presentation for " + item.getClass().getName() + ": " + e.getMessage(), e);
+      @NlsSafe String text = item instanceof PsiFileSystemItem fileSystemItem ? fileSystemItem.getName() : item.toString();
+      return TargetPresentation.builder(text).icon(IconUtil.getEmptyIcon(false)).presentation();
+    }
+  }
+
+  private static TargetPresentation calcPresentation(Object item, Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator) {
+    if (item instanceof NavigationTarget target) {
+      return target.computePresentation();
+    }
+
+    if (item instanceof PsiElement psi) {
+      return psiPresentationCalculator.apply(psi);
+    }
+
+    if (item instanceof PsiElementNavigationItem psiElementNavigationItem) {
+      var realElement = psiElementNavigationItem.getTargetElement();
+      return psiPresentationCalculator.apply(realElement);
+    }
+
+    if (item instanceof NavigationItem navigationItem) {
+      ItemPresentation itemPresentation = Objects.requireNonNull(navigationItem.getPresentation());
+      return convertPresentation(itemPresentation);
+    }
+
+    if (item instanceof ItemPresentation itemPresentation) {
+      return convertPresentation(itemPresentation);
+    }
+
+    LOG.error("Found items expected to be PsiItems or to have [com.intellij.navigation.ItemPresentation] field. But item [" + item.getClass() + "] is not");
+    @NlsSafe String text = item.toString();
+    return TargetPresentation.builder(text).icon(IconUtil.getEmptyIcon(false)).presentation();
+  }
+
+  @ApiStatus.Internal
+  public static Object getItem(Object value) {
+    if (value instanceof ItemWithPresentation<?> iwp) value = iwp.getItem();
+    if (value instanceof PsiItemWithSimilarity<?> iws) value = iws.getValue();
+    return value;
+  }
+
+  @ApiStatus.Internal
+  public static class ItemWithPresentation<T> extends Pair<T, TargetPresentation> {
+    /**
+     * @see #create(Object, Object)
+     */
+    public ItemWithPresentation(T first, TargetPresentation second) {
+      super(first, second);
+    }
+
+    public T getItem() {
+      return first;
+    }
+
+    public TargetPresentation getPresentation() {
+      return second;
+    }
+
+    @Override public String toString() {
+      return "An item with precalculated presentation, breakdown:\n" +
+             "Text: " + getPresentation().getPresentableText() + "\n" +
+             "Original item, class: " + getItem().getClass().getSimpleName() + "\n";
+    }
+  }
+
+  public static final class PsiItemWithPresentation extends ItemWithPresentation<PsiElement> {
+
+    @ApiStatus.Internal
+    public PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
+      super(first, second);
+    }
+
+  }
+
+  private static final class WrapperRenderer extends JPanel implements ListCellRenderer<Object> {
+    private final BiFunction<JList<?>, Object, PsiElementListCellRenderer.ItemMatchers> matchersSupplier;
+
+    private WrapperRenderer(BiFunction<JList<?>, Object, PsiElementListCellRenderer.ItemMatchers> supplier) {
+      super(new SearchEverywherePsiRenderer.SELayout());
+      matchersSupplier = supplier;
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      if (value instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
+        return getListCellRendererComponent(list, itemWithSimilarity.getValue(), index, isSelected, cellHasFocus);
+      }
+      ItemWithPresentation<?> itemAndPresentation = (ItemWithPresentation<?>)value;
+
+      TargetPresentation presentation = itemAndPresentation.getPresentation();
+      PsiElementListCellRenderer.ItemMatchers matchers = getItemMatchers(list, itemAndPresentation);
+
+      removeAll();
+
+      Color bgColor = isSelected ? UIUtil.getListSelectionBackground(true) : presentation.getBackgroundColor();
+      setBackground(bgColor);
+
+      JLabel locationLabel;
+      if (StringUtil.isNotEmpty(presentation.getLocationText())) {
+        locationLabel = new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT);
+        locationLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+        locationLabel.setIconTextGap(RendererPanelsUtils.getIconTextGap());
+        locationLabel.setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
+        add(locationLabel, BorderLayout.EAST);
+      }
+      else {
+        locationLabel = null;
+      }
+
+      ColoredListCellRenderer<Object> leftRenderer = new ColoredListCellRenderer<>() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          //noinspection UseDPIAwareInsets
+          setIpad(new Insets(0, 0, 0, getIpad().right)); // Border of top panel is used for around insets of renderer
+          setIcon(presentation.getIcon());
+          setIconTextGap(RendererPanelsUtils.getIconTextGap());
+          SimpleTextAttributes nameAttributes = presentation.getPresentableTextAttributes() != null
+                                                ? SimpleTextAttributes.fromTextAttributes(presentation.getPresentableTextAttributes())
+                                                : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null);
+          SpeedSearchUtil.appendColoredFragmentForMatcher(presentation.getPresentableText(), this, nameAttributes, matchers.nameMatcher,
+                                                          bgColor, selected);
+          if (presentation.getContainerText() != null) {
+            Insets listInsets = list.getInsets();
+            Insets rendererInsets = getInsets();
+            FontMetrics fm = list.getFontMetrics(list.getFont());
+            int containerMaxWidth = list.getWidth() - listInsets.left - listInsets.right
+                                    - rendererInsets.left - rendererInsets.right
+                                    - getPreferredSize().width;
+            if (locationLabel != null) containerMaxWidth -= locationLabel.getPreferredSize().width;
+
+            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, this);
+            SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
+                                                       ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
+                                                       : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+            SpeedSearchUtil.appendColoredFragmentForMatcher(" " + containerText, this, containerAttributes, matchers.locationMatcher,
+                                                            bgColor, selected);
+          }
+        }
+      };
+      add(leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.WEST);
+      accessibleContext = leftRenderer.getAccessibleContext();
+      return this;
+    }
+
+    private PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable ItemWithPresentation<?> value) {
+      if (value == null) return new PsiElementListCellRenderer.ItemMatchers(null, null);
+      return matchersSupplier.apply(list, value.getItem());
+    }
+  }
+
+  @Override
+  public @Nls @NotNull String getGroupName() {
+    return myDelegate.getGroupName();
+  }
+
+  @Override
+  public @Nls @NotNull String getFullGroupName() {
+    return myDelegate.getFullGroupName();
+  }
+
+  @Override
+  public int getSortWeight() {
+    return myDelegate.getSortWeight();
+  }
+
+  @Override
+  public @Nls @Nullable String getAdvertisement() {
+    return myDelegate.getAdvertisement();
+  }
+
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    if (myDelegate instanceof SearchEverywhereExtendedInfoProvider contributor) {
+      return contributor.createExtendedInfo();
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
+    return myDelegate.getActions(onChanged);
+  }
+
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return myDelegate.isEmptyPatternSupported();
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(myDelegate);
+  }
+
+  @Override
+  public @NotNull String getSearchProviderId() {
+    return myDelegate.getSearchProviderId();
+  }
+
+  @Override
+  public boolean isShownInSeparateTab() {
+    return myDelegate.isShownInSeparateTab();
+  }
+
+  @Override
+  public ScopeDescriptor getScope() {
+    if (myDelegate instanceof ScopeSupporting contributor) {
+      return contributor.getScope();
+    }
+    return new ScopeDescriptor(null);
+  }
+
+  @Override
+  public void setScope(ScopeDescriptor scope) {
+    if (myDelegate instanceof ScopeSupporting contributor) {
+      contributor.setScope(scope);
+    }
+  }
+
+  @Override
+  public List<ScopeDescriptor> getSupportedScopes() {
+    if (myDelegate instanceof ScopeSupporting contributor) {
+      return contributor.getSupportedScopes();
+    }
+    return Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull @Unmodifiable List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    return myDelegate.getSupportedCommands();
+  }
+
+  @Override
+  public @NotNull String filterControlSymbols(@NotNull String pattern) {
+    return myDelegate.filterControlSymbols(pattern);
+  }
+
+
+  @Override
+  public boolean showInFindResults() {
+    return myDelegate.showInFindResults();
+  }
+
+  @Override
+  public boolean processSelectedItem(@NotNull Object selected,
+                                     int modifiers,
+                                     @NotNull String searchText) {
+    return myDelegate.processSelectedItem(getItem(selected), modifiers, searchText);
+  }
+
+  @Override
+  public @NotNull @Unmodifiable List<@NotNull BiConsumer<Object, @NotNull DataSink>> getDataProviders() {
+    List<BiConsumer<Object, DataSink>> delegateDataProviders = myDelegate.getDataProviders();
+
+    return ContainerUtil.map(delegateDataProviders, dataProvider -> {
+      return (o, sink) -> dataProvider.accept(getItem(o), sink);
+    });
+  }
+
+  @Override
+  public boolean isMultiSelectionSupported() {
+    return myDelegate.isMultiSelectionSupported();
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return myDelegate.isDumbAware();
+  }
+
+  @Override
+  public int getElementPriority(@NotNull Object element,
+                                @NotNull String searchPattern) {
+    return myDelegate.getElementPriority(getItem(element), searchPattern);
+  }
+
+  public static @Nullable PsiElement toPsi(Object o) {
+    if (o instanceof PsiItemWithSimilarity<?> itemWithSimilarity) return toPsi(itemWithSimilarity.getValue());
+    if (o instanceof PsiElement) return (PsiElement)o;
+    if (o instanceof ItemWithPresentation<?> wp) return toPsi(wp.getItem());
+    if (o instanceof PsiElementNavigationItem en) return en.getTargetElement();
+    return null;
+  }
+
+  public WeightedSearchEverywhereContributor<Object> getDelegate() {
+    return myDelegate;
+  }
+}

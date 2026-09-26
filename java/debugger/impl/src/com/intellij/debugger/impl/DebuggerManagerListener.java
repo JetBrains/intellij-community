@@ -1,32 +1,80 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
+
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-public interface DebuggerManagerListener extends EventListener{
-  default void sessionCreated(DebuggerSession session) {
+/**
+ * Receives lifecycle events for Java debugger sessions.
+ * <p>
+ * A session is one logical debugging operation. One session can attach to more than one target VM.
+ * <p>
+ * A usual session produces these events:
+ * <pre>{@code
+ * sessionCreated
+ * sessionAttached
+ * sessionDetached
+ * sessionRemoved
+ * }</pre>
+ * <p>
+ * A session with one reattach produces these events:
+ * <pre>{@code
+ * sessionCreated
+ * sessionAttached
+ * sessionDetached
+ * sessionAttached
+ * sessionDetached
+ * sessionRemoved
+ * }</pre>
+ * <p>
+ * {@link #sessionCreated(DebuggerSession)} and {@link #sessionRemoved(DebuggerSession)} occur once for a session.
+ * The attach and detach events can occur multiple times.
+ * A failed attach can omit the attach and detach events.
+ * <p>
+ * The manager might remove a session without a preceding detach event.
+ * Use {@link #sessionRemoved(DebuggerSession)} for final cleanup.
+ */
+public interface DebuggerManagerListener extends EventListener {
+
+  @Topic.ProjectLevel
+  Topic<DebuggerManagerListener> TOPIC =
+    new Topic<>("DebuggerManagerListener", DebuggerManagerListener.class, Topic.BroadcastDirection.NONE);
+
+  /**
+   * The manager calls this method after it creates and registers a session.
+   * <p>
+   * This event occurs once. It does not mean that a target VM is attached.
+   */
+  default void sessionCreated(@NotNull DebuggerSession session) {
   }
 
-  default void sessionAttached(DebuggerSession session) {
+  /**
+   * The manager calls this method after the session attaches to a target VM.
+   * <p>
+   * This event occurs for the initial attach and for each successful reattach.
+   * Create state that belongs to one VM connection here.
+   */
+  default void sessionAttached(@NotNull DebuggerSession session) {
   }
 
-  default void sessionDetached(DebuggerSession session) {
+  /**
+   * The manager calls this method after the session detaches from a target VM.
+   * <p>
+   * The session can attach again after this event.
+   * Release state for the current VM connection here.
+   * Keep session state until {@link #sessionRemoved(DebuggerSession)}.
+   */
+  default void sessionDetached(@NotNull DebuggerSession session) {
   }
 
-  default void sessionRemoved(DebuggerSession session) {
+  /**
+   * The manager calls this method after it removes a disposed session.
+   * <p>
+   * This event occurs once and ends the session lifecycle.
+   * Release all remaining session and VM connection state here.
+   */
+  default void sessionRemoved(@NotNull DebuggerSession session) {
   }
 }

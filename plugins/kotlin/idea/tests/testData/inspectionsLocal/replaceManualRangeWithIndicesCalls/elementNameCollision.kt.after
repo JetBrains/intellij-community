@@ -1,0 +1,9 @@
+// WITH_STDLIB
+// FIX: Replace with loop over elements
+fun test() {
+    val element = mutableListOf<String>("hello", "world")
+    for (element1 in element) {
+        element1.length
+        element.size
+    }
+}

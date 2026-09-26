@@ -1,0 +1,15 @@
+// WITH_STDLIB
+
+class MyClass {
+    fun foo() = Unit
+    fun bar() = Unit
+    fun baz() = Unit
+}
+
+fun test(`when`: MyClass) {
+    `when`.run {
+        foo()
+        bar()
+        baz()
+    }
+}

@@ -1,4 +1,4 @@
-// "Replace Arrays.asList().stream() with Arrays.stream()" "true"
+// "Replace Arrays.asList().stream() with Arrays.stream()" "true-preview"
 
 import static java.util.Arrays.asList;
 

@@ -6,22 +6,20 @@ import com.intellij.psi.PsiElement;
 
 import java.util.List;
 
-/**
-* @author oleg
-*/
-public class TreePsiFragment extends PsiFragment {
+class TreePsiFragment extends PsiFragment {
   private final NodeSpecificHasher myHasher;
 
-  public TreePsiFragment(final NodeSpecificHasher hasher, final PsiElement root, final int cost) {
+  TreePsiFragment(final NodeSpecificHasher hasher, final PsiElement root, final int cost) {
     super(root, cost);
     myHasher = hasher;
   }
 
-  public TreePsiFragment(final NodeSpecificHasher hasher, final List<? extends PsiElement> element, final int from, final int to) {
+  TreePsiFragment(final NodeSpecificHasher hasher, final List<? extends PsiElement> element, final int from, final int to) {
     super(element, from, to);
     myHasher = hasher;
   }
 
+  @Override
   public boolean isEqual(PsiElement[] elements, int discardCost) {
     if (elements.length != myElementAnchors.length) {
       return false;

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchNodeComponentFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
@@ -24,15 +9,26 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,18 +37,15 @@ import java.util.Set;
  * {@link ArrangementUiComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
- * @since 8/8/12 10:51 AM
  */
-public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
+public final class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final List<ArrangementUiComponent>  myComponents      = ContainerUtilRt.newArrayList();
-  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = ContainerUtilRt.newHashSet();
+  private final @NotNull List<ArrangementUiComponent>  myComponents      = new ArrayList<>();
+  private final @NotNull Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
 
-  @NotNull private final ArrangementCompositeMatchCondition mySetting;
-  @Nullable private      Rectangle                          myScreenBounds;
-  @Nullable private      ArrangementUiComponent             myComponentUnderMouse;
+  private final @NotNull ArrangementCompositeMatchCondition mySetting;
+  private @Nullable Rectangle                          myScreenBounds;
+  private @Nullable ArrangementUiComponent             myComponentUnderMouse;
 
   public ArrangementAndMatchConditionComponent(@NotNull StdArrangementMatchRule rule,
                                                @NotNull ArrangementCompositeMatchCondition setting,
@@ -63,7 +56,8 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     mySetting = setting;
     setOpaque(false);
     setLayout(new GridBagLayout());
-    final Map<ArrangementSettingsToken, ArrangementMatchCondition> operands = ContainerUtilRt.newHashMap();
+    final Map<ArrangementSettingsToken, ArrangementMatchCondition> operands =
+      new HashMap<>();
     ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
@@ -92,9 +86,8 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     }
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     return mySetting;
   }
 
@@ -103,15 +96,13 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     // Do nothing
   }
 
-  @NotNull
   @Override
-  public JComponent getUiComponent() {
+  public @NotNull JComponent getUiComponent() {
     return this;
   }
 
-  @Nullable
   @Override
-  public Rectangle getScreenBounds() {
+  public @Nullable Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -211,9 +202,8 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     return null;
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseExited() {
+  public @Nullable Rectangle onMouseExited() {
     if (myComponentUnderMouse != null) {
       Rectangle result = myComponentUnderMouse.onMouseExited();
       myComponentUnderMouse = null;
@@ -222,15 +212,13 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     return null;
   }
 
-  @Nullable
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @Nullable ArrangementSettingsToken getToken() {
     return myComponentUnderMouse == null ? null : myComponentUnderMouse.getToken();
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getAvailableTokens() {
+  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
     return myAvailableTokens;
   }
 
@@ -260,7 +248,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   public void setListener(@NotNull Listener listener) {
     for (ArrangementUiComponent component : myComponents) {
       component.setListener(listener);
-    } 
+    }
   }
 
   @Override

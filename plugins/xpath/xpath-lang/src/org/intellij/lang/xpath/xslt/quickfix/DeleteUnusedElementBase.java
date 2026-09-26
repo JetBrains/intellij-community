@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DeleteUnusedElementBase<T extends XsltVariable> extends LocalQuickFixOnPsiElement {
@@ -32,18 +33,18 @@ public abstract class DeleteUnusedElementBase<T extends XsltVariable> extends Lo
         myName = name;
     }
 
-    @NotNull
-    public String getFamilyName() {
-        return "Delete unused element";
-    }
-
-    @NotNull
-    public String getText() {
-        return "Delete unused " + getType() + " '" + myName + "'";
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.delete.unused.element");
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    public @NotNull String getText() {
+        return XPathBundle.message("intention.name.delete.unused", getType(), myName);
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
         try {
             //noinspection unchecked
             deleteElement((T)startElement);

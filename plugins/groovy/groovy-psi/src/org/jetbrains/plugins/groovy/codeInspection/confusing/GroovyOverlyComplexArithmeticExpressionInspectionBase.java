@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -39,24 +26,17 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
    */
   public int m_limit = TERM_LIMIT;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Overly complex arithmetic expression";
-  }
-
   private int getLimit() {
     return m_limit;
   }
 
   @Override
   protected String buildErrorString(Object... args) {
-    return "Overly complex arithmetic expression #loc";
+    return GroovyBundle.message("inspection.message.overly.complex.arithmetic.expression");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -113,17 +93,14 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
       if (!isArithmetic(expression)) {
         return 1;
       }
-      if (expression instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
+      if (expression instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
         final GrExpression rhs = binaryExpression.getRightOperand();
         return countTerms(lhs) + countTerms(rhs);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression unaryExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression unaryExpression) {
         final GrExpression operand = unaryExpression.getOperand();
         return countTerms(operand);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return countTerms(contents);
       }
@@ -139,17 +116,14 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
     }
 
     private boolean isArithmetic(GrExpression expression) {
-      if (expression instanceof GrBinaryExpression) {
+      if (expression instanceof GrBinaryExpression binaryExpression) {
 
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
         final IElementType sign = binaryExpression.getOperationTokenType();
         return arithmeticTokens.contains(sign);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression unaryExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression unaryExpression) {
         final IElementType sign = unaryExpression.getOperationTokenType();
         return arithmeticTokens.contains(sign);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return isArithmetic(contents);
       }
@@ -160,9 +134,8 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
       if (isString(expression)) {
         return true;
       }
-      if (expression instanceof GrBinaryExpression) {
+      if (expression instanceof GrBinaryExpression binaryExpression) {
 
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
         final GrExpression lhs = binaryExpression.getLeftOperand();
 
         if (containsStringConcatenation(lhs)) {
@@ -170,19 +143,17 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
         }
         final GrExpression rhs = binaryExpression.getRightOperand();
         return containsStringConcatenation(rhs);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression unaryExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression unaryExpression) {
         final GrExpression operand = unaryExpression.getOperand();
         return containsStringConcatenation(operand);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return containsStringConcatenation(contents);
       }
       return false;
     }
 
-    private boolean isString(GrExpression expression) {
+    private static boolean isString(GrExpression expression) {
       if (expression == null) {
         return false;
       }

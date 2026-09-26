@@ -1,0 +1,7 @@
+// "Suppress 'DIVISION_BY_ZERO' for class C" "true"
+
+class C {
+    fun foo() = 2 / <caret>0
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

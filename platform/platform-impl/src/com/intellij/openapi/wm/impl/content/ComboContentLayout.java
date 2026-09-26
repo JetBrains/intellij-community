@@ -1,143 +1,130 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.ColorUtil;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-class ComboContentLayout extends ContentLayout {
-
-  ContentComboLabel myComboLabel;
+final class ComboContentLayout extends ContentLayout {
+  ContentComboLabel comboLabel;
 
   ComboContentLayout(ToolWindowContentUi ui) {
     super(ui);
   }
 
   @Override
-  public void init() {
+  public void init(@NotNull ContentManager contentManager) {
     reset();
 
-    myIdLabel = new BaseLabel(myUi, false);
-    myComboLabel = new ContentComboLabel(this);
+    idLabel = new BaseLabel(ui, ExperimentalUI.isNewUI());
+    MouseDragHelper.setComponentDraggable(idLabel, true);
+    comboLabel = new ContentComboLabel(this);
   }
 
   @Override
   public void reset() {
-    myIdLabel = null;
-    myComboLabel = null;
+    idLabel = null;
+    comboLabel = null;
   }
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getBounds();
-    Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
-
+    Rectangle bounds = ui.getTabComponent().getBounds();
+    Dimension idSize = isIdVisible() ? idLabel.getPreferredSize() : JBUI.emptySize();
     int eachX = 0;
     int eachY = 0;
 
-    myIdLabel.setBounds(eachX, eachY, idSize.width, bounds.height);
+    idLabel.setBounds(eachX, eachY, idSize.width, bounds.height);
     eachX += idSize.width;
 
-    Dimension comboSize = myComboLabel.getPreferredSize();
-    int spaceLeft = bounds.width - eachX - (isToDrawCombo() && isIdVisible() ? 3 : 0);
+    Dimension comboSize = comboLabel.getPreferredSize();
+    int nonLabelWidth = getTabToolbarPreferredWidth();
+    int spaceLeft = bounds.width - eachX - nonLabelWidth - (isToDrawCombo() && isIdVisible() ? 3 : 0);
 
     int width = comboSize.width;
     if (width > spaceLeft) {
       width = spaceLeft;
     }
 
-    myComboLabel.setBounds(eachX, eachY, width, bounds.height);
+    comboLabel.setBounds(eachX, eachY, width, bounds.height);
+    eachX += width;
+
+    // Tab toolbar is positioned at the end.
+    ActionToolbar tabToolbar = ui.getTabToolbar();
+    if (tabToolbar != null) {
+      JComponent component = tabToolbar.getComponent();
+      Dimension size = component.getPreferredSize();
+      component.setBounds(eachX, eachY + (bounds.height - size.height) / 2, size.width, size.height);
+      eachX += component.getWidth();
+    }
   }
 
   @Override
   public int getMinimumWidth() {
-    return myIdLabel != null ? myIdLabel.getPreferredSize().width : 0;
+    return (idLabel == null ? 0 : idLabel.getPreferredSize().width) + getTabToolbarPreferredWidth();
   }
-
-  @Override
-  public void paintComponent(Graphics g) {
-    if (!isToDrawCombo() || !myIdLabel.isVisible()) return;
-
-    Rectangle r = myIdLabel.getBounds();
-    g.setColor(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 20));
-    g.drawLine(r.width, 0, r.width, r.height);
-    g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
-    g.drawLine(r.width - 1, 0, r.width - 1, r.height);
-  }
-
-  @Override
-  public void paintChildren(Graphics g) { }
 
   @Override
   public void update() {
-    updateIdLabel(myIdLabel);
-    myComboLabel.update();
+    updateIdLabel(idLabel);
+    comboLabel.update();
   }
 
   @Override
   public void rebuild() {
-    myUi.removeAll();
+    JPanel tabComponent = ui.getTabComponent();
+    tabComponent.removeAll();
 
-    myUi.add(myIdLabel);
-    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
+    tabComponent.add(idLabel);
+    ToolWindowContentUi.initMouseListeners(idLabel, ui, true);
 
-    myUi.add(myComboLabel);
-    ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
+    tabComponent.add(comboLabel);
+    ToolWindowContentUi.initMouseListeners(comboLabel, ui, false);
+
+    ui.connectTabToolbar();
   }
 
   boolean isToDrawCombo() {
-    return myUi.myManager.getContentCount() > 1;
-  }
-
-  @Override
-  public void contentAdded(ContentManagerEvent event) {
-  }
-
-  @Override
-  public void contentRemoved(ContentManagerEvent event) {
+    return ui.getContentManager().getContentCount() > 1;
   }
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    final int width = myComboLabel.getSize().width;
+    final int width = comboLabel.getSize().width;
     listPopup.setMinimumSize(new Dimension(width, 0));
-    listPopup.show(new RelativePoint(myComboLabel, new Point(-2, myComboLabel.getHeight())));
+    listPopup.show(new RelativePoint(comboLabel, new Point(0, comboLabel.getHeight())));
   }
 
   @Override
-  public RelativeRectangle getRectangleFor(Content content) {
-    return null;
+  public @NlsActions.ActionText String getCloseActionName() {
+    return IdeBundle.message("action.ComboContentLayout.close.view.text");
   }
 
   @Override
-  public Component getComponentFor(Content content) {
-    return null;
+  public @NlsActions.ActionText String getCloseAllButThisActionName() {
+    return IdeBundle.message("action.ComboContentLayout.close.other.views.text");
   }
 
   @Override
-  public String getCloseActionName() {
-    return "Close View";
+  public @NlsActions.ActionText String getPreviousContentActionName() {
+    return IdeBundle.message("action.ComboContentLayout.select.previous.view.text");
   }
 
   @Override
-  public String getCloseAllButThisActionName() {
-    return "Close Other Views";
-  }
-
-  @Override
-  public String getPreviousContentActionName() {
-    return "Select Previous View";
-  }
-
-  @Override
-  public String getNextContentActionName() {
-    return "Select Next View";
+  public @NlsActions.ActionText String getNextContentActionName() {
+    return IdeBundle.message("action.ComboContentLayout.select.next.view.text");
   }
 }

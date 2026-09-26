@@ -1,0 +1,334 @@
+a:com.intellij.diagnostic.PerformanceWatcher
+- sf:getInstance():com.intellij.diagnostic.PerformanceWatcher
+- a:getUnresponsiveInterval():I
+f:com.intellij.diagnostic.PerformanceWatcher$Companion
+- f:getInstance():com.intellij.diagnostic.PerformanceWatcher
+com.intellij.ide.fileTemplates.FileTemplate
+- java.lang.Cloneable
+- sf:ATTRIBUTE_CALL_SUPER:java.lang.String
+- sf:ATTRIBUTE_CLASS_NAME:java.lang.String
+- sf:ATTRIBUTE_DEFAULT_RETURN_VALUE:java.lang.String
+- sf:ATTRIBUTE_DESCRIPTION:java.lang.String
+- sf:ATTRIBUTE_DIR_PATH:java.lang.String
+- sf:ATTRIBUTE_DISPLAY_NAME:java.lang.String
+- sf:ATTRIBUTE_EXCEPTION:java.lang.String
+- sf:ATTRIBUTE_EXCEPTION_TYPE:java.lang.String
+- sf:ATTRIBUTE_EXPRESSION:java.lang.String
+- sf:ATTRIBUTE_EXPRESSION_TYPE:java.lang.String
+- sf:ATTRIBUTE_FILE_NAME:java.lang.String
+- sf:ATTRIBUTE_FILE_PATH:java.lang.String
+- sf:ATTRIBUTE_METHOD_NAME:java.lang.String
+- sf:ATTRIBUTE_NAME:java.lang.String
+- sf:ATTRIBUTE_PACKAGE_NAME:java.lang.String
+- sf:ATTRIBUTE_PLAIN_CALL_SUPER:java.lang.String
+- sf:ATTRIBUTE_RETURN_TYPE:java.lang.String
+- sf:ATTRIBUTE_SIMPLE_CLASS_NAME:java.lang.String
+- sf:EMPTY_ARRAY:com.intellij.ide.fileTemplates.FileTemplate[]
+- sf:ourEncoding:java.lang.String
+- a:clone():com.intellij.ide.fileTemplates.FileTemplate
+- getChildren():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getDescription():java.lang.String
+- a:getExtension():java.lang.String
+- getFileName():java.lang.String
+- a:getName():java.lang.String
+- a:getText():java.lang.String
+- a:getText(java.util.Map):java.lang.String
+- a:getText(java.util.Properties):java.lang.String
+- a:getUnsetAttributes(java.util.Properties,com.intellij.openapi.project.Project):java.lang.String[]
+- a:isDefault():Z
+- a:isLiveTemplateEnabled():Z
+- a:isReformatCode():Z
+- a:isTemplateOfType(com.intellij.openapi.fileTypes.FileType):Z
+- setChildren(com.intellij.ide.fileTemplates.FileTemplate[]):V
+- a:setExtension(java.lang.String):V
+- setFileName(java.lang.String):V
+- a:setLiveTemplateEnabled(Z):V
+- a:setName(java.lang.String):V
+- a:setReformatCode(Z):V
+- a:setText(java.lang.String):V
+a:com.intellij.ide.fileTemplates.FileTemplateManager
+- psf:PROJECT_CONTEXT_VARIABLE:java.lang.String
+- <init>():V
+- a:addRecentName(java.lang.String):V
+- a:findInternalTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- a:getAllCodeTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getAllJ2eeTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getAllPatterns():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getAllTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getCodeTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- getDefaultContextMap():java.util.Map
+- s:getDefaultInstance():com.intellij.ide.fileTemplates.FileTemplateManager
+- a:getDefaultProperties():java.util.Properties
+- a:getDefaultTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- s:getInstance():com.intellij.ide.fileTemplates.FileTemplateManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.fileTemplates.FileTemplateManager
+- a:getInternalTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- a:getInternalTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
+- a:getJ2eeTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- a:getPattern(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- a:getTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
+- a:getTemplates(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate[]
+- a:internalTemplateToSubject(java.lang.String):java.lang.String
+- a:removeTemplate(com.intellij.ide.fileTemplates.FileTemplate):V
+- a:saveAllTemplates():V
+f:com.intellij.ide.fileTemplates.FileTemplateParseException
+- java.lang.Exception
+a:com.intellij.ide.fileTemplates.FileTemplatesScheme
+- com.intellij.openapi.options.Scheme
+- <init>(java.lang.String):V
+- getName():java.lang.String
+- a:getProject():com.intellij.openapi.project.Project
+c:com.intellij.ide.impl.DataManagerImpl
+- com.intellij.ide.DataManager
+- <init>():V
+- getDataContextFromFocusAsync():org.jetbrains.concurrency.Promise
+f:com.intellij.ide.impl.OpenProjectTask
+- sf:Companion:com.intellij.ide.impl.OpenProjectTask$Companion
+- f:asNewProject():com.intellij.ide.impl.OpenProjectTask
+- sf:build():com.intellij.ide.impl.OpenProjectTask
+- f:copy(Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,java.lang.Boolean,Z,java.lang.String,java.lang.String,Z,Z,java.util.List,java.util.List,java.util.List,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z):com.intellij.ide.impl.OpenProjectTask
+- bs:copy$default(com.intellij.ide.impl.OpenProjectTask,Z,Z,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.projectImport.ProjectOpenedCallback,I,I,Z,java.lang.Boolean,Z,java.lang.String,java.lang.String,Z,Z,java.util.List,java.util.List,java.util.List,Z,kotlin.jvm.functions.Function1,java.lang.Object,java.nio.file.Path,Z,I,java.lang.Object):com.intellij.ide.impl.OpenProjectTask
+- f:getCallback():com.intellij.projectImport.ProjectOpenedCallback
+- f:getColumn():I
+- f:getForceOpenInNewFrame():Z
+- f:getForceReuseFrame():Z
+- f:getLine():I
+- f:getPreloadServices():Z
+- f:getPreventIprLookup():Z
+- f:getProcessorChooser():kotlin.jvm.functions.Function1
+- f:getProject():com.intellij.openapi.project.Project
+- f:getProjectName():java.lang.String
+- f:getProjectToClose():com.intellij.openapi.project.Project
+- f:getProjectWorkspaceId():java.lang.String
+- f:getRunConfigurators():java.lang.Boolean
+- f:getRunConversionBeforeOpen():Z
+- f:getShowWelcomeScreen():Z
+- f:getUseDefaultProjectAsTemplate():Z
+- f:isNewProject():Z
+- f:isProjectCreatedWithWizard():Z
+- f:withForceOpenInNewFrame(Z):com.intellij.ide.impl.OpenProjectTask
+- f:withProject(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
+- f:withProjectName(java.lang.String):com.intellij.ide.impl.OpenProjectTask
+- f:withProjectRootDir(java.nio.file.Path):com.intellij.ide.impl.OpenProjectTask
+- f:withProjectToClose(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
+f:com.intellij.ide.impl.OpenProjectTask$Companion
+- f:build():com.intellij.ide.impl.OpenProjectTask
+f:com.intellij.ide.impl.OpenProjectTaskBuilder
+- <init>():V
+- f:build():com.intellij.ide.impl.OpenProjectTask
+- f:build(kotlin.jvm.functions.Function1):com.intellij.ide.impl.OpenProjectTask
+- f:getCallback():com.intellij.projectImport.ProjectOpenedCallback
+- f:getColumn():I
+- f:getForceOpenInNewFrame():Z
+- f:getForceReuseFrame():Z
+- f:getImplOptions():java.lang.Object
+- f:getLine():I
+- f:getPreloadServices():Z
+- f:getPreparedToOpen():kotlin.jvm.functions.Function2
+- f:getPreventIprLookup():Z
+- f:getProject():com.intellij.openapi.project.Project
+- f:getProjectFrameTypeId():java.lang.String
+- f:getProjectName():java.lang.String
+- f:getProjectRootDir():java.nio.file.Path
+- f:getProjectToClose():com.intellij.openapi.project.Project
+- f:getProjectWorkspaceId():java.lang.String
+- f:getRunConfigurators():java.lang.Boolean
+- f:getRunConversionBeforeOpen():Z
+- f:getShowWelcomeScreen():Z
+- f:getUseDefaultProjectAsTemplate():java.lang.Boolean
+- f:isNewProject():Z
+- f:isProjectCreatedWithWizard():Z
+- f:isRefreshVfsNeeded():Z
+- f:setCallback(com.intellij.projectImport.ProjectOpenedCallback):V
+- f:setColumn(I):V
+- f:setForceOpenInNewFrame(Z):V
+- f:setForceReuseFrame(Z):V
+- f:setImplOptions(java.lang.Object):V
+- f:setLine(I):V
+- f:setNewProject(Z):V
+- f:setPreloadServices(Z):V
+- f:setPreparedToOpen(kotlin.jvm.functions.Function2):V
+- f:setPreventIprLookup(Z):V
+- f:setProject(com.intellij.openapi.project.Project):V
+- f:setProjectCreatedWithWizard(Z):V
+- f:setProjectFrameTypeId(java.lang.String):V
+- f:setProjectName(java.lang.String):V
+- f:setProjectRootDir(java.nio.file.Path):V
+- f:setProjectToClose(com.intellij.openapi.project.Project):V
+- f:setProjectWorkspaceId(java.lang.String):V
+- f:setRefreshVfsNeeded(Z):V
+- f:setRunConfigurators(java.lang.Boolean):V
+- f:setRunConversionBeforeOpen(Z):V
+- f:setShowWelcomeScreen(Z):V
+- f:setUseDefaultProjectAsTemplate(java.lang.Boolean):V
+- f:withBeforeOpenCallback(java.util.function.Predicate):V
+f:com.intellij.ide.impl.OpenProjectTaskKt
+- sf:OpenProjectTask(kotlin.jvm.functions.Function1):com.intellij.ide.impl.OpenProjectTask
+f:com.intellij.ide.impl.ProjectUtilCore
+- s:getOpenProjects():com.intellij.openapi.project.Project[]
+- s:isValidProjectPath(java.nio.file.Path):Z
+com.intellij.ide.impl.dataRules.GetDataRule
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+f:com.intellij.ide.nls.NlsMessages
+- s:formatDateLong(java.util.Date):java.lang.String
+- s:formatDuration(J):java.lang.String
+- s:formatDurationApproximate(J):java.lang.String
+- s:formatDurationApproximateNarrow(J):java.lang.String
+- s:formatNarrowAndList(java.util.Collection):java.lang.String
+- s:formatOrList(java.util.Collection):java.lang.String
+- s:joiningAnd():java.util.stream.Collector
+c:com.intellij.ide.project.impl.BaseProjectDirectoriesImpl
+- p:baseDirectoryOf(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.openapi.vfs.VirtualFile
+com.intellij.ide.script.IdeScriptEngine
+- a:eval(java.lang.String):java.lang.Object
+- a:getBinding(java.lang.String):java.lang.Object
+- a:getFileExtensions():java.util.List
+- a:getLanguage():java.lang.String
+- a:getStdErr():java.io.Writer
+- a:getStdIn():java.io.Reader
+- a:getStdOut():java.io.Writer
+- a:setBinding(java.lang.String,java.lang.Object):V
+- a:setStdErr(java.io.Writer):V
+- a:setStdIn(java.io.Reader):V
+- a:setStdOut(java.io.Writer):V
+a:com.intellij.ide.script.IdeScriptEngineManager
+- a:getEngineInfos():java.util.List
+- s:getInstance():com.intellij.ide.script.IdeScriptEngineManager
+f:com.intellij.ide.script.IdeScriptException
+- java.lang.Exception
+f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
+- com.intellij.openapi.actionSystem.CustomizedDataContext
+- s:builder():com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
+- s:getProjectContext(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.DataContext
+f:com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
+- addNull(com.intellij.openapi.actionSystem.DataKey):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
+- build():com.intellij.openapi.actionSystem.DataContext
+- setParent(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
+c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+- com.intellij.openapi.components.PersistentStateComponent
+- getBlinkPeriod():I
+- getHorizontalScrollJump():I
+- getHorizontalScrollOffset():I
+- s:getInstance():com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+- getLineNumeration():com.intellij.openapi.editor.EditorSettings$LineNumerationType
+- getQuickDocOnMouseOverElementDelayMillis():I
+- getSoftWrapFileMasks():java.lang.String
+- getStripTrailingSpaces():java.lang.String
+- getTooltipsDelay():I
+- getVerticalScrollJump():I
+- getVerticalScrollOffset():I
+- isAllSoftWrapsShown():Z
+- isBlinkCaret():Z
+- isBlockCursor():Z
+- isBreadcrumbsShown():Z
+- isBreadcrumbsShownFor(java.lang.String):Z
+- isCamelWords():Z
+- isCaretRowShown():Z
+- isEnsureNewLineAtEOF():Z
+- isFoldingOutlineShown():Z
+- isIndentGuidesShown():Z
+- isInsertParenthesesAutomatically():Z
+- isLineNumbersShown():Z
+- isRefrainFromScrolling():Z
+- isRemoveTrailingBlankLines():Z
+- isRightMarginShown():Z
+- isShowInlineLocalDialog():Z
+- isShowIntentionBulb():Z
+- isShowIntentionPreview():Z
+- isShowQuickDocOnMouseOverElement():Z
+- isSmartHome():Z
+- isUseCustomSoftWrapIndent():Z
+- isUseEditorFontInInlays():Z
+- isUseSoftWraps():Z
+- isUseSoftWraps(com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces):Z
+- isVirtualSpace():Z
+- isWheelFontChangeEnabled():Z
+- isWhitespacesShown():Z
+- setAdditionalPageAtBottom(Z):V
+- setBreadcrumbsShown(Z):Z
+- setFocusMode(Z):V
+- setIndentGuidesShown(Z):V
+- setRefrainFromScrolling(Z):V
+- setShowInlineLocalDialog(Z):V
+- setShowIntentionBulb(Z):V
+- setShowIntentionPreview(Z):V
+- setStickyLinesShown(Z):Z
+- setWhitespacesShown(Z):V
+f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
+f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
+e:com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
+- java.lang.Enum
+com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
+- com.intellij.openapi.project.PossiblyDumbAware
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getEditorTabColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
+- getProjectViewColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
+com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+- com.intellij.openapi.project.DumbAware
+- sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
+- a:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getEditorTabTooltipHtml(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.text.HtmlChunk
+- getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- isNotWritable(com.intellij.openapi.vfs.VirtualFile):Z
+- isWritable(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
+- com.intellij.openapi.vfs.WritingAccessProvider
+- s:allowWriting(java.lang.Iterable):V
+- s:disableChecksDuring(java.lang.Runnable):V
+c:com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
+- com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+- <init>():V
+a:com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+- com.intellij.openapi.fileTypes.FileTypeManager
+- a:fireFileTypesChanged():V
+- a:getExtension(java.lang.String):java.lang.String
+- s:getInstanceEx():com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+f:com.intellij.openapi.progress.util.BackgroundTaskUtil
+- s:syncPublisher(com.intellij.util.messages.Topic):java.lang.Object
+f:com.intellij.openapi.progress.util.BackgroundTaskUtil$BackgroundTask
+- awaitCompletion():V
+- cancel():V
+- getFuture():java.util.concurrent.CompletableFuture
+com.intellij.openapi.progress.util.PingProgress
+- a:interact():V
+- s:interactWithEdtProgress():V
+f:com.intellij.openapi.progress.util.ProgressIndicatorUtils
+- s:awaitWithCheckCanceled(J):V
+- s:awaitWithCheckCanceled(com.intellij.openapi.util.ThrowableComputable):V
+- s:awaitWithCheckCanceled(java.util.concurrent.Future):java.lang.Object
+- s:awaitWithCheckCanceled(java.util.concurrent.locks.Condition):V
+- s:checkCancelledEvenWithPCEDisabled(com.intellij.openapi.progress.ProgressIndicator):V
+- s:runInReadActionWithWriteActionPriority(java.lang.Runnable):Z
+- s:scheduleWithWriteActionPriority(com.intellij.openapi.progress.util.ReadTask):V
+- s:yieldToPendingWriteActions():V
+a:com.intellij.openapi.progress.util.ReadTask
+- <init>():V
+- performInReadAction(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.progress.util.ReadTask$Continuation
+f:com.intellij.openapi.progress.util.ReadTask$Continuation
+- <init>(java.lang.Runnable):V
+- getAction():java.lang.Runnable
+com.intellij.openapi.project.ex.ProjectEx
+- com.intellij.openapi.project.Project
+- sf:NAME_FILE:java.lang.String
+- getCreationTrace():java.lang.String
+- isLight():Z
+- a:setProjectName(java.lang.String):V
+a:com.intellij.openapi.project.ex.ProjectManagerEx
+- com.intellij.openapi.project.ProjectManager
+- a:closeAndDisposeAllProjects(Z):Z
+- sf:getInstanceEx():com.intellij.openapi.project.ex.ProjectManagerEx
+- sf:getInstanceExIfCreated():com.intellij.openapi.project.ex.ProjectManagerEx
+- a:isDefaultProjectInitialized():Z
+- a:isProjectOpened(com.intellij.openapi.project.Project):Z
+f:com.intellij.openapi.project.ex.ProjectManagerEx$Companion
+- f:getInstanceEx():com.intellij.openapi.project.ex.ProjectManagerEx
+- f:getInstanceExIfCreated():com.intellij.openapi.project.ex.ProjectManagerEx
+com.intellij.openapi.project.ex.ProjectNameProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker
+f:com.intellij.util.UriUtil
+- s:trimLeadingSlashes(java.lang.String):java.lang.String
+- s:trimTrailingSlashes(java.lang.String):java.lang.String

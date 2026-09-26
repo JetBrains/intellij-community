@@ -1,87 +1,110 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
+import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 
 public final class LanguageUtil {
   private LanguageUtil() {
   }
 
   public static final Comparator<Language> LANGUAGE_COMPARATOR =
-    (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
+    (o1, o2) -> NaturalComparator.INSTANCE.compare(o1.getDisplayName(), o2.getDisplayName());
 
-
-  @Nullable
-  public static Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
-    Language language = getFileLanguage(file);
-    if (language == null) return null;
-    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+  public static @Nullable Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
+    return getLanguageForPsi(project, file, null);
   }
 
-  @Nullable
-  public static Language getFileLanguage(@Nullable VirtualFile file) {
-    if (file == null) return null;
-    Language l = file instanceof LightVirtualFile? ((LightVirtualFile)file).getLanguage() : null;
-    return l != null ? l : getFileTypeLanguage(file.getFileType());
+  public static @Nullable Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file, @Nullable FileType fileType) {
+    if (file == null) {
+      return null;
+    }
+
+    // a copy-paste of getFileLanguage(file)
+    Language explicit = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getLanguage() : null;
+    Language fileLanguage = explicit != null ? explicit : getFileTypeLanguage(fileType != null ? fileType : file.getFileType());
+
+    if (fileLanguage == null) return null;
+    // run generic file-level substitutors, e.g. for scratches
+    for (LanguageSubstitutor substitutor : LanguageSubstitutors.getInstance().forKey(Language.ANY)) {
+      Language language = substitutor.getLanguage(file, project);
+      if (language != null && language != Language.ANY) {
+        fileLanguage = language;
+        break;
+      }
+    }
+    return LanguageSubstitutors.getInstance().substituteLanguage(fileLanguage, file, project);
   }
 
-  @Nullable
-  public static Language getFileTypeLanguage(@Nullable FileType fileType) {
+  public static @Nullable Language getFileLanguage(@Nullable VirtualFile file) {
+    if (file == null) {
+      return null;
+    }
+
+    Language language = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getLanguage() : null;
+    return language == null ? getFileTypeLanguage(file.getFileType()) : language;
+  }
+
+  public static @Nullable Language getFileTypeLanguage(@NotNull FileType fileType) {
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 
-  @Nullable
-  public static FileType getLanguageFileType(@Nullable Language language) {
+  public static @Nullable FileType getLanguageFileType(@Nullable Language language) {
     return language == null ? null : language.getAssociatedFileType();
   }
 
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer) {
+  public static @NotNull ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(@NotNull ASTNode left,
+                                                                                          @NotNull ASTNode right,
+                                                                                          @NotNull Lexer lexer) {
     String textStr = left.getText() + right.getText();
 
     lexer.start(textStr, 0, textStr.length());
-    if (lexer.getTokenType() != left.getElementType()) return ParserDefinition.SpaceRequirements.MUST;
-    if (lexer.getTokenEnd() != left.getTextLength()) return ParserDefinition.SpaceRequirements.MUST;
+    if (lexer.getTokenType() != left.getElementType() || lexer.getTokenEnd() != left.getTextLength()) {
+      return ParserDefinition.SpaceRequirements.MUST;
+    }
 
     lexer.advance();
-    if (lexer.getTokenEnd() != textStr.length()) return ParserDefinition.SpaceRequirements.MUST;
-    if (lexer.getTokenType() != right.getElementType()) return ParserDefinition.SpaceRequirements.MUST;
+    if (lexer.getTokenEnd() != textStr.length() || lexer.getTokenType() != right.getElementType()) {
+      return ParserDefinition.SpaceRequirements.MUST;
+    }
 
     return ParserDefinition.SpaceRequirements.MAY;
   }
 
-  @NotNull
-  public static Language[] getLanguageDialects(@NotNull final Language base) {
-    final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), language -> language.getBaseLanguage() == base);
-    return list.toArray(new Language[0]);
-  }
+  public static boolean isInTemplateLanguageFile(@NotNull PsiElement element) {
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) {
+      return false;
+    }
 
-  public static boolean isInTemplateLanguageFile(@Nullable final PsiElement element) {
-    if (element == null) return false;
-
-    final PsiFile psiFile = element.getContainingFile();
-    if(psiFile == null) return false;
-
-    final Language language = psiFile.getViewProvider().getBaseLanguage();
+    Language language = psiFile.getViewProvider().getBaseLanguage();
     return language instanceof TemplateLanguage;
   }
 
@@ -98,38 +121,46 @@ public final class LanguageUtil {
     if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
       return false;
     }
-    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
-      return false;
-    }
-    return true;
+    return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null;
+  }
+
+  public static @NotNull @Unmodifiable List<Language> getInjectableLanguages() {
+    return getLanguages(LanguageUtil::isInjectableLanguage);
   }
 
   public static boolean isFileLanguage(@NotNull Language language) {
-    if (language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
-    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) return false;
+    if (language instanceof DependentLanguage ||
+        language instanceof InjectableLanguage ||
+        LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
+      return false;
+    }
+
     LanguageFileType type = language.getAssociatedFileType();
-    if (type == null || StringUtil.isEmpty(type.getDefaultExtension())) return false;
-    return StringUtil.isNotEmpty(type.getDefaultExtension());
+    return type != null && !Strings.isEmpty(type.getDefaultExtension());
   }
 
-  @NotNull
-  public static List<Language> getFileLanguages() {
-    List<Language> result = ContainerUtil.newArrayList();
+  public static @NotNull @Unmodifiable List<Language> getFileLanguages() {
+    return getLanguages(LanguageUtil::isFileLanguage);
+  }
+
+  public static @NotNull @Unmodifiable List<Language> getLanguages(@NotNull Predicate<? super Language> filter) {
+    LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
+    List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {
-      if (!isFileLanguage(language)) continue;
-      result.add(language);
+      if (filter.test(language)) {
+        result.add(language);
+      }
     }
     result.sort(LANGUAGE_COMPARATOR);
     return result;
   }
 
-  @NotNull
-  public static Language getRootLanguage(@NotNull PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    final FileViewProvider provider = containingFile.getViewProvider();
-    final Set<Language> languages = provider.getLanguages();
+  public static @NotNull Language getRootLanguage(@NotNull PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    FileViewProvider provider = containingFile.getViewProvider();
+    Set<Language> languages = provider.getLanguages();
     if (languages.size() > 1) {
-      final Language language = containingFile.getLanguage();
+      Language language = containingFile.getLanguage();
       if (languages.contains(language)) {
         return language;
       }
@@ -137,19 +168,55 @@ public final class LanguageUtil {
     return provider.getBaseLanguage();
   }
 
-  private static final Key<Collection<MetaLanguage>> MATCHING_LANGUAGES = Key.create("language.matching");
+  private static final Key<List<MetaLanguage>> MATCHING_META_LANGUAGES = Key.create("MATCHING_META_LANGUAGES");
 
-  @NotNull
-  static Collection<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
-    if (!Extensions.getRootArea().hasExtensionPoint(MetaLanguage.EP_NAME)) {
-      return Collections.emptyList(); // don't cache
-    }
-
-    Collection<MetaLanguage> cached = language.getUserData(MATCHING_LANGUAGES);
+  static @NotNull @Unmodifiable List<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
+    List<MetaLanguage> cached = language.getUserData(MATCHING_META_LANGUAGES);
     if (cached != null) {
       return cached;
     }
-    Set<MetaLanguage> result = MetaLanguage.getAllMatchingMetaLanguages(language).collect(Collectors.toSet());
-    return language.putUserDataIfAbsent(MATCHING_LANGUAGES, result);
+
+    if (!MetaLanguage.isEPRegistered()) {
+      // don't cache
+      return persistentListOf();
+    }
+
+    List<MetaLanguage> toCache;
+    if (language instanceof MetaLanguage) {
+      toCache = persistentListOf();
+    }
+    else {
+      Set<MetaLanguage> result = new HashSet<>();
+      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
+        if (metaLanguage.matchesLanguage(language)) {
+          result.add(metaLanguage);
+        }
+      }
+      toCache = result.isEmpty() ? persistentListOf() : toPersistentList(result);
+    }
+    language.putUserData(MATCHING_META_LANGUAGES, toCache);
+    return toCache;
+  }
+
+  static void clearMatchingMetaLanguagesCache(@NotNull Language language) {
+    language.putUserData(MATCHING_META_LANGUAGES, null);
+  }
+
+  public static @NotNull JBIterable<Language> getBaseLanguages(@NotNull Language language) {
+    return JBIterable.generate(language, Language::getBaseLanguage);
+  }
+
+  public static @Nullable Language findRegisteredLanguage(@NotNull String langValueText) {
+    Language language = Language.findLanguageByID(langValueText);
+    if (language != null) {
+      return language;
+    }
+
+    for (Language value : Language.getRegisteredLanguages()) {
+      if (value.getID().equalsIgnoreCase(langValueText) || value.getDisplayName().equalsIgnoreCase(langValueText)) {
+        return value;
+      }
+    }
+    return null;
   }
 }

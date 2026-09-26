@@ -1,0 +1,1 @@
+Companion object 19 println(Iface.Obj)

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
@@ -24,7 +11,7 @@ import java.util.List;
 
 public abstract class Loader {
 
-  @NotNull protected final SvnRepositoryCache myCache;
+  protected final @NotNull SvnRepositoryCache myCache;
 
   protected Loader(@NotNull SvnRepositoryCache cache) {
     myCache = cache;
@@ -32,14 +19,13 @@ public abstract class Loader {
 
   public abstract void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander);
 
-  @NotNull
-  protected abstract NodeLoadState getNodeLoadState();
+  protected abstract @NotNull NodeLoadState getNodeLoadState();
 
-  protected void refreshNodeError(@NotNull RepositoryTreeNode node, @NotNull String text) {
+  protected void refreshNodeError(@NotNull RepositoryTreeNode node, @NotNull VcsException error) {
     RepositoryTreeNode existingNode = findExistingNode(node);
 
     if (existingNode != null) {
-      existingNode.setErrorNode(text);
+      existingNode.setErrorNode(error.getMessage());
     }
   }
 
@@ -53,8 +39,7 @@ public abstract class Loader {
     }
   }
 
-  @Nullable
-  private static RepositoryTreeNode findExistingNode(@NotNull RepositoryTreeNode node) {
+  private static @Nullable RepositoryTreeNode findExistingNode(@NotNull RepositoryTreeNode node) {
     RepositoryTreeNode result = null;
 
     if (!node.isDisposed()) {

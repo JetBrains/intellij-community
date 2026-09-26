@@ -1,0 +1,23 @@
+f:com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- s:majorUpdateHappened(Z):V
+f:com.intellij.openapi.updateSettings.impl.PluginUpdateFacadeKt
+- sf:getPendingUpdates():java.util.Collection
+- sf:installUpdates(java.util.Collection,javax.swing.JComponent,java.util.function.Consumer):V
+f:com.intellij.openapi.updateSettings.impl.UpdateChecker
+- sf:INSTANCE:com.intellij.openapi.updateSettings.impl.UpdateChecker
+- sf:NOTIFICATIONS:com.intellij.notification.NotificationGroup
+- sf:getDisabledToUpdate():java.util.Set
+- sf:getDisabledToUpdatePlugins():java.util.Set
+- f:getExcludedFromUpdateCheckPlugins():java.util.HashSet
+- sf:getNotificationGroup():com.intellij.notification.NotificationGroup
+- sf:getNotificationGroupForIdeUpdateResults():com.intellij.notification.NotificationGroup
+- sf:getNotificationGroupForPluginUpdateResults():com.intellij.notification.NotificationGroup
+- sf:getPluginUpdates():java.util.Collection
+- sf:loadProductData(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.Product
+- sf:saveDisabledToUpdatePlugins():V
+- sf:updateAndShowResult():com.intellij.openapi.util.ActionCallback
+- sf:updateAndShowResult(com.intellij.openapi.project.Project):V
+- sf:updateAndShowResult(com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.UpdateSettings):V
+- bs:updateAndShowResult$default(com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.UpdateSettings,I,java.lang.Object):V

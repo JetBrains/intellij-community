@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -23,17 +23,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements GrDocMethodParams {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocMethodParamsImpl");
+  private static final Logger LOG = Logger.getInstance(GrDocMethodParamsImpl.class);
 
   public GrDocMethodParamsImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocMethodParameterList";
   }
@@ -67,22 +65,20 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
   public GrDocMethodParameter[] getParameters() {
     List<GrDocMethodParameter> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (GrDocMethodParameter.class.isInstance(cur)) result.add((GrDocMethodParameter)cur);
+      if (cur instanceof GrDocMethodParameter) result.add((GrDocMethodParameter)cur);
     }
     return result.toArray(new GrDocMethodParameter[0]);
   }
 
   @Override
-  @NotNull
-  public PsiElement getLeftParen() {
+  public @NotNull PsiElement getLeftParen() {
     ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN);
     assert paren != null;
     return paren.getPsi();
   }
 
   @Override
-  @Nullable
-  public PsiElement getRightParen() {
+  public @Nullable PsiElement getRightParen() {
     ASTNode paren = getNode().findChildByType(GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN);
     return paren != null ? paren.getPsi() : null;
   }

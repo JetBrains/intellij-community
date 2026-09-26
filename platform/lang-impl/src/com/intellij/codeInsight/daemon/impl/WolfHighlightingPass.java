@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -27,20 +26,17 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
-    super(project, document, DaemonBundle.message("pass.wolf"), file, null, TextRange.EMPTY_RANGE, false, new DefaultHighlightInfoProcessor());
+  WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile psiFile) {
+    super(project, document, DaemonBundle.message("pass.wolf"), psiFile, null, TextRange.EMPTY_RANGE, false, HighlightInfoProcessor.getEmpty());
   }
 
   @Override
-  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+  protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     if (!Registry.is("wolf.the.problem.solver")) return;
-    final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
-    if (solver instanceof WolfTheProblemSolverImpl) {
-      ((WolfTheProblemSolverImpl)solver).startCheckingIfVincentSolvedProblemsYet(progress, this);
+    WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
+    if (solver instanceof WolfTheProblemSolverImpl impl) {
+      impl.startCheckingIfVincentSolvedProblemsYet(progress, this);
     }
   }
 

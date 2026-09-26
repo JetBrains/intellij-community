@@ -1,0 +1,45 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven
+
+import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
+import java.nio.file.Path
+
+class SamWithReceiverMavenProjectImportHandler(project: Project) : AbstractMavenImportHandler(project) {
+    override val compilerPluginId: String = SamWithReceiverPluginNames.PLUGIN_ID
+    override val pluginName: String = "samWithReceiver"
+    override val mavenPluginArtifactName: String = "kotlin-maven-sam-with-receiver"
+    override val pluginJarFileFromIdea: Path = KotlinArtifacts.samWithReceiverCompilerPluginPath
+
+    override fun getOptions(
+        mavenProject: MavenProject,
+        enabledCompilerPlugins: List<String>,
+        compilerPluginOptions: List<String>
+    ): List<PluginOption>? {
+        if ("sam-with-receiver" !in enabledCompilerPlugins) {
+            return null
+        }
+
+        val annotations = mutableListOf<String>()
+
+        for ((presetName, presetAnnotations) in SamWithReceiverPluginNames.SUPPORTED_PRESETS) {
+            if (presetName in enabledCompilerPlugins) {
+                annotations.addAll(presetAnnotations)
+            }
+        }
+
+        annotations.addAll(compilerPluginOptions.mapNotNull { text ->
+            if (!text.startsWith(ANNOTATION_PARAMETER_PREFIX)) return@mapNotNull null
+            text.substring(ANNOTATION_PARAMETER_PREFIX.length)
+        })
+
+        return annotations.map { PluginOption(SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME, it) }
+    }
+}
+
+private const val ANNOTATION_PARAMETER_PREFIX = "sam-with-receiver:${SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME}="

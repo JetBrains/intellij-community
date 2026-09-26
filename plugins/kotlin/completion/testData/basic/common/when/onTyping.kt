@@ -1,0 +1,17 @@
+
+class Foo
+
+object Bar
+
+fun test(a: Any) {
+    when (a) {
+        i<caret>
+    }
+}
+
+// EXIST: is String
+// EXIST: is Foo
+// EXIST: is Bar
+// ABSENT: Bar
+// ABSENT: Foo
+// EXIST: buildList

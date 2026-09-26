@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ExternalAnnotationsNonProjectFileWritingAccessExtension implements NonProjectFileWritingAccessExtension {
+public final class ExternalAnnotationsNonProjectFileWritingAccessExtension implements NonProjectFileWritingAccessExtension {
 
   private final ReadableExternalAnnotationsManager myManager;
 

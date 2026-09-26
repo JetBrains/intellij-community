@@ -1,39 +1,39 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action.task;
 
-import com.intellij.execution.RunManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.action.ExternalSystemNodeAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2014
  */
+@ApiStatus.Internal
 public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskData> {
+
+  private static final Logger LOG = Logger.getInstance(RunExternalSystemTaskAction.class);
 
   public RunExternalSystemTaskAction() {
     super(TaskData.class);
@@ -45,19 +45,65 @@ public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskDa
                          @NotNull TaskData taskData,
                          @NotNull AnActionEvent e) {
     final ExternalTaskExecutionInfo taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(taskData);
-    ExternalSystemUtil.runTask(taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), project, projectSystemId);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace());
 
-    final DataContext dataContext = e.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    RunnerAndConfigurationSettings configuration = context.findExisting();
-    RunManager runManager = context.getRunManager();
-    if (configuration == null) {
-      configuration = context.getConfiguration();
-      if (configuration == null) {
-        return;
+    ReadAction.nonBlocking(() -> findOrGet(context))
+      .inSmartMode(project).expireWith(project)
+      .finishOnUiThread(ModalityState.nonModal(), configuration -> {
+        if (configuration == null || !runTaskAsExistingConfiguration(taskExecutionInfo, configuration)) {
+          runTaskAsNewRunConfiguration(project,
+                                       projectSystemId,
+                                       taskExecutionInfo,
+                                       newConfiguration -> {
+                                         newConfiguration.setTemporary(true);
+                                         RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), newConfiguration.getType().getId(), context.getPlace());
+                                         context.getRunManager().addConfiguration(newConfiguration);
+                                         context.getRunManager().setSelectedConfiguration(newConfiguration);
+                                       });
+          return;
+        }
+        context.getRunManager().addConfiguration(configuration);
+        context.getRunManager().setSelectedConfiguration(configuration);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @RequiresReadLock
+  private static @Nullable RunnerAndConfigurationSettings findOrGet(@NotNull ConfigurationContext context) {
+    RunnerAndConfigurationSettings result = context.findExisting();
+    if (result == null) {
+      result = context.getConfiguration();
+      if (result != null) {
+        result.setTemporary(true);
+        RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), result.getType().getId(), context.getPlace());
       }
-      runManager.setTemporaryConfiguration(configuration);
     }
-    runManager.setSelectedConfiguration(configuration);
+    return result;
+  }
+
+  private static boolean runTaskAsExistingConfiguration(@NotNull ExternalTaskExecutionInfo taskExecutionInfo,
+                                                        @NotNull RunnerAndConfigurationSettings configuration) {
+    final String executorId = taskExecutionInfo.getExecutorId();
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+    if (executor == null) {
+      return false;
+    }
+    ExecutionUtil.runConfiguration(configuration, executor);
+    return true;
+  }
+
+  private static void runTaskAsNewRunConfiguration(@NotNull Project project,
+                                                   @NotNull ProjectSystemId projectSystemId,
+                                                   @NotNull ExternalTaskExecutionInfo taskExecutionInfo,
+                                                   @NotNull Consumer<RunnerAndConfigurationSettings> consumer) {
+    TaskExecutionSpec spec = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(projectSystemId)
+      .withExecutorId(taskExecutionInfo.getExecutorId())
+      .withSettings(taskExecutionInfo.getSettings())
+      .withRunConfigurationConsumer(consumer)
+      .withActivateToolWindowBeforeRun(true)
+      .build();
+    ExternalSystemUtil.runTask(spec);
   }
 }

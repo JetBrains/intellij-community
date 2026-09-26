@@ -1,88 +1,92 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.lang.ref.WeakReference;
+
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance(ComponentWithBrowseButton.class);
-
   private final Comp myComponent;
   private final FixedSizeButton myBrowseButton;
+  private final ExtendableTextComponent.Extension myInlineButtonExtension;
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac || StartupUiUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
-    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.isFeatureEnabled("inline.browse.button");
+    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent;
     if (inlineBrowseButton) {
-      ExtendableTextComponent.Extension action = new ExtendableTextComponent.Extension() {
-        @Override
-        public Icon getIcon(boolean hovered) {
-          return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
-        }
-
-        @Override
-        public String getTooltip() {
-          return UIBundle.message("component.with.browse.button.browse.button.tooltip.text");
-        }
-
-        @Override
-        public Runnable getActionOnClick() {
-          return () -> {
-            for (ActionListener listener : myBrowseButton.getActionListeners()) {
-              listener.actionPerformed(new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action"));
-            }
-          };
-        }
-      };
-      ((ExtendableTextComponent)myComponent).addExtension(action);
+      myInlineButtonExtension = ExtendableTextComponent.Extension.create(
+        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), true, this::notifyActionListeners);
+      ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
       new DumbAwareAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
-          action.getActionOnClick().run();
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          notifyActionListeners();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
+    } else {
+      myInlineButtonExtension = null;
     }
     add(myComponent, BorderLayout.CENTER);
 
     myBrowseButton = new FixedSizeButton(myComponent);
+    if (isBackgroundSet()) {
+      myBrowseButton.setBackground(getBackground());
+    }
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
@@ -90,19 +94,56 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       add(myBrowseButton, BorderLayout.EAST);
     }
 
-    myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
+    myBrowseButton.setToolTipText(getIconTooltip());
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
     }
     if (ScreenReader.isActive()) {
       myBrowseButton.setFocusable(true);
-      myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
+      myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
+    } else if (Registry.is("ide.browse.button.always.focusable", false)) {
+      myBrowseButton.setFocusable(true);
+    }
+    LazyDisposable.installOn(this);
+
+    Insets insets = myComponent.getInsets();
+    if (!inlineBrowseButton) {
+      insets.right = myBrowseButton.getInsets().right;
+    }
+    UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(insets);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
+  }
+
+  protected @NotNull Icon getDefaultIcon() {
+    return AllIcons.General.OpenDisk;
+  }
+
+  protected @NotNull Icon getHoveredIcon() {
+    return AllIcons.General.OpenDiskHover;
+  }
+
+  protected @NotNull @NlsContexts.Tooltip String getIconTooltip() {
+    return getTooltip();
+  }
+
+  public static @NotNull @NlsContexts.Tooltip String getTooltip() {
+    return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
+           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
+  }
+
+  private void notifyActionListeners() {
+    ActionEvent event = new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action");
+    for (ActionListener listener: myBrowseButton.getActionListeners()) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        listener.actionPerformed(event);
+      }
     }
   }
 
-  @NotNull
-  public final Comp getChildComponent() {
+  public final @NotNull Comp getChildComponent() {
     return myComponent;
   }
 
@@ -111,11 +152,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     Dimension size = GuiUtils.getSizeByChars(charCount, comp);
     comp.setPreferredSize(size);
     Dimension preferredSize = myBrowseButton.getPreferredSize();
-
-    boolean keepHeight = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderWin10LookAndFeel();
-    preferredSize.setSize(size.width + preferredSize.width + 2,
-                          keepHeight ? preferredSize.height : preferredSize.height + 2);
-
+    @SuppressWarnings("removal") boolean keepHeight = UIUtil.isUnderWin10LookAndFeel();
+    preferredSize.setSize(size.width + preferredSize.width + 2, keepHeight ? preferredSize.height : preferredSize.height + 2);
     setPreferredSize(preferredSize);
   }
 
@@ -131,9 +169,28 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setEnabled(isEnabled());
   }
 
-  public void setButtonIcon(Icon icon) {
+  public void setButtonVisible(boolean buttonVisible) {
+    myBrowseButton.setVisible(buttonVisible);
+    if (myInlineButtonExtension != null && myComponent instanceof ExtendableTextComponent) {
+      if (buttonVisible) {
+        ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
+      } else {
+        ((ExtendableTextComponent)myComponent).removeExtension(myInlineButtonExtension);
+      }
+    }
+  }
+
+  public void setButtonIcon(@NotNull Icon icon) {
     myBrowseButton.setIcon(icon);
     myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+  }
+
+  @Override
+  public void setBackground(Color color) {
+    super.setBackground(color);
+    if (myBrowseButton != null) {
+      myBrowseButton.setBackground(color);
+    }
   }
 
   /**
@@ -147,42 +204,51 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<Comp> accessor) {
-    addActionListener(new BrowseFolderActionListener<>(title, description, this, project, fileChooserDescriptor, accessor));
+  public void addBrowseFolderListener(
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super Comp> accessor
+  ) {
+    addActionListener(new BrowseFolderActionListener<>(this, project, fileChooserDescriptor, accessor));
+  }
+
+  public void addFileSaverDialog(@Nullable Project project,
+                                 @NotNull FileSaverDescriptor descriptor,
+                                 TextComponentAccessor<? super Comp> accessor)
+  {
+    addActionListener(new FileSaverRunnable<>(project, descriptor, getChildComponent(), accessor));
   }
 
   /**
-   * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
    */
-  @Deprecated
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
+  @Deprecated(forRemoval = true)
+  public void addBrowseFolderListener(
+    @Nullable @NlsContexts.DialogTitle String title,
+    @Nullable @NlsContexts.Label String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super Comp> accessor
+  ) {
+    addBrowseFolderListener(project, fileChooserDescriptor.withTitle(title).withDescription(description), accessor);
+  }
+
+  /**
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  public void addBrowseFolderListener(
+    @Nullable @NlsContexts.DialogTitle String title,
+    @Nullable @NlsContexts.Label String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super Comp> accessor,
+    boolean autoRemoveOnHide
+  ) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
-  }
-
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("UnusedParameters")
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
-    addActionListener(actionListener);
-  }
-
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("UnusedParameters")
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
   }
 
   @Override
@@ -193,6 +259,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
+  /**
+   * @deprecated The implementation may attach the button via the
+   * {@link ExtendableTextComponent#addExtension(ExtendableTextComponent.Extension)}
+   * so that the returned button may not be visible to the users
+   *
+   * @see #setButtonVisible
+   * @see #setButtonEnabled
+   */
+  @Deprecated(forRemoval = true)
   public FixedSizeButton getButton() {
     return myBrowseButton;
   }
@@ -207,12 +282,17 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myBrowseButton.isVisible() && myBrowseButton.isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e){
+    public void actionPerformed(@NotNull AnActionEvent e){
       myBrowseButton.doClick();
     }
 
@@ -227,97 +307,35 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
-  public static class BrowseFolderActionListener<T extends JComponent> implements ActionListener {
-    private final String myTitle;
-    private final String myDescription;
-    protected ComponentWithBrowseButton<T> myTextComponent;
-    private final TextComponentAccessor<T> myAccessor;
-    private Project myProject;
-    protected final FileChooserDescriptor myFileChooserDescriptor;
-
-    public BrowseFolderActionListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
-                                      ComponentWithBrowseButton<T> textField,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<T> accessor) {
-      if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
-        LOG.error("multiple selection not supported");
-        fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {
-          @Override
-          public boolean isChooseMultiple() {
-            return false;
-          }
-        };
-      }
-
-      myTitle = title;
-      myDescription = description;
-      myTextComponent = textField;
-      myProject = project;
-      myFileChooserDescriptor = fileChooserDescriptor;
-      myAccessor = accessor;
+  public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
+    public BrowseFolderActionListener(
+      @Nullable ComponentWithBrowseButton<T> textField,
+      @Nullable Project project,
+      FileChooserDescriptor fileChooserDescriptor,
+      TextComponentAccessor<? super T> accessor
+    ) {
+      super(project, fileChooserDescriptor, textField != null ? textField.getChildComponent() : null, accessor);
     }
 
-    @Nullable
-    protected Project getProject() {
-      return myProject;
-    }
-
-    protected void setProject(@Nullable Project project) {
-      myProject = project;
+    /**
+     * @deprecated use {@link #BrowseFolderActionListener(ComponentWithBrowseButton, Project, FileChooserDescriptor, TextComponentAccessor)}
+     * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+     */
+    @Deprecated(forRemoval = true)
+    public BrowseFolderActionListener(
+      @Nullable @NlsContexts.DialogTitle String title,
+      @Nullable @NlsContexts.Label String description,
+      @Nullable ComponentWithBrowseButton<T> textField,
+      @Nullable Project project,
+      FileChooserDescriptor fileChooserDescriptor,
+      TextComponentAccessor<? super T> accessor
+    ) {
+      this(textField, project, fileChooserDescriptor.withTitle(title).withDescription(description), accessor);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      FileChooserDescriptor fileChooserDescriptor = myFileChooserDescriptor;
-      if (myTitle != null || myDescription != null) {
-        fileChooserDescriptor = (FileChooserDescriptor)myFileChooserDescriptor.clone();
-        if (myTitle != null) {
-          fileChooserDescriptor.setTitle(myTitle);
-        }
-        if (myDescription != null) {
-          fileChooserDescriptor.setDescription(myDescription);
-        }
-      }
-
-      FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
-    }
-
-    @Nullable
-    protected VirtualFile getInitialFile() {
-      String directoryName = getComponentText();
-      if (StringUtil.isEmptyOrSpaces(directoryName)) {
-        return null;
-      }
-
-      directoryName = FileUtil.toSystemIndependentName(directoryName);
-      VirtualFile path = LocalFileSystem.getInstance().findFileByPath(expandPath(directoryName));
-      while (path == null && directoryName.length() > 0) {
-        int pos = directoryName.lastIndexOf('/');
-        if (pos <= 0) break;
-        directoryName = directoryName.substring(0, pos);
-        path = LocalFileSystem.getInstance().findFileByPath(directoryName);
-      }
-      return path;
-    }
-
-    @NotNull
-    protected String expandPath(@NotNull String path) {
-      return path;
-    }
-
-    protected String getComponentText() {
-      return myAccessor.getText(myTextComponent.getChildComponent()).trim();
-    }
-
-    @NotNull
-    protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
-      return chosenFile.getPresentableUrl();
-    }
-
-    protected void onFileChosen(@NotNull VirtualFile chosenFile) {
-      myAccessor.setText(myTextComponent.getChildComponent(), chosenFileToResultingText(chosenFile));
+      run();
     }
   }
 
@@ -349,5 +367,34 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
     if (e.isConsumed()) return true;
     return super.processKeyBinding(ks, e, condition, pressed);
+  }
+
+  private static final class LazyDisposable implements Activatable {
+    private final WeakReference<ComponentWithBrowseButton<?>> reference;
+
+    private LazyDisposable(ComponentWithBrowseButton<?> component) {
+      reference = new WeakReference<>(component);
+    }
+
+    private static void installOn(ComponentWithBrowseButton<?> component) {
+      LazyDisposable disposable = new LazyDisposable(component);
+      UiNotifyConnector.Once.installOn(component, disposable);
+    }
+
+    @Override
+    public void showNotify() {
+      ComponentWithBrowseButton<?> component = reference.get();
+      if (component == null) return; // component is collected
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        DataManager dataManager = app.getServiceIfCreated(DataManager.class);
+        if (dataManager != null) {
+          Disposable disposable = UI_DISPOSABLE.getData(dataManager.getDataContext(component));
+          if (disposable != null) {
+            Disposer.register(disposable, component);
+          }
+        }
+      }
+    }
   }
 }

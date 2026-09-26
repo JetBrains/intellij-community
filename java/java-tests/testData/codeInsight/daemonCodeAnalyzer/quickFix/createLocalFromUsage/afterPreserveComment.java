@@ -1,8 +1,10 @@
-// "Create local variable 'zeit'" "true"
+// "Create local variable 'zeit'" "true-preview"
 public class A {
     void foo() {
         String[] split = null;
-        String zeit = split[1]; // 2011-04-13
+        //c1
+        String zeit = split//c2
+                [1]; // 2011-04-13
     }
 
 }

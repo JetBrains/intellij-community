@@ -1,37 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnList;
-import org.jetbrains.org.objectweb.asm.tree.analysis.*;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceValue;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.HashSet;
 import java.util.LinkedList;
 
-/**
- * @author lambdamix
- */
-public class OriginsAnalysis {
-
-  private static final SourceInterpreter ourInterpreter = new SourceInterpreter() {
+public final class OriginsAnalysis {
+  private static final SourceInterpreter ourInterpreter = new SourceInterpreter(Opcodes.API_VERSION) {
     @Override
     public SourceValue copyOperation(AbstractInsnNode insn, SourceValue value) {
       return value;
@@ -42,7 +29,7 @@ public class OriginsAnalysis {
     final boolean local;
     final int slot;
 
-    public PreValue(boolean local, int slot, int size) {
+    PreValue(boolean local, int slot, int size) {
       super(size);
       this.local = local;
       this.slot = slot;
@@ -59,7 +46,7 @@ public class OriginsAnalysis {
     }
   }
 
-  private static class InsnLocation extends Location {
+  private static final class InsnLocation extends Location {
     final int insnIndex;
 
     private InsnLocation(boolean local, int insnIndex, int slot) {
@@ -70,12 +57,10 @@ public class OriginsAnalysis {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null) return false;
-      InsnLocation insnLocation = (InsnLocation)o;
-      if (local != insnLocation.local) return false;
-      if (insnIndex != insnLocation.insnIndex) return false;
-      if (slot != insnLocation.slot) return false;
-      return true;
+      return o instanceof InsnLocation insnLocation &&
+             local == insnLocation.local &&
+             insnIndex == insnLocation.insnIndex &&
+             slot == insnLocation.slot;
     }
 
     @Override
@@ -87,25 +72,22 @@ public class OriginsAnalysis {
   }
 
   /**
-   *
-   * @param frames fixpoint of frames
+   * @param frames       fix point of frames
    * @param instructions method instructions
-   * @param graph method control flow graph
+   * @param graph        method control flow graph
    * @return array, array[i] == true means that the result of a method execution may originate at an i-th instruction
-   * @throws AnalyzerException
    */
-  @NotNull
-  public static boolean[] resultOrigins(Frame<Value>[] frames, InsnList instructions, ControlFlowGraph graph) throws AnalyzerException {
-
-    TIntArrayList[] backTransitions = new TIntArrayList[instructions.size()];
+  public static boolean @NotNull [] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
+    throws AnalyzerException {
+    IntArrayList[] backTransitions = new IntArrayList[instructions.size()];
     for (int i = 0; i < backTransitions.length; i++) {
-      backTransitions[i] = new TIntArrayList();
+      backTransitions[i] = new IntArrayList();
     }
     LinkedList<InsnLocation> queue = new LinkedList<>();
     HashSet<InsnLocation> queued = new HashSet<>();
     for (int from = 0; from < instructions.size(); from++) {
       for (int to : graph.transitions[from]) {
-        TIntArrayList froms = backTransitions[to];
+        IntList froms = backTransitions[to];
         froms.add(from);
         int opcode = instructions.get(to).getOpcode();
         if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.ARETURN) {
@@ -130,10 +112,11 @@ public class OriginsAnalysis {
         if (opcode != Opcodes.INVOKEINTERFACE && opcode != Opcodes.GETFIELD && !(opcode >= Opcodes.IALOAD && opcode <= Opcodes.SALOAD)) {
           result[insnIndex] = true;
         }
-      } else {
-        TIntArrayList froms = backTransitions[insnIndex];
+      }
+      else {
+        IntList froms = backTransitions[insnIndex];
         for (int i = 0; i < froms.size(); i++) {
-          InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getQuick(i), preLocation.slot);
+          InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getInt(i), preLocation.slot);
           if (queued.add(preILoc)) {
             queue.push(preILoc);
           }
@@ -145,15 +128,12 @@ public class OriginsAnalysis {
   }
 
   /**
-   *
-   * @param frame a start frame with an interesting value
+   * @param frame    a start frame with an interesting value
    * @param location location of an interesting value *after* execution of an instruction
-   * @param insn an executed instruction
+   * @param insn     an executed instruction
    * @return location of an interesting value *before* execution of an instruction (in the past) or null if it is not traceable
-   * @throws AnalyzerException
    */
-  @Nullable
-  private static Location previousLocation(Frame<Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
+  private static @Nullable Location previousLocation(Frame<? extends Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
     int insnType = insn.getType();
     if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
       return location;
@@ -166,22 +146,20 @@ public class OriginsAnalysis {
     preFrame.execute(insn, ourInterpreter);
     if (location.local) {
       SourceValue preVal = preFrame.getLocal(location.slot);
-      if (preVal instanceof PreValue) {
-        PreValue val = (PreValue)preVal;
+      if (preVal instanceof PreValue val) {
         return new Location(val.local, val.slot);
       }
-    } else {
+    }
+    else {
       SourceValue preVal = preFrame.getStack(location.slot);
-      if (preVal instanceof PreValue) {
-        PreValue val = (PreValue)preVal;
+      if (preVal instanceof PreValue val) {
         return new Location(val.local, val.slot);
       }
     }
     return null;
   }
 
-  @NotNull
-  private static Frame<SourceValue> makePreFrame(@NotNull Frame<Value> frame) {
+  private static @NotNull Frame<SourceValue> makePreFrame(@NotNull Frame<? extends Value> frame) {
     Frame<SourceValue> preFrame = new Frame<>(frame.getLocals(), frame.getMaxStackSize());
     for (int i = 0; i < frame.getLocals(); i++) {
       preFrame.setLocal(i, new PreValue(true, i, frame.getLocal(i).getSize()));
@@ -192,5 +170,3 @@ public class OriginsAnalysis {
     return preFrame;
   }
 }
-
-

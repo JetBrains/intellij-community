@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -29,25 +14,29 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlLocationCompletionContributor extends CompletionContributor {
-
-  public static final Function<Object, LookupElement> MAPPING =
-    o -> o instanceof LookupElement ? (LookupElement)o : LookupElementBuilder.create(o);
+final class XmlLocationCompletionContributor extends CompletionContributor {
+  public static final Function<Object, LookupElement> MAPPING = o -> {
+    return o instanceof LookupElement ? (LookupElement)o : LookupElementBuilder.create(o);
+  };
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -81,13 +70,8 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
   private static Object[] completeNamespace(PsiElement myElement) {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
     PsiElement parent = myElement.getParent();
-    final Set<Object> preferred = new HashSet<>();
-    if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
-      XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
-      preferred.addAll(helper.guessUnboundNamespaces(parent.getParent(), file));
-    }
     Set<String> list = new HashSet<>();
-    for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
+    for (XmlSchemaProvider provider : XmlSchemaProvider.EP_NAME.getExtensionList()) {
       if (provider.isAvailable(file)) {
         list.addAll(provider.getAvailableNamespaces(file, null));
       }
@@ -95,18 +79,31 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     if (!list.isEmpty()) {
       return ArrayUtil.toObjectArray(list);
     }
-    Object[] resourceUrls = ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet().toArray();
+    Set<String> set = new HashSet<>(ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet());
+    Set<String> fromIndex =
+      XmlNamespaceIndex.getAllResources(null, myElement.getProject()).stream()
+        .filter(resource -> "xsd".equals(resource.getFile().getExtension())).map(resource -> resource.getValue().getNamespace())
+        .collect(Collectors.toSet());
+    ContainerUtil.addAllNotNull(set, fromIndex);
+    Object[] resourceUrls = set.toArray();
     final XmlDocument document = file.getDocument();
     assert document != null;
     XmlTag rootTag = document.getRootTag();
-    final ArrayList<String> additionalNs = new ArrayList<>();
-    if (rootTag != null) URLReference.processWsdlSchemas(rootTag, xmlTag -> {
-      final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
-      if (s != null) { additionalNs.add(s); }
-      return true;
-    });
-    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs));
+    final List<String> additionalNs = new ArrayList<>();
+    if (rootTag != null) {
+      URLReference.processWsdlSchemas(rootTag, xmlTag -> {
+        final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
+        if (s != null) { additionalNs.add(s); }
+        return true;
+      });
+    }
+    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtilRt.toStringArray(additionalNs));
 
+    final Set<Object> preferred = new HashSet<>();
+    if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
+      XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
+      preferred.addAll(helper.guessUnboundNamespaces(parent.getParent(), file));
+    }
     return ContainerUtil.map2Array(resourceUrls, o -> {
       LookupElementBuilder builder = LookupElementBuilder.create(o);
       return preferred.contains(o) ? PrioritizedLookupElement.withPriority(builder, 100) : builder;
@@ -122,6 +119,6 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
       return attributeValue != null &&
              attribute.isNamespaceDeclaration() &&
              ContainerUtil.find(refs, ref -> ref.getCanonicalText().equals(attributeValue)) == null ? attributeValue + " " : null;
-    }, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 }

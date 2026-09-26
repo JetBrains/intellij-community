@@ -4,7 +4,7 @@ import one.util.streamex.StreamEx;
 
 public class SortedByInt {
   public static void main(String[] args) {
-    // Breakpoint!
+    // Breakpoint! lambdaOrdinal(-1)
     StreamEx.of(2, 1).sortedByInt(Integer::intValue).forEach(System.out::println);
   }
 }

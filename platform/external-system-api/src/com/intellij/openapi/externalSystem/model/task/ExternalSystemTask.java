@@ -4,10 +4,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- * @since 1/24/12 7:16 AM
- */
 public interface ExternalSystemTask {
 
   @NotNull
@@ -28,14 +24,14 @@ public interface ExternalSystemTask {
    * @param indicator  target progress indicator
    * @param listeners  callbacks to be notified on task execution update
    */
-  void execute(@NotNull ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners);
+  void execute(@NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners);
   
   /**
    * Executes current task at the calling thread, i.e. the call to this method blocks.
    * 
    * @param listeners  callbacks to be notified about the task execution update
    */
-  void execute(@NotNull ExternalSystemTaskNotificationListener... listeners);
+  void execute(ExternalSystemTaskNotificationListener @NotNull ... listeners);
 
   /**
    * Initiates cancel request of the current task and updates given indicator's {@link ProgressIndicator#setText2(String) status} during that.
@@ -43,14 +39,14 @@ public interface ExternalSystemTask {
    * @param indicator  target progress indicator
    * @param listeners  callbacks to be notified on task execution update
    */
-  boolean cancel(@NotNull ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners);
+  boolean cancel(@NotNull ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners);
 
   /**
    * Initiates cancel request.
    *
    * @param listeners  callbacks to be notified about the task execution update
    */
-  boolean cancel(@NotNull ExternalSystemTaskNotificationListener... listeners);
+  boolean cancel(ExternalSystemTaskNotificationListener @NotNull ... listeners);
 
   /**
    * Forces current task to refresh {@link #getState() its state}.

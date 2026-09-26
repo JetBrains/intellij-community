@@ -1,30 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class RunAnythingScrollingUtil {
-  @NonNls
-  protected static final String SELECT_PREVIOUS_ROW_ACTION_ID = "selectPreviousRow";
-  @NonNls
-  protected static final String SELECT_NEXT_ROW_ACTION_ID = "selectNextRow";
+public final class RunAnythingScrollingUtil {
 
   public static void installActions(@NotNull JList list,
                                     @NotNull JTextField focusParent,
                                     @NotNull Runnable handleFocusParent,
                                     boolean isCycleScrolling) {
     ActionMap actionMap = list.getActionMap();
-    actionMap.put(SELECT_PREVIOUS_ROW_ACTION_ID, new MoveAction(SELECT_PREVIOUS_ROW_ACTION_ID, list, handleFocusParent, isCycleScrolling));
-    actionMap.put(SELECT_NEXT_ROW_ACTION_ID, new MoveAction(SELECT_NEXT_ROW_ACTION_ID, list, handleFocusParent, isCycleScrolling));
+    actionMap.put(ListActions.Up.ID, new MoveAction(ListActions.Up.ID, list, handleFocusParent, isCycleScrolling));
+    actionMap.put(ListActions.Down.ID, new MoveAction(ListActions.Down.ID, list, handleFocusParent, isCycleScrolling));
 
     maybeInstallDefaultShortcuts(list);
 
@@ -34,8 +37,8 @@ public class RunAnythingScrollingUtil {
 
   private static void maybeInstallDefaultShortcuts(@NotNull JComponent component) {
     InputMap map = component.getInputMap(JComponent.WHEN_FOCUSED);
-    UIUtil.maybeInstall(map, SELECT_PREVIOUS_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
-    UIUtil.maybeInstall(map, SELECT_NEXT_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
+    UIUtil.maybeInstall(map, ListActions.Up.ID, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
+    UIUtil.maybeInstall(map, ListActions.Down.ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
   }
 
   private static void installMoveDownAction(@NotNull JList list,
@@ -44,7 +47,7 @@ public class RunAnythingScrollingUtil {
                                             final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveDown(), focusParent) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         moveDown(list, handleFocusParent, isCycleScrolling);
       }
     };
@@ -56,7 +59,7 @@ public class RunAnythingScrollingUtil {
                                           final boolean isCycleScrolling) {
     new ScrollingUtil.ListScrollAction(CommonShortcuts.getMoveUp(), focusParent) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         moveUp(list, handleFocusParent, isCycleScrolling);
       }
     };
@@ -96,13 +99,13 @@ public class RunAnythingScrollingUtil {
     selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
   }
 
-  private static class MoveAction extends AbstractAction {
-    @NotNull private final String myId;
-    @NotNull private final JList myComponent;
-    @NotNull private final Runnable myHandleFocusParent;
+  private static final class MoveAction extends AbstractAction {
+    private final @NotNull String myId;
+    private final @NotNull JList myComponent;
+    private final @NotNull Runnable myHandleFocusParent;
     private final boolean myIsCycleScrolling;
 
-    public MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
+    MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {
       myId = id;
       myComponent = component;
       myHandleFocusParent = handleFocusParent;
@@ -111,10 +114,10 @@ public class RunAnythingScrollingUtil {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      if (SELECT_PREVIOUS_ROW_ACTION_ID.equals(myId)) {
+      if (ListActions.Up.ID.equals(myId)) {
         moveUp(myComponent, myHandleFocusParent, myIsCycleScrolling);
       }
-      else if (SELECT_NEXT_ROW_ACTION_ID.equals(myId)) {
+      else if (ListActions.Down.ID.equals(myId)) {
         moveDown(myComponent, myHandleFocusParent, myIsCycleScrolling);
       }
     }

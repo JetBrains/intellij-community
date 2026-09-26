@@ -1,0 +1,7 @@
+{
+  "mainFile": "foo/A.kt",
+  "type": "MOVE_FILES",
+  "targetPackage": "implicit.baz.boo",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

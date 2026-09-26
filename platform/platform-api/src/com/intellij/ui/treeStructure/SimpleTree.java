@@ -1,31 +1,42 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.TreeUIHelper;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.CellEditor;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.tree.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellEditor;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,15 +48,10 @@ public class SimpleTree extends Tree implements CellEditorListener {
   private String myPlace;
 
   private JComponent myEditorComponent;
-  private boolean myEscapePressed;
   private int myEditingRow;
   private boolean myIgnoreSelectionChange;
 
   private int myMinHeightInRows = 5;
-
-  private Icon myExpandedHandle;
-  private Icon myCollapsedHandle;
-  private Icon myEmptyHandle;
 
   public SimpleTree() {
     setModel(new DefaultTreeModel(new PatchedDefaultMutableTreeNode()));
@@ -53,6 +59,13 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
     configureUiHelper(TreeUIHelper.getInstance());
 
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
+        handleDoubleClickOrEnter(getClosestPathForLocation(e.getX(), e.getY()), e);
+        return false;
+      }
+    }.installOn(this);
     addMouseListener(new MyMouseListener());
     setCellRenderer(new NodeRenderer());
 
@@ -61,6 +74,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     ToolTipManager.sharedInstance().registerComponent(this);
 
     getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         if (!myIgnoreSelectionChange && hasSingleSelection()) {
           getNodeFor(getSelectionPath()).handleSelection(SimpleTree.this);
@@ -69,6 +83,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     });
 
     addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && hasSingleSelection()) {
           handleDoubleClickOrEnter(getSelectionPath(), e);
@@ -79,12 +94,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
       }
     });
 
-    UIUtil.setLineStyleAngled(this);
-    if (SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) {
-      setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
-    }
-
-    setOpaque(UIUtil.isUnderGTKLookAndFeel());
+    setOpaque(false);
   }
 
   public SimpleTree(TreeModel aModel) {
@@ -94,14 +104,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   protected void configureUiHelper(final TreeUIHelper helper) {
     helper.installTreeSpeedSearch(this);
-  }
-
-  public boolean accept(AbstractTreeBuilder builder, final SimpleNodeVisitor visitor) {
-    return builder.accept(SimpleNode.class, new TreeVisitor<SimpleNode>() {
-      public boolean visit(@NotNull SimpleNode node) {
-        return visitor.accept(node);
-      }
-    }) != null;
   }
 
   public void setPopupGroup(ActionGroup aPopupGroup, String aPlace) {
@@ -114,26 +116,11 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   public SimpleNode getNodeFor(TreePath aPath) {
-    if (aPath == null) {
-      return NULL_NODE;
-    }
-
-    DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)aPath.getLastPathComponent();
-    if (treeNode == null) {
-      return NULL_NODE;
-    }
-
-    final Object userObject = treeNode.getUserObject();
-    if (userObject instanceof SimpleNode) {
-      return (SimpleNode)userObject;
-    }
-    else {
-      return NULL_NODE;
-    }
+    SimpleNode node = TreeUtil.getLastUserObject(SimpleNode.class, aPath);
+    return node != null ? node : NULL_NODE;
   }
 
-  @Nullable
-  public TreePath getPathFor(SimpleNode node) {
+  public @Nullable TreePath getPathFor(SimpleNode node) {
     final TreeNode nodeWithObject = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)getModel().getRoot(), node);
     if (nodeWithObject != null) {
       return TreeUtil.getPathFromRoot(nodeWithObject);
@@ -141,8 +128,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return null;
   }
 
-  @Nullable
-  public SimpleNode getSelectedNode() {
+  public @Nullable SimpleNode getSelectedNode() {
     if (isSelectionEmpty()) {
       return null;
     }
@@ -150,6 +136,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return getNodeFor(getSelectionPath());
   }
 
+  @Override
   public boolean isSelectionEmpty() {
     final TreePath selection = super.getSelectionPath();
     return selection == null || getNodeFor(selection) == NULL_NODE;
@@ -175,10 +162,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return result.toArray(new SimpleNode[0]);
   }
 
-  public void setSelectedNode(AbstractTreeBuilder builder, SimpleNode node, boolean expand) {
-    builder.select(node.getElement(), null, false);
-  }
-
+  @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
     g.setColor(UIManager.getColor("Tree.line"));
@@ -202,6 +186,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   // From FTree:
 
+  @Override
   public void cancelEditing() {
     if (isEditing()) {
       cellEditor.cancelCellEditing();
@@ -209,10 +194,12 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
   }
 
+  @Override
   public void editingStopped(ChangeEvent e) {
     doStopEditing();
   }
 
+  @Override
   public void editingCanceled(ChangeEvent e) {
     doStopEditing();
   }
@@ -221,10 +208,12 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return myEditorComponent;
   }
 
+  @Override
   public boolean isEditing() {
     return myEditorComponent != null;
   }
 
+  @Override
   public TreePath getEditingPath() {
     if (isEditing()) {
       return getPathForRow(myEditingRow);
@@ -232,13 +221,9 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return super.getEditingPath();
   }
 
+  @Override
   public boolean isPathEditable(TreePath path) {
     return true;
-  }
-
-  @Override
-  public final boolean isFileColorsEnabled() {
-    return false;
   }
 
   @Override
@@ -246,6 +231,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return true;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
@@ -257,6 +243,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
   }
 
+  @Override
   public void setCellEditor(TreeCellEditor aCellEditor) {
     if (cellEditor != null) {
       cellEditor.removeCellEditorListener(this);
@@ -268,6 +255,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
   }
 
+  @Override
   public boolean stopEditing() {
     boolean result = isEditing();
     if (result) {
@@ -279,6 +267,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return result;
   }
 
+  @Override
   public void startEditingAtPath(final TreePath path) {
     if (path != null && isVisible(path)) {
 
@@ -324,8 +313,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
 
     myEditorComponent.setBounds(nodeBounds);
-
-    myEscapePressed = false;
   }
 
   private void doStopEditing() {
@@ -338,20 +325,14 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
   }
 
-  public boolean isEscapePressed() {
-    return myEscapePressed;
-  }
-
-  public void setEscapePressed() {
-    myEscapePressed = true;
-  }
-
+  @Override
   public void addSelectionPath(TreePath path) {
     myIgnoreSelectionChange = true;
     super.addSelectionPath(path);
     myIgnoreSelectionChange = false;
   }
 
+  @Override
   public void addSelectionPaths(TreePath[] path) {
     myIgnoreSelectionChange = true;
     super.addSelectionPaths(path);
@@ -360,14 +341,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   private boolean isSelected(TreePath path) {
     TreePath[] selectionPaths = getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        if (path.equals(selectionPath)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return selectionPaths != null && ArrayUtil.contains(path, selectionPaths);
   }
 
   public boolean isMultipleSelection() {
@@ -379,42 +353,22 @@ public class SimpleTree extends Tree implements CellEditorListener {
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
-  // TODO: move to some util?
-  public static boolean isDoubleClick(MouseEvent e) {
-    return e != null && e.getClickCount() > 0 && e.getClickCount() % 2 == 0;
-  }
-
-  protected ActionGroup getPopupGroup() {
-    return myPopupGroup;
-  }
-
   protected void invokeContextMenu(final MouseEvent e) {
-    SwingUtilities.invokeLater(() -> {
-      final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
-      menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
-    });
+    SwingUtilities.invokeLater(() -> JBPopupMenu.showByEvent(e, myPlace, myPopupGroup));
   }
 
   private class MyMouseListener extends MouseAdapter {
+    @Override
     public void mousePressed(MouseEvent e) {
-      if (e.isPopupTrigger()) {
-        invokePopup(e);
-      }
-      else if (isDoubleClick(e)) {
-        handleDoubleClickOrEnter(getClosestPathForLocation(e.getX(), e.getY()), e);
-        /*
-        if (!TreeWizardPopupImpl.isLocationInExpandControl(SimpleTree.this, getSelectionPath(), e.getX(), e.getY())) {
-          TreePath treePath = getClosestPathForLocation(e.getX(), e.getY());
-          handleDoubleClickOrEnter(treePath, e);
-        }
-        */
-      }
+      invokePopup(e);
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       invokePopup(e);
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
       invokePopup(e);
     }
@@ -447,14 +401,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
   }
 
-  public boolean select(AbstractTreeBuilder aBuilder, final SimpleNodeVisitor aVisitor, boolean shouldExpand) {
-    return aBuilder.select(SimpleNode.class, new TreeVisitor<SimpleNode>() {
-      public boolean visit(@NotNull SimpleNode node) {
-        return aVisitor.accept(node);
-      }
-    }, null, false);
-  }
-
   private boolean hasSingleSelection() {
     return !isSelectionEmpty() && getSelectionPaths().length == 1;
   }
@@ -467,6 +413,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return (NodeRenderer)getCellRenderer();
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + '#' + System.identityHashCode(this);
   }
@@ -475,6 +422,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
     myMinHeightInRows = rows;
   }
 
+  @Override
   public Dimension getMinimumSize() {
     Dimension superSize = super.getMinimumSize();
 
@@ -486,85 +434,8 @@ public class SimpleTree extends Tree implements CellEditorListener {
     return new Dimension(superSize.width, (int)(rowHeight * myMinHeightInRows));
   }
 
-  public final int getToggleClickCount() {
-    SimpleNode node = getSelectedNode();
-    if (node != null) {
-      if (!node.expandOnDoubleClick()) return -1;
-    }
-    return super.getToggleClickCount();
-  }
-
   @Override
   public void processKeyEvent(final KeyEvent e) {
     super.processKeyEvent(e);
   }
-
-  private int getBoxWidth(TreePath path) {
-    final Object root = getModel().getRoot();
-    if (!isRootVisible()) {
-      if (path.getPathCount() == 2) {
-        final TreePath parent = path.getParentPath();
-        if (parent.getLastPathComponent() == root && !getShowsRootHandles()) {
-          return 0;
-        }
-      }
-    }
-
-    return getBoxWidth(this);
-  }
-
-  private static int getBoxWidth(JTree tree) {
-    BasicTreeUI basicTreeUI = (BasicTreeUI)tree.getUI();
-    int boxWidth;
-    if (basicTreeUI.getExpandedIcon() != null) {
-      boxWidth = basicTreeUI.getExpandedIcon().getIconWidth();
-    }
-    else {
-      boxWidth = 8;
-    }
-    return boxWidth;
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-
-    myExpandedHandle = null;
-    myCollapsedHandle = null;
-    myExpandedHandle = null;
-  }
-
-  public Icon getHandleIcon(DefaultMutableTreeNode node, TreePath path) {
-    if (node.getChildCount() == 0) return getEmptyHandle();
-
-    
-    return isExpanded(path) ? getExpandedHandle() : getCollapsedHandle();
-
-  }
-
-  public Icon getExpandedHandle() {
-    if (myExpandedHandle == null) {
-      myExpandedHandle = UIUtil.getTreeExpandedIcon();
-    }
-
-    return myExpandedHandle;
-  }
-
-  public Icon getCollapsedHandle() {
-    if (myCollapsedHandle == null) {
-      myCollapsedHandle = UIUtil.getTreeCollapsedIcon();
-    }
-
-    return myCollapsedHandle;
-  }
-
-  public Icon getEmptyHandle() {
-    if (myEmptyHandle == null) {
-      final Icon expand = getExpandedHandle();
-      myEmptyHandle = expand != null ? EmptyIcon.create(expand) : EmptyIcon.create(0);
-    }
-
-    return myEmptyHandle;
-  }
-
 }

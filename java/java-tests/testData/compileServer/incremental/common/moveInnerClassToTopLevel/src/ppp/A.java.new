@@ -1,0 +1,14 @@
+package ppp;
+
+public class A {
+
+  private final Inner myInner;
+
+  protected A(Inner inner) {
+    myInner = inner;
+  }
+
+  protected final Inner getInner() {
+    return myInner;
+  }
+}

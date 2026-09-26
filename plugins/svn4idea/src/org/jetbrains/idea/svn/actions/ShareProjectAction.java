@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,23 +17,32 @@ import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
-import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.ui.Messages.YES;
+import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.ui.Messages.showInfoMessage;
+import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.BRANCHES_NAME;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TAGS_NAME;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 public class ShareProjectAction extends BasicAction {
 
-  @NotNull
   @Override
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return message("share.directory.action");
   }
 
@@ -77,9 +86,13 @@ public class ShareProjectAction extends BasicAction {
 
       if (ShareDialog.ShareTarget.useSelected.equals(shareTarget) &&
           !isFolderEmpty(vcs, parent) &&
-          YES !=
-          showYesNoDialog(vcs.getProject(), "Remote folder \"" + parent + "\" is not empty.\nDo you want to continue sharing?",
-                          "Share Directory", getWarningIcon())) {
+          YES != showYesNoDialog(
+            vcs.getProject(),
+            message("dialog.message.share.to.not.empty.directory", parent),
+            message("share.directory.title"),
+            getWarningIcon()
+          )
+      ) {
         return false;
       }
 
@@ -112,7 +125,7 @@ public class ShareProjectAction extends BasicAction {
           finally {
             vcs.invokeRefreshSvnRoots();
           }
-        }, message("share.directory.title"), true, vcs.getProject()));
+        }, message("progress.title.share.directory"), true, vcs.getProject()));
 
       if (Boolean.TRUE.equals(actionStarted.get())) {
         if (error[0] != null) {
@@ -125,40 +138,37 @@ public class ShareProjectAction extends BasicAction {
     return false;
   }
 
-  @NotNull
-  private static Target createFolderStructure(@NotNull SvnVcs vcs,
-                                              @NotNull VirtualFile file,
-                                              @NotNull ShareDialog.ShareTarget shareTarget,
-                                              boolean createStandardStructure,
-                                              @NotNull Url parentUrl,
-                                              @NotNull String commitText) throws VcsException {
-    switch (shareTarget) {
-      case useSelected:
-        return Target.on(parentUrl, Revision.HEAD);
-      case useProjectName:
-        return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
-      default:
+  private static @NotNull Target createFolderStructure(@NotNull SvnVcs vcs,
+                                                       @NotNull VirtualFile file,
+                                                       @NotNull ShareDialog.ShareTarget shareTarget,
+                                                       boolean createStandardStructure,
+                                                       @NotNull Url parentUrl,
+                                                       @NotNull String commitText) throws VcsException {
+    return switch (shareTarget) {
+      case useSelected -> Target.on(parentUrl, Revision.HEAD);
+      case useProjectName -> createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
+      default -> {
         Target projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
-        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), "trunk", commitText);
+        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), TRUNK_NAME, commitText);
 
         if (createStandardStructure) {
-          createRemoteFolder(vcs, projectRoot.getUrl(), "branches", commitText);
-          createRemoteFolder(vcs, projectRoot.getUrl(), "tags", commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), BRANCHES_NAME, commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), TAGS_NAME, commitText);
         }
-        return trunk;
-    }
+        yield trunk;
+      }
+    };
   }
 
   private static boolean isFolderEmpty(@NotNull SvnVcs vcs, @NotNull String folderUrl) throws VcsException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> SvnUtil.remoteFolderIsEmpty(vcs, folderUrl), "Check Remote Folder Contents", false, vcs.getProject());
+      () -> SvnUtil.remoteFolderIsEmpty(vcs, folderUrl), message("progress.title.check.remote.folder.contents"), false, vcs.getProject());
   }
 
-  @NotNull
-  private static Target createRemoteFolder(@NotNull SvnVcs vcs,
-                                           @NotNull Url parent,
-                                           @NotNull String folderName,
-                                           @NotNull String commitText) throws VcsException {
+  private static @NotNull Target createRemoteFolder(@NotNull SvnVcs vcs,
+                                                    @NotNull Url parent,
+                                                    @NotNull String folderName,
+                                                    @NotNull String commitText) throws VcsException {
     Url url = append(parent, folderName);
     String message =
       message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);
@@ -187,9 +197,10 @@ public class ShareProjectAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
   }
 
+  @Override
   protected boolean isBatchAction() {
     return false;
   }

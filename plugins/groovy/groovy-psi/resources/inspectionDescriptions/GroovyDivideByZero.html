@@ -1,8 +1,11 @@
 <html>
 <body>
-
-This inspection reports any instances of division by zero or remainder by zero in Groovy code.
-<br>
-<small>Powered by InspectorGroovy</small>
+Reports divisions by zero or remainders by zero.
+<p><b>Example:</b></p>
+<pre><code>
+  def a = 42
+  a / 0 // warning
+  a % 0.0 // warning
+</code></pre>
 </body>
 </html>

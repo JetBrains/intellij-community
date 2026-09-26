@@ -1,51 +1,51 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
+import com.intellij.openapi.vcs.changes.ui.RepositoryChangesBrowserNodeBase
+import com.intellij.util.ui.CheckboxIcon
+import com.intellij.vcs.branch.BranchData
+import com.intellij.vcs.branch.BranchPresentation.getPresentableText
+import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
+import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl.getBackgroundColor
+import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
+import com.intellij.vcsUtil.VcsUtil
+import javax.swing.Icon
 
-private val ICON_SIZE = scale(14)
+open class RepositoryChangesBrowserNode(
+  repository: Repository,
+  private val colorManager: VcsLogColorManager = getColorManager(repository.project)
+) : RepositoryChangesBrowserNodeBase<Repository, BranchData>(repository) {
 
-class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<Repository>(repository) {
-  private val colorManager = getColorManager(repository.project)
+  override fun getIcon(): Icon = CheckboxIcon.createAndScale(colorManager.getRootColor(getUserObject().root))
 
-  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.icon = ColorIcon(ICON_SIZE, getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
-    renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
-    if (renderer.isShowingLocalChanges) {
-      val localBranch = getUserObject().currentBranchName
-      if (localBranch != null) {
-        renderer.append(" ($localBranch", REGULAR_ATTRIBUTES)
-        val remoteBranch = getUserObject().currentRemoteBranchName
-        if (remoteBranch != null) {
-          renderer.append(" ${UIUtil.rightArrow()} $remoteBranch")
-        }
-        renderer.append(")")
-      }
-    }
-    appendCount(renderer)
-  }
+  final override fun getCurrentBranch(repository: Repository): BranchData? = getCurrentBranch(repository.project, repository.root)
 
-  override fun getSortWeight(): Int = REPOSITORY_SORT_WEIGHT
+  final override fun getBranchText(branch: BranchData): String = getPresentableText(branch)
 
-  override fun compareUserObjects(o2: Repository): Int = getShortRepositoryName(getUserObject()).compareTo(getShortRepositoryName(o2), true)
+  final override fun getBranchTooltipText(branch: BranchData): String = getSingleTooltip(branch).orEmpty()
+
+  override fun compareUserObjects(o2: Repository): Int =
+    compareFileNames(getShortRepositoryName(getUserObject()), getShortRepositoryName(o2))
 
   override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
 
+  override fun getNodeFilePath(): FilePath = VcsUtil.getFilePath(getUserObject().root)
+
   companion object {
-    fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
-      findLogProviders(ProjectLevelVcsManagerImpl.getInstance(project).allVcsRoots.asList(), project).keys)
+    fun getColorManager(project: Project): VcsLogColorManager {
+      val colorManager = VcsProjectLog.getInstance(project).logManager?.colorManager
+      if (colorManager != null) return colorManager
+
+      val roots = VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots().asList(), project).keys
+      return VcsLogColorManagerFactory.create(roots)
+    }
   }
 }

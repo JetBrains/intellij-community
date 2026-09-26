@@ -1,0 +1,179 @@
+package main
+
+import (
+	"archive/zip"
+	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"jetbrains.com/content-module-packer/internal/pluginclasspath"
+	"jetbrains.com/content-module-packer/internal/pluginpack"
+)
+
+// TestArguments refuses an unknown option, a malformed option, a repeated option, a missing option, an empty
+// independent module, and a version outside the range. The deleted recipe options are unknown options.
+func TestArguments(t *testing.T) {
+	for _, arguments := range [][]string{
+		nil, {"--unknown=value"}, {"--projection"}, {"--projection="}, {"--projection=one", "--projection=two"},
+		{"--projection=plan.json"}, {"--independent-module"}, {"--independent-module="},
+		{"--recipe=recipe.json", "--catalogue=catalogue.json", "--output-dir=out", "--inventory=inventory.json"},
+		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
+			"--execution-version=1", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt", "--catalogue=c.json"},
+		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
+			"--execution-version=1", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt", "--recipe=recipe.json"},
+		{"--projection=plan.json", "--input-catalogue=catalogue.json", "--classpath-descriptor=descriptor.xml", "--plugin-directory=plugins/x",
+			"--execution-version=4", "--output-dir=out", "--inventory=inventory.json", "--assets=assets.json", "--classpath=classpath.txt"},
+	} {
+		var output, errors bytes.Buffer
+		if code := run(arguments, &output, &errors); code != 2 || errors.Len() == 0 || output.Len() != 0 {
+			t.Fatalf("arguments %v: code=%d, output=%q, errors=%q", arguments, code, &output, &errors)
+		}
+	}
+	var output, errors bytes.Buffer
+	if code := run([]string{"--recipe=recipe.json"}, &output, &errors); code != 2 || !strings.Contains(errors.String(), `unknown option "--recipe"`) {
+		t.Fatalf("--recipe: code=%d, output=%q, errors=%q", code, &output, &errors)
+	}
+}
+
+// projectionPlan is a plan file with one remainder jar, one module jar the chain reuses, and one raw file copy.
+// The chain names the reused module with `--independent-module`; the plan states it as a module asset only.
+const projectionPlan = `{
+  "version": 1, "plugin": "example", "variant": "", "layoutSignature": "signature",
+  "assets": [
+    {"destination": "lib/example.jar", "recipe": {"sources": [{"input": "example.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
+    {"module": "example.content"},
+    {"destination": "bin/tool", "inputs": ["tool"], "mode": 493, "classPath": false}
+  ]
+}`
+
+func writeProjectionFixture(t *testing.T, root, plan string) []string {
+	t.Helper()
+	jar := filepath.Join(root, "main.jar")
+	var buffer bytes.Buffer
+	writer := zip.NewWriter(&buffer)
+	entry, err := writer.Create("com/example/Main.class")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := entry.Write([]byte("class")); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	catalogue := pluginpack.Catalogue{Version: 1, Artifacts: []pluginpack.Artifact{
+		{ID: "example.main", Kind: "file", Root: jar}, {ID: "tool", Kind: "file", Root: filepath.Join(root, "tool")}}}
+	data, err := json.Marshal(catalogue)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, content := range map[string][]byte{"main.jar": buffer.Bytes(), "tool": []byte("tool"), "plan.json": []byte(plan),
+		"catalogue.json": data, "descriptor.xml": []byte("<idea-plugin/>")} {
+		if err := os.WriteFile(filepath.Join(root, name), content, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return []string{"--projection=" + filepath.Join(root, "plan.json"), "--input-catalogue=" + filepath.Join(root, "catalogue.json"),
+		"--classpath-descriptor=" + filepath.Join(root, "descriptor.xml"), "--plugin-directory=plugins/example", "--execution-version=1",
+		"--output-dir=" + filepath.Join(root, "payload"), "--inventory=" + filepath.Join(root, "inventory.json"),
+		"--assets=" + filepath.Join(root, "assets.json"), "--classpath=" + filepath.Join(root, "plugin-classpath.txt"),
+		"--independent-module=example.content"}
+}
+
+func TestProjectionRunWritesThePluginTheAssetsAndTheClassPath(t *testing.T) {
+	root := t.TempDir()
+	arguments := writeProjectionFixture(t, root, projectionPlan)
+	var output, errors bytes.Buffer
+	if code := run(arguments, &output, &errors); code != 0 || output.Len() == 0 || errors.Len() != 0 {
+		t.Fatalf("run: code=%d, output=%q, errors=%q", code, &output, &errors)
+	}
+	if _, err := os.Stat(filepath.Join(root, "payload/lib/example.jar")); err != nil {
+		t.Fatal(err)
+	}
+	if info, err := os.Stat(filepath.Join(root, "payload/bin/tool")); err != nil || info.Mode().Perm() != 0o755 {
+		t.Fatalf("copied tool: %v, %v", info, err)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "payload/lib/modules/example.content.jar")); !os.IsNotExist(err) {
+		t.Fatalf("the independent jar entered the remainder: %v", err)
+	}
+	assets, err := os.ReadFile(filepath.Join(root, "assets.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rows []pluginpack.Asset
+	if err := json.Unmarshal(assets, &rows); err != nil {
+		t.Fatal(err)
+	}
+	excluded := false
+	want := []pluginpack.Asset{{Destination: "lib/example.jar", Producer: "remainder"},
+		{Destination: "lib/modules/example.content.jar", Producer: "independent", Artifact: "example.content"},
+		{Destination: "bin/tool", Producer: "remainder", ClassPath: &excluded}}
+	if got, expected := mustJSON(t, rows), mustJSON(t, want); got != expected {
+		t.Fatalf("asset rows differ:\n%s\n%s", got, expected)
+	}
+	classpath, err := os.ReadFile(filepath.Join(root, "plugin-classpath.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, err := pluginclasspath.Record("example", []byte("<idea-plugin/>"), []string{"lib/example.jar"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(classpath, expected) {
+		t.Fatalf("classpath record = %x, want %x", classpath, expected)
+	}
+}
+
+// TestProjectionRunRefusesAKotlinPreparationAndAStaleVersion also refuses a reused module the plan has no plain module
+// jar for, and a plan that still states `reusableArtifacts`. Every refusal happens before any write.
+func TestProjectionRunRefusesAKotlinPreparationAndAStaleVersion(t *testing.T) {
+	kotlinPlan := strings.Replace(projectionPlan, `  ]
+}`, `  ],
+  "preparations": [{"id": "native", "inputs": ["tool"], "outputs": ["native:output"], "modelSignature": "x"}],
+  "operations": [{"id": "native", "kind": "library-layout-patches", "input": {"artifact": "tool"}, "output": "native:output", "manifest": "keep", "libraryLayout": {"any": 1}}]
+}`, 1)
+	kotlinPlan = strings.Replace(kotlinPlan, `"inputs": ["tool"], "mode": 493`, `"inputs": ["native:output"], "mode": 493`, 1)
+	stalePlan := strings.Replace(projectionPlan, `  ]
+}`, `  ],
+  "reusableArtifacts": [{"label": "//example:content.jar", "module": "example.content"}]
+}`, 1)
+	for name, scenario := range map[string]struct {
+		plan    string
+		version string
+		module  string
+		message string
+	}{
+		"a Kotlin operation kind":      {kotlinPlan, "1", "example.content", "does not execute"},
+		"a stale version":              {projectionPlan, "2", "example.content", "stale execution version"},
+		"a module without a plain jar": {projectionPlan, "1", "example.other", `independent module "example.other" matches no module jar asset`},
+		"a plan with reusableArtifacts": {stalePlan, "1", "example.content", "reusableArtifacts"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			arguments := writeProjectionFixture(t, root, scenario.plan)
+			arguments[4] = "--execution-version=" + scenario.version
+			arguments[len(arguments)-1] = "--independent-module=" + scenario.module
+			var output, errors bytes.Buffer
+			if code := run(arguments, &output, &errors); code != 1 || !strings.Contains(errors.String(), scenario.message) || output.Len() != 0 {
+				t.Fatalf("code=%d, output=%q, errors=%q", code, &output, &errors)
+			}
+			for _, file := range []string{"payload", "inventory.json", "assets.json", "plugin-classpath.txt"} {
+				if _, err := os.Lstat(filepath.Join(root, file)); !os.IsNotExist(err) {
+					t.Fatalf("%s was written by a failed run: %v", file, err)
+				}
+			}
+		})
+	}
+}
+
+func mustJSON(t *testing.T, value any) string {
+	t.Helper()
+	data, err := json.MarshalIndent(value, "", " ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}

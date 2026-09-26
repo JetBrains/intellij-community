@@ -1,0 +1,16 @@
+// "Replace 'with' with 'context'" "true"
+// WITH_RUNTIME
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.4
+
+class Ctx
+
+context(c: Ctx)
+fun fdemo() {
+}
+
+fun testCtx2() {
+    context(Ctx(), {
+        fdemo()
+    })
+}

@@ -1,3 +1,35 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.xpathView.search;
+
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+
 /**
  * Copyright 2006 Sascha Weinreuter
  *
@@ -13,36 +45,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.xpathView.search;
-
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Collections;
-
 public final class SearchScope {
   public enum ScopeType {
     PROJECT, MODULE, DIRECTORY, CUSTOM
@@ -69,29 +71,21 @@ public final class SearchScope {
     myScopeName = scopeName;
   }
 
-  public void setCustomScope(com.intellij.psi.search.SearchScope customScope) {
+  void setCustomScope(com.intellij.psi.search.SearchScope customScope) {
     myCustomScope = customScope;
   }
 
-  @NotNull
-  public String getName() {
-    switch (getScopeType()) {
-      case PROJECT:
-        return "Project";
-      case MODULE:
-        return "Module '" + getModuleName() + "'";
-      case DIRECTORY:
-        return "Directory '" + getPath() + "'";
-      case CUSTOM:
-        return getScopeName();
-    }
-    assert false;
-    return null;
+  public @NotNull String getName() {
+    return switch (getScopeType()) {
+      case PROJECT -> "Project";
+      case MODULE -> "Module '" + getModuleName() + "'";
+      case DIRECTORY -> "Directory '" + getPath() + "'";
+      case CUSTOM -> getScopeName();
+    };
   }
 
-  @NotNull
   @Attribute("type")
-  public ScopeType getScopeType() {
+  public @NotNull ScopeType getScopeType() {
     return myScopeType;
   }
 
@@ -110,9 +104,8 @@ public final class SearchScope {
     myModuleName = moduleName;
   }
 
-  @Nullable
   @Attribute("scope-name")
-  public String getScopeName() {
+  public @Nullable String getScopeName() {
     return myScopeName;
   }
 
@@ -121,9 +114,8 @@ public final class SearchScope {
     myScopeName = scopeName;
   }
 
-  @Nullable
   @Tag
-  public String getPath() {
+  public @Nullable String getPath() {
     return myPath;
   }
 
@@ -145,31 +137,24 @@ public final class SearchScope {
     final String dirName = getPath();
     final String moduleName = getModuleName();
 
-    switch (getScopeType()) {
-      case MODULE:
-        return moduleName != null && moduleName.length() > 0;
-      case DIRECTORY:
-        return dirName != null && dirName.length() > 0 && findFile(dirName) != null;
-      case CUSTOM:
-        return myCustomScope != null;
-      case PROJECT:
-        return true;
-    }
-    return false;
+    return switch (getScopeType()) {
+      case MODULE -> moduleName != null && !moduleName.isEmpty();
+      case DIRECTORY -> dirName != null && !dirName.isEmpty() && findFile(dirName) != null;
+      case CUSTOM -> myCustomScope != null;
+      case PROJECT -> true;
+    };
   }
 
-  public void iterateContent(@NotNull final Project project, final Processor<VirtualFile> processor) {
+  void iterateContent(final @NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
     switch (getScopeType()) {
-      case PROJECT:
-        //noinspection unchecked
+      case PROJECT ->
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
-        break;
-      case MODULE:
+      case MODULE -> {
         final Module module = ModuleManager.getInstance(project).findModuleByName(getModuleName());
         assert module != null;
         ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
-        break;
-      case DIRECTORY:
+      }
+      case DIRECTORY -> {
         final String dirName = getPath();
         assert dirName != null;
 
@@ -177,17 +162,16 @@ public final class SearchScope {
         if (virtualFile != null) {
           iterateRecursively(virtualFile, processor, isRecursive());
         }
-        break;
-      case CUSTOM:
+      }
+      case CUSTOM -> {
         assert myCustomScope != null;
 
         final ContentIterator iterator;
-        if (myCustomScope instanceof GlobalSearchScope) {
-          final GlobalSearchScope searchScope = (GlobalSearchScope)myCustomScope;
+        if (myCustomScope instanceof GlobalSearchScope searchScope) {
           iterator = new MyFileIterator(processor, virtualFile13 -> searchScope.contains(virtualFile13));
           if (searchScope.isSearchInLibraries()) {
             final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
-            final Collection<VirtualFile> libraryFiles = new THashSet<>();
+            final Collection<VirtualFile> libraryFiles = new HashSet<>();
             Collections.addAll(libraryFiles, enumerator.getClassesRoots());
             Collections.addAll(libraryFiles, enumerator.getSourceRoots());
             final Processor<VirtualFile> adapter = virtualFile1 -> iterator.processFile(virtualFile1);
@@ -205,6 +189,7 @@ public final class SearchScope {
         }
 
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+      }
     }
   }
 
@@ -220,9 +205,9 @@ public final class SearchScope {
     SearchScope scope = (SearchScope)o;
     return myRecursive == scope.myRecursive &&
            Comparing.equal(myCustomScope, scope.myCustomScope) &&
-           Comparing.equal(myModuleName, scope.myModuleName) &&
-           Comparing.equal(myPath, scope.myPath) &&
-           Comparing.equal(myScopeName, scope.myScopeName) &&
+           Objects.equals(myModuleName, scope.myModuleName) &&
+           Objects.equals(myPath, scope.myPath) &&
+           Objects.equals(myScopeName, scope.myScopeName) &&
            myScopeType == scope.myScopeType;
   }
 
@@ -237,13 +222,12 @@ public final class SearchScope {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile findFile(String dirName) {
-    return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
+  private static @Nullable VirtualFile findFile(String dirName) {
+    return StandardFileSystems.local().findFileByPath(dirName.replace('\\', '/'));
   }
 
-  private static void iterateRecursively(VirtualFile virtualFile, final Processor<VirtualFile> processor, boolean recursive) {
-    VfsUtilCore.visitChildrenRecursively(virtualFile, new VirtualFileVisitor(recursive ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
+  private static void iterateRecursively(VirtualFile virtualFile, final Processor<? super VirtualFile> processor, boolean recursive) {
+    VfsUtilCore.visitChildrenRecursively(virtualFile, new VirtualFileVisitor<Void>(recursive ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {
@@ -255,16 +239,16 @@ public final class SearchScope {
   }
 
   private static class MyFileIterator implements ContentIterator {
-    private final Processor<VirtualFile> myProcessor;
-    private final Condition<VirtualFile> myCondition;
+    private final Processor<? super VirtualFile> myProcessor;
+    private final Condition<? super VirtualFile> myCondition;
 
-    public MyFileIterator(Processor<VirtualFile> processor, Condition<VirtualFile> condition) {
+    MyFileIterator(Processor<? super VirtualFile> processor, Condition<? super VirtualFile> condition) {
       myCondition = condition;
       myProcessor = processor;
     }
 
     @Override
-    public boolean processFile(VirtualFile fileOrDir) {
+    public boolean processFile(@NotNull VirtualFile fileOrDir) {
       if (!fileOrDir.isDirectory() && myCondition.value(fileOrDir)) {
         myProcessor.process(fileOrDir);
       }

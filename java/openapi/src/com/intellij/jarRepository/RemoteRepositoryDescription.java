@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class RemoteRepositoryDescription {
+public final class RemoteRepositoryDescription {
   public static final RemoteRepositoryDescription MAVEN_CENTRAL = new RemoteRepositoryDescription(
     "central",
     "Maven Central repository",
@@ -34,56 +22,63 @@ public class RemoteRepositoryDescription {
     "JBoss Community repository",
     "https://repository.jboss.org/nexus/content/repositories/public/"
   );
-  public static final List<RemoteRepositoryDescription> DEFAULT_REPOSITORIES = Arrays.asList(
+  public static final List<RemoteRepositoryDescription> DEFAULT_REPOSITORIES = List.of(
     MAVEN_CENTRAL, JBOSS_COMMUNITY
   );
 
-  private final String myId;
-  private final String myName;
-  private final String myUrl;
+  private final @NotNull String myId;
+  private final @NotNull String myName;
+  private final @NlsSafe @NotNull String myUrl;
+  private final boolean myAllowSnapshots;
 
-  public RemoteRepositoryDescription(@NotNull String id, @NotNull String name, @NotNull String url) {
+  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NlsSafe @NotNull String url) {
+    this(id, name, url, true);
+  }
+
+  public RemoteRepositoryDescription(@NotNull String id,
+                                     @NotNull String name,
+                                     @NlsSafe @NotNull String url,
+                                     boolean allowSnapshots) {
     myId = id;
     myName = name;
     myUrl = url;
+    myAllowSnapshots = allowSnapshots;
   }
 
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  public String getUrl() {
+  public @NlsSafe @NotNull String getUrl() {
     return myUrl;
+  }
+
+  public boolean isAllowSnapshots() {
+    return myAllowSnapshots;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     RemoteRepositoryDescription that = (RemoteRepositoryDescription)o;
-
-    if (!myId.equals(that.myId)) return false;
-    if (!myName.equals(that.myName)) return false;
-    if (!myUrl.equals(that.myUrl)) return false;
-
-    return true;
+    return myAllowSnapshots == that.myAllowSnapshots &&
+           myId.equals(that.myId) &&
+           myName.equals(that.myName) &&
+           myUrl.equals(that.myUrl);
   }
 
   @Override
   public int hashCode() {
-    int result = myId.hashCode();
-    result = 31 * result + myName.hashCode();
-    result = 31 * result + myUrl.hashCode();
-    return result;
+    return Objects.hash(myId, myName, myUrl, myAllowSnapshots);
   }
 
   @Override
   public String toString() {
-    return myId + ":" + myName + ":" + myUrl;
+    return myId + ":" + myName + ":" + myUrl + " (snapshots=" + myAllowSnapshots + ")";
   }
 }

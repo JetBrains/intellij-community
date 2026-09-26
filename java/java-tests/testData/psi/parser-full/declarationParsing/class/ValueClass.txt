@@ -1,0 +1,109 @@
+PsiJavaFile:ValueClass.java
+  PsiImportList
+    <empty list>
+  PsiClass:One
+    PsiModifierList:value
+      PsiKeyword:value('value')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:One('One')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n\n  ')
+    PsiClass:Two
+      PsiModifierList:value
+        PsiKeyword:value('value')
+      PsiWhiteSpace(' ')
+      PsiKeyword:class('class')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:Two('Two')
+      PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace('\n    ')
+      PsiClass:Three
+        PsiModifierList:value
+          PsiKeyword:value('value')
+        PsiWhiteSpace(' ')
+        PsiKeyword:class('class')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:Three('Three')
+        PsiTypeParameterList
+          <empty list>
+        PsiReferenceList
+          <empty list>
+        PsiReferenceList
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiJavaToken:LBRACE('{')
+        PsiJavaToken:RBRACE('}')
+      PsiWhiteSpace('\n  ')
+      PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n')
+  PsiClass:I
+    PsiModifierList:value
+      PsiKeyword:value('value')
+    PsiWhiteSpace(' ')
+    PsiKeyword:interface('interface')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:I('I')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n')
+  PsiClass:R
+    PsiModifierList:value
+      PsiKeyword:value('value')
+    PsiWhiteSpace(' ')
+    PsiKeyword:record('record')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:R('R')
+    PsiTypeParameterList
+      <empty list>
+    PsiRecordHeader
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n')
+  PsiClass:E
+    PsiModifierList:value
+      PsiKeyword:value('value')
+    PsiWhiteSpace(' ')
+    PsiKeyword:enum('enum')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:E('E')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

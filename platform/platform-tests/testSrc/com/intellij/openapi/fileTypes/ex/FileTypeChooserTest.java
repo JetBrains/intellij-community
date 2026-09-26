@@ -15,18 +15,14 @@
  */
 package com.intellij.openapi.fileTypes.ex;
 
-import org.junit.Test;
+import com.intellij.testFramework.LightPlatformTestCase;
 
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+public class FileTypeChooserTest extends LightPlatformTestCase {
 
-/**
- * @author Nikolay Matveev
- */
-public class FileTypeChooserTest {
-  @Test
   public void testSuggestPatterns() {
-    assertSameElements(FileTypeChooser.suggestPatterns("a"), "a");
-    assertSameElements(FileTypeChooser.suggestPatterns("a.b"), "a.b", "*.b");
-    assertSameElements(FileTypeChooser.suggestPatterns("a.b.c"), "a.b.c", "*.c", "*.b.c");
+    assertOrderedEquals(FileTypeChooser.suggestPatterns("a"), "a");
+    assertOrderedEquals(FileTypeChooser.suggestPatterns("a.b"), "*.b", "a.b");
+    assertOrderedEquals(FileTypeChooser.suggestPatterns("a.b.y"), "*.y", "*.b.y", "a.b.y");
+    assertOrderedEquals(FileTypeChooser.suggestPatterns("a.txt"), "a.txt", "*.txt");
   }
 }

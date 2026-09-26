@@ -1,36 +1,28 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.AbstractElementManipulator;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
-public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
+public final class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   @Override
   public PsiLiteralExpression handleContentChange(@NotNull PsiLiteralExpression expr, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = expr.getText();
-    if (oldText.startsWith("\"")) {
+    if (expr.isTextBlock()) {
+      newContent = escapeTextBlockContent(newContent);
+    }
+    else if (oldText.startsWith("\"")) {
       newContent = StringUtil.escapeStringCharacters(newContent);
     }
     else if (oldText.startsWith("'") && newContent.length() <= 1) {
@@ -41,38 +33,47 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     }
 
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
-    final PsiExpression newExpr = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(newText, null);
+    final PsiExpression newExpr = JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText(newText, null);
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
 
-  @NotNull
+  private static @NotNull String escapeTextBlockContent(@NotNull String content) {
+    String[] lines = PsiLiteralUtil.escapeTextBlockCharacters(content, false, true, false).split("(?<=\n)");
+    int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
+    if (indent != 0 && lines.length > 0 && !lines[lines.length - 1].endsWith("\n")) {
+      // append \ + newline at the end of the last line, so we can use closing """ to indent;
+      lines[lines.length - 1] += "\\\n";
+    }
+    for (int i = 0; i < lines.length - 1; i++) {
+      String line = lines[i];
+      if (line.endsWith("\\\n") && lines[i + 1].equals("\n")) {
+        lines[i] = line.substring(0, line.length() - 2); // normalize strings with leading newlines
+      }
+    }
+    String result = StringUtil.join(lines);
+    if (result.endsWith(" ")) {
+      result = result.substring(0, result.length() - 1) + "\\s";
+    }
+    return result;
+  }
+
   @Override
-  public TextRange getRangeInElement(@NotNull final PsiLiteralExpression element) {
+  public @NotNull TextRange getRangeInElement(final @NotNull PsiLiteralExpression element) {
     return getValueRange(element);
   }
 
-  @NotNull
-  public static TextRange getValueRange(@NotNull PsiLiteralExpression element) {
-    int length = element.getTextLength();
-    boolean isQuoted;
-    if (element instanceof PsiLiteralExpressionImpl) {
-      // avoid calling getValue(): it allocates new string, it returns null for invalid escapes
-      IElementType type = ((PsiLiteralExpressionImpl)element).getLiteralElementType();
-      if (type == JavaTokenType.RAW_STRING_LITERAL) {
-        String text = ((PsiLiteralExpressionImpl)element).getNode().getText();
-
-        int leadingSeq = PsiRawStringLiteralUtil.getLeadingTicksSequence(text);
-        int trailingSeq = PsiRawStringLiteralUtil.getTrailingTicksSequence(text);
-
-        return length >= leadingSeq + trailingSeq ? TextRange.from(leadingSeq, length - trailingSeq - leadingSeq) : TextRange.from(0, length);
-      }
-
-      isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;
+  public static @NotNull TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
+    if (expression instanceof PsiLanguageInjectionHost) {
+      return ((PsiLanguageInjectionHost)expression).createLiteralTextEscaper().getRelevantTextRange();
     }
-    else {
-      final Object value = element.getValue();
-      isQuoted = value instanceof String || value instanceof Character;
+    // Normally, we go to the previous branch. Probably third-party implementations or ClsLiteralExpressionImpl may reach here
+    if (expression.isTextBlock()) {
+      throw new UnsupportedOperationException();
     }
+    // avoid calling PsiLiteralExpression.getValue(): it allocates new string, it returns null for invalid escapes
+    int length = expression.getTextLength();
+    final PsiType type = expression.getType();
+    boolean isQuoted = PsiTypes.charType().equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
   }
 }

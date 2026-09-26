@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
@@ -24,13 +6,12 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiMatchers {
+public final class PsiMatchers {
 
   private PsiMatchers() {
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasName(@NotNull final String name) {
+  public static @NotNull PsiMatcherExpression hasName(final @NotNull String name) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -40,8 +21,7 @@ public class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasText(@NotNull final String text) {
+  public static @NotNull PsiMatcherExpression hasText(final @NotNull String text) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -51,8 +31,7 @@ public class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasText(@NotNull final String... texts) {
+  public static @NotNull PsiMatcherExpression hasText(final String @NotNull ... texts) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -62,8 +41,7 @@ public class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasClass(@NotNull final Class<?> aClass) {
+  public static @NotNull PsiMatcherExpression hasClass(final @NotNull Class<?> aClass) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -73,8 +51,7 @@ public class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasClass(@NotNull final Class... classes) {
+  public static @NotNull PsiMatcherExpression hasClass(final Class<?> @NotNull ... classes) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {

@@ -1,101 +1,113 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.SVGLoader
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.ui.svg.getSvgDocumentSize
 import java.awt.Dimension
-import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.File
-import java.math.BigInteger
-import java.security.MessageDigest
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.imageio.ImageIO
+import javax.imageio.stream.MemoryCacheImageInputStream
 
-internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
+internal val File.children: List<File>
+  get() = if (isDirectory) listFiles()?.toList() ?: emptyList() else emptyList()
 
-internal fun isImage(file: File, iconsOnly: Boolean): Boolean {
-  if (!isImage(file)) return false
-  return !iconsOnly || isIcon(file)
+internal fun isImage(file: Path, iconsOnly: Boolean): Boolean {
+  return if (iconsOnly) isIcon(file) else isImage(file)
 }
 
-internal fun isIcon(file: File): Boolean {
-  if (!isImage(file)) return false
-  val size = imageSize(file) ?: return false
-  return size.height == size.width || size.height <= 100 && size.width <= 100
-}
+// allow other project path setups to generate Android Icons
+var androidIcons: Path = Path.of(PathManager.getCommunityHomePath(), "android/artwork/resources")
 
-internal fun isImage(file: File) = ImageExtension.fromFile(file) != null
+internal fun isIcon(file: Path): Boolean {
+  val fileName = file.fileName.toString()
+  val extension = ImageExtension.fromName(fileName) ?: return false
 
-internal fun imageSize(file: File): Dimension? {
-  val image = loadImage(file)
-  if (image == null) {
-    println("WARNING: can't load ${file.path}")
-    return null
+  if (extension == ImageExtension.SVG) {
+    return true
   }
-  val width = image.getWidth(null)
-  val height = image.getHeight(null)
-  return Dimension(width, height)
+  if (fileName.startsWith("qodana") || file.startsWith(androidIcons)) {
+    return true
+  }
+
+  val image = try {
+    loadPng(file)
+  }
+  catch (e: Exception) {
+    return false
+  }
+
+  val width = image.width
+  val height = image.height
+  return height == width || height <= 100 && width <= 100
 }
 
-internal fun loadImage(file: File): Image? {
+private fun loadPng(file: Path): BufferedImage {
+  val reader = ImageIO.getImageReadersByFormatName("png").next()
   try {
-    if (file.name.endsWith(".svg")) {
-      return SVGLoader.load(file.toURI().toURL(), 1.0f)
+    Files.newInputStream(file).use { fileInput ->
+      MemoryCacheImageInputStream(fileInput).use { imageInputStream ->
+        reader.setInput(imageInputStream, true, true)
+        return reader.read(0, null)
+      }
     }
-    else {
-      return ImageIO.read(file)
+  }
+  finally {
+    reader.dispose()
+  }
+}
+
+internal fun isImage(file: Path): Boolean = ImageExtension.fromName(file.fileName.toString()) != null
+
+internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimension? {
+  return try {
+    if (file.toString().endsWith(".svg")) {
+      val data = Files.readAllBytes(file)
+      val size = getSvgDocumentSize(data = data)
+      Dimension(size.width.toInt(), size.height.toInt())
+    } else {
+      val image = loadPng(file)
+      val width = image.width
+      val height = image.height
+      Dimension(width, height)
     }
   }
   catch (e: Exception) {
-    e.printStackTrace()
-    return null
+    if (failOnMalformedImage) {
+      throw e
+    }
+    println("WARNING: can't load $file")
+    null
   }
 }
 
-internal fun md5(file: File): String {
-  val md5 = MessageDigest.getInstance("MD5")
-  val bytes = file.inputStream().readBytes()
-  val hash = md5.digest(bytes)
-  return BigInteger(hash).abs().toString(16)
-}
-
 internal enum class ImageType(private val suffix: String) {
-  BASIC(""), RETINA("@2x"), DARCULA("_dark"), RETINA_DARCULA("@2x_dark");
+  BASIC(""), RETINA("@2x"), DARCULA("_dark"), RETINA_DARCULA("@2x_dark"), STROKE("_stroke");
 
   companion object {
-    fun getBasicName(file: File, prefix: List<String>): String {
-      val name = FileUtil.getNameWithoutExtension(file.name)
-      return stripSuffix((prefix + name).joinToString("/"))
+    fun getBasicName(suffix: String, prefix: String): String {
+      return "$prefix/${stripSuffix(FileUtilRt.getNameWithoutExtension(suffix))}"
     }
 
-    fun fromFile(file: File): ImageType {
-      val name = FileUtil.getNameWithoutExtension(file.name)
-      return fromName(name)
+    fun fromFile(file: Path): ImageType {
+      return fromName(FileUtilRt.getNameWithoutExtension(file.fileName.toString()))
     }
 
-    fun fromName(name: String): ImageType {
-      if (name.endsWith(RETINA_DARCULA.suffix)) return RETINA_DARCULA
-      if (name.endsWith(RETINA.suffix)) return RETINA
-      if (name.endsWith(DARCULA.suffix)) return DARCULA
-      return BASIC
+    private fun fromName(name: String): ImageType {
+      return when {
+        name.endsWith(RETINA_DARCULA.suffix) -> RETINA_DARCULA
+        name.endsWith(RETINA.suffix) -> RETINA
+        name.endsWith(DARCULA.suffix) -> DARCULA
+        name.endsWith(STROKE.suffix) -> STROKE
+        else -> BASIC
+      }
     }
 
     fun stripSuffix(name: String): String {
-      val type = fromName(name)
-      return name.removeSuffix(type.suffix)
+      return name.removeSuffix(fromName(name).suffix)
     }
   }
 }
@@ -104,15 +116,15 @@ internal enum class ImageExtension(private val suffix: String) {
   PNG(".png"), SVG(".svg"), GIF(".gif");
 
   companion object {
-    fun fromFile(file: File): ImageExtension? {
-      return fromName(file.name)
-    }
+    fun fromFile(file: Path) = fromName(file.fileName.toString())
 
     fun fromName(name: String): ImageExtension? {
-      if (name.endsWith(PNG.suffix)) return PNG
-      if (name.endsWith(SVG.suffix)) return SVG
-      if (name.endsWith(GIF.suffix)) return GIF
-      return null
+      return when {
+        name.endsWith(PNG.suffix) -> PNG
+        name.endsWith(SVG.suffix) -> SVG
+        name.endsWith(GIF.suffix) -> GIF
+        else -> null
+      }
     }
   }
 }

@@ -1,67 +1,125 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
+import com.intellij.util.system.OS;
+import com.intellij.util.system.WindowsShell;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
-public class GotoDesktopDirAction extends FileChooserAction {
-  private final NullableLazyValue<VirtualFile> myDesktopDirectory = new NullableLazyValue<VirtualFile>() {
-    @Nullable
-    @Override
-    protected VirtualFile compute() {
-      return getDesktopDirectory();
-    }
-  };
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+
+final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
+
+  private final Object NO_ARGS = new Object();
+
+  private static @Nullable Path findDesktopDirectoryPath() {
+    var path = getDesktopDirectory();
+    return Files.isDirectory(path) ? path : null;
+  }
+
+  private final DiskQueryRelay<Object, Path> myDirectoryPathComputation = new DiskQueryRelay<>(
+    (ignored) -> findDesktopDirectoryPath(),
+    ProcessIOExecutorService.INSTANCE
+  );
+
+  private final DiskQueryRelay<Object, VirtualFile> myVfsDirectoryComputation = new DiskQueryRelay<>(
+    (ignored) -> {
+      var path = findDesktopDirectoryPath();
+      return path != null ? VirtualFileManager.getInstance().findFileByNioPath(path) : null;
+    },
+    ProcessIOExecutorService.INSTANCE
+  );
+
+  private final NullableLazyValue<Path> myDesktopPath = lazyNullable(() -> {
+    return myDirectoryPathComputation.accessDiskWithCheckCanceled(NO_ARGS);
+  });
+
+  private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
+    return myVfsDirectoryComputation.accessDiskWithCheckCanceled(NO_ARGS);
+  });
 
   @Override
-  protected void actionPerformed(final FileSystemTree tree, AnActionEvent e) {
-    final VirtualFile dir = myDesktopDirectory.getValue();
+  protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    var path = myDesktopPath.getValue();
+    e.getPresentation().setEnabled(path != null);
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    var path = myDesktopPath.getValue();
+    if (path != null) {
+      panel.load(path);
+    }
+  }
+
+  @Override
+  protected void update(@NotNull FileSystemTree tree, @NotNull AnActionEvent e) {
+    var dir = myDesktopDirectory.getValue();
+    e.getPresentation().setEnabled(dir != null && tree.isUnderRoots(dir));
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull FileSystemTree tree, @NotNull AnActionEvent e) {
+    var dir = myDesktopDirectory.getValue();
     if (dir != null) {
       tree.select(dir, () -> tree.expand(dir, null));
     }
   }
 
-  @Override
-  protected void update(FileSystemTree tree, AnActionEvent e) {
-    VirtualFile dir = myDesktopDirectory.getValue();
-    e.getPresentation().setEnabled(dir != null && tree.isUnderRoots(dir));
-  }
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  static Path getDesktopDirectory() {
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
 
-  @Nullable
-  private static VirtualFile getDesktopDirectory() {
-    File desktop = new File(SystemProperties.getUserHome(), "Desktop");
-
-    if (!desktop.isDirectory() && SystemInfo.hasXdgOpen()) {
-      String path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
+    if (OS.CURRENT == OS.Windows) {
+      var path = WindowsShell.knownFolderPath(WindowsShell.FOLDERID_DESKTOP);
       if (path != null) {
-        desktop = new File(path);
+        return Path.of(path);
+      }
+    }
+    else if (OS.CURRENT == OS.macOS && Foundation.isAvailable()) {
+      var manager = Foundation.invoke(Foundation.getObjcClass("NSFileManager"), "defaultManager");
+      var selector = "URLForDirectory:inDomain:appropriateForURL:create:error:";
+      var url = Foundation.invoke(manager, selector, 12 /*NSDesktopDirectory*/, 1 /*NSUserDomainMask*/, null, false, null);
+      var path = Foundation.toStringViaUTF8(Foundation.invoke(url, "path"));
+      if (path != null) {
+        return Path.of(path);
+      }
+    }
+    else if (OS.isGenericUnix() && PathEnvironmentVariableUtil.isOnPath("xdg-user-dir")) {
+      var path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
+      if (path != null && !path.isBlank()) {
+        try {
+          return Path.of(path);
+        }
+        catch (InvalidPathException e) {
+          Logger.getInstance(GotoDesktopDirAction.class).error("str='" + path + "' JNU=" + System.getProperty("sun.jnu.encoding"), e);
+        }
       }
     }
 
-    return desktop.isDirectory() ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(desktop) : null;
+    return Path.of(SystemProperties.getUserHome(), "Desktop");
   }
 }

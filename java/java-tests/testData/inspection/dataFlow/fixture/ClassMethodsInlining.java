@@ -8,6 +8,12 @@ class ClassMethodsInlining {
     }
   }
 
+  void instanceBoxingTest() {
+    if (<warning descr="Condition 'Integer.class.isInstance(1)' is always 'true'">Integer.class.isInstance(1)</warning>) {
+
+    }
+  }
+
   void instanceTest(Class<?> c, Object o) {
     if(c.isInstance(o)) {
       System.out.println(o.hashCode());
@@ -93,5 +99,11 @@ class ClassMethodsInlining {
     if(<warning descr="Condition 'o instanceof String' is redundant and can be replaced with a null check">o instanceof String</warning>) {
       System.out.println("String");
     }
+  }
+
+  // IDEA-224224
+  public static <T> T tryCastAssert (@Nullable Object reference, Class<T> refType) {
+    if(refType.isInstance(reference)) return (T) reference;
+    throw new AssertionError("smth" + refType + "but" + reference.<warning descr="Method invocation 'getClass' may produce 'NullPointerException'">getClass</warning>() + "wasgiven");
   }
 }

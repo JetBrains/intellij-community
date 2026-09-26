@@ -1,0 +1,36 @@
+<html>
+<body>
+<p>
+  Reports a class that inherits from two base classes with incompatible
+  <a href="https://peps.python.org/pep-0800/">disjoint bases (PEP 800)</a>.
+</p>
+<p>
+  A class is a <em>disjoint base</em> when it carries the
+  <code>@typing.disjoint_base</code> decorator or has a non-empty
+  <code>__slots__</code> attribute (including dataclasses created with
+  <code>slots=True</code>). Many built-in types — <code>int</code>,
+  <code>str</code>, <code>float</code>, <code>tuple</code>, <code>list</code>,
+  <code>dict</code>, and others — are disjoint bases.
+</p>
+<p>
+  If two classes each trace back to a different, unrelated disjoint base,
+  they cannot share a common subclass — Python raises a
+  <code>TypeError</code> at runtime due to incompatible memory layouts.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+class A:
+    __slots__ = ('x',)
+
+class B:
+    __slots__ = ('y',)
+
+class C(A, B):  # error: A and B have incompatible disjoint bases
+    pass
+</code></pre>
+<p>
+  Classes that share a common disjoint base ancestor (e.g., two subclasses
+  of the same slotted class) are not flagged.
+</p>
+</body>
+</html>

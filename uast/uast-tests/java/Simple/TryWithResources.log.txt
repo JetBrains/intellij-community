@@ -1,4 +1,6 @@
 UFile (package = )
+    UImportStatement (isOnDemand = false)
+    UImportStatement (isOnDemand = false)
     UClass (name = TryWithResources)
         UMethod (name = foo)
             UBlockExpression
@@ -9,6 +11,17 @@ UFile (package = )
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                 USimpleNameReferenceExpression (identifier = FileReader)
                                 USimpleNameReferenceExpression (identifier = path)
+                    UBlockExpression
+                        UReturnExpression
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = br)
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                    UIdentifier (Identifier (readLine))
+        UMethod (name = foo)
+            UParameter (name = br)
+            UBlockExpression
+                UTryExpression (with resources)
+                    USimpleNameReferenceExpression (identifier = br)
                     UBlockExpression
                         UReturnExpression
                             UQualifiedReferenceExpression

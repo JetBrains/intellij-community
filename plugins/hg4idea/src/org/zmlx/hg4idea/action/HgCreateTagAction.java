@@ -12,9 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.command.HgTagCreateCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -25,12 +27,15 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.TAG_CREATION_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.TAG_CREATION_FAILED;
+
 public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
 
-  public void execute(@NotNull final Project project,
+  public void execute(final @NotNull Project project,
                       @NotNull Collection<HgRepository> repositories,
                       @Nullable HgRepository selectedRepo,
-                      @Nullable final String reference) {
+                      final @Nullable String reference) {
     final HgTagDialog dialog = new HgTagDialog(project, repositories, selectedRepo);
     if (dialog.showAndGet()) {
       try {
@@ -39,20 +44,24 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(project)
-                .notifyError(result, "Creation failed", "Tag creation [" + dialog.getTagName() + "] failed");
+                .notifyError(TAG_CREATION_ERROR,
+                             result,
+                             HgBundle.message("hg4idea.branch.creation.error"),
+                             HgBundle.message("action.hg4idea.CreateTag.error.msg", dialog.getTagName()));
             }
           }
         });
       }
       catch (HgCommandException e) {
-        HgErrorUtil.handleException(project, e);
+        HgErrorUtil.handleException(project, TAG_CREATION_FAILED, e);
       }
     }
   }
 
-  protected void execute(@NotNull final Project project,
+  @Override
+  protected void execute(final @NotNull Project project,
                          @NotNull Collection<HgRepository> repositories,
-                         @Nullable HgRepository selectedRepo) {
-    execute(project, repositories, selectedRepo, null);
+                         @Nullable HgRepository selectedRepo, @NotNull DataContext dataContext) {
+    execute(project, repositories, selectedRepo, "");
   }
 }
