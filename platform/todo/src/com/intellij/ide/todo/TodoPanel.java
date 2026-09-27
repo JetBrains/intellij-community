@@ -82,9 +82,12 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.BorderLayout;
 
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+
 public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, Disposable {
 
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
+  private static final String TODO_EDIT_SOURCE_ACTION_ID = "TodoViewEditSource";
 
   protected final @NotNull TodoView myTodoView;
   protected final @NotNull Project myProject;
@@ -286,7 +289,12 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    if (shouldUseSplitTodo()) {
+      group.add(ActionManager.getInstance().getAction(TODO_EDIT_SOURCE_ACTION_ID));
+    }
+    else {
+      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    }
     group.addSeparator();
     group.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));

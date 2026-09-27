@@ -1949,6 +1949,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/threadDumpParser/intellij.platform.threadDumpParser.tests.iml" filepath="$PROJECT_DIR$/platform/threadDumpParser/intellij.platform.threadDumpParser.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/todo/intellij.platform.todo.iml" filepath="$PROJECT_DIR$/platform/todo/intellij.platform.todo.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/todo/backend/intellij.platform.todo.backend.iml" filepath="$PROJECT_DIR$/platform/todo/backend/intellij.platform.todo.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/todo/frontend/intellij.platform.todo.frontend.iml" filepath="$PROJECT_DIR$/platform/todo/frontend/intellij.platform.todo.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/todo/plugin/intellij.platform.todo.plugin.iml" filepath="$PROJECT_DIR$/platform/todo/plugin/intellij.platform.todo.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tracing-ide/intellij.platform.tracing.ide.iml" filepath="$PROJECT_DIR$/platform/tracing-ide/intellij.platform.tracing.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/tracing/intellij.platform.tracing.rt.iml" filepath="$PROJECT_DIR$/platform/tracing/intellij.platform.tracing.rt.iml" />

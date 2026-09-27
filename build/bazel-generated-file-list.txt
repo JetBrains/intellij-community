@@ -1087,6 +1087,7 @@ platform/testRunner/plugin
 platform/threadDumpParser
 platform/todo
 platform/todo/backend
+platform/todo/frontend
 platform/todo/plugin
 platform/tracing
 platform/tracing-ide

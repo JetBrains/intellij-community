@@ -109,7 +109,10 @@ a:com.intellij.ide.todo.nodes.BaseToDoNode
 - a:getFileCount(java.lang.Object):I
 - a:getTodoItemCount(java.lang.Object):I
 com.intellij.ide.todo.nodes.LeafTodoItemNode
+- com.intellij.ide.todo.HighlightedRegionProvider
 - a:createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- a:getAdditionalLines():java.util.List
+- a:getIcon():javax.swing.Icon
 - a:getNavigationOffset():I
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 f:com.intellij.ide.todo.nodes.ModuleToDoNode

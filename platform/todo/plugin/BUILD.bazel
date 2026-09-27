@@ -8,6 +8,7 @@ dev_dist_plugin(
         # do not sort,
         "intellij.platform.todo",
         "intellij.platform.todo.backend",
+        "intellij.platform.todo.frontend",
         "intellij.platform.vcs.impl.lang.todo",
         "intellij.platform.vcs.impl.lang.todo.frontend",
     ],
@@ -15,6 +16,7 @@ dev_dist_plugin(
     descriptor_modules = [
         "intellij.platform.todo",
         "intellij.platform.todo.backend",
+        "intellij.platform.todo.frontend",
         "intellij.platform.vcs.impl.lang.todo",
         "intellij.platform.vcs.impl.lang.todo.frontend",
     ],
@@ -65,6 +67,7 @@ ij_plugin(
         # do not sort,
         "//platform/todo",
         "//platform/todo/backend",
+        "//platform/todo/frontend",
         "//platform/vcs-impl/lang/todo",
         "//platform/vcs-impl/lang/todo/frontend",
     ],
