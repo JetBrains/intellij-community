@@ -241,10 +241,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         parameters.insert(1, ("--source", source, "formatted"))
     else:
         parameters.insert(1, ("--source-in-jar", ctx.attr.descriptor_entry + "=" + source_jar.path, "literal"))
-    if ctx.attr.directory_name:
-        parameters.append(("--directory-name", ctx.attr.directory_name, "formatted"))
-    if ctx.attr.main_jar_name:
-        parameters.append(("--main-jar-name", ctx.attr.main_jar_name, "formatted"))
     stamps = _os_arch_stamps(ctx, product)
     if stamps.version_suffix:
         parameters.append(("--version-suffix", stamps.version_suffix, "formatted"))
@@ -704,8 +700,6 @@ port is field for field and a scope is what the platform's own resolver takes.""
         ),
         "exact_version": attr.bool(doc = "`PluginLayout.pluginCompatibilityExactVersion`."),
         "retain_product_descriptor": attr.bool(doc = "`PluginLayout.retainProductDescriptorForBundledPlugin`."),
-        "directory_name": attr.string(doc = "The plugin directory, when the layout does not take the derived one."),
-        "main_jar_name": attr.string(doc = "The main jar, when the layout does not take the derived one."),
         "_build_number_file": attr.label(
             allow_single_file = True,
             default = Label("@community//:build.txt"),

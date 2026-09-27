@@ -27,7 +27,6 @@ dev_dist_plugin(
         "lib/jps/java-guiForms-jps.jar": ["intellij.java.guiForms.jps"],
         "lib/uiDesigner.jar": ["intellij.java.guiForms.designer"],
     },
-    main_jar_name = "uiDesigner.jar",
     main_module = "intellij.java.guiForms.designer",
 )
 ### auto-generated section `dev intellij.java.guiForms.designer` end

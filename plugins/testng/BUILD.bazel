@@ -31,7 +31,6 @@ dev_dist_plugin(
         "lib/testng-rt.jar": ["intellij.testng.rt"],
         "lib/testng-plugin.jar": ["intellij.testng"],
     },
-    main_jar_name = "testng-plugin.jar",
     main_module = "intellij.testng",
 )
 ### auto-generated section `dev intellij.testng` end

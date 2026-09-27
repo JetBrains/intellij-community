@@ -206,7 +206,6 @@ dev_dist_plugin(
         "intellij.python.venv.frontend",
     ],
     directory_name = "python-ce",
-    main_jar_name = "python-ce.jar",
     main_module = "intellij.python.community.plugin",
     mode_refused_content_modules = {
         "frontend": [

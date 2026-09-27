@@ -63,6 +63,7 @@ def dev_dist_plugin(
         files = {},
         file_prefixes = {},
         executable_files = [],
+        directory_name = "",
         **descriptor_attrs):
     """Declare plugin modules and derive their build targets.
 
@@ -100,6 +101,8 @@ def dev_dist_plugin(
             other `frontend_` labels by the plugin that packs the JetBrains Client, and empty for every other plugin.
         frontend_product_application_info: The application info of the product the frontend takes its names and version from.
         frontend_build_number: The build number file the frontend build number is stamped from.
+        directory_name: The plugin directory, when the layout does not take the derived one. Only the packed component
+            reads it.
         **descriptor_attrs: Other descriptor attributes. Shared leaf attributes are refused.
     """
     if not main_module or type(module_targets) != "dict":
@@ -195,7 +198,7 @@ def dev_dist_plugin(
             name = dev_dist_plugin_component_target_name(main_module),
             main_module = main_module,
             descriptor = ":" + dev_dist_plugin_descriptor_target_name(main_module),
-            plugin_directory = dev_dist_plugin_directory(main_module, descriptor_attrs.get("directory_name", "")),
+            plugin_directory = dev_dist_plugin_directory(main_module, directory_name),
             modules = packed_modules,
             libraries = packed_libraries,
             content_module_jars = content_module_jars,

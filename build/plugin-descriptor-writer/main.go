@@ -61,8 +61,6 @@ func main() {
 type request struct {
 	output          string
 	mainModule      string
-	directoryName   string
-	mainJarName     string
 	source          string
 	sourceEntry     string
 	buildNumberFile string
@@ -386,11 +384,6 @@ func parseRequest(lines []string) (request, error) {
 			parsed.output = value
 		case "--main-module":
 			parsed.mainModule = value
-		case "--directory-name":
-			// This binary reads the value and writes it nowhere.
-			parsed.directoryName = value
-		case "--main-jar-name":
-			parsed.mainJarName = value
 		case "--source":
 			if parsed.source != "" {
 				err = fmt.Errorf("the descriptor source is declared more than once")

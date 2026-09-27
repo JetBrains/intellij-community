@@ -44,8 +44,6 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 	code := run([]string{"--flagfile=" + requestFile(t, dir,
 		"--out="+output,
 		"--main-module=intellij.example",
-		"--directory-name=example",
-		"--main-jar-name=example.jar",
 		"--source="+source,
 		"--build-number-file="+buildNumberFile(t, dir, "263.SNAPSHOT"),
 		"--release-date=20260101",
