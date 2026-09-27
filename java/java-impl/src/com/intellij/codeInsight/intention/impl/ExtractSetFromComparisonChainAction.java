@@ -93,7 +93,10 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       return ModCommand.chooseAction(JavaBundle.message("intention.extract.set.from.comparison.chain.popup.title"),
                                      new ExtractSetFromComparisonChainAction(false), new ExtractSetFromComparisonChainAction(true));
     }
-    LinkedHashSet<String> suggestions = getSuggestions(comparisons);
+    PsiElement brace = containingClass.getLBrace();
+    assert brace != null;
+    PsiElement place = brace.getNextSibling();
+    List<String> suggestions = getSuggestions(comparisons, place);
 
     return ModCommand.psiUpdate(containingClass, (cls, updater) -> {
       Project project = cls.getProject();
@@ -197,7 +200,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
     return JavaBundle.message("intention.extract.set.from.comparison.chain.family");
   }
 
-  private static @NotNull LinkedHashSet<String> getSuggestions(List<ExpressionToConstantComparison> comparisons) {
+  private static @NotNull List<String> getSuggestions(List<ExpressionToConstantComparison> comparisons, PsiElement place) {
     PsiExpression stringExpression = comparisons.getFirst().myExpression;
     Project project = stringExpression.getProject();
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
@@ -216,10 +219,15 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       .limit(5)
       .map(StringUtil::pluralize)
       .forEach(suggestions::add);
-    if(comparisons.getFirst().myType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+    if (comparisons.getFirst().myType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       suggestions.add("STRINGS");
     }
-    return suggestions;
+    List<String> result = new ArrayList<>();
+    for (String suggestion : suggestions) {
+      String uniqueName = manager.suggestUniqueVariableName(suggestion, place, true);
+      result.add(uniqueName);
+    }
+    return result;
   }
 
   private static StreamEx<ExpressionToConstantComparison> comparisons(PsiElement element) {
