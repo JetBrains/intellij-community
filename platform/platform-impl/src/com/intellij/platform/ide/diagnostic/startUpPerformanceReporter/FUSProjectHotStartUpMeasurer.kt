@@ -189,11 +189,12 @@ object FUSProjectHotStartUpMeasurer {
    */
   private fun isRemDevTestWorkaround(): Boolean = PlatformUtils.isJetBrainsClient() && ApplicationManagerEx.isInIntegrationTest()
 
-  fun getStartUpContextElementIntoIdeStarter(closeExternal: Boolean): CoroutineContext.Element? {
-    val close = closeExternal || !isReopenAndWelcomeScreenStatEnabled()
+  fun getStartUpContextElementIntoIdeStarter(close: Boolean): CoroutineContext.Element? {
+    val close = close || !isReopenAndWelcomeScreenStatEnabled()
     if (close) {
       statsIsWritten = true
       channel.close()
+      WelcomeScreenCollector.shouldNotStart()
       return null
     }
     channel.trySend(Event.IdeStarterStartedEvent)
@@ -262,6 +263,16 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.WelcomeScreenEvent())
   }
 
+  fun reportModalWelcomeScreenBecameVisible() {
+    WelcomeScreenCollector.modalWelcomeScreenBecameVisible()
+  }
+
+  fun reportNonModalWelcomeScreenShown() {
+    withRequiredProjectMarker { projectId ->
+      WelcomeScreenCollector.nonModalWelcomeScreenBecameVisible(projectId)
+    }
+  }
+
   fun reportReopeningProjects(openPaths: List<Path>) {
     if (!currentThreadContext().isProperContext()) return
     val size = openPaths.size
@@ -296,7 +307,8 @@ object FUSProjectHotStartUpMeasurer {
       return block.invoke()
     }
 
-    if (projectFile == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath()) {
+    val isWelcomeScreenProject = projectFile == WelcomeScreenProjectProvider.getWelcomeScreenProjectPath()
+    if (isWelcomeScreenProject) {
       reportWelcomeScreenIsGoingToBeShown()
     }
 
@@ -309,6 +321,7 @@ object FUSProjectHotStartUpMeasurer {
 
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
     channel.trySend(Event.ProjectPathReportEvent(projectId, hasSettings))
+    WelcomeScreenCollector.projectIsOpening(projectId, isWelcomeScreenProject)
     return withContext(MyProjectMarker(projectId)) {
       block.invoke()
     }
@@ -352,18 +365,20 @@ object FUSProjectHotStartUpMeasurer {
 
   fun reportStarterUsed() {
     reportViolation(Violation.ApplicationStarter)
-    WelcomeScreenCollector.close()
+    WelcomeScreenCollector.shouldNotStart()
   }
 
   fun frameBecameVisible() {
     withRequiredProjectMarker { projectId ->
       channel.trySend(Event.FrameBecameVisibleEvent(projectId))
+      WelcomeScreenCollector.frameBecameVisible(projectId)
     }
   }
 
   fun reportFrameBecameInteractive() {
     withRequiredProjectMarker { projectId ->
       channel.trySend(Event.FrameBecameInteractiveEvent(projectId))
+      WelcomeScreenCollector.frameBecameInteractive(projectId)
     }
   }
 

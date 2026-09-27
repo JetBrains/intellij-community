@@ -60,6 +60,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.safeToolWindowPaneId
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.InternalDecoratorImpl
@@ -115,6 +116,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JRootPane
+import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG = logger<ToolWindowManagerImpl>()
 private val performShowInSeparateTask = System.getProperty("idea.toolwindow.show.separate.task", "false").toBoolean()
@@ -1485,7 +1487,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
-      coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.nonModal().asContextElement()) {
+      val startUpContextElement = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
+      coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.nonModal().asContextElement() + startUpContextElement) {
         runnable.run()
       }
     }

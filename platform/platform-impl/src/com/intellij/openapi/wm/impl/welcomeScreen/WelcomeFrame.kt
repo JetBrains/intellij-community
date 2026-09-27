@@ -186,6 +186,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
         hideSplashBeforeShow(jFrame)
         jFrame.isVisible = true
         FUSProjectHotStartUpMeasurer.reportWelcomeScreenIsGoingToBeShown()
+        FUSProjectHotStartUpMeasurer.reportModalWelcomeScreenBecameVisible()
         installAppMenuIfNeeded(jFrame)
         instance = frame
         if (SystemInfoRt.isMac) {

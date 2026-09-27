@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
@@ -31,8 +32,12 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -87,7 +92,6 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
   }
 
   override fun createComponent(): JComponent {
-
     val mainPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
       border = JBUI.Borders.empty()
     }
@@ -99,7 +103,10 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       border = JBUI.Borders.empty()
     }
-    topPanel.add(WelcomeScreenLeftPanelActions(project).createButtonsComponent(scope))
+    val actionsComponent = WelcomeScreenLeftPanelActions(project).createButtonsComponent(scope)
+    reportNonModalWelcomeScreenWhenShown(actionsComponent)
+
+    topPanel.add(actionsComponent)
     topPanel.add(separator { customize(UnscaledGapsY(top = 17)) })
     topPanel.add(searchPanel(projectFilteringTree))
     topPanel.add(separator())
@@ -109,6 +116,26 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
                   BorderLayout.CENTER)
 
     return mainPanel
+  }
+
+  private fun reportNonModalWelcomeScreenWhenShown(component: JComponent) {
+    if (component.isShowing) {
+      FUSProjectHotStartUpMeasurer.reportNonModalWelcomeScreenShown()
+      return
+    }
+
+    val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: return
+    component.addHierarchyListener(object : HierarchyListener {
+      override fun hierarchyChanged(e: HierarchyEvent) {
+        if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) == 0L || !component.isShowing) {
+          return
+        }
+        component.removeHierarchyListener(this)
+        scope.launch(Dispatchers.IO + startUpContextElementToPass) {
+          FUSProjectHotStartUpMeasurer.reportNonModalWelcomeScreenShown()
+        }
+      }
+    })
   }
 
   override fun getComponentToFocus(): JComponent? {
