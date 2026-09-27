@@ -111,5 +111,19 @@ internal class BranchesDashboardTreeController(
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = selectedRepositories
       sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepositories.singleOrNull()
     }
+
+    /**
+     * Hides the keys of [snapshotSelectionActionsKeys] from the parent components.
+     * Use it in a component that is not the tree, but shares a data provider with the tree.
+     */
+    internal fun hideSelectionActionsKeys(sink: DataSink) {
+      sink.setNull(BRANCHES_UI_CONTROLLER)
+      sink.setNull(GIT_BRANCHES_TREE_SELECTION)
+      sink.setNull(SELECTED_ITEMS)
+      sink.setNull(GitBranchActionsDataKeys.USE_CURRENT_BRANCH)
+      sink.setNull(GitSingleRefActions.SELECTED_REF_DATA_KEY)
+      sink.setNull(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES)
+      sink.setNull(GitBranchActionsDataKeys.SELECTED_REPOSITORY)
+    }
   }
 }
