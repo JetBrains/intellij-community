@@ -1228,7 +1228,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val image = addPng(2, 2)
     configureProjectFile("![alt](image.png)\n\ntail")
     waitForImageInlay()
-    Registry.get("markdown.live.preview.image.max.bytes").setValue(1, testRootDisposable)
+    Registry.get("markdown.live.preview.image.max.megabytes").setValue(0, testRootDisposable)
 
     ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(3, 3)) }
 
@@ -1240,7 +1240,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val image = addPng(2, 2)
     configureProjectFile("![alt](image.png)\n\ntail")
     waitForImageInlay()
-    Registry.get("markdown.live.preview.image.max.pixels").setValue(1, testRootDisposable)
+    Registry.get("markdown.live.preview.image.max.megapixels").setValue(0, testRootDisposable)
 
     ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(3, 3)) }
 

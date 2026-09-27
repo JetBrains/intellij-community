@@ -62,15 +62,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
-    <registryKey key="markdown.live.preview.image.max.bytes"
-                 defaultValue="4194304"
-                 description="Maximum image file size in bytes for Markdown live preview."/>
-    <registryKey key="markdown.live.preview.image.max.pixels"
-                 defaultValue="2100000"
-                 description="Maximum image pixel count for Markdown live preview."/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.intellij.markdown">
+    <registryKey key="markdown.live.preview.image.max.megabytes"
+                 defaultValue="4"
+                 description="Maximum image file size in megabytes for Markdown live preview."/>
+    <registryKey key="markdown.live.preview.image.max.megapixels"
+                 defaultValue="4"
+                 description="Maximum image megapixel count for Markdown live preview."/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

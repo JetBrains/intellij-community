@@ -21,6 +21,8 @@ import kotlin.math.roundToInt
 @ApiStatus.Internal
 class LoadedImage(val file: VirtualFile, val width: Int, val height: Int)
 
+private const val SCALE_FACTOR = 1024 * 1024
+
 @ApiStatus.Internal
 object MarkdownImageLoader {
   private val LOG = Logger.getInstance(MarkdownImageLoader::class.java)
@@ -46,7 +48,7 @@ object MarkdownImageLoader {
 
   /** The intrinsic size of [file], or null when it is not an image inside the registry limits. */
   private fun readSize(file: VirtualFile): Pair<Int, Int>? {
-    val maxBytes = Registry.longValue("markdown.live.preview.image.max.bytes")
+    val maxBytes = Registry.intValue("markdown.live.preview.image.max.megabytes") * SCALE_FACTOR
     if (maxBytes < 0 || file.length > maxBytes) return null
 
     val content = file.contentsToByteArray()
@@ -54,7 +56,7 @@ object MarkdownImageLoader {
 
     val isSvg = file.extension.equals("svg", ignoreCase = true)
     val size = (if (isSvg) readSvgSize(content) else readRasterSize(content)) ?: return null
-    val maxPixels = Registry.longValue("markdown.live.preview.image.max.pixels")
+    val maxPixels = Registry.intValue("markdown.live.preview.image.max.megapixels") * SCALE_FACTOR
     return size.takeIf { (width, height) -> width.toDouble() * height <= maxPixels }
   }
 
