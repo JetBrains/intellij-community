@@ -323,6 +323,13 @@ data class ServerCapabilities(
      * Experimental server capabilities.
      */
     val experimental: JsonElement? = null,
+
+    /**
+     * The server provides inline completions.
+     *
+     * @since 3.18.0
+     */
+    val inlineCompletionProvider: OrBoolean<InlineCompletionRegistrationOptions>? = null,
 )
 
 typealias DocumentLinkOptions = Unknown

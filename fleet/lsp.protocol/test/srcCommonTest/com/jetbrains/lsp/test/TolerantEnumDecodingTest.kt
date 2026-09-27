@@ -13,6 +13,7 @@ import com.jetbrains.lsp.protocol.DocumentSymbol
 import com.jetbrains.lsp.protocol.DocumentSymbolClientCapabilities
 import com.jetbrains.lsp.protocol.FileChangeType
 import com.jetbrains.lsp.protocol.InlayHintKind
+import com.jetbrains.lsp.protocol.InlineCompletionTriggerKind
 import com.jetbrains.lsp.protocol.InsertTextFormat
 import com.jetbrains.lsp.protocol.InsertTextMode
 import com.jetbrains.lsp.protocol.LSP
@@ -82,6 +83,7 @@ class TolerantEnumDecodingTest {
       case(InlayHintKind.serializer(), InlayHintKind.Type) { it.value },
       case(SignatureHelpTriggerKind.serializer(), SignatureHelpTriggerKind.Invoked) { it.value },
       case(CodeActionTriggerKind.serializer(), CodeActionTriggerKind.Invoked) { it.value },
+      case(InlineCompletionTriggerKind.serializer(), InlineCompletionTriggerKind.Invoked) { it.value },
       case(PrepareSupportDefaultBehavior.serializer(), PrepareSupportDefaultBehavior.Identifier) { it.value },
       case(TextDocumentSyncKind.serializer(), TextDocumentSyncKind.Full) { it.value },
       case(TextDocumentSaveReason.serializer(), TextDocumentSaveReason.Manual) { it.code },

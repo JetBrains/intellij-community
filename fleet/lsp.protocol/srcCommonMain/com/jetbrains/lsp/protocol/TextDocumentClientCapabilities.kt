@@ -184,6 +184,13 @@ data class TextDocumentClientCapabilities(
      * @since 3.17.0
      */
     val diagnostic: DiagnosticClientCapabilities? = null,
+
+    /**
+     * Capabilities specific to the `textDocument/inlineCompletion` request.
+     *
+     * @since 3.18.0
+     */
+    val inlineCompletion: InlineCompletionClientCapabilities? = null,
 )
 
 @Serializable
@@ -415,6 +422,13 @@ data class DocumentFormattingClientCapabilities(
 @Serializable
 data class DocumentRangeFormattingClientCapabilities(
     val dynamicRegistration: Boolean?,
+
+    /**
+     * Whether the client supports formatting multiple ranges at once.
+     *
+     * @since 3.18.0
+     */
+    val rangesSupport: Boolean? = null,
 )
 
 @Serializable
