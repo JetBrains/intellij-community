@@ -161,7 +161,7 @@ IntellijDevFragmentInfo = provider(
 IntellijDevReferenceInfo = provider(
     doc = "A reference fragment, the second producer of a gate. No distribution composes it.",
     fields = {
-        "name": "The fragment name, which is also the `kind` of its manifest.",
+        "name": "The fragment name.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
     },
@@ -389,7 +389,6 @@ def _fragment_impl(ctx):
         fail("%s must declare at least one preloaded download manifest" % ctx.label)
 
     home = ctx.actions.declare_directory(ctx.label.name + ".home")
-    component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
     scratch = ctx.actions.declare_directory(ctx.label.name + ".scratch")
 
     # Which declared inputs the assembly never resolved. It used to be `unused_inputs_list`, pruning the action key
@@ -397,7 +396,7 @@ def _fragment_impl(ctx):
     # the key is computed over the full declared set before the action runs. Narrowing what is *declared* replaced it.
     # The file stays as the measurement of how honest a declaration is: declared minus unused is what a fragment used.
     unused_inputs = ctx.actions.declare_file(ctx.label.name + ".unused-inputs")
-    outputs = [home, component_manifest, scratch, unused_inputs]
+    outputs = [home, scratch, unused_inputs]
 
     project_tree = ctx.attr.project_model_tree[IntellijProjectModelTreeInfo].tree
     build_inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
@@ -406,7 +405,6 @@ def _fragment_impl(ctx):
     args = ctx.actions.args()
     args.add("--project-dir=" + project_tree.path)
     args.add("--output-dir=" + home.path)
-    args.add("--component-manifest=" + component_manifest.path)
     args.add("--scratch-dir=" + scratch.path)
 
     # Whatever an assembly still wants to download or extract goes here rather than into the checkout, where the cache
@@ -471,7 +469,7 @@ def _fragment_impl(ctx):
         progress_message = "Assembling %s dev fragment %s" % (ctx.attr.platform_prefix, ctx.label),
     )
     return [
-        DefaultInfo(files = depset([home, component_manifest])),
+        DefaultInfo(files = depset([home])),
         # The three files `./build/dev-dist.cmd inputs` joins, in one group: declared keys with their paths, the
         # ones the assembly never resolved, and which half of the declaration asked for each. Requesting the group runs
         # the assembly, which is the point - `used` is only knowable from a real assembly.
@@ -504,7 +502,7 @@ intellij_dev_fragment = rule(
         "build_date_seconds": attr.string(default = DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
-        "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
+        "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its mnemonic, its recipe and its diagnostics."),
         "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns: `only` the packed ones, or none when empty."),
         "runtime_module_repository": attr.bool(default = False, doc = "Whether this fragment owns `modules/module-descriptors.dat` and `modules/module-descriptors.jar`."),
         "platform_payload": attr.label(

@@ -8,7 +8,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
-import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
@@ -100,18 +99,6 @@ class IdeBuilderTest {
     )
 
     assertThat(options.generateRuntimeModuleRepository).isTrue()
-  }
-
-  @Test
-  fun componentOutputRejectsIncompleteComponentContracts() {
-    assertThatThrownBy {
-      DevBuildOutput.Component(
-        fragment = DevBuildFragment.COMPLETE,
-        manifestFile = tempDir.resolve("complete.json"),
-      )
-    }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("must use DevBuildOutput.Complete")
   }
 
   @Test
@@ -674,10 +661,7 @@ class IdeBuilderTest {
       buildDateInSeconds = buildDateInSeconds,
       os = os,
       arch = arch,
-      output = if (fragment.isComplete) DevBuildOutput.Complete else DevBuildOutput.Component(
-        fragment = fragment,
-        manifestFile = tempDir.resolve("${fragment.name}.component.json"),
-      ),
+      fragment = fragment,
     )
   }
 

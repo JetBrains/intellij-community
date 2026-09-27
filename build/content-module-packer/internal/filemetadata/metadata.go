@@ -49,10 +49,8 @@ func (entry Entry) MarshalJSON() ([]byte, error) {
 	}{encodedEntry: encodedEntry(entry)})
 }
 
-// HashFile computes the xxh3 content hash that the Kotlin manifest writer computes for the same file. The hash frames
-// each 256 KiB block with its 4-byte little-endian length. The Kotlin computeDevBuildContentHash
-// (DevBuildComponentManifest.kt) feeds each block through hash4j putByteArray, which appends the array length.
-// TestKotlinHashVectors pins the agreement.
+// HashFile computes the xxh3 content hash of a file. The hash frames each 256 KiB block with its 4-byte little-endian
+// length, as hash4j putByteArray does. TestKotlinHashVectors pins the values.
 func HashFile(source string) (int64, error) {
 	file, err := os.Open(source)
 	if err != nil {

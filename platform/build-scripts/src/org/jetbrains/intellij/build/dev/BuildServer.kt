@@ -64,7 +64,6 @@ fun renderSplitPlatformResources(
   scratchDir: Path,
 ): SplitPlatformResources {
   val productConfiguration = getProductConfiguration(createConfiguration(projectDir), platformPrefix, baseIdePlatformPrefixForFrontend = null)
-  val fragment = DevBuildFragment(name = "platform_resources", platform = null, runtimeModuleRepository = false)
   val request = BuildRequest(
     platformPrefix = platformPrefix,
     additionalModules = emptyList(),
@@ -74,7 +73,7 @@ fun renderSplitPlatformResources(
     runDirOverride = scratchDir.resolve("run"),
     scratchDir = scratchDir.resolve("scratch"),
     buildDateInSeconds = buildDateInSeconds,
-    output = DevBuildOutput.Component(fragment = fragment, manifestFile = scratchDir.resolve("component.json")),
+    fragment = DevBuildFragment(name = "platform_resources", platform = null, runtimeModuleRepository = false),
   )
   BuildLifetime().use { lifetime ->
     val context = createBuildContextFromProject(

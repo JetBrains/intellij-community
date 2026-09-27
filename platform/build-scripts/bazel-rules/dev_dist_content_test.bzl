@@ -328,7 +328,7 @@ def _fragment_test_impl(ctx):
     asserts.equals(env, "platform_runtime_module_repository", target[IntellijDevReferenceInfo].name)
     asserts.equals(
         env,
-        [target.label.name + ".home", target.label.name + ".component.json"],
+        [target.label.name + ".home"],
         [file.basename for file in target[DefaultInfo].files.to_list()],
     )
     return analysistest.end(env)

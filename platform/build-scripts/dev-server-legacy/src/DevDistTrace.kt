@@ -17,8 +17,6 @@ import java.nio.file.Path
  * Reuse metadata needed by adjacent file operations for span attributes. Gate extra work that serves only tracing.
  * The Go sourced collector counts source bytes during collection and inventory. The composer counts bytes beside
  * file copies. The jar packer collects extra file statistics only when tracing is enabled.
- *
- * The Kotlin manifest inventory needs file sizes for hashing, with or without tracing.
  */
 internal const val TRACE_FILE_OPTION: String = "--trace-file"
 

@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
-import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.DevDistRecipe
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
@@ -71,7 +70,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   // the root span is what a merged timeline groups an action's spans under, and every fragment action opens the same
   // one, so it has to say which fragment it was
   Span.current().setAttribute("fragment", fragment.name)
-  val output = DevBuildOutput.Component(fragment = fragment, manifestFile = options.requiredPath("--component-manifest"))
   options.optionalPath("--bazel-targets-json")?.let { path ->
     System.setProperty("intellij.build.bazel.targets.json.file", path.invariantSeparatorsPathString)
   }
@@ -111,7 +109,7 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
       // A caller that caches the whole result produces a reference once per change. A local jar cache would only add a
       // second copy of every jar, in a directory that concurrent assemblies change while its cleanup prunes it.
       jarCacheDir = null,
-      output = output,
+      fragment = fragment,
     )
   )
   val runDir = build.runDir

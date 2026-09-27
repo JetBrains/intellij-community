@@ -6,7 +6,9 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.invariantSeparatorsPathString
 
 private const val IDE_FINGERPRINT_VERSION = "v5"
@@ -88,4 +90,19 @@ internal fun computeIdeFingerprint(entries: List<IdeFingerprintEntry>, debug: St
       ?.append(' ')?.append(entry.type)?.append(' ')?.append(entry.relativePath)?.append('\n')
   }
   return "$IDE_FINGERPRINT_VERSION:${java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)}"
+}
+
+private fun computeDevBuildExecutableBit(file: Path): Boolean {
+  if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+    return false
+  }
+  val permissions = try {
+    Files.getPosixFilePermissions(file, LinkOption.NOFOLLOW_LINKS)
+  }
+  catch (_: UnsupportedOperationException) {
+    return false
+  }
+  return PosixFilePermission.OWNER_EXECUTE in permissions ||
+         PosixFilePermission.GROUP_EXECUTE in permissions ||
+         PosixFilePermission.OTHERS_EXECUTE in permissions
 }

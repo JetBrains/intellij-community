@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// The tests in this file cover composeComponents and its checks. The tests of the manifest writer are Kotlin tests,
+// The tests in this file cover composeComponents and its checks. The tests of a manifest writer are with that writer,
 // because the composer only reads manifests.
 
 func pointer[T any](value T) *T {

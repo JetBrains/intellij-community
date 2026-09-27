@@ -96,19 +96,6 @@ import kotlin.time.Duration.Companion.hours
 
 private const val maxWindowsPathLengthForIDERootToBeAbleToRunRiderBackend: Int = 64
 
-sealed interface DevBuildOutput {
-  data object Complete : DevBuildOutput
-
-  data class Component(
-    @JvmField val fragment: DevBuildFragment,
-    @JvmField val manifestFile: Path,
-  ) : DevBuildOutput {
-    init {
-      require(!fragment.isComplete) { "A complete dev distribution must use DevBuildOutput.Complete" }
-    }
-  }
-}
-
 /** What [buildProduct] assembled: the run directory, the IDE main class, and the classpath the launcher starts it with. */
 class DevBuildResult(
   @JvmField val runDir: Path,
@@ -178,15 +165,9 @@ data class BuildRequest(
   // `Long` is `java.lang.Long` in this file
   @JvmField val buildDateInSeconds: kotlin.Long? = null,
 
-  /** Complete distribution, or one fully specified independently cacheable component. */
-  @JvmField val output: DevBuildOutput = DevBuildOutput.Complete,
+  /** The whole distribution, or one reference fragment of it. */
+  @JvmField val fragment: DevBuildFragment = DevBuildFragment.COMPLETE,
 ) {
-  internal val fragment: DevBuildFragment
-    get() = (output as? DevBuildOutput.Component)?.fragment ?: DevBuildFragment.COMPLETE
-
-  internal val componentOutput: DevBuildOutput.Component?
-    get() = output as? DevBuildOutput.Component
-
   override fun toString(): String {
     return buildString {
       append("DevBuildRequest(platformPrefix='$platformPrefix', ")
@@ -504,30 +485,13 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
         }
       }
 
-      fork("compute IDE fingerprint") {
-        // The component manifest inventories the finished tree, including DistFiles and semantic archive links. It
-        // must therefore run after every post-processing child has completed, not merely after jars were laid out.
-        postProcessJob.await()
-        if (request.fragment.isComplete) {
+      if (request.fragment.isComplete) {
+        fork("compute IDE fingerprint") {
+          postProcessJob.await()
           computeIdeFingerprint(
             platformDistributionEntriesDeferred = platformLayoutResultDeferred,
             pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
             runDir = runDir,
-          )
-        }
-        else {
-          val pluginsResult = pluginDistributionEntriesDeferred.await()
-          writeDevBuildComponentManifest(
-            file = checkNotNull(request.componentOutput).manifestFile,
-            kind = request.fragment.name,
-            platformPrefix = request.platformPrefix,
-            os = request.os,
-            arch = request.arch,
-            additionalModules = if (request.fragment.ownsPlugins) request.additionalModules else emptyList(),
-            mainClass = context.ideMainClassName,
-            coreClassPath = coreClassPathDeferred.await(),
-            pluginCount = pluginsResult.pluginEntries.size + (pluginsResult.additionalPlugins?.size ?: 0),
-            componentRoot = runDir,
           )
         }
       }
