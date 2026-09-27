@@ -160,7 +160,7 @@ internal fun createInterpreterCacheLoader(): suspend (Module) -> InspectionRunne
 
 private class ConfigureInterpreterFix : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
-    return DropDownLink(PyBundle.message("python.sdk.custom.environment")) {
+    return DropDownLink(PyBundle.message("sdk.create.type.custom")) {
       val context = DataManager.getInstance().getDataContext(it)
       createAddInterpreterPopup(module, context)
     }
