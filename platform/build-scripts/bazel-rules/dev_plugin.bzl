@@ -444,8 +444,6 @@ def _dev_plugin_impl(ctx):
             dev_dist_plugin_classpath = depset([classpath]),
             file_metadata = depset([entry.metadata for entry in packed]),
             trace_spans = depset(spans),
-            # The part and the descriptor it names, which a consumer of the part reads too.
-            dev_dist_runtime_layout = depset([runtime_layout, classpath_descriptor]),
         ),
     ]
 

@@ -334,14 +334,6 @@ def preloaded_downloads_only_flag(platforms):
     """
     return _only_select(platforms, ["-D%s=true" % _ONLY_PROPERTY], [])
 
-def preloaded_downloads_only_bool(platforms):
-    """[preloaded_downloads_only_flag] for a consumer that takes a boolean rather than a JVM flag.
-
-    A rule attribute cannot be given a flag list, and the Bazel dev-distribution assembler sets the property
-    itself rather than receiving it on its command line.
-    """
-    return _only_select(platforms, True, False)
-
 def _only_select(platforms, value, default):
     for platform in platforms:
         if platform not in HOST_PLATFORMS:

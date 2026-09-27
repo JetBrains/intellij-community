@@ -307,7 +307,6 @@ _tool_fixture = rule(
 def _fragment_test_impl(ctx):
     env = analysistest.begin(ctx)
     target = analysistest.target_under_test(env)
-    fragment = target[IntellijDevReferenceInfo]
     inputs = ctx.attr.build_inputs[IntellijDevBuildInputsInfo]
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic.startswith("IntellijDev")]
     asserts.equals(env, 1, len(actions))
@@ -326,7 +325,12 @@ def _fragment_test_impl(ctx):
     # publishes no component provider, so no distribution can compose it.
     asserts.false(env, hasattr(target[OutputGroupInfo], "dev_dist_plugin_outputs"))
     asserts.false(env, IntellijDevFragmentInfo in target)
-    asserts.equals(env, [fragment.home, fragment.manifest], target[DefaultInfo].files.to_list())
+    asserts.equals(env, "platform_runtime_module_repository", target[IntellijDevReferenceInfo].name)
+    asserts.equals(
+        env,
+        [target.label.name + ".home", target.label.name + ".component.json"],
+        [file.basename for file in target[DefaultInfo].files.to_list()],
+    )
     return analysistest.end(env)
 
 _fragment_test = analysistest.make(

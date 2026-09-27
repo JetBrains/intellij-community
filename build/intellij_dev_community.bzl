@@ -1,7 +1,6 @@
 """Macros for IntelliJ-based IDE development builds."""
 
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
-load("@rules_java//java:defs.bzl", "java_binary")
 load(":dev_launch_dependencies.bzl", "COMMUNITY_DEV_LAUNCH_REPOS")
 load(":intellij_dev_legacy.bzl", "intellij_dev_binary")
 

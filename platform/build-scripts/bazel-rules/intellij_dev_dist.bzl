@@ -1,8 +1,8 @@
-"""Builds independently cacheable fragments of a dev-mode IDE distribution.
+"""Composes a dev-mode IDE distribution from components, and declares the reference fragments of the gates.
 
-A fragment names itself and the slice it owns; the assembler decides ownership from the layout it computed, so the
-fragments of one distribution partition it exactly instead of following lists someone maintains. See
-`org.jetbrains.intellij.build.dev.DevBuildFragment`.
+A component names the files it places, and the Go composer copies them into the distribution. A reference fragment
+runs the Kotlin assembler, which produces the same files a second time, so a gate can compare the two producers. No
+distribution composes a reference.
 
 Split assembly deliberately supports only builds with scrambling disabled. Platform co-scrambling and per-plugin
 scrambling require both component layouts in one process.
@@ -162,8 +162,6 @@ IntellijDevReferenceInfo = provider(
     doc = "A reference fragment, the second producer of a gate. No distribution composes it.",
     fields = {
         "name": "The fragment name, which is also the `kind` of its manifest.",
-        "home": "The fragment tree.",
-        "manifest": "The fragment manifest.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
     },
@@ -480,9 +478,8 @@ def _fragment_impl(ctx):
         # the assembly, which is the point - `used` is only knowable from a real assembly.
         OutputGroupInfo(
             declared_inputs = depset([bazel_inputs_manifest, build_inputs.inputs_origin, unused_inputs]),
-            # This fragment's spans and the shared project model tree's. The tree is deliberately carried here: it is a
-            # dependency of every fragment and of no distribution, so this is the only path by which one request for a
-            # dist's spans can reach it.
+            # This fragment's spans and the shared project model tree's. No distribution composes a reference, so a
+            # request for the spans of a distribution does not reach the tree.
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
             # This fragment's executed recipe. Nothing is propagated into it: the tree runs no assembler.
             dev_dist_plans = _plans_output_group([plan], []),
@@ -490,8 +487,6 @@ def _fragment_impl(ctx):
         ),
         IntellijDevReferenceInfo(
             name = ctx.attr.fragment_name,
-            home = home,
-            manifest = component_manifest,
             inputs_manifest = bazel_inputs_manifest,
             unused_inputs = unused_inputs,
         ),
@@ -708,7 +703,7 @@ intellij_dev_packed_jars_component = rule(
         "executable_files": attr.label_keyed_string_dict(allow_files = True, doc = "Maps each source label to its distribution path. The composer copies the file with the executable bit."),
         "plugin_classpath_prefix": attr.label(
             allow_single_file = True,
-            doc = "The `plugin-classpath.txt` prefix that `dev_dist_product_descriptor` writes, for a product whose `platform_lib` writes none. Only with `platform_payload`.",
+            doc = "The `plugin-classpath.txt` prefix that `dev_dist_product_descriptor` writes. Only with `platform_payload`.",
         ),
         "core_classpath": attr.string_list(
             doc = "The `lib/`-relative packed jars of the core classpath, from the generated `DEV_DIST_CORE_CLASSPATH`. Only with `platform_payload`.",
@@ -835,8 +830,8 @@ def _compose(ctx, fragment_targets):
             ide_config = depset([ide_config]),
             # The complete production plugin payload, without opening component archives or directories.
             dev_dist_plugin_outputs = _side_output_group([], fragment_targets, "dev_dist_plugin_outputs"),
-            # Every span file of this distribution in one request: the composition's own, each fragment's, and - through
-            # the fragments - the shared project model tree's. This is the group a measuring run asks for.
+            # Every span file of this distribution in one request: the composition's own and each component's. This is the
+            # group a measuring run asks for.
             trace_spans = _spans_output_group([spans], fragment_targets),
             # Every fragment's executed recipe in one request. The composition itself has none: it places files, it
             # does not pack them.

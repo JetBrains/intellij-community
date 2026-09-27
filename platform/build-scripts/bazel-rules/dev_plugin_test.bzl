@@ -221,7 +221,6 @@ def _dev_plugin_test_impl(ctx):
     asserts.equals(env, [_PACKAGE + ":foo-1.2.3.jar"], [member["library"] for member in single])
     asserts.true(env, single[0]["jars"][0].endswith("/" + ctx.file.single_jar.short_path.removeprefix("../")), single[0]["jars"])
     asserts.equals(env, [{"module": module} for module in content.member_modules], part["jars"][2]["members"])
-    asserts.equals(env, [layout.part, layout.descriptor], target[OutputGroupInfo].dev_dist_runtime_layout.to_list())
 
     # The raw content: every merged module jar, the members of the reused content module jar, and every library the
     # plugin names, the jar file token included. Neutral, like the packed inputs, so compared by short path.

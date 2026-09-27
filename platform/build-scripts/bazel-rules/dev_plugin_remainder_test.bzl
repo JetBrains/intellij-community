@@ -616,7 +616,6 @@ def _reused_component_test_impl(ctx):
     # The component forwards the layout part of its remainder, and no action of its own writes one.
     layout = ctx.attr.remainder[0][DevDistRuntimeLayoutInfo]
     asserts.equals(env, layout.part.short_path, target[DevDistRuntimeLayoutInfo].part.short_path)
-    asserts.equals(env, _short_paths([layout.part, layout.descriptor]), _short_paths(target[OutputGroupInfo].dev_dist_runtime_layout.to_list()))
     return analysistest.end(env)
 
 _reused_component_test = analysistest.make(
