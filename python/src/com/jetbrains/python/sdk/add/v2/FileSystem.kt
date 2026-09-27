@@ -11,24 +11,31 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.Path
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
@@ -38,8 +45,6 @@ import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
 import com.intellij.python.community.execService.python.getVersionFromVersionStringSafe
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
-import com.intellij.python.sdk.backend.detectPythonEnvironment
-import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.SysPythonRegisterError
@@ -49,6 +54,8 @@ import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.python.pytools.backend.ToolSearchPath
 import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
@@ -91,9 +98,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.event.ActionListener
+import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
+import javax.swing.JTextField
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -117,6 +127,26 @@ data class EelFileSystem(
   override val userReadableName: @NonNls String = eelApi.descriptor.name
   override val platformAndRoot: PlatformAndRoot = eelApi.getPlatformAndRoot()
   override val eelDescriptor: EelDescriptor = eelApi.descriptor
+  override fun createBrowseFolderListener(
+    textField: TextFieldWithBrowseButton,
+    descriptor: FileChooserDescriptor,
+    fieldAccessor: TextComponentAccessor<JTextField>,
+    targetHints: TargetBrowserHints,
+    title: String,
+  ): ActionListener =
+    ComponentWithBrowseButton.BrowseFolderActionListener(textField, null, descriptor.withRoots(getRootsForBrowsing()), fieldAccessor)
+
+  private fun getRootsForBrowsing(): List<VirtualFile> {
+    val vfs = LocalFileSystem.getInstance()
+    return if (eelDescriptor == LocalEelDescriptor) {
+      FileSystems.getDefault().rootDirectories
+    }
+    else {
+      listOf(eelApi.userInfo.home.root.asNioPath())
+    }.mapNotNull {
+      vfs.findFileByNioFile(it) ?: vfs.refreshAndFindFileByNioFile(it)
+    }
+  }
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
     // Only an absolute path names a directory on the eel. A relative one would resolve against the current directory
@@ -126,7 +156,7 @@ data class EelFileSystem(
         it.asEelPath()
       }
       else {
-        LOG.warn("Dropped the relative work directory '$it' of $path")
+        LOG.warn("Dropped the relative work directory '$it' of ${path.toStringForUI()}")
         null
       }
     }
@@ -143,8 +173,9 @@ data class EelFileSystem(
     parentComponent: JComponent,
   ) {
     SlowOperations.knownIssue("PY-666").use { // TODO FIX ME PLEASE if you know how
-      val descriptor = PythonSdkType.getInstance().homeChooserDescriptor.withTitle(browseTitle)
-      FileChooser.chooseFile(descriptor, null, parentComponent, null) { file ->
+      val descriptor = PythonSdkType.getInstance().homeChooserDescriptor.withTitle(browseTitle).withRoots(getRootsForBrowsing())
+      val home = LocalFileSystem.getInstance().findFileByNioFile(eelApi.userInfo.home.asNioPath())
+      FileChooser.chooseFile(descriptor, null, parentComponent, home) { file ->
         val path = file?.toNioPath()
         path?.toString()?.let {
           fieldAccessor.setText(comboBox, it)
@@ -164,15 +195,25 @@ data class EelFileSystem(
     return createSdk(pythonBinaryPath, sdkAdditionalData, suggestedSdkName)
   }
 
-  override fun parsePath(raw: String): PyResult<PathHolder.Eel> = try {
-    Path.of(raw).let { path ->
-      PyResult.success(PathHolder.Eel(path))
+  override fun parsePath(raw: String): PyResult<PathHolder.Eel> {
+    val mayBeFull = try {
+      Path(raw)
+    }
+    catch (_: InvalidPathException) {
+      null
+    }
+    if (mayBeFull != null && mayBeFull.getEelDescriptor() == eelDescriptor) {
+      return PyResult.success(PathHolder.Eel(mayBeFull))
+    }
+    else {
+      try {
+        return PyResult.success(PathHolder.Eel(Path(raw, eelDescriptor)))
+      }
+      catch (_: InvalidPathException) {
+        return PyResult.localizedError(PySdkBundle.message("path.validation.invalid", raw))
+      }
     }
   }
-  catch (e: InvalidPathException) {
-    PyResult.localizedError(e.localizedMessage)
-  }
-
   override suspend fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
     return when {
       !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
@@ -253,6 +294,7 @@ data class EelFileSystem(
     val context: UserDataHolder = UserDataHolderBase()
     context.putUserData(BASE_DIR, projectPathPrefix)
     val pythonBinaries = VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, context)
+      .filter { it.getEelDescriptor() == this.eelDescriptor }
     val suggestedPythonBinaries = VanillaPythonWithPythonInfoImpl.createByPythonBinaries(pythonBinaries)
 
     val venvs: List<VanillaPythonWithPythonInfo> = suggestedPythonBinaries.mapNotNull { (venv, r) ->
@@ -366,11 +408,36 @@ data class EelFileSystem(
   }
 }
 
-data class TargetFileSystem(
+internal data class TargetFileSystem(
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
   private val pythonLanguageRuntimeConfiguration: PythonLanguageRuntimeConfiguration,
   private val targetProbeWorkingDirectory: Path? = null,
 ) : FileSystem<PathHolder.Target> {
+
+
+  override fun createBrowseFolderListener(
+    textField: TextFieldWithBrowseButton,
+    descriptor: FileChooserDescriptor,
+    fieldAccessor: TextComponentAccessor<JTextField>,
+    targetHints: TargetBrowserHints,
+    title: String,
+  ): ActionListener? {
+    val targetType = targetEnvironmentConfiguration.getTargetType()
+    return if (targetType is BrowsableTargetEnvironmentType) {
+      targetType.createBrowser(
+        ProjectManager.getInstance().defaultProject,
+        title,
+        fieldAccessor,
+        textField.textField,
+        { targetEnvironmentConfiguration },
+        targetHints
+      )
+    }
+    else {
+      null
+    }
+  }
+
   override val isReadOnly: Boolean
     get() = !PythonInterpreterTargetEnvironmentFactory.isMutable(targetEnvironmentConfiguration)
   override val isBrowsable: Boolean
@@ -404,12 +471,13 @@ data class TargetFileSystem(
   ) {
     val targetType = targetEnvironmentConfiguration.getTargetType()
     if (targetType is BrowsableTargetEnvironmentType) {
-      val descriptor = FileChooserDescriptorFactory.singleFileOrDir().withTitle(browseTitle)
+      val descriptor =
+          FileChooserDescriptorFactory.singleFileOrDir().withTitle(browseTitle)
       val hints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
 
       val actionListener = targetType.createBrowser(
         ProjectManager.getInstance().defaultProject,
-        hints.customFileChooserDescriptor!!.title,
+        descriptor.title,
         fieldAccessor,
         comboBox,
         { targetEnvironmentConfiguration },
@@ -437,7 +505,7 @@ data class TargetFileSystem(
 
     val (additionalData, customSdkSuggestedName) = run {
       val data = PyTargetAwareAdditionalData(sdkAdditionalData, targetEnvironmentConfiguration).also {
-        it.interpreterPath = pythonBinaryPath.toString()
+        it.interpreterPath = pythonBinaryPath.toStringForExecution()
         it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       }
       targetPanelExtension?.let {

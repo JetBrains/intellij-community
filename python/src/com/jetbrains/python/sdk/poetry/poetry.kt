@@ -114,7 +114,7 @@ private suspend fun <P : PathHolder> setUpPoetry(
     inProjectEnv = inProjectEnv,
   ).getOr { return it }
   val pythonBinaryPath = fileSystem.resolvePythonBinary(pythonHomePath)
-                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath))
+                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath.toStringForUI()))
   return PyResult.success(pythonBinaryPath)
 }
 

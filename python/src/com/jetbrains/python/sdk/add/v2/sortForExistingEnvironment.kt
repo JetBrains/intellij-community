@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.isAssociatedWithModule
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -105,7 +105,7 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
           }
         }
       }
-      return@groupBy if (it.homePath.toString().startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
+      return@groupBy if (it.homePath.toStringForUI().startsWith(venvRoot)) Group.VENVS_IN_USER_HOME else Group.OTHER
     }
     if (LOG.isDebugEnabled) {
       LOG.debug(groupedPythons.map { (group, pythons) ->

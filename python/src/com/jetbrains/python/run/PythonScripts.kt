@@ -30,6 +30,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.HelperPackage
+import com.jetbrains.python.PYTHONIOENCODING
 import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.debugger.PyDebugRunner
@@ -163,7 +164,7 @@ private fun resolveUploadPath(localPath: String, uploads: List<PathMapping>): Ta
 
 private fun PythonExecution.setHelpersCharset() {
   charset = UTF_8
-  addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, UTF_8.name())
+  addEnvironmentVariable(PYTHONIOENCODING, UTF_8.name())
 }
 
 @ApiStatus.Internal

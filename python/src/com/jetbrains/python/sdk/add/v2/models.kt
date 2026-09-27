@@ -201,12 +201,17 @@ sealed interface ValidatedPath<T, P : PathHolder> {
   data class Folder<P : PathHolder>(
     override val pathHolder: P?,
     override val validationResult: PyResult<Unit>,
-  ) : ValidatedPath<Unit, P>
+  ) : ValidatedPath<Unit, P> {
+    override fun toString(): String = "Folder(pathHolder=${pathHolder?.toStringForUI()}, validationResult=$validationResult)"
+  }
 
   data class Executable<P : PathHolder>(
+    // TODO: This field must be non-null
     override val pathHolder: P?,
     override val validationResult: PyResult<Version>,
-  ) : ValidatedPath<Version, P>
+  ) : ValidatedPath<Version, P> {
+    override fun toString(): String = "Executable(pathHolder=${pathHolder?.toStringForUI()}, validationResult=$validationResult)"
+  }
 }
 
 open class AddInterpreterState<P : PathHolder>(propertyGraph: PropertyGraph) {

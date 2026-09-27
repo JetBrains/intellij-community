@@ -30,7 +30,7 @@ internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyConda
   val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
   return PyCondaCommand(
-    fullCondaPathOnTarget = executable.pathHolder.toString(),
+    fullCondaPathOnTarget = executable.pathHolder?.toStringForExecution() ?: error("Ask developer to fix it by dropping notDetectedExecutable"),
     targetConfig = targetEnvironmentConfiguration
   ).let { PyResult.success(it) }
 }
@@ -78,7 +78,7 @@ internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleO
   val workingDirectory = moduleOrProject.workingDirectory
                          ?: return PyResult.localizedError(message("python.sdk.project.working.directory.not.found"))
   val sdk = PyCondaCommand(
-    fullCondaPathOnTarget = executable.pathHolder.toString(),
+    fullCondaPathOnTarget = executable.pathHolder?.toStringForExecution() ?: error("Ask developer to fix it by dropping notDetectedExecutable"),
     targetConfig = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   ).createCondaSdkFromExistingEnvironment(
     condaIdentity = pyCondaEnv.envIdentity,

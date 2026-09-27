@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jetbrains.python.PyEnvConstKt.PYTHONIOENCODING;
+
 
 /**
  * Leave this class alone, use {@link com.intellij.python.community.execService.ExecService} or {@link com.intellij.platform.eel.EelExecApi}
@@ -40,7 +42,6 @@ import java.util.Set;
 public final class PythonEnvUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = PyEnvConstKt.PYTHONPATH;
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
-  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
   @SuppressWarnings("SpellCheckingInspection") public static final String IPYTHONENABLE = "IPYTHONENABLE";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONDONTWRITEBYTECODE = "PYTHONDONTWRITEBYTECODE";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYVENV_LAUNCHER = "__PYVENV_LAUNCHER__";

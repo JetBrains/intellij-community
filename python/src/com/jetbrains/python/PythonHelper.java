@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -76,7 +77,7 @@ public enum PythonHelper implements HelperPackage {
   DOCSTRING_FORMATTER("docstring_formatter.py"),
 
   EXTRA_SYSPATH("extra_syspath.py"),
-  SYSPATH("syspath.py"),
+  SYSPATH(Constants.SYSPATH_PY),
 
   // Compatible with 3.8+
   PYCODESTYLE("pycodestyle.py"),
@@ -296,5 +297,10 @@ public enum PythonHelper implements HelperPackage {
 
   public @NotNull GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
     return myModule.newCommandLine(pythonSdk, parameters);
+  }
+
+  @ApiStatus.Internal
+  public static final class Constants {
+    public static final String SYSPATH_PY = "syspath.py";
   }
 }

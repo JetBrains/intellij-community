@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -68,31 +70,39 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
     /**
      * checks that [pathAsString] is a valid path and returns it or error
      */
-    fun validatePath(pathAsString: String, onlyAllowPathsOn: EelDescriptor): Result<Path, MessageError> {
+    fun validatePath(pathAsString: String, onlyAllowPathsOn: EelDescriptor): Result<Path, ProjectFlowValidationError> {
       val path = try {
         Paths.get(pathAsString)
       }
       catch (e: InvalidPathException) {
-        return PyResult.localizedError(e.reason)
+        return PyResult.failure(ProjectFlowValidationError(e.reason))
       }
       val eelDescriptor = path.getEelDescriptor()
       if (eelDescriptor != onlyAllowPathsOn) {
-        return PyResult.localizedError(PyBundle.message("python.sdk.new.error.not.supported", eelDescriptor))
+        return PyResult.failure(ProjectFlowValidationError(PyBundle.message("python.sdk.new.error.not.supported", eelDescriptor.name),
+                                                           wrongEelDescriptor = eelDescriptor))
       }
       if (onlyAllowPathsOn == LocalEelDescriptor && localRoots.none { root -> path.startsWith(root) }) {
-        return PyResult.localizedError(PyBundle.message("python.sdk.new.error.unsupported.root"))
+        return PyResult.failure(ProjectFlowValidationError(PyBundle.message("python.sdk.new.error.unsupported.root")))
       }
 
       if (!path.isAbsolute) {
-        return PyResult.localizedError(PyBundle.message("python.sdk.new.error.no.absolute"))
+        return PyResult.failure(ProjectFlowValidationError(PyBundle.message("python.sdk.new.error.no.absolute")))
       }
 
       for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_RESERVED_WORDS)) {
         validator.curry { pathAsString }.validate()?.let {
-          return PyResult.localizedError(it.message)
+          return PyResult.failure(ProjectFlowValidationError(it.message))
         }
       }
       return Result.Success(path)
     }
   }
 }
+
+/**
+ * A special case of [MessageError] when user entered a path on [wrongEelDescriptor]
+ */
+@ApiStatus.Internal
+class ProjectFlowValidationError internal constructor(message: @Nls String, val wrongEelDescriptor: EelDescriptor? = null) :
+  MessageError(message)

@@ -72,13 +72,17 @@ sealed interface PythonVirtualEnvironment<P : PathHolder> {
   data class Existing<P : PathHolder>(
     override val pythonHomePath: P,
     val pythonInfo: PythonInfo? = null,
-  ) : PythonVirtualEnvironment<P>
+  ) : PythonVirtualEnvironment<P> {
+    override fun toString(): String = "Existing(pythonHomePath=${pythonHomePath.toStringForUI()}, pythonInfo=$pythonInfo)"
+  }
 
   /**
    * Represents a non-existing Python virtual environment.
    * This class is used for cases where the Python virtual environment is expected or referenced but does not exist on the file system.
    */
-  data class NotExisting<P : PathHolder>(override val pythonHomePath: P) : PythonVirtualEnvironment<P>
+  data class NotExisting<P : PathHolder>(override val pythonHomePath: P) : PythonVirtualEnvironment<P> {
+    override fun toString(): String = "NotExisting(pythonHomePath=${pythonHomePath.toStringForUI()})"
+  }
 }
 
 data class ProjectStructure(

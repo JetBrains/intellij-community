@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.pytools.backend.ToolCommandSpec
@@ -17,11 +20,13 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.ToolProbeResult
 import com.jetbrains.python.target.ui.TargetPanelExtension
-import java.nio.file.Path
-import javax.swing.JComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.event.ActionListener
+import java.nio.file.Path
+import javax.swing.JComponent
+import javax.swing.JTextField
 
 @ApiStatus.Internal
 interface FileSystem<P : PathHolder> {
@@ -39,10 +44,24 @@ interface FileSystem<P : PathHolder> {
    */
   val eelDescriptor: EelDescriptor?
 
+  /**
+   * Path on remote machine. As an exception, MRFS path is also supported by Eel impl.
+   */
   fun parsePath(raw: String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
 
+  // TODO: Almost same as configureFileBrowseEditor, unify
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  fun createBrowseFolderListener(
+    textField: TextFieldWithBrowseButton,
+    descriptor: FileChooserDescriptor,
+    fieldAccessor: TextComponentAccessor<JTextField>,
+    targetHints: TargetBrowserHints,
+    @Nls title: String,
+  ): ActionListener?
+
+  // TODO: Almost same as createBrowseFolderListener, unify
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun <T> configureFileBrowseEditor(
     fieldAccessor: TextComponentAccessor<ComboBox<T>>,
@@ -72,7 +91,6 @@ interface FileSystem<P : PathHolder> {
   ): PyResult<Sdk>
 
   fun createTargetRequest(): TargetEnvironmentRequest
-
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
   suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
@@ -80,9 +98,10 @@ interface FileSystem<P : PathHolder> {
   fun preferredInterpreterBasePath(): P? = null
   fun resolvePythonBinary(pythonHome: P): P?
   fun resolvePythonHome(pythonHomeOrBinary: P): P
-  fun getVenvName(pythonHome: P): String?
 
+  fun getVenvName(pythonHome: P): String?
   fun getBinaryToExec(path: P, workingDir: Path? = null): BinaryToExec
+
   suspend fun getHomePath(): P?
 
   /**
@@ -91,8 +110,8 @@ interface FileSystem<P : PathHolder> {
    * represent a path on target.
    */
   fun normalizePathToRemote(path: P): P
-
   suspend fun detectEnvironments(workingDir: Path, uiInfoGetter: (P) -> PyToolUIInfo?): List<DetectedSelectableInterpreter<P>>
+
   suspend fun detectTool(toolSpec: ToolCommandSpec, filter: (P) -> Boolean = { true }): P?
 
   @PyInternalExecApi

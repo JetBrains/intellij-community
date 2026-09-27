@@ -12,9 +12,8 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 @Service(Service.Level.APP)
-@ApiStatus.Internal
 @PyInternalExecApi
-class TargetFileSystemCache {
+internal class TargetFileSystemCache {
 
   private data class CacheKey(private val targetId: String, private val runtimeProperties: PythonLanguageRuntimeConfiguration.State)
 
@@ -22,7 +21,7 @@ class TargetFileSystemCache {
     .expireAfterWrite(5.minutes.toJavaDuration())
     .build()
 
-  fun getOrCreate(
+  internal fun getOrCreate(
     targetConfig: TargetEnvironmentConfiguration,
     runtimeConfiguration: PythonLanguageRuntimeConfiguration,
   ): TargetFileSystem = cache.get(CacheKey(targetConfig.uuid, runtimeConfiguration.state)) {

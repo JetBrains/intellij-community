@@ -77,7 +77,7 @@ private class UvLowLevelImpl<P : PathHolder>(
     }
 
     val venvArgs = mutableListOf("venv")
-    venvPath?.also { venvArgs += it.toString() }
+    venvPath?.also { venvArgs += it.toStringForExecution() }
     if (clearExisting) {
       venvArgs.add("--clear")
     }

@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,13 +156,14 @@ public abstract class PySkeletonGenerator {
    * allowing to additionally customize how it's going to be launched and performing the
    * default initialization before the run.
    */
+  @ApiStatus.Internal
   public abstract class Builder {
-    protected final List<String> myExtraSysPath = new ArrayList<>();
-    protected final List<String> myExtraArgs = new ArrayList<>();
-    protected String myWorkingDir;
-    protected String myTargetModuleName;
-    protected String myTargetModulePath;
-    protected boolean myPrebuilt = false;
+    // Fields are public due to the platform (or kotlin) bug: inheritors can't access protected fields and fail at runtime
+    public final List<String> myExtraSysPath = new ArrayList<>();
+    public final List<String> myExtraArgs = new ArrayList<>();
+    public String myWorkingDir;
+    public String myTargetModuleName;
+    public String myTargetModulePath;
 
     protected Builder() {
     }
@@ -182,11 +184,6 @@ public abstract class PySkeletonGenerator {
 
     public final @NotNull Builder workingDir(@NotNull String path) {
       myWorkingDir = path;
-      return this;
-    }
-
-    public final @NotNull Builder inPrebuildingMode() {
-      myPrebuilt = true;
       return this;
     }
 

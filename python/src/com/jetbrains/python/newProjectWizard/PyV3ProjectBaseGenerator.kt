@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard
 
+import com.intellij.facet.ui.FacetConfigurationQuickFix
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,10 +15,15 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.internal.startPyProjectModelSyncIfNeeded
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.EEL_FOR_NEW_PROJECTS
+import com.jetbrains.python.DEFAULT_EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
@@ -35,6 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import javax.swing.JComponent
 import kotlin.reflect.jvm.jvmName
 
 /**
@@ -58,6 +66,12 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   private companion object {
     val log = fileLogger()
   }
+
+  /**
+   * The peer of the last [createPeer] call. This generator is a singleton, but each dialog gets its own peer.
+   */
+  private var generatorPeer: PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS>? = null
+
   private val baseSettings = PyV3BaseProjectSettings()
   private var uiServices: PyV3UIServices = PyV3UIServicesProd
   val newProjectName: @NlsSafe String get() = _newProjectName ?: "${name.replace(" ", "")}Project"
@@ -130,17 +144,47 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
 
 
   override fun createPeer(): ProjectGeneratorPeer<PyV3BaseProjectSettings> =
-    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, uiServices)
+    PyV3GeneratorPeer(baseSettings,
+                      typeSpecificUI?.let { Pair(it, typeSpecificSettings) },
+                      uiServices,
+                      DEFAULT_EEL_FOR_NEW_PROJECTS).also { generatorPeer = it }
 
-  override fun validate(baseDirPath: String): ValidationResult =
-    when (val pathOrError = validatePath(baseDirPath, EEL_FOR_NEW_PROJECTS.descriptor)) {
+  override fun validate(baseDirPath: String): ValidationResult {
+    val peer = generatorPeer
+    return when (val pathOrError = validatePath(baseDirPath, (peer?.eel ?: DEFAULT_EEL_FOR_NEW_PROJECTS).descriptor)) {
       is Result.Success -> {
         ValidationResult.OK
       }
-      is Result.Failure -> ValidationResult(pathOrError.error.message)
+      is Result.Failure -> {
+        val quickFix = if (peer != null) {
+          pathOrError.error.wrongEelDescriptor?.let {
+            ChangeEelFix(it) { newEelApi ->
+              withContext(Dispatchers.UI) {
+                peer.showUIForEel(newEelApi)
+              }
+            }
+          }
+        }
+        else null
+        ValidationResult(pathOrError.error.message, quickFix)
+      }
     }
+  }
 
 
   @Service(Service.Level.PROJECT)
   private class MyService(val coroutineScope: CoroutineScope)
+}
+
+/**
+ * "Click here to switch from Local to WSL" button for example.
+ */
+private class ChangeEelFix(private val newEel: EelDescriptor, private val onEelChaned: suspend (EelApi) -> Unit) :
+  FacetConfigurationQuickFix(PyBundle.message("new.project.switch.eel", newEel.name)) {
+  @RequiresEdt
+  override fun run(place: JComponent?) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), PyBundle.message("new.project.switch.eel", newEel.name)) {
+      onEelChaned(newEel.toEelApi())
+    }
+  }
 }

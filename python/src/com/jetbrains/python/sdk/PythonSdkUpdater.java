@@ -16,7 +16,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -294,221 +293,21 @@ public final class PythonSdkUpdater {
     }
   }
 
-  private static class PyUpdateSdkTask extends Task.Backgroundable {
-
-    private final @NotNull Sdk mySdk;
-    private final @NotNull PyUpdateSdkRequestData myRequestData;
-
-    @SuppressWarnings("FieldNameHidesFieldInSuperclass")  // Only notnull
-    private final @NotNull Project myProject;
-
-    PyUpdateSdkTask(@NotNull Project project,
-                    @NotNull Sdk sdk,
-                    @NotNull PyUpdateSdkRequestData requestData) {
-      super(project, PyBundle.message("sdk.gen.updating.interpreter"), false);
-      mySdk = sdk;
-      myRequestData = requestData;
-      myProject = project;
+  /**
+   * Evaluates {@code sys.path} by running the Python interpreter from  SDK.
+   * <p>
+   * Returns all the existing paths except those manually excluded by the user.
+   */
+  private static @NotNull List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException, InvalidSdkException {
+    final long startTime = System.currentTimeMillis();
+    ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
+    if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
+      // Mock sdk in tests can't be executed
+      return PythonSdkType.getMockPath(sdk);
     }
-
-    private boolean isSdkDisposed() {
-      return mySdk instanceof Disposable disposable && Disposer.isDisposed(disposable);
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      if (myProject.isDisposed() || isSdkDisposed()) {
-        return;
-      }
-      // An SDK built outside the blessed creation path carries no PythonSdkAdditionalData, and the package manager is
-      // keyed by it. Nothing here can recover that, and this task runs in the background, so skip such an SDK.
-      if (!(mySdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData)) {
-        return;
-      }
-      PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
-      // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
-      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.
-      Disposable indicatorDisposable = getIndicatorDisposable(indicator);
-      if (mySdk instanceof Disposable sdkDisposable) {
-        if (!Disposer.tryRegister(sdkDisposable, indicatorDisposable)) {
-          return;
-        }
-      }
-      else {
-        Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
-      }
-      if (Trigger.LOG.isDebugEnabled()) {
-        Trigger.LOG.debug(
-          "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
-      }
-      try {
-        PythonInterpreter pythonInterpreter = pythonInterpreter(mySdk, true);
-        PyTargetsIntrospectionFacade targetsFacade = PyTargetsIntrospectionFacade.create(mySdk, myProject);
-        String version = targetsFacade.getInterpreterVersion(indicator);
-        commitSdkVersionIfChanged(mySdk, version);
-        if (targetsFacade.isLocalTarget()) {
-          List<String> paths = targetsFacade.getInterpreterPaths(indicator);
-          updateSdkPaths(pythonInterpreter, paths);
-        }
-        targetsFacade.synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator);
-        // This step also includes setting mapped interpreter paths
-        generateSkeletons(pythonInterpreter, indicator);
-        if (myRequestData.withPackagesUpdate) {
-          refreshPackages(manager, indicator);
-        }
-        addBundledPyiStubsToInterpreterPaths(manager);
-      }
-      catch (ExecutionException | InvalidSdkException e) {
-        LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
-      }
-      finally {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (!isSdkDisposed()) {
-            Disposer.dispose(indicatorDisposable);
-          }
-          // restart code analysis
-          DaemonCodeAnalyzer.getInstance(myProject).restart(this);
-        }, myProject.getDisposed());
-      }
-    }
-
-    private static void addBundledPyiStubsToInterpreterPaths(@NotNull PythonPackageManager packageManager) {
-      List<VirtualFile> allStubRoots = new ArrayList<>();
-      ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
-      ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
-      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.listInstalledPackagesSnapshot(), PythonPackage::getName);
-      List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
-        .flatArray(root -> root.getChildren())
-        .filter(VirtualFile::isDirectory)
-        .filter(stubPkgRoot -> {
-          String stubPkgName = stubPkgRoot.getName();
-          String stubPkgAlias = PyPsiPackageUtil.INSTANCE.moduleToPackageName(stubPkgName, stubPkgName);
-          return installedPackageNames.contains(stubPkgName) || installedPackageNames.contains(stubPkgAlias);
-        })
-        .filter(stubPkgRoot -> {
-          String pypiStubPkgName = stubPkgRoot.getName().toLowerCase(Locale.ROOT) + "-stubs";
-          String typeshedStubPkgName = "types-" + stubPkgRoot.getName();
-          return !(installedPackageNames.contains(pypiStubPkgName) ||
-                   installedPackageNames.contains(typeshedStubPkgName));
-        })
-        .toList();
-
-      LOG.info("Bundled .pyi stub roots for SDK " + packageManager.getSdk() + ":" + bundledStubRoots);
-      commitBundledStubRootsIfChanged(packageManager.getSdk(), bundledStubRoots);
-    }
-
-    private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
-      return indicator instanceof Disposable disposable ? disposable : new Disposable() {
-        @Override
-        public void dispose() {
-          LOG.info("Cancelling update for " + mySdk);
-          if (indicator.isRunning()) {
-            indicator.cancel();
-          }
-        }
-      };
-    }
-
-    private static void refreshPackages(@NotNull PythonPackageManager manager, @NotNull ProgressIndicator indicator) {
-      LOG.info("Performing background scan of packages for SDK " + getSdkPresentableName(manager.getSdk()));
-      indicator.setIndeterminate(true);
-      indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
-      indicator.setText2("");
-      PythonPackageManagerExt.reloadPackagesBlocking(manager);
-    }
-
-    @RequiresBackgroundThread(generateAssertion = false)
-    private void generateSkeletons(
-      @NotNull PythonInterpreter pythonInterpreter,
-      @NotNull ProgressIndicator indicator
-    ) {
-      final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(pythonInterpreter);
-      final @Nullable Path skeletonsPath = SdkExtKt.getSkeletonsPath(sdk);
-      try {
-        // The SDK's own name and path, not its presentation: building one runs the interpreter, which is far too much
-        // work for a log line.
-        LOG.info("Performing background update of skeletons for SDK " + sdk.getName() + " (" + sdk.getHomePath() + ")");
-        indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
-        PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, skeletonsPath, sdk);
-        if (PythonSdkUtil.isRemote(sdk)) {
-          List<@NotNull String> localRoots = SdkExtKt.getRemoteInterpreterLocalRoots(sdk);
-          updateSdkPaths(pythonInterpreter, localRoots);
-        }
-      }
-      catch (UnsupportedPythonSdkTypeException | InvalidSdkException | ExecutionException e) {
-        notifyOfGenerationFailure(e, pythonInterpreter);
-      }
-    }
-
-    private void notifyOfGenerationFailure(@NotNull Exception exception, @NotNull PythonInterpreter pythonInterpreter) {
-      // The SDK name, which is what the interpreter's presentation would report here anyway, without running it. Read
-      // from the task's own SDK, which the rest of this method already uses.
-      var interpreterName = mySdk.getName();
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        LOG.warn(exception);
-        return;
-      }
-      if (exception instanceof UnsupportedPythonSdkTypeException) {
-        notifyWarning(PyBundle.message("sdk.gen.failed.notification.title"),
-                      PyBundle.message("remote.interpreter.support.is.not.available", interpreterName),
-                      REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE);
-      }
-      else if (exception instanceof InvalidSdkException sdkException && PythonSdkUtil.isRemote(mySdk)) {
-        PythonSdkType.notifyRemoteSdkSkeletonsFail(sdkException, () -> {
-          if (!isSdkDisposed()) {
-            updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
-          }
-        });
-      }
-      else {
-        // The interpreter does not run: a user can delete or break it at any moment.
-        // That is a problem of the environment, not a defect of the code, so it is a warning and a notification.
-        LOG.warn("Skeleton generation failed for " + interpreterName, exception);
-        if (pythonInterpreter.getPythonEnvironment() != null) {
-          notifyWarning(PyBundle.message("sdk.gen.failed.skeletons.title", interpreterName),
-                        PyBundle.message("sdk.gen.failed.interpreter.unavailable"),
-                        REFRESH_SKELETONS_FAILED);
-        }
-      }
-    }
-
-    private void notifyWarning(@NotificationTitle @NotNull String title,
-                               @NotificationContent @NotNull String content,
-                               @NotNull String displayId) {
-      NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
-        .createNotification(title, content, NotificationType.WARNING)
-        .setDisplayId(displayId)
-        .notify(myProject);
-    }
-
-
-    @Override
-    public void onFinished() {
-      if (Trigger.LOG.isDebugEnabled()) {
-        Trigger.LOG.debug("Finishing SDK refresh for '" + mySdk.getName() + "' " +
-                          "originally scheduled at " + myRequestData.myTimestamp + " by " +
-                          Trigger.getCauseByTrace(myRequestData.myTraceback));
-      }
-      PyUpdateSdkRequestData requestData;
-      synchronized (ourLock) {
-        boolean existed = ourUnderRefresh.remove(mySdk);
-        LOG.assertTrue(existed, "Error in SDK refresh scheduling: refreshed SDK is not in the set.");
-        requestData = ourToBeRefreshed.remove(mySdk);
-        // Decide under the lock whether the queued update really starts: re-adding the SDK and only then
-        // discovering that the project or the SDK is gone would leave it in ourUnderRefresh forever, which
-        // both retains a disposed SDK and makes every later scheduleUpdate believe a refresh is in flight.
-        if (requestData != null && !myProject.isDisposed() && !isSdkDisposed()) {
-          ourUnderRefresh.add(mySdk);
-        }
-        else {
-          requestData = null;
-        }
-      }
-
-      if (requestData != null) {
-        ProgressManager.getInstance().run(new PyUpdateSdkTask(myProject, mySdk, requestData));
-      }
-    }
+    final List<String> sysPath = PyTargetsIntrospectionFacade.create(sdk, project).getInterpreterPaths();
+    LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
+    return sysPath;
   }
 
   /**
@@ -749,21 +548,222 @@ public final class PythonSdkUpdater {
     return homePath != null ? name + " (" + homePath + ")" : name;
   }
 
-  /**
-   * Evaluates {@code sys.path} by running the Python interpreter from  SDK.
-   * <p>
-   * Returns all the existing paths except those manually excluded by the user.
-   */
-  private static @NotNull List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException, InvalidSdkException {
-    final long startTime = System.currentTimeMillis();
-    ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
-    if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
-      // Mock sdk in tests can't be executed
-      return PythonSdkType.getMockPath(sdk);
+  private static class PyUpdateSdkTask extends Task.Backgroundable {
+
+    private final @NotNull Sdk mySdk;
+    private final @NotNull PyUpdateSdkRequestData myRequestData;
+
+    @SuppressWarnings("FieldNameHidesFieldInSuperclass")  // Only notnull
+    private final @NotNull Project myProject;
+
+    PyUpdateSdkTask(@NotNull Project project,
+                    @NotNull Sdk sdk,
+                    @NotNull PyUpdateSdkRequestData requestData) {
+      super(project, PyBundle.message("sdk.gen.updating.interpreter"), false);
+      mySdk = sdk;
+      myRequestData = requestData;
+      myProject = project;
     }
-    final List<String> sysPath = PyTargetsIntrospectionFacade.create(sdk, project).getInterpreterPaths(new EmptyProgressIndicator());
-    LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
-    return sysPath;
+
+    private boolean isSdkDisposed() {
+      return mySdk instanceof Disposable disposable && Disposer.isDisposed(disposable);
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      if (myProject.isDisposed() || isSdkDisposed()) {
+        return;
+      }
+      // An SDK built outside the blessed creation path carries no PythonSdkAdditionalData, and the package manager is
+      // keyed by it. Nothing here can recover that, and this task runs in the background, so skip such an SDK.
+      if (!(mySdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData)) {
+        return;
+      }
+      PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
+      // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
+      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.
+      Disposable indicatorDisposable = getIndicatorDisposable(indicator);
+      if (mySdk instanceof Disposable sdkDisposable) {
+        if (!Disposer.tryRegister(sdkDisposable, indicatorDisposable)) {
+          return;
+        }
+      }
+      else {
+        Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
+      }
+      if (Trigger.LOG.isDebugEnabled()) {
+        Trigger.LOG.debug(
+          "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
+      }
+      try {
+        PythonInterpreter pythonInterpreter = pythonInterpreter(mySdk, true);
+        PyTargetsIntrospectionFacade targetsFacade = PyTargetsIntrospectionFacade.create(mySdk, myProject);
+        String version = targetsFacade.getInterpreterVersion();
+        commitSdkVersionIfChanged(mySdk, version);
+        if (targetsFacade.isLocalTarget()) {
+          List<String> paths = targetsFacade.getInterpreterPaths();
+          updateSdkPaths(pythonInterpreter, paths);
+        }
+        targetsFacade.synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator);
+        // This step also includes setting mapped interpreter paths
+        generateSkeletons(pythonInterpreter, indicator);
+        if (myRequestData.withPackagesUpdate) {
+          refreshPackages(manager, indicator);
+        }
+        addBundledPyiStubsToInterpreterPaths(manager);
+      }
+      catch (ExecutionException | InvalidSdkException e) {
+        LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
+      }
+      finally {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!isSdkDisposed()) {
+            Disposer.dispose(indicatorDisposable);
+          }
+          // restart code analysis
+          DaemonCodeAnalyzer.getInstance(myProject).restart(this);
+        }, myProject.getDisposed());
+      }
+    }
+
+    private static void addBundledPyiStubsToInterpreterPaths(@NotNull PythonPackageManager packageManager) {
+      List<VirtualFile> allStubRoots = new ArrayList<>();
+      ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
+      ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
+      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.listInstalledPackagesSnapshot(), PythonPackage::getName);
+      List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
+        .flatArray(root -> root.getChildren())
+        .filter(VirtualFile::isDirectory)
+        .filter(stubPkgRoot -> {
+          String stubPkgName = stubPkgRoot.getName();
+          String stubPkgAlias = PyPsiPackageUtil.INSTANCE.moduleToPackageName(stubPkgName, stubPkgName);
+          return installedPackageNames.contains(stubPkgName) || installedPackageNames.contains(stubPkgAlias);
+        })
+        .filter(stubPkgRoot -> {
+          String pypiStubPkgName = stubPkgRoot.getName().toLowerCase(Locale.ROOT) + "-stubs";
+          String typeshedStubPkgName = "types-" + stubPkgRoot.getName();
+          return !(installedPackageNames.contains(pypiStubPkgName) ||
+                   installedPackageNames.contains(typeshedStubPkgName));
+        })
+        .toList();
+
+      LOG.info("Bundled .pyi stub roots for SDK " + packageManager.getSdk() + ":" + bundledStubRoots);
+      commitBundledStubRootsIfChanged(packageManager.getSdk(), bundledStubRoots);
+    }
+
+    private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
+      return indicator instanceof Disposable disposable ? disposable : new Disposable() {
+        @Override
+        public void dispose() {
+          LOG.info("Cancelling update for " + mySdk);
+          if (indicator.isRunning()) {
+            indicator.cancel();
+          }
+        }
+      };
+    }
+
+    private static void refreshPackages(@NotNull PythonPackageManager manager, @NotNull ProgressIndicator indicator) {
+      LOG.info("Performing background scan of packages for SDK " + getSdkPresentableName(manager.getSdk()));
+      indicator.setIndeterminate(true);
+      indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
+      indicator.setText2("");
+      PythonPackageManagerExt.reloadPackagesBlocking(manager);
+    }
+
+
+    @RequiresBackgroundThread
+    private void generateSkeletons(
+      @NotNull PythonInterpreter pythonInterpreter,
+      @NotNull ProgressIndicator indicator
+    ) {
+      final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(pythonInterpreter);
+      final @Nullable Path skeletonsPath = SdkExtKt.getSkeletonsPath(sdk);
+      try {
+        // The SDK's own name and path, not its presentation: building one runs the interpreter, which is far too much
+        // work for a log line.
+        LOG.info("Performing background update of skeletons for SDK " + sdk.getName() + " (" + sdk.getHomePath() + ")");
+        indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
+        PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, skeletonsPath, sdk);
+        if (PythonSdkUtil.isRemote(sdk)) {
+          List<@NotNull String> localRoots = SdkExtKt.getRemoteInterpreterLocalRoots(sdk);
+          updateSdkPaths(pythonInterpreter, localRoots);
+        }
+      }
+      catch (UnsupportedPythonSdkTypeException | InvalidSdkException | ExecutionException e) {
+        notifyOfGenerationFailure(e, pythonInterpreter);
+      }
+    }
+
+    private void notifyOfGenerationFailure(@NotNull Exception exception, @NotNull PythonInterpreter pythonInterpreter) {
+      // The SDK name, which is what the interpreter's presentation would report here anyway, without running it. Read
+      // from the task's own SDK, which the rest of this method already uses.
+      var interpreterName = mySdk.getName();
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        LOG.warn(exception);
+        return;
+      }
+      if (exception instanceof UnsupportedPythonSdkTypeException) {
+        notifyWarning(PyBundle.message("sdk.gen.failed.notification.title"),
+                      PyBundle.message("remote.interpreter.support.is.not.available", interpreterName),
+                      REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE);
+      }
+      else if (exception instanceof InvalidSdkException sdkException && PythonSdkUtil.isRemote(mySdk)) {
+        PythonSdkType.notifyRemoteSdkSkeletonsFail(sdkException, () -> {
+          if (!isSdkDisposed()) {
+            updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
+          }
+        });
+      }
+      else {
+        // The interpreter does not run: a user can delete or break it at any moment.
+        // That is a problem of the environment, not a defect of the code, so it is a warning and a notification.
+        LOG.warn("Skeleton generation failed for " + interpreterName, exception);
+        if (pythonInterpreter.getPythonEnvironment() != null) {
+          notifyWarning(PyBundle.message("sdk.gen.failed.skeletons.title", interpreterName),
+                        PyBundle.message("sdk.gen.failed.interpreter.unavailable"),
+                        REFRESH_SKELETONS_FAILED);
+        }
+      }
+    }
+
+    private void notifyWarning(@NotificationTitle @NotNull String title,
+                               @NotificationContent @NotNull String content,
+                               @NotNull String displayId) {
+      NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
+        .createNotification(title, content, NotificationType.WARNING)
+        .setDisplayId(displayId)
+        .notify(myProject);
+    }
+
+
+    @Override
+    public void onFinished() {
+      if (Trigger.LOG.isDebugEnabled()) {
+        Trigger.LOG.debug("Finishing SDK refresh for '" + mySdk.getName() + "' " +
+                          "originally scheduled at " + myRequestData.myTimestamp + " by " +
+                          Trigger.getCauseByTrace(myRequestData.myTraceback));
+      }
+      PyUpdateSdkRequestData requestData;
+      synchronized (ourLock) {
+        boolean existed = ourUnderRefresh.remove(mySdk);
+        LOG.assertTrue(existed, "Error in SDK refresh scheduling: refreshed SDK is not in the set.");
+        requestData = ourToBeRefreshed.remove(mySdk);
+        // Decide under the lock whether the queued update really starts: re-adding the SDK and only then
+        // discovering that the project or the SDK is gone would leave it in ourUnderRefresh forever, which
+        // both retains a disposed SDK and makes every later scheduleUpdate believe a refresh is in flight.
+        if (requestData != null && !myProject.isDisposed() && !isSdkDisposed()) {
+          ourUnderRefresh.add(mySdk);
+        }
+        else {
+          requestData = null;
+        }
+      }
+
+      if (requestData != null) {
+        ProgressManager.getInstance().run(new PyUpdateSdkTask(myProject, mySdk, requestData));
+      }
+    }
   }
 
   /**

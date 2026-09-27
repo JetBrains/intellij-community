@@ -5,3 +5,8 @@ package com.jetbrains.python
  * Env varname of paths to be added to `sys.path` separated by path-separator
  */
 const val PYTHONPATH: String = "PYTHONPATH"
+
+/**
+ * Env varname of the encoding of `stdin`, `stdout` and `stderr`
+ */
+const val PYTHONIOENCODING: String = "PYTHONIOENCODING"

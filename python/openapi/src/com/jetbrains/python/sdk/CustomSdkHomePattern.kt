@@ -16,6 +16,12 @@ object CustomSdkHomePattern {
   private val CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN: Pattern = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\|//wsl).+")
 
   /**
+   * Only the scheme part of [CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN]: `docker://`, `sftp://`, `docker-compose://` and so on.
+   * A Windows drive (`C:`) has one letter, so it does not match.
+   */
+  private val SCHEME_PYTHON_SDK_HOME_PATH_PATTERN: Pattern = Pattern.compile("^[-a-zA-Z_0-9]{2,}:.+")
+
+  /**
    * Returns whether provided Python interpreter path corresponds to custom
    * Python SDK.
    *
@@ -27,5 +33,17 @@ object CustomSdkHomePattern {
   @ApiStatus.Internal
   fun isCustomPythonSdkHomePath(homePath: String): Boolean {
     return CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(homePath).matches()
+  }
+
+  /**
+   * Returns whether [homePath] has a scheme (`docker://...`, `sftp://...`), as the SDKs from before the targets API have.
+   * Unlike [isCustomPythonSdkHomePath], a UNC path (`\\wsl$\...`) and `//wsl...` do not match: in the eel native mode
+   * these are valid paths on an eel.
+   */
+  @JvmStatic
+  @Contract(pure = true)
+  @ApiStatus.Internal
+  fun isSchemePythonSdkHomePath(homePath: String): Boolean {
+    return SCHEME_PYTHON_SDK_HOME_PATH_PATTERN.matcher(homePath).matches()
   }
 }

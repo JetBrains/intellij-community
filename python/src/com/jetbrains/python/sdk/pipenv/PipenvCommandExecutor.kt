@@ -23,7 +23,6 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
@@ -41,7 +40,7 @@ internal suspend fun <P : PathHolder> runPipEnv(
 ): PyResult<String> =
   PipEnvPyTool.getInstance().runTool(
     fileSystem = fileSystem,
-    pathFromSdk = pipenvExecutable?.toString(),
+    pathFromSdk = pipenvExecutable?.toStringForExecution(),
     dirPath = dirPath,
     args = args,
     env = baseEnv,
@@ -106,7 +105,7 @@ private suspend fun <P : PathHolder> runPipEnvWithSdk(
     fileSystem = fileSystem,
     dirPath = workingDirectory,
     args = args,
-    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toString()),
+    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toStringForExecution()),
     downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG.takeIf { args.firstOrNull() in PIPENV_PROJECT_MUTATING_COMMANDS },
   )
 }
@@ -132,7 +131,7 @@ internal suspend fun <P : PathHolder> setupPipEnvSdkWithProgressReport(
     installPackages = installPackages,
   ).getOr { return it }
   val pythonBinaryPath = fileSystem.resolvePythonBinary(pythonHomePath)
-                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath))
+                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath.toStringForUI()))
 
   return fileSystem.setupSdk(
     project = null,
@@ -152,14 +151,14 @@ internal suspend fun setupPipEnv(
   projectPath: Path,
   basePythonBinaryPath: PythonBinary?,
   installPackages: Boolean,
-): PyResult<@SystemDependent String> =
+): PyResult<Path> =
   setupPipEnv(
     projectPath = projectPath,
     fileSystem = projectPath.toEelFileSystem(),
     pipenvExecutable = null,
     basePythonBinaryPath = basePythonBinaryPath?.let(PathHolder::Eel),
     installPackages = installPackages,
-  ).mapSuccess { it.toString() }
+  ).mapSuccess { it.path }
 
 internal suspend fun <P : PathHolder> setupPipEnv(
   projectPath: Path,
@@ -183,7 +182,7 @@ internal suspend fun <P : PathHolder> setupPipEnv(
       runPipEnv(
         fileSystem = fileSystem,
         dirPath = projectPath,
-        args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toString()).toTypedArray(),
+        args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toStringForExecution()).toTypedArray(),
         pipenvExecutable = pipenvExecutable,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }
@@ -192,7 +191,7 @@ internal suspend fun <P : PathHolder> setupPipEnv(
       runPipEnv(
         fileSystem = fileSystem,
         dirPath = projectPath,
-        "--python", basePythonBinaryPath.toString(),
+        "--python", basePythonBinaryPath.toStringForExecution(),
         pipenvExecutable = pipenvExecutable,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }

@@ -5,8 +5,8 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 
 /**
- * We do not support new projects on any eel but local.
- * To support it on WSL2 we would need to rethink the whole V2 UI, and for Docker it doesn't make any sence.
+ * We do not support new projects on any eel but local in Idea, so for Idea this is the only supported eel.
+ * For PyCharm it is just a default
  */
 @Suppress("LocalEelUsage")
-internal val EEL_FOR_NEW_PROJECTS: EelApi get() = localEel
+internal val DEFAULT_EEL_FOR_NEW_PROJECTS: EelApi get() = localEel

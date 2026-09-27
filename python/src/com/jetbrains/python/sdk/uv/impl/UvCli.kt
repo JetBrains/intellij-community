@@ -30,7 +30,7 @@ import kotlin.time.Duration.Companion.minutes
 
 private fun <P : PathHolder> validateUvExecutable(uvPath: P?, platformAndRoot: PlatformAndRoot): ValidationInfo? {
   return validateExecutableFile(ValidationRequest(
-    path = uvPath?.toString(),
+    path = uvPath?.toStringForExecution(),
     fieldIsEmpty = PyBundle.message("python.sdk.uv.executable.not.found"),
     platformAndRoot = platformAndRoot
   ))
@@ -49,9 +49,9 @@ private suspend fun <P : PathHolder> runUv(
       put("VIRTUAL_ENV", VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
     }
     else {
-      put("VIRTUAL_ENV", venvPath.toString())
+      put("VIRTUAL_ENV", venvPath.toStringForExecution())
     }
-    venvPath?.let { put("UV_PROJECT_ENVIRONMENT", it.toString()) }
+    venvPath?.let { put("UV_PROJECT_ENVIRONMENT", it.toStringForExecution()) }
   }
   val bin = fileSystem.getBinaryToExec(uv, workingDir)
   val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf(PY_PROJECT_TOML, UV_LOCK.value)) else null

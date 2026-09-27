@@ -140,6 +140,8 @@ class ToolValidator<P : PathHolder>(
       return path?.validateToolExecutableByVersionProbe(this, toolVersionPrefix) ?: notDetectedExecutable()
     }
 
+    // TODO: Drop it, and implement it without LSP violation
+    @Deprecated("This is LSP violation. pathHolder must never be null")
     private fun <P : PathHolder> notDetectedExecutable(): ValidatedPath.Executable<P> = ValidatedPath.Executable(
       pathHolder = null,
       validationResult = PyResult.localizedError(PyBundle.message("python.sdk.executable.is.not.detected"))

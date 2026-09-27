@@ -8,15 +8,16 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService.Companion.nonActivationEnvVars
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.jetbrains.python.errorProcessing.PyResult
-import com.intellij.python.sdk.backend.ActivationScript
-import com.intellij.python.sdk.backend.PythonEnvironment
-import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.terminal.Shell
 import com.jetbrains.python.sdk.terminal.Shell.Companion.systemDefaultShell
 import kotlinx.coroutines.Dispatchers
@@ -86,6 +87,10 @@ internal class ActivatableEnvironmentService {
    */
   @OptIn(LowLevelLocalMachineAccess::class)
   private fun readActivationEnvironment(environment: PythonEnvironment): Map<String, String> {
+    if (environment.pythonBinaryPath.getEelDescriptor() != LocalEelDescriptor) {
+      //  ShellEnvironmentReader is broken, doesn't work with remote machines, and probably isn't required
+      return emptyMap()
+    }
     val shellType = systemDefaultShell?.type ?: Shell.Type.UNKNOWN
     val script = environment.activationScript(shellType) ?: return emptyMap()
     val isWindows = script.scriptPath.getEelDescriptor().osFamily == EelOsFamily.Windows

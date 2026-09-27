@@ -3,4 +3,6 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
 
-data class SdkWrapper<P>(val sdk: Sdk, val homePath: P)
+data class SdkWrapper<P>(val sdk: Sdk, val homePath: P) {
+  override fun toString(): String = "SdkWrapper(sdk=$sdk, homePath=${(homePath as? PathHolder)?.toStringForUI() ?: homePath})"
+}

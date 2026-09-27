@@ -42,8 +42,8 @@ internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFl
     }
 
     val pythonPath = fileSystem.parsePath(sdkHome).getOrThrow()
-    val venvPath = fileSystem.resolvePythonHome(pythonPath).toString()
-    return PyRunToolParameters(uvPath.toString(), listOf("run"), prepareEnv(venvPath))
+    val venvPath = fileSystem.resolvePythonHome(pythonPath).toStringForExecution()
+    return PyRunToolParameters(uvPath.toStringForExecution(), listOf("run"), prepareEnv(venvPath))
   }
 
   /**
@@ -63,7 +63,7 @@ internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFl
     val environment = uv.syncScript(scriptPath).getOrThrow()
 
     return PyRunToolParameters(
-      uvPath.toString(),
+      uvPath.toStringForExecution(),
       // The interpreter goes in the arguments because the SDK's own is dropped below.
       listOf("run", environment.pythonPath),
       mapOf(),

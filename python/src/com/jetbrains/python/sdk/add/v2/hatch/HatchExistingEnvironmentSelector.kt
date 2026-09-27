@@ -15,7 +15,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
@@ -63,7 +62,7 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
     val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
       model.fileSystem.resolvePythonBinary(existingHatchVenv.pythonHomePath)
         ?.takeIf { model.fileSystem.validateExecutable(it).isSuccess }
-        ?.toString()
+        ?.toStringForUI()
     } ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
     val existingSdk = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }

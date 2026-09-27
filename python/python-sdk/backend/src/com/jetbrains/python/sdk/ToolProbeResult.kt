@@ -16,4 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 data class ToolProbeResult<P : PathHolder>(
   val path: P,
   val versionOutput: String?,
-)
+) {
+  override fun toString(): String = "ToolProbeResult(path=${path.toStringForUI()}, versionOutput=$versionOutput)"
+}

@@ -136,6 +136,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
+import static com.jetbrains.python.PyEnvConstKt.PYTHONIOENCODING;
 import static com.jetbrains.python.console.PyConsoleUtil.ASYNCIO_REPL_ENV;
 
 /**
@@ -478,7 +479,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     PythonConsoleRunParams runParams = createConsoleRunParams(myWorkingDir, sdk, myEnvironmentVariables);
     PythonExecution pythonConsoleExecution = createPythonConsoleExecution(ideServerHostPortOnTarget, runParams, helpersAwareRequest);
     pythonConsoleExecution.setCharset(CONSOLE_CHARSET);
-    pythonConsoleExecution.getEnvs().put(PythonEnvUtil.PYTHONIOENCODING, environment -> CONSOLE_CHARSET.name());
+    pythonConsoleExecution.getEnvs().put(PYTHONIOENCODING, environment -> CONSOLE_CHARSET.name());
     List<String> interpreterOptions;
     if (!StringUtil.isEmptyOrSpaces(runParams.getInterpreterOptions())) {
       interpreterOptions = ParametersListUtil.parse(runParams.getInterpreterOptions());

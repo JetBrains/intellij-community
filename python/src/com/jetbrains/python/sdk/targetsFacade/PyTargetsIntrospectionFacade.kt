@@ -2,24 +2,24 @@
 package com.jetbrains.python.sdk.targetsFacade
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetProgressIndicatorAdapter
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.run.buildTargetedCommandLine
-import com.jetbrains.python.run.execute
-import com.jetbrains.python.run.prepareHelperScriptExecution
-import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.PythonHelper.Constants.SYSPATH_PY
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.InvalidSdkException
-import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
+import com.jetbrains.python.sdk.execGetStdout
+import com.jetbrains.python.sdk.executeHelper
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.ApiStatus
 sealed class PyTargetsIntrospectionFacade(
   protected val sdk: Sdk,
   protected val project: Project,
-  protected val pyRequest: HelpersAwareTargetEnvironmentRequest,
 ) {
   companion object {
     /**
@@ -44,41 +43,43 @@ sealed class PyTargetsIntrospectionFacade(
     fun create(sdk: Sdk, project: Project): PyTargetsIntrospectionFacade {
       val targetData = sdk.sdkAdditionalData as? PyTargetAwareAdditionalData
       return if (targetData != null) {
-        PyTargetsIntrospectionFacadeRemote.create(sdk, targetData, project) ?: throw InvalidSdkException(PyBundle.message("python.sdk.target.no.plugin", targetData::class.java.name))
+        PyTargetsIntrospectionFacadeRemote.create(sdk, targetData, project)
+        ?: throw InvalidSdkException(PyBundle.message("python.sdk.target.no.plugin", targetData::class.java.name))
       }
       else {
         PyTargetsIntrospectionFacadeLocal(sdk, project)
       }
     }
+
+    @JvmStatic
+    @Throws(ExecutionException::class)
+    protected fun <T> PyResult<T>.orThrowExecException(): T = getOr { throw ExecutionException(it.error.message) }
   }
 
-  protected val targetEnvRequest: TargetEnvironmentRequest
-    get() = pyRequest.targetEnvironmentRequest
+  protected suspend fun interpreter(): PythonInterpreter = sdk.pythonInterpreterAsync()
+
 
   abstract val isLocalTarget: Boolean
 
   @Throws(ExecutionException::class)
-  fun getInterpreterVersion(indicator: ProgressIndicator): String? {
-    // PythonExecution doesn't support launching a bare interpreter without a script or module
-    val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
-    sdk.configureBuilderToRunPythonOnTarget(cmdBuilder)
-    sdk.sdkFlavor
-    cmdBuilder.addParameter(PYTHON_VERSION_ARG)
-    val cmd = cmdBuilder.build()
+  @RequiresBackgroundThread
+  fun getInterpreterVersion(): String? =
+    runBlockingMaybeCancellable {
+      PythonSdkFlavor.getVersionStringFromOutput(
+        ExecService().execGetStdout(interpreter(), Args(PYTHON_VERSION_ARG))
+          .orThrowExecException()
+      )
+    }
 
-    val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-    return PythonSdkFlavor.getVersionStringFromOutput(cmd.execute(environment, indicator))
-  }
+  @RequiresBackgroundThread(generateAssertion = false)
+  @kotlin.jvm.Throws(ExecutionException::class)
+  open fun getInterpreterPaths(): List<String> = runBlockingMaybeCancellable {
+    ExecService().executeHelper(interpreter(), PyHelper(SYSPATH_PY)).orThrowExecException()
+  }.lines().filter { it.isNotBlank() }
 
-  @Throws(ExecutionException::class)
-  fun getInterpreterPaths(indicator: ProgressIndicator): List<String> {
-    val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.SYSPATH, helpersAwareTargetRequest = pyRequest)
-    val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-    val cmd = execution.buildTargetedCommandLine(environment, sdk, emptyList())
-    return cmd.execute(environment, indicator).stdoutLines
-  }
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @Throws(ExecutionException::class)
   abstract fun synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator: ProgressIndicator)
+
 }

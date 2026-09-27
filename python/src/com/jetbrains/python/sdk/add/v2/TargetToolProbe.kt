@@ -171,4 +171,6 @@ internal data class TargetProbeSnapshot(
 internal data class TargetEnvironmentProbe(
   val path: PathHolder.Target,
   val python: TargetPythonProbe.Executable,
-)
+) {
+  override fun toString(): String = "TargetEnvironmentProbe(path=${path.toStringForUI()}, python=$python)"
+}

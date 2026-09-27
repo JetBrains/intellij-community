@@ -104,7 +104,7 @@ private class HatchEnvComboBoxListCellRenderer<P : PathHolder>(val contentFlow: 
           append(value.hatchEnvironment.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
           value.pythonVirtualEnvironment?.pythonHomePath?.let { pythonHomePath ->
             append("\t", SimpleTextAttributes.REGULAR_ATTRIBUTES)
-            append(pythonHomePath.toString(), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+            append(pythonHomePath.toStringForUI(), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
           }
         }
       }

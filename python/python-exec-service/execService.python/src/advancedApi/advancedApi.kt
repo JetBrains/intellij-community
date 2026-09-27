@@ -16,6 +16,7 @@ import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.impl.asChannelConsumer
 import com.intellij.python.community.execService.reportOutputAsProgress
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
+import com.jetbrains.python.PYTHONIOENCODING
 import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.impl.PY3_HELPER_DEPENDENCIES_DIR
@@ -57,7 +58,8 @@ suspend fun <T> ExecService.executeHelperAdvanced(
   executePythonAdvanced(
     python,
     Args().addHelper(helper).add(args),
-    options,
+    // We read the output as UTF-8, but Python on Windows writes it in the ANSI code page by default.
+    options.copy(env = mapOf(PYTHONIOENCODING to Charsets.UTF_8.name()) + options.env),
     transformerToHandler(listener, stdInProvider?.asChannelConsumer(), processOutputTransformer))
 }
 

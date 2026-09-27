@@ -91,7 +91,7 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated:
     is ProjectOnly -> null
   }
   return mutableListOf<DialogAction>().apply {
-    if (targetModuleSitsOn == null) {
+    if (targetModuleSitsOn == null || eelNativeMode) {
       add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
     }
     addAll(collectNewInterpreterOnTargetActions(moduleOrProject, targetModuleSitsOn, onSdkCreated::accept))

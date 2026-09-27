@@ -36,7 +36,6 @@ import javax.swing.BorderFactory
 import javax.swing.ComboBoxEditor
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.io.path.pathString
 
 @VisibleForTesting
 class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
@@ -56,10 +55,7 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
   @VisibleForTesting
   val fieldAccessor: TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> = object : TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> {
     override fun getText(component: ComboBox<PythonSelectableInterpreter<P>?>): @NlsSafe String? =
-      when (val p = component.getItemAt(component.selectedIndex)?.homePath ?: return null) {
-        is PathHolder.Eel -> p.path.pathString
-        is PathHolder.Target -> p.pathString
-      }
+      component.getItemAt(component.selectedIndex)?.homePath?.toStringForUI()
 
     override fun setText(component: ComboBox<PythonSelectableInterpreter<P>?>, text: @NlsSafe String) {
       onPathSelected(text)

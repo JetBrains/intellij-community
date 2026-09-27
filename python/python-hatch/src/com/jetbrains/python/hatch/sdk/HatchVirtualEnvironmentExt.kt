@@ -35,13 +35,13 @@ suspend fun <P : PathHolder> HatchVirtualEnvironment<P>.createSdk(
   val existingVirtualEnvironment = when (val virtualEnvironment = pythonVirtualEnvironment) {
     is PythonVirtualEnvironment.Existing -> virtualEnvironment
     is PythonVirtualEnvironment.NotExisting -> {
-      return Result.failure(BasePythonExecutableNotFoundHatchError(virtualEnvironment.pythonHomePath.toString()))
+      return Result.failure(BasePythonExecutableNotFoundHatchError(virtualEnvironment.pythonHomePath.toStringForExecution()))
     }
     null -> return Result.failure(BasePythonExecutableNotFoundHatchError(pathString = null))
   }
   val pythonHomePath = existingVirtualEnvironment.pythonHomePath
   val pythonBinary = withContext(Dispatchers.IO) { fileSystem.resolvePythonBinary(pythonHomePath) }
-                     ?: return Result.failure(BasePythonExecutableNotFoundHatchError(pythonHomePath.toString()))
+                     ?: return Result.failure(BasePythonExecutableNotFoundHatchError(pythonHomePath.toStringForExecution()))
 
   val hatchSdkAdditionalData = HatchSdkAdditionalData(
     hatchWorkingDirectory = workingDirectoryPath,

@@ -213,7 +213,7 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
         message("sdk.rendering.detected.grey.text.venv")
       }
       append(String.format("Python %-4s", interpreter.pythonInfo.languageLevel))
-      append(" (" + replaceHomePathToTilde(interpreter.homePath.toString()) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      append(" (" + replaceHomePathToTilde(interpreter.homePath.toStringForUI()) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     is InstallableSelectableInterpreter -> {
       icon = AllIcons.Actions.Download
@@ -225,7 +225,7 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
       // This is a dirty hack, but version string might be null for invalid pythons
       // We must fix it after PythonInterpreterService will make sdk needless
       append(interpreter.sdkWrapper.sdk.versionString ?: "broken interpreter")
-      append(" " + replaceHomePathToTilde(interpreter.homePath.toString()), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      append(" " + replaceHomePathToTilde(interpreter.homePath.toStringForUI()), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
   }
 

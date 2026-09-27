@@ -84,6 +84,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
+import static com.jetbrains.python.sdk.SdkEelSupportKt.getEelNativeMode;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
 /**
@@ -319,7 +320,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public @NotNull String suggestSdkName(final @Nullable String currentSdkName, final @NotNull String sdkHome) {
-    if (CustomSdkHomePattern.isCustomPythonSdkHomePath(sdkHome)) {
+    if (isPreTargetSdkHomePath(sdkHome)) {
       return sdkHome;
     }
     Path pythonBinary;
@@ -362,7 +363,7 @@ public final class PythonSdkType extends SdkType {
       if (targetAdditionalData != null) {
         return targetAdditionalData;
       }
-      else if (isCustomPythonSdkHomePath(homePath)) {
+      else if (isPreTargetSdkHomePath(homePath)) {
         LOG.warn("Pretarget SDK skipped " + homePath);
         return new PyInvalidSdk();
       }
@@ -389,6 +390,16 @@ public final class PythonSdkType extends SdkType {
   @ApiStatus.Internal
   public static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
     return CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
+  }
+
+  /**
+   * Returns whether {@code homePath} belongs to an SDK from before the targets API (`docker://...`, `sftp://...`), which is not supported.
+   * In the eel native mode a UNC path (`\\wsl$\...`) is a valid path on an eel, so only a path with a scheme is such an SDK.
+   */
+  private static boolean isPreTargetSdkHomePath(@NotNull String homePath) {
+    return getEelNativeMode()
+           ? CustomSdkHomePattern.isSchemePythonSdkHomePath(homePath)
+           : CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
   }
 
   @Override

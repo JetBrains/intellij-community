@@ -41,7 +41,7 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
                            ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",
                                                                               selectedEnv.get()?.homePath))
 
-    PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == pythonBinaryPath.toString() }?.let {
+    PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == pythonBinaryPath.toStringForUI() }?.let {
       return Result.success(it)
     }
 

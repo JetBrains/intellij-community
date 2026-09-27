@@ -71,6 +71,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
+     val pyProject =  module.asPyProject() ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
       val envPath = runPipEnv(
         module.asEelOrJustPath(),
         "--venv",
@@ -99,7 +100,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
         return@withBackgroundProgress it
       }
 
-      val path = withContext(Dispatchers.IO) { VirtualEnvReader().findPythonInPythonRoot(Path.of(pipEnv)) }
+      val path = withContext(Dispatchers.IO) { VirtualEnvReader().findPythonInPythonRoot(pipEnv) }
       if (path == null) {
         return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", pipEnv))
       }

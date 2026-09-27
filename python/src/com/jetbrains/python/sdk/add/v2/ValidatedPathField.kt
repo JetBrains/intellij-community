@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.execution.target.BrowsableTargetEnvironmentType
 import com.intellij.execution.target.TargetBrowserHints
-import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
@@ -17,7 +15,6 @@ import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -180,8 +177,9 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         return@afterChange
       }
 
-      if (validatedPath.pathHolder != null) {
-        text = validatedPath.pathHolder.toString()
+      val pathHolder = validatedPath.pathHolder
+      if (pathHolder != null) {
+        text = pathHolder.toStringForUI()
       }
       else {
         text = ""
@@ -238,7 +236,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         .map {
           if (it == null) return@map null
 
-          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.toString() ?: "") != it) {
+          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.toStringForUI() ?: "") != it) {
             editorMode.store(true)
             pathValidator.markDirty()
           }
@@ -265,7 +263,6 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
     if (SystemInfo.isMac) {
       descriptor.isForcedToUseIdeaFileChooser = true
     }
-
     return descriptor
   }
 
@@ -273,29 +270,11 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   private fun createBrowseFolderListener(browseFolderDialogTitle: @Nls String, isFileSelectionMode: Boolean): ActionListener? {
     val descriptor = getFileChooserDescriptor(browseFolderDialogTitle, isFileSelectionMode)
     val targetBrowserHints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
-    val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
-
-    val listener = if (targetEnvironmentConfiguration == null) {
-      BrowseFolderActionListener(this, null, descriptor, fieldAccessor)
-    }
-    else {
-      val targetType = targetEnvironmentConfiguration.getTargetType()
-      if (targetType is BrowsableTargetEnvironmentType) {
-        targetType.createBrowser(
-          ProjectManager.getInstance().defaultProject,
-          browseFolderDialogTitle,
-          fieldAccessor,
-          this.textField,
-          { targetEnvironmentConfiguration },
-          targetBrowserHints
-        )
-      }
-      else {
-        null
-      }
-    }
-
-    return listener
+   return fileSystem.createBrowseFolderListener(textField = this,
+                                                descriptor = descriptor,
+                                                fieldAccessor = fieldAccessor,
+                                                targetHints=targetBrowserHints,
+                                                title=browseFolderDialogTitle)
   }
 }
 
@@ -311,10 +290,11 @@ private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.missingToolRow(
   validatedPathField: ValidatedPathField<T, P, V>,
   visiblePredicate: ObservableProperty<Boolean>,
 ): JPanel {
-  val selectExecutableLink = if (fileSystem.isBrowsable && fileSystem.toolPathCanBePersisted) ActionLink(message("sdk.create.custom.select.executable.link")) {
-    validatedPathField.button.doClick()
-  }
-  else null
+  val selectExecutableLink =
+    if (fileSystem.isBrowsable && fileSystem.toolPathCanBePersisted) ActionLink(message("sdk.create.custom.select.executable.link")) {
+      validatedPathField.button.doClick()
+    }
+    else null
 
   lateinit var tooltip: JPanel
   row("") {

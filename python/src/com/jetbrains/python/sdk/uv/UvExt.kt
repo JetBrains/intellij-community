@@ -60,14 +60,20 @@ internal sealed interface UvExecutionContext<P : PathHolder> {
     override val venvPath: PathHolder.Eel?,
     override val fileSystem: EelFileSystem,
     override val uvPath: PathHolder.Eel?,
-  ) : UvExecutionContext<PathHolder.Eel>
+  ) : UvExecutionContext<PathHolder.Eel> {
+    override fun toString(): String =
+      "Eel(workingDir=$workingDir, venvPath=${venvPath?.toStringForUI()}, fileSystem=$fileSystem, uvPath=${uvPath?.toStringForUI()})"
+  }
 
   data class Target(
     override val workingDir: Path,
     override val venvPath: PathHolder.Target?,
     override val fileSystem: TargetFileSystem,
     override val uvPath: PathHolder.Target?,
-  ) : UvExecutionContext<PathHolder.Target>
+  ) : UvExecutionContext<PathHolder.Target> {
+    override fun toString(): String =
+      "Target(workingDir=$workingDir, venvPath=${venvPath?.toStringForUI()}, fileSystem=$fileSystem, uvPath=${uvPath?.toStringForUI()})"
+  }
 
   suspend fun createUvCli(): PyResult<UvLowLevel<P>> = validateAndCreateUvCli(uvPath, fileSystem).mapSuccess { uvCli ->
     createUvLowLevel(workingDir, uvCli, venvPath)
@@ -218,8 +224,8 @@ internal suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   fileSystem: FileSystem<P>,
   usePip: Boolean,
 ): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
-  val venvPath = fileSystem.resolvePythonHome(pythonBinary).toString()
-  val sdkAdditionalData = UvSdkAdditionalData(workingDir, usePip, venvPath, uvPath.toString())
+  val venvPath = fileSystem.resolvePythonHome(pythonBinary).toStringForExecution()
+  val sdkAdditionalData = UvSdkAdditionalData(workingDir, usePip, venvPath, uvPath.toStringForExecution())
   val sdk = fileSystem.setupSdk(null, pythonBinary, sdkAdditionalData, null, null)
   sdk
 }

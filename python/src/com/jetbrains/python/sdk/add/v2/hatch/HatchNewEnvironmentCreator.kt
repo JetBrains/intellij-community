@@ -67,7 +67,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
   override suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> {
     val hatchExecutablePath = when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
       is PathHolder.Eel -> pathHolder.path
-      is PathHolder.Target -> return PyResult.localizedError(message("target.is.not.supported", pathHolder))
+      is PathHolder.Target -> return PyResult.localizedError(message("target.is.not.supported", pathHolder.toStringForUI()))
       null -> return Result.failure(HatchUIError.HatchExecutablePathIsNotValid(null))
     }
 

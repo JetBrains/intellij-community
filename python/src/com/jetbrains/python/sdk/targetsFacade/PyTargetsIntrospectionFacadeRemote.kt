@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
@@ -47,9 +48,9 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
   sdk: Sdk,
   private var data: PyTargetAwareAdditionalData,
   project: Project,
-  request: HelpersAwareTargetEnvironmentRequest,
+  private val pyRequest: HelpersAwareTargetEnvironmentRequest,
   private val configuration: TargetEnvironmentConfiguration,
-) : PyTargetsIntrospectionFacade(sdk, project, request) {
+) : PyTargetsIntrospectionFacade(sdk, project) {
   companion object {
 
     private const val STATE_FILE = ".state.json"
@@ -65,6 +66,10 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
       return PyTargetsIntrospectionFacadeRemote(sdk, data, project, request, configuration)
     }
   }
+
+  private val targetEnvRequest: TargetEnvironmentRequest
+    get() = pyRequest.targetEnvironmentRequest
+
 
   @Throws(ExecutionException::class)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
@@ -191,7 +196,7 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
   override fun synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator: ProgressIndicator) {
     val targetWithVfs = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration)
     if (targetWithVfs != null) {
-      synchronizeVfsMappedTarget(targetWithVfs, indicator)
+      synchronizeVfsMappedTarget(targetWithVfs)
     }
     else {
       refreshSources(indicator)
@@ -202,9 +207,8 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private fun synchronizeVfsMappedTarget(
     targetWithVfs: TargetWithMappedLocalVfs,
-    indicator: ProgressIndicator,
   ) {
-    val remotePaths = getInterpreterPaths(indicator)
+    val remotePaths = getInterpreterPaths()
     val pathMappings = PathMappingSettings()
 
     // Preserve mappings for paths added/excluded by user
