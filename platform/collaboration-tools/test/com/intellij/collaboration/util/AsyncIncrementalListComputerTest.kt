@@ -3,10 +3,12 @@ package com.intellij.collaboration.util
 
 import com.intellij.collaboration.async.timeoutRunBlockingWithBackgroundScope
 import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -50,6 +52,34 @@ internal class AsyncIncrementalListComputerTest {
     computer.requestMore()
     val afterSecond = computer.state.first { it.valueOrNull == listOf(1, 2, 3, 4) }
     assertTrue(afterSecond.isComplete)
+  }
+
+  @Test
+  fun `a request from a page collector loads the next page`() = timeoutRunBlockingWithBackgroundScope { bg ->
+    val computer = AsyncIncrementalListComputer.createIn(bg, computerOf(listOf(1), listOf(2)))
+    bg.launch(Dispatchers.Unconfined) {
+      computer.state.first { it.isValueAvailable && !it.isLoading }
+      computer.requestMore()
+    }
+    computer.requestMore()
+
+    val state = computer.state.first { it.isComplete }
+    assertEquals(listOf(1, 2), state.valueOrNull)
+  }
+
+  @Test
+  fun `a request made while a page is loading loads the next page`() = timeoutRunBlockingWithBackgroundScope { bg ->
+    val loader = ManualComputer()
+    val computer = AsyncIncrementalListComputer.createIn(bg, ComputableSequence { loader })
+
+    computer.requestMore()
+    computer.state.first { it.isLoading }
+    computer.requestMore()
+
+    loader.emitPage(listOf(1))
+    loader.emitPage(listOf(2))
+
+    computer.state.first { it.valueOrNull == listOf(1, 2) }
   }
 
   @Test

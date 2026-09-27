@@ -59,14 +59,10 @@ private class AsyncIncrementalListComputerImpl<T>(
     while (true) {
       checkCanceled()
       needMoreState.first { it }
-      try {
-        loadMore()
-        if (_state.value.isComplete && !loadAfterDone) {
-          break
-        }
-      }
-      finally {
-        needMoreState.value = false
+      needMoreState.value = false
+      loadMore()
+      if (_state.value.isComplete && !loadAfterDone) {
+        break
       }
     }
   }
