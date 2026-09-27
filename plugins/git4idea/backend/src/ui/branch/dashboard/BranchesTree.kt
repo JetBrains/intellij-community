@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
@@ -70,6 +71,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
+import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -275,7 +277,21 @@ internal class FilteringBranchesTree(
   }
 
   override fun installSearchField(): SearchTextField {
-    val searchField = super.installSearchField()
+    val searchField = object : SearchTextField(false) {
+      override fun preprocessEventForTextField(e: KeyEvent): Boolean {
+        if (e.keyCode == KeyEvent.VK_DOWN || e.keyCode == KeyEvent.VK_UP) {
+          IdeFocusManager.getInstance(project).requestFocus(component, true)
+          component.dispatchEvent(e)
+          return true
+        }
+        if (e.keyCode == KeyEvent.VK_ESCAPE && text.isEmpty()) {
+          IdeFocusManager.getInstance(project).requestFocus(component, true)
+          return true
+        }
+        return false
+      }
+    }
+    searchModel.speedSearch = createSpeedSearch(searchField)
     component.searchField = searchField
     return searchField
   }
