@@ -101,6 +101,6 @@ java_library(
         ":junit-platform-reporting",
         "//libraries/junit5",
         "//libraries/junit5-jupiter",
-        "//libraries/junit5-launcher",
+        "//libraries/junit6-launcher",
     ],
 )

@@ -98,7 +98,7 @@ testFrameworkContentModules = setOf(
   "intellij.libraries.junit4",
   "intellij.libraries.junit5",
   "intellij.libraries.junit5.jupiter",
-  "intellij.libraries.junit5.launcher",
+  "intellij.libraries.junit6.launcher",
   "intellij.libraries.junit6.params",
   "intellij.libraries.junit6.vintage",
   "intellij.platform.testFramework",

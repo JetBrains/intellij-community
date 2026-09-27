@@ -33,7 +33,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//tools/intellij.tools.ide.starter:ide-starter",
-        "//libraries/junit5-launcher",
+        "//libraries/junit6-launcher",
         ":libraries_kodein-di-jvm_provided",
     ],
 )
@@ -52,7 +52,7 @@ jvm_library(
         # do not sort,
         ":ide-starter-product-phpstorm",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//libraries/kodein-di-jvm",
         "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
     ],

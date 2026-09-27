@@ -19,8 +19,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit5-launcher_provided",
-    lib = "//libraries/junit5-launcher",
+    name = "libraries_junit6-launcher_provided",
+    lib = "//libraries/junit6-launcher",
 )
 
 jvm_library(
@@ -53,7 +53,7 @@ jvm_library(
         "//platform/testFramework/common",
         ":libraries_junit5_provided",
         ":libraries_junit6-params_provided",
-        ":libraries_junit5-launcher_provided",
+        ":libraries_junit6-launcher_provided",
     ],
 )
 
@@ -81,8 +81,8 @@ jvm_library(
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
-        "//libraries/junit5-launcher",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//platform/testFramework/common:common_test_lib",
@@ -167,8 +167,8 @@ jvm_library(
         "@lib//:mockito-junit-jupiter",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
-        "//libraries/junit5-launcher",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
         "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common",

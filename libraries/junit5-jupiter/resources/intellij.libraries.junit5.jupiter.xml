@@ -3,7 +3,7 @@
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit6.launcher"/>
     <!-- endregion -->
 
     <module name="intellij.libraries.junit6.vintage"/>

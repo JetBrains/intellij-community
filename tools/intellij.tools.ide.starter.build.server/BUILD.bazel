@@ -37,7 +37,7 @@ jvm_library(
         "//platform/util",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
         "//libraries/junit5",
-        "//libraries/junit5-launcher",
+        "//libraries/junit6-launcher",
         "//libraries/opentelemetry",
     ],
 )
@@ -65,7 +65,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
     ],
 )

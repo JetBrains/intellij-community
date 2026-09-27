@@ -6,7 +6,7 @@
     <module name="intellij.libraries.asm.tools"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit6.launcher"/>
     <module name="intellij.libraries.opentest4j"/>
     <module name="intellij.libraries.teamcity.service.messages"/>
     <module name="intellij.platform.bazel.runfiles"/>

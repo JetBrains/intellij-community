@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
   </component>
 </module>

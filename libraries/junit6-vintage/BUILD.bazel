@@ -18,7 +18,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-junit6-vintage-_j_unit6_vintage",
         "//libraries/junit4",
-        "//libraries/junit5-launcher",
+        "//libraries/junit6-launcher",
     ],
 )
 
@@ -36,7 +36,7 @@ jvm_library(
         # do not sort,
         ":junit6-vintage",
         "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.junit6.vintage` end

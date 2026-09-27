@@ -104,9 +104,9 @@
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit5.jupiter"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
-    <module name="intellij.libraries.junit5.launcher"/>
-    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit5.pioneer"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit6.launcher"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit6.params"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->

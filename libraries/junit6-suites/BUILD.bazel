@@ -18,7 +18,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-junit6-suites-_j_unit6_suites",
         "//libraries/junit5",
-        "//libraries/junit5-launcher",
+        "//libraries/junit6-launcher",
     ],
 )
 
@@ -37,7 +37,7 @@ jvm_library(
         # do not sort,
         ":junit6-suites",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.junit6.suites` end

@@ -36,7 +36,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="RUNTIME" />
   </component>
 </module>

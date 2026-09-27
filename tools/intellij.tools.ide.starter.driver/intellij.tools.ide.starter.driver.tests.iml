@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.driver" scope="TEST" />

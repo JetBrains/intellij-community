@@ -22,8 +22,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit5-launcher_provided",
-    lib = "//libraries/junit5-launcher",
+    name = "libraries_junit6-launcher_provided",
+    lib = "//libraries/junit6-launcher",
 )
 
 jvm_library(
@@ -70,7 +70,7 @@ jvm_library(
         "//platform/util/jdom",
         ":libraries_junit5-jupiter_provided",
         ":libraries_junit5_provided",
-        ":libraries_junit5-launcher_provided",
+        ":libraries_junit6-launcher_provided",
     ],
 )
 
@@ -93,8 +93,8 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-launcher",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
         "//libraries/assertj-core:assertj-core_test_lib",
@@ -186,8 +186,8 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-launcher",
-        "//libraries/junit5-launcher:junit5-launcher_test_lib",
+        "//libraries/junit6-launcher",
+        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
