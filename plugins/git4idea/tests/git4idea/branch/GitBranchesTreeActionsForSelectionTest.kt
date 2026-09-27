@@ -2,11 +2,19 @@
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.ide.DataManager
+import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataMap
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshotProvider
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.util.registry.Registry
@@ -55,10 +63,13 @@ import git4idea.ui.branch.dashboard.BranchNodeDescriptor
 import git4idea.ui.branch.dashboard.BranchesDashboardActions
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchActionsBuilder
 import git4idea.ui.branch.dashboard.BranchesDashboardTreeController
+import git4idea.ui.branch.dashboard.BranchesTreeSearchField
 import git4idea.ui.branch.dashboard.BranchesTreeSelection
 import git4idea.ui.branch.dashboard.BranchesTreeSelection.Companion.getSelectedRepositories
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.mockito.Mockito
+import java.awt.BorderLayout
+import javax.swing.JPanel
 import javax.swing.tree.TreePath
 import kotlin.reflect.KClass
 
@@ -256,6 +267,45 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
+  fun `test search field hides the tree data`() = branchesTreeTest {
+    HeadlessDataManager.fallbackToProductionDataManager(testRootDisposable)
+    singleRepoTreeState()
+
+    val treeData = UiDataProvider { sink ->
+      sink[BRANCHES_UI_CONTROLLER] = branchesUiController
+      BranchesDashboardTreeController.snapshotSelectionActionsKeys(sink, tree.selectionPaths)
+    }
+    val searchField = BranchesTreeSearchField(project, tree)
+    UiDataProvider.wrapComponent(JPanel(BorderLayout()).apply {
+      add(searchField, BorderLayout.NORTH)
+      add(tree, BorderLayout.CENTER)
+    }) { sink ->
+      sink[PlatformDataKeys.PROJECT] = project
+      treeData.uiDataSnapshot(sink)
+    }
+
+    for (matcher in listOf(BranchesTreeNodeMatchers.typeMatcher<BranchNodeDescriptor.Head>(),
+                           BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "another"))) {
+      select(matcher)
+      val treeContext = DataManager.getInstance().getDataContext(tree)
+      val searchFieldContext = DataManager.getInstance().getDataContext(searchField.textEditor)
+
+      for (key in RecordingDataSink().also { treeData.uiDataSnapshot(it) }.providedKeys) {
+        assertNotNull("${key.name} must be available in the tree", treeContext.getData(key))
+        assertNull("${key.name} must be hidden in the search field", searchFieldContext.getData(key))
+      }
+    }
+
+    assertTrue(isEnabledAndVisible(GitDeleteRefAction(), DataManager.getInstance().getDataContext(tree)))
+    assertFalse(isEnabledAndVisible(GitDeleteRefAction(), DataManager.getInstance().getDataContext(searchField.textEditor)))
+  }
+
+  private fun isEnabledAndVisible(action: AnAction, context: DataContext): Boolean {
+    val event = TestActionEvent.createTestEvent(context)
+    action.update(event)
+    return event.presentation.isEnabledAndVisible
+  }
+
   fun `test nothing to show`() = branchesTreeTest {
     singleRepoTreeState()
 
@@ -405,6 +455,28 @@ private object BranchesTreeNodeMatchers {
       return if (matcher(node)) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
     }
   }
+}
+
+private class RecordingDataSink : DataSink {
+  val providedKeys = mutableSetOf<DataKey<*>>()
+
+  override fun <T : Any> set(key: DataKey<T>, data: T?) {
+    providedKeys += key
+  }
+
+  override fun <T : Any> setNull(key: DataKey<T>) {}
+
+  override fun <T : Any> lazyValue(key: DataKey<T>, data: (DataMap) -> T?) {
+    providedKeys += key
+  }
+
+  override fun <T : Any> lazyNull(key: DataKey<T>) {}
+
+  override fun uiDataSnapshot(provider: UiDataProvider) = provider.uiDataSnapshot(this)
+
+  override fun dataSnapshot(provider: DataSnapshotProvider) = provider.dataSnapshot(this)
+
+  override fun uiDataSnapshot(provider: DataProvider) = throw UnsupportedOperationException()
 }
 
 private class ActionState(val isEnabled: Boolean, val action: KClass<out AnAction>) {
