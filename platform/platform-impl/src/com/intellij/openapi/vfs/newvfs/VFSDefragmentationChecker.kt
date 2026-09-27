@@ -27,7 +27,7 @@ private val PERIODIC_CHECK_DELAY = getLongProperty(
 /** Made configurable mainly for QA: to reduce the threshold to be able to test the functionality in a reasonable time */
 private val CHANGES_COUNT_TO_START_ASKING = getIntProperty(
   "intellij.vfs.defragmentation.changes-count-to-start-asking",
-  Int.MAX_VALUE / 8
+  Int.MAX_VALUE / 2
 )
 
 internal object VFSDefragmentationCheckerStopper {
