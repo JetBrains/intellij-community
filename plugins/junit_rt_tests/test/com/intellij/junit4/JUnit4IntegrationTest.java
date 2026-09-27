@@ -66,7 +66,7 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
     String communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/');
     String methodName = myNameRule.getMethodName();
     methodName = methodName.substring(0, methodName.indexOf("["));
-    String testDataPath = communityPath + File.separator + "plugins" + File.separator + "junit5_rt_tests" +
+    String testDataPath = communityPath + File.separator + "plugins" + File.separator + "junit_rt_tests" +
                           File.separator + "testData" + File.separator + "integration" + File.separator + methodName;
 
     addMavenLibs(module, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());

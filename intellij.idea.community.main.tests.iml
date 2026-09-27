@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.textmate.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.propertyBased.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.tests" scope="TEST" />

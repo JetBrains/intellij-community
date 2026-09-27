@@ -24,7 +24,7 @@ public class CustomJUnit5IntegrationTest extends AbstractTestFrameworkCompilingI
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/custom5Project");
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/custom5Project");
   }
 
   public void testRunClass() throws Exception {

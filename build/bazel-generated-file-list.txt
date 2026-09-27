@@ -1401,6 +1401,7 @@ plugins/junit5_rt
 plugins/junit5_rt_tests
 plugins/junit6_rt
 plugins/junit_rt
+plugins/junit_rt_tests
 plugins/keymaps/eclipse-keymap
 plugins/keymaps/netbeans5.6-keymap
 plugins/keymaps/qtcreator-keymap

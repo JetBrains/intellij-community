@@ -23,7 +23,7 @@ public class JUnitModuleInfoIntegrationTest extends AbstractTestFrameworkCompili
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/splitModulePath");
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/splitModulePath");
   }
 
   @Override

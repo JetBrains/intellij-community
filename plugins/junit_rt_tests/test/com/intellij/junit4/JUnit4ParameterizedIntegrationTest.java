@@ -16,7 +16,7 @@ public class JUnit4ParameterizedIntegrationTest extends AbstractTestFrameworkCom
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/parameterized");
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/parameterized");
   }
 
   private static Object[] createParams(final String mavenId, String src, String paramString) {

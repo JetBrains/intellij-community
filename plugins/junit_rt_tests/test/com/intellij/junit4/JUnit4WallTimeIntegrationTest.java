@@ -16,7 +16,7 @@ public class JUnit4WallTimeIntegrationTest extends AbstractTestFrameworkCompilin
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/wallTime");
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/wallTime");
   }
 
   @Override

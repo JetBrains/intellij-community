@@ -45,7 +45,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/mixed45Project");
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/mixed45Project");
   }
 
   @Override

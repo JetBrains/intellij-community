@@ -33,7 +33,7 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/forkProjectWithModuleInfo");
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/forkProjectWithModuleInfo");
   }
 
   @Override

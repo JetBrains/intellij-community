@@ -24,7 +24,7 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
   private static final String METHOD_NAME = "simple";
   @Override
   protected String getTestContentRoot() {
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/params/") + mySrc;
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit_rt_tests/testData/integration/params/") + mySrc;
   }
 
   @Parameterized.Parameters(name = "{1}")
