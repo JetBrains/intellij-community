@@ -352,7 +352,7 @@ class EditorSoundSignalsPipelineTest {
   fun `a caret signal survives when its line signal is muted`() = pipelineTest { editor ->
     // the suppression runs ahead of the player's settings filter, so an ungated one would leave nothing to play
     detector.signals = setOf(COUNTERPART_LINE_SIGNAL, CARET_SIGNAL)
-    settings.setSignalEnabled(COUNTERPART_LINE_SIGNAL, false)
+    settings.setSignal(COUNTERPART_LINE_SIGNAL, false)
 
     moveCaret(editor, LINE_1_START)
 
@@ -387,7 +387,7 @@ class EditorSoundSignalsPipelineTest {
   fun `disabling the feature detaches the listeners`() = pipelineTest { editor ->
     detector.signals = setOf(LINE_SIGNAL)
 
-    settings.setMode(SoundSignalsMode.OFF)
+    settings.setPlaySignals(false)
     // refreshSoundSignalsState() only reaches the manager *service*, which this test deliberately does not create
     manager.updateListenersState()
     moveCaret(editor, LINE_1_START)
@@ -466,8 +466,8 @@ class EditorSoundSignalsPipelineTest {
       settings = soundSignalsSettings
       val managerScope = childScope("EditorSoundSignalsManager under test")
       try {
-        // ON, not AUTO: tests run without a screen reader, so AUTO would silence everything
-        settings.setMode(SoundSignalsMode.ON)
+        // tests run without screen reader support, so the calculated default would silence everything
+        settings.setPlaySignals(true)
         ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, player, disposable)
         ExtensionTestUtil.maskExtensions(EditorSoundSignalDetector.EP_NAME, extraDetectors + detector, disposable)
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.soundSignals
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.Disposable
@@ -21,15 +22,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.util.asDisposable
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -121,7 +121,11 @@ class EditorSoundSignalsManager internal constructor(
     RegistryManager.getInstance().get(SOUND_SIGNALS_ENABLED_REGISTRY_KEY).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = refreshSoundSignalsState()
     }, scope)
-    ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, scope.asDisposable()) { refreshSoundSignalsState() }
+    scope.launch {
+      GeneralSettings.getInstance().propertyChangedFlow
+        .filter { it == GeneralSettings.PropertyNames.supportScreenReaders }
+        .collect { refreshSoundSignalsState() }
+    }
     managerJob.invokeOnCompletion { updateListenersState() }
     updateListenersState()
 

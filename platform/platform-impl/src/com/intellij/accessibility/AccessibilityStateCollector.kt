@@ -3,8 +3,9 @@ package com.intellij.accessibility
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.soundSignals.SoundSignalIdValidationRule
-import com.intellij.ide.soundSignals.SoundSignalsMode
+import com.intellij.ide.soundSignals.appliedSoundSignalsPolicy
 import com.intellij.ide.soundSignals.findSoundSignal
+import com.intellij.ide.soundSignals.isSoundSignalsFeatureEnabled
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -12,9 +13,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.components.service
 
 internal class AccessibilityStateCollector : ApplicationUsagesCollector() {
-  private val group = EventLogGroup("accessibility.state", 4)
+  private val group = EventLogGroup("accessibility.state", 5)
   private val screenReaderSupportInVmOptions = group.registerEvent("screen.reader.support.enabled.in.vmoptions", EventFields.Boolean("enabled"))
-  private val soundSignalsMode = group.registerEvent("sound.signals.mode", EventFields.Enum<SoundSignalsMode>("mode"))
+  private val soundSignalsMode = group.registerEvent("sound.signals.mode", EventFields.Enabled, EventFields.Boolean("explicit"))
   private val soundSignalDisabled =
     group.registerEvent("sound.signal.disabled", EventFields.StringValidatedByCustomRule<SoundSignalIdValidationRule>("signal"))
 
@@ -25,8 +26,9 @@ internal class AccessibilityStateCollector : ApplicationUsagesCollector() {
       add(screenReaderSupportInVmOptions.metric(it))
     }
 
-    val signals = service<AccessibilitySettings>().state.soundSignals
-    add(soundSignalsMode.metric(signals.mode))
-    signals.disabledSignals.filter { findSoundSignal(it) != null }.forEach { add(soundSignalDisabled.metric(it)) }
+    if (!isSoundSignalsFeatureEnabled()) return@buildSet
+    val state = service<AccessibilitySettings>().state.soundSignals
+    add(soundSignalsMode.metric(appliedSoundSignalsPolicy().isPlaySignalsOn, state.playSignals != null))
+    state.signals.filter { (id, enabled) -> !enabled && findSoundSignal(id) != null }.forEach { add(soundSignalDisabled.metric(it.key)) }
   }
 }

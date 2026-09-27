@@ -5,32 +5,37 @@ import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.util.whenFocusGained
+import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.actionListener
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import java.awt.event.FocusEvent
+import javax.swing.JCheckBox
 
 private const val SIGNAL_ROW_GAP = 3
 private const val SIGNAL_SECTION_GAP = 8
 
-internal fun Panel.soundSignalsGroup() {
+internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
   if (!isSoundSignalsFeatureEnabled()) return
-  val settings = service<AccessibilitySettings>()
+  val pending = PendingSoundSignals(screenReaderSupportCheckbox)
 
   group(IdeBundle.message("sound.signals.group.title")) {
-    lateinit var mode: ComboBox<SoundSignalsMode>
-    row(IdeBundle.message("sound.signals.mode.label")) {
-      mode = comboBox(SoundSignalsMode.entries, textListCellRenderer("") { it.title })
-        .bindItem({ settings.state.soundSignals.mode }, { mode -> mode?.let { settings.updateSoundSignals { it.copy(mode = mode) } } })
-        .component
+    lateinit var playSignals: ComboBox<Boolean>
+    row(IdeBundle.message("sound.signals.play.label")) {
+      playSignals = comboBox(listOf(true, false), textListCellRenderer("") {
+        IdeBundle.message(if (it) "sound.signals.play.on" else "sound.signals.play.off")
+      }).component
+    }
+    pending.view { playSignals.selectedItem = it.isPlaySignalsOn }
+    playSignals.whenItemSelected { on ->
+      // a render selects the calculated value, so only a user edit selects another one
+      if (on != pending.policy().isPlaySignalsOn) pending.edit { it.copy(playSignals = on) }
     }
     rowsRange {
       val signals = getSoundSignals()
@@ -38,17 +43,57 @@ internal fun Panel.soundSignalsGroup() {
         val topGap = if (index == 0) SIGNAL_ROW_GAP else SIGNAL_ROW_GAP + SIGNAL_SECTION_GAP
         val group = signal.group
         if (group == null) {
-          signalCheckBox(signal, settings, topGap)
+          signalCheckBox(signal, pending, topGap)
         }
         else {
-          groupCheckBoxes(group, signals.filter { it.group === group }, settings, topGap)
+          groupCheckBoxes(group, signals.filter { it.group === group }, pending, topGap)
         }
       }
-    }.enabledIf(mode.selectedValueMatches { it != SoundSignalsMode.OFF })
+    }.enabledIf(playSignals.selectedValueMatches { it == true })
+
+    screenReaderSupportCheckbox.addItemListener { pending.render() }
+    pending.render()
+
+    onReset { pending.reset() }
+    onIsModified { pending.isModified() }
+    onApply { pending.apply() }
   }
 }
 
-private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSignal>, settings: AccessibilitySettings, topGap: Int) {
+private class PendingSoundSignals(private val screenReader: JCheckBox) {
+  private val settings = service<AccessibilitySettings>()
+  private val views = ArrayList<(SoundSignalsPolicy) -> Unit>()
+  private var state = settings.state.soundSignals
+
+  fun policy(): SoundSignalsPolicy = SoundSignalsPolicy(screenReader.isSelected, state)
+
+  fun view(render: (SoundSignalsPolicy) -> Unit) {
+    views += render
+  }
+
+  fun render() {
+    val policy = policy()
+    for (view in views) view(policy)
+  }
+
+  fun edit(transform: (SoundSignalsSettingsState) -> SoundSignalsSettingsState) {
+    state = transform(state)
+    render()
+  }
+
+  fun reset() {
+    state = settings.state.soundSignals
+    render()
+  }
+
+  fun isModified(): Boolean = state != settings.state.soundSignals
+
+  fun apply() {
+    settings.update { it.copy(soundSignals = state) }
+  }
+}
+
+private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSignal>, pending: PendingSoundSignals, topGap: Int) {
   lateinit var groupCheckBox: SoundSignalGroupCheckBox
   lateinit var children: List<JBCheckBox>
   row {
@@ -56,12 +101,12 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
       .accessibleDescription(IdeBundle.message("sound.signals.group.accessible.description"))
       .actionListener { _, component ->
         val selected = component.state == ThreeStateCheckBox.State.SELECTED
-        for (child in children) child.isSelected = selected
+        pending.edit { it.copy(signals = it.signals + signals.associate { signal -> signal.id to selected }) }
       }
       .component
   }.customize(UnscaledGapsY(top = topGap))
   indent {
-    children = signals.map { signalCheckBox(it, settings) }
+    children = signals.map { signalCheckBox(it, pending) }
   }
   fun updateGroupState() {
     groupCheckBox.state = when (children.count { it.isSelected }) {
@@ -76,7 +121,7 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
   }
 }
 
-private fun Panel.signalCheckBox(signal: SoundSignal, settings: AccessibilitySettings, topGap: Int = SIGNAL_ROW_GAP): JBCheckBox {
+private fun Panel.signalCheckBox(signal: SoundSignal, pending: PendingSoundSignals, topGap: Int = SIGNAL_ROW_GAP): JBCheckBox {
   val player = SoundSignalPlayer.getInstance()
   lateinit var checkBox: JBCheckBox
   row {
@@ -84,11 +129,10 @@ private fun Panel.signalCheckBox(signal: SoundSignal, settings: AccessibilitySet
       .apply {
         signal.group?.let { accessibleDescription(IdeBundle.message("sound.signals.group.member.accessible.description", it.title)) }
       }
-      .bindSelected(
-        { signal.id !in settings.state.soundSignals.disabledSignals },
-        { checked -> settings.setSignalEnabled(signal, checked) },
-      )
-      .actionListener { _, _ -> player.preview(signal) }
+      .actionListener { _, component ->
+        pending.edit { it.copy(signals = it.signals + (signal.id to component.isSelected)) }
+        player.preview(signal)
+      }
       .applyToComponent {
         whenFocusGained { e ->
           when (e.cause) {
@@ -99,19 +143,10 @@ private fun Panel.signalCheckBox(signal: SoundSignal, settings: AccessibilitySet
       }
       .component
   }.customize(UnscaledGapsY(top = topGap))
+  pending.view { checkBox.isSelected = it.isSignalOn(signal.id) }
   return checkBox
 }
 
 private class SoundSignalGroupCheckBox(text: @Nls String) : ThreeStateCheckBox(text, State.NOT_SELECTED) {
   override fun nextState(): State = if (state == State.SELECTED) State.NOT_SELECTED else State.SELECTED
-}
-
-private fun AccessibilitySettings.setSignalEnabled(signal: SoundSignal, enabled: Boolean) {
-  updateSoundSignals {
-    it.copy(disabledSignals = if (enabled) it.disabledSignals - signal.id else it.disabledSignals + signal.id)
-  }
-}
-
-private fun AccessibilitySettings.updateSoundSignals(function: (SoundSignalsSettingsState) -> SoundSignalsSettingsState) {
-  update { it.copy(soundSignals = function(it.soundSignals)) }
 }

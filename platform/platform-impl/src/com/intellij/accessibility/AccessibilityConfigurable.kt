@@ -52,6 +52,7 @@ import com.intellij.util.ui.RestartDialogImpl
 import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import javax.swing.JCheckBox
 import javax.swing.KeyStroke
 
 internal class AccessibilityConfigurable : BoundSearchableConfigurable(
@@ -63,8 +64,8 @@ internal class AccessibilityConfigurable : BoundSearchableConfigurable(
 
   override fun createPanel(): DialogPanel = panel {
     visionGroup()
-    screenReaderModeGroup()
-    soundSignalsGroup()
+    val screenReaderCheckbox = screenReaderModeGroup()
+    soundSignalsGroup(screenReaderCheckbox)
   }
 
   override fun apply() {
@@ -168,7 +169,7 @@ internal class AccessibilityConfigurable : BoundSearchableConfigurable(
     }
   }
 
-  private fun Panel.screenReaderModeGroup() {
+  private fun Panel.screenReaderModeGroup(): JCheckBox {
     val generalSettings = GeneralSettings.getInstance()
     lateinit var screenReaderCell: Cell<JBCheckBox>
     group(message("accessibility.group.screen.reader.mode")) {
@@ -188,6 +189,7 @@ internal class AccessibilityConfigurable : BoundSearchableConfigurable(
         indent { notificationAnnouncingRows(screenReaderCell.selected) }
       }
     }
+    return screenReaderCell.component
   }
 
   private fun Panel.notificationAnnouncingRows(screenReaderSelected: ComponentPredicate) {
