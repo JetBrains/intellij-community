@@ -33,7 +33,9 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -50,11 +52,13 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.system.OS;
 import kotlin.Unit;
@@ -197,6 +201,27 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
     assertFalse(fileToDeletePointer.isValid());
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
+  }
+
+  @Test
+  public void testChangeApplierUsesTheEventsOfItsOwnPrepareChange() {
+    var fileToDelete = tempDir.newFileNio("toDelete.txt");
+    var otherFile = getVirtualFile(tempDir.newFileNio("other.txt"));
+    var listener = new LoggingListener();
+    createPointerByFile(fileToDelete, listener);
+    List<VFileEvent> deletion = List.of(new VFileDeleteEvent(this, getVirtualFile(fileToDelete)));
+    List<VFileEvent> reparse =
+      List.of(new VFilePropertyChangeEvent(FileContentUtilCore.FORCE_RELOAD_REQUESTOR, otherFile, VirtualFile.PROP_NAME, "other.txt", "other.txt"));
+
+    // Two batches prepare before one of them is applied, for example a VFS refresh and a reparse.
+    var deletionApplier = ReadAction.computeBlocking(() -> myVirtualFilePointerManager.prepareChange(deletion));
+    ReadAction.runBlocking(() -> myVirtualFilePointerManager.prepareChange(reparse));
+    WriteAction.runAndWait(() -> {
+      deletionApplier.beforeVfsChange();
+      myVirtualFilePointerManager.after(deletion);
+    });
+
+    assertEquals("before:true", ContainerUtil.getFirstItem(listener.log));
   }
 
   @Test//IJPL-176784
