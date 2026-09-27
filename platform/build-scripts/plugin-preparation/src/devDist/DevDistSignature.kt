@@ -19,7 +19,3 @@ fun devDistSignature(build: HashStream128.() -> Unit): String {
   val bytes = ByteBuffer.allocate(16).putLong(value.mostSignificantBits).putLong(value.leastSignificantBits).array()
   return BigInteger(1, bytes).toString(36)
 }
-
-/** The signature of [values] in order. Each value goes in with its length. */
-@ApiStatus.Internal
-fun devDistSignatureOf(values: Iterable<String>): String = devDistSignature { for (value in values) putString(value) }

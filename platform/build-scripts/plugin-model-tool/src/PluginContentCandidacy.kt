@@ -58,12 +58,6 @@ class DerivedPluginCandidacy(
    * the convention, and an offer is the narrower claim that one packing target may serve that jar.
    */
   @JvmField val memberPaths: Map<String, String>,
-  /**
-   * The module libraries each member's jar merges, by module name, and `null` for a member with a library it cannot name.
-   *
-   * The same set [DerivedCandidacyOffer.libraries] holds, for every member and not for the offered half.
-   */
-  @JvmField val memberLibraries: Map<String, Set<String>?>,
 )
 
 /**
@@ -89,7 +83,6 @@ fun derivePluginContentCandidacy(
   val offers = ArrayList<DerivedCandidacyOffer>()
   val vetoes = ArrayList<String>(residue.vetoedMembers)
   val memberPaths = HashMap<String, String>()
-  val memberLibraries = HashMap<String, Set<String>?>()
   val seen = HashSet<String>()
   // One library read per member, and only for a member that needs one.
   val libraryReads = HashMap<String, MergedMemberLibraries>()
@@ -118,9 +111,6 @@ fun derivePluginContentCandidacy(
       frontend = frontend,
       librariesKeptOut = member.name in residue.unmergedMembers,
     )
-    if (jar != null || rawName in residue.memberJars) {
-      memberLibraries.put(rawName, librariesOf(member).names)
-    }
     if (jar != null) {
       memberPaths.put(rawName, jar.relativeOutputFile)
     }
@@ -152,10 +142,6 @@ fun derivePluginContentCandidacy(
       frontend = frontend,
       librariesKeptOut = member.name in residue.unmergedMembers,
     )
-    // A member of a jar the layout names needs its library set even with no descriptor of its own.
-    if (jar != null || name in residue.memberJars) {
-      memberLibraries.putIfAbsent(name, librariesOf(member).names)
-    }
     if (jar == null) {
       continue
     }
@@ -173,7 +159,6 @@ fun derivePluginContentCandidacy(
     offers = offers,
     vetoes = vetoes,
     memberPaths = memberPaths,
-    memberLibraries = memberLibraries,
   )
 }
 

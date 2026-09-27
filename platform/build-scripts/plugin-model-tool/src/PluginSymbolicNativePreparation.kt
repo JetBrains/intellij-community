@@ -51,13 +51,11 @@ enum class PluginSymbolicNativeHandling {
  * A requirement at one original source position, not an executable preparation or a native entry inventory.
  * Only [PluginSymbolicNativeHandling.UNTOUCHED] proves that native handling cannot change the source.
  * Other results require Kotlin preparation to apply filters, duplicate precedence, and byte-dependent decisions.
- * Different occurrences of one [inputId] can have different requirements. Key them by source occurrence, not raw input alone.
+ * Different occurrences of one input can have different requirements. Key them by source occurrence, not by the input alone.
  * [modelSignature] identifies this selection policy, not signing inputs or the prepared output bytes.
  */
 @ApiStatus.Internal
 data class PluginSymbolicNativeRequirement(
-  @JvmField val sourceIndex: Int,
-  @JvmField val inputId: String,
   @JvmField val handling: PluginSymbolicNativeHandling,
   @JvmField val distributionPrefix: String?,
   @JvmField val modelSignature: String,
@@ -78,7 +76,7 @@ fun derivePluginSymbolicNativeRequirements(
 ): List<PluginSymbolicNativeRequirement> {
   val nativePolicy = requireNotNull(policy) { "The selected distribution has no native policy" }
   require(layout is PluginLayout || layout is PlatformLayout) { "The original layout has no known native source policy" }
-  return sources.mapIndexed { index, source ->
+  return sources.map { source ->
     val artifact = source.artifact
     require(artifact.id.isNotBlank()) { "A native source requires an input identity" }
     require(artifact.fileName.isNotBlank() && artifact.fileName !in listOf(".", "..") && artifact.fileName.none { it in "/\\\u0000" }) {
@@ -105,8 +103,6 @@ fun derivePluginSymbolicNativeRequirements(
     }
     val distributionPrefix = if (extraction) "lib/${nativePolicy.presignedLibraries.getValue(checkNotNull(library))}/" else null
     PluginSymbolicNativeRequirement(
-      sourceIndex = index,
-      inputId = artifact.id,
       handling = handling,
       distributionPrefix = distributionPrefix,
       modelSignature = nativeSelectionSignature(source, handling, library, distributionPrefix, nativePolicy),

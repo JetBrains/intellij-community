@@ -59,7 +59,7 @@ class PluginContentCandidacyFoldTest {
   }
 
   private fun plugin(offers: List<DerivedCandidacyOffer> = emptyList(), vetoes: List<String> = emptyList()): DerivedPluginCandidacy {
-    return DerivedPluginCandidacy(offers = offers, vetoes = vetoes, memberPaths = emptyMap(), memberLibraries = emptyMap())
+    return DerivedPluginCandidacy(offers = offers, vetoes = vetoes, memberPaths = emptyMap())
   }
 
   private fun offer(moduleName: String, libraries: Set<String>, isStated: Boolean = false): DerivedCandidacyOffer {
