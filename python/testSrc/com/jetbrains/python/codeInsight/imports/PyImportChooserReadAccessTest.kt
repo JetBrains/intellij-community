@@ -6,15 +6,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.components.JBList
 import com.intellij.util.Function
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyImportElement
 import java.util.concurrent.TimeUnit
 import javax.swing.ListCellRenderer
+import org.junit.jupiter.api.Test
 
 /**
  * The import popup renders and filters its items on the EDT, where Swing gives no read lock.
@@ -23,9 +25,10 @@ import javax.swing.ListCellRenderer
 @Subsystems.CodeInsight
 @Layers.Functional
 @TestFor(classes = [PyImportChooser::class], issues = ["PY-72797"])
-class PyImportChooserReadAccessTest : PyTestCase() {
+class PyImportChooserReadAccessTest : PyCodeInsightTestCase() {
 
-  fun `test the renderer and the filter namer take a read lock`() {
+  @Test
+  fun `the renderer and the filter namer take a read lock`() = runInEdtAndWait {
     val file = myFixture.configureByText("a.py", """
       import os
 
