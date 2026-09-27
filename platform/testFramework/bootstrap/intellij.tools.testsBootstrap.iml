@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.vintage" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.vintage" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.opentest4j" />

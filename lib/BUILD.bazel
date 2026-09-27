@@ -10634,7 +10634,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "libraries-junit5-vintage-_j_unit6_vintage",
+    name = "libraries-junit6-vintage-_j_unit6_vintage",
     jar = "@org_junit_vintage-junit-vintage-engine-6_1_3_http//file",
     source_jar = "@org_junit_vintage-junit-vintage-engine-6_1_3-sources_http//file",
     visibility = ["//visibility:public"],

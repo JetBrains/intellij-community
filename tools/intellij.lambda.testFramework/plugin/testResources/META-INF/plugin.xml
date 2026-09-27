@@ -110,7 +110,7 @@
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.junit5.pioneer"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
-    <module name="intellij.libraries.junit5.vintage"/>
+    <module name="intellij.libraries.junit6.vintage"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->
     <module name="intellij.libraries.kodein.di.jvm"/>
     <!-- chain: moduleSet lambda.testFrameworkLibraries -->

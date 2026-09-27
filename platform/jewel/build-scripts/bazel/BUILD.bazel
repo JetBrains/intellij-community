@@ -190,7 +190,7 @@ jvm_library(
         ":clikt-utils",
         ":jewel-bazel-scripts-utils",
         "//libraries/junit5-launcher",
-        "//libraries/junit5-vintage",
+        "//libraries/junit6-vintage",
         "//platform/jewel/ui-tests:ui-tests_test_lib",
         "@lib//:kotlin-stdlib",
     ],

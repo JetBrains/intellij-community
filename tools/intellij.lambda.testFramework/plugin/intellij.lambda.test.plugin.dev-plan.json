@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.lambda.test.plugin",
     "variant": "",
-    "layoutSignature": "4cqgkfcji5oalwjqofo2knx0c",
+    "layoutSignature": "e2n8chtif4bsuccbx23m70rhq",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.allure.java.commons.jar",
@@ -183,16 +183,16 @@
             }
         },
         {
-            "destination": "lib/modules/intellij.libraries.junit5.vintage.jar",
+            "destination": "lib/modules/intellij.libraries.junit6.vintage.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "intellij.libraries.junit5.vintage",
+                        "input": "intellij.libraries.junit6.vintage",
                         "kind": "module",
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-vintage-_j_unit6_vintage",
+                        "input": "@lib//:libraries-junit6-vintage-_j_unit6_vintage",
                         "kind": "library",
                         "filter": "library-v1"
                     }
