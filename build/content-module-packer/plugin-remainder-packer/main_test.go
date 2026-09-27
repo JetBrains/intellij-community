@@ -146,9 +146,9 @@ func TestProjectionRunRefusesAKotlinPreparationAndAStaleVersion(t *testing.T) {
 		module  string
 		message string
 	}{
-		"a Kotlin operation kind":      {kotlinPlan, "1", "example.content", "does not execute"},
-		"a stale version":              {projectionPlan, "2", "example.content", "stale execution version"},
-		"a module without a plain jar": {projectionPlan, "1", "example.other", `independent module "example.other" matches no module jar asset`},
+		"a Kotlin operation kind":       {kotlinPlan, "1", "example.content", "does not execute"},
+		"a stale version":               {projectionPlan, "2", "example.content", "stale execution version"},
+		"a module without a plain jar":  {projectionPlan, "1", "example.other", `independent module "example.other" matches no module jar asset`},
 		"a plan with reusableArtifacts": {stalePlan, "1", "example.content", "reusableArtifacts"},
 	} {
 		t.Run(name, func(t *testing.T) {
