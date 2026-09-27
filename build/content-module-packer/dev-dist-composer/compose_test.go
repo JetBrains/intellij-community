@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// The tests in this file port DevBuildComponentComposerTest. The Kotlin tests of the manifest writer stay in Kotlin,
+// The tests in this file cover composeComponents and its checks. The tests of the manifest writer are Kotlin tests,
 // because the composer only reads manifests.
 
 func pointer[T any](value T) *T {

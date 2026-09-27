@@ -14,8 +14,8 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// The Kotlin composer resolves paths through java.nio.file.Path. The helpers in this file reproduce the parts of that
-// behavior the composer depends on.
+// The helpers in this file resolve a path with the rules of java.nio.file.Path. The composer depends on these parts of
+// that behavior.
 
 const windows = runtime.GOOS == "windows"
 

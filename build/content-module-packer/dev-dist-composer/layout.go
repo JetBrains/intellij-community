@@ -7,9 +7,8 @@ import (
 	"strconv"
 )
 
-// writeLocalLayout is the Kotlin writeDevBuildLocalLayout (DevBuildLocalLayout.kt). It writes `local-layout.json`,
-// which names the runfile of each distribution file instead of a copy. The `local-home` subcommand of
-// dev-dist-collector reads it.
+// writeLocalLayout writes `local-layout.json`, which names the runfile of each distribution file instead of a copy. The
+// `local-home` subcommand of dev-dist-collector reads it.
 func writeLocalLayout(components []devBuildComponent, target string, sourceRunfiles *orderedMap, hasPluginClasspath bool,
 	sourceDirectoryRunfiles *orderedMap) error {
 	var links []distributionLink
@@ -101,8 +100,8 @@ func writeLocalLayout(components []devBuildComponent, target string, sourceRunfi
 	return os.WriteFile(filepath.Join(target, "local-layout.json"), output, 0o666)
 }
 
-// appendLocalLayoutEntry writes one Kotlin LocalLayoutEntry with `encodeDefaults = true`. The kind property is
-// written only for a directory, because it never encodes its default.
+// appendLocalLayoutEntry writes one entry of the local layout. It writes every property, null included, and the kind
+// property only for a directory.
 func appendLocalLayoutEntry(output []byte, name string, runfile, symlinkTarget *string, executable bool, mode *int64, directory bool) []byte {
 	output = append(output, `{"path":`...)
 	output = appendJSONString(output, name)

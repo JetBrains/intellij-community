@@ -12,9 +12,9 @@ import (
 	"unicode/utf8"
 )
 
-// The Kotlin composer reads its inputs with kotlinx.serialization and `ignoreUnknownKeys = false`. That decoder
-// matches a key by its exact spelling, refuses an unknown key, and requires every property without a default. It
-// accepts null only for a nullable property. The decoding below keeps these rules, which encoding/json does not.
+// The composer decodes its inputs with the rules of kotlinx.serialization and `ignoreUnknownKeys = false`. A key must
+// match by its exact spelling, an unknown key fails, and every property without a default is required. Null is valid
+// only for a nullable property. The decoding below keeps these rules, which encoding/json does not.
 
 // jsonObject holds the members of one JSON object. A repeated key keeps its last value, as in kotlinx.serialization.
 type jsonObject struct {
@@ -69,7 +69,7 @@ func decodeJSONMembers(data []byte) ([]jsonMember, error) {
 	return members, nil
 }
 
-// decodeJSONObject reads an object of the Kotlin class typeName, which has the properties names.
+// decodeJSONObject reads an object with the properties names. typeName names the object in an error message.
 func decodeJSONObject(data []byte, typeName string, names ...string) (jsonObject, error) {
 	members, err := decodeJSONMembers(data)
 	if err != nil {

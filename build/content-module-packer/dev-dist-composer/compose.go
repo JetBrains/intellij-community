@@ -14,7 +14,7 @@ import (
 	"jetbrains.com/content-module-packer/internal/span"
 )
 
-// devBuildComponent is the Kotlin DevBuildComponent. Its manifest names each file where it already is. An empty
+// devBuildComponent is one component to compose. Its manifest names each file where it already is. An empty
 // pluginClasspathPart is a component without plugin records; the path is absolute when set.
 type devBuildComponent struct {
 	manifest            *componentManifest
@@ -22,7 +22,8 @@ type devBuildComponent struct {
 	sourceBindings      *componentSources
 }
 
-// composedBuild is the Kotlin ComposedDevBuild.
+// composedBuild is the result of composeComponents: the values of the IDE config, the core classpath, and the
+// fingerprint.
 type composedBuild struct {
 	platformPrefix    string
 	mainClass         string
@@ -31,8 +32,8 @@ type composedBuild struct {
 	fingerprint       string
 }
 
-// composeOptions holds the optional arguments of the Kotlin composeDevBuildComponents. A nil sourceRunfiles requests a
-// full distribution, and a map requests launch metadata only. The keys of both maps are absolute paths.
+// composeOptions holds the optional arguments of composeComponents. A nil sourceRunfiles requests a full distribution,
+// and a map requests launch metadata only. The keys of both maps are absolute paths.
 type composeOptions struct {
 	pluginClasspathPrefix   string
 	expectedFragments       []string
@@ -43,8 +44,7 @@ type composeOptions struct {
 	parent                  *span.Span
 }
 
-// composeComponents is the Kotlin composeDevBuildComponents. It checks that the components form one distribution,
-// then assembles them at target.
+// composeComponents checks that the components form one distribution, then assembles them at target.
 func composeComponents(components []devBuildComponent, target string, options composeOptions) (*composedBuild, error) {
 	if len(components) == 0 {
 		return nil, fmt.Errorf("At least one dev-build component is required")
@@ -217,8 +217,8 @@ func kotlinList(values []string) string {
 	return "[" + strings.Join(values, ", ") + "]"
 }
 
-// mergeComponents is the Kotlin mergeDevBuildComponents. It validates every destination of every component before
-// it writes the first file.
+// mergeComponents writes the files of every component at target. It validates every destination of every component
+// before it writes the first file.
 func mergeComponents(components []devBuildComponent, target string, sourceDirectories []string, tracer *span.Tracer, parent *span.Span) error {
 	var links []distributionLink
 	var relativePaths []string
@@ -383,8 +383,8 @@ type mergedComponent struct {
 	byteCount int64
 }
 
-// copyManifestOnlyComponent is the Kotlin copyManifestOnlyComponent. It copies the files of a component that owns no
-// tree from the sources that its manifest names. The manifest declares the executable flag, so a source mode never
+// copyManifestOnlyComponent copies the files of a component that owns no tree from the sources that its manifest
+// names. The manifest declares the executable flag, so a source mode never
 // reaches the distribution.
 func copyManifestOnlyComponent(manifest *componentManifest, target string, sourceDirectories []string, bindings *componentSources) (mergedComponent, error) {
 	normalizedTarget := filepath.Clean(target)
@@ -516,8 +516,8 @@ func stagedPath(staged string) string {
 	return staged
 }
 
-// orderDevBuildLinks is the Kotlin orderDevBuildLinks. A link comes after every link that its target path traverses,
-// because Windows gives a link the kind of the target that exists at creation. Independent links keep their order.
+// orderDevBuildLinks puts a link after every link that its target path traverses, because Windows gives a link the
+// kind of the target that exists at creation. Independent links keep their order.
 func orderDevBuildLinks(names []string, targets map[string]string) ([]string, error) {
 	pending := make(map[string]bool, len(names))
 	for _, name := range names {

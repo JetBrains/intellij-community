@@ -189,8 +189,8 @@ type fingerprintEntry struct {
 	executable   bool
 }
 
-// computeIdeFingerprintFromComponents is the Kotlin computeIdeFingerprintFromComponents. A nil declaredModules means
-// that the caller has no declaration, and then the sum over the components applies.
+// computeIdeFingerprintFromComponents computes the IDE fingerprint of the components. A nil declaredModules means that
+// the caller has no declaration, and then the sum over the components applies.
 func computeIdeFingerprintFromComponents(components []*componentManifest, pluginClasspathFile string, declaredModules *[]string) (string, error) {
 	if len(components) == 0 {
 		return "", fmt.Errorf("At least one dev-build component manifest is required")

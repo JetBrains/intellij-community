@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// The tests in this file port DevBuildLocalLayoutTest.
+// The tests in this file cover the local layout that writeLocalLayout writes.
 
 func layoutComponent(kind string, entries ...componentEntry) devBuildComponent {
 	manifest := withEntries(testManifest(kind), entries...)

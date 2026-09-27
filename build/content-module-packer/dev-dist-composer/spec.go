@@ -11,13 +11,13 @@ import (
 
 const compositionSpecVersion = 1
 
-// compositionComponent is the Kotlin DevBuildCompositionComponent. Its manifest names each file where it already is.
+// compositionComponent is one component of the composition spec. Its manifest names each file where it already is.
 type compositionComponent struct {
 	Manifest            string
 	PluginClasspathPart *string
 }
 
-// compositionSpec is the Kotlin DevBuildCompositionSpec. A nil SourceRunfiles requests a full distribution.
+// compositionSpec is the file that `--composition-spec` names. A nil SourceRunfiles requests a full distribution.
 type compositionSpec struct {
 	Version                 int64
 	ExpectedFragments       []string
@@ -106,15 +106,15 @@ func decodeCompositionSpec(data []byte) (*compositionSpec, error) {
 	return spec, nil
 }
 
-// boundSource is the Kotlin DevBuildBoundSource. An empty directory means a file artifact.
+// boundSource is one artifact that Bazel staged for a component. An empty directory means a file artifact.
 type boundSource struct {
 	path      string
 	directory string
 	kind      string
 }
 
-// componentSources is the Kotlin DevBuildComponentSources. It maps the absolute path of each staged source to the
-// artifact that Bazel declared for it.
+// componentSources maps the absolute path of each staged source of one component to the artifact that Bazel declared
+// for it.
 type componentSources struct {
 	sources map[string]boundSource
 }
@@ -181,8 +181,8 @@ func (sources *componentSources) resolve(source string) (string, error) {
 	return boundReal, nil
 }
 
-// readSourceBindings is the Kotlin readDevBuildSourceBindings. Each line of file describes one artifact that Bazel
-// staged for a component: a file, or a directory with its members.
+// readSourceBindings reads the source bindings file. Each line of file describes one artifact that Bazel staged for a
+// component: a file, or a directory with its members.
 func readSourceBindings(file string, components []compositionComponent) (map[string]*componentSources, error) {
 	logicalFile, err := absolutePath(file)
 	if err != nil {
