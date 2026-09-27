@@ -86,7 +86,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="TEST" />
   </component>

@@ -187,6 +187,6 @@
     <orderEntry type="module" module-name="intellij.java.featuresTrainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.featuresTrainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
   </component>
 </module>

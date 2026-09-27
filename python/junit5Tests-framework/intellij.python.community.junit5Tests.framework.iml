@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.allure.java.commons" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.sshd.osgi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />

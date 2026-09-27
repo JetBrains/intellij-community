@@ -66,6 +66,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="PROVIDED" />
   </component>
 </module>

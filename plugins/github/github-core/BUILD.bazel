@@ -407,8 +407,8 @@ jvm_library(
         "@lib//:app-cash-turbine-jvm",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-params",
-        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit6-params",
+        "//libraries/junit6-params:junit6-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.github.tests` end

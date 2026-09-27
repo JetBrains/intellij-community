@@ -106,8 +106,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-params",
-        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit6-params",
+        "//libraries/junit6-params:junit6-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingProxy.tests` end

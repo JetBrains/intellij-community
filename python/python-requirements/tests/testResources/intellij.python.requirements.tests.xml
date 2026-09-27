@@ -3,7 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.testFramework.common"/>

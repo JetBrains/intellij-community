@@ -22,8 +22,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit5-params_provided",
-    lib = "//libraries/junit5-params",
+    name = "libraries_junit6-params_provided",
+    lib = "//libraries/junit6-params",
 )
 
 jvm_library(
@@ -82,7 +82,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         ":libraries_junit4_provided",
         ":libraries_junit5_provided",
-        ":libraries_junit5-params_provided",
+        ":libraries_junit6-params_provided",
     ],
 )
 
@@ -141,8 +141,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-params",
-        "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit6-params",
+        "//libraries/junit6-params:junit6-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework` end
