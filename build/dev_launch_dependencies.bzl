@@ -126,7 +126,7 @@ def jcef_url(platform, jcef_build):
 
 # TerminalLibGhosttyVtDownloader.downloadUrl
 def lib_ghostty_vt_url(version):
-    return "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/libghostty-vt/%s/libghostty-vt.zip.zst" % version
+    return "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/libghostty-vt/libghostty-vt-%s.zip.zst" % version
 
 # CommunityRepositoryModules.jSerialCommDownloadUrl - the content hash is the version. Keep in lockstep with
 # `JSERIALCOMM_NATIVE_HASH` in CommunityRepositoryModules.kt.

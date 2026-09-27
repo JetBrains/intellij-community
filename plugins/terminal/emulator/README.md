@@ -11,12 +11,11 @@ When running from sources (including tests), it's downloaded on the fly — see 
 
 ## Updating the library
 
-1. Run the `Terminal: libghostty-vt / Test & Build All platforms` TeamCity configuration against
-   the desired `JetBrains/ghostty` revision.
-2. Upload the resulting `libghostty-vt.zip.zst` to the storage under `libghostty-vt/<version>/`.
-   This is a manual step for now.
-3. Set the `libGhosttyVtVersion` property in
-   [dependencies.properties](../../../build/dependencies/dependencies.properties) to that version.
+1. Run the `Terminal: libghostty-vt / Publish` TeamCity configuration against
+   the desired `JetBrains/ghostty` revision. It builds the library and uploads it to the storage.
+2. Set the `libGhosttyVtVersion` property in
+   [dependencies.properties](../../../build/dependencies/dependencies.properties) to the uploaded version.
+   Take the version from the uploaded file name: `libghostty-vt-<version>.zip.zst`.
 
 ## Using a custom build
 

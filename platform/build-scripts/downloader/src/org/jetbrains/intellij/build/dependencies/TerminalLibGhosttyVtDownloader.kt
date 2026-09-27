@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.dependencies
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildHttpSession
+import org.jetbrains.intellij.build.SPACE_REPO_HOST
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Path
 
@@ -25,7 +26,7 @@ object TerminalLibGhosttyVtDownloader {
     return resolveAndExtractToCacheLocation(downloadUrl(version), communityRoot, session)
   }
 
-  /** Public so tests that pre-provision the build-dependencies download cache can pin the same URL. */
-  fun downloadUrl(version: String): String =
-    "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/$LIB_GHOSTTY_VT/$version/$LIB_GHOSTTY_VT.zip.zst"
+  /** Keep in sync with `lib_ghostty_vt_url` in `community/build/dev_launch_dependencies.bzl`. */
+  private fun downloadUrl(version: String): String =
+    "https://$SPACE_REPO_HOST/files/p/ij/intellij-build-dependencies/$LIB_GHOSTTY_VT/$LIB_GHOSTTY_VT-$version.zip.zst"
 }
