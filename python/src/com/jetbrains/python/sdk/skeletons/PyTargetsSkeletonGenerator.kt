@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -63,8 +64,10 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
    * thrown by access control according to [JVM specification](https://docs.oracle.com/javase/specs/jvms/se16/html/jvms-5.html#jvms-5.4.4).
    */
   private inner class TargetedBuilder(private val sdk: Sdk, private val skeletonsLocalRootPath: Path) : Builder() {
+    @RequiresBackgroundThread(generateAssertion = false)
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = doRunProcess(listener)
 
+    @RequiresBackgroundThread(generateAssertion = false)
     private fun doRunProcess(listener: LineWiseProcessOutputListener?): ProcessOutput {
       val generatorScriptExecution = prepareHelperScriptExecution(
         helperPackage = PythonHelper.GENERATOR3,
@@ -159,6 +162,7 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
     }
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   override fun runGeneration(builder: Builder, indicator: ProgressIndicator?): MutableList<GenerationResult> {
     foundBinaries.clear()
     val results = super.runGeneration(builder, indicator)

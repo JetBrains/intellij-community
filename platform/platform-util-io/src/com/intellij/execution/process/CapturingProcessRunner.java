@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,14 +72,17 @@ public class CapturingProcessRunner {
     }
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput runProcess(@NotNull ProgressIndicator indicator) {
     return runProcess(indicator, -1);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput runProcess(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
     return runProcess(indicator, timeoutInMilliseconds, true);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput runProcess(@NotNull ProgressIndicator indicator,
                                            int timeoutInMilliseconds,
                                            boolean destroyOnTimeout) {
@@ -141,8 +144,8 @@ public class CapturingProcessRunner {
   private void setErrorCodeIfNotYetSet() {
     // if exit code was set on processTerminated, no need to rewrite it
     // WinPtyProcess returns -2 if pty is already closed
-    if (!myOutput.isExitCodeSet() && myProcessHandler instanceof BaseProcessHandler) {
-      myOutput.setExitCode(((BaseProcessHandler<?>)myProcessHandler).getProcess().exitValue());
+    if (!myOutput.isExitCodeSet() && myProcessHandler instanceof BaseProcessHandler<?> handler) {
+      myOutput.setExitCode(handler.getProcess().exitValue());
     }
   }
 }

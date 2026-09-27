@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -63,21 +63,27 @@ public class CapturingProcessHandler extends OSProcessHandler {
    * Starts process with specified timeout
    *
    * @param timeoutInMilliseconds non-positive means infinity
-   * @param destroyOnTimeout whether to kill the process after timeout passes
+   * @param destroyOnTimeout      whether to kill the process after timeout passes
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds, boolean destroyOnTimeout) {
     return myProcessRunner.runProcess(timeoutInMilliseconds, destroyOnTimeout);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
     return myProcessRunner.runProcess(indicator);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds);
   }
 
-  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @NotNull ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator,
+                                                                int timeoutInMilliseconds,
+                                                                boolean destroyOnTimeout) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds, destroyOnTimeout);
   }
 

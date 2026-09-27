@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +76,7 @@ public abstract class PySkeletonGenerator {
 
   public abstract @NotNull Builder commandBuilder();
 
+  @RequiresBackgroundThread(generateAssertion = false)
   protected @NotNull List<GenerationResult> runGeneration(@NotNull Builder builder, @Nullable ProgressIndicator indicator)
     throws InvalidSdkException, ExecutionException {
     final List<GenerationResult> results = new ArrayList<>();
@@ -194,11 +196,13 @@ public abstract class PySkeletonGenerator {
       return this;
     }
 
+    @RequiresBackgroundThread(generateAssertion = false)
     public final @NotNull List<GenerationResult> runGeneration(@Nullable ProgressIndicator indicator)
       throws InvalidSdkException, ExecutionException {
       return PySkeletonGenerator.this.runGeneration(this, indicator);
     }
 
+    @RequiresBackgroundThread(generateAssertion = false)
     public abstract @NotNull ProcessOutput runProcessWithLineOutputListener(@NotNull LineWiseProcessOutputListener listener)
       throws InvalidSdkException, ExecutionException;
   }

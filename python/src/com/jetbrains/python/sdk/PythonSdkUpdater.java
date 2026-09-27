@@ -42,6 +42,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -62,7 +63,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Component;
 import java.io.IOException;
@@ -312,7 +312,7 @@ public final class PythonSdkUpdater {
     }
 
     private boolean isSdkDisposed() {
-      return mySdk instanceof Disposable && Disposer.isDisposed((Disposable)mySdk);
+      return mySdk instanceof Disposable disposable && Disposer.isDisposed(disposable);
     }
 
     @Override
@@ -417,9 +417,7 @@ public final class PythonSdkUpdater {
       PythonPackageManagerExt.reloadPackagesBlocking(manager);
     }
 
-    /**
-     * May be invoked from any thread.
-     */
+    @RequiresBackgroundThread(generateAssertion = false)
     private void generateSkeletons(
       @NotNull PythonInterpreter pythonInterpreter,
       @NotNull ProgressIndicator indicator
@@ -455,8 +453,8 @@ public final class PythonSdkUpdater {
                       PyBundle.message("remote.interpreter.support.is.not.available", interpreterName),
                       REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE);
       }
-      else if (exception instanceof InvalidSdkException && PythonSdkUtil.isRemote(mySdk)) {
-        PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
+      else if (exception instanceof InvalidSdkException sdkException && PythonSdkUtil.isRemote(mySdk)) {
+        PythonSdkType.notifyRemoteSdkSkeletonsFail(sdkException, () -> {
           if (!isSdkDisposed()) {
             updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
           }
