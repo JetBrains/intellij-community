@@ -740,7 +740,8 @@ public final class FileTypeDetectionService {
            null;
   }
 
-  private void reparseLater(@NotNull List<? extends VirtualFile> changed) {
+  @VisibleForTesting
+  public void reparseLater(@NotNull List<? extends VirtualFile> changed) {
     if (Registry.is("filetype.reparse.with.coroutines")) {
       ReparseUtilKt.reparseLaterWithCoroutines(scope, changed);
     }
