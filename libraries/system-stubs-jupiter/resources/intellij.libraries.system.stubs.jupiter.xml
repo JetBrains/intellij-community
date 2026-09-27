@@ -1,5 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
   </dependencies>
 </idea-plugin>

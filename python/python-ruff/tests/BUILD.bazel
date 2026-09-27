@@ -36,8 +36,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-jupiter",
         "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/kotlinx/coroutines/core",

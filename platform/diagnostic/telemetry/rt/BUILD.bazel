@@ -98,8 +98,8 @@ jvm_library(
         "//platform/util-rt:util-rt_test_lib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt.tests` end

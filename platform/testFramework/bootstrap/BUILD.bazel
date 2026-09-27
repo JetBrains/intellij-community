@@ -7,8 +7,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_provided_library(
@@ -49,7 +49,7 @@ jvm_library(
         "//platform/util/base",
         "//platform/util",
         ":libraries_junit6-launcher_provided",
-        ":libraries_junit5_provided",
+        ":libraries_junit6_provided",
         ":libraries_junit6-vintage_provided",
     ],
 )
@@ -70,8 +70,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6-launcher",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-vintage",
         "//libraries/junit6-vintage:junit6-vintage_test_lib",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",

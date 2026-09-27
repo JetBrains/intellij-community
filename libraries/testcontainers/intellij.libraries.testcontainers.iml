@@ -79,7 +79,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="RUNTIME" />
   </component>
 </module>

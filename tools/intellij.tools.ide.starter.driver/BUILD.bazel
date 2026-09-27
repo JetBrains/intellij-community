@@ -14,8 +14,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_library(
@@ -50,7 +50,7 @@ jvm_library(
         "//libraries/opentelemetry",
         "//platform/testFramework/teamCity",
         ":libraries_kodein-di-jvm_provided",
-        ":libraries_junit5_provided",
+        ":libraries_junit6_provided",
     ],
 )
 
@@ -73,8 +73,8 @@ jvm_library(
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//libraries/kodein-di-jvm",
         "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
         "//libraries/allure/java-commons:libraries-allure-java-commons_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
@@ -145,8 +145,8 @@ jvm_library(
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kodein-di-jvm",
         "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-launcher",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//libraries/junit5-pioneer",

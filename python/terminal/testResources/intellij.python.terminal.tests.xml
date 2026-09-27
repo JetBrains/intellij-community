@@ -4,7 +4,7 @@
     <module name="intellij.libraries.junit5.pioneer"/>
     <module name="intellij.python.venv.tests"/>
     <module name="intellij.libraries.hamcrest"/>
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.eel.provider"/>

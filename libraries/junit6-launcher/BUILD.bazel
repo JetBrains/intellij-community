@@ -17,7 +17,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:libraries-junit6-launcher-_j_unit6_launcher",
-        "//libraries/junit5",
+        "//libraries/junit6",
     ],
 )
 
@@ -35,7 +35,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":junit6-launcher",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.junit6.launcher` end

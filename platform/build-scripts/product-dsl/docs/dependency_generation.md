@@ -359,7 +359,7 @@ Plugins extracted from plugin.xml are detected as **test plugins** based on thei
 ```kotlin
 testFrameworkContentModules = setOf(
   "intellij.libraries.junit4",
-  "intellij.libraries.junit5",
+  "intellij.libraries.junit6",
   "intellij.libraries.junit6.jupiter",
   "intellij.platform.testFramework",
   "intellij.platform.testFramework.core",

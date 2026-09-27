@@ -48,7 +48,7 @@
     <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />

@@ -106,7 +106,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.jupiter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.suites" scope="TEST" />

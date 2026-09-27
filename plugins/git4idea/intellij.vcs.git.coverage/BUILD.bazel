@@ -117,8 +117,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",

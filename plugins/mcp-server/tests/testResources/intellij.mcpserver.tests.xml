@@ -5,7 +5,7 @@
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.editorconfig.backend"/>
     <module name="intellij.libraries.assertj.core"/>
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.libraries.kotlinTestAssertionsCoreJvm"/>
     <module name="intellij.libraries.kotlinx.io"/>

@@ -99,7 +99,7 @@ java_library(
     runtime_deps = [
         ":junit-platform-console",
         ":junit-platform-reporting",
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//libraries/junit6-jupiter",
         "//libraries/junit6-launcher",
     ],

@@ -24,7 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//libraries/junit6-params",
         "@lib//:fleet-test-runtime-_j_unit6_jupiter",
         "//libraries/junit6-launcher",
@@ -34,7 +34,7 @@ jvm_library(
     ],
     runtime_deps = [
         # do not sort,
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//libraries/junit6-params",
         "@lib//:fleet-test-runtime-_j_unit6_jupiter",
         "//libraries/junit6-launcher",
@@ -55,8 +55,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
         "@lib//:fleet-test-runtime-_j_unit6_jupiter",
@@ -71,7 +71,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":test-runtime",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//libraries/hamcrest:hamcrest_test_lib",

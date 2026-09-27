@@ -10,7 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.jetcheck" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />

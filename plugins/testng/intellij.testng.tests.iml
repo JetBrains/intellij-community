@@ -59,7 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.testng" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />

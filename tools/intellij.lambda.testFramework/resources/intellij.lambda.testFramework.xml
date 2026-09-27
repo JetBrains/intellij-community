@@ -4,7 +4,7 @@
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.driver.client"/>
     <module name="intellij.libraries.assertj.core"/>
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.launcher"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.libraries.kodein.di.jvm"/>

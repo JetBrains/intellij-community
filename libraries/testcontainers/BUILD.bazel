@@ -22,7 +22,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-testcontainers-testcontainers",
         "@lib//:libraries-testcontainers-testcontainers-junit-jupiter",
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//libraries/junit4",
     ],
 )
@@ -44,7 +44,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":testcontainers",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit4:junit4_test_lib",
     ],
 )

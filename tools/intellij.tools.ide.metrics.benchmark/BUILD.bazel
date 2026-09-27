@@ -159,8 +159,8 @@ jvm_library(
         "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark.tests` end

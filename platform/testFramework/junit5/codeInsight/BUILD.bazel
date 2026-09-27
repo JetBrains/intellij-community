@@ -11,8 +11,8 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight` start
 jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_provided_library(
@@ -55,7 +55,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
-        ":libraries_junit5_provided",
+        ":libraries_junit6_provided",
         ":libraries_junit6-jupiter_provided",
         ":libraries_junit4_provided",
     ],
@@ -73,8 +73,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":codeInsight",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-jupiter",
         "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
@@ -135,8 +135,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/testFramework",

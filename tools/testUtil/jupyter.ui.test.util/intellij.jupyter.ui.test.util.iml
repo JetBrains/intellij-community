@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" />
     <orderEntry type="module" module-name="intellij.driver.client" />
     <orderEntry type="module" module-name="intellij.driver.sdk" />
     <orderEntry type="module" module-name="intellij.driver.model" />

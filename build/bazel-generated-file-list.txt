@@ -531,8 +531,8 @@ libraries/jspecify
 libraries/jsr305
 libraries/jsvg
 libraries/junit4
-libraries/junit5
 libraries/junit5-pioneer
+libraries/junit6
 libraries/junit6-jupiter
 libraries/junit6-launcher
 libraries/junit6-params

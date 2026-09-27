@@ -30,8 +30,8 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.testFramework` start
 jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_provided_library(
@@ -142,7 +142,7 @@ jvm_library(
         "//jps/model-impl",
         "//platform/util:util-ui",
         "//platform/util-ex",
-        ":libraries_junit5_provided",
+        ":libraries_junit6_provided",
         ":libraries_junit6-params_provided",
         ":libraries_junit4_provided",
         ":libraries_junit6-launcher_provided",
@@ -177,8 +177,8 @@ jvm_library(
         # do not sort,
         ":testFramework",
         "//libraries/jetcheck:jetcheck_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/assertj-core:assertj-core_test_lib",
@@ -358,8 +358,8 @@ jvm_library(
         # do not sort,
         "//libraries/jetcheck",
         "//libraries/jetcheck:jetcheck_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/assertj-core",

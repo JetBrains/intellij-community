@@ -37,7 +37,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />

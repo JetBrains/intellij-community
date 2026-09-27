@@ -1192,8 +1192,8 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jsr305/intellij.libraries.jsr305.iml" filepath="$PROJECT_DIR$/libraries/jsr305/intellij.libraries.jsr305.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jsvg/intellij.libraries.jsvg.iml" filepath="$PROJECT_DIR$/libraries/jsvg/intellij.libraries.jsvg.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/junit4/intellij.libraries.junit4.iml" filepath="$PROJECT_DIR$/libraries/junit4/intellij.libraries.junit4.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/junit5/intellij.libraries.junit5.iml" filepath="$PROJECT_DIR$/libraries/junit5/intellij.libraries.junit5.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/junit5-pioneer/intellij.libraries.junit5.pioneer.iml" filepath="$PROJECT_DIR$/libraries/junit5-pioneer/intellij.libraries.junit5.pioneer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/junit6/intellij.libraries.junit6.iml" filepath="$PROJECT_DIR$/libraries/junit6/intellij.libraries.junit6.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/junit6-jupiter/intellij.libraries.junit6.jupiter.iml" filepath="$PROJECT_DIR$/libraries/junit6-jupiter/intellij.libraries.junit6.jupiter.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/junit6-launcher/intellij.libraries.junit6.launcher.iml" filepath="$PROJECT_DIR$/libraries/junit6-launcher/intellij.libraries.junit6.launcher.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/junit6-params/intellij.libraries.junit6.params.iml" filepath="$PROJECT_DIR$/libraries/junit6-params/intellij.libraries.junit6.params.iml" />

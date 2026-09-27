@@ -9,8 +9,8 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_provided_library(
@@ -51,7 +51,7 @@ jvm_library(
         "//tools/intellij.tools.ide.util.common:ide-util-common",
         "//libraries/opentelemetry",
         "//platform/testFramework/common",
-        ":libraries_junit5_provided",
+        ":libraries_junit6_provided",
         ":libraries_junit6-params_provided",
         ":libraries_junit6-launcher_provided",
     ],
@@ -73,8 +73,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//platform/remote-driver/model:model_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
@@ -146,8 +146,8 @@ jvm_library(
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kodein-di-jvm",
         "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",

@@ -39,7 +39,7 @@ jvm_library(
         "//libraries/fastutil",
         "//platform/core-ui",
         "//platform/ide-core",
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//java/java-runtime:rt",
     ],
 )
@@ -75,7 +75,7 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6:junit6_test_lib",
         "//java/java-runtime:rt_test_lib",
     ],
 )

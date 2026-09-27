@@ -122,8 +122,8 @@ jvm_library(
     runtime_deps = [":ijent-tests"],
     deps = [
         # do not sort,
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",

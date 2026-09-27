@@ -262,8 +262,8 @@ jvm_library(
         "//plugins/mermaid/markdown:markdown_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mermaid.tests` end

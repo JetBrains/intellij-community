@@ -8,7 +8,7 @@
     <module name="intellij.libraries.hamcrest"/>
     <module name="intellij.libraries.jetcheck"/>
     <module name="intellij.libraries.junit4"/>
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.jupiter"/>
     <module name="intellij.libraries.junit6.launcher"/>
     <module name="intellij.libraries.junit6.params"/>

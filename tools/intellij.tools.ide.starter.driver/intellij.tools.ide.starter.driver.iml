@@ -30,7 +30,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
     <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.driver.sdk" />
     <orderEntry type="module" module-name="intellij.libraries.allure.java.commons" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />

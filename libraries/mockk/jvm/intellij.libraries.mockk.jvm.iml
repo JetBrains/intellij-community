@@ -55,7 +55,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.byte.buddy.agent" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.objenesis" scope="RUNTIME" />

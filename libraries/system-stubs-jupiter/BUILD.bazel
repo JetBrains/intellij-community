@@ -16,7 +16,7 @@ jvm_library(
     exports = ["@lib//:libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter"],
     runtime_deps = [
         # do not sort,
-        "//libraries/junit5",
+        "//libraries/junit6",
         "@lib//:libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter",
     ],
 )
@@ -34,7 +34,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":system-stubs-jupiter",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.system.stubs.jupiter` end

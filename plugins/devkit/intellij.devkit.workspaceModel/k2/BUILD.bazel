@@ -129,7 +129,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin:kotlin-plugin-community-main",
@@ -160,8 +160,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_test_lib",
         "//platform/core-api:core",

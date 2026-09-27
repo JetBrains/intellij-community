@@ -5,8 +5,8 @@
     <module name="intellij.python.community.junit5Tests.framework"/>
     <module name="intellij.libraries.assertj.core"/>
     <module name="intellij.libraries.junit4"/>
-    <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend.observation"/>

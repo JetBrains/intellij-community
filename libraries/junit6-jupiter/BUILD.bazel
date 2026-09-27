@@ -18,7 +18,7 @@ jvm_library(
         # do not sort,
         "//libraries/junit6-vintage",
         "@lib//:libraries-junit6-jupiter-_j_unit6_jupiter",
-        "//libraries/junit5",
+        "//libraries/junit6",
         "//libraries/junit6-launcher",
     ],
 )
@@ -37,7 +37,7 @@ jvm_library(
         # do not sort,
         ":junit6-jupiter",
         "//libraries/junit6-vintage:junit6-vintage_test_lib",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
     ],
 )

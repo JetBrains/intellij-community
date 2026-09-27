@@ -122,8 +122,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "@lib//:kotlin-test-junit5",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.text.matching.tests` end

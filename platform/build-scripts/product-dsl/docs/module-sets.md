@@ -265,7 +265,7 @@ fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks")
   requiredModule("intellij.libraries.assertj.core")
   requiredModule("intellij.libraries.hamcrest")
   requiredModule("intellij.libraries.junit4")
-  requiredModule("intellij.libraries.junit5")
+  requiredModule("intellij.libraries.junit6")
   requiredModule("intellij.libraries.junit6.jupiter")
 }
 ```
@@ -356,7 +356,7 @@ Module sets can:
 - **Include individual modules**: `module("intellij.platform.vcs.impl")`
 - **Nest other module sets**: `moduleSet(corePlatform())`
 - **Use embedded loading**: `embeddedModule("intellij.platform.core")` for core classloader
-- **Use required loading**: `requiredModule("intellij.libraries.junit5")` for test frameworks
+- **Use required loading**: `requiredModule("intellij.libraries.junit6")` for test frameworks
 
 **Tip**: Prefer nesting existing module sets over duplicating modules. This creates a clean hierarchy and ensures consistency.
 

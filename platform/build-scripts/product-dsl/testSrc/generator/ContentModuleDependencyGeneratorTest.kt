@@ -343,7 +343,7 @@ class ContentModuleDependencyGeneratorTest {
     fun `production content module with test-support-like name keeps TEST scope dependency out of written deps`(@TempDir tempDir: Path) {
       runBlocking(Dispatchers.Default) {
         val busModule = ContentModuleName("intellij.tools.ide.starter.bus")
-        val junit5 = ContentModuleName("intellij.libraries.junit5")
+        val junit5 = ContentModuleName("intellij.libraries.junit6")
         val setup = pluginTestSetup(tempDir) {
           contentModule(junit5.value) {
             descriptor = """<idea-plugin package="junit5"/>"""

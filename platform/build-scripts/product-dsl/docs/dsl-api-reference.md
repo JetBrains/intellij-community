@@ -196,7 +196,7 @@ discovered from this module.
 
 **Example:**
 ```kotlin
-requiredModule("intellij.libraries.junit5")
+requiredModule("intellij.libraries.junit6")
 ```
 
 ---

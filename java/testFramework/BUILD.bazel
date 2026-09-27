@@ -14,8 +14,8 @@ jps_test(
 
 ### auto-generated section `build intellij.java.testFramework` start
 jvm_provided_library(
-    name = "libraries_junit5_provided",
-    lib = "//libraries/junit5",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_provided_library(
@@ -118,7 +118,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//java/java-indexing-api:indexing",
-        ":libraries_junit5_provided",
+        ":libraries_junit6_provided",
         ":libraries_junit6-params_provided",
     ],
 )
@@ -213,8 +213,8 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
     ],

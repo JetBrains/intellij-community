@@ -117,7 +117,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />

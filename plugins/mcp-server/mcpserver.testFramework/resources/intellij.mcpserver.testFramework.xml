@@ -3,7 +3,7 @@
   <dependencies>
     <plugin id="com.intellij.mcpServer"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>

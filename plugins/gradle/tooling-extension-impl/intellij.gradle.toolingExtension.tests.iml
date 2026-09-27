@@ -98,7 +98,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.trove" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="TEST" />

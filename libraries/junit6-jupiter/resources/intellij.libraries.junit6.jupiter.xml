@@ -2,7 +2,7 @@
 <idea-plugin visibility="internal">
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.launcher"/>
     <!-- endregion -->
 

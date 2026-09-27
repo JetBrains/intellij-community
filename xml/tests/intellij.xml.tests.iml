@@ -65,7 +65,7 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="RUNTIME" />

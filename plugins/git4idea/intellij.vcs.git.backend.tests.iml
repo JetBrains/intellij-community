@@ -122,7 +122,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="fleet.rhizomedb" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />

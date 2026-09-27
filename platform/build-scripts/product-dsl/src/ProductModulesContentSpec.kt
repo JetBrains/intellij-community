@@ -547,7 +547,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    *   name = "Python Tests Plugin",
    *   pluginXmlPath = "python/junit5Tests/plugin/testResources/META-INF/plugin.xml"
    * ) {
-   *   module("intellij.libraries.junit5")
+   *   module("intellij.libraries.junit6")
    *   module("intellij.platform.testFramework")
    * }
    * ```

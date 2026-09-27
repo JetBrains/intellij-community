@@ -235,8 +235,8 @@ jvm_library(
         "//platform/platform-impl/initial-config-import",
         "//platform/pluginSystem/parser/impl",
         "//platform/pluginSystem/parser/impl:impl_test_lib",
-        "//libraries/junit5",
-        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.ide.startup.importSettings.tests` end
