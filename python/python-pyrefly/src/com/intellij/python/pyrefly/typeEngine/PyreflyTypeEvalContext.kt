@@ -270,7 +270,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     val defNode = declaration.node
     if (defNode == null || defNode.uri.isEmpty()) {
       thisLogger().info("Pyrefly TSP: built minimal PyTypeVarType for $name (no declaration node)")
-      return Ref.create(PyTypeVarTypeImpl(name, null))
+      return Ref.create(PyTypeVarTypeImpl(name, PyAnyType.unknown))
     }
     val target = findElement(defNode)
     if (target != null) {
@@ -295,7 +295,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       }
     }
     thisLogger().info("Pyrefly TSP: fell back to minimal PyTypeVarType for $name")
-    return Ref.create(PyTypeVarTypeImpl(name, null))
+    return Ref.create(PyTypeVarTypeImpl(name, PyAnyType.unknown))
   }
 
   private fun buildPyOverloadedType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {

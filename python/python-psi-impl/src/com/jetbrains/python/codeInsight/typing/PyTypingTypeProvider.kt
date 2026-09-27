@@ -1505,7 +1505,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           scopeElement as? PyQualifiedNameOwner
         }
         else null
-        val result = PyTypeVarTypeImpl(name, null).withScopeOwner(scopeOwner)
+        val result = PyTypeVarTypeImpl(name, PyAnyType.unknown).withScopeOwner(scopeOwner)
         return Ref(result)
       }
       return null
