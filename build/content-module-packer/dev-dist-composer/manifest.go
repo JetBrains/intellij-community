@@ -20,7 +20,8 @@ const (
 	pluginClassPath          = "plugins/plugin-classpath.txt"
 )
 
-// componentEntry is the Kotlin DevBuildComponentEntry. A nil pointer is a Kotlin null.
+// componentEntry is one entry of a component manifest. A nil pointer is an absent field. The Kotlin
+// DevBuildComponentEntry writes every field except Source and Mode.
 type componentEntry struct {
 	RelativePath  string
 	Type          string

@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
-import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
@@ -156,31 +155,6 @@ fun contentModuleJarCoreClasspathEntries(
 
 /** The `lib/` jars the core classpath lists before everything else, in this order. */
 private val CORE_CLASSPATH_LEADING_JARS: List<String> = listOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR)
-
-/**
- * Applies the order of [generateClassPathByLayoutReport] to core-classpath entries that are already home-relative paths.
- *
- * The fragments of a split dev distribution each report the share of the classpath they packed, so ordering can only
- * happen once they are all in - and by then the entries are the strings a component manifest carries rather than the
- * `Path`s the layout produced. Same rule, same leading jars: a change to one of these two has to be made in the other.
- */
-@ApiStatus.Internal
-fun orderCoreClasspathEntries(entries: Collection<String>): List<String> {
-  val leading = CORE_CLASSPATH_LEADING_JARS.map { "$LIB_DIRECTORY/$it" }
-  val remaining = entries.toMutableList()
-  val result = ArrayList<String>(entries.size)
-  for (jar in leading) {
-    if (remaining.remove(jar)) {
-      result.add(jar)
-    }
-  }
-  // Sorted as `Path`s, not as strings, to reproduce the order of a complete assembly - which sorts absolute paths, so
-  // for an entry outside the distribution the two can still disagree. That only costs the "stable performance results"
-  // the sort is there for, never correctness: the platform classloader gets the same set either way.
-  remaining.sortWith(if (isWindows) compareBy { it } else compareBy(Path::of))
-  result.addAll(remaining)
-  return result
-}
 
 /**
  * Provides a set of paths that should be included in the core classpath.

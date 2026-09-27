@@ -35,18 +35,6 @@ data class DevBuildComponentEntry(
   @JvmField val executable: Boolean = false,
   /** Relative target of a genuine distribution symlink; `null` for an ordinary owned file. */
   @JvmField val symlinkTarget: String? = null,
-  /**
-   * Where this file's bytes are, for a component that owns no tree.
-   *
-   * A path as the producer received it, which is a Bazel execution-root-relative one, so the composer resolves it
-   * against its own working directory and finds the file its action staged at the same path. `null` for an entry of a
-   * component that has a tree, whose bytes are at [relativePath] under that tree.
-   *
-   * Deliberately outside the fingerprint: it names where bytes came from, and [hash] already says what they are.
-   */
-  @JvmField val source: String? = null,
-  /** Exact POSIX permission bits when the producer declares more than the conventional executable flag. */
-  @JvmField val mode: Int? = null,
 )
 
 @Serializable
@@ -190,7 +178,6 @@ private val DEV_BUILD_COMPONENT_ENTRY_ORDER: Comparator<DevBuildComponentEntry> 
   DevBuildComponentEntry::hash,
   DevBuildComponentEntry::executable,
   { it.symlinkTarget ?: "" },
-  { it.source ?: "" },
 )
 
 /** Content hashes by absolute path, and what reading them cost, for the inventory span. */

@@ -631,8 +631,8 @@ func setDistributionFileMode(target string, executable bool, mode *int64) error 
 	return os.Chmod(target, permissions)
 }
 
-// orderCoreClasspathEntries is the Kotlin orderCoreClasspathEntries (classpath.kt). The leading jars come first in a
-// fixed order. The other entries follow in the order of Java `Path` on Unix and of Java `String` on Windows.
+// orderCoreClasspathEntries applies the order of the Kotlin generateClassPathByLayoutReport (classpath.kt) to
+// home-relative entries. The leading jars come first in a fixed order. The other entries follow in the order of Java `Path` on Unix and of Java `String` on Windows.
 func orderCoreClasspathEntries(entries []string) []string {
 	remaining := slices.Clone(entries)
 	result := make([]string, 0, len(entries))
