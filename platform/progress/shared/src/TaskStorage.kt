@@ -46,8 +46,10 @@ class TaskStorage {
     try {
       withKernel {
         val projectId = if (!project.isDefault) project.projectId() else null
-        taskInfoEntity = change {
-          TaskInfoEntity.new {
+        // Capture the entity inside the transaction: `change` can commit and then throw CancellationException
+        // while it catches up, and the entity would leak if it were only assigned from the result
+        change {
+          taskInfoEntity = TaskInfoEntity.new {
             it[TaskInfoEntity.ProjectIdType] = projectId
             it[TaskInfoEntity.TitleType] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
@@ -77,7 +79,7 @@ class TaskStorage {
    */
   suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     change {
-      taskInfoEntity.delete()
+      if (taskInfoEntity.exists()) taskInfoEntity.delete()
     }
   }
 
