@@ -1,5 +1,5 @@
-// The dev-dist-composer command is the Go port of the Kotlin DevDistComposeMain. It assembles the components of a
-// dev distribution into one tree, or into launch metadata only. Then it writes the files that start the IDE.
+// The dev-dist-composer command assembles the components of a dev distribution into one tree, or into launch metadata
+// only. Then it writes the files that start the IDE.
 package main
 
 import (
@@ -112,8 +112,8 @@ func (options *commandLineOptions) checkNoUnknownOptions() error {
 	return nil
 }
 
-// composeDevDistribution is the body of the Kotlin DevDistComposeMain. The checks run in the Kotlin order, so the same
-// invalid input gives the same first failure.
+// composeDevDistribution checks the composition spec first, then the output options, the unknown options, the source
+// bindings and each component manifest. It removes the output directory only after all of these checks pass.
 func composeDevDistribution(options *commandLineOptions, tracer *span.Tracer, root *span.Span) error {
 	specFile, err := options.requiredPath("--composition-spec")
 	if err != nil {

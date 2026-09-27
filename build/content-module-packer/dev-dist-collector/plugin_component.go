@@ -75,9 +75,9 @@ type pluginComponentNativeTree struct {
 	Metadata string `json:"metadata"`
 }
 
-// pluginComponentAsset is one row of the asset table of a remainder. The Kotlin preparation or the packing action
-// writes the table. The collector decodes the row into the packer's own type, so both processes apply
-// pluginpack.ValidateAssets to the same fields.
+// pluginComponentAsset is one row of the asset table of a remainder. The plugin remainder packer writes the table. The
+// collector decodes the row into the packer's own type, so both processes apply pluginpack.ValidateAssets to the same
+// fields.
 type pluginComponentAsset = pluginpack.Asset
 
 func runPluginComponent(opts options, output, errors io.Writer) (exitCode int) {

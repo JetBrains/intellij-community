@@ -159,11 +159,10 @@ func IsExecutable(family Family, fileName string) bool {
 	return family != Windows && !strings.Contains(fileName, ".")
 }
 
-// Match is one selected entry: its full name, the name after the common prefix, its family and its architecture.
+// Match is one selected entry: its full name, the name after the common prefix, and its architecture.
 type Match struct {
 	PathWithPrefix string
 	Path           string
-	Family         Family
 	Arch           Arch
 }
 
@@ -194,7 +193,7 @@ func Select(entries []string, family Family, arch Arch) ([]Match, error) {
 		if !ok || !entryArch.compatibleWith(arch) {
 			continue
 		}
-		matches = append(matches, Match{PathWithPrefix: entry, Path: entryPath, Family: entryFamily, Arch: entryArch})
+		matches = append(matches, Match{PathWithPrefix: entry, Path: entryPath, Arch: entryArch})
 	}
 	return matches, nil
 }

@@ -12,6 +12,7 @@ import (
 	"hash/crc32"
 	"io"
 	"io/fs"
+	"math/big"
 	"os"
 	"path/filepath"
 	"slices"
@@ -19,8 +20,8 @@ import (
 	"testing"
 	"unicode/utf16"
 
+	"github.com/zeebo/xxh3"
 	"jetbrains.com/content-module-packer/internal/filemetadata"
-	"jetbrains.com/content-module-packer/internal/xxh3"
 )
 
 var pluginRemainderPacker = flag.String("plugin-remainder-packer", "", "The declared Go plugin remainder executable")
@@ -152,7 +153,7 @@ func kotlinJSON(t *testing.T, value any) string {
 func kotlinModelSignature(operation string) string {
 	var buffer hash4jStream
 	buffer.putString(`{"version":2,"operations":[` + operation + `]}`)
-	return xxh3.Signature128(buffer.Bytes())
+	return signature128(buffer.Bytes())
 }
 
 // kotlinModuleFilterOperation is the kotlinx encoding of a module-filter operation, the text its signature hashes.
@@ -220,9 +221,19 @@ func kotlinLayoutAssetsOperation(t *testing.T, id, output, format, root string, 
 		kotlinJSON(t, id), inputsField, kotlinJSON(t, output), kotlinJSON(t, format), kotlinJSON(t, root), strings.Join(assets, ","))
 }
 
-// hash4jStream frames values the way a hash4j `HashStream` does, so `xxh3.Signature128` over its bytes equals the
+// hash4jStream frames values the way a hash4j `HashStream` does, so `signature128` over its bytes equals the
 // Kotlin `devDistSignature` over the same puts.
 type hash4jStream struct{ bytes.Buffer }
+
+// signature128 is `devDistSignature` of the Kotlin plugin-preparation module: hash4j's `Hashing.xxh3_128()` over the
+// stream bytes, rendered as one base-36 number of the 128-bit value, most significant half first.
+func signature128(stream []byte) string {
+	value := xxh3.Hash128(stream)
+	bytes := make([]byte, 16)
+	binary.BigEndian.PutUint64(bytes, value.Hi)
+	binary.BigEndian.PutUint64(bytes[8:], value.Lo)
+	return new(big.Int).SetBytes(bytes).Text(36)
+}
 
 func (stream *hash4jStream) putInt(value int) {
 	binary.Write(&stream.Buffer, binary.LittleEndian, int32(value))
@@ -343,7 +354,7 @@ func kotlinLayoutSignature(plan kotlinPlanFile) string {
 		}
 	}
 	writeTexts(plan.PreparationRoots)
-	return xxh3.Signature128(buffer.Bytes())
+	return signature128(buffer.Bytes())
 }
 
 // TestKotlinSignatureHelpersReproduceTheFixtureConstants pins the two signature helpers against the constants the

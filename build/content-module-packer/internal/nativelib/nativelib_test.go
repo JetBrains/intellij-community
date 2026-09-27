@@ -144,12 +144,12 @@ func TestIsNativeEntryAndIsExecutable(t *testing.T) {
 
 func TestSelectTakesTheEntriesOfOnePlatform(t *testing.T) {
 	for variant, want := range map[string]Match{
-		"darwin_aarch64":  {PathWithPrefix: "sqlite/mac-aarch64/libsqliteij.jnilib", Path: "mac-aarch64/libsqliteij.jnilib", Family: MacOS, Arch: AArch64},
-		"darwin_x64":      {PathWithPrefix: "sqlite/mac-x86_64/libsqliteij.jnilib", Path: "mac-x86_64/libsqliteij.jnilib", Family: MacOS, Arch: X64},
-		"linux_aarch64":   {PathWithPrefix: "sqlite/linux-aarch64/libsqliteij.so", Path: "linux-aarch64/libsqliteij.so", Family: Linux, Arch: AArch64},
-		"linux_x64":       {PathWithPrefix: "sqlite/linux-x86_64/libsqliteij.so", Path: "linux-x86_64/libsqliteij.so", Family: Linux, Arch: X64},
-		"windows_aarch64": {PathWithPrefix: "sqlite/win-aarch64/sqliteij.dll", Path: "win-aarch64/sqliteij.dll", Family: Windows, Arch: AArch64},
-		"windows_x64":     {PathWithPrefix: "sqlite/win-x86_64/sqliteij.dll", Path: "win-x86_64/sqliteij.dll", Family: Windows, Arch: X64},
+		"darwin_aarch64":  {PathWithPrefix: "sqlite/mac-aarch64/libsqliteij.jnilib", Path: "mac-aarch64/libsqliteij.jnilib", Arch: AArch64},
+		"darwin_x64":      {PathWithPrefix: "sqlite/mac-x86_64/libsqliteij.jnilib", Path: "mac-x86_64/libsqliteij.jnilib", Arch: X64},
+		"linux_aarch64":   {PathWithPrefix: "sqlite/linux-aarch64/libsqliteij.so", Path: "linux-aarch64/libsqliteij.so", Arch: AArch64},
+		"linux_x64":       {PathWithPrefix: "sqlite/linux-x86_64/libsqliteij.so", Path: "linux-x86_64/libsqliteij.so", Arch: X64},
+		"windows_aarch64": {PathWithPrefix: "sqlite/win-aarch64/sqliteij.dll", Path: "win-aarch64/sqliteij.dll", Arch: AArch64},
+		"windows_x64":     {PathWithPrefix: "sqlite/win-x86_64/sqliteij.dll", Path: "win-x86_64/sqliteij.dll", Arch: X64},
 	} {
 		family, arch, err := ParseVariant(variant)
 		if err != nil {

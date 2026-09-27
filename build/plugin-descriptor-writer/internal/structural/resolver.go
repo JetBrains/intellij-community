@@ -32,10 +32,6 @@ import (
 // (`community/platform/util/src/com/intellij/openapi/util/JDOMUtil.java:76`).
 const XIncludeNamespace = "http://www.w3.org/2001/XInclude"
 
-// xmlNamespace is `Namespace.XML_NAMESPACE`, which `resolveXIncludeElement` reads `base` from
-// (`contentModuleEmbedding.kt:520`).
-const xmlNamespace = "http://www.w3.org/XML/1998/namespace"
-
 // Cache is a descriptor cache seeded from declared files, keyed by the load path a resolver asks for.
 //
 // PutIfAbsent follows the platform resolver, which writes resolved descriptors back into the cache.

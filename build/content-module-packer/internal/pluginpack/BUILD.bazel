@@ -46,7 +46,7 @@ go_test(
         "//build/content-module-packer/internal/jarpack",
         "//build/content-module-packer/internal/javaglob",
         "//build/content-module-packer/internal/planfile",
-        "//build/content-module-packer/internal/xxh3",
         "@com_github_klauspost_compress//zstd",
+        "@com_github_zeebo_xxh3//:xxh3",
     ],
 )

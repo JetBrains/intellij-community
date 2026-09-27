@@ -30,7 +30,6 @@ const (
 type File struct {
 	Version          int
 	Plugin           string
-	Variant          string
 	LayoutSignature  string
 	Assets           []Asset
 	Preparations     []Preparation
@@ -221,7 +220,7 @@ func (raw *rawFile) decode() (*File, error) {
 	if raw.Plugin == nil || raw.Variant == nil || raw.LayoutSignature == nil || raw.Assets == nil {
 		return nil, fmt.Errorf("a plan file requires plugin, variant, layoutSignature, and assets")
 	}
-	file := &File{Version: 1, Plugin: *raw.Plugin, Variant: *raw.Variant, LayoutSignature: *raw.LayoutSignature, PreparationRoots: raw.PreparationRoots}
+	file := &File{Version: 1, Plugin: *raw.Plugin, LayoutSignature: *raw.LayoutSignature, PreparationRoots: raw.PreparationRoots}
 	if raw.Version != nil {
 		file.Version = *raw.Version
 	}

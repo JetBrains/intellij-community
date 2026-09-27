@@ -131,7 +131,7 @@ output deleted and the caches bypassed (`--disk_cache= --noremote_accept_cached`
 
 The largest descriptor of the product, `intellij.database.plugin` with 116 content modules and a 470 KB output, is
 137 ms. The smallest is 76 ms. So the cost is the sandbox and not the process start, and a worker cannot remove a
-sandbox. `content-module-packer` is a worker because it runs ~2 500 actions; this rule runs one per plugin variant.
+sandbox. `content-module-packer` also runs without a worker, because ADR 0019 removed its worker.
 
 The population is 173 actions since 2026-08-28, because two plugins state one entry per (os, arch). The figures above
 were taken over 158 and were not re-taken; a per-action cost that does not depend on the descriptor's size does not
