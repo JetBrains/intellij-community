@@ -50,8 +50,6 @@ def dev_dist_plugin(
         descriptor = "",
         variants = [],
         embedded_descriptor_source = "",
-        embedded_descriptor = "",
-        embedded_descriptor_module = "",
         embedded_descriptors = {},
         embedded_library_descriptors = {},
         embedded_modules = [],
@@ -94,8 +92,6 @@ def dev_dist_plugin(
         executable_files: The single-file destinations of `files` the distribution marks executable. This is the mode
             `withResource*` gives a file.
         embedded_descriptor_source: The direct label of an embedded product descriptor.
-        embedded_descriptor: The embedded product descriptor path inside its module's package.
-        embedded_descriptor_module: The JPS module that owns the embedded product descriptor.
         embedded_descriptors: Exact descriptor targets mapped to resolver load paths.
         embedded_library_descriptors: Ordered Java containers mapped to space-separated resolver load paths.
         embedded_modules: The embedded descriptor search scope by JPS module name.
@@ -111,16 +107,12 @@ def dev_dist_plugin(
     shared = [key for key in _SHARED_LEAF_ATTRS if key in descriptor_attrs]
     if shared:
         fail("dev_dist_plugin: %s states shared leaf attributes: %s" % (main_module, shared))
-    if embedded_descriptor_source and (embedded_descriptor or embedded_descriptor_module):
-        fail("dev_dist_plugin: %s states both direct and module-relative embedded descriptor sources" % main_module)
-    if bool(embedded_descriptor) != bool(embedded_descriptor_module):
-        fail("dev_dist_plugin: %s must state both embedded_descriptor and embedded_descriptor_module" % main_module)
-    if not embedded_descriptor_source and not embedded_descriptor and (embedded_descriptors or embedded_library_descriptors or embedded_modules or embedded_separate_jar):
+    if not embedded_descriptor_source and (embedded_descriptors or embedded_library_descriptors or embedded_modules or embedded_separate_jar):
         fail("dev_dist_plugin: %s states embedded descriptor inputs without an embedded descriptor" % main_module)
     frontend_labels = [frontend_application_info, frontend_product_application_info, frontend_build_number]
     if any(frontend_labels) and not all(frontend_labels):
         fail("dev_dist_plugin: %s states some of the three frontend application info labels, and a frontend states all of them" % main_module)
-    if frontend_application_info and not embedded_descriptor_source and not embedded_descriptor:
+    if frontend_application_info and not embedded_descriptor_source:
         fail("dev_dist_plugin: %s states a frontend application info without an embedded descriptor" % main_module)
     if jars and variants:
         fail("dev_dist_plugin: %s states jars and layout variants, and a packed plugin has one layout" % main_module)
@@ -153,11 +145,6 @@ def dev_dist_plugin(
 
     # Nothing reads the labels. The resolution fills `stale`, and the `if jars and not stale` guard below reads it.
     _module_labels(content_modules, module_targets, stale)
-    embedded_owner = None
-    if embedded_descriptor_module:
-        embedded_owner = module_rule_label(embedded_descriptor_module, module_targets)
-        if embedded_owner == None:
-            stale[embedded_descriptor_module] = True
 
     # The packed component's inputs. A module a jar names is resolved like a content module, and a library token is
     # passed through as the label it is. A stale name here skips the whole component below, so a plugin never ships with
@@ -220,14 +207,13 @@ def dev_dist_plugin(
             executable_files = executable_files,
             visibility = ["//visibility:public"],
         )
-    if embedded_descriptor_source or embedded_owner != None:
+    if embedded_descriptor_source:
         dev_dist_embedded_product_descriptor(
             main_module = main_module,
-            source_module = embedded_owner,
-            source = embedded_descriptor_source if embedded_descriptor_source else embedded_descriptor,
+            source = embedded_descriptor_source,
             descriptors = embedded_descriptors,
             library_descriptors = embedded_library_descriptors,
-            modules = ([embedded_descriptor_module] if embedded_descriptor_module else []) + [name for name in embedded_modules if name != embedded_descriptor_module],
+            modules = embedded_modules,
             separate_jar = embedded_separate_jar,
         )
     if frontend_application_info:

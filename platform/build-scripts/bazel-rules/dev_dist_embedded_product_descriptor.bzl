@@ -105,7 +105,6 @@ _dev_dist_embedded_product_descriptor = rule(
 
 def dev_dist_embedded_product_descriptor(
         main_module,
-        source_module = None,
         source = None,
         product = None,
         tags = [],
@@ -118,10 +117,9 @@ def dev_dist_embedded_product_descriptor(
     """
     if not source:
         fail("dev_dist_embedded_product_descriptor requires a source")
-    source_label = source_module.rpartition(":")[0] + ":" + source if source_module else source
     _dev_dist_embedded_product_descriptor(
         name = dev_dist_embedded_product_descriptor_target_name(main_module, product),
-        source = source_label,
+        source = source,
         tags = tags + ["manual"],
         visibility = visibility,
         **kwargs
