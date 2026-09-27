@@ -1,115 +1,11 @@
 package pluginpack
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
-
-	"jetbrains.com/content-module-packer/internal/filemetadata"
 )
-
-func TestOwnedTreeMetadataValidatesWithoutPayload(test *testing.T) {
-	recipe, catalogue := treePlan(filepath.Join(test.TempDir(), "absent"))
-	catalogue.Artifacts[0].Tree = &OwnedTree{Version: TreeVersion, Artifact: "tree", Plugin: recipe.Plugin, LayoutSignature: recipe.LayoutSignature,
-		RootMode: 0o710, Entries: []filemetadata.Entry{{RelativePath: "empty", Type: "directory", Mode: 0}}}
-	execution, err := Plan(recipe, catalogue)
-	if err != nil {
-		test.Fatal(err)
-	}
-	catalogue.Artifacts[0].Tree.RootMode = 0
-	catalogue.Artifacts[0].Tree.Entries[0].RelativePath = "changed"
-	inputs := execution.Inputs()
-	inputs[0].Tree.Entries[0].RelativePath = "changed-again"
-	if actual := execution.Inputs()[0].Tree; actual.RootMode != 0o710 || actual.Entries[0].RelativePath != "empty" {
-		test.Fatal("metadata aliases caller storage")
-	}
-}
-
-func TestOwnedTreeMetadataRejectsInvalidContracts(test *testing.T) {
-	for _, scenario := range []string{"v1", "metadata-v1", "metadata-v3", "owner", "plugin", "signature", "file-root", "root-mode", "nil-entries", "duplicate", "case", "unicode", "escape", "newline", "missing-parent", "file-parent", "file-mode", "file-size", "executable", "directory-hash", "unknown-type", "library", "ordinary-copy"} {
-		test.Run(scenario, func(test *testing.T) {
-			recipe, catalogue := treePlan(filepath.Join(test.TempDir(), "absent"))
-			tree := &OwnedTree{Version: TreeVersion, Artifact: "tree", Plugin: recipe.Plugin, LayoutSignature: recipe.LayoutSignature,
-				RootMode: 0o755, Entries: []filemetadata.Entry{{RelativePath: "file", Type: "file", Mode: 0o644, Size: 1, Hash: 1}}}
-			catalogue.Artifacts[0].Tree = tree
-			switch scenario {
-			case "v1":
-				recipe.Version = Version
-			case "metadata-v1":
-				tree.Version = 1
-			case "metadata-v3":
-				tree.Version = 3
-			case "owner":
-				tree.Artifact = "other"
-			case "plugin":
-				tree.Plugin = "other"
-			case "signature":
-				tree.LayoutSignature = "stale"
-			case "file-root":
-				catalogue.Artifacts[0].Kind = "file"
-			case "root-mode":
-				tree.RootMode = 0o1755
-			case "nil-entries":
-				tree.Entries = nil
-			case "duplicate":
-				tree.Entries = append(tree.Entries, tree.Entries[0])
-			case "case", "unicode":
-				first, second := "File", "file"
-				if scenario == "unicode" {
-					first, second = "Café", "Cafe\u0301"
-				}
-				tree.Entries = []filemetadata.Entry{{RelativePath: first, Type: "directory"}, {RelativePath: second, Type: "directory"}}
-			case "escape":
-				tree.Entries[0].RelativePath = "../escape"
-			case "newline":
-				tree.Entries[0].RelativePath = "bad\nname"
-			case "missing-parent":
-				tree.Entries[0].RelativePath = "absent/file"
-			case "file-parent":
-				tree.Entries = append(tree.Entries, filemetadata.Entry{RelativePath: "file/child", Type: "directory"})
-			case "file-mode":
-				tree.Entries[0].Mode = 0o1644
-			case "file-size":
-				tree.Entries[0].Size = -1
-			case "executable":
-				tree.Entries[0].Executable = true
-			case "directory-hash":
-				tree.Entries[0].Type = "directory"
-			case "unknown-type":
-				tree.Entries[0].Type = "device"
-			case "library":
-				catalogue.Libraries = []Library{{ID: "library", Files: []Reference{{Artifact: "tree", Path: "file"}}}}
-			case "ordinary-copy":
-				recipe.Assets = append(recipe.Assets, Asset{Destination: "resource", Producer: "remainder"})
-				recipe.Operations = append(recipe.Operations, Operation{Kind: "copy", Destination: "resource", Input: &Reference{Artifact: "tree", Path: "file"}})
-			}
-			if _, err := Plan(recipe, catalogue); err == nil {
-				test.Fatal("accepted invalid owned tree metadata")
-			}
-		})
-	}
-}
-
-func TestOwnedTreeMetadataRejectsUnsafeLogicalLinks(test *testing.T) {
-	for _, target := range []string{"missing", "link", ".", "file/child", "./file/..", "../outside", "/absolute", "bad\nname"} {
-		test.Run(target, func(test *testing.T) {
-			recipe, catalogue := treePlan(filepath.Join(test.TempDir(), "absent"))
-			link := filepath.Join(test.TempDir(), "link")
-			if err := os.Symlink(target, link); err != nil {
-				test.Fatal(err)
-			}
-			entry, _ := filemetadata.Inspect(link, "link")
-			catalogue.Artifacts[0].Tree = &OwnedTree{Version: TreeVersion, Artifact: "tree", Plugin: recipe.Plugin, LayoutSignature: recipe.LayoutSignature,
-				RootMode: 0o755, Entries: []filemetadata.Entry{{RelativePath: "file", Type: "file", Mode: 0o644}, entry}}
-			if _, err := Plan(recipe, catalogue); err == nil {
-				test.Fatal("accepted unsafe logical link")
-			}
-		})
-	}
-}
 
 func treePlan(root string) (Recipe, Catalogue) {
 	excluded := false
@@ -126,7 +22,7 @@ func treePlan(root string) (Recipe, Catalogue) {
 func TestTreePlanningIsVersionedAndDoesNotReadDirectories(test *testing.T) {
 	recipe, catalogue := treePlan(filepath.Join(test.TempDir(), "missing"))
 	execution, err := Plan(recipe, catalogue)
-	if err != nil || !reflect.DeepEqual(execution.Inputs(), catalogue.Artifacts) {
+	if err != nil || !reflect.DeepEqual(execution.inputs, catalogue.Artifacts) {
 		test.Fatalf("tree planning opened the source or changed its ownership: %v", err)
 	}
 	for _, version := range []int{Version, 3} {
@@ -288,66 +184,16 @@ func TestPlanDoesNotReadPayloads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(execution.Inputs(), catalogue.Artifacts) {
-		t.Fatalf("unexpected action inputs: %#v", execution.Inputs())
+	if !reflect.DeepEqual(execution.inputs, catalogue.Artifacts) {
+		t.Fatalf("unexpected action inputs: %#v", execution.inputs)
 	}
-	execution.Inputs()[0].ID = "mutated"
+	catalogue.Artifacts[0].ID = "mutated"
 	recipe.Operations[0].Sources[0].Input.Artifact = "mutated"
 	recipe.Operations[0].Options.Directories = "mutated"
 	recipe.Assets[1].Destination = "mutated"
 	if execution.inputs[0].ID != "module" || execution.recipe.Operations[0].Sources[0].Input.Artifact != "module" ||
 		execution.recipe.Operations[0].Options.Directories != "none" || execution.recipe.Assets[1].Destination != "lib/plugin.jar" {
 		t.Fatal("a caller changed the validated plan")
-	}
-}
-
-func TestPlanOwnsEmptyPreparedSources(test *testing.T) {
-	recipe, catalogue := samplePlan(test.TempDir())
-	catalogue.Artifacts[0].Kind = "directory"
-	recipe.Operations[0].Sources = []Source{{Kind: "entries", Prepared: "module", Manifest: "drop"}}
-	execution, err := Plan(recipe, catalogue)
-	if err != nil {
-		test.Fatal(err)
-	}
-	if !reflect.DeepEqual(execution.Inputs(), catalogue.Artifacts) {
-		test.Fatalf("empty prepared source lost its owner: %+v", execution.Inputs())
-	}
-	for _, identifier := range []string{"missing", "packed-separate", " bad "} {
-		recipe.Operations[0].Sources[0].Prepared = identifier
-		if _, err := Plan(recipe, catalogue); err == nil || !strings.Contains(err.Error(), "prepared source") {
-			test.Fatalf("accepted invalid prepared owner %q: %v", identifier, err)
-		}
-	}
-	recipe.Operations[0].Sources[0].Prepared = "module"
-	catalogue.Artifacts[0].Kind = "file"
-	if _, err := Plan(recipe, catalogue); err == nil || !strings.Contains(err.Error(), "declared directory") {
-		test.Fatalf("accepted a file as a prepared directory: %v", err)
-	}
-}
-
-func TestPreparedFileReferencesRequireExactMetadata(test *testing.T) {
-	for _, version := range []int{Version, TreeVersion} {
-		for _, name := range []string{"", "missing", "bin", "current", "bin/../bin/tool", "../outside", "bin/TOOL"} {
-			test.Run(fmt.Sprintf("v%d/%s", version, name), func(test *testing.T) {
-				recipe, catalogue, _ := ownedTreeFixture(test)
-				recipe = preparedFileRecipe(recipe, version, "entries")
-				recipe.Operations[0].Sources[0].Entries[0].Input.Path = name
-				if _, err := Plan(recipe, catalogue); err == nil {
-					test.Fatal("accepted a reference outside the regular metadata entries")
-				}
-			})
-		}
-	}
-}
-
-func TestPreparedFilePlanningDoesNotReadPayload(test *testing.T) {
-	for _, version := range []int{Version, TreeVersion} {
-		recipe, catalogue, _ := ownedTreeFixture(test)
-		recipe = preparedFileRecipe(recipe, version, "entries")
-		catalogue.Artifacts[0].Root = filepath.Join(test.TempDir(), "absent")
-		if _, err := Plan(recipe, catalogue); err != nil {
-			test.Fatal(err)
-		}
 	}
 }
 
@@ -400,22 +246,13 @@ func TestPlanRejectsInvalidContracts(t *testing.T) {
 			recipe.Operations[0].Sources[0].Excludes = []string{"drop/**", "{unclosed"}
 		}, "invalid exclude"},
 		{"unknown directory mode", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[0].Options.Directories = "auto" }, "directory mode"},
-		{"unknown library", func(recipe *Recipe, _ *Catalogue) {
-			recipe.Operations[0].Sources[0] = Source{Kind: "library", Library: "unknown", Filter: "library", Manifest: "drop"}
-		}, "library source"},
+		{"catalogue library", func(_ *Recipe, catalogue *Catalogue) {
+			catalogue.Libraries = []Library{{ID: "library", Files: []Reference{{Artifact: "module"}}}}
+		}, "names a library"},
 		{"setuid", func(recipe *Recipe, _ *Catalogue) { recipe.Operations[0].Mode = 0o4755 }, "file mode"},
 		{"mixed operation", func(recipe *Recipe, _ *Catalogue) {
 			recipe.Operations[0].Input = &Reference{Artifact: "module"}
 		}, "jar operation"},
-		{"unknown override", func(recipe *Recipe, _ *Catalogue) {
-			recipe.Operations[0].Sources[0].Overrides = []EntryOverride{{Kind: "sign", Name: "native.so"}}
-		}, "unknown override"},
-		{"override manifest", func(recipe *Recipe, _ *Catalogue) {
-			recipe.Operations[0].Sources[0].Overrides = []EntryOverride{{Kind: "reserve", Name: "META-INF/MANIFEST.MF"}}
-		}, "unsupported override"},
-		{"duplicate override", func(recipe *Recipe, _ *Catalogue) {
-			recipe.Operations[0].Sources[0].Overrides = []EntryOverride{{Kind: "reserve", Name: "native.so"}, {Kind: "reserve", Name: "native.so"}}
-		}, "conflicting"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -437,8 +274,8 @@ func TestPlanReadsTheModuleOfAReusedJarAsAPlainInput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(execution.Inputs(), catalogue.Artifacts) {
-		t.Fatalf("unexpected action inputs: %#v", execution.Inputs())
+	if !reflect.DeepEqual(execution.inputs, catalogue.Artifacts) {
+		t.Fatalf("unexpected action inputs: %#v", execution.inputs)
 	}
 }
 
@@ -545,8 +382,8 @@ func TestLinkGraphUsesRawComponentsAndKnownDirectories(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if len(execution.Inputs()) != 0 {
-					t.Fatalf("independent targets became inputs: %v", execution.Inputs())
+				if len(execution.inputs) != 0 {
+					t.Fatalf("independent targets became inputs: %v", execution.inputs)
 				}
 			}
 		})

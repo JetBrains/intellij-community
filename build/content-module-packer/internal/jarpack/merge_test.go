@@ -113,24 +113,18 @@ func TestNativeChangesRetainOriginalSourcePositions(t *testing.T) {
 		sourceEntry{name: "after.class", data: "after"},
 	)
 	second := writeZipJar(t, "second.jar", sourceEntry{name: "native/extract.so", data: "must not reappear"})
-	replacement := filepath.Join(t.TempDir(), "signed")
-	if err := os.WriteFile(replacement, []byte("signed"), 0o644); err != nil {
-		t.Fatal(err)
-	}
 	spec := MergeSpec{Output: "plugin.jar", ValidateEntryNames: true, Sources: []Source{
-		{Path: first, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{
-			"native/lib.so": {Path: replacement}, "native/extract.so": {Reserve: true},
-		}},
+		{Path: first, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"native/extract.so": {Reserve: true}}},
 		{Path: second, Filter: ModuleOutputNameFilter},
 	}}
 	data, duplicates := pack(t, spec)
 	if !slices.Equal(entryNames(t, data), []string{"before.class", "native/lib.so", "after.class", "__index__"}) ||
-		packedEntry(t, data, "native/lib.so") != "signed" || !slices.Equal(duplicates, []string{"native/extract.so"}) {
+		packedEntry(t, data, "native/lib.so") != "unsigned" || !slices.Equal(duplicates, []string{"native/extract.so"}) {
 		t.Fatalf("native changes moved: %v, duplicates=%v", entryNames(t, data), duplicates)
 	}
 	var expected bytes.Buffer
 	writer := NewWriter(&expected)
-	for _, entry := range []sourceEntry{{name: "before.class", data: "before"}, {name: "native/lib.so", data: "signed"}, {name: "after.class", data: "after"}} {
+	for _, entry := range []sourceEntry{{name: "before.class", data: "before"}, {name: "native/lib.so", data: "unsigned"}, {name: "after.class", data: "after"}} {
 		if err := writer.Add(entry.name, []byte(entry.data), crc32Of([]byte(entry.data)), true); err != nil {
 			t.Fatal(err)
 		}
@@ -139,23 +133,22 @@ func TestNativeChangesRetainOriginalSourcePositions(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(data, expected.Bytes()) {
-		t.Fatal("native replacements changed the expected jar bytes")
+		t.Fatal("native reservations changed the expected jar bytes")
 	}
 }
 
-func TestPreparedReservationsAndEntitiesFollowSourceOrder(t *testing.T) {
+func TestPreparedEntitiesFollowSourceOrder(t *testing.T) {
 	root := t.TempDir()
 	file := filepath.Join(root, "prepared")
 	if err := os.WriteFile(file, []byte("\u001c Prepared \u001f"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	archive := writeZipJar(t, "module.jar", sourceEntry{name: "reserved.txt", data: "must not appear"}, sourceEntry{name: "META-INF/listOfEntities.txt", data: " Archive "})
+	archive := writeZipJar(t, "module.jar", sourceEntry{name: "META-INF/listOfEntities.txt", data: " Archive "})
 	data, _ := pack(t, MergeSpec{Output: "entities.jar", MergeEntities: true, Sources: []Source{
-		{Name: "reserved.txt", Reserve: true},
 		{Path: file, Name: "META-INF/listOfEntities.txt"},
 		{Path: archive, Filter: ModuleOutputNameFilter},
 	}})
-	if packedEntry(t, data, "META-INF/listOfEntities.txt") != "Prepared\nArchive" || slices.Contains(entryNames(t, data), "reserved.txt") {
+	if packedEntry(t, data, "META-INF/listOfEntities.txt") != "Prepared\nArchive" {
 		t.Fatalf("prepared source order changed: %v", entryNames(t, data))
 	}
 	if got := trimEntityList([]byte("\u0085keep\u0085")); got != "\u0085keep\u0085" {
@@ -168,13 +161,11 @@ func TestMergeRejectsUnsafeOrStaleSourceOperations(t *testing.T) {
 	for _, source := range []Source{
 		{Path: archive},
 		{Path: archive, Filter: ModuleOutputNameFilter, Manifest: "unknown"},
-		{Path: archive, Name: "entry", Reserve: true},
-		{Name: "entry", Reserve: true, Patch: true},
+		{Name: "entry"},
 		{Path: archive, Name: "../escape"},
 		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"missing.so": {Reserve: true}}},
 		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"icon-robots.txt": {Reserve: true}}},
 		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"present.so": {}}},
-		{Path: archive, Filter: ModuleOutputNameFilter, EntryOverrides: map[string]EntryOverride{"present.so": {Path: archive, Reserve: true}}},
 	} {
 		spec := MergeSpec{Output: filepath.Join(t.TempDir(), "invalid.jar"), ValidateEntryNames: true, Sources: []Source{source}}
 		if _, err := spec.Pack(); err == nil {

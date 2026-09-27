@@ -19,69 +19,7 @@ import (
 type Execution struct {
 	recipe    Recipe
 	artifacts map[string]Artifact
-	libraries map[string]Library
 	inputs    []Artifact
-}
-
-// Inputs returns the complete declared input set. Independent outputs are never included.
-func (execution *Execution) Inputs() []Artifact {
-	inputs := slices.Clone(execution.inputs)
-	for index := range inputs {
-		inputs[index] = cloneTreeArtifact(inputs[index])
-	}
-	return inputs
-}
-
-func cloneTreeArtifact(artifact Artifact) Artifact {
-	if artifact.Tree != nil {
-		tree := *artifact.Tree
-		tree.Entries = slices.Clone(tree.Entries)
-		artifact.Tree = &tree
-	}
-	return artifact
-}
-
-func (execution *Execution) validateTreeMetadata(artifact Artifact) error {
-	tree := artifact.Tree
-	if artifact.Kind != "directory" || tree.Version != TreeVersion || tree.Artifact != artifact.ID ||
-		tree.Plugin != execution.recipe.Plugin || tree.LayoutSignature != execution.recipe.LayoutSignature || tree.RootMode > 0o777 || tree.Entries == nil ||
-		tree.OmitRoot && len(tree.Entries) != 0 {
-		return fmt.Errorf("invalid prepared tree version, ownership, or root mode for %q", artifact.ID)
-	}
-	entries := make(map[string]filemetadata.Entry, len(tree.Entries))
-	assets := make([]Asset, 0, len(tree.Entries))
-	var links []Operation
-	for _, entry := range tree.Entries {
-		if err := validateRelativePath(entry.RelativePath); err != nil {
-			return err
-		}
-		if _, exists := entries[entry.RelativePath]; exists {
-			return fmt.Errorf("duplicate prepared tree entry %q", entry.RelativePath)
-		}
-		entries[entry.RelativePath] = entry
-		kind := "file"
-		if entry.Type == "directory" {
-			kind = "directory"
-		}
-		assets = append(assets, Asset{Destination: entry.RelativePath, Kind: kind})
-		if entry.Type == "symlink" {
-			if strings.ContainsAny(entry.SymlinkTarget, "\r\n") {
-				return fmt.Errorf("unsafe prepared tree link %q", entry.RelativePath)
-			}
-			links = append(links, Operation{Kind: "symlink", Destination: entry.RelativePath, Target: entry.SymlinkTarget})
-		}
-	}
-	if _, err := filemetadata.Merge(tree.Entries); err != nil {
-		return err
-	}
-	for name := range entries {
-		for parent := path.Dir(name); parent != "."; parent = path.Dir(parent) {
-			if entries[parent].Type != "directory" {
-				return fmt.Errorf("missing prepared tree directory %q", parent)
-			}
-		}
-	}
-	return validateSymlinks(assets, links)
 }
 
 func assetScope(asset Asset) string {
@@ -218,23 +156,20 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 	if err != nil {
 		return nil, err
 	}
-	execution := &Execution{artifacts: make(map[string]Artifact), libraries: make(map[string]Library)}
+	if len(catalogue.Libraries) != 0 {
+		return nil, fmt.Errorf("the catalogue names a library, but planfile expands each library into its files")
+	}
+	execution := &Execution{artifacts: make(map[string]Artifact)}
 	if err := json.Unmarshal(encoded, &execution.recipe); err != nil {
 		return nil, err
 	}
 	roots := make(map[string]bool)
 	for _, artifact := range catalogue.Artifacts {
-		artifact = cloneTreeArtifact(artifact)
 		if _, exists := execution.artifacts[artifact.ID]; exists || !validID(artifact.ID) {
 			return nil, fmt.Errorf("invalid or duplicate catalogue input %q", artifact.ID)
 		}
 		if artifact.Kind != "file" && artifact.Kind != "directory" {
 			return nil, fmt.Errorf("unknown root kind %q", artifact.Kind)
-		}
-		if artifact.Tree != nil {
-			if err := execution.validateTreeMetadata(artifact); err != nil {
-				return nil, err
-			}
 		}
 		if artifact.Root == "" || artifact.Root == "." || path.Clean(filepath.ToSlash(artifact.Root)) != filepath.ToSlash(artifact.Root) || !utf8.ValidString(artifact.Root) || strings.ContainsAny(artifact.Root, "\x00\r\n") {
 			return nil, fmt.Errorf("invalid root for %q", artifact.ID)
@@ -247,25 +182,7 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 		execution.artifacts[artifact.ID] = artifact
 		execution.inputs = append(execution.inputs, artifact)
 	}
-	for _, library := range catalogue.Libraries {
-		if _, exists := execution.libraries[library.ID]; exists || !validID(library.ID) || len(library.Files) == 0 {
-			return nil, fmt.Errorf("invalid or duplicate library %q", library.ID)
-		}
-		seen := make(map[Reference]bool)
-		for _, reference := range library.Files {
-			if err := execution.validateReference(&reference, nil); err != nil {
-				return nil, err
-			}
-			if seen[reference] {
-				return nil, fmt.Errorf("duplicate file in library %q", library.ID)
-			}
-			seen[reference] = true
-		}
-		library.Files = slices.Clone(library.Files)
-		execution.libraries[library.ID] = library
-	}
 	used := make(map[string]bool)
-	usedLibraries := make(map[string]bool)
 	operations := make(map[string]Operation)
 	for _, operation := range recipe.Operations {
 		scope := operationScope(operation)
@@ -274,7 +191,7 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 		if _, duplicate := operations[key]; duplicate || !exists || asset.Destination != operation.Destination || assetScope(asset) != scope || asset.Producer != "remainder" {
 			return nil, fmt.Errorf("conflicting or unowned remainder destination %q", operation.Destination)
 		}
-		if err := execution.validateOperation(operation, used, usedLibraries); err != nil {
+		if err := execution.validateOperation(operation, used); err != nil {
 			return nil, fmt.Errorf("%s: %w", operation.Destination, err)
 		}
 		writesTree := operation.Kind == "copy-tree" || operation.Kind == "layout-tree"
@@ -292,8 +209,8 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 			return nil, fmt.Errorf("missing remainder operation for %q", asset.Destination)
 		}
 	}
-	if len(used) != len(execution.artifacts) || len(usedLibraries) != len(execution.libraries) {
-		return nil, fmt.Errorf("stale ownership: catalogue contains unused inputs or libraries")
+	if len(used) != len(execution.artifacts) {
+		return nil, fmt.Errorf("stale ownership: catalogue contains unused inputs")
 	}
 	if !hasTrees {
 		if err := validateSymlinks(recipe.Assets, recipe.Operations); err != nil {
@@ -303,7 +220,7 @@ func Plan(recipe Recipe, catalogue Catalogue) (*Execution, error) {
 	return execution, nil
 }
 
-func (execution *Execution) validateOperation(operation Operation, used, usedLibraries map[string]bool) error {
+func (execution *Execution) validateOperation(operation Operation, used map[string]bool) error {
 	if operation.Mode > 0o777 {
 		return fmt.Errorf("invalid file mode %o", operation.Mode)
 	}
@@ -341,7 +258,7 @@ func (execution *Execution) validateOperation(operation Operation, used, usedLib
 			return fmt.Errorf("unknown directory mode %q", operation.Options.Directories)
 		}
 		for _, source := range operation.Sources {
-			if err := execution.validateSource(source, used, usedLibraries); err != nil {
+			if err := execution.validateSource(source, used); err != nil {
 				return err
 			}
 		}
@@ -519,14 +436,7 @@ func ValidateLinkGraph(directories map[string]bool, links map[string]string) err
 	return visit(".")
 }
 
-func (execution *Execution) validateSource(source Source, used, usedLibraries map[string]bool) error {
-	if source.Prepared != "" {
-		artifact, exists := execution.artifacts[source.Prepared]
-		if !exists || !validID(source.Prepared) || artifact.Kind != "directory" || (source.Kind != "entries" && source.Kind != "archive") {
-			return fmt.Errorf("prepared source %q requires a declared directory and entries or archive kind", source.Prepared)
-		}
-		used[source.Prepared] = true
-	}
+func (execution *Execution) validateSource(source Source, used map[string]bool) error {
 	switch jarpack.ManifestMode(source.Manifest) {
 	case jarpack.ManifestDrop, jarpack.ManifestKeep, jarpack.ManifestRewriteBootClassPath, jarpack.ManifestCoverageAgent:
 	default:
@@ -537,61 +447,23 @@ func (execution *Execution) validateSource(source Source, used, usedLibraries ma
 	}
 	switch source.Kind {
 	case "layout":
-		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Entries) != 0 ||
-			len(source.Overrides) != 0 || source.Layout == nil || jarpack.ManifestMode(source.Manifest) != jarpack.ManifestKeep {
+		if source.Input != nil || source.Filter != "" || len(source.Excludes) != 0 || len(source.Entries) != 0 ||
+			source.Layout == nil || jarpack.ManifestMode(source.Manifest) != jarpack.ManifestKeep {
 			return fmt.Errorf("layout source requires layout assets and the keep manifest policy without archive or filter options")
 		}
 		return execution.validateLayout(source.Layout, layoutEntriesFormat, used)
-	case "archive", "library":
+	case "archive":
 		if len(source.Entries) != 0 {
-			return fmt.Errorf("archive or library source cannot contain prepared entries")
+			return fmt.Errorf("archive source cannot contain prepared entries")
 		}
 		if _, err := sourceFilter(source); err != nil {
 			return err
 		}
-		if source.Kind == "archive" {
-			if source.Library != "" {
-				return fmt.Errorf("archive source cannot name a library")
-			}
-			if err := execution.validateReference(source.Input, used); err != nil {
-				return err
-			}
-		} else {
-			library, exists := execution.libraries[source.Library]
-			if !exists || source.Input != nil || len(source.Overrides) != 0 {
-				return fmt.Errorf("unresolved or invalid library source %q", source.Library)
-			}
-			usedLibraries[source.Library] = true
-			for _, reference := range library.Files {
-				if err := execution.validateReference(&reference, used); err != nil {
-					return err
-				}
-			}
-		}
-		names := make(map[string]bool)
-		for _, override := range source.Overrides {
-			if names[override.Name] || override.Name == jarpack.ManifestEntryName || override.Name == "META-INF/listOfEntities.txt" {
-				return fmt.Errorf("conflicting or unsupported override %q", override.Name)
-			}
-			names[override.Name] = true
-			if err := jarpack.ValidateEntryName(override.Name); err != nil {
-				return err
-			}
-			switch override.Kind {
-			case "replace":
-				if err := execution.validateReference(override.Input, used); err != nil {
-					return err
-				}
-			case "reserve":
-				if override.Input != nil {
-					return fmt.Errorf("reservation cannot have an input")
-				}
-			default:
-				return fmt.Errorf("unknown override %q", override.Kind)
-			}
+		if err := execution.validateReference(source.Input, used); err != nil {
+			return err
 		}
 	case "entries":
-		if source.Input != nil || source.Library != "" || source.Filter != "" || len(source.Excludes) != 0 || len(source.Overrides) != 0 {
+		if source.Input != nil || source.Filter != "" || len(source.Excludes) != 0 {
 			return fmt.Errorf("prepared entries cannot contain archive or filter options")
 		}
 		for _, entry := range source.Entries {
@@ -602,10 +474,6 @@ func (execution *Execution) validateSource(source Source, used, usedLibraries ma
 			case "file", "patch":
 				if err := execution.validateReference(entry.Input, used); err != nil {
 					return err
-				}
-			case "reserve":
-				if entry.Input != nil {
-					return fmt.Errorf("reservation cannot have an input")
 				}
 			default:
 				return fmt.Errorf("unknown prepared entry %q", entry.Kind)
@@ -625,18 +493,6 @@ func (execution *Execution) validateReference(reference *Reference, used map[str
 	if !exists {
 		return fmt.Errorf("unresolved input %q", reference.Artifact)
 	}
-	if artifact.Tree != nil {
-		if slices.ContainsFunc(execution.recipe.Operations, func(operation Operation) bool {
-			return operation.Kind == "copy-tree" && operation.Input != nil && operation.Input.Artifact == artifact.ID
-		}) {
-			return fmt.Errorf("prepared tree %q requires copy-tree ownership", artifact.ID)
-		}
-		if !slices.ContainsFunc(artifact.Tree.Entries, func(entry filemetadata.Entry) bool {
-			return entry.RelativePath == reference.Path && entry.Type == "file"
-		}) {
-			return fmt.Errorf("prepared input %q must name a metadata file: %s", artifact.ID, reference.Path)
-		}
-	}
 	if artifact.Kind == "file" {
 		if reference.Path != "" {
 			return fmt.Errorf("file input %q cannot have a relative path", artifact.ID)
@@ -644,9 +500,7 @@ func (execution *Execution) validateReference(reference *Reference, used map[str
 	} else if err := validateRelativePath(reference.Path); err != nil {
 		return err
 	}
-	if used != nil {
-		used[artifact.ID] = true
-	}
+	used[artifact.ID] = true
 	return nil
 }
 
@@ -686,9 +540,6 @@ func (execution *Execution) validateLayoutInput(reference Reference, used map[st
 		return "", fmt.Errorf("unresolved layout input %q", reference.Artifact)
 	}
 	if artifact.Kind == "directory" && reference.Path == "" {
-		if artifact.Tree != nil {
-			return "", fmt.Errorf("layout input %q must be a raw directory", reference.Artifact)
-		}
 		used[artifact.ID] = true
 		return "directory", nil
 	}
@@ -816,7 +667,7 @@ func validateRelativePath(value string) error {
 	return nil
 }
 
-// sourceFilter selects the entries of one archive or library source.
+// sourceFilter selects the entries of one archive source.
 // With excludes, the module filter is composed with the Java globs. META-INF/listOfEntities.txt is never excluded.
 // The manifest policy stays with jarpack.
 func sourceFilter(source Source) (func(string) bool, error) {

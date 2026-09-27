@@ -443,9 +443,6 @@ func (c *compiler) indexCatalogue(catalogue pluginpack.Catalogue) error {
 		if artifact.Kind != "file" && artifact.Kind != "directory" {
 			return fmt.Errorf("unknown artifact root kind %q", artifact.Kind)
 		}
-		if artifact.Tree != nil {
-			return fmt.Errorf("catalogue artifact %q carries prepared tree metadata, which a plan without a Kotlin preparation cannot have", artifact.ID)
-		}
 		c.artifacts[artifact.ID] = artifact
 		raw[artifact.ID] = true
 	}

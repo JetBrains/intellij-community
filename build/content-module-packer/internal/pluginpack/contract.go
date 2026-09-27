@@ -9,8 +9,6 @@ import (
 	"os"
 	"path"
 	"unicode/utf8"
-
-	"jetbrains.com/content-module-packer/internal/filemetadata"
 )
 
 const Version = 1
@@ -62,63 +60,14 @@ type Asset struct {
 type Catalogue struct {
 	Version   int        `json:"version"`
 	Artifacts []Artifact `json:"artifacts"`
-	Libraries []Library  `json:"libraries,omitempty"`
+	// Libraries is for planfile, which expands each library into its files. Plan refuses a catalogue with libraries.
+	Libraries []Library `json:"libraries,omitempty"`
 }
 
 type Artifact struct {
-	ID   string     `json:"id"`
-	Kind string     `json:"kind"`
-	Root string     `json:"root"`
-	Tree *OwnedTree `json:"tree,omitempty"`
-}
-
-type OwnedTree struct {
-	Version         int                  `json:"version"`
-	Artifact        string               `json:"artifact"`
-	Plugin          string               `json:"plugin"`
-	LayoutSignature string               `json:"layoutSignature"`
-	RootMode        uint32               `json:"rootMode"`
-	Entries         []filemetadata.Entry `json:"entries"`
-	OmitRoot        bool                 `json:"omitRoot,omitempty"`
-}
-
-func (tree *OwnedTree) UnmarshalJSON(data []byte) error {
-	type encodedTree OwnedTree
-	var decoded encodedTree
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&decoded); err != nil {
-		return err
-	}
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(data, &fields); err != nil {
-		return err
-	}
-	for _, key := range []string{"version", "artifact", "plugin", "layoutSignature", "rootMode", "entries"} {
-		if value, exists := fields[key]; !exists || bytes.Equal(value, []byte("null")) {
-			return fmt.Errorf("missing prepared tree metadata field %q", key)
-		}
-	}
-	if decoded.Version != TreeVersion {
-		return fmt.Errorf("unsupported prepared tree metadata version %d", decoded.Version)
-	}
-	var entries []map[string]json.RawMessage
-	if err := json.Unmarshal(fields["entries"], &entries); err != nil {
-		return err
-	}
-	for index, entry := range entries {
-		keys := []string{"relativePath", "type", "size", "mode", "executable"}
-		if decoded.Entries[index].Type != "directory" {
-			keys = append(keys, "hash")
-		}
-		for _, key := range keys {
-			if value, exists := entry[key]; !exists || bytes.Equal(value, []byte("null")) {
-				return fmt.Errorf("missing prepared tree entry field %q", key)
-			}
-		}
-	}
-	*tree = OwnedTree(decoded)
-	return nil
+	ID   string `json:"id"`
+	Kind string `json:"kind"`
+	Root string `json:"root"`
 }
 
 // Library lists archive files in their original expansion order.
@@ -206,10 +155,9 @@ type LayoutMapping struct {
 type JarOptions struct {
 	MergeEntities bool   `json:"mergeEntities,omitempty"`
 	Directories   string `json:"directories"`
-	VerifyCRC     bool   `json:"verifyCrc,omitempty"`
 }
 
-// Source kinds are archive, library, entries, and layout. Each source states its manifest policy.
+// Source kinds are archive, entries, and layout. Each source states its manifest policy.
 // Filters are the existing module and library filters, or all. Custom filters use prepared entry lists instead.
 // Excludes are java.nio glob patterns. They are valid only on an archive source with the module filter.
 // An entry whose whole name matches an exclude is dropped. META-INF/listOfEntities.txt survives every exclude.
@@ -218,31 +166,19 @@ type JarOptions struct {
 // It executes the Java-glob excludes of a module source and the layout transforms the plan file states.
 // The coverage-agent policy uses the production agent pattern. The rewrite-boot-class-path policy uses the output file name.
 type Source struct {
-	Kind      string          `json:"kind"`
-	Prepared  string          `json:"prepared,omitempty"`
-	Input     *Reference      `json:"input,omitempty"`
-	Library   string          `json:"library,omitempty"`
-	Filter    string          `json:"filter,omitempty"`
-	Excludes  []string        `json:"excludes,omitempty"`
-	Manifest  string          `json:"manifest"`
-	Entries   []PreparedEntry `json:"entries,omitempty"`
-	Overrides []EntryOverride `json:"overrides,omitempty"`
-	Layout    *LayoutAssets   `json:"layout,omitempty"`
+	Kind     string          `json:"kind"`
+	Input    *Reference      `json:"input,omitempty"`
+	Filter   string          `json:"filter,omitempty"`
+	Excludes []string        `json:"excludes,omitempty"`
+	Manifest string          `json:"manifest"`
+	Entries  []PreparedEntry `json:"entries,omitempty"`
+	Layout   *LayoutAssets   `json:"layout,omitempty"`
 }
 
-// PreparedEntry kinds are file, patch, and reserve. Entries retain their declared order.
+// PreparedEntry kinds are file and patch. Entries retain their declared order.
 // A file participates in entity aggregation. A patch rejects an earlier claim on its name.
 // A patch retains a manifest even when the source policy is drop.
-// A reservation claims the name without reading or writing bytes.
 type PreparedEntry struct {
-	Kind  string     `json:"kind"`
-	Name  string     `json:"name"`
-	Input *Reference `json:"input,omitempty"`
-}
-
-// EntryOverride replaces or reserves an archive entry when that entry occurs in the original source.
-// An override must match an included entry. Missing entries fail instead of moving the override to another position.
-type EntryOverride struct {
 	Kind  string     `json:"kind"`
 	Name  string     `json:"name"`
 	Input *Reference `json:"input,omitempty"`

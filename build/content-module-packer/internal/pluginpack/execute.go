@@ -19,7 +19,6 @@ type resolvedOperation struct {
 	spec        jarpack.MergeSpec
 	input       string
 	sourceInfo  os.FileInfo
-	expected    *filemetadata.Entry
 	backingRoot string
 }
 
@@ -31,19 +30,16 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 	if err != nil {
 		return err
 	}
-	prepared, backingRoots, err := execution.resolvePreparedFiles()
-	if err != nil {
-		return err
-	}
 	scratch, err := newLayoutScratch(execution.recipe, output)
 	if err != nil {
 		return err
 	}
 	defer scratch.remove()
-	operations, err := execution.resolveOperations(prepared, scratch)
+	operations, err := execution.resolveOperations(scratch)
 	if err != nil {
 		return err
 	}
+	var backingRoots []string
 	for _, resolved := range operations {
 		if resolved.backingRoot != "" {
 			backingRoots = append(backingRoots, resolved.backingRoot)
@@ -56,7 +52,7 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 				return err
 			}
 			if overlap {
-				return fmt.Errorf("output overlaps prepared tree backing root %q", backingRoot)
+				return fmt.Errorf("output overlaps the transport backing root %q", backingRoot)
 			}
 		}
 	}
@@ -104,19 +100,7 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 		return err
 	}
 	files := make([]filemetadata.Entry, 0, len(operations))
-	record := func(resolved resolvedOperation, file filemetadata.Entry) error {
-		if resolved.expected != nil {
-			expected := *resolved.expected
-			expected.RelativePath = file.RelativePath
-			if file != expected {
-				return fmt.Errorf("prepared tree entry changed while writing %q", resolved.operation.Destination)
-			}
-		}
-		files = append(files, file)
-		return nil
-	}
 	var links []layoutLink
-	linkOperations := make(map[string]resolvedOperation)
 	for _, resolved := range operations {
 		operation := resolved.operation
 		if operation.Kind == "directory" {
@@ -136,7 +120,6 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 			}
 		case "symlink":
 			links = append(links, layoutLink{name: transportDestination, target: operation.Target})
-			linkOperations[transportDestination] = resolved
 			continue
 		default:
 			return fmt.Errorf("unknown operation %q", operation.Kind)
@@ -148,9 +131,7 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 		}
 		mode := operation.Mode
 		if mode == 0 {
-			if resolved.expected != nil {
-				mode = resolved.expected.Mode
-			} else if resolved.sourceInfo != nil {
+			if resolved.sourceInfo != nil {
 				mode = filemetadata.Permissions(resolved.sourceInfo)
 			} else {
 				mode = 0o644
@@ -161,9 +142,7 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 		}
 		// The inventory records the mode the packer set. POSIX reads the same bits back, and NTFS stores none.
 		file.Mode, file.Executable = mode, mode&0o111 != 0
-		if err := record(resolved, file); err != nil {
-			return err
-		}
+		files = append(files, file)
 	}
 	// The links come after every file and in dependency order, so each link finds the kind of its target.
 	orderedLinks, err := orderLinks(links)
@@ -182,9 +161,7 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 		if err != nil {
 			return err
 		}
-		if err := record(linkOperations[link.name], file); err != nil {
-			return err
-		}
+		files = append(files, file)
 	}
 	directoryOperations := slices.Clone(operations)
 	slices.SortFunc(directoryOperations, func(first, second resolvedOperation) int {
@@ -199,9 +176,7 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 		destination := filepath.Join(stage, filepath.FromSlash(transportDestination))
 		mode := operation.Mode
 		if mode == 0 {
-			if resolved.expected != nil {
-				mode = resolved.expected.Mode
-			} else if resolved.sourceInfo != nil {
+			if resolved.sourceInfo != nil {
 				mode = filemetadata.Permissions(resolved.sourceInfo)
 			} else {
 				mode = 0o755
@@ -215,13 +190,6 @@ func (execution *Execution) Write(outputDirectory, inventoryFile string) error {
 			return err
 		}
 		entry.Mode = mode
-		if resolved.expected != nil {
-			expected := *resolved.expected
-			expected.RelativePath = transportDestination
-			if entry != expected {
-				return fmt.Errorf("prepared tree directory changed while writing %q", operation.Destination)
-			}
-		}
 		files = append(files, entry)
 	}
 	if err := os.MkdirAll(filepath.Dir(inventory), 0o755); err != nil {
@@ -316,36 +284,8 @@ func reserveOutputs(root string, destinations []Asset) error {
 	return nil
 }
 
-func (execution *Execution) resolvePreparedFiles() (map[Reference]string, []string, error) {
+func (execution *Execution) resolveOperations(scratch *layoutScratch) ([]resolvedOperation, error) {
 	cache := make(map[Reference]string)
-	var backingRoots []string
-	copiedTrees := make(map[string]bool)
-	for _, operation := range execution.recipe.Operations {
-		if operation.Kind == "copy-tree" {
-			copiedTrees[operation.Input.Artifact] = true
-		}
-	}
-	for _, artifact := range execution.inputs {
-		if artifact.Tree == nil || copiedTrees[artifact.ID] {
-			continue
-		}
-		entries, err := resolveOwnedTree(Operation{}, artifact)
-		if err != nil {
-			return nil, nil, fmt.Errorf("input %s: %w", artifact.ID, err)
-		}
-		for _, entry := range entries {
-			if entry.operation.Kind == "copy" {
-				cache[Reference{Artifact: artifact.ID, Path: entry.expected.RelativePath}] = entry.input
-			}
-			if entry.backingRoot != "" {
-				backingRoots = append(backingRoots, entry.backingRoot)
-			}
-		}
-	}
-	return cache, backingRoots, nil
-}
-
-func (execution *Execution) resolveOperations(cache map[Reference]string, scratch *layoutScratch) ([]resolvedOperation, error) {
 	resolve := func(reference *Reference) (string, error) {
 		if reference == nil {
 			return "", nil
@@ -392,7 +332,7 @@ func (execution *Execution) resolveOperations(cache map[Reference]string, scratc
 		if operation.Kind == "jar" {
 			resolved.spec = jarpack.MergeSpec{
 				MergeEntities: operation.Options.MergeEntities, DirectoryMode: jarpack.DirectoryMode(operation.Options.Directories),
-				VerifyCRC: operation.Options.VerifyCRC, ValidateEntryNames: true,
+				ValidateEntryNames: true,
 			}
 			for _, source := range operation.Sources {
 				manifest := jarpack.ManifestMode(source.Manifest)
@@ -411,7 +351,7 @@ func (execution *Execution) resolveOperations(cache map[Reference]string, scratc
 							return nil, err
 						}
 						resolved.spec.Sources = append(resolved.spec.Sources, jarpack.Source{
-							Path: file, Name: entry.Name, Patch: entry.Kind == "patch", Reserve: entry.Kind == "reserve", Manifest: manifest,
+							Path: file, Name: entry.Name, Patch: entry.Kind == "patch", Manifest: manifest,
 						})
 					}
 					continue
@@ -420,27 +360,11 @@ func (execution *Execution) resolveOperations(cache map[Reference]string, scratc
 				if err != nil {
 					return nil, err
 				}
-				var references []Reference
-				if source.Kind == "library" {
-					references = execution.libraries[source.Library].Files
-				} else {
-					references = []Reference{*source.Input}
+				file, err := resolve(source.Input)
+				if err != nil {
+					return nil, err
 				}
-				for _, reference := range references {
-					file, err := resolve(&reference)
-					if err != nil {
-						return nil, err
-					}
-					archive := jarpack.Source{Path: file, Filter: filter, Manifest: manifest, EntryOverrides: make(map[string]jarpack.EntryOverride)}
-					for _, override := range source.Overrides {
-						file, err := resolve(override.Input)
-						if err != nil {
-							return nil, err
-						}
-						archive.EntryOverrides[override.Name] = jarpack.EntryOverride{Path: file, Reserve: override.Kind == "reserve"}
-					}
-					resolved.spec.Sources = append(resolved.spec.Sources, archive)
-				}
+				resolved.spec.Sources = append(resolved.spec.Sources, jarpack.Source{Path: file, Filter: filter, Manifest: manifest})
 			}
 		}
 		operations = append(operations, resolved)
@@ -474,11 +398,7 @@ func resolvedAssets(operations []resolvedOperation) []Asset {
 }
 
 func (execution *Execution) resolveTree(operation Operation) ([]resolvedOperation, error) {
-	artifact := execution.artifacts[operation.Input.Artifact]
-	if artifact.Tree != nil {
-		return resolveOwnedTree(operation, artifact)
-	}
-	return resolveDirectoryTree(operation, artifact.Root)
+	return resolveDirectoryTree(operation, execution.artifacts[operation.Input.Artifact].Root)
 }
 
 // resolveDirectoryTree walks one raw directory and turns every entry into a copy, directory, or symlink operation.
@@ -659,172 +579,6 @@ func resolveTransportFile(target, relativePath, previousRoot string) (string, os
 		return "", nil, "", fmt.Errorf("transport member is not a regular file: %s", source)
 	}
 	return source, info, root, nil
-}
-
-func resolveOwnedTree(operation Operation, artifact Artifact) ([]resolvedOperation, error) {
-	root, err := filepath.Abs(artifact.Root)
-	if err != nil {
-		return nil, err
-	}
-	checkDirectory := func(directory string) error {
-		info, err := os.Lstat(directory)
-		if os.IsNotExist(err) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			return fmt.Errorf("prepared tree directory is not a real directory: %s", directory)
-		}
-		return nil
-	}
-	if err := checkDirectory(root); err != nil {
-		return nil, err
-	}
-	entries := slices.Clone(artifact.Tree.Entries)
-	slices.SortFunc(entries, func(first, second filemetadata.Entry) int {
-		return strings.Compare(first.RelativePath, second.RelativePath)
-	})
-	for _, entry := range entries {
-		if entry.Type == "directory" {
-			if err := checkDirectory(filepath.Join(root, filepath.FromSlash(entry.RelativePath))); err != nil {
-				return nil, err
-			}
-		}
-	}
-	rootMode := artifact.Tree.RootMode
-	if operation.Mode != 0 {
-		rootMode &= 0o755
-	}
-	rootEntry := filemetadata.Entry{RelativePath: operation.Destination, Type: "directory", Mode: rootMode}
-	var operations []resolvedOperation
-	if !artifact.Tree.OmitRoot && operation.Destination != "" {
-		operations = append(operations, resolvedOperation{
-			operation: Operation{
-				Kind: "directory", Destination: operation.Destination, Scope: operation.Scope,
-				Mode: normalizedTreeEntryMode(operation.Mode, artifact.Tree.RootMode, "directory"),
-			},
-			expected: &rootEntry,
-		})
-	}
-	identities := make(map[int64][]os.FileInfo)
-	backingRoot := ""
-	preparedFiles := make(map[string]string)
-	for _, entry := range entries {
-		if entry.Type != "file" {
-			continue
-		}
-		source := filepath.Join(root, filepath.FromSlash(entry.RelativePath))
-		info, err := os.Lstat(source)
-		if err != nil {
-			return nil, err
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			target, err := filemetadata.ReadLinkTarget(source)
-			if err != nil {
-				return nil, err
-			}
-			if !filepath.IsAbs(target) {
-				return nil, fmt.Errorf("prepared file transport link must be absolute: %s", source)
-			}
-			source, info, backingRoot, err = resolveTransportFile(target, entry.RelativePath, backingRoot)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if !info.Mode().IsRegular() || info.Mode()&(os.ModeSetuid|os.ModeSetgid|os.ModeSticky) != 0 || info.Size() != entry.Size {
-			return nil, fmt.Errorf("prepared file type, size, or mode conflicts with metadata: %s", source)
-		}
-		for _, previous := range identities[info.Size()] {
-			if os.SameFile(info, previous) {
-				return nil, fmt.Errorf("aliased prepared tree file: %s", source)
-			}
-		}
-		identities[info.Size()] = append(identities[info.Size()], info)
-		hash, err := filemetadata.HashFile(source)
-		if err != nil {
-			return nil, err
-		}
-		if hash != entry.Hash {
-			return nil, fmt.Errorf("prepared file hash conflicts with metadata: %s", source)
-		}
-		preparedFiles[entry.RelativePath] = source
-	}
-	for _, entry := range entries {
-		source := filepath.Join(root, filepath.FromSlash(entry.RelativePath))
-		kind := "directory"
-		switch entry.Type {
-		case "file":
-			kind = "copy"
-			source = preparedFiles[entry.RelativePath]
-		case "symlink":
-			kind = "symlink"
-			info, err := os.Lstat(source)
-			dereferencedDirectory := false
-			if err == nil && info.Mode()&os.ModeSymlink != 0 {
-				target, err := filemetadata.ReadLinkTarget(source)
-				if err != nil {
-					return nil, err
-				}
-				if filepath.IsAbs(target) {
-					source, info, backingRoot, err = resolveTransportEntry(target, entry.RelativePath, backingRoot)
-					if err != nil {
-						return nil, err
-					}
-				}
-			} else {
-				if err != nil && !os.IsNotExist(err) {
-					return nil, err
-				}
-				if err == nil {
-					if !info.IsDir() {
-						return nil, fmt.Errorf("prepared link type conflicts with metadata: %s", source)
-					}
-					dereferencedDirectory = true
-				}
-				if backingRoot == "" {
-					return nil, fmt.Errorf("prepared link type conflicts with metadata: %s", source)
-				}
-				source, info, _, err = resolveTransportRootEntry(backingRoot, entry.RelativePath, backingRoot)
-				if err != nil {
-					return nil, err
-				}
-			}
-			if info.Mode()&os.ModeSymlink == 0 {
-				return nil, fmt.Errorf("prepared link type conflicts with metadata: %s", source)
-			}
-			target, err := filemetadata.ReadLinkTarget(source)
-			if err != nil {
-				return nil, err
-			}
-			if filemetadata.CleanLinkTarget(target) != filemetadata.CleanLinkTarget(entry.SymlinkTarget) {
-				return nil, fmt.Errorf("prepared link target conflicts with metadata: %s", source)
-			}
-			if dereferencedDirectory {
-				targetInfo, err := os.Stat(source)
-				if err != nil || !targetInfo.IsDir() {
-					return nil, fmt.Errorf("prepared link target is not a directory: %s", source)
-				}
-			}
-		}
-		entry.RelativePath = path.Join(operation.Destination, entry.RelativePath)
-		if mode := normalizedTreeEntryMode(operation.Mode, entry.Mode, kind); operation.Mode != 0 && kind != "symlink" {
-			entry.Mode = mode
-			entry.Executable = entry.Type != "directory" && mode&0o111 != 0
-		}
-		operations = append(operations, resolvedOperation{
-			operation: Operation{
-				Kind: kind, Destination: entry.RelativePath, Scope: operation.Scope, Target: entry.SymlinkTarget,
-				Mode: normalizedTreeEntryMode(operation.Mode, entry.Mode, kind),
-			},
-			input: source, expected: &entry,
-		})
-	}
-	if len(operations) != 0 {
-		operations[0].backingRoot = backingRoot
-	}
-	return operations, nil
 }
 
 func (execution *Execution) resolve(reference Reference) (string, error) {

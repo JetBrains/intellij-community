@@ -202,7 +202,7 @@ func (executor *layoutExecutor) input(reference Reference) (layoutInput, error) 
 		}
 		return layoutInput{path: root, kind: "directory"}, nil
 	}
-	if artifact.Kind == "directory" && artifact.Tree == nil {
+	if artifact.Kind == "directory" {
 		input, handled, err := executor.directoryMember(artifact, reference)
 		if handled || err != nil {
 			return input, err

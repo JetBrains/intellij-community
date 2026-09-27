@@ -33,7 +33,6 @@ type Source struct {
 	// Name is the entry name a single-file source takes, and empty for a jar source.
 	Name           string
 	Patch          bool
-	Reserve        bool
 	Manifest       ManifestMode
 	EntryOverrides map[string]EntryOverride
 	// Library marks a `library=` source, the only kind a natives-mode group takes its native entries from.
@@ -50,10 +49,9 @@ const (
 	ManifestCoverageAgent        ManifestMode = "coverage-agent"
 )
 
-// EntryOverride replaces or reserves an archive entry at its original position.
-// A reservation claims the name without writing the entry.
+// EntryOverride reserves an archive entry at its original position. A reservation claims the name without writing the
+// entry.
 type EntryOverride struct {
-	Path    string
 	Reserve bool
 }
 
@@ -143,7 +141,7 @@ func (s MergeSpec) Merge() ([]string, error) {
 			if natives != nil && nativelib.IsNativeEntry(source.Name) {
 				return nil, fmt.Errorf("%s contains native entry %s outside the native library %s", source.Path, source.Name, s.Native.LibName)
 			}
-			if s.MergeEntities && source.Name == "META-INF/listOfEntities.txt" && !source.Patch && !source.Reserve {
+			if s.MergeEntities && source.Name == "META-INF/listOfEntities.txt" && !source.Patch {
 				data, err := os.ReadFile(source.Path)
 				if err != nil {
 					return nil, err
@@ -224,18 +222,11 @@ func (s MergeSpec) Merge() ([]string, error) {
 				continue
 			}
 
-			var data []byte
-			entryCRC := e.CRC
-			if overridden {
-				data, err = os.ReadFile(override.Path)
-				entryCRC = crc32.ChecksumIEEE(data)
-			} else {
-				data, err = jar.Data(e)
-			}
+			data, err := jar.Data(e)
 			if err != nil {
 				return nil, err
 			}
-			if s.VerifyCRC && !overridden {
+			if s.VerifyCRC {
 				// Carrying the source's CRC is only sound while the source's CRC is right. Nothing in a build
 				// should pay for this check, but a parity run should: it is what turns "we copied the number"
 				// into "the number describes these bytes".
@@ -253,7 +244,7 @@ func (s MergeSpec) Merge() ([]string, error) {
 				}
 				continue
 			}
-			if err := writer.Add(e.Name, data, entryCRC, true); err != nil {
+			if err := writer.Add(e.Name, data, e.CRC, true); err != nil {
 				return nil, err
 			}
 		}
@@ -306,17 +297,17 @@ func (s MergeSpec) validateSources() error {
 					return err
 				}
 			}
-			if len(source.EntryOverrides) != 0 || source.Filter != nil || (source.Reserve && (source.Path != "" || source.Patch)) || (!source.Reserve && source.Path == "") {
+			if len(source.EntryOverrides) != 0 || source.Filter != nil || source.Path == "" {
 				return fmt.Errorf("invalid file source %q", source.Name)
 			}
-		} else if source.Filter == nil || source.Path == "" || source.Patch || source.Reserve {
+		} else if source.Filter == nil || source.Path == "" || source.Patch {
 			return fmt.Errorf("invalid archive source %q", source.Path)
 		}
 		for name, override := range source.EntryOverrides {
 			if err := ValidateEntryName(name); err != nil {
 				return err
 			}
-			if (override.Reserve && override.Path != "") || (!override.Reserve && override.Path == "") || name == ManifestEntryName || name == "META-INF/listOfEntities.txt" {
+			if !override.Reserve || name == ManifestEntryName || name == "META-INF/listOfEntities.txt" {
 				return fmt.Errorf("invalid override of %q", name)
 			}
 		}
@@ -346,11 +337,6 @@ func addFileSource(
 	rewriteBootClassPath bool,
 	target string,
 ) (bool, error) {
-	if source.Reserve {
-		_, duplicate := seen[source.Name]
-		seen[source.Name] = struct{}{}
-		return duplicate, nil
-	}
 	isRewrittenManifest := rewriteBootClassPath && source.Name == ManifestEntryName
 	if !source.Patch && source.Name == ManifestEntryName && !keepManifest && !isRewrittenManifest {
 		return false, nil

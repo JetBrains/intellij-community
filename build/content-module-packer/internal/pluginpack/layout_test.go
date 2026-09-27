@@ -1124,8 +1124,6 @@ func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 	excluded := false
 	directory := directoryArtifact("tree", "tree")
 	file := fileArtifact("archive", "archive.zip")
-	owned := directoryArtifact("owned", "owned")
-	owned.Tree = &OwnedTree{Version: TreeVersion, Artifact: "owned", Plugin: "layout", LayoutSignature: "layout-v2", RootMode: 0o755, Entries: []filemetadata.Entry{}}
 	plainCopy := func(inputs ...Reference) LayoutAssets {
 		return LayoutAssets{Inputs: inputs, Assets: []LayoutAsset{{Destination: "copy", Sources: []int{0}}}}
 	}
@@ -1193,9 +1191,6 @@ func TestLayoutPlanRejectsInvalidPayloads(t *testing.T) {
 		{"tree-map over a file", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "archive"}},
 			Assets: []LayoutAsset{{Sources: []int{0}, Transform: treeMap(LayoutMapping{})}}}),
 			Catalogue{Version: Version, Artifacts: []Artifact{file}}, "tree-map requires"},
-		{"tree-map over an owned tree", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "owned"}},
-			Assets: []LayoutAsset{{Sources: []int{0}, Transform: treeMap(LayoutMapping{})}}}),
-			Catalogue{Version: Version, Artifacts: []Artifact{owned}}, "must be a raw directory"},
 		{"invalid mapping pattern", layoutTreeRecipe("payload", 0, LayoutAssets{Inputs: []Reference{{Artifact: "tree"}},
 			Assets: []LayoutAsset{{Sources: []int{0}, Transform: treeMap(LayoutMapping{Pattern: "{a"})}}}),
 			Catalogue{Version: Version, Artifacts: []Artifact{directory}}, "invalid mapping pattern"},

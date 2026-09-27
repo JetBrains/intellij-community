@@ -20,124 +20,6 @@ import (
 	"jetbrains.com/content-module-packer/internal/javaglob"
 )
 
-func ownedTreeFixture(test *testing.T) (Recipe, Catalogue, string) {
-	test.Helper()
-	root := test.TempDir()
-	backing := filepath.Join(root, "producer")
-	writeTestFile(test, filepath.Join(backing, "bin/tool"), bytes.Repeat([]byte("payload"), 80000))
-	for name, mode := range map[string]os.FileMode{"": 0o750, "bin": 0o711, "bin/tool": 0o751} {
-		if err := os.Chmod(filepath.Join(backing, name), mode); err != nil {
-			test.Fatal(err)
-		}
-	}
-	if err := os.Mkdir(filepath.Join(backing, "empty"), 0o710); err != nil {
-		test.Fatal(err)
-	}
-	if err := os.Symlink("./bin/tool", filepath.Join(backing, "current")); err != nil {
-		test.Fatal(err)
-	}
-	entries, err := filemetadata.Inventory(backing)
-	if err != nil {
-		test.Fatal(err)
-	}
-	recipe, catalogue := treePlan(filepath.Join(root, "transport"))
-	catalogue.Artifacts[0].Tree = &OwnedTree{Version: TreeVersion, Artifact: "tree", Plugin: recipe.Plugin,
-		LayoutSignature: recipe.LayoutSignature, RootMode: 0o750, Entries: entries}
-	transportTree(test, catalogue.Artifacts[0], backing)
-	return recipe, catalogue, backing
-}
-
-func preparedFileRecipe(recipe Recipe, version int, kind string) Recipe {
-	recipe.Version = version
-	recipe.Assets = []Asset{{Destination: "lib/prepared.jar", Producer: "remainder"}}
-	reference := &Reference{Artifact: "tree", Path: "bin/tool"}
-	source := Source{Kind: "entries", Prepared: "tree", Manifest: "keep",
-		Entries: []PreparedEntry{{Kind: "file", Name: "payload", Input: reference}}}
-	if kind == "empty-source" {
-		source.Entries = nil
-	}
-	if kind == "archive" {
-		source = Source{Kind: "archive", Prepared: "tree", Manifest: "keep", Filter: "all", Input: reference}
-	}
-	if kind == "override" {
-		source = Source{Kind: "archive", Prepared: "tree", Manifest: "keep", Filter: "all",
-			Input:     &Reference{Artifact: "tree", Path: "bin/archive.jar"},
-			Overrides: []EntryOverride{{Kind: "replace", Name: "payload", Input: reference}}}
-	}
-	recipe.Operations = []Operation{{Kind: "jar", Destination: "lib/prepared.jar", Options: &JarOptions{Directories: "none"}, Sources: []Source{source}}}
-	if kind == "copy" {
-		recipe.Operations = []Operation{{Kind: "copy", Destination: "lib/prepared.jar", Input: reference}}
-	}
-	return recipe
-}
-
-func TestPreparedFilesUseOwnedTransportMetadata(test *testing.T) {
-	for _, version := range []int{Version, TreeVersion} {
-		for _, kind := range []string{"entries", "copy", "archive", "override", "empty-source"} {
-			test.Run(fmt.Sprintf("v%d/%s", version, kind), func(test *testing.T) {
-				recipe, catalogue, backing := ownedTreeFixture(test)
-				recipe = preparedFileRecipe(recipe, version, kind)
-				payload := readTestFile(test, filepath.Join(backing, "bin/tool"))
-				if kind == "archive" || kind == "override" {
-					archive := filepath.Join(backing, "bin/tool")
-					if kind == "override" {
-						archive = filepath.Join(backing, "bin/archive.jar")
-					}
-					archiveFile(test, archive, testEntry{"payload", "archive payload"})
-					if kind == "archive" {
-						payload = []byte("archive payload")
-					}
-					entries, err := filemetadata.Inventory(backing)
-					if err != nil {
-						test.Fatal(err)
-					}
-					catalogue.Artifacts[0].Tree.Entries = entries
-					if err := os.RemoveAll(catalogue.Artifacts[0].Root); err != nil {
-						test.Fatal(err)
-					}
-					transportTree(test, catalogue.Artifacts[0], backing)
-				}
-				execution, err := Plan(recipe, catalogue)
-				if err != nil {
-					test.Fatal(err)
-				}
-				before := treeState(test, filepath.Dir(backing))
-				var previousPayload, previousInventory []byte
-				for run := range 2 {
-					root := test.TempDir()
-					output, inventory := filepath.Join(root, "plugin"), filepath.Join(root, "inventory.json")
-					if err := execution.Write(output, inventory); err != nil {
-						test.Fatal(err)
-					}
-					file := filepath.Join(output, "lib/prepared.jar")
-					if kind == "copy" {
-						if !bytes.Equal(readTestFile(test, file), payload) {
-							test.Fatal("copied payload differs")
-						}
-					} else {
-						_, contents := readArchive(test, file)
-						if kind == "empty-source" {
-							if len(contents) != 0 {
-								test.Fatal("empty source acquired payload")
-							}
-						} else if contents["payload"] != string(payload) {
-							test.Fatal("prepared jar payload differs")
-						}
-					}
-					actualPayload, actualInventory := readTestFile(test, file), readTestFile(test, inventory)
-					if run != 0 && (!bytes.Equal(previousPayload, actualPayload) || !bytes.Equal(previousInventory, actualInventory)) {
-						test.Fatal("repeated execution changed output bytes")
-					}
-					previousPayload, previousInventory = actualPayload, actualInventory
-				}
-				if !reflect.DeepEqual(before, treeState(test, filepath.Dir(backing))) {
-					test.Fatal("execution changed prepared inputs")
-				}
-			})
-		}
-	}
-}
-
 func TestDistributionScopeUsesOneRemainderWithoutPluginCollision(test *testing.T) {
 	root := test.TempDir()
 	pluginInput := filepath.Join(root, "plugin-input")
@@ -184,45 +66,6 @@ func TestDistributionScopeUsesOneRemainderWithoutPluginCollision(test *testing.T
 		return entry.RelativePath == distributionDestination
 	}) {
 		test.Fatalf("scoped inventory = %+v", entries)
-	}
-}
-
-func TestPreparedMetadataIsRecheckedOnEachWrite(test *testing.T) {
-	recipe, catalogue, backing := ownedTreeFixture(test)
-	recipe = preparedFileRecipe(recipe, Version, "entries")
-	execution, err := Plan(recipe, catalogue)
-	if err != nil {
-		test.Fatal(err)
-	}
-	root := test.TempDir()
-	if err := execution.Write(filepath.Join(root, "first"), filepath.Join(root, "first.json")); err != nil {
-		test.Fatal(err)
-	}
-	file := filepath.Join(backing, "bin/tool")
-	content := readTestFile(test, file)
-	content[0] ^= 1
-	writeTestFile(test, file, content)
-	if err := execution.Write(filepath.Join(root, "second"), filepath.Join(root, "second.json")); err == nil {
-		test.Fatal("reused stale prepared metadata validation")
-	}
-	if _, err := os.Stat(filepath.Join(root, "second")); !os.IsNotExist(err) {
-		test.Fatal("failed validation created output")
-	}
-}
-
-func transportTree(test *testing.T, artifact Artifact, backing string) {
-	test.Helper()
-	for _, entry := range artifact.Tree.Entries {
-		if entry.Type == "directory" {
-			continue
-		}
-		destination := filepath.Join(artifact.Root, filepath.FromSlash(entry.RelativePath))
-		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-			test.Fatal(err)
-		}
-		if err := os.Symlink(filepath.Join(backing, filepath.FromSlash(entry.RelativePath)), destination); err != nil {
-			test.Fatal(err)
-		}
 	}
 }
 
@@ -291,15 +134,6 @@ func copyResourceFixtureTree(test *testing.T, source, destination string) {
 	}
 }
 
-func writeOwnedTreeFixture(test *testing.T, recipe Recipe, catalogue Catalogue, output, inventory string) error {
-	test.Helper()
-	execution, err := Plan(recipe, catalogue)
-	if err != nil {
-		return err
-	}
-	return execution.Write(output, inventory)
-}
-
 // projectionContracts writes the plan file, the input catalogue and the classpath descriptor of one plugin under
 // contracts. The plan copies source as the tree resources, or as the file lib/raw.jar. The result is the argument
 // list of the packer's projection mode without its four outputs.
@@ -324,32 +158,6 @@ func projectionContracts(test *testing.T, contracts string, tree bool, source st
 	writeTestFile(test, filepath.Join(contracts, "descriptor.xml"), []byte("<idea-plugin><id>test.plugin</id></idea-plugin>"))
 	return []string{"--projection=" + filepath.Join(contracts, "plan.json"), "--input-catalogue=" + filepath.Join(contracts, "catalogue.json"),
 		"--classpath-descriptor=" + filepath.Join(contracts, "descriptor.xml"), "--plugin-directory=plugins/test", fmt.Sprintf("--execution-version=%d", version)}
-}
-
-func treeState(test *testing.T, root string) map[string]string {
-	test.Helper()
-	state := make(map[string]string)
-	err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		content := ""
-		if info.Mode().IsRegular() {
-			content = string(readTestFile(test, name))
-		} else if info.Mode()&os.ModeSymlink != 0 {
-			content, err = os.Readlink(name)
-		}
-		state[name] = fmt.Sprint(info.Mode()) + content
-		return err
-	})
-	if err != nil {
-		test.Fatal(err)
-	}
-	return state
 }
 
 func TestCopyModesPreserveOrOverrideTheSource(test *testing.T) {
@@ -388,271 +196,25 @@ func TestCopyModesPreserveOrOverrideTheSource(test *testing.T) {
 }
 
 func TestTreeModeNormalizationPreservesDeclaredBitsAndClearsGroupWrite(test *testing.T) {
-	for _, owned := range []bool{false, true} {
-		test.Run(fmt.Sprintf("owned=%t", owned), func(test *testing.T) {
-			source := filepath.Join(test.TempDir(), "source")
-			writeTestFile(test, filepath.Join(source, "bin/tool"), []byte("tool"))
-			writeTestFile(test, filepath.Join(source, "data.txt"), []byte("data"))
-			for name, mode := range map[string]os.FileMode{"": 0o770, "bin": 0o731, "bin/tool": 0o771, "data.txt": 0o664} {
-				if err := os.Chmod(filepath.Join(source, name), mode); err != nil {
-					test.Fatal(err)
-				}
-			}
-			recipe, catalogue := treePlan(source)
-			recipe.Assets[0].NormalizeTreeModes = true
-			recipe.Operations[0].Mode = 0o644
-			if owned {
-				entries, err := filemetadata.Inventory(source)
-				if err != nil {
-					test.Fatal(err)
-				}
-				catalogue.Artifacts[0].Tree = &OwnedTree{
-					Version: TreeVersion, Artifact: "tree", Plugin: recipe.Plugin, LayoutSignature: recipe.LayoutSignature,
-					RootMode: 0o770, Entries: entries,
-				}
-			}
-			output, _ := writeExecution(test, recipe, catalogue)
-			for name, want := range map[string]os.FileMode{
-				"kotlinc": 0o750, "kotlinc/bin": 0o711, "kotlinc/bin/tool": 0o751, "kotlinc/data.txt": 0o644,
-			} {
-				info, err := os.Stat(filepath.Join(output, name))
-				if err != nil || info.Mode().Perm() != want {
-					test.Fatalf("%s mode = %v, want %o: %v", name, info, want, err)
-				}
-			}
-		})
-	}
-}
-
-func TestOwnedTreeTransportPreservesAuthoritativeMetadata(test *testing.T) {
-	for _, shape := range []string{"transport", "missing-link", "unlisted-fifo", "empty", "zero-root", "zero-directory", "zero-file"} {
-		test.Run(shape, func(test *testing.T) {
-			recipe, catalogue, backing := ownedTreeFixture(test)
-			artifact := &catalogue.Artifacts[0]
-			switch shape {
-			case "missing-link":
-				if err := os.Remove(filepath.Join(artifact.Root, "current")); err != nil {
-					test.Fatal(err)
-				}
-			case "unlisted-fifo":
-				if message, err := exec.Command("mkfifo", filepath.Join(artifact.Root, "unlisted")).CombinedOutput(); err != nil {
-					test.Fatalf("%s: %v", message, err)
-				}
-			case "empty", "zero-root":
-				artifact.Root = filepath.Join(test.TempDir(), "absent")
-				artifact.Tree.Entries = []filemetadata.Entry{}
-				if shape == "zero-root" {
-					artifact.Tree.RootMode = 0
-				}
-			case "zero-directory", "zero-file":
-				for index := range artifact.Tree.Entries {
-					if artifact.Tree.Entries[index].RelativePath == "empty" && shape == "zero-directory" || artifact.Tree.Entries[index].Type == "file" && shape == "zero-file" {
-						artifact.Tree.Entries[index].Mode = 0
-						artifact.Tree.Entries[index].Executable = false
-					}
-				}
-			}
-			before := treeState(test, backing)
-			root := test.TempDir()
-			output, inventory := filepath.Join(root, "plugin"), filepath.Join(root, "inventory.json")
-			if err := writeOwnedTreeFixture(test, recipe, catalogue, output, inventory); err != nil {
-				test.Fatal(err)
-			}
-			actual, err := filemetadata.Read(inventory)
-			if err != nil {
-				test.Fatal(err)
-			}
-			want := []filemetadata.Entry{{RelativePath: "kotlinc", Type: "directory", Mode: artifact.Tree.RootMode}}
-			for _, entry := range artifact.Tree.Entries {
-				entry.RelativePath = "kotlinc/" + entry.RelativePath
-				want = append(want, entry)
-			}
-			slices.SortFunc(want, func(first, second filemetadata.Entry) int {
-				return strings.Compare(first.RelativePath, second.RelativePath)
-			})
-			if !reflect.DeepEqual(want, actual) {
-				test.Fatalf("transport lost metadata:\n%+v\n%+v", want, actual)
-			}
-			for _, entry := range actual {
-				name := filepath.Join(output, entry.RelativePath)
-				if entry.Type == "file" && entry.Mode == 0 {
-					info, err := os.Lstat(name)
-					if err != nil || info.Mode().Perm() != 0 {
-						test.Fatalf("zero file mode was not restored: %v", err)
-					}
-					if err := os.Chmod(name, 0o600); err != nil {
-						test.Fatal(err)
-					}
-					entry.Mode = 0o600
-				}
-				observed, err := filemetadata.Inspect(name, entry.RelativePath)
-				if err != nil || observed != entry {
-					test.Fatalf("payload differs: %+v: %v", observed, err)
-				}
-				if entry.Type == "directory" && entry.Mode == 0 {
-					if err := os.Chmod(name, 0o755); err != nil {
-						test.Fatal(err)
-					}
-				}
-			}
-			if !reflect.DeepEqual(before, treeState(test, backing)) {
-				test.Fatal("writer changed the producer tree")
-			}
-			if _, err := os.Lstat(filepath.Join(output, "lib/independent.jar")); !os.IsNotExist(err) {
-				test.Fatal("independent jar entered remainder")
-			}
-		})
-	}
-}
-
-func TestOwnedTreeTransportRejectsUnsafePayloadBeforeWrites(test *testing.T) {
-	for _, kind := range []string{"tree", "entries", "copy", "empty-source"} {
-		for _, scenario := range []string{"missing", "size", "hash", "leaf-chain", "genuine-escape", "substituted-entry", "relative-leaf", "special", "directory-link", "root-link", "link-file", "alias", "backing-output", "backing-inventory", "mixed-roots", "backing-directory-link"} {
-			test.Run(fmt.Sprintf("%s/%s", kind, scenario), func(test *testing.T) {
-				recipe, catalogue, backing := ownedTreeFixture(test)
-				if kind != "tree" {
-					recipe = preparedFileRecipe(recipe, Version, kind)
-				}
-				artifact := &catalogue.Artifacts[0]
-				file := filepath.Join(backing, "bin/tool")
-				leaf := filepath.Join(artifact.Root, "bin/tool")
-				root := test.TempDir()
-				output, inventory := filepath.Join(root, "plugin"), filepath.Join(root, "inventory.json")
-				remove := func(name string) {
-					test.Helper()
-					if err := os.Remove(name); err != nil {
-						test.Fatal(err)
-					}
-				}
-				link := func(target, name string) {
-					test.Helper()
-					if err := os.Symlink(target, name); err != nil {
-						test.Fatal(err)
-					}
-				}
-				switch scenario {
-				case "missing":
-					remove(leaf)
-				case "size", "hash":
-					for index := range artifact.Tree.Entries {
-						if artifact.Tree.Entries[index].Type == "file" {
-							if scenario == "size" {
-								artifact.Tree.Entries[index].Size++
-							} else {
-								artifact.Tree.Entries[index].Hash++
-							}
-						}
-					}
-				case "leaf-chain":
-					remove(file)
-					link(filepath.Join(backing, "current"), file)
-				case "genuine-escape":
-					outside := filepath.Join(test.TempDir(), "file")
-					writeTestFile(test, outside, readTestFile(test, file))
-					remove(file)
-					link(outside, file)
-				case "substituted-entry":
-					other := filepath.Join(backing, "bin/other")
-					writeTestFile(test, other, readTestFile(test, file))
-					remove(leaf)
-					link(other, leaf)
-				case "relative-leaf":
-					remove(leaf)
-					link("../../../producer/bin/tool", leaf)
-				case "special":
-					remove(file)
-					if message, err := exec.Command("mkfifo", file).CombinedOutput(); err != nil {
-						test.Fatalf("%s: %v", message, err)
-					}
-				case "directory-link":
-					remove(leaf)
-					remove(filepath.Dir(leaf))
-					link(filepath.Join(backing, "bin"), filepath.Dir(leaf))
-				case "root-link":
-					if err := os.RemoveAll(artifact.Root); err != nil {
-						test.Fatal(err)
-					}
-					link(backing, artifact.Root)
-				case "link-file":
-					remove(filepath.Join(artifact.Root, "current"))
-					writeTestFile(test, filepath.Join(artifact.Root, "current"), []byte("conflict"))
-				case "backing-output":
-					output = filepath.Join(backing, "generated")
-				case "backing-inventory":
-					inventory = filepath.Join(backing, "inventory.json")
-				case "alias", "mixed-roots":
-					var duplicate filemetadata.Entry
-					for _, entry := range artifact.Tree.Entries {
-						if entry.Type == "file" {
-							duplicate = entry
-						}
-					}
-					duplicate.RelativePath = "other"
-					artifact.Tree.Entries = append(artifact.Tree.Entries, duplicate)
-					target := filepath.Join(backing, "other")
-					if scenario == "alias" {
-						if err := os.Link(file, target); err != nil {
-							test.Fatal(err)
-						}
-					} else {
-						target = filepath.Join(test.TempDir(), "other")
-						writeTestFile(test, target, readTestFile(test, file))
-					}
-					link(target, filepath.Join(artifact.Root, "other"))
-				case "backing-directory-link":
-					other := filepath.Join(test.TempDir(), "bin")
-					if err := os.Rename(filepath.Join(backing, "bin"), other); err != nil {
-						test.Fatal(err)
-					}
-					link(other, filepath.Join(backing, "bin"))
-				}
-				before := treeState(test, filepath.Dir(backing))
-				if err := writeOwnedTreeFixture(test, recipe, catalogue, output, inventory); err == nil {
-					test.Fatal("accepted unsafe metadata transport")
-				}
-				if !reflect.DeepEqual(before, treeState(test, filepath.Dir(backing))) {
-					test.Fatal("failure changed producer or transport inputs")
-				}
-				for _, name := range []string{output, inventory} {
-					if _, err := os.Lstat(name); !os.IsNotExist(err) {
-						test.Fatalf("wrote before validation: %s: %v", name, err)
-					}
-				}
-			})
+	source := filepath.Join(test.TempDir(), "source")
+	writeTestFile(test, filepath.Join(source, "bin/tool"), []byte("tool"))
+	writeTestFile(test, filepath.Join(source, "data.txt"), []byte("data"))
+	for name, mode := range map[string]os.FileMode{"": 0o770, "bin": 0o731, "bin/tool": 0o771, "data.txt": 0o664} {
+		if err := os.Chmod(filepath.Join(source, name), mode); err != nil {
+			test.Fatal(err)
 		}
 	}
-}
-
-func TestOwnedTreeBackingBoundaryUsesPhysicalNames(test *testing.T) {
-	for _, destination := range []string{"output", "inventory"} {
-		test.Run(destination, func(test *testing.T) {
-			recipe, catalogue, backing := ownedTreeFixture(test)
-			alias := filepath.Join(filepath.Dir(backing), "PRODUCER")
-			info, aliasError := os.Stat(alias)
-			original, err := os.Stat(backing)
-			if err != nil {
-				test.Fatal(err)
-			}
-			same := aliasError == nil && os.SameFile(info, original)
-			root := test.TempDir()
-			output, inventory := filepath.Join(root, "plugin"), filepath.Join(root, "inventory.json")
-			if destination == "output" {
-				output = filepath.Join(alias, "generated")
-			} else {
-				inventory = filepath.Join(alias, "inventory.json")
-			}
-			before := treeState(test, backing)
-			err = writeOwnedTreeFixture(test, recipe, catalogue, output, inventory)
-			if same && err == nil {
-				test.Fatal("accepted physical backing alias")
-			}
-			if !same && err != nil {
-				test.Fatalf("rejected distinct case-sensitive output: %v", err)
-			}
-			if !reflect.DeepEqual(before, treeState(test, backing)) {
-				test.Fatal("writer changed backing inputs")
-			}
-		})
+	recipe, catalogue := treePlan(source)
+	recipe.Assets[0].NormalizeTreeModes = true
+	recipe.Operations[0].Mode = 0o644
+	output, _ := writeExecution(test, recipe, catalogue)
+	for name, want := range map[string]os.FileMode{
+		"kotlinc": 0o750, "kotlinc/bin": 0o711, "kotlinc/bin/tool": 0o751, "kotlinc/data.txt": 0o644,
+	} {
+		info, err := os.Stat(filepath.Join(output, name))
+		if err != nil || info.Mode().Perm() != want {
+			test.Fatalf("%s mode = %v, want %o: %v", name, info, want, err)
+		}
 	}
 }
 
@@ -898,25 +460,17 @@ func TestOutputRootSymlinksRejectTrailingSeparators(test *testing.T) {
 	}
 }
 
-func TestPreparedAnchorRootsRejectOutputAliases(test *testing.T) {
+func TestInputRootLinksRejectOutputAliases(test *testing.T) {
 	for _, destination := range []string{"payload", "inventory"} {
 		test.Run(destination, func(test *testing.T) {
 			root := test.TempDir()
-			source := filepath.Join(root, "prepared")
-			writeTestFile(test, filepath.Join(source, "file"), []byte("immutable prepared input"))
+			source := filepath.Join(root, "raw")
+			writeTestFile(test, filepath.Join(source, "file"), []byte("immutable raw input"))
 			alias := filepath.Join(root, "transport")
-			if err := os.Symlink("prepared", alias); err != nil {
+			if err := os.Symlink("raw", alias); err != nil {
 				test.Fatal(err)
 			}
-			recipe, catalogue := treePlan(source)
-			recipe.Version = Version
-			recipe.Assets[0].Kind = "file"
-			recipe.Operations[0] = Operation{Kind: "jar", Destination: "kotlinc", Options: &JarOptions{Directories: "none"},
-				Sources: []Source{{Kind: "entries", Manifest: "keep", Prepared: "tree"}}}
-			execution, err := Plan(recipe, catalogue)
-			if err != nil {
-				test.Fatal(err)
-			}
+			execution := boundaryExecution(test, source, true)
 			output, inventory := filepath.Join(root, "output"), filepath.Join(root, "inventory.json")
 			if destination == "payload" {
 				output = filepath.Join(alias, "nested/output")
@@ -928,11 +482,11 @@ func TestPreparedAnchorRootsRejectOutputAliases(test *testing.T) {
 				test.Fatal(err)
 			}
 			if err := execution.Write(output, inventory); err == nil || !strings.Contains(err.Error(), "overlaps input") {
-				test.Fatalf("accepted a prepared ownership boundary: %v", err)
+				test.Fatalf("accepted an output inside an input through a link: %v", err)
 			}
 			after, err := filemetadata.Inventory(root)
 			if err != nil || !reflect.DeepEqual(before, after) {
-				test.Fatalf("prepared inputs changed: %v", err)
+				test.Fatalf("raw inputs changed: %v", err)
 			}
 		})
 	}
@@ -1080,135 +634,10 @@ func TestCopyTreeMaterializesBazelTransportFilesAndKeepsPayloadLinks(test *testi
 	}
 }
 
-func TestOwnedTreeKeepsDirectoryLinkDereferencedByBazelTransport(test *testing.T) {
-	root := test.TempDir()
-	backing := filepath.Join(root, "backing")
-	writeTestFile(test, filepath.Join(backing, "real/file"), []byte("content"))
-	if err := os.Symlink("./real", filepath.Join(backing, "current")); err != nil {
-		test.Fatal(err)
-	}
-	entries, err := filemetadata.Inventory(backing)
-	if err != nil {
-		test.Fatal(err)
-	}
-	recipe, catalogue := treePlan(filepath.Join(root, "transport"))
-	catalogue.Artifacts[0].Tree = &OwnedTree{Version: TreeVersion, Artifact: "tree", Plugin: recipe.Plugin,
-		LayoutSignature: recipe.LayoutSignature, RootMode: 0o755, Entries: entries}
-	transportTree(test, catalogue.Artifacts[0], backing)
-	transportLink := filepath.Join(catalogue.Artifacts[0].Root, "current")
-	if err := os.Remove(transportLink); err != nil {
-		test.Fatal(err)
-	}
-	if err := os.Mkdir(transportLink, 0o755); err != nil {
-		test.Fatal(err)
-	}
-	execution, err := Plan(recipe, catalogue)
-	if err != nil {
-		test.Fatal(err)
-	}
-	if err := execution.Write(filepath.Join(root, "output"), filepath.Join(root, "inventory.json")); err != nil {
-		test.Fatal(err)
-	}
-	link := filepath.Join(root, "output/kotlinc/current")
-	if target, err := os.Readlink(link); err != nil || target != "./real" {
-		test.Fatalf("payload link changed: %q: %v", target, err)
-	}
-	if string(readTestFile(test, filepath.Join(link, "file"))) != "content" {
-		test.Fatal("payload link does not resolve to its declared target")
-	}
-}
-
-func TestOwnedTreeAcceptsCleanedLinkTargets(test *testing.T) {
-	for _, transport := range []bool{false, true} {
-		test.Run(fmt.Sprint(transport), func(test *testing.T) {
-			recipe, catalogue, backing := ownedTreeFixture(test)
-			link := filepath.Join(catalogue.Artifacts[0].Root, "current")
-			if transport {
-				link = filepath.Join(backing, "current")
-			}
-			if err := os.Remove(link); err != nil {
-				test.Fatal(err)
-			}
-			if err := os.Symlink("bin/tool", link); err != nil {
-				test.Fatal(err)
-			}
-			output, inventory := writeExecution(test, recipe, catalogue)
-			if target, err := os.Readlink(filepath.Join(output, "kotlinc/current")); err != nil || target != "./bin/tool" {
-				test.Fatalf("the declared link target changed: %q, %v", target, err)
-			}
-			for _, entry := range inventory {
-				actual, err := filemetadata.Inspect(filepath.Join(output, filepath.FromSlash(entry.RelativePath)), entry.RelativePath)
-				if err != nil || actual != entry {
-					test.Fatalf("inventory differs from output: %+v, %+v, %v", entry, actual, err)
-				}
-			}
-			if !bytes.Equal(readTestFile(test, filepath.Join(output, "kotlinc/current")), readTestFile(test, filepath.Join(backing, "bin/tool"))) {
-				test.Fatal("the link resolves to different content")
-			}
-		})
-	}
-}
-
-func TestOwnedTreeRejectsUnsafeLinkTransport(test *testing.T) {
-	for _, scenario := range []struct {
-		name   string
-		mutate func(*testing.T, Catalogue, string)
-	}{
-		{"target mismatch", func(test *testing.T, _ Catalogue, backing string) {
-			link := filepath.Join(backing, "current")
-			if err := os.Remove(link); err != nil {
-				test.Fatal(err)
-			}
-			if err := os.Symlink("./empty", link); err != nil {
-				test.Fatal(err)
-			}
-		}},
-		{"parent traversal", func(test *testing.T, _ Catalogue, backing string) {
-			link := filepath.Join(backing, "current")
-			if err := os.Remove(link); err != nil {
-				test.Fatal(err)
-			}
-			if err := os.Symlink("bin/../bin/tool", link); err != nil {
-				test.Fatal(err)
-			}
-		}},
-		{"path mismatch", func(test *testing.T, catalogue Catalogue, backing string) {
-			link := filepath.Join(catalogue.Artifacts[0].Root, "current")
-			if err := os.Remove(link); err != nil {
-				test.Fatal(err)
-			}
-			if err := os.Symlink(filepath.Join(backing, "bin/tool"), link); err != nil {
-				test.Fatal(err)
-			}
-		}},
-		{"directory for file link", func(test *testing.T, catalogue Catalogue, _ string) {
-			link := filepath.Join(catalogue.Artifacts[0].Root, "current")
-			if err := os.Remove(link); err != nil {
-				test.Fatal(err)
-			}
-			if err := os.Mkdir(link, 0o755); err != nil {
-				test.Fatal(err)
-			}
-		}},
-	} {
-		test.Run(scenario.name, func(test *testing.T) {
-			recipe, catalogue, backing := ownedTreeFixture(test)
-			scenario.mutate(test, catalogue, backing)
-			execution, err := Plan(recipe, catalogue)
-			if err != nil {
-				test.Fatal(err)
-			}
-			root := filepath.Dir(backing)
-			if err := execution.Write(filepath.Join(root, "output"), filepath.Join(root, "inventory.json")); err == nil {
-				test.Fatal("accepted an unsafe prepared link transport")
-			}
-			assertNoPublishedOutputs(test, root)
-		})
-	}
-}
-
-func TestOwnedTreeCopiesIntoPluginRoot(test *testing.T) {
-	recipe, catalogue, backing := ownedTreeFixture(test)
+func TestCopyTreeCopiesIntoPluginRoot(test *testing.T) {
+	source := filepath.Join(test.TempDir(), "source")
+	writeTestFile(test, filepath.Join(source, "bin/tool"), []byte("tool"))
+	recipe, catalogue := treePlan(source)
 	recipe.Assets[0].Destination = ""
 	recipe.Operations[0].Destination = ""
 	execution, err := Plan(recipe, catalogue)
@@ -1220,7 +649,7 @@ func TestOwnedTreeCopiesIntoPluginRoot(test *testing.T) {
 	if err := execution.Write(output, inventory); err != nil {
 		test.Fatal(err)
 	}
-	if !bytes.Equal(readTestFile(test, filepath.Join(output, "bin/tool")), readTestFile(test, filepath.Join(backing, "bin/tool"))) {
+	if !bytes.Equal(readTestFile(test, filepath.Join(output, "bin/tool")), readTestFile(test, filepath.Join(source, "bin/tool"))) {
 		test.Fatal("plugin-root tree payload differs")
 	}
 	entries, err := filemetadata.Read(inventory)
@@ -1590,15 +1019,11 @@ func TestBatchWritesOnlyItsAssetsInLayoutOrder(t *testing.T) {
 		Artifact{ID: "second", Kind: "file", Root: filepath.Join(root, "second.jar")},
 		Artifact{ID: "prepared", Kind: "directory", Root: prepared},
 	)
-	catalogue.Libraries = []Library{{ID: "ordered-library", Files: []Reference{{Artifact: "first"}, {Artifact: "second"}}}}
 	module := recipe.Operations[0].Sources[0]
-	module.Overrides = []EntryOverride{
-		{Kind: "replace", Name: "native/lib.so", Input: &Reference{Artifact: "prepared", Path: "signed.so"}},
-		{Kind: "reserve", Name: "native/extracted.so"},
-	}
 	recipe.Operations[0].Sources = []Source{
 		{Kind: "entries", Manifest: "keep", Entries: []PreparedEntry{{Kind: "patch", Name: "META-INF/plugin.xml", Input: &Reference{Artifact: "prepared", Path: "plugin.xml"}}}},
-		{Kind: "library", Library: "ordered-library", Filter: "library", Manifest: "drop"},
+		{Kind: "archive", Input: &Reference{Artifact: "first"}, Filter: "library", Manifest: "drop"},
+		{Kind: "archive", Input: &Reference{Artifact: "second"}, Filter: "library", Manifest: "drop"},
 		module, module,
 		{Kind: "entries", Manifest: "drop", Entries: []PreparedEntry{
 			{Kind: "file", Name: "custom/selected.txt", Input: &Reference{Artifact: "prepared", Path: "custom"}},
@@ -1640,11 +1065,11 @@ func TestBatchWritesOnlyItsAssetsInLayoutOrder(t *testing.T) {
 		t.Fatalf("link target %q: %v", target, err)
 	}
 	names, entries := readArchive(t, filepath.Join(output, "lib/plugin.jar"))
-	wantNames := []string{"META-INF/plugin.xml", "first/Library.class", "shared.txt", "second/Library.class", "spring/security/Mvc.class", "native/lib.so", "module/After.class", "custom/selected.txt", "META-INF/listOfEntities.txt", "__index__"}
+	wantNames := []string{"META-INF/plugin.xml", "first/Library.class", "shared.txt", "second/Library.class", "spring/security/Mvc.class", "native/lib.so", "native/extracted.so", "module/After.class", "custom/selected.txt", "META-INF/listOfEntities.txt", "__index__"}
 	if !slices.Equal(names, wantNames) {
 		t.Fatalf("source order changed:\n%v\nwant %v", names, wantNames)
 	}
-	if entries["META-INF/plugin.xml"] != "patched descriptor" || entries["native/lib.so"] != "signed native" || entries["shared.txt"] != "first wins" || entries["META-INF/listOfEntities.txt"] != "First\nSecond\nModule\nModule\nPrepared" {
+	if entries["META-INF/plugin.xml"] != "patched descriptor" || entries["native/lib.so"] != "unsigned" || entries["shared.txt"] != "first wins" || entries["META-INF/listOfEntities.txt"] != "First\nSecond\nModule\nModule\nPrepared" {
 		t.Fatalf("changed writer semantics: %v", entries)
 	}
 	customNames, _ := readArchive(t, filepath.Join(output, "lib/nested/custom.jar"))
@@ -1660,27 +1085,8 @@ func TestBatchWritesOnlyItsAssetsInLayoutOrder(t *testing.T) {
 	}
 }
 
-func TestLibraryExpansionPreservesFirstSourcePrecedence(t *testing.T) {
-	root := t.TempDir()
-	recipe, catalogue := samplePlan(root)
-	archiveFile(t, filepath.Join(root, "module.jar"), testEntry{"shared.txt", "first"})
-	second := filepath.Join(root, "second.jar")
-	archiveFile(t, second, testEntry{"shared.txt", "second"})
-	catalogue.Artifacts = append(catalogue.Artifacts, Artifact{ID: "second", Kind: "file", Root: second})
-	catalogue.Libraries = []Library{{ID: "library", Files: []Reference{{Artifact: "module"}, {Artifact: "second"}}}}
-	recipe.Operations[0].Sources = []Source{{Kind: "library", Library: "library", Filter: "all", Manifest: "drop"}}
-	for _, want := range []string{"first", "second"} {
-		output, _ := writeExecution(t, recipe, catalogue)
-		_, entries := readArchive(t, filepath.Join(output, "lib/plugin.jar"))
-		if entries["shared.txt"] != want {
-			t.Fatalf("first source precedence: %v", entries)
-		}
-		slices.Reverse(catalogue.Libraries[0].Files)
-	}
-}
-
 func TestFailedMergePublishesNothing(t *testing.T) {
-	for _, name := range []string{"missing input", "late patch", "conflicting patches", "missing override", "unsafe archive name", "unsafe prepared entry"} {
+	for _, name := range []string{"missing input", "late patch", "conflicting patches", "unsafe archive name", "unsafe prepared entry"} {
 		t.Run(name, func(t *testing.T) {
 			root := t.TempDir()
 			recipe, catalogue := samplePlan(root)
@@ -1695,8 +1101,6 @@ func TestFailedMergePublishesNothing(t *testing.T) {
 				} else {
 					recipe.Operations[0].Sources = []Source{patch, patch}
 				}
-			case "missing override":
-				recipe.Operations[0].Sources[0].Overrides = []EntryOverride{{Kind: "reserve", Name: "missing.so"}}
 			case "unsafe archive name":
 				archiveFile(t, filepath.Join(root, "module.jar"), testEntry{"../outside", "bad"})
 			case "unsafe prepared entry":

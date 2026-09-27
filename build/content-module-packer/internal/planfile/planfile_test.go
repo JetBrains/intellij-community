@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"jetbrains.com/content-module-packer/internal/filemetadata"
 	"jetbrains.com/content-module-packer/internal/pluginclasspath"
 	"jetbrains.com/content-module-packer/internal/pluginpack"
 )
@@ -478,9 +477,6 @@ func TestDeriveRefusesWhatTheGoPackerDoesNotExecute(t *testing.T) {
 				"layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}]`),
 			catalogue(fileArtifact("source")), "requires one tree asset"},
 		"a tree of a file input": {plan(2, `{"destination": "tree", "inputs": ["source"], "kind": "tree", "classPath": false}`), catalogue(fileArtifact("source")), "requires a directory artifact"},
-		"a catalogue with tree metadata": {plan(2, `{"destination": "tree", "inputs": ["source"], "kind": "tree", "classPath": false}`),
-			catalogue(pluginpack.Artifact{ID: "source", Kind: "directory", Root: "inputs/source", Tree: &pluginpack.OwnedTree{Version: 2, Artifact: "source", Plugin: "demo", LayoutSignature: "signature", Entries: []filemetadata.Entry{}}}),
-			"prepared tree metadata"},
 		"a prepared source under the default manifest": {plan(1, `{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"}]}}`,
 			moduleFilterSection), filterInputs, "explicit manifest policy"},
 		"stale prepared manifest policies": {plan(1, `{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared",
