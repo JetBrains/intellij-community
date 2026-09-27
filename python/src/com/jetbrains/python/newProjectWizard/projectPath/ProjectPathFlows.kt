@@ -1,22 +1,25 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard.projectPath
 
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.CHECK_NO_RESERVED_WORDS
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.create
+import com.jetbrains.python.packaging.PyPackageName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,6 +45,9 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
 
   companion object {
     private val defaultPath = Path(SystemProperties.getUserHome())
+    private val localRoots by lazy {
+      FileSystems.getDefault().rootDirectories.toSet()
+    }
 
     /**
      * Use [fixedPath] as input
@@ -51,22 +57,30 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
     /**
      * Use [projectPathString] as input i.e `c:\foo`
      */
-    fun create(projectPathString: Flow<String>): ProjectPathFlows = ProjectPathFlows(projectPathString.map {
-      withContext(Dispatchers.Default) {
-        validatePath(it).successOrNull
-      }
-    })
+    fun create(projectPathString: Flow<String>, onlyAllowPathsOn: EelDescriptor): ProjectPathFlows =
+      ProjectPathFlows(projectPathString.map {
+        withContext(Dispatchers.Default) {
+          validatePath(it, onlyAllowPathsOn).successOrNull
+        }
+      })
 
 
     /**
      * checks that [pathAsString] is a valid path and returns it or error
      */
-    fun validatePath(pathAsString: String): Result<Path, MessageError> {
+    fun validatePath(pathAsString: String, onlyAllowPathsOn: EelDescriptor): Result<Path, MessageError> {
       val path = try {
         Paths.get(pathAsString)
       }
       catch (e: InvalidPathException) {
         return PyResult.localizedError(e.reason)
+      }
+      val eelDescriptor = path.getEelDescriptor()
+      if (eelDescriptor != onlyAllowPathsOn) {
+        return PyResult.localizedError(PyBundle.message("python.sdk.new.error.not.supported", eelDescriptor))
+      }
+      if (onlyAllowPathsOn == LocalEelDescriptor && localRoots.none { root -> path.startsWith(root) }) {
+        return PyResult.localizedError(PyBundle.message("python.sdk.new.error.unsupported.root"))
       }
 
       if (!path.isAbsolute) {

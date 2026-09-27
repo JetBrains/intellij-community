@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
+import com.jetbrains.python.EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.PythonModuleTypeBase
@@ -95,7 +96,7 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
       catch (_: InvalidPathException) {
         "$dirPath$SystemPathSeparator$projectName"
       }
-    }
+    }, onlyAllowPathsOn = EEL_FOR_NEW_PROJECTS.descriptor
   )
 
   override fun setupUI(builder: Panel) {

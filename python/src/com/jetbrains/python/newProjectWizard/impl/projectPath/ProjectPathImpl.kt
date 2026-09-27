@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.newProjectWizard.PyV3UIServices
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
@@ -24,7 +25,7 @@ class ProjectPathImpl(
 
 
   private val listener = DocumentListenerToFlowAdapter(field)
-  override val projectPathFlows: ProjectPathFlows = ProjectPathFlows.create(listener.flow)
+  override val projectPathFlows: ProjectPathFlows = ProjectPathFlows.create(listener.flow, onlyAllowPathsOn = EEL_FOR_NEW_PROJECTS.descriptor)
 
   init {
     field.addDocumentListener(listener)

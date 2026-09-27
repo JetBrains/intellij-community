@@ -16,6 +16,7 @@ import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.internal.startPyProjectModelSyncIfNeeded
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
@@ -132,7 +133,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, uiServices)
 
   override fun validate(baseDirPath: String): ValidationResult =
-    when (val pathOrError = validatePath(baseDirPath)) {
+    when (val pathOrError = validatePath(baseDirPath, EEL_FOR_NEW_PROJECTS.descriptor)) {
       is Result.Success -> {
         ValidationResult.OK
       }

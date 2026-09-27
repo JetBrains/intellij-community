@@ -9,13 +9,13 @@ import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.backend.Version
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
+import com.jetbrains.python.EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
@@ -107,7 +107,10 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
 
   @RequiresEdt
   override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows) {
-    model = PythonLocalAddInterpreterModel(projectPathFlows, EelFileSystem(localEel))
+    // To support project creation on new WSL we would need to derive eel from pathFlow
+    // That means we would need to rebuild the whole UI as soon as it changes
+    // While it is possible, it cost time, and we postpone for now
+    model = PythonLocalAddInterpreterModel(projectPathFlows, EelFileSystem(EEL_FOR_NEW_PROJECTS))
     model.navigator.selectionMode = selectedMode
     propertyGraph.dependsOn(_venvBaseValid, model.state.baseInterpreter, deleteWhenChildModified = false) {
       model.state.baseInterpreter.get()?.let { venvBaseVersionError(it) == null } ?: true
