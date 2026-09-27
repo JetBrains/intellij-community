@@ -3,10 +3,7 @@
 package com.intellij.platform.buildScripts.pluginModelTool
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SignNativeFileMode
-import org.jetbrains.intellij.build.devDist.devDistSignature
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -36,8 +33,6 @@ data class PluginSymbolicNativePolicy(
   @JvmField val macSigningEnabled: Boolean,
   @JvmField val signingMode: SignNativeFileMode,
   @JvmField val presignedLibraries: Map<String, String>,
-  @JvmField val targetOs: List<OsFamily>,
-  @JvmField val targetArch: JvmArchitecture?,
 )
 
 @ApiStatus.Internal
@@ -52,13 +47,11 @@ enum class PluginSymbolicNativeHandling {
  * Only [PluginSymbolicNativeHandling.UNTOUCHED] proves that native handling cannot change the source.
  * Other results require Kotlin preparation to apply filters, duplicate precedence, and byte-dependent decisions.
  * Different occurrences of one input can have different requirements. Key them by source occurrence, not by the input alone.
- * [modelSignature] identifies this selection policy, not signing inputs or the prepared output bytes.
  */
 @ApiStatus.Internal
 data class PluginSymbolicNativeRequirement(
   @JvmField val handling: PluginSymbolicNativeHandling,
   @JvmField val distributionPrefix: String?,
-  @JvmField val modelSignature: String,
 )
 
 /**
@@ -105,31 +98,6 @@ fun derivePluginSymbolicNativeRequirements(
     PluginSymbolicNativeRequirement(
       handling = handling,
       distributionPrefix = distributionPrefix,
-      modelSignature = nativeSelectionSignature(source, handling, library, distributionPrefix, nativePolicy),
     )
-  }
-}
-
-private fun nativeSelectionSignature(
-  source: PluginSymbolicNativeSource,
-  handling: PluginSymbolicNativeHandling,
-  library: String?,
-  distributionPrefix: String?,
-  policy: PluginSymbolicNativePolicy,
-): String {
-  return devDistSignature {
-    putInt(1)
-    putString(source.channel.name)
-    putString(source.artifact.kind)
-    putString(handling.name)
-    if (handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
-      putString(checkNotNull(library))
-      putString(checkNotNull(distributionPrefix))
-      putString(policy.signingMode.name)
-      val platforms = policy.targetOs.map { it.name }.distinct().sorted()
-      putInt(platforms.size)
-      for (platform in platforms) putString(platform)
-      putString(policy.targetArch?.name.orEmpty())
-    }
   }
 }
