@@ -19,7 +19,7 @@ interface CodeActionOptions : WorkDoneProgressOptions {
      * The list of kinds may be generic, such as `CodeActionKind.Refactor`,
      * or the server may list out every specific kind they provide.
      */
-    val codeActionKinds: List<CodeActionKind>
+    val codeActionKinds: List<CodeActionKind>?
 
     /**
      * The server provides support to resolve additional
@@ -41,7 +41,7 @@ data class CodeActionRegistrationOptions(
      * The list of kinds may be generic, such as `CodeActionKind.Refactor`,
      * or the server may list out every specific kind they provide.
      */
-    override val codeActionKinds: List<CodeActionKind>,
+    override val codeActionKinds: List<CodeActionKind>? = null,
 
     /**
      * The server provides support to resolve additional
@@ -235,7 +235,8 @@ enum class CodeActionTriggerKind(val value: Int) {
     class Serializer : EnumAsIntSerializer<CodeActionTriggerKind>(
         serialName = CodeActionTriggerKind::class.simpleName!!,
         serialize = CodeActionTriggerKind::value,
-        deserialize = { entries[it - 1] },
+        deserialize = { entries.getOrNull(it - 1) },
+        fallback = CodeActionTriggerKind.Invoked,
     )
 }
 

@@ -55,6 +55,7 @@ data class Diagnostic(
      *
      * @since 3.15.0
      */
+    @Serializable(with = DiagnosticTagListSerializer::class)
     val tags: List<DiagnosticTag>? = null,
 
     /**
@@ -76,7 +77,8 @@ data class Diagnostic(
 class DiagnosticSeveritySerializer : EnumAsIntSerializer<DiagnosticSeverity>(
     serialName = "DiagnosticSeverity",
     serialize = DiagnosticSeverity::value,
-    deserialize = { DiagnosticSeverity.entries[it - 1] },
+    deserialize = { DiagnosticSeverity.entries.getOrNull(it - 1) },
+    fallback = DiagnosticSeverity.Error,
 )
 
 /**
@@ -93,8 +95,11 @@ enum class DiagnosticSeverity(val value: Int) {
 class DiagnosticTagSerializer : EnumAsIntSerializer<DiagnosticTag>(
     serialName = "DiagnosticTag",
     serialize = DiagnosticTag::value,
-    deserialize = { DiagnosticTag.entries[it - 1] },
+    deserialize = { DiagnosticTag.entries.getOrNull(it - 1) },
+    fallback = DiagnosticTag.Unnecessary,
 )
+
+class DiagnosticTagListSerializer : EnumAsIntListSerializer<DiagnosticTag>(DiagnosticTagSerializer())
 
 /**
  * The diagnostic tags.
@@ -201,6 +206,7 @@ data class PublishDiagnosticsClientCapabilities(
         /**
          * The tags supported by the client.
          */
+        @Serializable(with = DiagnosticTagListSerializer::class)
         val valueSet: List<DiagnosticTag>,
     )
 }

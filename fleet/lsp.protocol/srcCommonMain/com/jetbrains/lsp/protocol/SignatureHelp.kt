@@ -101,7 +101,8 @@ enum class SignatureHelpTriggerKind(val value: Int) {
   class Serializer : EnumAsIntSerializer<SignatureHelpTriggerKind>(
     serialName = SignatureHelpTriggerKind::class.simpleName!!,
     serialize = SignatureHelpTriggerKind::value,
-    deserialize = { entries[it - 1] },
+    deserialize = { entries.getOrNull(it - 1) },
+    fallback = SignatureHelpTriggerKind.Invoked,
   )
 }
 

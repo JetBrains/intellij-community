@@ -291,6 +291,7 @@ data class DocumentSymbolClientCapabilities(
      * Specific capabilities for the `SymbolKind` in the
      * `textDocument/documentSymbol` request.
      */
+    @Serializable(with = SymbolKindValueSetSerializer::class)
     val symbolKind: ValueSet<SymbolKind>? = null,
 
     /**
@@ -305,6 +306,7 @@ data class DocumentSymbolClientCapabilities(
      *
      * @since 3.16.0
      */
+    @Serializable(with = SymbolTagValueSetSerializer::class)
     val tagSupport: ValueSet<SymbolTag>? = null,
 
     /**
@@ -428,7 +430,8 @@ enum class PrepareSupportDefaultBehavior(val value: Int) {
 class PrepareSupportDefaultBehaviorSerializer : EnumAsIntSerializer<PrepareSupportDefaultBehavior>(
     serialName = "PrepareSupportDefaultBehavior",
     serialize = PrepareSupportDefaultBehavior::value,
-    deserialize = { PrepareSupportDefaultBehavior.entries[it - 1] },
+    deserialize = { PrepareSupportDefaultBehavior.entries.getOrNull(it - 1) },
+    fallback = PrepareSupportDefaultBehavior.Identifier,
 )
 
 @Serializable

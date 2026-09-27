@@ -64,7 +64,8 @@ enum class MessageType(val value: Int) {
   internal class Serializer : EnumAsIntSerializer<MessageType>(
     serialName = MessageType::class.simpleName!!,
     serialize = MessageType::value,
-    deserialize = { entries[it - 1] },
+    deserialize = { entries.getOrNull(it - 1) },
+    fallback = MessageType.Log,
   )
 }
 

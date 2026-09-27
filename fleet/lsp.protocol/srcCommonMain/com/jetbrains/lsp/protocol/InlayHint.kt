@@ -167,7 +167,8 @@ enum class InlayHintKind(val value: Int) {
     class Serializer : EnumAsIntSerializer<InlayHintKind>(
         serialName = "InlayHintKind",
         serialize = InlayHintKind::value,
-        deserialize = { InlayHintKind.entries[it - 1] },
+        deserialize = { InlayHintKind.entries.getOrNull(it - 1) },
+        fallback = InlayHintKind.Type,
     )
 }
 

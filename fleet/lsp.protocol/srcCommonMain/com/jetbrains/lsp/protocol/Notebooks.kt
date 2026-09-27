@@ -103,7 +103,8 @@ data class NotebookCell(
 class NotebookCellKindSerializer : EnumAsIntSerializer<NotebookCellKind>(
     serialName = "NotebookCellKind",
     serialize = NotebookCellKind::value,
-    deserialize = { NotebookCellKind.entries[it - 1] },
+    deserialize = { NotebookCellKind.entries.getOrNull(it - 1) },
+    fallback = NotebookCellKind.Code,
 )
 
 /**
@@ -111,7 +112,7 @@ class NotebookCellKindSerializer : EnumAsIntSerializer<NotebookCellKind>(
  *
  * @since 3.17.0
  */
-@Serializable
+@Serializable(NotebookCellKindSerializer::class)
 enum class NotebookCellKind(val value: Int) {
     /**
      * A markup-cell is formatted source that is used for display.

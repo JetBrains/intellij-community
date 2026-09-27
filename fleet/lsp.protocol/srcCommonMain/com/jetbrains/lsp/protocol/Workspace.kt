@@ -68,6 +68,44 @@ data class FileRename(
 )
 
 @Serializable
+data class CreateFilesParams(
+    /**
+     * An array of all files/folders created in this operation.
+     */
+    val files: List<FileCreate>,
+)
+
+/**
+ * Represents information on a file/folder create.
+ */
+@Serializable
+data class FileCreate(
+    /**
+     * A file:// URI for the location of the file/folder being created.
+     */
+    val uri: URI,
+)
+
+@Serializable
+data class DeleteFilesParams(
+    /**
+     * An array of all files/folders deleted in this operation.
+     */
+    val files: List<FileDelete>,
+)
+
+/**
+ * Represents information on a file/folder delete.
+ */
+@Serializable
+data class FileDelete(
+    /**
+     * A file:// URI for the location of the file/folder being deleted.
+     */
+    val uri: URI,
+)
+
+@Serializable
 data class DidChangeWatchedFilesParams(
     val changes: List<FileEvent>,
 )
@@ -196,7 +234,8 @@ enum class FileChangeType(val value: Int) {
 class FileChangeTypeSerializer : EnumAsIntSerializer<FileChangeType>(
     serialName = "FileChangeType",
     serialize = FileChangeType::value,
-    deserialize = { FileChangeType.entries[it - 1] },
+    deserialize = { FileChangeType.entries.getOrNull(it - 1) },
+    fallback = FileChangeType.Changed,
 )
 
 /**
@@ -222,6 +261,7 @@ data class SymbolInformation(
      *
      * @since 3.16.0
      */
+    @Serializable(with = SymbolTagListSerializer::class)
     val tags: List<SymbolTag>?,
 
     /**
@@ -317,6 +357,19 @@ data class TextDocumentContentResult(
 )
 
 /**
+ * Parameters for the `workspace/textDocumentContent/refresh` request.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+data class TextDocumentContentRefreshParams(
+    /**
+     * The uri of the text document to refresh.
+     */
+    val uri: DocumentUri,
+)
+
+/**
  * Text document content provider options.
  *
  * @since 3.18.0
@@ -331,7 +384,7 @@ data class TextDocumentContentOptions(
 
 object Workspace {
     val WorkspaceFolders: RequestType<Unit, List<WorkspaceFolder>, Unit> =
-        RequestType("workspace/folders", Unit.serializer(), ListSerializer(WorkspaceFolder.serializer()), Unit.serializer())
+        RequestType("workspace/workspaceFolders", Unit.serializer(), ListSerializer(WorkspaceFolder.serializer()), Unit.serializer())
     val DidChangeWorkspaceFolders: NotificationType<DidChangeWorkspaceFoldersParams> =
         NotificationType("workspace/didChangeWorkspaceFolders", DidChangeWorkspaceFoldersParams.serializer())
     val DidChangeConfiguration: NotificationType<DidChangeConfigurationParams> =
@@ -342,6 +395,21 @@ object Workspace {
     val WillRenameFiles: RequestType<RenameFilesParams, WorkspaceEdit?, Unit> =
         RequestType("workspace/willRenameFiles", RenameFilesParams.serializer(), WorkspaceEdit.serializer().nullable, Unit.serializer())
 
+    val DidRenameFiles: NotificationType<RenameFilesParams> =
+        NotificationType("workspace/didRenameFiles", RenameFilesParams.serializer())
+
+    val WillCreateFiles: RequestType<CreateFilesParams, WorkspaceEdit?, Unit> =
+        RequestType("workspace/willCreateFiles", CreateFilesParams.serializer(), WorkspaceEdit.serializer().nullable, Unit.serializer())
+
+    val DidCreateFiles: NotificationType<CreateFilesParams> =
+        NotificationType("workspace/didCreateFiles", CreateFilesParams.serializer())
+
+    val WillDeleteFiles: RequestType<DeleteFilesParams, WorkspaceEdit?, Unit> =
+        RequestType("workspace/willDeleteFiles", DeleteFilesParams.serializer(), WorkspaceEdit.serializer().nullable, Unit.serializer())
+
+    val DidDeleteFiles: NotificationType<DeleteFilesParams> =
+        NotificationType("workspace/didDeleteFiles", DeleteFilesParams.serializer())
+
     val RefreshCodeLenses: RequestType<Nothing?, Nothing?, Nothing?> =
         RequestType("workspace/codeLens/refresh", NoValueSerializer, NoValueSerializer, NoValueSerializer)
 
@@ -350,6 +418,9 @@ object Workspace {
 
     val RefreshSemanticTokens: RequestType<Nothing?, Nothing?, Nothing?> =
         RequestType("workspace/semanticTokens/refresh", NoValueSerializer, NoValueSerializer, NoValueSerializer)
+
+    val RefreshFoldingRanges: RequestType<Nothing?, Nothing?, Nothing?> =
+        RequestType("workspace/foldingRange/refresh", NoValueSerializer, NoValueSerializer, NoValueSerializer)
 
     val DidChangeWatchedFiles: NotificationType<DidChangeWatchedFilesParams> =
         NotificationType("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams.serializer())
@@ -365,6 +436,15 @@ object Workspace {
      */
     val TextDocumentContent: RequestType<TextDocumentContentParams, TextDocumentContentResult, Unit> =
         RequestType("workspace/textDocumentContent", TextDocumentContentParams.serializer(), TextDocumentContentResult.serializer(), Unit.serializer())
+
+    /**
+     * The `workspace/textDocumentContent/refresh` request is sent from the server to the client
+     * to refresh the content of a specific text document.
+     *
+     * @since 3.18.0
+     */
+    val RefreshTextDocumentContent: RequestType<TextDocumentContentRefreshParams, Nothing?, Nothing?> =
+        RequestType("workspace/textDocumentContent/refresh", TextDocumentContentRefreshParams.serializer(), NoValueSerializer, NoValueSerializer)
 
     val Symbol: RequestType<WorkspaceSymbolParams, WorkspaceSymbolResult?, Unit> =
         RequestType("workspace/symbol", WorkspaceSymbolParams.serializer(), WorkspaceSymbolResult.serializer().nullable, Unit.serializer())

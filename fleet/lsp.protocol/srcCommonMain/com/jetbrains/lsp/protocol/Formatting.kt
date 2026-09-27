@@ -87,3 +87,68 @@ val FormattingRequestType: RequestType<DocumentFormattingParams, List<TextEdit>?
 
 val RangeFormattingRequestType: RequestType<DocumentRangeFormattingParams, List<TextEdit>?, Unit> =
     RequestType("textDocument/rangeFormatting", DocumentRangeFormattingParams.serializer(), ListSerializer(TextEdit.serializer()).nullable, Unit.serializer())
+
+/**
+ * Parameters of the `textDocument/onTypeFormatting` request.
+ */
+@Serializable
+data class DocumentOnTypeFormattingParams(
+    /**
+     * The document to format.
+     */
+    val textDocument: TextDocumentIdentifier,
+
+    /**
+     * The position around which the on type formatting should happen.
+     * This is not necessarily the exact position where the character denoted
+     * by the property `ch` got typed.
+     */
+    val position: Position,
+
+    /**
+     * The character that has been typed that triggered the formatting
+     * on type request. That is not necessarily the last character that
+     * got inserted into the document since the client could auto insert
+     * characters as well (e.g. like automatic brace completion).
+     */
+    val ch: String,
+
+    /**
+     * The formatting options.
+     */
+    val options: FormattingOptions,
+)
+
+/**
+ * Parameters of the `textDocument/rangesFormatting` request.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+data class DocumentRangesFormattingParams(
+    /**
+     * The document to format.
+     */
+    val textDocument: TextDocumentIdentifier,
+
+    /**
+     * The ranges to format.
+     */
+    val ranges: List<Range>,
+
+    /**
+     * The format options.
+     */
+    val options: FormattingOptions,
+
+    override val workDoneToken: ProgressToken? = null,
+) : WorkDoneProgressParams
+
+val OnTypeFormattingRequestType: RequestType<DocumentOnTypeFormattingParams, List<TextEdit>?, Unit> =
+    RequestType("textDocument/onTypeFormatting", DocumentOnTypeFormattingParams.serializer(), ListSerializer(TextEdit.serializer()).nullable, Unit.serializer())
+
+/**
+ * @since 3.18.0
+ */
+val RangesFormattingRequestType: RequestType<DocumentRangesFormattingParams, List<TextEdit>?, Unit> =
+    RequestType("textDocument/rangesFormatting", DocumentRangesFormattingParams.serializer(), ListSerializer(TextEdit.serializer()).nullable, Unit.serializer())

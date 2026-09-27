@@ -133,6 +133,7 @@ data class WorkspaceSymbolClientCapabilities(
      * the symbol kinds from `File` to `Array` as defined in
      * the initial version of the protocol.
      */
+    @Serializable(with = SymbolKindValueSetSerializer::class)
     val symbolKind: ValueSet<SymbolKind>?,
 
 
@@ -142,6 +143,7 @@ data class WorkspaceSymbolClientCapabilities(
      *
      * @since 3.16.0
      */
+    @Serializable(with = SymbolTagValueSetSerializer::class)
     val tagSupport: ValueSet<SymbolTag>?,
 
     /**

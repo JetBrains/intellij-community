@@ -84,7 +84,8 @@ data class TextDocumentSyncOptions(
 class TextDocumentSyncKindSerializer : EnumAsIntSerializer<TextDocumentSyncKind>(
     serialName = "TextDocumentSyncKind",
     serialize = TextDocumentSyncKind::value,
-    deserialize = { TextDocumentSyncKind.entries[it] },
+    deserialize = { TextDocumentSyncKind.entries.getOrNull(it) },
+    fallback = TextDocumentSyncKind.Full,
 )
 
 @Serializable(TextDocumentSyncKindSerializer::class)
@@ -171,7 +172,8 @@ data class WillSaveTextDocumentParams(
 class TextDocumentSaveReasonSerializer : EnumAsIntSerializer<TextDocumentSaveReason>(
     serialName = "TextDocumentSaveReason",
     serialize = TextDocumentSaveReason::code,
-    deserialize = { TextDocumentSaveReason.entries[it - 1] },
+    deserialize = { TextDocumentSaveReason.entries.getOrNull(it - 1) },
+    fallback = TextDocumentSaveReason.Manual,
 )
 
 /**
@@ -219,6 +221,9 @@ object DocumentSync {
 
     val DidChange: NotificationType<DidChangeTextDocumentParams> =
         NotificationType("textDocument/didChange", DidChangeTextDocumentParams.serializer())
+
+    val WillSave: NotificationType<WillSaveTextDocumentParams> =
+        NotificationType("textDocument/willSave", WillSaveTextDocumentParams.serializer())
 
     val WillSaveWaitUntil: RequestType<WillSaveTextDocumentParams, List<TextEdit>, Unit> =
         RequestType(

@@ -80,6 +80,7 @@ data class WorkspaceSymbol(
     /**
      * Tags for this completion item.
      */
+    @Serializable(with = SymbolTagListSerializer::class)
     val tags: List<SymbolTag>?,
 
     /**
@@ -156,6 +157,7 @@ data class  DocumentSymbol(
      *
      * @since 3.16.0
      */
+    @Serializable(with = SymbolTagListSerializer::class)
     val tags: List<SymbolTag>?,
 
     /**
@@ -222,7 +224,8 @@ enum class SymbolKind(val value: Int) {
     class Serializer : EnumAsIntSerializer<SymbolKind>(
         serialName = SymbolKind::class.simpleName!!,
         serialize = SymbolKind::value,
-        deserialize = { SymbolKind.entries[it - 1] },
+        deserialize = { SymbolKind.entries.getOrNull(it - 1) },
+        fallback = SymbolKind.Property,
     )
 }
 
@@ -243,9 +246,16 @@ enum class SymbolTag(val value: Int) {
     class Serializer : EnumAsIntSerializer<SymbolTag>(
         serialName = SymbolTag::class.simpleName!!,
         serialize = SymbolTag::value,
-        deserialize = { SymbolTag.entries[it - 1] },
+        deserialize = { SymbolTag.entries.getOrNull(it - 1) },
+        fallback = SymbolTag.Deprecated,
     )
 }
+
+class SymbolTagListSerializer : EnumAsIntListSerializer<SymbolTag>(SymbolTag.Serializer())
+
+class SymbolKindValueSetSerializer : EnumAsIntValueSetSerializer<SymbolKind>(SymbolKind.Serializer())
+
+class SymbolTagValueSetSerializer : EnumAsIntValueSetSerializer<SymbolTag>(SymbolTag.Serializer())
 
 
 object WorkspaceSymbolRequests {

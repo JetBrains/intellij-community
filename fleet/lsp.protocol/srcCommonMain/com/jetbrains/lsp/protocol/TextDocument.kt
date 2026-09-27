@@ -64,7 +64,8 @@ enum class DocumentHighlightKind(val value: Int) {
     class Serializer : EnumAsIntSerializer<DocumentHighlightKind>(
         serialName = "DocumentHighlightKind",
         serialize = DocumentHighlightKind::value,
-        deserialize = { DocumentHighlightKind.entries[it - 1] },
+        deserialize = { DocumentHighlightKind.entries.getOrNull(it - 1) },
+        fallback = DocumentHighlightKind.Text,
     )
 }
 

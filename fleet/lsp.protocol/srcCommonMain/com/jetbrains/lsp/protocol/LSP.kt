@@ -941,6 +941,7 @@ object LSP {
         encodeDefaults = true
         explicitNulls = false
         ignoreUnknownKeys = true
+        coerceInputValues = true
         isLenient = true
         prettyPrint = true
         classDiscriminator = "kind"

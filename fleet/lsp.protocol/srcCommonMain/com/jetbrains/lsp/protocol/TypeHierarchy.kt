@@ -67,6 +67,7 @@ data class TypeHierarchyItem(
   /**
    * Tags for this item.
    */
+  @Serializable(with = SymbolTagListSerializer::class)
   val tags: List<SymbolTag>? = null,
 
   /**

@@ -131,6 +131,7 @@ data class CompletionClientCapabilities(
             /**
              * The tags supported by the client.
              */
+            @Serializable(with = CompletionItemTagListSerializer::class)
             val valueSet: List<CompletionItemTag>,
         )
 
@@ -144,6 +145,7 @@ data class CompletionClientCapabilities(
 
         @Serializable
         data class InsertTextModeSupportCapabilities(
+            @Serializable(with = InsertTextModeListSerializer::class)
             val valueSet: List<InsertTextMode>,
         )
     }
@@ -160,6 +162,7 @@ data class CompletionClientCapabilities(
          * the completion items kinds from `Text` to `Reference` as defined in
          * the initial version of the protocol.
          */
+        @Serializable(with = CompletionItemKindListSerializer::class)
         val valueSet: List<CompletionItemKind>? = null,
     )
 
@@ -271,7 +274,8 @@ data class CompletionParams(
 class CompletionTriggerKindSerializer : EnumAsIntSerializer<CompletionTriggerKind>(
     serialName = "CompletionTriggerKind",
     serialize = CompletionTriggerKind::value,
-    deserialize = { CompletionTriggerKind.entries[it - 1] },
+    deserialize = { CompletionTriggerKind.entries.getOrNull(it - 1) },
+    fallback = CompletionTriggerKind.Invoked,
 )
 
 /**
@@ -439,7 +443,8 @@ data class InsertReplaceEdit(
 class InsertTextFormatSerializer : EnumAsIntSerializer<InsertTextFormat>(
     serialName = "InsertTextFormat",
     serialize = InsertTextFormat::value,
-    deserialize = { InsertTextFormat.entries[it - 1] },
+    deserialize = { InsertTextFormat.entries.getOrNull(it - 1) },
+    fallback = InsertTextFormat.PlainText,
 )
 
 @Serializable(InsertTextFormatSerializer::class)
@@ -451,8 +456,11 @@ enum class InsertTextFormat(val value: Int) {
 class CompletionItemTagSerializer : EnumAsIntSerializer<CompletionItemTag>(
     serialName = "CompletionItemTag",
     serialize = CompletionItemTag::value,
-    deserialize = { CompletionItemTag.entries[it - 1] },
+    deserialize = { CompletionItemTag.entries.getOrNull(it - 1) },
+    fallback = CompletionItemTag.Deprecated,
 )
+
+class CompletionItemTagListSerializer : EnumAsIntListSerializer<CompletionItemTag>(CompletionItemTagSerializer())
 
 /**
  * Completion item tags are extra annotations that tweak the rendering of a
@@ -471,8 +479,11 @@ enum class CompletionItemTag(val value: Int) {
 class InsertTextModeSerializer : EnumAsIntSerializer<InsertTextMode>(
     serialName = "InsertTextMode",
     serialize = InsertTextMode::value,
-    deserialize = { InsertTextMode.entries[it - 1] },
+    deserialize = { InsertTextMode.entries.getOrNull(it - 1) },
+    fallback = InsertTextMode.AsIs,
 )
+
+class InsertTextModeListSerializer : EnumAsIntListSerializer<InsertTextMode>(InsertTextModeSerializer())
 
 /**
  * How whitespace and indentation is handled during completion
@@ -556,6 +567,7 @@ data class CompletionItem(
      *
      * @since 3.15.0
      */
+    @Serializable(with = CompletionItemTagListSerializer::class)
     val tags: List<CompletionItemTag>? = null,
 
     /**
@@ -727,8 +739,11 @@ fun StringOrMarkupContent.contentAsString(): String = when (this) {
 class CompletionItemKindSerializer : EnumAsIntSerializer<CompletionItemKind>(
     serialName = "CompletionItemKind",
     serialize = CompletionItemKind::kind,
-    deserialize = { CompletionItemKind.entries[it - 1] },
+    deserialize = { CompletionItemKind.entries.getOrNull(it - 1) },
+    fallback = CompletionItemKind.Text,
 )
+
+class CompletionItemKindListSerializer : EnumAsIntListSerializer<CompletionItemKind>(CompletionItemKindSerializer())
 
 /**
  * The kind of a completion entry.
