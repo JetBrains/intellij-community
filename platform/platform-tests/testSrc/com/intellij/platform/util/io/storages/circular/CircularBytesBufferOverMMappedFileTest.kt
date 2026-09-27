@@ -2,14 +2,18 @@
 package com.intellij.platform.util.io.storages.circular
 
 import com.intellij.platform.util.io.storages.circular.CircularBytesBuffer.QueueFullException
+import com.intellij.util.io.CorruptedException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption.WRITE
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
@@ -154,6 +158,16 @@ class CircularBytesBufferOverMMappedFileTest {
           2
         )
       }
+    }
+  }
+
+  @Test
+  fun `append adds closed state to a writer corruption exception`(@TempDir tempDir: Path) {
+    withQueue(tempDir) { queue ->
+      val exception = assertThrows(CorruptedException::class.java) {
+        queue.append({ _ -> throw CorruptedException("writer failure") }, 1)
+      }
+      assertThat(exception.message).contains("wasClosedProperly=true")
     }
   }
 
@@ -352,6 +366,47 @@ class CircularBytesBufferOverMMappedFileTest {
   }
 
   @Test
+  fun `corrupted record includes closed state`(@TempDir tempDir: Path) {
+    for (wasClosedProperly in listOf(true, false)) {
+      val storagePath = tempDir.resolve("queue-$wasClosedProperly.mmap")
+      openQueue(storagePath).close()
+      writeClosedProperlyFlag(storagePath, wasClosedProperly)
+      writeLong(storagePath, 24, 4)
+
+      val queue = openQueue(storagePath)
+      try {
+        val operations = mapOf<String, () -> Unit>(
+          "hasUnprocessedRecords" to { queue.hasUnprocessedRecords() },
+          "append" to { queue.append(byteArrayOf(1), 0, 1) },
+          "readMaybeConsuming" to { queue.readMaybeConsuming { CircularBytesBuffer.ReadDecision.stop() } },
+        )
+        for ((name, operation) in operations) {
+          val exception = assertThrows(CorruptedException::class.java) { operation() }
+          assertThat(exception.message)
+            .withFailMessage("$name must report whether the storage was closed properly")
+            .contains("wasClosedProperly=$wasClosedProperly")
+        }
+      }
+      finally {
+        queue.closeAndClean()
+      }
+    }
+  }
+
+  @Test
+  fun `corrupted file header includes closed state`(@TempDir tempDir: Path) {
+    for (wasClosedProperly in listOf(true, false)) {
+      val storagePath = tempDir.resolve("queue-$wasClosedProperly.mmap")
+      openQueue(storagePath).close()
+      writeClosedProperlyFlag(storagePath, wasClosedProperly)
+      writeLong(storagePath, 16, -1)
+
+      val exception = assertThrows(CorruptedException::class.java) { openQueue(storagePath) }
+      assertThat(exception.message).contains("wasClosedProperly=$wasClosedProperly")
+    }
+  }
+
+  @Test
   fun `withFileSizeNoMoreThan creates file no larger than power-of-two limit`(@TempDir tempDir: Path) {
     val maxFileSize = 128
 
@@ -377,6 +432,16 @@ class CircularBytesBufferOverMMappedFileTest {
 
   private fun openQueue(storagePath: Path, capacity: Int = 128): CircularBytesBufferOverMMappedFile {
     return CircularBytesBufferOverMMappedFile.Factory.withCapacityAtLeast(capacity).open(storagePath)
+  }
+
+  private fun writeClosedProperlyFlag(storagePath: Path, wasClosedProperly: Boolean) {
+    val buffer = ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder()).putInt(if (wasClosedProperly) 1 else 0).flip()
+    FileChannel.open(storagePath, WRITE).use { it.write(buffer, 12) }
+  }
+
+  private fun writeLong(storagePath: Path, offset: Long, value: Long) {
+    val buffer = ByteBuffer.allocate(Long.SIZE_BYTES).order(ByteOrder.nativeOrder()).putLong(value).flip()
+    FileChannel.open(storagePath, WRITE).use { it.write(buffer, offset) }
   }
 
   private fun assertFileSizeNoMoreThan(tempDir: Path, maxFileSize: Int) {
