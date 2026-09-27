@@ -140,8 +140,8 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
-        "//libraries/junit5-jupiter",
-        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/junit6-jupiter",
+        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jsr223.tests` end

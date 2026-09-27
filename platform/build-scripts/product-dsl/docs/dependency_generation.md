@@ -341,7 +341,7 @@ add the `@skip-dependency-generation` comment to the module descriptor XML file:
 ```
 
 **Use cases:**
-- Dependencies requiring specific topological sort ordering (e.g., `intellij.libraries.junit5.jupiter`)
+- Dependencies requiring specific topological sort ordering (e.g., `intellij.libraries.junit6.jupiter`)
 - Modules with complex dependency requirements not expressible via JPS
 
 When this marker is present, the module is completely skipped by `ModuleDescriptorDependencyGenerator`,
@@ -360,7 +360,7 @@ Plugins extracted from plugin.xml are detected as **test plugins** based on thei
 testFrameworkContentModules = setOf(
   "intellij.libraries.junit4",
   "intellij.libraries.junit5",
-  "intellij.libraries.junit5.jupiter",
+  "intellij.libraries.junit6.jupiter",
   "intellij.platform.testFramework",
   "intellij.platform.testFramework.core",
   "intellij.tools.testsBootstrap",

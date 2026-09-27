@@ -25,7 +25,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//libraries/junit5-jupiter",
+        "//libraries/junit6-jupiter",
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -59,7 +59,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel",
-        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit5:junit5_test_lib",
@@ -130,8 +130,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//libraries/junit5-jupiter",
-        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/junit6-jupiter",
+        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",

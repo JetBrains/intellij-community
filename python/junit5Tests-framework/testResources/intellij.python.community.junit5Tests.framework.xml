@@ -6,8 +6,8 @@
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.libraries.junit6.jupiter"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.mockk.jvm"/>

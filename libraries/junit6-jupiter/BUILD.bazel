@@ -1,54 +1,54 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.libraries.junit5.jupiter` start
+### auto-generated section `build intellij.libraries.junit6.jupiter` start
 jvm_library(
-    name = "junit5-jupiter",
+    name = "junit6-jupiter",
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.libraries.junit5.jupiter",
+    module_name = "intellij.libraries.junit6.jupiter",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-junit5-jupiter-_j_unit6_jupiter"],
+    exports = ["@lib//:libraries-junit6-jupiter-_j_unit6_jupiter"],
     runtime_deps = [
         # do not sort,
         "//libraries/junit6-vintage",
-        "@lib//:libraries-junit5-jupiter-_j_unit6_jupiter",
+        "@lib//:libraries-junit6-jupiter-_j_unit6_jupiter",
         "//libraries/junit5",
         "//libraries/junit6-launcher",
     ],
 )
 
 jvm_library(
-    name = "junit5-jupiter_test_lib",
+    name = "junit6-jupiter_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.libraries.junit5.jupiter",
+    module_name = "intellij.libraries.junit6.jupiter",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-junit5-jupiter-_j_unit6_jupiter"],
+    exports = ["@lib//:libraries-junit6-jupiter-_j_unit6_jupiter"],
     runtime_deps = [
         # do not sort,
-        ":junit5-jupiter",
+        ":junit6-jupiter",
         "//libraries/junit6-vintage:junit6-vintage_test_lib",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
     ],
 )
-### auto-generated section `build intellij.libraries.junit5.jupiter` end
+### auto-generated section `build intellij.libraries.junit6.jupiter` end
 
-### auto-generated section `iml intellij.libraries.junit5.jupiter` start
+### auto-generated section `iml intellij.libraries.junit6.jupiter` start
 exports_files(
     [
-        "intellij.libraries.junit5.jupiter.iml",
-        "resources/intellij.libraries.junit5.jupiter.xml",
+        "intellij.libraries.junit6.jupiter.iml",
+        "resources/intellij.libraries.junit6.jupiter.xml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.libraries.junit5.jupiter` end
+### auto-generated section `iml intellij.libraries.junit6.jupiter` end

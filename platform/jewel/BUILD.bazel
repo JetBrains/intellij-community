@@ -100,7 +100,7 @@ java_library(
         ":junit-platform-console",
         ":junit-platform-reporting",
         "//libraries/junit5",
-        "//libraries/junit5-jupiter",
+        "//libraries/junit6-jupiter",
         "//libraries/junit6-launcher",
     ],
 )

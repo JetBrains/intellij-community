@@ -12,8 +12,8 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.testFramework.junit5` start
 jvm_provided_library(
-    name = "libraries_junit5-jupiter_provided",
-    lib = "//libraries/junit5-jupiter",
+    name = "libraries_junit6-jupiter_provided",
+    lib = "//libraries/junit6-jupiter",
 )
 
 jvm_provided_library(
@@ -68,7 +68,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util-ex",
         "//platform/util/jdom",
-        ":libraries_junit5-jupiter_provided",
+        ":libraries_junit6-jupiter_provided",
         ":libraries_junit5_provided",
         ":libraries_junit6-launcher_provided",
     ],
@@ -86,8 +86,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":junit5",
-        "//libraries/junit5-jupiter",
-        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/junit6-jupiter",
+        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//java/java-runtime:rt_test_lib",
@@ -169,8 +169,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//libraries/junit5-jupiter",
-        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/junit6-jupiter",
+        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",

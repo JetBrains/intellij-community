@@ -1361,7 +1361,7 @@ private fun appendJUnitStarter(classPath: MutableList<String>, context: Compilat
     "JUnit6" to "intellij.libraries.junit5",
     "JUnit6Launcher" to "intellij.libraries.junit6.launcher",
     "JUnit6Vintage" to "intellij.libraries.junit6.vintage",
-    "JUnit6Jupiter" to "intellij.libraries.junit5.jupiter",
+    "JUnit6Jupiter" to "intellij.libraries.junit6.jupiter",
   )) {
     for (library in context.outputProvider.findLibraryRoots(libName, moduleName)) {
       classPath.add(library.toString())

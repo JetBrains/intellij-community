@@ -1,7 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.junit5.jupiter"/>
+    <module name="intellij.libraries.junit6.jupiter"/>
     <module name="intellij.libraries.junit6.vintage"/>
     <module name="intellij.libraries.asm.tools"/>
     <module name="intellij.libraries.junit4"/>

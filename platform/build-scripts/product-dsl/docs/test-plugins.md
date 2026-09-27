@@ -97,7 +97,7 @@ The following modules mark a plugin as a test plugin when declared as content:
 testFrameworkContentModules = setOf(
   "intellij.libraries.junit4",
   "intellij.libraries.junit5",
-  "intellij.libraries.junit5.jupiter",
+  "intellij.libraries.junit6.jupiter",
   "intellij.libraries.junit6.launcher",
   "intellij.libraries.junit6.params",
   "intellij.libraries.junit6.vintage",
@@ -244,7 +244,7 @@ See [dependency_generation.md](dependency_generation.md) for implementation deta
     <!-- region additional -->
     <module name="intellij.tools.testsBootstrap"/>
     <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.jupiter"/>
+    <module name="intellij.libraries.junit6.jupiter"/>
     <!-- endregion -->
   </content>
 </idea-plugin>

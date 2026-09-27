@@ -266,7 +266,7 @@ fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks")
   requiredModule("intellij.libraries.hamcrest")
   requiredModule("intellij.libraries.junit4")
   requiredModule("intellij.libraries.junit5")
-  requiredModule("intellij.libraries.junit5.jupiter")
+  requiredModule("intellij.libraries.junit6.jupiter")
 }
 ```
 
