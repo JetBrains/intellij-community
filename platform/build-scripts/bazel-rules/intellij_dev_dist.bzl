@@ -435,7 +435,6 @@ def _fragment_impl(ctx):
     if ctx.attr.runtime_module_repository:
         # The assembler lays the platform and the bundled plugins out without files, then writes only `modules/`.
         args.add("--runtime-module-repository")
-        args.add("--generate-runtime-module-repository")
 
         # The layout the repository is generated from, the reference of `./build/dev-dist.cmd runtime-repo`. Not in the
         # home, so no distribution composes it.

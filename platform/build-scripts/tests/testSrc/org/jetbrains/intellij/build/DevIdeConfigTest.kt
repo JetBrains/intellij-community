@@ -9,64 +9,55 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.readText
 
 /**
- * The config file is written by `DevDistMain` and read by `PreBuiltDevMain` and by the IDE Starter runner, in three
- * different processes, so the round trip is the contract - not either half of it.
+ * The Go composer writes the config file, and `PreBuiltDevMain` and the IDE Starter runner read it. The fixtures here
+ * state the format that the composer writes, and the reader must accept exactly that.
  */
 class DevIdeConfigTest {
   @TempDir
   lateinit var tempDir: Path
 
   @Test
-  fun aHomeUnderTheConfigDirIsNamedRelatively() {
+  fun aRelativeHomeIsResolvedAgainstTheConfigDir() {
     val configFile = tempDir.resolve("dist.ide.config")
     val home = tempDir.resolve("dist").createDirectories()
-
-    DevIdeConfig.write(configFile, home, "com.intellij.idea.Main", "idea", listOf("intellij.devkit"))
-
     // relative, so that the pair keeps naming each other after being read from a different path than it was written to
-    assertThat(configFile.readText()).contains("home.path=dist\n")
+    Files.writeString(configFile, composedConfig(homePath = "dist", additionalModules = "intellij.devkit"))
+
     assertThat(DevIdeConfig.read(configFile).homePath()).isEqualTo(home)
   }
 
   @Test
-  fun aHomeOutsideTheConfigDirStaysAbsolute() {
-    val configDir = tempDir.resolve("config").createDirectories()
-    val configFile = configDir.resolve("dist.ide.config")
+  fun anAbsoluteHomeIsTakenVerbatim() {
+    val configFile = tempDir.resolve("config").createDirectories().resolve("dist.ide.config")
     val home = tempDir.resolve("elsewhere/dist").createDirectories()
+    Files.writeString(configFile, composedConfig(homePath = home.toString().replace('\\', '/'), additionalModules = ""))
 
-    DevIdeConfig.write(configFile, home, "com.intellij.idea.Main", "idea", emptyList())
-
-    assertThat(configFile.readText()).contains("home.path=${home.toString().replace('\\', '/')}\n")
     assertThat(DevIdeConfig.read(configFile).homePath()).isEqualTo(home)
   }
 
   @Test
   fun theDistributionDescribesWhatItWasAssembledAs() {
     val configFile = tempDir.resolve("dist.ide.config")
-
-    DevIdeConfig.write(
+    tempDir.resolve("dist").createDirectories()
+    Files.writeString(
       configFile,
-      tempDir.resolve("dist").createDirectories(),
-      "com.intellij.idea.Main",
-      "GoLand",
-      listOf("intellij.devkit", "intellij.air.plugin"),
+      composedConfig(homePath = "dist", platformPrefix = "GoLand", additionalModules = "intellij.devkit,intellij.air.plugin"),
     )
 
     val content = DevIdeConfig.read(configFile)
     assertThat(content.mainClassName()).isEqualTo("com.intellij.idea.Main")
     assertThat(content.platformPrefix()).isEqualTo("GoLand")
-    // order is the caller's, so a consumer comparing sets and a human reading the file see the same thing
+    // order is the writer's, so a consumer comparing sets and a human reading the file see the same thing
     assertThat(content.additionalModules()).containsExactly("intellij.devkit", "intellij.air.plugin")
   }
 
   @Test
   fun noAdditionalModulesReadsAsAnEmptyList() {
     val configFile = tempDir.resolve("dist.ide.config")
-
-    DevIdeConfig.write(configFile, tempDir.resolve("dist").createDirectories(), "com.intellij.idea.Main", "idea", emptyList())
+    tempDir.resolve("dist").createDirectories()
+    Files.writeString(configFile, composedConfig(homePath = "dist", additionalModules = ""))
 
     assertThat(DevIdeConfig.read(configFile).additionalModules()).isEmpty()
   }
@@ -108,5 +99,13 @@ class DevIdeConfigTest {
     assertThatThrownBy { DevIdeConfig.resolveConfigFile("build/idea_air_dist.ide.config") }
       .hasMessageContaining("names neither an existing file nor a runfile")
       .hasMessageContaining("RUNFILES_MANIFEST_FILE")
+  }
+
+  /** A config file as `writeDevIdeConfig` of the Go composer writes it: four keys, each on its own line. */
+  private fun composedConfig(homePath: String, platformPrefix: String = "idea", additionalModules: String): String {
+    return "home.path=$homePath\n" +
+           "main.class.name=com.intellij.idea.Main\n" +
+           "platform.prefix=$platformPrefix\n" +
+           "additional.modules=$additionalModules\n"
   }
 }

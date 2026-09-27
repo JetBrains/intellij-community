@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.platform.devIdeConfig.DevIdeConfig
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -24,32 +23,23 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.system.exitProcess
 
 /**
- * Assembles a dev distribution into a caller-specified output directory and writes the [DevIdeConfig] file that a
- * launcher (`PreBuiltDevMain`) or a test harness consumes.
+ * Assembles a reference fragment of a dev distribution into a caller-specified output directory. A reference is the
+ * second producer of the `jars`, `replay` and `runtime-repo` gates, and no distribution composes it.
  *
- * Unlike `DevMainImpl`, which builds and launches in the same process from an IDE run configuration, this entry point only builds:
- * the run directory is given from the outside ([BuildRequest.runDirOverride]), the build scratch is kept out of it
- * ([BuildRequest.scratchDir]), and everything else is passed explicitly instead of being read from system properties,
- * so that a caller (a Bazel action, a CI step) fully controls the result.
+ * Unlike `DevMainImpl`, which builds and launches in the same process from an IDE run configuration, this entry point only
+ * builds. The Bazel action gives the run directory ([BuildRequest.runDirOverride]) and the build scratch
+ * ([BuildRequest.scratchDir]), and it passes everything else explicitly instead of through system properties.
  *
- * This entry point is product-agnostic: the product is selected by `--platform-prefix`.
- *
- * It also runs where there is no checkout to read: `--project-dir` names the project model tree the action declares,
- * `--preloaded-manifest` supplies the archives a build would otherwise download, and the jar cache is off unless
- * `--jar-cache-dir` names one. `--os` and `--arch` select the complete target platform. That is what an
- * dev-distribution fragment Bazel action passes.
+ * `--platform-prefix` selects the product. `--project-dir` names the project model tree the action declares, and
+ * `--preloaded-manifest` supplies the archives a build would otherwise download. `--os` and `--arch` select the
+ * complete target platform.
  *
  * [TRACE_FILE_OPTION] writes this process's spans out as a side output; without it nothing is written.
  * `--plan` does the same for the packaging recipe this assembly executed. See [DevDistRecipe].
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
-  runDevDistJob(
-    traceFile = options.optionalPath(TRACE_FILE_OPTION),
-    jobName = "assemble dev distribution",
-    // this entry point printed a console span dump before it could write a trace file; not measuring must leave that as it was
-    consoleSpansWhenNotMeasuring = true,
-  ) {
+  runDevDistJob(traceFile = options.optionalPath(TRACE_FILE_OPTION), jobName = "assemble dev distribution") {
     assembleDevDistribution(options)
   }
   // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
@@ -59,10 +49,10 @@ fun main(args: Array<String>) {
 @OptIn(ExperimentalPathApi::class)
 private fun assembleDevDistribution(options: CommandLineOptions) {
   val outputDir = options.requiredPath("--output-dir")
-  val scratchDir = options.optionalPath("--scratch-dir") ?: Path.of("${outputDir.invariantSeparatorsPathString}.scratch")
+  val scratchDir = options.requiredPath("--scratch-dir")
   // A Bazel action names the shared project model tree it declares. It cannot read the checkout, because the checkout is
   // not an input of anything.
-  val projectDir = options.requiredPath("--project-dir") { System.getenv("BUILD_WORKSPACE_DIRECTORY") }
+  val projectDir = options.requiredPath("--project-dir")
   // `BuildPaths.COMMUNITY_ROOT` and `ULTIMATE_HOME` are lazily initialized singletons that guess the repository root by walking up from
   // a set of candidate locations (see `IdeaProjectLoaderUtil.collectHomeSources`). Inside a Bazel action none of those candidates work:
   // there is no `BUILD_WORKSPACE_DIRECTORY`, the working directory is an execroot, and the jar location is in the output base -
@@ -70,40 +60,18 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   // so it must be set before any code touches those singletons.
   System.setProperty("intellij.build.ultimate.home.path", projectDir.invariantSeparatorsPathString)
 
-  val ideConfigFile = options.optionalPath("--ide-config")
   val platformPrefix = options.optional("--platform-prefix") ?: error("--platform-prefix is required")
-  val additionalModules = options.list("--additional-module")
   val os = options.optional("--os")?.let(::parseOs) ?: OsFamily.currentOs
   val arch = options.optional("--arch")?.let(::parseArch) ?: JvmArchitecture.currentJvmArch
   val buildDateInSeconds = options.optional("--build-date-seconds")?.let {
     it.toLongOrNull() ?: error("--build-date-seconds must be an integer number of seconds since the epoch, but got '$it'")
   }
-  // Unlike a dev run directory, which is rebuilt in place over and over and reuses a jar cache shared with every other
-  // product, an assembly here is produced once per change by a caller that caches the whole result. A local disk cache would
-  // only add a second copy of every jar, and a directory that concurrent assemblies mutate while its cleanup prunes it.
-  val jarCacheDir = options.optionalPath("--jar-cache-dir")
-  val generateRuntimeModuleRepository = options.optionalBoolean("--generate-runtime-module-repository") ?: false
-  // the output directory must be empty (see `BuildRequest.runDirOverride`). A Bazel action always gets an empty declared
-  // directory, so this is for a standalone caller re-running the assembler into a path it already used.
-  val cleanOutput = options.optionalBoolean("--clean-output") ?: false
   val cleanScratchOnSuccess = options.optionalBoolean("--clean-scratch-on-success") ?: false
   val fragment = parseFragment(options)
   // the root span is what a merged timeline groups an action's spans under, and every fragment action opens the same
   // one, so it has to say which fragment it was
   Span.current().setAttribute("fragment", fragment.name)
-  val componentManifest = options.optionalPath("--component-manifest")
-  val output = if (fragment.isComplete) {
-    require(componentManifest == null) {
-      "Component output options require --fragment"
-    }
-    DevBuildOutput.Complete
-  }
-  else {
-    DevBuildOutput.Component(
-      fragment = fragment,
-      manifestFile = checkNotNull(componentManifest) { "--component-manifest is required for fragment '$fragment'" },
-    )
-  }
+  val output = DevBuildOutput.Component(fragment = fragment, manifestFile = options.requiredPath("--component-manifest"))
   options.optionalPath("--bazel-targets-json")?.let { path ->
     System.setProperty("intellij.build.bazel.targets.json.file", path.invariantSeparatorsPathString)
   }
@@ -125,10 +93,6 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
-  if (cleanOutput && Files.exists(outputDir)) {
-    outputDir.deleteRecursively()
-  }
-
   if (planFile != null) {
     DevDistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
   }
@@ -136,18 +100,17 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   val build = buildProductInProcess(
     BuildRequest(
       platformPrefix = platformPrefix,
-      additionalModules = additionalModules,
+      additionalModules = emptyList(),
       projectDir = projectDir,
       os = os,
       arch = arch,
-      // the IDE is started by `PreBuiltDevMain`, which resets the classloader itself, so the boot classpath is not the final one
-      isBootClassPathCorrect = false,
-      generateRuntimeModuleRepository = generateRuntimeModuleRepository,
       runtimeModuleRepositoryLayoutFile = runtimeModuleRepositoryLayoutFile,
       runDirOverride = outputDir,
       scratchDir = scratchDir,
       buildDateInSeconds = buildDateInSeconds,
-      jarCacheDir = jarCacheDir,
+      // A caller that caches the whole result produces a reference once per change. A local jar cache would only add a
+      // second copy of every jar, in a directory that concurrent assemblies change while its cleanup prunes it.
+      jarCacheDir = null,
       output = output,
     )
   )
@@ -155,18 +118,12 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   val mainClassName = build.mainClass
 
   dropEmptyTempDir(runDir)
-  // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
-  // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
-  // that out. The relative-home rule and the file format live there too, with the readers.
-  if (fragment.isComplete) {
-    DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
-  }
 
   planFile?.let {
     DevDistRecipe.write(file = it, fragment = fragment.name)
   }
 
-  println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")
+  println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName)")
   if (cleanScratchOnSuccess) {
     scratchDir.deleteRecursively()
     Files.createDirectories(scratchDir)
@@ -174,14 +131,9 @@ private fun assembleDevDistribution(options: CommandLineOptions) {
   unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
 }
 
-/**
- * Reads which slice of a distribution to assemble.
- *
- * Nothing is inferred: a fragment names itself and its selectors, and passing none of them means the complete
- * distribution.
- */
+/** Reads which slice of a distribution to assemble. Nothing is inferred: a fragment names itself and its selectors. */
 private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
-  val name = options.optional("--fragment")
+  val name = options.optional("--fragment") ?: error("--fragment is required")
   val platform = options.optional("--platform")?.let { value ->
     // The jars are named rather than derived: the reference of the `jars` gate packs exactly the jars of the packed-jars
     // component, and both sides read one generated list.
@@ -192,14 +144,6 @@ private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
     }
   }
   val runtimeModuleRepository = options.optionalBoolean("--runtime-module-repository") ?: false
-
-  if (name == null) {
-    require(platform == null && !runtimeModuleRepository) {
-      "--fragment is required to select a part of a distribution; without it the whole distribution is assembled"
-    }
-    return DevBuildFragment.COMPLETE
-  }
-
   require(platform != null || runtimeModuleRepository) {
     "The '$name' fragment selects nothing: pass at least one of --platform, --runtime-module-repository"
   }

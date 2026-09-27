@@ -577,7 +577,7 @@ internal fun prepareOverriddenRunDir(runDir: Path): Path {
 
   check(staleEntries.isEmpty()) {
     "a run directory override must be empty, but $runDir already contains ${staleEntries.joinToString()};" +
-    " delete it first (the standalone assembler has --clean-output for that)"
+    " delete it first"
   }
   return Files.createDirectories(runDir)
 }

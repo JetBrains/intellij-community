@@ -33,10 +33,7 @@ class CommandLineOptions(private val values: Map<String, List<String>>) {
 
   fun pathList(name: String): List<Path> = list(name).map(::toAbsolutePath)
 
-  fun requiredPath(name: String, fallback: () -> String? = { null }): Path {
-    val value = optional(name) ?: fallback() ?: error("$name is required (no value and no fallback available)")
-    return toAbsolutePath(value)
-  }
+  fun requiredPath(name: String): Path = toAbsolutePath(optional(name) ?: error("$name is required"))
 
   fun checkNoUnknownOptions() {
     val unknown = values.keys - used

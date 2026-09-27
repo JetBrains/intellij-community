@@ -5,15 +5,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 
 /**
  * The handshake between a process that assembles a dev IDE distribution and a process that starts one.
  * <p>
- * The assembler ({@code DevDistMain}) writes this file next to the distribution; a launcher
+ * The Go composer of the dev distribution writes this file next to the distribution. A launcher
  * ({@code PreBuiltDevMain}) or a test harness reads it to find the distribution, the class to start, and what the
  * distribution actually is - which product, and which plugin modules were built into it. A consumer that needs a
  * different module set is looking at the wrong distribution, and can only notice because the distribution says so
@@ -56,38 +54,6 @@ public final class DevIdeConfig {
    *                          {@link #ADDITIONAL_MODULES_KEY} for what a distribution puts in it
    */
   public record Content(Path homePath, String mainClassName, String platformPrefix, List<String> additionalModules) {
-  }
-
-  /**
-   * Writes the config file for a distribution at [home].
-   * <p>
-   * The home is named relatively whenever the config file sits above it, so that the pair can be moved as a unit - a
-   * build artifact is read from a different path than it was written to. Separators are made invariant for the same
-   * reason they are in {@code core-classpath.txt}: a {@link Properties} file treats a Windows backslash as an escape.
-   */
-  public static void write(
-    Path configFile,
-    Path home,
-    String mainClassName,
-    String platformPrefix,
-    Collection<String> additionalModules
-  ) throws IOException {
-    // A `null` here would be written as the four characters "null" and read back as a product named that, which is a
-    // worse outcome than refusing to write the file.
-    Objects.requireNonNull(mainClassName, MAIN_CLASS_NAME_KEY);
-    Objects.requireNonNull(platformPrefix, PLATFORM_PREFIX_KEY);
-
-    Path configDir = configFile.toAbsolutePath().getParent();
-    Path absoluteHome = home.toAbsolutePath();
-    Path homePath = configDir != null && absoluteHome.startsWith(configDir) ? configDir.relativize(absoluteHome) : absoluteHome;
-
-    if (configDir != null) {
-      Files.createDirectories(configDir);
-    }
-    Files.writeString(configFile, HOME_PATH_KEY + '=' + invariantSeparators(homePath) + '\n' +
-                                  MAIN_CLASS_NAME_KEY + '=' + mainClassName + '\n' +
-                                  PLATFORM_PREFIX_KEY + '=' + platformPrefix + '\n' +
-                                  ADDITIONAL_MODULES_KEY + '=' + String.join(",", additionalModules) + '\n');
   }
 
   public static Content read(Path configFile) throws IOException {
@@ -182,9 +148,5 @@ public final class DevIdeConfig {
       }
     }
     return List.copyOf(modules);
-  }
-
-  private static String invariantSeparators(Path path) {
-    return path.toString().replace(path.getFileSystem().getSeparator(), "/");
   }
 }

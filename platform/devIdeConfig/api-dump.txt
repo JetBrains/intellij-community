@@ -7,7 +7,6 @@ f:com.intellij.platform.devIdeConfig.DevIdeConfig
 - s:declaredConfigFile():java.nio.file.Path
 - s:read(java.nio.file.Path):com.intellij.platform.devIdeConfig.DevIdeConfig$Content
 - s:resolveConfigFile(java.lang.String):java.nio.file.Path
-- s:write(java.nio.file.Path,java.nio.file.Path,java.lang.String,java.lang.String,java.util.Collection):V
 f:com.intellij.platform.devIdeConfig.DevIdeConfig$Content
 - java.lang.Record
 - <init>(java.nio.file.Path,java.lang.String,java.lang.String,java.util.List):V

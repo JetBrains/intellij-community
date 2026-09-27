@@ -224,8 +224,8 @@ func absoluteKeys(source *orderedMap) (*orderedMap, error) {
 	return result, nil
 }
 
-// writeDevIdeConfig is the Java DevIdeConfig.write. It names the home relative to the config file when the config file
-// is above it, so that the pair can move as a unit. Both paths are absolute and normalized.
+// writeDevIdeConfig writes the file that the Java DevIdeConfig reads. It names the home relative to the config file when
+// the config file is above it, so that the pair can move as a unit. Both paths are absolute and normalized.
 func writeDevIdeConfig(configFile, home, mainClass, platformPrefix string, additionalModules []string) error {
 	configDir := filepath.Dir(configFile)
 	hasParent := configDir != configFile
