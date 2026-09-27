@@ -48,7 +48,7 @@ func readCompositionSpec(file string) (*compositionSpec, error) {
 }
 
 func decodeCompositionSpec(data []byte) (*compositionSpec, error) {
-	object, err := decodeJSONObject(data, "org.jetbrains.intellij.build.dev.DevBuildCompositionSpec",
+	object, err := decodeJSONObject(data, "dev build composition spec",
 		"version", "expectedFragments", "additionalModules", "components", "pluginClasspathPrefix", "sourceRunfiles",
 		"sourceDirectoryRunfiles", "sourceBindings")
 	if err != nil {
@@ -71,7 +71,7 @@ func decodeCompositionSpec(data []byte) (*compositionSpec, error) {
 		return nil, err
 	}
 	for _, item := range items {
-		component, err := decodeJSONObject(item, "org.jetbrains.intellij.build.dev.DevBuildCompositionComponent",
+		component, err := decodeJSONObject(item, "dev build composition component",
 			"manifest", "pluginClasspathPart")
 		if err != nil {
 			return nil, err
@@ -207,7 +207,7 @@ func readSourceBindings(file string, components []compositionComponent) (map[str
 	}
 	roots := make(map[string]map[string]bool)
 	for _, line := range javaLines(string(data)) {
-		artifact, err := decodeJSONObject([]byte(line), "org.jetbrains.intellij.build.dev.DevBuildSourceArtifact",
+		artifact, err := decodeJSONObject([]byte(line), "dev build source artifact",
 			"component", "source", "anchorRelativePath", "type", "members")
 		if err != nil {
 			return nil, err

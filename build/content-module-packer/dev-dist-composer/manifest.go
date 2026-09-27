@@ -72,7 +72,7 @@ func readComponentManifest(file string) (*componentManifest, error) {
 }
 
 func decodeComponentManifest(data []byte) (*componentManifest, error) {
-	object, err := decodeJSONObject(data, "org.jetbrains.intellij.build.dev.DevBuildComponentManifest",
+	object, err := decodeJSONObject(data, "dev build component manifest",
 		"version", "kind", "platformPrefix", "os", "arch", "additionalModules", "mainClass", "coreClassPath", "pluginCount", "entries")
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func decodeComponentManifest(data []byte) (*componentManifest, error) {
 }
 
 func decodeComponentEntry(data []byte) (entry componentEntry, err error) {
-	object, err := decodeJSONObject(data, "org.jetbrains.intellij.build.dev.DevBuildComponentEntry",
+	object, err := decodeJSONObject(data, "dev build component entry",
 		"relativePath", "type", "hash", "executable", "symlinkTarget", "source", "mode")
 	if err != nil {
 		return entry, err
