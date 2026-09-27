@@ -67,9 +67,9 @@ fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewS
   val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
-    .mapNotNull {
+    .flatMap {
       if (PsiUtilCore.getElementType(it) == MarkdownElementTypes.BLOCK_QUOTE) blockQuotes.create(it.textRange)
-      else it.toDecorationSpecs(editor)
+      else listOfNotNull(it.toDecorationSpecs(editor))
     }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
     .toList()
@@ -101,43 +101,65 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
   }
 }
 
-/** Indexes blockquote markers once and creates specs in PSI traversal order. */
-private class BlockQuoteSpecBuilder(source: CharSequence, private val document: Document) {
+/** Indexes blockquote markers once and creates one spec per marker in PSI traversal order. */
+private class BlockQuoteSpecBuilder(private val source: CharSequence, private val document: Document) {
   private val markersByLine = HashMap<Int, List<Int>>()
   private val markersByDepth = mutableListOf<MutableList<MarkdownLivePreviewRange>>()
+  /** The run of markers on the line of each marker, keyed by the marker offset. */
+  private val markerRuns = HashMap<Int, MarkdownLivePreviewRange>()
   private val quoteEnds = ArrayDeque<Int>()
 
   init {
     for (line in 0 until document.lineCount) {
-      val lineEnd = document.getLineEndOffset(line)
-      val markers = source.blockQuoteMarkerOffsets(document.getLineStartOffset(line), lineEnd)
+      val markers = source.blockQuoteMarkerOffsets(document.getLineStartOffset(line), document.getLineEndOffset(line))
       if (markers.isEmpty()) continue
       markersByLine[line] = markers
       for ((depth, offset) in markers.withIndex()) {
         if (depth == markersByDepth.size) markersByDepth.add(mutableListOf())
-        markersByDepth[depth].add(MarkdownLivePreviewRange(offset, source.blockQuoteMarkerEnd(offset, lineEnd)))
+        markersByDepth[depth].add(MarkdownLivePreviewRange(offset, offset + 1))
       }
+      indexRuns(markers)
     }
   }
 
-  fun create(blockQuoteRange: TextRange): MarkdownLivePreviewSpec.BlockQuote? {
+  /** Splits the markers of one line into runs. Only spaces and tabs separate the markers of a run. */
+  private fun indexRuns(markers: List<Int>) {
+    var runStart = 0
+    for ((index, offset) in markers.withIndex()) {
+      val next = markers.getOrNull(index + 1)
+      if (next != null && (offset + 1 until next).all { source[it] in " \t" }) continue
+      val run = MarkdownLivePreviewRange(markers[runStart], offset + 1)
+      for (marker in markers.subList(runStart, index + 1)) markerRuns[marker] = run
+      runStart = index + 1
+    }
+  }
+
+  fun create(blockQuoteRange: TextRange): List<MarkdownLivePreviewSpec.BlockQuote> {
     while (quoteEnds.isNotEmpty() && quoteEnds.last() <= blockQuoteRange.startOffset) quoteEnds.removeLast()
     quoteEnds.addLast(blockQuoteRange.endOffset)
 
     val firstLine = document.getLineNumber(blockQuoteRange.startOffset)
-    val firstLineMarkers = markersByLine[firstLine] ?: return null
+    val firstLineMarkers = markersByLine[firstLine] ?: return emptyList()
     val firstMarkerIndex = firstLineMarkers.binarySearch(blockQuoteRange.startOffset).let { if (it < 0) -it - 1 else it }
-    if (firstMarkerIndex == firstLineMarkers.size) return null
+    if (firstMarkerIndex == firstLineMarkers.size) return emptyList()
 
-    val markers = markersByDepth.getOrNull(maxOf(firstMarkerIndex, quoteEnds.size - 1)) ?: return null
+    val markers = markersByDepth.getOrNull(maxOf(firstMarkerIndex, quoteEnds.size - 1)) ?: return emptyList()
     val start = markers.firstAtOrAfter(blockQuoteRange.startOffset)
     val end = markers.firstAtOrAfter(blockQuoteRange.endOffset)
-    if (start == end) return null
-    val rangeEnd = document.getLineEndOffset(document.getLineNumber(markers[end - 1].endOffset))
-    return MarkdownLivePreviewSpec.BlockQuote(
-      MarkdownLivePreviewRange(document.getLineStartOffset(firstLine), rangeEnd),
-      markers.subList(start, end).toList(),
-    )
+    val quoteMarkers = markers.subList(start, end)
+    return quoteMarkers.mapIndexed { index, marker ->
+      val next = quoteMarkers.getOrNull(index + 1)
+      val ruleEnd =
+        if (next != null) document.getLineStartOffset(document.getLineNumber(next.startOffset))
+        else document.getLineEndOffset(document.getLineNumber(marker.startOffset))
+      val placeholder = if (source.getOrNull(marker.endOffset)?.let { it in " \t" } == true) " " else "  "
+      MarkdownLivePreviewSpec.BlockQuote(
+        range = markerRuns.getValue(marker.startOffset),
+        markerRange = marker,
+        ruleRange = MarkdownLivePreviewRange(marker.startOffset, ruleEnd),
+        placeholderText = placeholder,
+      )
+    }
   }
 
   private fun List<MarkdownLivePreviewRange>.firstAtOrAfter(offset: Int): Int {
@@ -166,11 +188,6 @@ private fun CharSequence.blockQuoteMarkerOffsets(lineStart: Int, lineEnd: Int): 
       }
     }
   }
-
-private fun CharSequence.blockQuoteMarkerEnd(offset: Int, lineEnd: Int): Int {
-  val markerEnd = offset + 1
-  return if (markerEnd < lineEnd && this[markerEnd] in " \t") markerEnd + 1 else markerEnd
-}
 
 private fun CharSequence.listMarkerEnd(offset: Int, lineEnd: Int): Int {
   var cursor = offset

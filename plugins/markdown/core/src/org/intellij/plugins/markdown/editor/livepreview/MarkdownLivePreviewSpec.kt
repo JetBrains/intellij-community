@@ -110,11 +110,21 @@ sealed interface MarkdownLivePreviewSpec {
     val conceals: List<MarkdownLivePreviewRange>,
   ) : MarkdownLivePreviewSpec
 
-  /** Conceals blockquote markers and paints a vertical rule across the blockquote. */
+  /**
+   * Replaces a blockquote marker with [placeholderText] until a caret touches [range].
+   * The [range] covers the run of markers on the marker line. Only spaces and tabs separate the markers of a run.
+   * Thus one touch reveals all markers of the run.
+   * While the marker is concealed, it paints a vertical rule over [ruleRange].
+   */
   @Serializable
   data class BlockQuote(
     override val range: MarkdownLivePreviewRange,
-    val markerRanges: List<MarkdownLivePreviewRange>,
+    /** The `>` character that the placeholder replaces. */
+    val markerRange: MarkdownLivePreviewRange,
+    /** Starts at the marker. Ends at the start of the next marker line of the blockquote, or at the end of the marker line. */
+    val ruleRange: MarkdownLivePreviewRange,
+    /** Keeps each quote level two spaces wide. A space or a tab after the marker stays source text and gives the second space. */
+    val placeholderText: String,
   ) : MarkdownLivePreviewSpec
 
   /** Conceals a full logical line and paints it as a horizontal rule. */

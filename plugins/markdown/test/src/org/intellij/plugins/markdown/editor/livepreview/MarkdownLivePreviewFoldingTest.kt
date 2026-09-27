@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
@@ -39,6 +40,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
+import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -996,44 +998,128 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForImageInlays(3)
     assertEquals(listOf("![a](image.png)", "![b](image.png)", "![c](image.png)"), concealed().filter { it.startsWith("![") })
     assertEquals(content.indexOf("# "), headingFolds().single().startOffset)
-    assertTrue(visibleText().startsWith("• a\n\nb\n\n"))
+    assertTrue(visibleText().startsWith("• a\n\n b\n\n"))
     assertEquals(
       listOf(0, 2, 4),
       imageInlays().map { myFixture.editor.document.getLineNumber(it.offset) }.sorted(),
     )
   }
 
-  fun testBlockquoteCaretRevealsAndRestoresMarkers() {
+  fun testBlockquoteCaretRevealsOnlyTheTouchedMarker() {
     val content = "> first\n> second\n\ntail"
     configure("$content<caret>")
-    assertEquals("first\nsecond\n\ntail", visibleText())
+    val concealedText = " first\n second\n\ntail"
+    assertEquals(concealedText, visibleText())
 
     moveCaretTo(content.indexOf("first"))
-    assertEquals(content, visibleText())
+    assertEquals("The caret at the start of the quote text keeps the marker", concealedText, visibleText())
 
-    moveCaretTo(content.indexOf("second"))
-    assertEquals(content, visibleText())
+    moveCaretTo(0)
+    assertEquals("> first\n second\n\ntail", visibleText())
+
+    moveCaretTo(content.indexOf("second") - 1)
+    assertEquals(" first\n> second\n\ntail", visibleText())
 
     moveCaretTo(content.length)
-    assertEquals("first\nsecond\n\ntail", visibleText())
+    assertEquals(concealedText, visibleText())
   }
 
-  fun testNestedBlockquoteCaretRevealsAndRestoresMarkers() {
+  fun testNestedBlockquoteCaretRevealsTheMarkerRunOfItsLine() {
     val content = "> outer\n> > inner\n> last\n\ntail"
     configure("$content<caret>")
-    assertEquals("outer\ninner\nlast\n\ntail", visibleText())
+    val concealedText = " outer\n  inner\n last\n\ntail"
+    assertEquals(concealedText, visibleText())
 
-    moveCaretTo(content.indexOf("outer"))
-    assertEquals("> outer\n> inner\n> last\n\ntail", visibleText())
+    val innerLine = content.indexOf("> > inner")
+    for (offset in innerLine..innerLine + 3) {
+      moveCaretTo(offset)
+      assertEquals("The caret at $offset must reveal the run of its line", " outer\n> > inner\n last\n\ntail", visibleText())
+    }
 
     moveCaretTo(content.indexOf("inner"))
-    assertEquals(content, visibleText())
+    assertEquals(concealedText, visibleText())
 
-    moveCaretTo(content.indexOf("last"))
-    assertEquals("> outer\n> inner\n> last\n\ntail", visibleText())
+    moveCaretTo(0)
+    assertEquals("> outer\n  inner\n last\n\ntail", visibleText())
 
     moveCaretTo(content.length)
-    assertEquals("outer\ninner\nlast\n\ntail", visibleText())
+    assertEquals(concealedText, visibleText())
+  }
+
+  fun testOnlyOffsetsOnTheBlockquoteMarkerRunRevealIt() = assertNothingLogged {
+    for (line in listOf("> quote text  ", "  > indented", ">", ">>nested", "> > spaced")) {
+      val content = "$line\n\ntail"
+      configure("$content<caret>")
+      val markers = List(line.count { it == '>' }) { ">" }
+      val run = line.indexOf('>')..line.lastIndexOf('>') + 1
+      for (offset in 0..line.length) {
+        moveCaretTo(offset)
+        if (offset in run) {
+          assertEmpty("The caret at $offset must reveal '$line'", concealed())
+          assertEmpty(blockQuoteRules())
+        }
+        else {
+          assertEquals("The caret at $offset must keep '$line'", markers, concealed())
+          assertEquals(markers.size, blockQuoteRules().size)
+        }
+        moveCaretTo(content.length)
+        assertEquals(markers, concealed())
+      }
+    }
+  }
+
+  fun testEachQuoteLevelHasTheSameWidthWithOrWithoutASpace() {
+    val textStarts = listOf(">>text", "> >text", ">> text", "> > text").map { line ->
+      val content = "$line\n\ntail"
+      configure("$content<caret>")
+      assertEquals(listOf(">", ">"), concealed())
+      myFixture.editor.offsetToXY(line.indexOf("text")).x
+    }
+    assertTrue("Every quote level must have the same width: $textStarts", textStarts.max() - textStarts.min() <= 1)
+  }
+
+  fun testEachConcealedBlockquoteMarkerPaintsItsOwnRule() {
+    val content = "- > first\n  > second\n  > third\n\ntail"
+    configure("$content<caret>")
+    val document = myFixture.editor.document
+    val markers = listOf("> first", "> second", "> third").map(content::indexOf)
+    val rules = listOf(
+      markers[0] to document.getLineStartOffset(1),
+      markers[1] to document.getLineStartOffset(2),
+      markers[2] to document.getLineEndOffset(2),
+    )
+    assertEquals(rules, blockQuoteRules().map { it.startOffset to it.endOffset })
+
+    moveCaretTo(content.indexOf("> second"))
+    assertEquals(listOf("-", ">", ">"), concealed())
+    assertEquals(listOf(rules[0], rules[2]), blockQuoteRules().map { it.startOffset to it.endOffset })
+
+    moveCaretTo(content.length)
+    assertEquals(rules, blockQuoteRules().map { it.startOffset to it.endOffset })
+  }
+
+  fun testRevealedMarkersMoveOnlyTheRulesOfTheirLine() {
+    val content = ">>text\n>>>>text\n> > > test\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor
+    val document = editor.document
+    val concealedRules = paintedRules()
+    assertEquals(9, concealedRules.size)
+    for ((marker, bounds) in concealedRules) {
+      assertEquals("The rule must start at the x position of its marker", editor.offsetToXY(marker).x, bounds.x)
+    }
+    val outerRules = (0..2).map { concealedRules.getValue(document.getLineStartOffset(it)) }
+    outerRules.zipWithNext { above, below -> assertEquals("The outer rules must join", above.y + above.height + 1, below.y) }
+
+    for (line in 0..2) {
+      val lineStart = document.getLineStartOffset(line)
+      select(lineStart, lineStart + 2)
+      val otherRules = concealedRules.filterKeys { document.getLineNumber(it) != line }
+      assertEquals("A reveal on line $line must keep the rules of the other lines", otherRules, paintedRules())
+      editor.selectionModel.removeSelection()
+      moveCaretTo(content.length)
+      assertEquals(concealedRules, paintedRules())
+    }
   }
 
   fun testImageWithoutAltTextShowsTheGenericPlaceholder() {
@@ -1747,6 +1833,35 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     editor.foldingModel.allFoldRegions
       .filter { it.isValid && it.shouldNeverExpand() }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  private fun blockQuoteRules(): List<RangeHighlighter> =
+    myFixture.editor.markupModel.allHighlighters
+      .filter { it.isValid && it.customRenderer is MarkdownBlockQuotePainter }
+      .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  /** Paints each blockquote rule alone. Returns the painted bounds, keyed by the offset of the rule marker. */
+  private fun paintedRules(): Map<Int, Rectangle> {
+    val editor = myFixture.editor
+    val height = editor.offsetToXY(editor.document.textLength).y + 2 * editor.lineHeight
+    return blockQuoteRules().associate { rule ->
+      val bitmap = BufferedImage(1000, height, BufferedImage.TYPE_INT_ARGB)
+      val graphics = bitmap.createGraphics()
+      try {
+        rule.customRenderer!!.paint(editor, rule, graphics)
+      }
+      finally {
+        graphics.dispose()
+      }
+      var bounds: Rectangle? = null
+      for (y in 0 until bitmap.height) {
+        for (x in 0 until bitmap.width) {
+          if (bitmap.getRGB(x, y) ushr 24 == 0) continue
+          bounds = bounds?.apply { add(x, y) } ?: Rectangle(x, y, 0, 0)
+        }
+      }
+      rule.startOffset to checkNotNull(bounds) { "The rule at ${rule.startOffset} must paint" }
+    }
+  }
 
   private fun thematicBreakHighlighters(): List<RangeHighlighter> =
     myFixture.editor.markupModel.allHighlighters

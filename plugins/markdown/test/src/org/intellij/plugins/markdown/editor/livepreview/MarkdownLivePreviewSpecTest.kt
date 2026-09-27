@@ -278,89 +278,133 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   fun testNestedTaskAndQuotedTaskPreserveTheirIndentationAndQuoteMarkers() {
     val content = "- [ ] parent\n  continuation\n  - [x] child\n\n> - [ ] quoted"
-    assertEquals(listOf("- [ ]", "- [x]", "> ", "- [ ]"), concealed(content))
-    assertEquals(listOf("- [ ]", "- [x]", "> - [ ] quoted", "- [ ]"), revealRanges(content))
+    assertEquals(listOf("- [ ]", "- [x]", ">", "- [ ]"), concealed(content))
+    assertEquals(listOf("- [ ]", "- [x]", ">", "- [ ]"), revealRanges(content))
   }
 
-  fun testBlockquotesConcealMarkersAndCoverBlankLines() {
+  fun testBlockquotesConcealAndRevealEachMarker() {
     val content = "> first\n> second\n>\n> last"
-    assertEquals(listOf("> ", "> ", ">", "> "), concealed(content))
-    assertEquals(listOf(content), revealRanges(content))
+    assertEquals(listOf(">", ">", ">", ">"), concealed(content))
+    assertEquals(listOf(">", ">", ">", ">"), revealRanges(content))
+  }
+
+  fun testBlockquotePlaceholdersKeepEachLevelTwoSpacesWide() {
+    assertEquals(listOf("  ", "  "), placeholders(">>text"))
+    assertEquals(listOf(" ", " "), placeholders("> > text"))
+    assertEquals(listOf(" ", "  "), placeholders("> >text"))
+    assertEquals(listOf(" ", "  ", " "), placeholders("> first\n>\n>\ttab"))
+  }
+
+  fun testAdjacentBlockquoteMarkersOfALineRevealTogether() {
+    val content = ">>text\n>>>>text\n> > > test"
+    assertEquals(List(9) { ">" }, concealed(content))
+    assertEquals(
+      listOf(">>", ">>", ">>>>", ">>>>", ">>>>", ">>>>", "> > >", "> > >", "> > >"),
+      revealRanges(content),
+    )
+  }
+
+  fun testListMarkerBetweenBlockquoteMarkersSplitsTheirRun() {
+    val content = "> - > quoted item"
+    assertEquals(listOf(">", "-", ">"), concealed(content))
+    assertEquals(listOf(">", "-", ">"), revealRanges(content))
+  }
+
+  fun testBlockquoteRulesCoverTheLinesOfTheirMarkers() {
+    val content = "> first\n> second\n>\n> last"
+    assertEquals(listOf("> first\n", "> second\n", ">\n", "> last"), ruleSegments(content))
+  }
+
+  fun testNestedBlockquoteRulesCoverTheLinesOfTheirQuote() {
+    val content = "> outer\n> > inner\n> outer"
+    assertEquals(listOf("> outer\n", "> > inner\n", "> inner", "> outer"), ruleSegments(content))
+  }
+
+  fun testBlockquoteRuleCoversLazyContinuationLines() {
+    val content = "> first\nlazy\n> third"
+    assertEquals(listOf("> first\nlazy\n", "> third"), ruleSegments(content))
+  }
+
+  fun testBlockquoteRulesInsideListItemsCoverTheirLines() {
+    val content = "- > first\n  > second"
+    assertEquals(listOf("> first\n", "> second"), ruleSegments(content))
   }
 
   fun testNestedBlockquotesHaveNestedRanges() {
     val content = "> outer\n> > inner\n> outer"
-    assertEquals(listOf("> ", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf(content, "> > inner"), revealRanges(content))
+    assertEquals(listOf(">", ">", ">", ">"), concealed(content))
+    assertEquals(listOf(">", "> >", "> >", ">"), revealRanges(content))
   }
 
   fun testBlockquoteMarkersCanChangeIndentation() {
     val content = "> first\n  > second\n> third"
-    assertEquals(listOf("> ", "> ", "> "), concealed(content))
-    assertEquals(listOf(content), revealRanges(content))
+    assertEquals(listOf(">", ">", ">"), concealed(content))
+    assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
   fun testNestedBlockquoteRangeStopsAtTheOuterSibling() {
     val content = "> Bad example. More messages\n> > Another example\n> Test"
-    assertEquals(listOf("> ", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf(content, "> > Another example"), revealRanges(content))
+    assertEquals(listOf(">", ">", ">", ">"), concealed(content))
+    assertEquals(listOf("> Bad example. More messages\n", "> > Another example\n", "> Another example", "> Test"), ruleSegments(content))
   }
 
   fun testBlockquoteContinuationMarkersAreConcealed() {
     val content = "> first\n> second\n> third"
-    assertEquals(listOf("> ", "> ", "> "), concealed(content))
-    assertEquals(listOf(content), revealRanges(content))
+    assertEquals(listOf(">", ">", ">"), concealed(content))
+    assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsideListItemsAreConcealed() {
     val content = "- > first\n  > second\n  > third"
-    assertEquals(listOf("-", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf("-", content), revealRanges(content))
+    assertEquals(listOf("-", ">", ">", ">"), concealed(content))
+    assertEquals(listOf("-", ">", ">", ">"), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsidePlusListItemsAreConcealed() {
     val content = "+ > first\n  > second\n  > third"
-    assertEquals(listOf("+", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf("+", content), revealRanges(content))
+    assertEquals(listOf("+", ">", ">", ">"), concealed(content))
+    assertEquals(listOf("+", ">", ">", ">"), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsideAsteriskListItemsAreConcealed() {
     val content = "* > first\n  > second\n  > third"
-    assertEquals(listOf("*", "> ", "> ", "> "), concealed(content))
-    assertEquals(listOf("*", content), revealRanges(content))
+    assertEquals(listOf("*", ">", ">", ">"), concealed(content))
+    assertEquals(listOf("*", ">", ">", ">"), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsideOrderedListItemsAreConcealed() {
     val content = "1. > first\n   > second\n   > third"
-    assertEquals(listOf("> ", "> ", "> "), concealed(content))
-    assertEquals(listOf(content), revealRanges(content))
+    assertEquals(listOf(">", ">", ">"), concealed(content))
+    assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
   fun testBlockquoteMarkersInsideParenthesizedListItemsAreConcealed() {
     val content = "12) > first\n    > second\n    > third"
-    assertEquals(listOf("> ", "> ", "> "), concealed(content))
-    assertEquals(listOf(content), revealRanges(content))
+    assertEquals(listOf(">", ">", ">"), concealed(content))
+    assertEquals(listOf(">", ">", ">"), revealRanges(content))
   }
 
   fun testManySeparateBlockquotes() {
     val quotes = (1..200).map { "> quote $it" }
     val content = quotes.joinToString("\n\n")
-    assertEquals(List(200) { "> " }, concealed(content))
-    assertEquals(quotes, revealRanges(content))
+    assertEquals(List(200) { ">" }, concealed(content))
+    assertEquals(List(200) { ">" }, revealRanges(content))
+    assertEquals(quotes, ruleSegments(content))
   }
 
   fun testDeepBlockquotesConcealEachMarkerOnce() {
     val prefix = "> ".repeat(64)
     val quote = "${prefix}first\n${prefix}second"
     val content = "$quote\n" + "continuation\n".repeat(200)
-    assertEquals(List(128) { "> " }, concealed(content))
-    assertEquals(List(64) { quote }, revealRanges(content))
+    assertEquals(List(128) { ">" }, concealed(content))
+    assertEquals(List(128) { prefix.trimEnd() }, revealRanges(content))
   }
 
   fun testSiblingNestedBlockquotesKeepSeparateMarkers() {
     val content = "> > first\n>\n> > second"
-    assertEquals(listOf("> ", "> ", ">", "> ", "> "), concealed(content))
-    assertEquals(listOf("> > first", content, "> > second"), revealRanges(content))
+    assertEquals(listOf(">", ">", ">", ">", ">"), concealed(content))
+    assertEquals(listOf("> > first\n", "> first", ">\n", "> > second", "> second"), ruleSegments(content))
+    assertEquals(listOf("> >", "> >", ">", "> >", "> >"), revealRanges(content))
   }
 
   fun testTaskExamplesOutsideListsAreNotCheckboxes() {
@@ -421,7 +465,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun MarkdownLivePreviewSpec.concealedRanges(): List<MarkdownLivePreviewRange> = when (this) {
     is MarkdownLivePreviewSpec.Conceal -> conceals
-    is MarkdownLivePreviewSpec.BlockQuote -> markerRanges
+    is MarkdownLivePreviewSpec.BlockQuote -> listOf(markerRange)
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
     is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
@@ -436,6 +480,9 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
       val conceals = element.concealedRanges()
       assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
       assertTrue("An element must contain the markup it conceals: $element", conceals.all { element.range.contains(it) })
+      if (element is MarkdownLivePreviewSpec.BlockQuote) {
+        assertEquals("A rule must start at its marker: $element", element.markerRange.startOffset, element.ruleRange.startOffset)
+      }
     }
     val ranges = elements.flatMap { it.concealedRanges() }
     assertEquals("Each range must be concealed only once", ranges.distinct(), ranges)
@@ -447,6 +494,14 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun revealRanges(content: String): List<String> =
     elements(content).map { content.substring(it.range.startOffset, it.range.endOffset) }
+
+  private fun ruleSegments(content: String): List<String> =
+    blockQuotes(content).map { content.substring(it.ruleRange.startOffset, it.ruleRange.endOffset) }
+
+  private fun placeholders(content: String): List<String> = blockQuotes(content).map { it.placeholderText }
+
+  private fun blockQuotes(content: String): List<MarkdownLivePreviewSpec.BlockQuote> =
+    elements(content).filterIsInstance<MarkdownLivePreviewSpec.BlockQuote>()
 
   private fun images(content: String): List<MarkdownLivePreviewSpec.Image> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.Image>()
