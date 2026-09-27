@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -17,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -133,6 +133,7 @@ public final class AsyncEventSupport {
     }
   }
 
+  @RequiresReadLock
   static @NotNull AsyncEventSupport.ChangeAppliers runAsyncListeners(@NotNull List<? extends VFileEvent> events) {
     if (events.isEmpty()) return ChangeAppliers.EMPTY;
 
@@ -158,7 +159,7 @@ public final class AsyncEventSupport {
       var startNs = System.nanoTime();
       var canceled = false;
       try {
-        ReadAction.runBlocking(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
+        ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events));
       }
       catch (ProcessCanceledException e) {
         canceled = true;
