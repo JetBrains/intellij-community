@@ -710,9 +710,8 @@ public final class PyResolveUtil {
   }
 
   /**
-   * Resolves a fully qualified name like "module.Class.method" by walking through the hierarchy.
-   * This handles nested members (e.g., methods in classes, nested classes) by resolving each component
-   * in sequence starting from the module.
+   * Resolves a fully qualified name like "package.module.Class.method" by walking through the hierarchy.
+   * The longest prefix that resolves to a module wins, as with a class's {@code __module__}; the rest is walked as nested classes and methods.
    *
    * @param qualifiedName The qualified name to resolve (e.g., "test.A.f")
    * @param anchor The PSI element to use as context for resolution
@@ -722,26 +721,28 @@ public final class PyResolveUtil {
   public static @Nullable PsiElement resolveFullyQualifiedName(@NotNull QualifiedName qualifiedName,
                                                                 @NotNull PsiElement anchor,
                                                                 @NotNull TypeEvalContext context) {
-    if (qualifiedName.getComponentCount() == 0) {
-      return null;
+    PyQualifiedNameResolveContext resolveContext = PyResolveImportUtil.fromFoothold(anchor);
+    for (int moduleLength = qualifiedName.getComponentCount(); moduleLength > 0; moduleLength--) {
+      QualifiedName memberPath = qualifiedName.removeHead(moduleLength);
+      for (PsiElement module : PyResolveImportUtil.resolveQualifiedName(qualifiedName.subQualifiedName(0, moduleLength), resolveContext)) {
+        PsiElement member = resolveMemberPath(module, memberPath, context);
+        if (member != null) {
+          return member;
+        }
+      }
     }
+    return null;
+  }
 
-    // Resolve the first component as a module
-    QualifiedName moduleName = QualifiedName.fromComponents(qualifiedName.getFirstComponent());
-    List<PsiElement> moduleResults = PyResolveImportUtil.resolveQualifiedName(
-      moduleName,
-      PyResolveImportUtil.fromFoothold(anchor)
-    );
-
-    PsiElement current = ContainerUtil.getFirstItem(moduleResults);
-    if (current == null) {
-      return null;
-    }
-
-    current = PyUtil.turnDirIntoInit(current);
-
-    // Walk through remaining components to resolve nested members
-    for (String componentName :  qualifiedName.removeHead(1).getComponents()) {
+  /**
+   * Resolves a member path like "Class.method" by walking from {@code start} (a package, a module or a class) through nested classes and methods.
+   */
+  @ApiStatus.Internal
+  public static @Nullable PsiElement resolveMemberPath(@Nullable PsiElement start,
+                                                       @NotNull QualifiedName memberPath,
+                                                       @NotNull TypeEvalContext context) {
+    PsiElement current = PyUtil.turnDirIntoInit(start);
+    for (String componentName : memberPath.getComponents()) {
       if (componentName == null) {
         return null;
       }
@@ -749,7 +750,8 @@ public final class PyResolveUtil {
       if (current instanceof PyFile) {
         List<RatedResolveResult> members = ((PyFile)current).multiResolveName(componentName);
         RatedResolveResult firstMember = ContainerUtil.getFirstItem(members);
-        current = firstMember != null ? firstMember.getElement() : null;
+        // A submodule imported into a package resolves to its directory
+        current = firstMember != null ? PyUtil.turnDirIntoInit(firstMember.getElement()) : null;
       }
       else if (current instanceof PyClass) {
         PyClass pyClass = (PyClass)current;

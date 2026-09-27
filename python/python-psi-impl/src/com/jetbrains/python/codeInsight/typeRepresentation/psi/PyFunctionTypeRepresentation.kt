@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.ast.findChildByClass
+import com.jetbrains.python.codeInsight.typeRepresentation.resolveTypeRepresentationName
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyExpression
@@ -31,7 +32,6 @@ import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyElementImpl
-import com.jetbrains.python.psi.resolve.PyResolveUtil.resolveFullyQualifiedName
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
@@ -90,10 +90,10 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
     // If we have a function name, this is a 'def' type - try to resolve to PyFunctionType
     val qualifiedFunctionName = functionName
     if (qualifiedFunctionName != null) {
-      val resolvedFunction = resolveFullyQualifiedName(qualifiedFunctionName, this, context)
+      val resolvedFunction = resolveTypeRepresentationName<PyFunction>(qualifiedFunctionName, this, context)
 
       // If we resolved the function, create PyFunctionType with the signature from the representation
-      if (resolvedFunction is PyFunction) {
+      if (resolvedFunction != null) {
         // Create a custom PyFunctionType that uses our return type, not the function's definition
         val callableParams = parseCallableParameters(context, typeVarMap, resolvedFunction.parameterList)
         return object : PyFunctionTypeImpl(resolvedFunction, callableParams) {

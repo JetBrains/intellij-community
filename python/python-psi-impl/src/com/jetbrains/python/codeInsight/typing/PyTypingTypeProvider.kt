@@ -38,6 +38,8 @@ import com.jetbrains.python.codeInsight.stdlib.parameterizeNamedTupleType
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typeRepresentation.PyModuleTypeName
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
+import com.jetbrains.python.codeInsight.typeRepresentation.resolveByTypeEngineModuleName
+import com.jetbrains.python.codeInsight.typeRepresentation.resolveTypeRepresentationName
 import com.jetbrains.python.codeInsight.typing.PyTypeHintProvider.Companion.parseTypeHint
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Context
 import com.jetbrains.python.psi.AccessDirection
@@ -1492,8 +1494,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         }
         val scopeOwner = if (scopeExpression is PyReferenceExpression && scopeExpression.asQualifiedName() != null) {
           val qualifiedName = scopeExpression.asQualifiedName()!!
-          val scopeElement = PyResolveUtil.resolveFullyQualifiedName(qualifiedName, scopeExpression, context.typeContext)
-          scopeElement as? PyQualifiedNameOwner
+          resolveTypeRepresentationName<PyQualifiedNameOwner>(qualifiedName, scopeExpression, context.typeContext)
         }
         else null
         val result = PyTypeVarTypeImpl(name, PyAnyType.unknown).withScopeOwner(scopeOwner)
@@ -2782,7 +2783,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (expression is PyReferenceExpression) {
         val results: List<PsiElement?>
         if (typeRepresentation) {
-          results = expression.resolveTypeRepresentationReference()
+          results = expression.resolveTypeRepresentationReference(context)
         }
         else {
           if (context.maySwitchToAST(expression)) {
@@ -2846,10 +2847,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return elements.ifEmpty { listOf(null to expression) }
     }
 
-    private fun PyReferenceExpression.resolveTypeRepresentationReference(): List<PsiElement?> {
+    private fun PyReferenceExpression.resolveTypeRepresentationReference(context: TypeEvalContext): List<PsiElement?> {
       val qualifiedName = asQualifiedName() ?: return emptyList()
       val contextFile = FileContextUtil.getContextFile(this) ?: return emptyList()
       return PyPsiFacadeImpl.resolveQName(qualifiedName, contextFile)
+        .ifEmpty { listOfNotNull(resolveByTypeEngineModuleName(qualifiedName, contextFile, context)) }
     }
 
     private fun tryResolvingOnStubs(

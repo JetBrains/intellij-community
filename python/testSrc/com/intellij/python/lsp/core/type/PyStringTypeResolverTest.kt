@@ -4,6 +4,7 @@ package com.intellij.python.lsp.core.type
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.allure.Components
@@ -14,9 +15,12 @@ import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassType
@@ -560,4 +564,106 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
       assertFalse(classParameters[1].isSelf)
     }
   }
+
+  @Test
+  @TestFor(issues = ["PY-89805"])
+  fun `isSelf in a module named by the type engine's import root`() {
+    val sample = addFoo("src/sample.py")
+    test {
+      for (module in listOf("sample", "src.sample", "__unknown__")) {
+        val method = parse<PyFunctionType>("def $module.Foo.bar(self: typing.Self@$module.Foo) -> builtins.int", sample)
+        assertEquals("bar", method.callable.name)
+        assertTrue(method.getParameters(typeEvalContext)!!.single().isSelf, module)
+      }
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-89805"])
+  fun `class, nested class and scope in a module named by the type engine's import root`() {
+    val sample = addFoo("src/sample.py")
+    test {
+      assertEquals("Foo", parse<PyClassType>("sample.Foo", sample).name)
+      assertEquals("Inner", parse<PyClassType>("sample.Foo.Inner", sample).name)
+      assertEquals("Foo", parse<PySelfType>("typing.Self@sample.Foo", sample).pyClass.name)
+      assertEquals("bar", parse<PyTypeVarType>("T@sample.Foo.bar", sample).scopeOwner!!.name)
+      assertEquals("baz", parse<PyFunctionType>("def sample.Foo.Inner.baz(self: sample.Foo.Inner) -> None", sample).callable.name)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-89805"])
+  fun `package named by its directory`() {
+    val init = addFoo("a/b/c/__init__.py")
+    test {
+      val method = parse<PyFunctionType>("def c.Foo.bar(self: typing.Self@c.Foo) -> builtins.int", init)
+      assertTrue(method.getParameters(typeEvalContext)!!.single().isSelf)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-89805"])
+  fun `module in another file named by the type engine's import root`() {
+    addFoo("src/sample.py")
+    val user = addFoo("app/user.py")
+    test {
+      val method = parse<PyFunctionType>("def sample.Foo.bar(self: sample.Foo) -> builtins.int", user)
+      assertEquals("sample.py", method.callable.containingFile.name)
+      assertTrue(method.getParameters(typeEvalContext)!!.single().isSelf)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-89805"])
+  fun `ambiguous module name resolves only in the directory of the context file`() {
+    addFoo("x1/dup.py")
+    addFoo("x2/dup.py")
+    val nearby = addFoo("x1/user.py")
+    test {
+      assertEquals("x1", parse<PyClassType>("dup.Foo", nearby).pyClass.containingFile.containingDirectory.name)
+    }
+    val elsewhere = addFoo("app/user.py")
+    test {
+      assertFalse(PyStringTypeResolver.resolvePyType(elsewhere as PyTypedElement, "dup.Foo")?.get() is PyClassType)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-89805"])
+  fun `a module with another path does not resolve`() {
+    val sample = addFoo("src/sample.py")
+    test {
+      for (module in listOf("other", "other.sample")) {
+        val callable = parse<PyCallableType>("def $module.Foo.bar(self: $module.Foo) -> builtins.int", sample)
+        assertFalse(callable is PyFunctionType, module)
+        assertFalse(callable.getParameters(typeEvalContext)!!.single().isSelf, module)
+      }
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-89805"], classes = [PyResolveUtil::class])
+  fun `fully qualified name through packages`() {
+    myFixture.addFileToProject("pkg/__init__.py", "")
+    addFoo("pkg/mod.py")
+    addFoo("pkg/sub/__init__.py")
+    addFoo("nsp/mod.py")
+    test {
+      for (name in listOf("pkg.mod", "pkg.sub", "nsp.mod")) {
+        val method =
+          PyResolveUtil.resolveFullyQualifiedName(QualifiedName.fromDottedString("$name.Foo.bar"), myFixture.file, typeEvalContext)
+        assertInstanceOf<PyFunction>(method)
+        assertEquals(name, QualifiedNameFinder.findShortestImportableQName(method.containingFile).toString())
+      }
+    }
+  }
+
+  private fun addFoo(path: String) = myFixture.addFileToProject(path, """
+    class Foo:
+        @property
+        def bar(self) -> int:
+            return 42
+        class Inner:
+            def baz(self) -> None: ...
+    """.trimIndent())
 }
