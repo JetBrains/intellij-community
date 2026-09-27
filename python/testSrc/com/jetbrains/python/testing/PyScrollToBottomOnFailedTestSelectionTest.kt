@@ -6,14 +6,18 @@ import com.intellij.execution.testframework.sm.runner.MockRuntimeConfiguration
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import java.util.concurrent.TimeUnit
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 /**
  * The console prints the output of a selected test on the test executor thread, and the scroll task follows it there.
@@ -22,12 +26,20 @@ import java.util.concurrent.TimeUnit
 @Subsystems.TestRunner
 @Layers.Functional
 @TestFor(classes = [PyScrollToBottomOnFailedTestSelection::class], issues = ["PY-91931"])
-class PyScrollToBottomOnFailedTestSelectionTest : PyTestCase() {
+class PyScrollToBottomOnFailedTestSelectionTest : PyCodeInsightTestCase() {
 
-  fun `test the selection of a failed test off the EDT scrolls the console on the EDT`() {
+  @Test
+  fun `the selection of a failed test off the EDT scrolls the console on the EDT`() = runInEdtAndWait {
     val properties = SMTRunnerConsoleProperties(MockRuntimeConfiguration(myFixture.project), "pytest",
                                                 DefaultRunExecutor.getRunExecutorInstance())
-    val console = SMTRunnerConsoleView(properties)
+    val scrollOffsets = mutableListOf<Int>()
+    val console = object : SMTRunnerConsoleView(properties) {
+      override fun scrollTo(offset: Int) {
+        ApplicationManager.getApplication().assertIsDispatchThread()
+        scrollOffsets.add(offset)
+        super.scrollTo(offset)
+      }
+    }
     try {
       console.initUI()
       val viewer = console.resultsViewer
@@ -36,11 +48,14 @@ class PyScrollToBottomOnFailedTestSelectionTest : PyTestCase() {
         setTestFailed("assert False", null, false)
       }
       val listener = PyScrollToBottomOnFailedTestSelection(console)
+      val output = "AssertionError: expected True\n"
+      console.console.print(output, ConsoleViewContentType.ERROR_OUTPUT)
 
       ApplicationManager.getApplication().executeOnPooledThread {
         listener.onSelected(failedTest, viewer, viewer)
       }.get(1, TimeUnit.MINUTES)
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      PlatformTestUtil.waitWithEventsDispatching("The console did not scroll to the failed test output", { scrollOffsets.isNotEmpty() }, 10)
+      assertThat(scrollOffsets).containsExactly(output.length)
     }
     finally {
       Disposer.dispose(console)

@@ -21,7 +21,6 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -34,7 +33,6 @@ import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Pytest runner
@@ -101,6 +99,8 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
  * The scroll itself runs on the EDT, because the console view allows access only from the EDT.
  */
 internal class PyScrollToBottomOnFailedTestSelection(private val consoleView: SMTRunnerConsoleView) : TestResultsViewer.EventsListener {
+  private val disposable = Disposer.newCheckedDisposable(consoleView)
+
   override fun onSelected(
     selectedTestProxy: SMTestProxy?,
     viewer: TestResultsViewer,
@@ -109,13 +109,16 @@ internal class PyScrollToBottomOnFailedTestSelection(private val consoleView: SM
     if (selectedTestProxy != null &&
         selectedTestProxy.children.isEmpty() &&
         selectedTestProxy.isDefect && !selectedTestProxy.isInProgress) {
-      CompositePrintable.invokeInAlarm(Runnable {
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          consoleView.performWhenNoDeferredOutput(Runnable {
-            consoleView.scrollTo(consoleView.contentSize)
-          })
-        }, Condition<Any?> { Disposer.isDisposed(consoleView) })
-      })
+      CompositePrintable.invokeInAlarm {
+        ApplicationManager.getApplication().invokeLater(
+          {
+            consoleView.performWhenNoDeferredOutput {
+              consoleView.scrollTo(consoleView.contentSize)
+            }
+          },
+          { disposable.isDisposed },
+        )
+      }
     }
   }
 }
