@@ -238,7 +238,6 @@ def _platform_payload_test_impl(ctx):
         struct(jar = natives.jar, metadata = natives.metadata, relative_path = natives.relative_path, native_tree = native.tree, native_metadata = native.metadata, native_lib_dir = natives.native_lib_dir),
         records[natives.jar],
     )
-    asserts.equals(env, sorted(ctx.attr.expected_declared_modules), sorted(payload.declared_modules.to_list()))
 
     # What each packed jar merges, sorted by destination. The runtime module repository orders it by the platform jar order.
     asserts.equals(
@@ -256,7 +255,6 @@ def _platform_payload_test_impl(ctx):
 _platform_payload_test = analysistest.make(
     _platform_payload_test_impl,
     attrs = {
-        "expected_declared_modules": attr.string_list(mandatory = True),
         "packed": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
         "nested": attr.label(mandatory = True, providers = [DevDistPlatformJarInfo]),
         "natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
@@ -628,7 +626,6 @@ def dev_dist_content_test_suite(name):
     payload = name + "_payload"
     dev_dist_platform_payload(
         name = payload,
-        modules = [":" + packed_owner, ":" + raw_owner, ":" + natives_owner],
         packed = [":" + packed, ":" + nested, ":" + natives],
         native_platform = _PAYLOAD_PLATFORM,
     )
@@ -639,7 +636,6 @@ def dev_dist_content_test_suite(name):
         packed = ":" + packed,
         nested = ":" + nested,
         natives = ":" + natives,
-        expected_declared_modules = ["test.raw"],
     )
 
     # One owner per `lib/<dir>/`: two trees in one directory are refused where both jars are still named.
@@ -656,7 +652,6 @@ def dev_dist_content_test_suite(name):
         failing_payload = name + "_" + case + "_payload"
         dev_dist_platform_payload(
             name = failing_payload,
-            modules = [":" + raw_owner],
             packed = [":" + jar for jar in packed_jars],
             native_platform = native_platform,
             tags = ["manual"],

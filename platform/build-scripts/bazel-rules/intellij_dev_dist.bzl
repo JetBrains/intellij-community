@@ -78,21 +78,6 @@ def _dev_build_inputs_impl(ctx):
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
         _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
 
-    # A raw input a payload asked for on behalf of named modules, kept only while one of those modules is still declared.
-    # This is where a handed-over `lib/` jar stops costing declarations: the module whose bytes are now in that jar is
-    # not declared, so neither its own output nor its libraries stay in the manifest. The value is module *names*
-    # because a payload is written in names, and a name is the one key that means the same thing to the repository rule
-    # that wrote it and to analysis here.
-    if ctx.attr.owned_inputs:
-        declared = {name: True for name in ctx.attr.platform_payload[DevDistPlatformPayloadInfo].declared_modules.to_list()}
-        for target, owners in ctx.attr.owned_inputs.items():
-            files = target[DefaultInfo].files.to_list()
-            if len(files) != 1:
-                fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-            if not [owner for owner in owners.split(" ") if owner in declared]:
-                continue
-            _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
-
     if ctx.attr.content:
         content = ctx.attr.content[DevDistContentInfo]
 
@@ -159,22 +144,6 @@ intellij_dev_build_inputs = rule(
         # The jars, aggregated from the graph instead of from a generated name list. Both halves land in one manifest
         # under the same key convention, so nothing on the Kotlin side can tell where an entry came from.
         "content": attr.label(providers = [DevDistContentInfo]),
-        # Set on the fragment that owns `lib/`, together with `owned_inputs`. The reference target takes the same split
-        # from the other side - it declares the packed halves through `content` and packs them itself - so one target
-        # drives both and they cannot disagree about which side a module is on.
-        "platform_payload": attr.label(
-            providers = [DevDistPlatformPayloadInfo],
-            doc = "Decides which `owned_inputs` survive, through its `declared_modules`.",
-        ),
-        # Deliberately separate from `inputs`, which stays unconditional. What belongs there is everything a fragment
-        # reads for a reason no payload module owns: the project-model tree's files, the plugin descriptors, the
-        # payload's own library entries, and the build modules - every fragment loads the product properties before it
-        # packs anything, so those jars are classpath rather than content even for the two of them
-        # (`intellij.platform.dependencies`, `intellij.platform.buildScripts.downloader`) that a `lib/` jar also holds.
-        "owned_inputs": attr.label_keyed_string_dict(
-            allow_files = True,
-            doc = "Raw input to the space-separated names of the payload modules that asked for it.",
-        ),
     },
 )
 
