@@ -38,8 +38,8 @@ fun buildProductInProcess(request: BuildRequest): DevBuildResult {
 }
 
 /**
- * What the `platform_resources` fragment of the split dev distribution of one product writes: [files] for each
- * platform, keyed by the path in the distribution, and the [model] the plan generator computes for the product.
+ * What the production writers write for the `platform_resources` component of one product: [files] for each platform,
+ * keyed by the path in the distribution, and the [model] the plan generator computes for the product.
  */
 @ApiStatus.Internal
 class SplitPlatformResources(
@@ -48,11 +48,12 @@ class SplitPlatformResources(
 )
 
 /**
- * Renders the `platform_resources` fragment of the split dev distribution of [platformPrefix] for each of [platforms].
+ * Renders the files of the `platform_resources` component of [platformPrefix] for each of [platforms] with the
+ * production writers.
  *
- * The files come from `writePlatformResourceFiles` over the build context the fragment creates: no additional modules,
- * no runtime module repository, and the pinned [buildDateInSeconds]. The launch model tests compare them with the
- * renderers of [model]. [scratchDir] must be empty.
+ * The files come from `writePlatformResourceFiles` over a build context with no additional modules, no runtime module
+ * repository, and the pinned [buildDateInSeconds]. The launch model tests compare them with the renderers of [model].
+ * [scratchDir] must be empty.
  */
 @ApiStatus.Internal
 fun renderSplitPlatformResources(
@@ -63,7 +64,7 @@ fun renderSplitPlatformResources(
   scratchDir: Path,
 ): SplitPlatformResources {
   val productConfiguration = getProductConfiguration(createConfiguration(projectDir), platformPrefix, baseIdePlatformPrefixForFrontend = null)
-  val fragment = DevBuildFragment(name = "platform_resources", platform = null, platformResources = true, plugins = null, runtimeModuleRepository = false)
+  val fragment = DevBuildFragment(name = "platform_resources", platform = null, runtimeModuleRepository = false)
   val request = BuildRequest(
     platformPrefix = platformPrefix,
     additionalModules = emptyList(),

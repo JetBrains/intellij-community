@@ -203,15 +203,7 @@ private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
   require(platform != null || runtimeModuleRepository) {
     "The '$name' fragment selects nothing: pass at least one of --platform, --runtime-module-repository"
   }
-  // The plugin directories come from the packed plugin components, so a fragment never owns one. Nor do `bin` and the
-  // product metadata: the `platform_resources` component renders them from the launch model of the product.
-  return DevBuildFragment(
-    name = name,
-    platform = platform,
-    platformResources = false,
-    plugins = null,
-    runtimeModuleRepository = runtimeModuleRepository,
-  )
+  return DevBuildFragment(name = name, platform = platform, runtimeModuleRepository = runtimeModuleRepository)
 }
 
 /**

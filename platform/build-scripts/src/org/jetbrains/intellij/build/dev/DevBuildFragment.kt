@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.impl.ModuleItem
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment. No
  * distribution composes a fragment now: the fragments are the references of the `jars`, `replay` and `runtime-repo`
  * gates, which pack the same files as a second producer. The plugin directories come from the packed plugin
- * components, so no fragment owns one.
+ * components, and `bin` and the product metadata come from the `platform_resources` component, so no fragment owns them.
  */
 @ApiStatus.Internal
 data class DevBuildFragment(
@@ -18,13 +18,6 @@ data class DevBuildFragment(
   @JvmField val name: String,
   /** The `lib/` jars this fragment owns, or `null` if it owns none. */
   @JvmField val platform: PlatformJarSelector?,
-  /**
-   * Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files. Only a complete
-   * assembly does. A split distribution renders them with the `platform_resources` component, from the launch model.
-   */
-  @JvmField val platformResources: Boolean,
-  /** The bundled plugin directories this assembly owns: [PluginFragmentSelector.All] for a complete one, `null` for a fragment. */
-  @JvmField val plugins: PluginFragmentSelector?,
   /** Whether this fragment writes `modules/module-descriptors.{dat,jar}`. */
   @JvmField val runtimeModuleRepository: Boolean,
 ) {
@@ -34,55 +27,45 @@ data class DevBuildFragment(
     val COMPLETE: DevBuildFragment = DevBuildFragment(
       name = "all",
       platform = PlatformJarSelector.ALL,
-      platformResources = true,
-      plugins = PluginFragmentSelector.All,
       runtimeModuleRepository = true,
     )
   }
 
   /**
-   * Whether this fragment is the whole distribution: it needs no component manifest, writes `plugin-classpath.txt`
-   * itself, and is the only shape that may be scrambled.
+   * Whether this fragment is the whole distribution. Only a complete assembly owns `bin`, the product metadata, the
+   * launchers, the copied product files and the bundled plugin directories. It needs no component manifest, writes
+   * `plugin-classpath.txt` itself, and is the only shape that may be scrambled.
    *
-   * Defined by what it owns rather than by its name, so that naming a fragment `all` does not make it complete and a
-   * fragment that genuinely owns everything is not treated as a piece of something larger.
+   * Defined by what it owns rather than by its name, so that naming a fragment `all` does not make it complete.
    */
   val isComplete: Boolean
-    get() = platform?.isEverything == true && platformResources && plugins == PluginFragmentSelector.All
+    get() = platform?.isEverything == true
 
+  /**
+   * Whether this fragment packs `lib/` jars.
+   *
+   * Such a fragment inlines the content-module descriptors into the product descriptor. The reference of the `jars` gate
+   * packs the handed-over jars, and the application-info module jar is one of them.
+   */
   internal val ownsPlatformJars: Boolean
     get() = platform != null
 
+  /** Whether this assembly owns the bundled plugin directories, which only a complete one does. */
   internal val ownsPlugins: Boolean
-    get() = plugins != null
+    get() = isComplete
 
   /** Whether this fragment owns the runtime module repository files under `modules/`. */
   internal val ownsRuntimeModuleRepository: Boolean
     get() = runtimeModuleRepository
 
-  /**
-   * Whether this fragment can pack the jar that the inlined product descriptor ends up in.
-   *
-   * The reference of the `jars` gate packs the handed-over jars, and the application-info module jar is one of them. So
-   * it needs the descriptors inlined. A frontend is the exception: a jar of its own carries the root descriptor, see
-   * [org.jetbrains.intellij.build.BuildOptions.embedProductContentModuleDescriptors]. `layoutPlatform` fails when a
-   * fragment without the inlined descriptors packs the application-info module after all.
-   */
-  internal val ownsProductDescriptorJars: Boolean
-    get() = platform != null
-
   override fun toString(): String = name
 }
 
 /**
- * Which `lib/` jars a fragment owns: a set of jar names, and how to read it.
+ * Which `lib/` jars a fragment owns: every jar, or a set of jar names.
  *
  * Ownership is decided per **jar**, not per module: [org.jetbrains.intellij.build.impl.PlatformLayout.withProductModuleOutputFile]
- * can rename a content module into another jar, so the jar as a whole belongs to one owner. Packing also creates `lib/`
- * jars the layout never named - for a library that has to stay in its own jar
- * (`org.jetbrains.intellij.build.impl.isSeparateLibraryJar`) or for a project library - and those hold no module at all.
- * Both facts are why the selector is a name set with a default rather than a classification of what a jar contains: a
- * jar nobody named is simply not excluded, so it has an owner without anyone having to decide what it holds.
+ * can rename a content module into another jar, so the jar as a whole belongs to one owner.
  */
 @ApiStatus.Internal
 data class PlatformJarSelector(
@@ -91,10 +74,8 @@ data class PlatformJarSelector(
   @JvmField val mode: Mode,
 ) {
   enum class Mode {
-    /**
-     * Every `lib/` jar except [jars]. Only [ALL] uses it, with no [jars], for a complete assembly.
-     */
-    EXCLUDE,
+    /** Every `lib/` jar, with no [jars]. Only [ALL] uses it, for a complete assembly. */
+    ALL,
 
     /**
      * Only [jars], and nothing else.
@@ -107,19 +88,22 @@ data class PlatformJarSelector(
   }
 
   init {
-    require(mode == Mode.EXCLUDE || jars.isNotEmpty()) {
+    require(mode == Mode.ALL || jars.isNotEmpty()) {
       "A selector that owns only the jars it names must name at least one"
+    }
+    require(mode == Mode.ONLY || jars.isEmpty()) {
+      "A selector that owns every jar names none, but got $jars"
     }
   }
 
   /** Whether this selector owns every `lib/` jar, which is what a complete distribution needs. */
   val isEverything: Boolean
-    get() = mode == Mode.EXCLUDE && jars.isEmpty()
+    get() = mode == Mode.ALL
 
   /** Whether the `lib/` jar at [relativeOutputFile] belongs to this fragment. */
   fun accepts(relativeOutputFile: String): Boolean {
     return when (mode) {
-      Mode.EXCLUDE -> !jars.contains(relativeOutputFile)
+      Mode.ALL -> true
       Mode.ONLY -> jars.contains(relativeOutputFile)
     }
   }
@@ -127,15 +111,8 @@ data class PlatformJarSelector(
   companion object {
     /** Every `lib/` jar. */
     @JvmField
-    val ALL: PlatformJarSelector = PlatformJarSelector(jars = emptySet(), mode = Mode.EXCLUDE)
+    val ALL: PlatformJarSelector = PlatformJarSelector(jars = emptySet(), mode = Mode.ALL)
   }
-}
-
-/** Which bundled plugin directories an assembly owns. */
-@ApiStatus.Internal
-sealed interface PluginFragmentSelector {
-  /** Every bundled plugin, and the prebuilt plugin directories a product copies in. */
-  data object All : PluginFragmentSelector
 }
 
 /**

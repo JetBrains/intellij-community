@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
-import org.jetbrains.intellij.build.dev.PluginFragmentSelector
 import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
 import org.jetbrains.intellij.build.dev.configureTargetPlatform
 import org.jetbrains.intellij.build.dev.computeIdeFingerprint
@@ -69,15 +68,11 @@ class IdeBuilderTest {
 
     assertThat(complete.isComplete).isTrue()
     assertThat(complete.platform).isEqualTo(PlatformJarSelector.ALL)
-    assertThat(complete.platformResources).isTrue()
-    assertThat(complete.plugins).isEqualTo(PluginFragmentSelector.All)
     assertThat(complete.runtimeModuleRepository).isTrue()
     assertThat(
       DevBuildFragment(
-        name = "platform_lib",
-        platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
-        platformResources = false,
-        plugins = null,
+        name = "platform_lib_reference",
+        platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
         runtimeModuleRepository = false,
       ).isComplete
     ).isFalse()
@@ -85,19 +80,11 @@ class IdeBuilderTest {
 
   @Test
   fun runtimeModuleRepositoryFragmentIsNotComplete() {
-    val fragment = DevBuildFragment(
-      name = "platform_runtime_module_repository",
-      platform = null,
-      platformResources = false,
-      plugins = null,
-      runtimeModuleRepository = true,
-    )
+    val fragment = DevBuildFragment(name = "platform_runtime_module_repository", platform = null, runtimeModuleRepository = true)
 
     assertThat(fragment.isComplete).isFalse()
     assertThat(fragment.runtimeModuleRepository).isTrue()
     assertThat(fragment.platform).isNull()
-    assertThat(fragment.platformResources).isFalse()
-    assertThat(fragment.plugins).isNull()
   }
 
   @Test
@@ -107,13 +94,7 @@ class IdeBuilderTest {
     configureDevModeBuildOptions(
       options = options,
       request = createBuildRequest(
-        fragment = DevBuildFragment(
-          name = "platform_runtime_module_repository",
-          platform = null,
-          platformResources = false,
-          plugins = null,
-          runtimeModuleRepository = true,
-        ),
+        fragment = DevBuildFragment(name = "platform_runtime_module_repository", platform = null, runtimeModuleRepository = true),
       ),
       buildOptionsTemplate = BuildOptions(),
     )
@@ -134,47 +115,33 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun theFragmentAndThePackedJarsComponentPartitionLibJars() {
+  fun theReferenceSelectorOwnsOnlyTheJarsItNames() {
     val packed = setOf("intellij.libraries.asm.jar", "intellij.charts.jar")
-    val fragment = PlatformJarSelector(jars = packed, mode = PlatformJarSelector.Mode.EXCLUDE)
     val reference = PlatformJarSelector(jars = packed, mode = PlatformJarSelector.Mode.ONLY)
-    val jars = listOf(
-      "app-backend.jar",
-      // Named by no module: a project library, or one packing kept in its own jar. The layout never mentions it.
-      "swingx.jar",
-      "intellij.libraries.asm.jar",
-      "intellij.platform.lang.impl.jar",
-      "intellij.charts.jar",
-    )
-
-    // Every jar belongs to exactly one side, so the fragment and the packed jars partition `lib` instead of
-    // overlapping or losing a jar.
-    for (jar in jars) {
-      val owners = listOf(fragment, reference).filter { it.accepts(jar) }
-      assertThat(owners).describedAs(jar).hasSize(1)
+    // `swingx.jar` is named by no module: a project library, or one packing kept in its own jar.
+    for (jar in listOf("app-backend.jar", "swingx.jar", "intellij.libraries.asm.jar", "intellij.charts.jar")) {
       assertThat(PlatformJarSelector.ALL.accepts(jar)).describedAs(jar).isTrue()
     }
 
-    assertThat(fragment.accepts("app-backend.jar")).isTrue()
-    // A jar nobody named is the fragment's, which is what keeps it out of no fragment at all - and is why ownership
-    // no longer has to be derived from what a jar holds.
-    assertThat(fragment.accepts("swingx.jar")).isTrue()
-    assertThat(fragment.accepts("")).isTrue()
-    assertThat(fragment.accepts("intellij.libraries.asm.jar")).isFalse()
     assertThat(reference.accepts("intellij.charts.jar")).isTrue()
+    assertThat(reference.accepts("intellij.libraries.asm.jar")).isTrue()
     assertThat(reference.accepts("app-backend.jar")).isFalse()
+    assertThat(reference.accepts("swingx.jar")).isFalse()
   }
 
   @Test
   fun onlyASelectorThatOwnsEveryJarMakesADistributionComplete() {
     assertThat(PlatformJarSelector.ALL.isEverything).isTrue()
     assertThat(
-      PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE).isEverything
+      PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY).isEverything
     ).isFalse()
     // A selector that owns only what it names and names nothing owns nothing, which is never what a caller meant.
     assertThatThrownBy { PlatformJarSelector(jars = emptySet(), mode = PlatformJarSelector.Mode.ONLY) }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("must name at least one")
+    assertThatThrownBy { PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ALL) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("names none")
   }
 
   @Test
@@ -277,10 +244,8 @@ class IdeBuilderTest {
       options = options,
       request = createBuildRequest(
         fragment = DevBuildFragment(
-          name = "platform_lib",
+          name = "platform_lib_reference",
           platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
-          platformResources = false,
-          plugins = null,
           runtimeModuleRepository = false,
         ),
       ),
