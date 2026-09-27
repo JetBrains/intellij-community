@@ -18,12 +18,11 @@ import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 
 public final class ClientProperty {
   private ClientProperty() { }
@@ -80,7 +79,8 @@ public final class ClientProperty {
   private static final Key<Map<Key<?>, ContainerListener>> RECURSIVE_LISTENERS = Key.create("ClientProperty.recursiveListeners");
   /**
    * Sets the value for the client property of the component and its children.
-   * If hierarchy is changed, it sets the property for new components
+   * If hierarchy is changed, it sets the property for new components.
+   * An added component gets the recursive value of the container that it is added to.
    * @param component a Swing component that may hold a client property value
    * @param key       a typed key corresponding to a client property
    * @param value     new value for the client property
@@ -88,41 +88,56 @@ public final class ClientProperty {
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public static <T> void putRecursive(@NotNull JComponent component, @NotNull Key<T> key, @Nullable T value) {
-    ContainerListener listener = new ContainerAdapter() {
-      @Override
-      public void componentAdded(ContainerEvent e) {
-        Container container = e.getContainer();
-        if (container instanceof JComponent) {
-          putRecursive((JComponent)container, key, value);
+    new RecursiveListener<>(key, value).putInSubtree(component);
+  }
+
+  /**
+   * Keeps one value of one key in a component subtree.
+   * When a child is added, it puts the value into the subtree of that child only.
+   * The other children already hold the value and this listener.
+   */
+  private static final class RecursiveListener<T> extends ContainerAdapter {
+    private final @NotNull Key<T> key;
+    private final @Nullable T value;
+
+    private RecursiveListener(@NotNull Key<T> key, @Nullable T value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public void componentAdded(ContainerEvent e) {
+      if (e.getChild() instanceof JComponent child) {
+        putInSubtree(child);
+      }
+    }
+
+    private void putInSubtree(@NotNull JComponent root) {
+      ArrayDeque<JComponent> toProcess = new ArrayDeque<>();
+      toProcess.add(root);
+      while (!toProcess.isEmpty()) {
+        JComponent current = toProcess.poll();
+
+        Map<Key<?>, ContainerListener> listeners = get(current, RECURSIVE_LISTENERS);
+        if (listeners == null) {
+          listeners = new HashMap<>();
+          put(current, RECURSIVE_LISTENERS, listeners);
         }
-      }
-    };
 
-    Queue<JComponent> toProcess = new LinkedList<>();
-    toProcess.add(component);
-    while (!toProcess.isEmpty()) {
-      JComponent current = toProcess.poll();
+        ContainerListener existingListener = listeners.put(key, this);
+        if (existingListener != this) {
+          if (existingListener != null) {
+            current.removeContainerListener(existingListener);
+          }
+          current.addContainerListener(this);
+        }
 
-      Map<Key<?>, ContainerListener> listeners = get(current, RECURSIVE_LISTENERS);
-      if (listeners == null) {
-        listeners = new HashMap<>();
-        put(current, RECURSIVE_LISTENERS, listeners);
-      }
+        put(current, key, value);
 
-      ContainerListener existingListener = listeners.get(key);
-      if (existingListener != null) {
-        current.removeContainerListener(existingListener);
-      }
-
-      put(current, key, value);
-
-      listeners.put(key, listener);
-
-      current.addContainerListener(listener);
-
-      for (Component child : current.getComponents()) {
-        if (child instanceof JComponent) {
-          toProcess.add((JComponent)child);
+        for (Component child : current.getComponents()) {
+          if (child instanceof JComponent) {
+            toProcess.add((JComponent)child);
+          }
         }
       }
     }
