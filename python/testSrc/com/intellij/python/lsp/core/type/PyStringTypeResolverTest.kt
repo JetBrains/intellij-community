@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.utils
+package com.intellij.python.lsp.core.type
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiElement
-import com.intellij.python.lsp.core.type.PyStringTypeResolver
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.allure.Components
@@ -78,25 +77,27 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   private val typeEvalContext: TypeEvalContext
     get() = TypeEvalContext.externalContext(myFixture.project)
 
-  private inline fun <reified T : PyType> test(typeString: String) {
+  private fun test(block: () -> Unit) = runReadActionBlocking { block() }
+
+  private inline fun <reified T : PyType> test(typeString: String) = test {
     parse<T>(typeString)
   }
 
   private inline fun <reified T : PyType> parse(s: String, anchor: PsiElement = myFixture.file): T {
-    val result = runReadActionBlocking { PyStringTypeResolver.resolvePyType(anchor as PyTypedElement, s.trimIndent()) }
+    val result = PyStringTypeResolver.resolvePyType(anchor as PyTypedElement, s.trimIndent())
     assertNotNull(result, "the type completely failed to parse")
     return assertInstanceOf<T>(result!!.get())
   }
 
   @Test
-  fun `parse unresolved`() {
+  fun `parse unresolved`() = test {
     val ty = PyStringTypeResolver.resolvePyType(myFixture.file as PyTypedElement, "unresolved")
     assertNull(ty, "The type was resolved, which is unexpected")
   }
 
   @Test
   @TestCaseOptions(enablePyAnyType = false)
-  fun `parse Any old`() {
+  fun `parse Any old`() = test {
     assertFalse(PyAnyType.isEnabled)
     val result = PyStringTypeResolver.resolvePyType(myFixture.file as PyTypedElement, PyTypingTypeProvider.ANY)
     assertNotNull(result, "the type completely failed to parse")
@@ -115,7 +116,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   fun `parse union with Any`() = test<PyUnionType>("typing.Any | None")
 
   @Test
-  fun `parse simple`() {
+  fun `parse simple`() = test {
     val mapping =
       parse<PyClassType>("collections.abc.Mapping[collections.abc.Sequence[builtins.int], collections.abc.Iterable[builtins.str]]")
 
@@ -134,7 +135,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse tuple fixed`() {
+  fun `parse tuple fixed`() = test {
     val tupleType = parse<PyTupleType>("builtins.tuple[builtins.int, builtins.str]")
     assertFalse(tupleType.isHomogeneous)
 
@@ -147,21 +148,21 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse int`() {
+  fun `parse int`() = test {
     val type = parse<PyClassType>("builtins.int")
     assertFalse(type.isDefinition)
     assertEquals(builtins.intType, type)
   }
 
   @Test
-  fun `parse type int`() {
+  fun `parse type int`() = test {
     val type = parse<PyClassType>("builtins.type[builtins.int]")
     assertTrue(type.isDefinition)
     assertEquals(builtins.intType!!.pyClass, type.pyClass)
   }
 
   @Test
-  fun `parse tuple variadic`() {
+  fun `parse tuple variadic`() = test {
     val tupleType = parse<PyTupleType>("builtins.tuple[builtins.int, ...]")
 
     assertTrue(tupleType.isHomogeneous)
@@ -169,7 +170,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse literal`() {
+  fun `parse literal`() = test {
     val union = parse<PyUnionType>("typing.Literal[1, 2]")
     assertEquals(2, union.members.size)
 
@@ -181,7 +182,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse function type`() {
+  fun `parse function type`() = test {
     val fnType = parse<PyFunctionType>("def test.f(x: builtins.int, y: builtins.str = 'abb') -> builtins.str")
 
     assertEquals("f", fnType.callable.name)
@@ -206,21 +207,21 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse member callable`() {
+  fun `parse member callable`() = test {
     val fnType = parse<PyFunctionType>("def test.A.f() -> None")
 
     assertEquals("f", fnType.callable.name)
   }
 
   @Test
-  fun `parse member callable staticmethod`() {
+  fun `parse member callable staticmethod`() = test {
     val fnType = parse<PyFunctionType>("def test.A.s() -> None")
 
     assertEquals("s", fnType.callable.name)
   }
 
   @Test
-  fun `parse function from nested class`() {
+  fun `parse function from nested class`() = test {
     val fnType = parse<PyFunctionType>("def test.A.B.f() -> None")
 
     assertEquals("f", fnType.callable.name)
@@ -230,7 +231,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   fun `parse function unresolved`() = test<PyCallableType>("def unresolved() -> Unknown")
 
   @Test
-  fun `parse function with type parameter`() {
+  fun `parse function with type parameter`() = test {
     val fnType = parse<PyFunctionType>("def test.A.g[T: builtins.int](x: T) -> T")
 
     assertInstanceOf<PyTypeVarType>(fnType.getReturnType(typeEvalContext))
@@ -244,12 +245,14 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   @Test
   fun `parse module expression type`() {
     val pandas = myFixture.addFileToProject("pandas/__init__.py", "")
-    val moduleType = parse<PyModuleType>("Module[pandas]", pandas)
-    assertEquals("pandas", moduleType.name)
+    test {
+      val moduleType = parse<PyModuleType>("Module[pandas]", pandas)
+      assertEquals("pandas", moduleType.name)
+    }
   }
 
   @Test
-  fun `parse callable type`() {
+  fun `parse callable type`() = test {
     val ct = parse<PyCallableType>("(builtins.int) -> builtins.str")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -269,7 +272,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
     """)
 
   @Test
-  fun `parse callable type complex`() {
+  fun `parse callable type complex`() = test {
     val ct = parse<PyCallableType>("(builtins.int | builtins.list[builtins.int]) -> None")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -281,7 +284,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse callable type with type parameter`() {
+  fun `parse callable type with type parameter`() = test {
     val ct = parse<PyCallableType>("[T: builtins.int](x: T) -> T")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -291,7 +294,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse callable named parameter`() {
+  fun `parse callable named parameter`() = test {
     val ct = parse<PyCallableType>("(a: builtins.int) -> None")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -305,7 +308,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse callable default parameter`() {
+  fun `parse callable default parameter`() = test {
     val ct = parse<PyCallableType>("(a: builtins.int = ...) -> None")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -320,7 +323,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse nested callable`() {
+  fun `parse nested callable`() = test {
     // Callable[[Callable[[], None], Callable[[], None]]
     val outer = parse<PyCallableType>("(() -> None, /) -> () -> None")
 
@@ -348,7 +351,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `callable variadic`() {
+  fun `callable variadic`() = test {
     val ct = parse<PyCallableType>("(*builtins.str, **test.B) -> None")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -388,7 +391,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   fun `type Generic`() = test<PyCustomType>("builtins.type[Generic]")
 
   @Test
-  fun `special form`() {
+  fun `special form`() = test {
     val type = parse<PyClassType>("builtins.type[Literal]")
     assertFalse(type.isDefinition)
     assertEquals("typing._SpecialForm", type.classQName)
@@ -398,7 +401,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `callable complex variadic`() {
+  fun `callable complex variadic`() = test {
     val ct = parse<PyCallableType>("(*a: *builtins.tuple[builtins.int], **b: **test.B) -> None")
 
     val params = ct.getParameters(typeEvalContext)!!
@@ -422,7 +425,7 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `complex callable`() {
+  fun `complex callable`() = test {
     val fnType =
       parse<PyCallableType>("(builtins.str, /, x: builtins.int = builtins.int, *args: builtins.float, z: builtins.bool, **kwargs: builtins.complex) -> builtins.int")
 
@@ -457,35 +460,35 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  fun `parse generic scope function`() {
+  fun `parse generic scope function`() = test {
     val ty = parse<PyTypeVarType>("T@test.f")
     assertEquals("T", ty.name)
     assertEquals("test.f", ty.scopeOwner!!.qualifiedName)
   }
 
   @Test
-  fun `parse generic scope class`() {
+  fun `parse generic scope class`() = test {
     val ty = parse<PyTypeVarType>("T@test.A")
     assertEquals("T", ty.name)
     assertEquals("test.A", ty.scopeOwner!!.qualifiedName)
   }
 
   @Test
-  fun `parse generic scope nested class with function`() {
+  fun `parse generic scope nested class with function`() = test {
     val ty = parse<PyTypeVarType>("T@test.A.B.f")
     assertEquals("T", ty.name)
     assertEquals("test.A.B.f", ty.scopeOwner!!.qualifiedName)
   }
 
   @Test
-  fun `parse generic scope method`() {
+  fun `parse generic scope method`() = test {
     val ty = parse<PyTypeVarType>("T@test.A.f")
     assertEquals("T", ty.name)
     assertEquals("test.A.f", ty.scopeOwner!!.qualifiedName)
   }
 
   @Test
-  fun `self type`() {
+  fun `self type`() = test {
     val ty = parse<PySelfType>("typing.Self@test.A")
     assertEquals("test.A", ty.pyClass.qualifiedName)
   }
@@ -497,9 +500,11 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
 
       UserId = NewType("UserId", int)
     """.trimIndent())
-    val type = parse<PyTypingNewType>("user_id.UserId", file)
-    assertEquals("UserId", type.name)
-    assertEquals(builtins.intType, type.classType)
+    test {
+      val type = parse<PyTypingNewType>("user_id.UserId", file)
+      assertEquals("UserId", type.name)
+      assertEquals(builtins.intType, type.classType)
+    }
   }
 
   @Test
@@ -512,19 +517,22 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
         GREEN = 2
         BLUE = 3
     """.trimIndent()) as PyFile
-    val enumClass = file.findTopLevelClass("Color")
-    val type = parse<PyUnionType>("typing.Literal[color.Color.BLUE, color.Color.RED]", file)
-    val expectedNames = listOf("BLUE", "RED")
-    assertEquals(expectedNames.size, type.members.size)
-    for ((index, subType) in type.members.withIndex()) {
-      assertInstanceOf<PyLiteralType>(subType)
-      assertEquals(enumClass, subType.pyClass)
-      assertEquals(expectedNames[index], subType.enumMemberName)
+    test {
+
+      val enumClass = file.findTopLevelClass("Color")
+      val type = parse<PyUnionType>("typing.Literal[color.Color.BLUE, color.Color.RED]", file)
+      val expectedNames = listOf("BLUE", "RED")
+      assertEquals(expectedNames.size, type.members.size)
+      for ((index, subType) in type.members.withIndex()) {
+        assertInstanceOf<PyLiteralType>(subType)
+        assertEquals(enumClass, subType.pyClass)
+        assertEquals(expectedNames[index], subType.enumMemberName)
+      }
     }
   }
 
   @Test
-  fun overload() {
+  fun overload() = test {
     val type = parse<PyOverloadType>("Overload[(int) -> int, (str) -> str]")
     assertEquals(2, type.items.size)
     for (item in type.items) {
@@ -540,14 +548,16 @@ class PyStringTypeResolverTest : PyCodeInsightTestCase() {
           @classmethod
           def m(cls, a: type[A]): ...
       """.trimIndent())
-    val method = parse<PyFunctionType>("def test.A.f(self: test.A, a: test.A) -> None")
-    val methodParameters = method.getParameters(typeEvalContext)!!
-    assertTrue(methodParameters[0].isSelf)
-    assertFalse(methodParameters[1].isSelf)
+    test {
+      val method = parse<PyFunctionType>("def test.A.f(self: test.A, a: test.A) -> None")
+      val methodParameters = method.getParameters(typeEvalContext)!!
+      assertTrue(methodParameters[0].isSelf)
+      assertFalse(methodParameters[1].isSelf)
 
-    val classmethod = parse<PyFunctionType>("def test.A.m(cls: builtins.type[test.A], a: builtins.type[test.A]) -> None")
-    val classParameters = classmethod.getParameters(typeEvalContext)!!
-    assertTrue(classParameters[0].isSelf)
-    assertFalse(classParameters[1].isSelf)
+      val classmethod = parse<PyFunctionType>("def test.A.m(cls: builtins.type[test.A], a: builtins.type[test.A]) -> None")
+      val classParameters = classmethod.getParameters(typeEvalContext)!!
+      assertTrue(classParameters[0].isSelf)
+      assertFalse(classParameters[1].isSelf)
+    }
   }
 }
