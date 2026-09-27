@@ -3,7 +3,7 @@
 //
 // The input is the launch model that the dev distribution plan generator writes for the product
 // (`ProductLaunchModel` in community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/productInfo). The
-// Kotlin `renderProductLaunchFiles` renders the same files from the same model, and the two must agree byte for byte.
+// files must be the files that the production writers of the build scripts write, byte for byte.
 // `DevDistProductLaunchModelTest` checks that for every split product and every host platform.
 package main
 

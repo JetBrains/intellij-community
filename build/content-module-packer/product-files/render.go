@@ -305,8 +305,7 @@ func additionalJvmArguments(jvm jvmArguments, target platform, openedPackages []
 
 var majorReleaseDate = regexp.MustCompile(`^\d{8}$`)
 
-// renderProductInfo is `renderProductInfo` of `ProductLaunchRenderer.kt`: `product-info.json` of a launch that bundles
-// a runtime, with no built-in modules.
+// renderProductInfo renders `product-info.json` of a launch that bundles a runtime, with no built-in modules.
 func renderProductInfo(model launchModel, target platform, openedPackages []string) (string, error) {
 	if !majorReleaseDate.MatchString(model.MajorVersionReleaseDate) {
 		return "", fmt.Errorf("the major release date %q is not yyyyMMdd", model.MajorVersionReleaseDate)
