@@ -14,6 +14,7 @@ import com.intellij.python.pytools.backend.Version
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -54,6 +55,7 @@ interface PySdkPanelBuilder {
   /**
    * Performs only static initialization using Kotlin DSL [com.intellij.ui.dsl], without access to [CoroutineScope].
    */
+  @RequiresEdt
   fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows)
 
   /**
@@ -104,6 +106,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   private lateinit var custom: PythonAddCustomInterpreter<PathHolder.Eel>
   private lateinit var model: PythonMutableTargetAddInterpreterModel<PathHolder.Eel>
 
+  @RequiresEdt
   override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows) {
     model = PythonLocalAddInterpreterModel(projectPathFlows, EelFileSystem(localEel))
     model.navigator.selectionMode = selectedMode
