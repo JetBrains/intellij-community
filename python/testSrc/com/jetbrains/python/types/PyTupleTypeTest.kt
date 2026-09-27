@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.impl.PyParenthesizedExpressionImpl
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -1204,5 +1205,13 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
     A = tuple(sorted([1, 4, 2]))
 
     B = A + (4, 6, 7, 8)
+    """.trimIndent())
+
+  @Test
+  @TestFor(classes = [PyParenthesizedExpressionImpl::class])
+  fun `parentheses around a missing expression`() = test("""
+    expr = not (
+    #          │└ ERROR ')' expected
+    #          └ TYPE Unknown
     """.trimIndent())
 }

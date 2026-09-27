@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,6 @@ public class PyParenthesizedExpressionImpl extends PyElementImpl implements PyPa
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression expr = getContainedExpression();
-    return expr != null ? context.getType(expr) : null;
+    return expr != null ? context.getType(expr) : PyAnyType.getUnknown();
   }
 }

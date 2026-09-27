@@ -593,8 +593,8 @@ object PyCallExpressionHelper {
    */
   @JvmStatic
   fun getCallType(expression: PyBinaryExpression, context: TypeEvalContext, @Suppress("unused") key: TypeEvalContext.Key): PyType? {
-    val leftExpr = expression.leftExpression ?: return null
-    val rightExpr = expression.rightExpression ?: return null
+    val leftExpr = expression.leftExpression ?: return PyAnyType.unknown
+    val rightExpr = expression.rightExpression ?: return PyAnyType.unknown
 
     val resolveContext = PyResolveContext.defaultContext(context)
     val callableTypes = multiResolveOperator(expression, resolveContext)

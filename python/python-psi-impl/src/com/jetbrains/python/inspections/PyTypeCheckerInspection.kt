@@ -329,7 +329,7 @@ open class PyTypeCheckerInspection : PyInspection() {
             }
           }
 
-          val actual = if (returnExpr == null) getInstance(node).noneType else returnExpr.getType(myTypeEvalContext)
+          val actual = if (returnExpr == null) getInstance(node).noneType ?: PyAnyType.unknown else returnExpr.getType(myTypeEvalContext)
           if (!matchesExpectedType(expected, actual, returnExpr, null)) {
             if (returnExpr != null) {
               val actualViaPromotion = tryPromotingType(returnExpr, expected)
@@ -852,7 +852,7 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (hasExplicitType(node)) {
         val annotation = node.annotation
         val expected: PyType? = getExpectedReturnStatementType(node, myTypeEvalContext)
-        val noneType: PyType? = getInstance(node).noneType
+        val noneType: PyType? = getInstance(node).noneType ?: PyAnyType.unknown
         val returnsNone = expected.isNoneType
         val returnsOptional = match(expected, noneType, myTypeEvalContext)
 
