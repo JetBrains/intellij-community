@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,71 +65,6 @@ func TestDistributionScopeUsesOneRemainderWithoutPluginCollision(test *testing.T
 		return entry.RelativePath == distributionDestination
 	}) {
 		test.Fatalf("scoped inventory = %+v", entries)
-	}
-}
-
-func copyResourceFixtureTree(test *testing.T, source, destination string) {
-	test.Helper()
-	type directoryMode struct {
-		path string
-		mode os.FileMode
-	}
-	var directories []directoryMode
-	err := filepath.WalkDir(source, func(sourcePath string, entry fs.DirEntry, walkError error) error {
-		if walkError != nil {
-			return walkError
-		}
-		relative, err := filepath.Rel(source, sourcePath)
-		if err != nil {
-			return err
-		}
-		destinationPath := destination
-		if relative != "." {
-			destinationPath = filepath.Join(destination, relative)
-		}
-		info, err := os.Lstat(sourcePath)
-		if err != nil {
-			return err
-		}
-		switch {
-		case info.IsDir():
-			if err := os.MkdirAll(destinationPath, 0o755); err != nil {
-				return err
-			}
-			directories = append(directories, directoryMode{path: destinationPath, mode: info.Mode().Perm()})
-			return nil
-		case info.Mode().IsRegular():
-			if err := os.MkdirAll(filepath.Dir(destinationPath), 0o755); err != nil {
-				return err
-			}
-			content, err := os.ReadFile(sourcePath)
-			if err != nil {
-				return err
-			}
-			if err := os.WriteFile(destinationPath, content, info.Mode().Perm()); err != nil {
-				return err
-			}
-			return os.Chmod(destinationPath, info.Mode().Perm())
-		case info.Mode()&os.ModeSymlink != 0:
-			if err := os.MkdirAll(filepath.Dir(destinationPath), 0o755); err != nil {
-				return err
-			}
-			target, err := os.Readlink(sourcePath)
-			if err != nil {
-				return err
-			}
-			return os.Symlink(target, destinationPath)
-		default:
-			return fmt.Errorf("unsupported resource fixture entry: %s", sourcePath)
-		}
-	})
-	if err != nil {
-		test.Fatal(err)
-	}
-	for _, directory := range slices.Backward(directories) {
-		if err := os.Chmod(directory.path, directory.mode); err != nil {
-			test.Fatal(err)
-		}
 	}
 }
 
