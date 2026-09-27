@@ -102,9 +102,7 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     val onShowTrigger = object : JComponent() {}
     builder.row { cell(onShowTrigger) }
 
-    val sdkPanelBuilder = PythonSdkPanelBuilderAndSdkCreator(
-        module = null,
-    )
+    val sdkPanelBuilder = PythonSdkPanelBuilderAndSdkCreator()
 
     sdkPanelBuilder.buildPanel(builder, projectPathFlows)
     sdkPanelBuilder.onShownInitialization(onShowTrigger)

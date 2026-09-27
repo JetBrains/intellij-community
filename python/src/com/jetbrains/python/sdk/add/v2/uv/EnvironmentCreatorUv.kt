@@ -30,7 +30,6 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -72,15 +71,10 @@ private fun Version.languageLevel(): @NlsSafe String = "$major.$minor"
 
 /**
  * Creates a UV environment creator for the given model.
- *
- * @param module The module context for environment creation. Can be null when creating an interpreter
- *               at the project level (not associated with a specific module). When null, the creator
- *               will navigate to the generic Python existing environment selector instead of the
- *               UV-specific selector if a .venv directory already exists.
  */
-internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(module: Module?): EnvironmentCreatorUv<PathHolder.Eel> {
-  val errorSink = module?.project?.let { ErrorSink().withProject(it) } ?: ErrorSink()
-  return EnvironmentCreatorUv(this, module, errorSink)
+internal fun PythonMutableTargetAddInterpreterModel<PathHolder.Eel>.uvCreator(): EnvironmentCreatorUv<PathHolder.Eel> {
+  val errorSink = ErrorSink()
+  return EnvironmentCreatorUv(this, null, errorSink)
 }
 
 internal class EnvironmentCreatorUv<P : PathHolder>(

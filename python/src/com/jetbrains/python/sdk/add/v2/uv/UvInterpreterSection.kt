@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
@@ -22,11 +21,10 @@ import kotlinx.coroutines.CoroutineScope
  */
 internal class UvInterpreterSection(
   private val model: PythonMutableTargetAddInterpreterModel<PathHolder.Eel>,
-  module: Module?,
   private val selectedMode: ObservableMutableProperty<PythonInterpreterSelectionMode>,
   propertyGraph: PropertyGraph,
 ) {
-  private val uvCreator: EnvironmentCreatorUv<PathHolder.Eel> = model.uvCreator(module)
+  private val uvCreator: EnvironmentCreatorUv<PathHolder.Eel> = model.uvCreator()
 
   private val _uv = propertyGraph.booleanProperty(selectedMode, PythonInterpreterSelectionMode.PROJECT_UV)
 
