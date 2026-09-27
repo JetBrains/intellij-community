@@ -59,6 +59,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.GridBag;
@@ -1041,6 +1042,7 @@ public abstract class DialogWrapper {
    * center of the dialog's content pane. The implementation can return {@code null}
    * value. In this case there will be no options panel.
    */
+  @RequiresEdt
   protected abstract @Nullable JComponent createCenterPanel();
 
   /** @see Window#toFront() */
