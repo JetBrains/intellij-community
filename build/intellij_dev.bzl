@@ -81,34 +81,12 @@ def _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_pat
     })
 
 _PREBUILT_DEV_MAIN_CLASS = "com.intellij.platform.bootstrap.dev.PreBuiltDevMain"
-_BEFORE_RUN_DEV_MAIN_CLASS = "com.intellij.platform.bootstrap.dev.BeforeRunDevMain"
 
-# `PreBuiltDevMain` and `BeforeRunDevMain`. The module carries no build scripts.
+# `PreBuiltDevMain`. The module carries no build scripts.
 _LAUNCHER_MODULE = "@community//platform/bootstrap/dev"
-
-def _before_run_launch(main_class, main_class_module, before_run_main_class, before_run_runtime_deps):
-    """How a launcher starts: `main_class` directly, or `BeforeRunDevMain` over `before_run_main_class` and then `main_class`.
-
-    `main_class_module` holds `main_class`. `BeforeRunDevMain` comes from the launcher module and starts the class
-    `-Dintellij.build.dev.server.main.class` names.
-    """
-    if not before_run_main_class:
-        return struct(main_class = main_class, runtime_deps = [main_class_module], jvm_flags = [])
-    runtime_deps = [_LAUNCHER_MODULE]
-    if main_class_module != _LAUNCHER_MODULE:
-        runtime_deps.append(main_class_module)
-    return struct(
-        main_class = _BEFORE_RUN_DEV_MAIN_CLASS,
-        runtime_deps = runtime_deps + before_run_runtime_deps,
-        jvm_flags = [
-            "-Dintellij.build.dev.server.before.run.main.class=" + before_run_main_class,
-            "-Dintellij.build.dev.server.main.class=" + main_class,
-        ],
-    )
 
 # For `intellij_dev_legacy.bzl`, which cannot load a private name.
 runtime_jvm_flags = _runtime_jvm_flags
-before_run_launch = _before_run_launch
 
 def intellij_dev_prebuilt_binary(
         name,
@@ -121,16 +99,12 @@ def intellij_dev_prebuilt_binary(
         program_args = [],
         visibility = None,
         local_home_tool = None,
-        data = [],
-        before_run_main_class = "",
-        before_run_runtime_deps = []):
+        data = []):
     """Launches a built distribution or a linked local home without packaging it.
 
     The distribution declares its product and additional modules.
     When it supplies local metadata, local_home_tool prepares a temporary home from its component runfiles.
     `data` is the launcher's extra runfiles, on top of the distribution and its config.
-    With `before_run_main_class`, `BeforeRunDevMain` runs that class over `before_run_runtime_deps` first, then
-    `PreBuiltDevMain`, as `intellij_dev_binary` does before `DevMainKt`.
     """
 
     # Manual, like the distribution in `data`: a wildcard build must not compose it. `bazel run` names the launcher and
@@ -144,16 +118,15 @@ def intellij_dev_prebuilt_binary(
 
     local_home_data = [local_home_tool] if local_home_tool else []
     local_home_flags = ["-Didea.dev.local.home.tool=$(rlocationpath %s)" % local_home_tool] if local_home_tool else []
-    launch = _before_run_launch(_PREBUILT_DEV_MAIN_CLASS, _LAUNCHER_MODULE, before_run_main_class, before_run_runtime_deps)
 
     java_binary(
         name = name,
         visibility = visibility,
-        runtime_deps = launch.runtime_deps,
-        main_class = launch.main_class,
+        runtime_deps = [_LAUNCHER_MODULE],
+        main_class = _PREBUILT_DEV_MAIN_CLASS,
         tags = tags,
         data = data + [dist_target, ide_config] + local_home_data,
-        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + launch.jvm_flags + [
+        jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + local_home_flags + [
             "-D%s=$(rlocationpath %s)" % (DEV_IDE_CONFIG_PATH_PROPERTY, ide_config),
             # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime,
             # and a dev launch has it only because `DevMainImpl` sets it from the project root it just built against.
