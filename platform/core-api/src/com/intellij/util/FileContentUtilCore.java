@@ -10,8 +10,12 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.concurrency.TransferredWriteActionService;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,31 +47,46 @@ public final class FileContentUtilCore {
    * @param files the files to reparse.
    */
   public static void reparseFiles(@NotNull Collection<? extends VirtualFile> files) {
-    Application application = ApplicationManager.getApplication();
-    application.runWriteAction(() -> {
-      // files must be processed under one write action to prevent firing event for invalid files.
-      Set<VFilePropertyChangeEvent> events = new HashSet<>();
-      for (VirtualFile file : files) {
-        if (file != null && !file.isDirectory() && file.isValid()) {
-          events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, file, VirtualFile.PROP_NAME, file.getName(), file.getName()));
-        }
+    // files must be processed under one write action to prevent firing event for invalid files.
+    ApplicationManager.getApplication().runWriteAction(() -> fireReparseEvents(createReparseEvents(files)));
+  }
+
+  /**
+   * Creates the reparse events for the valid files in {@code files} that are not directories.
+   * To reparse the files, give the result to {@code RefreshQueue.processEvents}, which drops the events of invalid files.
+   * Then increment {@link ForcefulReparseModificationTracker}.
+   */
+  @ApiStatus.Internal
+  @RequiresReadLock
+  public static @Unmodifiable @NotNull List<VFileEvent> createReparseEvents(@NotNull Collection<? extends VirtualFile> files) {
+    Set<VFilePropertyChangeEvent> events = new HashSet<>();
+    for (VirtualFile file : files) {
+      if (file != null && !file.isDirectory() && file.isValid()) {
+        events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, file, VirtualFile.PROP_NAME, file.getName(), file.getName()));
       }
+    }
+    return Collections.unmodifiableList(new ArrayList<>(events));
+  }
 
-      BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-      BulkFileListenerBackgroundable publisherBackgroundable = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
-      List<VFileEvent> eventList = Collections.unmodifiableList(new ArrayList<>(events));
+  /**
+   * Sends {@code events} from {@link #createReparseEvents} to the VFS listeners, which reparse the files.
+   */
+  @RequiresWriteLock
+  private static void fireReparseEvents(@NotNull List<VFileEvent> events) {
+    Application application = ApplicationManager.getApplication();
+    BulkFileListener publisher = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+    BulkFileListenerBackgroundable publisherBackgroundable = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
 
-      TransferredWriteActionService service = application.getService(TransferredWriteActionService.class);
-      Consumer<Runnable> bgToEdt = service::runOnEdtWithTransferredWriteActionAndWait;
-      Consumer<Runnable> edtToBg = service::runOnBackgroundThreadWithTransferredWriteActionAndWait;
+    TransferredWriteActionService service = application.getService(TransferredWriteActionService.class);
+    Consumer<Runnable> bgToEdt = service::runOnEdtWithTransferredWriteActionAndWait;
+    Consumer<Runnable> edtToBg = service::runOnBackgroundThreadWithTransferredWriteActionAndWait;
 
-      invokePublisher(() -> publisherBackgroundable.before(eventList), edtToBg, Runnable::run);
-      invokePublisher(() -> publisher.before(eventList), Runnable::run, bgToEdt);
-      invokePublisher(() -> publisher.after(eventList), Runnable::run, bgToEdt);
-      invokePublisher(() -> publisherBackgroundable.after(eventList), edtToBg, Runnable::run);
+    invokePublisher(() -> publisherBackgroundable.before(events), edtToBg, Runnable::run);
+    invokePublisher(() -> publisher.before(events), Runnable::run, bgToEdt);
+    invokePublisher(() -> publisher.after(events), Runnable::run, bgToEdt);
+    invokePublisher(() -> publisherBackgroundable.after(events), edtToBg, Runnable::run);
 
-      ForcefulReparseModificationTracker.increment();
-    });
+    ForcefulReparseModificationTracker.increment();
   }
 
   private static void invokePublisher(Runnable targetRunnable, Consumer<Runnable> whatToDoOnEdt, Consumer<Runnable> whatToDoOnBgt) {
