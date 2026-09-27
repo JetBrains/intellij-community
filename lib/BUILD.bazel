@@ -10597,7 +10597,7 @@ copy_file(
 )
 
 java_library(
-    name = "libraries-junit5-suites-_j_unit6_suites",
+    name = "libraries-junit6-suites-_j_unit6_suites",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
