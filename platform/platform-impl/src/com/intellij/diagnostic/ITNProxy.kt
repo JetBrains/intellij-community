@@ -381,7 +381,9 @@ object ITNProxy {
 
         if (errorBean.isAutoReportedByPlatform) {
           append(builder, "report.automatic", "true")
-          append(builder, "report.automatic.source", ExceptionAutoReportUtil.getAutoReportSource(event.throwable))
+          // the event may carry a sanitized copy of the throwable, so the source is taken from the original one
+          val originalThrowable = (event.data as? AbstractMessage)?.throwable ?: event.throwable
+          append(builder, "report.automatic.source", ExceptionAutoReportUtil.getAutoReportSource(originalThrowable))
           ExceptionAutoReportUtil.getAutoReportTag()?.let {
             append(builder, "report.automatic.tag", it)
           }

@@ -41,7 +41,7 @@ public class SubmittedReportInfo {
     return myLinkText;
   }
 
-  public SubmissionStatus getStatus() {
+  public @NotNull SubmissionStatus getStatus() {
     return myStatus;
   }
 }
