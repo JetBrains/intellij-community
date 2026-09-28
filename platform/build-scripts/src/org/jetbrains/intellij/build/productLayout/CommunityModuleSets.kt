@@ -217,15 +217,6 @@ object CommunityModuleSets {
   }
 
   /**
-   * JSP base API modules — shared JSP language base used by Java, Kotlin, Lombok plugins and language servers.
-   * Kept in its own module set because it does not belong to `essential` (JSP-specific) and needs its own
-   * classloader to depend on xml.psi (a separate content module).
-   */
-  fun jspBase(): ModuleSet = moduleSet("jsp.base") {
-    module("intellij.jsp.base")
-  }
-
-  /**
    * XML support modules without Structure View UI.
    * The other products bundle the `intellij.xml.plugin` wrapper plugin instead.
    */

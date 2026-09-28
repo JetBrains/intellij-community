@@ -15,6 +15,7 @@
   </dependencies>
 
   <module value="com.intellij.modules.java"/>
+  <module value="com.intellij.modules.jsp.base"/>
 
   <content namespace="jetbrains">
     <module name="intellij.java.syntax" loading="embedded"/>
@@ -34,6 +35,7 @@
     <module name="intellij.java.execution" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers" loading="optional"/>
     <module name="intellij.jvm.analysis" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jsp.base"/>
     <module name="intellij.jsp" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.debugger" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.codeserver.core" required-if-available="intellij.platform.backend"/>

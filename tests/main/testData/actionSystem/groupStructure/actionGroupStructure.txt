@@ -2740,11 +2740,11 @@
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
   Images.SetBackgroundImage
+  AddAntBuildFile
+  XPathView.XSLT.Associations
   GitLab.Create.Snippet
   Github.Create.Gist
   Mermaid.ExportDiagram
-  AddAntBuildFile
-  XPathView.XSLT.Associations
   Gradle.ProjectViewDependencyAnalyzer
   PackageFile
   Maven.ProjectViewDependencyAnalyzer

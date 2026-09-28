@@ -8,7 +8,6 @@
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
-  <module value="com.intellij.modules.jsp.base"/>
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.lang.actions"/>
   <module value="com.intellij.modules.platform"/>
@@ -19,7 +18,6 @@
   <xi:include href="/META-INF/DesignerCorePlugin.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/intellij.moduleSets.jsp.base.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.platform.resources.defaults.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>

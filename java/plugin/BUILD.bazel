@@ -21,6 +21,7 @@ dev_dist_plugin(
         "intellij.java.execution",
         "intellij.java.remoteServers",
         "intellij.jvm.analysis",
+        "intellij.jsp.base",
         "intellij.jsp",
         "intellij.java.debugger",
         "intellij.java.codeserver.core",

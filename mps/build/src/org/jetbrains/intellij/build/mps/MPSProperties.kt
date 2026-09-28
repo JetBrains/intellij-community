@@ -193,10 +193,6 @@ class MPSProperties : JetBrainsProductProperties() {
         moduleSet(CommunityModuleSets.ideCommon())
         moduleSet(CommunityModuleSets.platformResourceDefaults())
 
-        // JSP base modules — the Java plugin's intellij.jsp/intellij.jsp.spi content modules depend on
-        // intellij.jsp.base, which java-capable products provide (see CommunityProductFragments.javaIdeBaseFragment).
-        moduleSet(CommunityModuleSets.jspBase())
-
         module("intellij.platform.whatsNew")
         module("intellij.ide.startup.importSettings")
         // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
