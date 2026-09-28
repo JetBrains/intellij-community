@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -166,7 +167,9 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
     panel.createActionLabel(title, () -> {
       if (sourceFile.isValid()) {
         OpenFileDescriptor descriptor = new OpenFileDescriptor(project, sourceFile);
-        FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+        var fileEditorManager = FileEditorManager.getInstance(project);
+        fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor)
+          .withRequestFocus(true));
       }
     });
   }

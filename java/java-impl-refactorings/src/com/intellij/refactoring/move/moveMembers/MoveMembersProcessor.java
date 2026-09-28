@@ -275,7 +275,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     if (myOpenInEditor) {
       PsiMember item = JBIterable.from(movedMembers.values()).map(SmartPsiElementPointer::getElement).filter(Objects::nonNull).first();
       if (item != null) {
-        EditorHelper.openInEditor(item);
+        EditorHelper.requestOpenInEditor(item, false);
       }
     }
   }
