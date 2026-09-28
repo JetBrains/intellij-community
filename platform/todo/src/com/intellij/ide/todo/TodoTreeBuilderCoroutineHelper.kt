@@ -59,9 +59,10 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
     val scanCompleted = CompletableFuture<Unit>()
 
     remoteTodoFilesWatchJob = this.scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
-      readAction { treeBuilder.clearCache() }
+      var scanInProgress = true
       collectWatchedTodoFiles(treeBuilder.project, todoScope, filter) { event ->
         coroutineContext.ensureActive()
+        if (event is TodoEvent.AllItemsRemoved) scanInProgress = true
         val change = treeBuilder.applyRemoteTodoEvent(event)
         when (change) {
           is TodoModelChange.FileUpdated -> treeBuilder.addRemoteTodoFileToTree(change.file)
@@ -70,9 +71,10 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
           TodoModelChange.Nothing -> {}
           }
         if (event is TodoEvent.ScanFinished) {
+          scanInProgress = false
           scanCompleted.complete(Unit)
         }
-        readAction { treeBuilder.updateVisibleTree() }
+        if (!scanInProgress) readAction { treeBuilder.updateVisibleTree() }
       }
     }
     return scanCompleted
