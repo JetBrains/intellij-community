@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
@@ -1727,10 +1728,10 @@ object MavenUtil {
   }
 
   fun getModuleJdk(mavenProjectsManager: MavenProjectsManager, mavenProject: MavenProject): Sdk? {
-    val module = mavenProjectsManager.findModule(mavenProject)
-    if (module == null) return null
-
-    return ModuleRootManager.getInstance(module).getSdk()
+    return runReadAction {
+      val module = mavenProjectsManager.findModule(mavenProject) ?: return@runReadAction null
+      ModuleRootManager.getInstance(module).sdk
+    }
   }
 
   @JvmStatic
