@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -27,8 +28,10 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 class GitLabProjectViewModelTest {
@@ -112,6 +115,25 @@ class GitLabProjectViewModelTest {
     vm.activateAndAwaitProject { }
 
     coVerify(exactly = 0) { connectionManager.openConnection(any(), any()) }
+  }
+
+  @Test
+  fun `activateAndAwaitProject skips the action when no mapping for the preferred project appears`() = timeoutRunBlocking {
+    val vm = project.service<GitLabProjectViewModel>()
+
+    // A connection to another project exists, so a fallback to any connected vm would run the action there.
+    connectionManager.openConnection(originMapping, account)
+    vm.connectedProjectVm.first { it != null }
+
+    val unknownProject = GitLabProjectCoordinates(GitLabServerPath.DEFAULT_SERVER, GitLabProjectPath("unknown-owner", "repo"))
+    var actionInvoked = false
+    vm.activateAndAwaitProject(unknownProject to account, mappingTimeout = 100.milliseconds) {
+      actionInvoked = true
+    }
+    delay(500.milliseconds) // longer than the mapping timeout, so the skip has happened when the check runs
+
+    assertFalse(actionInvoked)
+    coVerify(exactly = 1) { connectionManager.openConnection(any(), any()) }
   }
 
   @Test
