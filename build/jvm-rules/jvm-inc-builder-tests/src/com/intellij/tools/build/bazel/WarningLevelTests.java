@@ -13,7 +13,7 @@ import org.junit.Test;
  *   <li>the initial build is clean and succeeds;</li>
  *   <li>step 1 introduces a real compiler warning into the sources — under {@code -Werror} it becomes an
  *       error and the build turns <b>red</b> ({@code Exit code: ERROR} in build.log);</li>
- *   <li>step 2 adds {@code x_warning_level = ["&lt;DIAGNOSTIC&gt;:warning"]} for exactly that diagnostic — the
+ *   <li>step 2 adds {@code x_warning_level = {"&lt;DIAGNOSTIC&gt;": "warning"}} for exactly that diagnostic — the
  *       warning is downgraded, the same code now compiles and the build turns <b>green</b> ({@code Exit code: OK}).</li>
  * </ul>
  * Verified for two different warning types (DEPRECATION and UNCHECKED_CAST).
@@ -35,9 +35,9 @@ public class WarningLevelTests extends BazelIncBuildTest {
    * UNCHECKED_CAST warning under {@code -Werror}:
    * <ul>
    *   <li>step 1: both warnings, no override -> build red ({@code Exit code: ERROR});</li>
-   *   <li>step 2: {@code x_warning_level = ["DEPRECATION:warning"]} -> still red, UNCHECKED_CAST remains
+   *   <li>step 2: {@code x_warning_level = {"DEPRECATION": "warning"}} -> still red, UNCHECKED_CAST remains
    *       an error (so the second level is not a no-op);</li>
-   *   <li>step 3: {@code x_warning_level = ["DEPRECATION:warning", "UNCHECKED_CAST:warning"]} -> both
+   *   <li>step 3: {@code x_warning_level = {"DEPRECATION": "warning", "UNCHECKED_CAST": "warning"}} -> both
    *       downgraded, the same code compiles, build green ({@code Exit code: OK}).</li>
    * </ul>
    */

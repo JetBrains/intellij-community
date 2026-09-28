@@ -235,7 +235,7 @@ public class BuildContextImpl implements BuildContext {
     }
 
     StringBuilder optIns = new StringBuilder();
-    for (String annotName : CLFlags.OPT_IN.getValue(flags)) {
+    for (String annotName : CLFlags.X_OPTIN.getValue(flags)) {
       optIns.append(annotName).append(",");
     }
     if (!optIns.isEmpty()) {
@@ -253,15 +253,9 @@ public class BuildContextImpl implements BuildContext {
       throw new IllegalArgumentException("Unsupported kotlinc warning option: " + warn);
     }
 
-    if (CLFlags.X_ALLOW_RESULT_RETURN_TYPE.isFlagSet(flags)) {
-      options.add("-Xallow-result-return-type");
-    }
-    Iterable<String> jsr305 = CLFlags.X_JSR305.getValue(flags);
+    Iterable<String> jsr305 = CLFlags.X_JSR_305.getValue(flags);
     if (jsr305.iterator().hasNext()) {
       options.add("-Xjsr305=" + String.join(",", jsr305));
-    }
-    if (CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS.isFlagSet(flags)) {
-      options.add("-Xstrict-java-nullability-assertions");
     }
     // One comma-joined flag, not repeated: kotlinc parses with overrideArguments=true, where a repeated
     // array arg overwrites (last wins); warningLevels' default ',' delimiter splits it back into an array.

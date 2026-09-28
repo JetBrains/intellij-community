@@ -46,7 +46,7 @@ public final class BuildContextKotlinOptionsTest extends TestCase {
       "--target_label", "//test:lib",
       "--out", "out/lib.jar",
       "--kotlin_module_name", "lib",
-      "--x_jsr305", "strict", "under-migration:warn", "@org.example.Nullable:ignore"
+      "--x_jsr_305", "strict", "under-migration:warn", "@org.example.Nullable:ignore"
     );
 
     K2JVMCompilerArguments arguments = buildKotlinCompilerArguments(context);

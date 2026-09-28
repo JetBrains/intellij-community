@@ -58,6 +58,22 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
             return "no-compatibility"
         fail("Unsupported x_jvm_default value: %s" % x_jvm_default)
 
+    def _warning_levels_to_dict(levels):
+        result = {}
+        for entry in levels:
+            diagnostic, separator, level = entry.rpartition(":")
+            if not separator or not diagnostic or not level:
+                fail("x_warning_level entry must have the form DIAGNOSTIC:level, got %s" % entry)
+            result[diagnostic] = level
+        return result
+
+    def _jsr305_mode(modes):
+        if not modes:
+            return "default"
+        if len(modes) == 1 and modes[0] in ["ignore", "warn", "strict"]:
+            return modes[0]
+        fail("x_jsr305 takes one global mode, ignore, warn or strict, got %s" % modes)
+
     # We set default options for IntelliJ project.
     def create_kotlinc_options(
             name,
@@ -69,7 +85,6 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
             progressive = $progressive,
             warn = "off",
             x_allow_kotlin_package = False,
-            x_allow_result_return_type = False,
             x_allow_unstable_dependencies = False,
             x_compiler_plugin_order = [],
             x_consistent_data_class_copy_visibility = False,
@@ -87,7 +102,6 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
             x_report_all_warnings = $allWarnings,
             x_sam_conversions = "indy",
             x_skip_prerelease_check = False,
-            x_strict_java_nullability_assertions = False,
             x_warning_level = [],
             x_wasm_attach_js_exception = False,
             x_wasm_generate_closed_world_multimodule = False,
@@ -102,21 +116,22 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
             jvm_target = _normalize_kotlinc_jvm_target(jvm_target),
             api_version = api_version,
             language_version = language_version,
-            opt_in = opt_in,
+            x_optin = opt_in,
             plugin_options = plugin_options,
             progressive = progressive,
             visibility = ["//visibility:public"],
             warn = warn,
             x_allow_kotlin_package = x_allow_kotlin_package,
-            x_allow_result_return_type = x_allow_result_return_type,
             x_allow_unstable_dependencies = x_allow_unstable_dependencies,
             x_compiler_plugin_order = x_compiler_plugin_order,
             x_consistent_data_class_copy_visibility = x_consistent_data_class_copy_visibility,
             x_context_parameters = x_context_parameters,
             x_context_receivers = x_context_receivers,
-            x_explicit_api = x_explicit_api_mode,
+            # rules_kotlin spells "no enforcement" as "off"; the facet spells it "disable".
+            x_explicit_api_mode = "off" if x_explicit_api_mode == "disable" else x_explicit_api_mode,
             x_inline_classes = x_inline_classes,
-            x_jsr305 = x_jsr305,
+            # rules_kotlin takes one global mode; the facet writes the -Xjsr305 values as a list.
+            x_jsr_305 = _jsr305_mode(x_jsr305),
             jvm_default = jvm_default,
             x_lambdas = x_lambdas,
             x_no_call_assertions = x_no_call_assertions,
@@ -125,8 +140,8 @@ internal fun renderCompilerOptionsBzl(defaults: KotlincProjectDefaults): String 
             x_report_all_warnings = kotlinc_opt_override("x_report_all_warnings", x_report_all_warnings),
             x_sam_conversions = x_sam_conversions,
             x_skip_prerelease_check = x_skip_prerelease_check,
-            x_strict_java_nullability_assertions = x_strict_java_nullability_assertions,
-            x_warning_level = x_warning_level,
+            # rules_kotlin takes a dict; the facet writes `DIAGNOSTIC:level` entries.
+            x_warning_level = _warning_levels_to_dict(x_warning_level),
             x_wasm_attach_js_exception = x_wasm_attach_js_exception,
             x_wasm_generate_closed_world_multimodule = x_wasm_generate_closed_world_multimodule,
             x_wasm_kclass_fqn = x_wasm_kclass_fqn,

@@ -1367,10 +1367,10 @@ private fun hasIconRobots(root: Path): Boolean {
 }
 
 /** The manifest attributes the jar tool of the rules_kotlin backend writes itself. A module manifest may not set them. */
-private val JAR_TOOL_MANIFEST_ATTRIBUTES = java.util.Set.of("Manifest-Version", "Created-By")
+private val JAR_TOOL_MANIFEST_ATTRIBUTES = setOf("Manifest-Version", "Created-By")
 
 /** The manifest attributes the rules_kotlin rules write for the build graph. A module manifest must not set them. */
-private val RULE_MANIFEST_ATTRIBUTES = java.util.Set.of("Target-Label", "Injecting-Rule-Kind")
+private val RULE_MANIFEST_ATTRIBUTES = setOf("Target-Label", "Injecting-Rule-Kind")
 
 /**
  * The main attributes of the `META-INF/MANIFEST.MF` a module ships in a production resource root, as `Name: value` lines for the
@@ -1509,10 +1509,6 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("x_allow_kotlin_package", true)
     }
   }
-  //x_allow_result_return_type
-  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xallow-result-return-type") == true) {
-    options.put("x_allow_result_return_type", true)
-  }
   //x_allow_unstable_dependencies
   handleArgument(K2JVMCompilerArguments::allowUnstableDependencies) {
     if (it) {
@@ -1615,10 +1611,6 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("x_skip_prerelease_check", true)
     }
   }
-  //x_strict_java_nullability_assertions
-  if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xstrict-java-nullability-assertions") == true) {
-    options.put("x_strict_java_nullability_assertions", true)
-  }
   //x_wasm_attach_js_exception
   if (mergedCompilerArguments.errors?.unknownExtraFlags?.contains("-Xwasm-attach-js-exception") == true) {
     options.put("x_wasm_attach_js_exception", true)
@@ -1655,6 +1647,8 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     // which is what the x_x_language handling above reads.
     handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths", "manuallyConfiguredFeatures"),
     allowedInternalArguments = allowedInternalXXLanguage,
+    // -Xallow-result-return-type and -Xstrict-java-nullability-assertions left the compiler before 2.4. A facet that
+    // still carries one of them gets no option for it; the Kotlin/Wasm flags are emitted above.
     allowedUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception", "-Xwasm-generate-closed-world-multimodule", "-Xwasm-kclass-fqn"),
   )
 

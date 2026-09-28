@@ -5,92 +5,64 @@ load(
     _rk_kt_kotlinc_options = "kt_kotlinc_options",
 )
 
+# The Kotlin compiler options of a target are the rules_kotlin provider; rules_jvm adds no JVM option of its own.
 KotlincOptions = _RKKotlincOptions
 
+# The options rules_jvm keeps next to KotlincOptions: the Kotlin/Wasm options the wasmjs rules read, and plugin_options
+# until kt_plugin_cfg replaces it. The rules_kotlin provider models neither.
 KotlincExtraOptionsInfo = provider(
-    doc = "Extra Kotlin compiler options not covered by the standard KotlincOptions provider.",
+    doc = "Kotlin compiler options rules_jvm carries next to the rules_kotlin KotlincOptions provider.",
     fields = {
-        "plugin_options": "Additional -P compiler options.",
-        "x_allow_result_return_type": "Enable kotlin.Result as a return type.",
-        "x_jsr305": "Nullability modes for JSR-305 annotations.",
-        "x_strict_java_nullability_assertions": "Enable strict Java nullability assertions.",
-        "x_warning_level": "Per-diagnostic warning levels passed as repeated -Xwarning-level flags.",
-        "x_wasm_attach_js_exception": "Enable attaching JS exceptions for Wasm.",
-        "x_wasm_generate_closed_world_multimodule": "Generate closed-world multimodule Wasm.",
-        "x_wasm_kclass_fqn": "Enable KClass::qualifiedName support for Wasm.",
+        "plugin_options": "Compiler plugin options, each `plugin:<id>:<key>=<value>`, passed as -P. To be replaced by kt_plugin_cfg.",
+        "x_wasm_attach_js_exception": "Attach a JavaScript exception to a Wasm exception (-Xwasm-attach-js-exception).",
+        "x_wasm_generate_closed_world_multimodule": "Generate closed-world multimodule Wasm (-Xwasm-generate-closed-world-multimodule).",
+        "x_wasm_kclass_fqn": "Support KClass::qualifiedName in Wasm (-Xwasm-kclass-fqn).",
     },
 )
 
-_EXTRA_OPTION_FIELDS = [
-    "plugin_options",
-    "x_allow_result_return_type",
-    "x_jsr305",
-    "x_strict_java_nullability_assertions",
-    "x_warning_level",
-    "x_wasm_attach_js_exception",
-    "x_wasm_generate_closed_world_multimodule",
-    "x_wasm_kclass_fqn",
-]
-
-_EXTRA_OPTION_ATTRS = {
-    "plugin_options": attr.string_list(
-        default = [],
-        doc = "Define compiler plugin options to pass as repeated -P entries.",
-    ),
-    "x_allow_result_return_type": attr.bool(
-        default = False,
-        doc = "Enable kotlin.Result as a return type.",
-    ),
-    "x_jsr305": attr.string_list(
-        default = [],
-        doc = "Nullability modes for JSR-305 annotations.",
-    ),
-    "x_strict_java_nullability_assertions": attr.bool(
-        default = False,
-        doc = "Enable strict Java nullability assertions.",
-    ),
-    "x_warning_level": attr.string_list(
-        default = [],
-        doc = "Per-diagnostic warning levels, e.g. DEPRECATION:warning.",
-    ),
-    "x_wasm_attach_js_exception": attr.bool(
-        default = False,
-        doc = "Enable attaching JavaScript exceptions for Wasm.",
-    ),
-    "x_wasm_generate_closed_world_multimodule": attr.bool(
-        default = False,
-        doc = "Generate closed-world multimodule Wasm.",
-    ),
-    "x_wasm_kclass_fqn": attr.bool(
-        default = False,
-        doc = "Enable KClass::qualifiedName support for Wasm.",
-    ),
+_WASM_OPTION_FLAGS = {
+    "x_wasm_attach_js_exception": "-Xwasm-attach-js-exception",
+    "x_wasm_generate_closed_world_multimodule": "-Xwasm-generate-closed-world-multimodule",
+    "x_wasm_kclass_fqn": "-Xwasm-kclass-fqn",
 }
 
+_EXTRA_OPTION_FIELDS = ["plugin_options"] + list(_WASM_OPTION_FLAGS.keys())
+
+_EXTRA_OPTION_ATTRS = dict(
+    {
+        name: attr.bool(
+            default = False,
+            doc = "Passes %s to the Kotlin/Wasm compiler." % flag,
+        )
+        for name, flag in _WASM_OPTION_FLAGS.items()
+    },
+    plugin_options = attr.string_list(
+        default = [],
+        doc = "Compiler plugin options, each `plugin:<id>:<key>=<value>`, passed to the compiler as -P.",
+    ),
+)
+
 def _kt_kotlinc_options_with_extra_impl(ctx):
-    extra_values = {name: getattr(ctx.attr, name, None) for name in _EXTRA_OPTION_FIELDS}
     return [
         ctx.attr.kotlinc_options[KotlincOptions],
-        KotlincExtraOptionsInfo(**extra_values),
+        KotlincExtraOptionsInfo(**{name: getattr(ctx.attr, name) for name in _EXTRA_OPTION_FIELDS}),
     ]
-
-_KT_KOTLINC_OPTIONS_WITH_EXTRA_ATTRS = dict(_EXTRA_OPTION_ATTRS)
-_KT_KOTLINC_OPTIONS_WITH_EXTRA_ATTRS.update({
-    # Every jvm_library names a kotlinc options target on both backends, so a dependency here makes every
-    # build analyze the guard of the protobuf toolchains (//:proto_toolchain_guard): a lost toolchain
-    # registration or a protoc built from source fails the build instead of passing silently.
-    "_proto_toolchain_guard": attr.label(
-        default = Label("//:proto_toolchain_guard"),
-    ),
-    "kotlinc_options": attr.label(
-        mandatory = True,
-        providers = [KotlincOptions],
-    ),
-})
 
 _kt_kotlinc_options_with_extra = rule(
     implementation = _kt_kotlinc_options_with_extra_impl,
-    attrs = _KT_KOTLINC_OPTIONS_WITH_EXTRA_ATTRS,
+    attrs = dict(
+        _EXTRA_OPTION_ATTRS,
+        kotlinc_options = attr.label(
+            mandatory = True,
+            providers = [KotlincOptions],
+        ),
+        # Every jvm_library names a kotlinc options target on both backends, so a dependency here makes every
+        # build analyze the guard of the protobuf toolchains (//:proto_toolchain_guard): a lost toolchain
+        # registration or a protoc built from source fails the build instead of passing silently.
+        _proto_toolchain_guard = attr.label(
+            default = Label("//:proto_toolchain_guard"),
+        ),
+    ),
     provides = [KotlincOptions, KotlincExtraOptionsInfo],
 )
 
@@ -105,94 +77,42 @@ _RULE_ATTR_NAMES = [
     "visibility",
 ]
 
-def _extract_rule_attrs(kwargs):
-    attrs = {}
-    for name in _RULE_ATTR_NAMES:
-        if name in kwargs:
-            attrs[name] = kwargs.pop(name)
-    return attrs
-
-def _merge_dicts(left, right):
-    result = {}
-    result.update(left)
-    result.update(right)
-    return result
-
-# rules_kotlin (bta-incremental, based on upstream master) spells two kt_kotlinc_options attrs
-# differently from the fork this repo was originally written against. Callers (including the
-# generated community/build/compiler-options.bzl) keep the original spellings; translate here.
-_RENAMED_RK_OPTIONS = {
-    "opt_in": "x_optin",
-    "x_explicit_api": "x_explicit_api_mode",
-}
-
-def _to_rk_option(option_name, value):
-    renamed = _RENAMED_RK_OPTIONS.get(option_name, option_name)
-    if renamed == "x_explicit_api_mode" and value == "disable":
-        # Upstream spells "no enforcement" as "off" (renders no flag), which matches what the
-        # fork's "disable" produced.
-        value = "off"
-    return renamed, value
-
 def kt_kotlinc_options(name, **kwargs):
-    """Define Kotlin compiler options with standard rules_kotlin providers.
+    """Defines Kotlin compiler options: rules_kotlin's kt_kotlinc_options plus the rules_jvm extra options.
 
-    Standard options are delegated to rules_kotlin's kt_kotlinc_options.
-    rules_jvm-specific options are carried via KotlincExtraOptionsInfo, which by design only the
-    JPS backend reads; their delivery on the rules_kotlin (BTA) backend is handled separately.
+    Every option except the extra options goes to rules_kotlin's `kt_kotlinc_options` under the rules_kotlin
+    attribute name. The target provides `KotlincOptions` and `KotlincExtraOptionsInfo`.
+
+    Args:
+        name: The target name.
+        **kwargs: The options and the common rule attributes.
     """
-    rule_attrs = _extract_rule_attrs(kwargs)
-
-    rk_kwargs = {}
-    extra_kwargs = {}
-    for option_name, value in kwargs.items():
-        if option_name in _EXTRA_OPTION_FIELDS:
-            extra_kwargs[option_name] = value
-        else:
-            rk_option_name, rk_value = _to_rk_option(option_name, value)
-            rk_kwargs[rk_option_name] = rk_value
+    rule_attrs = {attr_name: kwargs.pop(attr_name) for attr_name in _RULE_ATTR_NAMES if attr_name in kwargs}
+    extra_kwargs = {option: kwargs.pop(option) for option in _EXTRA_OPTION_FIELDS if option in kwargs}
 
     rk_options_name = name + "_rules_kotlin_options"
-
     _rk_kt_kotlinc_options(
         name = rk_options_name,
         visibility = ["//visibility:private"],
-        **rk_kwargs
+        **kwargs
     )
-
     _kt_kotlinc_options_with_extra(
         name = name,
         kotlinc_options = ":" + rk_options_name,
-        **_merge_dicts(extra_kwargs, rule_attrs)
+        **dict(extra_kwargs, **rule_attrs)
     )
 
 def _extra_options_to_flags(kotlinc_extra_options):
     if not kotlinc_extra_options:
         return []
-
     flags = []
-
-    plugin_options = getattr(kotlinc_extra_options, "plugin_options", None)
-    if plugin_options:
-        for option in plugin_options:
-            flags.extend(["-P", option])
-
-    if getattr(kotlinc_extra_options, "x_allow_result_return_type", False):
-        flags.append("-Xallow-result-return-type")
-    jsr305 = getattr(kotlinc_extra_options, "x_jsr305", None)
-    if jsr305:
-        flags.append("-Xjsr305=" + ",".join(jsr305))
-    if getattr(kotlinc_extra_options, "x_strict_java_nullability_assertions", False):
-        flags.append("-Xstrict-java-nullability-assertions")
-    for level in getattr(kotlinc_extra_options, "x_warning_level", None) or []:
-        flags.append("-Xwarning-level=" + level)
-    if getattr(kotlinc_extra_options, "x_wasm_attach_js_exception", False):
-        flags.append("-Xwasm-attach-js-exception")
-    if getattr(kotlinc_extra_options, "x_wasm_generate_closed_world_multimodule", False):
-        flags.append("-Xwasm-generate-closed-world-multimodule")
-    if getattr(kotlinc_extra_options, "x_wasm_kclass_fqn", False):
-        flags.append("-Xwasm-kclass-fqn")
-
+    for option in getattr(kotlinc_extra_options, "plugin_options", []):
+        flags.extend(["-P", option])
+    flags.extend([
+        flag
+        for name, flag in _WASM_OPTION_FLAGS.items()
+        if getattr(kotlinc_extra_options, name, False)
+    ])
     return flags
 
 # Used by the Bazel plugin.
@@ -209,23 +129,23 @@ def kotlinc_options_to_flags(kotlinc_options, kotlinc_extra_options = None):
     flags.extend(_extra_options_to_flags(kotlinc_extra_options))
     return flags
 
+# The options the JPS worker takes, in worker flag order. Each is the name of a KotlincOptions field, and the
+# worker flag is that name with a `--` prefix.
 _WORKER_OPTION_NAMES = [
     "jvm_target",
     "api_version",
     "language_version",
-    "opt_in",
-    "plugin_options",
+    "x_optin",
     "warn",
     "x_allow_kotlin_package",
-    "x_allow_result_return_type",
     "x_allow_unstable_dependencies",
     "x_compiler_plugin_order",
     "x_consistent_data_class_copy_visibility",
     "x_context_parameters",
     "x_context_receivers",
-    "x_explicit_api",
+    "x_explicit_api_mode",
     "x_inline_classes",
-    "x_jsr305",
+    "x_jsr_305",
     "jvm_default",
     "x_lambdas",
     "x_no_call_assertions",
@@ -235,37 +155,27 @@ _WORKER_OPTION_NAMES = [
     "x_report_all_warnings",
     "x_sam_conversions",
     "x_skip_prerelease_check",
-    "x_strict_java_nullability_assertions",
     "x_warning_level",
-    "x_wasm_attach_js_exception",
-    "x_wasm_generate_closed_world_multimodule",
-    "x_wasm_kclass_fqn",
     "x_when_guards",
     "x_xlanguage",
 ]
 
-def _kotlinc_worker_option_value(name, kotlinc_options, kotlinc_extra_options):
-    if kotlinc_extra_options and name in _EXTRA_OPTION_FIELDS:
-        return getattr(kotlinc_extra_options, name, None)
-
-    if not kotlinc_options:
+def _kotlinc_worker_option_value(name, kotlinc_options):
+    if not hasattr(kotlinc_options, name):
         return None
-
-    # The worker flag names predate the rules_kotlin attr renames; read the renamed provider
-    # fields while keeping the worker wire format unchanged.
-    field = _RENAMED_RK_OPTIONS.get(name, name)
-    if not hasattr(kotlinc_options, field):
-        return None
-    value = getattr(kotlinc_options, field, None)
-    if name == "x_explicit_api" and value == "off":
-        # "off" is the attr's no-enforcement default; the worker's default is the same, so emit
-        # nothing (the previous pin's attr used "" for this case).
+    value = getattr(kotlinc_options, name)
+    if name == "x_explicit_api_mode" and value == "off":
+        # "off" is the no-enforcement default of the attribute and of the worker: emit nothing.
         return None
     if name == "jvm_default" and value == "off":
-        # "off" is the attr's render-no-flag default (value_to_flag maps it to None); the stable
-        # -jvm-default flag rejects "off" as a mode, so emit nothing (the previous pin's attr
-        # used "" for this case).
+        # "off" renders no flag in rules_kotlin, and the stable -jvm-default flag rejects it as a mode: emit nothing.
         return None
+    if name == "x_jsr_305" and value == "default":
+        # "default" renders no flag in rules_kotlin: emit nothing.
+        return None
+    if name == "x_warning_level":
+        # rules_kotlin holds the option as a dict; the worker takes repeated `NAME:level` values.
+        return ["%s:%s" % (diagnostic, level) for diagnostic, level in value.items()]
     return value
 
 def kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options = None):
@@ -273,10 +183,14 @@ def kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options = None)
 
     Args:
         kotlinc_options: rules_kotlin KotlincOptions.
-        kotlinc_extra_options: Optional KotlincExtraOptionsInfo.
+        args: The Args object of the worker action.
+        kotlinc_extra_options: Optional KotlincExtraOptionsInfo; the worker takes its plugin_options.
     """
+    plugin_options = getattr(kotlinc_extra_options, "plugin_options", []) if kotlinc_extra_options else []
+    if plugin_options:
+        args.add_all("--plugin_options", plugin_options)
     for name in _WORKER_OPTION_NAMES:
-        value = _kotlinc_worker_option_value(name, kotlinc_options, kotlinc_extra_options)
+        value = _kotlinc_worker_option_value(name, kotlinc_options)
         if value == None or value == "" or value == [] or value == False:
             continue
 
@@ -285,9 +199,10 @@ def kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options = None)
         if name == "jvm_target" and value == "1.8":
             value = "8"
 
+        flag = "--" + name
         if value == True:
-            args.add("--" + name)
+            args.add(flag)
         elif type(value) == "list":
-            args.add_all("--" + name, value)
+            args.add_all(flag, value)
         else:
-            args.add("--" + name, value)
+            args.add(flag, value)
