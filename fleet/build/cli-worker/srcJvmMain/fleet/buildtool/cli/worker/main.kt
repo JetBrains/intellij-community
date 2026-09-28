@@ -2,20 +2,24 @@
 package fleet.buildtool.cli.worker
 
 import fleet.buildtool.cli.main as runCli
+import fleet.buildtool.cli.telemetryServer.withTelemetryServer
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.WorkRequestReaderWithoutDigest
 import org.jetbrains.bazel.jvm.processRequests
 
 fun main(args: Array<String>) {
-  processRequests(
-    startupArgs = args,
-    executorFactory = { _, _ ->
-      WorkRequestExecutor { request, _, _, _ ->
-        runCli(request.arguments)
-        0
-      }
-    },
-    reader = WorkRequestReaderWithoutDigest(System.`in`),
-    serviceName = "community-fleet-cli-worker",
-  )
+  val serviceName = "community-fleet-cli-worker"
+  withTelemetryServer(serviceName) {
+    processRequests(
+      startupArgs = args,
+      executorFactory = { _, _ ->
+        WorkRequestExecutor { request, _, _, _ ->
+          runCli(request.arguments)
+          0
+        }
+      },
+      reader = WorkRequestReaderWithoutDigest(System.`in`),
+      serviceName = serviceName,
+    )
+  }
 }

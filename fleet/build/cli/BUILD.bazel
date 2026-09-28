@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -7,6 +8,15 @@ java_binary(
     main_class = "fleet.buildtool.cli.MainKt",
     visibility = ["//visibility:public"],
     runtime_deps = [":cli"],
+)
+
+# When enabled, the community Haven CLI workers serve telemetry, such as a coroutine dump, over a
+# loopback HTTP server. The worker log shows its URL. The flag is on by default.
+# Disable it with `--@community//fleet/build/cli:telemetry_server=false`.
+bool_flag(
+    name = "telemetry_server",
+    build_setting_default = True,
+    visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `build fleet.build.cli` start

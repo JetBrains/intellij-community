@@ -1,0 +1,16 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+    name = "cli-telemetry-server",
+    srcs = glob(
+        ["srcJvmMain/**/*.kt"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/debug",
+        "//platform/bootstrap/coroutine",
+        "@lib//:kotlin-stdlib",
+    ],
+)

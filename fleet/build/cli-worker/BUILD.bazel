@@ -5,7 +5,11 @@ java_binary(
     name = "haven-cli-worker",
     main_class = "fleet.buildtool.cli.worker.MainKt",
     visibility = ["//visibility:public"],
-    runtime_deps = [":haven-cli-worker-lib"],
+    runtime_deps = [
+        # do not sort, the coroutine debug probes must shadow the kotlin-stdlib ones in the deploy jar
+        "//platform/bootstrap/coroutine",
+        ":haven-cli-worker-lib",
+    ],
 )
 
 jvm_library(
@@ -17,6 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         "//fleet/build/cli",
+        "//fleet/build/cli-telemetry-server",
         "@lib//:kotlin-stdlib",
         "@lib//:libraries-kotlinx-coroutines-core-kotlinx-coroutines-core",
         "@rules_jvm//:opentelemetry-api_import",
