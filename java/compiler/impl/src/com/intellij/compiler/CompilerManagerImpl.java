@@ -61,6 +61,7 @@ import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
@@ -86,6 +87,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,6 +99,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -546,18 +549,46 @@ public class CompilerManagerImpl extends CompilerManager {
           }
           final int listenPort = NetUtils.findAvailableSocketPort();
           // the manager lives as long as the project, so its event loop must not become a child of the first caller's job (e.g. the debugger's)
-          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-            manager = new ExternalJavacManager(
-              compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
-            );
-            manager.setWslExecutablePath(WSLDistribution.findWslExe());
-            manager.start(listenPort);
+          try {
+            manager = ThreadContext.resetThreadContext(() -> {
+              try {
+                return startJavacManager(compilerWorkingDir, listenPort);
+              }
+              catch (IOException e) {
+                throw new UncheckedIOException(e);
+              }
+            });
+          }
+          catch (UncheckedIOException e) {
+            throw e.getCause();
           }
           myExternalJavacManager = manager;
-          IdleTask task = new IdleTask(manager);
-          task.removeIdleListener = IdleTracker.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
         }
       }
+    }
+    return manager;
+  }
+
+  private static @NotNull ExternalJavacManager startJavacManager(@NotNull File compilerWorkingDir, int listenPort) throws IOException {
+    ExternalJavacManager manager = new ExternalJavacManager(
+      compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
+    );
+    manager.setWslExecutablePath(WSLDistribution.findWslExe());
+    manager.start(listenPort);
+    IdleTask task = new IdleTask(manager);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      // IdleTracker starts the Swing event queue, which a headless app must not do
+      ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService()
+        .scheduleWithFixedDelay(task, IdleTask.CHECK_PERIOD, IdleTask.CHECK_PERIOD, TimeUnit.MILLISECONDS);
+      task.removeIdleListener = new AccessToken() {
+        @Override
+        public void finish() {
+          future.cancel(false);
+        }
+      };
+    }
+    else {
+      task.removeIdleListener = IdleTracker.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
     }
     return manager;
   }
