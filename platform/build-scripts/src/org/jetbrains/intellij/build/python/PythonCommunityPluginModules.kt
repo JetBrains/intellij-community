@@ -21,8 +21,8 @@ object PythonCommunityPluginModules {
           moduleName = "intellij.python.helpers",
           resourcePath = "",
           relativeOutputPath = "helpers",
-          excludes = listOf("{setup.py,conftest.py}", "**/{setup.py,conftest.py}"),
-          directoryExcludes = listOf("{tests,.idea}", "**/{tests,.idea}", "pydev/pydev_test*", "**/pydev/pydev_test*"),
+          excludedFiles = listOf("setup.py", "conftest.py"),
+          excludedDirectories = listOf("tests", ".idea", "pydev/pydev_test*"),
         )
       }
 

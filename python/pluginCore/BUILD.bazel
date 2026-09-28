@@ -379,7 +379,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:0:0:source": "python/helpers",
     },
     source_tree_targets = {
-        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources",
+        "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
     },
 )
 ### auto-generated section `dev intellij.python.community.plugin` end

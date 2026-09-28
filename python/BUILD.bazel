@@ -45,9 +45,21 @@ content_module_jar(module = ":python-pydev")
 filegroup(
     name = "dev_dist_resources",
     srcs = glob(
-        [
-            "helpers/**",
-            "helpers/pydev/**",
+        ["helpers/pydev/**"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "dev_dist_resources_helpers",
+    srcs = glob(
+        ["helpers/**"],
+        exclude = [
+            "helpers/**/.idea/**/*",
+            "helpers/**/conftest.py",
+            "helpers/**/pydev/pydev_test*/**/*",
+            "helpers/**/setup.py",
+            "helpers/**/tests/**/*",
         ],
     ),
     visibility = ["//visibility:public"],

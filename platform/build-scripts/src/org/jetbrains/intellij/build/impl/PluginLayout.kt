@@ -416,10 +416,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       moduleName: String,
       resourcePath: String,
       relativeOutputPath: String,
-      excludes: List<String> = emptyList(),
-      directoryExcludes: List<String> = emptyList(),
+      excludedFiles: List<String> = emptyList(),
+      excludedDirectories: List<String> = emptyList(),
     ) {
-      layout.resourceGenerators += ModuleResourceTree(moduleName, resourcePath, relativeOutputPath, excludes, directoryExcludes)
+      layout.resourceGenerators += ModuleResourceTree(moduleName, resourcePath, relativeOutputPath, excludedFiles, excludedDirectories)
     }
 
     /**

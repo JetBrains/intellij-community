@@ -14,7 +14,12 @@ import java.nio.file.FileSystems
  */
 @ApiStatus.Internal
 sealed interface DevPluginLayoutAssetSource {
-  data class ModuleDirectory(@JvmField val moduleName: String, @JvmField val path: String) : DevPluginLayoutAssetSource
+  /** A checkout directory of a module. The generator gives a directory with [exclusions] a filegroup of its own. */
+  data class ModuleDirectory(
+    @JvmField val moduleName: String,
+    @JvmField val path: String,
+    @JvmField val exclusions: DevPluginResourceExclusions = DevPluginResourceExclusions.NONE,
+  ) : DevPluginLayoutAssetSource
 
   /** A debugger egg prepared in Kotlin from two raw checkout directories. Paths are relative to the project root. */
   data class DebuggerEgg(
@@ -107,6 +112,52 @@ sealed interface DevPluginLayoutAssetSource {
   data class GdScriptSdk(
     @JvmField val version: String,
   ) : DevPluginLayoutAssetSource
+}
+
+/**
+ * The files and directories that a checkout directory source leaves out. Production and the generated Bazel glob read
+ * the same patterns.
+ *
+ * A pattern has one or more `/`-separated segments. A segment is literal text, and `*` in it matches any text without
+ * `/`. A pattern matches the last segments of a path relative to the directory, at any depth. So `tests` matches
+ * `tests` and `a/b/tests`. A file pattern leaves out a matching file. A directory pattern leaves out a matching
+ * directory and everything below it, and it keeps a file of that name.
+ */
+@ApiStatus.Internal
+data class DevPluginResourceExclusions(
+  @JvmField val files: List<String> = emptyList(),
+  @JvmField val directories: List<String> = emptyList(),
+) {
+  init {
+    for (pattern in files + directories) {
+      val segments = pattern.split('/')
+      require(pattern.none { it in "?[]{}\\" } && segments.none { it.isEmpty() || it == "." || it == ".." || it == "**" }) {
+        "A resource exclusion requires segments of literal text and '*': '$pattern'"
+      }
+    }
+  }
+
+  fun isEmpty(): Boolean = files.isEmpty() && directories.isEmpty()
+
+  /** The java.nio globs over a path relative to the directory, for the files. */
+  fun fileGlobs(): List<String> = files.flatMap { listOf(it, "**/$it") }
+
+  /** The java.nio globs over a path relative to the directory, for the directories. */
+  fun directoryGlobs(): List<String> = directories.flatMap { listOf(it, "**/$it") }
+
+  /**
+   * The `exclude` patterns of a Bazel `glob` over the package-relative [directory], sorted. A trailing Bazel double star
+   * also matches zero segments and would leave out a file named like a directory pattern. So a directory pattern ends
+   * with a double star and then a single star, which match one or more segments.
+   */
+  fun bazelExcludes(directory: String): List<String> {
+    return (files.map { "$directory/**/$it" } + directories.map { "$directory/**/$it/**/*" }).sorted()
+  }
+
+  companion object {
+    @JvmField
+    val NONE: DevPluginResourceExclusions = DevPluginResourceExclusions()
+  }
 }
 
 @ApiStatus.Internal
