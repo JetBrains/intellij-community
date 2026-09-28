@@ -1025,6 +1025,23 @@ a:com.intellij.execution.ui.RunContentDescriptorReusePolicy
 a:com.intellij.execution.ui.RunnerLayoutUi$Factory
 - p:<init>():V
 - a:create(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.Disposable):com.intellij.execution.ui.RunnerLayoutUi
+com.intellij.execution.ui.layout.CellTransform
+com.intellij.execution.ui.layout.CellTransform$Facade
+- a:minimize(com.intellij.ui.content.Content,com.intellij.execution.ui.layout.CellTransform$Restore):V
+com.intellij.execution.ui.layout.CellTransform$Restore
+- a:restoreInGrid():com.intellij.openapi.util.ActionCallback
+c:com.intellij.execution.ui.layout.CellTransform$Restore$List
+- com.intellij.execution.ui.layout.CellTransform$Restore
+- <init>():V
+- add(com.intellij.execution.ui.layout.CellTransform$Restore):V
+- isRestoringNow():Z
+- restoreInGrid():com.intellij.openapi.util.ActionCallback
+com.intellij.execution.ui.layout.Grid
+- a:getCellFor(com.intellij.ui.content.Content):com.intellij.execution.ui.layout.GridCell
+- a:getContents():java.util.List
+com.intellij.execution.ui.layout.GridCell
+- a:getContentCount():I
+- a:minimize(com.intellij.ui.content.Content):V
 a:com.intellij.execution.ui.layout.LayoutAttractionPolicy
 - <init>():V
 - a:attract(com.intellij.ui.content.Content,com.intellij.execution.ui.RunnerLayoutUi):V
@@ -1050,6 +1067,51 @@ e:com.intellij.execution.ui.layout.PlaceInGrid
 - sf:right:com.intellij.execution.ui.layout.PlaceInGrid
 - s:valueOf(java.lang.String):com.intellij.execution.ui.layout.PlaceInGrid
 - s:values():com.intellij.execution.ui.layout.PlaceInGrid[]
+com.intellij.execution.ui.layout.Tab
+- a:getDefaultIndex():I
+- a:getIndex():I
+- a:isDefault():Z
+- a:isDetached(com.intellij.execution.ui.layout.PlaceInGrid):Z
+- a:setDetached(com.intellij.execution.ui.layout.PlaceInGrid,Z):V
+com.intellij.execution.ui.layout.View
+- a:assignTab(com.intellij.execution.ui.layout.Tab):V
+- a:getPlaceInGrid():com.intellij.execution.ui.layout.PlaceInGrid
+- a:getTab():com.intellij.execution.ui.layout.Tab
+- a:getTabIndex():I
+- a:getWindow():I
+- a:isMinimizedInGrid():Z
+- a:setMinimizedInGrid(Z):V
+- a:setPlaceInGrid(com.intellij.execution.ui.layout.PlaceInGrid):V
+- a:setTabIndex(I):V
+- a:setWindow(I):V
+com.intellij.execution.ui.layout.ViewContext
+- com.intellij.openapi.Disposable
+- sf:CELL_POPUP_PLACE:java.lang.String
+- sf:CELL_TOOLBAR_PLACE:java.lang.String
+- sf:CONTENT_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:CONTEXT_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:TAB_POPUP_PLACE:java.lang.String
+- sf:TAB_TOOLBAR_PLACE:java.lang.String
+- a:findCellFor(com.intellij.ui.content.Content):com.intellij.execution.ui.layout.GridCell
+- a:findGridFor(com.intellij.ui.content.Content):com.intellij.execution.ui.layout.Grid
+- a:getActionManager():com.intellij.openapi.actionSystem.ActionManager
+- a:getCellTransform():com.intellij.execution.ui.layout.CellTransform$Facade
+- a:getContentManager():com.intellij.ui.content.ContentManager
+- a:getFocusManager():com.intellij.openapi.wm.IdeFocusManager
+- a:getProject():com.intellij.openapi.project.Project
+- a:getRunnerLayoutUi():com.intellij.execution.ui.RunnerLayoutUi
+- a:getStateFor(com.intellij.ui.content.Content):com.intellij.execution.ui.layout.View
+- a:getTabFor(com.intellij.execution.ui.layout.Grid):com.intellij.execution.ui.layout.Tab
+- a:isMinimizeActionEnabled():Z
+- a:isMoveToGridActionEnabled():Z
+- s:isPopupPlace(java.lang.String):Z
+- a:isStateBeingRestored():Z
+- a:isToDisposeRemovedContent():Z
+- a:restoreLayout():V
+- a:saveUiState():V
+- a:select(com.intellij.ui.content.Content,Z):com.intellij.openapi.util.ActionCallback
+- a:setStateIsBeingRestored(Z,java.lang.Object):V
+- a:validate(com.intellij.ui.content.Content,com.intellij.openapi.util.ActiveRunnable):V
 f:com.intellij.openapi.actionSystem.ExecutionDataKeys
 - sf:EXECUTION_ENVIRONMENT:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
