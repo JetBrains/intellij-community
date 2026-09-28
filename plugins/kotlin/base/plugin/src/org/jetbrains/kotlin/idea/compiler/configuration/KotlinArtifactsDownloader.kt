@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.idea.AppMode
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
@@ -8,6 +9,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -25,6 +27,8 @@ import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_BUILD_TOOLS_IMPL_LOCATION_PREFIX_PATH
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH
@@ -50,6 +54,58 @@ import kotlin.time.Duration.Companion.seconds
 
 @Suppress("IO_FILE_USAGE")
 object KotlinArtifactsDownloader {
+    private const val USE_BUILD_TOOLS_API_REGISTRY_KEY: String = "kotlin.jps.use.build.tools.api"
+
+    /**
+     * @return whether JPS builds can use the Build Tools API.
+     */
+    fun isBuildToolsApiEnabled(): Boolean = Registry.`is`(USE_BUILD_TOOLS_API_REGISTRY_KEY, false)
+
+    private val MINIMUM_BUILD_TOOLS_IMPL_VERSION = KotlinVersion(2, 5, 20)
+
+    /**
+     * @return whether [version] is [MINIMUM_BUILD_TOOLS_IMPL_VERSION] or later. 
+     * JPS needs the client-managed incremental compilation that is available since that version.
+     */
+    fun isBuildToolsImplSupported(version: String): Boolean =
+        IdeKotlinVersion.get(version).kotlinVersion >= MINIMUM_BUILD_TOOLS_IMPL_VERSION
+
+    /**
+     * @return the BTA implementation directory for Kotlin version [version]. The directory can be missing.
+     * Its name must differ from the Kotlin dist directory name, because a remote build copies each path parameter
+     * to a directory with the same name.
+     */
+    fun getBuildToolsImplDirectory(version: String): Path {
+        val artifactVersion = IdeKotlinVersion.get(version).artifactVersion
+        return KOTLIN_BUILD_TOOLS_IMPL_LOCATION_PREFIX_PATH.resolve("$KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID-$artifactVersion")
+    }
+
+    private fun lazyDownloadBuildToolsImpl(project: Project, version: String, indicator: ProgressIndicator): Path? {
+        if (!isBuildToolsApiEnabled() || !isBuildToolsImplSupported(version)) return null
+
+        // TODO The IDE bundles the Kotlin dist for its own compiler version, but not the implementation.
+        // For a bundled dev version, the download usually fails, because Maven Central has no dev versions.
+        // JPS then uses the legacy compiler.
+        val context = DownloadContext(
+            project,
+            indicator,
+            KotlinBasePluginBundle.message("progress.text.downloading.kotlin.build.tools.impl"),
+        )
+        var failure: Throwable? = null
+        val directory = try {
+            LazyKotlinBuildToolsImplProducer(version).lazyProduceDirectory(context)
+        } catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            failure = e
+            null
+        }
+
+        if (directory == null) {
+            LOG.info("No $KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID for $version. Kotlin JPS uses the legacy compiler path.", failure)
+        }
+        return directory
+    }
+
     fun getUnpackedKotlinDistPath(version: String): File =
         if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlinc
         else KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
@@ -78,7 +134,9 @@ object KotlinArtifactsDownloader {
     }
 
     /**
-     * @return **true** if all dependencies are ready
+     * @return **true** if all dependencies are ready.
+     * The Build Tools API implementation is optional, so it does not change the result.
+     * Without it, Kotlin JPS uses the legacy compiler path. Each call tries to download a missing implementation again.
      */
     @Synchronized // Avoid manipulations with the same files from different threads
     fun lazyDownloadMissingJpsPluginDependencies(
@@ -99,6 +157,8 @@ object KotlinArtifactsDownloader {
             onError(failedToDownloadUnbundledJpsMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, jpsVersion))
             return false
         }
+
+        lazyDownloadBuildToolsImpl(project, jpsVersion, indicator)
 
         return true
     }
@@ -252,7 +312,7 @@ object KotlinArtifactsDownloader {
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: Throwable) {
-            COMPILER_PLUGIN_RESOLVE_LOG.warn(
+            LOG.warn(
                 "Failed to resolve $groupId:$artifactId:$version from project Maven repositories", e,
             )
             null
@@ -301,7 +361,7 @@ object KotlinArtifactsDownloader {
     }
 }
 
-private val COMPILER_PLUGIN_RESOLVE_LOG = logger<KotlinArtifactsDownloader>()
+private val LOG = logger<KotlinArtifactsDownloader>()
 
 // downloads and atomically replaces downloaded file with temp file
 // do one additional try in 5 seconds after fail

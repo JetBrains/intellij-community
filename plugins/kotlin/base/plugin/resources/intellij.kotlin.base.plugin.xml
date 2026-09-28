@@ -50,6 +50,10 @@
     <registryKey key="kotlin.jps.cache.external.system.id" defaultValue="true"
                  description="KTIJ-29020 - cache info about external system id for evaluating the final Kotlin JPS compiler version.
                  It is necessary when the workspace has two projects with different build systems and different versions of the Kotlin compiler"  />
+    <registryKey key="kotlin.jps.use.build.tools.api"
+                 description="Let JPS builds compile Kotlin through the Build Tools API instead of the legacy compiler.
+                 The IDE downloads the implementation for JPS 2.5.20 or later"
+                 defaultValue="false"/>
 
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducerCacheInvalidator"/>
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>

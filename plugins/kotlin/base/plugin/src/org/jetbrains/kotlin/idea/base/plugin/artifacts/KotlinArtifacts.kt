@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames.JETBR
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.div
 
 @ApiStatus.Internal
 object KotlinArtifactConstants {
@@ -35,7 +36,12 @@ object KotlinArtifactConstants {
     @NlsSafe
     const val KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID: String = "kotlin-jps-plugin"
 
+    @NlsSafe
+    const val KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID: String = "kotlin-build-tools-impl"
+
     val KOTLIN_DIST_LOCATION_PREFIX_PATH: Path = PathManager.getSystemDir().resolve("kotlin-dist-for-ide")
+
+    val KOTLIN_BUILD_TOOLS_IMPL_LOCATION_PREFIX_PATH: Path = PathManager.getSystemDir() / "kotlin" / KOTLIN_BUILD_TOOLS_IMPL_ARTIFACT_ID
 
     @Suppress("IO_FILE_USAGE")
     @Deprecated("Use KOTLIN_DIST_LOCATION_PREFIX_PATH instead", ReplaceWith("KOTLIN_DIST_LOCATION_PREFIX_PATH"))

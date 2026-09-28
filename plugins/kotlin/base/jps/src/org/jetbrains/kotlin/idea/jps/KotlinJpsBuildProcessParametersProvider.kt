@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.jps
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -16,6 +18,12 @@ import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClass
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.isDirectory
+
+// Must match `JpsBtaToolchainLoader.IMPL_HOME_PROPERTY` in the Kotlin JPS plugin
+private const val BTA_IMPL_HOME_PROPERTY = "kotlin.jps.build.tools.impl.home"
+
+private val LOG = logger<KotlinJpsBuildProcessParametersProvider>()
 
 /**
  * Provide a correct JPS plugin classpath and home for JPS plugin specified in options.
@@ -47,17 +55,30 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
 
     override fun getPathParameters(): List<Pair<String, Path>> {
         val version = KotlinJpsPluginSettings.jpsVersion(project)
-        val kotlinDist = KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project)
-        if (!kotlinDist.isDirectory) {
+
+        @Suppress("IO_FILE_USAGE")
+        val kotlinDist = KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project).toPath()
+
+        if (!kotlinDist.isDirectory()) {
             // jps plugin dist of `version` is not yet downloaded
             downloadOrThrow(version)
 
-            if (!kotlinDist.isDirectory) {
+            if (!kotlinDist.isDirectory()) {
                 error("Unable to download required Kotlin JPS plugin version $version: dist is not available after downloading at $kotlinDist")
             }
         }
 
-        return listOf(Pair("-Djps.kotlin.home=", kotlinDist.toPath()))
+        return buildList {
+            add(Pair("-Djps.kotlin.home=", kotlinDist))
+            // The Kotlin dist does not contain the implementation, so the BTA impl is passed via [BTA_IMPL_HOME_PROPERTY]
+            // It's downloaded by the before-compile task
+            if (KotlinArtifactsDownloader.isBuildToolsApiEnabled()) {
+                KotlinArtifactsDownloader.getBuildToolsImplDirectory(version).takeIf { it.isDirectory() }?.let {
+                    LOG.debug { "Kotlin JPS gets the Build Tools API implementation from $it" }
+                    add(Pair("-D$BTA_IMPL_HOME_PROPERTY=", it))
+                }
+            }
+        }
     }
 
     override fun getVMArguments(): List<String> =
