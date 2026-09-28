@@ -11,13 +11,16 @@ import com.intellij.collaboration.ui.util.bindValidationOnApplyIn
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginErrorStatusPresenter
@@ -77,3 +80,11 @@ internal object GitLabOAuthLoginInputPanelFactory {
     }
   }
 }
+
+internal fun Row.addWarningForHttpProtocol(cs: CoroutineScope, isHttpUsed: StateFlow<Boolean>): CellBase<Panel> = panel {
+  row {
+    val warning = CollaborationToolsBundle.message("accounts.warning.http.uri")
+    @Suppress("HardCodedStringLiteral")
+    comment("<icon src='AllIcons.General.Warning'>&nbsp;$warning").align(AlignX.LEFT)
+  }
+}.visibleIf(isHttpUsed.asObservableIn(cs))

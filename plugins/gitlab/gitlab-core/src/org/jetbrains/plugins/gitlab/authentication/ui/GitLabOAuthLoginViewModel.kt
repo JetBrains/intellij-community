@@ -11,6 +11,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.io.URLUtil
 import git4idea.remote.hosting.GitHostingUrlUtil
 import git4idea.remote.hosting.collectRemotes
 import git4idea.repo.GitRepositoryManager
@@ -61,6 +62,10 @@ internal class GitLabOAuthLoginViewModel(
   val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
 
   val isLoggingIn: StateFlow<Boolean> = loginState.mapState { it is LoginState.Connecting }
+
+  val isHttpUri: StateFlow<Boolean> = _serverUri.mapState { uri ->
+    uri.startsWith(URLUtil.HTTP_PROTOCOL + URLUtil.SCHEME_SEPARATOR)
+  }
 
   private val _outcome = MutableStateFlow<GitLabOAuthLoginOutcome?>(null)
   val outcome: StateFlow<GitLabOAuthLoginOutcome?> = _outcome.asStateFlow()

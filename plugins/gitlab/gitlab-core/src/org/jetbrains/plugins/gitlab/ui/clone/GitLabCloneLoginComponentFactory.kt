@@ -18,7 +18,6 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.util.ui.JBUI
 import git4idea.config.GitVcsApplicationSettings
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginErrorStatusPresent
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginInputPanelFactory
+import org.jetbrains.plugins.gitlab.authentication.ui.addWarningForHttpProtocol
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginEntryViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneOAuthCustomServerLoginViewModel
@@ -112,15 +112,19 @@ internal object GitLabCloneLoginComponentFactory {
           cell(loadingLabel)
           cell(backLink)
           cell(cancelLink)
-
+        }
+        row("") {
+          addWarningForHttpProtocol(cs, loginModel.isHttpUri)
+        }
+        row("") {
           addWarningForPersistentCredentials(
             cs,
             service<GitLabAccountManager>().canPersistCredentials,
             ::panel
-          ).align(AlignX.RIGHT)
-
+          )
+        }
+        row("") {
           addWarningForEnabledCredentialHelper(GitVcsApplicationSettings.getInstance().isUseCredentialHelper, ::panel)
-            .align(AlignX.RIGHT)
         }
       }).withPreferredWidth(350).apply {
       border = JBUI.Borders.empty(8, 0, 0, 35)
@@ -158,15 +162,16 @@ internal object GitLabCloneLoginComponentFactory {
         row("") {
           cell(loginButton)
           cell(backLink)
-
+        }
+        row("") {
           addWarningForPersistentCredentials(
             cs,
             service<GitLabAccountManager>().canPersistCredentials,
             ::panel
-          ).align(AlignX.RIGHT)
-
+          )
+        }
+        row("") {
           addWarningForEnabledCredentialHelper(GitVcsApplicationSettings.getInstance().isUseCredentialHelper, ::panel)
-            .align(AlignX.RIGHT)
         }
       }
     ).apply {
