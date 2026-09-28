@@ -639,11 +639,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     updateListHeight(listModel);
 
+    int previousSelectedIndex = list.getSelectedIndex();
+
     list.setSelectedIndex(toSelect);
-    if (ScreenReader.isActive()) {
-      AccessibleContext context = list.getAccessibleContext();
-      Accessible child = context.getAccessibleChild(list.getSelectedIndex());
-      context.firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY, null, child);
+
+    // The batch update above mutes the list listeners, so a refiltered model can put another item under an
+    // unchanged index with no event. AccessibleJList reports every other case itself.
+    if (ScreenReader.isActive() && list.getSelectedIndex() == previousSelectedIndex) {
+      LookupElement previousSelectedItem = previousSelectedIndex >= 0 && previousSelectedIndex < oldModel.size()
+                                           ? oldModel.get(previousSelectedIndex)
+                                           : null;
+      LookupElement selectedItem = toSelect < items.size() ? items.get(toSelect) : null;
+      if (selectedItem != previousSelectedItem) {
+        AccessibleContext context = list.getAccessibleContext();
+        Accessible child = context.getAccessibleChild(previousSelectedIndex);
+        context.firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY, null, child);
+      }
     }
     return !ContainerUtil.equalsIdentity(oldModel, items);
   }
