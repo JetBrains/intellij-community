@@ -597,6 +597,7 @@ public final class PlatformTestUtil {
 
   /**
    * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
+   * Also waits for runnables that a background write action holds back, so it can block until that write action ends.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
   @RequiresEdt
@@ -616,7 +617,9 @@ public final class PlatformTestUtil {
         var start = System.currentTimeMillis();
         while (true) {
           var event = eventQueue.peekEvent();
-          if (event == null && canary.get()) break;
+          // In UI_ONLY mode the flush queue posts no event for a write-intent runnable queued after the canary ran,
+          // for example an `invokeLater` from a drained runnable; `WriteActionFinished` posts one once the write action ends.
+          if (event == null && canary.get() && !LaterInvocator.holdsBackWriteIntentRunnables()) break;
           var elapsed = getMillisSince(start);
           if (elapsed > DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS) {
             throw new AssertionError(

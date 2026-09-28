@@ -420,6 +420,17 @@ public final class LaterInvocator {
     return ourNonBlockingEdtQueue;
   }
 
+  /**
+   * Whether the EDT queue holds write-intent runnables back until a write action in another thread completes.
+   *
+   * <p>In that state the queue posts no AWT event for a newly queued write-intent runnable, so an empty AWT queue does not mean
+   * that every {@code invokeLater} has run.
+   */
+  @TestOnly
+  public static boolean holdsBackWriteIntentRunnables() {
+    return ourNonBlockingEdtQueue != null && ourNonBlockingEdtQueue.holdsBackWriteIntentRunnables();
+  }
+
   @RequiresEdt
   private static void reincludeSkippedItemsAndRequestFlush() {
     ourNonBlockingEdtQueue.onModalityChanged();
