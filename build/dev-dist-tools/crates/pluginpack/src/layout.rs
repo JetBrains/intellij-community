@@ -10,7 +10,7 @@ use planfile::contract::{LayoutAsset, LayoutAssets, LayoutTransform, LayoutTrans
 
 use crate::error::{Error, IoContext, Result, fail};
 use crate::execute::{Resolved, Resolver, resolve_directory_tree, resolve_transport_file};
-use crate::layout_archive::{EntryKind, LayoutArchive, gzip_member};
+use crate::layout_archive::{EntryKind, LayoutArchive};
 use crate::layout_writer::{Content, EntriesWriter, LayoutWriter, TreeWriter};
 use crate::paths;
 use crate::plan::{compile_globs, compile_includes, includes_entry, mapping_pattern};
@@ -68,6 +68,11 @@ impl LayoutScratch {
             root: Some(root),
             count: 0,
         })
+    }
+
+    /// A scratch without a directory, for a reader that never decodes an archive.
+    pub(crate) const fn unavailable() -> Self {
+        Self { root: None, count: 0 }
     }
 
     /// Creates one numbered directory with mode 0755.
@@ -238,7 +243,6 @@ impl Resolver<'_> {
                 None => Self::copy_asset(&inputs[0], asset, writer),
                 Some(transform) => match transform.kind {
                     LayoutTransformKind::ArchiveTree => self.extract_archive(&inputs[0], asset, transform, writer),
-                    LayoutTransformKind::GzipXmlArchive => self.gzip_xml_archives(&inputs, asset, writer),
                     LayoutTransformKind::TreeMap => Self::map_trees(&inputs, asset, transform, writer),
                 },
             };
@@ -441,44 +445,6 @@ impl Resolver<'_> {
                 EntryKind::Symlink => writer.symlink(&target, &entry.target),
             }
         })
-    }
-
-    /// Reads the `.xml` entries of every source archive in central-directory order and writes each one as
-    /// `<destination>/<name>.gzip`. A source is a `.zip` or a `.jar`. A file that is not XML, and a link, fail with the
-    /// archive name. The entry keeps the deflate stream of the archive, so the Kotlin build and this packer write the
-    /// same bytes.
-    fn gzip_xml_archives(&mut self, inputs: &[LayoutInput], asset: &LayoutAsset, writer: &mut dyn LayoutWriter) -> Result<()> {
-        let is_archive = |path: &Path| {
-            let name = path
-                .file_name()
-                .map(|name| name.to_string_lossy().to_lowercase())
-                .unwrap_or_default();
-            name.ends_with(".zip") || name.ends_with(".jar")
-        };
-        for input in inputs {
-            let file = match input {
-                LayoutInput::File { path, .. } if is_archive(path) => path,
-                _ => fail!(
-                    "a gzip-xml-archive transform reads a zip or jar archive: {}",
-                    input.path().display()
-                ),
-            };
-            let mut archive = LayoutArchive::open(file, self.scratch)?;
-            archive.visit(&mut |entry| {
-                if entry.kind == EntryKind::Directory {
-                    return Ok(());
-                }
-                if entry.kind != EntryKind::File || !entry.name.ends_with(".xml") {
-                    fail!("unexpected file {:?} in {}", entry.name, file.display());
-                }
-                let stream = entry
-                    .deflate()
-                    .map_err(|error| error.context(format_args!("{}: {}", file.display(), entry.name)))?;
-                let destination = join_layout_path(&asset.destination, &format!("{}.gzip", entry.name));
-                writer.file(&destination, Content::Bytes(gzip_member(&stream)), 0o644)
-            })?;
-        }
-        Ok(())
     }
 }
 

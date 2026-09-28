@@ -1,11 +1,14 @@
 //! Derives the recipe of one complex plugin from its plan file and packs the remainder against the Starlark input
 //! catalogue. It also writes the asset rows and the plugin classpath record. The caller is
 //! `dev_plugin_remainder_from_plan` in `dev_plugin_remainder.bzl`.
+//!
+//! The mode `gzip-resources` writes the gzip resources of one module instead, see [`pluginpack::write_gzip_resources`].
+//! The caller is `gzip_resources` in `gzip_resources.bzl`.
 
 use std::ffi::OsString;
 use std::fs;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use planfile::contract::{Catalogue, SCOPED_VERSION, VERSION};
@@ -22,6 +25,12 @@ const OPTIONS: [&str; 9] = [
     "--assets",
     "--classpath",
 ];
+
+/// The first argument that selects the gzip resources mode.
+const GZIP_RESOURCES_MODE: &str = "gzip-resources";
+
+/// The output directory of the gzip resources mode. The archives follow as plain arguments.
+const GZIP_OUTPUT_OPTION: &str = "--output-dir";
 
 /// Names one module whose plain module jar the chain reuses. It repeats once per module and may be absent.
 const INDEPENDENT_MODULE_OPTION: &str = "--independent-module";
@@ -52,6 +61,11 @@ impl Arguments {
 
 /// Runs the packer and returns the exit code: 0 on success, 1 on a failure, 2 on a usage error.
 fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+    let mut arguments = arguments.into_iter().peekable();
+    if arguments.peek().is_some_and(|argument| argument == GZIP_RESOURCES_MODE) {
+        arguments.next();
+        return run_gzip_resources(arguments, errors);
+    }
     let arguments = match parse(arguments) {
         Ok(arguments) => arguments,
         Err(message) => {
@@ -76,6 +90,53 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
             1
         }
     }
+}
+
+/// Runs the gzip resources mode: `gzip-resources --output-dir=<dir> <archive>...`. The exit codes are the ones of
+/// [`run`].
+fn run_gzip_resources(arguments: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
+    let (output, archives) = match parse_gzip_resources(arguments) {
+        Ok(parsed) => parsed,
+        Err(message) => {
+            let _ = writeln!(errors, "ERROR: {message}");
+            return 2;
+        }
+    };
+    match pluginpack::write_gzip_resources(&archives, &output) {
+        Ok(()) => 0,
+        Err(error) => {
+            let _ = writeln!(errors, "ERROR: {error}");
+            1
+        }
+    }
+}
+
+/// Reads one `--output-dir=` option and at least one archive.
+fn parse_gzip_resources(arguments: impl IntoIterator<Item = OsString>) -> Result<(PathBuf, Vec<PathBuf>), String> {
+    let mut output = None;
+    let mut archives = Vec::new();
+    let mut parser = lexopt::Parser::from_args(arguments);
+    while let Some(argument) = parser.next().map_err(|error| error.to_string())? {
+        match argument {
+            lexopt::Arg::Long(name) if format!("--{name}") == GZIP_OUTPUT_OPTION && output.is_none() => {
+                let value = parser.value().map_err(|error| error.to_string())?;
+                if value.is_empty() {
+                    return Err(format!("expected a nonempty {GZIP_OUTPUT_OPTION}=value option"));
+                }
+                output = Some(PathBuf::from(value));
+            }
+            lexopt::Arg::Value(value) => archives.push(PathBuf::from(value)),
+            lexopt::Arg::Long(name) => return Err(format!("unknown or repeated option \"--{name}\"")),
+            lexopt::Arg::Short(name) => return Err(format!("unknown option \"-{name}\"")),
+        }
+    }
+    let Some(output) = output else {
+        return Err(format!("{GZIP_OUTPUT_OPTION} is required"));
+    };
+    if archives.is_empty() {
+        return Err("expected at least one archive".to_owned());
+    }
+    Ok((output, archives))
 }
 
 /// Reads the options. An option takes its value after `=`, and only `--independent-module` and `--refused-module`

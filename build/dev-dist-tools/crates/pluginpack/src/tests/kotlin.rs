@@ -314,7 +314,6 @@ pub(crate) fn kotlin_module_filter_operation(id: &str, input: &str, output: &str
 fn transform_kind_name(kind: LayoutTransformKind) -> &'static str {
     match kind {
         LayoutTransformKind::ArchiveTree => "archive-tree",
-        LayoutTransformKind::GzipXmlArchive => "gzip-xml-archive",
         LayoutTransformKind::TreeMap => "tree-map",
     }
 }
@@ -742,13 +741,11 @@ fn kotlin_module_filter_materialization_matches_the_excludes() {
 
 /// One layout-assets operation with its raw inputs on disk. A tree fixture names its root, and an entries fixture names
 /// its jar. `present` lists the output paths that the fixture exists for. `host_order` marks a jar whose entry order
-/// follows the readdir order of the host, so the golden holds the sorted entries. `decompress` marks a jar of gzip
-/// entries: the golden holds the entry names and the decompressed payload.
+/// follows the readdir order of the host, so the golden holds the sorted entries.
 struct LayoutParityFixture {
     format: &'static str,
     root: &'static str,
     host_order: bool,
-    decompress: bool,
     layout: LayoutAssets,
     inputs: Catalogue,
     present: Vec<&'static str>,
@@ -792,7 +789,6 @@ fn tree_map_fixture(inputs: &Path, format: &'static str) -> LayoutParityFixture 
             format,
             root: "localization.jar",
             host_order: true,
-            decompress: false,
             layout,
             inputs,
             present: vec!["lib/localization.jar"],
@@ -802,7 +798,6 @@ fn tree_map_fixture(inputs: &Path, format: &'static str) -> LayoutParityFixture 
             format,
             root: "resources",
             host_order: false,
-            decompress: false,
             layout,
             inputs,
             present: vec![
@@ -823,7 +818,6 @@ fn tree_fixture(root: &'static str, layout: LayoutAssets, inputs: Catalogue, pre
         format: "tree",
         root,
         host_order: false,
-        decompress: false,
         layout,
         inputs,
         present,
@@ -833,7 +827,7 @@ fn tree_fixture(root: &'static str, layout: LayoutAssets, inputs: Catalogue, pre
 /// The layout-assets operations that the packer executes: one per transform, per archive reader rule, and per format.
 /// The golden fixture "strip and mapping selection with normalized tree modes" has no port. No plan file normalizes
 /// the modes of a tree, so the typed layout-tree operation has no mode.
-const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 8] = [
+const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 7] = [
     ("archive-tree from a tar.gz keeps modes, a link, and an empty directory", |inputs| {
         // The link `latest` carries a trailing slash, which the Kotlin writer removed through Path.of.
         let archive = inputs.join("assets.tar.gz");
@@ -1004,40 +998,6 @@ const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 8] = [
             vec!["jbr/bin/launcher", "jbr/lib/tool.jar"],
         )
     }),
-    (
-        "gzip-xml-archive entries hold the XML of each archive in central-directory order",
-        |inputs| {
-            // The first archive has a Unix directory entry and its files out of name order. The second repeats a name that
-            // the first archive already claimed.
-            let (first, second) = (inputs.join("dialects.jar"), inputs.join("more.zip"));
-            write_zip(
-                &first,
-                &[
-                    unix_zip_entry("dialects/", "", 0o755, 3),
-                    zip_entry("dialects/zeta.xml", "<zeta/>"),
-                    zip_entry("dialects/alpha.xml", "<alpha/>"),
-                    zip_entry("shared.xml", "<first/>"),
-                ],
-            );
-            write_zip(&second, &[zip_entry("shared.xml", "<second/>"), zip_entry("beta.xml", "<beta/>")]);
-            LayoutParityFixture {
-                format: "entries",
-                root: "dialects.jar",
-                host_order: false,
-                decompress: true,
-                layout: layout(
-                    &[Reference::artifact("first"), Reference::artifact("second")],
-                    vec![layout_asset(
-                        "resources",
-                        &[0, 1],
-                        Some(transform(LayoutTransformKind::GzipXmlArchive)),
-                    )],
-                ),
-                inputs: catalogue(vec![file_artifact("first", &first), file_artifact("second", &second)]),
-                present: vec!["lib/dialects.jar"],
-            }
-        },
-    ),
 ];
 
 fn layout_input_ids(layout: &LayoutAssets) -> Vec<String> {
@@ -1130,8 +1090,8 @@ fn kotlin_layout_materialization_matches_the_transforms() {
         let record = materialization_record(&written.output);
         require_inventory_matches_tree(&written.output, &written.inventory);
         require_recorded_paths(&record, &fixture.present);
-        let golden_record = if fixture.host_order || fixture.decompress {
-            jar_entry_record(&written.output.join("lib").join(fixture.root), fixture.decompress)
+        let golden_record = if fixture.host_order {
+            jar_entry_record(&written.output.join("lib").join(fixture.root))
         } else {
             record
         };

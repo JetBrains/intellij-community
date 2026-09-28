@@ -9,6 +9,7 @@
 
 mod error;
 mod execute;
+mod gzip_resources;
 mod layout;
 mod layout_archive;
 mod layout_writer;
@@ -16,6 +17,7 @@ mod paths;
 mod plan;
 
 pub use error::{Error, Result};
+pub use gzip_resources::write_gzip_resources;
 pub use plan::{Execution, plan, validate_assets, validate_link_graph};
 
 #[cfg(test)]

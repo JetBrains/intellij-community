@@ -110,6 +110,12 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
                           sources = listOf("@rules_jvm//jps-builders-6:build-javac-rt_sources")),
 ).associateBy { it.moduleName }
 
+/**
+ * The modules whose jar holds a gzip member of each `.xml` entry of their provided module libraries, see
+ * `gzip_resources.bzl`. A provided library stays off the runtime class path, and no packer merges it.
+ */
+internal val GZIP_RESOURCE_MODULES: Set<String> = setOf("intellij.database.dialects.minicat")
+
 internal enum class SnapshotLibraryMode {
   WRITE_TO_REPO,
   REUSE_GENERATED,
@@ -730,7 +736,17 @@ internal class BazelBuildFileGenerator(
       resourceJarTargets.add(BazelLabel(label = codegenTargetName, module = null))
     }
 
-    
+    if (module.name in GZIP_RESOURCE_MODULES) {
+      val provided = deps?.providedModuleLibraries.orEmpty()
+      require(provided.isNotEmpty()) { "Module ${module.name} gzips its provided module libraries, but it has none" }
+      val gzipTargetName = "${moduleDescriptor.targetName}_gzip_resources"
+      load("@community//platform/build-scripts/bazel-rules:gzip_resources.bzl", "gzip_resources")
+      target("gzip_resources") {
+        option("name", gzipTargetName)
+        option("srcs", provided.unsorted())
+      }
+      resourceJarTargets.add(BazelLabel(label = gzipTargetName, module = null))
+    }
 
     val useIjPluginModule = shouldUseIjPluginModuleFunction(moduleDescriptor, moduleList, manuallyWrittenAttributes)
     val moduleTargetType: String

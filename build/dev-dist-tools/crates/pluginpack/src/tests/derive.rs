@@ -302,7 +302,7 @@ fn derivation_record(output: &Path, assets: &[Asset], class_path: &[u8]) -> Vec<
     for line in materialization_record(output) {
         let path = line.split('\t').next().unwrap();
         if path.ends_with(".jar") && line.contains("\tfile\t") {
-            for entry in jar_entry_record(&crate::paths::host(output, path), false) {
+            for entry in jar_entry_record(&crate::paths::host(output, path)) {
                 record.push(format!("{path}!{entry}"));
             }
             continue;
@@ -435,7 +435,8 @@ fn library(id: &str, members: &[&str]) -> Library {
 }
 
 /// The Go `mustDerive` also planned every derivation of `planfile_test.go`. The `planfile` crate cannot depend on this
-/// crate, so this test plans the derivations of its tests: the plan-file shapes that `planfile` accepts must plan.
+/// crate, so this test plans the derivations of its tests: the plan-file shapes that `planfile` accepts must plan. The
+/// derivation of a library input of two members has no case here. No layout transform reads two archive files.
 #[test]
 fn every_planfile_derivation_plans() {
     const NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
@@ -450,24 +451,21 @@ fn every_planfile_derivation_plans() {
     let rt = r#"{"input": "demo.rt", "kind": "module", "filter": "module-v1"}"#;
     let entries = r#""preparations": [{"id": "entries", "inputs": ["@lib//:one", "raw"], "outputs": ["entries:output"], "modelSignature": "e"}],
     "operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
-      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1, 0], "transform": {"kind": "gzip-xml-archive"}}]}}]"#;
+      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "archive-tree"}},
+        {"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}]"#;
     let entries_jar = r#"{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}}"#;
     let every_kind_preparations = r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"},
       {"id": "tree", "inputs": ["archive"], "outputs": ["tree:output"], "modelSignature": "y"},
-      {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"},
-      {"id": "gzip", "inputs": ["dialects"], "outputs": ["gzip:output"], "modelSignature": "g"}]"#;
+      {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"}]"#;
     let every_kind_operations = r#""operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]},
       {"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
         "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}},
       {"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",
         "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "tree-map", "mappings": [{"pattern": "*.properties", "destination": "messages"}, {}],
-          "excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}},
-      {"id": "gzip", "kind": "layout-assets", "inputs": [{"artifact": "dialects"}], "output": "gzip:output", "manifest": "keep",
-        "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "gzip-xml-archive"}}]}}]"#;
+          "excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}}]"#;
     let every_kind_assets = r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
         {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop", "directoryEntries": true}}},
       {"destination": "lib/l10n.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}},
-      {"destination": "lib/dialects.jar", "recipe": {"sources": [{"input": "gzip:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}},
       {"destination": "payload", "inputs": ["tree:output"], "kind": "tree", "classPath": false},
       {"destination": "lib/standardDsls", "inputs": ["dsls"], "kind": "tree", "classPath": false},
       {"destination": "bin/tool", "inputs": ["native"], "mode": 493}"#;
@@ -568,13 +566,6 @@ fn every_planfile_derivation_plans() {
             &[],
         ),
         (
-            "a library input of two members",
-            plan_text(1, entries_jar, &[entries]),
-            one_library(&["@lib//:one/one-1.0.jar", "@lib//:one/one-api-1.0.jar"]),
-            1,
-            &[],
-        ),
-        (
             "every operation kind",
             plan_text(2, every_kind_assets, &[every_kind_preparations, every_kind_operations]),
             catalogue(vec![
@@ -584,7 +575,6 @@ fn every_planfile_derivation_plans() {
                 inputs_directory("dsls"),
                 inputs_artifact("archive"),
                 inputs_directory("properties"),
-                inputs_artifact("dialects"),
             ]),
             2,
             &[],

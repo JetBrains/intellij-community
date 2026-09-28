@@ -347,10 +347,10 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
     let kind = asset.transform.as_ref().map(|transform| transform.kind);
     if asset.destination.is_empty() {
         // An entry asset can write its output root when each entry brings its own relative path. A mapped tree, an
-        // extracted archive, a gzip archive, and a copied directory do that.
+        // extracted archive, and a copied directory do that.
         let expands = kind.is_some() || asset.sources.len() == 1 && sources_are(InputKind::Directory);
         if format != LayoutFormat::Tree && !expands {
-            fail!("only a tree, a mapped entry asset, an extracted archive, a gzip archive, or a copied directory can use its output root");
+            fail!("only a tree, a mapped entry asset, an extracted archive, or a copied directory can use its output root");
         }
     } else {
         validate_relative_path(&asset.destination)?;
@@ -385,16 +385,6 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
         LayoutTransformKind::ArchiveTree => {
             if asset.sources.len() != 1 || !sources_are(InputKind::File) {
                 fail!("archive-tree requires one archive file");
-            }
-        }
-        LayoutTransformKind::GzipXmlArchive => {
-            if format != LayoutFormat::Entries
-                || asset.sources.is_empty()
-                || transform.strip_components != 0
-                || !transform.mappings.is_empty()
-                || !sources_are(InputKind::File)
-            {
-                fail!("gzip-xml-archive requires ordered archive files and jar entries");
             }
         }
         LayoutTransformKind::TreeMap => {

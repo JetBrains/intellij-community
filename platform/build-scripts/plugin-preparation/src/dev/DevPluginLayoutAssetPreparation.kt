@@ -60,11 +60,6 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val name: String,
   ) : DevPluginLayoutAssetSource
 
-  data class ModuleLibraries(
-    @JvmField val modules: List<String>,
-    @JvmField val allowedNames: Set<String>,
-  ) : DevPluginLayoutAssetSource
-
   data class ModuleLibrary(
     @JvmField val module: String,
     @JvmField val name: String,
@@ -261,10 +256,6 @@ data class DevPluginLayoutAssetTransform(
       )
     }
 
-    fun gzipXmlArchive(): DevPluginLayoutAssetTransform {
-      return DevPluginLayoutAssetTransform(kind = "gzip-xml-archive")
-    }
-
     fun treeMap(
       mappings: List<DevPluginLayoutAssetMapping>,
       excludes: List<String> = emptyList(),
@@ -293,7 +284,6 @@ data class DevPluginLayoutAssetPreparation(
 
 /**
  * Validates one layout-assets payload at generation time. The packer ports these rules to `plan.rs` of the `pluginpack` crate.
- * A `gzip-xml-archive` asset requires the `entries` format.
  */
 internal fun validateDevPluginLayoutAssetPreparation(
   preparation: DevPluginLayoutAssetPreparation,
@@ -312,10 +302,10 @@ internal fun validateDevPluginLayoutAssetPreparation(
     require(asset.hostPlatforms.isEmpty()) { "A layout asset payload must not name host platforms: ${asset.destination}" }
     if (asset.destination.isEmpty()) {
       // An entry asset writes its output root when every entry brings its own relative path: a mapped tree, an
-      // extracted archive, a gzip archive, or a copied directory. The packer checks the directory kind.
+      // extracted archive, or a copied directory. The packer checks the directory kind.
       require(preparation.format == "tree" ||
-              preparation.format == "entries" && transform?.kind in setOf("archive-tree", "gzip-xml-archive", "tree-map", null)) {
-        "Only a tree, a mapped entry asset, an extracted archive, a gzip archive, or a copied directory can use its output root"
+              preparation.format == "entries" && transform?.kind in setOf("archive-tree", "tree-map", null)) {
+        "Only a tree, a mapped entry asset, an extracted archive, or a copied directory can use its output root"
       }
     }
     else {
@@ -327,7 +317,7 @@ internal fun validateDevPluginLayoutAssetPreparation(
       require(asset.sources.size == 1) { "A direct layout asset requires one source" }
       continue
     }
-    require(transform.kind in setOf("archive-tree", "gzip-xml-archive", "tree-map")) {
+    require(transform.kind in setOf("archive-tree", "tree-map")) {
       "Unknown layout asset transform '${transform.kind}'"
     }
     require(transform.stripComponents >= 0) { "A layout asset strip count must not be negative" }
@@ -359,10 +349,6 @@ internal fun validateDevPluginLayoutAssetPreparation(
     when (transform.kind) {
       "archive-tree" -> require(asset.sources.size == 1) {
         "An archive-tree transform requires one archive"
-      }
-      "gzip-xml-archive" -> require(preparation.format == "entries" && asset.sources.isNotEmpty() && transform.stripComponents == 0 &&
-                                              transform.mappings.isEmpty()) {
-        "A gzip-xml-archive transform requires ordered archive inputs and an entries output"
       }
       "tree-map" -> require(asset.sources.isNotEmpty() && transform.stripComponents == 0 && transform.mappings.isNotEmpty()) {
         "A tree-map transform requires ordered tree inputs and mappings"

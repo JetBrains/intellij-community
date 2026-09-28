@@ -8,7 +8,7 @@ use planfile::LayoutFormat;
 use planfile::contract::{Catalogue, LayoutAsset, LayoutTransform, LayoutTransformKind, Recipe, Reference, VERSION};
 
 use super::*;
-use crate::layout_archive::{EntryKind, GZIP_MEMBER_HEADER, LayoutArchive};
+use crate::layout_archive::{EntryKind, LayoutArchive};
 use crate::plan::{InputKind, validate_layout_asset};
 
 fn archive_catalogue(file: &Path) -> Catalogue {
@@ -17,10 +17,6 @@ fn archive_catalogue(file: &Path) -> Catalogue {
 
 fn one_archive(transform: LayoutTransform) -> LayoutAssets {
     layout(&[Reference::artifact("archive")], vec![layout_asset("", &[0], Some(transform))])
-}
-
-fn gzip_xml_archive() -> LayoutTransform {
-    transform(LayoutTransformKind::GzipXmlArchive)
 }
 
 /// The shape of the native helper plans: a mapping strips two components, and an executable pattern names the entry
@@ -432,137 +428,6 @@ fn unsafe_archive_paths_fail_before_writing_outside_the_prepared_tree() {
         "unsafe archive path",
     );
     assert_absent(&root.path().join("outside"));
-}
-
-#[test]
-fn gzip_xml_archives_accept_jar_files_and_keep_source_order() {
-    let root = temp();
-    let (first, second) = (root.path().join("first.jar"), root.path().join("second.zip"));
-    write_zip(
-        &first,
-        &[zip_entry("a.xml", "a"), zip_entry("same.xml", "first"), zip_entry("dir/", "")],
-    );
-    write_zip(&second, &[zip_entry("b.xml", "b"), zip_entry("same.xml", "second")]);
-    let layout = layout(
-        &[Reference::artifact("first"), Reference::artifact("second")],
-        vec![layout_asset("resources", &[0, 1], Some(gzip_xml_archive()))],
-    );
-    let written = write_execution(
-        &layout_jar_recipe(layout),
-        &catalogue(vec![file_artifact("first", &first), file_artifact("second", &second)]),
-    );
-    let (names, entries) = read_archive(&written.output.join("lib/layout.jar"));
-    assert_eq!(
-        names,
-        [
-            "resources/a.xml.gzip",
-            "resources/same.xml.gzip",
-            "resources/b.xml.gzip",
-            "__index__"
-        ]
-    );
-    for (name, want) in [
-        ("resources/a.xml.gzip", "a"),
-        ("resources/same.xml.gzip", "first"),
-        ("resources/b.xml.gzip", "b"),
-    ] {
-        assert_eq!(text(&gunzip(&entries[name])), want, "{name}");
-    }
-    assert_eq!(
-        entries["resources/a.xml.gzip"][..10],
-        GZIP_MEMBER_HEADER,
-        "the gzip header carries a name, a time, or an extra flag"
-    );
-}
-
-#[test]
-fn gzip_xml_archives_keep_the_deflate_stream_of_the_source_entry() {
-    let root = temp();
-    let archive = root.path().join("resources.jar");
-    let large = "<row/>".repeat(20000);
-    write_zip(
-        &archive,
-        &[
-            ZipEntry {
-                deflate: true,
-                ..zip_entry("deflated.xml", &large)
-            },
-            zip_entry("stored.xml", &large),
-            zip_entry("empty.xml", ""),
-        ],
-    );
-    let layout = layout(
-        &[Reference::artifact("archive")],
-        vec![layout_asset("resources", &[0], Some(gzip_xml_archive()))],
-    );
-    let written = write_execution(&layout_jar_recipe(layout), &archive_catalogue(&archive));
-    let (_, entries) = read_archive(&written.output.join("lib/layout.jar"));
-    let mut crc = flate2::Crc::new();
-    crc.update(large.as_bytes());
-    let mut trailer = crc.sum().to_le_bytes().to_vec();
-    trailer.extend_from_slice(&(large.len() as u32).to_le_bytes());
-    let mut source = zip::ZipArchive::new(fs::File::open(&archive).unwrap()).unwrap();
-    let mut deflated = Vec::new();
-    Read::read_to_end(&mut source.by_index_raw(0).unwrap(), &mut deflated).unwrap();
-    let mut want = GZIP_MEMBER_HEADER.to_vec();
-    want.extend_from_slice(&deflated);
-    want.extend_from_slice(&trailer);
-    assert_eq!(
-        entries["resources/deflated.xml.gzip"], want,
-        "the deflated member is not the source stream"
-    );
-    assert_eq!(text(&gunzip(&entries["resources/deflated.xml.gzip"])), large);
-    let stored = &entries["resources/stored.xml.gzip"];
-    assert_eq!(stored[stored.len() - 8..], trailer[..], "the stored member trailer");
-    assert_eq!(
-        stored.len(),
-        GZIP_MEMBER_HEADER.len() + large.len() + 2 * 5 + 8,
-        "the stored member holds two stored blocks"
-    );
-    assert_eq!(text(&gunzip(stored)), large);
-    let mut empty = GZIP_MEMBER_HEADER.to_vec();
-    empty.extend_from_slice(&[1, 0, 0, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0]);
-    assert_eq!(entries["resources/empty.xml.gzip"], empty, "the empty member");
-    assert!(gunzip(&entries["resources/empty.xml.gzip"]).is_empty());
-}
-
-#[test]
-fn gzip_xml_archives_read_zip_and_jar_archives_only() {
-    let root = temp();
-    let archive = root.path().join("resources.tar.gz");
-    write_tar_gz(&archive, &[tar_file("a.xml", "a", 0o644)]);
-    let layout = layout(
-        &[Reference::artifact("archive")],
-        vec![layout_asset("resources", &[0], Some(gzip_xml_archive()))],
-    );
-    expect_write_failure(
-        &layout_jar_recipe(layout),
-        &archive_catalogue(&archive),
-        "reads a zip or jar archive",
-    );
-}
-
-#[test]
-fn gzip_xml_archives_reject_an_entry_that_is_not_xml() {
-    let root = temp();
-    let archive = root.path().join("resources.jar");
-    write_zip(&archive, &[zip_entry("a.xml", "a"), zip_entry("notes.txt", "text")]);
-    let layout = layout(
-        &[Reference::artifact("archive")],
-        vec![layout_asset("resources", &[0], Some(gzip_xml_archive()))],
-    );
-    expect_write_failure(
-        &layout_jar_recipe(layout.clone()),
-        &archive_catalogue(&archive),
-        r#"unexpected file "notes.txt""#,
-    );
-    let linked = root.path().join("linked.jar");
-    write_zip(&linked, &[zip_link("a.xml", "b.xml", 3)]);
-    expect_write_failure(
-        &layout_jar_recipe(layout),
-        &archive_catalogue(&linked),
-        r#"unexpected file "a.xml""#,
-    );
 }
 
 /// The zip creator rule, the streamed `.zip.zst` flattening, the link target spelling, and the duplicate policy of
@@ -1156,7 +1021,7 @@ fn layout_tree_map_excludes_validation() {
         }
         for (kind, format) in [
             (LayoutTransformKind::ArchiveTree, LayoutFormat::Tree),
-            (LayoutTransformKind::GzipXmlArchive, LayoutFormat::Entries),
+            (LayoutTransformKind::ArchiveTree, LayoutFormat::Entries),
         ] {
             let mut asset = layout_asset("out", &[0], Some(transform(kind)));
             validate_layout_asset(&asset, format, &[InputKind::File]).unwrap();
@@ -1389,7 +1254,7 @@ fn tree_map_links_stay_links() {
 fn layout_includes_and_executables_validation() {
     let archive = file_artifact("archive", "archive.zip");
     let directory = directory_artifact("tree", "tree");
-    let tests: [(&str, LayoutTransform, &Artifact, &str); 5] = [
+    let tests: [(&str, LayoutTransform, &Artifact, &str); 4] = [
         (
             "includes on tree-map",
             LayoutTransform {
@@ -1416,15 +1281,6 @@ fn layout_includes_and_executables_validation() {
             },
             &archive,
             "invalid include",
-        ),
-        (
-            "executables on gzip-xml-archive",
-            LayoutTransform {
-                executables: strings(&["*"]),
-                ..gzip_xml_archive()
-            },
-            &archive,
-            "layout executable patterns require archive-tree",
         ),
         (
             "an invalid executable pattern",
@@ -1474,33 +1330,6 @@ fn layout_plan_rejects_invalid_payloads() {
             ),
             directory(),
             "archive-tree requires one archive file",
-        ),
-        (
-            "gzip-xml-archive in a tree",
-            layout_tree_recipe(
-                "payload",
-                layout(
-                    &[Reference::artifact("archive")],
-                    vec![layout_asset("resources", &[0], Some(gzip_xml_archive()))],
-                ),
-            ),
-            file(),
-            "gzip-xml-archive requires",
-        ),
-        (
-            "gzip-xml-archive over a directory",
-            layout_jar_recipe(layout(
-                &[Reference::artifact("tree")],
-                vec![layout_asset("resources", &[0], Some(gzip_xml_archive()))],
-            )),
-            directory(),
-            "gzip-xml-archive requires",
-        ),
-        (
-            "gzip-xml-archive without a source",
-            layout_jar_recipe(layout(&[], vec![layout_asset("resources", &[], Some(gzip_xml_archive()))])),
-            catalogue(Vec::new()),
-            "gzip-xml-archive requires",
         ),
         (
             "source index out of range",
@@ -1639,13 +1468,4 @@ fn layout_plan_accepts_the_plan_file_shapes() {
         ],
     );
     plan(&layout_jar_recipe(entries), &catalogue).unwrap();
-    let gzip = layout(
-        &[Reference::artifact("archive")],
-        vec![layout_asset("", &[0], Some(gzip_xml_archive()))],
-    );
-    plan(
-        &layout_jar_recipe(gzip),
-        &crate::tests::catalogue(vec![file_artifact("archive", "missing.zip")]),
-    )
-    .unwrap();
 }

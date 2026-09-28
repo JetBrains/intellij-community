@@ -17,23 +17,15 @@ import org.junit.jupiter.api.Test
  */
 internal class DevPluginLayoutAssetPreparationTest {
   @Test
-  fun `a gzip-xml-archive asset requires archive inputs and an entries output`() {
-    val gzip = DevPluginLayoutAsset(destination = "resources", sources = listOf(0), transform = DevPluginLayoutAssetTransform.gzipXmlArchive())
-    val inputs = listOf(DevPluginReference("archive"), DevPluginReference("tree"))
-
-    validateLayoutAssets(DevPluginLayoutAssetPreparation(
-      format = "entries",
-      assets = listOf(
-        gzip,
-        DevPluginLayoutAsset(destination = "", sources = listOf(1), transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))),
-      ),
-    ), inputs)
-    assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "tree", root = "payload", assets = listOf(gzip)), inputs)
-    }.hasMessageContaining("an entries output")
-    assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(gzip.copy(sources = emptyList()))), inputs)
-    }.hasMessageContaining("an entries output")
+  fun `the removed gzip-xml-archive transform is refused`() {
+    val gzip = DevPluginLayoutAsset(destination = "resources", sources = listOf(0), transform = DevPluginLayoutAssetTransform(kind = "gzip-xml-archive"))
+    val operation = DevPluginPreparationOperation(
+      id = "layout-assets:gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("archive")), output = "layout-assets:gzip:output",
+      manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(gzip)),
+    )
+    assertThat(isPackerExecutedOperation(operation)).isFalse()
+    assertThatThrownBy { devPluginPreparationOperationSignature(operation, version = 2) }
+      .hasMessageContaining("No packer operation executes 'layout-assets:gzip'")
   }
 
   @Test
@@ -49,8 +41,8 @@ internal class DevPluginLayoutAssetPreparationTest {
         manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "payload", assets = treeAssets),
       ),
       DevPluginPreparationOperation(
-        id = "layout-assets:gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("dialects")), output = "layout-assets:gzip:output",
-        manifest = "keep", layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
+        id = "layout-assets:entries", kind = "layout-assets", inputs = listOf(DevPluginReference("resources")), output = "layout-assets:entries:output",
+        manifest = "keep", layoutAssets = treeMapEntriesPreparation(sources = listOf(0)),
       ),
     )
     assertThat(operations).allMatch(::isPackerExecutedOperation)
@@ -64,8 +56,8 @@ internal class DevPluginLayoutAssetPreparationTest {
         ),
         PluginPackingAsset(destination = "payload", inputs = listOf("layout-assets:tree:output"), kind = "tree", classPath = false),
         PluginPackingAsset(
-          destination = "lib/dialects.jar", inputs = listOf("layout-assets:gzip:output"),
-          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:gzip:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
+          destination = "lib/resources.jar", inputs = listOf("layout-assets:entries:output"),
+          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:entries:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
         ),
       ),
       preparations = operations.map { operation ->
@@ -90,9 +82,9 @@ internal class DevPluginLayoutAssetPreparationTest {
   @Test
   fun `every operation of a plan file is packer-executed`() {
     val moduleFilter = DevPluginPreparationOperation(id = "filter", input = DevPluginReference("module"), output = "filtered", manifest = "keep")
-    val gzip = DevPluginPreparationOperation(
-      id = "gzip", kind = "layout-assets", inputs = listOf(DevPluginReference("jar")), output = "gzip:output", manifest = "keep",
-      layoutAssets = gzipXmlArchivePreparation(sources = listOf(0)),
+    val entries = DevPluginPreparationOperation(
+      id = "entries", kind = "layout-assets", inputs = listOf(DevPluginReference("resources")), output = "entries:output", manifest = "keep",
+      layoutAssets = treeMapEntriesPreparation(sources = listOf(0)),
     )
     val file = DevPluginPreparationOperation(
       id = "file", kind = "layout-assets", inputs = listOf(DevPluginReference("build")), output = "file:output", manifest = "keep",
@@ -106,7 +98,7 @@ internal class DevPluginLayoutAssetPreparationTest {
     )
 
     assertThat(isPackerExecutedOperation(moduleFilter)).isTrue()
-    assertThat(isPackerExecutedOperation(gzip)).isTrue()
+    assertThat(isPackerExecutedOperation(entries)).isTrue()
     assertThat(isPackerExecutedOperation(file)).isFalse()
     assertThat(isPackerExecutedOperation(presigned)).isFalse()
     assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
@@ -209,10 +201,11 @@ internal class DevPluginLayoutAssetPreparationTest {
     }.hasMessageContaining("host platforms")
   }
 
-  private fun gzipXmlArchivePreparation(sources: List<Int>): DevPluginLayoutAssetPreparation {
+  private fun treeMapEntriesPreparation(sources: List<Int>): DevPluginLayoutAssetPreparation {
+    val transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping()))
     return DevPluginLayoutAssetPreparation(
       format = "entries",
-      assets = listOf(DevPluginLayoutAsset(destination = "resources", sources = sources, transform = DevPluginLayoutAssetTransform.gzipXmlArchive())),
+      assets = listOf(DevPluginLayoutAsset(destination = "resources", sources = sources, transform = transform)),
     )
   }
 

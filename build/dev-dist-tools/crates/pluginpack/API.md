@@ -6,7 +6,7 @@ validation functions again on the produced table.
 
 ## The subset rule
 
-The crate executes only the shapes that the 136 checked-in `*.dev-plan.json` files use, and it refuses every other shape
+The crate executes only the shapes that the 103 checked-in `*.dev-plan.json` files use, and it refuses every other shape
 with an error that names it. `planfile` refuses most unused shapes at decode time, so its typed recipe cannot state
 them. The table lists what the Go packer supported and this crate refuses.
 
@@ -22,6 +22,8 @@ them. The table lists what the Go packer supported and this crate refuses.
 | a destination or a tree entry that is not ASCII, or that holds `&` | the `filemeta::path_identity` error |
 | a tree link that resolves through another link, or a link target with an empty segment | the `filemeta::validate_links` error |
 | a remainder entry at the name of an independent file of the plugin scope, at a parent of it, or below it | `conflicting output destination` or `conflicting output directory` |
+| a gzip resource source that is not a `.zip` or a `.jar` | `a gzip resource source is a zip or jar archive` |
+| a gzip resource entry that is not an `.xml` file, or that is a link | `unexpected file` |
 
 The Go distribution transport root `.distribution-root/` does not exist: the remainder writes only plugin files.
 
@@ -39,6 +41,9 @@ The Go distribution transport root `.distribution-root/` does not exist: the rem
   graph of one tree (Go `ValidateLinkGraph`). `directories` names every node and marks each directory true, with `.`
   for the root. Call `filemeta::validate_links` first, as the Go collector did. That function refuses a target that
   resolves through another link, so this function does not check it again.
+- `write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()>`: writes `<output>/<entry>.gzip` for each
+  `.xml` entry of each archive. The member holds the deflate stream of the zip entry. The first archive that holds a
+  name wins, and a directory entry writes nothing.
 - `Error`: one refusal or failure. `Display` and `Error::message()` give the Go error text. `Result<T>` is its alias.
 
 ## Archive readers

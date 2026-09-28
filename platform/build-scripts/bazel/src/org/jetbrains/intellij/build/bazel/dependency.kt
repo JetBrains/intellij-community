@@ -45,6 +45,8 @@ internal data class ModuleDeps(
   @JvmField val exports: List<BazelLabel>,
   @JvmField val associates: List<BazelLabel>,
   @JvmField val plugins: List<String>,
+  /** The plain labels of the `PROVIDED` repository module libraries. [GZIP_RESOURCE_MODULES] read their jars. */
+  @JvmField val providedModuleLibraries: List<BazelLabel> = emptyList(),
 )
 
 internal fun generateDeps(
@@ -60,6 +62,7 @@ internal fun generateDeps(
   val runtimeDeps = mutableListOf<BazelLabel>()
   val packedDeps = mutableListOf<BazelLabel>()
   val provided = mutableListOf<BazelLabel>()
+  val providedModuleLibraries = mutableListOf<BazelLabel>()
 
   if (isTest) {  // test always depends on production
     if (hasSources && module.sources.isNotEmpty()) {
@@ -322,6 +325,18 @@ internal fun generateDeps(
             module = null,
           )
 
+          if (isProvided && isModuleLibrary) {
+            val plainLabel = libraryDependencyLabel(
+              library = library,
+              container = containerForLabel,
+              communityRoot = context.communityRoot,
+              ultimateRoot = context.ultimateRoot,
+              isCommunityDependent = module.isCommunity,
+              isProvided = false,
+            )
+            providedModuleLibraries.add(BazelLabel(plainLabel, module = null))
+          }
+
           addDep(
             isTest = isTest,
             scope = scope,
@@ -373,7 +388,8 @@ internal fun generateDeps(
   checkForDuplicates("bazel exports", exports)
   checkForDuplicates("bazel provided", provided)
 
-  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, packedDeps = packedDeps, exports = exports, provided = provided, plugins = plugins.toList())
+  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, packedDeps = packedDeps, exports = exports, provided = provided, plugins = plugins.toList(),
+                    providedModuleLibraries = providedModuleLibraries)
 }
 
 private fun addPackedDepIfNeeded(

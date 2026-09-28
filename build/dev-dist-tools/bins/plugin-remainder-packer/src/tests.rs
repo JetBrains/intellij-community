@@ -282,3 +282,63 @@ fn projection_run_omits_the_assets_of_a_refused_module() {
         }
     }
 }
+
+/// Writes one zip with the given deflated entries.
+fn write_deflated_zip(file: &Path, entries: &[(&str, &str)]) {
+    let mut writer = zip::ZipWriter::new(fs::File::create(file).unwrap());
+    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    for (name, content) in entries {
+        writer.start_file(*name, options).unwrap();
+        writer.write_all(content.as_bytes()).unwrap();
+    }
+    writer.finish().unwrap();
+}
+
+/// The gzip resources mode writes one gzip member per XML entry under the output directory, and prints nothing. The
+/// member holds the deflate stream of the source entry between the gzip header and the trailer.
+#[test]
+fn gzip_resources_mode_writes_one_member_per_xml_entry() {
+    let root = tempfile::tempdir().unwrap();
+    let archive = root.path().join("postgres-1.256.jar");
+    write_deflated_zip(&archive, &[("com/db/postgres.minicat.xml", &"<model/>".repeat(1000))]);
+    let output = root.path().join("out");
+    let (code, printed, errors) = run_captured(vec![
+        OsString::from("gzip-resources"),
+        OsString::from(format!("--output-dir={}", output.display())),
+        archive.clone().into_os_string(),
+    ]);
+    assert_eq!((code, printed.as_str(), errors.as_str()), (0, "", ""));
+    let member = fs::read(output.join("com/db/postgres.minicat.xml.gzip")).unwrap();
+    let mut source = zip::ZipArchive::new(fs::File::open(&archive).unwrap()).unwrap();
+    let mut deflated = Vec::new();
+    std::io::Read::read_to_end(&mut source.by_index_raw(0).unwrap(), &mut deflated).unwrap();
+    assert_eq!(member[..2], [0x1f, 0x8b], "the gzip magic");
+    assert_eq!(member[10..member.len() - 8], deflated[..], "the member is not the source stream");
+}
+
+/// The gzip resources mode refuses a missing output, a missing archive, an unknown option and a repeated output with the
+/// usage code, and a file that is not XML with the failure code.
+#[test]
+fn gzip_resources_mode_refuses_bad_arguments_and_non_xml_entries() {
+    let root = tempfile::tempdir().unwrap();
+    let output = format!("--output-dir={}", root.path().join("out").display());
+    for case in [
+        vec!["gzip-resources"],
+        vec!["gzip-resources", "a.jar"],
+        vec!["gzip-resources", output.as_str()],
+        vec!["gzip-resources", output.as_str(), "--unknown=x", "a.jar"],
+        vec!["gzip-resources", output.as_str(), output.as_str(), "a.jar"],
+    ] {
+        let (code, _, errors) = run_captured(arguments(&case));
+        assert!(code == 2 && !errors.is_empty(), "{case:?}: code={code}, errors={errors:?}");
+    }
+    let archive = root.path().join("notes.jar");
+    write_deflated_zip(&archive, &[("notes.txt", "text")]);
+    let (code, _, errors) = run_captured(vec![
+        OsString::from("gzip-resources"),
+        OsString::from(output),
+        archive.into_os_string(),
+    ]);
+    assert_eq!(code, 1);
+    assert!(errors.contains(r#"unexpected file "notes.txt""#), "{errors}");
+}

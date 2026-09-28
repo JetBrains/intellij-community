@@ -57,7 +57,7 @@ const TEST_PLAN: &str = r#"{
   "operations": [
     {"id": "module-filter:p.main", "input": {"artifact": "p.main"}, "output": "module-filter:p.main:output", "manifest": "keep", "excludes": ["js/**"]},
     {"id": "layout-assets:0", "kind": "layout-assets", "inputs": [{"artifact": "p.main"}], "output": "layout-assets:0:output", "manifest": "keep",
-      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "gzip-xml-archive"}}]}}
+      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}
   ]
 }"#;
 

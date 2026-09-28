@@ -9,7 +9,7 @@ The crate depends on `serde`, `serde_json` and `thiserror` only.
 
 ## The subset rule
 
-The crate ports only the shapes that the 105 checked-in `*.dev-plan.json` files use. It refuses every other shape with
+The crate ports only the shapes that the 103 checked-in `*.dev-plan.json` files use. It refuses every other shape with
 an error that names it. The table lists what the Go code supports and the port refuses.
 
 `testdata/corpus/` holds a copy of each of these files, without the Starlark test fixture. The corpus test reads and
@@ -92,7 +92,7 @@ catalogue.
 - `LayoutAssets { inputs: Vec<Reference>, assets: Vec<LayoutAsset> }`.
 - `LayoutAsset { destination, sources: Vec<usize>, transform: Option<LayoutTransform>, mode: u32 }` (`Deserialize`). No transform is a plain copy. Mode zero keeps the source mode.
 - `LayoutTransform { kind: LayoutTransformKind, strip_components: u32, mappings: Vec<LayoutMapping>, excludes, directory_excludes, includes, executables: Vec<String> }` (`Deserialize`).
-- `LayoutTransformKind::{ArchiveTree, GzipXmlArchive, TreeMap}`.
+- `LayoutTransformKind::{ArchiveTree, TreeMap}`.
 - `LayoutMapping { pattern, strip_components: u32, destination }` (`Deserialize`). An empty pattern is `**`.
 
 ## `planfile::json` (Go `pluginpack.ReadJSON`)

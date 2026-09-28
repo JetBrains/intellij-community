@@ -772,20 +772,21 @@ fn library_catalogue(libraries: &[(&str, &[&str])]) -> Catalogue {
 fn derive_resolves_a_library_input_to_its_members() {
     let entries = r#""preparations": [{"id": "entries", "inputs": ["@lib//:one", "raw"], "outputs": ["entries:output"], "modelSignature": "e"}],
     "operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
-      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1, 0], "transform": {"kind": "gzip-xml-archive"}}]}}]"#;
+      "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "archive-tree"}},
+        {"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}]"#;
     let jar_asset = r#"{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}}"#;
     for (name, members, inputs, sources) in [
         (
             "one member",
             &["one-1.0.jar"][..],
             &["@lib//:one/one-1.0.jar", "raw"][..],
-            vec![1, 0],
+            [vec![1], vec![0]],
         ),
         (
             "two members",
             &["one-1.0.jar", "one-api-1.0.jar"][..],
             &["@lib//:one/one-1.0.jar", "@lib//:one/one-api-1.0.jar", "raw"][..],
-            vec![2, 0, 1],
+            [vec![2], vec![0, 1]],
         ),
     ] {
         let mut catalogue = library_catalogue(&[("@lib//:one", members)]);
@@ -796,7 +797,9 @@ fn derive_resolves_a_library_input_to_its_members() {
             false,
             vec![layout_source(
                 inputs,
-                vec![transform_asset(sources, transform(LayoutTransformKind::GzipXmlArchive))],
+                sources
+                    .map(|sources| transform_asset(sources, transform(LayoutTransformKind::ArchiveTree)))
+                    .to_vec(),
             )],
         )];
         assert_eq!(derivation.recipe.operations, want, "{name}");
@@ -824,17 +827,14 @@ fn derive_compiles_every_operation_kind() {
         directory_artifact("dsls"),
         file_artifact("archive"),
         directory_artifact("properties"),
-        file_artifact("dialects"),
     ]);
     let tree = r#"{"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
     "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}}"#;
     let entries = r#"{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",
     "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "tree-map", "mappings": [{"pattern": "*.properties", "destination": "messages"}, {}],
       "excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}}"#;
-    let gzip = r#"{"id": "gzip", "kind": "layout-assets", "inputs": [{"artifact": "dialects"}], "output": "gzip:output", "manifest": "keep",
-    "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "gzip-xml-archive"}}]}}"#;
     let operations = format!(
-        r#""operations": [{{"id": "filter", "input": {{"artifact": "raw"}}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}}, {tree}, {entries}, {gzip}]"#
+        r#""operations": [{{"id": "filter", "input": {{"artifact": "raw"}}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}}, {tree}, {entries}]"#
     );
     let derivation = must_derive(
         &plan(
@@ -842,15 +842,13 @@ fn derive_compiles_every_operation_kind() {
             r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
         {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop", "directoryEntries": true}}},
       {"destination": "lib/l10n.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}},
-      {"destination": "lib/dialects.jar", "recipe": {"sources": [{"input": "gzip:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}},
       {"destination": "payload", "inputs": ["tree:output"], "kind": "tree", "classPath": false},
       {"destination": "lib/standardDsls", "inputs": ["dsls"], "kind": "tree", "classPath": false},
       {"destination": "bin/tool", "inputs": ["native"], "mode": 493}"#,
             &[
                 r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"},
           {"id": "tree", "inputs": ["archive"], "outputs": ["tree:output"], "modelSignature": "y"},
-          {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"},
-          {"id": "gzip", "inputs": ["dialects"], "outputs": ["gzip:output"], "modelSignature": "g"}]"#,
+          {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"}]"#,
                 &operations,
             ],
         ),
@@ -894,14 +892,6 @@ fn derive_compiles_every_operation_kind() {
             false,
             vec![layout_source(&["properties"], vec![transform_asset(vec![0], tree_map)])],
         ),
-        jar(
-            "lib/dialects.jar",
-            false,
-            vec![layout_source(
-                &["dialects"],
-                vec![transform_asset(vec![0], transform(LayoutTransformKind::GzipXmlArchive))],
-            )],
-        ),
         contract::Operation::LayoutTree {
             destination: "payload".to_owned(),
             layout: LayoutAssets {
@@ -930,7 +920,6 @@ fn derive_compiles_every_operation_kind() {
     let rows = vec![
         row("lib/main.jar", "remainder", ""),
         row("lib/l10n.jar", "remainder", ""),
-        row("lib/dialects.jar", "remainder", ""),
         tree_row("payload", "remainder", ""),
         tree_row("lib/standardDsls", "remainder", ""),
         row("bin/tool", "remainder", ""),
@@ -941,7 +930,6 @@ fn derive_compiles_every_operation_kind() {
         serde_json::to_string(&derivation.assets).unwrap(),
         concat!(
             r#"[{"destination":"lib/main.jar","producer":"remainder"},{"destination":"lib/l10n.jar","producer":"remainder"},"#,
-            r#"{"destination":"lib/dialects.jar","producer":"remainder"},"#,
             r#"{"destination":"payload","producer":"remainder","kind":"tree","classPath":false},"#,
             r#"{"destination":"lib/standardDsls","producer":"remainder","kind":"tree","classPath":false},"#,
             r#"{"destination":"bin/tool","producer":"remainder"}]"#,
@@ -1091,7 +1079,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
                 &[
                     r#""preparations": [{"id": "layout", "inputs": ["source"], "outputs": ["layout:output"], "modelSignature": "x"}],
           "operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
-            "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "gzip-xml-archive"}}]}}]"#,
+            "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "archive-tree"}}]}}]"#,
                 ],
             ),
             catalogue(vec![file_artifact("source")]),

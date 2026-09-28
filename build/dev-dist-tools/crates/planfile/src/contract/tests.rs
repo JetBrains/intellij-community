@@ -58,7 +58,7 @@ fn layout_transform_excludes_encoding() {
             tree_map(&[], &[], &["DotFiles/*.sh"]),
         ),
         (
-            r#"{"kind":"gzip-xml-archive","stripComponents":1,"mappings":[{},{"pattern":"*.xml","stripComponents":2,"destination":"d"}]}"#,
+            r#"{"kind":"archive-tree","stripComponents":1,"mappings":[{},{"pattern":"*.xml","stripComponents":2,"destination":"d"}]}"#,
             LayoutTransform {
                 strip_components: 1,
                 mappings: vec![
@@ -69,7 +69,7 @@ fn layout_transform_excludes_encoding() {
                         destination: "d".to_owned(),
                     },
                 ],
-                ..transform(LayoutTransformKind::GzipXmlArchive)
+                ..transform(LayoutTransformKind::ArchiveTree)
             },
         ),
     ] {
@@ -77,6 +77,13 @@ fn layout_transform_excludes_encoding() {
     }
     let error = from_slice::<LayoutTransform>(br#"{"excludes":[]}"#).unwrap_err();
     assert!(error.message().contains("missing field `kind`"), "{error}");
+}
+
+/// The gzip resources of a module are a Bazel action now. So the removed kind `gzip-xml-archive` does not read.
+#[test]
+fn layout_transform_refuses_the_gzip_xml_archive_kind() {
+    let error = from_slice::<LayoutTransform>(br#"{"kind":"gzip-xml-archive"}"#).unwrap_err();
+    assert!(error.message().contains("unknown variant `gzip-xml-archive`"), "{error}");
 }
 
 #[test]

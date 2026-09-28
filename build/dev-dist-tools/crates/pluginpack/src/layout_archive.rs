@@ -1,4 +1,4 @@
-//! The archive readers of the `archive-tree` and `gzip-xml-archive` transforms. The `zip` crate reads `.zip` and `.jar`.
+//! The archive readers of the `archive-tree` transform and of the gzip resources. The `zip` crate reads `.zip` and `.jar`.
 //! `ruzstd` and the `zip` crate read `.zip.zst`, and `flate2` and the `tar` crate read `.tar.gz`.
 
 use std::collections::{HashMap, HashSet};

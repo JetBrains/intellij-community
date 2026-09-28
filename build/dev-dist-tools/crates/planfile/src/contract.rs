@@ -200,7 +200,6 @@ pub struct LayoutTransform {
 #[serde(rename_all = "kebab-case")]
 pub enum LayoutTransformKind {
     ArchiveTree,
-    GzipXmlArchive,
     TreeMap,
 }
 

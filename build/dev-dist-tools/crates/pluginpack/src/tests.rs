@@ -1,5 +1,5 @@
 //! The port of the Go tests of `internal/pluginpack`. Each module names its Go file. A Go case without a port is named
-//! in the doc comment of the nearest test, with the reason. The module `corpus` has no Go original.
+//! in the doc comment of the nearest test, with the reason. The modules `corpus` and `gzip_resources` have no Go original.
 
 #![allow(
     clippy::cast_possible_truncation,
@@ -11,6 +11,7 @@
 mod corpus;
 mod derive;
 mod execute;
+mod gzip_resources;
 mod kotlin;
 mod layout;
 mod planning;
@@ -614,17 +615,13 @@ pub(crate) fn require_recorded_paths(record: &[String], paths: &[&str]) {
 }
 
 /// Lists the entries of a jar by name with their content digest, sorted by name. The generated index follows the entry
-/// order and is left out. With `decompress`, the digest is over the decompressed gzip payload of each entry.
-pub(crate) fn jar_entry_record(jar: &Path, decompress: bool) -> Vec<String> {
+/// order and is left out.
+pub(crate) fn jar_entry_record(jar: &Path) -> Vec<String> {
     let (names, entries) = read_archive(jar);
     let mut record: Vec<String> = names
         .iter()
         .filter(|name| *name != "__index__")
-        .map(|name| {
-            let content = &entries[name];
-            let content = if decompress { gunzip(content) } else { content.clone() };
-            format!("{name}\tentry\t-\t{}", sha256_hex(&content))
-        })
+        .map(|name| format!("{name}\tentry\t-\t{}", sha256_hex(&entries[name])))
         .collect();
     record.sort();
     record
