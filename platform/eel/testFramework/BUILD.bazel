@@ -23,6 +23,7 @@ jvm_library(
         "//platform/util/base",
         "//platform/util-rt",
         "//platform/testFramework/core",
+        "//platform/util",
     ],
 )
 
@@ -45,6 +46,7 @@ jvm_library(
         "//platform/util/base:base_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//platform/testFramework/core:core_test_lib",
+        "//platform/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.testFramework` end

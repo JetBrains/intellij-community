@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

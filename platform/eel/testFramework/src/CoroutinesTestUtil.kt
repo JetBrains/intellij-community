@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.testFramework
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -23,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -40,6 +44,7 @@ import kotlin.concurrent.thread
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -134,10 +139,25 @@ suspend fun <T> bodyLimitedCoroutineScope(
   // Some child coroutine may throw an important exception after cancelling. This code catches them.
   try {
     withContext(NonCancellable) {
-      withTimeout(finalizeTimeout) {
-        for (child in children) {
-          child.join()
+      try {
+        withTimeout(finalizeTimeout) {
+          for (child in children) {
+            child.join()
+          }
         }
+      }
+      catch (err: TimeoutCancellationException) {
+        @Suppress("RAW_SCOPE_CREATION")
+        val threadDump = children.filter { it.isActive }.mapNotNull { dumpCoroutines(CoroutineScope(it)) }.joinToString("\n")
+
+        if (threadDump.isNotBlank()) {
+          val dumpFile = PathManager.getLogDir()
+            .findOrCreateFile("threadDump-bodyLimitedCoroutineScope-${System.currentTimeMillis()}.log")
+            .apply { writeText(threadDump) }
+          println("\u001B[33mCaptured thread dump: file:${dumpFile.toAbsolutePath()}\u001B[0m")
+        }
+
+        throw Exception("Some children didn't manage to exit in $finalizeTimeout", err)
       }
     }
   }
@@ -256,13 +276,17 @@ suspend fun executeAndReturnLoggedError(
     }
     .firstOrNull()
 
-suspend fun executeAndCollectLoggedErrors(
+@OptIn(ExperimentalContracts::class)
+suspend fun <T> executeAndCollectLoggedErrors(
   collection: MutableCollection<Throwable>,
   limit: Int = Int.MAX_VALUE,
   collectWarnings: Boolean = false,
   collectMessagesWithoutExceptions: Boolean = false,
-  body: suspend () -> Unit,
-) {
+  body: suspend () -> T,
+): T {
+  contract {
+    callsInPlace(body, InvocationKind.EXACTLY_ONCE)
+  }
   // It's easier and more reliable than coroutines in this particular case.
   val startupLatch = CountDownLatch(1)
   val shutdownLatch = CountDownLatch(1)
@@ -286,7 +310,7 @@ suspend fun executeAndCollectLoggedErrors(
     private fun processThrowable(message: String, t: Throwable?) {
       val err = when {
         t != null -> t
-        collectMessagesWithoutExceptions -> Throwable(message).also { it.stackTrace = arrayOf() }
+        collectMessagesWithoutExceptions -> Throwable(message)
         else -> null
       }
       if (err != null) {
@@ -314,7 +338,7 @@ suspend fun executeAndCollectLoggedErrors(
 
   try {
     startupLatch.await()
-    body()
+    return body()
   }
   finally {
     shutdownLatch.countDown()
