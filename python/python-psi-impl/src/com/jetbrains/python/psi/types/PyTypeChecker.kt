@@ -222,20 +222,33 @@ object PyTypeChecker {
     body: () -> Boolean,
   ): Boolean {
     val collector = context.diagnostics ?: return body()
+    val (result, child) = collectInto(collector, body)
+    if (!result) {
+      collector.current.add(PyTypeMismatchExplanation(message(), child, step()))
+    }
+    return result
+  }
+
+  /**
+   * Runs [body] with recording diverted to a fresh buffer, and returns its result with what it recorded.
+   *
+   * This lets a branch that explores several candidates choose the shape of its breakdown after the walk, so
+   * no candidate is matched a second time just to record it. [recordFrameBool] and [withoutRecording] are the
+   * two degenerate cases: attach the buffer to the parent, or drop it.
+   */
+  private inline fun <T> collectInto(
+    collector: DiagnosticsCollector,
+    body: () -> T,
+  ): Pair<T, List<PyTypeMismatchExplanation>> {
     val parent = collector.current
     val child = mutableListOf<PyTypeMismatchExplanation>()
     collector.current = child
-    val result: Boolean
     try {
-      result = body()
+      return body() to child.toList()
     }
     finally {
       collector.current = parent
     }
-    if (!result) {
-      parent.add(PyTypeMismatchExplanation(message(), child.toList(), step()))
-    }
-    return result
   }
 
   /** Records a terminal reason (no children) at the current frame, if a breakdown is being collected. */
@@ -251,14 +264,7 @@ object PyTypeChecker {
    */
   private inline fun <T> withoutRecording(context: MatchContext, body: () -> T): T {
     val collector = context.diagnostics ?: return body()
-    val parent = collector.current
-    collector.current = mutableListOf()
-    return try {
-      body()
-    }
-    finally {
-      collector.current = parent
-    }
+    return collectInto(collector, body).first
   }
 
   /**
@@ -1014,10 +1020,15 @@ object PyTypeChecker {
              else actual.members.any { match(expected, it, context).getOrDefault(false) }
     }
 
-    // Collecting a breakdown: find the incompatible members first (discarding their trial recordings), then record
-    // only the most useful shape.
-    val failing = withoutRecording(context) {
-      actual.members.filter { !match(expected, it, context).getOrDefault(false) }
+    // One walk: buffer each failing member's reasons ([collectInto]), then pick the shape below. The shape
+    // depends on how many members fail, which is only known at the end.
+    val collector = context.diagnostics!!
+    val failing = mutableListOf<Pair<PyType?, List<PyTypeMismatchExplanation>>>()
+    for (member in actual.members) {
+      val (memberMatched, reasons) = collectInto(collector) { match(expected, member, context).getOrDefault(false) }
+      if (!memberMatched) {
+        failing.add(member to reasons)
+      }
     }
     val matched = if (requireAll) failing.isEmpty() else failing.size < actual.members.size
     if (matched) return true
@@ -1026,7 +1037,7 @@ object PyTypeChecker {
       // Exactly one incompatible member: the "Not all members …" umbrella and a naming frame would only add
       // redundant levels (the member's own reason already names it, e.g. "`C` is incompatible with protocol `P`"),
       // so record that reason directly under the headline, which already shows the whole union.
-      match(expected, failing.single(), context)
+      collector.current.addAll(failing.single().second)
     }
     else {
       // Several incompatible members: the "Not all members of X are assignable to Y" umbrella, then a frame per
@@ -1042,13 +1053,10 @@ object PyTypeChecker {
         // so mark the direction — a call-site renderer must not read the required type as a "union with members".
         PyMismatchStep.NoUnionMember(codifiedType(context, actual), codifiedType(context, expected), actualIsUnion = true)
       }) {
-        for (member in failing) {
-          recordFrameBool(context, {
-            PyPsiBundle.problemMessage("INSP.type.checker.breakdown.union.member.incompatible",
-                                       codifiedType(context, member), codifiedType(context, expected))
-          }, {
-            PyMismatchStep.UnionMember(codifiedType(context, member))
-          }) { match(expected, member, context).getOrDefault(false) }
+        for ((member, reasons) in failing) {
+          val message = PyPsiBundle.problemMessage("INSP.type.checker.breakdown.union.member.incompatible",
+                                                   codifiedType(context, member), codifiedType(context, expected))
+          collector.current.add(PyTypeMismatchExplanation(message, reasons, PyMismatchStep.UnionMember(codifiedType(context, member))))
         }
         false
       }
