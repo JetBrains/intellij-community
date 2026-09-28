@@ -1,0 +1,190 @@
+a:com.intellij.build.AbstractViewManager
+- pf:myBuildContentManager:com.intellij.build.BuildContentManager
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project):V
+- dispose():V
+- p:getBuildsMap():java.util.Map
+- p:getContentIcon():javax.swing.Icon
+- pa:getViewName():java.lang.String
+- isBuildContentView():Z
+- isConsoleEnabledByDefault():Z
+- p:onBuildFinish(com.intellij.build.BuildDescriptor):V
+- p:onBuildStart(com.intellij.build.BuildDescriptor):V
+- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+f:com.intellij.build.BuildContentDescriptor
+- <init>(com.intellij.execution.ui.ExecutionConsole,com.intellij.execution.process.ProcessHandler,javax.swing.JComponent,java.lang.String):V
+- isActivateToolWindowWhenFailed():Z
+- isNavigateToError():com.intellij.util.ThreeState
+f:com.intellij.build.BuildTextConsoleView
+f:com.intellij.build.BuildTreeConsoleView
+- <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole):V
+- addFilter(java.util.function.Predicate):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- allowHeavyFilters():V
+- canPause():Z
+- clear():V
+- contains(java.util.function.Predicate):Z
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
+- dispose():V
+- getContentSize():I
+- getFilter():java.util.function.Predicate
+- getNextOccurenceActionName():java.lang.String
+- getPreviousOccurenceActionName():java.lang.String
+- goNextOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- goPreviousOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- hasDeferredOutput():Z
+- hasNextOccurence():Z
+- hasPreviousOccurence():Z
+- isDisposed():Z
+- isFilteringEnabled():Z
+- isOutputPaused():Z
+- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+- performWhenNoDeferredOutput(java.lang.Runnable):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- removeFilter(java.util.function.Predicate):V
+- scrollTo(I):V
+- setHelpId(java.lang.String):V
+- setOutputPaused(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+f:com.intellij.build.BuildTreeFilters
+c:com.intellij.build.BuildView
+- sf:CONSOLE_VIEW_NAME:java.lang.String
+- <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,java.lang.String,com.intellij.build.ViewManager):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.ui.ExecutionConsole,com.intellij.build.BuildDescriptor,java.lang.String,com.intellij.build.ViewManager):V
+- addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
+- addFilter(java.util.function.Predicate):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- allowHeavyFilters():V
+- canPause():Z
+- clear():V
+- contains(java.util.function.Predicate):Z
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
+- getActions():com.intellij.openapi.actionSystem.AnAction[]
+- getAdditionalActions():com.intellij.openapi.actionSystem.AnAction[]
+- getContentSize():I
+- getFilter():java.util.function.Predicate
+- getNextOccurenceActionName():java.lang.String
+- getPreviousOccurenceActionName():java.lang.String
+- goNextOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- goPreviousOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- hasDeferredOutput():Z
+- hasNextOccurence():Z
+- hasPreviousOccurence():Z
+- hideOriginalActions():V
+- isFilteringEnabled():Z
+- isOutputPaused():Z
+- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+- performWhenNoDeferredOutput(java.lang.Runnable):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- removeFilter(java.util.function.Predicate):V
+- scrollTo(I):V
+- setHelpId(java.lang.String):V
+- setOutputPaused(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+c:com.intellij.build.BuildViewManager
+- <init>(com.intellij.openapi.project.Project):V
+- getViewName():java.lang.String
+c:com.intellij.build.DefaultBuildDescriptor
+- <init>(com.intellij.build.BuildDescriptor):V
+- <init>(java.lang.Object,java.lang.Object,java.lang.String,java.lang.String,J):V
+- <init>(java.lang.Object,java.lang.String,java.lang.String,J):V
+- getAttachedConsoleConsumer():com.intellij.util.Consumer
+- getContentDescriptorSupplier():java.util.function.Supplier
+- getGroupId():java.lang.Object
+- getStartTime():J
+- getWorkingDir():java.lang.String
+- isActivateToolWindowWhenAdded():Z
+- isActivateToolWindowWhenFailed():Z
+- isAutoFocusContent():Z
+- isNavigateToError():com.intellij.util.ThreeState
+- setAutoFocusContent(Z):V
+- withExecutionEnvironment(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.build.DefaultBuildDescriptor
+- withProcessHandler(com.intellij.build.process.BuildProcessHandler,com.intellij.util.Consumer):com.intellij.build.DefaultBuildDescriptor
+c:com.intellij.build.ExecutionNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.build.ExecutionNode,Z,java.util.function.Supplier):V
+- getElement():com.intellij.build.ExecutionNode
+- getEndTime():J
+- s:getEventResultIcon(com.intellij.build.events.EventResult):javax.swing.Icon
+- getNavigatables():java.util.List
+- getTitle():java.lang.String
+- hasInfos():Z
+- hasWarnings():Z
+- s:isFailed(com.intellij.build.events.EventResult):Z
+- s:isSkipped(com.intellij.build.events.EventResult):Z
+- reportChildMessageKind(com.intellij.build.events.MessageEvent$Kind):com.intellij.build.ExecutionNode
+- setNavigatable(com.intellij.pom.Navigatable):V
+- p:update(com.intellij.ide.projectView.PresentationData):V
+f:com.intellij.build.FileNavigatable
+- <init>(com.intellij.openapi.project.Project,com.intellij.build.FilePosition):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- getFileDescriptor():com.intellij.openapi.fileEditor.OpenFileDescriptor
+- getFilePosition():com.intellij.build.FilePosition
+- navigate(Z):V
+f:com.intellij.build.FilePosition
+- <init>(java.io.File,I,I):V
+- <init>(java.io.File,I,I,I,I):V
+- equals(java.lang.Object):Z
+c:com.intellij.build.SyncViewManager
+- <init>(com.intellij.openapi.project.Project):V
+- getViewName():java.lang.String
+com.intellij.build.events.FinishEvent
+- a:getResult():com.intellij.build.events.EventResult
+e:com.intellij.build.events.MessageEvent$Kind
+- sf:ERROR:com.intellij.build.events.MessageEvent$Kind
+- sf:INFO:com.intellij.build.events.MessageEvent$Kind
+- sf:SIMPLE:com.intellij.build.events.MessageEvent$Kind
+- sf:STATISTICS:com.intellij.build.events.MessageEvent$Kind
+- sf:WARNING:com.intellij.build.events.MessageEvent$Kind
+- s:valueOf(java.lang.String):com.intellij.build.events.MessageEvent$Kind
+com.intellij.build.events.ProgressBuildEvent
+- a:getProgress():J
+- a:getTotal():J
+- a:getUnit():java.lang.String
+c:com.intellij.build.events.impl.FailureImpl
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.util.List):V
+- <init>(java.lang.String,java.lang.String,java.util.List,java.lang.Throwable,com.intellij.notification.Notification,com.intellij.pom.Navigatable):V
+- <init>(java.lang.String,java.lang.Throwable):V
+- <init>(java.lang.String,java.lang.Throwable,com.intellij.notification.Notification,com.intellij.pom.Navigatable):V
+- getCauses():java.util.List
+- getDescription():java.lang.String
+- getError():java.lang.Throwable
+- getMessage():java.lang.String
+- getNavigatable():com.intellij.pom.Navigatable
+- getNotification():com.intellij.notification.Notification
+c:com.intellij.build.events.impl.FailureResultImpl
+- <init>(java.lang.String,java.lang.Throwable):V
+- <init>(java.util.List):V
+- getFailures():java.util.List
+f:com.intellij.build.events.impl.SuccessResultImpl
+- getWarnings():java.util.List
+- isUpToDate():Z
+com.intellij.build.issue.BuildIssueProvider
+- a:getBuildIssue():com.intellij.build.issue.BuildIssue
+a:com.intellij.build.issue.ConfigurableBuildIssue
+- com.intellij.build.issue.BuildIssue
+- <init>():V
+- f:addDescription(java.lang.String):V
+- f:addQuickFix(com.intellij.build.issue.BuildIssueQuickFix):java.lang.String
+- f:addQuickFixPrompt(java.lang.String):V
+- f:getDescription():java.lang.String
+- f:getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- f:getQuickFixes():java.util.List
+- f:getTitle():java.lang.String
+- f:setNavigatable(kotlin.jvm.functions.Function1):V
+- f:setTitle(java.lang.String):V
+c:com.intellij.build.output.BuildOutputInstantReaderImpl
+- <init>(java.lang.Object,java.lang.Object,com.intellij.build.BuildProgressListener,java.util.List):V
+- <init>(java.lang.Object,java.lang.Object,com.intellij.build.BuildProgressListener,java.util.List,I):V
+- <init>(java.lang.Object,java.lang.Object,com.intellij.build.BuildProgressListener,java.util.List,I,I):V
+- b:<init>(java.lang.Object,java.lang.Object,com.intellij.build.BuildProgressListener,java.util.List,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- append(C):com.intellij.build.output.BuildOutputInstantReaderImpl
+- append(java.lang.CharSequence,I,I):com.intellij.build.output.BuildOutputInstantReaderImpl
+- close():V
+- getParentEventId():java.lang.Object
+- pushBack():V
+- pushBack(I):V
+- readLine():java.lang.String

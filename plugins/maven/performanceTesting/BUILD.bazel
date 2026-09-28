@@ -43,6 +43,7 @@ jvm_library(
         "//platform/backend/workspace",
         "//platform/workspace/storage",
         "//platform/lang-api:lang",
+        "//platform/buildView",
     ],
 )
 
@@ -76,6 +77,7 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//platform/workspace/storage:storage_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/buildView:buildView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.performanceTesting` end

@@ -539,6 +539,7 @@ private val RPC_MODULE_ID = PluginModuleId("intellij.platform.rpc", PluginModule
  * See [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956#keep-compatibility-with-external-plugins) for more details.
  */
 private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = arrayOf(
+  "intellij.platform.buildView",
   "intellij.platform.collaborationTools.auth",
   "intellij.platform.collaborationTools.auth.base",
   "intellij.platform.debugger",

@@ -79,6 +79,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.tooling.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.buildView" />
     <orderEntry type="module" module-name="intellij.kotlin.preferences" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

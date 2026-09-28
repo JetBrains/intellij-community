@@ -1576,19 +1576,6 @@
                                    order="last"/>
     <runAnything.executionProvider implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider"
                                    order="last"/>
-    <!-- Build view -->
-    <projectService serviceInterface="com.intellij.build.BuildContentManager"
-                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"/>
-    <projectService serviceInterface="com.intellij.build.BuildViewManager"
-                    serviceImplementation="com.intellij.build.BuildViewManager"
-                    testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
-    <projectService serviceInterface="com.intellij.build.SyncViewManager"
-                    serviceImplementation="com.intellij.build.SyncViewManager"
-                    testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
-    <projectService serviceInterface="com.intellij.build.BuildWorkspaceConfiguration" open="true"
-                    serviceImplementation="com.intellij.build.BuildWorkspaceConfigurationImpl"/>
-    <applicationService serviceInterface="com.intellij.build.events.BuildEvents"
-                        serviceImplementation="com.intellij.build.events.impl.BuildEventsImpl"/>
     <moveLeftRightHandler language=""
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
                           order="last"/>

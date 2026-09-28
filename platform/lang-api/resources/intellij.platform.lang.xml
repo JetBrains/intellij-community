@@ -27,9 +27,6 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.buildProgressListenerRegistrar"
-                    interface="com.intellij.build.BuildProgressListenerRegistrar"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiElementExternalizer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PsiElementExternalizer"/>
     </extensionPoint>

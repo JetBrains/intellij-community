@@ -102,6 +102,7 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util-ex",
         "//platform/lang-api:lang",
+        "//platform/buildView",
         "//platform/statistics",
     ],
 )
@@ -168,6 +169,7 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/buildView:buildView_test_lib",
         "//platform/statistics:statistics_test_lib",
     ],
 )

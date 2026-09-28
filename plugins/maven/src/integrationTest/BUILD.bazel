@@ -76,6 +76,8 @@ jvm_library(
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
+        "//platform/buildView",
+        "//platform/buildView:buildView_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//platform/lang-core",

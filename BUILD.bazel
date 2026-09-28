@@ -825,6 +825,8 @@ jvm_library(
         "//platform/xdebugger-impl/frontend:debugger-impl-frontend-tests_test_lib",
         "//platform/xdebugger-impl/ui:debugger-impl-ui-tests",
         "//platform/xdebugger-impl/ui:debugger-impl-ui-tests_test_lib",
+        "//platform/buildView:buildView-tests",
+        "//platform/buildView:buildView-tests_test_lib",
         "//xml/relaxng:relaxng-tests",
         "//xml/relaxng:relaxng-tests_test_lib",
         "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",

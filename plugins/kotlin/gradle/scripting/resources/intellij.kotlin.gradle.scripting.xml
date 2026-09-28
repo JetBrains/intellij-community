@@ -33,6 +33,7 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

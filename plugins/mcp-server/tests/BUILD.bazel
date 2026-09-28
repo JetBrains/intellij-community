@@ -117,6 +117,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/buildView",
+        "//platform/buildView:buildView_test_lib",
         "//platform/lang-impl/testEntities",
         "//platform/lang-impl/testEntities:testEntities_test_lib",
         "//platform/projectModel-api:projectModel",

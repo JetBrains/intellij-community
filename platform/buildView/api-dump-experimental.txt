@@ -1,0 +1,140 @@
+a:com.intellij.build.AbstractViewManager
+- com.intellij.build.BuildProgressListener
+- com.intellij.build.BuildProgressObservable
+- com.intellij.build.ViewManager
+- com.intellij.openapi.Disposable
+- *:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
+*:com.intellij.build.BuildEventDispatcher
+- com.intellij.build.BuildProgressListener
+- java.io.Closeable
+- java.lang.Appendable
+- append(C):com.intellij.build.BuildEventDispatcher
+- append(java.lang.CharSequence):com.intellij.build.BuildEventDispatcher
+- append(java.lang.CharSequence,I,I):com.intellij.build.BuildEventDispatcher
+- close():V
+- invokeOnCompletion(java.util.function.Consumer):V
+- setStdOut(Z):V
+*:com.intellij.build.BuildProgressObservable
+- a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
+f:com.intellij.build.BuildTreeFilters
+- *sf:createFilteringActionsGroup(java.util.function.Supplier):com.intellij.openapi.actionSystem.DefaultActionGroup
+c:com.intellij.build.BuildView
+- com.intellij.build.BuildProgressListener
+- com.intellij.build.Filterable
+- com.intellij.execution.runners.RunContentActionsContributor
+- com.intellij.execution.ui.ConsoleView
+- com.intellij.execution.ui.ObservableConsoleView
+- com.intellij.ide.OccurenceNavigator
+- com.intellij.openapi.actionSystem.UiDataProvider
+- com.intellij.openapi.ui.ComponentContainer
+- javax.swing.JPanel
+- *sf:RESTART_ACTIONS:com.intellij.openapi.actionSystem.DataKey
+c:com.intellij.build.BuildViewManager
+- com.intellij.build.AbstractViewManager
+- *s:createBuildProgress(com.intellij.openapi.project.Project):com.intellij.build.progress.BuildProgress
+*:com.intellij.build.BuildWorkspaceConfiguration
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.build.BuildWorkspaceConfiguration
+- a:isShowFirstErrorInEditor():Z
+c:com.intellij.build.DefaultBuildDescriptor
+- com.intellij.build.BuildDescriptor
+- *:getActions():java.util.List
+- *:getContextActions(com.intellij.build.ExecutionNode):java.util.List
+- *:getExecutionFilters():java.util.List
+- *:getRestartActions():java.util.List
+- *:withAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.build.DefaultBuildDescriptor
+- *:withActions(com.intellij.openapi.actionSystem.AnAction[]):com.intellij.build.DefaultBuildDescriptor
+- *:withContextAction(java.util.function.Function):com.intellij.build.DefaultBuildDescriptor
+- *:withContextActions(com.intellij.openapi.actionSystem.AnAction[]):com.intellij.build.DefaultBuildDescriptor
+- *:withExecutionFilter(com.intellij.execution.filters.Filter):com.intellij.build.DefaultBuildDescriptor
+- *:withExecutionFilters(com.intellij.execution.filters.Filter[]):com.intellij.build.DefaultBuildDescriptor
+- *:withRestartAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.build.DefaultBuildDescriptor
+- *:withRestartActions(com.intellij.openapi.actionSystem.AnAction[]):com.intellij.build.DefaultBuildDescriptor
+c:com.intellij.build.ExecutionNode
+- com.intellij.ide.util.treeView.PresentableNodeDescriptor
+- *:isAlwaysLeaf():Z
+- *:setAlwaysLeaf(Z):V
+c:com.intellij.build.SyncViewManager
+- com.intellij.build.AbstractViewManager
+- *s:createBuildProgress(com.intellij.openapi.project.Project):com.intellij.build.progress.BuildProgress
+*:com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:build():com.intellij.build.events.BuildIssueEvent
+- a:withFilePosition(com.intellij.build.FilePosition):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:withId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:withOutputIds(java.util.List):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+*:com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+- a:build():com.intellij.build.events.PresentableBuildEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+- a:withId(java.lang.Object):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+com.intellij.build.eventBuilders.StartBuildEventBuilder
+- *a:withBuildViewSettings(com.intellij.build.BuildViewSettingsProvider):com.intellij.build.eventBuilders.StartBuildEventBuilder
+*:com.intellij.build.events.BuildEventPresentationData
+- a:consoleToolbarActions():com.intellij.openapi.actionSystem.ActionGroup
+- a:getExecutionConsole():com.intellij.execution.ui.ExecutionConsole
+- a:getNodeIcon():javax.swing.Icon
+*:com.intellij.build.events.BuildIssueEvent
+- com.intellij.build.events.MessageEvent
+- s:builder(com.intellij.build.issue.BuildIssue,com.intellij.build.events.MessageEvent$Kind):com.intellij.build.eventBuilders.BuildIssueEventBuilder
+- a:getDescription():java.lang.String
+- a:getIssue():com.intellij.build.issue.BuildIssue
+*:com.intellij.build.events.DerivedResult
+- com.intellij.build.events.EventResult
+- a:createDefaultResult():com.intellij.build.events.EventResult
+- a:createFailureResult():com.intellij.build.events.FailureResult
+*:com.intellij.build.events.DuplicateMessageAware
+- com.intellij.build.events.MessageEvent
+*:com.intellij.build.events.PresentableBuildEvent
+- com.intellij.build.events.BuildEvent
+- s:builder(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
+- a:getPresentationData():com.intellij.build.events.BuildEventPresentationData
+*:com.intellij.build.issue.BuildIssueChecker
+- a:check(com.intellij.build.issue.BuildIssueData):com.intellij.build.issue.BuildIssue
+*:com.intellij.build.issue.BuildIssueData
+*:com.intellij.build.issue.BuildIssueQuickFix
+- a:getId():java.lang.String
+- runQuickFix(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):java.util.concurrent.CompletableFuture
+*f:com.intellij.build.issue.quickfix.OpenFileQuickFix
+- com.intellij.build.issue.BuildIssueQuickFix
+- *sf:Companion:com.intellij.build.issue.quickfix.OpenFileQuickFix$Companion
+- <init>(java.nio.file.Path,java.lang.String):V
+- getId():java.lang.String
+- runQuickFix(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):java.util.concurrent.CompletableFuture
+- *sf:showFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- *sf:showFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):V
+*f:com.intellij.build.issue.quickfix.OpenFileQuickFix$Companion
+- f:showFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- f:showFile(com.intellij.openapi.project.Project,java.nio.file.Path,java.lang.String):V
+*:com.intellij.build.progress.BuildProgress
+- a:buildIssue(com.intellij.build.issue.BuildIssue,com.intellij.build.events.MessageEvent$Kind):com.intellij.build.progress.BuildProgress
+- a:cancel():com.intellij.build.progress.BuildProgress
+- a:cancel(J,java.lang.String):com.intellij.build.progress.BuildProgress
+- a:fail():com.intellij.build.progress.BuildProgress
+- a:fail(J,java.lang.String):com.intellij.build.progress.BuildProgress
+- a:fileMessage(java.lang.String,java.lang.String,com.intellij.build.events.MessageEvent$Kind,com.intellij.build.FilePosition):com.intellij.build.progress.BuildProgress
+- a:finish():com.intellij.build.progress.BuildProgress
+- a:finish(J):com.intellij.build.progress.BuildProgress
+- a:finish(J,java.lang.String,com.intellij.build.events.EventResult):com.intellij.build.progress.BuildProgress
+- a:finish(J,Z,java.lang.String):com.intellij.build.progress.BuildProgress
+- a:finish(com.intellij.build.events.EventResult):com.intellij.build.progress.BuildProgress
+- a:finish(java.lang.String,com.intellij.build.events.EventResult):com.intellij.build.progress.BuildProgress
+- a:finish(Z):com.intellij.build.progress.BuildProgress
+- a:getId():java.lang.Object
+- a:message(java.lang.String,java.lang.String,com.intellij.build.events.MessageEvent$Kind,com.intellij.pom.Navigatable):com.intellij.build.progress.BuildProgress
+- a:output(java.lang.String,com.intellij.execution.process.ProcessOutputType):com.intellij.build.progress.BuildProgress
+- output(java.lang.String,Z):com.intellij.build.progress.BuildProgress
+- a:presentable(java.lang.String,com.intellij.build.events.BuildEventPresentationData):com.intellij.build.progress.BuildProgress
+- a:progress(java.lang.String):com.intellij.build.progress.BuildProgress
+- a:progress(java.lang.String,J,J,java.lang.String):com.intellij.build.progress.BuildProgress
+- a:start(com.intellij.build.progress.BuildProgressDescriptor):com.intellij.build.progress.BuildProgress
+- a:start(com.intellij.build.progress.BuildProgressDescriptor,com.intellij.build.BuildViewSettingsProvider):com.intellij.build.progress.BuildProgress
+- a:start(java.lang.String,com.intellij.build.progress.BuildProgressDescriptor):com.intellij.build.progress.BuildProgress
+- a:start(java.lang.String,com.intellij.build.progress.BuildProgressDescriptor,com.intellij.build.BuildViewSettingsProvider):com.intellij.build.progress.BuildProgress
+- a:startChildProgress(java.lang.String):com.intellij.build.progress.BuildProgress
+*:com.intellij.build.progress.BuildProgressDescriptor
+- a:getBuildDescriptor():com.intellij.build.BuildDescriptor
+- a:getTitle():java.lang.String

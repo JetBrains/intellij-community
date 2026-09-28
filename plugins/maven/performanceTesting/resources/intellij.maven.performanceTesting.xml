@@ -4,6 +4,7 @@
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>

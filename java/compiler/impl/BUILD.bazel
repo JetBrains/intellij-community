@@ -103,6 +103,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/lang-api:lang",
+        "//platform/buildView",
     ],
 )
 
@@ -200,6 +201,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/buildView:buildView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.compiler.impl` end
