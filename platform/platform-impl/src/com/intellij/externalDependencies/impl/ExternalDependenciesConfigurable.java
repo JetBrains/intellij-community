@@ -4,11 +4,15 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.externalDependencies.ProjectExternalDependency;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.newui.PluginLogoApi;
+import com.intellij.ide.plugins.newui.PluginLogoKt;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -41,6 +45,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -56,9 +61,11 @@ import java.util.Map;
 @ApiStatus.Internal
 public final class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
+  private static final int PLUGIN_ICON_SIZE = 16;
   private final ExternalDependenciesManager myDependenciesManager;
   private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
   private Map<String, String> myPluginNameById;
+  private final Map<String, Icon> myPluginIconById = new HashMap<>();
 
   public ExternalDependenciesConfigurable(Project project) {
     myDependenciesManager = ExternalDependenciesManager.getInstance(project);
@@ -93,6 +100,7 @@ public final class ExternalDependenciesConfigurable implements SearchableConfigu
       protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
                                            int index, boolean selected, boolean hasFocus) {
         if (dependency instanceof DependencyOnPlugin value) {
+          setIcon(getPluginIconById(value.getPluginId()));
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
           String maxVersion = value.getMaxVersion();
@@ -171,6 +179,16 @@ public final class ExternalDependenciesConfigurable implements SearchableConfigu
 
   private @NlsContexts.ListItem String getPluginNameById(@NotNull @NlsSafe String pluginId) {
     return ObjectUtils.notNull(getPluginNameByIdMap().get(pluginId), pluginId);
+  }
+
+  private @NotNull Icon getPluginIconById(@NotNull String pluginId) {
+    return myPluginIconById.computeIfAbsent(pluginId, id -> {
+      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(PluginId.getId(id));
+      if (descriptor == null) {
+        return PluginLogoKt.reloadPluginIcon(AllIcons.Plugins.PluginLogo, PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
+      }
+      return PluginLogoApi.getIcon(descriptor, PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE, null);
+    });
   }
 
   private Map<String, @NlsContexts.ListItem String> getPluginNameByIdMap() {
