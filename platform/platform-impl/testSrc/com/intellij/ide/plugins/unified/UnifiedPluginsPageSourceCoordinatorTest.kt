@@ -845,6 +845,39 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
+  fun `disabled Bundled categories keep category order and priority`() {
+    val alphaEnabled = localItem(plugin("alpha.enabled", "Zulu Alpha"), enabled = true, category = "Alpha")
+    val alphaDisabled = localItem(plugin("alpha.disabled", "Aardvark Alpha"), enabled = false, category = "Alpha")
+    val beta = localItem(plugin("beta", "Beta"), enabled = true, category = "Beta")
+    val priority = localItem(plugin("priority", "Priority"), enabled = false, category = "Tools")
+    val other = localItem(plugin("other", "Other"), enabled = true)
+    val local = localState(listOf(
+      PluginSectionState(PluginSectionId.Installed),
+      PluginSectionState(PluginSectionId.Bundled, items = listOf(other, priority, alphaDisabled, beta, alphaEnabled)),
+    ))
+    val source = composeUnifiedPluginsPageSourceState(PluginsQueryState(), local)
+    val sourceItems = source.sections.single { it.id == PluginSectionId.Bundled }.items
+
+    assertThat(sourceItems.map(PluginItemState::pluginId)).containsExactly(
+      alphaEnabled.pluginId,
+      alphaDisabled.pluginId,
+      beta.pluginId,
+      priority.pluginId,
+      other.pluginId,
+    )
+
+    val controller = UnifiedPluginsPageController(
+      initialSections = source.sections,
+      priorityBundledCategories = setOf("Tools"),
+    )
+    controller.setSectionExpanded(PluginSectionId.Bundled, true)
+    val bundled = controller.state.value.sections.single { it.id == PluginSectionId.Bundled }
+    assertThat(bundled.categoryGroups.map(BundledPluginCategoryGroupState::category)).containsExactly(
+      "Tools", "Alpha", "Beta", bundledPluginCategory(null),
+    )
+  }
+
+  @Test
   fun `repository filter targets one cached section and keeps local sections unfiltered`() {
     val localPlugin = item(plugin("local.plugin", "Local"))
     val firstPlugin = item(plugin("first.plugin", "First"))

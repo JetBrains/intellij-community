@@ -67,7 +67,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-09-24
+Date: 2026-09-28
 
 ## Purpose
 
@@ -291,7 +291,8 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - Earlier rows may remain visible while filtering runs. They must not set the new query's order or automatic selection.
 - The first projected result for a query revision must set the plugin order in each section.
 - Relevance must initially place local plugins with errors before healthy plugins.
-- Without text terms, relevance must place enabled plugins before disabled plugins within each error group.
+- Without text terms, Installed relevance must place enabled plugins before disabled plugins within each error group.
+- Without text terms, Bundled relevance must place enabled plugins before disabled plugins within each category and error group.
 - With text terms, relevance must use the existing match scores before enabled state within each error group.
 - Enabled plugins must win a match score tie.
 - Later results in the same query revision must retain the relative order of plugins that remain in a section.
@@ -678,12 +679,14 @@ Untested: No focused test verifies that Internal ignores the legacy Show All que
 
 - Bundled must use Other for a missing category.
 - Default Relevance must sort category names with case sensitivity and put Other last.
+- A disabled Bundled category must keep its position under Default Relevance.
 - Default Relevance must sort plugin names within each category.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
     `local snapshot assigns bundled categories and normalizes a missing category`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
-    `bundled relevance sorts exact categories and names with Other last`
+    `bundled relevance sorts exact categories and names with Other last`;
+    `disabled Bundled categories keep category order and priority`
   )
 
 - An expanded Bundled section must group plugins by category when the query is empty.
