@@ -1,0 +1,13 @@
+// "Add return keyword" "true"
+// LANGUAGE_VERSION: 2.3
+// COMPILER_ARGUMENTS: -Xreturn-value-checker=full
+fun greeting(): String = "Hello"
+
+fun test(name: String): String {
+    if (name.isNotBlank()) {
+        return greeting()
+    }
+    return "Hello, anonymous user"
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.NoReturnValueFactory$AddReturnKeywordFix

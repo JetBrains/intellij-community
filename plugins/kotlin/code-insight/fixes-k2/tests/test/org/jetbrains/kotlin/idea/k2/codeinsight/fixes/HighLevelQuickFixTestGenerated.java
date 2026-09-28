@@ -8951,6 +8951,46 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("addReturnIfBranch.kt")
+        public void testAddReturnIfBranch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnIfBranch.kt");
+        }
+
+        @TestMetadata("addReturnInLambda.kt")
+        public void testAddReturnInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnInLambda.kt");
+        }
+
+        @TestMetadata("addReturnNonLastStatement.kt")
+        public void testAddReturnNonLastStatement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnNonLastStatement.kt");
+        }
+
+        @TestMetadata("addReturnSubtype.kt")
+        public void testAddReturnSubtype() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnSubtype.kt");
+        }
+
+        @TestMetadata("addReturnTryBranch.kt")
+        public void testAddReturnTryBranch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnTryBranch.kt");
+        }
+
+        @TestMetadata("addReturnTypeMismatch.kt")
+        public void testAddReturnTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnTypeMismatch.kt");
+        }
+
+        @TestMetadata("addReturnUnitFunction.kt")
+        public void testAddReturnUnitFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnUnitFunction.kt");
+        }
+
+        @TestMetadata("addReturnWhenBranch.kt")
+        public void testAddReturnWhenBranch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/addReturnWhenBranch.kt");
+        }
+
         @TestMetadata("binaryExpressions.kt")
         public void testBinaryExpressions() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/binaryExpressions.kt");
