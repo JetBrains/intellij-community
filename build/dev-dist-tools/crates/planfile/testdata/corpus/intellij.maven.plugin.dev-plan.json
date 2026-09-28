@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.maven.plugin",
     "variant": "",
-    "layoutSignature": "7ezs3zo5bnxh02e3byalrond7",
+    "layoutSignature": "cvw6zvcya13piz5y3p063vg4a",
     "assets": [
         {
             "destination": "lib/intellij.maven.model.jar",
@@ -376,7 +376,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "3mpxykhigirs4o82e2hqnlyz7"
+            "modelSignature": "8dd3on47wmc2zy9wzkxfxqvow"
         },
         {
             "id": "layout-assets:resource-generator:2",
@@ -386,7 +386,7 @@
             "outputs": [
                 "layout-assets:resource-generator:2:output"
             ],
-            "modelSignature": "3njm9wbzqzcgsowakrmtdskq5"
+            "modelSignature": "ddl9woloxmxgucy2j416epkwj"
         }
     ],
     "operations": [
@@ -437,15 +437,15 @@
                     {
                         "destination": "",
                         "sources": [
-                            0,
+                            0
+                        ],
+                        "mode": 420
+                    },
+                    {
+                        "destination": "",
+                        "sources": [
                             1
                         ],
-                        "transform": {
-                            "kind": "tree-map",
-                            "mappings": [
-                                {}
-                            ]
-                        },
                         "mode": 420
                     }
                 ]
@@ -470,12 +470,6 @@
                         "sources": [
                             0
                         ],
-                        "transform": {
-                            "kind": "tree-map",
-                            "mappings": [
-                                {}
-                            ]
-                        },
                         "mode": 420
                     }
                 ]

@@ -867,24 +867,16 @@ private fun maven3LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
       mavenLibrariesDirectory("@dev_launch_maven3_libraries//:files", "maven3-libraries"),
       mavenLibrariesDirectory("@dev_launch_maven_telemetry_libraries//:files", "maven-telemetry-libraries"),
     ),
-    assets = listOf(DevPluginLayoutAsset(
-      destination = "lib/intellij.maven.server3",
-      sources = listOf(0, 1),
-      transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping())),
-      mode = 420,
-    )),
+    assets = listOf(0, 1).map { source ->
+      DevPluginLayoutAsset(destination = "lib/intellij.maven.server3", sources = listOf(source), mode = 420)
+    },
   )
 }
 
 private fun maven4LibrariesLayoutAssetSpec(): DevPluginLayoutAssetSpec {
   return DevPluginLayoutAssetSpec(
     sources = listOf(mavenLibrariesDirectory("@dev_launch_maven_telemetry_libraries//:files", "maven-telemetry-libraries")),
-    assets = listOf(DevPluginLayoutAsset(
-      destination = "lib/intellij.maven.server4",
-      sources = listOf(0),
-      transform = DevPluginLayoutAssetTransform.treeMap(listOf(DevPluginLayoutAssetMapping())),
-      mode = 420,
-    )),
+    assets = listOf(DevPluginLayoutAsset(destination = "lib/intellij.maven.server4", sources = listOf(0), mode = 420)),
   )
 }
 
