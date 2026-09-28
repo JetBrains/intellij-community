@@ -11,9 +11,9 @@ import com.intellij.openapi.externalSystem.service.execution.DefaultExternalSyst
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.build.GradleBuildViewSettingsProvider;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunSyncFilter;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -42,12 +42,7 @@ public class GradleExecutionConsoleManager extends DefaultExternalSystemExecutio
 
   @Override
   public @NotNull BuildViewSettingsProvider getExecutionConsoleSettings() {
-    return new BuildViewSettingsProvider() {
-      @Override
-      public boolean isSingleBuildConsoleView() {
-        return Registry.is("gradle.build.toolwindow.single.console");
-      }
-    };
+    return new GradleBuildViewSettingsProvider();
   }
 
   @Override

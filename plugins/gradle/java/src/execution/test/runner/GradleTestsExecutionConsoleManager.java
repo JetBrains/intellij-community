@@ -5,6 +5,7 @@ import com.intellij.build.BuildContentManager;
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
+import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
@@ -60,6 +61,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
+import org.jetbrains.plugins.gradle.execution.build.GradleBuildViewSettingsProvider;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
@@ -303,5 +305,10 @@ public final class GradleTestsExecutionConsoleManager
       new GradleRerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());
     return new AnAction[]{rerunFailedTestsAction, new JvmToggleAutoTestAction()};
+  }
+
+  @Override
+  public @NotNull BuildViewSettingsProvider getExecutionConsoleSettings() {
+    return new GradleBuildViewSettingsProvider();
   }
 }
