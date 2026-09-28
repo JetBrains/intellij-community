@@ -159,6 +159,58 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     x: int = get_str_or_bytes()  # WARNING TOOLTIP Not all members of str | bytes are assignable to int
     """.trimIndent())
 
+  /** The widest union that keeps its per-member detail. Its counterpart below is the narrowest to lose it. */
+  @Test
+  @TestFor(issues = ["PY-91327"])
+  @TestCaseOptions(enableRegistryKeys = [COMPOSITE_SINGLE_PASS])
+  fun `a union at the breakdown bound still explains each member`() = test("""
+    from typing import Protocol
+    class A(Protocol):
+        a: int
+    class C1: pass
+    class C2: pass
+    class C3: pass
+    class C4: pass
+    class C5: pass
+    def get_five() -> C1 | C2 | C3 | C4 | C5: ...
+    x: A = get_five()  # WARNING TOOLTIP C1 lacks attribute a, which A requires
+    """.trimIndent())
+
+  /** One member past the bound: the breakdown collapses to the summary line alone. */
+  @Test
+  @TestFor(issues = ["PY-91327"])
+  @TestCaseOptions(enableRegistryKeys = [COMPOSITE_SINGLE_PASS])
+  fun `a union past the breakdown bound collapses to one reason`() = test("""
+    from typing import Protocol
+    class A(Protocol):
+        a: int
+    class C1: pass
+    class C2: pass
+    class C3: pass
+    class C4: pass
+    class C5: pass
+    class C6: pass
+    def get_six() -> C1 | C2 | C3 | C4 | C5 | C6: ...
+    x: A = get_six()  # WARNING TOOLTIP Not all members of C1 | C2 | C3 | C4 | C5 | C6 are assignable to A
+    """.trimIndent())
+
+  /** With the flag off, a wide union keeps the unbounded breakdown it has always had. */
+  @Test
+  @TestFor(issues = ["PY-91327"])
+  fun `a wide union keeps its full breakdown while the bound is disabled`() = test("""
+    from typing import Protocol
+    class A(Protocol):
+        a: int
+    class C1: pass
+    class C2: pass
+    class C3: pass
+    class C4: pass
+    class C5: pass
+    class C6: pass
+    def get_six() -> C1 | C2 | C3 | C4 | C5 | C6: ...
+    x: A = get_six()  # WARNING TOOLTIP C1 lacks attribute a, which A requires
+    """.trimIndent())
+
   @Test
   fun `callable return type mismatch is reported`() = test("""
     from typing import Callable
@@ -651,4 +703,8 @@ class PyTypeCheckerExplanationTest : PyCodeInsightTestCase() {
     data = [True]
     c.put(data)  # WARNING Expected type 'list[int]', got 'list[bool]' instead # PY-89564
     """.trimIndent())
+
+  private companion object {
+    const val COMPOSITE_SINGLE_PASS = "python.typing.composite.single.pass"
+  }
 }
