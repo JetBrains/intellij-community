@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -36,7 +37,8 @@ interface ExternalSystemOutputDispatcherFactory {
   fun create(buildId: Any,
              buildProgressListener: BuildProgressListener,
              appendOutputToMainConsole: Boolean,
-             parsers: List<BuildOutputParser>): ExternalSystemOutputMessageDispatcher
+             parsers: List<BuildOutputParser>,
+             consoleSettings: BuildViewSettingsProvider): ExternalSystemOutputMessageDispatcher
 
   companion object {
 

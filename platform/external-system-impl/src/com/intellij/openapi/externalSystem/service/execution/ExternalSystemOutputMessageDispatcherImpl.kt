@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.FinishBuildEvent
@@ -18,6 +19,7 @@ open class ExternalSystemOutputMessageDispatcherImpl(
   buildId: BuildId,
   private val listener: BuildProgressListener,
   parsers: List<BuildOutputParser>,
+  val consoleSettings: BuildViewSettingsProvider
 ) : ExternalSystemOutputMessageDispatcher {
 
   override var stdOut: Boolean = true

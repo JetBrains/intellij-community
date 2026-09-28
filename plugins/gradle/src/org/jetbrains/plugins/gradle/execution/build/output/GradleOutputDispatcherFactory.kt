@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.StartEvent
@@ -36,8 +37,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     buildProgressListener: BuildProgressListener,
     appendOutputToMainConsole: Boolean,
     parsers: List<BuildOutputParser>,
+    consoleSettings: BuildViewSettingsProvider
   ): ExternalSystemOutputMessageDispatcher {
-    return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers)
+    return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers, consoleSettings)
   }
 
   @Internal
@@ -49,7 +51,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     listener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
     private val parsers: List<BuildOutputParser>,
-  ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers) {
+    consoleSettings: BuildViewSettingsProvider
+  ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers, consoleSettings) {
 
     private var currentReader: BuildOutputInstantReaderImpl = reader
 

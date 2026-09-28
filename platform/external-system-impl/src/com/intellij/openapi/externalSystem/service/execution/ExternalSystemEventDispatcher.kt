@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildEventDispatcher
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -16,8 +17,10 @@ class ExternalSystemEventDispatcher(
   taskId: ExternalSystemTaskId,
   progressListener: BuildProgressListener?,
   appendOutputToMainConsole: Boolean,
+  consoleSettings: BuildViewSettingsProvider,
 ) : BuildEventDispatcher {
-  constructor(taskId: ExternalSystemTaskId, progressListener: BuildProgressListener?) : this(taskId, progressListener, true)
+  constructor(taskId: ExternalSystemTaskId, progressListener: BuildProgressListener?, consoleSettings: BuildViewSettingsProvider)
+    : this(taskId, progressListener, true, consoleSettings)
 
   private lateinit var outputMessageDispatcher: ExternalSystemOutputMessageDispatcher
   private var isStdOut: Boolean = true
@@ -45,8 +48,9 @@ class ExternalSystemEventDispatcher(
           foundFactory = it
         }
       }
-      outputMessageDispatcher = foundFactory?.create(taskId, progressListener, appendOutputToMainConsole, buildOutputParsers)
-                                ?: ExternalSystemOutputMessageDispatcherImpl(taskId, progressListener, buildOutputParsers)
+      outputMessageDispatcher =
+        foundFactory?.create(taskId, progressListener, appendOutputToMainConsole, buildOutputParsers, consoleSettings)
+        ?: ExternalSystemOutputMessageDispatcherImpl(taskId, progressListener, buildOutputParsers, consoleSettings)
     }
   }
 

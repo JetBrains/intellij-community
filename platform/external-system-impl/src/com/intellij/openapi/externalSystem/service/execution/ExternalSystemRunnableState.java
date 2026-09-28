@@ -251,7 +251,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
-      try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
+      try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false, consoleSettings)) {
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskExecution", _ ->
           task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
             processHandler, eventDispatcher, buildDescriptor, dataContext,

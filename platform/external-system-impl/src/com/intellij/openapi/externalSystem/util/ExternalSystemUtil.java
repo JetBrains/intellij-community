@@ -416,7 +416,7 @@ public final class ExternalSystemUtil {
 
     var progressListener = project.getService(SyncViewManager.class);
 
-    try (var eventDispatcher = new ExternalSystemEventDispatcher(taskId, progressListener, false)) {
+    try (var eventDispatcher = new ExternalSystemEventDispatcher(taskId, progressListener, false, consoleSettings)) {
       var syncListener = new ExternalSystemSyncEventDispatcher(
         importSpec, task, processHandler, eventDispatcher, buildDescriptor,
         BuildConsoleUtils.getDataContext(taskId, progressListener, executionConsole),

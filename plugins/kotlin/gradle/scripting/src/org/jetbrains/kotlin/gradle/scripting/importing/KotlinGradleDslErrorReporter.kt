@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.gradle.scripting.importing
 
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.FilePosition
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.MessageEvent
@@ -25,7 +26,7 @@ class KotlinGradleDslErrorReporter(
     private val task: ExternalSystemTaskId
 ) {
     private val syncViewManager = project.service<SyncViewManager>()
-    private val buildEventDispatcher = ExternalSystemEventDispatcher(task, syncViewManager)
+    private val buildEventDispatcher = ExternalSystemEventDispatcher(task, syncViewManager, BuildViewSettingsProvider.EMPTY)
 
     fun reportError(
         scriptFile: File,

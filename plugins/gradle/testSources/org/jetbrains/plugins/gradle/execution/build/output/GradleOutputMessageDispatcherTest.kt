@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
@@ -44,7 +45,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
@@ -76,7 +77,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent1)
@@ -112,7 +113,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
@@ -142,7 +143,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
@@ -169,7 +170,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent1)
@@ -203,7 +204,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.appendLine("root output")
@@ -228,7 +229,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
@@ -270,7 +271,7 @@ class GradleOutputMessageDispatcherTest {
     }
 
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser)).use { dispatcher ->
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY).use { dispatcher ->
       dispatcher.onEvent(buildId, startBuildEvent)
       dispatcher.onEvent(buildId, startEvent)
       dispatcher.appendLine("> Task :task")
@@ -295,7 +296,7 @@ class GradleOutputMessageDispatcherTest {
     val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
 
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, emptyList()).use { dispatcher ->
+    GradleOutputMessageDispatcher(buildId, listener, false, emptyList(), BuildViewSettingsProvider.EMPTY).use { dispatcher ->
       dispatcher.onEvent(buildId, startBuildEvent)
       dispatcher.appendLine("> Task :task")
       dispatcher.appendLine("task output")
@@ -321,7 +322,7 @@ class GradleOutputMessageDispatcherTest {
 
     val parser = RecordingBuildOutputParser()
     val listener = RecordingBuildProgressListener()
-    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser))
+    GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)

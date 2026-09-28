@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.impl.SuccessResultImpl
@@ -54,7 +55,11 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
     ExtensionTestUtil.maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(TestParserProvider(parsers)), testRootDisposable)
     val semaphore = Semaphore(1)
     val buildDescriptor = DefaultBuildDescriptor(taskId, "test task", "/path", System.currentTimeMillis())
-    val dispatcher = ExternalSystemEventDispatcher(taskId, BuildProgressListener { _, event -> eventMessages += event.message })
+    val dispatcher = ExternalSystemEventDispatcher(
+      taskId,
+      BuildProgressListener { _, event -> eventMessages += event.message },
+      BuildViewSettingsProvider.EMPTY
+    )
     dispatcher.use {
       val buildRootProgress = BuildRootProgressImpl(dispatcher)
       buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
