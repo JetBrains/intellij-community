@@ -228,17 +228,13 @@ object PyTypeUtil {
   }
 
   fun toUnsafeUnionFromRef(): Collector<Ref<PyType?>?, *, Ref<PyType?>?> {
-    return toUnionFromRef { _, types ->
-      PyUnsafeUnionType.unsafeUnion(types)
-    }
+    return toUnionFromRef { type1, type2 -> PyUnsafeUnionType.unsafeUnion(type1, type2) }
   }
 
   @JvmStatic
   fun toUnionFromRef(streamSource: PyType?): Collector<Ref<PyType?>?, *, Ref<PyType?>?> {
     return if (streamSource is PyUnsafeUnionType)
-      toUnionFromRef { _, types ->
-        PyUnsafeUnionType.unsafeUnion(types)
-      }
+      toUnionFromRef { type1, type2 -> PyUnsafeUnionType.unsafeUnion(type1, type2) }
     else {
       toUnionFromRef { type1, type2 -> PyUnionType.unionOrUnknown(type1, type2) }
     }
@@ -321,9 +317,7 @@ object PyTypeUtil {
    * ```
    *
    * If [transform] returns an empty list, the result is the identity element of the composite kind:
-   * `Never` for a union or an unsafe union (bottom), and `object` for an intersection (top). The `object` type is
-   * resolved against [this]'s original members and degrades to [PyAnyType.unknown] only for an anchorless intersection
-   * (one made solely of `Any`/`None`).
+   * [PyNeverType.NEVER] for a union or an unsafe union (bottom), and [PyTopType] for an intersection (top).
    *
    * @see compositeMap
    * @see compositeMatchesAsSubtype
@@ -390,7 +384,7 @@ object PyTypeUtil {
 
   /**
    * Rebuilds a composite type of the same kind as [this] from [members], folding an empty [members] to the identity
-   * element of that kind: `Never` for unions/unsafe unions, `Unknown` for intersections.
+   * element of that kind: [PyNeverType.NEVER] for unions/unsafe unions, [PyTopType] for intersections.
    */
   private fun PyType?.rebuildLike(members: List<PyType?>): PyType? =
     when (this) {
