@@ -46,6 +46,11 @@ fun UnscaledGaps.toJBEmptyBorder(): JBEmptyBorder {
   return JBEmptyBorder(top, left, bottom, right)
 }
 
+@ApiStatus.Internal
+fun UnscaledGaps.toInsets(): JBInsets {
+  return JBInsets(top, left, bottom, right)
+}
+
 private object EmptyGaps : UnscaledGaps {
   override val top: Int = 0
   override val left: Int = 0

@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.customization.NonCustomizableAction
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.util.PropertiesComponent
@@ -15,11 +14,12 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionHolder
-import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationInfo
@@ -112,9 +112,8 @@ internal class IdeUpdateToolbarWidget :
 
     val factory = JBPopupFactory.getInstance()
     val group = ActionManager.getInstance().getAction("IdeUpdateToolbarWidget.Popup") as ActionGroup
-    // the actions are registered in XML, so the update they act on is passed through the data context
-    val dataContext = CustomizedDataContext.withSnapshot(e.dataContext) { sink -> sink[UPDATE_KEY] = update }
-    val step = factory.createActionsStep(group, dataContext,
+    // the actions get the update from UpdateButtonWrapper, which provides UPDATE_KEY
+    val step = factory.createActionsStep(group, e.dataContext,
                                          ActionPlaces.getPopupPlace("IdeUpdateToolbarWidget"),
                                          false, true, null, null, false, -1, false)
     // the renderer is decorated before the list wraps it into ExpandedItemListCellRendererWrapper, so the wrapping stays single
@@ -298,7 +297,7 @@ private fun IdeUpdateWidgetState.Status.buttonTooltip(): @NlsContexts.Tooltip St
  *
  * @see com.intellij.platform.trialPromotion.idesWithFreeTier.TrialStateButtonWrapper
  */
-private class UpdateButtonWrapper(private val onClick: (JComponent) -> Unit) : JPanel(GridLayout()) {
+private class UpdateButtonWrapper(private val onClick: (JComponent) -> Unit) : JPanel(GridLayout()), UiDataProvider {
 
   private val button: PillButton = PillButton()
   private var status: IdeUpdateWidgetState.Status = IdeUpdateWidgetState.Status.AVAILABLE
@@ -326,6 +325,11 @@ private class UpdateButtonWrapper(private val onClick: (JComponent) -> Unit) : J
     button.isEnabled = IdeUpdateWidgetState.getInstance().isClickable()
     button.text = status.buttonText()
     button.toolTipText = status.buttonTooltip()
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    // the popup actions are registered in XML, so the update they act on is passed through the data context
+    sink.lazy(UPDATE_KEY) { UpdateSettingsEntryPointActionProvider.getPlatformUpdateInfo() }
   }
 
   override fun updateUI() {
@@ -381,12 +385,8 @@ private class UpdateButtonWrapper(private val onClick: (JComponent) -> Unit) : J
 }
 
 private fun forceDarkColors(): Boolean {
-  if (!isDarkHeader()) {
-    return false
-  }
-
   val theme = (LafManager.getInstance().currentUIThemeLookAndFeel as? UIThemeLookAndFeelInfoImpl)?.theme ?: return false
-  return UITheme.isBasedOnTheme(theme, UITheme.EXPERIMENTAL_LIGHT_ID) && !UITheme.isBasedOnTheme(theme, UITheme.ISLANDS_LIGHT_ID)
+  return isDarkHeader() && !theme.isDark
 }
 
 /**

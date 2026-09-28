@@ -16,8 +16,11 @@
 package com.intellij.ui.components.labels;
 
 
+import org.jetbrains.annotations.NotNull;
+
 public interface LinkListener<T> {
 
+  @NotNull
   LinkListener NULL = (_, _) -> { };
 
   void linkSelected(LinkLabel<T> aSource, T aLinkData);

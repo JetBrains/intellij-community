@@ -1,18 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.DrawUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.toInsets
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -22,8 +25,8 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
-private val TEXT_GAPS: UnscaledGaps = UnscaledGaps(top = 4, left = 16, bottom = 3, right = 16)
-private const val DEFAULT_FONT_SIZE: Int = 13
+private val TEXT_GAPS = UnscaledGaps(top = 4, left = 16, bottom = 3, right = 16)
+private const val DEFAULT_FONT_SIZE = 13
 private const val BORDER_SIZE: Float = 1.5f
 
 private val DISABLED_FOREGROUND: Color = JBUI.CurrentTheme.Label.disabledForeground()
@@ -103,6 +106,7 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
     this.text = text
     isOpaque = false
     font = JBFont.regular()
+    updateUI()
 
     addMouseListener(object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent?) {
@@ -129,6 +133,14 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
         }
       }
     })
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+
+    // Makes getFontMetrics() use the same text hints as painting, so the preferred size matches the painted text
+    UISettings.setupComponentAntialiasing(this)
+    UISettings.setupFractionalMetrics(this)
   }
 
   override fun setEnabled(enabled: Boolean) {
@@ -161,10 +173,10 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
   override fun paintComponent(g: Graphics) {
     val rect = Rectangle(0, 0, width, height)
     val arc = height.toFloat()
-    val g2 = g.create() as Graphics2D
 
-    try {
+    UIUtil.useSafely(g) { g2 ->
       DrawUtil.setupRenderingHints(g2)
+      UISettings.setupAntialiasing(g2)
 
       val borderColor = when {
         !isEnabled -> DISABLED_BORDER_COLOR
@@ -186,13 +198,14 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
         background?.let {
           DarculaNewUIUtil.fillInsideComponentBorder(g2, rect, it, arc)
         }
-        DarculaNewUIUtil.drawRoundedRectangle(g2, rect, borderColor, arc, BORDER_SIZE)
+        DarculaNewUIUtil.drawRoundedRectangle(g2, rect, borderColor, arc, JBUIScale.scale(BORDER_SIZE))
       }
 
       text?.let {
+        val insets = TEXT_GAPS.toInsets()
         val fontMetrics = getFontMetrics(font)
-        val offset = (rect.height - TEXT_GAPS.height - fontMetrics.height) / 2
-        val x = max(TEXT_GAPS.left, (rect.width - fontMetrics.stringWidth(it)) / 2)
+        val offset = (rect.height - insets.height() - fontMetrics.height) / 2
+        val x = max(insets.left, (rect.width - fontMetrics.stringWidth(it)) / 2)
 
         g2.color = when {
           !isEnabled -> DISABLED_FOREGROUND
@@ -200,11 +213,8 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
           else -> colorState.foreground
         }
         g2.font = font
-        g2.drawString(it, x, TEXT_GAPS.top + offset + fontMetrics.ascent)
+        g2.drawString(it, x, insets.top + offset + fontMetrics.ascent)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 
@@ -214,7 +224,8 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
 
   override fun getPreferredSize(): Dimension {
     val textDimension = getTextDimension()
-    return Dimension(textDimension.width + TEXT_GAPS.width, textDimension.height + TEXT_GAPS.height)
+    val insets = TEXT_GAPS.toInsets()
+    return Dimension(textDimension.width + insets.width(), textDimension.height + insets.height())
   }
 
   private fun getTextDimension(): Dimension {

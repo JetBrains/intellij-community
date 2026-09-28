@@ -12,10 +12,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val REMIND_LATER_TIME = "IdeUpdateWidget.RemindLaterTime"
-private val REMIND_LATER_TIMEOUT_MS = TimeUnit.DAYS.toMillis(3)
+private val REMIND_LATER_TIMEOUT = 3.days
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -75,7 +76,7 @@ class IdeUpdateWidgetState {
       }
 
       val elapsed = System.currentTimeMillis() - PropertiesComponent.getInstance().getLong(REMIND_LATER_TIME, 0)
-      return elapsed < REMIND_LATER_TIMEOUT_MS
+      return elapsed.milliseconds < REMIND_LATER_TIMEOUT
     }
   }
 
