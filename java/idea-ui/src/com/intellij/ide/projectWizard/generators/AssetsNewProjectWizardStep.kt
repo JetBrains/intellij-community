@@ -20,10 +20,11 @@ import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
+import com.intellij.openapi.fileEditor.FileEditorOpenMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.isFile
@@ -173,13 +174,10 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
         .filter { it.isFile }
     }
-    withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        for (file in virtualFiles) {
-          fileEditorManager.openFile(file, true)
-        }
-      }
+    val fileEditorManager = FileEditorManager.getInstanceAsync(project)
+    for (file in virtualFiles) {
+      val request = FileEditorOpenRequest.withFocus(true).withOpenMode(FileEditorOpenMode.DEFAULT)
+      fileEditorManager.openFile(file, request)
     }
     withContext(Dispatchers.EDT) {
       val projectView = ProjectView.getInstance(project)
