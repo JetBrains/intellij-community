@@ -40,16 +40,49 @@ class ToolWindowEditorTabManager(
   /**
    * Sessions of tool window editor tabs currently attached to this project, keyed by their virtual files.
    *
-   * A [ToolWindowEditorTabFile] may exist without a session, for example while a persistent tab is being restored.
+   * A [ToolWindowEditorTabFile] may exist without a session, for example until the content of a restored tab is created
+   * from its [pending state][pendingStateByFile].
    * A session is added once the corresponding tool window content is attached and removed when the tab is closed
    * or invalidated.
    */
   private val sessionByFile = ConcurrentHashMap<ToolWindowEditorTabFile, ToolWindowEditorTabSession>()
 
   /**
+   * Persisted states of restored tabs whose tool window content is not created yet, keyed by their virtual files.
+   *
+   * [ToolWindowEditorTabFileEditor.setState] adds the state. The content is created from it when the editor is shown
+   * for the first time, or earlier when another operation needs the content (see [getOrRestoreSession]).
+   */
+  private val pendingStateByFile = ConcurrentHashMap<ToolWindowEditorTabFile, ToolWindowEditorTabState>()
+
+  /**
    * Returns the state of [file] while its tool window content is attached, or `null` if it is not.
    */
   fun getSession(file: ToolWindowEditorTabFile): ToolWindowEditorTabSession? = sessionByFile[file]
+
+  /**
+   * Returns the session of [file]. If the content of [file] is not restored yet, restores it from the pending state first.
+   *
+   * Returns `null` if [file] has neither a session nor a pending state, or if the content cannot be restored.
+   * The pending state is removed in both cases, so a failed restore is not repeated.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  internal fun getOrRestoreSession(file: ToolWindowEditorTabFile): ToolWindowEditorTabSession? {
+    sessionByFile[file]?.let { return it }
+    // Remove the state first, so a nested call during the restore does not restore the content again.
+    val state = pendingStateByFile.remove(file) ?: return null
+    return if (restoreEditorTabFileContent(file, state)) sessionByFile[file] else null
+  }
+
+  internal fun getPendingState(file: ToolWindowEditorTabFile): ToolWindowEditorTabState? = pendingStateByFile[file]
+
+  /**
+   * Keeps [state] to restore the content of [file] later. Does nothing if [file] already has a session or a pending state.
+   */
+  internal fun addPendingState(file: ToolWindowEditorTabFile, state: ToolWindowEditorTabState) {
+    if (sessionByFile.containsKey(file)) return
+    pendingStateByFile.putIfAbsent(file, state)
+  }
 
   /**
    * Returns the current presentation of [file], or `null` if the file has no attached content yet.
@@ -130,7 +163,7 @@ class ToolWindowEditorTabManager(
    * @return `true` if the content was successfully restored and attached; `false` otherwise
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  internal fun restoreEditorTabFileContent(
+  private fun restoreEditorTabFileContent(
     file: ToolWindowEditorTabFile,
     state: ToolWindowEditorTabState,
   ): Boolean {
@@ -240,6 +273,7 @@ class ToolWindowEditorTabManager(
     }
 
     ToolWindowEditorTabFileRegistry.getInstance().removeFile(file)
+    pendingStateByFile.remove(file)
     sessionByFile.remove(file)?.close(releaseContent)
 
     // remove file from recent files

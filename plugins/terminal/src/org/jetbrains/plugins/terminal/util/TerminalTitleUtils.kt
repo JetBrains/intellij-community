@@ -74,7 +74,7 @@ object TerminalTitleUtils {
         .asSequence()
         .filterIsInstance<ToolWindowEditorTabFile>()
         .filter { it.toolWindowId == TerminalToolWindowFactory.TOOL_WINDOW_ID }
-        .mapNotNullTo(this) { tabManager.getTabPresentation(it)?.title }
+        .mapTo(this) { tabManager.getTabTitle(it) }
     }
 
     return UniqueNameGenerator.generateUniqueName(

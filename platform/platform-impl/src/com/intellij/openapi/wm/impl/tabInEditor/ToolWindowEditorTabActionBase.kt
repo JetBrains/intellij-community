@@ -24,7 +24,8 @@ abstract class ToolWindowEditorTabActionBase : DumbAwareAction() {
 
   final override fun actionPerformed(e: AnActionEvent) {
     val context = getContext(e) ?: return
-    actionPerformed(e, context.content)
+    val content = context.tabManager.getOrRestoreSession(context.file)?.content ?: return
+    actionPerformed(e, content)
   }
 
   final override fun update(e: AnActionEvent) {
@@ -34,7 +35,12 @@ abstract class ToolWindowEditorTabActionBase : DumbAwareAction() {
       return
     }
 
-    update(e, context.toolWindow, context.content)
+    val content = context.tabManager.getSession(context.file)?.content
+    when {
+      content != null -> update(e, context.toolWindow, content)
+      context.tabManager.getPendingState(context.file) != null -> updateForPendingContent(e, context.toolWindow)
+      else -> e.presentation.isEnabledAndVisible = false
+    }
   }
 
   /**
@@ -63,21 +69,37 @@ abstract class ToolWindowEditorTabActionBase : DumbAwareAction() {
     content: Content,
   )
 
+  /**
+   * Called from [DumbAwareAction.update] instead of the other [update] if the content of the current editor tab
+   * is not restored yet. [actionPerformed] restores the content before it gets it.
+   *
+   * The default implementation hides the action.
+   *
+   * @param e the current action event
+   * @param toolWindow the tool window associated with the current editor tab
+   */
+  open fun updateForPendingContent(
+    e: AnActionEvent,
+    toolWindow: ToolWindow,
+  ) {
+    e.presentation.isEnabledAndVisible = false
+  }
+
   private fun getContext(e: AnActionEvent): Context? {
     val project = e.project ?: return null
     val file = e.getData(PlatformDataKeys.FILE_EDITOR)?.file as? ToolWindowEditorTabFile ?: return null
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(file.toolWindowId) ?: return null
 
-    val content = ToolWindowEditorTabManager.getInstance(project).getSession(file)?.content ?: return null
-
     return Context(
+      tabManager = ToolWindowEditorTabManager.getInstance(project),
+      file = file,
       toolWindow = toolWindow,
-      content = content,
     )
   }
 
   private data class Context(
+    val tabManager: ToolWindowEditorTabManager,
+    val file: ToolWindowEditorTabFile,
     val toolWindow: ToolWindow,
-    val content: Content,
   )
 }

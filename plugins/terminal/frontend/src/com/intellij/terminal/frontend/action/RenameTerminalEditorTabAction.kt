@@ -20,6 +20,11 @@ internal class RenameTerminalEditorTabAction : ToolWindowEditorTabActionBase(), 
                                          isTerminalContent(content)
   }
 
+  // Only the Reworked Terminal tabs are restored in the editor, so the restored content is a terminal content.
+  override fun updateForPendingContent(e: AnActionEvent, toolWindow: ToolWindow) {
+    e.presentation.isEnabledAndVisible = toolWindow.id == TerminalToolWindowFactory.TOOL_WINDOW_ID
+  }
+
   override fun actionPerformed(e: AnActionEvent, content: Content) {
     findTerminalTitle(content) ?: return
 

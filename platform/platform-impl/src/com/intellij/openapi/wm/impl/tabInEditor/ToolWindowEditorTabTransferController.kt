@@ -69,7 +69,7 @@ internal class ToolWindowEditorTabTransferController(private val project: Projec
     if (!canMoveContentToToolWindow(toolWindow, file)) return
 
     val tabManager = ToolWindowEditorTabManager.getInstance(project)
-    val content = tabManager.getSession(file)?.content
+    val content = tabManager.getOrRestoreSession(file)?.content
 
     val editorManager = FileEditorManagerEx.getInstanceEx(project)
     val sourceWindow = editorManager.currentWindow?.takeIf { it.getComposite(file) != null }
