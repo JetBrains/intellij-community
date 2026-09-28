@@ -74,7 +74,7 @@ public final class ThreadLeakTracker {
 
   // The name of the single-file Rider backend host.
   // The value must match the AssemblyName in the project of the backend host.
-  private static final String RIDER_BACKEND_HOST_NAME = "RiderStub";
+  private static final String RIDER_BACKEND_HOST_NAME = "Rider.BackendHost";
 
   // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads' detection)
   private static final Set<String> wellKnownOffenders;
