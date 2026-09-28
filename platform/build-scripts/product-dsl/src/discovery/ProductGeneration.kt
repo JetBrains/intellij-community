@@ -166,7 +166,7 @@ internal fun generateAllProductXmlFiles(
 ): ProductGenerationResult {
   // Convert test product specs to DiscoveredProduct instances
   val testProducts = testProductSpecs.mapNotNull { (name, spec) ->
-    val xmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml"
+    val xmlPath = "ultimate/platform-ultimate/testFramework/resources/META-INF/${name}Plugin.xml"
     val xmlFile = projectRoot.resolve(xmlPath)
     if (Files.notExists(xmlFile)) {
       return@mapNotNull null

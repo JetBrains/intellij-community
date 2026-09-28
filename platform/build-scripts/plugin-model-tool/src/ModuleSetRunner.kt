@@ -265,7 +265,7 @@ private fun jsonResponse(
       name = name,
       className = "test-product",
       sourceFile = "test-product",
-      pluginXmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml",
+      pluginXmlPath = "ultimate/platform-ultimate/testFramework/resources/META-INF/${name}Plugin.xml",
       contentSpec = spec,
       buildModules = emptyList()
     )
