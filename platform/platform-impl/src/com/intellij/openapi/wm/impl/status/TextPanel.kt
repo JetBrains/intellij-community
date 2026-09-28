@@ -194,6 +194,8 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     this.explicitSize = explicitSize
   }
 
+  internal var useStoredAccessibleDescription: Boolean = false
+
   open class WithIconAndArrows : TextPanel {
     @ApiStatus.Internal
     companion object {
@@ -280,7 +282,9 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
 
     override fun getAccessibleName(): String? = text
 
-    override fun getAccessibleDescription(): @Nls String? = StatusBarAccessibilityUtil.getAccessibleDescription(this@TextPanel)
+    override fun getAccessibleDescription(): @Nls String? =
+      if (useStoredAccessibleDescription) accessibleDescription
+      else StatusBarAccessibilityUtil.getAccessibleDescription(this@TextPanel)
 
     override fun getAccessibleAction(): AccessibleAction? =
       if (this@TextPanel.isFocusable) accessibleAction else null

@@ -991,14 +991,17 @@ internal fun createComponentByWidgetPresentation(presentation: WidgetPresentatio
       panel.setTextAlignment(presentation.alignment)
       panel.border = JBUI.CurrentTheme.StatusBar.Widget.border()
       configurePresentationComponent(presentation, panel)
+      panel.useStoredAccessibleDescription = true
 
       scope.launch {
         presentation.text()
           .distinctUntilChanged()
           .collectLatest { text ->
+            val description = StatusBarAccessibilityUtil.toAccessibleDescription(presentation.getTooltipText())
             withContext(Dispatchers.EDT) {
               panel.isVisible = !text.isNullOrEmpty()
               panel.text = text
+              panel.accessibleContext.accessibleDescription = description
             }
           }
       }
@@ -1008,14 +1011,17 @@ internal fun createComponentByWidgetPresentation(presentation: WidgetPresentatio
       val panel = WithIconAndArrows(toolTipTextSupplier)
       panel.border = JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
       configurePresentationComponent(presentation, panel)
+      panel.useStoredAccessibleDescription = true
 
       scope.launch {
         presentation.icon()
           .distinctUntilChanged()
           .collectLatest { icon ->
+            val description = StatusBarAccessibilityUtil.toAccessibleDescription(presentation.getTooltipText())
             withContext(Dispatchers.EDT) {
               panel.icon = icon
               panel.isVisible = icon != null
+              panel.accessibleContext.accessibleDescription = description
               panel.repaint()
             }
           }

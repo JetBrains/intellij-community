@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -19,9 +20,12 @@ object StatusBarAccessibilityUtil {
     PrimaryAccessibleAction(component, component, action)
 
   @JvmStatic
+  fun getAccessibleDescription(component: JComponent): @Nls String? = toAccessibleDescription(component.toolTipText)
+
+  @JvmStatic
   @Suppress("HardCodedStringLiteral")
-  fun getAccessibleDescription(component: JComponent): @Nls String? {
-    val toolTipText = component.toolTipText ?: return null
+  fun toAccessibleDescription(toolTipText: @NlsContexts.Tooltip String?): @Nls String? {
+    if (toolTipText == null) return null
     return StringUtil.removeHtmlTags(toolTipText).trim().ifBlank { null }
   }
 
