@@ -74,11 +74,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     state.all.arePackagesShown = true;
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    if (!shouldUseSplitTodo()) {
-      // to make sure the backend has the latest TodoConfiguration settings,
-      // in split mode, backend subscribes to TodoConfiguration.PROPERTY_CHANGE
-      connection.subscribe(TodoConfigurationPropertyChangeListener.TOPIC, new MyPropertyChangeListener());
-    }
+    connection.subscribe(TodoConfigurationPropertyChangeListener.TOPIC, new MyPropertyChangeListener());
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
 
     myChangesSupport = TodoViewChangesSupport.getInstance(project);
