@@ -207,7 +207,7 @@ object IjPluginPackager {
           dataFetcher()
         }
       }
-      packedModulesWriter?.addModuleLibrary(targetJar, pluginDescriptorModuleName, targetJarName.removeSuffix(".jar"))
+      packedModulesWriter?.addModuleLibrary(targetJar, pluginDescriptorModuleName, jar.name)
     }
   }
 
@@ -268,8 +268,7 @@ object IjPluginPackager {
       if (packedModulesWriter != null) {
         packedModulesWriter.addContentModule(outputJar, contentModuleElement.name)
         contentModule.jars.asSequence().drop(1).forEach { jar ->
-          val libraryName = removeVersionFromJar(jar.name).removeSuffix(".jar")
-          packedModulesWriter.addModuleLibrary(outputJar, contentModuleElement.name, libraryName)
+          packedModulesWriter.addModuleLibrary(outputJar, contentModuleElement.name, jar.name)
         }
       }
     }

@@ -110,7 +110,7 @@ internal fun buildPluginsByBazel(
       if (!packedModulesPath.exists()) {
         buildContext.messages.logErrorAndThrow("Cannot build '${plugin.mainModule}' because '${packedModulesPath}' does not exist")
       }
-      val distributionFileEntries = readPackedModules(packedModulesPath, plugin.mainModule, pluginTargetDir)
+      val distributionFileEntries = readPackedModules(packedModulesPath, plugin.mainModule, pluginTargetDir, buildContext.outputProvider)
       if (searchableOptionSet != null) {
         // `ij_plugin` never packs searchable options: the index is produced by running the IDE assembled from
         // index-free plugin distributions, so it can only be added to the distribution afterwards

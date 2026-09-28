@@ -149,7 +149,7 @@ internal class IjPluginPackagerTest {
           contentModules:
           - name: module.with.package.and.library
             libraries:
-              library:
+              library.jar:
                 - name: module.with.package.and.library.jar
         - name: lib/modules/optional.module.jar
           contentModules:
@@ -430,10 +430,10 @@ internal class IjPluginPackagerTest {
           modules:
           - name: descriptor
         - name: lib/library.jar
-          library: library
+          library: library-1.2.3.jar
           module: descriptor
         - name: lib/other-library.jar
-          library: other-library
+          library: other-library.jar
           module: descriptor
       """.trimIndent())
     })

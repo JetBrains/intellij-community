@@ -7,6 +7,8 @@ import kotlin.io.path.writeText
  * Writes the `packed-modules.yaml` file of one plugin distribution.
  *
  * The file names each jar of the distribution. Under a jar it names the modules and the libraries the packager put into that jar.
+ * It names a library by the file name of its input JAR, because the packager does not know the name of the JPS library. The build
+ * scripts find the JPS library by that file name.
  *
  * It uses the format of `com.intellij.platform.distributionContent.FileEntry` to simplify parsing of the file in the build scripts.
  */
@@ -20,8 +22,8 @@ internal class PackedModulesWriter(
     getOrCreateEntry(jarFile).modules.add(moduleName)
   }
 
-  fun addModuleLibrary(jarFile: Path, moduleName: String, libraryName: String) {
-    getOrCreateEntry(jarFile).moduleLevelLibraries.add(ModuleLevelLibraryEntry(moduleName, libraryName))
+  fun addModuleLibrary(jarFile: Path, moduleName: String, libraryJarName: String) {
+    getOrCreateEntry(jarFile).moduleLevelLibraries.add(ModuleLevelLibraryEntry(moduleName, libraryJarName))
   }
 
   fun addContentModule(jarFile: Path, moduleName: String) {
@@ -43,7 +45,7 @@ internal class PackedModulesWriter(
       }
       val separateLibrary = librariesWithoutModule.singleOrNull()
       if (separateLibrary != null) {
-        lines.add("  library: ${renderYamlScalar(separateLibrary.libraryName)}")
+        lines.add("  library: ${renderYamlScalar(separateLibrary.libraryJarName)}")
         lines.add("  module: ${renderYamlScalar(separateLibrary.moduleName)}")
       }
     }
@@ -72,7 +74,7 @@ internal class PackedModulesWriter(
       if (!libraryEntries.isNullOrEmpty()) {
         lines.add("    libraries:")
         libraryEntries.forEach { libraryEntry ->
-          lines.add("      ${renderYamlScalar(libraryEntry.libraryName)}:")
+          lines.add("      ${renderYamlScalar(libraryEntry.libraryJarName)}:")
           lines.add("        - name: ${renderYamlScalar(fileName)}")
         }
       }
@@ -95,6 +97,6 @@ internal class PackedModulesWriter(
 
   private data class ModuleLevelLibraryEntry(
     val moduleName: String,
-    val libraryName: String,
+    val libraryJarName: String,
   )
 }
