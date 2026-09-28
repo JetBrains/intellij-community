@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application;
+package com.intellij.internal.experiments;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.PlatformInternalBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
@@ -37,7 +38,7 @@ public final class ExperimentsDialog extends DialogWrapper {
   ExperimentsDialog(@Nullable Project project) {
     super(project);
     init();
-    setTitle(IdeBundle.message("dialog.title.experimental.features"));
+    setTitle(PlatformInternalBundle.message("dialog.title.experimental.features"));
   }
 
   @Override
@@ -45,7 +46,7 @@ public final class ExperimentsDialog extends DialogWrapper {
     ExperimentalFeature[] features = Experiments.EP_NAME.getExtensions();
     JBTable table = new JBTable(createModel(features));
     table.setShowGrid(false);
-    table.getEmptyText().setText(IdeBundle.message("empty.text.no.features.available"));
+    table.getEmptyText().setText(PlatformInternalBundle.message("empty.text.no.features.available"));
     table.getColumnModel().getColumn(0).setCellRenderer(getIdRenderer());
     table.getColumnModel().getColumn(1).setCellRenderer(getValueRenderer());
     table.getColumnModel().getColumn(1).setCellEditor(new BooleanTableCellEditor());

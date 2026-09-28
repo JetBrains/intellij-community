@@ -73,6 +73,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//libraries/gson",
         "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jbr",
     ],
 )
 
@@ -136,6 +137,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/gson:gson_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//libraries/jbr:jbr_test_lib",
     ],
 )
 ### auto-generated section `build intellij.dev.core` end

@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.internal
+package com.intellij.internal.propertiesComponent
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.BasePropertyService
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.PlatformInternalBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -38,7 +39,6 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.BorderLayout
 import java.awt.event.MouseEvent
 import javax.swing.Action
@@ -65,16 +65,16 @@ internal class PropertiesComponentDialog(private val project: Project?) : Dialog
   private val panels = ArrayList<PropertiesComponentPanel>()
 
   init {
-    title = DevKitBundle.message("dialog.title.properties.component")
+    title = PlatformInternalBundle.message("dialog.title.properties.component")
     setOKButtonText(CommonBundle.getCloseButtonText())
     init()
   }
 
   override fun createCenterPanel(): JComponent {
     val tabs = JBTabbedPane()
-    addTab(tabs, DevKitBundle.message("properties.component.tab.application"), PropertiesComponent.getInstance())
+    addTab(tabs, PlatformInternalBundle.message("properties.component.tab.application"), PropertiesComponent.getInstance())
     if (project != null && !project.isDefault) {
-      addTab(tabs, DevKitBundle.message("properties.component.tab.project"), PropertiesComponent.getInstance(project))
+      addTab(tabs, PlatformInternalBundle.message("properties.component.tab.project"), PropertiesComponent.getInstance(project))
     }
     tabs.preferredSize = JBUI.DialogSizes.extraLarge()
     return tabs
@@ -90,7 +90,7 @@ internal class PropertiesComponentDialog(private val project: Project?) : Dialog
 
   override fun getPreferredFocusedComponent(): JComponent? = panels.firstOrNull()?.table
 
-  override fun getDimensionServiceKey(): String = "DevKit.PropertiesComponentDialog"
+  override fun getDimensionServiceKey(): String = "PropertiesComponentDialog"
 
   override fun doOKAction() {
     panels.forEach { it.table.cellEditor?.stopCellEditing() }
@@ -115,7 +115,7 @@ private class PropertiesComponentPanel(properties: PropertiesComponent) {
     table.tableHeader.reorderingAllowed = false
     table.putClientProperty("terminateEditOnFocusLost", true)
     if (!model.isSupported) {
-      table.emptyText.text = DevKitBundle.message("properties.component.unsupported")
+      table.emptyText.text = PlatformInternalBundle.message("properties.component.unsupported")
     }
 
     val renderer = TextRenderer()
@@ -161,7 +161,7 @@ private class PropertiesComponentPanel(properties: PropertiesComponent) {
     details.font = JBFont.label()
 
     val group = DefaultActionGroup(EditAction(), RemoveAction(), RefreshAction())
-    val toolbar = ActionManager.getInstance().createActionToolbar("DevKit.PropertiesComponent", group, true)
+    val toolbar = ActionManager.getInstance().createActionToolbar("PropertiesComponent", group, true)
     toolbar.targetComponent = table
 
     content.add(toolbar.component, BorderLayout.NORTH)
@@ -193,8 +193,8 @@ private class PropertiesComponentPanel(properties: PropertiesComponent) {
   private fun removeSelected() {
     val viewRows = table.selectedRows
     if (viewRows.isEmpty()) return
-    val message = DevKitBundle.message("properties.component.remove.message", viewRows.size, model.getEntry(table.convertRowIndexToModel(viewRows[0])).key)
-    if (Messages.showYesNoDialog(table, message, DevKitBundle.message("properties.component.remove.title"), Messages.getQuestionIcon()) != Messages.YES) {
+    val message = PlatformInternalBundle.message("properties.component.remove.message", viewRows.size, model.getEntry(table.convertRowIndexToModel(viewRows[0])).key)
+    if (Messages.showYesNoDialog(table, message, PlatformInternalBundle.message("properties.component.remove.title"), Messages.getQuestionIcon()) != Messages.YES) {
       return
     }
 
@@ -219,7 +219,7 @@ private class PropertiesComponentPanel(properties: PropertiesComponent) {
     details.caretPosition = 0
   }
 
-  private inner class EditAction : DumbAwareAction(DevKitBundle.messagePointer("properties.component.action.edit"), AllIcons.Actions.EditSource) {
+  private inner class EditAction : DumbAwareAction(PlatformInternalBundle.messagePointer("properties.component.action.edit"), AllIcons.Actions.EditSource) {
     init {
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), table)
     }
@@ -235,7 +235,7 @@ private class PropertiesComponentPanel(properties: PropertiesComponent) {
     }
   }
 
-  private inner class RemoveAction : DumbAwareAction(DevKitBundle.messagePointer("properties.component.action.remove"), AllIcons.General.Remove) {
+  private inner class RemoveAction : DumbAwareAction(PlatformInternalBundle.messagePointer("properties.component.action.remove"), AllIcons.General.Remove) {
     init {
       registerCustomShortcutSet(CommonShortcuts.getDelete(), table)
     }
@@ -251,7 +251,7 @@ private class PropertiesComponentPanel(properties: PropertiesComponent) {
     }
   }
 
-  private inner class RefreshAction : DumbAwareAction(DevKitBundle.messagePointer("properties.component.action.refresh"), AllIcons.Actions.Refresh) {
+  private inner class RefreshAction : DumbAwareAction(PlatformInternalBundle.messagePointer("properties.component.action.refresh"), AllIcons.Actions.Refresh) {
     init {
       registerCustomShortcutSet(CommonShortcuts.getRerun(), table)
     }
@@ -307,9 +307,9 @@ private class PropertiesTableModel(private val properties: PropertiesComponent, 
 
   override fun getColumnName(column: Int): String {
     return when (column) {
-      KEY_COLUMN -> DevKitBundle.message("properties.component.column.key")
-      VALUE_COLUMN -> DevKitBundle.message("properties.component.column.value")
-      else -> DevKitBundle.message("properties.component.column.type")
+      KEY_COLUMN -> PlatformInternalBundle.message("properties.component.column.key")
+      VALUE_COLUMN -> PlatformInternalBundle.message("properties.component.column.value")
+      else -> PlatformInternalBundle.message("properties.component.column.type")
     }
   }
 
@@ -322,8 +322,8 @@ private class PropertiesTableModel(private val properties: PropertiesComponent, 
         is ListEntry -> entry.values.joinToString(", ")
       }
       else -> when (entry) {
-        is StringEntry -> DevKitBundle.message("properties.component.type.string")
-        is ListEntry -> DevKitBundle.message("properties.component.type.list")
+        is StringEntry -> PlatformInternalBundle.message("properties.component.type.string")
+        is ListEntry -> PlatformInternalBundle.message("properties.component.type.list")
       }
     }
   }
@@ -391,14 +391,14 @@ private class MultilineValueDialog(parent: JComponent, private val entry: Proper
     get() = textArea.text
 
   init {
-    title = DevKitBundle.message("properties.component.edit.title")
+    title = PlatformInternalBundle.message("properties.component.edit.title")
     init()
   }
 
   override fun createCenterPanel(): JComponent {
     val message = when (entry) {
-      is StringEntry -> DevKitBundle.message("properties.component.edit.value.message", entry.key)
-      is ListEntry -> DevKitBundle.message("properties.component.edit.list.message", entry.key)
+      is StringEntry -> PlatformInternalBundle.message("properties.component.edit.value.message", entry.key)
+      is ListEntry -> PlatformInternalBundle.message("properties.component.edit.list.message", entry.key)
     }
     val initialText = when (entry) {
       is StringEntry -> entry.value

@@ -624,7 +624,6 @@
     <action id="ChangeIdeScale" class="com.intellij.ide.actions.QuickChangeIdeScaleAction">
       <override-text place="GoToAction"/>
     </action>
-    <action id="ShowExperiments" class="com.intellij.application.ShowExperimentsAction"/>
     <action id="MoveFileToAnotherModule" internal="true" class="com.intellij.ide.actions.MoveFileToAnotherModuleAction"/>
     <action id="CreateAllServicesAndExtensions" internal="true"
             class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"/>

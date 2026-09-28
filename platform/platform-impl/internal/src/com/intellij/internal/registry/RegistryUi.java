@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util.registry;
+package com.intellij.internal.registry;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.LangBundle;
+import com.intellij.internal.PlatformInternalBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -25,6 +25,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueSource;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +52,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,11 +98,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Internal. Plugins are not allowed to show Registry programmatically.
- */
-@ApiStatus.Internal
-public final class RegistryUi implements Disposable {
+final class RegistryUi implements Disposable {
   private static final String RECENT_PROPERTIES_KEY = "RegistryRecentKeys";
 
   private final JBTable myTable;
@@ -112,7 +110,7 @@ public final class RegistryUi implements Disposable {
   private final MyTableModel myModel;
   private final Map<String, String> myModifiedValues = new HashMap<>();
 
-  public RegistryUi() {
+  RegistryUi() {
     myContent.setLayout(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
 
     myModel = new MyTableModel();
@@ -164,7 +162,7 @@ public final class RegistryUi implements Disposable {
           RegistryValue value = myModel.getRegistryValue(modelRow);
           String description = value.getDescription();
           if (value.isRestartRequired()) {
-            myDescriptionLabel.setText(description + "\n" + IdeBundle.message("registry.key.requires.ide.restart.note"));
+            myDescriptionLabel.setText(description + "\n" + PlatformInternalBundle.message("registry.key.requires.ide.restart.note"));
           }
           else {
             myDescriptionLabel.setText(description);
@@ -223,7 +221,7 @@ public final class RegistryUi implements Disposable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
-      e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.RegistryUi.text"));
+      e.getPresentation().setText(PlatformInternalBundle.messagePointer("action.presentation.RegistryUi.text"));
       e.getPresentation().setIcon(AllIcons.General.Reset);
 
       if (e.getPresentation().isEnabled()) {
@@ -255,7 +253,7 @@ public final class RegistryUi implements Disposable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
-      e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.RegistryUi.text.edit"));
+      e.getPresentation().setText(PlatformInternalBundle.messagePointer("action.presentation.RegistryUi.text.edit"));
       e.getPresentation().setIcon(AllIcons.Actions.EditSource);
     }
 
@@ -359,7 +357,7 @@ public final class RegistryUi implements Disposable {
   public boolean show() {
     DialogWrapper dialog = new DialogWrapper(true) {
       {
-        setTitle(LangBundle.message("dialog.title.registry"));
+        setTitle(PlatformInternalBundle.message("dialog.title.registry"));
         setModal(true);
         init();
         invalidateActions();
@@ -374,7 +372,7 @@ public final class RegistryUi implements Disposable {
         }
         String warning = new HtmlBuilder().append(
           HtmlChunk.tag("b").addText(
-            IdeBundle.message("registry.change.warning", ApplicationNamesInfo.getInstance().getFullProductName())
+            PlatformInternalBundle.message("registry.change.warning", ApplicationNamesInfo.getInstance().getFullProductName())
           )
         ).wrapWithHtmlBody().toString();
         JLabel warningLabel = new JLabel(warning);
@@ -412,7 +410,7 @@ public final class RegistryUi implements Disposable {
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
-        myCloseAction = new AbstractAction(IdeBundle.message("registry.close.action.text")) {
+        myCloseAction = new AbstractAction(PlatformInternalBundle.message("registry.close.action.text")) {
           @Override
           public void actionPerformed(@NotNull ActionEvent e) {
             final TableCellEditor cellEditor = myTable.getCellEditor();
@@ -472,8 +470,8 @@ public final class RegistryUi implements Disposable {
   }
 
   private void restoreDefaults() {
-    String message = LangBundle.message("dialog.message.are.you.sure.you.want.to.revert.registry.settings.to.default.values");
-    int r = Messages.showYesNoDialog(myContent, message, LangBundle.message("dialog.title.revert.to.defaults"), Messages.getQuestionIcon());
+    String message = PlatformInternalBundle.message("dialog.message.are.you.sure.you.want.to.revert.registry.settings.to.default.values");
+    int r = Messages.showYesNoDialog(myContent, message, PlatformInternalBundle.message("dialog.title.revert.to.defaults"), Messages.getQuestionIcon());
     if (r == Messages.YES) {
       Registry.getInstance().restoreDefaults();
       myModel.fireChanged();
@@ -665,7 +663,7 @@ public final class RegistryUi implements Disposable {
 
   private final class RestoreDefaultsAction extends AbstractAction {
     RestoreDefaultsAction() {
-      super(IdeBundle.message("registry.restore.defaults.action.text"));
+      super(PlatformInternalBundle.message("registry.restore.defaults.action.text"));
     }
 
     @Override

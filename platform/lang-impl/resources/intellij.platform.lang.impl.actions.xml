@@ -381,7 +381,6 @@
     <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
     <action id="FindSelectionInPath" class="com.intellij.find.actions.FindSelectionInPathAction" use-shortcut-of="FindInPath"/>
     <action id="ConfigureSoftWraps" class="com.intellij.openapi.editor.actions.ConfigureSoftWrapsAction"/>
-    <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
     <action id="ChooseRuntime" class="com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserAction">
       <synonym text="Choose Runtime"/>
     </action>

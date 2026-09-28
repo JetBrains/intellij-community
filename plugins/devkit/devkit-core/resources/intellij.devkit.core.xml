@@ -1240,10 +1240,6 @@
             class="org.jetbrains.idea.devkit.internal.ShowEditorHighlighterTokensAction">
       <add-to-group group-id="Internal.Editor"/>
     </action>
-    <action id="ShowPropertiesComponent" internal="true"
-            class="org.jetbrains.idea.devkit.internal.ShowPropertiesComponentAction">
-      <add-to-group group-id="MaintenanceGroup" relative-to-action="ShowExperiments" anchor="after"/>
-    </action>
 
     <action id="DumpFocusableComponentHierarchyAction" internal="true"
             class="org.jetbrains.idea.devkit.internal.focus.DumpFocusableComponentHierarchyAction"/>

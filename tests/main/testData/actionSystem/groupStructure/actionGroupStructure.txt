@@ -728,16 +728,18 @@
         WorkspaceEntitiesJsonLog
         WorkspaceEntitiesJsonLogFile
         PrintModulesAndEntitySources
+        ReloadProject
       <separator>
       Internal.Editor
-        AddInlayInternalAction
-        AddAfterLineEndInlayInternalAction
-        AddInlayBlockInternalAction
-        DumpEditorStateInternalAction
+        AddInlayInternal
+        AddAfterLineEndInlayInternal
+        AddInlayBlockInternal
+        DumpEditorStateInternal
         SetCaretVisualAttributesInternalAction
         EditorRenderingBenchmarkAction
         EditorAddCustomWrap
         EditorRemoveCustomWrapsAtCaret
+        ShowEditorHighlighterTokens
       Internal.UI
         ShowSplash
         EnableMetalRendering
@@ -760,9 +762,10 @@
           FrequentBackgroundReadAction
           TestProgressWindow
           TestCoroutineProgress
-          PositionTrackerTestAction
+          PositionTrackerTest
           UIFreeze
           PooledFreeze
+          UiDebugger
           Internal.UI.Animation
             AnimationPanelTestAction
             AnimatorTestAction
@@ -829,10 +832,10 @@
       MaintenanceGroup
         ShowRegistry
         ShowExperiments
+        ShowPropertiesComponent
         DumpMLCompletionFeatures
         DumpLookupElementWeights
         IdeScriptingConsole
-        UiDebugger
         com.intellij.searchEverywhereMl.ranking.core.actions.OpenFeaturesInScratchFileAction
         com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction
         com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction
@@ -858,18 +861,18 @@
         DumpVfsInfoForExcludedFiles
         DumpVfsInfoForFsRoot
         DumpWatchedRoots
-        CountVfsFileChildrenAction
+        CountVfsFileChildren
       Internal.Dump
         DumpCodeStyleCache
         DumpPluginDescriptorsAction
         DumpExtensions
         DumpInspectionDescriptions
         DumpIntentionsDescriptions
-        ScanSourceCommentsAction
+        ScanSourceComments
         DumpScreenConfiguration
-        DumpIElementTypesAction
-        DumpLoadedInspectionsAction
-        DumpRunConfigurationTypesAction
+        DumpIElementTypes
+        DumpLoadedInspections
+        DumpRunConfigurationTypes
         DumpFormattingModel
         CheckClassLoading
         DumpGroovyControlFlowAction
@@ -898,7 +901,6 @@
         SetCurrentLessonAsPassed
         ResetOnboardingFeedbackState
         ShowDemoAltClickPromoter
-      ReloadProjectAction
       Internal.Ex
         ClearIDEStatistics
         ShowMainMenu
@@ -906,11 +908,11 @@
         ToggleIncompleteMode
         ResetGotItTooltips
         Internal.Performance
+          ShowEdtUtilizationChart
           LaggingMode
           TypingLatencyReport
           RetypeFile
         ShowUpdateDialogAction
-        ShowEdtUtilizationChart
         ShortDumbMode
         DumbModeTremble
         IoFlooding
@@ -921,13 +923,13 @@
         TopAnomalies
         KeymapToCsv
         CompareKeymaps
-      TriggerProjectIndexableFilesFilterHealthCheckAction
+      TriggerProjectIndexableFilesFilterHealthCheck
       ImageDuplicates
       TestIconMappings
       ShowNonRetinaImages
       ShowSearchEverywhereItemInfo
       CompletionQualityStats
-      ShowControlFlowAction
+      ShowControlFlow
       PythonGenerateDictionaries
       Internal.Python
         PyUpdateProjectSdk
@@ -973,7 +975,6 @@
         ShowHelpPageById
         DevKit.AnalyzePersistentSyntaxTreeOverhead
         AnalyzeUnloadablePlugins
-      ShowEditorHighlighterTokens
       tasks.internal
         show.certificate
         deadlock.with.certificate.dialog

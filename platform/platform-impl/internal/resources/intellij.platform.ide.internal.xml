@@ -130,13 +130,9 @@
   </extensions>
 
   <actions resource-bundle="messages.PlatformInternalBundle">
-    <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction">
+    <action id="OpenLog" class="com.intellij.internal.OpenLogAction" internal="true">
       <synonym key="action.OpenLog.Show.text"/>
       <add-to-group group-id="HelpMenu" relative-to-action="ShowLog" anchor="before"/>
-    </action>
-    <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
-    <action id="ReloadProjectAction" internal="true" class="com.intellij.internal.ReloadProjectAction">
-      <add-to-group group-id="Internal"/>
     </action>
 
     <group id="Internal.Ex" internal="true">
@@ -161,6 +157,17 @@
     </group>
 
     <action id="HidpiInfo" class="com.intellij.internal.HidpiInfo"/>
+
+    <action id="ShowRegistry" class="com.intellij.internal.registry.ShowRegistryAction">
+      <add-to-group group-id="MaintenanceGroup" anchor="first"/>
+    </action>
+    <action id="ShowExperiments" class="com.intellij.internal.experiments.ShowExperimentsAction">
+      <add-to-group group-id="MaintenanceGroup" relative-to-action="ShowRegistry" anchor="after"/>
+    </action>
+    <action id="ShowPropertiesComponent" internal="true"
+            class="com.intellij.internal.propertiesComponent.ShowPropertiesComponentAction">
+      <add-to-group group-id="MaintenanceGroup" relative-to-action="ShowExperiments" anchor="after"/>
+    </action>
   </actions>
 
   <applicationListeners>

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal;
+package com.intellij.dev.core;
 
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -23,7 +24,7 @@ final class ReloadProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && !PlatformUtils.isRider());
   }
 
   @Override

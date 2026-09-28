@@ -4,6 +4,7 @@
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.analysis"/>
@@ -58,8 +59,13 @@
     <!-- The action class stays in `intellij.platform.ide.internal`, because a platform performance test uses it. -->
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
+    <action id="PerformGC" internal="true" class="com.intellij.dev.core.PerformGCAction"/>
+
     <action id="PrintModulesAndEntitySources" internal="true"
             class="com.intellij.dev.core.PrintModulesAndEntitySources">
+      <add-to-group group-id="Internal.WorkspaceModel"/>
+    </action>
+    <action id="ReloadProject" internal="true" class="com.intellij.dev.core.ReloadProjectAction">
       <add-to-group group-id="Internal.WorkspaceModel"/>
     </action>
 
@@ -133,7 +139,7 @@
     <action id="TestCoroutineProgress" internal="true" class="com.intellij.dev.core.TestCoroutineProgressAction">
       <add-to-group group-id="Internal.UI.Ex"/>
     </action>
-    <action id="PositionTrackerTestAction" internal="true" class="com.intellij.dev.core.PositionTrackerTestAction">
+    <action id="PositionTrackerTest" internal="true" class="com.intellij.dev.core.PositionTrackerTestAction">
       <add-to-group group-id="Internal.UI.Ex"/>
     </action>
     <action id="UIFreeze" internal="true" class="com.intellij.dev.core.UIFreezeAction">
@@ -143,24 +149,24 @@
       <add-to-group group-id="Internal.UI.Ex"/>
     </action>
 
-    <action id="UiDebugger" class="com.intellij.dev.core.ShowUiDebuggerAction">
+    <action id="UiDebugger" class="com.intellij.dev.core.ShowUiDebuggerAction" internal="true">
       <add-to-group group-id="Internal.UI.Ex"/>
     </action>
     <action id="ToggleEssentialHighlighting" internal="true" class="com.intellij.dev.core.ToggleEssentialHighlightingAction">
       <add-to-group group-id="PowerSaveGroup"/>
     </action>
 
-    <action id="AddInlayInternalAction" internal="true" class="com.intellij.dev.core.AddInlayInternalAction">
+    <action id="AddInlayInternal" internal="true" class="com.intellij.dev.core.AddInlayInternalAction">
       <add-to-group group-id="Internal.Editor"/>
     </action>
-    <action id="AddAfterLineEndInlayInternalAction" internal="true"
+    <action id="AddAfterLineEndInlayInternal" internal="true"
             class="com.intellij.dev.core.AddAfterLineEndInlayInternalAction">
       <add-to-group group-id="Internal.Editor"/>
     </action>
-    <action id="AddInlayBlockInternalAction" internal="true" class="com.intellij.dev.core.AddInlayBlockInternalAction">
+    <action id="AddInlayBlockInternal" internal="true" class="com.intellij.dev.core.AddInlayBlockInternalAction">
       <add-to-group group-id="Internal.Editor"/>
     </action>
-    <action id="DumpEditorStateInternalAction" internal="true" class="com.intellij.dev.core.DumpEditorStateInternalAction">
+    <action id="DumpEditorStateInternal" internal="true" class="com.intellij.dev.core.DumpEditorStateInternalAction">
       <add-to-group group-id="Internal.Editor"/>
     </action>
     <action id="SetCaretVisualAttributesInternalAction" internal="true"
@@ -168,7 +174,7 @@
       <add-to-group group-id="Internal.Editor"/>
     </action>
 
-    <action id="TriggerProjectIndexableFilesFilterHealthCheckAction" internal="true"
+    <action id="TriggerProjectIndexableFilesFilterHealthCheck" internal="true"
             class="com.intellij.dev.core.TriggerProjectIndexableFilesFilterHealthCheckAction">
       <add-to-group group-id="Internal"/>
     </action>
@@ -187,7 +193,7 @@
     <action id="CompletionQualityStats" internal="true" class="com.intellij.dev.core.CompletionQualityStatsAction">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-    <action id="ShowControlFlowAction" internal="true" class="com.intellij.dev.core.ShowControlFlowAction">
+    <action id="ShowControlFlow" internal="true" class="com.intellij.dev.core.ShowControlFlowAction">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
 
@@ -209,7 +215,7 @@
     <action id="DumpWatchedRoots" internal="true" class="com.intellij.dev.core.DumpWatchedRootsAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>
-    <action id="CountVfsFileChildrenAction" internal="true" class="com.intellij.dev.core.CountVfsFileChildrenAction">
+    <action id="CountVfsFileChildren" internal="true" class="com.intellij.dev.core.CountVfsFileChildrenAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>
 
@@ -222,19 +228,19 @@
     <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.dev.core.DumpIntentionsAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-    <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.dev.core.ScanSourceCommentsAction">
+    <action id="ScanSourceComments" internal="true" class="com.intellij.dev.core.ScanSourceCommentsAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
     <action id="DumpScreenConfiguration" internal="true" class="com.intellij.dev.core.DumpScreenConfigurationAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-    <action id="DumpIElementTypesAction" internal="true" class="com.intellij.dev.core.DumpIElementTypesAction">
+    <action id="DumpIElementTypes" internal="true" class="com.intellij.dev.core.DumpIElementTypesAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-    <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.dev.core.DumpLoadedInspectionsAction">
+    <action id="DumpLoadedInspections" internal="true" class="com.intellij.dev.core.DumpLoadedInspectionsAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
-    <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.dev.core.DumpRunConfigurationTypesAction">
+    <action id="DumpRunConfigurationTypes" internal="true" class="com.intellij.dev.core.DumpRunConfigurationTypesAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
     <action id="DumpFormattingModel" internal="true" class="com.intellij.dev.core.DumpFormattingModelAction">
@@ -245,7 +251,7 @@
     </action>
 
     <action id="ShowWorkspaceFileState" internal="true" class="com.intellij.dev.core.ShowWorkspaceFileStateAction"/>
-    <action id="PaintEditorLineStripeComponentAction" internal="true"
+    <action id="PaintEditorLineStripeComponent" internal="true"
             class="com.intellij.dev.core.PaintEditorLineStripeHintComponentAction"/>
     <action id="ShowInlineCompletionStatistics" internal="true"
             class="com.intellij.dev.core.ShowCompletionLocalStatisticsAction"/>

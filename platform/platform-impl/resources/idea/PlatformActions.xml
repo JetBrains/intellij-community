@@ -1070,10 +1070,7 @@
       <reference ref="ChangeIdeScale"/>
     </group>
 
-    <group id="MaintenanceGroup">
-      <reference ref="ShowRegistry"/>
-      <reference ref="ShowExperiments"/>
-    </group>
+    <group id="MaintenanceGroup"/>
 
     <reference ref="Console.Open"/>
     <reference ref="Console.Execute"/>
