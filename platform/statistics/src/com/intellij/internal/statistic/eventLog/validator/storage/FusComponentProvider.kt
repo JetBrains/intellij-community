@@ -255,7 +255,6 @@ object FusComponentProvider {
     val productMode = when {
       PlatformUtils.isQodana() -> null
       currentProductModeId != ProductMode.MONOLITH.id -> currentProductModeId
-      detectClionNova() -> "nova"
       else -> null
     }
     val systemEventIdProvider = UsageStatisticsPersistenceComponent.getInstance()
@@ -583,10 +582,6 @@ object FusComponentProvider {
 
   private fun getEventLogDir(recorderId: String): Path =
     EventLogConfiguration.getInstance().getEventLogDataPath().resolve("logs").resolve(recorderId)
-
-  // Taken from CLionLanguagePluginKind; remove once CLion Nova is deployed 100%.
-  private fun detectClionNova(): Boolean =
-    System.getProperty("idea.suppressed.plugins.set.selector") == "radler" && PlatformUtils.isCLion()
 
   class BundledJvmFileStorage(private val recorderId: String) : FileStorage {
     private val bundledBasePath: String
