@@ -6,7 +6,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -129,7 +128,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
 
   @VisibleForTesting
   internal suspend fun confirmCreateNewWorktreeInsteadOfOpening(project: Project, branch: GitBranch, worktreePath: String?): Boolean {
-    val decision = withContext(Dispatchers.UI) {
+    val decision = withContext(Dispatchers.UiWithModelAccess) {
       GitCheckoutInOtherWorktreeDialogs.buildAndShow(
         project, branch.name, worktreePath,
         GitBundle.message("working.tree.dialog.branch.already.checked.out.confirm.create.anyway"),
@@ -291,7 +290,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     branchName: String,
     worktreePath: String?,
   ): Boolean {
-    val decision = withContext(Dispatchers.UI) {
+    val decision = withContext(Dispatchers.UiWithModelAccess) {
       GitCheckoutInOtherWorktreeDialogs.buildAndShow(
         project, branchName, worktreePath,
         GitBundle.message("working.tree.dialog.branch.already.checked.out.confirm.create.anyway"),
