@@ -141,7 +141,7 @@
 
     <notificationGroup id="PerformancePlugin" displayType="STICKY_BALLOON"
                        bundle="messages.PerformanceTestingBundle" key="notification.group.performance.plugin"
-                       notificationIds="promo.notification.automatic.error.report"/>
+                       notificationIds="automatic.error.report.enabled"/>
     <registryKey key="performance.plugin.playback.runner.useDirectActionCall" defaultValue="false"
                  description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework"
                  restartRequired="false"/>
