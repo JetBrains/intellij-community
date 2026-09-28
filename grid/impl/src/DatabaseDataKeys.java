@@ -3,7 +3,6 @@ package com.intellij.database;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.settings.DataGridSettings;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
@@ -23,6 +22,4 @@ public final class DatabaseDataKeys {
 
   public static final DataKey<DataGrid> DATA_GRID_KEY = DataKey.create("DATA_GRID_KEY");
   public static final Key<DataGrid> GRID_KEY = Key.create("GRID_KEY");
-  public static final DataKey<String> RESULT_SET_QUERY_KEY = DataKey.create("RESULT_SET_QUERY_KEY");
-  public static final DataKey<Language> RESULT_SET_QUERY_LANGUAGE_KEY = DataKey.create("RESULT_SET_QUERY_LANGUAGE_KEY");
 }
