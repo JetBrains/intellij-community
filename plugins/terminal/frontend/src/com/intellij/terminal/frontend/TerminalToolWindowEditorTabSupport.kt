@@ -12,7 +12,9 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.flow.throttleLatest
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabContent
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalTabContent.ClosingConfirmationDetails
+import com.intellij.terminal.frontend.toolwindow.impl.buildPendingTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.confirmTermination
+import com.intellij.terminal.frontend.toolwindow.impl.getPendingTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.isTerminalTabContent
 import com.intellij.terminal.frontend.toolwindow.impl.toTerminalTabContent
 import com.intellij.ui.content.Content
@@ -67,6 +69,10 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
     project: Project,
     content: Content,
   ): Flow<ToolWindowEditorTabPresentation> {
+    // The platform calls it on the EDT before it takes the content component for the editor tab.
+    // So it is the place to build a pending tab that is moved to the editor.
+    content.buildPendingTerminalTab(project)
+
     return flow {
       suspend fun buildPresentation(): ToolWindowEditorTabPresentation {
         return withContext(Dispatchers.EDT) {
@@ -87,7 +93,7 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   override fun canBeMovedToEditor(content: Content): Boolean {
-    return content.isTerminalTabContent()
+    return content.isTerminalTabContent() || content.getPendingTerminalTab() != null
   }
 
   private fun buildTabPresentation(project: Project, content: Content): ToolWindowEditorTabPresentation {

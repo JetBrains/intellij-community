@@ -122,7 +122,7 @@ interface TerminalToolWindowTabBuilder {
   fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalToolWindowTabBuilder
 
   /**
-   * Builds the tab into the [content] of a pending tab, which is already in the Terminal tool window.
+   * Builds the tab into the [content] of a pending tab, which is in the Terminal tool window or is being moved to the editor.
    * The tab is not added to the tool window again and not selected, so [contentManager], [requestFocus] and
    * [shouldAddToToolWindow] have no effect.
    *

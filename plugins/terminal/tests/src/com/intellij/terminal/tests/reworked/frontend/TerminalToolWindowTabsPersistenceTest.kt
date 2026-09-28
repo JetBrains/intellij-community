@@ -8,10 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.terminal.frontend.TerminalToolWindowEditorTabPersistenceProvider
+import com.intellij.terminal.frontend.TerminalToolWindowEditorTabSupport
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalInEditorSupport
 import com.intellij.terminal.frontend.toolwindow.impl.getPendingTerminalTab
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
@@ -20,6 +23,7 @@ import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
@@ -186,6 +190,31 @@ internal class TerminalToolWindowTabsPersistenceTest {
       assertThat(second.getTerminalTab()?.view?.title?.userDefinedTitle).isEqualTo("Renamed 2")
       awaitCondition("the renamed second tab should be persisted") { storage.getStoredTabs().getOrNull(1)?.name == "Renamed 2" }
       assertThat(storage.getStoredTabs()).containsExactly(storedTab1, storedTab2.copy(name = "Renamed 2", isUserDefinedName = true))
+    }
+  }
+
+  @Test
+  fun `a pending tab can be moved to the editor and is built for its editor tab`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2)
+
+    withTerminalToolWindowManager(project) { manager ->
+      val first = manager.tabs.single()
+      val second = toolWindow.contentManager.contents[1]
+      val support = TerminalToolWindowEditorTabSupport()
+      assertThat(support.canBeMovedToEditor(second)).isTrue()
+      assertThat(TerminalInEditorSupport().canOpenInEditor(project, second)).isTrue()
+      // The platform asks it before the presentation flow, so the editor tab is persistent.
+      assertThat(TerminalToolWindowEditorTabPersistenceProvider().canSerialize(second)).isTrue()
+      assertThat(second.getTerminalTab()).isNull()
+
+      val presentation = support.getTabPresentationFlow(project, second).first()
+
+      assertThat(presentation.title).isEqualTo("Restored 2")
+      val tab = requireNotNull(second.getTerminalTab()) { "The pending tab should be built for its editor tab" }
+      assertThat(second.getPendingTerminalTab()).isNull()
+      assertThat(tab.view.title.defaultTitle).isEqualTo("Restored 2")
+      assertThat(tab.processOptions.workingDirectory).isEqualTo("/tmp/two")
+      assertThat(manager.tabs).containsExactly(first, tab)
     }
   }
 

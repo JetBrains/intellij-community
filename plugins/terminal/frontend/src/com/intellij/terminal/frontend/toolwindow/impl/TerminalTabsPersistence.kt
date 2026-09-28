@@ -1,10 +1,10 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
@@ -185,7 +185,10 @@ private fun listenTerminalTabChangeEvents(
   // A pending tab gets its view without a contentAdded event.
   project.messageBus.connect(coroutineScope).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
     override fun tabAdded(tab: TerminalToolWindowTab) {
-      addTerminalViewListeners(tab.content)
+      // A pending tab moved to the editor can be built after it is removed from the tool window.
+      if (tab.content.manager != null) {
+        addTerminalViewListeners(tab.content)
+      }
     }
   })
 }

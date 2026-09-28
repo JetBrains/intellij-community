@@ -12,10 +12,11 @@ import com.intellij.ui.content.Content
 
 internal class TerminalInEditorSupport : ToolWindowInEditorSupport {
   override fun canOpenInEditor(project: Project, content: Content): Boolean {
-    return content.getTerminalTab() != null
+    return content.getTerminalTab() != null || content.getPendingTerminalTab() != null
   }
 
   override fun openInEditor(content: Content, targetWindow: EditorWindow) {
+    content.buildPendingTerminalTab(targetWindow.manager.project)
     val terminalTab = content.getTerminalTab() ?: return
     openReworkedTerminalInEditor(terminalTab, targetWindow)
   }

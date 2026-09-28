@@ -8,6 +8,7 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl
 import com.intellij.terminal.frontend.toolwindow.impl.computePersistedTab
+import com.intellij.terminal.frontend.toolwindow.impl.getPendingTerminalTab
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.xmlb.XmlSerializer
@@ -26,7 +27,10 @@ class TerminalToolWindowEditorTabPersistenceProvider : ToolWindowEditorTabPersis
 
   // A tab that opted out of restoring is not serialized here either: dragging it into the editor area must
   // not put back the command re-run that TerminalTabsPersistence leaves out of the tool window state.
-  override fun canSerialize(content: Content): Boolean = content.getTerminalTab()?.restoreOnProjectReopen == true
+  // A pending tab is always restorable. It is built before serialize, in TerminalToolWindowEditorTabSupport.getTabPresentationFlow.
+  override fun canSerialize(content: Content): Boolean {
+    return content.getTerminalTab()?.restoreOnProjectReopen == true || content.getPendingTerminalTab() != null
+  }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   override fun serialize(content: Content): Element {
