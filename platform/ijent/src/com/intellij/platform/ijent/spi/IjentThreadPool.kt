@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -59,6 +60,8 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
   )
   private annotation class ErrorMarker
 
+  override fun toString(): String = javaClass.simpleName
+
   @ErrorMarker
   @Suppress("unused")
   fun asCoroutineDispatcher(): ExecutorCoroutineDispatcher {
@@ -71,11 +74,15 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
       asCoroutineDispatcher()
     }
 
-    val exceptionHandler = CoroutineExceptionHandler { context, exception ->
-      // IjentUnavailableException is silently ignored - it's already logged during its creation.
-      if (exception !is IjentUnavailableException) {
-        IjentLogger.OTHER_LOG.error("Uncaught exception in IJent coroutine $context", exception)
+    val exceptionHandler = object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+      override fun handleException(context: CoroutineContext, exception: Throwable) {
+        // IjentUnavailableException is silently ignored - it's already logged during its creation.
+        if (exception !is IjentUnavailableException) {
+          IjentLogger.OTHER_LOG.error("Uncaught exception in IJent coroutine $context", exception)
+        }
       }
+
+      override fun toString(): String = "IjentThreadPoolExceptionHandler"
     }
 
     dispatcher + exceptionHandler

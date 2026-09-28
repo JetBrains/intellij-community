@@ -53,7 +53,13 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
     val context = IjentThreadPool.coroutineContext
     // Prevents from logging the error by the default exception handler.
     // Errors are logged explicitly in this function.
-    val dummyExceptionHandler = CoroutineExceptionHandler { _, err -> /* nothing */ }
+    val dummyExceptionHandler = object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+      override fun handleException(context: CoroutineContext, exception: Throwable) {
+        // Nothing.
+      }
+
+      override fun toString(): String = "IjentDummyExceptionHandler"
+    }
 
     // This supervisor scope exists only to prevent automatic propagation of IjentUnavailableException to the parent scope.
     // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
