@@ -4,9 +4,9 @@ package com.intellij.openapi.application
 import com.intellij.openapi.application.UpdateCheckerTestBase.Companion.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
-import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.junit5.RegistryKey
