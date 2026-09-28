@@ -161,7 +161,7 @@ impl Execution {
         }
         let inventory_parent = parent_of(&inventory);
         fscopy::create_dirs_0755(inventory_parent)?;
-        let metadata = tempfile::Builder::new()
+        let mut metadata = tempfile::Builder::new()
             .prefix(".plugin-inventory-")
             .tempfile_in(inventory_parent)
             .at(inventory_parent)?
@@ -175,10 +175,12 @@ impl Execution {
             _ => {}
         }
         stage.publish(&output)?;
-        if let Err(error) = metadata.persist(&inventory) {
+        // `fs::rename` gives a long path the `\\?\` prefix. `TempPath::persist` does not, so it fails past `MAX_PATH`.
+        if let Err(error) = fs::rename(&metadata, &inventory) {
             remove_stage(&output, &stage.directories);
-            return Err(error.error).at(&inventory);
+            return Err(error).at(&inventory);
         }
+        metadata.disable_cleanup(true);
         Ok(())
     }
 

@@ -10,3 +10,9 @@ rust_lints_as_errors(
     cargo = "@ddt//:workspace_cargo_lints",
     visibility = ["//visibility:public"],
 )
+
+# The clippy configuration of both workspaces. Both `.bazelrc` files set it as `@rules_rust//rust/settings:clippy.toml`.
+exports_files(
+    ["clippy.toml"],
+    visibility = ["//visibility:public"],
+)

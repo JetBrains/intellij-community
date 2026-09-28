@@ -209,6 +209,34 @@ fn binary_output_aliases_preserve_contract_files() {
     }
 }
 
+/// The packer writes every output below a directory whose path is longer than `MAX_PATH` of Windows, which is 260
+/// characters. A Bazel output path on Windows can be that long.
+#[test]
+fn outputs_pack_past_max_path() {
+    let Some(packer) = packer() else { return };
+    let root = tempfile::tempdir().unwrap();
+    let source = root.path().join("source");
+    write_file(&source.join("file"), b"long path");
+    let mut arguments = projection_contracts(&root.path().join("contracts"), true, &source);
+    let mut package = root.path().to_path_buf();
+    for index in 0..5 {
+        package.push(format!("{index}-intellij.air.integrationTests.bridge.plugin"));
+    }
+    let output = package.join("plugin_remainder.plugin");
+    let inventory = package.join("plugin_remainder.file-metadata.json");
+    assert!(inventory.as_os_str().len() > 300, "the test path is too short: {}", inventory.display());
+    arguments.extend(outputs(
+        &output.display().to_string(),
+        &inventory.display().to_string(),
+        &package,
+    ));
+    let result = run(&packer, &arguments, root.path());
+    assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+    assert_eq!(fs::read(output.join("resources/file")).unwrap(), b"long path");
+    assert!(exists(&inventory), "the packer wrote no inventory");
+    assert!(exists(&package.join("assets.json")), "the packer wrote no asset rows");
+}
+
 /// A relative catalogue root resolves against the working directory, also when the working directory is a link.
 #[test]
 fn relative_directory_roots_resolve_through_working_directory_links() {

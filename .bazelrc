@@ -8,6 +8,9 @@ import %workspace%/common.bazelrc
 # The community Go targets do not use Cgo.
 common --@rules_go//go/config:pure
 
+# The clippy configuration of the dev-dist tools, the only crates with a clippy test.
+common --@rules_rust//rust/settings:clippy.toml=//build/dev-dist-tools:clippy.toml
+
 try-import %workspace%/../build/remote_cache.bazelrc
 
 # Enable remote cache key scrubbing
