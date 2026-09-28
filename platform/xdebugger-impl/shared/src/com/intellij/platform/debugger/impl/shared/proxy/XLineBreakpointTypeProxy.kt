@@ -14,7 +14,7 @@ interface XLineBreakpointTypeProxy : XBreakpointTypeProxy {
 
   val priority: Int
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun supportsInterLinePlacement(): Boolean
 
   suspend fun canPutAt(editor: Editor, line: Int, project: Project): Boolean
