@@ -8,7 +8,9 @@ import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.FinishEvent
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.ProgressBuildEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.build.events.StartEvent
 import com.intellij.execution.rpc.createProcessHandlerDto
 import com.intellij.ide.rpc.setupTransfer
 import com.intellij.openapi.Disposable
@@ -191,7 +193,7 @@ class BackendMultipleBuildsView(private val project: Project, internal val viewM
             Disposer.dispose(it)
           }
         }
-        else {
+        else if (event is ProgressBuildEvent || event is StartEvent || event is FinishEvent) {
           val message = event.getMessage()
           if (message != buildInfo.statusMessage) {
             buildInfo.statusMessage = message
