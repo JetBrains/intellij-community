@@ -3,12 +3,15 @@ package com.intellij.terminal.tests.reworked.frontend
 import com.intellij.mock.MockFocusManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.ui.getClipboardText
@@ -69,11 +72,30 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
     assertThat(getClipboardText()).isEqualTo("irs\neco\nhir")
   }
 
-  private fun createTerminalEditor(): Editor {
-    val scope = terminalProjectScope(project).childScope("TerminalOutputEditor").also {
+  @Test
+  fun `copy on selection works in the alternate buffer editor`() {
+    val editor = createTerminalEditor { project, settings, scope ->
+      TerminalEditorFactory.createAlternateBufferEditor(project, settings, DocumentImpl("", true), scope)
+    }
+    editor.document.setText(
+      """
+      first
+      second
+      """.trimIndent()
+    )
+
+    // Select "second"
+    editor.selectionModel.setSelection(6, 12)
+    assertThat(getClipboardText()).isEqualTo("second")
+  }
+
+  private fun createTerminalEditor(
+    createEditor: (Project, JBTerminalSystemSettingsProviderBase, CoroutineScope) -> Editor = TerminalEditorFactory::createOutputEditor,
+  ): Editor {
+    val scope = terminalProjectScope(project).childScope("TerminalEditor").also {
       Disposer.register(testRootDisposable) { it.cancel() }
     }
-    val editor = TerminalEditorFactory.createOutputEditor(
+    val editor = createEditor(
       project,
       object : JBTerminalSystemSettingsProviderBase() {
         override fun copyOnSelect(): Boolean = true

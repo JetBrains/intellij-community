@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.terminal.tests.reworked.util.TerminalViewFixture
 import com.intellij.terminal.tests.reworked.util.TerminalViewTestCase
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.junit.jupiter.api.Test
@@ -16,7 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * End-to-end coverage of OSC8 hyperlinks: a real [com.intellij.terminal.frontend.view.impl.TerminalViewImpl] is
  * connected to the production `TerminalSession`, backed by a loopback connector instead of a real shell process.
  * Raw `OSC 8` escape sequences are fed through the connector, and the final state is asserted where the UI
- * actually renders it: a hyperlink [RangeHighlighter] in the output editor's markup model.
+ * actually renders it: a hyperlink [RangeHighlighter] in the markup model of the active buffer's editor.
  *
  * Every case runs on both JediTerm and Ghostty emulators.
  */
@@ -117,7 +118,45 @@ internal class TerminalOsc8HyperlinksEndToEndTest(emulatorType: TerminalEmulator
     assertThat(fixture.uriOf(highlighter)).isEqualTo(uri)
   }
 
+  @Test
+  fun `OSC8 hyperlink in the alternate screen is rendered in the alternate buffer editor`() = doTest { fixture ->
+    fixture.enterAlternateScreen()
+    fixture.connector.feed("before ${osc8("https://example.com", "link text")} after")
+
+    val highlighter = fixture.awaitHyperlink()
+    assertThat(fixture.textOf(highlighter)).isEqualTo("link text")
+    assertThat(fixture.uriOf(highlighter)).isEqualTo("https://example.com")
+  }
+
+  @Test
+  fun `OSC8 hyperlink in the same chunk as the switch to the alternate screen is rendered`() = doTest { fixture ->
+    // The alternate model gets the link before the view switches the editors.
+    fixture.enterAlternateScreen(sameChunkText = "before ${osc8("https://example.com", "link text")} after")
+
+    val highlighter = fixture.awaitHyperlink()
+    assertThat(fixture.textOf(highlighter)).isEqualTo("link text")
+    assertThat(fixture.uriOf(highlighter)).isEqualTo("https://example.com")
+  }
+
+  @Test
+  fun `hovering an OSC8 hyperlink in the alternate screen shows its target URI as a tooltip`() = doTest { fixture ->
+    fixture.enterAlternateScreen()
+    fixture.resize(columns = 80, rows = 24)
+    fixture.connector.feed("x ${osc8("https://jetbrains.com", "JB")} y")
+
+    val highlighter = fixture.awaitHyperlink()
+    fixture.hover(highlighter)
+
+    assertThat(fixture.activeEditor.contentComponent.toolTipText).contains("https://jetbrains.com")
+  }
+
   private fun osc8(uri: String, text: String): String = "$OSC8_PREFIX$uri$ST$text$OSC8_PREFIX$ST"
+
+  /** Enters the alternate screen with [sameChunkText] in the same chunk, and waits until the view shows the alternate buffer. */
+  private suspend fun TerminalViewFixture.enterAlternateScreen(sameChunkText: String = "") {
+    connector.feed("$ESC[?1049h$sameChunkText")
+    view.outputModels.active.first { it === view.outputModels.alternative }
+  }
 
   companion object {
     private val ESC: String = Char(0x1B).toString()
@@ -135,15 +174,15 @@ internal class TerminalOsc8HyperlinksEndToEndTest(emulatorType: TerminalEmulator
 // ---------------------------------------------------------------------------
 
 private fun TerminalViewFixture.textOf(highlighter: RangeHighlighter): String {
-  return view.outputEditor.document.getText(highlighter.textRange)
+  return activeEditor.document.getText(highlighter.textRange)
 }
 
 /**
- * The target URI of the OSC8 link rendered as [highlighter], read from the output model - the markup model's
+ * The target URI of the OSC8 link rendered as [highlighter], read from the active output model - the markup model's
  * own decoration doesn't expose it (it's only used internally to build the click action).
  */
 private fun TerminalViewFixture.uriOf(highlighter: RangeHighlighter): String {
-  val model = view.outputModels.regular
+  val model = view.outputModels.active.value
   return model.getOsc8Hyperlinks().single {
     (it.startOffset - model.startOffset).toInt() == highlighter.startOffset &&
     (it.endOffset - model.startOffset).toInt() == highlighter.endOffset
@@ -152,7 +191,7 @@ private fun TerminalViewFixture.uriOf(highlighter: RangeHighlighter): String {
 
 /** Moves the mouse over the middle of [highlighter]'s range, as a real mouse move would. */
 private fun TerminalViewFixture.hover(highlighter: RangeHighlighter) {
-  val editor = view.outputEditor
+  val editor = activeEditor
   val offset = (highlighter.startOffset + highlighter.endOffset) / 2
   val point = editor.offsetToXY(offset)
   val event = MouseEvent(
@@ -164,11 +203,11 @@ private fun TerminalViewFixture.hover(highlighter: RangeHighlighter) {
 private suspend fun TerminalViewFixture.awaitHyperlink(): RangeHighlighter = awaitHyperlinks(1).single()
 
 /**
- * Polls the output editor's markup model until exactly [count] hyperlink highlighters are present, then returns
+ * Polls the active editor's markup model until exactly [count] hyperlink highlighters are present, then returns
  * them sorted by position.
  */
 private suspend fun TerminalViewFixture.awaitHyperlinks(count: Int): List<RangeHighlighter> {
-  val editor = view.outputEditor
+  val editor = activeEditor
   while (true) {
     val highlighters = editor.markupModel.allHighlighters.filter { it.isValid && it.layer == HighlighterLayer.HYPERLINK }
     if (highlighters.size == count) return highlighters.sortedBy { it.startOffset }

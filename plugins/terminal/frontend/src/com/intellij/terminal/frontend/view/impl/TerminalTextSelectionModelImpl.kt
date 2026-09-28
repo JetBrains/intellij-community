@@ -13,14 +13,16 @@ import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.util.asDisposable
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 
 internal class TerminalTextSelectionModelImpl(
   private val outputModels: TerminalOutputModelsSet,
   private val regularEditor: Editor,
-  private val alternateBufferEditor: Editor,
+  private val alternateBufferEditor: Deferred<Editor>,
   coroutineScope: CoroutineScope,
 ) : TerminalTextSelectionModel {
   override val selection: TerminalTextSelection?
@@ -30,14 +32,17 @@ internal class TerminalTextSelectionModelImpl(
 
   init {
     val listener = MyEditorSelectionListener()
-    regularEditor.selectionModel.addSelectionListener(listener, coroutineScope.asDisposable())
-    alternateBufferEditor.selectionModel.addSelectionListener(listener, coroutineScope.asDisposable())
+    val parentDisposable = coroutineScope.asDisposable()
+    regularEditor.selectionModel.addSelectionListener(listener, parentDisposable)
+    // The handler runs synchronously on completion, so the listener gets every selection change of the new editor.
+    alternateBufferEditor.invokeOnCompletion {
+      alternateBufferEditor.getNow()?.selectionModel?.addSelectionListener(listener, parentDisposable)
+    }
   }
 
   override fun updateSelection(newSelection: TerminalTextSelection?) {
     val outputModel = outputModels.active.value
-    val curEditor = if (outputModel == outputModels.regular) regularEditor else alternateBufferEditor
-    val editorSelectionModel = curEditor.selectionModel
+    val editorSelectionModel = getEditor(outputModel).selectionModel
     if (newSelection != null) {
       if (newSelection.startOffset !in outputModel.startOffset..outputModel.endOffset ||
           newSelection.endOffset !in outputModel.startOffset..outputModel.endOffset) {
@@ -53,8 +58,7 @@ internal class TerminalTextSelectionModelImpl(
 
   private fun getCurrentSelection(): TerminalTextSelection? {
     val outputModel = outputModels.active.value
-    val curEditor = if (outputModel == outputModels.regular) regularEditor else alternateBufferEditor
-    val editorSelectionModel = curEditor.selectionModel
+    val editorSelectionModel = getEditor(outputModel).selectionModel
     return if (editorSelectionModel.hasSelection()) {
       TerminalTextSelection.of(
         outputModel.startOffset + editorSelectionModel.selectionStart.toLong(),
@@ -68,11 +72,19 @@ internal class TerminalTextSelectionModelImpl(
     listeners.add(listener, parentDisposable)
   }
 
+  /** The view makes the alternate model active only after it creates the alternate buffer editor. */
+  private fun getEditor(outputModel: TerminalOutputModel): Editor {
+    return if (outputModel == outputModels.regular) {
+      regularEditor
+    }
+    else checkNotNull(alternateBufferEditor.getNow()) { "The alternate buffer editor is not created yet" }
+  }
+
   private inner class MyEditorSelectionListener : SelectionListener {
     override fun selectionChanged(e: SelectionEvent) {
       val outputModel = when (e.editor) {
         regularEditor -> outputModels.regular
-        alternateBufferEditor -> outputModels.alternative
+        alternateBufferEditor.getNow() -> outputModels.alternative
         else -> error("Unexpected editor: ${e.editor}")
       }
 

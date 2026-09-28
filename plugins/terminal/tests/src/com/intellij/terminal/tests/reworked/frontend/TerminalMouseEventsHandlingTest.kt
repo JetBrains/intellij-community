@@ -9,9 +9,14 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.view.TerminalTextSelection
+import com.intellij.terminal.frontend.view.TerminalTextSelectionChangeEvent
+import com.intellij.terminal.frontend.view.TerminalTextSelectionListener
+import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -26,13 +31,16 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -66,9 +74,16 @@ internal class TerminalMouseEventsHandlingTest {
   private val project: Project by projectFixture
 
   /** Mouse reporting is disabled by default, matching [TerminalSession.processMouseEvent] before any app enables it. */
-  private fun doTest(isMouseReportingEnabled: Boolean = false, block: suspend (Fixture) -> Unit): Unit =
+  private fun doTest(
+    isMouseReportingEnabled: Boolean = false,
+    isAlternateScreenBuffer: Boolean = false,
+    block: suspend (Fixture) -> Unit,
+  ): Unit =
     timeoutRunBlocking(context = Dispatchers.EDT) {
       Fixture(project, isMouseReportingEnabled = isMouseReportingEnabled).use { fixture ->
+        if (isAlternateScreenBuffer) {
+          fixture.switchToAlternateScreenBuffer()
+        }
         block(fixture)
       }
     }
@@ -708,11 +723,73 @@ internal class TerminalMouseEventsHandlingTest {
     }
   }
 
+  /** The alternate buffer editor, which the view configures apart from the output editor. No hyperlink. */
+  @Nested
+  inner class AlternateBuffer {
+    @Test
+    fun `click places the editor caret`(): Unit = doTest(isAlternateScreenBuffer = true) { fixture ->
+      fixture.setText("plain text")
+
+      val point = fixture.pointAt(column = 4)
+      val pressConsumed = fixture.press(point, InputEvent.BUTTON1_DOWN_MASK)
+      val releaseConsumed = fixture.release(point, 0)
+
+      assertThat(pressConsumed).isFalse()
+      assertThat(releaseConsumed).isFalse()
+      assertThat(fixture.reportedEvents).isEmpty()
+      assertThat(fixture.editor.caretModel.offset).isEqualTo(4)
+    }
+
+    @Test
+    fun `click is reported when mouse reporting is enabled`(): Unit =
+      doTest(isMouseReportingEnabled = true, isAlternateScreenBuffer = true) { fixture ->
+        fixture.setText("plain text")
+
+        val point = fixture.pointAt(column = 4)
+        val pressConsumed = fixture.press(point, InputEvent.BUTTON1_DOWN_MASK)
+        val releaseConsumed = fixture.release(point, 0)
+
+        assertThat(pressConsumed).isTrue()
+        assertThat(releaseConsumed).isTrue()
+        assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
+      }
+
+    @Test
+    fun `press-drag-release selects text and updates the terminal text selection model`(): Unit =
+      doTest(isAlternateScreenBuffer = true) { fixture ->
+        fixture.setText("select this text")
+        val selectionEvents = mutableListOf<TerminalTextSelectionChangeEvent>()
+        val listenerDisposable = Disposer.newDisposable()
+        fixture.textSelectionModel.addListener(listenerDisposable, object : TerminalTextSelectionListener {
+          override fun selectionChanged(event: TerminalTextSelectionChangeEvent) {
+            selectionEvents.add(event)
+          }
+        })
+
+        try {
+          fixture.press(fixture.pointAt(column = 0), InputEvent.BUTTON1_DOWN_MASK)
+          fixture.drag(fixture.pointAt(column = 6), InputEvent.BUTTON1_DOWN_MASK)
+          fixture.release(fixture.pointAt(column = 6), 0)
+        }
+        finally {
+          Disposer.dispose(listenerDisposable)
+        }
+
+        val model = fixture.alternateBufferModel
+        val expectedSelection = TerminalTextSelection.of(model.startOffset, model.startOffset + 6L)
+        assertThat(fixture.editor.selectionModel.selectedText).isEqualTo("select")
+        assertThat(fixture.textSelectionModel.selection).isEqualTo(expectedSelection)
+        assertThat(selectionEvents).isNotEmpty()
+        assertThat(selectionEvents.last().outputModel).isSameAs(model)
+        assertThat(selectionEvents.last().newSelection).isEqualTo(expectedSelection)
+      }
+  }
+
   /**
    * A real [TerminalViewImpl] connected to a [RecordingTerminalSession], so the production mouse events handler,
    * hyperlinks logic, and editor logic are exercised as-is.
    */
-  private class Fixture(project: Project, columns: Int = 20, isMouseReportingEnabled: Boolean = false) : AutoCloseable {
+  private class Fixture(project: Project, private val columns: Int = 20, isMouseReportingEnabled: Boolean = false) : AutoCloseable {
     private val scope = terminalProjectScope(project).childScope("TerminalViewImpl")
     private val session = RecordingTerminalSession(scope, isMouseReportingEnabled)
     private val terminalView: TerminalViewImpl = TerminalViewImpl(
@@ -723,11 +800,19 @@ internal class TerminalMouseEventsHandlingTest {
     )
     private var nextHyperlinkId = 1L
 
+    // The view exposes the applier of the output editor only.
     private val decorationApplier: EditorTextDecorationApplier
       get() = terminalView.outputEditorDecorationApplier
 
+    /** The editor of the active buffer. */
     val editor: EditorImpl
-      get() = terminalView.outputEditor
+      get() = if (terminalView.isAlternateScreenBuffer) checkNotNull(terminalView.alternateBufferEditorDeferred.getNow()) else terminalView.outputEditor
+
+    val textSelectionModel: TerminalTextSelectionModel
+      get() = terminalView.textSelectionModel
+
+    val alternateBufferModel: TerminalOutputModel
+      get() = terminalView.outputModels.alternative
 
     /** Kinds of the mouse events reported to the (fake) terminal process, in order. */
     val reportedEvents: List<MouseEventKind>
@@ -743,14 +828,28 @@ internal class TerminalMouseEventsHandlingTest {
 
     init {
       terminalView.connectToSession(session)
+      setEditorSize()
+    }
 
+    /**
+     * Switches the view to the alternate buffer, as a state change from the session does.
+     * The session of this fixture has no output flow, so the test changes the state itself.
+     */
+    suspend fun switchToAlternateScreenBuffer() {
+      val sessionModel = terminalView.sessionModel
+      sessionModel.updateTerminalState(sessionModel.terminalState.value.copy(isAlternateScreenBuffer = true))
+      terminalView.outputModels.active.first { it === terminalView.outputModels.alternative }
+      setEditorSize()
+    }
+
+    private fun setEditorSize() {
       val characterGrid = editor.characterGrid ?: error("Character grid is not initialized")
       val widthInPixels = ceil(columns * characterGrid.charWidth).toInt()
       EditorTestUtil.setEditorVisibleSizeInPixels(editor, widthInPixels, 3 * editor.lineHeight)
     }
 
     fun setText(text: String) {
-      val outputModel = terminalView.outputModels.regular as MutableTerminalOutputModel
+      val outputModel = terminalView.outputModels.active.value as MutableTerminalOutputModel
       outputModel.updateContent(0, text)
     }
 

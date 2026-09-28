@@ -113,7 +113,8 @@ internal class TerminalTypingLocksTest : BasePlatformTestCase() {
   companion object {
     private val INIT_READ_LOCKS: Set<String> = emptySet()
     private val INIT_WRITE_INTENT_LOCKS: Set<String> = setOf(
-      "com.intellij.terminal.frontend.view.impl.TerminalViewImpl#configureOutputEditor",
+      "com.intellij.terminal.frontend.view.impl.TerminalViewImpl#installBufferEditorFeatures",
+      "com.intellij.terminal.frontend.view.impl.TerminalViewImpl#installOutputPsiFileSync",
       "org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils#createOutputEditor"
     )
 

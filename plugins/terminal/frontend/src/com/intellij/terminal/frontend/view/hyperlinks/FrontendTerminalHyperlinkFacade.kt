@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.view.hyperlinks
 
 import com.intellij.execution.impl.EditorTextDecorationApplier
+import com.intellij.openapi.util.Key
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,5 +50,9 @@ class FrontendTerminalHyperlinkFacade(
   @TestOnly
   suspend fun awaitHoverProcessed(count: Long) {
     processedHovers.first { it > count }
+  }
+
+  companion object {
+    val KEY: Key<FrontendTerminalHyperlinkFacade> = Key("FrontendTerminalHyperlinkFacade")
   }
 }

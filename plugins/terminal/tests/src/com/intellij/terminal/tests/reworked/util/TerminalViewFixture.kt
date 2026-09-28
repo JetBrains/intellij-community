@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -31,6 +32,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
@@ -56,11 +59,17 @@ import kotlin.time.Duration.Companion.seconds
 internal class TerminalViewFixture(private val project: Project, emulatorType: TerminalEmulatorType) : AutoCloseable {
   private val scope = terminalProjectScope(project).childScope("TerminalViewFixture")
 
+  val session: TerminalSession
   val connector: LoopbackTtyConnector
   val view: TerminalViewImpl
 
+  /** The editor that shows the active buffer of [view]. */
+  val activeEditor: EditorImpl
+    get() = if (view.isAlternateScreenBuffer) checkNotNull(view.alternateBufferEditorDeferred.getNow()) else view.outputEditor
+
   init {
     val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(project, scope, emulatorType)
+    this.session = session
     this.connector = connector
 
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
@@ -75,7 +84,7 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun resize(columns: Int, rows: Int) {
-    val editor = if (view.isAlternateScreenBuffer) view.alternateBufferEditor else view.outputEditor
+    val editor = activeEditor
     val characterGrid = checkNotNull(editor.characterGrid) { "Character grid is not initialized" }
     EditorTestUtil.setEditorVisibleSizeInPixels(
       editor,
@@ -94,7 +103,7 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun invokeAction(actionId: String) {
     val action = ActionManager.getInstance().getAction(actionId) ?: error("Unknown action: $actionId")
-    val editor = if (view.isAlternateScreenBuffer) view.alternateBufferEditor else view.outputEditor
+    val editor = activeEditor
     val context = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(TerminalActionUtil.EDITOR_KEY, editor)

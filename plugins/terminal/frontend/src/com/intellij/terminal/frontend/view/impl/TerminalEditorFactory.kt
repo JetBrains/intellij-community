@@ -3,12 +3,11 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -43,7 +42,9 @@ object TerminalEditorFactory {
     settings: JBTerminalSystemSettingsProviderBase,
     coroutineScope: CoroutineScope,
   ): EditorImpl {
-    val document = createDocument(withLanguage = true)
+    val document = runReadActionBlocking {
+      FileDocumentManager.getInstance().getDocument(TerminalOutputVirtualFile())!!
+    }
     val editor = createEditor(document, project, settings, coroutineScope)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     addTopAndBottomInsets(editor)
@@ -56,9 +57,9 @@ object TerminalEditorFactory {
   fun createAlternateBufferEditor(
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,
+    document: Document,
     coroutineScope: CoroutineScope,
   ): EditorImpl {
-    val document = createDocument(withLanguage = false)
     val editor = createEditor(document, project, settings, coroutineScope)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
 
@@ -136,15 +137,6 @@ object TerminalEditorFactory {
       }
     }
     return editor
-  }
-
-  private fun createDocument(withLanguage: Boolean): Document {
-    return if (withLanguage) {
-      runReadAction {
-        FileDocumentManager.getInstance().getDocument(TerminalOutputVirtualFile())!!
-      }
-    }
-    else DocumentImpl("", true)
   }
 
   private fun configureSoftWraps(editor: EditorImpl) {
