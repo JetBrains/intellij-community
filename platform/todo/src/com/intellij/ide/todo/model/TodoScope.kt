@@ -3,7 +3,9 @@ package com.intellij.ide.todo.model
 
 import com.intellij.ide.util.scopeChooser.ScopesStateService
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.annotations.ApiStatus
 import kotlinx.serialization.Serializable
@@ -27,6 +29,10 @@ sealed interface TodoScope {
 
 @ApiStatus.Internal
 fun TodoScope.toSearchScope(project: Project): SearchScope? {
-  if (this !is TodoScope.NamedScope) return null
-  return ScopesStateService.getInstance(project).getScopesState().getScopeDescriptorById(this.scopeId)?.scope
+  return when (this) {
+    TodoScope.Project -> null
+    is TodoScope.CurrentFile -> GlobalSearchScope.fileScope(project, fileId.virtualFile())
+    is TodoScope.ChangeList -> GlobalSearchScope.filesScope(project, fileIds.mapNotNull { it.virtualFile() })
+    is TodoScope.NamedScope -> ScopesStateService.getInstance(project).getScopesState().getScopeDescriptorById(scopeId)?.scope
+  }
 }
