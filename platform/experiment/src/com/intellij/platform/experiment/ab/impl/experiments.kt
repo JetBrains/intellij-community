@@ -26,7 +26,6 @@ enum class ABExperimentOption {
   NEW_USERS_ONBOARDING,
   //SPLIT_SEARCH_EVERYWHERE,
   CLION_WIZARD_REMOVAL,
-  RIDER_REPO_VIEW,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -79,13 +78,6 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
     controlBuckets = (0 until 256).toSet() + (768 until 1024).toSet(),
     majorVersion = "2026.2",
     products = EnumSet.of(IntelliJPlatformProduct.CLION),
-  ),
-  ExperimentAssignment(
-    experiment = ABExperimentOption.RIDER_REPO_VIEW,
-    experimentBuckets = (0 until 256).toSet(),
-    controlBuckets = (786 until 1024).toSet(),
-    majorVersion = "2026.2",
-    products = EnumSet.of(IntelliJPlatformProduct.RIDER)
   )
   // the rest belongs to the "unassigned" experiment
 )
