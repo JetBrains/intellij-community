@@ -23,3 +23,9 @@ fixtures, the environment annotations, and the test module wiring. The skill is 
 monorepo only.
 
 If a change cannot get a test, say so, and give the reason before you finish.
+
+## Django
+
+If you edit Django support — in `plugins/django-core/` or in `python/python-django/` — read and follow
+[`django-multimodule.md`](../../../python/.ai/django-multimodule.md). It holds the module-context rules for a
+multimodule project.
