@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
+import com.intellij.diagnostic.ExceptionAutoReportUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
@@ -10,6 +11,7 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.gdpr.showDataSharingOptionsDialog
 import com.intellij.ide.impl.ProjectUtil.openOrImportFilesAsync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -26,8 +28,10 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WelcomeScreenCustomization
@@ -44,6 +48,8 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
@@ -52,6 +58,11 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.initOnShow
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Component
@@ -61,6 +72,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
@@ -140,6 +152,17 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
               }
           }
         }
+
+        val errorReportAlert = createErrorReportAlert()
+        if (errorReportAlert != null) {
+          row {
+            cell(errorReportAlert)
+              .align(AlignX.CENTER)
+              .applyToComponent {
+                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+              }
+          }
+        }
       }
     }.apply {
       background = WelcomeScreenUIManager.getProjectsBackground()
@@ -148,6 +171,63 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
 
   private fun checkState() {
     isPanelEmptyPredicate.set(getCurrentState() == PanelState.EMPTY)
+  }
+
+  private fun createErrorReportAlert(): JComponent? {
+    if (!ExceptionAutoReportUtil.isConsentAllowedToBeVisible) return null
+
+    val alertWrapper = JPanel(BorderLayout())
+    alertWrapper.isOpaque = false
+
+    alertWrapper.initOnShow("ErrorReportAlert") {
+      if (!ExceptionAutoReportUtil.isAutoReportAllowedByUser()) return@initOnShow
+
+      if (!ExceptionAutoReportUtil.needNotificationOfDataCollection()) {
+        LOG.debug("User is already notified enough of error reports collection")
+        return@initOnShow
+      }
+
+      LOG.info("Notify user that error reports are sent automatically")
+
+      val label = JLabel(IdeBundle.message("welcome.screen.ea.auto.report.alert"))
+      label.foreground = UIUtil.getInactiveTextColor()
+
+      val alert = JPanel(HorizontalLayout(UIUtil.DEFAULT_HGAP))
+      alert.isOpaque = false
+      alert.border = JBUI.Borders.empty(PROMO_BORDER_OFFSET)
+      alert.add(label)
+      alert.add(ActionLink(IdeBundle.message("welcome.screen.ea.auto.report.configure.link")) {
+        ExceptionAutoReportUtil.recordUserVisitedConfigure()
+
+        if (showDataSharingOptionsDialog()) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(Dispatchers.UI) {
+            removeErrorReportAlertIfDisabled(alert)
+          }
+        }
+      })
+
+      alertWrapper.add(alert, BorderLayout.CENTER)
+      alertWrapper.revalidate()
+      alertWrapper.repaint()
+
+      ExceptionAutoReportUtil.recordUserNotifiedOfDataCollection()
+    }
+
+    return alertWrapper
+  }
+
+  private suspend fun removeErrorReportAlertIfDisabled(alert: JComponent) {
+    LOG.debug("Recheck if error reporting is enabled, hide alert otherwise")
+
+    if (!ExceptionAutoReportUtil.isAutoReportAllowedByUser()) {
+      val parent = alert.parent ?: return
+      parent.remove(alert)
+      parent.revalidate()
+      parent.repaint()
+
+      LOG.debug("Error reporting is disabled, hide alert")
+    }
   }
 
   override fun updateComponent() {
@@ -335,6 +415,8 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     return toolbar
   }
 }
+
+private val LOG = fileLogger()
 
 private const val PROMO_BORDER_OFFSET = 16
 

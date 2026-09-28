@@ -18,7 +18,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName

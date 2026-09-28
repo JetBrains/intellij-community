@@ -217,10 +217,6 @@ public final class ConsentOptions implements ModificationTracker {
     return getDefaultConsent(STATISTICS_OPTION_ID);
   }
 
-  public @Nullable Consent getDefaultErrorAutoReportConsent() {
-    return getDefaultConsent(EA_AUTO_REPORT_OPTION_ID);
-  }
-
   public static @NotNull Predicate<Consent> condUsageStatsConsent() {
     return consent -> STATISTICS_OPTION_ID.equals(consent.getId());
   }
@@ -285,10 +281,6 @@ public final class ConsentOptions implements ModificationTracker {
   @TestOnly
   public void setAiDataCollectionPermission(boolean permitted) {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
-  }
-
-  public void setEAAutoReportAllowed(boolean permitted) {
-    setPermission(EA_AUTO_REPORT_OPTION_ID, permitted);
   }
 
   @RequiresReadLockAbsence(generateAssertion = false)
@@ -380,8 +372,6 @@ public final class ConsentOptions implements ModificationTracker {
     if (isEAP()) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
-      // auto reporting exceptions in EAPs is controlled in `ExceptionEAPAutoReportManager`
-      allDefaults.remove(EA_AUTO_REPORT_OPTION_ID);
     }
     else {
       // EAP feedback consent is relevant to EA builds only

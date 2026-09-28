@@ -519,7 +519,7 @@
       description="Pinned public key for the ITN error reporting endpoint. Required when ea.diagnostic.endpoint is set. Accepts Base64-encoded SubjectPublicKeyInfo bytes or PEM text"
     />
     <registryKey
-      key="ea.auto.report.feature.visible"
+      key="ea.auto.report.allowed"
       defaultValue="true"
       description="Makes the automatic error reporting feature visible in UI and available to enable/disable"
       restartRequired="true"/>
@@ -554,7 +554,6 @@
     <projectSettings service="com.intellij.openapi.project.impl.ProjectRootPersistentStateComponent"/>
     <projectSettings service="com.intellij.ide.ProjectColorInfoManager"/>
     <projectSettings service="com.intellij.platform.OpenProjectSettingsService"/>
-    <applicationSettings service="com.intellij.diagnostic.ExceptionEAPAutoReportManager"/>
     <applicationSettings service="com.intellij.diagnostic.logs.LogLevelConfigurationManager"/>
     <projectSettings service="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
     <applicationSettings service="com.intellij.toolWindow.ButtonsStateService"/>

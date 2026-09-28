@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
+import com.intellij.diagnostic.ExceptionAutoReportUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.gdpr.showDataSharingOptionsDialog
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -18,7 +20,9 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -37,6 +41,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageColl
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -50,6 +55,7 @@ import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -77,6 +83,8 @@ import javax.swing.SwingConstants
 import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import kotlin.math.max
+
+private val LOG = fileLogger()
 
 internal class WelcomeScreenRightTabImpl(
   project: Project,
@@ -433,7 +441,66 @@ internal class WelcomeScreenRightTabImpl(
     toolbar.targetComponent = component
     toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.isOpaque = false
-    component.add(toolbar.component)
+
+    val footerWrapper = JPanel(VerticalLayout(UIUtil.DEFAULT_VGAP, SwingConstants.CENTER))
+    component.add(footerWrapper)
+    footerWrapper.add(toolbar.component)
+
+    addErrorReportAlert(coroutineScope, footerWrapper)
+  }
+
+  private fun addErrorReportAlert(coroutineScope: CoroutineScope, footerWrapper: JPanel) {
+    fun reconcileErrorReportAlert(alert: JPanel) {
+      coroutineScope.launch {
+        LOG.debug("Recheck if error reporting is enabled, hide alert otherwise")
+
+        if (!ExceptionAutoReportUtil.isAutoReportAllowedByUser()) {
+          withContext(Dispatchers.UI) {
+            alert.parent?.remove(alert)
+          }
+
+          LOG.debug("Error reporting is disabled, hide alert")
+        }
+      }
+    }
+
+    if (ExceptionAutoReportUtil.isConsentAllowedToBeVisible) {
+      coroutineScope.launch {
+        if (ExceptionAutoReportUtil.isAutoReportAllowedByUser()) {
+          if (ExceptionAutoReportUtil.needNotificationOfDataCollection()) {
+            LOG.info("Notify user that error reports are sent automatically")
+
+            withContext(Dispatchers.UI) {
+              val label = JLabel(IdeBundle.message("welcome.screen.ea.auto.report.alert"))
+              label.foreground = UIUtil.getInactiveTextColor()
+
+              val horizontalPanel = JPanel(HorizontalLayout(UIUtil.DEFAULT_HGAP))
+              horizontalPanel.add(label)
+              horizontalPanel.add(ActionLink(IdeBundle.message("welcome.screen.ea.auto.report.configure.link")) {
+                ExceptionAutoReportUtil.recordUserVisitedConfigure()
+
+                if (showDataSharingOptionsDialog()) {
+                  reconcileErrorReportAlert(horizontalPanel)
+                }
+              })
+
+              footerWrapper.add(horizontalPanel)
+              footerWrapper.invalidate()
+              footerWrapper.repaint()
+
+              horizontalPanel.launchOnShow("isAutoReportAllowedByUser") {
+                reconcileErrorReportAlert(horizontalPanel)
+              }
+            }
+
+            ExceptionAutoReportUtil.recordUserNotifiedOfDataCollection()
+          }
+          else {
+            LOG.debug("User is already notified enough of error reports collection")
+          }
+        }
+      }
+    }
   }
 
   private fun createFooterModels(): List<InfoPanelModel> {

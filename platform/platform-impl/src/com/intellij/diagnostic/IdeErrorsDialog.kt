@@ -40,7 +40,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.LoadingDecorator
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -841,27 +840,8 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
 
         updateControls()
 
-        val parentComponent = getParentComponentForReport(true)
-        coroutineScope.launch {
-          val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-          if (!autoReportEnabled) {
-            if (closeDialog) {
-              withContext(Dispatchers.EDT) { super@IdeErrorsDialog.doOKAction() }
-            }
-            return@launch
-          }
-
-          val reportAllStarted = reportAll(myMessageClusters, parentComponent, true)
-
-          withContext(Dispatchers.EDT) {
-            if (reportAllStarted) {
-              notifySuccessReportAll(true)
-              super@IdeErrorsDialog.doOKAction()
-            }
-            else {
-              updateControls()
-            }
-          }
+        if (closeDialog) {
+          super@IdeErrorsDialog.doOKAction()
         }
       }
     }
@@ -883,32 +863,11 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     "Thank you for chipping in. Together, we can achieve anything.",
   )
 
-  private fun notifySuccessReportAll(withAutoReportEnabled: Boolean) {
+  private fun notifySuccessReportAll() {
     val gratitude = if (application.isInternal) gratitudeMessagesInternal.random() else DiagnosticBundle.message("error.report.gratitude")
-    val content = if (withAutoReportEnabled) DiagnosticBundle.message("error.report.with.auto.report.enabled", gratitude) else gratitude
     val title = DiagnosticBundle.message("error.reports.submitted")
-    val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
+    val notification = Notification("Error Report", title, gratitude, NotificationType.INFORMATION).setImportant(false)
     notification.notify(myProject)
-  }
-
-  /**
-   *  Returns true if a user enabled an automatic error report on this request
-   */
-  private suspend fun suggestEnablingAutoReportIfApplicable(): Boolean {
-    if (!ExceptionAutoReportUtil.shouldOfferEnablingAutoReport()) return false
-
-    val dialogResult = withContext(Dispatchers.EDT) {
-      MessageDialogBuilder.yesNo(
-        DiagnosticBundle.message("auto.report.suggestion.dialog.title"),
-        DiagnosticBundle.message("auto.report.suggestion.dialog.message"),
-      )
-        .yesText(DiagnosticBundle.message("auto.report.suggestion.dialog.yes.option"))
-        .noText(DiagnosticBundle.message("auto.report.suggestion.dialog.no.option"))
-        .ask(rootPane)
-    }
-
-    ExceptionAutoReportUtil.enablingAutoReportOffered(dialogResult)
-    return dialogResult
   }
 
   private inner class ReportAllAction : AbstractAction(DiagnosticBundle.message("error.report.all.action")) {
@@ -923,8 +882,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
           val reportingStarted = reportAll(myMessageClusters, parentComponent)
           if (reportingStarted) {
             withContext(Dispatchers.EDT) {
-              val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-              notifySuccessReportAll(autoReportEnabled)
+              notifySuccessReportAll()
               super@IdeErrorsDialog.doOKAction()
             }
           }
@@ -946,8 +904,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
           if (reportingStarted) {
             withContext(Dispatchers.EDT) {
               myMessagePool.clearErrors()
-              val autoReportEnabled = suggestEnablingAutoReportIfApplicable()
-              notifySuccessReportAll(autoReportEnabled)
+              notifySuccessReportAll()
               super@IdeErrorsDialog.doOKAction()
             }
           }
@@ -968,16 +925,11 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private suspend fun reportAll(
     messageClusters: List<ErrorMessageCluster>,
     parentComponent: Component,
-    onlyEligibleForAutoReport: Boolean = false,
   ): Boolean {
     var reportingStarted = true
     for (i in messageClusters.indices) {
       val cluster = messageClusters[i]
       if (!cluster.canSubmit) {
-        continue
-      }
-
-      if (onlyEligibleForAutoReport && !ExceptionAutoReportUtil.isAutoReportableException(cluster.first)) {
         continue
       }
 

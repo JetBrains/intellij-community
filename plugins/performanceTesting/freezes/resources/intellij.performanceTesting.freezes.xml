@@ -30,8 +30,7 @@
                  description="Show notification about freezes in plugins"/>
     <applicationSettings service="com.intellij.performanceTesting.freezes.PluginsFreezesService"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.performanceTesting.freezes.promo.ErrorReportPromoterActivity"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.performanceTesting.freezes.AutoReportExceptionsStateCollector"/>
+    <backgroundPostStartupActivity implementation="com.intellij.performanceTesting.freezes.promo.ErrorReportEnabledActivity"/>
   </extensions>
 
   <actions resource-bundle="messages.PluginFreezeBundle">

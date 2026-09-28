@@ -4,8 +4,6 @@
 
 package com.intellij.ui
 
-import com.intellij.diagnostic.ExceptionAutoReportUtil
-import com.intellij.diagnostic.ExceptionEAPAutoReportManager
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
@@ -47,7 +45,6 @@ import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -316,16 +313,11 @@ object AppUIUtil {
     var result = options.consents.first
     if (options.isEAP) {
       val statConsent = options.defaultUsageStatsConsent
-      val errorAutoReportConsent = when {
-        ExceptionAutoReportUtil.isConsentAllowedToBeVisible -> options.defaultErrorAutoReportConsent
-        else -> null
-      }
-      if (statConsent != null || errorAutoReportConsent != null) {
-        // init stats consent and automatic error report consent for EAP from the dedicated location
+      if (statConsent != null) {
+        // init stats consent for EAP from the dedicated location
         val consents = result
         result = ArrayList()
-        result.addIfNotNull(statConsent?.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed))
-        result.addIfNotNull(errorAutoReportConsent?.derive(ExceptionEAPAutoReportManager.getInstance().enabledInEAP))
+        result.add(statConsent.derive(UsageStatisticsPersistenceComponent.getInstance().isAllowed))
         result.addAll(consents)
       }
     }
@@ -392,22 +384,15 @@ object AppUIUtil {
     val options = ConsentOptions.getInstance()
     if (ApplicationManager.getApplication() != null && options.isEAP) {
       val isUsageStats = ConsentOptions.condUsageStatsConsent()
-      val isAutoReportErrors = ConsentOptions.condEAAutoReportConsent()
       var saved = 0
       for (consent in consents) {
-        when {
-          isUsageStats.test(consent) -> {
-            UsageStatisticsPersistenceComponent.getInstance().isAllowed = consent.isAccepted
-            saved++
-          }
-          isAutoReportErrors.test(consent) -> {
-            ExceptionEAPAutoReportManager.getInstance().enabledInEAP = consent.isAccepted
-            saved++
-          }
+        if (isUsageStats.test(consent)) {
+          UsageStatisticsPersistenceComponent.getInstance().isAllowed = consent.isAccepted
+          saved++
         }
       }
       if (consents.size - saved > 0) {
-        options.setConsents(consents.filter { !isUsageStats.test(it) && !isAutoReportErrors.test(it) })
+        options.setConsents(consents.filter { !isUsageStats.test(it) })
       }
     }
     else {
