@@ -887,7 +887,7 @@
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
                         serviceImplementation="com.intellij.ide.plugins.marketplace.MarketplaceRequests"
                         preload="true"/>
-    <applicationService serviceInterface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService"
+    <applicationService serviceInterface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService" open="true"
                         serviceImplementation="com.intellij.ide.plugins.marketplace.utils.ApplicationInfoMarketplaceCustomizationService"
                         preload="true"/>
     <applicationService serviceInterface="com.intellij.ide.ConsentOptionsProvider"
@@ -1673,7 +1673,7 @@
                         client="local"/>
     <actionGroupCustomization
       implementation="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarActionGroupCustomization" />
-    <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionedServiceRegistry"
+    <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionedServiceRegistry" open="true"
                         serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionedServiceRegistry"/>
     <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionerCompanyBrandingProvider"
                         serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionerCompanyBrandingProvider"/>
