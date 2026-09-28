@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.ModuleImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
@@ -13,4 +14,5 @@ internal sealed class ImportKind<T : GroovyImport> {
   internal object Static : ImportKind<StaticImport>()
   internal object Star : ImportKind<StarImport>()
   internal object StaticStar : ImportKind<StaticStarImport>()
+  internal object Module : ImportKind<ModuleImport>()
 }

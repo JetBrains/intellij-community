@@ -23,10 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrImportStatementStub;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.ModuleImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport;
 
 import java.util.Objects;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.PsiImportUtil.createImportFromStatement;
 
 public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementStub> implements GrImportStatement, StubBasedPsiElement<GrImportStatementStub> {
 
@@ -168,6 +171,25 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
   @Override
   public @Nullable GroovyImport getImport() {
-    return createImportFromStatement(this);
+    String qualifiedName = getImportFqn();
+    if (qualifiedName == null) return null;
+    if (isModule()) {
+      return new ModuleImport(qualifiedName);
+    }
+    if (isOnDemand()) {
+      return isStatic() ? new StaticStarImport(qualifiedName) : new StarImport(qualifiedName);
+    }
+    String importedName = getImportedName();
+    if (importedName == null) return null;
+    if (isStatic()) {
+      int index = qualifiedName.lastIndexOf('.');
+      if (index <= 0) {
+        return new RegularImport(qualifiedName, importedName);
+      }
+      String packageName = qualifiedName.substring(0, index);
+      String shortName = qualifiedName.substring(index + 1);
+      return new StaticImport(packageName, shortName, importedName);
+    }
+    return new RegularImport(qualifiedName, importedName);
   }
 }

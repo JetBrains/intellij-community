@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.lang.jvm.types.JvmArrayType
@@ -29,8 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 
@@ -71,11 +69,6 @@ val PsiMethod.isEffectivelyVarArgs: Boolean get() = isVarArgs || parameters.last
 
 @NonNls
 fun elementInfo(element: PsiElement): String = "Element: $element; class: ${element.javaClass}; text: ${element.text}"
-
-fun GrCodeReferenceElement.mayContainTypeArguments(): Boolean {
-  val (parent, _) = skipParentsOfType<GrCodeReferenceElement>() ?: return true
-  return parent !is GrImportStatement
-}
 
 fun GrExpression?.isNullLiteral(): Boolean {
   return this is GrLiteral && GrLiteralImpl.getLiteralType(this) == KW_NULL

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 
 import com.intellij.util.containers.reverse
@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.ModuleImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
@@ -51,11 +52,16 @@ class GroovyImportCollector(private val file: GroovyFileBase) {
     getMap(ImportKind.StaticStar)[import.classFqn] = import
   }
 
+  private fun addModuleImport(import: ModuleImport) {
+    getMap(ImportKind.Module)[import.moduleName] = import
+  }
+
   fun addImport(import: GroovyImport): Unit = when (import) {
     is RegularImport -> addRegularImport(import)
     is StaticImport -> addStaticImport(import)
     is StarImport -> addStarImport(import)
     is StaticStarImport -> addStaticStarImport(import)
+    is ModuleImport -> addModuleImport(import)
     else -> error("Unsupported import. Class: ${import.javaClass}; toString: ${import}")
   }
 

@@ -19,7 +19,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_6_0;
+    return GroovyProjectDescriptors.GROOVY_6_0_REAL_JDK;
   }
 
   public void testSimpleVal() {
@@ -81,6 +81,15 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        class yield {
                            yield() {}
                        }
+                       """);
+  }
+
+  public void testMpduleImport() {
+    highlightingTest("""
+                       import module java.sql
+                       <warning descr="Unused import">import module java.base <error descr="Import alias not allowed on module import">as Basic</error></warning>
+                       def conn = DriverManager.getConnection('jdbc:h2:mem:test')
+                       def stmt = conn.createStatement()
                        """);
   }
 

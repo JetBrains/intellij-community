@@ -102,6 +102,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrImportAlias;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -216,7 +217,6 @@ import static org.jetbrains.plugins.groovy.annotator.UtilKt.checkVariableModifie
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.registerLocalFix;
 import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessChecker.checkUnresolvedReference;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.mayContainTypeArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDeclaration;
 
@@ -237,11 +237,6 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   public void visitTypeArgumentList(@NotNull GrTypeArgumentList typeArgumentList) {
     PsiElement parent = typeArgumentList.getParent();
     if (!(parent instanceof GrReferenceElement)) return;
-
-    if (parent instanceof GrCodeReferenceElement && !mayContainTypeArguments((GrCodeReferenceElement)parent)) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("type.argument.list.is.not.allowed.here")).create();
-      return;
-    }
 
     final GroovyResolveResult resolveResult = ((GrReferenceElement<?>)parent).advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
@@ -1697,6 +1692,16 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitImportStatement(@NotNull GrImportStatement importStatement) {
     checkAnnotationList(myHolder, importStatement.getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
+    if (importStatement.isOnDemand() || importStatement.isModule()) {
+      GrImportAlias alias = importStatement.getAlias();
+      if (alias != null) {
+        String message = GroovyBundle.message("import.alias.not.allowed.here", importStatement.isOnDemand() ? 1 : 2);
+        myHolder.newAnnotation(HighlightSeverity.ERROR, message)
+          .range(alias)
+          .withFix(QuickFixFactory.getInstance().createDeleteFix(alias, GroovyBundle.message("import.alias.remove.fix")))
+          .create();
+      }
+    }
   }
 
   @Override
@@ -1716,7 +1721,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("enums.may.not.have.extends.clause")).create();
     }
     else {
-      checkReferenceList(myHolder, extendsClause, IS_NOT_INTERFACE, GroovyBundle.message("no.interface.expected.here"), 
+      checkReferenceList(myHolder, extendsClause, IS_NOT_INTERFACE, GroovyBundle.message("no.interface.expected.here"),
                          new ChangeExtendsImplementsQuickFix(typeDefinition).asIntention());
       checkForWildCards(myHolder, extendsClause);
     }

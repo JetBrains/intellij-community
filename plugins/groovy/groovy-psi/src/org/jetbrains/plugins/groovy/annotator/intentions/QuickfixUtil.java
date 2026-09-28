@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -167,6 +167,14 @@ public final class QuickfixUtil {
       highlightElement, highlightElement, "", ProblemHighlightType.INFORMATION, true, LocalQuickFix.EMPTY_ARRAY
     );
     return ContainerUtil.map(fixes, it -> QuickFixWrapper.wrap(descriptor, it));
+  }
+
+  public static @NotNull IntentionAction fixToIntention(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix fix) {
+    InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
+    // dummy problem descriptor, highlight element is only used
+    ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(
+      highlightElement, highlightElement, "", ProblemHighlightType.INFORMATION, true, LocalQuickFix.EMPTY_ARRAY);
+    return QuickFixWrapper.wrap(descriptor, fix);
   }
 
   public static @NotNull LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {

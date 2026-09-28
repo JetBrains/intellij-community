@@ -19,7 +19,7 @@ public interface GroovyProjectDescriptors {
   TestLibrary LIB_GROOVY_3_0 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:3.0.20");
   TestLibrary LIB_GROOVY_4_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:4.0.18");
   TestLibrary LIB_GROOVY_5_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:5.0.7");
-  TestLibrary LIB_GROOVY_6_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:6.0.0-alpha-2");
+  TestLibrary LIB_GROOVY_6_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:6.0.0");
 
   LightProjectDescriptor GROOVY_1_6 = new LibraryLightProjectDescriptor(LIB_GROOVY_1_6);
   LightProjectDescriptor GROOVY_1_7 = new LibraryLightProjectDescriptor(LIB_GROOVY_1_7);
@@ -55,6 +55,20 @@ public interface GroovyProjectDescriptors {
   };
 
   DefaultLightProjectDescriptor GROOVY_4_0_REAL_JDK = new LibraryLightProjectDescriptor(LIB_GROOVY_4_0) {
+    @Override
+    public Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false);
+    }
+  };
+
+  DefaultLightProjectDescriptor GROOVY_5_0_REAL_JDK = new LibraryLightProjectDescriptor(LIB_GROOVY_5_0) {
+    @Override
+    public Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false);
+    }
+  };
+
+  DefaultLightProjectDescriptor GROOVY_6_0_REAL_JDK = new LibraryLightProjectDescriptor(LIB_GROOVY_6_0) {
     @Override
     public Sdk getSdk() {
       return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false);

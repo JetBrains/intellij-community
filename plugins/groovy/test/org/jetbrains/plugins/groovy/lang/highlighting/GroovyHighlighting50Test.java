@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.util.HighlightingTest;
 public class GroovyHighlighting50Test extends LightGroovyTestCase implements HighlightingTest {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_5_0;
+    return GroovyProjectDescriptors.GROOVY_5_0_REAL_JDK;
   }
 
   public void testPatternVariable() {
@@ -149,10 +149,16 @@ public class GroovyHighlighting50Test extends LightGroovyTestCase implements Hig
                        }
                        """);
   }
-  
+
   public void testValDeclaration() {
     highlightingTest("""
                        <error descr="'val' declarations are available in Groovy 6.0 or later">val</error> x = 1
+                       """);
+  }
+
+  public void testModuleImport() {
+    highlightingTest("""
+                       <error descr="Module imports are available in Groovy 6.0 or later"><warning descr="Unused import">import module java.base</warning></error>
                        """);
   }
 

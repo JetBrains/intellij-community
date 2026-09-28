@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
 
 import com.intellij.psi.PsiElement
@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyNamedImport
+import org.jetbrains.plugins.groovy.lang.resolve.imports.ModuleImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.defaultImports
@@ -34,8 +35,9 @@ internal class GroovyFileImportsImpl(
   private val staticImports get() = getImports(ImportKind.Static)
   override val starImports: Collection<StarImport> get() = getImports(ImportKind.Star)
   override val staticStarImports: Collection<StaticStarImport> get() = getImports(ImportKind.StaticStar)
+  private val moduleImports : Collection<ModuleImport> get() = getImports(ImportKind.Module)
   override val allNamedImports: Collection<GroovyNamedImport> = flatten(regularImports, staticImports)
-  private val allStarImports = flatten(starImports, staticStarImports)
+  private val allStarImports = flatten(starImports, staticStarImports, moduleImports)
   private val allNamedImportsMap by lazy { allNamedImports.groupBy { it.name } }
 
   override fun getImportsByName(name: String): Collection<GroovyNamedImport> = allNamedImportsMap[name] ?: emptyList()
