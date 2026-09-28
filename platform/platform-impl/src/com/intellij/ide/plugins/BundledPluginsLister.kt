@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.io.jackson.writeStringField
@@ -44,7 +45,9 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
       }
 
       JsonFactory().createGenerator(ObjectWriteContext.empty(), out).use { writer ->
-        val plugins = PluginManagerCore.getPluginSet().enabledPlugins
+        val pluginSet = PluginManagerCore.getPluginSet()
+        val plugins = pluginSet.enabledPlugins
+        val skipExcludedModules = ProductLoadingStrategy.strategy.currentModeId != ProductMode.MONOLITH.id
         val layout = HashSet<LayoutItemDescriptor>()
         val pluginIds = ArrayList<String>(plugins.size)
         val homeDir = PathManager.getHomeDir()
@@ -66,6 +69,10 @@ internal class BundledPluginsLister : ModernApplicationStarter() {
             LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
           }
           for (module in plugin.contentModules) {
+            if (skipExcludedModules && !pluginSet.isModuleEnabled(module.moduleId)) {
+              continue
+            }
+
             layout.add(LayoutItemDescriptor(
               name = module.moduleId.name,
               kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
