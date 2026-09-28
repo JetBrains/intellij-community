@@ -1152,6 +1152,28 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
+  fun `search focus repaint preserves header background around field`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val view = createView()
+    val searchComponent = view.searchComponent as SearchFieldWithExtension
+    val editor = componentsOfType(searchComponent, SearchTextField::class.java).single().textEditor
+    val headerBackground = Color(0xE9EAEE)
+    val header = JPanel(null).apply {
+      background = headerBackground
+      setSize(JBUI.scale(360), JBUI.scale(48))
+      add(searchComponent)
+    }
+    searchComponent.setBounds(JBUI.scale(10), JBUI.scale(10), JBUI.scale(340), searchComponent.preferredSize.height)
+    layoutRecursively(header)
+
+    assertThat(searchComponent.isOpaque).isFalse()
+    assertThat(paintedPixel(header, searchComponent.x, searchComponent.y)).isEqualTo(headerBackground.rgb)
+
+    editor.focusListeners.forEach { it.focusLost(FocusEvent(editor, FocusEvent.FOCUS_LOST)) }
+
+    assertThat(paintedPixel(header, searchComponent.x, searchComponent.y)).isEqualTo(headerBackground.rgb)
+  }
+
+  @Test
   fun `search emits user edit delivered while sections render`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val queries = ArrayList<String>()
     val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 1)))

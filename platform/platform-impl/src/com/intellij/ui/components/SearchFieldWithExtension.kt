@@ -62,6 +62,8 @@ class SearchFieldWithExtension private constructor(
   }
 
   init {
+    isOpaque = false
+
     extensionComponent.apply {
       border = JBUI.Borders.empty()
       isOpaque = false

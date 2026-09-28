@@ -325,6 +325,11 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `Spotlight search applies its query without requesting focus`
   )
 
+- The search field must preserve the header background around its rounded outline when focus changes.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `search focus repaint preserves header background around field`
+  )
+
 - The latest page input, Settings search action, or navigation request must win over an older deferred request.
   [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
     `stale Settings clear does not replace Marketplace navigation`;
