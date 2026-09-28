@@ -1697,7 +1697,7 @@
     <notificationGroup id="Missing Plugin Update Source" displayType="STICKY_BALLOON" bundle="messages.IdeBundle"
                        key="notification.missing.plugin.update.source.title"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity"/>
-    <registryKey key="update.source.initialization.enabled" defaultValue="false"
+    <registryKey key="update.source.initialization.enabled" defaultValue="true"
                  description="Enable initialization of update plugin update sources once for an IDE" />
     <universalFileChooserContributor implementation="com.intellij.openapi.fileChooser.universal.LocalFileChooserContributor"/>
     <projectSettings service="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
