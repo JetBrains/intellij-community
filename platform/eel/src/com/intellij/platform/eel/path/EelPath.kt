@@ -30,7 +30,7 @@ sealed interface EelPath {
     @Throws(EelPathException::class)
     @JvmStatic
     fun parse(raw: String, descriptor: EelDescriptor): EelPath {
-      return ArrayListEelAbsolutePath.parseOrNull(raw, descriptor) ?: throw EelPathException(raw, "Not a valid absolute path")
+      return ArrayListEelAbsolutePath.parseOrNull(raw, descriptor) ?: throw EelPathException(raw, "Not a valid absolute path on $descriptor")
     }
 
     @Throws(EelPathException::class)
