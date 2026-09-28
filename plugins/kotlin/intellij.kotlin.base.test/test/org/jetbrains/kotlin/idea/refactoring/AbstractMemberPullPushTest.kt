@@ -13,11 +13,13 @@ import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.lightElementForMemberInfo
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.util.findElementsByCommentPrefix
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -122,7 +124,9 @@ internal var PsiElement.elementInfo: ElementInfo by NotNullableUserDataProperty(
 @ApiStatus.Internal
 fun <T : MemberInfoBase<*>> chooseMembers(members: List<T>): List<T> {
     members.forEach {
-        val memberPsi = it.member.let { if (it is KtPsiClassWrapper) it.psiClass else it }
+        val memberPsi = it.member.let { member ->
+            if (member is KtSuperTypeEntry) lightElementForMemberInfo(member)?.unwrapped ?: member else member
+        }
         val info = memberPsi.elementInfo
         it.isChecked = info.checked
         it.isToAbstract = info.toAbstract

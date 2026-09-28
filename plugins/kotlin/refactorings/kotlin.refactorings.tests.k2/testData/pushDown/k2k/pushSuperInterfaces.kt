@@ -7,6 +7,6 @@ interface Y
 // INFO: {"checked": "true"}
 interface Z
 
-open class <caret>A : X, Y, Z
+open class <caret>A : X, Y, Z, W
 
 class B : A(), Z

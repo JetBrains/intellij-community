@@ -1,5 +1,3 @@
-// IGNORE_K2
-// TODO: Implement JavaToKotlinPostconversionPullUpHelper
 // INFO: {"checked": "true"}
 interface X
 

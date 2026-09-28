@@ -8,10 +8,11 @@ import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.classMembers.MemberInfoModel
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.ifEmpty
 
-class KotlinInterfaceDependencyMemberInfoModel<T : KtNamedDeclaration, M : MemberInfoBase<T>>(
+class KotlinInterfaceDependencyMemberInfoModel<T : KtElement, M : MemberInfoBase<T>>(
     aClass: KtClassOrObject
 ) : DependencyMemberInfoModel<T, M>(KotlinInterfaceMemberDependencyGraph<T, M>(aClass), MemberInfoModel.WARNING) {
     init {
@@ -21,7 +22,7 @@ class KotlinInterfaceDependencyMemberInfoModel<T : KtNamedDeclaration, M : Membe
             val text = buildString {
                 append(KotlinBundle.message("interface.member.dependency.required.by.interfaces", dependencies.size))
                 append(" ")
-                dependencies.joinTo(this) { it.name ?: "" }
+                dependencies.joinTo(this) { (it as? KtNamedDeclaration)?.name ?: it.text }
             }
             text
         }

@@ -235,6 +235,11 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
             runTest("testData/pullUp/k2k/moveSuperInterfaces.kt");
         }
 
+        @TestMetadata("moveSuperInterfacesFromInterface.kt")
+        public void testMoveSuperInterfacesFromInterface() throws Exception {
+            runTest("testData/pullUp/k2k/moveSuperInterfacesFromInterface.kt");
+        }
+
         @TestMetadata("moveSuperInterfacesToEmptySpecifierList.kt")
         public void testMoveSuperInterfacesToEmptySpecifierList() throws Exception {
             runTest("testData/pullUp/k2k/moveSuperInterfacesToEmptySpecifierList.kt");
@@ -401,6 +406,11 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
         @TestMetadata("fromClassToNestedClass.kt")
         public void testFromClassToNestedClass() throws Exception {
             runTest("testData/pullUp/k2j/fromClassToNestedClass.kt");
+        }
+
+        @TestMetadata("moveSuperInterfacesFromInterfaceToInterface.kt")
+        public void testMoveSuperInterfacesFromInterfaceToInterface() throws Exception {
+            runTest("testData/pullUp/k2j/moveSuperInterfacesFromInterfaceToInterface.kt");
         }
 
         @TestMetadata("moveSuperInterfacesToClass.kt")

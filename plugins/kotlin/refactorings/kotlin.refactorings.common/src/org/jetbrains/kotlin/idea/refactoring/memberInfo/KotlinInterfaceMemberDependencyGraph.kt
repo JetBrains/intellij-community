@@ -9,11 +9,16 @@ import com.intellij.refactoring.util.classMembers.InterfaceMemberDependencyGraph
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 
-class KotlinInterfaceMemberDependencyGraph<T : KtNamedDeclaration, M : MemberInfoBase<T>>(
-    klass: KtClassOrObject
+class KotlinInterfaceMemberDependencyGraph<T : KtElement, M : MemberInfoBase<T>>(
+    private val klass: KtClassOrObject
 ) : MemberDependencyGraph<T, M> {
+    private fun toMember(element: PsiMember): KtElement? {
+        val unwrapped = element.unwrapped
+        return findSuperTypeEntry(klass, unwrapped) ?: unwrapped as? KtElement
+    }
+
     private val delegateGraph: MemberDependencyGraph<PsiMember, MemberInfoBase<PsiMember>> =
         InterfaceMemberDependencyGraph(klass.toLightClass())
 
@@ -24,8 +29,8 @@ class KotlinInterfaceMemberDependencyGraph<T : KtNamedDeclaration, M : MemberInf
     @Suppress("UNCHECKED_CAST")
     override fun getDependent() = delegateGraph.dependent
         .asSequence()
-        .mapNotNull { it.unwrapped }
-        .filterIsInstanceTo(LinkedHashSet<KtNamedDeclaration>()) as Set<T>
+        .mapNotNull { toMember(it) }
+        .toCollection(LinkedHashSet<KtElement>()) as Set<T>
 
     @Suppress("UNCHECKED_CAST")
     override fun getDependenciesOf(member: T): Set<T> {
@@ -33,7 +38,7 @@ class KotlinInterfaceMemberDependencyGraph<T : KtNamedDeclaration, M : MemberInf
         val psiMemberDependencies = delegateGraph.getDependenciesOf(psiMember) ?: return emptySet()
         return psiMemberDependencies
             .asSequence()
-            .mapNotNull { it.unwrapped }
-            .filterIsInstanceTo(LinkedHashSet<KtNamedDeclaration>()) as Set<T>
+            .mapNotNull { toMember(it) }
+            .toCollection(LinkedHashSet<KtElement>()) as Set<T>
     }
 }

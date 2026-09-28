@@ -1,10 +1,11 @@
+// TARGET_CLASS: Base
+
+interface Base : X
+
 // INFO: {"checked": "true"}
 interface X
 
 // INFO: {"checked": "false"}
 interface Y
 
-// INFO: {"checked": "true"}
-interface Z
-
-class B: A(), Y
+interface I : Base, Y

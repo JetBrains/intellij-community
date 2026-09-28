@@ -1,5 +1,3 @@
-// IGNORE_K2
-// TODO: Implement JavaToKotlinPullUpHelperFactory
 open class A: Z {
 
 }

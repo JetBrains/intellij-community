@@ -28,7 +28,9 @@ abstract class AbstractK2ExtractionTest : AbstractExtractionTest() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun doExtractSuperTest(unused: String, isInterface: Boolean) {
         doTest(checkAdditionalAfterdata = true) { file ->
-            markMembersInfo(file)
+            // Members may be declared in extra files as well (e.g. a super interface declared in Java),
+            // so their "// INFO:" directives have to be picked up too.
+            file.containingDirectory?.files?.forEach(::markMembersInfo) ?: markMembersInfo(file)
 
             val targetParent = file.findElementByCommentPrefix("// SIBLING:")?.parent ?: file.parent!!
             val fileText = file.text

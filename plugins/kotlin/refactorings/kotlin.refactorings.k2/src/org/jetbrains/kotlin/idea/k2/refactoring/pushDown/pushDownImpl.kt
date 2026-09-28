@@ -20,12 +20,10 @@ import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.createSuperTypeEntryForAddition
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.pullUp.addMemberToTarget
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -39,7 +37,6 @@ internal data class MemberContext(
 
 context(session: KaSession)
 internal fun createPushDownAction(
-    sourceClass: KtClass,
     memberInfo: KotlinMemberInfo,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
@@ -51,10 +48,9 @@ internal fun createPushDownAction(
             substitutor,
         )
 
-    is KtClassOrObject, is KtPsiClassWrapper -> {
+    is KtClassOrObject, is KtSuperTypeListEntry -> {
         createPushDownActionForClassLikeMember(
             memberInfo,
-            sourceClass,
             targetClass,
             substitutor,
         )
@@ -151,15 +147,11 @@ private fun addCallableMember(
 context(session: KaSession)
 private fun createPushDownActionForClassLikeMember(
     memberInfo: KotlinMemberInfo,
-    sourceClass: KtClassOrObject,
     targetClass: KtClassOrObject,
     substitutor: KaSubstitutor,
 ): PushDownAction? {
     return if (memberInfo.overrides != null) {
-        val superTypeListEntry = getSuperTypeEntryBySymbol(
-            sourceClass,
-            memberInfo.member.symbol as KaClassSymbol,
-        ) ?: return null
+        val superTypeListEntry = memberInfo.member as? KtSuperTypeListEntry ?: return null
 
         val newSpecifier = createSuperTypeEntryForAddition(
             superTypeListEntry,
@@ -172,8 +164,9 @@ private fun createPushDownActionForClassLikeMember(
             null
         }
     } else {
+        val member = memberInfo.member as? KtClassOrObject ?: return null
         PushDownAction {
-            addMemberToTarget(memberInfo.member, targetClass)
+            addMemberToTarget(member, targetClass)
         }
     }
 }

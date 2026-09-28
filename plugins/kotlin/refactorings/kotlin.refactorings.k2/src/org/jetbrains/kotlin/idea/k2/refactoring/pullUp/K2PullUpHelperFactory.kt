@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.EmptyPullUpHelper
 import org.jetbrains.kotlin.idea.refactoring.pullUp.toKtDeclarationWrapperAware
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class K2PullUpHelperFactory : PullUpHelperFactory {
@@ -18,7 +19,7 @@ internal class K2PullUpHelperFactory : PullUpHelperFactory {
         val sourceClass = sourceClass.unwrapped as? KtClassOrObject ?: return null
         val targetClass = targetClass.unwrapped as? PsiNamedElement ?: return null
         val membersToMove = membersToMove
-            .mapNotNull { it.toKtDeclarationWrapperAware() }
+            .mapNotNull { it.toKtDeclarationWrapperAware(sourceClass) as? KtNamedDeclaration }
             .sortedBy { it.startOffset }
         return K2PullUpData(sourceClass, targetClass, membersToMove)
     }

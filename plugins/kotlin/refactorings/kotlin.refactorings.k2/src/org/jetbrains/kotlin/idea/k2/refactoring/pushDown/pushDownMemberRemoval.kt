@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.pushDown
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.computeAndRenderReturnType
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.makeAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -22,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 
 context(session: KaSession)
 internal fun createRemoveOriginalMemberAction(
@@ -30,7 +29,7 @@ internal fun createRemoveOriginalMemberAction(
     substitutor: KaSubstitutor,
 ): RemovalAction? = when (memberInfo.member) {
     is KtProperty, is KtNamedFunction -> createRemoveCallableMemberAction(memberInfo, sourceClass, substitutor)
-    is KtClassOrObject, is KtPsiClassWrapper -> createRemoveClassLikeMemberAction(memberInfo, sourceClass)
+    is KtClassOrObject, is KtSuperTypeListEntry -> createRemoveClassLikeMemberAction(memberInfo, sourceClass)
     else -> null
 }
 
@@ -63,20 +62,16 @@ private fun createRemoveCallableMemberAction(
     return RemovalAction { member.delete() }
 }
 
-context(session: KaSession)
 private fun createRemoveClassLikeMemberAction(
     memberInfo: KotlinMemberInfo,
     sourceClass: KtClass,
 ): RemovalAction? {
     val member = memberInfo.member
     return if (memberInfo.overrides != null) {
-        val superTypeListEntry = getSuperTypeEntryBySymbol(
-            sourceClass,
-            member.symbol as KaClassSymbol,
-        ) ?: return null
-
+        val superTypeListEntry = member as? KtSuperTypeListEntry ?: return null
         RemovalAction { sourceClass.removeSuperType(superTypeListEntry) }
     } else {
-        RemovalAction { member.delete() }
+        val classLikeMember = member as? KtClassOrObject ?: return null
+        RemovalAction { classLikeMember.delete() }
     }
 }

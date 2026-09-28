@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.renderForConflicts
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
@@ -46,6 +45,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
@@ -63,8 +63,9 @@ internal fun analyzePushDownConflicts(
     val membersToKeepAbstract = ArrayList<KtNamedDeclaration>()
     for (info in context.membersToMove) {
         val member = info.member
-        if (!info.isChecked || ((member is KtClassOrObject || member is KtPsiClassWrapper) && info.overrides != null)) continue
+        if (!info.isChecked || member is KtSuperTypeListEntry) continue
 
+        if (member !is KtNamedDeclaration) continue
         membersToPush += member
         if ((member is KtNamedFunction || member is KtProperty) && info.isToAbstract && (member.symbol as? KaCallableSymbol)?.modality != KaSymbolModality.ABSTRACT) {
             membersToKeepAbstract += member

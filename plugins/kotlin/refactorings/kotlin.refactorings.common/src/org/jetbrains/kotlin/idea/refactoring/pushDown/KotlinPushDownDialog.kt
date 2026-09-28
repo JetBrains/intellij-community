@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinUsesDependencyMemb
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -40,7 +41,7 @@ class KotlinPushDownDialog(
         init()
     }
 
-    private var memberInfoModel: MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>? = null
+    private var memberInfoModel: MemberInfoModel<KtElement, KotlinMemberInfo>? = null
 
     private val selectedMemberInfos: List<KotlinMemberInfo>
         get() = memberInfos.filter { it.isChecked && memberInfoModel?.isMemberEnabled(it) ?: false }
@@ -79,16 +80,17 @@ class KotlinPushDownDialog(
         )
         panel.add(memberSelectionPanel, BorderLayout.CENTER)
 
-        memberInfoModel = object : DelegatingMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(
+        memberInfoModel = object : DelegatingMemberInfoModel<KtElement, KotlinMemberInfo>(
             ANDCombinedMemberInfoModel(
-                KotlinUsesDependencyMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(sourceClass, null, false),
-                UsedByDependencyMemberInfoModel<KtNamedDeclaration, PsiNamedElement, KotlinMemberInfo>(sourceClass)
+                KotlinUsesDependencyMemberInfoModel<KtElement, KotlinMemberInfo>(sourceClass, null, false),
+                UsedByDependencyMemberInfoModel<KtElement, PsiNamedElement, KotlinMemberInfo>(sourceClass)
             )
         ) {
             override fun isFixedAbstract(member: KotlinMemberInfo?) = null
 
             override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean = runReadAction {
                 val member = memberInfo.member
+                if (member !is KtNamedDeclaration) return@runReadAction false
                 if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD)

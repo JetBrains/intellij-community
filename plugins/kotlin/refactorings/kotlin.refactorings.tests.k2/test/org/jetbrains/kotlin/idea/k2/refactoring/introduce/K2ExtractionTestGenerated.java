@@ -85,6 +85,11 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
             runTest("testData/extractSuperclass/interface.kt");
         }
 
+        @TestMetadata("javaSuperInterface.kt")
+        public void testJavaSuperInterface() throws Exception {
+            runTest("testData/extractSuperclass/javaSuperInterface.kt");
+        }
+
         @TestMetadata("noWarningOnVisibilityInsideAbstractedMember.kt")
         public void testNoWarningOnVisibilityInsideAbstractedMember() throws Exception {
             runTest("testData/extractSuperclass/noWarningOnVisibilityInsideAbstractedMember.kt");
@@ -181,6 +186,11 @@ public abstract class K2ExtractionTestGenerated extends AbstractK2ExtractionTest
         @TestMetadata("extractToExistingFile.kt")
         public void testExtractToExistingFile() throws Exception {
             runTest("testData/extractInterface/extractToExistingFile.kt");
+        }
+
+        @TestMetadata("javaSuperInterface.kt")
+        public void testJavaSuperInterface() throws Exception {
+            runTest("testData/extractInterface/javaSuperInterface.kt");
         }
 
         @TestMetadata("liftInternal.kt")

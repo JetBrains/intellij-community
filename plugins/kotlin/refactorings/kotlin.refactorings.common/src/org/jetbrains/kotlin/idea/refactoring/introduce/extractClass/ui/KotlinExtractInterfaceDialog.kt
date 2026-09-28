@@ -71,7 +71,7 @@ class KotlinExtractInterfaceDialog(
             override fun isMemberEnabled(member: KotlinMemberInfo): Boolean {
                 if (!super.isMemberEnabled(member)) return false
 
-                val declaration = member.member
+                val declaration = (member as? KotlinMemberInfo.Declaration)?.declaration ?: return true
                 return runReadAction {
                     !(declaration.hasModifier(KtTokens.INLINE_KEYWORD) ||
                             declaration.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
@@ -81,7 +81,7 @@ class KotlinExtractInterfaceDialog(
 
             override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean {
                 if (!super.isAbstractEnabled(memberInfo)) return false
-                val member = memberInfo.member
+                val member = (memberInfo as KotlinMemberInfo.Declaration).declaration
                 return runReadAction {
                     if (member.isAbstractInInterface(originalClass)) return@runReadAction false
                     if (member.isConstructorDeclaredProperty()) return@runReadAction false
@@ -90,7 +90,7 @@ class KotlinExtractInterfaceDialog(
             }
 
             override fun isAbstractWhenDisabled(memberInfo: KotlinMemberInfo): Boolean {
-                val member = memberInfo.member
+                val member = (memberInfo as? KotlinMemberInfo.Declaration)?.declaration ?: return false
                 return runReadAction {
                     member is KtProperty || member.isAbstractInInterface(originalClass) || member.isConstructorDeclaredProperty()
                 }

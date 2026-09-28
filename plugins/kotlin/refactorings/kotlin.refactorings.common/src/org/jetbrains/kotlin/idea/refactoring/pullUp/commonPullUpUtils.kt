@@ -5,9 +5,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
-import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.addAnnotation
 import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationAfter
 import org.jetbrains.kotlin.idea.base.psi.addMemberDeclarationBefore
@@ -18,13 +17,14 @@ import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.findSuperTypeEntry
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.lightElementForMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -54,19 +54,29 @@ fun KtNamedDeclaration.canMoveMemberToJavaClass(targetClass: PsiClass): Boolean 
 }
 
 @ApiStatus.Internal
-fun PsiMember.toKtDeclarationWrapperAware(): KtNamedDeclaration? {
-    if (this is PsiClass && this !is KtLightClass) return KtPsiClassWrapper(this)
+fun PsiMember.toKtDeclarationWrapperAware(sourceClass: KtClassOrObject): KtElement? {
+    if (this is PsiClass) {
+        // `unwrapped` turns a KtLightClass back into its KtClassOrObject and leaves a Java PsiClass as is, so the
+        // super type entries can be matched against source PSI without building a light class for each of them.
+        findSuperTypeEntry(sourceClass, unwrapped)?.let { return it }
+    }
     return namedUnwrappedElement as? KtNamedDeclaration
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 @ApiStatus.Internal
-fun getInterfaceContainmentVerifier(getMemberInfos: () -> List<KotlinMemberInfo>): (KtNamedDeclaration) -> Boolean = result@{ member ->
-    val psiMethodToCheck = lightElementForMemberInfo(member) as? PsiMethod ?: return@result false
-    getMemberInfos().any {
-        if (!it.isSuperClass || it.overrides != false) return@any false
+fun getInterfaceContainmentVerifier(getMemberInfos: () -> List<KotlinMemberInfo>): (KtElement) -> Boolean {
+    // The verifier is invoked once per member, so resolving the super interfaces is memoized across calls instead of
+    // being repeated for every member. The dialogs this backs do not modify PSI while it is in use.
+    val superInterfaces = HashMap<KotlinMemberInfo, PsiClass?>()
+    return result@{ member ->
+        val psiMethodToCheck = lightElementForMemberInfo(member) as? PsiMethod ?: return@result false
+        getMemberInfos().any { info ->
+            if (!info.isSuperClass || info.overrides != false) return@any false
 
-        val psiSuperInterface = (it.member as? KtClass)?.toLightClass()
-        psiSuperInterface?.findMethodBySignature(psiMethodToCheck, true) != null
+            val psiSuperInterface = superInterfaces.getOrPutIfMissing(info) { lightElementForMemberInfo(info.member) as? PsiClass }
+            psiSuperInterface?.findMethodBySignature(psiMethodToCheck, true) != null
+        }
     }
 }
 

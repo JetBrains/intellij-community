@@ -22,10 +22,12 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinOrJavaClassCellRenderer
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinUsesAndInterfacesDependencyMemberInfoModel
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.resolveSuperTypeDeclaration
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.toJavaMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -39,7 +41,7 @@ class KotlinPullUpDialog(
   classOrObject: KtClassOrObject,
   superClasses: List<PsiNamedElement>,
   memberInfoStorage: KotlinMemberInfoStorage,
-) : PullUpDialogBase<KotlinMemberInfoStorage, KotlinMemberInfo, KtNamedDeclaration, PsiNamedElement>(
+) : PullUpDialogBase<KotlinMemberInfoStorage, KotlinMemberInfo, KtElement, PsiNamedElement>(
     project, classOrObject, superClasses, memberInfoStorage, RefactoringBundle.message("pull.members.up.title")
 ) {
     init {
@@ -49,8 +51,8 @@ class KotlinPullUpDialog(
     private inner class MemberInfoModelImpl(
       originalClass: KtClassOrObject,
       superClass: PsiNamedElement?,
-      interfaceContainmentVerifier: (KtNamedDeclaration) -> Boolean
-    ) : KotlinUsesAndInterfacesDependencyMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(
+      interfaceContainmentVerifier: (KtElement) -> Boolean
+    ) : KotlinUsesAndInterfacesDependencyMemberInfoModel<KtElement, KotlinMemberInfo>(
         originalClass,
         superClass,
         false,
@@ -80,6 +82,7 @@ class KotlinPullUpDialog(
 
             return runReadAction {
                 val member = memberInfo.member
+                if (member !is KtNamedDeclaration) return@runReadAction false
                 if (member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD)
@@ -97,6 +100,7 @@ class KotlinPullUpDialog(
         override fun isAbstractWhenDisabled(memberInfo: KotlinMemberInfo): Boolean {
             val superClass = superClass
             val member = memberInfo.member
+            if (member !is KtNamedDeclaration) return false
             if (member.isCompanionMemberOf(sourceClass)) return false
             if (member.isAbstractInInterface(sourceClass)) return true
             if (superClass != null && member.isConstructorParameterWithInterfaceTarget(superClass)) return true
@@ -106,8 +110,12 @@ class KotlinPullUpDialog(
 
         override fun isMemberEnabled(memberInfo: KotlinMemberInfo): Boolean {
             val superClass = superClass ?: return false
-            val member = memberInfo.member
-
+            val member = when (memberInfo) {
+                is KotlinMemberInfo.SuperType -> {
+                    return memberInfo.canPullUpTo(superClass, memberInfoStorage)
+                }
+                is KotlinMemberInfo.Declaration -> memberInfo.declaration
+            }
             if (member.hasModifier(KtTokens.CONST_KEYWORD)) return false
 
             if (superClass is KtClass && superClass.isInterface() &&
@@ -123,7 +131,7 @@ class KotlinPullUpDialog(
             return true
         }
 
-        override fun memberInfoChanged(event: MemberInfoChange<KtNamedDeclaration, KotlinMemberInfo>) {
+        override fun memberInfoChanged(event: MemberInfoChange<KtElement, KotlinMemberInfo>) {
             super.memberInfoChanged(event)
             val superClass = superClass ?: return
             if (superClass != lastSuperClass) {
@@ -143,7 +151,7 @@ class KotlinPullUpDialog(
 
     override fun getSuperClass() = super.getSuperClass()
 
-    override fun createMemberInfoModel(): MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo> =
+    override fun createMemberInfoModel(): MemberInfoModel<KtElement, KotlinMemberInfo> =
         MemberInfoModelImpl(sourceClass, preselection, getInterfaceContainmentVerifier { selectedMemberInfos })
 
   override fun initClassCombo(classCombo: JComboBox<*>) {
@@ -192,4 +200,14 @@ class KotlinPullUpDialog(
             )
         }
     }
+}
+
+@ApiStatus.Internal
+fun KotlinMemberInfo.SuperType.canPullUpTo(): Boolean = overrides == false
+
+@ApiStatus.Internal
+fun KotlinMemberInfo.SuperType.canPullUpTo(superClass: PsiNamedElement, storage: KotlinMemberInfoStorage): Boolean {
+    if (!canPullUpTo()) return false
+    val declaration = superTypeEntry.resolveSuperTypeDeclaration() ?: return false
+    return storage.getExtending(superClass).none { it.isEquivalentTo(declaration) }
 }

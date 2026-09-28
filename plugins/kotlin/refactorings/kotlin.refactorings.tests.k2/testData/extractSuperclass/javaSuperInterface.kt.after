@@ -1,0 +1,11 @@
+open class X : J {
+    // INFO: {checked: "true"}
+    fun foo() {
+
+    }
+}
+
+// NAME: X
+// SIBLING:
+class A : X() {
+}

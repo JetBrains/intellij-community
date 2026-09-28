@@ -273,11 +273,12 @@ internal fun collectConflicts(
     memberInfos: List<KotlinMemberInfo>,
     conflicts: MultiMap<PsiElement, String>,
 ) {
+    val declarationInfos = memberInfos.filterIsInstance<KotlinMemberInfo.Declaration>()
     val pullUpData = K2PullUpData(
-        sourceClass, targetClass, memberInfos.mapNotNull { it.member })
+        sourceClass, targetClass, declarationInfos.map { it.declaration })
 
-    for (memberInfo in memberInfos) {
-        val member = memberInfo.member
+    for (memberInfo in declarationInfos) {
+        val member = memberInfo.declaration
         val memberSymbol = member.symbol
 
         checkClashWithSuperDeclaration(pullUpData, member, memberSymbol, conflicts)
@@ -297,8 +298,8 @@ internal fun checkVisibilityInAbstractedMembers(
     val membersToMove = ArrayList<KtNamedDeclaration>()
     val membersToAbstract = ArrayList<KtNamedDeclaration>()
 
-    for (memberInfo in memberInfos) {
-        val member = memberInfo.member ?: continue
+    for (memberInfo in memberInfos.filterIsInstance<KotlinMemberInfo.Declaration>()) {
+        val member = memberInfo.declaration
         (if (memberInfo.isToAbstract) membersToAbstract else membersToMove).add(member)
     }
 

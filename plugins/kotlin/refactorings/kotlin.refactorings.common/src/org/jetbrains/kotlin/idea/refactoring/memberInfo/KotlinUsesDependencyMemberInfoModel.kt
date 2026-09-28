@@ -7,18 +7,19 @@ import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.util.classMembers.UsesDependencyMemberInfoModel
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-open class KotlinUsesDependencyMemberInfoModel<T : KtNamedDeclaration, M : MemberInfoBase<T>>(
+open class KotlinUsesDependencyMemberInfoModel<T : KtElement, M : MemberInfoBase<T>>(
     klass: KtClassOrObject,
     superClass: PsiNamedElement?,
     recursive: Boolean
 ) : UsesDependencyMemberInfoModel<T, PsiNamedElement, M>(klass, superClass, recursive) {
     override fun doCheck(memberInfo: M, problem: Int): Int {
         val member = memberInfo.member
-        val container = member.containingClassOrObject
+        val container = (member as? KtNamedDeclaration)?.containingClassOrObject
         if (problem == MemberInfoModel.ERROR
             && container is KtObjectDeclaration
             && container.isCompanion()

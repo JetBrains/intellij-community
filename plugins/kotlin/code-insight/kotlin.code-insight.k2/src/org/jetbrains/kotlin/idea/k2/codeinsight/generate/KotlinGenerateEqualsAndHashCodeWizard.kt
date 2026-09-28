@@ -21,8 +21,8 @@ class KotlinGenerateEqualsAndHashCodeWizard(
     properties: List<KtNamedDeclaration>,
     needEquals: Boolean,
     needHashCode: Boolean,
-    private val memberInfos: List<KotlinMemberInfo>,
-    private val membersToHashCode: HashMap<KtNamedDeclaration, KotlinMemberInfo>
+    private val memberInfos: List<KotlinMemberInfo.Declaration>,
+    private val membersToHashCode: HashMap<KtNamedDeclaration, out KotlinMemberInfo.Declaration>
 ) : KotlinGenerateEqualsWizard(project, klass, properties, needEquals, needHashCode, memberInfos, membersToHashCode) {
     override fun addSteps() {
         addStep(object : TemplateChooserStep(myClass, KotlinEqualsHashCodeTemplatesManager.getInstance()) {
@@ -62,10 +62,12 @@ class KotlinGenerateEqualsAndHashCodeWizard(
 
             private fun updateMemberInfos(ktClass: KtClass, memberFilters: MemberFilters) {
                 myEqualsPanel?.table?.setMemberInfos(
-                    memberInfos.filter { memberFilters.isApplicableForEqualsInClass(it.member, ktClass) }
+                    memberInfos.filter { memberInfo ->
+                        memberFilters.isApplicableForEqualsInClass(memberInfo.declaration, ktClass)
+                    }
                 )
                 membersToHashCode.values.forEach { memberInfo ->
-                    if (!memberFilters.isApplicableForHashCodeInClass(memberInfo.member, ktClass)) {
+                    if (!memberFilters.isApplicableForHashCodeInClass(memberInfo.declaration, ktClass)) {
                         memberInfo.isChecked = false
                     }
                 }

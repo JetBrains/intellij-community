@@ -3,20 +3,21 @@
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SeparatorFactory
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import java.awt.BorderLayout
 
-class KotlinMemberSelectionPanel @JvmOverloads constructor(
+class KotlinMemberSelectionPanel<I : KotlinMemberInfo> @JvmOverloads constructor(
     @NlsContexts.DialogTitle title: String? = null,
-    memberInfo: List<KotlinMemberInfo>,
+    memberInfo: List<I>,
     @Nls abstractColumnHeader: String? = null,
-    memberInfoModel: KotlinMemberInfoModel? = null,
-) : AbstractMemberSelectionPanel<KtNamedDeclaration, KotlinMemberInfo>() {
-    private val table: KotlinMemberSelectionTable = createMemberSelectionTable(memberInfo, memberInfoModel, abstractColumnHeader)
+    memberInfoModel: MemberInfoModel<KtElement, I>? = null,
+) : AbstractMemberSelectionPanel<KtElement, I>() {
+    private val table: KotlinMemberSelectionTable<I> = createMemberSelectionTable(memberInfo, memberInfoModel, abstractColumnHeader)
 
     init {
         layout = BorderLayout()
@@ -26,12 +27,12 @@ class KotlinMemberSelectionPanel @JvmOverloads constructor(
     }
 
     private fun createMemberSelectionTable(
-        memberInfo: List<KotlinMemberInfo>,
-        memberInfoModel: KotlinMemberInfoModel?,
+        memberInfo: List<I>,
+        memberInfoModel: MemberInfoModel<KtElement, I>?,
         @Nls abstractColumnHeader: String?
-    ): KotlinMemberSelectionTable {
+    ): KotlinMemberSelectionTable<I> {
         return KotlinMemberSelectionTable(memberInfo, memberInfoModel, abstractColumnHeader)
     }
 
-    override fun getTable(): KotlinMemberSelectionTable = table
+    override fun getTable(): KotlinMemberSelectionTable<I> = table
 }

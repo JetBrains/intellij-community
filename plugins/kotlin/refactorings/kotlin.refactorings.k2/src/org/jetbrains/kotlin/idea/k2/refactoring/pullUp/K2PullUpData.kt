@@ -79,9 +79,11 @@ internal class K2PullUpData(
             }
         }
 
-    val isInterfaceTarget: Boolean = (targetClass as? KtClassOrObject)?.let { klass ->
-        analyze(targetClass) {
-            (klass.symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE
+    val isInterfaceTarget: Boolean = when (targetClass) {
+        is PsiClass -> targetClass.isInterface
+        is KtClassOrObject -> analyze(targetClass) {
+            (targetClass.symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE
         }
-    } == true
+        else -> false
+    }
 }

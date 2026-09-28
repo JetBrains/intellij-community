@@ -139,7 +139,6 @@ internal class K2PushDownProcessor(
         actionsContext: PushDownActionsContext,
     ) {
         createPushDownAction(
-            context.sourceClass,
             memberInfo,
             targetClass,
             substitutor,
@@ -170,8 +169,9 @@ internal class K2PushDownProcessor(
         substitutor: KaSubstitutor,
         actionsContext: PushDownActionsContext,
     ) {
+        val member = memberInfo.member as? KtNamedDeclaration ?: return
         actionsContext.markedElements += markElements(
-            memberInfo.member,
+            member,
             context.sourceClass,
             targetClass,
             substitutor,

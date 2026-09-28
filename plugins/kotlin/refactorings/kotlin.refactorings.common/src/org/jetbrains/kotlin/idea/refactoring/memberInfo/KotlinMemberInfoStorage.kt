@@ -10,17 +10,26 @@ import org.jetbrains.kotlin.idea.refactoring.resolveDirectSupertypes
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtSuperTypeEntry
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 
 @ApiStatus.Internal
 class KotlinMemberInfoStorage(
     classOrObject: KtClassOrObject,
-    filter: (KtNamedDeclaration) -> Boolean = { true }
-) : AbstractMemberInfoStorage<KtNamedDeclaration, PsiNamedElement, KotlinMemberInfo>(classOrObject, filter) {
+    filter: (KtElement) -> Boolean = { true }
+) : AbstractMemberInfoStorage<KtElement, PsiNamedElement, KotlinMemberInfo>(classOrObject, filter) {
 
-    override fun memberConflict(member1: KtNamedDeclaration, member: KtNamedDeclaration): Boolean {
-        return KotlinMemberInfoStorageSupport.getInstance().memberConflict(member1, member)
+    override fun memberConflict(member1: KtElement, member: KtElement): Boolean {
+        if (member1 is KtSuperTypeListEntry && member is KtSuperTypeListEntry) {
+            // Comparing resolved source declarations avoids building a light class for each pair of entries.
+            val superDeclaration = member1.resolveSuperTypeDeclaration() ?: return false
+            return member.resolveSuperTypeDeclaration()?.let { superDeclaration.isEquivalentTo(it) } == true
+        }
+        return member1 is KtNamedDeclaration && member is KtNamedDeclaration &&
+               KotlinMemberInfoStorageSupport.getInstance().memberConflict(member1, member)
     }
 
     override fun buildSubClassesMap(aClass: PsiNamedElement) {
@@ -47,10 +56,10 @@ class KotlinMemberInfoStorage(
 fun extractClassMembers(
     aClass: KtClassOrObject,
     collectSuperTypeEntries: Boolean = true,
-    filter: ((KtNamedDeclaration) -> Boolean)? = null
+    filter: ((KtElement) -> Boolean)? = null
 ): List<KotlinMemberInfo> {
     fun KtClassOrObject.extractFromClassBody(
-        filter: ((KtNamedDeclaration) -> Boolean)?,
+        filter: ((KtElement) -> Boolean)?,
         isCompanion: Boolean,
         result: MutableCollection<KotlinMemberInfo>
     ) {
@@ -62,29 +71,24 @@ fun extractClassMembers(
                         && !(it is KtObjectDeclaration && it.isCompanion())
                         && (filter == null || filter(it))
             }
-            .mapTo(result) { KotlinMemberInfo(it as KtNamedDeclaration, isCompanionMember = isCompanion) }
+            .mapTo(result) { KotlinMemberInfo.Declaration(it as KtNamedDeclaration, isCompanionMember = isCompanion) }
     }
 
     val result = ArrayList<KotlinMemberInfo>()
 
     if (collectSuperTypeEntries) {
-        aClass.resolveDirectSupertypes()
-            .mapNotNull { classPsi ->
-                when (classPsi) {
-                    is KtClass -> classPsi
-                    is PsiClass -> KtPsiClassWrapper(classPsi)
-                    else -> null
-                }
-            }
-            .filter { it.isInterfaceClass() }
-            .mapTo(result) { KotlinMemberInfo(it, true) }
+        aClass.superTypeListEntries
+            .filterIsInstance<KtSuperTypeEntry>()
+            .filter { it.resolveSuperTypeDeclaration()?.isInterfaceClass() == true }
+            .filter { filter == null || filter(it) }
+            .mapTo(result) { KotlinMemberInfo.SuperType(it) }
     }
 
     aClass.primaryConstructor
         ?.valueParameters
         ?.asSequence()
         ?.filter { it.hasValOrVar() }
-        ?.mapTo(result) { KotlinMemberInfo(it) }
+        ?.mapTo(result) { KotlinMemberInfo.Declaration(it) }
 
     aClass.extractFromClassBody(filter, false, result)
     (aClass as? KtClass)?.companionObjects?.firstOrNull()?.extractFromClassBody(filter, true, result)

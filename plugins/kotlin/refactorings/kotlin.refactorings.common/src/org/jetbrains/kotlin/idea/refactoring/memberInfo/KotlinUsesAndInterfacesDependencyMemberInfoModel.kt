@@ -9,9 +9,9 @@ import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.util.classMembers.UsesDependencyMemberInfoModel
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 
-open class KotlinUsesAndInterfacesDependencyMemberInfoModel<T : KtNamedDeclaration, M : MemberInfoBase<T>>(
+open class KotlinUsesAndInterfacesDependencyMemberInfoModel<T : KtElement, M : MemberInfoBase<T>>(
     klass: KtClassOrObject,
     superClass: PsiNamedElement?,
     recursive: Boolean,

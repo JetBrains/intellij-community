@@ -175,11 +175,15 @@ private fun getElementsToMove(
 
     analyze(originalClass) {
         for (superTypeListEntry in originalClass.superTypeListEntries) {
+            if (superTypeListEntry in superInterfacesToMove) {
+                elementsToMove[superTypeListEntry] = null
+                continue
+            }
             val superType = superTypeListEntry.typeReference?.type ?: continue
             val superSymbol = superType.expandedSymbol ?: continue
             val superClass = superSymbol.psi as? KtClass ?: continue
 
-            if ((!isExtractInterface && !superClass.isInterface()) || superClass in superInterfacesToMove) {
+            if (!isExtractInterface && !superClass.isInterface()) {
                 elementsToMove[superTypeListEntry] = null
             }
         }

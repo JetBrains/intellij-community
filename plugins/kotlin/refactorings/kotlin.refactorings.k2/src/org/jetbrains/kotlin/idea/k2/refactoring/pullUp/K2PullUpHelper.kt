@@ -76,13 +76,11 @@ import org.jetbrains.kotlin.idea.base.psi.setParameterTypeReference
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
-import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.getSuperTypeEntryBySymbol
 import org.jetbrains.kotlin.idea.refactoring.createJavaField
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
 import org.jetbrains.kotlin.idea.refactoring.deleteWithCompanion
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.pullUp.addMemberToTarget
 import org.jetbrains.kotlin.idea.refactoring.pullUp.canMoveMemberToJavaClass
 import org.jetbrains.kotlin.idea.refactoring.pullUp.doAddCallableMember
@@ -125,6 +123,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
+import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -421,43 +420,38 @@ internal class K2PullUpHelper(
         return clashingSuperSymbol.psi as? KtCallableDeclaration
     }
 
-    private fun moveSuperInterface(member: KtNamedDeclaration, substitutor: PsiSubstitutor) {
-        val realMemberPsi = (member as? KtPsiClassWrapper)?.psiClass ?: member
-
-        val currentSpecifier = allowAnalysisFromWriteActionInEdt(member) {
-            val classSymbol = member.symbol as? KaClassSymbol ?: return
-            getSuperTypeEntryBySymbol(
-                data.sourceClass,
-                classSymbol,
-            ) ?: return
+    private fun moveSuperInterface(member: KtSuperTypeEntry, substitutor: PsiSubstitutor) {
+        val realMemberPsi = allowAnalysisFromWriteActionInEdt(member) {
+            member.typeReference?.type?.expandedSymbol?.psi ?: return
+        }
+        val targetAlreadyInheritsInterface = allowAnalysisFromWriteActionInEdt(member) {
+            val classSymbol = member.typeReference?.type?.expandedSymbol ?: return
+            data.getTargetClassSymbol().isSubClassOf(classSymbol)
         }
         when (data.targetClass) {
             is KtClass -> {
                 allowAnalysisFromWriteActionInEdt(data.sourceClass) {
                     addSuperTypeEntry(
-                        currentSpecifier,
+                        member,
                         data.targetClass,
                         data.getSourceToTargetClassSubstitutor(),
                     )
                 }
-                data.sourceClass.removeSuperType(currentSpecifier)
+                data.sourceClass.removeSuperType(member)
             }
 
             is PsiClass -> {
                 val elementFactory = JavaPsiFacade.getElementFactory(member.project)
 
                 val sourcePsiClass = data.sourceClass.toLightClass() ?: return
+                val sourceReferenceList = if (sourcePsiClass.isInterface) sourcePsiClass.extendsList else sourcePsiClass.implementsList
                 val superRef =
-                    sourcePsiClass.implementsList?.referenceElements?.firstOrNull { it.resolve()?.unwrapped == realMemberPsi } ?: return
+                    sourceReferenceList?.referenceElements?.firstOrNull { it.resolve()?.unwrapped == realMemberPsi } ?: return
                 val superTypeForTarget = substitutor.substitute(elementFactory.createType(superRef))
 
-                data.sourceClass.removeSuperType(currentSpecifier)
+                data.sourceClass.removeSuperType(member)
 
-                allowAnalysisFromWriteActionInEdt(data.sourceClass) {
-                    val classSymbol = member.symbol as KaClassSymbol
-                    val targetClassSymbol = data.getTargetClassSymbol()
-                    if (targetClassSymbol.isSubClassOf(classSymbol)) return
-                }
+                if (targetAlreadyInheritsInterface) return
 
                 val refList = if (data.isInterfaceTarget) data.targetClass.extendsList else data.targetClass.implementsList
                 refList?.add(elementFactory.createReferenceFromText(superTypeForTarget.canonicalText, null))
@@ -549,12 +543,13 @@ internal class K2PullUpHelper(
     }
 
     override fun move(info: MemberInfoBase<PsiMember>, substitutor: PsiSubstitutor) {
-        val member = info.member.toKtDeclarationWrapperAware() ?: return
+        val member = info.member.toKtDeclarationWrapperAware(data.sourceClass) ?: return
 
-        if ((member is KtClass || member is KtPsiClassWrapper) && info.overrides != null) {
+        if (member is KtSuperTypeEntry && info.overrides != null) {
             moveSuperInterface(member, substitutor)
             return
         }
+        if (member !is KtNamedDeclaration) return
 
         val targetClass = data.targetClass
         if (targetClass is PsiClass) {

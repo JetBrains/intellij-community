@@ -9,6 +9,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.classMembers.AbstractMemberInfoModel
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
@@ -18,11 +19,12 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.list.createTargetPresentationRenderer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.AbstractKotlinMemberInfoModel
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoModel
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
 
@@ -78,7 +80,7 @@ sealed class K2MoveSourceModel<T : PsiElement>(
         override val mppDeclarationsSelected: MutableBooleanProperty =
             AtomicBooleanProperty(hasExpectOrActualElements())
 
-        private lateinit var memberSelectionPanel: KotlinMemberSelectionPanel
+        private lateinit var memberSelectionPanel: KotlinMemberSelectionPanel<KotlinMemberInfo.Declaration>
 
         override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
@@ -99,7 +101,7 @@ sealed class K2MoveSourceModel<T : PsiElement>(
                     memberSelectionPanel = cell(selectionPanel).align(Align.FILL).component
                     val table = memberSelectionPanel.table
                     table.addMemberInfoChangeListener {
-                        elements = table.selectedMemberInfos.map { it.member }.toSet()
+                        elements = table.selectedMemberInfos.map { it.declaration }.toSet()
                         mppDeclarationsSelected.set(hasExpectOrActualElements())
                         if (elements.isEmpty()) {
                             onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
@@ -129,8 +131,8 @@ sealed class K2MoveSourceModel<T : PsiElement>(
         private fun getMemberInfos(
             elementsToMove: Set<KtNamedDeclaration>,
             allDeclaration: List<KtNamedDeclaration>
-        ): List<KotlinMemberInfo> = allDeclaration.map { declaration ->
-            KotlinMemberInfo(declaration, false).apply {
+        ): List<KotlinMemberInfo.Declaration> = allDeclaration.map { declaration ->
+            KotlinMemberInfo.Declaration(declaration, false).apply {
                 isChecked = elementsToMove.contains(declaration)
             }
         }
@@ -140,10 +142,11 @@ sealed class K2MoveSourceModel<T : PsiElement>(
     }
 }
 
-private object ReadOnlyKotlinMemberInfoModel : AbstractKotlinMemberInfoModel() {
-    override fun isMemberEnabled(member: KotlinMemberInfo): Boolean = false
+private object ReadOnlyKotlinMemberInfoModel : AbstractMemberInfoModel<KtElement, KotlinMemberInfo.Declaration>(),
+    KotlinMemberInfoModel<KotlinMemberInfo.Declaration> {
+    override fun isMemberEnabled(member: KotlinMemberInfo.Declaration): Boolean = false
 
-    override fun isCheckedWhenDisabled(member: KotlinMemberInfo?): Boolean {
+    override fun isCheckedWhenDisabled(member: KotlinMemberInfo.Declaration?): Boolean {
         return member?.isChecked ?: false
     }
 }

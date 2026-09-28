@@ -25,9 +25,10 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuper
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinUsesAndInterfacesDependencyMemberInfoModel
+import org.jetbrains.kotlin.idea.refactoring.pullUp.canPullUpTo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.jvm.JvmConstants
@@ -58,20 +59,22 @@ abstract class KotlinExtractSuperDialogBase(
     open class MemberInfoModelBase(
         originalClass: KtClassOrObject,
         val memberInfos: List<KotlinMemberInfo>,
-        interfaceContainmentVerifier: (KtNamedDeclaration) -> Boolean
-    ) : KotlinUsesAndInterfacesDependencyMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>(
+        interfaceContainmentVerifier: (KtElement) -> Boolean
+    ) : KotlinUsesAndInterfacesDependencyMemberInfoModel<KtElement, KotlinMemberInfo>(
         originalClass,
         null,
         false,
         interfaceContainmentVerifier
     ) {
         override fun isMemberEnabled(member: KotlinMemberInfo): Boolean = runReadAction {
-            val declaration = member.member ?: return@runReadAction false
-            !declaration.hasModifier(KtTokens.CONST_KEYWORD)
+            when (member) {
+                is KotlinMemberInfo.Declaration -> !member.declaration.hasModifier(KtTokens.CONST_KEYWORD)
+                is KotlinMemberInfo.SuperType -> member.canPullUpTo()
+            }
         }
 
         override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean = runReadAction {
-            val member = memberInfo.member
+            val member = (memberInfo as? KotlinMemberInfo.Declaration)?.declaration ?: return@runReadAction false
             !(member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD))

@@ -9,4 +9,4 @@ interface Z
 
 open class A
 
-class B : A(), Z, X, Y
+class B : A(), Z, X, Y, W
