@@ -15,6 +15,7 @@ import com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider
 import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.ui.components.Badge
@@ -41,7 +42,14 @@ internal class ConfigurableNewOptionsTest {
     PluginUpdatesService.getInstance().awaitUpdates()
   }
 
+  /**
+   * The test creates the component of every page, and the Grammar and Style page loads the LanguageTool rules.
+   * The loader sets `jdk.xml.maxGeneralEntitySizeLimit`, which the Xerces parser of the test classpath rejects,
+   * so the test states the parser of the JDK.
+   */
   @Test
+  @SystemProperty(propertyKey = "javax.xml.parsers.SAXParserFactory",
+                  propertyValue = "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl")
   fun `leaf configurable newOptions attribute matches rendered new badges`() = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val leaves = mutableListOf<LeafConfigurable>()
     collectLeaves(ConfigurableExtensionPointUtil.getConfigurableGroup(null, true).configurables, emptyList(), leaves)
