@@ -1308,6 +1308,37 @@ com.intellij.util.containers.ConcurrentList
 - java.util.List
 - a:addAllAbsent(java.util.Collection):I
 - a:addIfAbsent(java.lang.Object):Z
+com.intellij.util.containers.ConcurrentLongIntMap
+- a:clear():V
+- a:compute(J,com.intellij.util.containers.ConcurrentLongIntMap$LongIntToIntFunction):I
+- a:computeIfAbsent(J,java.util.function.LongToIntFunction):I
+- a:computeIfPresent(J,com.intellij.util.containers.ConcurrentLongIntMap$LongIntToIntFunction):I
+- a:containsKey(J):Z
+- a:containsValue(I):Z
+- a:entrySet():java.util.Set
+- a:forEach(com.intellij.util.containers.ConcurrentLongIntMap$LongIntConsumer):V
+- a:get(J):I
+- a:getOrDefault(J,I):I
+- a:isEmpty():Z
+- a:mappingCount():J
+- a:merge(J,I,com.intellij.util.containers.ConcurrentLongIntMap$IntIntToIntFunction):I
+- a:put(J,I):I
+- a:putIfAbsent(J,I):I
+- a:remove(J):I
+- a:remove(J,I):Z
+- a:replace(J,I):I
+- a:replace(J,I,I):Z
+- a:replaceAll(com.intellij.util.containers.ConcurrentLongIntMap$LongIntToIntFunction):V
+- a:size():I
+com.intellij.util.containers.ConcurrentLongIntMap$Entry
+- a:getKey():J
+- a:getValue():I
+com.intellij.util.containers.ConcurrentLongIntMap$IntIntToIntFunction
+- a:apply(I,I):I
+com.intellij.util.containers.ConcurrentLongIntMap$LongIntConsumer
+- a:accept(J,I):V
+com.intellij.util.containers.ConcurrentLongIntMap$LongIntToIntFunction
+- a:apply(J,I):I
 com.intellij.util.containers.ConcurrentLongObjectMap
 - a:cacheOrGet(J,java.lang.Object):java.lang.Object
 - a:clear():V

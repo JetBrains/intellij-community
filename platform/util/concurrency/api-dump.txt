@@ -9,6 +9,7 @@ f:com.intellij.concurrency.ConcurrentCollectionFactory
 - s:createConcurrentIdentitySet():java.util.Set
 - s:createConcurrentIntObjectMap():com.intellij.util.containers.ConcurrentIntObjectMap
 - s:createConcurrentIntObjectWeakValueMap():com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentLongIntMap(I):com.intellij.util.containers.ConcurrentLongIntMap
 - s:createConcurrentLongObjectMap():com.intellij.util.containers.ConcurrentLongObjectMap
 - s:createConcurrentMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentSet():java.util.Set
