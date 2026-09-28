@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureResult
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
+import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeOrdered
 import com.intellij.openapi.externalSystem.autolink.mapExtensionSafe
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
@@ -125,7 +125,7 @@ private class GradleSyncActionRunner {
     phase: GradleSyncPhase,
   ) {
     TELEMETRY.spanBuilder(phase.name + "-idea").use {
-      GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { contributor ->
+      GradleSyncContributor.EP_NAME.forEachExtensionSafeInline { contributor ->
         if (contributor.phase == phase) {
           TELEMETRY.spanBuilder(contributor.name).use {
             storage = contributor.createProjectModel(context, storage)

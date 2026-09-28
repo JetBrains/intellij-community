@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.ide.actions.ImportProjectAction
+import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
-import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
@@ -53,7 +53,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
 
   suspend fun attachMavenProject(project: Project, relativePath: String) {
     val projectPath = testPath.resolve(relativePath).toCanonicalPath()
-    EP_NAME.forEachExtensionSafeAsync { extension ->
+    EP_NAME.forEachExtensionSafeInline { extension ->
       if (extension.systemId == IntellijMavenUtil.SYSTEM_ID) {
         extension.linkAndLoadProjectAsync(project, projectPath)
       }

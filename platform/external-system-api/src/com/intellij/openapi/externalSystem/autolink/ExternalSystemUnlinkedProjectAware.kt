@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -56,7 +57,7 @@ interface ExternalSystemUnlinkedProjectAware {
     @JvmStatic
     @Internal
     suspend fun unlinkOtherLinkedProjects(project: Project, externalProjectPath: String, systemId: ProjectSystemId) {
-      EP_NAME.forEachExtensionSafeAsync { extension ->
+      EP_NAME.forEachExtensionSafeInline { extension ->
         if (extension.systemId != systemId && extension.isLinkedProject(project, externalProjectPath)) {
           LOG.info("Unlinking $systemId project ${externalProjectPath}")
           extension.unlinkProject(project, externalProjectPath)

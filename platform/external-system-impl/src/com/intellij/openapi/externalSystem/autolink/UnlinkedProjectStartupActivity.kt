@@ -6,6 +6,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.createExtensionDisposable
+import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
@@ -109,7 +110,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   ): Pair<List<ExternalSystemUnlinkedProjectAware>, List<ExternalSystemUnlinkedProjectAware>> {
     val linkedProjects = ArrayList<ExternalSystemUnlinkedProjectAware>()
     val unlinkedProjects = ArrayList<ExternalSystemUnlinkedProjectAware>()
-    EP_NAME.forEachExtensionSafeAsync { extension ->
+    EP_NAME.forEachExtensionSafeInline { extension ->
       when {
         extension.isLinkedProject(project, externalProjectPath) ->
           linkedProjects.add(extension)
@@ -161,7 +162,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   }
 
   private fun hasLinkedProject(project: Project, projectRoot: String): Boolean {
-    EP_NAME.forEachExtensionSafeAsync { extension ->
+    EP_NAME.forEachExtensionSafeInline { extension ->
       if (extension.isLinkedProject(project, projectRoot)) {
         return true
       }

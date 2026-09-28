@@ -14,11 +14,6 @@ inline fun <Extension : Any, R> Extension.runExtensionSafe(block: Extension.() -
     .getOrLogException(logger<ExtensionPointImpl<*>>())
 
 @ApiStatus.Internal
-inline fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(action: (Extension) -> Unit): Unit =
-  extensionList.asSequence()
-    .forEach { it.runExtensionSafe(action) }
-
-@ApiStatus.Internal
 inline fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeOrdered(action: (Extension) -> Unit): Unit =
   extensionList.asSequence()
     .sortedWith(ORDER_AWARE_COMPARATOR)
