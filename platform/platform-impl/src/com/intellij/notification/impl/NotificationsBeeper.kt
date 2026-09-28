@@ -18,11 +18,13 @@ import java.awt.Toolkit
  */
 internal class NotificationsBeeper: Notifications {
   override fun notify(notification: Notification) {
-    if (isSoundEnabled() && NotificationsConfigurationImpl.getSettings(notification.groupId).isPlaySound) {
+    if (playsSound(NotificationsConfigurationImpl.getSettings(notification.groupId))) {
       service<NotificationSoundPlayer>().play(notification)
     }
   }
 }
+
+internal fun playsSound(settings: NotificationSettings): Boolean = isSoundEnabled() && settings.isPlaySound
 
 @Service
 private class NotificationSoundPlayer(private val scope: CoroutineScope) {

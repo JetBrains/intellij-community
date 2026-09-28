@@ -82,7 +82,12 @@ private fun doNotify(notification: Notification, project: Project?) {
     return
   }
 
-  if (NotificationsConfigurationImpl.getSettings(notification.groupId).displayType == NotificationDisplayType.NONE) {
+  val settings = NotificationsConfigurationImpl.getSettings(notification.groupId)
+  val isNoPopup = settings.displayType == NotificationDisplayType.NONE
+  val announceForPlaySound =
+    Registry.`is`("ide.accessibility.announcing.notifications.with.sound", true) && playsSound(settings)
+
+  if (isNoPopup && !announceForPlaySound) {
     return
   }
 
