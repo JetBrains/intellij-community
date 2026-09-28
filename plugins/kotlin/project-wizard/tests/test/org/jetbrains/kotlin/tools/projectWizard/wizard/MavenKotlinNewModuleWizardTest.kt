@@ -6,6 +6,10 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.maven.testFramework.fixtures.assertSize
+import com.intellij.maven.testFramework.fixtures.sdk
+import com.intellij.maven.testFramework.fixtures.waitForModuleCreation
+import com.intellij.maven.testFramework.fixtures.waitForProjectCreation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -18,20 +22,15 @@ import com.intellij.testFramework.useProject
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
-import org.jetbrains.idea.maven.wizards.sdk
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinNewProjectWizardData.Companion.kotlinMavenData
-import org.junit.Assert
-import org.junit.Test
 import org.junit.jupiter.api.Assertions
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
 import java.io.File
 
 @TestRoot("project-wizard/tests")
-@RunWith(JUnit4::class)
 class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
     override val testDirectory: String
         get() = "testData/mavenNewModuleWizard"
@@ -41,22 +40,22 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
     @Test
     fun `test when module is created then its pom is unignored`() = runBlocking {
         // create project
-        waitForProjectCreation {
+        maven.waitForProjectCreation {
             createKotlinProjectFromTemplate()
         }.useProject { project ->
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
             // import project
             assertModules(project, "project")
-            Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
+            Assertions.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
             // ignore pom
             val modulePomPath = "${project.basePath}/$newModuleName/pom.xml"
             val ignoredPoms = listOf(modulePomPath)
             mavenProjectsManager.ignoredFilesPaths = ignoredPoms
-            Assert.assertEquals(ignoredPoms, mavenProjectsManager.ignoredFilesPaths)
+            Assertions.assertEquals(ignoredPoms, mavenProjectsManager.ignoredFilesPaths)
 
             // create module
-            waitForModuleCreation {
+            maven.waitForModuleCreation {
                 createKotlinModuleFromTemplate(project)
             }
             assertModules(project, "project", newModuleName)
@@ -70,34 +69,34 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
     @Test
     fun `test new maven module inherits project sdk by default`() = runBlocking {
         // create project
-        waitForProjectCreation {
+        maven.waitForProjectCreation {
             createKotlinProjectFromTemplate()
         }.useProject { project ->
             // import project
             assertModules(project, "project")
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-            Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
+            Assertions.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
             // create module
-            waitForModuleCreation {
+            maven.waitForModuleCreation {
                 createKotlinModuleFromTemplate(project)
             }
             assertModules(project, "project", newModuleName)
 
             // verify SKD is inherited
             val moduleModule = ModuleManager.getInstanceAsync(project).findModuleByName(newModuleName)!!
-            Assert.assertTrue(ModuleRootManager.getInstance(moduleModule).modifiableModel.isSdkInherited)
+            Assertions.assertTrue(ModuleRootManager.getInstance(moduleModule).modifiableModel.isSdkInherited)
         }
         return@runBlocking
     }
 
     @Test
     fun testNewModuleInJavaProject() = runBlocking {
-        waitForProjectCreation {
-            createProjectFromTemplate(JAVA) {
+        maven.waitForProjectCreation {
+            maven.wizards.createProjectFromTemplate(JAVA) {
                 it.baseData!!.name = "project"
                 it.javaBuildSystemData!!.buildSystem = MAVEN
-                it.javaMavenData!!.sdk = mySdk
+                it.javaMavenData!!.sdk = maven.sdk
                 it.javaMavenData!!.groupId = "org.testcase"
                 it.javaMavenData!!.version = "1.0.0"
                 it.javaMavenData!!.addSampleCode = false
@@ -105,9 +104,9 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
         }.useProject { project ->
             assertModules(project, "project")
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-            Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
+            Assertions.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
-            waitForModuleCreation {
+            maven.waitForModuleCreation {
                 createKotlinModuleFromTemplate(project, addSampleCode = true)
             }
 
@@ -134,7 +133,7 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
         independentHierarchy: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
     ) = runBlocking {
-        waitForProjectCreation {
+        maven.waitForProjectCreation {
             createKotlinProjectFromTemplate(
                 groupId = groupId,
                 version = version,
@@ -143,9 +142,9 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
         }.useProject { project ->
             assertModules(project, "project")
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-            Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
+            Assertions.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
-            waitForModuleCreation {
+            maven.waitForModuleCreation {
                 createKotlinModuleFromTemplate(
                     project, groupId = groupId,
                     version = version,
@@ -165,7 +164,7 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
     @Test
     fun testCreateNewProject() {
         runBlocking {
-            waitForProjectCreation {
+            maven.waitForProjectCreation {
                 createKotlinProjectFromTemplate()
             }.useProject { project ->
                 assertModules(project, listOf("project"))
@@ -192,7 +191,7 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
     @Test
     fun testSampleCode() {
         runBlocking {
-            waitForProjectCreation {
+            maven.waitForProjectCreation {
                 createKotlinProjectFromTemplate(addSampleCode = true)
             }.useProject { project ->
                 val mainFileContent = project.findMainFileContent()
@@ -213,7 +212,7 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
     fun testSampleCodeRawOnboardingTips() {
         Registry.get("doc.onboarding.tips.render").withValue(false) {
             runBlocking {
-                waitForProjectCreation {
+                maven.waitForProjectCreation {
                     createKotlinProjectFromTemplate(addSampleCode = true)
                 }.useProject { project ->
                     val mainFileContent = project.findMainFileContent()
@@ -231,7 +230,7 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
         }
     }
 
-    private fun createKotlinModuleFromTemplate(
+    private suspend fun createKotlinModuleFromTemplate(
         project: Project,
         groupId: String = "org.testcase",
         version: String = "1.0.0",
@@ -241,10 +240,10 @@ class MavenKotlinNewModuleWizardTest : MavenKotlinNewProjectWizardTestCase() {
         val projectModule = project.modules.single()
         val mavenProjectsManager = MavenProjectsManager.getInstance(project)
 
-        return createModuleFromTemplate(project, KOTLIN) {
+        return maven.wizards.createModuleFromTemplate(project, KOTLIN) {
             it.baseData!!.name = newModuleName
             it.kotlinBuildSystemData!!.buildSystem = MAVEN
-            it.kotlinMavenData!!.sdk = mySdk
+            it.kotlinMavenData!!.sdk = maven.sdk
 
             it.kotlinMavenData!!.groupId = groupId
             it.kotlinMavenData!!.artifactId = newModuleName

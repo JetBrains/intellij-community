@@ -5,44 +5,50 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.maven.testFramework.fixtures.MavenProjectWizardTestFixture
+import com.intellij.maven.testFramework.fixtures.mavenProjectWizardFixture
+import com.intellij.maven.testFramework.fixtures.sdk
+import com.intellij.maven.testFramework.fixtures.waitForProjectCreation
 import com.intellij.openapi.project.Project
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.useProject
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
-import org.jetbrains.idea.maven.wizards.sdk
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinNewProjectWizardData.Companion.kotlinMavenData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
-import org.junit.Assert
-import org.junit.Rule
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
-import org.junit.rules.TestName
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 import java.io.File
 
 internal const val ONBOARDING_TIPS_SEARCH_STR = "with your caret at the highlighted text"
 
-abstract class MavenKotlinNewProjectWizardTestCase : MavenNewProjectWizardTestCase() {
+@TestApplication
+abstract class MavenKotlinNewProjectWizardTestCase {
+    protected val maven: MavenProjectWizardTestFixture by mavenProjectWizardFixture()
 
     abstract val testDirectory: String
 
     abstract val testRoot: File?
 
-    @JvmField
-    @Rule
-    var testName = TestName()
+    private lateinit var testMethodName: String
 
-    override fun runInDispatchThread() = false
+    @BeforeEach
+    fun rememberTestName(testInfo: TestInfo) {
+        testMethodName = testInfo.testMethod.get().name
+    }
 
-    override fun tearDown() {
+    @AfterEach
+    fun tearDown() {
         runAll(
             { CodeStyle.getDefaultSettings().clearCodeStyleSettings() },
-            { KotlinSdkType.removeKotlinSdkInTests() },
-            { super.tearDown() })
+            { KotlinSdkType.removeKotlinSdkInTests() })
     }
 
     private fun getTestDataFolder(testRoot: File?): File {
@@ -50,7 +56,7 @@ abstract class MavenKotlinNewProjectWizardTestCase : MavenNewProjectWizardTestCa
     }
 
     private fun getTestFolderName(): String {
-        return testName.methodName.takeWhile { it != '(' }.removePrefix("test").decapitalizeAsciiOnly()
+        return testMethodName.takeWhile { it != '(' }.removePrefix("test").decapitalizeAsciiOnly()
     }
 
     fun Project.assertCorrectProjectFiles(testRoot: File?, substituteVersions: Boolean = true) {
@@ -80,15 +86,15 @@ abstract class MavenKotlinNewProjectWizardTestCase : MavenNewProjectWizardTestCa
         )
     }
 
-    fun createKotlinProjectFromTemplate(
+    suspend fun createKotlinProjectFromTemplate(
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
     ): Project {
-        return createProjectFromTemplate(KOTLIN) {
+        return maven.wizards.createProjectFromTemplate(KOTLIN) {
             it.baseData!!.name = "project"
             it.kotlinBuildSystemData!!.buildSystem = MAVEN
-            it.kotlinMavenData!!.sdk = mySdk
+            it.kotlinMavenData!!.sdk = maven.sdk
             it.kotlinMavenData!!.parentData = null
 
             it.kotlinMavenData!!.groupId = groupId
@@ -180,7 +186,7 @@ abstract class MavenKotlinNewProjectWizardTestCase : MavenNewProjectWizardTestCa
         addSampleCodeToProject: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
     ) = runBlocking {
-        waitForProjectCreation {
+        maven.waitForProjectCreation {
             createKotlinProjectFromTemplate(
                 groupId = groupId,
                 version = version,
@@ -189,7 +195,7 @@ abstract class MavenKotlinNewProjectWizardTestCase : MavenNewProjectWizardTestCa
         }.useProject { project ->
             assertModules(project, "project")
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-            Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
+            Assertions.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
             project.assertCorrectProjectFiles(testRoot, substituteVersions = false)
             additionalAssertions(project)

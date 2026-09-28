@@ -3,13 +3,10 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Test
 import java.io.File
 
 @TestRoot("project-wizard/tests")
-@RunWith(JUnit4::class)
 internal class MavenKotlinNewProjectWizardTest : MavenKotlinNewProjectWizardTestCase() {
     override val testDirectory: String
         get() = "testData/mavenNewProjectWizard"
