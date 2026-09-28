@@ -7,6 +7,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 /**
  * A main interface to override index storages.
  * Use {@link FileBasedIndexLayoutProviderBean} to register a plugin which could provide custom index storage.
@@ -18,7 +21,7 @@ import org.jetbrains.annotations.Unmodifiable;
  * again, that constructor shouldn't access something that could fail (e.g. optional jni libs)
  */
 @ApiStatus.Internal
-public interface FileBasedIndexLayoutProvider {
+public interface FileBasedIndexLayoutProvider extends Closeable {
   ExtensionPointName<FileBasedIndexLayoutProviderBean> STORAGE_LAYOUT_EP_NAME =
     ExtensionPointName.create("com.intellij.fileBasedIndexLayout");
 
@@ -46,4 +49,9 @@ public interface FileBasedIndexLayoutProvider {
   default boolean isSupported() {
     return true;
   }
+
+  /** Closes shared provider's resources;
+   * All the storage layouts returned by this provider must be closed before this method is called. */
+  @Override
+  default void close() throws IOException { }
 }

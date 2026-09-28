@@ -107,6 +107,7 @@ import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
+import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.CorruptedException;
@@ -852,6 +853,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IndexDataInitializer.runParallelTasks(indexDisposeTasks, false);
+        FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME.forEachExtensionSafe(bean -> {
+          try {
+            bean.closeLayoutProvider();
+          }
+          catch (IOException e) {
+            LOG.error("Problem closing index storage layout provider " + bean.id, e);
+          }
+        });
         FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList().forEach(ex -> ex.shutdown());
         if (!keepConnection) {
           myConnection.disconnect();

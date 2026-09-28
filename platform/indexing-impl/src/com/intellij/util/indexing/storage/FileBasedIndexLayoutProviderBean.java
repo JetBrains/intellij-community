@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ResourceBundle;
 
 @ApiStatus.Internal
@@ -68,6 +69,20 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
       myLayoutProvider = ApplicationManager.getApplication().instantiateClass(providerClass, myPluginDescriptor);
     }
     return myLayoutProvider;
+  }
+
+  /** Closes the current provider and clears it so that later access creates a new instance. */
+  public synchronized void closeLayoutProvider() throws IOException {
+    if (myLayoutProvider == null) {
+      return;
+    }
+
+    try {
+      myLayoutProvider.close();
+    }
+    finally {
+      myLayoutProvider = null;
+    }
   }
 
   private volatile PluginDescriptor myPluginDescriptor;
