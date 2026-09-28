@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInsight.util.InspectionTracer
+import com.intellij.codeInspection.AggregateResultsInspection
+import com.intellij.codeInspection.CommonProblemDescriptor
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.diagnostic.telemetry.TracerLevel.DETAILED
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiFile
@@ -12,14 +14,15 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
 @ApiStatus.Internal
-fun reportToQodanaWhenInspectionFinished(inspectListener: InspectListener,
+fun reportToQodanaWhenInspectionFinished(context: GlobalInspectionContextEx,
                                          toolWrapper: InspectionToolWrapper<*, *>,
-                                         globalSimple : Boolean,
+                                         kind: InspectListener.InspectionKind,
                                          psiFile: PsiFile?,
-                                         project: Project,
-                                         inspectAction: Callable<Int>) {
+                                         inspectAction: Callable<out Collection<CommonProblemDescriptor>>) {
   val start = System.nanoTime()
-  var problemsCount = -1
+  var descriptors: Collection<CommonProblemDescriptor>? = null
+  val project = context.project
+  val publisher = project.messageBus.syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC)
   try {
     InspectionTracer.spanBuilder(spanName = "inspectionRun", level = DETAILED).use { span ->
       if (span.isRecording) {
@@ -29,16 +32,30 @@ fun reportToQodanaWhenInspectionFinished(inspectListener: InspectListener,
           span.setAttribute("file", path)
         }
       }
-      problemsCount = inspectAction.call()
+      descriptors = inspectAction.call()
     }
   }
   catch (e: Exception) {
-    inspectListener.inspectionFailed(toolWrapper.tool.getShortName(), e, psiFile, project)
+    publisher.inspectionFailed(toolWrapper.tool.shortName, e, psiFile, project)
     throw e
   }
   finally {
-    inspectListener.inspectionFinished(TimeoutUtil.getDurationMillis(start), Thread.currentThread().id, problemsCount, toolWrapper,
-                                       if (globalSimple) InspectListener.InspectionKind.GLOBAL_SIMPLE else InspectListener.InspectionKind.GLOBAL, psiFile, project)
+    val duration = TimeoutUtil.getDurationMillis(start)
+    val threadId = Thread.currentThread().threadId()
+    val problemsCount = descriptors?.size ?: -1
+    publisher.inspectionFinished(duration, threadId, problemsCount, toolWrapper, kind, psiFile, project)
+
+    if (descriptors != null && toolWrapper.tool is AggregateResultsInspection) {
+      val problemsByRule = descriptors.groupBy { (it as? ProblemDescriptor)?.problemGroup?.problemName }
+      for ((ruleId, ruleDescriptors) in problemsByRule) {
+        if (ruleId != null && ruleId != toolWrapper.shortName) {
+          val childWrapper = context.tools[ruleId]?.tool
+          if (childWrapper != null) {
+            publisher.inspectionFinished(duration, threadId, ruleDescriptors.size, childWrapper, kind, psiFile, project)
+          }
+        }
+      }
+    }
   }
 }
 
@@ -52,7 +69,7 @@ fun reportToQodanaWhenActivityFinished(inspectListener: InspectListener,
     activity.run()
   }
   finally {
-    inspectListener.activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind, project)
+    inspectListener.activityFinished(System.currentTimeMillis() - start, Thread.currentThread().threadId(), activityKind, project)
   }
 }
 
@@ -69,7 +86,7 @@ suspend fun reportToQodanaWhenActivityFinished(
   } finally {
     inspectListener.activityFinished(
       System.currentTimeMillis() - start,
-      Thread.currentThread().id,
+      Thread.currentThread().threadId(),
       activityKind,
       project
     )

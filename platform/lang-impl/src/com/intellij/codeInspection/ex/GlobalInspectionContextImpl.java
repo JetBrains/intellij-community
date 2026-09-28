@@ -142,6 +142,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -522,19 +523,31 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
 
-      var cachedWrappersValue = wrappersForThisFile.get();
-      var wrappers =
+      EnabledInspectionsProvider.ToolWrappers cachedWrappersValue = wrappersForThisFile.get();
+      EnabledInspectionsProvider.ToolWrappers wrappers =
         (cachedWrappersValue != null) ? cachedWrappersValue : getWrappersFromTools(enabledInspectionsProvider, file, includeDoNotShow);
-
-      wrappers.getExternalAnnotatorWrappers()
-        .forEach(wrapper -> {
-          var tool = ((ExternalAnnotatorBatchInspection)wrapper.getTool());
-          var descriptors = tool.checkFile(file, this, inspectionManager);
-          InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
-          ReadAction.runBlocking(
-            () -> BatchModeDescriptorsUtil.addProblemDescriptors(Arrays.asList(descriptors), false, this, null, toolPresentation, CONVERT)
+      InspectionProfileWrapper.runWithCustomInspectionWrapper(file, _ -> new InspectionProfileWrapper(getCurrentProfile()), () ->
+        wrappers.getExternalAnnotatorWrappers().forEach(wrapper -> {
+          ExternalAnnotatorBatchInspection tool = ((ExternalAnnotatorBatchInspection)wrapper.getTool());
+          InspectionEventsKt.reportToQodanaWhenInspectionFinished(
+            this,
+            wrapper,
+            InspectListener.InspectionKind.LOCAL,
+            file,
+            () -> {
+              ProblemDescriptor[] descriptors = tool.checkFile(file, this, inspectionManager);
+              if (descriptors.length > 0) {
+                InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
+                List<ProblemDescriptor> descriptorList = Arrays.asList(descriptors);
+                ReadAction.runBlocking(
+                  () -> BatchModeDescriptorsUtil.addProblemDescriptors(descriptorList, false, this, null, toolPresentation, CONVERT)
+                );
+                return descriptorList;
+              }
+              return Collections.emptyList();
+            }
           );
-        });
+        }));
 
       return true;
     };
@@ -635,14 +648,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               ProblemsHolder holder = new ProblemsHolder(inspectionManager, psiFile, false);
               ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
               InspectionEventsKt.reportToQodanaWhenInspectionFinished(
-                getInspectionEventPublisher(),
+                this,
                 toolWrapper,
-                true,
+                InspectListener.InspectionKind.GLOBAL_SIMPLE,
                 psiFile,
-                getProject(),
                 () -> {
                   tool.checkFile(psiFile, inspectionManager, holder, this, problemDescriptionProcessor);
-                  return holder.getResultCount();
+                  return holder.getResults();
                 });
               InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
               BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
@@ -800,14 +812,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           try {
             ThrowableRunnable<RuntimeException> runnable = () -> {
               InspectionEventsKt.reportToQodanaWhenInspectionFinished(
-                getInspectionEventPublisher(),
+                this,
                 toolWrapper,
-                false,
+                InspectListener.InspectionKind.GLOBAL,
                 null,
-                getProject(),
                 () -> {
                   tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
-                  return toolPresentation.getProblemDescriptors().size();
+                  return toolPresentation.getProblemDescriptors();
                 });
 
               //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
