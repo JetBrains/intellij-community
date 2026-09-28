@@ -69,6 +69,9 @@ internal class ContentModuleByProductModeFilter(
     return productModeMatcher.matches(module)
   }
 
+  /** The run time excludes a refused plugin module by the same rule, so the descriptor keeps it and only the jar goes. */
+  override fun keepsRefusedModuleInDescriptor(pluginMainModuleName: String?): Boolean = pluginMainModuleName != null
+
   override fun toString(): String {
     return "ContentModuleByProductModeFilter{productMode=${productMode.id}}"
   }

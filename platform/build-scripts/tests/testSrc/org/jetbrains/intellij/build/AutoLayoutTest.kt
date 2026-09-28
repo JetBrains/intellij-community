@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build
 
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.junit.jupiter.api.Test
 
@@ -14,6 +16,27 @@ internal class AutoLayoutTest {
   @Test
   fun `content module without package needs separate jar without marker`() {
     assertThat(jarPath(loadingRule = null, hasPackageAttribute = false)).isEqualTo("modules/intellij.test.content.jar")
+  }
+
+  /**
+   * A content module the product's filter refuses is in the taken set although no jar packs it, so the auto layout does
+   * not put its output into the main jar. That was candidate C-2 of the dev-build guide.
+   */
+  @Test
+  fun `a taken module is not an auto layout child`() {
+    val layout = PluginLayout.pluginAutoWithCustomDirName("demo.plugin") { }
+    val taken = mutableSetOf("demo.plugin", "demo.plugin.backend")
+
+    val children = inferredAutoLayoutChildren(
+      layout = layout,
+      directDependencies = sequenceOf("demo.plugin.backend", "demo.plugin.frontend", "other.module"),
+      addedModules = taken,
+      platformLayout = PlatformLayout(),
+      pluginLayouts = listOf(layout),
+    )
+
+    assertThat(children).containsExactly("demo.plugin.frontend")
+    assertThat(taken).containsExactlyInAnyOrder("demo.plugin", "demo.plugin.backend", "demo.plugin.frontend")
   }
 
   private fun jarPath(loadingRule: String?, hasPackageAttribute: Boolean = true): String? {

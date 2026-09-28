@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.contentModuleJarPath
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.impl.isAutoLayoutChild
+import org.jetbrains.intellij.build.impl.isOptionalLoadingRule
 import org.jetbrains.intellij.build.impl.pluginDefaultJarName
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -83,6 +84,13 @@ fun inferredAutoLayoutChildren(
   return result
 }
 
+/**
+ * Adds the sources of every content module of the patched plugin descriptor to [jarPackager].
+ *
+ * Returns the content modules the product's filter refuses. The descriptor keeps them, the run time excludes them, and
+ * the distribution holds no jar of them. They join [addedModules] all the same, so neither the layout members nor the
+ * auto layout put their output into another jar.
+ */
 internal fun computeModuleSourcesByContent(
   helper: JarPackagerDependencyHelper,
   context: BuildContext,
@@ -92,12 +100,12 @@ internal fun computeModuleSourcesByContent(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   modulesWithCustomPath: HashSet<String>,
   pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
-) {
+): Set<String> {
   // plugin patcher must be executed before
   val cachedFileData = pluginCachedDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)
   // quick fix of clion installer - not clear yet why a proper fix didn't help
   if (cachedFileData == null && pluginLayout.mainModule == BUILT_IN_HELP_MODULE_NAME) {
-    return
+    return emptySet()
   }
 
   val element = requireNotNull(cachedFileData) {
@@ -116,9 +124,16 @@ internal fun computeModuleSourcesByContent(
   }
 
   val frontendModuleFilter = context.getFrontendModuleFilter()
+  val contentModuleFilter = context.getContentModuleFilter()
+  val refusedModules = LinkedHashSet<String>()
   val descriptorCacheWriter = pluginCachedDescriptorContainer.write()
   for ((moduleName, loadingRule) in pluginContent) {
     if (!addedModules.add(moduleName)) {
+      continue
+    }
+    if (isOptionalLoadingRule(loadingRule) &&
+        !contentModuleFilter.isOptionalModuleIncluded(moduleName = moduleName, pluginMainModuleName = pluginLayout.mainModule)) {
+      refusedModules.add(moduleName)
       continue
     }
 
@@ -149,6 +164,7 @@ internal fun computeModuleSourcesByContent(
     )
   }
   descriptorCacheWriter.apply()
+  return refusedModules
 }
 
 internal fun generateInclusionReasonForContentModule(pluginMainModule: String): String = "<- $pluginMainModule (plugin content)"

@@ -89,7 +89,7 @@ internal fun processAndGetProductPluginContentModules(
   resolveIncludes(element = element, elementResolver = xIncludeResolver)
 
   val moduleItems = LinkedHashSet<ModuleItem>()
-  filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, contentModuleFilter = contentModuleFilter) { moduleElement, moduleName, loadingRule ->
+  filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, contentModuleFilter = contentModuleFilter) { moduleElement, moduleName, loadingRule, _ ->
     processProductModule(
       moduleElement = moduleElement,
       layout = layout,
@@ -115,10 +115,12 @@ internal fun processAndGetProductPluginContentModules(
   return moduleItems
 }
 
+/** One `<module/>` of a `<content>` block. [refused] is `true` for a module the filter refuses but the descriptor keeps. */
 private data class ContentModuleData(
   val element: Element,
   val name: String,
   val loadingRule: String?,
+  val refused: Boolean,
 )
 
 private fun collectContentModules(
@@ -135,15 +137,22 @@ private fun collectContentModules(
         "Module name is not specified for ${JDOMUtil.writeElement(moduleElement)}"
       }
       val loadingRule = moduleElement.getAttributeValue("loading")
+      var refused = false
       if (isOptionalLoadingRule(loadingRule)) {
         if (!contentModuleFilter.isOptionalModuleIncluded(moduleName = moduleName.substringBeforeLast('/'), pluginMainModuleName = pluginMainModuleName)) {
-          Span.current().addEvent("Module '$moduleName' is excluded from ${if (pluginMainModuleName == null) "product" else "plugin $pluginMainModuleName"} by $contentModuleFilter")
-          iterator.remove()
-          continue
+          val owner = if (pluginMainModuleName == null) "product" else "plugin $pluginMainModuleName"
+          if (!contentModuleFilter.keepsRefusedModuleInDescriptor(pluginMainModuleName)) {
+            Span.current().addEvent("Module '$moduleName' is excluded from $owner by $contentModuleFilter")
+            iterator.remove()
+            continue
+          }
+          // The run time excludes the module, so the descriptor keeps it and the distribution places no jar of it.
+          Span.current().addEvent("Module '$moduleName' of $owner is refused by $contentModuleFilter; the descriptor keeps it and no jar is packed")
+          refused = true
         }
       }
 
-      result.add(ContentModuleData(element = moduleElement, name = moduleName, loadingRule = loadingRule))
+      result.add(ContentModuleData(element = moduleElement, name = moduleName, loadingRule = loadingRule, refused = refused))
     }
   }
   return result
@@ -153,19 +162,26 @@ internal fun filterAndProcessContentModules(
   rootElement: Element,
   pluginMainModuleName: String?,
   context: BuildContext,
-  contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
+  contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?, refused: Boolean) -> Unit,
 ) {
   filterAndProcessContentModules(rootElement, pluginMainModuleName, context.getContentModuleFilter(), contentHandler)
 }
 
+/**
+ * Walks the `<module/>` elements of every `<content>` block of [rootElement] and hands each kept one to [contentHandler].
+ *
+ * A refused module of the core plugin leaves the tree. A refused module of a bundled plugin leaves the tree too, unless
+ * [ContentModuleFilter.keepsRefusedModuleInDescriptor] says the run time excludes it: then the handler sees it with
+ * `refused = true`, embeds its descriptor, and the packer skips its jar, see `computeModuleSourcesByContent`.
+ */
 internal fun filterAndProcessContentModules(
   rootElement: Element,
   pluginMainModuleName: String?,
   contentModuleFilter: ContentModuleFilter,
-  contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
+  contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?, refused: Boolean) -> Unit,
 ) {
   for (module in collectContentModules(rootElement = rootElement, pluginMainModuleName = pluginMainModuleName, contentModuleFilter = contentModuleFilter)) {
-    contentHandler(module.element, module.name, module.loadingRule)
+    contentHandler(module.element, module.name, module.loadingRule, module.refused)
   }
 }
 

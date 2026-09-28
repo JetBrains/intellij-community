@@ -217,7 +217,7 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
 
   val embeddedModules = LinkedHashSet<String>()
   embeddedModules.add(pluginMainModule)
-  filterAndProcessContentModules(rootElement, pluginMainModule, contentModuleFilter) { _, moduleName, loadingRule ->
+  filterAndProcessContentModules(rootElement, pluginMainModule, contentModuleFilter) { _, moduleName, loadingRule, _ ->
     if (loadingRule == "embedded") {
       embeddedModules.add(moduleName)
     }

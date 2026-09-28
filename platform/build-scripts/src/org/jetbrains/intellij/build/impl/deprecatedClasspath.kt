@@ -138,7 +138,7 @@ private fun generateProjectStructureMapping(
     )
     resolveIncludes(element = element, elementResolver = xIncludeResolver)
 
-    filterAndProcessContentModules(rootElement = element, pluginMainModuleName = pluginLayout.mainModule, context = context) { _, _, _ ->
+    filterAndProcessContentModules(rootElement = element, pluginMainModuleName = pluginLayout.mainModule, context = context) { _, _, _, _ ->
       // no need to embed modules
     }
 

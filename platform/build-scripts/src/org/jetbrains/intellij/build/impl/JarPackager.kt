@@ -194,7 +194,7 @@ class JarPackager private constructor(
     }
 
     // First, check the content. This is done prior to everything else since we might configure a custom relativeOutputFile.
-    if (layout is PluginLayout) {
+    val refusedContentModules = if (layout is PluginLayout) {
       computeModuleSourcesByContent(
         helper = helper,
         context = context,
@@ -206,8 +206,15 @@ class JarPackager private constructor(
         pluginCachedDescriptorContainer = cachedDescriptorWriterProvider!!,
       )
     }
+    else {
+      emptySet()
+    }
 
     for (item in includedModules) {
+      // The distribution holds no jar of a content module the product's filter refuses, whatever path the layout states.
+      if (item.moduleName in refusedContentModules) {
+        continue
+      }
       if (layout is PluginLayout && addedModules.contains(item.moduleName) && !item.relativeOutputFile.contains('/')) {
         check(item.relativeOutputFile == layout.getMainJarName()) {
           "Custom output path is not allowed for content modules ($item)"

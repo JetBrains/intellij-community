@@ -648,10 +648,11 @@ For non-scrambled plugins, it's safe to embed immediately:
 
 ```kotlin
 // Structural xi:includes already resolved by this point
-filterAndProcessContentModules(rootElement, pluginMainModuleName, context) { moduleElement, moduleName, _ ->
-  if (pluginLayout.pathsToScramble.isEmpty()) {
+filterAndProcessContentModules(rootElement, pluginMainModuleName, context) { moduleElement, moduleName, _, refused ->
+  if (pluginLayout.pathsToScramble.isEmpty() || refused) {
     // NOT scrambled → embed content module descriptors now in plugin.xml
     // Safe because: no scrambling = no class name changes
+    // A refused module has no jar in the distribution, so the run time reads its body here (ADR 0022)
     embedContentModules(
       moduleElement = moduleElement,
       pluginDescriptorContainer = descriptorContainer,
@@ -665,9 +666,15 @@ filterAndProcessContentModules(rootElement, pluginMainModuleName, context) { mod
 }
 ```
 
+**What does the product mode filter do here?**
+- A `<module/>` the mode refuses stays in `plugin.xml`, with its body embedded
+- The packer gives it no jar and keeps it in the taken set, so the auto layout adds it to no other jar
+- The run time excludes the module from its descriptor (`configureProductModeModules`)
+- A module the build cannot resolve still leaves `plugin.xml`, and so does a refused module of the core plugin
+
 **What happens to scrambled plugins here?**
 - Structural xi:includes ARE resolved (to find `<content>` tags)
-- Content modules are NOT embedded (conditional skip via early return)
+- Content modules are NOT embedded (conditional skip via early return), except a refused one
 - The `<module>` elements remain empty
 - Embedding deferred to Path 2 (after scrambling)
 
