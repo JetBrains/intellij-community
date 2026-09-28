@@ -173,7 +173,7 @@ class MutableTerminalOutputModelImpl(
     this.cursorOffset = offset
 
     val event = TerminalCursorOffsetChangeEventImpl(this, oldValue, offset)
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+    fireListenersAndLogAllExceptions(listeners, LOG, { "Exception during handling $event" }) {
       it.cursorOffsetChanged(event)
     }
   }
@@ -449,7 +449,7 @@ class MutableTerminalOutputModelImpl(
   }
 
   private inline fun doSingleDocumentChange(isTypeAhead: Boolean, block: () -> TerminalContentChangeEventImpl): TerminalContentChangeEventImpl {
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling beforeContentChanged event") {
+    fireListenersAndLogAllExceptions(listeners, LOG, { "Exception during handling beforeContentChanged event" }) {
       it.beforeContentChanged(this)
     }
 
@@ -463,7 +463,7 @@ class MutableTerminalOutputModelImpl(
     }
     ensureCorrectOffsets()
 
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+    fireListenersAndLogAllExceptions(listeners, LOG, { "Exception during handling $event" }) {
       it.afterContentChanged(event)
     }
     return event

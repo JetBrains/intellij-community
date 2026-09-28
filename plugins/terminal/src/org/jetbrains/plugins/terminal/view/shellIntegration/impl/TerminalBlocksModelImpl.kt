@@ -210,7 +210,7 @@ class TerminalBlocksModelImpl(
   }
 
   private fun fireListeners(event: TerminalBlocksModelEvent) {
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+    fireListenersAndLogAllExceptions(listeners, LOG, { "Exception during handling $event" }) {
       when (event) {
         is TerminalBlockAddedEvent -> it.blockAdded(event)
         is TerminalBlockRemovedEvent -> it.blockRemoved(event)

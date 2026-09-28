@@ -110,7 +110,7 @@ class TerminalShellIntegrationImpl(
   }
 
   fun onCompletionFinished(result: String) {
-    fireListenersAndLogAllExceptions(completionListeners, LOG, "Exception during handling completion finished event") {
+    fireListenersAndLogAllExceptions(completionListeners, LOG, { "Exception during handling completion finished event" }) {
       it.completionFinished(result)
     }
   }
@@ -132,7 +132,7 @@ class TerminalShellIntegrationImpl(
   }
 
   private fun fireCommandExecutionListeners(event: TerminalCommandExecutionEvent) {
-    fireListenersAndLogAllExceptions(commandExecutionListeners, LOG, "Exception during handling $event") {
+    fireListenersAndLogAllExceptions(commandExecutionListeners, LOG, { "Exception during handling $event" }) {
       when (event) {
         is TerminalCommandStartedEvent -> it.commandStarted(event)
         is TerminalCommandFinishedEvent -> it.commandFinished(event)

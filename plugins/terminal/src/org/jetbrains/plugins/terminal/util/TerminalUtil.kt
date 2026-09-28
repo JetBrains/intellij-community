@@ -166,7 +166,7 @@ internal fun TtyConnector.getDebugName(): @NonNls String {
 fun <T : Any> fireListenersAndLogAllExceptions(
   listeners: List<T>,
   logger: Logger,
-  message: String,
+  message: () -> String,
   callListener: (T) -> Unit,
 ) {
   for (listener in listeners) {
@@ -175,7 +175,7 @@ fun <T : Any> fireListenersAndLogAllExceptions(
     }
     catch (e: Exception) {
       // Even log a cancellation exception because we do not expect it to be thrown from the listener
-      PluginException.logPluginError(logger, message, e, listener.javaClass)
+      PluginException.logPluginError(logger, message(), e, listener.javaClass)
     }
   }
 }

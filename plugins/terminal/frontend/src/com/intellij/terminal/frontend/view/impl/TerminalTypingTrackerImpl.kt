@@ -240,7 +240,7 @@ class TerminalTypingTrackerImpl(
   }
 
   private fun fireEvent(event: TerminalTypingEvent) {
-    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+    fireListenersAndLogAllExceptions(listeners, LOG, { "Exception during handling $event" }) {
       it.onTypingEvent(event)
     }
   }

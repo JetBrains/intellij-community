@@ -81,7 +81,7 @@ internal class TerminalTextSelectionModelImpl(
 
       if (newSelection != oldSelection) {
         val event = TerminalTextSelectionChangeEventImpl(outputModel, oldSelection, newSelection)
-        fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling $event") {
+        fireListenersAndLogAllExceptions(listeners, LOG, { "Exception during handling $event" }) {
           it.selectionChanged(event)
         }
       }
