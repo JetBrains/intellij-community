@@ -11,12 +11,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.action.TerminalEmulatorBadgeAction
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
@@ -31,6 +33,7 @@ import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewBuilderOptions
 import com.intellij.terminal.frontend.view.impl.createTerminalView
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -61,6 +64,8 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProject
 import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
+import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
 import kotlin.time.Duration.Companion.seconds
 
@@ -154,15 +159,20 @@ class TerminalToolWindowTabsManagerImpl(
     val terminal = createTerminalViewAndStartSession(builder, tabScope.childScope("TerminalView"))
     project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).terminalViewCreated(terminal)
 
+    val pendingContent = builder.pendingContent
     val tab = doCreateTab(
       project = project,
       terminal = terminal,
+      content = pendingContent ?: createTabContent(),
       closeOnProcessTermination = builder.closeOnProcessTermination,
       restoreOnProjectReopen = builder.restoreOnProjectReopen,
       processOptions = builder.getRequestedProcessOptions(),
       coroutineScope = tabScope,
     )
-    if (builder.shouldAddToToolWindow) {
+    if (pendingContent != null) {
+      project.messageBus.syncPublisher(TerminalTabsManagerListener.TOPIC).tabAdded(tab)
+    }
+    else if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
       ReworkedTerminalUsageCollector.logTabOpened(
         project = project,
@@ -173,18 +183,21 @@ class TerminalToolWindowTabsManagerImpl(
     return tab
   }
 
+  private fun createTabContent(): Content {
+    return ContentFactory.getInstance().createContent(TerminalToolWindowPanel(), null, false)
+  }
+
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun doCreateTab(
     project: Project,
     terminal: TerminalView,
+    content: Content,
     closeOnProcessTermination: Boolean,
     restoreOnProjectReopen: Boolean,
     processOptions: TerminalRequestedProcessOptions,
     coroutineScope: CoroutineScope,
   ): TerminalToolWindowTab {
-    val panel = TerminalToolWindowPanel()
-    panel.setContent(terminal.component)
-    val content = ContentFactory.getInstance().createContent(panel, null, false)
+    (content.component as TerminalToolWindowPanel).setContent(terminal.component)
     content.setPreferredFocusedComponent { terminal.preferredFocusableComponent }
     TerminalTabCloseListenerImpl.install(content, project, parentDisposable = content)
 
@@ -258,16 +271,44 @@ class TerminalToolWindowTabsManagerImpl(
       options = viewOptions,
       coroutineScope = coroutineScope
     )
-    terminal.title.change {
-      if (builder.isUserDefinedName) {
-        userDefinedTitle = builder.tabName
-      }
-      else {
-        defaultTitle = builder.tabName ?: createDefaultTabName(project, getToolWindow())
-      }
-    }
+    terminal.title.applyTabName(builder.tabName, builder.isUserDefinedName)
 
     return terminal
+  }
+
+  private fun TerminalTitle.applyTabName(@NlsSafe tabName: String?, isUserDefinedName: Boolean) {
+    change {
+      if (isUserDefinedName) {
+        userDefinedTitle = tabName
+      }
+      else {
+        defaultTitle = tabName ?: createDefaultTabName(project, getToolWindow())
+      }
+    }
+  }
+
+  /**
+   * Adds [storedTab] to the tool window as a pending tab (see [getPendingTerminalTab]) without selecting it.
+   * The tab label and tooltip are the same as the built tab will have.
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun addPendingTab(storedTab: TerminalSessionPersistedTab) {
+    val title = TerminalTitle()
+    title.applyTabName(storedTab.name, storedTab.isUserDefinedName)
+
+    val content = createTabContent()
+    content.displayName = title.buildSettingsAwareTitle()
+    content.description = StringUtil.escapeXmlEntities(title.buildSettingsAwareFullTitle())
+    // Keep the resolved default name, so the built tab gets the same name.
+    content.setPendingTerminalTab(storedTab.copy(name = title.userDefinedTitle ?: title.defaultTitle))
+
+    val contentManager = getToolWindow().contentManager
+    contentManager.addContent(content)
+    ReworkedTerminalUsageCollector.logTabOpened(
+      project = project,
+      openingWay = TerminalTabOpeningWay.TABS_RESTORE,
+      tabCount = contentManager.contentsRecursively.size
+    )
   }
 
   private fun getToolWindow(): ToolWindow {
@@ -329,25 +370,20 @@ class TerminalToolWindowTabsManagerImpl(
     }
 
     private fun restoreTabs(tabs: List<TerminalSessionPersistedTab>, manager: TerminalToolWindowTabsManagerImpl) {
-      for (tab in tabs) {
-        val builder = manager.createTabBuilder() as TerminalToolWindowTabBuilderImpl
-        with(builder) {
-          shellCommand(tab.shellCommand)
-          workingDirectory(tab.workingDirectory)
-          envVariables(tab.envVariables ?: emptyMap())
-          processType(tab.processType ?: TerminalProcessType.SHELL)
-          tabName(tab.name)
-          userDefinedName(tab.isUserDefinedName)
-          requestFocus(false)  // Otherwise it may trigger the tool window showing
-          // Pass null as a trigger time because we don't need to track latency in this case.
-          startupFusInfo(TerminalStartupFusInfo(TerminalTabOpeningWay.TABS_RESTORE, triggerTime = null))
-        }
-        builder.createTab()
+      val contentManager = manager.getToolWindow().contentManager
+      installPendingTabsBuilding(manager.project, contentManager, manager.coroutineScope.childScope("TerminalPendingTabsBuilding"))
+
+      // Build only the first tab, because it becomes selected. The other tabs are built when the user selects them.
+      val firstTab = tabs.firstOrNull()
+      if (firstTab != null) {
+        manager.createTabBuilder().applyPersistedTab(firstTab).createTab()
+      }
+      for (tab in tabs.drop(1)) {
+        manager.addPendingTab(tab)
       }
 
       ReworkedTerminalUsageCollector.logSessionRestored(manager.project, tabs.size)
 
-      val contentManager = manager.getToolWindow().contentManager
       val firstContent = contentManager.getContent(0)
       if (firstContent != null) {
         contentManager.setSelectedContent(firstContent)
@@ -359,24 +395,10 @@ class TerminalToolWindowTabsManagerImpl(
   internal fun createDetachedTab(
     row: TerminalSessionPersistedTab,
   ): TerminalToolWindowTab {
-    val builder = createTabBuilder() as TerminalToolWindowTabBuilderImpl
-    with(builder) {
-      shellCommand(row.shellCommand)
-      workingDirectory(row.workingDirectory)
-      envVariables(row.envVariables ?: emptyMap())
-      processType(row.processType ?: TerminalProcessType.SHELL)
-      tabName(row.name)
-      userDefinedName(row.isUserDefinedName)
-      shouldAddToToolWindow(false)
-      requestFocus(false)
-      startupFusInfo(
-        TerminalStartupFusInfo(
-          TerminalTabOpeningWay.TABS_RESTORE,
-          triggerTime = null,
-        )
-      )
-    }
-    return builder.createTab()
+    return createTabBuilder()
+      .applyPersistedTab(row)
+      .shouldAddToToolWindow(false)
+      .createTab()
   }
 
   private inner class TerminalToolWindowTabBuilderImpl : TerminalToolWindowTabBuilder {
@@ -410,6 +432,8 @@ class TerminalToolWindowTabsManagerImpl(
       private set
     var startupFusInfo: TerminalStartupFusInfo? = null
       private set
+    var pendingContent: Content? = null
+      private set
 
     override fun workingDirectory(directory: String?): TerminalToolWindowTabBuilder {
       workingDirectory = directory
@@ -441,7 +465,7 @@ class TerminalToolWindowTabsManagerImpl(
       return this
     }
 
-    fun userDefinedName(isUserDefinedName: Boolean): TerminalToolWindowTabBuilder {
+    override fun userDefinedName(isUserDefinedName: Boolean): TerminalToolWindowTabBuilder {
       this.isUserDefinedName = isUserDefinedName
       return this
     }
@@ -483,6 +507,11 @@ class TerminalToolWindowTabsManagerImpl(
 
     override fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalToolWindowTabBuilder {
       this.startupFusInfo = startupFusInfo
+      return this
+    }
+
+    override fun pendingContent(content: Content): TerminalToolWindowTabBuilder {
+      pendingContent = content
       return this
     }
 

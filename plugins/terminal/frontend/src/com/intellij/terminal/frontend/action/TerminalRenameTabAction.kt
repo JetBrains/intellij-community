@@ -5,6 +5,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.buildPendingTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.getFullTitleText
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.Nls
@@ -22,6 +23,8 @@ internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
   }
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
+    // The context menu of a tab that is not selected can target a pending tab, which has no title to change.
+    content.buildPendingTerminalTab(project)
     applyTerminalContentDisplayName(content, newContentName)
   }
 }

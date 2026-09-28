@@ -8,6 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.terminal.frontend.action.TerminalRenameTabAction
+import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
+import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.toolwindow.impl.getPendingTerminalTab
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -45,48 +51,162 @@ internal class TerminalToolWindowTabsPersistenceTest {
   private val project: Project by projectFixture()
   private val disposable: Disposable by disposableFixture()
 
+  private val storedTab1 = TerminalSessionPersistedTab(
+    name = "Restored 1",
+    isUserDefinedName = true,
+    shellCommand = listOf("/bin/zsh"),
+    workingDirectory = "/tmp/one",
+    envVariables = mapOf("FOO" to "bar"),
+    processType = TerminalProcessType.SHELL,
+  )
+
+  private val storedTab2 = TerminalSessionPersistedTab(
+    name = "Restored 2",
+    isUserDefinedName = false,
+    shellCommand = null,
+    workingDirectory = "/tmp/two",
+    envVariables = emptyMap(),
+    processType = TerminalProcessType.NON_SHELL,
+  )
+
+  private val storedTab3 = TerminalSessionPersistedTab(
+    name = "Restored 3",
+    isUserDefinedName = false,
+    shellCommand = listOf("/bin/bash"),
+    workingDirectory = "/tmp/three",
+    envVariables = emptyMap(),
+    processType = TerminalProcessType.SHELL,
+  )
+
   @Test
-  fun `stored tabs are restored on tool window initialization`(): Unit = runBlocking(Dispatchers.EDT) {
-    // Restoring only happens for a trusted project with the reworked terminal enabled (new UI is on by default in tests).
-    TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, disposable)
-    TrustedProjects.setProjectTrusted(project, true)
-
-    TerminalTabsStorage.getInstance(project).updateStoredTabs(listOf(
-      TerminalSessionPersistedTab(
-        name = "Restored 1",
-        isUserDefinedName = true,
-        shellCommand = listOf("/bin/zsh"),
-        workingDirectory = "/tmp/one",
-        envVariables = mapOf("FOO" to "bar"),
-        processType = TerminalProcessType.SHELL,
-      ),
-      TerminalSessionPersistedTab(
-        name = "Restored 2",
-        isUserDefinedName = false,
-        shellCommand = null,
-        workingDirectory = "/tmp/two",
-        envVariables = emptyMap(),
-        processType = TerminalProcessType.NON_SHELL,
-      ),
-    ))
-
-    val toolWindow = registerTerminalToolWindow()
-    TerminalToolWindowInitializer.performInitialization(toolWindow)
+  fun `only the first stored tab is built on tool window initialization`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2, storedTab3)
 
     withTerminalToolWindowManager(project) { manager ->
-      awaitCondition("2 tabs should be restored") { manager.tabs.size == 2 }
+      val contents = toolWindow.contentManager.contents
+      assertThat(contents.map { it.displayName }).containsExactly("Restored 1", "Restored 2", "Restored 3")
+      assertThat(contents.map { it.getPendingTerminalTab() }).containsExactly(null, storedTab2, storedTab3)
+      assertThat(contents.map { it.getTerminalTab() != null }).containsExactly(true, false, false)
 
-      val tabs = manager.tabs
-      val first = tabs.single { it.view.title.userDefinedTitle == "Restored 1" }
+      val first = manager.tabs.single()
+      assertThat(first.content).isSameAs(contents[0])
+      assertThat(first.view.title.userDefinedTitle).isEqualTo("Restored 1")
       assertThat(first.processOptions.shellCommand).containsExactly("/bin/zsh")
       assertThat(first.processOptions.workingDirectory).isEqualTo("/tmp/one")
       assertThat(first.processOptions.envVariables).containsEntry("FOO", "bar").hasSize(1)
       assertThat(first.processOptions.processType).isEqualTo(TerminalProcessType.SHELL)
+    }
+  }
 
-      val second = tabs.single { it.view.title.defaultTitle == "Restored 2" }
-      assertThat(second.view.title.userDefinedTitle).isNull()
-      assertThat(second.processOptions.workingDirectory).isEqualTo("/tmp/two")
-      assertThat(second.processOptions.processType).isEqualTo(TerminalProcessType.NON_SHELL)
+  @Test
+  fun `pending tabs stay in storage`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2, storedTab3)
+    val storage = TerminalTabsStorage.getInstance(project)
+
+    withTerminalToolWindowManager(project) { manager ->
+      // Renaming the built tab makes the persistence store all tabs again.
+      manager.tabs.single().view.title.change {
+        userDefinedTitle = "Renamed 1"
+      }
+
+      awaitCondition("the renamed first tab should be persisted") { storage.getStoredTabs().firstOrNull()?.name == "Renamed 1" }
+      assertThat(storage.getStoredTabs()).containsExactly(storedTab1.copy(name = "Renamed 1"), storedTab2, storedTab3)
+      assertThat(toolWindow.contentManager.contents.map { it.getTerminalTab() != null }).containsExactly(true, false, false)
+    }
+  }
+
+  @Test
+  fun `a pending tab is built when it is selected`(): Unit = runBlocking(Dispatchers.EDT) {
+    val viewsCreated = mutableListOf<TerminalView>()
+    val tabsAdded = mutableListOf<TerminalToolWindowTab>()
+    project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
+      override fun terminalViewCreated(view: TerminalView) {
+        viewsCreated.add(view)
+      }
+
+      override fun tabAdded(tab: TerminalToolWindowTab) {
+        tabsAdded.add(tab)
+      }
+    })
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2, storedTab3)
+
+    withTerminalToolWindowManager(project) { manager ->
+      val contents = toolWindow.contentManager.contents
+      val first = manager.tabs.single()
+      assertThat(viewsCreated).containsExactly(first.view)
+      assertThat(tabsAdded).containsExactly(first)
+
+      toolWindow.contentManager.setSelectedContent(contents[2])
+
+      val third = requireNotNull(contents[2].getTerminalTab()) { "The selected pending tab should be built" }
+      assertThat(manager.tabs).containsExactly(first, third)
+      assertThat(contents[2].getPendingTerminalTab()).isNull()
+      assertThat(contents[2].displayName).isEqualTo("Restored 3")
+      assertThat(third.view.title.defaultTitle).isEqualTo("Restored 3")
+      assertThat(third.view.title.userDefinedTitle).isNull()
+      assertThat(third.processOptions.shellCommand).containsExactly("/bin/bash")
+      assertThat(third.processOptions.workingDirectory).isEqualTo("/tmp/three")
+      assertThat(third.processOptions.processType).isEqualTo(TerminalProcessType.SHELL)
+      assertThat(contents[1].getTerminalTab()).isNull()
+
+      assertThat(viewsCreated).containsExactly(first.view, third.view)
+      assertThat(tabsAdded).containsExactly(first, third)
+    }
+  }
+
+  @Test
+  fun `a change of a built pending tab is persisted`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2)
+    val storage = TerminalTabsStorage.getInstance(project)
+
+    withTerminalToolWindowManager(project) {
+      val second = toolWindow.contentManager.contents[1]
+      toolWindow.contentManager.setSelectedContent(second)
+      awaitEarlierPersistencePasses()
+      second.getTerminalTab()!!.view.title.change {
+        userDefinedTitle = "Renamed 2"
+      }
+
+      awaitCondition("the renamed second tab should be persisted") { storage.getStoredTabs().getOrNull(1)?.name == "Renamed 2" }
+      assertThat(storage.getStoredTabs()).containsExactly(storedTab1, storedTab2.copy(name = "Renamed 2", isUserDefinedName = true))
+    }
+  }
+
+  @Test
+  fun `renaming a pending tab builds it and persists the name`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2)
+    val storage = TerminalTabsStorage.getInstance(project)
+
+    withTerminalToolWindowManager(project) { manager ->
+      val second = toolWindow.contentManager.contents[1]
+      awaitEarlierPersistencePasses()
+      TerminalRenameTabAction().applyContentDisplayName(second, project, "Renamed 2")
+
+      assertThat(manager.tabs).hasSize(2)
+      assertThat(second.getTerminalTab()?.view?.title?.userDefinedTitle).isEqualTo("Renamed 2")
+      awaitCondition("the renamed second tab should be persisted") { storage.getStoredTabs().getOrNull(1)?.name == "Renamed 2" }
+      assertThat(storage.getStoredTabs()).containsExactly(storedTab1, storedTab2.copy(name = "Renamed 2", isUserDefinedName = true))
+    }
+  }
+
+  @Test
+  fun `a closed pending tab is removed from storage`(): Unit = runBlocking(Dispatchers.EDT) {
+    val viewsCreated = mutableListOf<TerminalView>()
+    project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
+      override fun terminalViewCreated(view: TerminalView) {
+        viewsCreated.add(view)
+      }
+    })
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2, storedTab3)
+    val storage = TerminalTabsStorage.getInstance(project)
+
+    withTerminalToolWindowManager(project) {
+      val contentManager = toolWindow.contentManager
+      contentManager.removeContent(contentManager.contents[1], true)
+
+      awaitCondition("the closed pending tab should be removed from storage") { storage.getStoredTabs().size == 2 }
+      assertThat(storage.getStoredTabs()).containsExactly(storedTab1, storedTab3)
+      assertThat(viewsCreated).hasSize(1)
     }
   }
 
@@ -189,8 +309,33 @@ internal class TerminalToolWindowTabsPersistenceTest {
     assertThat(satisfied).describedAs("$message (not satisfied within $timeout)").isTrue()
   }
 
+  /**
+   * The persistence stores the current state of all tabs in each pass.
+   * So a pass that an earlier event requested can store a later change too.
+   * Wait for these passes, so that only the change under test can make the next pass.
+   * On a slow machine the wait can be too short. Then the test can pass without the code under test, but the wait cannot make it fail.
+   */
+  private suspend fun awaitEarlierPersistencePasses() {
+    delay(1.seconds)
+  }
+
   private fun registerTerminalToolWindow(): ToolWindow {
     return ToolWindowManager.getInstance(project)
       .registerToolWindow(RegisterToolWindowTask(id = TerminalToolWindowFactory.TOOL_WINDOW_ID))
+  }
+
+  /**
+   * Stores [tabs], initializes the tool window, and waits until the tool window has a content for each stored tab.
+   */
+  private suspend fun restoreStoredTabs(vararg tabs: TerminalSessionPersistedTab): ToolWindow {
+    // Restoring only happens for a trusted project with the reworked terminal enabled (new UI is on by default in tests).
+    TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, disposable)
+    TrustedProjects.setProjectTrusted(project, true)
+    TerminalTabsStorage.getInstance(project).updateStoredTabs(tabs.toList())
+
+    val toolWindow = registerTerminalToolWindow()
+    TerminalToolWindowInitializer.performInitialization(toolWindow)
+    awaitCondition("${tabs.size} tabs should be restored") { toolWindow.contentManager.contentCount == tabs.size }
+    return toolWindow
   }
 }
