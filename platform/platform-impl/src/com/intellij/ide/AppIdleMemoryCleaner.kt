@@ -194,9 +194,9 @@ internal object AppIdleMemoryCleanerUsagesCollector : CounterUsagesCollector() {
   private val DURATION_SINCE_LAST_CLEANUP = EventFields.Long("duration_since_last_cleanup_ms", description = "Duration since last event")
   private val GC_DURATION = EventFields.Int("gc_duration_ms", description = "Duration of GC invocation")
   private val MEM_BEFORE_CLEANUP_MB = EventFields.Int(
-    "mem_before_cleanup_mb", description = "OS-provided process memory usage (`RAM + SWAP - FileMappings`) before cleanup")
+    "mem_before_cleanup_mb", description = "OS-provided process memory usage ('RAM + SWAP - FileMappings') before cleanup")
   private val MEM_AFTER_CLEANUP_MB = EventFields.Int(
-    "mem_after_cleanup_mb", description = "OS-provided process memory usage (`RAM + SWAP - FileMappings`) after cleanup")
+    "mem_after_cleanup_mb", description = "OS-provided process memory usage ('RAM + SWAP - FileMappings') after cleanup")
   private val TOTAL_CLEANED_MB = EventFields.Int(
     "total_cleaned_mb", description = "mem_before_cleanup_mb - mem_after_cleanup_mb")
   private val TOTAL_CLEANED_PERCENT = EventFields.Int(

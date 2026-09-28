@@ -52,7 +52,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val EVENT: EventField<Class<*>?> = EventFields.Class("event", "Event which triggered completion")
     val EDITOR_TYPE: EventField<InlineCompletionEditorType> = EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor")
     val PROVIDER: EventField<Class<*>?> = EventFields.Class("provider", "Completion provider class")
-    val PROVIDER_PLUGIN_INFO: EventField<PluginInfo?> = PluginInfoField("plugin_id_of_provider", "Id of provider's plugin")
+    val PROVIDER_PLUGIN_INFO: EventField<PluginInfo?> = PluginInfoField("plugin_id_of_provider", "ID of provider's plugin")
     val TIME_TO_COMPUTE: EventField<Long> = EventFields.Long("time_to_compute", "Time of provider execution (ms)")
     val OUTCOME: EventField<Outcome?> = EventFields.NullableEnum<Outcome>("outcome", description = "Invocation outcome (show, no_suggestions, etc.)")
 
@@ -86,12 +86,12 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val EDITOR_TYPE: EventField<InlineCompletionEditorType> = EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor")
     val PROVIDER: EventField<Class<*>?> = EventFields.Class("provider", "Completion provider class")
     val LINES: EventField<List<Int>> = EventFields.IntList("lines", "Number of lines in the suggestion")
-    val LENGTH: EventField<List<Int>> = EventFields.IntList("length", "Length of the 'gray text' shown (in chars)")
+    val LENGTH: EventField<List<Int>> = EventFields.IntList("length", "Length of the gray text shown (in chars)")
     val LENGTH_CHANGE_DURING_SHOW: EventField<Int> = EventFields.Int("typing_during_show", "How many chars the user typed over completion or length of partially accepted completion")
 
     val TIME_TO_SHOW: EventField<Long> = EventFields.Long("time_to_show", "Time between completion invocation time and show time (ms)")
     val SHOWING_TIME: EventField<Long> = EventFields.Long("showing_time", "Period of time for which the user was looking at the suggestion (ms)")
-    val FINISH_TYPE: EventField<FinishType> = EventFields.Enum<FinishType>("finish_type", "How completion session was finished")
+    val FINISH_TYPE: EventField<FinishType> = EventFields.Enum<FinishType>("finish_type", "Whether the completion suggestion was accepted or cancelled by the user")
 
     val EXPLICIT_SWITCHING_VARIANTS_TIMES: EventField<Int> = EventFields.Int("explicit_switching_variants_times", "How many times the user was switching between completion variants (we only have 1 at the moment)")
     val SELECTED_INDEX: EventField<Int> = EventFields.Int("selected_index")

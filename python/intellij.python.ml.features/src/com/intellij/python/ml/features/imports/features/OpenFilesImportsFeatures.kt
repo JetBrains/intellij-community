@@ -16,8 +16,8 @@ private const val FILES_TO_WATCH = 8
 
 object OpenFilesImportsFeatures : ImportCandidateFeatures(Features) {
   object Features : FeatureContainer {
-    val OPEN_FILES_EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("open_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
-    val OPEN_FILES_EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("open_files_existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
+    val OPEN_FILES_EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("open_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from (open files)" }.nullable()
+    val OPEN_FILES_EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("open_files_existing_import_prefix") { "A maximal prefix for which there exists some import (open files)" }.nullable()
     val OPEN_FILES_NEEDED_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("open_files_needed_import_from_prefix") { "COMPONENT_COUNT - OPEN_FILES_EXISTING_IMPORT_FROM_PREFIX" }.nullable()
     val OPEN_FILES_NEEDED_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("open_files_needed_import_prefix") { "COMPONENT_COUNT - OPEN_FILES_EXISTING_IMPORT_PREFIX" }.nullable()
   }

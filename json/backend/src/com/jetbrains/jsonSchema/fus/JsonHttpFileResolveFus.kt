@@ -27,11 +27,11 @@ internal object JsonHttpFileLoadingUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = jsonHttpFileResolveGroup
 }
 
-internal val JsonHttpFileNioFile = EventFields.Boolean("nio_file_resolve_status", "Remote schema found via nio.file api")
-internal val JsonHttpFileNioFileCanBeRead = EventFields.Boolean("nio_file_can_read_status", "Remote schema found via nio.file api can be read")
-internal val JsonHttpFileNioFileLength = EventFields.RoundedLong("nio_file_length_status", "Remote schema found via nio.file api length")
-internal val JsonHttpFileVfsFile = EventFields.Boolean("vfs_file_resolve_status", "Remote schema found via VFS api")
-internal val JsonHttpFileSyncRefreshVfsFile = EventFields.Boolean("vfs_refresh_file_resolve_status", "Remote schema found via VFS api after explicit synchronous refresh")
+internal val JsonHttpFileNioFile = EventFields.Boolean("nio_file_resolve_status", "Remote schema found via nio.file API")
+internal val JsonHttpFileNioFileCanBeRead = EventFields.Boolean("nio_file_can_read_status", "Whether the remote schema found via nio.file API can be read")
+internal val JsonHttpFileNioFileLength = EventFields.RoundedLong("nio_file_length_status", "The length of the remote schema found via nio.file API")
+internal val JsonHttpFileVfsFile = EventFields.Boolean("vfs_file_resolve_status", "Remote schema found via VFS API")
+internal val JsonHttpFileSyncRefreshVfsFile = EventFields.Boolean("vfs_refresh_file_resolve_status", "Remote schema found via VFS API after explicit synchronous refresh")
 internal val JsonHttpFileVfsFileValidity = EventFields.Boolean("vfs_file_validity_status", "Remote schema VFS file validity")
 internal val JsonHttpFileDownloadState = EventFields.Enum<JsonRemoteSchemaDownloadState>("http_file_download_status", "Remote file download state")
 

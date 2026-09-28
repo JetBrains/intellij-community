@@ -603,12 +603,12 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   private val MEM_SAMPLES_FIELD = EventFields.Int("samples")
   private val MEM_HISTOGRAM_TOTAL1_FIELD = EventFields.IntList(
     "ram_minus_file_mappings",
-    description = "OS-provided process memory usage `RAM - FileMappings`; sampled every second, aggregated into a histogram; " +
+    description = "RAM - FileMappings; sampled every second, aggregated into a histogram; " +
                   "buckets=${MEM_HISTOGRAM_BUCKETS.contentToString()}"
   )
   private val MEM_HISTOGRAM_TOTAL2_FIELD = EventFields.IntList(
     "ram_plus_swap_minus_file_mappings",
-    description = "OS-provided process memory usage `RAM + SWAP - FileMappings`; sampled every second, aggregated into a histogram; " +
+    description = "RAM + SWAP - FileMappings; sampled every second, aggregated into a histogram; " +
                   "buckets=${MEM_HISTOGRAM_BUCKETS.contentToString()}"
   )
   private val MEM_HEARTBEAT_EVENT = GROUP.registerVarargEvent(

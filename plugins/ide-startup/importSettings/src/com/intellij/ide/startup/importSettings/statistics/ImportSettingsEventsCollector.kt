@@ -74,8 +74,8 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
   private val JB_IDE_VALUES = EventFields.StringList("jbIdeValues", ALLOWED_JB_IDES, "Supported JB IDEs")
   private val EXTERNAL_IDE_VALUES = EventFields.EnumList<TransferableIdeId>("externalIdeValues", "Supported external IDEs")
-  private val FIRST_PAGE_BUTTONS = EventFields.Enum<ProductPageButton>("productPageButton", "Buttons on the first page")
-  private val SECOND_PAGE_BUTTONS = EventFields.Enum<ConfigurePageButton>("configurePageButton", "Buttons on the second page")
+  private val FIRST_PAGE_BUTTONS = EventFields.Enum<ProductPageButton>("productPageButton", "Button on the first page")
+  private val SECOND_PAGE_BUTTONS = EventFields.Enum<ConfigurePageButton>("configurePageButton", "Button on the second page")
   private val IMPORT_TYPES = EventFields.Enum<ImportType>("importTypes", "Import type")
   private val PLUGIN_CANT_IMPORT_REASONS = EventFields.Enum<ImportErrorTypes>("importErrorTypes")
   private val JB_IMPORT_CATEGORIES = EventFields.StringList("settingsCategories",
@@ -107,8 +107,8 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   private val jbIdeDisabledOptions = GROUP.registerEvent("page.configure.jb.disabled.categories", JB_IMPORT_CATEGORIES)
   private val jbIdePlugins = GROUP.registerEvent(
     "page.configure.jb.ide.plugins",
-    EventFields.Int("totalCount", "Total number of plugins that we've found during scanning"),
-    EventFields.Int("unselectedCount", "number of unselected plugins"))
+    EventFields.Int("totalCount", "Total number of plugins that were found during scanning"),
+    EventFields.Int("unselectedCount", "Number of unselected plugins"))
   private val configurePageExpandClicked = GROUP.registerEvent("page.configure.expand.clicked", EventFields.String("itemId", ITEMS_MULTIPLE_IDS))
   private val configurePageButton = GROUP.registerEvent("page.configure.button", SECOND_PAGE_BUTTONS)
   private val configurePageTimeSpent = GROUP.registerEvent("page.configure.time.spent", EventFields.DurationMs)

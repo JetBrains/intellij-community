@@ -22,12 +22,12 @@ object TerminalShellInfoStatistics {
   val promptThemeField: StringEventField = EventFields.String("prompt_theme", knownPromptThemes)
 
   val isOhMyPoshField: BooleanEventField = EventFields.Boolean("is_oh_my_posh", "Zsh, Bash, Powershell")
-  val isStarshipField: BooleanEventField = EventFields.Boolean("is_starship", "Zsh, Bash, Powershell")
+  val isStarshipField: BooleanEventField = EventFields.Boolean("is_starship", "Bash, Zsh, Powershell")
 
   val isOhMyZshField: BooleanEventField = EventFields.Boolean("is_oh_my_zsh", "Zsh only")
   val isP10KField: BooleanEventField = EventFields.Boolean("is_p10k", "Zsh only")
-  val isSpaceshipField: BooleanEventField = EventFields.Boolean("is_spaceship", "Zsh only")
-  val isPreztoField: BooleanEventField = EventFields.Boolean("is_prezto", "Zsh only")
+  val isSpaceshipField: BooleanEventField = EventFields.Boolean("is_spaceship", "Only Zsh")
+  val isPreztoField: BooleanEventField = EventFields.Boolean("is_prezto", "Zsh")
 
   val isOhMyBashField: BooleanEventField = EventFields.Boolean("is_oh_my_bash", "Bash only")
   val isBashItField: BooleanEventField = EventFields.Boolean("is_bash_it", "Bash only")

@@ -16,13 +16,13 @@ object LogSystemCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup(ID, 2)
   override fun getGroup(): EventLogGroup = GROUP
 
-  val restartField: BooleanEventField = EventFields.Boolean("restart", "Don't start external uploader because there is restarted")
-  val runningFromSourcesField: BooleanEventField = EventFields.Boolean("running_from_sources", "Don't start external uploader because IDE is running from sources")
-  val sendingOnExitDisabledField: BooleanEventField = EventFields.Boolean("sending_onexit_not_enabled", "Don't start external uploader because sending on exit is disabled")
-  val notEnabledLoggerProvidersField: BooleanEventField = EventFields.Boolean("not_enabled_logger_providers", "Don't start external uploader because there are no enabled logger providers")
-  val updateInProgressField: BooleanEventField = EventFields.Boolean("update_in_progress", "Don't start external uploader because update is in progress")
-  val sendingForAllRecordersDisabledField: BooleanEventField = EventFields.Boolean("sending_disabled_for_all_recorders", "Don't start external uploader because sending logs is disabled for all recorders")
-  val failedToStartField: BooleanEventField = EventFields.Boolean("failed_to_start", "Failed to start external log uploader")
+  val restartField: BooleanEventField = EventFields.Boolean("restart", "If true, the external uploader wasn't started because IDE was restarted")
+  val runningFromSourcesField: BooleanEventField = EventFields.Boolean("running_from_sources", "If true, the external uploader wasn't started because IDE was running from sources")
+  val sendingOnExitDisabledField: BooleanEventField = EventFields.Boolean("sending_onexit_not_enabled", "If true, the external uploader wasn't started because sending on exit is disabled")
+  val notEnabledLoggerProvidersField: BooleanEventField = EventFields.Boolean("not_enabled_logger_providers", "If true, the external uploader wasn't started because there are no enabled logger providers")
+  val updateInProgressField: BooleanEventField = EventFields.Boolean("update_in_progress", "If true, the external uploader wasn't started because an update is in progress")
+  val sendingForAllRecordersDisabledField: BooleanEventField = EventFields.Boolean("sending_disabled_for_all_recorders", "If true, the external uploader wasn't started because sending logs is disabled for all recorders")
+  val failedToStartField: BooleanEventField = EventFields.Boolean("failed_to_start", "External log uploader failed to start")
 
   val externalUploaderLaunched: VarargEventId = GROUP.registerVarargEvent(
     "external.uploader.launched",

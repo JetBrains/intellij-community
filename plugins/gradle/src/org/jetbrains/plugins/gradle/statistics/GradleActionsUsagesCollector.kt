@@ -26,7 +26,7 @@ internal object GradleActionsUsagesCollector : CounterUsagesCollector() {
   val SHOW_GRADLE_DAEMONS_ACTION = GROUP.registerEvent("showGradleDaemonsAction")
 
   @JvmField
-  val TOGGLE_PARALLEL_FETCH = GROUP.registerEvent("toggleParallelFetch", EventFields.Boolean("new_value", "newly set value"))
+  val TOGGLE_PARALLEL_FETCH = GROUP.registerEvent("toggleParallelFetch", EventFields.Boolean("new_value", "Newly set value"))
 
   @JvmStatic
   fun trigger(project: Project?, action: EventId) {

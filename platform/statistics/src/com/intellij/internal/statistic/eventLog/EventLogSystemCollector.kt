@@ -220,22 +220,21 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
                                                                  "loading or parsing stages."
     private const val CODE_METADATA_UPDATE_FAILED_DESCRIPTION = "In case loading request failed - the metric is recorded response code if it " +
                                                                 "was different from 200."
-    private const val TOTAL_LOGS_SEND_DESCRIPTION = "Total amount of existing for sending event-log files"
+    private const val TOTAL_LOGS_SEND_DESCRIPTION = "Total amount of event log files ready to be sent"
     private const val SEND_LOGS_SEND_DESCRIPTION = "Amount of event log files attempted to send"
-    private const val FAILED_LOGS_SEND_DESCRIPTION = "Amount of event-log files which were failed to send"
-    private const val EXTERNAL_LOGS_SEND_DESCRIPTION = "Indicates if logs were sending from external process or not."
-    private const val SUCCEED_LOGS_SEND_DESCRIPTION = "The amount of successfully sent files."
-    private const val ERRORS_LOGS_SEND_DESCRIPTION = "The list of integers which identify error codes. If error is less than 100, the problem is " +
-                                                     "in data structure (e.g. invalid recorder code), if error is between 100 and 600 it's error " +
-                                                     "code from an HTTP request."
+    private const val FAILED_LOGS_SEND_DESCRIPTION = "Amount of event log files which failed to send"
+    private const val EXTERNAL_LOGS_SEND_DESCRIPTION = "Indicates if logs were being sent from external process or not."
+    private const val SUCCEED_LOGS_SEND_DESCRIPTION = "The amount of successfully sent files"
+    private const val ERRORS_LOGS_SEND_DESCRIPTION = "List of error codes. If the code is less than 100, the problem is in data structure " +
+                                                     "(e.g. invalid recorder code); if the code is between 100 and 600, it's an HTTP response code."
     private const val SEND_TS_EXTERNAL_SEND_STARTED_DESCRIPTION = "Actual time when sending was started"
     private const val SEND_TS_EXTERNAL_SEND_FINISHED_DESCRIPTION = "Actual time when sending was finished"
-    private const val SUCCEED_EXTERNAL_SEND_FINISHED_DESCRIPTION = "Shows if external process sent data successfully or not"
-    private const val ERROR_EXTERNAL_SEND_FINISHED_DESCRIPTION = "The error name in case the sending was failed, e.g. 'no arguments', 'not permitted server', 'no application config' etc."
-    private const val SUCCEED_EXTERNAL_SEND_COMMAND_CREATION_FINISHED_DESCRIPTION = "Shows if command to start external upload process was " +
+    private const val SUCCEED_EXTERNAL_SEND_FINISHED_DESCRIPTION = "Shows if external process has sent data successfully or not"
+    private const val ERROR_EXTERNAL_SEND_FINISHED_DESCRIPTION = "The error name in case the sending has failed, e.g. 'no arguments', 'not permitted server', 'no application config' etc."
+    private const val SUCCEED_EXTERNAL_SEND_COMMAND_CREATION_FINISHED_DESCRIPTION = "Shows if the command to start an external upload process has " +
                                                                                     "finished successfully or not"
-    private const val ERROR_EXTERNAL_SEND_COMMAND_CREATION_FINISHED_DESCRIPTION = "The error name in case command to start external upload " +
-                                                                                  "process was failed, e.g. 'no logs', 'no temp folder' etc."
+    private const val ERROR_EXTERNAL_SEND_COMMAND_CREATION_FINISHED_DESCRIPTION = "The error name in case the command to start an external upload " +
+                                                                                  "process has failed, e.g. 'no logs', 'no temp folder' etc."
     private const val ERROR_TS_LOADING_CONFIG_FAILED_DESCRIPTION = "Error time stamp is added if error happened in external process"
     private val stageMetadataLoadFailedField = EventFields.Enum<EventLogMetadataUpdateStage>("stage",
                                                                                              STAGE_METADATA_LOAD_FAILED_DESCRIPTION)

@@ -17,8 +17,8 @@ private const val FILES_TO_WATCH = 8
 
 object NeighborFilesImportsFeatures : ImportCandidateFeatures(Features) {
   object Features : FeatureContainer {
-    val NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
-    val NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
+    val NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from (neighbor files)" }.nullable()
+    val NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_prefix") { "A maximal prefix for which there exists some import (neighbor files)" }.nullable()
     val NEIGHBOR_FILES_NEEDED_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_needed_import_from_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX" }.nullable()
     val NEIGHBOR_FILES_NEEDED_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_needed_import_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX" }.nullable()
   }

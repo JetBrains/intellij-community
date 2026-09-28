@@ -31,7 +31,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
-  private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
+  private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Duration in milliseconds")
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
   private val TERMINAL_TAB_OPENING_WAY = EventFields.Enum<TerminalTabOpeningWay>("opening_way")
   private val TABS_COUNT = EventFields.Int("tab_count", "Total number of terminal tabs including the newly added one")
@@ -72,7 +72,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val DURATION_90_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_90_ms", "90% percentile")
   private val SECOND_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "second_largest_duration_ms")
   private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
-  private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "90% percentile")
+  private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "Text Length 90% percentile")
 
   private val tabOpenedEvent = GROUP.registerVarargEvent(
     "tab.opened",

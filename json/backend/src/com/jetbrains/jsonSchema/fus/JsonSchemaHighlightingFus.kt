@@ -39,7 +39,7 @@ internal sealed interface JsonSchemaFusFeature {
 }
 
 internal enum class JsonSchemaFusAllowedListFeature(override val event: StringEventField) : JsonSchemaFusFeature {
-  JsonFusSchemaId(EventFields.StringValidatedByCustomRule("schema_id", JsonSchemaIdValidationRule::class.java, "JSON schema ID"))
+  JsonFusSchemaId(EventFields.StringValidatedByCustomRule("schema_id", JsonSchemaIdValidationRule::class.java, "JSON schema ID. Only values from a predefined list (KnownSchemaIdentifiers.json) are accepted"))
 }
 
 internal enum class JsonSchemaFusCountedUniqueFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
