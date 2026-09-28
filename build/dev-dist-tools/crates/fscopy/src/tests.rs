@@ -391,6 +391,7 @@ fn absolute_path_removes_dot_segments_lexically() {
 
 #[cfg(unix)]
 #[test]
+#[expect(clippy::disallowed_methods, reason = "the test compares the result with fs::canonicalize")]
 fn real_path_follows_links_after_the_lexical_step_and_resolve_links_before_it() {
     let directory = tempfile::tempdir().unwrap();
     let root = fs::canonicalize(directory.path()).unwrap();

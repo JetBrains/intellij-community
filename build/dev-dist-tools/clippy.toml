@@ -1,9 +1,12 @@
 # The clippy configuration of both dev-dist workspaces. `build/dev-dist-tools/.cargo/config.toml` points `cargo clippy`
 # of the ultimate workspace here, and both `.bazelrc` files point the Bazel clippy aspect here.
 
-# tempfile 3.27 gives these calls the path without the `\\?\` prefix, so on Windows they fail past MAX_PATH
-# (tempfile#444). Rust std adds the prefix. Publish with `fs::rename`, then call `TempPath::disable_cleanup(true)`.
 disallowed-methods = [
+  # On Windows the result carries the `\\?\` prefix, and the tools refuse such a path. `fscopy::resolve_links` removes it.
+  { path = "std::fs::canonicalize", reason = "gives a \\\\?\\ path on Windows; use fscopy::resolve_links" },
+  { path = "std::path::Path::canonicalize", reason = "gives a \\\\?\\ path on Windows; use fscopy::resolve_links" },
+  # tempfile 3.27 gives these calls the path without the `\\?\` prefix, so on Windows they fail past MAX_PATH
+  # (tempfile#444). Rust std adds the prefix. Publish with `fs::rename`, then call `TempPath::disable_cleanup(true)`.
   { path = "tempfile::NamedTempFile::keep", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
   { path = "tempfile::NamedTempFile::persist", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
   { path = "tempfile::NamedTempFile::persist_noclobber", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },

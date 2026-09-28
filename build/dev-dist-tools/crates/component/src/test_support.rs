@@ -18,7 +18,7 @@ pub(crate) struct TempDir {
 impl TempDir {
     pub(crate) fn new() -> Self {
         let directory = tempfile::tempdir().expect("a temporary directory");
-        let path = fs::canonicalize(directory.path()).expect("a real path");
+        let path = fscopy::resolve_links(directory.path()).expect("a real path");
         Self {
             _directory: directory,
             path,

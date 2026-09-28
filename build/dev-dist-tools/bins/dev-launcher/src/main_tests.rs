@@ -339,7 +339,7 @@ fn prepare_reads_only_the_fields_of_the_launch_manifest() {
 fn prepare_links_the_local_home_in_process() {
     let launcher = write_launcher(&[], true);
     let workspace = tempfile::tempdir().unwrap();
-    let workspace = std::fs::canonicalize(workspace.path()).unwrap();
+    let workspace = fscopy::resolve_links(workspace.path()).unwrap();
     let homes = workspace.join("out/dev-data/idea/homes");
     let parent = std::os::unix::process::parent_id().to_string();
     for name in ["999999999", parent.as_str(), "not-a-process"] {

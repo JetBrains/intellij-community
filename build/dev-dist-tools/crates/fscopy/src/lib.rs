@@ -212,6 +212,7 @@ pub fn real_path(path: &Path) -> io::Result<PathBuf> {
 /// On Windows, [`fs::canonicalize`] asks `GetFinalPathNameByHandleW` for the final path, which supports a long path
 /// and follows a junction. The function then removes the `\\?\` prefix. It does not use `dunce::canonicalize`.
 /// For a path longer than `MAX_PATH`, `dunce` keeps the prefix, and the Go original removes it from every path.
+#[expect(clippy::disallowed_methods, reason = "the one call of fs::canonicalize, which removes the prefix")]
 pub fn resolve_links(path: &Path) -> io::Result<PathBuf> {
     let resolved = fs::canonicalize(path).map_err(|error| with_path(&error, path))?;
     if cfg!(windows) {

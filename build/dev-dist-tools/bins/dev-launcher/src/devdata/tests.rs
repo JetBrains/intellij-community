@@ -43,7 +43,7 @@ impl Fixture {
         let directory = tempfile::tempdir().unwrap();
         // The temporary directories of macOS are below a symbolic link (/var -> /private/var), and the launcher
         // hashes real paths.
-        let base = std::fs::canonicalize(directory.path()).unwrap();
+        let base = fscopy::resolve_links(directory.path()).unwrap();
         let fixture = Self {
             _directory: directory,
             workspace: base.join("idea"),
