@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.grid.loader.xls",
     "variant": "",
-    "layoutSignature": "cwhbk4xb6tq2jvccjmgqv857s",
+    "layoutSignature": "lzv2l3etjso3mcl7vtj08rv0",
     "assets": [
         {
             "destination": "lib/grid-loader-xls.jar",
@@ -54,7 +54,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "39l1gi6p7sw8o96snrmoicx4u"
+            "modelSignature": "1tazlojijzo0w2ie9n6kd6fzx"
         },
         {
             "id": "layout-assets:resource-generator:1",
@@ -86,13 +86,7 @@
                         "destination": "",
                         "sources": [
                             0
-                        ],
-                        "transform": {
-                            "kind": "tree-map",
-                            "mappings": [
-                                {}
-                            ]
-                        }
+                        ]
                     }
                 ]
             }

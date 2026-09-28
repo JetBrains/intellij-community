@@ -15,7 +15,10 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 
-/** Declares a filtered resource tree for production and development. Patterns match paths relative to the source directory. */
+/**
+ * Declares a filtered resource tree for production and development. Patterns match paths relative to the source directory.
+ * A tree without exclusions is a plain copy.
+ */
 @ApiStatus.Internal
 class ModuleResourceTree(
   moduleName: String,
@@ -43,11 +46,16 @@ class ModuleResourceTree(
       assets = listOf(DevPluginLayoutAsset(
         destination = relativeOutputPath,
         sources = listOf(0),
-        transform = DevPluginLayoutAssetTransform.treeMap(
-          mappings = listOf(DevPluginLayoutAssetMapping()),
-          excludes = excludes.toList(),
-          directoryExcludes = directoryExcludes.toList(),
-        ),
+        transform = if (excludes.isEmpty() && directoryExcludes.isEmpty()) {
+          null
+        }
+        else {
+          DevPluginLayoutAssetTransform.treeMap(
+            mappings = listOf(DevPluginLayoutAssetMapping()),
+            excludes = excludes.toList(),
+            directoryExcludes = directoryExcludes.toList(),
+          )
+        },
       )),
     )
   }
@@ -63,9 +71,9 @@ class ModuleResourceTree(
   fun copyTo(sourceDirectory: Path, targetDirectory: Path) {
     require(Files.isDirectory(sourceDirectory)) { "The resource tree is missing: $sourceDirectory" }
     val asset = devPluginLayoutAssetSpec.assets.single()
-    val transform = requireNotNull(asset.transform)
-    val fileMatchers = transform.excludes.map { sourceDirectory.fileSystem.getPathMatcher("glob:$it") }
-    val directoryMatchers = transform.directoryExcludes.map { sourceDirectory.fileSystem.getPathMatcher("glob:$it") }
+    val transform = asset.transform
+    val fileMatchers = transform?.excludes.orEmpty().map { sourceDirectory.fileSystem.getPathMatcher("glob:$it") }
+    val directoryMatchers = transform?.directoryExcludes.orEmpty().map { sourceDirectory.fileSystem.getPathMatcher("glob:$it") }
     copyDir(
       sourceDir = sourceDirectory,
       targetDir = targetDirectory.resolve(asset.destination),
