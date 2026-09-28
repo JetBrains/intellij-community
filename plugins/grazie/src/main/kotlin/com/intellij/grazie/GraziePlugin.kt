@@ -21,7 +21,7 @@ object GraziePlugin {
   }
 
   object Hunspell : GrazieStateLifecycle {
-    const val version = "0.9.5"
+    const val version = "0.9.8"
     const val url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/spell"
 
     override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {

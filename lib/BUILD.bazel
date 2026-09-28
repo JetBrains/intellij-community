@@ -3196,17 +3196,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.gec/gec-util-0.9.5.jar_copy",
-    src = "@ai_grazie_gec-gec-util-0_9_5_http//file",
-    out = "ai.grazie.gec/gec-util-0.9.5.jar",
+    name = "ai.grazie.gec/gec-util-0.9.8.jar_copy",
+    src = "@ai_grazie_gec-gec-util-0_9_8_http//file",
+    out = "ai.grazie.gec/gec-util-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-core-ai-grazie-gec-util",
-    jar = "@ai_grazie_gec-gec-util-0_9_5_http//file",
-    source_jar = "@ai_grazie_gec-gec-util-0_9_5-sources_http//file",
+    jar = "@ai_grazie_gec-gec-util-0_9_8_http//file",
+    source_jar = "@ai_grazie_gec-gec-util-0_9_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -3226,17 +3226,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-common-jvm-0.9.5.jar_copy",
-    src = "@ai_grazie_nlp-nlp-common-jvm-0_9_5_http//file",
-    out = "ai.grazie.nlp/nlp-common-jvm-0.9.5.jar",
+    name = "ai.grazie.nlp/nlp-common-jvm-0.9.8.jar_copy",
+    src = "@ai_grazie_nlp-nlp-common-jvm-0_9_8_http//file",
+    out = "ai.grazie.nlp/nlp-common-jvm-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-core-ai-grazie-nlp-common-jvm",
-    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_5_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_5-sources_http//file",
+    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_8_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -3555,44 +3555,44 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.spell/hunspell-de-0.9.5.jar_copy",
-    src = "@ai_grazie_spell-hunspell-de-0_9_5_http//file",
-    out = "ai.grazie.spell/hunspell-de-0.9.5.jar",
+    name = "ai.grazie.spell/hunspell-de-0.9.8.jar_copy",
+    src = "@ai_grazie_spell-hunspell-de-0_9_8_http//file",
+    out = "ai.grazie.spell/hunspell-de-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-tests-ai-grazie-spell-hunspell-de",
-    jar = "@ai_grazie_spell-hunspell-de-0_9_5_http//file",
+    jar = "@ai_grazie_spell-hunspell-de-0_9_8_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "ai.grazie.spell/hunspell-ru-0.9.5.jar_copy",
-    src = "@ai_grazie_spell-hunspell-ru-0_9_5_http//file",
-    out = "ai.grazie.spell/hunspell-ru-0.9.5.jar",
+    name = "ai.grazie.spell/hunspell-ru-0.9.8.jar_copy",
+    src = "@ai_grazie_spell-hunspell-ru-0_9_8_http//file",
+    out = "ai.grazie.spell/hunspell-ru-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-tests-ai-grazie-spell-hunspell-ru",
-    jar = "@ai_grazie_spell-hunspell-ru-0_9_5_http//file",
+    jar = "@ai_grazie_spell-hunspell-ru-0_9_8_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "ai.grazie.spell/hunspell-uk-0.9.5.jar_copy",
-    src = "@ai_grazie_spell-hunspell-uk-0_9_5_http//file",
-    out = "ai.grazie.spell/hunspell-uk-0.9.5.jar",
+    name = "ai.grazie.spell/hunspell-uk-0.9.8.jar_copy",
+    src = "@ai_grazie_spell-hunspell-uk-0_9_8_http//file",
+    out = "ai.grazie.spell/hunspell-uk-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "grazie-tests-ai-grazie-spell-hunspell-uk",
-    jar = "@ai_grazie_spell-hunspell-uk-0_9_5_http//file",
+    jar = "@ai_grazie_spell-hunspell-uk-0_9_8_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -5596,17 +5596,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-detect-jvm-0.9.5.jar_copy",
-    src = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5_http//file",
-    out = "ai.grazie.nlp/nlp-detect-jvm-0.9.5.jar",
+    name = "ai.grazie.nlp/nlp-detect-jvm-0.9.8.jar_copy",
+    src = "@ai_grazie_nlp-nlp-detect-jvm-0_9_8_http//file",
+    out = "ai.grazie.nlp/nlp-detect-jvm-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
-    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5-sources_http//file",
+    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_8_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -5656,25 +5656,25 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie.spell/gec-spell-engine-local-0.9.5.jar_copy",
-    src = "@ai_grazie_spell-gec-spell-engine-local-0_9_5_http//file",
-    out = "ai.grazie.spell/gec-spell-engine-local-0.9.5.jar",
+    name = "ai.grazie.spell/gec-spell-engine-local-0.9.8.jar_copy",
+    src = "@ai_grazie_spell-gec-spell-engine-local-0_9_8_http//file",
+    out = "ai.grazie.spell/gec-spell-engine-local-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-patterns-jvm-0.9.5.jar_copy",
-    src = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_5_http//file",
-    out = "ai.grazie.nlp/nlp-patterns-jvm-0.9.5.jar",
+    name = "ai.grazie.nlp/nlp-patterns-jvm-0.9.8.jar_copy",
+    src = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_8_http//file",
+    out = "ai.grazie.nlp/nlp-patterns-jvm-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.5.jar_copy",
-    src = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_5_http//file",
-    out = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.5.jar",
+    name = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.8.jar_copy",
+    src = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_8_http//file",
+    out = "ai.grazie.nlp/nlp-tokenizer-jvm-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -5684,55 +5684,55 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":ai_grazie_spell-gec-spell-engine-local-0_9_5_http_import",
-        ":ai_grazie_nlp-nlp-common-jvm-0_9_5_http_import",
-        ":ai_grazie_nlp-nlp-patterns-jvm-0_9_5_http_import",
-        ":ai_grazie_nlp-nlp-tokenizer-jvm-0_9_5_http_import",
-        ":ai_grazie_nlp-nlp-detect-jvm-0_9_5_http_import",
+        ":ai_grazie_spell-gec-spell-engine-local-0_9_8_http_import",
+        ":ai_grazie_nlp-nlp-common-jvm-0_9_8_http_import",
+        ":ai_grazie_nlp-nlp-patterns-jvm-0_9_8_http_import",
+        ":ai_grazie_nlp-nlp-tokenizer-jvm-0_9_8_http_import",
+        ":ai_grazie_nlp-nlp-detect-jvm-0_9_8_http_import",
     ],
 )
 
 jvm_import(
-    name = "ai_grazie_spell-gec-spell-engine-local-0_9_5_http_import",
-    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_5_http//file",
-    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_5-sources_http//file",
+    name = "ai_grazie_spell-gec-spell-engine-local-0_9_8_http_import",
+    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_8_http//file",
+    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_8-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-common-jvm-0_9_5_http_import",
-    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_5_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_5-sources_http//file",
+    name = "ai_grazie_nlp-nlp-common-jvm-0_9_8_http_import",
+    jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_8_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_9_8-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-patterns-jvm-0_9_5_http_import",
-    jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_5_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_5-sources_http//file",
+    name = "ai_grazie_nlp-nlp-patterns-jvm-0_9_8_http_import",
+    jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_8_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_9_8-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_9_5_http_import",
-    jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_5_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_5-sources_http//file",
+    name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_9_8_http_import",
+    jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_8_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_9_8-sources_http//file",
 )
 
 jvm_import(
-    name = "ai_grazie_nlp-nlp-detect-jvm-0_9_5_http_import",
-    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5_http//file",
-    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_5-sources_http//file",
+    name = "ai_grazie_nlp-nlp-detect-jvm-0_9_8_http_import",
+    jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_8_http//file",
+    source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_9_8-sources_http//file",
 )
 
 copy_file(
-    name = "ai.grazie.spell/hunspell-en-0.9.5.jar_copy",
-    src = "@ai_grazie_spell-hunspell-en-0_9_5_http//file",
-    out = "ai.grazie.spell/hunspell-en-0.9.5.jar",
+    name = "ai.grazie.spell/hunspell-en-0.9.8.jar_copy",
+    src = "@ai_grazie_spell-hunspell-en-0_9_8_http//file",
+    out = "ai.grazie.spell/hunspell-en-0.9.8.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
-    jar = "@ai_grazie_spell-hunspell-en-0_9_5_http//file",
+    jar = "@ai_grazie_spell-hunspell-en-0_9_8_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -19852,15 +19852,15 @@ jvm_import(
 
 jvm_import(
     name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_5_http//file",
-    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_5-sources_http//file",
+    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_8_http//file",
+    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
-    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_5_http//file",
-    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_5-sources_http//file",
+    jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_8_http//file",
+    source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_9_8-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
