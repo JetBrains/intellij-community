@@ -35,4 +35,13 @@ data class MarkerSpec @JvmOverloads constructor(
      * Defines how this marker is transformed by document edits.
      */
     val policy: MarkerPolicy = DefaultMarkerPolicy,
-)
+) {
+  fun withGreedyToLeft(value: Boolean): MarkerSpec =
+    if (isGreedyToLeft == value) this else copy(isGreedyToLeft = value)
+
+  fun withGreedyToRight(value: Boolean): MarkerSpec =
+    if (isGreedyToRight == value) this else copy(isGreedyToRight = value)
+
+  fun withStickyToRight(value: Boolean): MarkerSpec =
+    if (isStickingToRight == value) this else copy(isStickingToRight = value)
+}

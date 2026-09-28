@@ -872,7 +872,7 @@ class SnapshotMarkerEngineImplTest {
           val markerId = nextMarkerId++
           val offset = random.nextInt(document.textLength + 1)
           val measure = random.nextInt(maxMeasure)
-          val spec = nonGreedySpec().copy(isStickingToRight = random.nextBoolean())
+          val spec = nonGreedySpec().withStickyToRight(random.nextBoolean())
           rootStore.updateRoot(document.core.snapshot()) {
             it.insert(markerId, offset, offset, spec, flavorFlags = 0, measure = measure)
           }

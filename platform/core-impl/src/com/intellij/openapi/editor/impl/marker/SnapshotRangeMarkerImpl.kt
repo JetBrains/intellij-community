@@ -95,15 +95,15 @@ open class SnapshotRangeMarkerImpl private constructor(
   override fun isGreedyToRight(): Boolean = spec.isGreedyToRight
 
   override fun setGreedyToLeft(greedy: Boolean) {
-    updateSpec { it.copy(isGreedyToLeft = greedy) }
+    updateSpec { it.withGreedyToLeft(greedy) }
   }
 
   override fun setGreedyToRight(greedy: Boolean) {
-    updateSpec { it.copy(isGreedyToRight = greedy) }
+    updateSpec { it.withGreedyToRight(greedy) }
   }
 
   override fun setStickingToRight(value: Boolean) {
-    updateSpec { it.copy(isStickingToRight = value) }
+    updateSpec { it.withStickyToRight(value) }
   }
 
   fun isStickingToRight(): Boolean = spec.isStickingToRight

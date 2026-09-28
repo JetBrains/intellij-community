@@ -4,8 +4,8 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Applies each [DocumentOp] to all marker roots for one document.
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ApiStatus.Internal
 class SnapshotMarkerStores {
-  private val stores: MutableSet<SnapshotMarkerRootStore> = ConcurrentHashMap.newKeySet()
+  private val stores: MutableList<SnapshotMarkerRootStore> = ContainerUtil.createEmptyCOWList()
 
   internal fun register(store: SnapshotMarkerRootStore) {
     stores.add(store)
@@ -41,13 +41,19 @@ class SnapshotMarkerStores {
   ): DocumentSnapshot {
     if (op is DocumentTextPatch) {
       validatePatch(beforeSnapshot, afterSnapshot, op)
-      capturedRoots.forEach { it.store.applyPatch(it.root, beforeSnapshot, afterSnapshot, op) }
+      for (i in capturedRoots.indices) {
+        val it = capturedRoots[i]
+        it.store.applyPatch(it.root, beforeSnapshot, afterSnapshot, op)
+      }
     }
     else {
       require(beforeSnapshot.text() === afterSnapshot.text()) {
         "Snapshots must share the same text instance, but op: $op corrupted the text"
       }
-      capturedRoots.forEach { it.store.inherit(it.root, afterSnapshot) }
+      for (i in capturedRoots.indices) {
+        val it = capturedRoots[i]
+        it.store.inherit(it.root, afterSnapshot)
+      }
     }
     return afterSnapshot
   }
@@ -56,11 +62,13 @@ class SnapshotMarkerStores {
     SnapshotMarkerEngineImpl.processQueue()
     if (markerSnapshot === metadataSnapshot) return metadataSnapshot
 
-    val stores = aliveStores().filter { it.containsSnapshot(markerSnapshot) || it.containsSnapshot(metadataSnapshot) }
-    if (stores.isEmpty()) return metadataSnapshot
+    val relevantStores = stores.filter { it.containsSnapshot(markerSnapshot) || it.containsSnapshot(metadataSnapshot) }
+    if (relevantStores.isEmpty()) {
+      return metadataSnapshot
+    }
 
     val mergedSnapshot = metadataSnapshot.copyWithNewIdentity()
-    stores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
+    relevantStores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
   }
 
@@ -70,12 +78,15 @@ class SnapshotMarkerStores {
    */
   private fun captureRoots(snapshot: DocumentSnapshot): List<CapturedRoot> {
     SnapshotMarkerEngineImpl.processQueue()
-    return aliveStores().mapNotNull { store ->
-      store.captureRoot(snapshot)?.let { CapturedRoot(store, it) }
+    val result = ArrayList<CapturedRoot>(stores.size)
+    stores.forEach { store ->
+      val capturedRoot = store.captureRoot(snapshot)?.let { CapturedRoot(store, it) }
+      if (capturedRoot != null) {
+        result.add(capturedRoot)
+      }
     }
+    return result
   }
-
-  private fun aliveStores(): List<SnapshotMarkerRootStore> = stores.toList()
 
   private fun validatePatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch) {
     val beforeLength = beforeSnapshot.text().length()

@@ -42,8 +42,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
 ) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
-  private val roots: ConcurrentMap<DocumentSnapshot, RootState> =
-    CollectionFactory.createConcurrentWeakIdentityMap()
+  private val roots: ConcurrentMap<DocumentSnapshot, RootState> = CollectionFactory.createConcurrentWeakIdentityMap()
 
   private val documentListener: PrioritizedDocumentListener? =
     if (onMarkersInvalidated != null || onDocumentChanged != null || onMarkersAffected != null) {
@@ -168,7 +167,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
 
   private fun rootState(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot): RootState {
     processQueue()
-    return roots.computeIfAbsent(snapshot) { RootState(initialRoot) }
+    return roots[snapshot] ?: roots.computeIfAbsent(snapshot) { RootState(initialRoot) }
   }
 
   /**
