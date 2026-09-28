@@ -28,7 +28,6 @@ object ProofreadingService {
   internal fun covering(file: PsiFile, range: TextRange): List<TextProblem> {
     return getAllProblems(file, checkedDomains())
       .filter { problem -> range.isEmpty || problem.intersects(range) || problem.text.rangesInFile.any { it.intersects(range) } }
-      .filter { it.maybeHasSuggestions() }
   }
 
   /**
@@ -58,13 +57,9 @@ object ProofreadingService {
       CachedValueProvider.Result.create(ConcurrentHashMap.newKeySet(), getGrazieTracker(this))
     }
 
-  @JvmStatic
-  internal fun TextProblem.hasSuggestions(): Boolean =
-    this.suggestions.isNotEmpty() || this.customFixes.filterIsInstance<TextLevelFix>().flatMap { it.changes }.isNotEmpty()
-
   // if a typo's suggestion is to be calculated locally, let's hope there will be suggestion
   private fun TextProblem.maybeHasSuggestions(): Boolean =
-    this is TypoProblem && !this.isCloud || hasSuggestions()
+    this is TypoProblem || this.suggestions.isNotEmpty() || this.customFixes.filterIsInstance<TextLevelFix>().flatMap { it.changes }.isNotEmpty()
 
   private fun getProblemTextRanges(problem: TextProblem) = problem.highlightRanges.map { problem.text.textRangeToFile(it) }
   private fun TextProblem.intersects(range: TextRange) = getProblemTextRanges(this)

@@ -73,16 +73,18 @@ import kotlin.math.min
 
 private val appliedChange = Key<Int>("grazie.mass.apply.change.index")
 
+data class ProblemWithSuggestions(val original: TextProblem, val suggestions: List<TextProblem.Suggestion>)
+
 class GrazieMassApplyDialog : DialogWrapper {
   private val text: String
-  private val problems: List<TextProblem>
+  private val problems: List<ProblemWithSuggestions>
   private val project: Project
   private val editor: EditorEx
   private val undoManager: DocumentUndoManager
   private val highlightings = HighlightedProblems()
   private val massOptionComboBox by lazy { CollectionComboBoxModel(MassOptions.entries) }
 
-  constructor(file: PsiFile, problems: List<TextProblem>) : super(file.project) {
+  constructor(file: PsiFile, problems: List<ProblemWithSuggestions>) : super(file.project) {
     check(problems.isNotEmpty()) { "In order to apply mass fixes, there must be at least one problem to fix" }
     this.text = file.text
     this.project = file.project
@@ -260,53 +262,28 @@ class GrazieMassApplyDialog : DialogWrapper {
     })
   }
 
-  private fun getHighlightings(): List<Highlighting> {
-    val preparedProblems = problems.map(::prepareProblem)
-
-    val normalSuggestionRanges = preparedProblems
-      .flatMap { it.changes.flatMap { change -> change.originalReplacements } }
-      .map { it.first }
-    val intersectionFilter = NormalSuggestionRangeFilter(normalSuggestionRanges)
-    val textLevelChanges = mutableSetOf<StringOperation>()
-
-    return preparedProblems.flatMap { prepared ->
-      val customHighlightings = prepared.textLevelFixes
-        .asSequence()
-        .flatMap { fix -> fix.changes.map { TextLevelChange(fix, it) } }
-        .filter { (_, change) -> !intersectionFilter.intersects(change.range) && textLevelChanges.add(change) }
-        .map { (fix, change) -> DocumentChange(fix.text, listOf(change.range to change.replacement.toString()), editor, project) }
-        .map { change ->
-          Highlighting(
-            prepared.problem,
-            listOf(addRangeHighlighter(editor, change.originalReplacements.single().first, BOLD_TEXT_ATTRIBUTES)),
-            listOf(change, IgnoreChange(prepared.problem, change))
-          )
-        }.toList()
-
-      val highlighting = if (prepared.changes.isNotEmpty()) {
+  private fun getHighlightings(): List<Highlighting> =
+    problems.asSequence()
+      .map { prepareProblem(it) }
+      .filter { it.changes.isNotEmpty() }
+      .map { prepared ->
         Highlighting(
-          prepared.problem,
-          prepared.ranges,
+          prepared.problem, prepared.ranges,
           prepared.changes + IgnoreChange(prepared.problem, prepared.changes.firstOrNull())
         )
-      } else {
-        null
-      }
-      customHighlightings + listOfNotNull(highlighting)
-    }
-  }
+      }.toList()
 
-  private fun prepareProblem(problem: TextProblem): PreparedProblem {
-    val ranges = problem.highlightRanges
-      .map { problem.text.textRangeToFile(it) }
+  private fun prepareProblem(problem: ProblemWithSuggestions): PreparedProblem {
+    val ranges = problem.original.highlightRanges
+      .map { problem.original.text.textRangeToFile(it) }
       .map { addRangeHighlighter(editor, it, BOLD_TEXT_ATTRIBUTES) }
     val changes = problem.suggestions.map { suggestion ->
       val replacements = suggestion.changes
-        .flatMap { toRangeReplacements(it.range, it.replacement, problem) }
+        .flatMap { toRangeReplacements(it.range, it.replacement, problem.original) }
         .map { (range, replacement) -> range to replacement }
       DocumentChange(suggestion.presentableText, replacements, editor, project)
     }
-    return PreparedProblem(problem, ranges, changes, problem.customFixes.filterIsInstance<TextLevelFix>())
+    return PreparedProblem(problem.original, ranges, changes)
   }
 
   private fun Row.labeledIcon(icon: Icon, problemsExtractor: (HighlightedProblems) -> Int) {
@@ -349,8 +326,8 @@ private fun addRangeHighlighter(editor: Editor, range: TextRange, textAttribute:
   )
 }
 
-private fun getTextRanges(problems: List<TextProblem>): List<TextRange> {
-  val ranges = problems.flatMap { it.text.rangesInFile }
+private fun getTextRanges(problems: List<ProblemWithSuggestions>): List<TextRange> {
+  val ranges = problems.flatMap { it.original.text.rangesInFile }
     .sortedBy { it.startOffset }.distinct()
   return TextRangeUtil.mergeRanges(ranges)
 }
@@ -627,7 +604,6 @@ private data class PreparedProblem(
   val problem: TextProblem,
   val ranges: List<RangeHighlighter>,
   val changes: List<DocumentChange>,
-  val textLevelFixes: List<TextLevelFix>,
 )
 
 private data class TextLevelChange(

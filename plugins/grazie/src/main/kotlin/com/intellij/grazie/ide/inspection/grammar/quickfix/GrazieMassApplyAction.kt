@@ -9,8 +9,8 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.ide.ui.mass.GrazieMassApplyDialog
+import com.intellij.grazie.ide.ui.mass.ProblemWithSuggestions
 import com.intellij.grazie.text.ProofreadingService
-import com.intellij.grazie.text.ProofreadingService.hasSuggestions
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.openapi.application.readActionBlocking
@@ -44,16 +44,10 @@ class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, Customizab
     val problems = runWithModalProgressBlocking(project, GrazieBundle.message("grazie.mass.apply.action.title")) {
       readActionBlocking {
         ProofreadingService.covering(file, getSelectionRange(editor))
+          .map { ProblemWithSuggestions(it, it.suggestions) }
       }
     }
-    if (problems.isEmpty()) return
-
-    val hasSuggestions = runWithModalProgressBlocking(project, GrazieBundle.message("grazie.mass.apply.action.title")) {
-      readActionBlocking {
-        problems.any { it.hasSuggestions() }
-      }
-    }
-    if (!hasSuggestions) return
+    if (problems.all { it.suggestions.isEmpty() }) return
 
     val dialog = GrazieMassApplyDialog(file, problems)
     dialog.show()

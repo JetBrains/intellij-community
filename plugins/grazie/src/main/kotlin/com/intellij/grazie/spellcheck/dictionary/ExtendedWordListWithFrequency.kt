@@ -4,7 +4,7 @@ package com.intellij.grazie.spellcheck.dictionary
 import ai.grazie.spell.lists.WordListWithFrequency
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.grazie.spellcheck.engine.MAX_WORD_LENGTH
-import com.intellij.openapi.progress.util.runWithCheckCanceled
+import com.intellij.grazie.utils.runWithCheckCanceledOrKnownSlow
 
 internal class ExtendedWordListWithFrequency(private val base: WordListWithFrequency,
                                              private val extension: WordListAdapter) : WordListWithFrequency {
@@ -21,9 +21,8 @@ internal class ExtendedWordListWithFrequency(private val base: WordListWithFrequ
     return base.contains(word, caseSensitive) || extension.contains(word, caseSensitive)
   }
 
-  // TODO: Remove `runWithCheckCanceled` after lucene update. https://github.com/apache/lucene/pull/16527
   override fun suggest(word: String) = (if (base is HunspellWordList) {
-    runWithCheckCanceled { base.suggest(word) }
+    runWithCheckCanceledOrKnownSlow("IJPL-256787") { base.suggest(word) }
   } else {
     base.suggest(word)
   }).apply { this += extension.suggest(word) }

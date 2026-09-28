@@ -24,6 +24,7 @@ import com.intellij.grazie.text.TextProblemAggregator
 import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
@@ -31,6 +32,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
+import com.intellij.util.SlowOperations
+import com.intellij.util.ui.EDT
 import ai.grazie.text.TextRange as GrazieTextRange
 
 @JvmField
@@ -111,6 +114,14 @@ internal fun getGrazieTracker(file: PsiFile): ModificationTracker {
     DictionaryModificationTracker.getInstance(file.project).modificationCount +
     file.modificationStamp +
     PsiModificationTracker.getInstance(file.project).modificationCount
+  }
+}
+
+internal fun <T> runWithCheckCanceledOrKnownSlow(ytTicket: String, block: () -> T): T {
+  if (EDT.isCurrentThreadEdt()) {
+    return SlowOperations.knownIssue(ytTicket).use { block() }
+  } else {
+    return runWithCheckCanceled { block() }
   }
 }
 
