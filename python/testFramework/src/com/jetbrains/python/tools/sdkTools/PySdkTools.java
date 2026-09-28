@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.targetsFacade.PyTargetsIntrospectionFacade;
@@ -101,9 +102,10 @@ public final class PySdkTools {
    * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
    */
-  public static void generateTempSkeletonsOrPackages(final @NotNull Sdk sdk,
-                                                     final boolean addSkeletons,
-                                                     final @Nullable Module module)
+  @RequiresBackgroundThread(generateAssertion = false)
+  static void generateTempSkeletonsOrPackages(final @NotNull Sdk sdk,
+                                              final boolean addSkeletons,
+                                              final @Nullable Module module)
     throws InvalidSdkException, ExecutionException {
     Project project = null;
 
