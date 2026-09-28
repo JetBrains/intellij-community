@@ -12,6 +12,7 @@ import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -69,7 +70,9 @@ internal suspend fun collectSplitModeCompatibilityIssues(
           val psiManager = PsiManager.getInstance(project)
           val psiFile = psiManager.findFile(virtualFile) ?: return@smartReadAction null
           val tools = getSplitModeCompatibilityInspectionTools(project)
-          inspectSplitModeCompatibilityFile(project, psiFile, tools)
+          blockingContextToIndicator {
+            inspectSplitModeCompatibilityFile(project, psiFile, tools)
+          }
         } ?: continue
         inspectedFileCount++
         issues += fileIssues
