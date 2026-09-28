@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenTestFixture
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.getEditor
 import com.intellij.maven.testFramework.fixtures.getTestPsiFile
@@ -27,14 +28,13 @@ import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
-import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.usages.UsageTargetUtil
-import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.Assert.assertNotNull
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 // Rename refactoring and find-usages helpers.
 suspend fun MavenDomTestFixture.assertRenameResult(value: String, expectedXml: String, omitModelVersionTag: Boolean = false) {
@@ -67,7 +67,7 @@ suspend fun MavenDomTestFixture.doInlineRename(f: VirtualFile, value: String) {
   val context = createRenameDataContext(f, value)
   val renameHandler = readAction { RenameHandlerRegistry.getInstance().getRenameHandler(context) }
   assertNotNull(renameHandler)
-  assertInstanceOf(renameHandler, VariableInplaceRenameHandler::class.java)
+  assertInstanceOf(VariableInplaceRenameHandler::class.java, renameHandler)
   withContext(Dispatchers.EDT) {
     writeIntentReadAction {
       CodeInsightTestUtil.doInlineRename(renameHandler as VariableInplaceRenameHandler?, value, fixture)
@@ -98,7 +98,7 @@ private suspend fun MavenDomTestFixture.createRenameDataContext(f: VirtualFile, 
 }
 
 suspend fun MavenDomTestFixture.assertSearchResultsInclude(file: VirtualFile, vararg expected: PsiElement?) {
-  assertContainsElements(search(file), *expected)
+  assertContain(search(file), *expected)
 }
 
 suspend fun MavenDomTestFixture.assertSearchResults(file: VirtualFile, vararg expected: PsiElement?) {

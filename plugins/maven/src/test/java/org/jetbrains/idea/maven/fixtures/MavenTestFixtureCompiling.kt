@@ -21,9 +21,9 @@ import com.intellij.packaging.impl.compiler.ArtifactCompileScope
 import com.intellij.testFramework.CompilerTester
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.TestFileSystemBuilder
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Arrays
@@ -134,7 +134,7 @@ fun MavenImportingTestFixture.assertJar(relativePath: String, fileSystemBuilder:
 fun MavenImportingTestFixture.assertCopied(path: String) {
   val parent = projectPom.parent.toNioPath()
   val resolvedPath = parent.resolve(path)
-  assertTrue("File $resolvedPath doesn't exist", resolvedPath.exists())
+  assertTrue(resolvedPath.exists(), "File $resolvedPath doesn't exist")
 }
 
 fun MavenImportingTestFixture.assertExists(path: String) {
@@ -146,7 +146,7 @@ fun MavenImportingTestFixture.assertDoesNotExist(path: String) {
 }
 
 fun MavenImportingTestFixture.assertExists(path: Path) {
-  assertTrue("File should exist $path", path.exists())
+  assertTrue(path.exists(), "File should exist $path")
 }
 
 @Throws(IOException::class)
@@ -172,7 +172,7 @@ fun MavenImportingTestFixture.assertResult(pomFile: VirtualFile, relativePath: S
 fun MavenImportingTestFixture.loadResult(pomFile: VirtualFile, relativePath: String): String {
   val parent = pomFile.parent.toNioPath()
   val file = parent.resolve(relativePath)
-  assertTrue("file not found: $relativePath", file.exists())
+  assertTrue(file.exists(), "file not found: $relativePath")
   return file.readText()
 }
 

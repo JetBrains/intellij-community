@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.localquarantine.plugin.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
@@ -12,7 +13,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.WaitFor

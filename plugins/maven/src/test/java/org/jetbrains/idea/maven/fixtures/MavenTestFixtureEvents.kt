@@ -3,16 +3,16 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.awaitConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -35,7 +35,7 @@ suspend fun MavenDomTestFixture.runAndExpectPluginIndexEvents(expectedArtifactId
 
   awaitConfiguration()
 
-  assertTrue("Maven plugins are not indexed in time: " + java.lang.String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty())
+  assertTrue(artifactIdsToIndex.isEmpty(), "Maven plugins are not indexed in time: " + java.lang.String.join(", ", artifactIdsToIndex))
 }
 
 suspend fun MavenDomTestFixture.runAndExpectArtifactDownloadEvents(expectedGroupId: String, expectedArtifactIds: Set<String>, action: suspend () -> Unit) {

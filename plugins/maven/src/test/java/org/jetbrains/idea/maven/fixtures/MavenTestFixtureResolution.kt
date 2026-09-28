@@ -20,15 +20,15 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlTagValue
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
-import junit.framework.TestCase.assertFalse
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 
 // Reference resolution, DOM tag lookup, documentation and intention helpers.
 
@@ -90,9 +90,9 @@ suspend fun MavenDomTestFixture.assertResolved(file: VirtualFile, expected: PsiE
 }
 
 private suspend fun MavenDomTestFixture.doAssertResolved(file: VirtualFile, expected: PsiElement): PsiReference? {
-  assertNotNull("expected reference is null", expected)
+  assertNotNull(expected, "expected reference is null")
   val ref = getReferenceAtCaret(file)
-  assertNotNull("reference at caret is null", ref)
+  assertNotNull(ref, "reference at caret is null")
   var resolved = readAction { ref!!.resolve() }
   if (resolved is MavenPsiElementWrapper) {
     resolved = resolved.wrappee
@@ -123,7 +123,7 @@ suspend fun MavenDomTestFixture.assertNoReferences(file: VirtualFile, refClass: 
   val refs = if (ref is PsiMultiReference) ref.references else arrayOf(ref)
   readAction {
     for (each in refs) {
-      assertFalse(each.toString(), refClass.isInstance(each))
+      assertFalse(refClass.isInstance(each), each.toString())
     }
   }
 }
@@ -132,11 +132,11 @@ suspend fun MavenDomTestFixture.findTag(file: VirtualFile, path: String, clazz: 
   configTest(file)
   return readAction {
     val model = MavenDomUtil.getMavenDomModel(project, file, clazz)
-    assertNotNull("Model is not of $clazz", model)
+    assertNotNull(model, "Model is not of $clazz")
     val tag = MavenDomUtil.findTag(model!!, path)
     val xmlTag = model.xmlTag
-    assertNotNull("xmlTag is null for $path", xmlTag)
-    assertNotNull("Tag $path not found in \n${xmlTag!!.text}", tag)
+    assertNotNull(xmlTag, "xmlTag is null for $path")
+    assertNotNull(tag, "Tag $path not found in \n${xmlTag!!.text}")
     tag!!
   }
 }

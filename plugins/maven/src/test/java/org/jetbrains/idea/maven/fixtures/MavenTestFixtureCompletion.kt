@@ -4,14 +4,13 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertDoNotContain
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.configTest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
-import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,7 +18,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
-import org.junit.Assert.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotNull
 import java.util.TreeSet
 import java.util.function.Function
 
@@ -31,11 +30,11 @@ suspend fun MavenDomTestFixture.assertCompletionVariants(f: VirtualFile, vararg 
 
 suspend fun MavenDomTestFixture.assertCompletionVariants(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>, vararg expected: String?) {
   val actual = getCompletionVariants(f, lookupElementStringFunction)
-  assertSameElements(actual, *expected)
+  assertUnorderedElementsAreEqual(actual, *expected)
 }
 
 suspend fun MavenDomTestFixture.assertCompletionVariantsInclude(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>, vararg expected: String?) {
-  assertContainsElements(getCompletionVariants(f, lookupElementStringFunction), *expected)
+  assertContain(getCompletionVariants(f, lookupElementStringFunction), *expected)
 }
 
 suspend fun MavenDomTestFixture.assertCompletionVariantsInclude(f: VirtualFile, vararg expected: String?) {
@@ -43,12 +42,12 @@ suspend fun MavenDomTestFixture.assertCompletionVariantsInclude(f: VirtualFile, 
 }
 
 suspend fun MavenDomTestFixture.assertCompletionVariantsDoNotInclude(f: VirtualFile, vararg expected: String?) {
-  assertDoesntContain(getCompletionVariants(f), *expected)
+  assertDoNotContain(getCompletionVariants(f), *expected)
 }
 
 suspend fun MavenDomTestFixture.assertCompletionVariantsNoCache(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>, vararg expected: String?) {
   val actual = getCompletionVariantsNoCache(f, lookupElementStringFunction)
-  assertSameElements(actual, *expected)
+  assertUnorderedElementsAreEqual(actual, *expected)
 }
 
 suspend fun MavenDomTestFixture.getCompletionVariants(f: VirtualFile): List<String?> {
@@ -89,8 +88,8 @@ suspend fun MavenDomTestFixture.getDependencyCompletionVariants(f: VirtualFile, 
 fun MavenDomTestFixture.assertCompletionVariants(fixture: CodeInsightTestFixture, lookupElementStringFunction: Function<LookupElement, String?>, vararg expected: String?) {
   val actual = getCompletionVariants(fixture, lookupElementStringFunction)
   val expectedList = expected.toList()
-  assertNotNull("Expected $expectedList but got null", actual)
-  assertSameElements(actual!!, expectedList)
+  assertNotNull(actual, "Expected $expectedList but got null")
+  assertUnorderedElementsAreEqual(actual!!, expectedList)
 }
 
 fun MavenDomTestFixture.getCompletionVariants(fixture: CodeInsightTestFixture, lookupElementStringFunction: Function<LookupElement, String?>): List<String?>? {
@@ -100,7 +99,7 @@ fun MavenDomTestFixture.getCompletionVariants(fixture: CodeInsightTestFixture, l
 
 /** Wraps [xml] into a full `pom.xml` document the same way [com.intellij.maven.testFramework.fixtures.createProjectPom] does, for `fixture.checkResult(...)`. */
 fun MavenDomTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
-  return MavenTestCase.createPomXml(modelVersion, xml, false)
+  return createPomXml(modelVersion, xml, false)
 }
 
 @Language("XML")

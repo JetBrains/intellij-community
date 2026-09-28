@@ -11,10 +11,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
-import junit.framework.TestCase.assertTrue
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -35,7 +35,7 @@ fun MavenImportingTestFixture.executeGoal(relativePath: String?, goal: String) {
   wait.acquire()
   MavenRunner.getInstance(project).run(rp, rs) { wait.release() }
   val ok = wait.tryAcquire(10, TimeUnit.SECONDS)
-  assertTrue("Maven execution failed", ok)
+  assertTrue(ok, "Maven execution failed")
 }
 
 /**

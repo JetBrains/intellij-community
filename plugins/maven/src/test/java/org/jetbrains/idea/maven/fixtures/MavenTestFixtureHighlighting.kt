@@ -20,8 +20,7 @@ import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
-import org.junit.Assert.assertNotNull
-import org.junit.ComparisonFailure
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 // Highlighting checks. [MavenDomTestFixture.Highlight] is the expected-highlight matcher.
 
@@ -41,7 +40,7 @@ suspend fun MavenDomTestFixture.checkHighlighting(f: VirtualFile) {
       }
     }
   }
-  catch (e: ComparisonFailure) {
+  catch (e: AssertionError) {
     throw e
   }
   catch (throwable: Throwable) {
@@ -65,7 +64,7 @@ suspend fun MavenDomTestFixture.doHighlighting(file: VirtualFile): Collection<Hi
 
 fun MavenDomTestFixture.assertHighlighting(highlightingInfos: Collection<HighlightInfo>, vararg expectedHighlights: MavenDomTestFixture.Highlight) {
   expectedHighlights.forEach { expected ->
-    assertNotNull("Not highlighted: $expected", highlightingInfos.firstOrNull { expected.matches(it) })
+    assertNotNull(highlightingInfos.firstOrNull { expected.matches(it) }, "Not highlighted: $expected")
   }
 }
 

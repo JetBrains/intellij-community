@@ -36,7 +36,7 @@ import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
-import org.junit.Assert.fail
+import org.junit.jupiter.api.fail
 import java.nio.charset.Charset
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
