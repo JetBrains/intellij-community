@@ -34,6 +34,15 @@ interface WelcomeRightTabContentProvider {
 
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
+  /**
+   * The keys of the features whose section takes the place of the feature grid.
+   *
+   * While one of these features states a section, the tab shows no feature buttons. The buttons come back when the
+   * feature states no section, for example while it is not available.
+   */
+  val featureKeysReplacingFeatureGrid: Set<String>
+    get() = emptySet()
+
   fun getAdditionalInfoButtonModels(project: Project): List<InfoButtonModel> = emptyList()
 
   /**

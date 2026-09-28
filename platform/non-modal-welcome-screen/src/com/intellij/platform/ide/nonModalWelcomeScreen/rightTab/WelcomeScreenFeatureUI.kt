@@ -57,6 +57,15 @@ abstract class WelcomeScreenFeatureUI {
   open val isAlwaysAvailable: Boolean get() = false
 
   /**
+   * Tells if this feature offers itself in [project] now.
+   *
+   * The tab asks this each time it fills its content. A feature that answers `false` gets no button and no section, as
+   * if no handler registered its [featureKey]. This applies to an [isAlwaysAvailable] feature too. The tab does not
+   * follow a later change of the answer.
+   */
+  open suspend fun isAvailable(project: Project): Boolean = true
+
+  /**
    * The section this feature contributes under the feature grid, or `null` for a feature that states a button only.
    *
    * Called off the EDT, so an implementation owns the hop to the EDT that its own Swing construction needs. The tab

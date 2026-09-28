@@ -4,7 +4,6 @@ package com.intellij.ide.customization.java.welcomeScreen
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureApi
@@ -32,14 +31,12 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
 
   /**
    * The Air plugin contributes the agent prompt input as a section above the feature grid, under its own feature key.
-   * That input is the tab's call to action on its own, so the grid stays empty while the plugin is there, and these
-   * buttons stand in for the input while it is not.
+   * That input is the tab's call to action on its own, so the grid stays empty while the input shows. The feature
+   * buttons stand in for the input while it does not show.
    */
-  override fun getFeatureButtonModels(project: Project): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
-    if (hasAgentPromptInput()) {
-      return emptyList()
-    }
+  override val featureKeysReplacingFeatureGrid: Set<String> = setOf(IdeaFeatureKeys.AIR_SESSIONS)
 
+  override fun getFeatureButtonModels(project: Project): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
     return listOf(
       WelcomeRightTabContentProvider.FeatureButtonModel(
         text = IdeBundle.message("idea.non.modal.welcome.screen.new.file"),
@@ -56,20 +53,6 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
         }
       )
     )
-  }
-
-  /**
-   * Whether the Air plugin places its prompt input on the tab.
-   *
-   * The plugin has to be there, and its prompt has to be on. [AIR_WELCOME_SCREEN_PROMPT_REGISTRY_KEY] is the only
-   * thing that turns the prompt off, so reading the key answers for the section itself. The key is on by default,
-   * which is the default this read states as well.
-   */
-  private fun hasAgentPromptInput(): Boolean {
-    if (WelcomeScreenFeatureUI.getForFeatureKey(IdeaFeatureKeys.AIR_SESSIONS) == null) {
-      return false
-    }
-    return Registry.`is`(AIR_WELCOME_SCREEN_PROMPT_REGISTRY_KEY, true)
   }
 
   /**
@@ -96,11 +79,3 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
     }
   }
 }
-
-/**
- * The registry key of the Air prompt input on the welcome right tab.
- *
- * Mirrors `WELCOME_SCREEN_PROMPT_REGISTRY_KEY`, which the Air plugin keeps internal. The tab itself never states
- * which of its sections were built, so the button grid reads the key that decides the only section there is.
- */
-private const val AIR_WELCOME_SCREEN_PROMPT_REGISTRY_KEY = "air.welcome.screen.inline.prompt"
