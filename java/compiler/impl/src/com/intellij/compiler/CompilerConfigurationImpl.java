@@ -149,9 +149,16 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
     if (!project.isDefault()) {
       // initial state
-      StartupManager.getInstance(project).runAfterOpened(() -> {
+      StartupManager startupManager = StartupManager.getInstance(project);
+      if (startupManager == null) {
+        // headless projects without a startup manager (e.g. the language server analyzer) are never "opened"
         myRegisteredCompilers = collectCompilers();
-      });
+      }
+      else {
+        startupManager.runAfterOpened(() -> {
+          myRegisteredCompilers = collectCompilers();
+        });
+      }
     }
     BackendCompiler.EP_NAME.getPoint(project).addChangeListener(() -> {
       myRegisteredCompilers = collectCompilers();
