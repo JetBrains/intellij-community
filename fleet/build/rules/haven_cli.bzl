@@ -22,7 +22,7 @@ HAVEN_CLI_ATTR = {
 # serves telemetry, such as a coroutine dump, over a loopback HTTP server. The worker log shows its URL.
 # The JVM arguments are part of the worker key, so the flag starts a separate worker pool.
 def _haven_cli_jvm_flags(ctx):
-    flags = ["-Xmx2g"]
+    flags = ["-Xmx1g"]
     if ctx.attr._telemetry_server[BuildSettingInfo].value:
         flags.append("-Dfleet.build.haven.telemetry.server.enabled=true")
     return flags
