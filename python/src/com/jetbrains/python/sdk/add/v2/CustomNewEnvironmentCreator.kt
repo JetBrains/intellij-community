@@ -171,7 +171,7 @@ internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.
   // todo use target config
   val path = when (interpreter) {
     is InstallableSelectableInterpreter<P> -> {
-      installBaseSdk(interpreter.installableSdk)?.let { fileSystem.wrapSdk(it) }?.homePath
+      installBaseSdk(interpreter.installableSdk).getOrElse { return null }.let { fileSystem.wrapSdk(it) }.homePath
     }
     is DetectedSelectableInterpreter, is ExistingSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> interpreter.homePath
   }

@@ -10,6 +10,11 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.ExistingSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.InstallableSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.InterpreterWithPath
+import com.jetbrains.python.sdk.add.v2.ManuallyAddedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
@@ -50,7 +55,15 @@ internal class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAd
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     // todo error handling, nullability issues
-    val sdk = model.state.selectedInterpreter.get()!!.setupSdk(
+    val interpreter: InterpreterWithPath<P> = when (val interpreter = model.state.selectedInterpreter.get()) {
+      is InstallableSelectableInterpreter, null -> throw AssertionError("This code should never be called and it is here due to lack of abstraction")
+      is DetectedSelectableInterpreter,
+      is ExistingSelectableInterpreter,
+      is ManuallyAddedSelectableInterpreter,
+        -> interpreter
+    }
+
+    val sdk = interpreter.setupSdk(
       moduleOrProject = moduleOrProject,
       fileSystem = model.fileSystem,
       targetPanelExtension = model.state.targetPanelExtension.get(),

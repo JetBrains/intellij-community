@@ -50,10 +50,11 @@ internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.
   moduleOrProject: ModuleOrProject,
 ): PyResult<Sdk> {
   val baseSdkPath = when (val baseSdk = state.baseInterpreter.get()!!) {
-    is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.installableSdk)?.let { fileSystem.wrapSdk(it) }?.homePath
-    is ExistingSelectableInterpreter -> baseSdk.homePath
-    is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> baseSdk.homePath
-  }!!
+    is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.installableSdk)
+      .getOrElse { return PyResult.localizedError(message("python.sdk.installation.balloon.error.message")) }
+      .let { fileSystem.wrapSdk(it) }.homePath
+    is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter, is ExistingSelectableInterpreter -> baseSdk.homePath
+  }
 
   if (fileSystem.isReadOnly) {
     return PyResult.localizedError(message("the.file.system.is.read.only"))

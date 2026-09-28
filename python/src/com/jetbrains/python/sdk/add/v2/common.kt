@@ -187,12 +187,13 @@ enum class PythonInterpreterSelectionMethod {
 }
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-internal fun installBaseSdk(installRequest: InstallablePythonSdk): Sdk? {
+internal fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<Sdk> {
   val installed = installRequest.install(null) {
     PythonSdkUtil.getAllSdks()
-  }.getOrLogException(LOGGER)
+  }
 
-  if (installed == null) {
+  // Logs the failure and rethrows control flow exceptions (cancellation must not show the balloon)
+  if (installed.getOrLogException(LOGGER) == null) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")
       .createNotification(message("python.sdk.installation.balloon.error.message"), NotificationType.ERROR)
@@ -207,23 +208,20 @@ internal fun installBaseSdk(installRequest: InstallablePythonSdk): Sdk? {
     NotificationsManager
       .getNotificationsManager()
       .showNotification(notification, IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project)
-    return null
   }
   return installed
 }
 
 
-internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
+internal suspend fun <P : PathHolder> InterpreterWithPath<P>.setupSdk(
   moduleOrProject: ModuleOrProject,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
 ): PyResult<Sdk> {
   when (this) {
     is ExistingSelectableInterpreter -> return PyResult.success(sdkWrapper.sdk)
-    is DetectedSelectableInterpreter, is InstallableSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit
+    is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit
   }
-
-  val homePath = this@setupSdk.homePath!!
 
   // Do our best to guess the flavor
   return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension)
