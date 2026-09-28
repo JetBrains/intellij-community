@@ -78,7 +78,7 @@ private fun getResourcePlaceholderText(psiElements: List<PsiElement>): String? {
 }
 
 private fun isValuesDirectory(element: PsiElement): Boolean {
-  return element.containingFile?.parent?.name == "values"
+  return element.containingFile?.parent?.name == ResourceType.STRING.dirName
 }
 
 private fun extractPlaceholderText(psiElement: PsiElement): String? {
