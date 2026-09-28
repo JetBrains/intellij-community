@@ -287,12 +287,30 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       return true;
     }
 
-    if (app.isHeadlessEnvironment() || CertificateManager.getInstance().getState().ACCEPT_AUTOMATICALLY) {
+    if (CertificateManager.getInstance().getState().ACCEPT_AUTOMATICALLY) {
       LOG.debug("Certificate will be accepted automatically");
       if (parameters.myAddToKeyStore) {
         myCustomManager.addCertificate(endPoint);
       }
       return true;
+    }
+
+    if (app.isHeadlessEnvironment()) {
+      var fingerprint = new CertificateWrapper(endPoint).getSha256Fingerprint();
+      var host = remoteHost != null ? remoteHost : "unknown host";
+      var subject = endPoint.getSubjectX500Principal().toString();
+      var issuer = endPoint.getIssuerX500Principal().toString();
+      var certPath = CertificateManager.getInstance().getCacertsPath();
+      var warnMsg = ("The IDE rejected an untrusted certificate, because a headless run cannot ask the user. " +
+                     "Host: %s. Subject: %s. Issuer: %s. SHA-256 fingerprint: %s. " +
+                     "If you trust this certificate, " +
+                     "add it to the trust store of the operating system, or import it into %s.").formatted(host, subject, issuer,
+                                                                                                           fingerprint, certPath);
+      LOG.warn(warnMsg);
+      // we print it to stderr, so that it is visible in the console to command line users in headless mode.
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println(warnMsg);
+      return false;
     }
 
     if (app.isUnitTestMode()) {
