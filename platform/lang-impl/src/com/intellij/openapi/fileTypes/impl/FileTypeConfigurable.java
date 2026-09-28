@@ -9,7 +9,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,7 +34,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.JBSplitter;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -102,25 +100,16 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   @Override
   public JComponent createComponent() {
     JBTabbedPane tabbedPane = new JBTabbedPane();
-    myFileTypePanel = new FileTypePanel();
     myRecognizedFileType = new RecognizedFileTypesPanel();
-    JBSplitter splitter = new JBSplitter(false, 0.3f);
-    splitter.setFirstComponent(myRecognizedFileType);
 
     JPanel rightPanel = new JPanel(new BorderLayout());
     myPatterns = new PatternsPanel();
     myHashBangs = new HashBangPanel();
     rightPanel.add(myPatterns, BorderLayout.CENTER);
     rightPanel.add(myHashBangs, BorderLayout.SOUTH);
-    splitter.setSecondComponent(rightPanel);
-
-    myFileTypePanel.myUpperPanel.add(splitter, BorderLayout.CENTER);
+    myFileTypePanel = new FileTypePanel(myRecognizedFileType, rightPanel);
 
     myRecognizedFileType.myFileTypesList.addListSelectionListener(_ -> updateExtensionList());
-    myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
-    myFileTypePanel.myAssociatePanel.setBorder(JBUI.Borders.emptyTop(16));
-    myFileTypePanel.myAssociateButton.setText(
-      FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
     myFileTypePanel.myAssociateButton.addActionListener(_ -> OSAssociateFileTypesUtil.chooseAndAssociate(
       new OSAssociateFileTypesUtil.Callback() {
         @Override
@@ -159,7 +148,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         }
       }
     ));
-    tabbedPane.add(FileTypesBundle.message("filetype.recognized.group"), myFileTypePanel.myWholePanel);
+    tabbedPane.add(FileTypesBundle.message("filetype.recognized.group"), myFileTypePanel.panel);
 
     myIgnoreFilesPanel = new IgnoredFilesAndFoldersPanel();
     tabbedPane.add(FileTypesBundle.message("filetype.ignore.group"), myIgnoreFilesPanel);
