@@ -7,7 +7,9 @@ import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.http.url
@@ -171,17 +173,19 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       .setPluginUpdateSourceId(PluginId.getId(NIGHTLY_SOURCE_PLUGIN), createNightlyPluginUpdateSourceId())
 
     installedPluginsFacade.setHosts(listOf(oldNightlyServer.url, firstNightlyServer.url, secondNightlyServer.url))
-    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
-                                         listOf(firstNightlyServer.url, secondNightlyServer.url).joinToString(",")) {
-      val internalResult = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
-      assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
-      val result = internalResult.pluginUpdates
+    TestModeFlags.runWithFlag(FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES, true) {
+      withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
+                                           listOf(firstNightlyServer.url, secondNightlyServer.url).joinToString(",")) {
+        val internalResult = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
+        assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
+        val result = internalResult.pluginUpdates
 
-      val updatesById = result.allEnabled.associateBy { it.id.idString }
-      assertEquals(setOf(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, NIGHTLY_SOURCE_PLUGIN), updatesById.keys)
-      assertEquals("9.0", updatesById.getValue(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN).pluginVersion)
-      assertEquals("7.0", updatesById.getValue(NIGHTLY_SOURCE_PLUGIN).pluginVersion)
-      assertTrue(result.allDisabled.isEmpty())
+        val updatesById = result.allEnabled.associateBy { it.id.idString }
+        assertEquals(setOf(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN, NIGHTLY_SOURCE_PLUGIN), updatesById.keys)
+        assertEquals("9.0", updatesById.getValue(NIGHTLY_AND_MARKETPLACE_SOURCE_PLUGIN).pluginVersion)
+        assertEquals("7.0", updatesById.getValue(NIGHTLY_SOURCE_PLUGIN).pluginVersion)
+        assertTrue(result.allDisabled.isEmpty())
+      }
     }
   }
 

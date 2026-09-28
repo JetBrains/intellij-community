@@ -6,7 +6,9 @@ import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -24,35 +26,37 @@ internal class PluginUpdateSourceCompatibilityTest {
     val firstNightlyRepositoryUrl = "https://nightly.example.com"
     val secondNightlyRepositoryUrl = "https://nightly2.example.com"
 
-    withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
-                                         "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
-      val firstNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(firstNightlyRepositoryUrl)
-      val secondNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(secondNightlyRepositoryUrl)
-      val firstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
-      val sameFirstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
-      val secondCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom2.example.com")
-      val firstMarketplaceChannelCustomRepository =
-        service.createCustomRepositoryPluginUpdateSourceId("https://plugins.jetbrains.com/plugins/beta/9185")
-      val secondMarketplaceChannelCustomRepository =
-        service.createCustomRepositoryPluginUpdateSourceId("https://plugins.jetbrains.com/plugins/beta/4067")
-      val nightlyRepo = createNightlyPluginUpdateSourceId()
+    TestModeFlags.runWithFlag(FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES, true) {
+      withSystemProperty<RuntimeException>(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY,
+                                           "$firstNightlyRepositoryUrl,$secondNightlyRepositoryUrl") {
+        val firstNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(firstNightlyRepositoryUrl)
+        val secondNightlyRepository = service.createCustomRepositoryPluginUpdateSourceId(secondNightlyRepositoryUrl)
+        val firstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
+        val sameFirstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
+        val secondCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom2.example.com")
+        val firstMarketplaceChannelCustomRepository =
+          service.createCustomRepositoryPluginUpdateSourceId("https://plugins.jetbrains.com/plugins/beta/9185")
+        val secondMarketplaceChannelCustomRepository =
+          service.createCustomRepositoryPluginUpdateSourceId("https://plugins.jetbrains.com/plugins/beta/4067")
+        val nightlyRepo = createNightlyPluginUpdateSourceId()
 
-      assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(
-        // theoretically marketplace channel repositories shouldn't be able to install updates from each other,
-        // but they by definition can't share plugins, so in real world it doesn't matter
-        listOf(firstMarketplace, secondMarketplace, firstMarketplaceChannelCustomRepository, secondMarketplaceChannelCustomRepository),
-        listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo),
-        listOf(firstCustomRepository, sameFirstCustomRepository),
-        listOf(secondCustomRepository),
-      )
+        assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(
+          // theoretically marketplace channel repositories shouldn't be able to install updates from each other,
+          // but they by definition can't share plugins, so in real world it doesn't matter
+          listOf(firstMarketplace, secondMarketplace, firstMarketplaceChannelCustomRepository, secondMarketplaceChannelCustomRepository),
+          listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo),
+          listOf(firstCustomRepository, sameFirstCustomRepository),
+          listOf(secondCustomRepository),
+        )
 
-      val nightlyAndMarketplaceSource = createNightlyAndMarketplacePluginUpdateSourceId()
-      for (source in listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo, firstMarketplace, secondMarketplace)) {
-        assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, true)
-      }
+        val nightlyAndMarketplaceSource = createNightlyAndMarketplacePluginUpdateSourceId()
+        for (source in listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo, firstMarketplace, secondMarketplace)) {
+          assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, true)
+        }
 
-      for (source in listOf(firstCustomRepository, sameFirstCustomRepository, secondCustomRepository)) {
-        assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, false)
+        for (source in listOf(firstCustomRepository, sameFirstCustomRepository, secondCustomRepository)) {
+          assertCanInstallUpdatesFrom(nightlyAndMarketplaceSource, source, false)
+        }
       }
     }
   }
