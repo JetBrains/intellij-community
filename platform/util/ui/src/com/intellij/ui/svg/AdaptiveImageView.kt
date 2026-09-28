@@ -16,7 +16,9 @@ import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.Shape
 import java.net.URL
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
+import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.text.Document
 import javax.swing.text.Element
@@ -130,8 +132,13 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
 
     if (updatePreferredImageViewDimensions()) {
       preferenceChanged(null, true, true)
-    } else {
-      container?.repaint()
+    }
+
+    SwingUtilities.invokeLater { // repaint in next paint, not during paint stack, otherwise icon will not appear
+      container?.let {
+        it.revalidate()
+        it.repaint()
+      }
     }
   }
 

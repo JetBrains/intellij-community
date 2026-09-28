@@ -4,7 +4,6 @@ package com.intellij.psi.util;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -18,8 +17,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +34,14 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import java.io.File;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject;
 
 /**
  * Resolve small icons located in a project for use in UI (e.g., gutter preview icon, lookups).
@@ -43,7 +50,7 @@ import java.util.List;
 public final class ProjectIconsAccessor {
   private static final @NonNls String JAVAX_SWING_ICON = "javax.swing.Icon";
 
-  private static final int ICON_MAX_WEIGHT = 16;
+  private static final int ICON_MAX_WIDTH = 16;
   private static final int ICON_MAX_HEIGHT = 16;
   private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; // 2Kb
 
@@ -121,6 +128,21 @@ public final class ProjectIconsAccessor {
     return null;
   }
 
+  /**
+   * Returns the variant of the icon file for the current theme: {@code icon_dark.svg} next to {@code icon.svg} in a dark theme,
+   * or {@code iconFile} itself if there is no such variant.
+   * Use it when the icon is loaded without {@link IconLoader}, which handles light/dark internally.
+   */
+  public static @NotNull VirtualFile resolveIconFile(@NotNull VirtualFile iconFile) {
+    if (!StringUtil.equalsIgnoreCase(iconFile.getExtension(), "svg") || JBColor.isBright()) return iconFile;
+
+    VirtualFile directory = iconFile.getParent();
+    if (directory == null) return iconFile;
+
+    VirtualFile darkFile = directory.findChild(iconFile.getNameWithoutExtension() + "_dark.svg");
+    return darkFile != null ? darkFile : iconFile;
+  }
+
   public @Nullable Icon getIcon(@NotNull VirtualFile file) {
     String path = file.getPath();
     long stamp = file.getModificationStamp();
@@ -131,7 +153,7 @@ public final class ProjectIconsAccessor {
     }
 
     try {
-      Icon icon = createOrFindBetterIcon(file, IntelliJProjectUtil.isIntelliJPlatformProject(project));
+      Icon icon = createOrFindBetterIcon(file);
       iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
       iconCache.put(file.getPath(), iconInfo);
     }
@@ -152,25 +174,25 @@ public final class ProjectIconsAccessor {
 
   public static boolean hasProperSize(Icon icon) {
     return icon.getIconHeight() <= JBUIScale.scale(ICON_MAX_HEIGHT) &&
-           icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
+           icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WIDTH);
   }
 
-  /**
-   * @deprecated Use {@linkplain IntelliJProjectUtil#isIntelliJPlatformProject(Project)} instead.
-   */
-  @Deprecated
-  public static boolean isIdeaProject(@Nullable Project project) {
-    return IntelliJProjectUtil.isIntelliJPlatformProject(project);
-  }
-
-  private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {
-    if (useIconLoader) {
-      return IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
+  private Icon createOrFindBetterIcon(@NotNull VirtualFile file) throws IOException {
+    if (isIntelliJPlatformProject(project)) {
+      return IconLoader.findIcon(file.toNioPath().toUri().toURL());
     }
+
     if (StringUtil.equalsIgnoreCase(file.getExtension(), "svg")) {
-      var svg = SVGLoader.load(file.getInputStream(), 1.0f);
-      return new ImageIcon(svg);
+      Image svg;
+
+      try (InputStream stream = resolveIconFile(file).getInputStream()) {
+        ScaleContext context = ScaleContext.create();
+        svg = SVGLoader.load(null, stream, context, ICON_MAX_WIDTH, ICON_MAX_HEIGHT);
+        BufferedImage hiDPI = (BufferedImage)ImageUtil.ensureHiDPI(svg, context);
+        return new JBImageIcon(hiDPI);
+      }
     }
+
     return new ImageIcon(file.contentsToByteArray());
   }
 }

@@ -846,6 +846,9 @@
     <referenceInjector implementation="org.jetbrains.idea.devkit.references.ActionOrGroupIdReferenceInjector"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.ActionWithoutIdReferencesQueryExecutor"/>
 
+    <platform.backend.documentation.psiTargetProvider order="before JavaPsiDocumentationTargetProvider"
+                                                      implementation="org.jetbrains.idea.devkit.references.IconFieldDocumentationTargetProvider"/>
+
     <psi.referenceContributor language="UAST"
                               implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
     <psi.referenceContributor language="UAST"
