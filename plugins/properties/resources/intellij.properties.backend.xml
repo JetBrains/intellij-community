@@ -27,7 +27,6 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
-    <module name="intellij.platform.structuralSearch"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.util.diff"/>
@@ -160,7 +159,6 @@
     <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesWebReferenceContributor"/>
 
     <liveTemplateContext contextId="Properties" implementation="com.intellij.lang.properties.template.PropertiesContextType"/>
-    <structuralsearch.profile implementation="com.intellij.lang.properties.structuralsearch.PropertiesStructuralSearchProfile"/>
 
     <diff.merge.conflict.semantic.resolver implementation="com.intellij.lang.properties.merge.PropertiesMergeConflictResolver"/>
 

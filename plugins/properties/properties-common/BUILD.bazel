@@ -11,6 +11,7 @@ dev_dist_plugin(
         "intellij.properties.copyright",
         "intellij.properties.backend.psi",
         "intellij.properties.backend",
+        "intellij.properties.structuralSearch",
         "intellij.properties.psi",
     ],
     descriptor = "resources/META-INF/plugin.xml",
@@ -20,6 +21,7 @@ dev_dist_plugin(
         "intellij.properties.backend.psi",
         "intellij.properties.copyright",
         "intellij.properties.psi",
+        "intellij.properties.structuralSearch",
     ],
     jars = {
         "lib/intellij.properties.jar": ["intellij.properties"],
@@ -29,6 +31,7 @@ dev_dist_plugin(
         "frontend": [
             "intellij.properties.backend.psi",
             "intellij.properties.backend",
+            "intellij.properties.structuralSearch",
         ],
     },
     module_jar_paths = {

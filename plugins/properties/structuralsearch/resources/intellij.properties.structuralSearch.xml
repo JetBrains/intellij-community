@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.duplicates.analysis"/>
+    <module name="intellij.platform.structuralSearch"/>
+    <module name="intellij.properties"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.properties.psi"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <!-- The profile needs the intellij.platform.structuralSearch content module, which only the Structural Search plugin ships.
+       A product without that plugin skips this module and keeps the rest of the Properties plugin. -->
+  <extensions defaultExtensionNs="com.intellij">
+    <structuralsearch.profile implementation="com.intellij.lang.properties.structuralsearch.PropertiesStructuralSearchProfile"/>
+  </extensions>
+</idea-plugin>

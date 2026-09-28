@@ -117,6 +117,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/structuralsearch:structuralSearch-tests",
         "//platform/structuralsearch:structuralSearch-tests_test_lib",
+        "//plugins/properties/structuralsearch:structuralSearch",
+        "//plugins/properties/structuralsearch:structuralSearch_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/diff-impl",

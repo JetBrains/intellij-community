@@ -1720,6 +1720,7 @@ plugins/properties/properties-common
 plugins/properties/properties-psi-api
 plugins/properties/properties-psi-impl
 plugins/properties/property-tests
+plugins/properties/structuralsearch
 plugins/properties/tests
 plugins/pty4j/plugin
 plugins/rareJavaRefactorings
