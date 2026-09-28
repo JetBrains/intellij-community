@@ -1,0 +1,12 @@
+# Deprecated reexports that are added via __getattr__().
+MySQLdb.cursors.BaseCursor.DataError
+MySQLdb.cursors.BaseCursor.DatabaseError
+MySQLdb.cursors.BaseCursor.Error
+MySQLdb.cursors.BaseCursor.IntegrityError
+MySQLdb.cursors.BaseCursor.InterfaceError
+MySQLdb.cursors.BaseCursor.InternalError
+MySQLdb.cursors.BaseCursor.MySQLError
+MySQLdb.cursors.BaseCursor.NotSupportedError
+MySQLdb.cursors.BaseCursor.OperationalError
+MySQLdb.cursors.BaseCursor.ProgrammingError
+MySQLdb.cursors.BaseCursor.Warning

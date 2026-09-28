@@ -1,10 +1,12 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, WriteableBuffer
 from socket import socket
-from typing import overload
+from typing import TypeVar, overload
 from typing_extensions import deprecated
 
 import _win32typing
 from win32.lib.pywintypes import TimeType, error as error
+
+_BufferT = TypeVar("_BufferT", bound=_win32typing.PyOVERLAPPEDReadBuffer | WriteableBuffer)
 
 def AreFileApisANSI(): ...
 def CancelIo(handle: int, /) -> None: ...
@@ -59,11 +61,17 @@ def GetFileSize(): ...
 def AllocateReadBuffer(bufSize: int, /) -> _win32typing.PyOVERLAPPEDReadBuffer: ...
 
 @overload
-def ReadFile(hFile: int, bufSize: int, /) -> tuple[int, str]: ...
+def ReadFile(hFile: int, bufSize: int, overlapped: None = None, /) -> tuple[int, bytes]: ...
 @overload
 def ReadFile(
-    hFile: int, buffer: _win32typing.PyOVERLAPPEDReadBuffer, overlapped: _win32typing.PyOVERLAPPED | None, /
-) -> tuple[int, str]: ...
+    hFile: int, bufSize: int, overlapped: _win32typing.PyOVERLAPPED, /
+) -> tuple[int, _win32typing.PyOVERLAPPEDReadBuffer]: ...
+@overload
+def ReadFile(
+    hFile: int, buffer: _win32typing.PyOVERLAPPEDReadBuffer | WriteableBuffer, overlapped: None = None, /
+) -> tuple[int, bytes]: ...
+@overload
+def ReadFile(hFile: int, buffer: _BufferT, overlapped: _win32typing.PyOVERLAPPED, /) -> tuple[int, _BufferT]: ...
 
 def WriteFile(
     hFile: int, data: str | bytes | _win32typing.PyOVERLAPPEDReadBuffer, ol: _win32typing.PyOVERLAPPED | None = ..., /

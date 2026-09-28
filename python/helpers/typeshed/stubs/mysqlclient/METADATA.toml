@@ -1,4 +1,4 @@
-version = "2.2.*"
+version = "2.3.*"
 upstream-repository = "https://github.com/PyMySQL/mysqlclient"
 
 [tool.stubtest]

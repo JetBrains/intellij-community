@@ -1,6 +1,7 @@
 from braintree.search import Search
 
 class TransactionSearch:
+    ach_type: Search.MultipleValueNodeBuilder
     acquirer_reference_number: Search.TextNodeBuilder
     billing_company: Search.TextNodeBuilder
     billing_country_name: Search.TextNodeBuilder

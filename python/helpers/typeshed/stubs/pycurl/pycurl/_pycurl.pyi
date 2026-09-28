@@ -1,6 +1,6 @@
 # Stub for the pycurl C extension (imported at runtime as `pycurl._pycurl`).
 import sys
-from _typeshed import ReadableBuffer, WriteableBuffer
+from _typeshed import ReadableBuffer, Unused, WriteableBuffer
 from collections.abc import Callable
 from datetime import datetime
 from types import TracebackType
@@ -205,6 +205,91 @@ class CurlMimePart:
     def headers(self, headers: list[str | bytes] | tuple[str | bytes, ...] | None, /) -> None: ...
     def subparts(self, mime: CurlMime, /) -> None: ...
 
+@disjoint_base
+class CurlUrl:
+    def __new__(cls, url: str | bytes | None = None, flags: int = 0) -> Self: ...
+    def getpart(self, part: int, flags: int = 0, /) -> str | None: ...
+    def setpart(self, part: int, value: str | bytes | None, flags: int = 0, /) -> None: ...
+    def __copy__(self) -> Self: ...
+    def __deepcopy__(self, memo: Unused, /) -> Self: ...
+
+    @property
+    def url(self) -> str | None: ...
+    @url.setter
+    def url(self, value: str | bytes | None) -> None: ...
+    @url.deleter
+    def url(self) -> None: ...
+
+    @property
+    def scheme(self) -> str | None: ...
+    @scheme.setter
+    def scheme(self, value: str | bytes | None) -> None: ...
+    @scheme.deleter
+    def scheme(self) -> None: ...
+
+    @property
+    def user(self) -> str | None: ...
+    @user.setter
+    def user(self, value: str | bytes | None) -> None: ...
+    @user.deleter
+    def user(self) -> None: ...
+
+    @property
+    def password(self) -> str | None: ...
+    @password.setter
+    def password(self, value: str | bytes | None) -> None: ...
+    @password.deleter
+    def password(self) -> None: ...
+
+    @property
+    def options(self) -> str | None: ...
+    @options.setter
+    def options(self, value: str | bytes | None) -> None: ...
+    @options.deleter
+    def options(self) -> None: ...
+
+    @property
+    def host(self) -> str | None: ...
+    @host.setter
+    def host(self, value: str | bytes | None) -> None: ...
+    @host.deleter
+    def host(self) -> None: ...
+
+    @property
+    def port(self) -> str | None: ...
+    @port.setter
+    def port(self, value: str | bytes | int | None) -> None: ...
+    @port.deleter
+    def port(self) -> None: ...
+
+    @property
+    def path(self) -> str | None: ...
+    @path.setter
+    def path(self, value: str | bytes | None) -> None: ...
+    @path.deleter
+    def path(self) -> None: ...
+
+    @property
+    def query(self) -> str | None: ...
+    @query.setter
+    def query(self, value: str | bytes | None) -> None: ...
+    @query.deleter
+    def query(self) -> None: ...
+
+    @property
+    def fragment(self) -> str | None: ...
+    @fragment.setter
+    def fragment(self, value: str | bytes | None) -> None: ...
+    @fragment.deleter
+    def fragment(self) -> None: ...
+
+    @property
+    def zoneid(self) -> str | None: ...
+    @zoneid.setter
+    def zoneid(self, value: str | bytes | None) -> None: ...
+    @zoneid.deleter
+    def zoneid(self) -> None: ...
+
 APPCONNECT_TIME_T: Final[int] = ...
 CONNECT_TIME_T: Final[int] = ...
 CONTENT_LENGTH_DOWNLOAD_T: Final[int] = ...
@@ -245,6 +330,7 @@ CONNECTTIMEOUT_MS: Final = 156
 CONNECT_ONLY: Final = 141
 CONNECT_TIME: Final = 3145733
 CONNECT_TO: Final = 10243
+CONN_ID: Final[int]
 CONTENT_LENGTH_DOWNLOAD: Final = 3145743
 CONTENT_LENGTH_UPLOAD: Final = 3145744
 CONTENT_TYPE: Final = 1048594
@@ -264,6 +350,7 @@ CURLHSTS_READONLYFILE: Final[int]
 CURLSTS_DONE: Final[int]
 CURLSTS_FAIL: Final[int]
 CURLSTS_OK: Final[int]
+CURLU: Final[int]
 CURL_HTTP_VERSION_1_0: Final = 1
 CURL_HTTP_VERSION_1_1: Final = 2
 CURL_HTTP_VERSION_2: Final = 3
@@ -525,6 +612,7 @@ INFO_CERTINFO: Final = 4194338
 INFO_COOKIELIST: Final = 4194332
 INFO_FILETIME: Final = 2097166
 INFO_HTTP_VERSION: Final = 2097198
+INFO_REFERER: Final[int]
 INFO_RTSP_CLIENT_CSEQ: Final = 2097189
 INFO_RTSP_CSEQ_RECV: Final = 2097191
 INFO_RTSP_SERVER_CSEQ: Final = 2097190
@@ -564,6 +652,7 @@ LOCAL_PORT: Final = 2097194
 LOCK_DATA_CONNECT: Final = 5
 LOCK_DATA_COOKIE: Final = 2
 LOCK_DATA_DNS: Final = 3
+LOCK_DATA_HSTS: Final[int]
 LOCK_DATA_PSL: Final = 6
 LOCK_DATA_SSL_SESSION: Final = 4
 LOGIN_OPTIONS: Final = 10224
@@ -702,6 +791,7 @@ PROXY_CAINFO: Final = 10246
 PROXY_CAINFO_BLOB: Final = 40310
 PROXY_CAPATH: Final = 10247
 PROXY_CRLFILE: Final = 10260
+PROXY_ERROR: Final[int]
 PROXY_ISSUERCERT: Final = 10296
 PROXY_ISSUERCERT_BLOB: Final = 40297
 PROXY_KEYPASSWD: Final = 10258
@@ -718,6 +808,7 @@ PROXY_SSL_CIPHER_LIST: Final = 10259
 PROXY_SSL_OPTIONS: Final = 261
 PROXY_SSL_VERIFYHOST: Final = 249
 PROXY_SSL_VERIFYPEER: Final = 248
+PROXY_SSL_VERIFYRESULT: Final[int]
 PROXY_TLS13_CIPHERS: Final = 10277
 PROXY_TLSAUTH_PASSWORD: Final = 10252
 PROXY_TLSAUTH_TYPE: Final = 10253
@@ -748,6 +839,7 @@ RESOLVER_START_FUNCTION: Final[int]
 RESPONSE_CODE: Final = 2097154
 RESUME_FROM: Final = 30116
 RESUME_FROM_LARGE: Final = 30116
+RETRY_AFTER: Final[int]
 RTSPREQ_ANNOUNCE: Final = 3
 RTSPREQ_DESCRIBE: Final = 2
 RTSPREQ_GET_PARAMETER: Final = 8
@@ -762,6 +854,7 @@ RTSPREQ_SETUP: Final = 4
 RTSPREQ_SET_PARAMETER: Final = 9
 RTSPREQ_TEARDOWN: Final = 7
 SASL_IR: Final = 218
+SCHEME: Final[int]
 SEEKFUNCTION: Final = 20167
 SEEKFUNC_CANTSEEK: Final = 2
 SEEKFUNC_FAIL: Final = 1
@@ -770,6 +863,7 @@ SERVICE_NAME: Final = 10236
 SHARE: Final = 10100
 SH_SHARE: Final = 1
 SH_UNSHARE: Final = 2
+SIZE_DELIVERED: Final[int]
 SIZE_DOWNLOAD: Final = 3145736
 SIZE_UPLOAD: Final = 3145735
 SOCKET_BAD: Final = -1
@@ -809,7 +903,12 @@ SSLKEYPASSWD: Final = 10026
 SSLKEYTYPE: Final = 10088
 SSLKEY_BLOB: Final = 40292
 SSLOPT_ALLOW_BEAST: Final = 1
+SSLOPT_AUTO_CLIENT_CERT: Final[int]
+SSLOPT_EARLYDATA: Final[int]
+SSLOPT_NATIVE_CA: Final[int]
+SSLOPT_NO_PARTIALCHAIN: Final[int]
 SSLOPT_NO_REVOKE: Final = 2
+SSLOPT_REVOKE_BEST_EFFORT: Final[int]
 SSLVERSION: Final = 32
 SSLVERSION_DEFAULT: Final = 0
 SSLVERSION_MAX_DEFAULT: Final = 65536
@@ -825,12 +924,14 @@ SSLVERSION_TLSv1_1: Final = 5
 SSLVERSION_TLSv1_2: Final = 6
 SSLVERSION_TLSv1_3: Final = 7
 SSL_CIPHER_LIST: Final = 10083
+SSL_EC_CURVES: Final[int]
 SSL_ENABLE_ALPN: Final = 226
 SSL_ENABLE_NPN: Final = 225
 SSL_ENGINES: Final = 4194331
 SSL_FALSESTART: Final = 233
 SSL_OPTIONS: Final = 216
 SSL_SESSIONID_CACHE: Final = 150
+SSL_SIGNATURE_ALGORITHMS: Final[int]
 SSL_VERIFYHOST: Final = 81
 SSL_VERIFYPEER: Final = 64
 SSL_VERIFYRESULT: Final = 2097165
@@ -865,9 +966,21 @@ TRANSFERTEXT: Final = 53
 TRANSFER_ENCODING: Final = 207
 UNIX_SOCKET_PATH: Final = 10231
 UNRESTRICTED_AUTH: Final = 105
+UPART_FRAGMENT: Final[int]
+UPART_HOST: Final[int]
+UPART_OPTIONS: Final[int]
+UPART_PASSWORD: Final[int]
+UPART_PATH: Final[int]
+UPART_PORT: Final[int]
+UPART_QUERY: Final[int]
+UPART_SCHEME: Final[int]
+UPART_URL: Final[int]
+UPART_USER: Final[int]
+UPART_ZONEID: Final[int]
 UPLOAD: Final = 46
 UPLOAD_BUFFERSIZE: Final = 280
 URL: Final = 10002
+USED_PROXY: Final[int]
 USERAGENT: Final = 10018
 USERNAME: Final = 10173
 USERPWD: Final = 10005
@@ -876,6 +989,22 @@ USESSL_CONTROL: Final = 2
 USESSL_NONE: Final = 0
 USESSL_TRY: Final = 1
 USE_SSL: Final = 119
+U_ALLOW_SPACE: Final[int]
+U_APPENDQUERY: Final[int]
+U_DEFAULT_PORT: Final[int]
+U_DEFAULT_SCHEME: Final[int]
+U_DISALLOW_USER: Final[int]
+U_GET_EMPTY: Final[int]
+U_GUESS_SCHEME: Final[int]
+U_NON_SUPPORT_SCHEME: Final[int]
+U_NO_AUTHORITY: Final[int]
+U_NO_DEFAULT_PORT: Final[int]
+U_NO_GUESS_SCHEME: Final[int]
+U_PATH_AS_IS: Final[int]
+U_PUNY2IDN: Final[int]
+U_PUNYCODE: Final[int]
+U_URLDECODE: Final[int]
+U_URLENCODE: Final[int]
 VERBOSE: Final = 41
 VERSION_ALTSVC: Final = 16777216
 VERSION_ASYNCHDNS: Final = 128
@@ -923,4 +1052,5 @@ WS_PONG: Final[int]
 WS_RAW_MODE: Final[int]
 WS_TEXT: Final[int]
 XFERINFOFUNCTION: Final = 20219
+XFER_ID: Final[int]
 XOAUTH2_BEARER: Final = 10220
