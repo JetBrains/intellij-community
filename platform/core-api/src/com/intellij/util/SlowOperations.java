@@ -193,6 +193,17 @@ public final class SlowOperations {
     if (!Registry.is("ide.slow.operations.assertion", true)) {
       return true;
     }
+    if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
+      return true;
+    }
+    for (String activity : ourStack) {
+      if (RESET.equals(activity)) {
+        break;
+      }
+      if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
+        return true;
+      }
+    }
 
     return false;
   }
