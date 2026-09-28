@@ -4,27 +4,30 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.ijent.IjentUnavailableException.ClosedByApplication
 import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils
+import com.intellij.testFramework.common.timeoutRunBlocking
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.job
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.util.Collections
-import kotlin.coroutines.cancellation.CancellationException
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,13 +38,14 @@ import kotlin.time.Duration.Companion.seconds
  * be rewritten), but that any coroutine which must surface the failure of a dead session can *resolve* the single
  * canonical [IjentUnavailableException] and rethrow it.
  */
+@OptIn(DelicateCoroutinesApi::class)
 class IjentProcessUtilTest {
   @Test
-  fun `expected process exit stores ClosedByApplication without attaching it to cancellation`(): Unit {
-    val ijentContext = IjentScope.IjentContext()
+  fun `expected process exit stores ClosedByApplication without attaching it to cancellation`(): Unit = runBlocking {
+    val ijentScope = ParentOfIjentScopes(this).createIjentScope("test")
 
-    runBlocking(ijentContext) {
-      val thrown = shouldThrow<CancellationException> {
+    withContext(ijentScope) {
+      val thrown = shouldThrow<ClosedByApplication> {
         IjentSessionMediatorUtils.ijentProcessExitCodeHandler(
           ijentLabel = "test",
           lastStderrMessages = MutableSharedFlow<String?>(),
@@ -51,90 +55,24 @@ class IjentProcessUtilTest {
       }
 
       thrown.cause shouldBe null
-      ijentContext.resolveExitReason(1.seconds).shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>()
+      ijentScope.resolveExitReason(1.seconds).shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>()
     }
   }
 
   @Test
-  fun `resolveDeadSessionReason returns the unwrapped IjentUnavailableException immediately`(): Unit = runBlocking {
-    val canonical = CommunicationFailure("direct", null)
-    val wrapped = CancellationException("cancelled", canonical)
-
-    IjentUnavailableException.resolveDeadSessionReason(wrapped, 100.milliseconds) shouldBe canonical
-  }
-
-  @Test
-  fun `resolveDeadSessionReason maps a low-level failure to the canonical reason`(): Unit {
-    val ijentContext = IjentScope.IjentContext()
+  fun `SafeDeferred await surfaces the canonical reason instead of FailedDeferred`(): Unit = runBlocking {
+    val dummyHandler = CoroutineExceptionHandler { _, _ -> }
+    val ijentScope = ParentOfIjentScopes(CoroutineScope(SupervisorJob() + dummyHandler)).createIjentScope("test")
     val canonical = CommunicationFailure("canonical", null)
 
-    runBlocking(ijentContext) {
-      // The mediator publishes the authoritative reason.
-      ijentContext.completeExitReason(canonical)
-
-      IjentUnavailableException.resolveDeadSessionReason(IOException("low level"), 1.seconds) shouldBe canonical
-    }
-  }
-
-  @Test
-  fun `resolveDeadSessionReason uses the dead IJent context outside its coroutine scope`(): Unit {
-    val parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val ijentScope = IjentSessionMediatorUtils.createProcessScope(ParentOfIjentScopes(parentScope), "test IJent")
-    val canonical = IjentUnavailableException.ClosedByApplication("closed", null)
-
-    try {
-      ijentScope.s.coroutineContext[IjentScope.IjentContext.Key]!!.completeExitReason(canonical)
-
-      runBlocking {
-        IjentUnavailableException.resolveDeadSessionReason(
-          CancellationException("unrelated cancellation"),
-          ijentScope,
-          1.seconds,
-        ) shouldBe canonical
-      }
-    }
-    finally {
-      parentScope.cancel()
-    }
-  }
-
-  @Test
-  fun `a non-unavailable failure does not mask the canonical reason`(): Unit {
-    val ijentContext = IjentScope.IjentContext()
-    val canonical = CommunicationFailure("canonical", null)
-
-    runBlocking(ijentContext) {
-      ijentContext.completeExitReason(canonical)
-
-      // Even though a plain "oops" would win a cancellation race, the canonical reason must prevail.
-      IjentUnavailableException.resolveDeadSessionReason(IllegalStateException("oops"), 1.seconds) shouldBe canonical
-    }
-  }
-
-  @Test
-  fun `resolveDeadSessionReason falls back to the original error when no reason arrives within the bound`(): Unit {
-    val ijentContext = IjentScope.IjentContext()
-    val lowLevel = IOException("low level")
-
-    runBlocking(ijentContext) {
-      // exitReason is never completed, so the bounded await times out and the original error is returned.
-      IjentUnavailableException.resolveDeadSessionReason(lowLevel, 100.milliseconds) shouldBe lowLevel
-    }
-  }
-
-  @Test
-  fun `SafeDeferred await surfaces the canonical reason instead of FailedDeferred`(): Unit {
-    val ijentContext = IjentScope.IjentContext()
-    val canonical = CommunicationFailure("canonical", null)
-
-    runBlocking(ijentContext) {
-      ijentContext.completeExitReason(canonical)
+    withContext(ijentScope) {
+      ijentScope.destroy(canonical, isRootCause = true)
 
       val backing = CompletableDeferred<Int>()
       // Reproduces IJPL-245668: the backing deferred fails with a raw low-level exception.
       backing.completeExceptionally(IOException("Process exited normally"))
 
-      val safeDeferred = SafeDeferred(backing, IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER)
+      val safeDeferred = SafeDeferred(backing) { ijentScope.resolveExitReason() }
 
       val thrown = shouldThrow<SafeDeferred.FailedDeferred> { safeDeferred.await() }
         .cause
@@ -154,35 +92,61 @@ class IjentProcessUtilTest {
   }
 
   @Test
-  fun `sibling coroutines resolve the canonical reason under production-like topology`(): Unit = runBlocking {
-    val ijentContext = IjentScope.IjentContext()
-    val canonical = CommunicationFailure("session died", null)
+  fun `any failure in any coroutine of ijent terminates the whole session`(): Unit = timeoutRunBlocking {
+    val dummyHandler = CoroutineExceptionHandler { _, _ -> }
+    val ijentScope = ParentOfIjentScopes(CoroutineScope(SupervisorJob() + dummyHandler)).createIjentScope("IjentProcessUtilTest")
+    ijentScope.s.launch {
+      delay(100.milliseconds)
+      error("oops")
+    }
 
-    // A supervisor parent that swallows uncaught exceptions, and a non-supervisor child carrying the IjentContext -
-    // this mirrors IjentSessionMediatorUtils.createProcessScope.
-    val supervisor = CoroutineScope(Dispatchers.Default + SupervisorJob() + CoroutineExceptionHandler { _, _ -> })
-    try {
-      val child = CoroutineScope(supervisor.coroutineContext + Job(supervisor.coroutineContext.job) + ijentContext)
-
-      val resolvedReasons = Collections.synchronizedList(mutableListOf<Throwable>())
-
-      val jobs = (0 until 3).map { index ->
-        child.launch {
-          // A low-level failure arrives; the boundary resolves the canonical reason (bounded await bridges the race).
-          resolvedReasons.add(IjentUnavailableException.resolveDeadSessionReason(IOException("low level $index"), 3.seconds))
-        }
+    val err = shouldThrowAny {
+      ijentScope.wrapErrors {
+        ijentScope.s.async { delay(1.seconds) }.await()
       }
-
-      // The mediator publishes the authoritative reason after the siblings are already waiting.
-      ijentContext.completeExitReason(canonical)
-
-      jobs.joinAll()
-
-      resolvedReasons.size shouldBe jobs.size
-      resolvedReasons.forEach { it shouldBe canonical }
     }
-    finally {
-      supervisor.cancel()
+    err.message shouldContain "oops"
+  }
+
+  @Test
+  fun `IjentScope rethrows the root cause`(): Unit = timeoutRunBlocking {
+    val rightErrorMessage = "This is the right error (${Random.nextInt()})"
+    val dummyHandler = CoroutineExceptionHandler { _, _ -> }
+    val ijentScope = ParentOfIjentScopes(CoroutineScope(SupervisorJob() + dummyHandler)).createIjentScope("IjentProcessUtilTest")
+
+    val deferred = ijentScope.s.async {
+      delay(10.seconds)
     }
+
+    ijentScope.s.launch {
+      delay(10.milliseconds)
+      throw CommunicationFailure("This error should not propagate", null)
+    }
+
+    ijentScope.s.launch {
+      delay(10.milliseconds)
+      throw IllegalStateException("This error should not propagate either", null)
+    }
+
+    ijentScope.s.launch(start = CoroutineStart.UNDISPATCHED) {
+      try {
+        delay(200.milliseconds)
+      }
+      catch (ex: Throwable) {
+        throw ex
+      }
+      finally {
+        val err = ClosedByApplication(rightErrorMessage, null)
+        ijentScope.destroy(err, true)
+        throw CommunicationFailure("And even this error should not propagate", null)
+      }
+    }
+
+    val caughtErr = shouldThrow<ClosedByApplication> {
+      ijentScope.wrapErrors {
+        deferred.await()
+      }
+    }
+    caughtErr.message shouldBe rightErrorMessage
   }
 }

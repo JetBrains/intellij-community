@@ -14,6 +14,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -63,7 +64,8 @@ class IjentSessionMediatorUtilsTest {
       ijentScope.s.launch {
         throw IOException("something broke inside a healthy session")
       }
-      ijentScope.s.coroutineContext.job.join()
+      // A watcher outside the session scope reports the failure. Wait for the whole session, not only for its scope.
+      parent.coroutineContext.job.children.toList().joinAll()
 
       uncaught.map { it.message }.shouldContainExactly("something broke inside a healthy session")
     }

@@ -9,13 +9,13 @@ import com.intellij.platform.eel.channels.EelChannelException
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.eel.provider.utils.sendWholeText
-import com.intellij.platform.eel.toSafeDeferred
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.ParentOfIjentScopes
+import com.intellij.platform.ijent.asyncSafe
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
 import com.intellij.platform.ijent.tcp.MutualTlsCertificates
@@ -27,7 +27,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
@@ -166,7 +165,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   private val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
 
-  private val myContext: SafeDeferred<ShellSession> = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
+  private val myContext: SafeDeferred<ShellSession> = ijentProcessScope.asyncSafe(currentDispatcher, start = CoroutineStart.LAZY) {
     val processFacade = createShellProcessFacade(ijentProcessScope)
     val mediator = IjentSessionProcessMediator.create(
       parentScope = parentScope,
@@ -209,9 +208,9 @@ abstract class IjentDeployingOverShellProcessStrategy(
         is PowerShellIo -> PowerShellSession(shellIo)
       }
     }
-  }.toSafeDeferred(IjentUnavailableException::unwrapFromCancellationExceptions)
+  }
 
-  private val myDetectedTarget = parentScope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
+  private val myDetectedTarget = ijentProcessScope.asyncSafe(currentDispatcher, start = CoroutineStart.LAZY) {
     val session = getMyContext()
     session.execCommand {
       detectTarget()
@@ -231,9 +230,11 @@ abstract class IjentDeployingOverShellProcessStrategy(
     return try {
       myDetectedTarget.await()
     }
-    catch (e: CancellationException) {
-      currentCoroutineContext().ensureActive()
-      throw IjentUnavailableException.unwrapFromCancellationExceptions(e) ?: RuntimeException(e)
+    catch (e: SafeDeferred.FailedDeferred) {
+      throw e.cause
+    }
+    catch (e: SafeDeferred.CancelledDeferred) {
+      throw e
     }
   }
 
@@ -348,9 +349,17 @@ private class ShellProcessWrapper(
     }
   }
 
-  /** Returns a failure observed while terminating a process that is still owned by the deployer. */
+  /**
+   * The result of [destroyForciblyAndGetError].
+   *
+   * @property processFailure the canonical failure of the process. It exists only if the process failed by itself.
+   * @property cleanupFailure a failure of the termination itself. It never describes why the deployment failed.
+   */
+  class CleanupResult(val processFailure: IjentUnavailableException?, val cleanupFailure: Exception?)
+
+  /** Terminates a process that is still owned by the deployer and returns the failures that it observed. */
   @OptIn(InternalCoroutinesApi::class)
-  suspend fun destroyForciblyAndGetError(): Throwable? = withContext(NonCancellable) {
+  suspend fun destroyForciblyAndGetError(): CleanupResult = withContext(NonCancellable) {
     var cleanupFailure: Exception? = null
     val cleanupStartsNow = cleanupStarted.compareAndSet(false, true)
     val processTerminationWasRequested = when (mediator.process.exitCode.state) {
@@ -389,9 +398,7 @@ private class ShellProcessWrapper(
         IjentUnavailableException.unwrapFromCancellationExceptions(job.getCancellationException())
       }
       else null
-    processFailure?.also { failure ->
-      cleanupFailure?.let(failure::addSuppressed)
-    } ?: cleanupFailure
+    CleanupResult(processFailure, cleanupFailure)
   }
 
   private fun terminateProcessScope(error: IjentUnavailableException) {
@@ -575,21 +582,16 @@ private suspend fun <T : Any> ShellSession.execCommand(block: suspend ShellSessi
     block()
   }
   catch (initialErrorFromStack: Exception) {
-    val errorFromScope = io.process.destroyForciblyAndGetError()
+    val cleanup = io.process.destroyForciblyAndGetError()
     val errorFromStack = IjentUnavailableException.unwrapFromCancellationExceptions(initialErrorFromStack)
 
     // A process failure may be hidden behind CancellationException. Prefer the canonical failure from the process scope in that case.
     // Other errors may be programmer bugs and must retain their original type so that they reach the error reporter.
-    // A null errorFromScope means the process was killed by this cleanup itself, so the stack error is the root cause.
-    val mainError: Throwable =
-      when {
-        errorFromScope == null -> errorFromStack ?: initialErrorFromStack
-        errorFromStack != null -> errorFromStack
-        initialErrorFromStack is CancellationException -> errorFromScope
-        else -> initialErrorFromStack
-      }
+    // A null processFailure means that this cleanup itself tried to kill the process, so the stack error is the root cause.
+    // That stays true when the kill fails: a cleanup failure is only a consequence, so it never replaces the root cause.
+    val mainError: Throwable = cleanup.processFailure ?: errorFromStack ?: initialErrorFromStack
 
-    for (secondaryError in listOfNotNull(errorFromStack, errorFromScope)) {
+    for (secondaryError in listOfNotNull(errorFromStack, cleanup.processFailure, cleanup.cleanupFailure)) {
       if (mainError !== secondaryError && mainError.suppressed.none { it === secondaryError }) {
         mainError.addSuppressed(secondaryError)
       }

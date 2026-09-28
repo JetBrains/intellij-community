@@ -4,10 +4,6 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.platform.eel.EelUnavailableException
-import com.intellij.platform.ijent.IjentUnavailableException.Companion.resolveDeadSessionReason
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
@@ -24,8 +20,19 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
     this.attachments = attachments
   }
 
+  /**
+   * The IDE or the user ended the session on purpose. It is not a failure, and it is never an IDE error report.
+   *
+   * The use cases and the other error kinds are in `platform/ijent/docs/internal/scope-lifetime.md`.
+   */
   class ClosedByApplication(message: String, cause: Throwable?) : IjentUnavailableException(message, cause)
 
+  /**
+   * The session ended because of a failure.
+   * The failure is an IDE error report, unless it is [diagnosed].
+   *
+   * The use cases and the other error kinds are in `platform/ijent/docs/internal/scope-lifetime.md`.
+   */
   class CommunicationFailure(
     message: String,
     cause: Throwable?,
@@ -34,6 +41,9 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
     /**
      * The failure has a cause the IDE could name and has already put in front of the user: a condition of the
      * environment, not a defect. It still ends the session, but it is not an IDE error report.
+     *
+     * The flag has an effect only when the failure is the exit reason of [IjentScope].
+     * So destroy the scope with it and `isRootCause = true`.
      */
     var diagnosed: Boolean = false
   }
@@ -73,67 +83,5 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
      */
     @Internal
     val DEAD_SESSION_RESOLVE_TIMEOUT: Duration = 3.seconds  // 3 seconds are taken at random, feel free to experiment with the value.
-
-    /**
-     * Resolves the canonical dead-session [IjentUnavailableException] for [initialError].
-     *
-     * First unwraps [CancellationException]s; if that already yields an [IjentUnavailableException], it is returned
-     * immediately. Otherwise, if the current coroutine runs inside an [IjentScope.IjentContext], its authoritative
-     * [IjentScope.IjentContext.exitReason] is awaited for at most [timeout] (in a [NonCancellable] section, so a
-     * cancelled boundary can still obtain the reason). Falls back to the unwrapped [initialError] if no canonical
-     * reason becomes available within the bound.
-     */
-    @Internal
-    suspend fun resolveDeadSessionReason(
-      initialError: Throwable,
-      timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
-    ): Throwable = resolveDeadSessionReason(
-      initialError,
-      currentCoroutineContext()[IjentScope.IjentContext.Key],
-      timeout,
-    )
-
-    /**
-     * Resolves a dead-session failure against the authoritative context of [ijentScope].
-     *
-     * Unlike the ambient overload, this is suitable for API calls made from a caller scope that is independent from
-     * the IJent session being used.
-     */
-    @Internal
-    suspend fun resolveDeadSessionReason(
-      initialError: Throwable,
-      ijentScope: IjentScope,
-      timeout: Duration = DEAD_SESSION_RESOLVE_TIMEOUT,
-    ): Throwable = resolveDeadSessionReason(
-      initialError,
-      ijentScope.s.coroutineContext[IjentScope.IjentContext.Key],
-      timeout,
-    )
-
-    private suspend fun resolveDeadSessionReason(
-      initialError: Throwable,
-      ijentContext: IjentScope.IjentContext?,
-      timeout: Duration,
-    ): Throwable {
-      val unwrapped = unwrapFromCancellationExceptions(initialError)
-      if (unwrapped is IjentUnavailableException) return unwrapped
-      ijentContext ?: return initialError
-      val resolved = withContext(NonCancellable) { ijentContext.resolveExitReason(timeout) }
-      return resolved ?: initialError
-    }
   }
-}
-
-/**
- * A reusable [com.intellij.platform.eel.SafeDeferred] dead-session mapper for IJent-owned deferreds.
- *
- * When the backing deferred fails, this maps the failure to the canonical [IjentUnavailableException] (resolving it
- * from the ambient [IjentScope.IjentContext] if necessary) so that `SafeDeferred.await` wraps the canonical
- * [IjentUnavailableException] (instead of the low-level failure) into `SafeDeferred.FailedDeferred`.
- * Returns `null` for failures that are not attributable to a dead session, preserving the default `FailedDeferred`
- * behavior.
- */
-@Internal
-val IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER: suspend (Throwable) -> Throwable? = { err ->
-  IjentUnavailableException.resolveDeadSessionReason(err).takeIf { it is IjentUnavailableException }
 }
