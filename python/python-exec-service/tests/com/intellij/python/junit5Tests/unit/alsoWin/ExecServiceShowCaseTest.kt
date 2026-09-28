@@ -14,6 +14,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplication
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.HowToReportFile.AnArgument
 import com.intellij.python.community.execService.ProcessEvent
 import com.intellij.python.community.execService.ProcessInteractiveHandler
 import com.intellij.python.community.execService.PyProcessListener
@@ -42,10 +43,14 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junitpioneer.jupiter.cartesian.CartesianTest
+import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -55,7 +60,7 @@ import kotlin.time.Duration.Companion.seconds
  * To exec this test against remote eels, you need `intellij.platform.ijent.testFramework` in classpath (exists on TC)
  */
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
-class ExecServiceShowCaseTest {
+internal class ExecServiceShowCaseTest {
   enum class SimpleApiExecType { IN_SHELL, RELATIVE, FULL_PATH }
 
   @Timeout(value = 5, unit = TimeUnit.MINUTES)
@@ -295,5 +300,31 @@ class ExecServiceShowCaseTest {
     assertTrue(stdoutReported, "No stdout reported")
     assertEquals(text, output.trim(), "Wrong result")
 
+  }
+
+  // Process writes a file into a local directory, we copy the directory back after the process exits
+  @ParameterizedTest
+  @EelSource
+  fun testDownloadDirAfterExecution(eelHolder: EelHolder, @TempDir localDir: Path): Unit = timeoutRunBlocking(5.minutes) {
+    val eel = eelHolder.eel
+    val (shell, arg) = eel.exec.getShell()
+    val text = "abc"
+    val fileName = "out.txt"
+    // `cmd /C` has its own rules for quotes, so do not quote the path on Windows
+    val writeFileCommand: (remoteDir: String) -> String = when (eel.platform) {
+      is EelPlatform.Windows -> { remoteDir -> "echo $text> $remoteDir\\$fileName" }
+      is EelPlatform.Posix -> { remoteDir -> "echo $text > '$remoteDir/$fileName'" }
+    }
+
+    val args = Args(arg).addLocalDir(localDir) {
+      // The remote path of the directory is a part of the shell command
+      reportDir(andReport = { writeFileCommand(it) to AnArgument })
+      downloadAfterExecution()
+    }
+    ExecService().execGetStdout(shell.asNioPath(), args).getOrThrow()
+
+    val localFile = localDir.resolve(fileName)
+    assertTrue(localFile.exists(), "$localFile was not downloaded")
+    assertEquals(text, localFile.readText().trim(), "Wrong file content")
   }
 }

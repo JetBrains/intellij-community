@@ -32,7 +32,7 @@ import com.intellij.python.community.execService.impl.PathMapper
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
 import com.intellij.python.community.execService.impl.Uploader
-import com.intellij.python.community.execService.resolveAgainst
+import com.intellij.python.community.execService.impl.resolveAgainst
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
@@ -92,9 +92,16 @@ internal suspend fun createProcessLauncherOnTarget(
 
   // Setup download roots if download is requested
   val downloadConfig = launchRequest.downloadConfig
-  if (downloadConfig != null) {
-    val localDirsToDownload = workingDir?.let { setOf(it) } ?: emptySet()
-    val downloadRoots = mapDownloadRoots(request.uploadVolumes, localDirsToDownload)
+  val dirsToDownload = launchRequest.args.localArgs.mapNotNullTo(mutableSetOf()) { localArg ->
+    when (localArg) {
+      is Arg.FileArg -> null
+      is Arg.DirArg -> localArg.root.takeIf { localArg.download }
+    }
+  }
+  val localDirsToDownload = dirsToDownload + setOfNotNull(workingDir.takeIf { downloadConfig != null })
+  if (localDirsToDownload.isNotEmpty()) {
+    // Two directories can be in one upload root. One download root is sufficient for them.
+    val downloadRoots = mapDownloadRoots(request.uploadVolumes, localDirsToDownload).distinctBy { it.localRootPath }
     request.downloadVolumes.addAll(downloadRoots)
   }
 
@@ -130,8 +137,8 @@ internal suspend fun createProcessLauncherOnTarget(
     override suspend fun uploadFile(localFile: Path): FullPathOnTarget =
       getRemotePath(localFile)
 
-    override suspend fun uploadDir(localDir: Directory): PathMapper = PathMapper { relativePath ->
-      getRemotePath(relativePath.resolveAgainst(localDir))
+    override suspend fun uploadDir(localDir: Directory): PathMapper = PathMapper { entry ->
+      getRemotePath(entry.resolveAgainst(localDir))
     }
   })
 
@@ -170,7 +177,8 @@ internal suspend fun createProcessLauncherOnTarget(
                                                                                             exePath,
                                                                                             targetEnv,
                                                                                             cmdLine,
-                                                                                            downloadConfig)))
+                                                                                            downloadConfig,
+                                                                                            dirsToDownload)))
 }
 
 private fun uploadVolume(
@@ -252,6 +260,10 @@ private class TargetProcessCommands(
   private val targetEnv: TargetEnvironment,
   private val cmdLine: TargetedCommandLine,
   private val downloadConfig: DownloadConfig?,
+  /**
+   * Local directories from [com.intellij.python.community.execService.DirScope.downloadAfterExecution].
+   */
+  private val dirsToDownload: Set<Directory>,
 ) : ProcessCommands {
   override val info: ProcessCommandsInfo
     get() = ProcessCommandsInfo(
@@ -268,6 +280,7 @@ private class TargetProcessCommands(
         delay(100.milliseconds)
       }
       downloadAfterExecution()
+      downloadDirs()
       targetEnv.shutdown()
     }, killProcess = {
       process?.destroyForcibly()
@@ -283,17 +296,37 @@ private class TargetProcessCommands(
       val downloadRelativeDir = computeDownloadRelativeDir(workingDirOnTarget, volume.targetRoot)
       val paths = downloadConfig.relativePaths.takeIf { it.isNotEmpty() } ?: listOf(".")
       for (path in paths) {
-        coroutineToIndicator {
-          try {
-            volume.download(downloadRelativeDir + path, it)
-          }
-          catch (e: IOException) {
-            fileLogger().warn("Could not download $path: ${e.message}")
-          }
-          catch (e: RuntimeException) { // TODO: Unfortunately even though download is documented to throw IOException, in practice other random exceptions are possible for SSH at least
-            fileLogger().warn("Could not download $path: ${e.message}")
-          }
-        }
+        volume.downloadAndLogError(downloadRelativeDir + path)
+      }
+    }
+  }
+
+  /**
+   * Download each directory of [dirsToDownload] from the download volume that has it.
+   */
+  private suspend fun downloadDirs() {
+    for (localDir in dirsToDownload) {
+      val volume = targetEnv.downloadVolumes.values.find { localDir.startsWith(it.localRoot) }
+      if (volume == null) {
+        logger.warn("No download volume for $localDir")
+        continue
+      }
+      // `download` takes a path relative to the volume root with the separator of the target.
+      val relativePath = volume.localRoot.relativize(localDir).joinToString("/").ifEmpty { "." }
+      volume.downloadAndLogError(relativePath)
+    }
+  }
+
+  private suspend fun TargetEnvironment.DownloadableVolume.downloadAndLogError(relativePath: String) {
+    coroutineToIndicator {
+      try {
+        download(relativePath, it)
+      }
+      catch (e: IOException) {
+        fileLogger().warn("Could not download $relativePath: ${e.message}")
+      }
+      catch (e: RuntimeException) { // TODO: Unfortunately even though download is documented to throw IOException, in practice other random exceptions are possible for SSH at least
+        fileLogger().warn("Could not download $relativePath: ${e.message}")
       }
     }
   }

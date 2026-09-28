@@ -20,6 +20,7 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.ArgsAndEnv
+import com.intellij.python.community.execService.impl.DirEntry
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle.message
 import com.intellij.python.community.execService.impl.Uploader
@@ -300,7 +301,8 @@ data class UploadConfig(
  * @property[tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
  * @property[weight] use it to limit the number of concurrent processes not to exhaust user resources, see [ConcurrentProcessWeight]
  * @property[uploadBeforeExecution] configuration for uploading files before command execution (Target-based execution only)
- * @property[downloadAfterExecution] configuration for downloading files after command execution (Target-based execution only)
+ * @property[downloadAfterExecution] configuration for downloading files after command execution (Target-based execution only).
+ * To download a directory that is not the working directory, see [DirScope.downloadAfterExecution].
  */
 data class ExecOptions(
   override val env: Map<String, String> = emptyMap(),
@@ -394,6 +396,18 @@ interface DirScope {
    * Give [file] (relative to the directory) to the process. [andReport] tells how to give it.
    */
   fun findChild(file: RelativePath, andReport: FileReporter)
+
+  /**
+   * Give the directory itself to the process. [andReport] tells how to give it.
+   */
+  fun reportDir(andReport: FileReporter)
+
+  /**
+   * After the process exits, copy the directory from the remote machine back to the local directory.
+   * Use it when the process writes files into the directory.
+   * If the directory is on the same machine as the process, nothing is copied.
+   */
+  fun downloadAfterExecution()
 }
 
 /**
@@ -431,15 +445,31 @@ class Args(vararg initialArgs: String) {
    *       findChild(RelativePath{ "config.d" / "file.cfg"}, andReport = { it to EnvVar("MYENV") })
    *     }
    * ```
+   * To give the directory itself and get the files that the process writes into it:
+   * ```kotlin
+   *     addLocalDir(outputDir) {
+   *       reportDir(andReport = { it to AnArgument })
+   *       downloadAfterExecution()
+   *     }
+   * ```
    */
   fun addLocalDir(localDir: Directory, dirScope: DirScope.() -> Unit): Args {
-    val files = mutableListOf<Pair<RelativePath, FileReporter>>()
+    val files = mutableListOf<Pair<DirEntry, FileReporter>>()
+    var download = false
     object : DirScope {
       override fun findChild(file: RelativePath, andReport: FileReporter) {
-        files.add(file to andReport)
+        files.add(DirEntry.Child(file) to andReport)
+      }
+
+      override fun reportDir(andReport: FileReporter) {
+        files.add(DirEntry.Root to andReport)
+      }
+
+      override fun downloadAfterExecution() {
+        download = true
       }
     }.dirScope()
-    _args.add(Arg.DirArg(localDir, files))
+    _args.add(Arg.DirArg(localDir, files, download))
     return this
   }
 

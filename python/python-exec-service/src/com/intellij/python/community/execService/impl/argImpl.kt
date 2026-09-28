@@ -16,5 +16,29 @@ internal sealed interface Arg {
   sealed interface LocalArg : Arg
 
   data class FileArg(internal val file: Path, internal val fileReporter: FileReporter) : LocalArg
-  data class DirArg(internal val root: Directory, internal val filesToReport: List<Pair<RelativePath, FileReporter>>) : LocalArg
+
+  /**
+   * The full [root] directory. [filesToReport] are given to the process.
+   * If [download] is true, [root] is copied back from the remote machine after the process exits.
+   */
+  data class DirArg(
+    internal val root: Directory,
+    internal val filesToReport: List<Pair<DirEntry, FileReporter>>,
+    internal val download: Boolean,
+  ) : LocalArg
+}
+
+/**
+ * An entry of [Arg.DirArg.root] to give to the process.
+ */
+internal sealed interface DirEntry {
+  /**
+   * The directory itself.
+   */
+  data object Root : DirEntry
+
+  /**
+   * A file or a directory in the directory.
+   */
+  data class Child(val path: RelativePath) : DirEntry
 }

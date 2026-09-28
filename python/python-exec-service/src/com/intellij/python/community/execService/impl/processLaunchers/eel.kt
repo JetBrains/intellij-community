@@ -19,15 +19,18 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
+import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.project.stateStore
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.TtySize
+import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.PathMapper
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.Uploader
-import com.intellij.python.community.execService.resolveAgainst
+import com.intellij.python.community.execService.impl.resolveAgainst
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -35,9 +38,11 @@ import com.jetbrains.python.sdk.getModuleRoots
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.Collections
@@ -64,6 +69,8 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
   }
   val eel = exePath.descriptor.toEelApi()
 
+  // Local directory to its copy on the remote eel. There is no copy for a directory on the same eel.
+  val remoteCopies = mutableMapOf<Directory, Path>()
 
   val (args, env) = launchRequest.args.getArgsAndEnv(object : Uploader {
     override suspend fun uploadFile(localFile: Path): FullPathOnTarget = withContext(Dispatchers.IO) {
@@ -102,7 +109,7 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
             }
             remoteDir
           }
-        }
+        }.also { remoteCopies[localDir] = it }
       }
       log.debug { "$localDir mapped to $remoteDir" }
       return PathMapper {
@@ -110,6 +117,12 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
       }
     }
   })
+  val dirsToDownload = launchRequest.args.localArgs.mapNotNullTo(mutableSetOf()) { localArg ->
+    when (localArg) {
+      is Arg.FileArg -> null
+      is Arg.DirArg -> localArg.root.takeIf { localArg.download }
+    }
+  }
   return ProcessLauncher(
     exeForError = Exe.OnEel(exePath),
     args = args,
@@ -118,7 +131,8 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
                                          exePath,
                                          args,
                                          env = launchRequest.getEnvMergingWithPathVars(env, binOnEel.path.getEelDescriptor().osFamily),
-                                         tty = launchRequest.usePty)
+                                         tty = launchRequest.usePty,
+                                         downloads = dirsToDownload.mapNotNull { localDir -> remoteCopies[localDir]?.let { it to localDir } })
   )
 }
 
@@ -129,6 +143,10 @@ private class EelProcessCommands(
   private val args: List<String>,
   private val env: Map<String, String>,
   private val tty: TtySize?,
+  /**
+   * Pairs of a remote directory and a local directory. After the process exits, we copy each remote directory to its local directory.
+   */
+  private val downloads: List<Pair<Path, Directory>>,
 ) : ProcessCommands {
   private var eelProcess: EelProcess? = null
 
@@ -147,6 +165,27 @@ private class EelProcessCommands(
     waitForExit = { eelProcess?.exitCode?.await() },
     killProcess = { eelProcess?.kill() }
   )
+
+  private suspend fun downloadAfterExecution() {
+    for ((remoteDir, localDir) in downloads) {
+      try {
+        val time = measureTime {
+          // The remote directory is a full copy of the local directory, so an incremental transfer copies only the changes.
+          EelPathTransfer.incrementalWalkingTransfer(
+            sourceRoot = remoteDir,
+            targetRoot = localDir,
+            fileAttributesStrategy = EelFileTransferAttributesStrategy.Copy,
+            absoluteSymlinkHandler = null,
+            filter = null,
+          )
+        }
+        log.debug { "Downloaded $remoteDir to $localDir in $time" }
+      }
+      catch (e: IOException) {
+        log.warn("Could not download $remoteDir to $localDir: ${e.message}")
+      }
+    }
+  }
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
     val workDir = binOnEel.workDir
@@ -174,6 +213,14 @@ private class EelProcessCommands(
         .interactionOptions(if (tty != null) EelExecApi.Pty(tty.cols.toInt(), tty.rows.toInt()) else null)
         .eelIt()
       this.eelProcess = eelProcess
+      if (downloads.isNotEmpty()) {
+        // Eel binds the process to the scope itself, so `processFunctions.waitForExit` runs only for a kill.
+        // This coroutine is a child of the scope, so the caller that waits for the scope gets the downloaded files.
+        scopeToBind.launch(Dispatchers.IO) {
+          eelProcess.exitCode.await()
+          downloadAfterExecution()
+        }
+      }
       return Result.success(eelProcess.convertToJVMProcess())
     }
     catch (e: ExecuteProcessException) {

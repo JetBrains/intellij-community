@@ -4,7 +4,7 @@ package com.intellij.python.community.execService.impl
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.python.community.execService.FileReporter
 import com.intellij.python.community.execService.HowToReportFile
-import com.intellij.python.community.execService.RelativePath
+import com.intellij.python.community.execService.resolveAgainst
 import com.jetbrains.python.venvReader.Directory
 import java.nio.file.Path
 
@@ -28,8 +28,8 @@ internal data class ArgsAndEnv private constructor(val commandArgs: List<String>
           is Arg.DirArg -> {
             // Upload the full root directory
             val mapper = fileMapper.uploadDir(arg.root)
-            for ((filePath, fileReporter) in arg.filesToReport) {
-              addFileArgument(fileReporter, mapper.getRemotePath(filePath), commandArgs, env)
+            for ((entry, fileReporter) in arg.filesToReport) {
+              addFileArgument(fileReporter, mapper.getRemotePath(entry), commandArgs, env)
             }
           }
         }
@@ -70,7 +70,15 @@ internal interface Uploader {
 
 internal fun interface PathMapper {
   /**
-   * Return the [FullPathOnTarget] of [relativePath] in the uploaded directory.
+   * Return the [FullPathOnTarget] of [entry] in the uploaded directory.
    */
-  fun getRemotePath(relativePath: RelativePath): FullPathOnTarget
+  fun getRemotePath(entry: DirEntry): FullPathOnTarget
+}
+
+/**
+ * Return the local path of [entry] in [root].
+ */
+internal fun DirEntry.resolveAgainst(root: Directory): Path = when (this) {
+  DirEntry.Root -> root
+  is DirEntry.Child -> path.resolveAgainst(root)
 }
