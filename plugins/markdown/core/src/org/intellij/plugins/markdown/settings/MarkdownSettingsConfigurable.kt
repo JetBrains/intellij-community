@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -23,7 +22,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
@@ -97,12 +95,6 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
       showPreviewUnavailableWarningIfNeeded()
       previewDependentOptionsBlock {
         htmlPanelProvidersRow(MarkdownHtmlPanelProvider.getAvailableProviders())
-        row(MarkdownBundle.message("markdown.settings.default.layout")) {
-          comboBox(
-            model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
-            renderer = textListCellRenderer("") { it.getName() }
-          ).bindItem(settings::splitLayout.toNullableProperty()).widthGroup(comboBoxWidthGroup)
-        }
         row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
           comboBox(
             model = DefaultComboBoxModel(arrayOf(false, true)),

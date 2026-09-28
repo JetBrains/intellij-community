@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -354,7 +353,7 @@ class MarkdownPreviewFileEditor(
 
     override fun settingsChanged(settings: MarkdownSettings) {
       coroutineScope.launch(Dispatchers.EDT) {
-        if (settings.splitLayout != TextEditorWithPreview.Layout.SHOW_EDITOR) {
+        if (htmlPanelWrapper.isShowing) {
           if (panel == null) {
             attachHtmlPanel()
           }

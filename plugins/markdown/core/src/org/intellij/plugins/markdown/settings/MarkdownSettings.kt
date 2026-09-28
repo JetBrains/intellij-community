@@ -30,6 +30,8 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.isStripTrailingSpacesOnSave
     set(value) { state.isStripTrailingSpacesOnSave = value }
 
+  // Keep this property for binary compatibility with plugins.
+  @Deprecated("The default layout setting is no longer available.")
   var splitLayout: TextEditorWithPreview.Layout
     get() = state.splitLayout
     set(value) { state.splitLayout = value }
