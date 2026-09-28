@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.FrontendThenBackend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.util.PsiUtilBase
 
 internal class ShowIntentionActionsAction : BaseCodeInsightAction(), ActionToIgnore, LightEditCompatible, DumbAware, FrontendThenBackend {
@@ -23,7 +24,7 @@ internal class ShowIntentionActionsAction : BaseCodeInsightAction(), ActionToIgn
   override fun update(event: AnActionEvent) {
     val project = event.project
     val presentation = event.presentation
-    if (LightEdit.owns(project)) {
+    if (LightEdit.owns(project) || IdeProductMode.isLight) {
       presentation.setEnabledAndVisible(ActionPlaces.EDITOR_POPUP != event.place)
       return
     }
