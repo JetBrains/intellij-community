@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -45,6 +46,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    if (referenceTarget is PyTargetExpression) {
+      getUnannotatedConverterFieldType(referenceTarget, context)?.let { return Ref.create(it) }
+    }
+
     // MyDataclass() call
     val anchor = anchor?.let(PyCallExpressionNavigator::getPyCallExpressionByCallee)
     if (referenceTarget is PyClass && anchor is PyCallExpression) {
@@ -52,6 +57,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     }
 
     return null
+  }
+
+  /** The converter return type of a `dataclass_transform` [field] without an annotation. An annotated field keeps its declared type. */
+  private fun getUnannotatedConverterFieldType(field: PyTargetExpression, context: TypeEvalContext): PyType? {
+    if (field.annotationValue != null || field.typeCommentAnnotation != null) return null
+    return PyDataclassTransformResolver.getConverterReturnType(field, context)
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {

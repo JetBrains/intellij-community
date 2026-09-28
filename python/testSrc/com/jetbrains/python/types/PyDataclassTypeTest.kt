@@ -1082,6 +1082,307 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  @TestFor(issues = ["PY-75771", "PY-80624"])
+  inner class DataclassTransformConverter {
+    @Test
+    fun `converter field type`() = test("""
+      from typing import Callable, dataclass_transform
+
+      def model_field(converter: Callable) -> str: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field = model_field(converter=int)
+
+      expr = DC("1").field
+      # └ TYPE int
+      expr_on_class = DC.field
+      # └ TYPE int
+      """.trimIndent())
+
+    @Test
+    fun `converter with aliased field specifier and TypeVar field type`() = test("""
+      from typing import Callable, TypeVar, dataclass_transform
+
+      T = TypeVar('T')
+      def model_field(converter: Callable[[str], T]) -> T: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      my_alias = model_field
+
+      class DC(ModelBase):
+          field = my_alias(converter=int)
+
+      expr = DC("1").field
+      # └ TYPE int
+      """.trimIndent())
+
+    @Test
+    fun `read of annotated converter field gives declared type`() = test("""
+      from typing import Any, Callable, Iterable, TypeVar, dataclass_transform
+
+      S = TypeVar('S')
+      def to_list(x: Iterable[S]) -> list[S]: ...
+      def model_field(*, converter: Callable) -> Any: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          generic_function: list[int] = model_field(converter=to_list)
+          generic_class: list[int] = model_field(converter=list)
+
+      expr1 = DC((1,), (2,)).generic_function
+      # └ TYPE list[int]
+      expr2 = DC((1,), (2,)).generic_class
+      # └ TYPE list[int]
+      """.trimIndent())
+
+    @Test
+    fun `read of converter field of generic dataclass substitutes type parameters`() = test("""
+      from typing import Any, Callable, Generic, TypeVar, dataclass_transform
+
+      T = TypeVar('T')
+      def model_field(*, converter: Callable) -> Any: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase, Generic[T]):
+          declared: list[T] = model_field(converter=list[T])
+          inferred = model_field(converter=list[T])
+
+      class Sub(DC[str]): ...
+
+      def make() -> DC[int]: ...
+
+      expr1 = make().declared
+      # └ TYPE list[int]
+      expr2 = make().inferred
+      # └ TYPE list[int]
+      expr3 = Sub([]).declared
+      # └ TYPE list[str]
+      """.trimIndent())
+
+    @Test
+    fun `write to converter field of generic dataclass substitutes type parameters`() = test("""
+      from typing import Any, Callable, Generic, TypeVar, dataclass_transform
+
+      T = TypeVar('T')
+      def model_field(*, converter: Callable) -> Any: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase, Generic[T]):
+          field: list[T] = model_field(converter=list[T])
+
+      def make() -> DC[int]: ...
+
+      d = make()
+      d.field = (1, 2)
+      d.field = ("a",)
+      #         ^^^^^^ WARNING Expected type 'Iterable[int]', got 'tuple[Literal["a"]]' instead
+      """.trimIndent())
+
+    @Test
+    fun `converter field in class body has declared type`() = test("""
+      from typing import Any, Callable, dataclass_transform
+
+      def model_field(converter: Callable) -> Any: ...
+      def to_int(s: str) -> int: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field: int = model_field(converter=to_int)
+      #   └ TYPE int
+      """.trimIndent())
+
+    @Test
+    fun `constructor call checks converter input type`() = test("""
+      from typing import Callable, dataclass_transform
+
+      def model_field(converter: Callable) -> str: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field = model_field(converter=int)
+
+      DC(1)
+      DC("1")
+      DC(1.5)
+      DC([1, 2])
+      #  ^^^^^^ WARNING Expected type 'str | Buffer | SupportsInt | SupportsIndex | bytes | bytearray', got 'list[Literal[1, 2]]' instead
+      """.trimIndent())
+
+    @Test
+    fun `assignment checks converter input type`() = test("""
+      from typing import Any, Callable, dataclass_transform
+
+      def model_field(converter: Callable) -> Any: ...
+      def to_int(s: str) -> int: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field: int = model_field(converter=to_int)
+          unannotated = model_field(converter=to_int)
+
+          def __post_init__(self) -> None:
+              self.field = "1"
+
+          def reset(self) -> None:
+              self.field = 5
+      #                    └ WARNING Expected type 'str', got 'Literal[5]' instead
+
+      dc = DC("1", "2")
+      dc.field = "2"
+      dc.field = 2
+      #          └ WARNING Expected type 'str', got 'Literal[2]' instead
+      dc.unannotated += 1
+      #^^^^^^^^^^^^^^^^^^ WARNING Expected type 'str' for augmented assignment, got 'int' from operation instead
+      DC.field = 3
+      """.trimIndent())
+
+    @Test
+    fun `converter keyword of a call that is not a field specifier`() = test("""
+      from typing import Callable, dataclass_transform
+
+      def model_field(converter: Callable) -> str: ...
+      def not_a_field_specifier(converter: Callable) -> str: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field: str = not_a_field_specifier(converter=int)
+
+      expr = DC("1").field
+      # └ TYPE str
+      DC(1)
+      #  └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    fun `converter field of a dataclass in another file`() = test("""
+      from mod import DC
+
+      expr = DC("1").field
+      # └ TYPE int
+      DC(1)
+      #  └ WARNING Expected type 'str', got 'Literal[1]' instead
+      dc = DC("1")
+      dc.field = 1
+      #          └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """.trimIndent(), "mod.py" to """
+      from typing import Callable, dataclass_transform
+
+      def model_field(converter: Callable) -> str: ...
+      def to_int(s: str) -> int: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field: int = model_field(converter=to_int)
+      """)
+
+    @Test
+    @TestInspections(disableInspections = [PyArgumentListInspection::class])
+    fun `default and default factory must match converter input type`() = test("""
+      from typing import Any, Callable, dataclass_transform
+
+      def model_field(
+          *, converter: Callable, default: object = None, default_factory: Callable | None = None, factory: Callable | None = None,
+      ) -> Any: ...
+      def to_int(s: str) -> int: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field0: int = model_field(converter=to_int, default="")
+          field1: int = model_field(converter=to_int, default=1)
+      #                                                       └ WARNING Expected type 'str', got 'Literal[1]' instead
+          field2: int = model_field(converter=to_int, default_factory=str)
+          field3: int = model_field(converter=to_int, default_factory=int)
+      #                                                               ^^^ WARNING Expected type 'str', got 'int' instead
+          field4: int = model_field(converter=to_int, factory=int)
+      #                                                       ^^^ WARNING Expected type 'str', got 'int' instead
+      """.trimIndent())
+
+    @Test
+    fun `unbound method converter accepts its self type`() = test("""
+      from typing import Any, Callable, dataclass_transform
+
+      def model_field(*, converter: Callable) -> Any: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field: str = model_field(converter=str.strip)
+
+      DC(" a ")
+      DC(1)
+      #  └ WARNING Expected type 'LiteralString | str', got 'Literal[1]' instead
+      """.trimIndent())
+
+    @Test
+    fun `converter return type must match declared type`() = test("""
+      from typing import Any, Callable, TypeVar, dataclass_transform
+
+      T = TypeVar('T')
+      def model_field(*, converter: Callable[[Any], T]) -> T: ...
+      def to_int(s: str) -> int: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          ok: int = model_field(converter=to_int)
+          bad: str = model_field(converter=to_int)
+      #              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'int' instead
+      """.trimIndent())
+
+    @Test
+    fun `converter field matches a protocol and a class pattern by its declared type`() = test("""
+      from typing import Any, Callable, Protocol, dataclass_transform
+
+      def model_field(*, converter: Callable) -> Any: ...
+      def to_int(s: str) -> int: ...
+
+      @dataclass_transform(field_specifiers=(model_field,))
+      class ModelBase: ...
+
+      class DC(ModelBase):
+          field: int = model_field(converter=to_int)
+
+      class HasField(Protocol):
+          field: int
+
+      def use(p: HasField): ...
+
+      use(DC("1"))
+
+      def check(dc: object):
+          match dc:
+              case DC(field=x):
+                  expr = x
+      #           └ TYPE int
+      """.trimIndent())
+  }
+
+  @Nested
   inner class NestedDataclassThroughInstance {
     @Test
     @TestFor(issues = ["PY-91150"])

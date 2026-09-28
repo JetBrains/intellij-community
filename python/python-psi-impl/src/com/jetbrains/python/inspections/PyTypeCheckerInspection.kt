@@ -15,6 +15,7 @@ import com.intellij.psi.util.childOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil.getScopeOwner
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassTransformResolver
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumAttributeInfo
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.getEnumValueType
@@ -181,9 +182,11 @@ open class PyTypeCheckerInspection : PyInspection() {
       val target = node.target
       if (target !is PyReferenceExpression) return
 
-      var expected = myTypeEvalContext.getType(target)
       val resolved: PsiElement? = target.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve()
-      if (resolved !is PyTargetExpression || !hasExplicitType(resolved)) return
+      if (resolved !is PyTargetExpression) return
+      val converterInputType = getConverterInputType(target)
+      if (converterInputType == null && !hasExplicitType(resolved)) return
+      var expected = converterInputType ?: myTypeEvalContext.getType(target)
 
       val qualifier = target.qualifier
       if (qualifier != null) {
@@ -598,7 +601,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         }
       }
 
-      var expected = myTypeEvalContext.getType(node)
+      var expected = getConverterInputType(node) ?: myTypeEvalContext.getType(node)
       val qualifier = node.qualifier
       if (qualifier != null) {
         expected = myTypeEvalContext.getType(qualifier).compositeMap {
@@ -774,6 +777,24 @@ open class PyTypeCheckerInspection : PyInspection() {
           }
         }
       }
+    }
+
+    /**
+     * The converter input type when [attribute] is a `dataclass_transform` field with a `converter`, accessed on an instance.
+     * An assignment on the class does not run the converter.
+     */
+    private fun <T> getConverterInputType(attribute: T): PyType? where T : PyQualifiedExpression, T : PyReferenceOwner {
+      val qualifier = attribute.qualifier ?: return null
+      if ((myTypeEvalContext.getType(qualifier) as? PyClassLikeType)?.isDefinition == true) return null
+      val resolved = attribute.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve() as? PyTargetExpression ?: return null
+      // A reference can resolve to an assignment `self.field = ...` in a method. The converter is on the class-level declaration.
+      val field = if (resolved.isQualified) {
+        resolved.containingClass?.findClassAttribute(resolved.name ?: return null, true, myTypeEvalContext) ?: return null
+      }
+      else {
+        resolved
+      }
+      return PyDataclassTransformResolver.getConverterInputType(field, myTypeEvalContext)
     }
 
     private fun <T> getClassAttributeType(attribute: T): Ref<PyType?>? where T : PyQualifiedExpression?, T : PyReferenceOwner? {
