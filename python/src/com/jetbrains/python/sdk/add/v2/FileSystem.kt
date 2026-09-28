@@ -768,12 +768,15 @@ private sealed interface CachedSystemPython {
 }
 
 /**
- * Returns a [EelFileSystem] backed by the EEL of [this] path, falling back to [localEel] when [this] is null
- * or has no EEL descriptor. Convenience for callers that operate on local-host paths and want a [FileSystem]
- * to pass to a tool runner.
+ * Returns an [EelFileSystem] on the eel of [this] path.
+ * If you do not always have a path, use [EelOrJustPath] instead of a `null` path.
  */
-internal suspend fun Path?.toEelFileSystem(): EelFileSystem =
-  EelFileSystem(this?.getEelDescriptor()?.toEelApi() ?: localEel)
+internal suspend fun Path.toEelFileSystem(): EelFileSystem = getEelDescriptor().toEelFileSystem()
+
+/**
+ * Returns an [EelFileSystem] on [this] eel.
+ */
+internal suspend fun EelDescriptor.toEelFileSystem(): EelFileSystem = EelFileSystem(toEelApi())
 
 internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> =
   if (isLocal) {

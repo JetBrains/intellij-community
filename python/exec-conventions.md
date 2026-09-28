@@ -123,5 +123,7 @@ val sdk = createSdkForNewEnv(context, ref)
 A project can be on any eel. Never assume that the project is on the local eel.
 
 * Do not use `localEel`. Get the eel from the project or from the path.
+* Never fall back to `localEel` when a path is `null`. If a function needs an eel and an optional path,
+  accept `EelOrJustPath` instead of `Path?`. It always has an eel. Its path, if present, is on that eel.
 * Use `EelApi` to run processes and to connect to the network.
 * Use NIO `Path` or `EelPath` to work with the file system.

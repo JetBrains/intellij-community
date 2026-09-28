@@ -22,6 +22,7 @@ import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pyproject.safeGetArr
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
 import com.jetbrains.python.sdk.poetry.PoetryDependencyGroupSupport
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
 import com.jetbrains.python.sdk.poetry.runPoetry
@@ -42,7 +43,7 @@ internal class PoetryPyProjectManager : PyProjectManager {
     name: @NlsSafe String?,
   ): PyResult<Unit> {
     val args = if (name != null) arrayOf("new", name) else arrayOf("init")
-    return runPoetry(where, *args, "-n").mapSuccess { }
+    return runPoetry(where.asEelOrJustPath(), *args, "-n").mapSuccess { }
   }
 
   /**

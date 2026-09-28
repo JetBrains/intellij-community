@@ -4,7 +4,6 @@ package com.jetbrains.python.pipenv.sdk.configuration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
@@ -34,6 +33,7 @@ import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.module.getEel
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pipenv.setupPipEnv
 import com.jetbrains.python.sdk.pipenv.suggestedSdkName
@@ -72,7 +72,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
     if (canManage) {
       val envPath = runPipEnv(
-        module.baseDir?.path?.toNioPathOrNull(),
+        module.asEelOrJustPath(),
         "--venv",
         transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
       ).successOrNull

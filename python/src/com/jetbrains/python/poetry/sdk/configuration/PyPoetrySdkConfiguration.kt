@@ -47,6 +47,7 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.module.eelDescriptor
 import com.jetbrains.python.module.getEel
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
 import com.jetbrains.python.sdk.poetry.POETRY_TOML
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -94,7 +95,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
-      val basePath = module.baseDir?.path?.toNioPathOrNull()
+      val basePath = module.asEelOrJustPath()
       runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
       val envPath = runPoetry(basePath, "env", "info", "-p")
         .mapSuccess { it.toNioPathOrNull() }

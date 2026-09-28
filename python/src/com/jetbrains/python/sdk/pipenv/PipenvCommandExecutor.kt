@@ -17,6 +17,8 @@ import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.intellij.python.pytools.runTool
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toEelFileSystem
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -48,18 +50,18 @@ internal suspend fun <P : PathHolder> runPipEnv(
 
 @Internal
 @PyInternalExecApi
-suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> =
+suspend fun runPipEnv(dirPath: Path, vararg args: String): PyResult<String> =
   runPipEnv(
     fileSystem = dirPath.toEelFileSystem(),
     dirPath = dirPath,
     args = args,
   )
 
-internal suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
+internal suspend fun <T> runPipEnv(dirPath: EelOrJustPath, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
   PipEnvPyTool.getInstance().runTool(
     fileSystem = dirPath.toEelFileSystem(),
     pathFromSdk = null,
-    dirPath = dirPath,
+    dirPath = dirPath.path,
     args = args,
     transformer = transformer,
   )
