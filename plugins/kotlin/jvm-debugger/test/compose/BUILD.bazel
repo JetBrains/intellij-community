@@ -29,6 +29,7 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/execution.serviceView/plugin",
+        "//java/java-impl/testFramework",
     ],
 )
 
@@ -54,6 +55,7 @@ jvm_library(
         ":compose",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
+        "//java/java-impl/testFramework:testFramework_test_lib",
     ],
     deps = [
         # do not sort,

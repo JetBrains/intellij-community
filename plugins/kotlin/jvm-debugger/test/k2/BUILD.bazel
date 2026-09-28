@@ -49,6 +49,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/core-api:core",
         "//plugins/kotlin/gradle/gradle",
+        "//java/java-impl/testFramework",
     ],
 )
 
@@ -73,6 +74,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//java/java-impl/testFramework:testFramework_test_lib",
     ],
     deps = [
         # do not sort,

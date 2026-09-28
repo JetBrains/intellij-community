@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.android.logcat.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.scripting" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl.testFramework" scope="RUNTIME" />
   </component>
 </module>

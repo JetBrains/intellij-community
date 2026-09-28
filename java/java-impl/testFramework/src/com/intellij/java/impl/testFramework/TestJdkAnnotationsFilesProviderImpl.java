@@ -1,4 +1,4 @@
-package com.intellij.openapi.projectRoots.files;
+package com.intellij.java.impl.testFramework;
 
 import com.intellij.openapi.projectRoots.testFramework.TestJdkAnnotationsFilesProvider;
 import com.intellij.testFramework.common.BazelTestUtil;
