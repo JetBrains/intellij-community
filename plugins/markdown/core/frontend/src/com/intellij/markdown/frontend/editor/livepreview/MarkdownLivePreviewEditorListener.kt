@@ -1,13 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.editor.livepreview
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.EditorScopeProvider
 import com.intellij.openapi.editor.impl.editorIdOrNull
@@ -25,7 +26,7 @@ import org.intellij.plugins.markdown.lang.supportsMarkdown
 /** Follows the live-preview state of each Markdown editor and keeps the backend and the reconciler in line with it. */
 internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
-    val editor = event.editor
+    val editor = event.editor as? EditorEx ?: return
     if (!editor.supportsMarkdown()) return
     ApplicationManager.getApplication().invokeLater {
       if (editor.isDisposed) return@invokeLater
@@ -33,8 +34,9 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
       val editorId = editor.editorIdOrNull() ?: return@invokeLater
       EditorScopeProvider.getInstance(project).getEditorScope(editor).launch(Dispatchers.Default) {
         try {
-          // Skips the initial off state, so an editor that never turns live preview on makes no RPC calls.
+          // Skips the initial off state, so an editor that never turns live preview on keeps its look and makes no RPC calls.
           editor.livePreviewEnablednessFlow().dropWhile { !it }.collectLatest { enabled ->
+            withContext(Dispatchers.EDT) { MarkdownLivePreviewEditorAppearance.getOrCreate(editor)?.change(enabled) }
             synchronize(editor, editorId, enabled)
           }
         }

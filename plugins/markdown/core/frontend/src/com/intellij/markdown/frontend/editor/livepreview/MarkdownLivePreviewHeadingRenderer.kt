@@ -73,7 +73,7 @@ private const val MODIFIER_KEYS = InputEvent.SHIFT_DOWN_MASK or InputEvent.CTRL_
 private const val SOURCE_RANGE_ATTRIBUTE = "md-src-pos"
 
 /**
- * Paints each heading line as HTML in a custom fold. The HTML heading element supplies its font size.
+ * Paints each heading line as HTML in a custom fold. The HTML heading element supplies its font size, scaled as in the JCEF preview.
  * While a heading shows its source, a block inlay below it takes the height difference to prevent UI jumps.
  * A plain click on a painted heading moves the caret to the source character under the mouse.
  * The Go-to Declaration mouse shortcut, such as Ctrl+Click, also runs Go to Declaration there.
@@ -267,7 +267,8 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
     val style = if (look.font.isItalic) "italic" else "normal"
     val css = "body { margin: 0; padding: 0; font-family: ${EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER}; " +
               "font-weight: $weight; font-style: $style } " +
-              "h1, h2, h3, h4, h5, h6 { margin: 0; padding: 0 } " +
+              // The heading sizes of the JCEF preview style sheet, relative to the body font.
+              "h1 { font-size: 2.2em } h2 { font-size: 1.8em } h3 { font-size: 1.3em } h4, h5, h6 { font-size: 1em } " +
               "a { color: #${ColorUtil.toHex(look.linkColor)}; text-decoration: underline } " +
               ".user-del { text-decoration: line-through }"
     return JBHtmlPane(

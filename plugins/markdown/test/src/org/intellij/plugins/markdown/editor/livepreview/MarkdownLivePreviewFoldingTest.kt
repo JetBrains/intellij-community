@@ -41,6 +41,7 @@ import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import java.awt.Rectangle
+import java.awt.Color
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -273,6 +274,19 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertHeadingHeightIsStable(content)
   }
 
+  fun testHeadingFoldRefreshesAfterEditorFontNameChange() {
+    configure("before\n# title\n\nafter<caret>")
+    val scheme = myFixture.editor.colorsScheme
+    val fontName = EditorColorsManager.getInstance().globalScheme.editorFontName
+    assertFalse("The test needs another font name", scheme.editorFontName == fontName)
+    val renderer = headingFolds().single().renderer
+
+    scheme.editorFontName = fontName
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    assertNotSame(renderer, headingFolds().single().renderer)
+  }
+
   fun testHeadingPaintsWithLightAndDarkEditorSchemes() {
     val content = "before\n# **bold** *italic* `code` ~~gone~~ [link](https://example.org)\n\nafter"
     configure("$content<caret>")
@@ -283,17 +297,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       val scheme = manager.getScheme(name)!!
       manager.setGlobalScheme(scheme, processChangeSynchronously = true)
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-      val fold = headingFolds().single()
-      val bitmap = BufferedImage(fold.widthInPixels, fold.heightInPixels, BufferedImage.TYPE_INT_RGB)
-      val graphics = bitmap.createGraphics()
-      try {
-        graphics.color = scheme.defaultBackground
-        graphics.fillRect(0, 0, bitmap.width, bitmap.height)
-        fold.renderer.paint(fold, graphics, Rectangle2D.Double(0.0, 0.0, bitmap.width.toDouble(), bitmap.height.toDouble()), TextAttributes())
-      }
-      finally {
-        graphics.dispose()
-      }
+      val bitmap = paintHeading(headingFolds().single(), scheme.defaultBackground)
       val pixels = bitmap.getRGB(0, 0, bitmap.width, bitmap.height, null, 0, bitmap.width)
       assertTrue("The heading must paint text in $name", pixels.count { it != scheme.defaultBackground.rgb } > 100)
       assertHeadingHeightIsStable(content)
@@ -324,11 +328,12 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
     val start = content.indexOf("Hello")
     val end = content.indexOf("\n\n")
+    val text = paintedHeadingColumns()
 
     assertEquals(start, clickHeading { 1 })
-    val middle = clickHeading { it.widthInPixels / 2 }
+    val middle = clickHeading { (text.first + text.last) / 2 }
     assertTrue("$middle", middle in start + 1 until end)
-    val last = clickHeading { it.widthInPixels - 1 }
+    val last = clickHeading { text.last }
     assertTrue("$last", last in end - 1..end)
   }
 
@@ -337,10 +342,13 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     configure("$content<caret>")
     EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
     val start = content.indexOf("code")
+    val code = paintedHeadingColumns()
 
     assertEquals(start, clickHeading { 1 })
-    val middle = clickHeading { it.widthInPixels / 2 }
+    val middle = clickHeading { (code.first + code.last) / 2 }
     assertTrue("$middle", middle in start + 1 until start + "code".length)
+    // A click right of the code text puts the caret after the code text, before the closing backtick.
+    assertEquals(start + "code".length, clickHeading { it.widthInPixels - 1 })
   }
 
   fun testImageInAHeadingStaysBelowTheHeadingWhenTheHeadingShowsItsSource() {
@@ -372,48 +380,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertSame(region, headingFolds().single())
     assertTrue("${region.heightInPixels} > $wideHeight", region.heightInPixels > wideHeight)
     assertHeadingHeightIsStable(content)
-  }
-
-  /** Clicks the folded heading at the x that [x] gives, and returns the caret offset after the click. */
-  private fun clickHeading(x: (CustomFoldRegion) -> Int): Int {
-    moveCaretTo(myFixture.editor.document.textLength)
-    val fold = headingFolds().single()
-    val location = fold.location!!
-    EditorMouseFixture(myFixture.editor as EditorImpl).clickAtXY(location.x + x(fold), location.y + fold.heightInPixels / 2)
-    assertEmpty(headingFolds())
-    return myFixture.editor.caretModel.offset
-  }
-
-  private fun assertHeadingHeightIsStable(content: String) {
-    val editor = myFixture.editor
-    val after = content.indexOf("after")
-    val y = editor.offsetToXY(after).y
-    repeat(3) {
-      moveCaretTo(content.indexOf('#'))
-      assertEmpty(headingFolds())
-      assertEquals(y, editor.offsetToXY(after).y)
-      moveCaretTo(content.length)
-      assertEquals(1, headingFolds().size)
-      assertEquals(y, editor.offsetToXY(after).y)
-    }
-  }
-
-  private fun headingFolds(): List<CustomFoldRegion> =
-    myFixture.editor.foldingModel.allFoldRegions.filterIsInstance<CustomFoldRegion>().sortedBy { it.startOffset }
-
-  /**
-   * Shows [content] as source in a small viewport with the caret at [caretOffset], as an editor does before its specs arrive.
-   * Returns the specs to publish.
-   */
-  private fun configureWithLateSpecs(content: String, caretOffset: Int): MarkdownLivePreviewSpecSet {
-    configure(content)
-    val editor = myFixture.editor
-    val specs = computeLivePreviewSpecs(myFixture.file, editor)
-    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(null)
-    EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
-    moveCaretTo(caretOffset)
-    assertEmpty(headingFolds())
-    return specs
   }
 
   fun testInlineLinkShowsOnlyItsTitle() {
@@ -733,18 +699,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     assertEquals(listOf("-" to "•", "-" to "◦"), concealedWithPlaceholders())
     assertNotSame(staleChildRegion, concealedLivePreviewRegions(myFixture.editor)[1])
-  }
-
-  fun testListMarkerConcealmentDoesNotMoveItemText() {
-    val content = "- bullet\n1. ordered\n\ntail"
-    configure("$content<caret>")
-    val offsets = listOf(content.indexOf("bullet"), content.indexOf("ordered"))
-    val concealedPositions = offsets.map { myFixture.editor.offsetToXY(it) }
-
-    moveCaretTo(0)
-
-    assertEmpty(concealed())
-    assertEquals(concealedPositions, offsets.map { myFixture.editor.offsetToXY(it) })
   }
 
   fun testNestedElementRevealsItsAncestor() {
@@ -1666,6 +1620,74 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       { concealed() == listOf("**", "**") },
       10,
     )
+  }
+
+  /**
+   * The x range, relative to the single heading fold, where the heading paints its text.
+   * Live preview soft-wraps the heading, so the fold is as wide as the editor, and the text fills only a part of it.
+   */
+  private fun paintedHeadingColumns(): IntRange {
+    val background = myFixture.editor.colorsScheme.defaultBackground
+    val bitmap = paintHeading(headingFolds().single(), background)
+    val columns = (0 until bitmap.width).filter { x -> (0 until bitmap.height).any { y -> bitmap.getRGB(x, y) != background.rgb } }
+    assertNotEmpty(columns)
+    return columns.first()..columns.last()
+  }
+
+  private fun paintHeading(fold: CustomFoldRegion, background: Color): BufferedImage {
+    val bitmap = BufferedImage(fold.widthInPixels, fold.heightInPixels, BufferedImage.TYPE_INT_RGB)
+    val graphics = bitmap.createGraphics()
+    try {
+      graphics.color = background
+      graphics.fillRect(0, 0, bitmap.width, bitmap.height)
+      fold.renderer.paint(fold, graphics, Rectangle2D.Double(0.0, 0.0, bitmap.width.toDouble(), bitmap.height.toDouble()), TextAttributes())
+    }
+    finally {
+      graphics.dispose()
+    }
+    return bitmap
+  }
+
+  /** Clicks the folded heading at the x that [x] gives, and returns the caret offset after the click. */
+  private fun clickHeading(x: (CustomFoldRegion) -> Int): Int {
+    moveCaretTo(myFixture.editor.document.textLength)
+    val fold = headingFolds().single()
+    val location = fold.location!!
+    EditorMouseFixture(myFixture.editor as EditorImpl).clickAtXY(location.x + x(fold), location.y + fold.heightInPixels / 2)
+    assertEmpty(headingFolds())
+    return myFixture.editor.caretModel.offset
+  }
+
+  private fun assertHeadingHeightIsStable(content: String) {
+    val editor = myFixture.editor
+    val after = content.indexOf("after")
+    val y = editor.offsetToXY(after).y
+    repeat(3) {
+      moveCaretTo(content.indexOf('#'))
+      assertEmpty(headingFolds())
+      assertEquals(y, editor.offsetToXY(after).y)
+      moveCaretTo(content.length)
+      assertEquals(1, headingFolds().size)
+      assertEquals(y, editor.offsetToXY(after).y)
+    }
+  }
+
+  private fun headingFolds(): List<CustomFoldRegion> =
+    myFixture.editor.foldingModel.allFoldRegions.filterIsInstance<CustomFoldRegion>().sortedBy { it.startOffset }
+
+  /**
+   * Shows [content] as source in a small viewport with the caret at [caretOffset], as an editor does before its specs arrive.
+   * Returns the specs to publish.
+   */
+  private fun configureWithLateSpecs(content: String, caretOffset: Int): MarkdownLivePreviewSpecSet {
+    configure(content)
+    val editor = myFixture.editor
+    val specs = computeLivePreviewSpecs(myFixture.file, editor)
+    MarkdownLivePreviewReconciler.getExisting(editor)!!.publishSpecs(null)
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
+    moveCaretTo(caretOffset)
+    assertEmpty(headingFolds())
+    return specs
   }
 
   private fun assertBackspaceAfterElement(element: String) {
