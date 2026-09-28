@@ -16,7 +16,7 @@ pub mod contract;
 pub mod json;
 mod plan;
 
-pub use compile::{Derivation, derive};
+pub use compile::{Derivation, derive, omitted_assets};
 pub use plan::{
     Asset, DEFAULT_MODE, EXECUTABLE_MODE, JarRecipe, JarSource, JarWriter, LayoutAssetPreparation, LayoutFormat, ManifestPolicy, Operation,
     PlanFile, Preparation, from_slice, module_jar_asset, module_jar_recipe, read,

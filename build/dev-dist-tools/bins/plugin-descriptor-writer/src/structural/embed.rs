@@ -23,6 +23,9 @@ pub(crate) struct ContentRequest {
     /// False for a layout that embeds no content-module descriptor. Such a descriptor keeps its `<module/>` elements
     /// empty, and the filter still runs.
     pub embeds: bool,
+    /// The content modules whose body is embedded although the layout embeds none: the modules the product's mode
+    /// refuses. The distribution places no jar of them, so the run time reads the body to exclude the module.
+    pub embedded: BTreeSet<String>,
     /// The product content modules that the product scrambles. Their `<module/>` elements stay empty, and their
     /// descriptors are not resolved, because scrambling can rename classes (`processProductModule` of
     /// `productModuleLayout.kt`). Only a product descriptor states them.
@@ -104,12 +107,26 @@ pub(crate) fn embed_content_modules(root_element: &mut Element, request: &Conten
         );
     }
 
-    if !request.embeds {
-        return Ok(());
+    // The same invariant holds for the modules that keep a body in a non-embedding descriptor.
+    let unmatched: Vec<&str> = request
+        .embedded
+        .iter()
+        .map(String::as_str)
+        .filter(|name| !kept_names.contains(name))
+        .collect();
+    if !unmatched.is_empty() {
+        bail!(
+            "the plan of {} embeds the content modules [{}]. Its descriptor keeps no <module/> of those names",
+            request.main_module,
+            unmatched.join(", ")
+        );
     }
 
     for (content_index, module_index, module_name) in &kept {
         if request.scrambled.contains(module_name) {
+            continue;
+        }
+        if !request.embeds && !request.embedded.contains(module_name) {
             continue;
         }
         let Some(module_element) = root_element.children[*content_index]

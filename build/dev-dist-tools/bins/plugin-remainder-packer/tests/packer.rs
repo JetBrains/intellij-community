@@ -273,7 +273,7 @@ fn projection_mode_matches_the_in_process_derivation() {
 
     let file = planfile::read(&root.path().join("plan.json")).unwrap();
     let catalogue: planfile::contract::Catalogue = planfile::json::read(&root.path().join("catalogue.json")).unwrap();
-    let derivation = planfile::derive(&file, &catalogue, "plugins/filtered", descriptor, 1, &[]).unwrap();
+    let derivation = planfile::derive(&file, &catalogue, "plugins/filtered", descriptor, 1, &[], &[]).unwrap();
     let in_process = root.path().join("in-process");
     pluginpack::plan(&derivation.recipe, &derivation.catalogue)
         .unwrap()

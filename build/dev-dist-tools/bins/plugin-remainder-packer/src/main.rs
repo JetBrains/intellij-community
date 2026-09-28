@@ -26,15 +26,21 @@ const OPTIONS: [&str; 9] = [
 /// Names one module whose plain module jar the chain reuses. It repeats once per module and may be absent.
 const INDEPENDENT_MODULE_OPTION: &str = "--independent-module";
 
+/// Names one content module that the product mode of the chain refuses. It repeats once per module and may be absent.
+/// An asset whose every module is refused is omitted from the remainder, see `planfile::omitted_assets`.
+const REFUSED_MODULE_OPTION: &str = "--refused-module";
+
 fn main() -> ExitCode {
     let code = run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr());
     ExitCode::from(code)
 }
 
-/// The parsed command line: the value of each option in [`OPTIONS`] order, and the independent modules.
+/// The parsed command line: the value of each option in [`OPTIONS`] order, the independent modules and the refused
+/// modules.
 struct Arguments {
     values: Vec<String>,
     independent_modules: Vec<String>,
+    refused_modules: Vec<String>,
 }
 
 impl Arguments {
@@ -72,10 +78,12 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
     }
 }
 
-/// Reads the options. An option takes its value after `=`, and only `--independent-module` repeats.
+/// Reads the options. An option takes its value after `=`, and only `--independent-module` and `--refused-module`
+/// repeat.
 fn parse(arguments: impl IntoIterator<Item = OsString>) -> Result<Arguments, String> {
     let mut values: Vec<Option<String>> = vec![None; OPTIONS.len()];
     let mut independent_modules = Vec::new();
+    let mut refused_modules = Vec::new();
     let mut parser = lexopt::Parser::from_args(arguments);
     while let Some(argument) = parser.next().map_err(|error| error.to_string())? {
         let name = match argument {
@@ -91,9 +99,14 @@ fn parse(arguments: impl IntoIterator<Item = OsString>) -> Result<Arguments, Str
                     .map_err(|value| format!("{name} is not UTF-8: {}", value.display()))
             })
             .transpose()?;
-        if name == INDEPENDENT_MODULE_OPTION {
+        if name == INDEPENDENT_MODULE_OPTION || name == REFUSED_MODULE_OPTION {
+            let modules = if name == INDEPENDENT_MODULE_OPTION {
+                &mut independent_modules
+            } else {
+                &mut refused_modules
+            };
             match value {
-                Some(value) if !value.is_empty() => independent_modules.push(value),
+                Some(value) if !value.is_empty() => modules.push(value),
                 _ => return Err(format!("expected a nonempty {name}=value option")),
             }
             continue;
@@ -116,6 +129,7 @@ fn parse(arguments: impl IntoIterator<Item = OsString>) -> Result<Arguments, Str
     Ok(Arguments {
         values: required,
         independent_modules,
+        refused_modules,
     })
 }
 
@@ -134,6 +148,7 @@ fn project(arguments: &Arguments, version: u32) -> Result<String, String> {
         &descriptor,
         version,
         &arguments.independent_modules,
+        &arguments.refused_modules,
     )
     .map_err(|error| error.to_string())?;
     let execution = pluginpack::plan(&derivation.recipe, &derivation.catalogue).map_err(|error| error.to_string())?;

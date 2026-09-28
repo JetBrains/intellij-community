@@ -100,6 +100,7 @@ class PluginDependenciesValidator private constructor(
       val pluginSet = pluginSetBuildLock.withLockInterruptibly { pluginSetTestBuilder.build() }
       validator.reportPluginLoadingErrors(pluginSet)
       validator.checkPluginSet(pluginSet)
+      validator.checkModeRefusalAgreement(pluginSet)
       return validator.errors
     }
   }
@@ -213,6 +214,33 @@ class PluginDependenciesValidator private constructor(
     this is PluginIsIncompatibleWithProduct &&
     (incompatibilityReason is PluginIncompatibilityReason.IncompatibleWithHostPlatform ||
      incompatibilityReason is PluginIncompatibilityReason.IncompatibleWithCpuArch)
+
+  /**
+   * An optional content module of a bundled plugin that the JPS walk of the product mode refuses must be excluded by the
+   * run time too. A distribution of that mode places no jar of such a module, so an enabled one would load with no
+   * classes. The two walks agree when the module's descriptor states the dependency that reaches the refused root.
+   */
+  private fun checkModeRefusalAgreement(pluginSet: PluginSet) {
+    if (productMode == ProductMode.MONOLITH) {
+      return
+    }
+    for (descriptor in pluginSet.getEnabledModules()) {
+      if (descriptor !is ContentModuleDescriptor || descriptor.moduleLoadingRule.required || !descriptor.parent.isBundled) {
+        continue
+      }
+      val moduleName = descriptor.moduleId.name.substringBeforeLast('/')
+      val jpsModule = project.findModuleByName(moduleName) ?: continue
+      if (productModeMatcher.matches(jpsModule)) {
+        continue
+      }
+      errors.add(PluginModuleConfigurationError(
+        pluginModelModuleName = moduleName,
+        errorMessage = "'$moduleName' of plugin '${descriptor.parent.pluginId}' reaches a module the '${productMode.id}' mode refuses, " +
+                       "yet the run time enables it. A distribution of that mode places no jar of it (ADR 0021 in build/decisions). " +
+                       "Its descriptor must state the dependency that reaches the refused module.",
+      ))
+    }
+  }
 
   private fun checkPluginSet(pluginSet: PluginSet) {
     val jpsModuleToRuntimeDescriptors = LinkedHashMap<String, MutableList<IdeaPluginDescriptorImpl>>()

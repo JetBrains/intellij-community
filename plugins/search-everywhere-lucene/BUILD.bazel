@@ -22,6 +22,12 @@ dev_dist_plugin(
         "lib/searchEverywhereLucene-plugin.jar": ["intellij.searchEverywhereLucene.plugin"],
     },
     main_module = "intellij.searchEverywhereLucene.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.searchEverywhereLucene.backend",
+            "intellij.searchEverywhereLucene.performanceTesting",
+        ],
+    },
     module_jar_paths = {
         "intellij.searchEverywhereLucene.common": "lib/intellij.searchEverywhereLucene.common.jar",
     },

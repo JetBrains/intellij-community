@@ -263,10 +263,10 @@ _dev_plugin_spans_test = analysistest.make(
 )
 
 def _mode_test_impl(ctx):
-    """Under a frontend product the leaf refuses the modules of that mode, and the shared packaging ships none of them.
+    """Under a frontend product the distribution places no jar of a module the leaf refuses for that mode.
 
-    A refused module leaves every jar, and a jar that merges no module any more goes. A refused reused jar goes too. A
-    packaging a product states for itself keeps everything `jars` names.
+    A jar whose every module is refused is not packed, and a reused jar of a refused module is not placed. A jar that
+    merges a refused module with a kept one is packed whole.
     """
     env = analysistest.begin(ctx)
     actions = analysistest.target_actions(env)
@@ -276,6 +276,9 @@ def _mode_test_impl(ctx):
     destinations = sorted([jar["destination"] for jar in json.decode(specs[0].content)["jars"]])
     asserts.equals(env, sorted(ctx.attr.expected_packed), packed)
     asserts.equals(env, sorted(ctx.attr.expected_destinations), destinations)
+    merged = [action for action in actions if action.mnemonic == "PackDevPluginJar" and [file for file in action.outputs.to_list() if file.basename == "mode.jar"]]
+    asserts.equals(env, 1, len(merged))
+    asserts.true(env, [input for input in merged[0].inputs.to_list() if input.basename.endswith("split.jar")] != [], "the mixed jar keeps the refused module")
     return analysistest.end(env)
 
 _mode_test = analysistest.make(
@@ -532,8 +535,8 @@ def dev_plugin_test_suite(name):
     tests.append(_stale_macro_test(name))
     tests.append(_copies_macro_test(name, helper_token, resources_token, resources_prefix))
 
-    # One leaf serves a frontend product: it refuses the split module and the member there, and the shared packaging
-    # drops both. A packaging that keeps them is one product's own.
+    # One leaf serves a frontend product: it names the split module and the member as refused there. The distribution
+    # packs the mixed `lib/mode.jar` whole, packs no `lib/split.jar`, and places no reused member jar.
     mode_owner = name + "_mode_owner"
     _fixture_module(name = mode_owner, module_name = _MODE_MODULE)
     dev_dist_plugin_descriptor(
@@ -542,31 +545,26 @@ def dev_plugin_test_suite(name):
         descriptor = source,
         mode_refused_content_modules = {"frontend": [_SPLIT_MODULE, _MEMBER_MODULE]},
     )
-    for case, keeps, expected_packed, expected_destinations in [
-        ("shared", False, ["mode.jar"], ["lib/mode.jar"]),
-        ("own", True, ["mode.jar", "split.jar"], ["lib/mode.jar", "lib/modules/test.dev.member.jar", "lib/split.jar"]),
-    ]:
-        mode_component = name + "_mode_" + case
-        dev_plugin(
-            name = mode_component,
-            main_module = _MODE_MODULE,
-            descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MODE_MODULE),
-            plugin_directory = "plugins/mode",
-            modules = {":" + mode_owner: _MODE_MODULE, ":" + split: _SPLIT_MODULE},
-            libraries = [library_token],
-            content_module_jars = [":" + content_jar],
-            jars = {
-                "lib/mode.jar": [_MODE_MODULE, _SPLIT_MODULE],
-                "lib/split.jar": [_SPLIT_MODULE, library_token],
-            },
-            keeps_mode_refused_modules = keeps,
-        )
-        tests.append(mode_component + "_test")
-        _mode_test(
-            name = tests[-1],
-            target_under_test = ":" + mode_component,
-            expected_packed = expected_packed,
-            expected_destinations = expected_destinations,
-        )
+    mode_component = name + "_mode"
+    dev_plugin(
+        name = mode_component,
+        main_module = _MODE_MODULE,
+        descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MODE_MODULE),
+        plugin_directory = "plugins/mode",
+        modules = {":" + mode_owner: _MODE_MODULE, ":" + split: _SPLIT_MODULE},
+        libraries = [library_token],
+        content_module_jars = [":" + content_jar],
+        jars = {
+            "lib/mode.jar": [_MODE_MODULE, _SPLIT_MODULE],
+            "lib/split.jar": [_SPLIT_MODULE, library_token],
+        },
+    )
+    tests.append(mode_component + "_test")
+    _mode_test(
+        name = tests[-1],
+        target_under_test = ":" + mode_component,
+        expected_packed = ["mode.jar"],
+        expected_destinations = ["lib/mode.jar"],
+    )
 
     native.test_suite(name = name, tests = tests)

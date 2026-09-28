@@ -86,6 +86,17 @@ dev_dist_plugin(
         ],
     },
     main_module = "intellij.grazie",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.grazie.todo",
+            "intellij.grazie.java",
+            "intellij.grazie.json",
+            "intellij.grazie.markdown",
+            "intellij.grazie.properties",
+            "intellij.grazie.xml",
+            "intellij.grazie.yaml",
+        ],
+    },
     module_jar_paths = {
         "intellij.libraries.kotlin.logging": "lib/intellij.libraries.kotlin.logging.jar",
     },

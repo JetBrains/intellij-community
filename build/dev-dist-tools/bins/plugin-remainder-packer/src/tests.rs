@@ -228,3 +228,57 @@ fn projection_run_refuses_a_kotlin_preparation_and_a_stale_version() {
         }
     }
 }
+
+/// `--refused-module` names a content module that the product mode refuses. The asset whose every module is refused is
+/// omitted: the packer writes no file for it and states no row and no classpath jar. A reused jar of a refused module
+/// leaves the rows too. A refused module that no asset merges is a stale declaration and fails before any write.
+#[test]
+fn projection_run_omits_the_assets_of_a_refused_module() {
+    let root = tempfile::tempdir().unwrap();
+    let mut values = write_projection_fixture(root.path(), PROJECTION_PLAN);
+    values.push("--refused-module=example.main".to_owned());
+    values.push("--refused-module=example.content".to_owned());
+    let (code, output, errors) = run_captured(values.into_iter().map(OsString::from).collect());
+    assert!(
+        code == 0 && !output.is_empty() && errors.is_empty(),
+        "code={code}, output={output:?}, errors={errors:?}"
+    );
+    assert!(
+        fs::symlink_metadata(root.path().join("payload/lib/example.jar")).is_err(),
+        "the omitted jar entered the remainder"
+    );
+    assert_eq!(mode_of(&root.path().join("payload/bin/tool")), 0o755);
+    let assets = fs::read_to_string(root.path().join("assets.json")).unwrap();
+    assert_eq!(assets, r#"[{"destination":"bin/tool","producer":"remainder","classPath":false}]"#);
+    let classpath = fs::read(root.path().join("plugin-classpath.txt")).unwrap();
+    let expected = planfile::classpath::record::<&str>("example", b"<idea-plugin/>", &[]).unwrap();
+    assert_eq!(classpath, expected);
+
+    for (name, extra, message) in [
+        (
+            "an unmatched module",
+            "--refused-module=example.other",
+            r#"refused module "example.other" matches no asset of the plan"#,
+        ),
+        (
+            "an empty module",
+            "--refused-module=",
+            "expected a nonempty --refused-module=value option",
+        ),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let mut values = write_projection_fixture(root.path(), PROJECTION_PLAN);
+        values.push(extra.to_owned());
+        let (code, output, errors) = run_captured(values.into_iter().map(OsString::from).collect());
+        assert!(
+            code != 0 && errors.contains(message) && output.is_empty(),
+            "{name}: code={code}, output={output:?}, errors={errors:?}"
+        );
+        for file in ["payload", "inventory.json", "assets.json", "plugin-classpath.txt"] {
+            assert!(
+                fs::symlink_metadata(root.path().join(file)).is_err(),
+                "{name}: a failed run wrote {file}"
+            );
+        }
+    }
+}

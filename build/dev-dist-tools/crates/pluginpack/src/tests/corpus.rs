@@ -148,6 +148,7 @@ fn every_checked_in_plan_file_plans() {
             b"<idea-plugin/>",
             file.version,
             &independent_modules,
+            &[],
         )
         .unwrap_or_else(|error| panic!("{}: derive: {error}", path.display()));
         validate_assets(file.version, &derivation.assets, true)

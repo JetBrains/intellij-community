@@ -336,6 +336,7 @@ fn plan_derivation_matches_the_kotlin_preparer() {
         &descriptor,
         fixture.plan.version,
         &fixture.reused,
+        &[],
     )
     .unwrap_or_else(|error| panic!("{error}"));
     let written = write_execution(&derivation.recipe, &derivation.catalogue);
@@ -392,6 +393,7 @@ fn plan_derivation_matches_the_kotlin_preparer() {
                 &format!("plugins/{}", plan.plugin),
                 b"<idea-plugin/>",
                 plan.version,
+                &[],
                 &[],
             )
         });
@@ -606,8 +608,16 @@ fn every_planfile_derivation_plans() {
     ];
     for (name, text, inputs, version, independent) in scenarios {
         let file = planfile::from_slice(text.as_bytes()).unwrap_or_else(|error| panic!("{name}: {error}"));
-        let derivation = planfile::derive(&file, &inputs, "plugins/demo", b"<idea-plugin/>", version, &strings(independent))
-            .unwrap_or_else(|error| panic!("{name}: {error}"));
+        let derivation = planfile::derive(
+            &file,
+            &inputs,
+            "plugins/demo",
+            b"<idea-plugin/>",
+            version,
+            &strings(independent),
+            &[],
+        )
+        .unwrap_or_else(|error| panic!("{name}: {error}"));
         plan(&derivation.recipe, &derivation.catalogue).unwrap_or_else(|error| panic!("{name}: the derived recipe does not plan: {error}"));
     }
 }

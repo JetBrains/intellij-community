@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.lambda.test.plugin",
     "variant": "",
-    "layoutSignature": "b10nnhd7be1lrc3ay0t2f3t2k",
+    "layoutSignature": "4cqgkfcji5oalwjqofo2knx0c",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.allure.java.commons.jar",
@@ -92,7 +92,7 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-_j_unit5",
+                        "input": "@lib//:libraries-junit5-_j_unit6",
                         "kind": "library",
                         "filter": "library-v1"
                     }
@@ -112,7 +112,7 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-jupiter-_j_unit5_jupiter",
+                        "input": "@lib//:libraries-junit5-jupiter-_j_unit6_jupiter",
                         "kind": "library",
                         "filter": "library-v1"
                     }
@@ -132,7 +132,7 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-launcher-_j_unit5_launcher",
+                        "input": "@lib//:libraries-junit5-launcher-_j_unit6_launcher",
                         "kind": "library",
                         "filter": "library-v1"
                     }
@@ -152,7 +152,7 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-params-_j_unit5_params",
+                        "input": "@lib//:libraries-junit5-params-_j_unit6_params",
                         "kind": "library",
                         "filter": "library-v1"
                     }
@@ -192,7 +192,7 @@
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-vintage-_j_unit5_vintage",
+                        "input": "@lib//:libraries-junit5-vintage-_j_unit6_vintage",
                         "kind": "library",
                         "filter": "library-v1"
                     }

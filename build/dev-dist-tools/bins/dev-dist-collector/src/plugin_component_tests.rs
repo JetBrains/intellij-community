@@ -961,6 +961,47 @@ fn packed_component_refuses_stale_inputs() {
     run_collector(&plugin_component_args()).assert_error("overlaps payload");
 }
 
+/// `refusedModules` names the content modules that the product mode of the component refuses. The packer omitted every
+/// asset of those modules, so the spec's reused jar of such a module places nothing and its rows are absent.
+#[cfg(unix)]
+#[test]
+fn prepared_component_drops_the_reused_jars_of_refused_modules() {
+    let _directory = WorkDir::new();
+    let mut fixture = Prepared::new();
+    fixture.spec["refusedModules"] = json!(["shared"]);
+    fixture.assets.retain(|asset| asset["producer"] != "independent");
+    write_file("metadata/plugin-classpath.txt", class_path_fixture("demo", &["lib/demo.jar"]));
+    fixture.write();
+    run_collector(&plugin_component_args()).assert_success();
+    let entries = manifest_entries("component.json");
+    assert_eq!(entries.len(), 3);
+    assert!(
+        !entries.contains_key("plugins/demo/lib/member.jar"),
+        "the reused jar of a refused module was placed"
+    );
+    assert_class_path_part(&class_path_fixture("demo", &["lib/demo.jar"]));
+
+    for file in ["component.json", "component.plugin-classpath-part"] {
+        std::fs::remove_file(file).unwrap();
+    }
+
+    // A refused module whose rows the packer still states is a stale ownership, as an unused reused jar is.
+    let mut stale = Prepared::new();
+    stale.spec["refusedModules"] = json!(["shared"]);
+    stale.write();
+    run_collector(&plugin_component_args()).assert_error("missing independent artifact shared");
+    for (modules, message) in [
+        (json!(["shared", "shared"]), r#"refused module "shared" is named twice"#),
+        (json!([" "]), "a refused module requires a name"),
+    ] {
+        let mut fixture = Prepared::new();
+        fixture.spec["refusedModules"] = modules;
+        fixture.write();
+        run_collector(&plugin_component_args()).assert_error(message);
+    }
+    assert_no_outputs();
+}
+
 /// A prepared spec with a key of the packed shape, or the other way round, matches no rule and is refused.
 #[test]
 fn a_spec_takes_only_the_keys_of_its_shape() {
@@ -974,6 +1015,10 @@ fn a_spec_takes_only_the_keys_of_its_shape() {
     run_collector(&plugin_component_args()).assert_error("names no copied files and no descriptor");
     let mut spec = packed_spec(false);
     spec["independent"] = json!([]);
+    write_json("component-spec.json", &spec);
+    run_collector(&plugin_component_args()).assert_error("names only its descriptor, jars and files");
+    let mut spec = packed_spec(false);
+    spec["refusedModules"] = json!([]);
     write_json("component-spec.json", &spec);
     run_collector(&plugin_component_args()).assert_error("names only its descriptor, jars and files");
     write_json(

@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.python.plugin",
     "variant": "",
-    "layoutSignature": "2bffu1kghnxd4wbfu5l9348e6",
+    "layoutSignature": "2xx31s1lrwvelnbryepgpjuv8",
     "assets": [
         {
             "module": "intellij.python.frontend.base"
@@ -11,7 +11,16 @@
             "module": "intellij.python.frontend"
         },
         {
-            "module": "intellij.scientific.py.tables.split.common"
+            "module": "intellij.python"
+        },
+        {
+            "module": "intellij.python.core.impl"
+        },
+        {
+            "module": "intellij.python.scientific"
+        },
+        {
+            "module": "intellij.python.plugin.java"
         },
         {
             "destination": "lib/python.jar",
@@ -30,12 +39,108 @@
                         "input": "intellij.python.plugin",
                         "kind": "module",
                         "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.django.core",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.jinja",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "intellij.template.lang.core",
+                        "kind": "module",
+                        "filter": "module-v1"
                     }
                 ],
                 "writer": {
                     "mergeEntities": true
                 }
             }
+        },
+        {
+            "module": "intellij.python.djangoDbConfig"
+        },
+        {
+            "module": "intellij.python.huggingFace"
+        },
+        {
+            "module": "intellij.python.docker"
+        },
+        {
+            "module": "intellij.python.coverage"
+        },
+        {
+            "module": "intellij.python.duplicatesDetection"
+        },
+        {
+            "module": "intellij.python.duplocator"
+        },
+        {
+            "module": "intellij.python.endpoints"
+        },
+        {
+            "module": "intellij.python.endpointsHttpclient"
+        },
+        {
+            "module": "intellij.python.endpointsMicroservicesUI"
+        },
+        {
+            "module": "intellij.python.gherkin"
+        },
+        {
+            "module": "intellij.python.javascript.debugger"
+        },
+        {
+            "module": "intellij.python.profiler"
+        },
+        {
+            "module": "intellij.python.pydantic"
+        },
+        {
+            "module": "intellij.python.pyramid"
+        },
+        {
+            "module": "intellij.python.pytestBdd"
+        },
+        {
+            "module": "intellij.python.remoteInterpreter"
+        },
+        {
+            "module": "intellij.python.uml"
+        },
+        {
+            "module": "intellij.python.wsl"
+        },
+        {
+            "module": "intellij.python.pro.js"
+        },
+        {
+            "module": "intellij.python.pro.localization"
+        },
+        {
+            "module": "intellij.python.templateLanguages"
+        },
+        {
+            "module": "intellij.python.performanceTesting"
+        },
+        {
+            "module": "intellij.scientific.py.tables"
+        },
+        {
+            "module": "intellij.scientific.py.tables.split.common"
+        },
+        {
+            "module": "intellij.python.pro.rust"
+        },
+        {
+            "module": "intellij.python.pro.rust.debugger"
+        },
+        {
+            "module": "intellij.platform.commercial.verifier"
         }
     ]
 }

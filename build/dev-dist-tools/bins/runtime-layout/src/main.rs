@@ -15,12 +15,13 @@
 //! catalogue of its chain:
 //!
 //! ```text
-//! runtime-layout plan-part --plan=<file> --catalogue=<file> [--independent-libraries=<file>] \
+//! runtime-layout plan-part --plan=<file> --catalogue=<file> [--independent-libraries=<file>] [--refused-module=<module>...] \
 //!   --descriptor-module=<module> --plugin-directory=plugins/<directory> --descriptor=<file> --output=<file>
 //! ```
 //!
 //! The independent libraries file is `{"version": 1, "libraries": [{"library": <label>, "jars": [<file>...]}...]}`: the
-//! libraries that the reused content module jars of the plugin merge.
+//! libraries that the reused content module jars of the plugin merge. A refused module is a content module that the
+//! product mode of the chain refuses. The part leaves out the jars that the packer omits for the refused modules.
 
 mod assemble;
 mod descriptor;
@@ -117,7 +118,7 @@ struct IndependentLibraries {
 fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<String> {
     let values = parse_options(
         args,
-        &["--independent-libraries"],
+        &["--independent-libraries", "--refused-module"],
         &[
             "--plan",
             "--catalogue",
@@ -140,6 +141,12 @@ fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<String> {
         }
         independent_libraries.extend(libraries.libraries);
     }
+    let refused_modules: Vec<String> = values
+        .get("--refused-module")
+        .into_iter()
+        .flatten()
+        .map(|module| module.to_string_lossy().into_owned())
+        .collect();
     let plan_path = &values["--plan"][0];
     let plan = planfile::read(Path::new(plan_path))?;
     let catalogue: planfile::contract::Catalogue = planfile::json::read(Path::new(&values["--catalogue"][0]))?;
@@ -147,6 +154,7 @@ fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<String> {
         &plan,
         &catalogue,
         &independent_libraries,
+        &refused_modules,
         &single("--descriptor-module"),
         &single("--plugin-directory"),
         &single("--descriptor"),

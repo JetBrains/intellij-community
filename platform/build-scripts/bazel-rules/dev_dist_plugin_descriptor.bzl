@@ -28,7 +28,9 @@ DevDistPluginDescriptorInfo = provider(
 
         Always in its final byte form: a classpath writer copies the bytes and applies no XML rewrite.""",
         "platforms": "The `HOST_PLATFORMS` entries this layout variant serves.",
-        "mode_refused_content_modules": "The content modules the leaf refuses because of its product's mode. `dev_plugin` drops them from the shared packaging.",
+        "mode_refused_content_modules": """The content modules the product's mode refuses at run time. The descriptor keeps them.
+
+        `dev_plugin` and the chain place no jar whose every module is in this list, and no reused jar of such a module.""",
         "_declaration": "Private versioned metadata with the declared File objects and action parameters.",
         "_declaration_file": "The private metadata file. It is not a default output or an action input.",
     },
@@ -237,6 +239,11 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         ("--embed-content-modules", str(embed_content_modules).lower(), "literal"),
         ("--reserialize-before-content-embedding", str(reserialize_before_content_embedding).lower(), "literal"),
     ]
+
+    # The distribution places no jar of a module the product's mode refuses, so a descriptor that embeds no body
+    # still embeds the body of such a module. The run time reads it there and excludes the module.
+    if not embed_content_modules:
+        parameters.append(("--embed-content-module", ctx.attr.mode_refused_content_modules.get(product.mode, []), "repeated"))
     if source != None:
         parameters.insert(1, ("--source", source, "formatted"))
     else:
@@ -248,7 +255,7 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         parameters.append(("--compatible-build-range", ctx.attr.compatible_build_range, "formatted"))
     parameters.extend([
         ("--marker", stamps.markers, "repeated"),
-        ("--refused-content-module", _refused_content_modules(ctx, product), "repeated"),
+        ("--refused-content-module", ctx.attr.refused_content_modules, "repeated"),
         ("--separate-jar", ctx.attr.separate_jar, "repeated"),
     ])
 
@@ -470,10 +477,6 @@ def _descriptor_declaration_json(declaration):
         "default_outputs": [_descriptor_file_identity(file) for file in declaration.default_outputs],
     }) + "\n"
 
-def _refused_content_modules(ctx, product):
-    """The content modules this leaf refuses: the stated ones, then the ones its product's mode refuses."""
-    return ctx.attr.refused_content_modules + ctx.attr.mode_refused_content_modules.get(product.mode, [])
-
 def _dev_dist_plugin_descriptor_impl(ctx):
     if ctx.attr.unresolved_descriptor_modules:
         fail("Missing selected descriptors for %s: %s. Regenerate the dev sections." % (
@@ -663,10 +666,11 @@ The survivors are `descriptor`'s own `<content>`, which this action already decl
 here. A refusal that reaches no `<module/>` fails the action.""",
         ),
         "mode_refused_content_modules": attr.string_list_dict(
-            doc = """The content modules the leaf refuses in a product of each mode, keyed by the mode, such as `frontend`.
+            doc = """The content modules each product mode refuses at run time, keyed by the mode, such as `frontend`.
 
-A frontend product refuses the content modules that reach a backend root, and that rule reads the module alone. So the
-leaf of every product states one list, and the leaf adds the list of the mode `dev_dist_product_info` names.""",
+A fact of the plugin's modules: a frontend refuses the content modules that reach a backend root, and that rule reads
+the module alone. The descriptor keeps every module, and the run time excludes a refused one. The provider states the
+list of the mode `dev_dist_product_info` names, and the rules place no jar of such a module under that product.""",
         ),
         "separate_jar": attr.string_list(
             doc = "Which content module's embedded descriptor takes `separate-jar=\"true\"`. A deviation, normally empty.",

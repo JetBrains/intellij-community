@@ -36,6 +36,10 @@ pub struct Derivation {
 /// `independent_modules` names the modules whose jar the chain reuses from a `content_module_jar` target. An asset in
 /// the shape of such a module jar is independent, and its artifact is the module name. The generator has matched the
 /// whole recipe against the target before it names the module.
+///
+/// `refused_modules` names the content modules that the product mode of the chain refuses. An asset whose every module
+/// is refused is omitted, see [`omitted_assets`]: the packer does not write it, and no asset row, classpath jar or
+/// operation names it. The catalogue of the derivation drops the inputs that only an omitted asset reads.
 pub fn derive(
     file: &PlanFile,
     catalogue: &Catalogue,
@@ -43,6 +47,7 @@ pub fn derive(
     descriptor: &[u8],
     execution_version: u32,
     independent_modules: &[String],
+    refused_modules: &[String],
 ) -> Result<Derivation, Error> {
     let Some(plugin_dir_name) = plugin_directory
         .strip_prefix("plugins/")
@@ -58,8 +63,9 @@ pub fn derive(
             file.version
         );
     }
-    let mut compiler = Compiler::new(file, independent_modules);
     let plugin_context = |error: Error| error.context(format_args!("plugin {:?}", file.plugin));
+    let omitted = omitted_assets(file, refused_modules).map_err(plugin_context)?;
+    let mut compiler = Compiler::new(file, independent_modules, omitted);
     compiler.plan().map_err(plugin_context)?;
     compiler.bind_operations().map_err(plugin_context)?;
     compiler.index_catalogue(catalogue).map_err(plugin_context)?;
@@ -79,10 +85,72 @@ pub fn derive(
         class_path,
         catalogue: Catalogue {
             version: catalogue.version,
-            artifacts: catalogue.artifacts.clone(),
+            artifacts: compiler.executed_artifacts(catalogue),
             libraries: Vec::new(),
         },
     })
+}
+
+/// The modules of one asset: the `module` sources of its recipe, the module that a `prepared` source's module-filter
+/// operation reads, and the module of a reused native tree. A library jar, a file copy and a layout tree have none.
+fn asset_modules<'a>(file: &'a PlanFile, asset: &'a Asset) -> Vec<&'a str> {
+    if let Some(module) = native_tree_module(asset) {
+        return vec![module];
+    }
+    let Some(recipe) = &asset.recipe else {
+        return Vec::new();
+    };
+    let mut modules = Vec::new();
+    for source in &recipe.sources {
+        match source.kind.as_str() {
+            "module" => push_new(&mut modules, &source.input),
+            "prepared" => {
+                let module = file
+                    .operations
+                    .iter()
+                    .find(|operation| operation.kind == MODULE_FILTER_KIND && operation.output == source.input)
+                    .and_then(|operation| operation.input.as_ref());
+                if let Some(input) = module {
+                    push_new(&mut modules, &input.artifact);
+                }
+            }
+            _ => {}
+        }
+    }
+    modules
+}
+
+/// Whether each asset of `file`, in plan order, is omitted for a product mode that refuses `refused_modules`.
+///
+/// An asset is omitted when it has at least one module and every one of them is refused. An asset that merges a refused
+/// module with a kept one stays whole: the run time refuses the module, and the class loader fence keeps its packages
+/// out of reach. A refused module that no asset merges is a stale declaration and fails, as an unmatched independent
+/// module does. The packer and the runtime layout tool both read this answer, so the two cannot drift.
+pub fn omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec<bool>, Error> {
+    let mut refused = HashSet::with_capacity(refused_modules.len());
+    for module in refused_modules {
+        if module.is_empty() {
+            fail!("a refused module requires a name");
+        }
+        if !refused.insert(module.as_str()) {
+            fail!("refused module {module:?} is named twice");
+        }
+    }
+    let mut matched = HashSet::new();
+    let mut omitted = Vec::with_capacity(file.assets.len());
+    for asset in &file.assets {
+        let modules = asset_modules(file, asset);
+        for module in &modules {
+            if refused.contains(module) {
+                matched.insert(*module);
+            }
+        }
+        omitted.push(!modules.is_empty() && modules.iter().all(|module| refused.contains(module)));
+    }
+    if let Some(module) = refused_modules.iter().find(|module| !matched.contains(module.as_str())) {
+        fail!("refused module {module:?} matches no asset of the plan; regenerate the dev distribution declarations");
+    }
+    Ok(omitted)
 }
 
 /// `pluginPackingExecutionVersion`: 3 with a distribution asset, 2 with a tree, else 1.
@@ -131,12 +199,23 @@ struct PlannedAsset<'a> {
     asset: &'a Asset,
     /// The module of an independent asset, or `None` for a remainder asset.
     artifact: Option<&'a str>,
+    /// Whether the product mode of the chain refuses every module of the asset, see [`omitted_assets`].
+    omitted: bool,
+}
+
+impl PlannedAsset<'_> {
+    /// Whether the packer writes the asset: a remainder asset that is not omitted.
+    const fn executed(&self) -> bool {
+        self.artifact.is_none() && !self.omitted
+    }
 }
 
 /// The plan file, the ownership rows and the catalogue index of one derivation.
 struct Compiler<'a> {
     file: &'a PlanFile,
     independent_modules: &'a [String],
+    /// The omission of each asset of the file, in plan order.
+    omitted: Vec<bool>,
     assets: Vec<PlannedAsset<'a>>,
     /// The preparations of the remainder assets in first use order.
     required: Vec<&'a Preparation>,
@@ -150,10 +229,11 @@ struct Compiler<'a> {
 }
 
 impl<'a> Compiler<'a> {
-    fn new(file: &'a PlanFile, independent_modules: &'a [String]) -> Self {
+    fn new(file: &'a PlanFile, independent_modules: &'a [String], omitted: Vec<bool>) -> Self {
         Self {
             file,
             independent_modules,
+            omitted,
             assets: Vec::new(),
             required: Vec::new(),
             producers: HashMap::new(),
@@ -200,7 +280,7 @@ impl<'a> Compiler<'a> {
             }
         }
         let mut used = HashSet::new();
-        for asset in &file.assets {
+        for (asset, &omitted) in file.assets.iter().zip(&self.omitted) {
             if let Some(module) = native_tree_module(asset) {
                 if asset.scope != DISTRIBUTION_SCOPE || !native_jars.contains(module) {
                     fail!(
@@ -212,6 +292,7 @@ impl<'a> Compiler<'a> {
                 self.assets.push(PlannedAsset {
                     asset,
                     artifact: Some(module),
+                    omitted,
                 });
                 continue;
             }
@@ -229,7 +310,7 @@ impl<'a> Compiler<'a> {
             if let Some(module) = artifact {
                 used.insert(module);
             }
-            self.assets.push(PlannedAsset { asset, artifact });
+            self.assets.push(PlannedAsset { asset, artifact, omitted });
         }
         if let Some(module) = self.independent_modules.iter().find(|module| !used.contains(module.as_str())) {
             fail!("independent module {module:?} matches no module jar asset; regenerate the dev distribution declarations");
@@ -530,11 +611,42 @@ impl<'a> Compiler<'a> {
         }
     }
 
+    /// The catalogue artifacts that an executed operation reads, in catalogue order. The Starlark catalogue lists every
+    /// input of the plan, an input of an omitted asset too. The plan step requires every artifact of its catalogue to be
+    /// used, so the artifacts that only an omitted asset reads leave the catalogue of the derivation.
+    fn executed_artifacts(&self, catalogue: &Catalogue) -> Vec<Artifact> {
+        let mut raw: Vec<&str> = Vec::new();
+        for planned in self.assets.iter().filter(|planned| planned.executed()) {
+            for input in &planned.asset.inputs {
+                match self.producers.get(input.as_str()) {
+                    Some(preparation) => preparation.inputs.iter().for_each(|dependency| push_new(&mut raw, dependency)),
+                    None => push_new(&mut raw, input),
+                }
+            }
+        }
+        let mut expected: HashSet<&str> = HashSet::new();
+        for input in raw {
+            match self.libraries.get(input) {
+                Some(library) => expected.extend(library.files.iter().map(|reference| reference.artifact.as_str())),
+                None => {
+                    expected.insert(input);
+                }
+            }
+        }
+        catalogue
+            .artifacts
+            .iter()
+            .filter(|artifact| expected.contains(artifact.id.as_str()))
+            .cloned()
+            .collect()
+    }
+
     /// `deriveDevPluginExecutionAssets`: the producer of every asset in plan order. A default stays empty, the way the
     /// Kotlin encoder omits it.
     fn asset_rows(&self) -> Vec<contract::Asset> {
         self.assets
             .iter()
+            .filter(|planned| !planned.omitted)
             .map(|planned| {
                 let asset = planned.asset;
                 let producer = if planned.artifact.is_some() { "independent" } else { "remainder" };
@@ -558,6 +670,7 @@ impl<'a> Compiler<'a> {
     fn class_path_jars(&self) -> Vec<&'a str> {
         self.assets
             .iter()
+            .filter(|planned| !planned.omitted)
             .map(|planned| planned.asset)
             .filter(|asset| {
                 let destination = asset.destination.as_str();
@@ -574,7 +687,7 @@ impl<'a> Compiler<'a> {
     /// Compiles one remainder operation per remainder asset.
     fn operations(&self) -> Result<Vec<contract::Operation>, Error> {
         let mut operations = Vec::new();
-        for planned in self.assets.iter().filter(|planned| planned.artifact.is_none()) {
+        for planned in self.assets.iter().filter(|planned| planned.executed()) {
             let asset = planned.asset;
             let destination = asset.destination.clone();
             let operation = if asset.kind == "tree" {

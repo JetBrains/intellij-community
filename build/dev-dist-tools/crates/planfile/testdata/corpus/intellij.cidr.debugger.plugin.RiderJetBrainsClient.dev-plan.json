@@ -2,16 +2,31 @@
     "version": 1,
     "plugin": "intellij.cidr.debugger.plugin",
     "variant": "",
-    "layoutSignature": "8wjc8iu55rueus8sz6xls7puq",
+    "layoutSignature": "2qcdwgrd5l9bhdfj6b5p8c3s8",
     "assets": [
         {
+            "module": "intellij.cidr.debugger.backend"
+        },
+        {
             "module": "intellij.cidr.debugger.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.core"
+        },
+        {
+            "module": "intellij.cidr.debugger.dap"
         },
         {
             "module": "intellij.cidr.debugger.frontend"
         },
         {
+            "module": "intellij.cidr.debugger.mcp"
+        },
+        {
             "module": "intellij.cidr.debugger.profiles.shared"
+        },
+        {
+            "module": "intellij.cidr.debugger.profiles.backend"
         },
         {
             "module": "intellij.cidr.debugger.profiles.frontend"
@@ -21,6 +36,9 @@
         },
         {
             "module": "intellij.cidr.runner"
+        },
+        {
+            "module": "intellij.cidr.debugger.plugin.core"
         },
         {
             "destination": "lib/modules/intellij.libraries.antlr4.runtime.jar",

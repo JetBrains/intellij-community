@@ -123,6 +123,7 @@ fn every_checked_in_plan_file_reads_and_derives() {
             b"<idea-plugin/>",
             file.version,
             &independent_modules(&file),
+            &[],
         )
         .unwrap_or_else(|error| panic!("{}: {error}", path.display()));
         source_kinds.extend(

@@ -2,10 +2,19 @@
     "version": 1,
     "plugin": "intellij.remoteDevelopment.plugin",
     "variant": "",
-    "layoutSignature": "4vb4d5tl581p9les6e5m61w9k",
+    "layoutSignature": "1u6qnypwq7qcbkyoky7vzpw54",
     "assets": [
         {
+            "module": "intellij.platform.kernel.backend.split"
+        },
+        {
+            "module": "intellij.platform.navbar.backend.split"
+        },
+        {
             "module": "intellij.platform.rpc.split"
+        },
+        {
+            "module": "intellij.platform.plugins.backend.split"
         },
         {
             "module": "intellij.platform.plugins.shared.split"
@@ -60,13 +69,22 @@
             }
         },
         {
+            "module": "intellij.platform.inline.completion.backend.split"
+        },
+        {
             "module": "intellij.platform.completion.common.split"
+        },
+        {
+            "module": "intellij.platform.completion.backend.split"
         },
         {
             "module": "intellij.platform.buildView.split"
         },
         {
             "module": "intellij.platform.credentialStore.common"
+        },
+        {
+            "module": "intellij.platform.credentialStore.backend.split"
         },
         {
             "module": "intellij.platform.split.connection"
@@ -227,6 +245,18 @@
             "module": "intellij.platform.split.statistics"
         },
         {
+            "module": "intellij.platform.backend.split"
+        },
+        {
+            "module": "intellij.platform.backend.split.jcef"
+        },
+        {
+            "module": "intellij.platform.remoteController.backend"
+        },
+        {
+            "module": "intellij.platform.remoteController.cli"
+        },
+        {
             "module": "intellij.platform.remoteController"
         },
         {
@@ -240,6 +270,9 @@
         },
         {
             "module": "intellij.rd.eel.frontend"
+        },
+        {
+            "module": "intellij.rd.eel.backend"
         },
         {
             "module": "intellij.platform.frontend.split.base"
@@ -282,6 +315,9 @@
         },
         {
             "module": "intellij.platform.frontend.split.connection"
+        },
+        {
+            "module": "intellij.execution.process.elevation.backend.split"
         },
         {
             "destination": "jre-build.txt",

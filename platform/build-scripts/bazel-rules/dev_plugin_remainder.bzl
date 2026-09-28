@@ -39,6 +39,7 @@ DevPluginRemainderInfo, _new_remainder_info = provider(
         "assets": "File containing the complete ordered asset table.",
         "classpath": "File containing the plugin classpath record.",
         "independent_artifacts": "Independent artifact references, excluded from the packing action.",
+        "refused_modules": "The content modules the product's mode refuses. No jar of them is placed, see `--refused-module`.",
     },
     init = _remainder_info_init,
 )
@@ -608,7 +609,7 @@ def _catalogue_binding(ctx, artifact_catalogue, reused_jars):
                 fail("catalogue artifact %s overlaps independent artifact %s" % (identifier, independent.path))
     return binding
 
-def _remainder_providers(ctx, graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content):
+def _remainder_providers(ctx, graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content, refused_modules):
     """The providers of a packed remainder. The component reads this one contract."""
     return [
         DefaultInfo(
@@ -624,6 +625,7 @@ def _remainder_providers(ctx, graph, execution_version, directory, metadata, ass
             assets = assets,
             classpath = classpath,
             independent_artifacts = independent_artifacts,
+            refused_modules = refused_modules,
         ),
         OutputGroupInfo(
             file_metadata = depset([metadata]),
@@ -649,7 +651,11 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     reused_jars = _reused_jars(ctx)
     binding = _catalogue_binding(ctx, artifact_catalogue, reused_jars)
     classpath_descriptor = _descriptor_classpath_file(descriptor_target)
-    independent_artifacts = depset(reused_jars.values())
+
+    # The content modules the product's mode refuses. The packer omits an asset whose every module is refused, the
+    # runtime layout part omits the same assets, and a reused jar of a refused module is not placed.
+    refused_modules = descriptor_target[DevDistPluginDescriptorInfo].mode_refused_content_modules
+    independent_artifacts = depset([jar for module, jar in reused_jars.items() if module not in refused_modules])
 
     # The raw content of the whole plugin: the catalogue's compiled modules and libraries, plus what each reused content
     # module jar merged.
@@ -685,6 +691,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     arguments.add(assets, format = "--assets=%s")
     arguments.add(classpath, format = "--classpath=%s")
     arguments.add_all(reused_jars.keys(), format_each = "--independent-module=%s")
+    arguments.add_all(refused_modules, format_each = "--refused-module=%s")
     ctx.actions.run(
         mnemonic = "PackDevPluginRemainder",
         executable = ctx.executable._packer,
@@ -713,6 +720,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         layout_arguments.add(independent_libraries, format = "--independent-libraries=%s")
         layout_inputs.append(independent_libraries)
     layout_arguments.add(descriptor_target[DevDistPluginDescriptorInfo].plugin_main_module, format = "--descriptor-module=%s")
+    layout_arguments.add_all(refused_modules, format_each = "--refused-module=%s")
     layout_arguments.add(ctx.attr.plugin_directory, format = "--plugin-directory=%s")
     layout_arguments.add(classpath_descriptor.path, format = "--descriptor=%s")
     layout_arguments.add(runtime_layout, format = "--output=%s")
@@ -724,7 +732,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         arguments = [layout_arguments],
         progress_message = "Deriving the runtime layout part of %{label} from its plan file",
     )
-    return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content) + [
+    return _remainder_providers(ctx, ctx.attr.graph, execution_version, directory, metadata, assets, classpath, independent_artifacts, content, refused_modules) + [
         DevDistRuntimeLayoutInfo(
             part = runtime_layout,
             descriptor = classpath_descriptor,
@@ -788,8 +796,13 @@ def _dev_plugin_component_impl(ctx):
     identifiers = {}
     declared = {file: True for file in remainder.independent_artifacts.to_list()}
     bound = {}
+    refused = {module: True for module in remainder.refused_modules}
     for target in ctx.attr.independent_artifacts:
         info = target[ContentModuleJarInfo]
+
+        # The run time excludes a refused module, so its reused jar is not placed.
+        if info.module_name in refused:
+            continue
         identifier = _catalogue_id(info.module_name)
         if identifier in identifiers:
             fail("duplicate independent artifact ID: %s" % identifier)
@@ -833,15 +846,18 @@ def _dev_plugin_component_impl(ctx):
             if _overlapping_artifacts(source, artifact):
                 fail("component metadata %s overlaps payload artifact %s" % (source.path, artifact.path))
 
-    spec = ctx.actions.declare_file(ctx.label.name + ".collection.json")
-    ctx.actions.write(spec, json.encode({
+    collection = {
         "version": execution_version,
         "pluginDirectory": ctx.attr.plugin_directory,
         "remainder": {"directory": remainder.directory.path, "metadata": remainder.metadata.path},
         "assets": remainder.assets.path,
         "classpath": remainder.classpath.path,
         "independent": independent,
-    }) + "\n")
+    }
+    if remainder.refused_modules:
+        collection["refusedModules"] = remainder.refused_modules
+    spec = ctx.actions.declare_file(ctx.label.name + ".collection.json")
+    ctx.actions.write(spec, json.encode(collection) + "\n")
     manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
     classpath = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath-part")
     outputs = [manifest, classpath]

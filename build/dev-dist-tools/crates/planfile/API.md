@@ -9,7 +9,7 @@ The crate depends on `serde`, `serde_json` and `thiserror` only.
 
 ## The subset rule
 
-The crate ports only the shapes that the 136 checked-in `*.dev-plan.json` files use. It refuses every other shape with
+The crate ports only the shapes that the 105 checked-in `*.dev-plan.json` files use. It refuses every other shape with
 an error that names it. The table lists what the Go code supports and the port refuses.
 
 `testdata/corpus/` holds a copy of each of these files, without the Starlark test fixture. The corpus test reads and
@@ -35,6 +35,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | a module-filter input that names a library | the library |
 | a plugin directory that is not `plugins/<name>` | the directory |
 | a plugin classpath name that is not ASCII, or that holds NUL | the name |
+| a refused module that no asset of the plan merges, an empty one, or one named twice | the module |
 
 ## Crate root: the plan file (Go `planfile.go`, `compile.go`)
 
@@ -55,9 +56,12 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 - `module_jar_recipe(module: &str) -> JarRecipe`: the recipe of a module's own jar.
 - `module_jar_asset(module: &str) -> Asset`: the asset of a module's own jar at `lib/modules/<module>.jar`.
 - `Derivation { recipe: contract::Recipe, assets: Vec<contract::Asset>, class_path: Vec<u8>, catalogue: contract::Catalogue }`: the execution contract of one chain. `catalogue` keeps the artifacts and drops the libraries.
-- `derive(file: &PlanFile, catalogue: &contract::Catalogue, plugin_directory: &str, descriptor: &[u8], execution_version: u32, independent_modules: &[String]) -> Result<Derivation, Error>`: compiles the plan file for the packer (Go `planfile.Derive`).
+- `derive(file: &PlanFile, catalogue: &contract::Catalogue, plugin_directory: &str, descriptor: &[u8], execution_version: u32, independent_modules: &[String], refused_modules: &[String]) -> Result<Derivation, Error>`: compiles the plan file for the packer (Go `planfile.Derive`).
   It does not plan the recipe. The caller passes `recipe` and `catalogue` to the `pluginpack` plan step.
   Where Go reports the first problem in map order, `derive` reports the first one in plan or catalogue order.
+  `refused_modules` names the content modules that the product mode of the chain refuses. An asset that `omitted_assets` marks is omitted: it has no row, no classpath jar and no operation, and `catalogue` of the derivation drops the inputs that only an omitted asset reads. The Starlark catalogue still lists them.
+- `omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec<bool>, Error>`: whether each asset of the file, in plan order, is omitted for the refused modules.
+  The modules of an asset are its `module` sources, the module that a `prepared` source's `module-filter` operation reads, and the module of a reused native tree. An asset with at least one module, all of them refused, is omitted. An asset that merges a refused module with a kept one stays whole, and an asset without a module is never omitted. The packer and the runtime layout tool both read this answer.
 
 The plan-file types derive `Clone`, `Debug`, `PartialEq`, `Eq`. Only `read` and `from_slice` make them from JSON.
 

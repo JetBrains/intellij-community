@@ -25,14 +25,20 @@ use crate::targets::apparent_label;
 ///
 /// A reused content module jar is not in the catalogue, because its own target packs it. `independent_libraries`
 /// states the libraries of such jars, by label.
+///
+/// `refused_modules` names the content modules that the product mode of the chain refuses. The part leaves out every
+/// asset that the packer omits for them, by the one answer of `planfile::omitted_assets`, so the layout lists no jar
+/// that the component does not place.
 pub(crate) fn part_from_plan(
     plan: &PlanFile,
     catalogue: &Catalogue,
     independent_libraries: &[Member],
+    refused_modules: &[String],
     descriptor_module: &str,
     plugin_directory: &str,
     descriptor: &str,
 ) -> anyhow::Result<Part> {
+    let omitted = planfile::omitted_assets(plan, refused_modules)?;
     let roots: HashMap<&str, &str> = catalogue
         .artifacts
         .iter()
@@ -76,8 +82,8 @@ pub(crate) fn part_from_plan(
         jar_order: String::new(),
         jars: Vec::new(),
     };
-    for asset in &plan.assets {
-        let Some(recipe) = &asset.recipe else {
+    for (asset, &omitted) in plan.assets.iter().zip(&omitted) {
+        let Some(recipe) = asset.recipe.as_ref().filter(|_| !omitted) else {
             continue;
         };
         let destination = &asset.destination;

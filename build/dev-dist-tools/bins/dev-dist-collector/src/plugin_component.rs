@@ -4,6 +4,10 @@
 //! ready classpath record. `_dev_plugin` (`dev_plugin.bzl`) writes the packed shape: the final descriptor, the jars
 //! that Bazel packed and the files that the plugin copies. A top-level `jars` key selects the packed shape, and then
 //! the collector writes the classpath record itself.
+//!
+//! A prepared spec can name `refusedModules`: the content modules that the product mode of the component refuses. The
+//! packer omitted every asset whose modules are all refused, so the collector drops the reused jars of those modules
+//! from `independent` and expects no row for them. The packed shape lists only the placed jars, so it has no such key.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
@@ -25,6 +29,7 @@ struct SpecFile {
     assets: Option<String>,
     classpath: Option<String>,
     independent: Option<Vec<Independent>>,
+    refused_modules: Option<Vec<String>>,
     descriptor: Option<String>,
     jars: Option<Vec<PackedJar>>,
     files: Option<Vec<PackedFile>>,
@@ -127,13 +132,16 @@ impl PluginComponentSpec {
         if spec.files.is_some() || spec.descriptor.is_some() {
             bail!("a prepared plugin component names no copied files and no descriptor");
         }
+        let refused = refused_modules(spec.refused_modules.unwrap_or_default())?;
+        let mut independent = spec.independent.unwrap_or_default();
+        independent.retain(|artifact| !refused.contains(artifact.artifact.as_str()));
         let spec = PreparedSpec {
             version,
             plugin_directory: spec.plugin_directory,
             remainder: spec.remainder.unwrap_or_default(),
             assets: spec.assets.unwrap_or_default(),
             classpath: spec.classpath.unwrap_or_default(),
-            independent: spec.independent.unwrap_or_default(),
+            independent,
         };
         let mut metadata = vec![file, &spec.assets, &spec.classpath, &spec.remainder.metadata];
         let mut payload = vec![spec.remainder.directory.as_str()];
@@ -164,7 +172,12 @@ impl PluginComponentSpec {
             bail!("unsupported packed plugin component version: {}", spec.version);
         }
         validate_plugin_directory(&spec.plugin_directory)?;
-        if spec.remainder.is_some() || spec.assets.is_some() || spec.classpath.is_some() || spec.independent.is_some() {
+        if spec.remainder.is_some()
+            || spec.assets.is_some()
+            || spec.classpath.is_some()
+            || spec.independent.is_some()
+            || spec.refused_modules.is_some()
+        {
             bail!("a packed plugin component names only its descriptor, jars and files");
         }
         let spec = PackedSpec {
@@ -229,6 +242,21 @@ fn in_span(span: &tracing::Span, collect: impl FnOnce() -> anyhow::Result<Vec<So
         Err(error) => trace::fail(span, &format_args!("{error:#}")),
     }
     result
+}
+
+/// The refused modules of a prepared spec as a set. The rule writes the list of the descriptor leaf, so a repeated or
+/// an empty name is a defect of the producer.
+fn refused_modules(modules: Vec<String>) -> anyhow::Result<HashSet<String>> {
+    let mut refused = HashSet::with_capacity(modules.len());
+    for module in modules {
+        if module.trim().is_empty() {
+            bail!("a refused module requires a name");
+        }
+        if !refused.insert(module.clone()) {
+            bail!("refused module {module:?} is named twice");
+        }
+    }
+    Ok(refused)
 }
 
 fn validate_plugin_directory(plugin_directory: &str) -> anyhow::Result<()> {

@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.rider.plugins.unity",
     "variant": "",
-    "layoutSignature": "egdhe37yi6ca8gkutfixfcpp7",
+    "layoutSignature": "etuudr5vwj7ldkm6id4ff6f25",
     "assets": [
         {
             "module": "intellij.rider.plugins.unity.common"
@@ -11,7 +11,22 @@
             "module": "intellij.rider.plugins.unity.frontend"
         },
         {
+            "module": "intellij.rider.plugins.unity.backend"
+        },
+        {
             "module": "intellij.rider.plugins.unity.model"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.profiler.mcp"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.yaml"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.css"
+        },
+        {
+            "module": "intellij.rider.plugins.unity.javascript"
         },
         {
             "destination": "lib/rider-plugins-unity.jar",

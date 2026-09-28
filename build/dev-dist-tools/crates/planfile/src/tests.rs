@@ -76,6 +76,16 @@ const NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe
   {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false, "scope": "distribution"}"#;
 
 fn derive_plan(text: &str, inputs: &Catalogue, version: u32, independent_modules: &[&str]) -> Result<Derivation, Error> {
+    derive_refusing(text, inputs, version, independent_modules, &[])
+}
+
+fn derive_refusing(
+    text: &str,
+    inputs: &Catalogue,
+    version: u32,
+    independent_modules: &[&str],
+    refused_modules: &[&str],
+) -> Result<Derivation, Error> {
     derive(
         &must_read_plan(text),
         inputs,
@@ -83,6 +93,7 @@ fn derive_plan(text: &str, inputs: &Catalogue, version: u32, independent_modules
         b"<idea-plugin/>",
         version,
         &strings(independent_modules),
+        &strings(refused_modules),
     )
 }
 
@@ -1161,7 +1172,95 @@ fn derive_refuses_an_invalid_plugin_directory() {
             b"",
             1,
             &[],
+            &[],
         );
         assert!(result.unwrap_err().message().contains("is not plugins/<name>"), "{directory:?}");
+    }
+}
+
+/// The chain names the modules its product mode refuses. An asset whose every module is refused is omitted: no row, no
+/// classpath jar, no operation, and the inputs that only it reads leave the catalogue of the derivation. An asset that
+/// merges a refused module with a kept one stays whole, and a jar without a module is never omitted. A refused module
+/// whose jar the chain reuses is omitted as well.
+#[test]
+fn derive_omits_an_asset_whose_every_module_is_refused() {
+    let backend = r#"{"input": "demo.backend", "kind": "module", "filter": "module-v1"}"#;
+    let main = r#"{"input": "demo.main", "kind": "module", "filter": "module-v1"}"#;
+    let library = r#"{"input": "@lib//:demo-lib", "kind": "library", "filter": "library-v1"}"#;
+    let assets = format!(
+        r#"{{"module": "demo.content"}}, {{"module": "demo.shared"}},
+    {{"destination": "lib/backend.jar", "recipe": {{"sources": [{backend}], "writer": {{"mergeEntities": true}}}}}},
+    {{"destination": "lib/demo.jar", "recipe": {{"sources": [{main}, {backend}], "writer": {{"mergeEntities": true}}}}}},
+    {{"destination": "lib/demo-lib.jar", "recipe": {{"sources": [{library}], "writer": {{"mergeEntities": true}}}}}},
+    {FILTERED_JAR}"#
+    );
+    let mut inputs = catalogue(vec![
+        file_artifact("demo.backend"),
+        file_artifact("demo.main"),
+        file_artifact("@lib//:demo-lib/a.jar"),
+        file_artifact("raw"),
+    ]);
+    inputs.libraries = vec![Library {
+        id: "@lib//:demo-lib".to_owned(),
+        files: vec![Reference::artifact("@lib//:demo-lib/a.jar")],
+    }];
+    let text = plan(1, &assets, &[MODULE_FILTER_SECTION]);
+    let refused = ["demo.backend", "demo.content", "raw"];
+    let derivation =
+        derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], &refused).unwrap_or_else(|error| panic!("{error}"));
+    assert_eq!(
+        derivation.assets,
+        [
+            row("lib/modules/demo.shared.jar", "independent", "demo.shared"),
+            row("lib/demo.jar", "remainder", ""),
+            row("lib/demo-lib.jar", "remainder", ""),
+        ]
+    );
+    assert_eq!(derivation.recipe.assets, derivation.assets);
+    assert_eq!(
+        derivation
+            .recipe
+            .operations
+            .iter()
+            .map(contract::Operation::destination)
+            .collect::<Vec<_>>(),
+        ["lib/demo.jar", "lib/demo-lib.jar"]
+    );
+    assert_eq!(
+        derivation
+            .catalogue
+            .artifacts
+            .iter()
+            .map(|artifact| artifact.id.as_str())
+            .collect::<Vec<_>>(),
+        ["demo.backend", "demo.main", "@lib//:demo-lib/a.jar"],
+        "the module-filter input that only the omitted jar reads left the catalogue, and the merged input stayed"
+    );
+    let expected = classpath::record("demo", b"<idea-plugin/>", &["lib/demo.jar", "lib/demo-lib.jar"]).unwrap();
+    assert_eq!(derivation.class_path, expected);
+
+    // Without a refusal the same plan derives every asset, so the refused list alone changes the derivation.
+    let complete = derive_plan(&text, &inputs, 1, &["demo.content", "demo.shared"]).unwrap_or_else(|error| panic!("{error}"));
+    assert_eq!(complete.assets.len(), 6);
+    assert_eq!(complete.catalogue.artifacts.len(), 4);
+
+    for (name, refused, message) in [
+        (
+            "a module without an asset",
+            &["demo.other"][..],
+            r#"refused module "demo.other" matches no asset of the plan"#,
+        ),
+        (
+            "a module named twice",
+            &["demo.backend", "demo.backend"][..],
+            r#"refused module "demo.backend" is named twice"#,
+        ),
+        ("an empty module", &[""][..], "a refused module requires a name"),
+    ] {
+        let result = derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], refused);
+        match result {
+            Ok(_) => panic!("{name}: expected {message:?}"),
+            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+        }
     }
 }

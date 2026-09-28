@@ -296,6 +296,9 @@ struct PluginRequest {
     reserialize_before_content_embedding: bool,
     /// The content modules that the filter of the product refuses. Normally empty.
     refused_content_modules: Vec<String>,
+    /// The content modules whose body is embedded although `--embed-content-modules` is false: the modules the
+    /// product's mode refuses at run time, whose jar the distribution does not place.
+    embedded_content_modules: BTreeSet<String>,
     separate_jar: BTreeSet<String>,
     /// The descriptors that the patch can reach, keyed by load path.
     plugin_descriptors: BTreeMap<String, String>,
@@ -396,6 +399,7 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
             refused: parsed.refused_content_modules.clone(),
             separate_jar: parsed.separate_jar.clone(),
             embeds: parsed.embeds_content,
+            embedded: parsed.embedded_content_modules.clone(),
             scrambled: BTreeSet::new(),
         },
         &cache,
@@ -414,6 +418,7 @@ fn parse_plugin_request(lines: &[OptionLine]) -> Result<PluginRequest> {
         &[
             "--marker",
             "--refused-content-module",
+            "--embed-content-module",
             "--separate-jar",
             "--plugin-descriptor",
             "--plugin-descriptor-in-jar",
@@ -444,6 +449,9 @@ fn parse_plugin_request(lines: &[OptionLine]) -> Result<PluginRequest> {
                 parsed.reserialize_before_content_embedding = parse_boolean_strict(line.value()?)?;
             }
             "--refused-content-module" => parsed.refused_content_modules.push(line.value()?.to_owned()),
+            "--embed-content-module" => {
+                parsed.embedded_content_modules.insert(line.value()?.to_owned());
+            }
             "--separate-jar" => {
                 parsed.separate_jar.insert(line.value()?.to_owned());
             }

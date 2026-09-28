@@ -880,7 +880,9 @@ internal fun getResourceReader(path: String, classLoader: ClassLoader): XMLStrea
   }
 }
 
-internal fun loadCoreProductPlugin(
+@Internal
+@VisibleForTesting
+fun loadCoreProductPlugin(
   loadingContext: PluginDescriptorLoadingContext,
   pathResolver: PathResolver,
   useCoreClassLoader: Boolean,
@@ -1012,6 +1014,15 @@ private fun loadProductModule(
     // do not log - the severity of the error is determined by the loadingStrategy, the default strategy does not return null at all
     PluginDescriptorBuilder.builder().apply {
       visibility = ModuleVisibilityValue.PUBLIC
+      // A stub keeps the dependencies of its embedded body, so the product mode exclusion propagates through it.
+      val descriptorContent = module.descriptorContent
+      if (descriptorContent != null) {
+        val reader = createXmlStreamReader(descriptorContent)
+        val body = parsePluginXml(input = reader, readContext = loadingContext.readContext, xIncludeLoader = xIncludeLoader)
+        for (dependency in body.dependencies) {
+          addDependency(dependency)
+        }
+      }
     }
   }
   else {

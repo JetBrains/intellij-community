@@ -32,25 +32,37 @@ fun createContentModuleFilter(
   }
   return ContentModuleByProductModeFilter(
     project = project,
-    bundledPluginModules = bundledPluginModules(),
+    bundledPluginModules = bundledPluginModules().toSet(),
     productMode = productProperties.productMode,
   )
 }
 
 /**
+ * The filter of [productMode] over every module of [project], whatever plugin holds it.
+ *
+ * The dev-distribution generator states the modules each mode refuses as a fact of the plugin, once per plugin and not
+ * per product. So it asks for every mode a split product uses, and no plugin is bypassed as "not bundled".
+ */
+fun createProductModeContentModuleFilter(project: JpsProject, productMode: ProductMode): ContentModuleFilter {
+  return ContentModuleByProductModeFilter(project = project, bundledPluginModules = null, productMode = productMode)
+}
+
+/**
  * An instance of [ContentModuleFilter] which excludes modules not compatible with the given [ProductMode] from the platform part and bundled plugins.
+ *
+ * [bundledPluginModules] names the plugins the filter applies to. A plugin outside the set is not filtered. `null` applies
+ * the filter to every plugin.
  */
 internal class ContentModuleByProductModeFilter(
   private val project: JpsProject,
-  bundledPluginModules: List<String>,
+  private val bundledPluginModules: Set<String>?,
   private val productMode: ProductMode
 ) : ContentModuleFilter {
-  
+
   private val productModeMatcher by lazy { JpsProductModeMatcher(productMode) }
-  private val bundledPluginMainModules = bundledPluginModules.toSet()
 
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
-    if (pluginMainModuleName != null && !bundledPluginMainModules.contains(pluginMainModuleName)) {
+    if (pluginMainModuleName != null && bundledPluginModules != null && !bundledPluginModules.contains(pluginMainModuleName)) {
       return true
     }
     val module = project.findModuleByName(moduleName) ?: return true

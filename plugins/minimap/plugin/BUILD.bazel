@@ -11,6 +11,9 @@ dev_dist_plugin(
         "lib/minimap-plugin.jar": ["intellij.minimap.plugin"],
     },
     main_module = "intellij.minimap.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.minimap.core"],
+    },
 )
 ### auto-generated section `dev intellij.minimap.plugin` end
 

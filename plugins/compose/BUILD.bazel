@@ -30,6 +30,15 @@ dev_dist_plugin(
         ],
     },
     main_module = "intellij.compose.ide.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.compose.ide.plugin.shared",
+            "intellij.compose.ide.plugin.shared.android",
+            "intellij.compose.ide.plugin.codeInsight",
+            "intellij.compose.ide.plugin.resources",
+            "intellij.compose.ide.plugin.resources.android",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.compose.ide.plugin` end
 

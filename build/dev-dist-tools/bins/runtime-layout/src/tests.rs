@@ -844,6 +844,38 @@ fn plan_part() {
     );
 }
 
+/// `--refused-module` names the content modules that the product mode of the chain refuses. The part leaves out the
+/// jars that the packer omits for them: a jar whose every module is refused. A jar that merges a refused module with a
+/// kept one stays, and a refused module that no jar merges fails.
+#[test]
+fn plan_part_leaves_out_the_jars_of_refused_modules() {
+    let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
+    let files = Files::new();
+    let output = files.path("part.json").display().to_string();
+    let mut args = plan_part_args(&files, TEST_PLAN, independent, "plugin.xml", &output);
+    args.push("--refused-module=p.content".to_owned());
+    args.push("--refused-module=p.other".to_owned());
+    let result = run_tool(&args);
+    assert_eq!(result.code, 0, "{}", result.errors);
+    assert_eq!(result.output, format!("Wrote the layout part of p.main with 3 jars to {output}\n"));
+    let actual: Part = serde_json::from_str(&std::fs::read_to_string(&output).unwrap()).unwrap();
+    assert_eq!(
+        actual.jars.iter().map(|jar| jar.destination.as_str()).collect::<Vec<_>>(),
+        ["lib/modules/p.natives.jar", "lib/p.jar", "lib/a2.jar"]
+    );
+    let files = Files::new();
+    let output = files.path("part.json").display().to_string();
+    let mut args = plan_part_args(&files, TEST_PLAN, independent, "plugin.xml", &output);
+    args.push("--refused-module=p.unknown".to_owned());
+    let result = run_tool(&args);
+    assert!(
+        result.code != 0 && result.errors.contains(r#"refused module "p.unknown" matches no asset of the plan"#),
+        "exit {}, stderr {:?}",
+        result.code,
+        result.errors
+    );
+}
+
 #[test]
 fn plan_part_refusals() {
     let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;

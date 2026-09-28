@@ -272,18 +272,17 @@ def _dev_plugin_impl(ctx):
     # The jars of the layout part in plan order, each with its merge-order members. The reused jars follow them.
     layout_jars = []
 
-    # The leaf refuses the content modules of its product's mode, and the shared packaging then ships none of them: a
-    # refused module leaves every jar, and a jar that merges no module any more goes, with the libraries it merged. A
-    # packaging a product states for itself keeps what `jars` names.
-    refused = {} if ctx.attr.keeps_mode_refused_modules else {name: True for name in descriptor_info.mode_refused_content_modules}
+    # The run time excludes the content modules of the product's mode, and the distribution places no jar of them: a jar
+    # whose every module is refused is not packed, and a reused jar of a refused module is not placed. A jar that merges
+    # a refused module with a kept one is packed whole, with the same bytes for every product, and the run time fences
+    # the refused packages.
+    refused = {name: True for name in descriptor_info.mode_refused_content_modules}
     for destination, tokens in ctx.attr.jars.items():
         _check_destination(destination)
         if not tokens:
             fail("'%s' merges nothing" % destination, attr = "jars")
-        if refused:
-            tokens = [token for token in tokens if is_library_token(token) or token not in refused]
-            if all([is_library_token(token) for token in tokens]):
-                continue
+        if refused and all([is_library_token(token) or token in refused for token in tokens]):
+            continue
         _claim_destination(destinations, destination, _STATED_IN_JARS, "jars")
 
         module_jars = []
@@ -486,12 +485,6 @@ at `<prefix>/<entry>` lands at `<destination>/<entry>`.""",
         ),
         "executable_files": attr.string_list(
             doc = "The single-file destinations of `files` the distribution marks executable, as `withResource*` does with mode 493.",
-        ),
-        "keeps_mode_refused_modules": attr.bool(
-            doc = """Whether this packaging is one product's own, so it keeps the content modules the leaf refuses for the product's mode.
-
-The generator sets it on a product package whose product merges a refused module into another jar. A shared packaging leaves
-it unset, and the rule drops the refused modules.""",
         ),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
         "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),

@@ -383,3 +383,42 @@ fn an_unmatched_scrambled_module_is_refused() {
         assert!(error.contains("scrambles the content modules"), "{name}: {error}");
     }
 }
+
+/// A descriptor that embeds no body still embeds the body of a module the product's mode refuses. The distribution
+/// places no jar of that module, so the run time reads the body here and excludes the module (ADR 0021).
+#[test]
+fn a_mode_refused_module_keeps_its_body_in_a_non_embedding_descriptor() {
+    let request = ContentRequest {
+        embedded: names(&["b"]),
+        ..request(&[], false)
+    };
+    let got = embed_or_fail(
+        "<idea-plugin><content><module name=\"a\"/><module name=\"b\"/></content></idea-plugin>",
+        &request,
+        &[
+            ("a.xml", "<idea-plugin package=\"a\"/>"),
+            ("b.xml", "<idea-plugin package=\"b\"><dependencies/></idea-plugin>"),
+        ],
+    );
+    assert!(
+        got.contains("<module name=\"a\" />"),
+        "the other module keeps an empty element:\n{got}"
+    );
+    assert!(
+        got.contains("<module name=\"b\"><![CDATA["),
+        "the refused module carries its body:\n{got}"
+    );
+}
+
+/// The invariant of the embedded list: a name that reaches no kept `<module/>` is a stale plan.
+#[test]
+fn an_unmatched_embedded_module_is_refused() {
+    let request = ContentRequest {
+        embedded: names(&["absent"]),
+        ..request(&[], false)
+    };
+    let error = embed_error("<idea-plugin><content><module name=\"a\"/></content></idea-plugin>", &request, &[]);
+    for expected in ["absent", "intellij.example"] {
+        assert!(error.contains(expected), "the refusal must state {expected}: {error}");
+    }
+}
