@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -112,11 +113,12 @@ class GitLabProjectViewModel(
     selectorVm.first()?.submitSelection()
   }
 
-  private suspend fun connect(mapping: GitLabProjectMapping, account: GitLabAccount) {
+  private suspend fun connect(mapping: GitLabProjectMapping, account: GitLabAccount): GitLabProjectConnection? {
     val current = connectionManager.connectionState.value
-    if (current != null && current.repo.repository == mapping.repository && current.account == account) return
-    connectionManager.openConnection(mapping, account)
+    if (current != null && current.repo.repository == mapping.repository && current.account == account) return current
+    val connection = connectionManager.openConnection(mapping, account)
     project.service<GitLabMergeRequestsPreferences>().selectedUrlAndAccountId = mapping.remote.url to account.id
+    return connection
   }
 
   fun activate() {
@@ -151,8 +153,8 @@ class GitLabProjectViewModel(
         LOG.warn("No Git remote for GitLab project $expectedProjectCoordinates appeared in $mappingTimeout, skipping the requested action")
         return@launch
       }
-      connect(mapping, account)
-      connectedProjectVm.filterNotNull().first { it.projectCoordinates == expectedProjectCoordinates }.action()
+      val connection = connect(mapping, account) ?: return@launch
+      connectedProjectVm.filterNotNull().first { it.connectionId == connection.id }.action()
     }
   }
 

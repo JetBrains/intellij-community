@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
@@ -66,6 +67,7 @@ class GitLabProjectViewModelTest {
         val repo = firstArg<GitLabProjectMapping>()
         val acc = secondArg<GitLabAccount>()
         val connection = mockk<GitLabProjectConnection>(relaxed = true)
+        every { connection.id } returns UUID.randomUUID().toString()
         every { connection.repo } returns repo
         every { connection.account } returns acc
         connection.also { connectionStateFlow.value = it }
@@ -78,6 +80,7 @@ class GitLabProjectViewModelTest {
       every { create(any(), any(), any(), any(), any(), any()) } answers {
         val connection = arg<GitLabProjectConnection>(4)
         mockk<GitLabConnectedProjectViewModel>(relaxed = true) {
+          every { connectionId } returns connection.id
           every { projectCoordinates } returns connection.repo.repository
         }
       }
@@ -155,6 +158,49 @@ class GitLabProjectViewModelTest {
 
       assertEquals(listOf(forkMapping.repository), seenProjects)
     }
+
+  @Test
+  fun `activateAndAwaitProject awaits the new connection when the account changes for the same project`() = timeoutRunBlocking {
+    val vm = project.service<GitLabProjectViewModel>()
+    val originalConnection = connectionManager.openConnection(originMapping, account)!!
+    val originalVm = vm.connectedProjectVm.first { it != null }!!
+    val originalVmChecked = CompletableDeferred<Unit>()
+
+    every { originalVm.projectCoordinates } answers {
+      originalVmChecked.complete(Unit)
+      originMapping.repository
+    }
+    every { originalVm.connectionId } answers {
+      originalVmChecked.complete(Unit)
+      originalConnection.id
+    }
+    val factory = project.service<GitLabConnectedProjectViewModelFactory>()
+    every { factory.create(any(), any(), any(), any(), any(), any()) } answers {
+      val connection = arg<GitLabProjectConnection>(4)
+      // Delay the new view model until the activation checks the old one.
+      timeoutRunBlocking { originalVmChecked.await() }
+      mockk<GitLabConnectedProjectViewModel>(relaxed = true) {
+        every { connectionId } returns connection.id
+        every { projectCoordinates } returns connection.repo.repository
+      }
+    }
+
+    try {
+      val otherAccount = GitLabAccount(name = "other-user", server = account.server)
+      val actionConnectionId = CompletableDeferred<String>()
+      vm.activateAndAwaitProject(originMapping.repository to otherAccount) {
+        actionConnectionId.complete(connectionId)
+      }
+
+      val actualConnectionId = actionConnectionId.await()
+      val newConnection = connectionManager.connectionState.value!!
+      assertEquals(otherAccount, newConnection.account)
+      assertEquals(newConnection.id, actualConnectionId)
+    }
+    finally {
+      originalVmChecked.complete(Unit)
+    }
+  }
 
   @Test
   fun `activateAndAwaitProject does not reconnect when a different mapping resolves to the same project and account`() =
