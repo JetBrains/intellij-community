@@ -75,6 +75,19 @@ import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
+  /** Whether the per-member breakdown of a composite type is bounded by [maxBreakdownMembers] (PY-91327). */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isCompositeSinglePassEnabled(): Boolean = Registry.`is`("python.typing.composite.single.pass", false)
+
+  /**
+   * The widest composite that still gets a per-member breakdown. Past it, matching short-circuits and records
+   * one summarizing reason.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun maxBreakdownMembers(): Int = Registry.intValue("python.typing.composite.breakdown.max.members", 5)
+
   /**
    * The largest number of parameter combinations that [matchSingleCallableAgainstOverloads] checks.
    * Above it, the check is [matchAnyOverloadItem] only.
@@ -465,6 +478,24 @@ object PyTypeChecker {
       return Optional.of(false)
     }
 
+    // Composite types (PY-91327). The six branches below look alike but differ per branch:
+    //
+    //   branch                         quantifier   breakdown
+    //   actual is PyUnionType          strict flag  per failing member
+    //   expected is PyUnionType        any          one summary frame
+    //   actual is PyUnsafeUnionType    any          none
+    //   expected is PyUnsafeUnionType  any          one summary frame
+    //   expected is PyIntersectionType all          per failing member
+    //   actual is PyIntersectionType   any          one summary frame
+    //
+    // Unions match actual-first, intersections expected-first, because the `all` quantifier must be the outer
+    // check for a composite-vs-composite match to distribute. It sits on the actual side of a union and the
+    // expected side of an intersection, so `A & B <: C & D` unfolds as
+    // `(A <: C or B <: C) and (A <: D or B <: D)`.
+    //
+    // Both sides are walked, so composite-vs-composite costs |actual| x |expected|; [maxBreakdownMembers]
+    // caps the per-member detail.
+
     if (actual is PyUnionType) {
       return Optional.of(match(expected, actual, context))
     }
@@ -481,9 +512,6 @@ object PyTypeChecker {
       return Optional.of(match(expected, actual, context))
     }
 
-    // Expected-first, unlike unions: an intersection's `all` quantifier lives on the expected side
-    // (`actual <: A & B` iff it matches every member), so it must be the outer check for `A & B <: C & D` to
-    // distribute correctly as `(A <: C or B <: C) and (A <: D or B <: D)`.
     if (expected is PyIntersectionType) {
       return Optional.of(match(expected, actual, context))
     }
