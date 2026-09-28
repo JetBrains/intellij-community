@@ -12,10 +12,11 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -246,8 +247,11 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     final String agentPath = handleSpacesInAgentPath(path);
     if (agentPath == null) return;
+    var noLocationMode = RegistryManager.getInstance().get("idea.jacoco.collect.coverage.for.classes.with.no.location");
+    boolean includeNoLocation = noLocationMode.isOptionEnabled("on") ||
+                                noLocationMode.isOptionEnabled("intellij") && IntelliJProjectUtil.isIntelliJPlatformProject(project);
     javaParameters.getTargetDependentParameters().asTargetParameters().add(_ -> {
-      return createArgumentTargetValue(agentPath, sessionDataFilePath, patterns, excludePatterns);
+      return createArgumentTargetValue(agentPath, sessionDataFilePath, patterns, excludePatterns, includeNoLocation);
     });
   }
 
@@ -255,24 +259,33 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                        String sessionDataFilePath,
                                                        String @Nullable [] patterns,
                                                        String[] excludePatterns) {
+    return createArgumentTargetValue(agentPath, sessionDataFilePath, patterns, excludePatterns, false);
+  }
+
+  private static JavaTargetParameter createArgumentTargetValue(String agentPath,
+                                                               String sessionDataFilePath,
+                                                               String @Nullable [] patterns,
+                                                               String[] excludePatterns,
+                                                               boolean includeNoLocation) {
     HashSet<String> uploadPaths = ContainerUtil.newHashSet(agentPath);
     HashSet<String> downloadPaths = ContainerUtil.newHashSet(sessionDataFilePath);
     var builder = new JavaTargetParameter.Builder(uploadPaths, downloadPaths);
-    return doCreateCoverageArgument(builder, patterns, excludePatterns, sessionDataFilePath, agentPath);
+    return doCreateCoverageArgument(builder, patterns, excludePatterns, sessionDataFilePath, agentPath, includeNoLocation);
   }
 
   private static @NotNull JavaTargetParameter doCreateCoverageArgument(@NotNull JavaTargetParameter.Builder builder,
                                                                        String @Nullable [] patterns,
                                                                        String[] excludePatterns,
                                                                        String sessionDataFilePath,
-                                                                       String agentPath) {
+                                                                       String agentPath,
+                                                                       boolean includeNoLocation) {
     builder
       .fixed("-javaagent:")
       .resolved(agentPath)
       .fixed("=destfile=")
       .resolved(sessionDataFilePath)
       .fixed(",append=false");
-    if (Registry.is("idea.jacoco.collect.coverage.for.classes.with.no.location")) {
+    if (includeNoLocation) {
       // JaCoCo engine ignores classes with no location.
       // Location is accessed with these methods:
       // * java.security.CodeSource.getLocation
