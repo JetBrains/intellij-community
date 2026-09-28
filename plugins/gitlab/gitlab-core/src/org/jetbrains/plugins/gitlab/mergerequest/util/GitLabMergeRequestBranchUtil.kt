@@ -25,7 +25,7 @@ object GitLabMergeRequestBranchUtil {
   private suspend fun findSourceRemoteBranch(
     gitRepository: GitRepository,
     serverPath: GitLabServerPath,
-    details: GitLabMergeRequestFullDetails
+    details: GitLabMergeRequestFullDetails,
   ): GitRemoteBranch? {
     val sourceRemoteDescriptor = details.getSourceRemoteDescriptor(serverPath)
 
@@ -43,7 +43,7 @@ object GitLabMergeRequestBranchUtil {
   private suspend fun findTargetRemoteBranch(
     gitRepository: GitRepository,
     serverPath: GitLabServerPath,
-    details: GitLabMergeRequestFullDetails
+    details: GitLabMergeRequestFullDetails,
   ): GitRemoteBranch? {
     val targetRemoteDescriptor = details.getTargetRemoteDescriptor(serverPath)
 
@@ -59,7 +59,7 @@ object GitLabMergeRequestBranchUtil {
   suspend fun fetchAndCheckoutBranch(
     gitRepository: GitRepository,
     serverPath: GitLabServerPath,
-    details: GitLabMergeRequestFullDetails
+    details: GitLabMergeRequestFullDetails,
   ) {
     val localPrefix = getLocalBranchPrefix(details)
     val remoteBranch = findSourceRemoteBranch(gitRepository, serverPath, details) ?: return
@@ -105,7 +105,7 @@ object GitLabMergeRequestBranchUtil {
   suspend fun fetchAndShowRemoteBranchInLog(
     gitRepository: GitRepository,
     serverPath: GitLabServerPath,
-    details: GitLabMergeRequestFullDetails
+    details: GitLabMergeRequestFullDetails,
   ) {
     val sourceRemoteBranch = findSourceRemoteBranch(gitRepository, serverPath, details) ?: return
     val targetRemoteBranch = findTargetRemoteBranch(gitRepository, serverPath, details)

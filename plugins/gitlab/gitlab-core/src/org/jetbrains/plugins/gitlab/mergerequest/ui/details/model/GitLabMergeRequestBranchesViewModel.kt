@@ -82,7 +82,10 @@ internal class GitLabMergeRequestBranchesViewModel(
   override fun checkoutInNewWorktree() {
     cs.launch {
       val details = mergeRequest.details.first()
-      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranchInNewWorktree(gitRemote.repository, serverPath, details, preferredProjectAndAccount)
+      GitLabMergeRequestBranchUtil.fetchAndCheckoutBranchInNewWorktree(gitRemote.repository,
+                                                                       serverPath,
+                                                                       details,
+                                                                       preferredProjectAndAccount)
     }
     GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
   }

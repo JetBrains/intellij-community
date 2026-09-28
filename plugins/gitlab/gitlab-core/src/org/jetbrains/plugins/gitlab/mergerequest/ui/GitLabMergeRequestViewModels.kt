@@ -87,7 +87,14 @@ internal class GitLabMergeRequestViewModels(
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazyDetailsVm
 
   val timelineVm: GitLabMergeRequestTimelineViewModel by lazy {
-    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest, htmlConverter, textCompletionViewModel).also {
+    LoadAllGitLabMergeRequestTimelineViewModel(project,
+                                               cs,
+                                               projectData,
+                                               project.service(),
+                                               currentUser,
+                                               mergeRequest,
+                                               htmlConverter,
+                                               textCompletionViewModel).also {
       setupTimelineVm(it)
     }
   }

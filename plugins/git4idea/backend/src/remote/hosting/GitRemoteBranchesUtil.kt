@@ -46,12 +46,12 @@ data class HostedGitRepositoryRemote(
   val serverUri: URI,
   val path: String,
   val httpUrl: String?,
-  val sshUrl: String?
+  val sshUrl: String?,
 )
 
 data class HostedGitRepositoryRemoteBranch(
   val remote: HostedGitRepositoryRemote,
-  val branchName: String
+  val branchName: String,
 )
 
 object GitRemoteBranchesUtil {
@@ -114,10 +114,12 @@ object GitRemoteBranchesUtil {
   private fun findLocalBranchTrackingRemote(repository: GitRepository, branch: GitRemoteBranch): GitLocalBranch? =
     repository.branchTrackInfos.find { it.remoteBranch == branch }?.localBranch
 
-  suspend fun fetchAndCheckoutRemoteBranch(repository: GitRepository,
-                                           remote: HostedGitRepositoryRemote,
-                                           remoteBranch: String,
-                                           newLocalBranchPrefix: String?) {
+  suspend fun fetchAndCheckoutRemoteBranch(
+    repository: GitRepository,
+    remote: HostedGitRepositoryRemote,
+    remoteBranch: String,
+    newLocalBranchPrefix: String?,
+  ) {
     withBackgroundProgress(repository.project,
                            CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
       val branch = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
@@ -225,8 +227,8 @@ object GitRemoteBranchesUtil {
     // A special ref has no tracking branch, so a local branch from an earlier worktree is found by its name.
     val existingLocalBranchName = if (branch is GitSpecialRefRemoteBranch) newLocalBranchName else branch.nameForRemoteOperations
     val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
-                               ?: existingLocalBranchName?.let { repository.branches.findLocalBranch(it) }
-                                 ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
+                              ?: existingLocalBranchName?.let { repository.branches.findLocalBranch(it) }
+                                ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
     val ref: GitBranch = existingLocalBranch ?: branch
     val newBranchName = if (existingLocalBranch == null) newLocalBranchName else null
     GitCreateWorkingTreeService.getInstance()
@@ -286,10 +288,12 @@ object GitRemoteBranchesUtil {
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun checkoutRemoteBranch(repository: GitRepository,
-                           branch: GitRemoteBranch,
-                           newLocalBranchPrefix: String? = null,
-                           callInAwtLater: Runnable? = null) {
+  fun checkoutRemoteBranch(
+    repository: GitRepository,
+    branch: GitRemoteBranch,
+    newLocalBranchPrefix: String? = null,
+    callInAwtLater: Runnable? = null,
+  ) {
     when (branch) {
       // For special refs, there's no backing remote branch.
       // We check out in detached HEAD to avoid confusion from pull/push actions.
@@ -316,7 +320,13 @@ object GitRemoteBranchesUtil {
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun checkoutRemoteBranch(project: Project, repositories: List<GitRepository>, remoteBranchName: String, suggestedLocalName: String, callInAwtLater: Runnable?) {
+  private fun checkoutRemoteBranch(
+    project: Project,
+    repositories: List<GitRepository>,
+    remoteBranchName: String,
+    suggestedLocalName: String,
+    callInAwtLater: Runnable?,
+  ) {
     // can have remote conflict if git-svn is used - suggested local name will be equal to selected remote
     if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
       askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater)
@@ -354,9 +364,11 @@ object GitRemoteBranchesUtil {
                                                                    callInAwtLater)
   }
 
-  private suspend fun showRemoteBranchInLog(repository: GitRepository,
-                                            branch: GitRemoteBranch,
-                                            targetBranch: GitRemoteBranch?) {
+  private suspend fun showRemoteBranchInLog(
+    repository: GitRepository,
+    branch: GitRemoteBranch,
+    targetBranch: GitRemoteBranch?,
+  ) {
     withContext(Dispatchers.Main) {
       val branchFilter = if (targetBranch != null) {
         VcsLogFilterObject.fromRange(targetBranch.nameForLocalOperations, branch.nameForLocalOperations)

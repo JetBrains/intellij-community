@@ -46,7 +46,7 @@ class GHPRBranchesViewModel internal constructor(
   private val project: Project,
   private val mapping: GHGitRepositoryMapping,
   private val account: GithubAccount,
-  private val detailsState: StateFlow<GHPullRequest>
+  private val detailsState: StateFlow<GHPullRequest>,
 ) : CodeReviewBranchesViewModel {
   private val cs = parentCs.childScope(this::class)
 

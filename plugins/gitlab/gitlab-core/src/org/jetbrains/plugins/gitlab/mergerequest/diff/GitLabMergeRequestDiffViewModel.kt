@@ -62,7 +62,8 @@ private typealias NewDiscussionsFlow = StateFlow<Collection<GitLabMergeRequestDi
  * A viewmodel for the merge request diff window capable of showing different file diffs
  */
 @ApiStatus.Internal
-interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
+interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel,
+                                            CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
   val discussions: DiscussionsFlow
   val draftDiscussions: DraftDiscussionsFlow
   val newDiscussions: NewDiscussionsFlow

@@ -80,7 +80,7 @@ internal class GitLabMergeRequestSubmitReviewViewModelImpl(
   private val mergeRequest: GitLabMergeRequest,
   private val currentUser: GitLabUserDTO,
   currentReview: SubmittableReview,
-  private val onDone: () -> Unit
+  private val onDone: () -> Unit,
 ) : GitLabMergeRequestSubmitReviewViewModel {
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
   private val taskLauncher = SingleCoroutineLauncher(cs)

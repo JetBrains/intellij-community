@@ -41,7 +41,7 @@ import kotlin.time.Duration.Companion.minutes
 @Service(Service.Level.PROJECT)
 class GitLabProjectViewModel(
   private val project: Project,
-  parentCs: CoroutineScope
+  parentCs: CoroutineScope,
 ) {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
