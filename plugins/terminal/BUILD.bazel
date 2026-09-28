@@ -31,6 +31,24 @@ exports_files(
 )
 ### auto-generated section `dev intellij.terminal` end
 
+# Bundled by Fleet into the terminal rc archive it publishes, see `//fleet/build/internal/rules:fleet_terminal_rc.bzl`.
+exports_files(
+    [
+        "resources/shell-integrations/bash/bash-fig.bash",
+        "resources/shell-integrations/bash/bash-integration.bash",
+        "resources/shell-integrations/bash/bash-preexec.bash",
+        "resources/shell-integrations/fish/fish-integration.fish",
+        "resources/shell-integrations/powershell/powershell-integration.ps1",
+        "resources/shell-integrations/zsh/zdotdir/.zlogin",
+        "resources/shell-integrations/zsh/zdotdir/.zprofile",
+        "resources/shell-integrations/zsh/zdotdir/.zshenv",
+        "resources/shell-integrations/zsh/zdotdir/.zshrc",
+        "resources/shell-integrations/zsh/zdotdir/source-original.zsh",
+        "resources/shell-integrations/zsh/zsh-integration.zsh",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.terminal` start
 jvm_provided_library(
     name = "libraries_opentelemetry_provided",
