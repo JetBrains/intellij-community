@@ -421,6 +421,21 @@ class AbstractSingleNotificationBehavior(object):
                     pydev_log.info("Sending suspend notification after timeout.")
                     thread_id, thread = next(iter(self._suspended_thread_id_to_thread.items()))
                     self.send_suspend_notification(thread_id, thread, CMD_THREAD_SUSPEND)
+            elif self._pause_requested:
+                # No thread reached a trace callback within the timeout: it is likely
+                # blocked in a native or I/O call (e.g. a blocking read) that pydevd
+                # cannot interrupt. Warn the user instead of leaving the pause request
+                # looking like it silently did nothing.
+                pydev_log.info("Pause requested but no thread suspended after timeout.")
+                py_db = self._py_db()
+                if py_db is not None:
+                    py_db.writer.add_command(
+                        py_db.cmd_factory.make_warning_message(
+                            "Pause did not stop the process: it may be blocked in a native or "
+                            "I/O call (e.g. a blocking read) that the debugger cannot interrupt. "
+                            "It will stop the next time it executes Python code."
+                        )
+                    )
 
     def on_thread_suspend(self, thread_id, thread, stop_reason):
         with self._lock:
