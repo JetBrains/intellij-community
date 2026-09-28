@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.soundSignals
 
+import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -86,7 +87,7 @@ class SoundSignalPlayedEventTest {
     FUCollectorTestCase.collectLogEvents(disposable, action)
       .filter { it.group.id == "accessibility" && it.event.id == "sound.signal.played" }
 
-  private fun collectorTest(body: (SoundSignalsSettings) -> Unit) = withSoundSignalsSettings { settings ->
+  private fun collectorTest(body: (AccessibilitySettings) -> Unit) = withSoundSignalsSettings { settings ->
     settings.setMode(SoundSignalsMode.ON)
     ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, SilentPlayer(), disposable)
     body(settings)

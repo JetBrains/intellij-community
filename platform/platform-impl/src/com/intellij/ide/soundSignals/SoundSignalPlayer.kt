@@ -22,8 +22,7 @@ abstract class SoundSignalPlayer {
 
   fun play(vararg signals: SoundSignal) {
     if (signals.isEmpty()) return
-    val settings = service<SoundSignalsSettings>()
-    val enabled = signals.filter(settings::isSignalEnabled).distinctBy { it.id }
+    val enabled = signals.filter(::isSoundSignalOn).distinctBy { it.id }
     if (enabled.isEmpty()) return
     playEnabled(enabled)
     for (signal in enabled) {

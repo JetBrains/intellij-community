@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.soundSignals
 
+import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.accessibility.AccessibilityStateCollector
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -63,5 +64,5 @@ class SoundSignalsStateMetricsTest {
   private fun valuesOf(eventId: String, field: String): List<Any?> =
     collect().filter { it.eventId == eventId }.map { it.data.build()[field] }
 
-  private fun collectorTest(body: (SoundSignalsSettings) -> Unit) = withSoundSignalsSettings(body)
+  private fun collectorTest(body: (AccessibilitySettings) -> Unit) = withSoundSignalsSettings(body)
 }

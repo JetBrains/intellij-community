@@ -985,13 +985,14 @@
                              bundle="messages.IdeBundle"
                              key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
-    <!-- Sound Signals -->
+    <!-- Accessibility -->
     <applicationConfigurable groupId="appearance"
                              groupWeight="140"
-                             id="preferences.soundSignals"
-                             provider="com.intellij.ide.soundSignals.SoundSignalsConfigurableProvider"
+                             id="preferences.accessibility"
+                             instance="com.intellij.accessibility.AccessibilityConfigurable"
                              bundle="messages.IdeBundle"
-                             key="configurable.SoundSignalsConfigurable.display.name"/>
+                             key="configurable.AccessibilityConfigurable.display.name"/>
+    <applicationService serviceImplementation="com.intellij.accessibility.AccessibilitySettings"/>
     <!-- Plugins -->
     <applicationConfigurable groupId="root"
                              groupWeight="55"
@@ -1241,7 +1242,6 @@
                         preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.ide.soundSignals.SoundSignalPlayer"
                         serviceImplementation="com.intellij.ide.soundSignals.SoundSignalPlayerImpl"/>
-    <applicationService serviceImplementation="com.intellij.ide.soundSignals.SoundSignalsSettings"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.soundSignals.SoundSignalIdValidationRule"/>
     <soundSignalProvider implementation="com.intellij.ide.soundSignals.IdeSoundSignalProvider"/>
     <editorSoundSignalDetector implementation="com.intellij.ide.soundSignals.ErrorWarningSoundSignalDetector"/>

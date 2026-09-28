@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.soundSignals
 
+import com.intellij.accessibility.AccessibilitySettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -447,7 +448,7 @@ class EditorSoundSignalsPipelineTest {
   }
 
   private lateinit var project: Project
-  private lateinit var settings: SoundSignalsSettings
+  private lateinit var settings: AccessibilitySettings
   private lateinit var manager: EditorSoundSignalsManager
   private lateinit var detector: FakeDetector
   private lateinit var player: RecordingPlayer

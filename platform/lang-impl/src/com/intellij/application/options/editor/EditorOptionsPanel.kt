@@ -414,7 +414,7 @@ internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorO
                   return@onSuccess
                 }
                 val settings = context.getData(Settings.KEY) ?: return@onSuccess
-                settings.select(settings.find("preferences.lookFeel"))
+                settings.select(settings.find("preferences.accessibility"))
               }
             }.visibleIf(screenReaderEnabledProperty)
           }

@@ -2,17 +2,11 @@
 package com.intellij.notification.impl.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.UISettingsListener
-import com.intellij.notification.NotificationAnnouncingMode
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationLocation
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.notification.impl.isNotificationAnnouncerFeatureAvailable
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
@@ -59,19 +53,6 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
   private lateinit var notificationSettings: NotificationSettingsUi
   private val myDoNotAskConfigurableUi = DoNotAskConfigurableUi()
 
-  private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
-  private val notificationModeToUserString: Map<NotificationAnnouncingMode, String> =
-    if (SystemInfo.isMac) mapOf(
-      NotificationAnnouncingMode.NONE to IdeBundle.message("notifications.configurable.announcing.value.off"),
-      NotificationAnnouncingMode.MEDIUM to IdeBundle.message("notifications.configurable.announcing.value.medium"),
-      NotificationAnnouncingMode.HIGH to IdeBundle.message("notifications.configurable.announcing.value.high")
-    )
-    else mapOf(
-      NotificationAnnouncingMode.NONE to IdeBundle.message("notifications.configurable.announcing.value.off"),
-      NotificationAnnouncingMode.MEDIUM to IdeBundle.message("notifications.configurable.announcing.value.not.interrupting"),
-      NotificationAnnouncingMode.HIGH to IdeBundle.message("notifications.configurable.announcing.value.interrupting")
-    )
-
   init {
     speedSearch.setupListeners()
     ui = panel {
@@ -100,19 +81,6 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
           }
         }).bindItem(settings::getNotificationLocation) { settings.notificationLocation = it ?: NotificationLocation.getDefaultLocation() }
       }
-      if (isNotificationAnnouncerFeatureAvailable) {
-        row(IdeBundle.message("notifications.configurable.announcing.title")) {
-          val options = listOf(NotificationAnnouncingMode.NONE,
-                               NotificationAnnouncingMode.MEDIUM,
-                               NotificationAnnouncingMode.HIGH)
-
-          val combo = comboBox(options, textListCellRenderer {
-            notificationModeToUserString[it]
-          }).bindItem(settings::getNotificationAnnouncingMode) { settings.notificationAnnouncingMode = it!! }
-
-          if (SystemInfo.isMac) combo.comment(IdeBundle.message("notifications.configurable.announcing.comment"))
-        }.visibleIf(screenReaderEnabledProperty)
-      }
       row {
         notificationSettings = NotificationSettingsUi(notificationList.model.getElementAt(0), useBalloonNotifications.selected)
         scrollCell(notificationList)
@@ -127,10 +95,6 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
         .resizableRow()
     }
     ScrollingUtil.ensureSelectionExists(notificationList)
-
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, UISettingsListener {
-      screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
-    })
   }
 
   private fun notificationLocationIcon(location: NotificationLocation): Icon =

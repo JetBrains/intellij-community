@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -71,7 +70,6 @@ class EditorSoundSignalsManager internal constructor(
       editor.editorKind == EditorKind.MAIN_EDITOR || editor.editorKind == EditorKind.DIFF || editor.editorKind == EditorKind.CONSOLE
   }
 
-  private val settings = service<SoundSignalsSettings>()
   private val managerJob = scope.coroutineContext.job
   private val caretPositionRequests =
     MutableSharedFlow<CaretPositionRequest>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -140,7 +138,7 @@ class EditorSoundSignalsManager internal constructor(
 
   @Synchronized
   private fun updateListenersDisposable(): Disposable? {
-    if (!managerJob.isActive || !settings.isEnabled) {
+    if (!managerJob.isActive || !isSoundSignalsOn()) {
       return listenersDisposable.also { listenersDisposable = null }
     }
     if (listenersDisposable != null) return null
@@ -166,7 +164,7 @@ class EditorSoundSignalsManager internal constructor(
     val scoped = if (newLine) signals else signals.filter { it.lineCounterpart != null }
     val toPlay = scoped.filterNot { detected ->
       val counterpart = detected.lineCounterpart ?: return@filterNot false
-      scoped.any { it.signal === counterpart } && settings.isSignalEnabled(counterpart)
+      scoped.any { it.signal === counterpart } && isSoundSignalOn(counterpart)
     }
     if (toPlay.isNotEmpty()) SoundSignalPlayer.getInstance().play(*toPlay.map { it.signal }.toTypedArray())
   }

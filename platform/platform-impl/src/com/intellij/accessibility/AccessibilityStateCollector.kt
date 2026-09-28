@@ -4,7 +4,6 @@ package com.intellij.accessibility
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.soundSignals.SoundSignalIdValidationRule
 import com.intellij.ide.soundSignals.SoundSignalsMode
-import com.intellij.ide.soundSignals.SoundSignalsSettings
 import com.intellij.ide.soundSignals.findSoundSignal
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -26,7 +25,7 @@ internal class AccessibilityStateCollector : ApplicationUsagesCollector() {
       add(screenReaderSupportInVmOptions.metric(it))
     }
 
-    val signals = service<SoundSignalsSettings>().state
+    val signals = service<AccessibilitySettings>().state.soundSignals
     add(soundSignalsMode.metric(signals.mode))
     signals.disabledSignals.filter { findSoundSignal(it) != null }.forEach { add(soundSignalDisabled.metric(it)) }
   }

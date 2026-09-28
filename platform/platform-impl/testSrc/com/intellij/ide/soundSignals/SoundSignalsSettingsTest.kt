@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.soundSignals
 
+import com.intellij.accessibility.AccessibilitySettings
+import com.intellij.accessibility.AccessibilitySettingsState
+import com.intellij.configurationStore.serialize
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -16,10 +20,10 @@ class SoundSignalsSettingsTest {
       ScreenReader.setActive(active)
 
       settings.setMode(SoundSignalsMode.ON)
-      assertThat(settings.isEnabled).isTrue()
+      assertThat(isSoundSignalsOn()).isTrue()
 
       settings.setMode(SoundSignalsMode.OFF)
-      assertThat(settings.isEnabled).isFalse()
+      assertThat(isSoundSignalsOn()).isFalse()
     }
   }
 
@@ -28,13 +32,13 @@ class SoundSignalsSettingsTest {
     settings.setMode(SoundSignalsMode.AUTO)
 
     ScreenReader.setActive(false)
-    assertThat(settings.isEnabled).isFalse()
+    assertThat(isSoundSignalsOn()).isFalse()
 
     ScreenReader.setActive(true)
-    assertThat(settings.isEnabled).isTrue()
+    assertThat(isSoundSignalsOn()).isTrue()
 
     ScreenReader.setActive(false)
-    assertThat(settings.isEnabled).isFalse()
+    assertThat(isSoundSignalsOn()).isFalse()
   }
 
   @Test
@@ -42,19 +46,37 @@ class SoundSignalsSettingsTest {
     settings.setMode(SoundSignalsMode.ON)
     settings.setSignalEnabled(IdeSoundSignals.WARNING_LINE, false)
 
-    assertThat(settings.isSignalEnabled(IdeSoundSignals.WARNING_LINE)).isFalse()
-    assertThat(settings.isSignalEnabled(IdeSoundSignals.ERROR_LINE)).isTrue()
+    assertThat(isSoundSignalOn(IdeSoundSignals.WARNING_LINE)).isFalse()
+    assertThat(isSoundSignalOn(IdeSoundSignals.ERROR_LINE)).isTrue()
   }
 
   @Test
   fun `a muted id with no declaration survives a round trip`() = settingsTest { settings ->
-    settings.loadState(SoundSignalsSettingsState(disabledSignals = setOf("plugin.only.signal")))
+    settings.loadSoundSignals(SoundSignalsSettingsState(disabledSignals = setOf("plugin.only.signal")))
 
     settings.setSignalEnabled(IdeSoundSignals.ERROR_LINE, false)
-    assertThat(settings.state.disabledSignals).containsExactlyInAnyOrder("plugin.only.signal", "error.line")
+    assertThat(settings.soundSignals.disabledSignals).containsExactlyInAnyOrder("plugin.only.signal", "error.line")
 
     settings.setSignalEnabled(IdeSoundSignals.ERROR_LINE, true)
-    assertThat(settings.state.disabledSignals).containsExactly("plugin.only.signal")
+    assertThat(settings.soundSignals.disabledSignals).containsExactly("plugin.only.signal")
+  }
+
+  @Test
+  fun `the sound signals are stored in their own tag of the accessibility state`() {
+    val state = AccessibilitySettingsState(SoundSignalsSettingsState(mode = SoundSignalsMode.ON, disabledSignals = setOf("error.line")))
+
+    assertThat(JDOMUtil.write(serialize(state)!!)).isEqualTo("""
+      <AccessibilitySettingsState>
+        <soundSignals>
+          <option name="mode" value="ON" />
+          <option name="disabledSignals">
+            <set>
+              <option value="error.line" />
+            </set>
+          </option>
+        </soundSignals>
+      </AccessibilitySettingsState>
+    """.trimIndent())
   }
 
   @Test
@@ -62,12 +84,12 @@ class SoundSignalsSettingsTest {
   fun `the registry key overrides the ON mode`() = settingsTest { settings ->
     settings.setMode(SoundSignalsMode.ON)
 
-    assertThat(settings.isEnabled).isFalse()
-    assertThat(settings.isSignalEnabled(IdeSoundSignals.ERROR_LINE)).isFalse()
+    assertThat(isSoundSignalsOn()).isFalse()
+    assertThat(isSoundSignalOn(IdeSoundSignals.ERROR_LINE)).isFalse()
   }
 
   /** [ScreenReader.setActive] is a process-wide static with no restore API, so its prior value is saved by hand. */
-  private fun settingsTest(body: (SoundSignalsSettings) -> Unit) {
+  private fun settingsTest(body: (AccessibilitySettings) -> Unit) {
     val screenReaderBefore = ScreenReader.isActive()
     try {
       withSoundSignalsSettings(body)
