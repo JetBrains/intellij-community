@@ -2,8 +2,10 @@
 package com.jetbrains.python.documentation.docstrings
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.ast.docstring.DocStringUtilCore
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
@@ -135,6 +137,17 @@ object DocStringUtil {
       }
     }
     return null
+  }
+
+  /**
+   * Returns the host docstring literal when [file] is Python code injected from that docstring:
+   * a doctest fragment or a fenced or Sphinx code block. Returns null otherwise.
+   */
+  @JvmStatic
+  fun getDocstringInjectionHost(file: PsiFile): PyStringLiteralExpression? {
+    val manager = InjectedLanguageManager.getInstance(file.project) ?: return null
+    val host = manager.getInjectionHost(file) as? PyStringLiteralExpression ?: return null
+    return if (getParentDefinitionDocString(host) === host) host else null
   }
 
   @JvmStatic

@@ -13,7 +13,9 @@ import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.highlighting.PyHighlighter
+import com.jetbrains.python.documentation.PyDocumentationSettings
+import com.jetbrains.python.documentation.doctest.PyDocstringCodeBlockLanguageDialect
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.documentation.docstrings.DocStringParser
 import com.jetbrains.python.documentation.docstrings.DocStringUtil
@@ -62,7 +64,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     val pyInjectedFile = injected!!
       .map { it.first }
       .filterIsInstance<PsiFile>()
-      .firstOrNull { it.language.`is`(PythonLanguage.INSTANCE) }
+      .firstOrNull { it.language.`is`(PyDocstringCodeBlockLanguageDialect.getInstance()) }
       ?: error("Python docstring language injection not found")
 
     val highlightInfos: List<HighlightInfo> =
@@ -212,7 +214,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     val ilm = InjectedLanguageManager.getInstance(myFixture.project)
     val pyInjections = (ilm.getInjectedPsiFiles(doc) ?: emptyList())
       .mapNotNull { it.first as? PsiFile }
-      .filter { it.language.`is`(PythonLanguage.INSTANCE) }
+      .filter { it.language.`is`(PyDocstringCodeBlockLanguageDialect.getInstance()) }
     assertTrue("Non-Python fence must not be injected as Python, but found: " +
                pyInjections.joinToString("\n---\n") { "'${it.text}'" }, pyInjections.isEmpty())
   }
@@ -260,7 +262,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
 
     val pyInjections = injected
       .mapNotNull { it.first as? PsiFile }
-      .filter { it.language.`is`(PythonLanguage.INSTANCE) }
+      .filter { it.language.`is`(PyDocstringCodeBlockLanguageDialect.getInstance()) }
     assertTrue("Expected the 10K-line fenced code to be injected as Python", pyInjections.isNotEmpty())
     assertTrue("Injection should span the whole fence, down to the last line",
                pyInjections.any { it.text.contains("value_9999 = 9999") })
@@ -276,12 +278,17 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     val injected = ilm.getInjectedPsiFiles(doc) ?: error("No injected PSI files found")
     val pyInjections = injected
       .mapNotNull { it.first as? PsiFile }
-      .filter { it.language.`is`(PythonLanguage.INSTANCE) }
+      .filter { it.language.`is`(PyDocstringCodeBlockLanguageDialect.getInstance()) }
     assertTrue("Expected a Python injection from the Markdown fence", pyInjections.isNotEmpty())
     return pyInjections.first()
   }
 
-  private fun testCodeBlockInjection(fileName: String, fileContent: String, expectedInjectedText: String, language: Language = PythonLanguage.INSTANCE) {
+  private fun testCodeBlockInjection(
+    fileName: String,
+    fileContent: String,
+    expectedInjectedText: String,
+    language: Language = PyDocstringCodeBlockLanguageDialect.getInstance(),
+  ) {
     myFixture.configureByText(fileName, fileContent)
 
     val doc = getDocstringOfFunction("foo") ?: error("Docstring not found")
@@ -343,5 +350,126 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
             pass
     """.trimIndent())
     myFixture.checkHighlighting(true, false, true)
+  }
+
+  @TestFor(issues = ["PY-91625"])
+  fun `test inspections are enabled for code block when the setting is on`() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    runWithInspectDocstrings {
+      myFixture.configureByText("a.py", """
+          def foo():
+              '''
+              .. code-block:: python
+
+                  <warning descr="Unresolved reference 'completely_unresolved_name'">completely_unresolved_name</warning>
+              '''
+              pass
+      """.trimIndent())
+      myFixture.checkHighlighting(true, false, true)
+    }
+  }
+
+  @TestFor(issues = ["PY-91625"])
+  fun `test inspections are enabled for markdown code block when the setting is on`() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    runWithInspectDocstrings {
+      myFixture.configureByText("a.py", """
+          def foo():
+              '''
+              ```py
+              <warning descr="Unresolved reference 'completely_unresolved_name'">completely_unresolved_name</warning>
+              ```
+              '''
+              pass
+      """.trimIndent())
+      myFixture.checkHighlighting(true, false, true)
+    }
+  }
+
+  private fun runWithInspectDocstrings(runnable: () -> Unit) {
+    val settings = PyDocumentationSettings.getInstance(myFixture.module)
+    val old = settings.isInspectDocstring
+    settings.isInspectDocstring = true
+    try {
+      runnable()
+    }
+    finally {
+      settings.isInspectDocstring = old
+    }
+  }
+
+  @TestFor(issues = ["PY-91625"])
+  fun `test code block keeps its highlighting when the setting is off`() {
+    myFixture.configureByText("a.py", """
+        def foo():
+            '''
+            .. code-block:: python
+
+                print("ok")
+            '''
+            pass
+    """.trimIndent())
+
+    val infos = CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.file, myFixture.editor, intArrayOf(), true)
+
+    assertTrue("Expected the builtin 'print' to stay highlighted inside the code block",
+               infos.any { it.description == PyHighlighter.PY_BUILTIN_NAME.externalName })
+  }
+
+  @TestFor(issues = ["PY-91625"])
+  fun `test code block reports no structural problem`() {
+    val text = """
+        def foo():
+            '''
+            .. code-block:: python
+
+                return value
+                break
+            '''
+            pass
+    """.trimIndent()
+
+    myFixture.configureByText("off.py", text)
+    myFixture.checkHighlighting(true, false, true)
+
+    runWithInspectDocstrings {
+      myFixture.configureByText("on.py", text)
+      myFixture.checkHighlighting(true, false, true)
+    }
+  }
+
+  @TestFor(issues = ["PY-91625"])
+  fun `test code block resolves a sibling top-level function from the host file`() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    runWithInspectDocstrings {
+      myFixture.configureByText("sibling.py", """
+          def helper():
+              return 42
+
+
+          def foo():
+              '''
+              .. code-block:: python
+
+                  helper()
+              '''
+              pass
+      """.trimIndent())
+      myFixture.checkHighlighting(true, false, true)
+
+      val ilm = InjectedLanguageManager.getInstance(myFixture.project)
+      val doc = getDocstringOfFunction("foo") ?: error("Docstring not found")
+      val injection = ilm.getInjectedPsiFiles(doc)
+        ?.map { it.first }
+        ?.filterIsInstance<PsiFile>()
+        ?.firstOrNull { it.language.`is`(PyDocstringCodeBlockLanguageDialect.getInstance()) }
+        ?: error("Code-block injection not found")
+
+      val callOffset = injection.text.indexOf("helper")
+      val reference = injection.findReferenceAt(callOffset) ?: error("No reference to 'helper' in the code block")
+      val hostFile = myFixture.file as PyFile
+      val helper = hostFile.topLevelFunctions.firstOrNull { it.name == "helper" } ?: error("'helper' not found in the host file")
+      assertEquals(helper, reference.resolve())
+    }
   }
 }

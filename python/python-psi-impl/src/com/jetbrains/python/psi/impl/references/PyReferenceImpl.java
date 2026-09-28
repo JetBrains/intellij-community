@@ -20,6 +20,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.Property;
@@ -715,7 +716,12 @@ public class PyReferenceImpl extends PyReferenceBase {
   @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     if (isBuiltInConstant()) return null;
-    return super.getUnresolvedHighlightSeverity(context);
+
+    final HighlightSeverity severity = super.getUnresolvedHighlightSeverity(context);
+    if (severity == null) return null;
+
+    final boolean isInsideDocString = DocStringUtil.getDocstringInjectionHost(myElement.getContainingFile()) != null;
+    return isInsideDocString ? HighlightSeverity.WARNING : severity;
   }
 
   private boolean isBuiltInConstant() {

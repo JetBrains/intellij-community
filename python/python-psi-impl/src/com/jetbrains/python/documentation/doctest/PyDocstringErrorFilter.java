@@ -18,10 +18,7 @@ package com.jetbrains.python.documentation.doctest;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,12 +33,6 @@ public final class PyDocstringErrorFilter extends HighlightErrorFilter {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyDoctestFile) return false;
 
-    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
-    if (manager == null) return true;
-    final PsiLanguageInjectionHost host = manager.getInjectionHost(file);
-    if (host instanceof PyStringLiteralExpression && DocStringUtil.getParentDefinitionDocString(host) == host) {
-      return false;
-    }
-    return true;
+    return DocStringUtil.getDocstringInjectionHost(file) == null;
   }
 }

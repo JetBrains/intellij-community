@@ -31,9 +31,9 @@ import org.jetbrains.annotations.NotNull;
  *
  * User : ktisha
  */
-public class PyDocReferenceExpression extends PyReferenceExpressionImpl {
+public class PyDoctestReferenceExpression extends PyReferenceExpressionImpl {
 
-  public PyDocReferenceExpression(ASTNode astNode) {
+  public PyDoctestReferenceExpression(ASTNode astNode) {
     super(astNode);
   }
 
@@ -46,7 +46,7 @@ public class PyDocReferenceExpression extends PyReferenceExpressionImpl {
     if (importParent != null) {
       return PyImportReference.forElement(this, importParent, context);
     }
-    return new PyDocReference(this, context);
+    return new PyDoctestReference(this, context);
   }
 }
 

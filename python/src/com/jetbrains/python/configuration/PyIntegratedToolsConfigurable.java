@@ -59,7 +59,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import java.awt.Insets;
 import java.lang.reflect.Method;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -85,6 +84,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private final JPanel myErrorPanel;
   private final TextFieldWithBrowseButton myRequirementsPathField;
   private final JCheckBox analyzeDoctest;
+  private final JCheckBox inspectDocstring;
   private final JPanel myDocStringsPanel;
   private final JPanel myRestPanel;
   private final JCheckBox renderExternal;
@@ -120,7 +120,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                         null, null, 0, false));
       myDocStringsPanel = new JPanel();
-      myDocStringsPanel.setLayout(new GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1));
+      myDocStringsPanel.setLayout(new GridLayoutManager(4, 2, JBUI.emptyInsets(), -1, -1));
       myMainPanel.add(myDocStringsPanel, new GridConstraints(2, 0, 2, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -143,10 +143,16 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       myDocStringsPanel.add(analyzeDoctest, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                 GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      inspectDocstring = new JCheckBox();
+      this.$$$loadButtonText$$$(inspectDocstring, this.$$$getMessageFromBundle$$$("messages/PyBundle",
+                                                                                  "form.integrated.tools.inspect.python.code.in.docstrings"));
+      myDocStringsPanel.add(inspectDocstring, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
       renderExternal = new JCheckBox();
       this.$$$loadButtonText$$$(renderExternal, this.$$$getMessageFromBundle$$$("messages/PyBundle",
                                                                                 "form.integrated.tools.render.external.documentation.for.stdlib"));
-      myDocStringsPanel.add(renderExternal, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+      myDocStringsPanel.add(renderExternal, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                 GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myRestPanel = new JPanel();
@@ -214,6 +220,11 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
+    analyzeDoctest.addItemListener(
+      e -> inspectDocstring.setEnabled(analyzeDoctest.isSelected())
+    );
+    inspectDocstring.setSelected(myDocumentationSettings.isInspectDocstring());
+    inspectDocstring.setEnabled(analyzeDoctest.isSelected());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
       .withTitle(PyBundle.message("configurable.choose.path.to.the.package.requirements.file")));
@@ -411,6 +422,9 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       return true;
     }
+    if (inspectDocstring.isSelected() != myDocumentationSettings.isInspectDocstring()) {
+      return true;
+    }
     if (renderExternal.isSelected() != myDocumentationSettings.isRenderExternalDocumentation()) {
       return true;
     }
@@ -451,6 +465,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       reparseFiles(Collections.singletonList(PlainTextFileType.INSTANCE.getDefaultExtension()));
     }
     myDocumentationSettings.setAnalyzeDoctest(analyzeDoctest.isSelected());
+    myDocumentationSettings.setInspectDocstring(inspectDocstring.isSelected());
     setRequirementsPath(myRequirementsPathField.getText());
 
     DaemonCodeAnalyzer.getInstance(myProject).restart(this);
@@ -484,6 +499,7 @@ final class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
+    inspectDocstring.setSelected(myDocumentationSettings.isInspectDocstring());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.setText(getRequirementsPath());
 

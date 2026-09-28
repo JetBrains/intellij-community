@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.ast.PyAstElsePart;
@@ -154,6 +153,18 @@ public abstract class PyDocumentationSettings
     }
   }
 
+  public final boolean isInspectDocstring() {
+    return getState().myInspectDocstring;
+  }
+
+  public final void setInspectDocstring(boolean inspect) {
+    var state = getState();
+    state.myInspectDocstring = inspect;
+    if (myModule != null) {
+      loadState(state);
+    }
+  }
+
   public final boolean isRenderExternalDocumentation() {
     return getState().myRenderExternalDocumentation;
   }
@@ -173,6 +184,8 @@ public abstract class PyDocumentationSettings
     public boolean myAnalyzeDoctest = true;
     @OptionTag("renderExternalDocumentation")
     public boolean myRenderExternalDocumentation;
+    @OptionTag("inspectDocstrings")
+    public boolean myInspectDocstring;
 
     @ApiStatus.Internal
     public ServiceState(@NotNull DocStringFormat docStringFormat) {

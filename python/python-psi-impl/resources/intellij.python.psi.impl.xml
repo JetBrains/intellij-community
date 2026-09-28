@@ -155,6 +155,7 @@
     <!-- PyDocstring -->
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
     <lang.parserDefinition language="Doctest" implementationClass="com.jetbrains.python.documentation.doctest.PyDoctestParserDefinition"/>
+    <lang.parserDefinition language="PythonDocstringCodeBlock" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringCodeBlockParserDefinition"/>
     <highlightErrorFilter implementation="com.jetbrains.python.documentation.doctest.PyDocstringErrorFilter"/>
     <lang.formatter language="Doctest" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringFormattingModelBuilder"/>
 

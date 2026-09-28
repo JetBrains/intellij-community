@@ -24,7 +24,6 @@ import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyIndentUtil;
@@ -134,7 +133,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
   private static void injectCodeBlocks(@NotNull List<TextRange> codeBlockRanges,
                                        @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
     for (TextRange range : codeBlockRanges) {
-      injectionPlacesRegistrar.addPlace(PythonLanguage.getInstance(), range, null, null);
+      injectionPlacesRegistrar.addPlace(PyDocstringCodeBlockLanguageDialect.getInstance(), range, null, null);
     }
   }
 

@@ -34,8 +34,8 @@ import java.util.Set;
 /**
  * User : ktisha
  */
-public class PyDocReference extends PyReferenceImpl {
-  public PyDocReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
+public class PyDoctestReference extends PyReferenceImpl {
+  public PyDoctestReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     super(element, context);
   }
 

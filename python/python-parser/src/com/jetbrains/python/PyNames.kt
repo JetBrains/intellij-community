@@ -151,6 +151,7 @@ object PyNames {
 
   const val TESTCASE_SETUP_NAME: String = "setUp"
   const val PY_DOCSTRING_ID: String = "Doctest"
+  const val PY_DOCSTRING_CODE_BLOCK_ID: String = "PythonDocstringCodeBlock"
   const val END_WILDCARD: String = ".*"
 
   const val INIT: String = "__init__"

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.xmlb.XmlSerializer
@@ -37,6 +38,7 @@ internal class PyDocumentationSettingsSerializationTest {
     // The removed value falls back to PLAIN via setFormatName(); the redundant "format" option is ignored.
     assertEquals(DocStringFormat.PLAIN, state.format)
     assertFalse(state.myAnalyzeDoctest)
+    assertFalse(state.myInspectDocstring)
     assertTrue(state.myRenderExternalDocumentation)
   }
 
