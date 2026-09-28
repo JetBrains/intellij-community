@@ -10,11 +10,10 @@ Groovy script
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     Reference element
-      Reference element
-        PsiElement(identifier)('a')
-      PsiElement(.)('.')
-      PsiErrorElement:identifier expected, got ';'
-        <empty list>
+      PsiElement(identifier)('a')
+    PsiElement(.)('.')
+    PsiErrorElement:Identifier expected
+      <empty list>
   PsiElement(;)(';')
   PsiElement(new line)('\n')
   Import statement
@@ -24,20 +23,19 @@ Groovy script
     PsiWhiteSpace(' ')
     Reference element
       Reference element
-        Reference element
-          PsiElement(identifier)('a')
-        PsiElement(.)('.')
-        PsiElement(identifier)('b')
+        PsiElement(identifier)('a')
       PsiElement(.)('.')
-      PsiErrorElement:identifier expected, got ';'
-        <empty list>
+      PsiElement(identifier)('b')
+    PsiElement(.)('.')
+    PsiErrorElement:Identifier expected
+      <empty list>
   PsiElement(;)(';')
   PsiElement(new line)('\n')
   Import statement
     Modifiers
       <empty list>
     PsiElement(import)('import')
-    PsiErrorElement:identifier expected, got ';'
+    PsiErrorElement:Identifier expected
       <empty list>
   PsiElement(;)(';')
   PsiElement(new line)('\n')

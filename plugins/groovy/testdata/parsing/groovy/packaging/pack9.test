@@ -9,22 +9,17 @@ Groovy script
     PsiElement(package)('package')
     PsiWhiteSpace(' ')
     Reference element
-      Reference element
-        PsiElement(identifier)('a')
-        Type arguments
-          PsiElement(<)('<')
-          Type element
-            Reference element
-              PsiElement(identifier)('b')
-          PsiElement(>)('>')
-      PsiElement(.)('.')
-      PsiElement(identifier)('c')
-      Type arguments
-        PsiElement(<)('<')
-        Type element
-          Reference element
-            PsiElement(identifier)('d')
-        PsiElement(>)('>')
+      PsiElement(identifier)('a')
+    PsiErrorElement:Newline, '.' or ';' expected
+      <empty list>
+    PsiElement(<)('<')
+    PsiElement(identifier)('b')
+    PsiElement(>)('>')
+    PsiElement(.)('.')
+    PsiElement(identifier)('c')
+    PsiElement(<)('<')
+    PsiElement(identifier)('d')
+    PsiElement(>)('>')
   PsiElement(new line)('\n\n')
   Import statement
     Modifiers
@@ -32,19 +27,14 @@ Groovy script
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
     Reference element
-      Reference element
-        PsiElement(identifier)('a')
-        Type arguments
-          PsiElement(<)('<')
-          Type element
-            Reference element
-              PsiElement(identifier)('b')
-          PsiElement(>)('>')
-      PsiElement(.)('.')
-      PsiElement(identifier)('c')
-      Type arguments
-        PsiElement(<)('<')
-        Type element
-          Reference element
-            PsiElement(identifier)('d')
-        PsiElement(>)('>')
+      PsiElement(identifier)('a')
+    PsiErrorElement:Newline, '.' or ';' expected
+      <empty list>
+    PsiElement(<)('<')
+    PsiElement(identifier)('b')
+    PsiElement(>)('>')
+    PsiElement(.)('.')
+    PsiElement(identifier)('c')
+    PsiElement(<)('<')
+    PsiElement(identifier)('d')
+    PsiElement(>)('>')

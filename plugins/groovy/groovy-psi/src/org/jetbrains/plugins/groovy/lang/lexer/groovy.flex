@@ -131,68 +131,73 @@ mTRIPLE_DOUBLE_QUOTED_CONTENT = {mDOUBLE_QUOTED_CONTENT} | {mSTRING_NL} | \"(\")
 mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 %%
 <YYINITIAL, IN_INJECTION, IN_GSTRING_DOLLAR> {
-  "package"       { return storeToken(KW_PACKAGE); }
-  "strictfp"      { return storeToken(KW_STRICTFP); }
-  "import"        { return storeToken(KW_IMPORT); }
-  "static"        { return storeToken(KW_STATIC); }
-  "def"           { return storeToken(KW_DEF); }
-  "var"           { return storeToken(KW_VAR); }
-  "val"           { return storeToken(KW_VAL); }
-  "class"         { return storeToken(KW_CLASS); }
-  "interface"     { return storeToken(KW_INTERFACE); }
-  "enum"          { return storeToken(KW_ENUM); }
-  "trait"         { return storeToken(KW_TRAIT); }
-  "record"        { return storeToken(KW_RECORD); }
-  "extends"       { return storeToken(KW_EXTENDS); }
-  "super"         { return storeToken(KW_SUPER); }
-  "void"          { return storeToken(KW_VOID); }
   "boolean"       { return storeToken(KW_BOOLEAN); }
   "byte"          { return storeToken(KW_BYTE); }
   "char"          { return storeToken(KW_CHAR); }
-  "short"         { return storeToken(KW_SHORT); }
-  "int"           { return storeToken(KW_INT); }
-  "float"         { return storeToken(KW_FLOAT); }
-  "long"          { return storeToken(KW_LONG); }
   "double"        { return storeToken(KW_DOUBLE); }
-  "as"            { return storeToken(KW_AS); }
-  "private"       { return storeToken(KW_PRIVATE); }
+  "float"         { return storeToken(KW_FLOAT); }
+  "int"           { return storeToken(KW_INT); }
+  "long"          { return storeToken(KW_LONG); }
+  "short"         { return storeToken(KW_SHORT); }
+  "void"          { return storeToken(KW_VOID); }
+
   "abstract"      { return storeToken(KW_ABSTRACT); }
-  "public"        { return storeToken(KW_PUBLIC); }
-  "protected"     { return storeToken(KW_PROTECTED); }
-  "transient"     { return storeToken(KW_TRANSIENT); }
-  "native"        { return storeToken(KW_NATIVE); }
-  "synchronized"  { return storeToken(KW_SYNCHRONIZED); }
-  "sealed"        { return storeToken(KW_SEALED); }
-  "non-sealed"    { return storeToken(KW_NON_SEALED); }
-  "volatile"      { return storeToken(KW_VOLATILE); }
+  "as"            { return storeToken(KW_AS); }
+  "assert"        { return storeToken(KW_ASSERT); }
+  "break"         { return storeToken(KW_BREAK); }
+  "case"          { return storeToken(KW_CASE); }
+  "catch"         { return storeToken(KW_CATCH); }
+  "class"         { return storeToken(KW_CLASS); }
+  "const"         { return storeToken(KW_CONST); }
+  "continue"      { return storeToken(KW_CONTINUE); }
+  "def"           { return storeToken(KW_DEF); }
   "default"       { return storeToken(KW_DEFAULT); }
   "do"            { return storeToken(KW_DO); }
-  "throws"        { return storeToken(KW_THROWS); }
-  "implements"    { return storeToken(KW_IMPLEMENTS); }
-  "permits"       { return storeToken(KW_PERMITS); }
-  "this"          { return storeToken(KW_THIS); }
-  "if"            { return storeToken(KW_IF); }
   "else"          { return storeToken(KW_ELSE); }
-  "while"         { return storeToken(KW_WHILE); }
-  "switch"        { return storeToken(KW_SWITCH); }
-  "for"           { return storeToken(KW_FOR); }
-  "in"            { return storeToken(KW_IN); }
-  "return"        { return storeToken(KW_RETURN); }
-  "break"         { return storeToken(KW_BREAK); }
-  "continue"      { return storeToken(KW_CONTINUE); }
-  "yield"         { return storeToken(KW_YIELD); }
-  "throw"         { return storeToken(KW_THROW); }
-  "assert"        { return storeToken(KW_ASSERT); }
-  "case"          { return storeToken(KW_CASE); }
-  "try"           { return storeToken(KW_TRY); }
-  "finally"       { return storeToken(KW_FINALLY); }
-  "catch"         { return storeToken(KW_CATCH); }
-  "instanceof"    { return storeToken(KW_INSTANCEOF); }
-  "new"           { return storeToken(KW_NEW); }
-  "true"          { return storeToken(KW_TRUE); }
+  "enum"          { return storeToken(KW_ENUM); }
+  "extends"       { return storeToken(KW_EXTENDS); }
   "false"         { return storeToken(KW_FALSE); }
-  "null"          { return storeToken(KW_NULL); }
   "final"         { return storeToken(KW_FINAL); }
+  "finally"       { return storeToken(KW_FINALLY); }
+  "for"           { return storeToken(KW_FOR); }
+  "goto"          { return storeToken(KW_GOTO); }
+  "if"            { return storeToken(KW_IF); }
+  "implements"    { return storeToken(KW_IMPLEMENTS); }
+  "import"        { return storeToken(KW_IMPORT); }
+  "in"            { return storeToken(KW_IN); }
+  "instanceof"    { return storeToken(KW_INSTANCEOF); }
+  "interface"     { return storeToken(KW_INTERFACE); }
+  "module"        { return storeToken(KW_MODULE); }
+  "native"        { return storeToken(KW_NATIVE); }
+  "new"           { return storeToken(KW_NEW); }
+  "non-sealed"    { return storeToken(KW_NON_SEALED); }
+  "null"          { return storeToken(KW_NULL); }
+  "package"       { return storeToken(KW_PACKAGE); }
+  "permits"       { return storeToken(KW_PERMITS); }
+  "private"       { return storeToken(KW_PRIVATE); }
+  "protected"     { return storeToken(KW_PROTECTED); }
+  "public"        { return storeToken(KW_PUBLIC); }
+  "return"        { return storeToken(KW_RETURN); }
+  "record"        { return storeToken(KW_RECORD); }
+  "sealed"        { return storeToken(KW_SEALED); }
+  "static"        { return storeToken(KW_STATIC); }
+  "strictfp"      { return storeToken(KW_STRICTFP); }
+  "super"         { return storeToken(KW_SUPER); }
+  "switch"        { return storeToken(KW_SWITCH); }
+  "synchronized"  { return storeToken(KW_SYNCHRONIZED); }
+  "this"          { return storeToken(KW_THIS); }
+  "threadsafe"    { return storeToken(KW_THREADSAFE); }
+  "throw"         { return storeToken(KW_THROW); }
+  "throws"        { return storeToken(KW_THROWS); }
+  "trait"         { return storeToken(KW_TRAIT); }
+  "transient"     { return storeToken(KW_TRANSIENT); }
+  "true"          { return storeToken(KW_TRUE); }
+  "try"           { return storeToken(KW_TRY); }
+  "val"           { return storeToken(KW_VAL); }
+  "var"           { return storeToken(KW_VAR); }
+  "volatile"      { return storeToken(KW_VOLATILE); }
+  "while"         { return storeToken(KW_WHILE); }
+  "yield"         { return storeToken(KW_YIELD); }
 }
 
 <NLS_AFTER_LBRACE> {

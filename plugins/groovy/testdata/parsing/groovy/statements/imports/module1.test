@@ -1,0 +1,20 @@
+import module java.base as Incorrect
+-----
+Groovy script
+  Import statement
+    Modifiers
+      <empty list>
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    PsiElement(module)('module')
+    PsiWhiteSpace(' ')
+    Reference element
+      Reference element
+        PsiElement(identifier)('java')
+      PsiElement(.)('.')
+      PsiElement(identifier)('base')
+    PsiWhiteSpace(' ')
+    GrImportAliasImpl(IMPORT_ALIAS)
+      PsiElement(as)('as')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('Incorrect')

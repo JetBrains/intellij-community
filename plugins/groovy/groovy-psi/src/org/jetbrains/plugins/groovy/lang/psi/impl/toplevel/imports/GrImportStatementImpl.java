@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
 import com.intellij.lang.ASTNode;
@@ -75,7 +75,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
   @Override
   public @Nullable String getImportedName() {
-    if (isOnDemand()) return null;
+    if (isOnDemand() || isModule()) return null;
 
     GrImportStatementStub stub = getStub();
     if (stub != null) {
@@ -98,6 +98,12 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
     GrCodeReferenceElement ref = getImportReference();
     return ref == null ? null : ref.getReferenceName();
+  }
+
+  @Override
+  public boolean isModule() {
+    GrImportStatementStub stub = getStub();
+    return stub != null ? stub.isModule() : findChildByType(GroovyTokenTypes.kMODULE) != null;
   }
 
   @Override
@@ -140,6 +146,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
   @Override
   public @Nullable PsiClass resolveTargetClass() {
+    if (isModule()) return null;
     final GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return null;
 

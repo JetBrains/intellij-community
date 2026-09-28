@@ -42,6 +42,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INSTAN
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INTERFACE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_LONG;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_MODULE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NATIVE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NEW;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NON_SEALED;
@@ -317,6 +318,7 @@ public interface GroovyTokenTypes {
   IElementType kINT = KW_INT;
   IElementType kINTERFACE = KW_INTERFACE;
   IElementType kLONG = KW_LONG;
+  IElementType kMODULE = KW_MODULE;
   IElementType kNATIVE = KW_NATIVE;
   IElementType kNEW = KW_NEW;
   IElementType kNON_SEALED = KW_NON_SEALED;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.StubElement;
@@ -29,7 +29,7 @@ public class GrImportStatementElementType extends GrStubElementType<GrImportStat
       parentStub, this,
       psi.getImportFqn(),
       psi.isAliasedImport() ? psi.getImportedName() : null,
-      GrImportStatementStub.buildFlags(psi.isStatic(), psi.isOnDemand())
+      GrImportStatementStub.buildFlags(psi)
     );
   }
 

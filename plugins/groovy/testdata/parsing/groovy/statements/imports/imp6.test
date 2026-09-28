@@ -18,7 +18,7 @@ Groovy script
     PsiWhiteSpace(' ')
     GrImportAliasImpl(IMPORT_ALIAS)
       PsiElement(as)('as')
-      PsiErrorElement:identifier expected
+      PsiErrorElement:Identifier expected
         <empty list>
   PsiElement(new line)('\n')
   Reference expression

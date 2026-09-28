@@ -112,11 +112,10 @@
     KW_BREAK = 'break'
     KW_CASE = 'case'
     KW_CATCH = 'catch'
+    KW_CONST = 'const'
     KW_CLASS = 'class'
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
-    KW_VAR = 'var'
-    KW_VAL = 'val'
     KW_DEFAULT = 'default'
     KW_DO = 'do'
     KW_ELSE = 'else'
@@ -126,12 +125,14 @@
     KW_FINAL = 'final'
     KW_FINALLY = 'finally'
     KW_FOR = 'for'
+    KW_GOTO = 'goto'
     KW_IF = 'if'
     KW_IMPLEMENTS = 'implements'
     KW_IMPORT = 'import'
     KW_IN = 'in'
     KW_INTERFACE = 'interface'
     KW_INSTANCEOF = 'instanceof'
+    KW_MODULE = 'module'
     KW_NATIVE = 'native'
     KW_NULL = 'null'
     KW_NEW = 'new'
@@ -150,12 +151,15 @@
     KW_SWITCH = 'switch'
     KW_SYNCHRONIZED = 'synchronized'
     KW_THIS = 'this'
+    KW_THREADSAFE = 'threadsafe'
     KW_THROW = 'throw'
     KW_THROWS = 'throws'
     KW_TRAIT = 'trait'
     KW_TRANSIENT = 'transient'
     KW_TRUE = 'true'
     KW_TRY = 'try'
+    KW_VAL = 'val'
+    KW_VAR = 'var'
     KW_VOLATILE = 'volatile'
     KW_WHILE = 'while'
     KW_YIELD = 'yield'
@@ -203,24 +207,14 @@
 root ::= mb_nl package_definition? mb_separators top_levels
 
 // region Header constructs
-package_definition ::= modifier_list mb_nl ('package') package_name
+package_definition ::= <<parsePackage modifier_list>>
 {
-  pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType'
-  consumeTokenMethod = 'consumeTokenFast'
 }
-private package_name ::= qualified_name { name = 'package name' }
 
-import ::= modifier_list mb_nl ('import') 'static'? qualified_name import_star? import_alias?
+import ::= <<parseImport modifier_list>>
 {
-  pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType'
-  consumeTokenMethod = 'consumeTokenFast'
-}
-private import_star ::= '.' '*'
-import_alias ::= 'as' (weak_keyword | IDENTIFIER)
-{
-  pin = 1
 }
 // endregion
 
@@ -264,7 +258,7 @@ private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
 private var_modifier ::= ('var' | 'val' | 'sealed') &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
-private weak_keyword_identifiers ::= 'as' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield' { consumeTokenMethod = 'consumeTokenFast' }
+private weak_keyword_identifiers ::= 'as' | 'module' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield' { consumeTokenMethod = 'consumeTokenFast' }
 
 private weak_keyword ::= weak_keyword_identifiers | clear_variants_and_fail
 
@@ -1372,8 +1366,6 @@ private code_reference_identifiers_soft ::= 'def' | 'in' { consumeTokenMethod = 
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= <<annotated code_reference_base>> { elementType = '' name = 'type' }
-
-private qualified_name ::= <<qualifiedName code_reference>>
 
 //noinspection BnfUnusedRule
 doc_reference ::= short_code_reference doc_reference_tail* { elementType = code_reference }

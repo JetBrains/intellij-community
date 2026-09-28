@@ -1,0 +1,15 @@
+import module java.base
+-----
+Groovy script
+  Import statement
+    Modifiers
+      <empty list>
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    PsiElement(module)('module')
+    PsiWhiteSpace(' ')
+    Reference element
+      Reference element
+        PsiElement(identifier)('java')
+      PsiElement(.)('.')
+      PsiElement(identifier)('base')

@@ -7,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.parser
 import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilder.Marker
+import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.PsiBuilderUtil.parseBlockLazy
 import com.intellij.lang.parser.GeneratedParserUtilBase.Builder
 import com.intellij.lang.parser.GeneratedParserUtilBase.ErrorState
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAL
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kYIELD
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.IMPORT_ALIAS
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.lambda_expression_head
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_EXPRESSION
@@ -43,7 +45,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BOD
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY_SWITCH_AWARE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE_SWITCH_AWARE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFERENCE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IDENTIFIER
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INSTANCEOF_EXPRESSION
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_AS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IMPORT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_MODULE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PACKAGE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_STATIC
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.METHOD_CALL_EXPRESSION
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NEW_EXPRESSION
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL
@@ -51,11 +61,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REFERENCE_EXPRESSION
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_COMMA
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DOT
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RBRACE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_SEMI
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_STAR
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.CONTEXTUAL_KEYWORDS
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.KEYWORDS
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.RESERVED_KEYWORDS
@@ -166,12 +180,6 @@ fun anyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser): Boolea
 }
 
 private val PsiBuilder.anyTypeElementParsing get() = this[parseAnyTypeElement]
-
-fun qualifiedName(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
-  return builder.withKey(parseQualifiedName, true) {
-    parser.parse(builder, level)
-  }
-}
 
 fun isQualifiedName(builder: PsiBuilder, level: Int): Boolean = builder[parseQualifiedName]
 
@@ -357,6 +365,95 @@ fun parseApplication(builder: PsiBuilder, level: Int,
     INSTANCEOF_EXPRESSION -> false
     else -> applicationParser.parse(builder, nextLevel)
   }
+}
+
+fun parsePackage(builder: PsiBuilder, level: Int, modifierList: Parser): Boolean {
+  modifierList.parse(builder, level)
+  skipNewlines(builder)
+  if (PsiBuilderUtil.expect(builder, KW_PACKAGE)) {
+    parseQualifiedName(builder, true)
+    parseStatementEnd(builder)
+    return true
+  }
+  return false
+}
+
+private fun parseStatementEnd(builder: PsiBuilder) {
+  if (builder.tokenType != T_SEMI && builder.tokenType != NL && builder.tokenType != null) {
+    builder.error(GroovyBundle.message("semicolon.expected.but.got", builder.tokenText))
+    builder.advanceLexer()
+    while (builder.tokenType != T_SEMI && builder.tokenType != NL && builder.tokenType != null) {
+      builder.advanceLexer() // recovery
+    }
+  }
+}
+
+fun parseImport(builder: PsiBuilder, level: Int, modifierList: Parser): Boolean {
+  modifierList.parse(builder, level)
+  skipNewlines(builder)
+  if (PsiBuilderUtil.expect(builder, KW_IMPORT)) {
+    if (builder.tokenType == KW_MODULE && builder.lookAhead(1) != T_DOT) {
+      builder.advanceLexer()
+      parseQualifiedName(builder, false)
+    }
+    else {
+      if (builder.tokenType == KW_STATIC) builder.advanceLexer()
+      parseQualifiedName(builder, true)
+      if (builder.tokenType == T_DOT && builder.lookAhead(1) == T_STAR) {
+        builder.advanceLexer()
+        builder.advanceLexer()
+      }
+    }
+    if (builder.tokenType == KW_AS) {
+      val aliasMarker = builder.mark()
+      builder.advanceLexer()
+      parseIdentifier(builder);
+      aliasMarker.done(IMPORT_ALIAS)
+    }
+    parseStatementEnd(builder)
+    return true
+  }
+  return false
+}
+
+private fun parseQualifiedName(builder: PsiBuilder, allowStar: Boolean) {
+  var marker = builder.mark()
+  if (!parseIdentifier(builder, true)) {
+    marker.drop()
+    return
+  }
+  marker.done(CODE_REFERENCE)
+  while (builder.tokenType == T_DOT) {
+    marker = marker.precede()
+    builder.advanceLexer()
+    if (allowStar && builder.tokenType == T_STAR) {
+      builder.advanceLexer()
+      marker.drop()
+      return
+    }
+    if (!parseIdentifier(builder, true)) {
+      marker.drop()
+      return
+    }
+    marker.done(CODE_REFERENCE)
+  }
+}
+
+private fun skipNewlines(builder: PsiBuilder) {
+  while (builder.tokenType == NL) builder.advanceLexer()
+}
+
+fun parseIdentifier(builder: PsiBuilder, allowDef: Boolean = false): Boolean {
+  if (builder.tokenType == IDENTIFIER) {
+    builder.advanceLexer()
+    return true
+  }
+  else if (CONTEXTUAL_KEYWORDS.contains(builder.tokenType) || allowDef && builder.tokenType == KW_DEF) {
+    builder.advanceLexer()
+    return true
+  }
+  builder.error(GroovyBundle.message("identifier.expected"))
+  return false
 }
 
 fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(KEYWORDS)

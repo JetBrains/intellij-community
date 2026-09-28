@@ -4497,86 +4497,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // modifier_list mb_nl ('import') 'static'? qualified_name import_star? import_alias?
+  // <<parseImport modifier_list>>
   public static boolean import_$(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_$")) return false;
-    boolean r, p;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, IMPORT, "<import>");
-    r = modifier_list(b, l + 1);
-    r = r && mb_nl(b, l + 1);
-    r = r && import_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && report_error_(b, import_3(b, l + 1));
-    r = p && report_error_(b, qualified_name(b, l + 1)) && r;
-    r = p && report_error_(b, import_5(b, l + 1)) && r;
-    r = p && import_6(b, l + 1) && r;
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // ('import')
-  private static boolean import_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenFast(b, KW_IMPORT);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // 'static'?
-  private static boolean import_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_3")) return false;
-    consumeTokenFast(b, KW_STATIC);
-    return true;
-  }
-
-  // import_star?
-  private static boolean import_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_5")) return false;
-    import_star(b, l + 1);
-    return true;
-  }
-
-  // import_alias?
-  private static boolean import_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_6")) return false;
-    import_alias(b, l + 1);
-    return true;
-  }
-
-  /* ********************************************************** */
-  // 'as' (weak_keyword | IDENTIFIER)
-  public static boolean import_alias(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_alias")) return false;
-    if (!nextTokenIs(b, KW_AS)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, IMPORT_ALIAS, null);
-    r = consumeToken(b, KW_AS);
-    p = r; // pin = 1
-    r = r && import_alias_1(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // weak_keyword | IDENTIFIER
-  private static boolean import_alias_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_alias_1")) return false;
-    boolean r;
-    r = weak_keyword(b, l + 1);
-    if (!r) r = consumeToken(b, IDENTIFIER);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // '.' '*'
-  static boolean import_star(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "import_star")) return false;
-    if (!nextTokenIs(b, T_DOT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, T_DOT, T_STAR);
-    exit_section_(b, m, null, r);
+    r = parseImport(b, l + 1, GroovyGeneratedParser::modifier_list);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -5957,37 +5884,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // modifier_list mb_nl ('package') package_name
+  // <<parsePackage modifier_list>>
   public static boolean package_definition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "package_definition")) return false;
-    boolean r, p;
+    boolean r;
     Marker m = enter_section_(b, l, _NONE_, PACKAGE_DEFINITION, "<package definition>");
-    r = modifier_list(b, l + 1);
-    r = r && mb_nl(b, l + 1);
-    r = r && package_definition_2(b, l + 1);
-    p = r; // pin = 3
-    r = r && package_name(b, l + 1);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  // ('package')
-  private static boolean package_definition_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "package_definition_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenFast(b, KW_PACKAGE);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // qualified_name
-  static boolean package_name(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "package_name")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, null, "<package name>");
-    r = qualified_name(b, l + 1);
+    r = parsePackage(b, l + 1, GroovyGeneratedParser::modifier_list);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -6579,12 +6481,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "qualified_code_reference_2", c)) break;
     }
     return true;
-  }
-
-  /* ********************************************************** */
-  // <<qualifiedName code_reference>>
-  static boolean qualified_name(PsiBuilder b, int l) {
-    return qualifiedName(b, l + 1, GroovyGeneratedParser::code_reference);
   }
 
   /* ********************************************************** */
@@ -8551,11 +8447,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'as' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield'
+  // 'as' | 'module' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield'
   static boolean weak_keyword_identifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "weak_keyword_identifiers")) return false;
     boolean r;
     r = consumeTokenFast(b, KW_AS);
+    if (!r) r = consumeTokenFast(b, KW_MODULE);
     if (!r) r = consumeTokenFast(b, KW_PERMITS);
     if (!r) r = consumeTokenFast(b, KW_RECORD);
     if (!r) r = consumeTokenFast(b, KW_SEALED);

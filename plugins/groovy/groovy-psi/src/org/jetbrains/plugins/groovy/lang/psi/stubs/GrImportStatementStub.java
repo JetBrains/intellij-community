@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.IStubElementType;
@@ -9,8 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 public class GrImportStatementStub extends StubBase<GrImportStatement> implements StubElement<GrImportStatement> {
-  private static final byte STATIC_MASK = 0x1;
-  private static final byte ON_DEMAND_MASK = 0x2;
+  private static final byte STATIC_MASK = 0b1;
+  private static final byte ON_DEMAND_MASK = 0b10;
+  private static final byte MODULE_MASK = 0b100;
 
   private final String myFqn;
   private final String myAliasName;
@@ -39,6 +40,10 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
     return (myFlags & STATIC_MASK) != 0;
   }
 
+  public boolean isModule() {
+    return (myFlags & MODULE_MASK) != 0;
+  }
+
   public boolean isOnDemand() {
     return (myFlags & ON_DEMAND_MASK) != 0;
   }
@@ -47,8 +52,9 @@ public class GrImportStatementStub extends StubBase<GrImportStatement> implement
     return myFlags;
   }
 
-  public static byte buildFlags(boolean isStatic, boolean isOnDemand) {
-    return (byte)((isStatic ? 1 : 0) * STATIC_MASK +
-                  (isOnDemand ? 1 : 0) * ON_DEMAND_MASK);
+  public static byte buildFlags(GrImportStatement importStatement) {
+    return (byte)((importStatement.isStatic() ? STATIC_MASK : 0) |
+                  (importStatement.isOnDemand() ? ON_DEMAND_MASK : 0) |
+                  (importStatement.isModule() ? MODULE_MASK : 0));
   }
 }

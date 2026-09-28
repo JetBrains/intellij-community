@@ -121,6 +121,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterParameterExtendsListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrWildcardTypeArgumentImpl;
 
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.IMPORT_ALIAS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ADDITIVE_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ANNOTATION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ANNOTATION_ARGUMENT_LIST;
@@ -179,7 +180,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IF_STATEM
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IMPLEMENTS_CLAUSE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IMPL_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IMPORT;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IMPORT_ALIAS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INDEX_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INSTANCEOF_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INTERFACE_TYPE_DEFINITION;

@@ -5,44 +5,69 @@ import com.intellij.psi.tree.TokenSet;
 
 import static com.intellij.psi.tree.TokenSet.create;
 import static com.intellij.psi.tree.TokenSet.orSet;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_AS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ASSERT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BOOLEAN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BREAK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BYTE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CASE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CATCH;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CHAR;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CLASS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CONST;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CONTINUE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEFAULT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DO;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DOUBLE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ELSE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ENUM;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_EXTENDS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FALSE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FINAL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FINALLY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FLOAT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FOR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_GOTO;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IF;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IMPLEMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IMPORT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INSTANCEOF;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INTERFACE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_LONG;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_MODULE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NATIVE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NEW;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NON_SEALED;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_NULL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PACKAGE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PERMITS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PRIVATE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PROTECTED;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_PUBLIC;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RECORD;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_RETURN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SEALED;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SHORT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_STATIC;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_STRICTFP;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SUPER;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SWITCH;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SYNCHRONIZED;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THIS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THREADSAFE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THROW;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_THROWS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRAIT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRANSIENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRUE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_TRY;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VOLATILE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_WHILE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_YIELD;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LEFT_SHIFT_SIGN;
@@ -107,22 +132,30 @@ public interface GroovyTokenSets {
    * Keywords that are always treated as keywords.
    */
   TokenSet RESERVED_KEYWORDS = create(
-    KW_AS, KW_ASSERT, KW_BREAK, KW_CASE,
-    KW_CATCH, KW_CLASS, /*const,*/ KW_CONTINUE,
+    KW_ABSTRACT, KW_ASSERT, KW_BREAK, KW_CASE,
+    KW_CATCH, KW_CLASS, KW_CONST, KW_CONTINUE,
     KW_DEF, KW_DEFAULT, KW_DO, KW_ELSE,
-    KW_ENUM, KW_EXTENDS, KW_FALSE, KW_FINALLY,
-    KW_FOR, /*goto,*/ KW_IF, KW_IMPLEMENTS,
-    KW_IMPORT, KW_IN, T_NOT_IN, KW_INSTANCEOF, T_NOT_INSTANCEOF, KW_INTERFACE,
-    KW_NEW, KW_NULL, KW_PACKAGE, KW_RETURN,
-    KW_SUPER, KW_SWITCH, KW_THIS, KW_THROW,
-    KW_THROWS, KW_TRAIT, KW_TRUE, KW_TRY,
-    KW_WHILE, KW_YIELD
+    KW_ENUM, KW_EXTENDS, KW_FINAL, KW_FINALLY,
+    KW_FOR, KW_GOTO, KW_IF, KW_IMPLEMENTS,
+    KW_IMPORT, KW_INSTANCEOF, KW_INTERFACE, KW_NATIVE,
+    KW_NEW, KW_NON_SEALED, KW_NULL, KW_PACKAGE,
+    KW_PRIVATE, KW_PROTECTED, KW_PUBLIC, KW_RETURN,
+    KW_STATIC, KW_STRICTFP, KW_SUPER, KW_SWITCH,
+    KW_SYNCHRONIZED, KW_THIS, KW_THREADSAFE, KW_THROW,
+    KW_THROWS, KW_TRANSIENT, KW_TRY, KW_VOLATILE,
+    KW_WHILE
   );
+
+  TokenSet OTHER_RESERVED_WORDS = create(
+    KW_NULL, KW_TRUE, KW_FALSE, KW_BOOLEAN, KW_CHAR, KW_BYTE, KW_SHORT, KW_INT, KW_LONG, KW_FLOAT, KW_DOUBLE
+  );
+
+  TokenSet CONTEXTUAL_KEYWORDS = create(KW_AS, KW_IN, KW_MODULE, KW_PERMITS, KW_RECORD, KW_SEALED, KW_TRAIT, KW_VAR, KW_VAL, KW_YIELD);
 
   /**
    * http://docs.groovy-lang.org/latest/html/documentation/core-syntax.html#_keywords. Reserved + Contextual keywords.
    */
-  TokenSet KEYWORDS = orSet(RESERVED_KEYWORDS, create(KW_PERMITS, KW_RECORD, KW_VAL, KW_VAR, KW_YIELD));
+  TokenSet KEYWORDS = orSet(RESERVED_KEYWORDS, OTHER_RESERVED_WORDS, CONTEXTUAL_KEYWORDS);
 
 
   TokenSet STRING_LITERALS = create(STRING_SQ, STRING_TSQ, STRING_DQ, STRING_TDQ);

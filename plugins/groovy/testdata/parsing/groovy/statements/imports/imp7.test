@@ -1,5 +1,6 @@
 import static a
-import b as c
+import static b as c
+import static d.* as e
 -----
 Groovy script
   Import statement
@@ -17,6 +18,8 @@ Groovy script
       <empty list>
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
+    PsiElement(static)('static')
+    PsiWhiteSpace(' ')
     Reference element
       PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
@@ -24,3 +27,20 @@ Groovy script
       PsiElement(as)('as')
       PsiWhiteSpace(' ')
       PsiElement(identifier)('c')
+  PsiElement(new line)('\n')
+  Import statement
+    Modifiers
+      <empty list>
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    PsiElement(static)('static')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(identifier)('d')
+    PsiElement(.)('.')
+    PsiElement(*)('*')
+    PsiWhiteSpace(' ')
+    GrImportAliasImpl(IMPORT_ALIAS)
+      PsiElement(as)('as')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('e')

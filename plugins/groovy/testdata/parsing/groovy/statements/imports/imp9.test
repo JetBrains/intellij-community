@@ -1,6 +1,5 @@
 import a
 import b as c
-import d.* as e
 -----
 Groovy script
   Import statement
@@ -23,18 +22,3 @@ Groovy script
       PsiElement(as)('as')
       PsiWhiteSpace(' ')
       PsiElement(identifier)('c')
-  PsiElement(new line)('\n')
-  Import statement
-    Modifiers
-      <empty list>
-    PsiElement(import)('import')
-    PsiWhiteSpace(' ')
-    Reference element
-      PsiElement(identifier)('d')
-    PsiElement(.)('.')
-    PsiElement(*)('*')
-    PsiWhiteSpace(' ')
-    GrImportAliasImpl(IMPORT_ALIAS)
-      PsiElement(as)('as')
-      PsiWhiteSpace(' ')
-      PsiElement(identifier)('e')

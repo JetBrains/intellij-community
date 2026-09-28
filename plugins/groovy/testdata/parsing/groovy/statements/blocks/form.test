@@ -7,6 +7,6 @@ Groovy script
     Modifiers
       <empty list>
     PsiElement(package)('package')
-    PsiErrorElement:<package name> expected
+    PsiErrorElement:Identifier expected
       <empty list>
   PsiElement(new line)('\n\n')

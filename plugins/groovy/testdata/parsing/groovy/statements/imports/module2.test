@@ -1,5 +1,4 @@
-import a.b.
-*
+import module java.base.*
 -----
 Groovy script
   Import statement
@@ -7,14 +6,14 @@ Groovy script
       <empty list>
     PsiElement(import)('import')
     PsiWhiteSpace(' ')
+    PsiElement(module)('module')
+    PsiWhiteSpace(' ')
     Reference element
       Reference element
-        PsiElement(identifier)('a')
+        PsiElement(identifier)('java')
       PsiElement(.)('.')
-      PsiElement(identifier)('b')
+      PsiElement(identifier)('base')
     PsiElement(.)('.')
     PsiErrorElement:Identifier expected
       <empty list>
-  PsiElement(new line)('\n')
-  PsiErrorElement:';', <statement> or new line expected, got '*'
     PsiElement(*)('*')

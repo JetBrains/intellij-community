@@ -29,7 +29,7 @@ public class GrNumericLUBTypeTest extends LightGroovyTestCase {
 
   private void doTest(String expressionText, String expectedType) {
     GroovyFile file = DefaultGroovyMethods.asType(
-      getFixture().configureByText("_.groovy", "import static Constants.*" + expressionText),
+      getFixture().configureByText("_.groovy", "import static Constants.*\n" + expressionText),
       GroovyFile.class
     );
     GrExpression expression = DefaultGroovyMethods.asType(DefaultGroovyMethods.last(file.getStatements()), GrExpression.class);

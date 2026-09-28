@@ -1,5 +1,3 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -110,7 +108,6 @@ public interface GroovyElementTypes {
   GrImplementsClauseElementType IMPLEMENTS_CLAUSE = new GrImplementsClauseElementType("IMPLEMENTS_CLAUSE");
   GroovyElementType IMPL_EXPRESSION = new GroovyElementType("IMPL_EXPRESSION");
   GrImportStatementElementType IMPORT = new GrImportStatementElementType("IMPORT");
-  GroovyElementType IMPORT_ALIAS = new GroovyElementType("IMPORT_ALIAS");
   GroovyElementType INDEX_EXPRESSION = new GroovyElementType("INDEX_EXPRESSION");
   GroovyElementType INSTANCEOF_EXPRESSION = new GroovyElementType("INSTANCEOF_EXPRESSION");
   GrInterfaceDefinitionElementType INTERFACE_TYPE_DEFINITION = new GrInterfaceDefinitionElementType("INTERFACE_TYPE_DEFINITION");
@@ -197,6 +194,7 @@ public interface GroovyElementTypes {
   IElementType KW_CATCH = new GroovyElementType("catch");
   IElementType KW_CHAR = new GroovyElementType("char");
   IElementType KW_CLASS = new GroovyElementType("class");
+  IElementType KW_CONST = new GroovyElementType("const");
   IElementType KW_CONTINUE = new GroovyElementType("continue");
   IElementType KW_DEF = new GroovyElementType("def");
   IElementType KW_DEFAULT = new GroovyElementType("default");
@@ -210,6 +208,7 @@ public interface GroovyElementTypes {
   IElementType KW_FINALLY = new GroovyElementType("finally");
   IElementType KW_FLOAT = new GroovyElementType("float");
   IElementType KW_FOR = new GroovyElementType("for");
+  IElementType KW_GOTO = new GroovyElementType("goto");
   IElementType KW_IF = new GroovyElementType("if");
   IElementType KW_IMPLEMENTS = new GroovyElementType("implements");
   IElementType KW_IMPORT = new GroovyElementType("import");
@@ -218,6 +217,7 @@ public interface GroovyElementTypes {
   IElementType KW_INT = new GroovyElementType("int");
   IElementType KW_INTERFACE = new GroovyElementType("interface");
   IElementType KW_LONG = new GroovyElementType("long");
+  IElementType KW_MODULE = new GroovyElementType("module");
   IElementType KW_NATIVE = new GroovyElementType("native");
   IElementType KW_NEW = new GroovyElementType("new");
   IElementType KW_NON_SEALED = new GroovyElementType("non-sealed");
@@ -237,6 +237,7 @@ public interface GroovyElementTypes {
   IElementType KW_SWITCH = new GroovyElementType("switch");
   IElementType KW_SYNCHRONIZED = new GroovyElementType("synchronized");
   IElementType KW_THIS = new GroovyElementType("this");
+  IElementType KW_THREADSAFE = new GroovyElementType("threadsafe");
   IElementType KW_THROW = new GroovyElementType("throw");
   IElementType KW_THROWS = new GroovyElementType("throws");
   IElementType KW_TRAIT = new GroovyElementType("trait");

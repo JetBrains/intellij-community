@@ -289,7 +289,9 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testImports$imp7() { doTest(); }
 
   public void testImports$imp8() { doTest(); }
-
+  public void testImports$module0() { doTest(); }
+  public void testImports$module1() { doTest(); }
+  public void testImports$module2() { doTest(); }
   public void testImports$typeArguments() { doTest(); }
 
   public void testKing_regex$king1() { doTest(); }

@@ -41,6 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kINSTANCE
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kINT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kINTERFACE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kLONG;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kMODULE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNATIVE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNON_SEALED;
@@ -224,6 +225,7 @@ public interface TokenSets {
   );
 
   TokenSet CONTEXTUAL_KEYWORDS = TokenSet.create(
+    kMODULE,
     kPERMITS,
     kRECORD,
     kSEALED,
@@ -234,7 +236,8 @@ public interface TokenSets {
 
   TokenSet GROOVY_KEYWORDS = TokenSet.create(kAS, kIN, kTRAIT);
 
-  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kAS, kIN, kPERMITS, kRECORD, kSEALED, kTRAIT, kVAL, kVAR, kYIELD);
+  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = 
+    TokenSet.create(mIDENT, kDEF, kAS, kIN, kMODULE, kPERMITS, kRECORD, kSEALED, kTRAIT, kVAL, kVAR, kYIELD);
 
   TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, CONTEXTUAL_KEYWORDS,
                                            TokenSet.create(mIDENT, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL));
@@ -248,6 +251,7 @@ public interface TokenSets {
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
     kLONG,
+    kMODULE,
     kNATIVE, kNEW, kNON_SEALED, kNOT_IN, kNOT_INSTANCEOF, kNULL,
     kPACKAGE, kPERMITS, kPRIVATE, kPROTECTED, kPUBLIC,
     kRECORD, kRETURN,

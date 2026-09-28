@@ -2014,10 +2014,10 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   public void testTypeArgumentsInImportReferences() {
     doTestHighlighting("""
-                         import java.util.List<error descr="Type argument list is not allowed here"><String></error>
-                         import java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.Entry
-                         import static java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.*
-                         import java.util.List<error descr="Type argument list is not allowed here"><String></error> as Foo
+                         import java.util.List<error descr="Newline, '.' or ';' expected"><</error>String>
+                         import java.util.Map<error descr="Newline, '.' or ';' expected"><</error>Integer, String>.Entry
+                         import static java.util.Map<error descr="Newline, '.' or ';' expected"><</error>Integer, String>.*
+                         import java.util.List<error descr="Newline, '.' or ';' expected"><</error>String> as Foo
                          """, false);
   }
 
