@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -10,10 +12,14 @@ import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPackageRepository
+import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pythonSdk
 
@@ -72,4 +78,19 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   override fun getBasePath(): String = "/community/python/testData/requirements/"
 
+  fun setDependencyRoot(providerType: RequirementsProviderType) {
+    val sdk = myFixture.project.pythonSdk!!
+    sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, providerType)
+    val moduleDir = myFixture.findFileInTempDir(providerType.filename).parent
+    ApplicationManager.getApplication().runWriteAction {
+      val modificator = sdk.sdkModificator
+      (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = moduleDir.path
+      modificator.commitChanges()
+    }
+    // the initialization runs read actions, which a plain `runBlocking` on the EDT would deadlock against a
+    // pending background write action
+    runWithModalProgressBlocking(myFixture.project, "Initializing the test package manager") {
+      PythonPackageManager.forSdk(myFixture.project, sdk).waitForInit()
+    }
+  }
 }
