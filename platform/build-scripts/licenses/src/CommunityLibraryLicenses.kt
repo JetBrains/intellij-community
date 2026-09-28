@@ -1488,7 +1488,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   jetbrainsLibrary("completion-ranking-python-with-full-line"),
   jetbrainsLibrary("completion-ranking-scala-exp"),
   jetbrainsLibrary("completion-ranking-sh"),
-  jetbrainsLibrary("debugger-agent"),
   jetbrainsLibrary("debugger-memory-agent"),
   jetbrainsLibrary("diogen-analysis"),
   jetbrainsLibrary("download-pgp-verifier"),
