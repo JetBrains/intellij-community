@@ -75,8 +75,19 @@ def func3(attr_int: AttrProto[int], attr_float: AttrProto[float]):
     v2: AttrProto[int] = attr_float  # E
 
 
+# Specification: https://typing.readthedocs.io/en/latest/spec/protocol.html#self-types-in-protocols
+# > The self-types in protocols follow the rules for other methods.
+# Specification: https://typing.readthedocs.io/en/latest/spec/annotations.html#annotating-instance-and-class-methods
+# > In addition, the first argument in an instance method can be annotated
+# > with a type variable. In this case the return type may use the same
+# > type variable, thus making that method a generic function.
+
+
+T_bounded = TypeVar("T_bounded", bound="HasParent")
+
+
 class HasParent(Protocol):
-    def get_parent(self: T) -> T:
+    def get_parent(self: T_bounded) -> T_bounded:
         ...
 
 
@@ -96,52 +107,79 @@ parent = generic_get_parent(ConcreteHasParent())  # OK
 assert_type(parent, ConcreteHasParent)
 
 
-class HasPropertyProto(Protocol):
+# Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#use-in-protocols
+# > `Self` is valid within Protocols, similar to its use in classes:
+
+
+class HasParentProperty(Protocol):
     @property
-    def f(self: T) -> T:
+    def parent(self) -> Self:
         ...
 
+
+class ConcreteParentProperty:
+    @property
+    def parent(self) -> Self:
+        return self
+
+
+class InvalidParentProperty:
+    @property
+    def parent(self) -> HasParentProperty:
+        return ConcreteParentProperty()
+
+
+hp1: HasParentProperty = ConcreteParentProperty()  # OK
+hp2: HasParentProperty = InvalidParentProperty()  # E
+
+
+
+class HasMethod(Protocol):
     def m(self, item: T, callback: Callable[[T], str]) -> str:
         ...
 
 
-class ConcreteHasProperty1:
-    @property
-    def f(self: T) -> T:
-        return self
-
+class ConcreteHasMethod:
     def m(self, item: T, callback: Callable[[T], str]) -> str:
         return ""
 
 
-class ConcreteHasProperty2:
-    @property
-    def f(self) -> Self:
-        return self
-
+class InvalidHasMethod:
     def m(self, item: int, callback: Callable[[int], str]) -> str:
         return ""
 
 
-class ConcreteHasProperty3:
-    @property
-    def f(self) -> int:
-        return 0
-
-    def m(self, item: int, callback: Callable[[int], str]) -> str:
-        return ""
+hm1: HasMethod = ConcreteHasMethod()  # OK
+hm2: HasMethod = InvalidHasMethod()  # E
 
 
-class ConcreteHasProperty4:
-    @property
-    def f(self) -> Self:
-        return self
-
-    def m(self, item: str, callback: Callable[[int], str]) -> str:
-        return ""
+# Specification: https://typing.readthedocs.io/en/latest/spec/generics.html#use-in-protocols
+# > Checking a class for assignability to a protocol: If a protocol uses `Self`
+# > in methods or attribute annotations, then a class `Foo` is assignable
+# > to the protocol if its corresponding methods and attribute annotations use
+# > either `Self` or `Foo` or any of `Foo`'s subclasses.
 
 
-hp1: HasPropertyProto = ConcreteHasProperty1()  # OK
-hp2: HasPropertyProto = ConcreteHasProperty2()  # E
-hp3: HasPropertyProto = ConcreteHasProperty3()  # E
-hp4: HasPropertyProto = ConcreteHasProperty4()  # E
+class HasGreaterThan(Protocol):
+    def __gt__(self, other: Self) -> bool:
+        ...
+
+
+class ConcreteGreaterThan1:
+    def __gt__(self, other: Self) -> bool:
+        return False
+
+
+class ConcreteGreaterThan2:
+    def __gt__(self, other: "ConcreteGreaterThan2") -> bool:
+        return False
+
+
+class InvalidGreaterThan:
+    def __gt__(self, other: int) -> bool:
+        return False
+
+
+hg1: HasGreaterThan = ConcreteGreaterThan1()  # OK
+hg2: HasGreaterThan = ConcreteGreaterThan2()  # OK
+hg3: HasGreaterThan = InvalidGreaterThan()  # E
