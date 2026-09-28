@@ -73,6 +73,7 @@
   "excludedTestLibs": [
     "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
+    "//plugins/air/frontend/llm/analytics/jcp:air-frontend-llm-analytics-jcp-tests_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
     "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
     "//plugins/air/tests/integration/headless/acp/runtime-installation:runtime-installation_test_lib",
