@@ -64,7 +64,7 @@ class <lineMarker descr="Run Test">SessionTest</lineMarker>: TestCase() {
     }
 }
 
-abstract class <lineMarker descr="Is subclassed by FooCase in AbstractFoo (testing) Press ... to navigate"><lineMarker descr="Run Test">AbstractFoo</lineMarker></lineMarker>: TestCase() {
+abstract class <lineMarker descr="Is subclassed by FooCase in AbstractFoo (testing) Press ... to navigate"><lineMarker descr="Run Test">AbstractFoo</lineMarker></lineMarker> private constructor(): TestCase() {
     inner class FooCase : AbstractFoo() {
         fun testFoo() {
 
@@ -115,3 +115,5 @@ class <lineMarker descr="Run Test">TestClassWithSuite</lineMarker> {
 }
 
 class WithPrivateConstructor private constructor() : TestCase() { }
+
+open class WithProtectedConstructor protected constructor() : TestCase() { }

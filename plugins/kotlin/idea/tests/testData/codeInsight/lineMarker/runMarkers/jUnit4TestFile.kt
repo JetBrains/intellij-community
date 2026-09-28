@@ -54,7 +54,7 @@ object SessionObjectTest {
     fun `top level extension function as module function`() {}
 }
 
-abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by FooCase in AbstractBar (testing) Press ... to navigate">AbstractBar</lineMarker></lineMarker> {
+abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by FooCase in AbstractBar (testing) Press ... to navigate">AbstractBar</lineMarker></lineMarker> private constructor() {
     class <lineMarker descr="Run Test">FooCase</lineMarker> : AbstractBar() {
         @Test
         fun <lineMarker descr="Run Test">testFoo</lineMarker>() {
@@ -80,6 +80,17 @@ abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by 
     fun <lineMarker descr="Run Test">testBaseFoo</lineMarker>() {
 
     }
+}
+
+abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by FooBazz (testing) Press ... to navigate">AbstractBazz</lineMarker></lineMarker> {
+    @Test
+    fun <lineMarker descr="Run Test">testBar</lineMarker>() {}
+}
+class <lineMarker descr="Run Test">FooBazz</lineMarker> : AbstractBazz()
+
+open class ProtectedConstructorTest protected constructor() {
+    @Test
+    fun testWithProtectedConstructor() {}
 }
 
 fun String.foo() {}

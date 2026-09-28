@@ -65,6 +65,19 @@ class JavaTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTes
     """.trimIndent(), "SomeTest")
   }
 
+  fun `test case without test methods in JUnit 4 inheritance`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      abstract class SomeAbstractTest {
+        private SomeAbstractTest() {} 
+        @org.junit.Test
+        public void foo() { }
+        
+        public static class SomeTest extends SomeAbstractTest {}
+      }
+      
+    """.trimIndent(), "SomeTest")
+  }
+
   fun `test case with ignored test in JUnit 4`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       public class SomeTest {

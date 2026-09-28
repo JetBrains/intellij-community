@@ -6,7 +6,7 @@ public class InstanceVariableInitialization extends TestCase {
 
     private String <warning descr="Instance field 'javaHome' may not be initialized during object construction or 'setUp()' call">javaHome</warning>;
 
-    InstanceVariableInitialization() {
+    public InstanceVariableInitialization() {
         //javaHome = System.getProperty("java.home");
     }
 

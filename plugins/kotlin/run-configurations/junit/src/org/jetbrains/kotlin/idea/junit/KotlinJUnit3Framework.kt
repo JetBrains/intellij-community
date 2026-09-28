@@ -23,12 +23,12 @@ import com.intellij.util.ThreeState.UNSURE
 import com.intellij.util.ThreeState.YES
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtNamedFunction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -93,6 +93,11 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             if (!isFrameworkAvailable(declaration)) return NO
             val name = declaration.name
             if (name == null) return NO
+            if (declaration is KtClass &&
+                !declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) &&
+                !declaration.hasPublicConstructor()) {
+                return NO
+            }
             return checkJUnit3TestClass(
                 declaration,
                 PsiShortNamesCache.getInstance(declaration.project).withoutLanguages(KotlinLanguage.INSTANCE),
@@ -113,7 +118,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             if (objects.flatMap { it.declarations }.filterIsInstance<KtNamedFunction>().any { it.name == "suite" }) {
                 return UNSURE // suites don't need to extend TestClass
             }
-            if (declaration is KtObjectDeclaration || declaration.primaryConstructor?.isPrivate() == true) return NO
+            if (declaration is KtObjectDeclaration) return NO
             val superTypeListEntries = declaration.superTypeListEntries
             for (superTypeEntry in superTypeListEntries) {
                 if (superTypeEntry is KtSuperTypeCallEntry) {

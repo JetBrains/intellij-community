@@ -107,6 +107,8 @@ class KotlinJUnit4Framework : JUnit4Framework(), KotlinPsiBasedTestFramework {
                 NO
             } else if ((declaration as? KtClass)?.isInner() == true) {
                 NO
+            } else if (declaration is KtClass && !declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) && !declaration.hasPublicConstructor()) {
+                NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitUtil.RUN_WITH)) {
                 YES
             } else if (findAnnotatedFunction(declaration, testableClassMethodAnnotations) != null) {
@@ -124,7 +126,10 @@ class KotlinJUnit4Framework : JUnit4Framework(), KotlinPsiBasedTestFramework {
                     }
                 }
                 UNSURE
-            } else {
+            } else if (declaration.superTypeListEntries.isNotEmpty()) {
+                UNSURE
+            }
+            else {
                 NO
             }
         }
