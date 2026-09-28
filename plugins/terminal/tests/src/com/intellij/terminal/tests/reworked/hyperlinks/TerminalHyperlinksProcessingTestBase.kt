@@ -47,6 +47,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalAsyncHyperlinkInfo
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.updateContent
@@ -145,7 +146,12 @@ internal abstract class TerminalHyperlinksProcessingTestBase : BasePlatformTestC
       return model
     }
 
-    fun updateModel(fromLine: Long, newText: String) {
+    /**
+     * Replaces the output from [fromLine] with [newText].
+     *
+     * Each of [osc8Substrings] marks its single occurrence in [newText] as an OSC8 hyperlink.
+     */
+    fun updateModel(fromLine: Long, newText: String, osc8Substrings: List<String> = emptyList()) {
       val textWithEol = newText.ensureEOL()
       val event = TerminalContentUpdatedEvent(
         text = textWithEol,
@@ -155,6 +161,10 @@ internal abstract class TerminalHyperlinksProcessingTestBase : BasePlatformTestC
         cursorColumnIndex = 0,
         screenTopLogicalLineIndex = fromLine,
         screenTopColumnIndex = 0,
+        osc8Hyperlinks = osc8Substrings.map { substring ->
+          val start = textWithEol.indexOfSingle(substring).toLong()
+          Osc8HyperlinkDto(start, start + substring.length, "https://example.com/$substring")
+        }.sortedBy { it.startOffset },
       )
       outputModel.updateContent(event)
     }

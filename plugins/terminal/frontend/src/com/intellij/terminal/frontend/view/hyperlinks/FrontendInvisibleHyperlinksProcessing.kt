@@ -152,8 +152,10 @@ private class InvisibleHyperlinksOnHover(
     // is published, but the collectLatest turn that cancels this block may be queued
     // behind this resumption. The reply is stale then.
     if (modCount != this.modCount) return null
+    val osc8Hyperlinks = outputModel.getOsc8Hyperlinks()
     return results.mapNotNull {
-      it.toFilterResultInfo().toEditorDecoration(outputModel, onLinkClicked)
+      val info = it.toFilterResultInfo()
+      if (info.isOverlappedBy(osc8Hyperlinks)) null else info.toEditorDecoration(outputModel, onLinkClicked)
     }
   }
 

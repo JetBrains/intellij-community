@@ -58,6 +58,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.session.toFilterResultInfo
 import org.jetbrains.plugins.terminal.hyperlinks.toPlatformId
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputOsc8Hyperlink
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -366,11 +367,13 @@ private fun processHyperlinksUpdatedEvent(
   )
   applier.removeDecorations(removed.map { it.toPlatformId() })
 
+  val osc8Hyperlinks = outputModel.getOsc8Hyperlinks()
   val newLinks = event.hyperlinks
     .asSequence()
     .map { it.toFilterResultInfo() }
     .filter { it.absoluteStartOffset >= modelStartOffset }  // Filter out trimmed hyperlinks
     .filter { it.absoluteEndOffset <= applyUpToOffset }   // Filter out hyperlinks in the range that was changed during links' calculation
+    .filterNot { it.isOverlappedBy(osc8Hyperlinks) }
     .toList()
 
   // Add only hyperlinks that can be transformed into decorations
@@ -383,6 +386,36 @@ private fun processHyperlinksUpdatedEvent(
   }
   hyperlinksModel.addHyperlinks(hyperlinks)
   applier.addDecorations(decorations)
+}
+
+/**
+ * Returns `true` if this is a hyperlink that shares a character with one of [osc8Hyperlinks].
+ *
+ * OSC8 hyperlinks have priority over the detected ones in the same text (IJPL-256174).
+ * Returns `false` for highlightings and inlays, because they are not hyperlinks.
+ */
+internal fun TerminalFilterResultInfo.isOverlappedBy(osc8Hyperlinks: List<TerminalOutputOsc8Hyperlink>): Boolean {
+  return this is TerminalHyperlinkInfo && osc8Hyperlinks.intersects(absoluteStartOffset, absoluteEndOffset)
+}
+
+/**
+ * Returns `true` if the range `[absoluteStartOffset, absoluteEndOffset)` shares a character with a hyperlink of this list.
+ *
+ * The list must be sorted by offset and have no overlapping ranges, as [TerminalOutputModel.getOsc8Hyperlinks] returns it.
+ */
+private fun List<TerminalOutputOsc8Hyperlink>.intersects(
+  absoluteStartOffset: Long,
+  absoluteEndOffset: Long,
+): Boolean {
+  if (isEmpty()) return false
+  // Find the first OSC8 hyperlink that ends after the range start.
+  val result = binarySearch {
+    if (it.endOffset.toAbsolute() <= absoluteStartOffset) -1 else 1
+  }
+  // binarySearch never finds, so result == (-insertionIndex - 1)
+  check(result < 0) { "result = $result" }
+  val insertionIndex = -result - 1
+  return insertionIndex < size && this[insertionIndex].startOffset.toAbsolute() < absoluteEndOffset
 }
 
 internal fun TerminalFilterResultInfo.toEditorDecoration(

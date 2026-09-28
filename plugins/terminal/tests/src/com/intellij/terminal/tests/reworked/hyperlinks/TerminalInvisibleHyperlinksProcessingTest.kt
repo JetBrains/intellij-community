@@ -42,6 +42,13 @@ internal class TerminalInvisibleHyperlinksProcessingTest : TerminalHyperlinksPro
   }
 
   @Test
+  fun `invisible links that overlap OSC8 hyperlinks are dropped`() = withFixture {
+    updateModel(0L, "0: line0 hover0 hover1 hover2", osc8Substrings = listOf("hover0", "ver2"))
+    hover(at(0, "hover1"))
+    assertHoverLinks(at(0, "hover1"))
+  }
+
+  @Test
   fun `recently hovered lines are not requested again`() = withFixture {
     updateModel(0L, """
       0: line0 hover0

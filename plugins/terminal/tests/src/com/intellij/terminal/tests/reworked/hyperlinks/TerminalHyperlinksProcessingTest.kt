@@ -47,6 +47,36 @@ internal class TerminalHyperlinksProcessingTest : TerminalHyperlinksProcessingTe
   }
 
   @Test
+  fun `links that overlap OSC8 hyperlinks are dropped`() = withFixture {
+    updateModel(0L, """
+      0: line0 link0 link1
+      1: line1 link2 link3 link4
+    """.trimIndent(), osc8Substrings = listOf("link0", "ink3 li"))
+    assertLinks(
+      link(at(0, "link1")),
+      link(at(1, "link2")),
+    )
+  }
+
+  @Test
+  fun `links next to OSC8 hyperlinks are kept`() = withFixture {
+    updateModel(0L, "0: line0 link0 link1 link2", osc8Substrings = listOf(" link1 "))
+    assertLinks(
+      link(at(0, "link0")),
+      link(at(0, "link2")),
+    )
+  }
+
+  @Test
+  fun `highlightings that overlap OSC8 hyperlinks are kept`() = withFixture {
+    filter.highlight = HIGHLIGHT1
+    updateModel(0L, "0: line0 highlight0", osc8Substrings = listOf("highlight0"))
+    assertHighlightings(
+      highlight(at(0, "highlight0")),
+    )
+  }
+
+  @Test
   fun `some links with inlays`() = withFixture {
     // Must have multiple results per line because com.intellij.execution.filters.CompositeFilter.createFinalResult
     // is broken and doesn't preserve the result item as-is if there's only one result.
