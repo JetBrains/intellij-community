@@ -114,6 +114,11 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     doTest("X");
   }
 
+  /** Markdown has no string literals, so the word before the wrap stays on the line while it fits in the right margin. */
+  public void testWrapKeepsPrecedingWordThatFits() {
+    doTest("t");
+  }
+
   public void testPasteIntoLineWithLinkDoesNotAssert() {
     myFixture.configureByFile("pasteIntoLineWithLinkDoesNotAssert.md");
     EditorTestUtil.configureSoftWraps(myFixture.getEditor(), 40);

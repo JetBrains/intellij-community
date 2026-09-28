@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.util.PsiUtilBase.getLanguageInEditor;
@@ -44,11 +47,21 @@ public final class FormatConstants {
   private FormatConstants() {
   }
 
+  /**
+   * Returns {@link #RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS} for the language at the caret.
+   * A language without string literal tokens, for example plain text, gets no reserved columns,
+   * because a wrap cannot split a string literal there.
+   */
   public static int getReservedLineWrapWidthInColumns(@NotNull Editor editor) {
-    return isPlainTextFile(editor) ? 0 : RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+    return hasStringLiterals(editor) ? RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS : 0;
   }
 
-  private static boolean isPlainTextFile(@NotNull Editor editor) {
-    return editor.getProject() != null && PlainTextLanguage.INSTANCE.is(getLanguageInEditor(editor, editor.getProject()));
+  private static boolean hasStringLiterals(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project == null) return true;
+    Language language = getLanguageInEditor(editor, project);
+    if (language == null) return true;
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    return parserDefinition == null || parserDefinition.getStringLiteralElements().getTypes().length != 0;
   }
 }

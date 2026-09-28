@@ -1,4 +1,4 @@
 ```
-# Gallia est omnis divisa in partes tres, quarum unam incolumnt Belgae, 
-aliam a b c<caret>
+# Gallia est omnis divisa in partes tres, quarum unam incolumnt Belgae, aliam a 
+b c<caret>
 ```
