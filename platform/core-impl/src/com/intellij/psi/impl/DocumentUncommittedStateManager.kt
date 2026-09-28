@@ -18,6 +18,8 @@ import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.WeakReference
 import java.util.Collections
@@ -194,7 +196,7 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
     var main: Baseline? = null
 
     // visible in the forked timelines
-    val forked: ConcurrentMap<Long, Baseline> = ConcurrentHashMap()
+    val forked: ConcurrentLongObjectMap<Baseline> = Java11Shim.createConcurrentLongObjectMap()
   }
 
   // Returns the state if it exists.
@@ -291,7 +293,7 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
     val state = peek(document)
     val main = state?.main ?: return
     val version = InternalPsiVersioning.getCurrentPsiVersion()
-    state.forked[version] = main.fork(frozen, watermark)
+    state.forked.put(version, main.fork(frozen, watermark))
     InternalPsiVersioning.recordVersionedChange(this)
   }
 
@@ -335,7 +337,11 @@ internal class DocumentUncommittedStateManager : PsiVersionCleanable {
    */
   override fun liveVersionChanged(minVersion: Long) {
     for (state in liveStates.keys) {
-      state.forked.keys.removeIf { version -> version < minVersion }
+      for (version in state.forked.keys()) {
+        if (version < minVersion) {
+          state.forked.remove(version)
+        }
+      }
     }
     // cleaning up timelines that correspond to strongly unreachable references
     removeTimelines { it.document.get() == null }
