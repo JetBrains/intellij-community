@@ -92,6 +92,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   private final Map<UUID, Channel> myConnections = Collections.synchronizedMap(new HashMap<>()); // processId->channel
   private final Executor myExecutor;
   private boolean myOwnExecutor;
+  private volatile EventLoopGroup myEventLoopGroup;
   private final long myKeepAliveTimeout;
   private String myWslExePath = "wsl";
 
@@ -108,8 +109,9 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   public void start(int listenPort) throws UnknownHostException {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
+    myEventLoopGroup = new NioEventLoopGroup(1, myExecutor);
     final ServerBootstrap bootstrap = new ServerBootstrap()
-      .group(new NioEventLoopGroup(1, myExecutor))
+      .group(myEventLoopGroup)
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)
@@ -275,6 +277,10 @@ public class ExternalJavacManager extends ProcessAdapter {
       }
     }
     myChannelRegistrar.close().awaitUninterruptibly();
+    final EventLoopGroup eventLoopGroup = myEventLoopGroup;
+    if (eventLoopGroup != null) {
+      eventLoopGroup.shutdownGracefully();
+    }
     if (myOwnExecutor && myExecutor instanceof ExecutorService) {
       final ExecutorService service = (ExecutorService)myExecutor;
       service.shutdown();

@@ -9,6 +9,7 @@ import com.intellij.compiler.impl.OneProjectItemCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdleTracker;
@@ -544,11 +545,14 @@ public class CompilerManagerImpl extends CompilerManager {
             return null; // should not happen for real projects
           }
           final int listenPort = NetUtils.findAvailableSocketPort();
-          manager = new ExternalJavacManager(
-            compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
-          );
-          manager.setWslExecutablePath(WSLDistribution.findWslExe());
-          manager.start(listenPort);
+          // the manager lives as long as the project, so its event loop must not become a child of the first caller's job (e.g. the debugger's)
+          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+            manager = new ExternalJavacManager(
+              compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
+            );
+            manager.setWslExecutablePath(WSLDistribution.findWslExe());
+            manager.start(listenPort);
+          }
           myExternalJavacManager = manager;
           IdleTask task = new IdleTask(manager);
           task.removeIdleListener = IdleTracker.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
