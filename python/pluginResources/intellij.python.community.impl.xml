@@ -962,6 +962,10 @@
     <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
                  description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
 
+    <registryKey key="python.typing.composite.breakdown.max.members" defaultValue="5"
+                 description="The widest union or intersection type that still gets a per-member type mismatch breakdown, or 0 for no bound"/>
+
+
     <python.processOutput.common.processOutputIconMapping implementation="com.jetbrains.python.sdk.SdkIconMapping"/>
 
     <!-- Debugger Show value tooltip -->
