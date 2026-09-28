@@ -17,6 +17,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService.Companion.isFunctionalitySupported
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
@@ -30,6 +31,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.Random
+
+internal const val REGISTRY_KEY_DISABLE_UPDATE_SOURCES_FOR_INTERNAL_USERS =
+  "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users"
 
 @State(name = "PluginUpdateSources", storages = [Storage("pluginUpdateSources.xml", roamingType = RoamingType.DISABLED)])
 internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
@@ -238,6 +242,10 @@ private fun isInternalUser(): Boolean {
   val isJetBrainsEmail = JBAccountInfoService.getInstance()?.userData?.email?.endsWith("@jetbrains.com") == true
   val isJetBrainsTeam = LicensingFacade.getInstance()?.licensedTo?.contains("JetBrains Team") == true
   return isJetBrainsEmail || isJetBrainsTeam
+}
+
+internal fun isPluginUpdateSourceUIAndFilteringDisabledForInternalUser(): Boolean {
+  return Registry.`is`(REGISTRY_KEY_DISABLE_UPDATE_SOURCES_FOR_INTERNAL_USERS, false) && isInternalUser()
 }
 
 @ApiStatus.Internal

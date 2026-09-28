@@ -316,6 +316,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Restricts updating plugins to the configured source (IJPL-171317)"/>
     <registryKey key="platform.make.plugin.update.source.visible.in.ui" defaultValue="false"
                  description="Makes plugin update sources visible in UI (IJPL-171317)"/>
+    <registryKey key="platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users" defaultValue="false"
+                 description="Hides plugin update sources in the UI and disables plugin update source filtering for internal users."/>
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
