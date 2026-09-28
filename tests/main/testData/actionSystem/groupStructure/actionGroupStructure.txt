@@ -2582,7 +2582,6 @@
   WelcomeNewEmptyFile
   NewScratchFile
   NewDir
-  NewRemoteDevModule
   compose.newVectorAsset
   JavaFxCreateActions
   NewJavaSpecialFile
