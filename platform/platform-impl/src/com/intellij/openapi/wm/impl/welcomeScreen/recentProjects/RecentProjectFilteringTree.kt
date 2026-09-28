@@ -9,6 +9,7 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.ide.unscaledProjectIconSize
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -25,6 +26,7 @@ import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -96,6 +98,8 @@ import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.DefaultMutableTreeNode
@@ -276,32 +280,48 @@ class RecentProjectFilteringTree(
     private val projectActionButtonViewModel: ProjectActionButtonViewModel,
     private val isProjectPathValid: (String) -> Boolean,
   ) : PopupHandler() {
-    private var popupMenu: ActionPopupMenu? = null
-    private var vcsPopupMenu: ActionPopupMenu? = null
+    private val buttonPopups = mutableMapOf<String, ActionPopupMenu>()
 
     override fun mouseMoved(mouseEvent: MouseEvent) {
       if (actionIsInProgress(mouseEvent)) return
+      updateHoverAndSelection(mouseEvent.point)
+    }
 
-      val point = mouseEvent.point
-      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+    /**
+     * Selects the row under [point] and sets the button hover to match, then repaints the row. A null
+     * [point] means the mouse is off the tree, so it drops the selection and the hover. The mouse move
+     * handler and the popup close handler share this, so the button hover always follows the cursor.
+     */
+    private fun updateHoverAndSelection(point: Point?) {
+      val row = if (point != null) TreeUtil.getRowForLocation(tree, point.x, point.y) else -1
+
+      var repaintRow = false
       if (row != -1) {
         if (!tree.isRowSelected(row)) {
           tree.setSelectionRow(row)
-          // Repaint whole row to avoid flickering of row buttons
-          tree.repaint(tree.getRowBounds(row))
+          repaintRow = true
         }
       }
       else {
         tree.clearSelection()
       }
 
-      projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
-      projectActionButtonViewModel.isVcsButtonHovered = intersectWithVcsIcon(point)
+      // Repaint the row when the hovered button changes, otherwise the renderer keeps the old hover
+      // state and the button never highlights while the mouse stays in the same row.
+      val hovered = rowButtonAt(point)
+      if (projectActionButtonViewModel.hovered != hovered) {
+        projectActionButtonViewModel.hovered = hovered
+        repaintRow = true
+      }
+
+      if (repaintRow && row != -1) {
+        // Repaint whole row to avoid flickering of row buttons
+        tree.repaint(tree.getRowBounds(row))
+      }
     }
 
     private fun actionIsInProgress(mouseEvent: MouseEvent): Boolean {
-      return popupMenu?.component?.isVisible == true ||
-             vcsPopupMenu?.component?.isVisible == true ||
+      return buttonPopups.values.any { it.component.isVisible } ||
              mouseEvent.isMultipleSelectionInProgress
     }
 
@@ -328,32 +348,12 @@ class RecentProjectFilteringTree(
       }
 
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
-        if (intersectWithVcsIcon(point)) {
-          invokeVcsPopup(mouseEvent.component, point.x, point.y, item)
-        }
-        else if (intersectWithActionIcon(point)) {
-          when (item) {
-            is CloneableProjectItem -> {
-              when (item.cloneableProject.cloneStatus) {
-                CloneStatus.SUCCESS -> invokePopup(mouseEvent.component, point.x, point.y, item)
-                CloneStatus.PROGRESS -> cancelCloneProject(item.cloneableProject)
-                CloneStatus.FAILURE -> item.removeItem()
-                CloneStatus.CANCEL -> item.removeItem()
-              }
-            }
-            is RecentProjectItem -> {
-              if (isProjectPathValid(item.projectPath)) {
-                invokePopup(mouseEvent.component, point.x, point.y, item)
-              }
-              else {
-                item.removeItem()
-              }
-            }
-            else -> invokePopup(mouseEvent.component, point.x, point.y, item)
-          }
+        val button = rowButtonAt(point)
+        if (button == null) {
+          activateItem(tree, item, mouseEvent, tree.getRowForPath(treePath))
         }
         else {
-          activateItem(tree, item, mouseEvent, tree.getRowForPath(treePath))
+          button.onClick(mouseEvent.component, point.x, point.y, item)
         }
       }
 
@@ -362,16 +362,80 @@ class RecentProjectFilteringTree(
 
     override fun invokePopup(component: Component, x: Int, y: Int) {
       val sourceItem = getItem(TreeUtil.getPathForLocation(tree, x, y)) ?: return
-      val items = getSelectedItems(tree)
-      invokePopup(component, x, y, sourceItem, items)
+      showPopup(RecentProjectRowButton.MoreActions.ACTION_GROUP_ID, component, x, y, sourceItem, getSelectedItems(tree))
     }
 
-    private fun invokePopup(
-      component: Component, x: Int, y: Int,
+    // The button under [point], if any. Walks the row's buttons from the right, because the rightmost one is the only slot every row has.
+    private fun rowButtonAt(point: Point?): RecentProjectRowButton? {
+      if (point == null) return null
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      if (row == -1) return null
+      val item = itemAt(row) ?: return null
+      val buttons = rowButtons(item, isProjectValid(item))
+      return buttons.lastOrNull { buttonRect(row, buttons, buttons.indexOf(it)).contains(point) }
+    }
+
+    private fun itemAt(row: Int): RecentProjectTreeItem? =
+      (tree.getPathForRow(row)?.lastPathComponent as? DefaultMutableTreeNode)?.userObject as? RecentProjectTreeItem
+
+    private fun isProjectValid(item: RecentProjectTreeItem): Boolean =
+      item !is RecentProjectItem || isProjectPathValid(item.projectPath)
+
+    /**
+     * The bounds of the button at [index] of [buttons] on [row].
+     *
+     * The rightmost button is anchored to the row's edge, and each button to its left steps over its own gap to the neighbour on its
+     * right - the gap belongs to the button that owns the space, which is the one being placed, not the one already placed.
+     */
+    private fun buttonRect(row: Int, buttons: List<RecentProjectRowButton>, index: Int): Rectangle {
+      val size = JBUI.scale(ActionsButton.SIZE)
+      var rect = rightmostButtonRect(row)
+      for (i in buttons.lastIndex - 1 downTo index) {
+        rect = Rectangle(rect.x - size - JBUIScale.scale(buttons[i].rightGap), rect.y, size, size)
+      }
+      return rect
+    }
+
+    // The rightmost button of [row]. Its gap to the edge belongs to the row, not to the button, because a group row indents differently.
+    private fun rightmostButtonRect(row: Int): Rectangle {
+      val helper = RenderingHelper(tree) // because the renderer's bounds are not full width
+      val bounds = tree.getRowBounds(row)
+      val size = JBUI.scale(ActionsButton.SIZE)
+
+      val rightGap = when (itemAt(row)) {
+        is ProjectsGroupItem -> JBUIScale.scale(ActionsButton.GROUP_RIGHT_GAP)
+        else -> JBUIScale.scale(ActionsButton.RIGHT_GAP) + JBUIScale.scale(RENDERER_BORDER_SIZE)
+      }
+
+      return Rectangle(helper.width - helper.rightMargin - size - rightGap,
+                       bounds.y + (bounds.height - size) / 2, size, size)
+    }
+
+    private fun RecentProjectRowButton.onClick(component: Component, x: Int, y: Int, item: RecentProjectTreeItem) {
+      when (this) {
+        is RecentProjectRowButton.VcsActions -> showPopup(ACTION_GROUP_ID, component, x, y, item)
+        is RecentProjectRowButton.MoreActions -> showPopup(ACTION_GROUP_ID, component, x, y, item)
+        is RecentProjectRowButton.Remove -> item.removeItem()
+        is RecentProjectRowButton.CancelClone -> (item as? CloneableProjectItem)?.let { cancelCloneProject(it.cloneableProject) }
+      }
+    }
+
+    private fun showPopup(
+      actionGroupId: String,
+      component: Component,
+      x: Int,
+      y: Int,
       sourceItem: RecentProjectTreeItem,
       selectedItems: List<RecentProjectTreeItem> = emptyList(),
     ) {
-      val popupMenu = getPopupMenu()
+      val popupMenu = buttonPopups.getOrPut(actionGroupId) {
+        ActionManager.getInstance().let { actionManager ->
+          val group = actionManager.getAction(actionGroupId) as ActionGroup
+          actionManager.createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).also {
+            it.component.addPopupMenuListener(updateHoverOnPopupClose)
+          }
+        }
+      }
       popupMenu.setDataContext {
         SimpleDataContext.builder()
           .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, selectedItems)
@@ -383,72 +447,14 @@ class RecentProjectFilteringTree(
       popupMenu.component.show(component, x, y)
     }
 
-    private fun getPopupMenu(): ActionPopupMenu {
-      return popupMenu ?: ActionManager.getInstance().let { actionManager ->
-        val group = actionManager.getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
-        actionManager.createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).also {
-          popupMenu = it
-        }
-      }
-    }
+    private val updateHoverOnPopupClose = object : PopupMenuListener {
+      override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {}
 
-    private fun intersectWithActionIcon(point: Point): Boolean {
-      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
-      return row != -1 && getActionsButtonRect(row).contains(point)
-    }
-
-    private fun getActionsButtonRect(row: Int): Rectangle {
-      val helper = RenderingHelper(tree) // because the renderer's bounds are not full width
-      val bounds = tree.getRowBounds(row)
-      val size = JBUI.scale(ActionsButton.SIZE)
-
-      val node = tree.getPathForRow(row)?.lastPathComponent as? DefaultMutableTreeNode
-      val rightGap = when (node?.userObject) {
-        is ProjectsGroupItem -> JBUIScale.scale(ActionsButton.GROUP_RIGHT_GAP)
-        else -> JBUIScale.scale(ActionsButton.RIGHT_GAP) + JBUIScale.scale(RENDERER_BORDER_SIZE)
+      override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent) {
+        updateHoverAndSelection(tree.mousePosition)
       }
 
-      return Rectangle(helper.width - helper.rightMargin - size - rightGap,
-                       bounds.y + (bounds.height - size) / 2, size, size)
-    }
-
-    private fun intersectWithVcsIcon(point: Point): Boolean {
-      if (!isVcsActionsEnabled()) return false
-      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
-      if (row == -1) return false
-      val node = tree.getPathForRow(row)?.lastPathComponent as? DefaultMutableTreeNode
-      val item = node?.userObject as? RecentProjectItem ?: return false
-      return item.branchName != null &&
-             isProjectPathValid(item.projectPath) &&
-             getVcsButtonRect(row).contains(point)
-    }
-
-    // The VCS button sits one button-size to the left of the actions button.
-    private fun getVcsButtonRect(row: Int): Rectangle {
-      val actionsRect = getActionsButtonRect(row)
-      val size = JBUI.scale(ActionsButton.SIZE)
-      return Rectangle(actionsRect.x - size - JBUIScale.scale(ActionsButton.VCS_RIGHT_GAP), actionsRect.y, size, size)
-    }
-
-    private fun invokeVcsPopup(component: Component, x: Int, y: Int, sourceItem: RecentProjectTreeItem) {
-      val popupMenu = getVcsPopupMenu()
-      popupMenu.setDataContext {
-        SimpleDataContext.builder()
-          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEMS_KEY, getSelectedItems(tree))
-          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY, sourceItem)
-          .add(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_TREE_KEY, tree)
-          .build()
-      }
-      popupMenu.component.show(component, x, y)
-    }
-
-    private fun getVcsPopupMenu(): ActionPopupMenu {
-      return vcsPopupMenu ?: ActionManager.getInstance().let { actionManager ->
-        val group = actionManager.getAction("WelcomeScreenRecentProjectVcsActionGroup") as ActionGroup
-        actionManager.createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).also {
-          vcsPopupMenu = it
-        }
-      }
+      override fun popupMenuCanceled(e: PopupMenuEvent) {}
     }
 
     private fun cancelCloneProject(cloneableProject: CloneableProject) {
@@ -513,7 +519,12 @@ class RecentProjectFilteringTree(
       }
     }
 
-    private inner class RecentProjectComponent : JPanel(GridLayout()) {
+    private abstract inner class RowComponent : JPanel(GridLayout()) {
+      final override fun getToolTipText(event: MouseEvent): String? =
+        buttonViewModel.hovered?.tooltip ?: super.getToolTipText(event)
+    }
+
+    private inner class RecentProjectComponent : RowComponent() {
       private val recentProjectsManager: RecentProjectsManagerBase
         get() = RecentProjectsManagerBase.getInstanceEx()
 
@@ -532,12 +543,8 @@ class RecentProjectFilteringTree(
         icon = IconUtil.colorize(AllIcons.Vcs.Branch, UIUtil.getInactiveTextColor(), keepGray = false, keepBrightness = false)
       }
       private val projectIconLabel = JLabel()
-      private val projectActions = ActionsButton().apply {
-        setState(AllIcons.Ide.Notification.Gear, false)
-      }
-      private val projectVcsActions = ActionsButton().apply {
-        setState(AllIcons.Vcs.Branch, false)
-      }
+
+      private val buttonSlots = RowButtonSlots(count = 2)
       private val projectNamePanel = JPanel(VerticalLayout(4)).apply {
         isOpaque = false
 
@@ -558,14 +565,17 @@ class RecentProjectFilteringTree(
 
       init {
         border = JBUI.Borders.empty(RENDERER_BORDER_SIZE)
-        RowsGridBuilder(this)
+        val builder = RowsGridBuilder(this)
           .cell(projectIconLabel,
                 gaps = if (ExperimentalUI.isNewUI()) UnscaledGaps(6, 6, 0, 8) else UnscaledGaps(top = 8, right = 8),
                 verticalAlign = VerticalAlign.TOP)
           .cell(projectNamePanel, resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, gaps = UnscaledGaps(4, 4, 4, 4))
           .cell(projectProgressLabel, resizableColumn = true, horizontalAlign = HorizontalAlign.RIGHT, gaps = UnscaledGaps(left = 8, right = 8))
-          .cell(projectVcsActions, gaps = UnscaledGaps(right = ActionsButton.VCS_RIGHT_GAP))
-          .cell(projectActions, gaps = UnscaledGaps(right = ActionsButton.RIGHT_GAP))
+        for ((index, slot) in buttonSlots.components.withIndex()) {
+          val isLast = index == buttonSlots.components.lastIndex
+          builder.cell(slot,
+                       gaps = UnscaledGaps(right = if (isLast) ActionsButton.RIGHT_GAP else RecentProjectRowButton.VcsActions.rightGap))
+        }
       }
 
       fun customizeComponent(item: RecentProjectItem, rowHovered: Boolean): JComponent {
@@ -585,18 +595,7 @@ class RecentProjectFilteringTree(
                            isProjectValid = isProjectValid,
                            providerIcon = null)
 
-        if (isProjectValid) {
-          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
-                                               AllIcons.Ide.Notification.GearHover)
-        }
-        else {
-          buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Welcome.RecentProjects.Remove,
-                                               AllIcons.Welcome.RecentProjects.RemoveHover)
-        }
-
-        buttonViewModel.prepareVcsButton(projectVcsActions, rowHovered,
-                                         visible = isVcsActionsEnabled() && isProjectValid && item.branchName != null,
-                                         icon = AllIcons.Vcs.Branch)
+        buttonSlots.show(rowButtons(item, isProjectValid), buttonViewModel.hovered, rowHovered)
 
         return this
       }
@@ -615,10 +614,7 @@ class RecentProjectFilteringTree(
                            isProjectValid = isProjectValid,
                            providerIcon = item.providerIcon)
 
-        buttonViewModel.prepareActionsButton(projectActions, rowHovered,
-                                             AllIcons.Ide.Notification.Gear,
-                                             AllIcons.Ide.Notification.GearHover,
-                                             alwaysReserveSpace = true)
+        buttonSlots.show(rowButtons(item, isProjectValid), buttonViewModel.hovered, rowHovered, SlotVisibility.RESERVE_SPACE)
 
         if (item.statusText != null) {
           projectStatusLabel.isVisible = true
@@ -674,8 +670,7 @@ class RecentProjectFilteringTree(
 
         projectStatusLabel.isVisible = false
         projectProgressLabel.isVisible = false
-        projectActions.isVisible = false
-        projectVcsActions.isVisible = false
+        buttonSlots.hide()
 
         if (tooltip != toolTipText) {
           serviceIfCreated<IdeTooltipManager>()?.hideCurrent(mouseEvent = null)
@@ -703,12 +698,12 @@ class RecentProjectFilteringTree(
       }
     }
 
-    private inner class ProjectGroupComponent : JPanel(GridLayout()) {
-
+    private inner class ProjectGroupComponent : RowComponent() {
       private val projectGroupNameLabel = SimpleColoredComponent().apply {
         isOpaque = false
       }
-      private val projectGroupActions = ActionsButton().apply {
+      private val buttonSlots = RowButtonSlots(count = 1)
+      private val projectGroupActions = buttonSlots.components.single().apply {
         setState(AllIcons.Ide.Notification.Gear, false)
       }
 
@@ -726,8 +721,7 @@ class RecentProjectFilteringTree(
           append(item.displayName(), SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
         }
 
-        buttonViewModel.prepareActionsButton(projectGroupActions, rowHovered, AllIcons.Ide.Notification.Gear,
-                                             AllIcons.Ide.Notification.GearHover)
+        buttonSlots.show(rowButtons(item, isProjectValid = true), buttonViewModel.hovered, rowHovered)
 
         AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
         AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
@@ -736,7 +730,7 @@ class RecentProjectFilteringTree(
       }
     }
 
-    private inner class CloneableProjectComponent : JPanel(GridLayout()) {
+    private inner class CloneableProjectComponent : RowComponent() {
       private val recentProjectsManager: RecentProjectsManagerBase
         get() = RecentProjectsManagerBase.getInstanceEx()
 
@@ -757,7 +751,8 @@ class RecentProjectFilteringTree(
         verticalAlignment = SwingConstants.TOP
       }
       private var cancelButton: Boolean? = null
-      private val projectActionButton = ActionsButton()
+      private val buttonSlots = RowButtonSlots(count = 1)
+      private val projectActionButton = buttonSlots.components.single()
       private val projectProgressLabel = JLabel().apply {
         foreground = NamedColorUtil.getInactiveTextColor()
       }
@@ -801,15 +796,9 @@ class RecentProjectFilteringTree(
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(item.projectPath.pathString, false)
         when (cancelButton) {
-          true -> {
-            buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Actions.DeleteTag,
-                                                 AllIcons.Actions.DeleteTagHover)
-            projectActionButton.isVisible = true // always visible
-          }
-          false -> {
-            buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Welcome.RecentProjects.Remove,
-                                                 AllIcons.Welcome.RecentProjects.RemoveHover)
-          }
+          // A clone in progress keeps its cancel button reachable without hovering the row.
+          true -> buttonSlots.show(rowButtons(item, isProjectValid = true), buttonViewModel.hovered, rowHovered, SlotVisibility.ALWAYS)
+          false -> buttonSlots.show(rowButtons(item, isProjectValid = true), buttonViewModel.hovered, rowHovered)
           else -> {}
         }
         projectProgressBarPanel.apply {
@@ -880,29 +869,8 @@ class RecentProjectFilteringTree(
   }
 
   private class ProjectActionButtonViewModel(
-    var isButtonHovered: Boolean = false,
-    var isVcsButtonHovered: Boolean = false,
-  ) {
-
-    fun prepareActionsButton(button: ActionsButton, rowHovered: Boolean, icon: Icon, hoveredIcon: Icon, alwaysReserveSpace: Boolean = false) {
-      val buttonHovered = isButtonHovered && rowHovered
-      val buttonIcon = if (buttonHovered) hoveredIcon else icon
-      if (alwaysReserveSpace) {
-        button.isVisible = true
-        button.setState(if (rowHovered) buttonIcon else EmptyIcon.create(buttonIcon), buttonHovered)
-      }
-      else {
-        button.isVisible = rowHovered
-        button.setState(buttonIcon, buttonHovered)
-      }
-    }
-
-    fun prepareVcsButton(button: ActionsButton, rowHovered: Boolean, visible: Boolean, icon: Icon) {
-      val show = rowHovered && visible
-      button.isVisible = show
-      button.setState(icon, isVcsButtonHovered && show)
-    }
-  }
+    var hovered: RecentProjectRowButton? = null,
+  )
 
   private class FullRendererComponentTreeUI : DefaultTreeUI() {
     override fun getPathBounds(tree: JTree, path: TreePath?): Rectangle? {
@@ -1025,13 +993,120 @@ class RecentProjectFilteringTree(
   }
 }
 
-/** Registry key that enables the VCS actions icon and menu for a recent project on the welcome screen. Off by default. */
 private const val RECENT_PROJECT_VCS_ACTIONS_ENABLED = "ide.welcome.screen.recent.project.vcs.actions"
 
 private fun isVcsActionsEnabled(): Boolean = Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED)
 
-private class ActionsButton : SelectablePanel() {
+private sealed class RecentProjectRowButton(
+  val icon: Icon,
+  val hoveredIcon: Icon = icon,
+  /** Unscaled gap between this button and the button on its right. The rightmost button takes its gap from the row instead. */
+  val rightGap: Int = ActionsButton.RIGHT_GAP,
+) {
+  abstract val tooltip: @NlsContexts.Tooltip String
 
+  /** Opens the version control actions of a recent project that is on a branch. */
+  object VcsActions : RecentProjectRowButton(icon = AllIcons.Vcs.Branch, rightGap = ActionsButton.VCS_RIGHT_GAP) {
+    const val ACTION_GROUP_ID: String = "WelcomeScreenRecentProjectVcsActionGroup"
+
+    override val tooltip: @NlsContexts.Tooltip String
+      get() = IdeBundle.message("welcome.screen.recent.project.vcs.actions.tooltip")
+  }
+
+  /** Opens the row's action popup. */
+  object MoreActions : RecentProjectRowButton(AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover) {
+    const val ACTION_GROUP_ID: String = "WelcomeScreenRecentProjectActionGroup"
+
+    override val tooltip: @NlsContexts.Tooltip String
+      get() = IdeBundle.message("welcome.screen.more.actions.link.text")
+  }
+
+  /** Drops the row from the list: a recent project that is no longer on disk, or a clone that failed or was canceled. */
+  object Remove : RecentProjectRowButton(AllIcons.Welcome.RecentProjects.Remove, AllIcons.Welcome.RecentProjects.RemoveHover) {
+    override val tooltip: @NlsContexts.Tooltip String
+      get() = ActionsBundle.message("action.WelcomeScreen.RemoveSelected.text")
+  }
+
+  /** Cancels a clone that is still running. The clone task supplies the wording. */
+  data class CancelClone(override val tooltip: @NlsContexts.Tooltip String) :
+    RecentProjectRowButton(AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover)
+}
+
+private fun rowButtons(item: RecentProjectTreeItem, isProjectValid: Boolean): List<RecentProjectRowButton> =
+  when (item) {
+    is RecentProjectItem -> listOfNotNull(
+      RecentProjectRowButton.VcsActions.takeIf { isVcsActionsEnabled() && isProjectValid && item.branchName != null },
+      if (isProjectValid) RecentProjectRowButton.MoreActions else RecentProjectRowButton.Remove,
+    )
+    is CloneableProjectItem -> when (item.cloneableProject.cloneStatus) {
+      CloneStatus.PROGRESS -> listOf(RecentProjectRowButton.CancelClone(item.cloneableProject.cloneTaskInfo.cancelTooltipText))
+      CloneStatus.SUCCESS -> listOf(RecentProjectRowButton.MoreActions)
+      CloneStatus.FAILURE, CloneStatus.CANCEL -> listOf(RecentProjectRowButton.Remove)
+    }
+    else -> listOf(RecentProjectRowButton.MoreActions)
+  }
+
+/** When a row shows its buttons. */
+private enum class SlotVisibility {
+  /** Only while the cursor is on the row, which is how a row keeps its buttons out of the way until wanted. */
+  ON_HOVER,
+
+  /** Always, hover or not: a clone in progress keeps its cancel button reachable. */
+  ALWAYS,
+
+  /** Always takes the space, but only draws the button on hover, so the row's text does not reflow as the cursor passes. */
+  RESERVE_SPACE,
+}
+
+/**
+ * The button slots of a row, left to right.
+ *
+ * A cell renderer is a flyweight - one component tree reused for every row - so the components are created once and added to the grid
+ * once, and a row only says which buttons go in them. A row's buttons are right aligned in the slots, because the rightmost slot is the
+ * one every row uses.
+ */
+private class RowButtonSlots(count: Int) {
+  val components: List<ActionsButton> = List(count) { ActionsButton() }
+
+  /** Shows [buttons] in the slots, and hides the slots this row does not use. */
+  fun show(
+    buttons: List<RecentProjectRowButton>,
+    hovered: RecentProjectRowButton?,
+    rowHovered: Boolean,
+    visibility: SlotVisibility = SlotVisibility.ON_HOVER,
+  ) {
+    val firstUsedSlot = components.size - buttons.size
+    for ((index, slot) in components.withIndex()) {
+      val button = buttons.getOrNull(index - firstUsedSlot)
+      if (button == null) {
+        slot.isVisible = false
+        continue
+      }
+      val buttonHovered = hovered == button && rowHovered
+      val icon = if (buttonHovered) button.hoveredIcon else button.icon
+      when (visibility) {
+        SlotVisibility.ON_HOVER -> {
+          slot.isVisible = rowHovered
+          slot.setState(icon, buttonHovered)
+        }
+        SlotVisibility.ALWAYS -> {
+          slot.isVisible = true
+          slot.setState(icon, buttonHovered)
+        }
+        SlotVisibility.RESERVE_SPACE -> {
+          slot.isVisible = true
+          slot.setState(if (rowHovered) icon else EmptyIcon.create(icon), buttonHovered)
+        }
+      }
+    }
+  }
+
+  fun hide() {
+    components.forEach { it.isVisible = false }
+  }
+}
+
+private class ActionsButton : SelectablePanel() {
   companion object {
     const val SIZE = 22
     const val RIGHT_GAP = 20
@@ -1059,8 +1134,7 @@ private class ActionsButton : SelectablePanel() {
 }
 
 private val MouseEvent.isMultipleSelectionInProgress: Boolean
-  get() =
-    UIUtil.isControlKeyDown(this) || isShiftDown
+  get() = UIUtil.isControlKeyDown(this) || isShiftDown
 
 internal class ProviderProjectAdditionalActionsGroup : ActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
