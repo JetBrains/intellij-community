@@ -395,9 +395,7 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
 ) : IjentFileSystemWindowsApi {
   // TODO Make user suspendable again?
   override val user: EelUserWindowsInfo by lazy {
-    // A plain runBlocking would carry no IjentCalledContextElement; capture the thread state (EDT, locks)
-    // afresh so that awaitDelegate can detect a deployment awaited from a blocking call (IJPL-245001).
-    runBlocking(IjentCallerContextElement(IjentCallerContext.computeCallerContext())) {
+    fsBlocking {
       holder.withDelegateRetrying { user }
     }
   }
