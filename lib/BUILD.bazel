@@ -4276,6 +4276,13 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "java-debugger-impl-tests-sa-jdwp",
+    jar = "@org_jetbrains_intellij_deps-sa-jdwp-1_25_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-sa-jdwp-1_25-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
 copy_file(
     name = "org.jetbrains.intellij.deps/jb-jdi-2.46.jar_copy",
     src = "@org_jetbrains_intellij_deps-jb-jdi-2_46_http//file",
