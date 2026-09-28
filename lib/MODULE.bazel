@@ -11516,20 +11516,6 @@ http_file(
 )
 
 http_file(
-    name = "org_swinglabs-swingx-core-1_6_2-2_http",
-    downloaded_file_path = "swingx-core-1.6.2-2.jar",
-    sha256 = "0df80935d9bc3b3841bc621c6fef6615c93aaf80393ccaa196db11bf97784f18",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/swinglabs/swingx-core/1.6.2-2/swingx-core-1.6.2-2.jar",
-)
-
-http_file(
-    name = "org_swinglabs-swingx-core-1_6_2-2-sources_http",
-    downloaded_file_path = "swingx-core-1.6.2-2-sources.jar",
-    sha256 = "6c42948e5a7269e6811ea073c7520079e4874fab686fe6710a4875ef3f2158e6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/swinglabs/swingx-core/1.6.2-2/swingx-core-1.6.2-2-sources.jar",
-)
-
-http_file(
     name = "uk_org_webcompere-system-stubs-jupiter-2_1_8_http",
     downloaded_file_path = "system-stubs-jupiter-2.1.8.jar",
     sha256 = "9a24867a51f5d22db67d9052a06bc5dd2e9a3e273bc2ee9814620f2d9f25d0a8",

@@ -1334,10 +1334,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   LibraryLicense("StreamEx", libraryName = "StreamEx", url = "https://github.com/amaembo/streamex")
     .apache("https://github.com/amaembo/streamex/blob/master/LICENSE"),
 
-  LibraryLicense("swingx", libraryName = "swingx", url = "https://central.sonatype.com/artifact/org.swinglabs/swingx-core/1.6.2-2")
-    .lgpl21("https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html")
-    .suppliedByOrganizations("Sun Microsystems, Inc."),
-
   LibraryLicense("System Stubs Jupiter", libraryName = "uk.webcompere.system.stubs.jupiter", url = "https://github.com/webcompere/system-stubs")
     .mit("https://github.com/webcompere/system-stubs/blob/main/LICENSE")
     .suppliedByPersons("Ashley Frieze"),

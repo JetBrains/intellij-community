@@ -168,9 +168,6 @@ private fun createPlatformLayout(
   // the library is put to a separate JAR due to IJPL-248572; todo: include it only for Linux: IJPL-249098
   layout.withProjectLibraries(sequenceOf("jetbrains.intellij.deps.java.atk.wrapper.linux"))
 
-  // the library is put to a separate JAR due to IJPL-248591; it would be better to get rid of it completely, see IJPL-749
-  layout.withModuleLibrary(libraryName = "swingx", moduleName = "intellij.libraries.swingx")
-
   addModule(PLATFORM_LOADER_JAR, productLayout = productLayout, layout = layout)
   addModule(UTIL_JAR, productLayout = productLayout, layout = layout)
   addModule("externalProcess-rt.jar", productLayout = productLayout, layout = layout)

@@ -14135,21 +14135,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.swinglabs/swingx-core-1.6.2-2.jar_copy",
-    src = "@org_swinglabs-swingx-core-1_6_2-2_http//file",
-    out = "org.swinglabs/swingx-core-1.6.2-2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "libraries-swingx-swingx",
-    jar = "@org_swinglabs-swingx-core-1_6_2-2_http//file",
-    source_jar = "@org_swinglabs-swingx-core-1_6_2-2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "uk.org.webcompere/system-stubs-jupiter-2.1.8.jar_copy",
     src = "@uk_org_webcompere-system-stubs-jupiter-2_1_8_http//file",
     out = "uk.org.webcompere/system-stubs-jupiter-2.1.8.jar",

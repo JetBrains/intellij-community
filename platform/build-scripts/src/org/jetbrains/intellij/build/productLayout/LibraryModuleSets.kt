@@ -269,7 +269,6 @@ object LibraryModuleSets {
     module("intellij.libraries.jsch.agent.proxy")
     embeddedModule("intellij.libraries.miglayout.swing")
     module("intellij.libraries.sshj")
-    embeddedModule("intellij.libraries.swingx")
     embeddedModule("intellij.libraries.winp")
 
     embeddedModule("intellij.libraries.rd.core")

@@ -675,7 +675,6 @@ libraries/sqlite-native
 libraries/sshd-osgi
 libraries/sshj
 libraries/stream
-libraries/swingx
 libraries/system-stubs-jupiter
 libraries/teamcity/service-messages
 libraries/test-discovery

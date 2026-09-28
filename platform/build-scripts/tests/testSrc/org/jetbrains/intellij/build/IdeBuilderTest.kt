@@ -105,15 +105,15 @@ class IdeBuilderTest {
   fun theReferenceSelectorOwnsOnlyTheJarsItNames() {
     val packed = setOf("intellij.libraries.asm.jar", "intellij.charts.jar")
     val reference = PlatformJarSelector(jars = packed, mode = PlatformJarSelector.Mode.ONLY)
-    // `swingx.jar` is named by no module: a project library, or one packing kept in its own jar.
-    for (jar in listOf("app-backend.jar", "swingx.jar", "intellij.libraries.asm.jar", "intellij.charts.jar")) {
+    // `product-backend.jar` is named by no module: it holds project libraries only.
+    for (jar in listOf("app-backend.jar", "product-backend.jar", "intellij.libraries.asm.jar", "intellij.charts.jar")) {
       assertThat(PlatformJarSelector.ALL.accepts(jar)).describedAs(jar).isTrue()
     }
 
     assertThat(reference.accepts("intellij.charts.jar")).isTrue()
     assertThat(reference.accepts("intellij.libraries.asm.jar")).isTrue()
     assertThat(reference.accepts("app-backend.jar")).isFalse()
-    assertThat(reference.accepts("swingx.jar")).isFalse()
+    assertThat(reference.accepts("product-backend.jar")).isFalse()
   }
 
   @Test

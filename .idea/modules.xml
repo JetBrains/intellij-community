@@ -1334,7 +1334,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/sshd-osgi/intellij.libraries.sshd.osgi.iml" filepath="$PROJECT_DIR$/libraries/sshd-osgi/intellij.libraries.sshd.osgi.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/sshj/intellij.libraries.sshj.iml" filepath="$PROJECT_DIR$/libraries/sshj/intellij.libraries.sshj.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/stream/intellij.libraries.stream.iml" filepath="$PROJECT_DIR$/libraries/stream/intellij.libraries.stream.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/swingx/intellij.libraries.swingx.iml" filepath="$PROJECT_DIR$/libraries/swingx/intellij.libraries.swingx.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/system-stubs-jupiter/intellij.libraries.system.stubs.jupiter.iml" filepath="$PROJECT_DIR$/libraries/system-stubs-jupiter/intellij.libraries.system.stubs.jupiter.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/teamcity/service-messages/intellij.libraries.teamcity.service.messages.iml" filepath="$PROJECT_DIR$/libraries/teamcity/service-messages/intellij.libraries.teamcity.service.messages.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/test-discovery/intellij.libraries.test.discovery.iml" filepath="$PROJECT_DIR$/libraries/test-discovery/intellij.libraries.test.discovery.iml" />

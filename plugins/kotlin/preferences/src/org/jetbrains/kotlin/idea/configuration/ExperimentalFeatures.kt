@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
-import org.jdesktop.swingx.VerticalLayout
+import com.intellij.ui.components.panels.VerticalLayout
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 

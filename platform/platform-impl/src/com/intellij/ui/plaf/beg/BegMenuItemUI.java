@@ -14,12 +14,12 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenuDragSupportKt;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import org.jdesktop.swingx.util.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -637,7 +637,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   private static boolean triggerMenuActionsOnRmbRelease() {
-    return !OS.isWindows() && AdvancedSettings.getBoolean("ide.trigger.menu.actions.on.rmb.release");
+    return !SystemInfo.isWindows && AdvancedSettings.getBoolean("ide.trigger.menu.actions.on.rmb.release");
   }
 
   private boolean handleReleaseOnMenuItem(@NotNull MouseEvent e, @NotNull MenuSelectionManager manager) {

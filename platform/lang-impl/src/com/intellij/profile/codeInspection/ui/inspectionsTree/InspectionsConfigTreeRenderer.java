@@ -17,12 +17,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
-import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTree;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Internal
-public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer implements UiInspectorTreeRendererContextProvider {
+public abstract class InspectionsConfigTreeRenderer implements TreeCellRenderer, UiInspectorTreeRendererContextProvider {
   protected abstract String getFilter();
 
   @Override
