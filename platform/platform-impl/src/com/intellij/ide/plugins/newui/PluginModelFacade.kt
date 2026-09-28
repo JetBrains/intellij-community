@@ -228,7 +228,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isLoaded(model.pluginId)
   }
 
-  suspend fun getPendingPluginUpdateSource(pluginId: PluginId): PluginUpdateSource? {
+  open suspend fun getPendingPluginUpdateSource(pluginId: PluginId): PluginUpdateSource? {
     return UiPluginManager.getInstance().getPendingPluginUpdateSource(pluginModel.sessionId, pluginId)
   }
 
