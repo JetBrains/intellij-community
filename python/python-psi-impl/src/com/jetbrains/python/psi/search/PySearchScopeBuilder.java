@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.search;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -13,6 +14,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.sdk.ModuleOrProject;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,15 +52,14 @@ public final class PySearchScopeBuilder {
   private boolean myExcludeStdlibTests = false;
   private boolean myExcludeThirdPartyBundledDeps = false;
   private boolean myExcludeThirdPartyTests = false;
-  private final @NotNull Project myProject;
-  private final @Nullable Module myModule;
-  private final @Nullable Sdk mySdk;
+  private final @NotNull ModuleOrProject myModuleOrProject;
+  private final @NotNull List<Sdk> myEffectiveSdks;
 
   /**
    * Creates a new builder for the given Python SDK.
    */
-  public static @NotNull PySearchScopeBuilder forPythonSdkOf(@NotNull Project project) {
-    return new PySearchScopeBuilder(project, null);
+  public static @NotNull PySearchScopeBuilder forProject(@NotNull Project project) {
+    return new PySearchScopeBuilder(new ModuleOrProject.ProjectOnly(project));
   }
 
   /**
@@ -66,16 +67,18 @@ public final class PySearchScopeBuilder {
    * <p>
    * The element's own module answers first, then {@link MainPythonSdkKt#mainPythonSdk}.
    */
-  public static @NotNull PySearchScopeBuilder forPythonSdkOf(@NotNull PsiElement element) {
-    return new PySearchScopeBuilder(element.getProject(), ModuleUtilCore.findModuleForPsiElement(element));
+  public static @NotNull PySearchScopeBuilder forModuleOf(@NotNull PsiElement element) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    return new PySearchScopeBuilder(
+      module != null ?
+      new ModuleOrProject.ModuleAndProject(module) :
+      new ModuleOrProject.ProjectOnly(element.getProject())
+    );
   }
 
-  private PySearchScopeBuilder(@NotNull Project project, @Nullable Module module) {
-    assert module == null || project.equals(module.getProject());
-
-    myProject = project;
-    myModule = module;
-    mySdk = findModuleOrProjectPythonSdk(project, module);
+  private PySearchScopeBuilder(@NotNull ModuleOrProject moduleOrProject) {
+    myModuleOrProject = moduleOrProject;
+    myEffectiveSdks = findEffectivePythonSdks(moduleOrProject);
   }
 
   /**
@@ -106,18 +109,19 @@ public final class PySearchScopeBuilder {
    * Builds a {@link GlobalSearchScope} instance for the specified SDK according to the configuration.
    */
   public @NotNull GlobalSearchScope build() {
+    Project project = myModuleOrProject.getProject();
     GlobalSearchScope scope;
-    if (myModule != null) {
-      scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
+    if (myModuleOrProject instanceof ModuleOrProject.ModuleAndProject moduleAndProject) {
+      scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleAndProject.getModule());
     }
     else {
-      scope = GlobalSearchScope.allScope(myProject);
+      scope = GlobalSearchScope.allScope(project);
     }
     if (myExcludeStdlibTests) {
       scope = scope.intersectWith(GlobalSearchScope.notScope(buildStdlibTestsScope()));
     }
     if (myExcludeThirdPartyTests || myExcludeThirdPartyBundledDeps) {
-      scope = scope.intersectWith(GlobalSearchScope.notScope(new QualifiedNameFinder.QualifiedNameBasedScope(myProject) {
+      scope = scope.intersectWith(GlobalSearchScope.notScope(new QualifiedNameFinder.QualifiedNameBasedScope(project) {
         @Override
         protected boolean containsQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull QualifiedName qName) {
           if (THIRD_PARTY_PACKAGE_ROOT_NAMES.contains(root.getName())) {
@@ -137,26 +141,36 @@ public final class PySearchScopeBuilder {
   }
 
   private @NotNull GlobalSearchScope buildStdlibTestsScope() {
-    if (mySdk != null) {
-      VirtualFile libDir = PySearchUtilBase.findLibDir(mySdk);
-      if (libDir != null) {
-        return StreamEx.of(STDLIB_TEST_DIRS)
-          .map(relPath -> libDir.findFileByRelativePath(relPath))
-          .nonNull()
-          .map(dir -> GlobalSearchScopesCore.directoryScope(myProject, dir, true))
-          .reduce(GlobalSearchScope.EMPTY_SCOPE, GlobalSearchScope::union);
-      }
-    }
-    return GlobalSearchScope.EMPTY_SCOPE;
+    return StreamEx.of(myEffectiveSdks)
+      .map(sdk -> PySearchUtilBase.findLibDir(sdk))
+      .nonNull()
+      .flatMap(libDir -> StreamEx.of(STDLIB_TEST_DIRS)
+        .map(relPath -> libDir.findFileByRelativePath(relPath))
+        .nonNull()
+        .map(dir -> GlobalSearchScopesCore.directoryScope(myModuleOrProject.getProject(), dir, true))
+      )
+      .reduce(GlobalSearchScope.EMPTY_SCOPE, GlobalSearchScope::union);
   }
 
-  private static @Nullable Sdk findModuleOrProjectPythonSdk(@NotNull Project project, @Nullable Module module) {
-    if (module != null) {
-      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+  private static @NotNull List<Sdk> findEffectivePythonSdks(@NotNull ModuleOrProject moduleOrProject) {
+    if (moduleOrProject instanceof ModuleOrProject.ModuleAndProject moduleAndProject) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(moduleAndProject.getModule());
       if (sdk != null) {
-        return sdk;
+        return List.of(sdk);
       }
     }
-    return MainPythonSdkKt.mainPythonSdk(project);
+    else {
+      // If there is no "active" Module for the scope, exclude stdlib tests for all configured project SDKs
+      ModuleManager moduleManager = ModuleManager.Companion.getInstanceIfDefined(moduleOrProject.getProject());
+      if (moduleManager != null) {
+        return StreamEx.of(moduleManager.getModules())
+          .map(m -> PythonSdkUtil.findPythonSdk(m))
+          .nonNull()
+          .distinct()
+          .toList();
+      }
+    }
+    Sdk mainPythonSdk = MainPythonSdkKt.mainPythonSdk(moduleOrProject.getProject());
+    return mainPythonSdk != null ? List.of(mainPythonSdk) : List.of();
   }
 }

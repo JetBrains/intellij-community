@@ -30,7 +30,7 @@ public class PySearchUtilBase {
    * @see PySearchScopeBuilder
    */
   public static @NotNull GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
-    return PySearchScopeBuilder.forPythonSdkOf(anchor)
+    return PySearchScopeBuilder.forModuleOf(anchor)
       .excludeStandardLibraryTests()
       .excludeThirdPartyPackageTests()
       .excludeThirdPartyPackageBundledDependencies()
@@ -52,7 +52,7 @@ public class PySearchUtilBase {
   public static @NotNull GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
     Project project = Objects.requireNonNull(scope.getProject());
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
-    return scope.intersectWith(PySearchScopeBuilder.forPythonSdkOf(project)
+    return scope.intersectWith(PySearchScopeBuilder.forProject(project)
                                  .excludeStandardLibraryTests()
                                  .build());
   }
