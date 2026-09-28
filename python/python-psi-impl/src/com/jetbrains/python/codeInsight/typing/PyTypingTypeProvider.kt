@@ -2245,7 +2245,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val name: String = nameArgument.stringValue
       val defaultExpression = element.getKeywordArgument("default")
       val boundExpression = element.getKeywordArgument("bound")
-      val bound = if (boundExpression == null) PyAnyType.unknown else Ref.deref(getType(boundExpression, context))
+      val bound = boundExpression?.let { Ref.deref(getType(it, context)) } ?: PyAnyType.unknown
       val defaultType = if (defaultExpression != null) getType(defaultExpression, context) else null
       val variance: PyVariance = getTypeVarVarianceFromDeclaration(element)
       when (typeParameterKind) {
