@@ -45,7 +45,8 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
-internal fun isMacLibrary(name: String): Boolean =
+@org.jetbrains.annotations.ApiStatus.Internal
+fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so") || name.endsWith(".tbd")
 
 /** Signs the binaries under [root] and repacks the archives under it whose binaries are not signed. */
@@ -205,7 +206,8 @@ internal fun signMacBinaries(
   }
 }
 
-private fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
+@org.jetbrains.annotations.ApiStatus.Internal
+fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
 
 internal fun isSigned(path: Path): Boolean {
   return Files.newByteChannel(path).use {
