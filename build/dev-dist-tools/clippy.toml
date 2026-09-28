@@ -1,5 +1,5 @@
 # The clippy configuration of both dev-dist workspaces. `build/dev-dist-tools/.cargo/config.toml` points `cargo clippy`
-# of the ultimate workspace here, and both `.bazelrc` files point the Bazel clippy aspect here.
+# of the ultimate workspace here, and `community/.bazelrc` points the Bazel clippy aspect here.
 
 disallowed-methods = [
   # On Windows the result carries the `\\?\` prefix, and the tools refuse such a path. `fscopy::resolve_links` removes it.

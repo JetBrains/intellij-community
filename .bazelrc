@@ -8,7 +8,8 @@ import %workspace%/common.bazelrc
 # The community Go targets do not use Cgo.
 common --@rules_go//go/config:pure
 
-# The clippy configuration of the dev-dist tools, the only crates with a clippy test.
+# The clippy configuration of the dev-dist tools. Their crates run their clippy tests only from this root. The
+# ultimate root does not set it, because it applies to every clippy test, and vm-lane needs the calls it bans.
 common --@rules_rust//rust/settings:clippy.toml=//build/dev-dist-tools:clippy.toml
 
 try-import %workspace%/../build/remote_cache.bazelrc
