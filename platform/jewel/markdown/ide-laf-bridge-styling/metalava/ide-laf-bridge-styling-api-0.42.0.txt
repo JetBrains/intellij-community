@@ -12,6 +12,11 @@ package org.jetbrains.jewel.intui.markdown.bridge {
     method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void ProvideMarkdownStyling(optional org.jetbrains.jewel.markdown.rendering.MarkdownStyling markdownStyling, optional org.jetbrains.jewel.markdown.MarkdownMode markdownMode, optional org.jetbrains.jewel.markdown.processing.MarkdownProcessor markdownProcessor, optional org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer markdownBlockRenderer, optional org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter codeHighlighter, kotlin.jvm.functions.Function0<kotlin.Unit> content);
   }
 
+  public final class IdeCoilImageLoaderKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension withIdeDefaultLoader(org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension.Companion);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension withIdeDefaultLoader(org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension.Companion, coil3.PlatformContext context);
+  }
+
 }
 
 package org.jetbrains.jewel.intui.markdown.bridge.styling {

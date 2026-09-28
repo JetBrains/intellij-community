@@ -32,9 +32,12 @@ repositories {
 dependencies {
     api(projects.markdown.core)
     api(projects.ideLafBridge)
+    compileOnly(libs.coil.compose)
+    compileOnly(libs.coil.network.ktor3)
     compileOnly(projects.markdown.extensions.frontMatter)
     compileOnly(projects.markdown.extensions.gfmAlerts)
     compileOnly(projects.markdown.extensions.gfmTables)
+    compileOnly(projects.markdown.extensions.images)
 
     intellijPlatform { intellijIdea(libs.versions.idea) }
 

@@ -85,6 +85,7 @@ jvm_library(
         "//plugins/gradle",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
+        "//libraries/coil",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
     ],
 )
@@ -146,6 +147,7 @@ jvm_library(
         "//plugins/gradle:gradle_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/coil:coil_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.compose` end

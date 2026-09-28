@@ -45,7 +45,11 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.frontMatter" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.images" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.libraries.coil" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />

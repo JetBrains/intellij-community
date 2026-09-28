@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import coil3.compose.LocalPlatformContext
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
@@ -24,7 +25,13 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
+import org.jetbrains.jewel.intui.markdown.bridge.create
+import org.jetbrains.jewel.intui.markdown.bridge.styling.create
+import org.jetbrains.jewel.intui.markdown.bridge.withIdeDefaultLoader
 import org.jetbrains.jewel.markdown.Markdown
+import org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
+import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 
@@ -40,10 +47,27 @@ internal fun MarkdownShowcaseTab(project: Project) {
         }
 
         val contentColor = if (enabled) JewelTheme.globalColors.text.normal else JewelTheme.globalColors.text.disabled
+        val markdownStyling = remember(JewelTheme.instanceUuid) { MarkdownStyling.create() }
+        val coil3ImageRendererExtension = Coil3ImageRendererExtension.withIdeDefaultLoader()
+
         CompositionLocalProvider(LocalContentColor provides contentColor) {
-            ProvideMarkdownStyling(project) {
+            ProvideMarkdownStyling(
+              project = project,
+              markdownStyling = markdownStyling,
+              markdownBlockRenderer = remember(markdownStyling, coil3ImageRendererExtension) {
+                MarkdownBlockRenderer.create(
+                  styling = markdownStyling,
+                  rendererExtensions = listOf(coil3ImageRendererExtension),
+                )
+              },
+            ) {
                 Markdown(
                     """
+                |### A Really Cool Image That's Going to Blow Your Mind!
+                |
+                |![rubber duckies!](https://pixabay.com/photos/duck-meet-ducks-rubber-ducks-4127713/)
+                |
+                |
                 |### Code Blocks With Different Programming Languages
                 |```kt
                 |class CoolClassKt {
