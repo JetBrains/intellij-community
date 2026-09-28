@@ -288,7 +288,8 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `search renders placeholder and ordered focusable controls`
   )
 
-- The first result for a query revision must set the plugin order in each section.
+- Earlier rows may remain visible while filtering runs. They must not set the new query's order or automatic selection.
+- The first projected result for a query revision must set the plugin order in each section.
 - Relevance must initially place local plugins with errors before healthy plugins.
 - Without text terms, relevance must place enabled plugins before disabled plugins within each error group.
 - With text terms, relevance must use the existing match scores before enabled state within each error group.
@@ -299,6 +300,8 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
 - The first collapsed and expanded Bundled results may set separate orders to keep categories together.
 - An explicit sort must override both local priorities and control Marketplace ordering. Custom repositories must retain their source order.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
+    `new query ignores previous repository order until projection finishes`;
+    `repeating a repository query restores its relevance order`;
     `local relevance prioritizes errors and enabled plugins while explicit sorts override priorities`;
     `text search ranks match scores before enabled state`;
     `installed relevance uses legacy name and description match scores`;
@@ -345,6 +348,7 @@ Untested: Community tests verify the Enter handler, but they do not verify the S
 ## Search Reporting
 
 - Each nonempty query must emit one unified search event after all eligible sources settle.
+- A pending query projection must not count as settled.
 - The event must report the query shape, filter kinds, source kinds, effective sort, and each section result count.
 - The event must not report filter values or repository identities.
 - A session start event must identify the unified page.

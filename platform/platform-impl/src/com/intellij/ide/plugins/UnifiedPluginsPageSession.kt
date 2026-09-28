@@ -733,7 +733,13 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     }
     val data = state.listModelData
     listModel.replaceAll(data.installedModels, data.errors, data.installationStates, data.updateSources)
-    controller.replaceSourceState(state.query, state.sections, state.mayEstablishSelection, state.searchControls)
+    controller.replaceSourceState(
+      query = state.query,
+      updatedSections = state.sections,
+      mayEstablishSelection = state.mayEstablishSelection,
+      updatedSearchControls = state.searchControls,
+      projectedQueryRevision = state.projectedQueryRevision,
+    )
     renderControllerState()
     reportSourceFailures(state)
     reportPageReady(state)
@@ -900,9 +906,6 @@ private fun isCalledFromSpotlightPainter(): Boolean {
 }
 
 private val SEARCH_CALLER_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
-
-private val UnifiedPluginsPageSourceState.sourcesSettled: Boolean
-  get() = internalDescriptorSettled && repositoryPlugins != null && sections.none { it.status is PluginSectionStatus.Loading }
 
 private val UnifiedPluginsPageSourceState.sourceFailures: Set<UnifiedPluginSourceFailure>
   get() = sections.asSequence()

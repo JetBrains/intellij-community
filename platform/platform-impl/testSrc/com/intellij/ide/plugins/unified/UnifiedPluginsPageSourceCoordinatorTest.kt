@@ -80,6 +80,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
 
     coordinator.setQuery(" beta ")
     assertThat(coordinator.state.value.query).isEqualTo(PluginsQueryState(" beta ", "beta", 1))
+    assertThat(coordinator.state.value.projectedQueryRevision).isEqualTo(0)
     assertThat(coordinator.state.value.sections.map { it.id }).contains(PluginSectionId.Marketplace)
       .doesNotContain(PluginSectionId.Suggested)
     assertThat(installedIds(coordinator.state.value)).containsExactly("alpha.plugin")
@@ -89,8 +90,112 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
     runCurrent()
 
     assertThat(coordinator.state.value.query).isEqualTo(PluginsQueryState("Beta", "Beta", 3))
+    assertThat(coordinator.state.value.projectedQueryRevision).isEqualTo(3)
     assertThat(installedIds(coordinator.state.value)).containsExactly("beta.plugin")
     assertThat(provider.loadCount).isEqualTo(1)
+    coordinator.close()
+  }
+
+  @Test
+  fun `new query ignores previous repository order until projection finishes`() {
+    val architecture = item(plugin("php.architecture", "PHP Architecture"))
+    val php = item(plugin("php", "PHP"))
+    val repositoryId = PluginSectionId.CustomRepository("repository")
+    val repositoryState = UnifiedPluginRepositorySourceState(
+      sections = listOf(PluginSectionState(repositoryId, items = listOf(architecture, php))),
+      listModelData = PluginListModelData.EMPTY,
+      repositoryPlugins = emptyList(),
+      suggestionsRefreshRevision = 0,
+    )
+    val localState = localState()
+    val initial = composeUnifiedPluginsPageSourceState(PluginsQueryState(), localState, repositoryState = repositoryState)
+    val controller = UnifiedPluginsPageController(initial.sections, initial.query)
+    val query = PluginsQueryState("/repository:repository PHP", "/repository:repository PHP", revision = 1)
+
+    val pending = transitionUnifiedPluginsPageQuery(initial, query, mayEstablishSelection = true)
+    assertThat(pending.projectedQueryRevision).isEqualTo(initial.query.revision)
+    assertThat(pending.sourcesSettled).isFalse()
+    controller.replaceSourceState(
+      pending.query,
+      pending.sections,
+      pending.mayEstablishSelection,
+      projectedQueryRevision = pending.projectedQueryRevision,
+    )
+    assertThat(controller.state.value.selectedOccurrence).isNull()
+
+    val projected = composeUnifiedPluginsPageSourceState(query, localState, repositoryState = repositoryState)
+    assertThat(projected.projectedQueryRevision).isEqualTo(query.revision)
+    assertThat(projected.sourcesSettled).isTrue()
+    assertThat(repositorySections(projected).single().items.map(PluginItemState::pluginId))
+      .containsExactly(php.pluginId, architecture.pluginId)
+    controller.replaceSourceState(
+      projected.query,
+      projected.sections,
+      projected.mayEstablishSelection,
+      projectedQueryRevision = projected.projectedQueryRevision,
+    )
+    assertThat(controller.state.value.sections.single { it.id == repositoryId }.items.map(PluginItemState::pluginId))
+      .containsExactly(php.pluginId, architecture.pluginId)
+    assertThat(controller.state.value.selectedOccurrence).isEqualTo(PluginOccurrenceId(repositoryId, php.pluginId))
+
+    controller.replaceSourceState(
+      query,
+      listOf(PluginSectionState(repositoryId, items = listOf(architecture, php))),
+      mayEstablishSelection = false,
+    )
+    assertThat(controller.state.value.sections.single { it.id == repositoryId }.items.map(PluginItemState::pluginId))
+      .containsExactly(php.pluginId, architecture.pluginId)
+  }
+
+  @Test
+  fun `repeating a repository query restores its relevance order`() = runTest {
+    val repository = CustomPluginRepository("repository", PluginSource.LOCAL)
+    val repositoryProvider = FixedRepositoryDataProvider(
+      repositories = listOf(repository),
+      plugins = mapOf(repository.id to listOf(plugin("phing", "Phing"), plugin("php", "PHP"))),
+    )
+    val coordinator = coordinator(
+      provider = FakeLocalDataProvider(UnifiedPluginInventory(emptyList(), emptyList())),
+      repositoryDataProvider = repositoryProvider,
+    )
+    coordinator.start()
+    runCurrent()
+
+    val repositoryId = PluginSectionId.CustomRepository(repository.id)
+    val initial = coordinator.state.value
+    val controller = UnifiedPluginsPageController(initial.sections, initial.query)
+    fun publish(state: UnifiedPluginsPageSourceState) {
+      controller.replaceSourceState(
+        query = state.query,
+        updatedSections = state.sections,
+        mayEstablishSelection = state.mayEstablishSelection,
+        projectedQueryRevision = state.projectedQueryRevision,
+      )
+    }
+    fun repositoryIds(state: UnifiedPluginsPageSourceState): List<String> =
+      state.sections.single { it.id == repositoryId }.items.map { it.pluginId.idString }
+
+    fun search(query: String, pendingIds: List<String>, expectedIds: List<String>) {
+      coordinator.setQuery(query)
+      val pending = coordinator.state.value
+      assertThat(pending.projectedQueryRevision).isLessThan(pending.query.revision)
+      assertThat(repositoryIds(pending)).containsExactlyElementsOf(pendingIds)
+      publish(pending)
+
+      runCurrent()
+      val projected = coordinator.state.value
+      assertThat(projected.projectedQueryRevision).isEqualTo(projected.query.revision)
+      publish(projected)
+      assertThat(controller.state.value.sections.single { it.id == repositoryId }.items.map { it.pluginId.idString })
+        .containsExactlyElementsOf(expectedIds)
+    }
+
+    search("php", listOf("phing", "php"), listOf("php"))
+    search("ph", listOf("php"), listOf("php", "phing"))
+    search("phi", listOf("php", "phing"), listOf("phing"))
+    search("ph", listOf("phing"), listOf("php", "phing"))
+
+    assertThat(repositoryProvider.repositoryLoadCount).isEqualTo(1)
     coordinator.close()
   }
 

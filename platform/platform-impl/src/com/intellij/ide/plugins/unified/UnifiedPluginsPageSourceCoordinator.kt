@@ -43,7 +43,15 @@ internal data class UnifiedPluginsPageSourceState(
   val mayEstablishSelection: Boolean,
   val searchControls: UnifiedPluginsSearchControlsState = UnifiedPluginsSearchControlsState(),
   val internalDescriptorSettled: Boolean = true,
-)
+  /** Identifies the query used by the last completed page projection. */
+  val projectedQueryRevision: Long = query.revision,
+) {
+  val sourcesSettled: Boolean
+    get() = projectedQueryRevision == query.revision &&
+            internalDescriptorSettled &&
+            repositoryPlugins != null &&
+            sections.none { it.status is PluginSectionStatus.Loading }
+}
 
 internal data class UnifiedPluginSourceProjection(
   val eligible: Boolean,

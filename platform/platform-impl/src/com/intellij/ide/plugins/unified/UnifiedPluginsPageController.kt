@@ -27,6 +27,7 @@ internal class UnifiedPluginsPageController(
   private var installingExpansionDefaultHandled = false
   private var nextInsertionOrder = 0L
   private var query = initialQuery
+  private var projectedQueryRevision = initialQuery.revision
   private var automaticExpansionContext = query.automaticExpansionContext()
   private val automaticallyCollapsedSections = HashSet<PluginSectionId>()
   private var searchControls = UnifiedPluginsSearchControlsState()
@@ -63,9 +64,11 @@ internal class UnifiedPluginsPageController(
     updatedSections: List<PluginSectionState>,
     mayEstablishSelection: Boolean,
     updatedSearchControls: UnifiedPluginsSearchControlsState = searchControls,
+    projectedQueryRevision: Long = query.revision,
   ) {
     synchronized(lock) {
       storeQuery(query)
+      this.projectedQueryRevision = projectedQueryRevision
       searchControls = updatedSearchControls
       replaceStoredSections(updatedSections)
       val querySelectionPending = pendingQuerySelectionRevision == query.revision
@@ -78,6 +81,7 @@ internal class UnifiedPluginsPageController(
 
   fun replaceSections(newSections: List<PluginSectionState>) {
     synchronized(lock) {
+      projectedQueryRevision = query.revision
       replaceStoredSections(newSections)
       publish(establishSelection = true)
     }
@@ -85,6 +89,7 @@ internal class UnifiedPluginsPageController(
 
   fun updateSections(updatedSections: List<PluginSectionState>) {
     synchronized(lock) {
+      projectedQueryRevision = query.revision
       updatedSections.forEach(::storeSection)
       publish(establishSelection = true)
     }
@@ -258,7 +263,7 @@ internal class UnifiedPluginsPageController(
         initialSelectionPending = true
       }
       selectedOccurrences = emptyList()
-      if (establishSelection && initialSelectionPending) {
+      if (establishSelection && initialSelectionPending && projectedQueryRevision == query.revision) {
         firstOccurrence(visibleSections)?.let { selectedOccurrences = listOf(it) }
         if (selectedOccurrences.isNotEmpty()) {
           initialSelectionPending = false
@@ -278,11 +283,12 @@ internal class UnifiedPluginsPageController(
   private fun visibleSections(): List<PluginSectionState> {
     val route = query.sourceRoute()
     val selectedRepositoryIds = if (route.repositories.eligible) route.selectedRepositoryIds else emptySet()
+    val projected = projectedQueryRevision == query.revision
     return sections.values
       .asSequence()
       .filter { section -> isVisibleForCurrentQuery(section, selectedRepositoryIds) }
       .map(::orderBundledItems)
-      .map(::stabilizeItemOrder)
+      .map { section -> if (projected) stabilizeItemOrder(section) else section }
       .sortedWith(compareBy({ section: PluginSectionState -> sectionRank(section.id) }, { sectionInsertionOrder.getValue(it.id) }))
       .toList()
   }
