@@ -79,6 +79,7 @@ class ToolWindowEditorTabSession(
 
     presentation = newPresentation
     file.updatePresentableName(newPresentation.title)
+    file.updateIcon(newPresentation.icon)
 
     project.messageBus.syncPublisher(RecentFileHistoryOrderListener.TOPIC).recentFileUpdated(file)
 

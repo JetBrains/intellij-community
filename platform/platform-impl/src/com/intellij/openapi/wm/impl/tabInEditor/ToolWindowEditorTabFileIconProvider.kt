@@ -11,6 +11,6 @@ internal class ToolWindowEditorTabFileIconProvider : FileIconProvider {
     val editorTabFile = file as? ToolWindowEditorTabFile ?: return null
     if (project == null) return null
 
-    return ToolWindowEditorTabManager.getInstance(project).getTabPresentation(editorTabFile)?.icon
+    return ToolWindowEditorTabManager.getInstance(project).getTabIcon(editorTabFile)
   }
 }

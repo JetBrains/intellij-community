@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.tabInEditor
 
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.ide.util.treeView.findCachedImageIcon
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.project.Project
@@ -8,7 +11,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.icons.decodeCachedImageIconFromByteArray
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * Virtual file that represents tool window content opened in an editor tab.
@@ -55,6 +60,16 @@ class ToolWindowEditorTabFile internal constructor(
    */
   @NlsSafe
   internal var presentableName: String = persistentPath?.name ?: ""
+    private set
+
+  /**
+   * The last known icon of the tab, or `null` if it is unknown.
+   *
+   * For persistent tabs, the icon is also stored in [persistentPath] if it can be serialized,
+   * so it is available when the project is reopened, before the restored tab's [ToolWindowEditorTabSession] is loaded.
+   */
+  @Volatile
+  internal var lastKnownIcon: Icon? = persistentPath?.icon?.let { decodeIcon(it) }
     private set
 
   init {
@@ -130,5 +145,32 @@ class ToolWindowEditorTabFile internal constructor(
 
     presentableName = name
     persistentPath?.let { persistentPath = it.withName(name) }
+  }
+
+  /**
+   * Updates the last known icon of this tab.
+   *
+   * For persistent tabs, the icon is also stored in [persistentPath] so it is available when the project is reopened.
+   */
+  internal fun updateIcon(icon: Icon?) {
+    if (lastKnownIcon == icon) return
+
+    lastKnownIcon = icon
+    persistentPath?.let { path -> persistentPath = path.withIcon(icon?.let(::encodeIcon)) }
+  }
+}
+
+private val LOG = logger<ToolWindowEditorTabFile>()
+
+private fun encodeIcon(icon: Icon): ByteArray? = findCachedImageIcon(icon)?.encodeToByteArray()
+
+private fun decodeIcon(data: ByteArray): Icon? {
+  return try {
+    decodeCachedImageIconFromByteArray(data)
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    LOG.debug("Cannot restore the stored icon of a tool window editor tab", e)
+    null
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.tabInEditor
 
+import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -21,10 +22,14 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.icons.createCachedIcon
+import com.intellij.ui.scale.ScaleContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -123,6 +128,18 @@ internal fun registerFakeToolWindowEditorTabPersistenceProvider(
 
 internal fun createTabContent(component: JComponent = JPanel(), displayName: String = "tab"): Content =
   ContentFactory.getInstance().createContent(component, displayName, false)
+
+/**
+ * Creates an icon that can be serialized, as the platform icons in the IDE can.
+ * The platform icons in unit tests cannot be serialized, because the tests do not activate the icon manager.
+ */
+internal fun createSerializableIcon(directory: Path): Icon {
+  val file = directory.resolve("icon.svg")
+  Files.writeString(file, """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"/>""")
+  return createCachedIcon(file, ScaleContext.create())
+}
+
+internal fun Icon?.serialized(): ByteArray? = findCachedImageIcon(this)?.encodeToByteArray()
 
 /**
  * Builds a transient tool window editor tab with its content already attached, which is the state a tab moved out of a

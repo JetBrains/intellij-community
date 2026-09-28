@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -85,6 +87,31 @@ class ToolWindowEditorTabFileTest {
     // Tool window tabs must never be split.
     assertThat(file.getUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT)).isTrue()
   }
+
+  @Test
+  fun `presentation updates the last known icon`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = createFile(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+    awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
+
+    assertThat(file.lastKnownIcon).isEqualTo(AllIcons.General.Gear)
+  }
+
+  @Test
+  fun `a persistent file stores its last known icon in the path`(@TempDir tempDir: Path): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val path = PersistentToolWindowEditorTabPath(project.locationHash, "TestToolWindow", "icon-tab", "Name")
+      val file = ToolWindowEditorTabFile(toolWindowId = "TestToolWindow", persistentPath = path)
+      val icon = createSerializableIcon(tempDir)
+      val expectedIcon = requireNotNull(icon.serialized())
+
+      file.updateIcon(icon)
+
+      val storedPath = requireNotNull(PersistentToolWindowEditorTabPath.parse(requireNotNull(file.persistentPath).toString()))
+      assertThat(storedPath.icon).isEqualTo(expectedIcon)
+      assertThat(storedPath.name).isEqualTo("Name")
+      val restoredFile = ToolWindowEditorTabFile(toolWindowId = "TestToolWindow", persistentPath = storedPath)
+      assertThat(restoredFile.lastKnownIcon.serialized()).isEqualTo(expectedIcon)
+    }
 
   @Test
   fun `onEditorClosed invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {

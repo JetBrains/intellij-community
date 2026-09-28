@@ -75,18 +75,24 @@ internal class ToolWindowEditorTabFileSystem : DeprecatedVirtualFileSystem(),
  *
  * Paths have the following structure:
  *
- * `projectLocationHash/toolWindowId/persistenceId/name`
+ * `projectLocationHash/toolWindowId/persistenceId/name/icon`
  *
  * [projectLocationHash] associates the tab with its project, [toolWindowId] identifies the owning
  * tool window, and [persistenceId] distinguishes multiple persistent tabs belonging to the same
- * tool window. [name] stores the tab's last known presentable name so it is available after the
+ * tool window. [name] and [icon] store the tab's last known presentable name and icon so they are available after the
  * project is reopened, before the restored tab's [ToolWindowEditorTabSession] is loaded.
+ *
+ * [icon] is a serialized [com.intellij.ui.icons.CachedImageIcon] (see [com.intellij.ui.icons.CachedImageIcon.encodeToByteArray]).
+ *
+ * All segments are always written, so a new segment can be added at the end. An empty name and a missing icon
+ * are written as empty segments.
  */
 internal class PersistentToolWindowEditorTabPath(
   val projectLocationHash: String,
   val toolWindowId: String,
   val persistenceId: String,
   @NlsSafe val name: String = "",
+  val icon: ByteArray? = null,
 ) {
   /**
    * Returns a path with the same identity and [name] as its title.
@@ -97,11 +103,24 @@ internal class PersistentToolWindowEditorTabPath(
       toolWindowId = toolWindowId,
       persistenceId = persistenceId,
       name = name,
+      icon = icon,
+    )
+
+  /**
+   * Returns a path with the same identity and [icon] as its serialized icon.
+   */
+  fun withIcon(icon: ByteArray?): PersistentToolWindowEditorTabPath =
+    PersistentToolWindowEditorTabPath(
+      projectLocationHash = projectLocationHash,
+      toolWindowId = toolWindowId,
+      persistenceId = persistenceId,
+      name = name,
+      icon = icon,
     )
 
   override fun toString(): String {
-    return listOf(projectLocationHash, toolWindowId, persistenceId, name)
-      .joinToString("/") { encode(it) }
+    val segments = listOf(projectLocationHash, toolWindowId, persistenceId, name).map { encode(it) }
+    return (segments + encodeBytes(icon ?: ByteArray(0))).joinToString("/")
   }
 
   override fun equals(other: Any?): Boolean {
@@ -123,27 +142,32 @@ internal class PersistentToolWindowEditorTabPath(
   companion object {
     fun parse(path: String): PersistentToolWindowEditorTabPath? {
       val segments = path.split('/')
-      if (segments.size != 4) return null
+      // The paths stored before the icons were added have no icon segment.
+      if (segments.size != 4 && segments.size != 5) return null
 
       return runCatching {
         PersistentToolWindowEditorTabPath(
           projectLocationHash = decode(segments[0]),
           toolWindowId = decode(segments[1]),
           persistenceId = decode(segments[2]),
-          name = decode(segments[3])
+          name = decode(segments[3]),
+          icon = segments.getOrNull(4)?.let { decodeBytes(it) }?.takeIf { it.isNotEmpty() },
         )
       }.getOrNull()
     }
 
-    private fun encode(value: String): String =
+    private fun encode(value: String): String = encodeBytes(value.toByteArray(Charsets.UTF_8))
+
+    private fun decode(value: String): String = decodeBytes(value).toString(Charsets.UTF_8)
+
+    private fun encodeBytes(value: ByteArray): String =
       Base64.getUrlEncoder()
         .withoutPadding()
-        .encodeToString(value.toByteArray(Charsets.UTF_8))
+        .encodeToString(value)
 
-    private fun decode(value: String): String =
+    private fun decodeBytes(value: String): ByteArray =
       Base64.getUrlDecoder()
         .decode(value)
-        .toString(Charsets.UTF_8)
   }
 }
 

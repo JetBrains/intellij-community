@@ -41,6 +41,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -182,6 +184,17 @@ class ToolWindowEditorTabPendingContentTest {
     assertThat(provider.deserializeInvocations).isEmpty()
   }
 
+  @Test
+  fun `a restored tab shows its stored icon before its content is restored`(@TempDir tempDir: Path): Unit = uiTest {
+    val storedIcon = requireNotNull(createSerializableIcon(tempDir).serialized())
+    val editor = createRestoredTabEditor(icon = storedIcon)
+
+    val tabIcon = ToolWindowEditorTabFileIconProvider().getIcon(editor.file, 0, project)
+
+    assertThat(tabIcon.serialized()).isEqualTo(storedIcon)
+    assertThat(provider.deserializeInvocations).isEmpty()
+  }
+
   private fun registerSupportAndProvider(id: String, provider: ToolWindowEditorTabPersistenceProvider) {
     registerFakeToolWindowEditorTabSupport(id, FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Tab"))), disposable)
     registerFakeToolWindowEditorTabPersistenceProvider(id, provider, disposable)
@@ -190,12 +203,13 @@ class ToolWindowEditorTabPendingContentTest {
   /**
    * Creates the editor of a persistent tab and gives it the stored state, as the editor restore at project open does.
    */
-  private fun createRestoredTabEditor(id: String = toolWindowId): ToolWindowEditorTabFileEditor {
+  private fun createRestoredTabEditor(id: String = toolWindowId, icon: ByteArray? = null): ToolWindowEditorTabFileEditor {
     val path = PersistentToolWindowEditorTabPath(
       projectLocationHash = project.locationHash,
       toolWindowId = id,
       persistenceId = "restored-tab",
       name = "Restored",
+      icon = icon,
     )
     val file = requireNotNull(ToolWindowEditorTabFileRegistry.getInstance().getOrCreatePersistentFile(path))
     val editor = ToolWindowEditorTabFileEditor(project, file)

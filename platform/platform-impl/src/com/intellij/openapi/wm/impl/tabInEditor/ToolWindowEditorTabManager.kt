@@ -21,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import javax.swing.Icon
 
 private val LOG = logger<ToolWindowEditorTabManager>()
 
@@ -102,6 +103,21 @@ class ToolWindowEditorTabManager(
     getTabPresentation(file)?.let { return it.title }
 
     return file.presentableName
+  }
+
+  /**
+   * Returns the icon of [file].
+   *
+   * If a session presentation is available, its icon is returned. Otherwise, a persistent tab
+   * falls back to the last known icon stored in its [PersistentToolWindowEditorTabPath]. This allows
+   * restored tabs to display their icon before their presentation is loaded.
+   *
+   * Returns `null` if no icon is available.
+   */
+  fun getTabIcon(file: ToolWindowEditorTabFile): Icon? {
+    getTabPresentation(file)?.let { return it.icon }
+
+    return file.lastKnownIcon
   }
 
   /**
