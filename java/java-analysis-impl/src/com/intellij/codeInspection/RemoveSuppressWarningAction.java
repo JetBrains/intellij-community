@@ -158,9 +158,10 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
         JavaPsiFacade.getElementFactory(tag.getProject())
           .createDocCommentFromText(CommentUtil.convertToDocComment(docComment, nextText), tag)
           .getDescriptionElements();
-      if (descriptionElements.length > 0) {
+      int expectedDescriptionLength = (docComment.isMarkdownComment() ? 1 : 2);
+      if (descriptionElements.length >= expectedDescriptionLength) {
         docComment.addRangeAfter(descriptionElements[0],
-                                 descriptionElements[descriptionElements.length - (docComment.isMarkdownComment() ? 1 : 2)], tag);
+                                 descriptionElements[descriptionElements.length - expectedDescriptionLength], tag);
       }
       tag.delete();
     }
