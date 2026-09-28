@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.idea.base.psi.appendTypeArgument
 import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateValueArgumentList
-import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -81,23 +80,16 @@ class CollectionConcatenationToBuildCollectionInspection :
 
     override fun isApplicableByPsi(element: KtExpression): Boolean {
         if (element is KtParameter) return false
-        // sub expression elements are/will be visited
-        if (element is KtBinaryExpression) return false
-        // do not report on arguments
         val parent = element.parent
         if (element is KtNameReferenceExpression && parent is KtValueArgument) return false
         if (parent is KtParenthesizedExpression) {
-            // we only care about the topmost `KtParenthesizedExpression` expression
             return false
         }
         val expression = element.safeDeparenthesize()
         val expressionToConvert = expression.expressionToConvert()
         return when (expressionToConvert) {
             is KtBinaryExpression -> {
-                if (expression is KtBinaryExpression && expressionToConvert != expression) {
-                    // we only care about the topmost `KtBinaryExpression` expression
-                    return false
-                }
+                if (expressionToConvert != expression) return false
                 expressionToConvert.hasApplicableToken() && isApplicablePossiblyNestedBinaryExpression(expressionToConvert)
             }
 
@@ -105,20 +97,8 @@ class CollectionConcatenationToBuildCollectionInspection :
         }
     }
 
-    override fun getApplicableRanges(element: KtExpression): List<TextRange> {
-        val expression = element.safeDeparenthesize()
-        val expressionToConvert = expression.expressionToConvert()
-        return when {
-            expressionToConvert is KtBinaryExpression && expressionToConvert == expression ->
-                // applicable only on the `+`/`-` operators
-                nestedBinaryExpressionSequence(expressionToConvert)
-                    .mapTo(mutableListOf()) { binaryExpression ->
-                        binaryExpression.operationReference.textRange.relativeTo(element)
-                    }
-
-            else -> listOf(TextRange(0, element.textLength))
-        }
-    }
+    override fun getApplicableRanges(element: KtExpression): List<TextRange> =
+        listOf(TextRange(0, element.textLength))
 
     private fun isApplicablePossiblyNestedBinaryExpression(element: KtBinaryExpression): Boolean {
         return nestedBinaryExpressionSequence(element).all { binaryExpression ->
