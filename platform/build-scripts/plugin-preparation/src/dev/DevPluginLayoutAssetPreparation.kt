@@ -196,7 +196,8 @@ interface DevPluginLayoutAssetOwner {
 
 /**
  * One file or tree contribution to a prepared plugin tree.
- * A null [transform] is a direct copy.
+ * A null [transform] is a direct copy. A [mode] of a direct directory copy sets its regular files, and its directories get
+ * 0755. Mode zero keeps the source modes.
  *
  * [hostPlatforms] names the `HOST_PLATFORMS` entries the asset serves, such as `darwin_aarch64`. An empty list serves
  * every platform. The generator keeps the asset in the plan of a named platform and drops it from every other plan,

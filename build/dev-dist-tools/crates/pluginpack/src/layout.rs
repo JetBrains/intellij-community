@@ -19,6 +19,12 @@ const fn mode_or(mode: u32, fallback: u32) -> u32 {
     if mode == 0 { fallback } else { mode }
 }
 
+/// The mode that a directory of a plain copy takes from the declared mode of its asset. A declared mode sets the files,
+/// so each directory then gets 0755. Mode zero keeps the source mode.
+const fn copy_directory_mode(mode: u32) -> u32 {
+    if mode == 0 { 0 } else { 0o755 }
+}
+
 pub(crate) fn join_layout_path(first: &str, second: &str) -> String {
     match (first.is_empty(), second.is_empty()) {
         (true, _) => second.to_owned(),
@@ -283,7 +289,8 @@ impl Resolver<'_> {
         }))
     }
 
-    /// Writes a plain copy. A directory is copied with every descendant in byte-sorted path order.
+    /// Writes a plain copy. A directory is copied with every descendant in byte-sorted path order. A declared mode sets
+    /// the regular files of a directory copy, and its directories get 0755.
     fn copy_asset(input: &LayoutInput, asset: &LayoutAsset, writer: &mut dyn LayoutWriter) -> Result<()> {
         let root = match input {
             LayoutInput::Symlink { target, .. } => return writer.symlink(&asset.destination, target),
@@ -291,7 +298,10 @@ impl Resolver<'_> {
             LayoutInput::Directory(root) => root,
         };
         let metadata = fs::symlink_metadata(root).at(root)?;
-        writer.directory(&asset.destination, mode_or(asset.mode, filemeta::permissions(&metadata)))?;
+        writer.directory(
+            &asset.destination,
+            mode_or(copy_directory_mode(asset.mode), filemeta::permissions(&metadata)),
+        )?;
         let mut entries = Vec::new();
         walk_layout_tree(root, |entry| {
             entries.push(entry);
@@ -302,7 +312,12 @@ impl Resolver<'_> {
         for entry in &entries {
             let (source, metadata) = transport_entry(entry, &mut transport_root)?;
             let destination = join_layout_path(&asset.destination, &entry.relative);
-            copy_layout_entry(&source, &metadata, &destination, asset.mode, writer)?;
+            let mode = if metadata.is_dir() {
+                copy_directory_mode(asset.mode)
+            } else {
+                asset.mode
+            };
+            copy_layout_entry(&source, &metadata, &destination, mode, writer)?;
         }
         Ok(())
     }

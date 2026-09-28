@@ -167,6 +167,7 @@ pub struct LayoutAssets {
 
 /// Writes one file or one tree under the destination. The sources index [`LayoutAssets::inputs`]. No transform is a
 /// plain copy of one file, link or directory. An empty destination is the output root. Mode zero keeps the source mode.
+/// A declared mode of a directory copy sets its regular files, and its directories get 0755.
 #[derive(Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(default, deny_unknown_fields)]
 pub struct LayoutAsset {

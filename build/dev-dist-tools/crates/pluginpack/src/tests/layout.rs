@@ -245,6 +245,43 @@ fn declared_mode_overrides_executable_transport_modes() {
     assert_mode(&written.output.join("libraries/mapped/mapped.jar"), 0o644);
 }
 
+/// A declared mode of a plain directory copy sets its regular files. The root and every directory get 0755, so two
+/// copies onto one root with mode 0644 keep a traversable tree.
+#[test]
+fn a_declared_mode_applies_to_the_files_of_a_directory_copy() {
+    let root = temp();
+    let (first, second) = (root.path().join("first"), root.path().join("second"));
+    write_test_file(&first.join("top.jar"), b"top");
+    write_test_file(&first.join("sub/nested.jar"), b"nested");
+    write_test_file(&second.join("other.jar"), b"other");
+    chmod(&first.join("top.jar"), 0o600);
+    chmod(&first.join("sub/nested.jar"), 0o755);
+    chmod(&first.join("sub"), 0o750);
+    chmod(&second.join("other.jar"), 0o755);
+    let layout = layout(
+        &[Reference::artifact("first"), Reference::artifact("second")],
+        vec![
+            LayoutAsset {
+                mode: 0o644,
+                ..layout_asset("", &[0], None)
+            },
+            LayoutAsset {
+                mode: 0o644,
+                ..layout_asset("", &[1], None)
+            },
+        ],
+    );
+    let catalogue = catalogue(vec![directory_artifact("first", &first), directory_artifact("second", &second)]);
+    let written = write_execution(&layout_tree_recipe("libraries", layout), &catalogue);
+    let libraries = written.output.join("libraries");
+    assert_mode(&libraries, 0o755);
+    assert_mode(&libraries.join("sub"), 0o755);
+    assert_mode(&libraries.join("top.jar"), 0o644);
+    assert_mode(&libraries.join("sub/nested.jar"), 0o644);
+    assert_mode(&libraries.join("other.jar"), 0o644);
+    assert_content(&libraries.join("other.jar"), "other");
+}
+
 #[test]
 fn tree_copies_materialize_bazel_transport_links() {
     for transform in [Some(tree_map(vec![mapping("", 0, "")])), None] {

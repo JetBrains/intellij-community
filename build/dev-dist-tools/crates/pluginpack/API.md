@@ -49,6 +49,12 @@ The Go distribution transport root `.distribution-root/` does not exist: the rem
 - `.tar.gz`: `flate2` and the `tar` crate, in stream order, the first gzip member only. A hard link is a file with the
   bytes of its target.
 
+## Layout modes
+
+- A plain copy of a file gets the declared mode of its asset. Mode zero keeps the source mode.
+- A plain copy of a directory gives the declared mode to its regular files. The root and every directory get 0755.
+  Mode zero keeps the source modes.
+
 ## Tests
 
 Under `cargo test`, the tests read `testdata/` from `CARGO_MANIFEST_DIR`, and under Bazel from `DDT_TESTDATA_DIR`. The
