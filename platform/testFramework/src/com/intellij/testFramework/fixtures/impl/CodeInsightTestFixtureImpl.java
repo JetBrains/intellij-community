@@ -2471,7 +2471,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             PsiTestUtil.compareStubTexts(e);
           }
         });
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         checkPsiTextConsistency(project, vFile);
       }
       catch (AssertionError e) {
