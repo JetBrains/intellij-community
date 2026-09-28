@@ -212,8 +212,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, creationTrigger)
     val updateUI = creationTrigger == XBreakpointCreationTrigger.BREAKPOINT_EVENT
     (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager(updateUI)
-    newBreakpoint.installListener {
-      breakpointsChanged.tryEmit(Unit)
+    newBreakpoint.installListener { emitChanged ->
+      if (emitChanged) {
+        breakpointsChanged.tryEmit(Unit)
+      }
       if (newBreakpoint is FrontendXLineBreakpointProxy) {
         lineBreakpointVisualizationManager.breakpointChanged(newBreakpoint)
       }

@@ -173,6 +173,19 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  /**
+   * Same bookkeeping and notification as {@link #updateStateIfNeededAndNotify}, for a caller that
+   * mutates a field outside {@link #myState} (e.g. a plugin-owned {@link XBreakpointProperties}
+   * field) and already knows whether the value actually changed.
+   */
+  @ApiStatus.Internal
+  public void notifyExternalPropertyUpdateRequested(long requestId, boolean valueChanged) {
+    boolean requestCompleted = myBreakpointManager.getRequestCounter().setRequestCompleted(myId, requestId);
+    if (valueChanged || requestCompleted) {
+      fireBreakpointChanged();
+    }
+  }
+
   protected final <T> T withStateLock(@NotNull Supplier<T> action) {
     return withLockMaybeCancellable(myLock, action::get);
   }

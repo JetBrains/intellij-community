@@ -2,8 +2,11 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.frontend.breakpoints.BreakpointGutterIconRenderer
 import com.intellij.platform.debugger.impl.frontend.util.SequentialRpcRequestsExecutor
@@ -12,6 +15,7 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDtoState
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XDataBreakpointInfo
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.platform.debugger.impl.rpc.xExpression
 import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter
@@ -24,17 +28,26 @@ import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+import com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+import com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.swing.Icon
 
 internal fun createXBreakpointProxy(
@@ -93,7 +106,7 @@ internal open class FrontendXBreakpointProxy(
   protected val currentState: XBreakpointDtoState get() = _state.value
 
   @Volatile
-  private var listener: (() -> Unit)? = null
+  private var listener: ((emitChanged: Boolean) -> Unit)? = null
 
   /**
    * Updates breakpoint state if needed.
@@ -160,16 +173,29 @@ internal open class FrontendXBreakpointProxy(
       // which have the latest requestId. Otherwise, we ignore the update.
       dto.state.toFlow().collectLatest {
         if (breakpointRequestCounter.isSuitableUpdate(id, it.requestId)) {
+          val old = _state.value
           _state.value = it
-          onBreakpointChange()
+          onBreakpointChange(shouldEmitChanged(old, it))
         }
       }
     }
   }
 
-  internal fun installListener(listener: () -> Unit) {
+  internal fun installListener(listener: (emitChanged: Boolean) -> Unit) {
     assert(this.listener == null) { "Listener is already installed" }
     this.listener = listener
+  }
+
+  /**
+   * Returns true when this update should emit `breakpointsChanged`.
+   * Read-only changes to data-breakpoint size or registration error do not require this event.
+   */
+  private fun shouldEmitChanged(old: XBreakpointDtoState, new: XBreakpointDtoState): Boolean {
+    fun XBreakpointDtoState.withoutDiagnostics() = copy(
+      requestId = 0,
+      dataBreakpointInfo = dataBreakpointInfo?.copy(sizeBytes = null, registrationError = null),
+    )
+    return old.withoutDiagnostics() != new.withoutDiagnostics()
   }
 
   /**
@@ -185,8 +211,8 @@ internal open class FrontendXBreakpointProxy(
     onBreakpointChange()
   }
 
-  private fun onBreakpointChange() {
-    listener?.invoke()
+  private fun onBreakpointChange(emitChanged: Boolean = true) {
+    listener?.invoke(emitChanged)
   }
 
   internal fun dependencyChanged() {
@@ -336,6 +362,48 @@ internal open class FrontendXBreakpointProxy(
     return currentState.hasCustomCondition
   }
 
+  override fun getDataBreakpointInfo(): XDataBreakpointInfo? = currentState.dataBreakpointInfo
+
+  override fun setDataBreakpointAccessType(accessType: XDataBreakpointAccessType?) {
+    updateStateIfNeededInternal(newValue = accessType,
+                                getter = { it.dataBreakpointInfo?.accessType },
+                                copy = { it.copy(dataBreakpointInfo = it.dataBreakpointInfo?.copy(accessType = accessType)) }) { requestId ->
+      XBreakpointApi.getInstance().setDataBreakpointAccessType(id, requestId, accessType)
+    }
+  }
+
+  override fun setDataBreakpointLifetime(lifetime: XDataBreakpointLifetime?) {
+    updateStateIfNeededInternal(newValue = lifetime,
+                                getter = { it.dataBreakpointInfo?.lifetime },
+                                copy = { it.copy(dataBreakpointInfo = it.dataBreakpointInfo?.copy(lifetime = lifetime)) }) { requestId ->
+      XBreakpointApi.getInstance().setDataBreakpointLifetime(id, requestId, lifetime)
+    }
+  }
+
+  override fun setDataBreakpointHitCount(enabled: Boolean, mode: XDataBreakpointHitCountMode, value: Int) {
+    updateStateIfNeededInternal(newValue = Triple(enabled, mode, value),
+                                getter = { it.dataBreakpointInfo?.let { info -> Triple(info.hitCountEnabled, info.hitCountMode, info.hitCountValue) } },
+                                copy = {
+                                  it.copy(dataBreakpointInfo = it.dataBreakpointInfo?.copy(
+                                    hitCountEnabled = enabled, hitCountMode = mode, hitCountValue = value,
+                                  ))
+                                }) { requestId ->
+      XBreakpointApi.getInstance().setDataBreakpointHitCount(id, requestId, enabled, mode, value)
+    }
+  }
+
+  override fun subscribeOnDataBreakpointInfoChanges(disposable: Disposable, listener: (XDataBreakpointInfo) -> Unit) {
+    val scope = cs.childScope("DataBreakpointInfoChangesListener")
+    Disposer.register(disposable, Disposable { scope.cancel("disposed") })
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      _state.map { it.dataBreakpointInfo }.filterNotNull().distinctUntilChanged().collect {
+        withContext(Dispatchers.EDT) {
+          listener(it)
+        }
+      }
+    }
+  }
+
   override fun getGeneralDescription(): String {
     return currentState.generalDescription
   }
@@ -364,6 +432,7 @@ internal open class FrontendXBreakpointProxy(
            currentState.suspendPolicy == otherState.suspendPolicy &&
            currentState.group == otherState.group &&
            currentState.lineBreakpointInfo == otherState.lineBreakpointInfo &&
+           currentState.dataBreakpointInfo == otherState.dataBreakpointInfo &&
            currentState.hasCustomCondition == otherState.hasCustomCondition &&
            dependentBreakpointManager.getMasterBreakpoint(this) == dependentBreakpointManager.getMasterBreakpoint(other) &&
            dependentBreakpointManager.isLeaveEnabled(this) == dependentBreakpointManager.isLeaveEnabled(other)
