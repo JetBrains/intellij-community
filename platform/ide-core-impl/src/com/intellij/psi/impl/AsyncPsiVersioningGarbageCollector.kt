@@ -5,15 +5,14 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.impl.source.tree.mvcc.PsiVersionCleanable
 import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
-import kotlinx.coroutines.CompletableDeferred
+import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.Java11Shim
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
@@ -27,7 +26,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : PsiVersioningGarbageCollector {
 
-  private val versionCleanables = ConcurrentHashMap<Long, ConcurrentLinkedQueue<WeakReference<PsiVersionCleanable>>>()
+  private val versionCleanables: ConcurrentLongObjectMap<ConcurrentLinkedQueue<WeakReference<PsiVersionCleanable>>> =
+    Java11Shim.createConcurrentLongObjectMap()
 
   private val latestBarrier: AtomicReference<Long> = AtomicReference()
   private val timeoutQueue: Channel<Unit> = Channel()
@@ -80,7 +80,7 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
   }
 
   fun cleanupReferences(minVersion: Long) {
-    for (version in versionCleanables.keys) {
+    for (version in versionCleanables.keys()) {
       if (version > minVersion) continue
       val bucket = versionCleanables.remove(version) ?: continue
       for (reference in bucket) {
@@ -94,5 +94,5 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     cleanupReferences(InternalPsiVersioning.PsiVersionRegistry.instance.minVersionForCleaning())
   }
 
-  override fun pendingVersionCleanableCount(): Int = versionCleanables.values.sumOf { it.size }
+  override fun pendingVersionCleanableCount(): Int = versionCleanables.values().sumOf { it.size }
 }
