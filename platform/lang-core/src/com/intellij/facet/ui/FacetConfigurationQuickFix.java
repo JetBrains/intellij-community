@@ -3,6 +3,7 @@
 package com.intellij.facet.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
@@ -22,6 +23,7 @@ public abstract class FacetConfigurationQuickFix {
     return myFixButtonText;
   }
 
+  @RequiresEdt
   public abstract void run(JComponent place);
 
 }
