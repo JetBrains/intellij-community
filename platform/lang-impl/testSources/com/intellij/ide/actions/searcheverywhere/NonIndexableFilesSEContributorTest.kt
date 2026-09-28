@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.find.DirectorySearchEngine
 import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindModel
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.mock.MockProgressIndicator
@@ -277,6 +278,82 @@ open class NonIndexableFilesSEContributorTest {
     }
 
     assertThat(consumerCalls).isEqualTo(1)
+  }
+
+  @Test
+  fun `absolute path pattern resolves the file as an exact match`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val file = baseDir.newVirtualFile("root/sub/file.txt")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val found = fetchDescriptors("${file.path}:12")
+
+    assertThat(found.map { (it.item as PsiFileSystemItem).virtualFile }).containsExactly(file)
+    assertThat(found.single().weight).isEqualTo(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
+  }
+
+  @Test
+  fun `absolute path pattern resolves a file outside the non-indexable roots`(): Unit = timeoutRunBlocking {
+    baseDir.newVirtualDirectory("root").let { root ->
+      workspaceModel.update { storage ->
+        storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+      }
+    }
+    val outside = baseDir.newVirtualFile("outside/other.txt")
+    VfsTestUtil.syncRefresh()
+
+    assertThat(searchNonIndexableFiles(outside.path).map { it.virtualFile }).containsExactly(outside)
+  }
+
+  @Test
+  fun `relative path pattern yields the file once`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val file = baseDir.newVirtualFile("root/sub/file.txt")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val found = fetchDescriptors("root/sub/file.txt")
+
+    assertThat(found.map { (it.item as PsiFileSystemItem).virtualFile }).containsExactly(file)
+  }
+
+  @Test
+  fun `consumer rejection of the path match stops the search`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    val file = baseDir.newVirtualFile("root/file.txt")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+    val walkStarted = AtomicBoolean(false)
+    registerNameSearchEngine { _, _, _ -> walkStarted.set(true) }
+    val contributor = NonIndexableFilesSEContributor(createEvent(project))
+    Disposer.register(disposable, contributor)
+    var consumerCalls = 0
+
+    contributor.fetchWeightedElements(file.path, MockProgressIndicator().apply { start() }) {
+      consumerCalls++
+      false
+    }
+
+    assertThat(consumerCalls).isEqualTo(1)
+    assertThat(walkStarted.get()).isFalse()
+  }
+
+  private fun fetchDescriptors(pattern: String): List<FoundItemDescriptor<Any>> {
+    val contributor = NonIndexableFilesSEContributor(createEvent(project))
+    Disposer.register(disposable, contributor)
+    val found = mutableListOf<FoundItemDescriptor<Any>>()
+    contributor.fetchWeightedElements(pattern, MockProgressIndicator().apply { start() }) {
+      synchronized(found) { found.add(it) }
+      true
+    }
+    return found
   }
 
   @Test

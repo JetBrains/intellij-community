@@ -8,6 +8,7 @@ import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
@@ -235,6 +237,14 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     ProgressManager.getInstance().executeProcessUnderProgress(
       {
         runBlockingCancellable {
+          // A path pattern is an explicit navigation request, as in the index-based Files contributor.
+          // A product without that contributor gets the lookup here; with it, Search Everywhere merges the equal items.
+          var pathItem: PsiFileSystemItem? = null
+          val pathItemConsumed = readActionUndispatched {
+            pathItem = GotoFileItemProvider.findFileSystemItemByAbsolutePath(project, pattern)
+            pathItem?.let { consumer.process(FoundItemDescriptor<Any>(it, DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)) } ?: true
+          }
+          if (!pathItemConsumed) return@runBlockingCancellable
           // we do not pass [filter] here, because we want to show files that do not match the filter in suboptimal matches
           val nonIndexableTraversal = readAction { ConcurrentFileTraversal.nonIndexableTraversal(project, searchInLibraries) }
           val state = SearchJobsState(nonIndexableTraversal)
@@ -296,6 +306,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
               file.isDirectory -> psiManager.findDirectory(file)
               else -> psiManager.findFile(file)
             }
+            if (psiItem != null && psiItem == pathItem) return@collectResults true
 
             val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
             val consumed = consumer.process(itemDescriptor)
@@ -330,6 +341,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
                     file.isDirectory -> PsiManager.getInstance(project).findDirectory(file)
                     else -> PsiManager.getInstance(project).findFile(file)
                   } ?: return@readActionUndispatched false
+                  if (psiItem == pathItem) return@readActionUndispatched true
                   val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
                   val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
                   if (consumer.process(itemDescriptor)) return@readActionUndispatched true

@@ -389,11 +389,26 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   private @Nullable PsiFileSystemItem getFileByAbsolutePath(@NotNull String pattern) {
+    return findFileSystemItemByAbsolutePath(myProject, pattern);
+  }
+
+  /**
+   * Resolves a Go to File pattern that is an absolute path, or a path relative to the project base directory.
+   * <p>
+   * The line and column suffix of the pattern is ignored. A file outside the project content and libraries
+   * is found only for an absolute path, and only when {@code search.everywhere.absolute.path.outside.project} is on.
+   * Needs a read action.
+   *
+   * @return the file or directory the pattern points to, or {@code null} if the pattern is not such a path
+   */
+  @ApiStatus.Internal
+  public static @Nullable PsiFileSystemItem findFileSystemItemByAbsolutePath(@NotNull Project project, @NotNull String pattern) {
     if (!pattern.contains("/") && !pattern.contains("\\")) {
       return null;
     }
 
-    String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
+    // the line and column detection is the same for every model that is not a class or symbol model
+    String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, null));
     if (Registry.is("search.everywhere.absolute.path.outside.project")) {
       if (!SystemInfo.isWindows) {
         // '~' is a shell convention, not a Windows one
@@ -403,19 +418,19 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (OSAgnosticPathUtil.isAbsolute(path) && !isFileSystemRoot(path)) {
         // an absolute path is an explicit navigation request, so the file doesn't have to belong to the project
         VirtualFile vFile = findFileByAbsolutePathWithoutCaching(path);
-        return vFile == null ? null : PsiUtilCore.findFileSystemItem(myProject, vFile);
+        return vFile == null ? null : PsiUtilCore.findFileSystemItem(project, vFile);
       }
     }
 
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
     if (vFile == null) {
-      String unitedPath = unitePaths(myProject.getBasePath(), path);
+      String unitedPath = unitePaths(project.getBasePath(), path);
       if (unitedPath != null) vFile = LocalFileSystem.getInstance().findFileByPathIfCached(unitedPath);
     }
     if (vFile != null) {
-      ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
+      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
       if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
-        return PsiUtilCore.findFileSystemItem(myProject, vFile);
+        return PsiUtilCore.findFileSystemItem(project, vFile);
       }
     }
     return null;
