@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.util.NlsSafe
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -220,7 +221,7 @@ class KotlinParameterInfo(
 
         if ((newParameter.typeReference != null || requiresExplicitType(inheritedCallable)) &&
             (currentType.text != originalType.text || newParameter.typeReference == null) ) {
-            newParameter.typeReference = psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE)
+            newParameter.setCallableTypeReference(psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE))
         }
 
         if (!isInherited && isNewParameter) {

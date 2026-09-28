@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.copy
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.file.UpdateAddedFileProcessor
+import org.jetbrains.kotlin.idea.base.psi.setPackageFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
@@ -16,7 +17,7 @@ class KotlinUpdateAddedFileProcessor : UpdateAddedFileProcessor() {
         if ((originalElement == null || originalElement is KtFile && originalElement.packageMatchesDirectoryOrImplicit()) &&
             targetFile.packageMatchesDirectoryOrImplicit() != true) {
             targetFile.containingDirectory?.getFqNameWithImplicitPrefix()?.quoteIfNeeded()?.let { targetDirectoryFqName ->
-                targetFile.packageFqName = targetDirectoryFqName
+                targetFile.setPackageFqName(targetDirectoryFqName)
             }
         }
     }

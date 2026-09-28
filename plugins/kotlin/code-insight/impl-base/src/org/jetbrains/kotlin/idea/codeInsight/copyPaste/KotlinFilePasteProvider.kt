@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.copyPaste
 
 import com.intellij.ide.PasteProvider
@@ -13,6 +13,7 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.idea.base.psi.setPackageFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
@@ -56,7 +57,7 @@ class KotlinFilePasteProvider : PasteProvider {
                 documentManager.commitDocument(document)
                 val qualifiedName = JavaDirectoryService.getInstance()?.getPackage(directory)?.qualifiedName
                 if (qualifiedName != null && file is KtFile) {
-                    file.packageFqName = FqName(qualifiedName)
+                    file.setPackageFqName(FqName(qualifiedName))
                 }
                 OpenFileDescriptor(project, file.virtualFile).navigate(true)
             }

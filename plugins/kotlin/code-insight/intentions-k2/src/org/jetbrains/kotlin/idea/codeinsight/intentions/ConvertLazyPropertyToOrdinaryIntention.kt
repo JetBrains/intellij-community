@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiComment
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
@@ -45,8 +46,10 @@ internal class ConvertLazyPropertyToOrdinaryIntention :
         val delegate = element.delegate ?: return
         val delegateExpression = element.delegateExpression() ?: return
         val functionLiteral = delegateExpression.functionLiteral() ?: return
-        element.initializer = functionLiteral.singleStatement()
-            ?: KtPsiFactory(element.project).createExpression("run ${functionLiteral.text}")
+        element.setPropertyInitializer(
+            functionLiteral.singleStatement() ?: KtPsiFactory(element.project).createExpression("run ${functionLiteral.text}")
+        )
+
         delegate.delete()
     }
 }

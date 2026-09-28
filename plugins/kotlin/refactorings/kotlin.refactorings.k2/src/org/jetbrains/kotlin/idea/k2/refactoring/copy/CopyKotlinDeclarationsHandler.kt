@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.refactoring.copy
 
@@ -23,8 +23,8 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesDialog
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.psi.setPackageFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
@@ -262,7 +262,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
                 //set the package statement first to ensure
                 // that the usages from the old package would be explicitly imported by shortenReferences of [retargetInternalUsagesForCopyFile]
                 if (fileToCopy.packageMatchesDirectoryOrImplicit()) {
-                    targetDirectoryFqName?.quoteIfNeeded()?.let { copiedFile.packageFqName = it }
+                    targetDirectoryFqName?.quoteIfNeeded()?.let { copiedFile.setPackageFqName(it) }
                 }
                 retargetInternalUsagesForCopyFile(fileToCopy, copiedFile)
             }

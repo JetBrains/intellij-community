@@ -22,6 +22,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSou
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import org.jetbrains.kotlin.idea.base.psi.setPackageFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.base.util.module
@@ -151,7 +152,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
         override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
             val file = previewDescriptor.psiElement as? KtFile ?: return IntentionPreviewInfo.EMPTY
             val packageDirective = file.packageDirective ?: return IntentionPreviewInfo.EMPTY
-            packageDirective.fqName = packageFqName
+            packageDirective.setPackageFqName(packageFqName)
             return IntentionPreviewInfo.DIFF
         }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.setCallableTypeReference
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
@@ -58,7 +59,7 @@ private fun doChangeType(
         "@${renderAnnotation(target, request, psiFactory)}"
     }
     val newType = psiFactory.createType("$annotations $typeName".trim())
-    target.typeReference = newType
+    target.setCallableTypeReference(newType)
     if (oldType != null) {
         val commentSaver = CommentSaver(oldType)
         commentSaver.restore(target.typeReference!!)
