@@ -77,6 +77,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected final NotNullLazyValue<File> myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
+  private final @NotNull FixButton myFixButton;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
   private AbstractNewProjectStep<T> myProjectStep;
   private static final String DEFAULT_PROJECT_NAME = "untitled";
@@ -104,6 +105,10 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     myCallback = callback;
     myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled().toFile());
     myNewProjectName = newProjectName != null ? newProjectName : DEFAULT_PROJECT_NAME;
+    myFixButton = new FixButton(() -> {
+      checkValid();
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
@@ -146,6 +151,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);
+    bottomPanel.add(myFixButton.getComponent(), BorderLayout.WEST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     checkValid();
     return mainPanel;
@@ -261,6 +267,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   public boolean checkValid() {
     if (myLocationField == null) return true;
+    myFixButton.setFix(null);
 
     String projectPath = myLocationField.getText().trim();
     if (projectPath.isEmpty()) {
@@ -279,6 +286,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       ValidationResult validationResult = myProjectGenerator.validate(projectPath);
       if (!validationResult.isOk()) {
         setErrorText(validationResult.getErrorMessage());
+        myFixButton.setFix(validationResult.getQuickFix());
         return false;
       }
 

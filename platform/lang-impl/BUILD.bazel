@@ -402,7 +402,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.lang.tests",
+    associates = [
+        "//platform/lang-impl",
+        "//platform/lang-impl:lang-impl_test_lib",
+    ],
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -469,8 +472,6 @@ jvm_library(
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/platform-impl:ide-impl",
-        "//platform/lang-impl",
-        "//platform/lang-impl:lang-impl_test_lib",
         "//platform/welcome-screen-impl:welcomeScreen-impl",
         "//platform/welcome-screen-impl:welcomeScreen-impl_test_lib",
         "//platform/usageView",
