@@ -251,6 +251,8 @@ def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
             "supports-worker-cancellation": "1",
             "supports-path-mapping": "1",
             "supports-multiplex-sandboxing": "1",
+            # share the worker pool with KotlinCompileWasmJs: the same builder handles both requests
+            "worker-key-mnemonic": "KotlinCompileWasmJs",
         },
         arguments = ctx.attr._wasmjs_builder_jvm_flags[BuildSettingInfo].value + [
             ctx.file._wasmjs_builder_launcher.path,
