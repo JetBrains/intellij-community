@@ -72,6 +72,10 @@ public final class ThreadLeakTracker {
     return map;
   }
 
+  // The name of the single-file Rider backend host.
+  // The value must match the AssemblyName in the project of the backend host.
+  private static final String RIDER_BACKEND_HOST_NAME = "RiderStub";
+
   // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads' detection)
   private static final Set<String> wellKnownOffenders;
 
@@ -139,7 +143,6 @@ public final class ThreadLeakTracker {
       "Reference Handler",
       "Rider.Backend", // ignore process + io threads because backend follows application lifecycle and can be started during the test
       "Rider.LightweightBackend", // same as Rider.Backend, but for the lightweight backend process
-      "RiderStub", // same as Rider.Backend, but for the single-file backend host, whose command line has no "Rider.Backend" in it
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
@@ -159,6 +162,8 @@ public final class ThreadLeakTracker {
     );
     validateWhitelistedThreads(offenders);
     wellKnownOffenders = new HashSet<>(offenders);
+    // The value of RIDER_BACKEND_HOST_NAME can change, so the sorted list of literals does not contain it.
+    wellKnownOffenders.add(RIDER_BACKEND_HOST_NAME);
 
     try {
       // init zillions of timers in e.g., MacOSXPreferencesFile
