@@ -25,5 +25,9 @@ internal class FoldedCodeAudioCueDetector : EditorAudioCueDetector {
     return result
   }
 
-  private fun isFoldedCode(region: FoldRegion): Boolean = region.isValid && !region.isExpanded && region !is CustomFoldRegion
+  private fun isFoldedCode(region: FoldRegion): Boolean =
+    region.isValid &&
+    !region.isExpanded &&
+    region !is CustomFoldRegion &&
+    region.placeholderText.isNotEmpty()
 }
