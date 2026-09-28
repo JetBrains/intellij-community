@@ -1690,6 +1690,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.EditorHyperlinkUsageCollector"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.MarketplaceChannelUrlService"
+                        serviceImplementation="com.intellij.openapi.updateSettings.impl.MarketplaceChannelUrlServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcePluginsProvider"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcePluginsProviderImpl"/>
     <notificationGroup id="Plugin Update Sources Reset" displayType="BALLOON" bundle="messages.IdeBundle"
