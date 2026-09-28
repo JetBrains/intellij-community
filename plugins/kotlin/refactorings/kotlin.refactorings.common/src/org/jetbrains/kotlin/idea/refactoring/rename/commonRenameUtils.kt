@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -80,7 +81,8 @@ inline fun <T> runProcessWithProgressSynchronously(
  * A rename with a user starts on EDT. The progress there keeps the interface alive while the search
  * runs on another thread. A rename with no user starts on a background thread. A modal progress
  * there stops the interface of a person who asked for nothing, and it needs the write thread to
- * enter the modality. So this runs [action] on the calling thread, in a read action.
+ * enter the modality. So this runs [action] on the calling thread with no progress, see
+ * [runInCancellableReadAction]. The caller shows the progress, if it wants one.
  *
  * A language server counts its own event thread as EDT, so it keeps the progress and the behavior it
  * has today.
@@ -93,7 +95,7 @@ internal fun <T> runProcessWithProgressIfOnEdt(
     if (EDT.isCurrentThreadEdt()) {
         runProcessWithProgressSynchronously(progressTitle, canBeCancelled = true, project, action)
     } else {
-        runReadActionBlocking(action)
+        runInCancellableReadAction(action)
     }
 
 /**
@@ -110,7 +112,19 @@ internal fun <T> underModalProgressIfOnEdt(
     if (EDT.isCurrentThreadEdt()) {
         ActionUtil.underModalProgress(project, progressTitle) { computable() }
     } else {
-        runReadActionBlocking(computable)
+        runInCancellableReadAction(computable)
+    }
+
+/**
+ * A headless rename holds the read action of its caller, and that read action cancels [action]. A
+ * nested read action cannot, so this runs [action] as it is. With no read action, [action] runs in a
+ * non-blocking one, which a write action restarts.
+ */
+private fun <T> runInCancellableReadAction(action: () -> T): T =
+    if (ApplicationManager.getApplication().isReadAccessAllowed) {
+        action()
+    } else {
+        ReadAction.nonBlocking<T>(action).executeSynchronously()
     }
 
 fun checkConflictsAndReplaceUsageInfos(

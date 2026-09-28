@@ -1,5 +1,4 @@
 @file:Suppress("FunctionName")
-@file:OptIn(ExperimentalSerializationApi::class)
 
 package com.intellij.mcpserver.toolsets.general
 
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -51,7 +51,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 class RefactoringToolset : McpToolset {
@@ -148,8 +147,17 @@ class RefactoringToolset : McpToolset {
 
     // analyze() writes nothing and needs a read action only. It must stay off EDT, because the
     // Kotlin Analysis API refuses to resolve there. plan.apply() below is the step that writes.
-    val analysis = readAction {
-      ready.element()?.let { HeadlessRenameProcessor.analyze(project, it, newName) }
+    // The search can take long. A person cancels it from the status bar, and a write action restarts it.
+    // A person who keeps typing would restart it forever, so it gives up after a few attempts.
+    val progressTitle = McpServerBundle.message("tool.activity.renaming.symbol", request.symbolName, newName, pathInProject)
+    var attempts = 0
+    val analysis = withBackgroundProgress(project, progressTitle, cancellable = true) {
+      readAction {
+        if (++attempts > MAX_ANALYSIS_ATTEMPTS) {
+          return@readAction HeadlessRenameResult.Failed(HeadlessRenameFailure.PLAN_STALE, null)
+        }
+        ready.element()?.let { HeadlessRenameProcessor.analyze(project, it, newName) }
+      }
     } ?: return staleTarget(ready.resolvedSymbol)
     val plan = when (analysis) {
       is HeadlessRenameResult.Planned -> analysis.plan
@@ -499,6 +507,8 @@ class RefactoringToolset : McpToolset {
   }
 
   private companion object {
+    private const val MAX_ANALYSIS_ATTEMPTS: Int = 10
+
     private const val LEGACY_HINT: String =
       "This language has no headless rename support, so the rename ran on the legacy path. " +
       "It reports whether it wrote, and no reason. It can also stop on a dialog in the IDE."
