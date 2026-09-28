@@ -31,10 +31,16 @@ internal class PluginUpdateSourceCompatibilityTest {
       val firstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
       val sameFirstCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom.example.com")
       val secondCustomRepository = service.createCustomRepositoryPluginUpdateSourceId("https://custom2.example.com")
+      val firstMarketplaceChannelCustomRepository =
+        service.createCustomRepositoryPluginUpdateSourceId("https://plugins.jetbrains.com/plugins/beta/9185")
+      val secondMarketplaceChannelCustomRepository =
+        service.createCustomRepositoryPluginUpdateSourceId("https://plugins.jetbrains.com/plugins/beta/4067")
       val nightlyRepo = createNightlyPluginUpdateSourceId()
 
       assertCanInstallUpdatesFromSymmetricallyOnlyWithinLists(
-        listOf(firstMarketplace, secondMarketplace),
+        // theoretically marketplace channel repositories shouldn't be able to install updates from each other,
+        // but they by definition can't share plugins, so in real world it doesn't matter
+        listOf(firstMarketplace, secondMarketplace, firstMarketplaceChannelCustomRepository, secondMarketplaceChannelCustomRepository),
         listOf(firstNightlyRepository, secondNightlyRepository, nightlyRepo),
         listOf(firstCustomRepository, sameFirstCustomRepository),
         listOf(secondCustomRepository),

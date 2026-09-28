@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.updateSettings.impl.MarketplaceChannelUrlService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourcePluginsProvider
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade
 import com.intellij.openapi.util.BuildNumber
@@ -199,6 +200,12 @@ internal abstract class UpdateCheckerTestBase {
     val installedPlugins = plugins.asList()
     installedPluginsFacade.setPlugins(installedPlugins)
     pluginUpdateSourcePluginsProvider.setPlugins(installedPlugins.map { it.createTestPluginDescriptor() })
+  }
+
+  protected fun replaceMarketplaceChannelUrlService(marketplaceBaseUrl: String) {
+    application.replaceService(MarketplaceChannelUrlService::class.java,
+                               MarketplaceChannelUrlService.createInstance(marketplaceBaseUrl),
+                               testDisposable.get())
   }
 
   private val pluginUpdateSourcePluginsProvider: TestPluginUpdateSourcePluginsProvider

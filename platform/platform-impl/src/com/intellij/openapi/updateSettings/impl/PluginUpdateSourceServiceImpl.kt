@@ -205,8 +205,8 @@ internal data class XmlSerializableRepository(
 private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
 
 private fun createRepository(initialHost: String?): Repository {
-  val isMarketplace = initialHost == null
   val host = normalizeHost(initialHost)
+  val isMarketplace = initialHost == null || MarketplaceChannelUrlService.getInstance().isMarketplaceChannelUrl(host)
   return Repository(host,
                     isMarketplace,
                     isNightlyRepository(host, ApplicationManager.getApplication().isInternal))
