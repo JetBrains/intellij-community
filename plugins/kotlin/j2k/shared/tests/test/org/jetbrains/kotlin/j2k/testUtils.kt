@@ -95,6 +95,7 @@ fun getK2FileTextWithErrors(file: KtFile): String {
                 .filter { it.factoryName != "CLASSIFIER_REDECLARATION" && it.factoryName != "PACKAGE_CONFLICTS_WITH_CLASSIFIER" }
                 .filter { it.severity == KaSeverity.ERROR }
                 .map { it.defaultMessage.replace(oldChar = '\n', newChar = ' ') }
+                .sorted()
                 .toList()
         }
     }

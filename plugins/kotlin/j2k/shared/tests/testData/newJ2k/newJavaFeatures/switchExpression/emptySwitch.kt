@@ -1,5 +1,5 @@
-// ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
 // ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
+// ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
 object NonDefault {
     @JvmStatic
     fun main(args: Array<String>) {
