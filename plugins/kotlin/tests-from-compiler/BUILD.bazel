@@ -25,6 +25,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "kotlin.testsFromCompiler",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
