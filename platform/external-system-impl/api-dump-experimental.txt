@@ -21,17 +21,6 @@
 - <init>(java.util.List):V
 - getBuildIssue():com.intellij.build.issue.BuildIssue
 - getBuildIssues():java.util.List
-*f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher
-- com.intellij.build.BuildEventDispatcher
-- <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.BuildProgressListener):V
-- <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.BuildProgressListener,Z):V
-- append(C):com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher
-- append(java.lang.CharSequence):com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher
-- append(java.lang.CharSequence,I,I):com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher
-- close():V
-- invokeOnCompletion(java.util.function.Consumer):V
-- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
-- setStdOut(Z):V
 *:com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 - *sf:Companion:com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware$Companion
 - *s:getEnvironmentConfigurationProvider(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider

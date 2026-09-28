@@ -11,10 +11,12 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
-@ApiStatus.Experimental
-class ExternalSystemEventDispatcher(taskId: ExternalSystemTaskId,
-                                    progressListener: BuildProgressListener?,
-                                    appendOutputToMainConsole: Boolean) : BuildEventDispatcher {
+@ApiStatus.Internal
+class ExternalSystemEventDispatcher(
+  taskId: ExternalSystemTaskId,
+  progressListener: BuildProgressListener?,
+  appendOutputToMainConsole: Boolean,
+) : BuildEventDispatcher {
   constructor(taskId: ExternalSystemTaskId, progressListener: BuildProgressListener?) : this(taskId, progressListener, true)
 
   private lateinit var outputMessageDispatcher: ExternalSystemOutputMessageDispatcher

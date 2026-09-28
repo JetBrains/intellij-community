@@ -1030,19 +1030,6 @@ c:com.intellij.openapi.externalSystem.service.ImportCanceledException
 - <init>(java.lang.Throwable):V
 com.intellij.openapi.externalSystem.service.ParametersEnhancer
 - a:enhanceRemoteProcessing(com.intellij.execution.configurations.SimpleJavaParameters):V
-com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
-- sf:Companion:com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory$Companion
-- a:create(java.lang.Object,com.intellij.build.BuildProgressListener,Z,java.util.List):com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
-- a:getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
-f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
-- com.intellij.build.BuildProgressListener
-- java.io.Closeable
-- java.lang.Appendable
-- a:getStdOut():Z
-- a:invokeOnCompletion(java.util.function.Consumer):V
-- a:setStdOut(Z):V
 com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getBuildOutputParsers(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):java.util.List

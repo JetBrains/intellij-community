@@ -5,6 +5,8 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * Factory of [ExternalSystemOutputMessageDispatcher]s for external system task.
@@ -12,6 +14,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
  * @see ExternalSystemOutputMessageDispatcher
  * @see com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
  */
+@Internal
+@OverrideOnly
 interface ExternalSystemOutputDispatcherFactory {
   /**
    * External system id is needed to find applicable factory for external system task.

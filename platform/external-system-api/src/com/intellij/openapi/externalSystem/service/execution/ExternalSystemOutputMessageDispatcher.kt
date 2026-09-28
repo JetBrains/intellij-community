@@ -2,6 +2,8 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import java.io.Closeable
 import java.util.function.Consumer
 
@@ -10,6 +12,8 @@ import java.util.function.Consumer
  * and dispatches them into IDEA build progress.
  * @see BuildProgressListener
  */
+@Internal
+@OverrideOnly
 interface ExternalSystemOutputMessageDispatcher : Closeable, Appendable, BuildProgressListener {
   /**
    * Output type for next [append] and [onEvent] calls.

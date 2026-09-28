@@ -4,16 +4,6 @@ a:com.intellij.build.AbstractViewManager
 - com.intellij.build.ViewManager
 - com.intellij.openapi.Disposable
 - *:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
-*:com.intellij.build.BuildEventDispatcher
-- com.intellij.build.BuildProgressListener
-- java.io.Closeable
-- java.lang.Appendable
-- append(C):com.intellij.build.BuildEventDispatcher
-- append(java.lang.CharSequence):com.intellij.build.BuildEventDispatcher
-- append(java.lang.CharSequence,I,I):com.intellij.build.BuildEventDispatcher
-- close():V
-- invokeOnCompletion(java.util.function.Consumer):V
-- setStdOut(Z):V
 *:com.intellij.build.BuildProgressObservable
 - a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 f:com.intellij.build.BuildTreeFilters
