@@ -253,6 +253,20 @@ jvm_import(
 )
 
 copy_file(
+    name = "io.ktor/ktor-client-mock-jvm-3.6.0.jar_copy",
+    src = "@io_ktor-ktor-client-mock-jvm-3_6_0_http//file",
+    out = "io.ktor/ktor-client-mock-jvm-3.6.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "android-play-publishing-tests-ktor-client-mock-jvm",
+    jar = "@io_ktor-ktor-client-mock-jvm-3_6_0_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jetbrains.intellij.deps.android.tools.base/traceprocessor_protos-232.1.23.0.jar_copy",
     src = "@org_jetbrains_intellij_deps_android_tools_base-traceprocessor_protos-232_1_23_0_http//file",
     out = "org.jetbrains.intellij.deps.android.tools.base/traceprocessor_protos-232.1.23.0.jar",
@@ -2132,14 +2146,6 @@ jvm_import(
     name = "fleet-io-ktor-client-logging",
     jar = "@io_ktor-ktor-client-logging-jvm-3_6_0_http//file",
     source_jar = "@io_ktor-ktor-client-logging-jvm-3_6_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.ktor/ktor-client-mock-jvm-3.6.0.jar_copy",
-    src = "@io_ktor-ktor-client-mock-jvm-3_6_0_http//file",
-    out = "io.ktor/ktor-client-mock-jvm-3.6.0.jar",
-    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
