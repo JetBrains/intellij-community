@@ -24,6 +24,7 @@ import com.intellij.psi.util.elementType
 import org.intellij.markdown.html.entities.Entities
 import org.intellij.plugins.markdown.editor.toc.TableOfContentsMarkers
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
@@ -121,6 +122,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
   /**
    * Builds visible text for this header.
    * Visible text includes text content of all children without starting hash and a whitespace after hash.
+   * HTML tags are omitted.
    *
    * For a child inline link this method will only take it's visible part ([MarkdownLink.linkText]).
    *
@@ -146,12 +148,12 @@ class MarkdownHeader: MarkdownHeaderImpl {
     val builder = StringBuilder()
     val children = contentHolder.children().dropWhile { it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
     traverseNameText(builder, children, imageText)
-    return builder.toString().trim(' ')
+    return builder.toString().trim(' ').takeUnless { it.isEmpty() }
   }
 
   private fun traverseNameText(builder: StringBuilder, elements: Sequence<PsiElement>, imageText: (MarkdownImage) -> String) {
     for (child in elements) {
-      if (TableOfContentsMarkers.isHtmlComment(child)) {
+      if (child.hasType(MarkdownTokenTypes.HTML_TAG)) {
         continue
       }
       when (child) {

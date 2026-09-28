@@ -97,8 +97,9 @@ class GenerateTableOfContentsAction: AnAction() {
       return buildString {
         appendLine(sectionDelimiter)
         for (header in headers) {
-          appendHeader(header, indentSize)
-          appendLine()
+          if (appendHeader(header, indentSize)) {
+            appendLine()
+          }
         }
         append(sectionDelimiter)
       }
@@ -125,9 +126,9 @@ class GenerateTableOfContentsAction: AnAction() {
       return topLevelElements.filterIsInstance<MarkdownHeader>().filterNot(TableOfContentsMarkers::isOmittedFromToc)
     }
 
-    private fun StringBuilder.appendHeader(header: MarkdownHeader, indentSize: Int) {
-      val text = header.buildVisibleText(hideImages = false) ?: return
-      val reference = header.anchorText ?: return
+    private fun StringBuilder.appendHeader(header: MarkdownHeader, indentSize: Int): Boolean {
+      val text = header.buildVisibleText(hideImages = false) ?: return false
+      val reference = header.anchorText ?: return false
       repeat((header.level - 1) * indentSize) {
         append(' ')
       }
@@ -136,6 +137,7 @@ class GenerateTableOfContentsAction: AnAction() {
       append("](#")
       append(reference)
       append(")")
+      return true
     }
   }
 }

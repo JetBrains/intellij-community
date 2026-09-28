@@ -35,6 +35,10 @@ open class MarkdownStructureViewTest : MarkdownStructureViewTestCase() {
     doTest()
   }
 
+  fun testHeadersWithHtmlTags() {
+    doTest()
+  }
+
   fun testHeadersWithImages() {
     doTest()
   }

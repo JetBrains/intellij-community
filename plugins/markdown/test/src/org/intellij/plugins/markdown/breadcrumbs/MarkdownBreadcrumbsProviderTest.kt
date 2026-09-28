@@ -37,6 +37,12 @@ class MarkdownBreadcrumbsProviderTest : BasePlatformTestCase() {
     assertEquals(listOf("Heading"), myFixture.getBreadcrumbsAtCaret().map(Crumb::getText))
   }
 
+  fun `test html tags are hidden from breadcrumb text`() {
+    myFixture.configureByText("test.md", "# Some <b>bold</b> text\n## Foo<br>Bar\nText<caret>")
+
+    assertEquals(listOf("Some bold text", "FooBar"), myFixture.getBreadcrumbsAtCaret().map(Crumb::getText))
+  }
+
   fun `test setext heading is included in breadcrumbs`() {
     myFixture.configureByText("test.md", "Heading\n=======\nText<caret>")
 

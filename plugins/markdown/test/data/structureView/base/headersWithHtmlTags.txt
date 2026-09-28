@@ -1,0 +1,4 @@
+-headersWithHtmlTags.md
+ -[my title in MD file]
+  my head1
+ Invalid header: # <img src="a.png">

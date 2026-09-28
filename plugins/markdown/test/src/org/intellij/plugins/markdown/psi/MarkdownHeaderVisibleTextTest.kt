@@ -82,6 +82,14 @@ class MarkdownHeaderVisibleTextTest: LightPlatformCodeInsightTestCase() {
     doTest(content, "Some header  suffix", true)
   }
 
+  fun `test html tags`() {
+    // language=Markdown
+    val content = """
+    # Some <b>bold</b> text
+    """.trimIndent()
+    doTest(content, "Some bold text")
+  }
+
   private fun doTest(content: String, expected: String, hideImages: Boolean = false) {
     configureFromFileText("some.md", content)
     val header = firstElement as MarkdownHeader
