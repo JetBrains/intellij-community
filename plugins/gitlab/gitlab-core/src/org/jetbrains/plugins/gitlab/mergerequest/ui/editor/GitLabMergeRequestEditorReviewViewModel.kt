@@ -146,7 +146,11 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
       val discussions = discussionsResult.getOrNull() ?: emptyList()
       val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
 
-      (discussions + draftNotes + newDiscussions).associateBy { note -> note.trackingId }
+      buildList {
+        addAll(discussions)
+        addAll(draftNotes)
+        addAll(newDiscussions)
+      }.associateBy { note -> note.trackingId }
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)

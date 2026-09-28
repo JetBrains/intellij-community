@@ -57,7 +57,7 @@ class GitLabProjectViewModel(
   val connectedProjectVm: StateFlow<GitLabConnectedProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
       connection?.let { vmFactory.create(project, this, accountManager, projectsManager, it, ::activate) }
-    }.stateIn(cs, SharingStarted.Companion.Eagerly, null)
+    }.stateIn(cs, SharingStarted.Eagerly, null)
 
   val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {
     val preferences = project.service<GitLabMergeRequestsPreferences>()

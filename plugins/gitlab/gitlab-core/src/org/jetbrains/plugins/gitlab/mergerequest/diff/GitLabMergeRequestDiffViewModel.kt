@@ -163,7 +163,11 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
       val discussions = discussionsResult.getOrNull() ?: emptyList()
       val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
 
-      (discussions + draftNotes + newDiscussions).associateBy { it.trackingId }
+      buildList {
+        addAll(discussions)
+        addAll(draftNotes)
+        addAll(newDiscussions)
+      }.associateBy { it.trackingId }
     }.stateInNow(cs, emptyMap())
 
   override fun showChange(change: GitLabMergeRequestDiffChangeViewModel, scrollRequest: DiffViewerScrollRequest?) =
