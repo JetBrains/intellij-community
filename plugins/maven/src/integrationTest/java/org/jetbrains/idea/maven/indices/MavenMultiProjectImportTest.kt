@@ -2,82 +2,74 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.projectWizard.ProjectWizardTestCase
-import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.openapi.application.EDT
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.mavenProjectWizardFixture
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
-import junit.framework.TestCase
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 
-class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
-  override fun runInDispatchThread() = false
-  private var myDir: Path? = null
+@TestApplication
+class MavenMultiProjectImportTest {
+  private val maven by mavenProjectWizardFixture()
+  private lateinit var myDir: Path
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_NEW_WINDOW
   }
 
-  override fun tearDown() {
-    RunAll(
-      ThrowableRunnable {
-        super.tearDown()
-        GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.defaultConfirmNewProject()
-      },
-      ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() }
-    ).run()
+  @AfterEach
+  fun tearDown() {
+    GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.defaultConfirmNewProject()
   }
 
+  @Test
   fun testIndicesForDifferentProjectsShouldBeSameInstance() = runBlocking {
-    myDir = tempDir.newPath("", true)
-    val pom1 = createPomXml("projectDir1", """
+    myDir = Files.createTempDirectory(maven.wizards.contentRoot, "projects")
+    val pom1 = writePom("projectDir1", """
       <groupId>test</groupId>
       <artifactId>project1</artifactId>
       <version>1</version>
       """.trimIndent())
-    importMaven(myProject, pom1!!)
+    importMaven(maven.project, pom1!!)
 
-    val pom2 = createPomXml("projectDir2", """
+    val pom2 = writePom("projectDir2", """
       <groupId>test</groupId>
       <artifactId>project2</artifactId>
       <version>1</version>
       """.trimIndent())!!
 
-    val provider = MavenProjectImportProvider()
-    val module = withContext(Dispatchers.EDT) {
-      importProjectFrom(pom2.getPath(), null, provider)
-    }
+    val module = maven.wizards.importProjectFrom(pom2.path, null, MavenProjectImportProvider())
 
-    val project2 = module.getProject()
+    val project2 = module.project
     importMaven(project2, pom2)
     MavenIndicesManager.getInstance(project2).updateIndexList()
-    MavenIndicesManager.getInstance(myProject).updateIndexList()
+    MavenIndicesManager.getInstance(maven.project).updateIndexList()
     MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
 
-    TestCase.assertEquals(1, MavenSystemIndicesManager.getInstance().getAllGavIndices().size)
+    assertEquals(1, MavenSystemIndicesManager.getInstance().getAllGavIndices().size)
   }
 
-  private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {
-    val projectDir = myDir!!.resolve(dir)
+  private fun writePom(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {
+    val projectDir = myDir.resolve(dir)
     projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCase.createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml, omitModelVersionTag = false))
+    pom.write(createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml, omitModelVersionTag = false))
     return VirtualFileManager.getInstance().refreshAndFindFileByNioPath(pom)
   }
 

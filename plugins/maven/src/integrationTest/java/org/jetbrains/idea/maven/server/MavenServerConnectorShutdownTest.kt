@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
@@ -6,26 +6,32 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.maven.testFramework.assertWithinTimeout
+import com.intellij.maven.testFramework.fixtures.mavenProjectWizardFixture
+import com.intellij.maven.testFramework.fixtures.sdk
+import com.intellij.maven.testFramework.fixtures.waitForProjectCreation
 import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
-import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
-import org.jetbrains.idea.maven.wizards.sdk
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class MavenServerConnectorShutdownTest : MavenNewProjectWizardTestCase() {
-  override fun runInDispatchThread() = false
+@TestApplication
+class MavenServerConnectorShutdownTest {
+  private val maven by mavenProjectWizardFixture()
 
+  @Test
   fun `test connector is shut down on project closing`() = runBlocking {
     val mavenServerManager = MavenServerManager.getInstance()
     val connectorRef = Ref<MavenServerConnector>()
     // create project
-    waitForProjectCreation {
-      createProjectFromTemplate(JAVA) {
+    maven.waitForProjectCreation {
+      maven.wizards.createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
         it.javaBuildSystemData!!.buildSystem = MAVEN
-        it.javaMavenData!!.sdk = mySdk
+        it.javaMavenData!!.sdk = maven.sdk
       }
     }.withProjectAsync {
       val connectors = mavenServerManager.getAllConnectors().filter { it.project?.name == "project" }

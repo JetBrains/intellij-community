@@ -1,23 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.fixtures.createPom
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.mavenProjectWizardFixture
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
-class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
+@TestApplication
+class MavenAddFileAsMavenProjectActionTest {
+  private val maven by mavenProjectWizardFixture()
+
+  @Test
   fun `test import non-default pom`() = runBlocking {
-    val pom1: Path = createPom()
+    val pom1: Path = maven.createPom()
     val pom2 = pom1.parent.resolve("pom2.xml")
-    pom2.write(MavenTestCase.createPomXml(
+    pom2.write(createPomXml(
       MavenConstants.MODEL_VERSION_4_0_0,
       """
         <groupId>test</groupId>
@@ -26,6 +34,7 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
       """.trimIndent(),
       omitModelVersionTag = false))
 
+    val project = maven.project
     val file = StandardFileSystems.local().refreshAndFindFileByPath(pom2.toString())
     val event = TestActionEvent.createTestEvent {
       when {
@@ -38,9 +47,9 @@ class MavenAddFileAsMavenProjectActionTest : MavenProjectWizardTestCase() {
     val action = AddFileAsMavenProjectAction()
     action.actionPerformedAsync(event)
 
-    val projectsManager = MavenProjectsManager.getInstance(module.project)
+    val projectsManager = MavenProjectsManager.getInstance(project)
     val paths = projectsManager.state.originalFiles.map { Path.of(it) }
-    TestCase.assertEquals(1, paths.size)
-    TestCase.assertEquals(pom2, paths[0])
+    assertEquals(1, paths.size)
+    assertEquals(pom2, paths[0])
   }
 }

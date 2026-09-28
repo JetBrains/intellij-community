@@ -1,52 +1,57 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.ProjectTypeStep
-import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.maven.testFramework.fixtures.assertSize
+import com.intellij.maven.testFramework.fixtures.mavenProjectWizardFixture
+import com.intellij.maven.testFramework.fixtures.sdk
+import com.intellij.maven.testFramework.fixtures.waitForModuleCreation
+import com.intellij.maven.testFramework.fixtures.waitForProjectCreation
+import com.intellij.maven.testFramework.fixtures.withWizard
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.SystemProperty
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-var MavenNewProjectWizardData.sdk: Sdk?
-  get() = if (jdkIntent is ProjectWizardJdkIntent.ExistingJdk) (jdkIntent as ProjectWizardJdkIntent.ExistingJdk).jdk else null
-  set(value) { jdkIntent = ProjectWizardJdkIntent.fromJdk(value) }
+@TestApplication
+class MavenProjectWizardTest {
+  private val maven by mavenProjectWizardFixture()
 
-class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
-  override fun runInDispatchThread() = false
-
+  @Test
+  @RegistryKey(key = "ide.activity.tracking.enable.debug", value = "true")
+  @SystemProperty(propertyKey = "idea.force.commit.on.external.change", propertyValue = "true")
   fun `test when module is created then its pom is unignored`() = runBlocking {
-    Registry.get("ide.activity.tracking.enable.debug").setValue(true, testRootDisposable)
-    setSystemProperty("idea.force.commit.on.external.change", "true", testRootDisposable)
-
     // create project
-    waitForProjectCreation {
-      createProjectFromTemplate(JAVA) {
+    maven.waitForProjectCreation {
+      maven.wizards.createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
         it.javaBuildSystemData!!.buildSystem = MAVEN
-        it.javaMavenData!!.sdk = mySdk
+        it.javaMavenData!!.sdk = maven.sdk
       }
     }.useProjectAsync { project ->
       val mavenProjectsManager = MavenProjectsManager.getInstance(project)
       // import project
       assertModules(project, "project")
-      //val module = project.modules.single()
       assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
       // ignore pom
@@ -56,12 +61,12 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       assertEquals(ignoredPoms, mavenProjectsManager.ignoredFilesPaths)
 
       // create module
-      waitForModuleCreation {
-        createModuleFromTemplate(project, JAVA) {
+      maven.waitForModuleCreation {
+        maven.wizards.createModuleFromTemplate(project, JAVA) {
           it.baseData!!.name = "untitled"
           it.javaBuildSystemData!!.buildSystem = MAVEN
-          it.javaMavenData!!.sdk = mySdk
-          it.javaMavenData!!.parentData = mavenProjectsManager.findProject(module)
+          it.javaMavenData!!.sdk = maven.sdk
+          it.javaMavenData!!.parentData = null
         }
       }
       assertModules(project, "project", "untitled")
@@ -71,13 +76,14 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
     }
   }
 
+  @Test
   fun `test new maven module inherits project sdk by default`() = runBlocking {
     // create project
-    waitForProjectCreation {
-      createProjectFromTemplate(JAVA) {
+    maven.waitForProjectCreation {
+      maven.wizards.createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
         it.javaBuildSystemData!!.buildSystem = MAVEN
-        it.javaMavenData!!.sdk = mySdk
+        it.javaMavenData!!.sdk = maven.sdk
       }
     }.useProjectAsync { project ->
       // import project
@@ -87,11 +93,11 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
       // create
-      waitForModuleCreation {
-        createModuleFromTemplate(project, JAVA) {
+      maven.waitForModuleCreation {
+        maven.wizards.createModuleFromTemplate(project, JAVA) {
           it.baseData!!.name = "untitled"
           it.javaBuildSystemData!!.buildSystem = MAVEN
-          it.javaMavenData!!.sdk = mySdk
+          it.javaMavenData!!.sdk = maven.sdk
           it.javaMavenData!!.parentData = mavenProjectsManager.findProject(module)
         }
       }
@@ -104,12 +110,13 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
     }
   }
 
+  @Test
   fun `test configurator creates module in project structure modifiable model`() = runBlocking {
-    waitForProjectCreation {
-      createProjectFromTemplate(JAVA) {
+    maven.waitForProjectCreation {
+      maven.wizards.createProjectFromTemplate(JAVA) {
         it.baseData!!.name = "project"
         it.javaBuildSystemData!!.buildSystem = MAVEN
-        it.javaMavenData!!.sdk = mySdk
+        it.javaMavenData!!.sdk = maven.sdk
       }
     }.useProjectAsync { project ->
       assertModules(project, "project")
@@ -118,15 +125,19 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       val projectStructureConfigurable = ProjectStructureConfigurable.getInstance(project)
       val modulesConfigurator = projectStructureConfigurable.context.modulesConfigurator
-      val module = waitForModuleCreation {
-        withWizard({ modulesConfigurator.addNewModule(null)!! }) {
-          this as ProjectTypeStep
-          assertTrue(setSelectedTemplate(JAVA, null))
-          val step = customStep as NewProjectWizardStep
-          step.baseData!!.name = "untitled"
-          step.javaBuildSystemData!!.buildSystem = MAVEN
-          step.javaMavenData!!.sdk = mySdk
-        }.single()
+      val module = maven.waitForModuleCreation {
+        withContext(Dispatchers.EDT) {
+          writeIntentReadAction {
+            maven.withWizard({ modulesConfigurator.addNewModule(null)!! }) {
+              this as ProjectTypeStep
+              assertTrue(setSelectedTemplate(JAVA, null))
+              val step = customStep as NewProjectWizardStep
+              step.baseData!!.name = "untitled"
+              step.javaBuildSystemData!!.buildSystem = MAVEN
+              step.javaMavenData!!.sdk = maven.sdk
+            }.single()
+          }
+        }
       }
 
       assertEquals(setOf("project", "untitled"), modulesConfigurator.moduleModel.modules.map { it.name }.toSet())
