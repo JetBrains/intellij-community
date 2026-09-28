@@ -10,6 +10,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.markup.CustomHighlighterOrder
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -117,6 +118,8 @@ fun collectCodeFenceBackground(fence: MarkdownCodeFence, document: Document): Co
 }
 
 private class CodeFenceBackgroundRenderer(private val background: CodeFenceBackground) : CustomHighlighterRenderer {
+  override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.BEFORE_BACKGROUND
+
   override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
     val color = backgroundColor(editor) ?: return
     // offsetToXY maps every offset of a collapsed region to the line of its placeholder. A fence that
