@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.structureView.backend
 
+import com.intellij.ide.structureView.ModelListener
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModel.ElementInfoProvider
 import com.intellij.ide.structureView.StructureViewModel.ExpandInfoProvider
@@ -162,6 +163,14 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
 
             Disposer.register(disposable, treeModelWrapper)
 
+            // Rebuild on model changes like the legacy popup (FileStructurePopup) and the tool window (StructureViewComponent) do.
+            // Models that fill their tree asynchronously after creation - e.g. Rider's protocol-backed ProtocolStructureViewModel,
+            // which waits for the backend to send the tree - rely on it; otherwise a popup opened before the model is ready keeps
+            // the initial (empty) snapshot forever (RIDER-143462).
+            val modelListener = ModelListener { recomputeNodesOnModelChange(id) }
+            treeModelWrapper.addModelListener(modelListener)
+            Disposer.register(disposable, Disposable { treeModelWrapper.removeModelListener(modelListener) })
+
             // to get the same tree deduplication as in com.intellij.ui.treeStructure.filtered.FilteringTreeStructure.addToCache
             lateinit var filteringStructure: FilteringTreeStructure
             val wrapper = object : SmartTreeStructure(project, treeModelWrapper) {
@@ -230,7 +239,7 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
                   }
 
                   val nodesDto = nodes?.let {
-                    TreeNodesDto(it.editorSelectionId, it.nodes, it.nodeProviders, it.deferredProviderNodes)
+                    TreeNodesDto(it.editorSelectionId, it.nodes, it.nodeProviders, it.deferredProviderNodes, it.rootNode)
                   }
                   nodesFlow.emit(nodesDto)
                 }
@@ -287,6 +296,25 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
     return dto
   }
 
+  /**
+   * Re-sends the tree to the frontend after the [StructureViewModel] reported a change. Mirrors the tree-action path in
+   * `StructureTreeApiImpl.setTreeActionState`: rebuild the wrapper tree on the model's invoker, invalidate the tree model and
+   * request a new [StructureViewEvent.ComputeNodes]. A change fired before the entry is registered is covered by the initial
+   * rebuild and compute in [createStructureViewModel]; a change after disposal is dropped.
+   */
+  private fun recomputeNodesOnModelChange(id: StructureViewDtoId) {
+    val entry = structureViews[id.id] ?: return
+    entry.structureTreeModel.invoker.invoke {
+      if (entry.structureTreeModel.isDisposed) return@invoke
+      logger.trace { "createStructureViewModel[$id]: model changed, recomputing nodes" }
+      entry.wrapper.rebuildTree()
+      entry.structureTreeModel.invalidateAsync().thenRun {
+        if (entry.structureTreeModel.isDisposed) return@thenRun
+        entry.requestFlow.tryEmit(StructureViewEvent.ComputeNodes)
+      }
+    }
+  }
+
   suspend fun disposeStructureViewModel(id: StructureViewDtoId) {
     withContext(Dispatchers.EDT + NonCancellable) {
       val entry = structureViews[id.id] ?: return@withContext
@@ -300,6 +328,7 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
     val nodes: List<StructureViewTreeElementDto>,
     val nodeProviders: List<NodeProviderNodesDto>,
     val deferredProviderNodes: Deferred<DeferredNodesDto>,
+    val rootNode: StructureViewTreeElementDto?,
   )
 
   private fun computeNodes(entryId: Int): ComputeNodesResult? {
@@ -315,6 +344,7 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
     val nodeProvidersMap = getNodeProviders(entry.treeModel)?.filter { it !is DelegatingNodeProvider<*> }?.associate { it to mutableListOf<StructureViewTreeElementDto>() } ?: emptyMap()
     val expandInfoProvider = entry.treeModel as? ExpandInfoProvider
     val elementInfoProvider = getElementInfoProvider(entry.treeModel)
+    val rootNode = createRootModel(entry.wrapper.rootElement as TreeElementWrapper, expandInfoProvider, elementInfoProvider)
 
     //todo for not a popup these don't have to implement FileStructureFilter
     val filters = entry.treeModel.filters.filterIsInstance<FileStructureFilter>()
@@ -414,7 +444,8 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
       selection,
       mainNodes,
       nodeProviders,
-      deferredNodeProviders.asDeferred()
+      deferredNodeProviders.asDeferred(),
+      rootNode,
     )
   }
 

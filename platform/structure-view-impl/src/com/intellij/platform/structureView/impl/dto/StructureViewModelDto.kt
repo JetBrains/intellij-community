@@ -32,6 +32,7 @@ data class TreeNodesDto(
   val nodes: List<StructureViewTreeElementDto>,
   val nodeProviders: List<NodeProviderNodesDto>,
   @Serializable(with = DeferredSerializer::class) val deferredProviderNodes: Deferred<DeferredNodesDto?>,
+  val rootNode: StructureViewTreeElementDto? = null,
 )
 
 @ApiStatus.Internal
