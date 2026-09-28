@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -157,7 +158,8 @@ object TrustedProjectsDialog {
 
   /**
    * Shows a warning confirmation for trusting the location of a single file opened in the safe mode
-   * inside [hostProject]'s frame (see [com.intellij.ide.TrustedFiles]) and marks [filePath] trusted if the user confirms.
+   * inside [hostProject]'s frame (see [com.intellij.ide.TrustedFiles]).
+   * If the user confirms, marks [filePath] trusted, or adds its parent folder to the trusted locations when the user chooses the folder.
    *
    * @return `true` if the file became trusted
    */
@@ -176,11 +178,13 @@ object TrustedProjectsDialog {
       val parentPath = filePath.parent
       if (choice.isTrustFolder && parentPath != null) {
         TrustedProjectsStatistics.TRUST_FILE_LOCATION_CHECKBOX_SELECTED.log()
-        // record the folder grant first: setProjectTrusted fires the only trust event,
-        // and TrustedFilesCache must see the granted folder when it resets on that event
         service<TrustedPathsSettings>().addTrustedPath(parentPath.toString())
+        application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
+          .onProjectTrusted(TrustedProjectsLocator.locateProject(parentPath, project = null))
       }
-      TrustedProjects.setProjectTrusted(locatedFile, true)
+      else {
+        TrustedProjects.setProjectTrusted(locatedFile, true)
+      }
     }
 
     TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(hostProject, answer)
