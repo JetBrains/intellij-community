@@ -12,13 +12,14 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public final class TextFieldWithListAccessibleContext extends JTextComponent.AccessibleJTextComponent {
-
+  private final JTextComponent myTextComponent;
   private final AccessibleContext myListContext;
 
   private PropertyChangeSupport accessibleChangeSupport = null;
 
   public TextFieldWithListAccessibleContext(JTextComponent textComponent, AccessibleContext listContext) {
     textComponent.super();
+    myTextComponent = textComponent;
     myListContext = listContext;
   }
 
@@ -27,7 +28,9 @@ public final class TextFieldWithListAccessibleContext extends JTextComponent.Acc
     if (accessibleChangeSupport == null) {
       accessibleChangeSupport = new PropertyChangeSupport(this);
       super.addPropertyChangeListener(evt -> redirectEvent(evt));
-      myListContext.addPropertyChangeListener(evt -> redirectEvent(evt));
+      myListContext.addPropertyChangeListener(evt -> {
+        if (myTextComponent.isFocusOwner()) redirectEvent(evt);
+      });
     }
     accessibleChangeSupport.addPropertyChangeListener(listener);
   }
