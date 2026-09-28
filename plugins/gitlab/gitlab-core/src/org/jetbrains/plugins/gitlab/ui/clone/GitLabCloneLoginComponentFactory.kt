@@ -28,6 +28,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginInputPanelFactory
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginEntryViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneLoginViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneOAuthCustomServerLoginViewModel

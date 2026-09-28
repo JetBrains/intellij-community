@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.ui.clone
+package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.authentication.ui.GitLabOAuthLoginViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JLabel
 

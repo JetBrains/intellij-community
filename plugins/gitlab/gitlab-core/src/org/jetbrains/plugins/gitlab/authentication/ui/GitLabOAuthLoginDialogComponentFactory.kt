@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabCredentials
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabOAuthLoginInputPanelFactory
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import javax.swing.JComponent
 
