@@ -9,6 +9,7 @@ import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.util.ThreeState
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
@@ -59,6 +60,8 @@ object TrustedProjects {
     val explicitTrustedState = TrustedPaths.getInstance().getProjectTrustedState(locatedProject)
     return when {
       isTrustedCheckDisabledForProduct() -> ThreeState.YES
+      // before the explicit state: a recorded answer for a system path is stale and must not win
+      isSystemTrusted(locatedProject) -> ThreeState.YES
       explicitTrustedState != ThreeState.UNSURE -> explicitTrustedState
       LightEdit.owns(locatedProject.project) && locatedProject.project === LightEditUtil.getProjectIfCreated() -> ThreeState.YES
       TrustedPathsSettings.getInstance().isProjectTrusted(locatedProject) -> {
@@ -71,6 +74,11 @@ object TrustedProjects {
 
   @ApiStatus.Internal
   fun setProjectTrusted(locatedProject: LocatedProject, isTrusted: Boolean) {
+    // a system path is trusted implicitly: keep it out of the persistent state,
+    // so it never appears in Settings | Trusted Locations and cannot be revoked there
+    if (isSystemTrusted(locatedProject)) {
+      return
+    }
     val trustedPaths = TrustedPaths.getInstance()
     val oldState = trustedPaths.getProjectTrustedState(locatedProject)
     trustedPaths.setProjectTrustedState(locatedProject, isTrusted)
@@ -96,6 +104,27 @@ object TrustedProjects {
   fun isProjectLocationOfferedForTrust(projectPath: Path): Boolean {
     val parent = projectPath.parent ?: return false
     return !parent.startsWith(PathManager.getOriginalConfigDir())
+  }
+
+  /**
+   * Whether [path] is a system path: a path the IDE owns, currently the welcome-screen ("Home") project directory.
+   *
+   * A system path is trusted unconditionally, like the custom VM options file. Its trust state is never
+   * persisted, and the path never appears in Settings | Trusted Locations (IJPL-254558). The check depends
+   * only on the registered [WelcomeScreenProjectProvider], not on the non-modal welcome-screen toggle,
+   * so a stale recorded answer is healed after the toggle changes.
+   */
+  @ApiStatus.Internal
+  fun isSystemTrustedPath(path: Path): Boolean {
+    val welcomeScreenProjectPath = WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() ?: return false
+    return path.startsWith(welcomeScreenProjectPath)
+  }
+
+  /** Whether every root of [locatedProject] is a [system path][isSystemTrustedPath]. */
+  private fun isSystemTrusted(locatedProject: LocatedProject): Boolean {
+    val welcomeScreenProjectPath = WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() ?: return false
+    val roots = locatedProject.projectRoots
+    return roots.isNotEmpty() && roots.all { it.startsWith(welcomeScreenProjectPath) }
   }
 
   /**
