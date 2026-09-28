@@ -267,6 +267,18 @@ object PyTypeChecker {
     return collectInto(collector, body).first
   }
 
+  /** Runs [body] with normal short-circuiting and without creating nested explanations. */
+  private inline fun <T> withoutDiagnostics(context: MatchContext, body: () -> T): T {
+    val collector = context.diagnostics ?: return body()
+    context.diagnostics = null
+    try {
+      return body()
+    }
+    finally {
+      context.diagnostics = collector
+    }
+  }
+
   /**
    * Renders [type] as a [PyInspectionMessages.CodifiedParam] for a breakdown message: the description is the plain
    * type name (so [PyTypeMismatchExplanation.message]'s description stays the same text the Problems view would show),
@@ -1002,6 +1014,10 @@ object PyTypeChecker {
     return match(expectedParameters, actual, context)
   }
 
+  /** Whether [composite] is too wide for a per-member breakdown. See [maxBreakdownMembers]. */
+  private fun exceedsBreakdownBound(composite: PyCompositeTypeBase): Boolean =
+    isCompositeSinglePassEnabled() && composite.members.size > maxBreakdownMembers()
+
   private fun match(expected: PyType, actual: PyUnionType, context: MatchContext): Boolean {
     if (expected is PyTupleType) {
       // XXX A type-widening hack for cases like PyTypeTest.testDictFromTuple
@@ -1014,10 +1030,21 @@ object PyTypeChecker {
     // `||` short-circuits, so when strict semantics are off the literal scan still runs exactly as before.
     val requireAll = PyUnionType.isStrictSemanticsEnabled() || // checking strictly separately until PY-24834 gets implemented
                      actual.members.any { it is PyLiteralStringType || it is PyLiteralType }
-    // The original short-circuiting `all`/`any` with zero overhead when no breakdown is being collected.
-    if (context.diagnostics == null) {
-      return if (requireAll) actual.members.all { match(expected, it, context).getOrDefault(false) }
-             else actual.members.any { match(expected, it, context).getOrDefault(false) }
+    // Short-circuit when no breakdown is collected, and when the union is too wide to break down.
+    if (context.diagnostics == null || exceedsBreakdownBound(actual)) {
+      val shortCircuited = withoutDiagnostics(context) {
+        if (requireAll) actual.members.all { match(expected, it, context).getOrDefault(false) }
+        else actual.members.any { match(expected, it, context).getOrDefault(false) }
+      }
+      if (!shortCircuited) {
+        recordLeaf(context, {
+          PyMismatchStep.NoUnionMember(codifiedType(context, actual), codifiedType(context, expected), actualIsUnion = true)
+        }) {
+          PyPsiBundle.problemMessage("INSP.type.checker.breakdown.union.member.not.assignable",
+                                     codifiedType(context, actual), codifiedType(context, expected))
+        }
+      }
+      return shortCircuited
     }
 
     // One walk: buffer each failing member's reasons ([collectInto]), then pick the shape below. The shape
@@ -1094,7 +1121,13 @@ object PyTypeChecker {
     }, {
       PyMismatchStep.NoUnionMember(codifiedType(context, actual), codifiedType(context, expected))
     }) {
-      matchAnyUnionMember(expected.members, actual, context)
+      // Past the bound the summary node keeps its line but loses the per-member sub-reasons.
+      if (exceedsBreakdownBound(expected)) {
+        withoutDiagnostics(context) { matchAnyUnionMember(expected.members, actual, context) }
+      }
+      else {
+        matchAnyUnionMember(expected.members, actual, context)
+      }
     }
   }
 
@@ -1138,14 +1171,20 @@ object PyTypeChecker {
     if (actual in expected.members) {
       return true
     }
-    // Mirror of the [PyUnionType] case: record a per-member breakdown when collecting, otherwise plain `any`.
+    // Mirror of the [PyUnionType] case: record a per-member breakdown when collecting, otherwise plain `any`,
+    // and drop the sub-reasons past the breakdown bound.
     return recordFrameBool(context, {
       PyPsiBundle.problemMessage("INSP.type.checker.breakdown.not.assignable.to.union",
                                  codifiedType(context, actual), codifiedType(context, expected))
     }, {
       PyMismatchStep.NoUnionMember(codifiedType(context, actual), codifiedType(context, expected))
     }) {
-      matchAnyUnionMember(expected.members, actual, context)
+      if (exceedsBreakdownBound(expected)) {
+        withoutDiagnostics(context) { matchAnyUnionMember(expected.members, actual, context) }
+      }
+      else {
+        matchAnyUnionMember(expected.members, actual, context)
+      }
     }
   }
 
