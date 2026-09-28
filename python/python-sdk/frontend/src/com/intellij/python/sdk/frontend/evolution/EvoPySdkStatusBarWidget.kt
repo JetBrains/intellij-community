@@ -280,7 +280,14 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     scope.launch {
       requestEvoSdkConfigurationInProgress(project.projectId()).collect { inProgress ->
         configuring = inProgress
-        if (!inProgress) project.service<EvoConfiguringTracker>().nodeId = null   // stop attributing the fade to a tool
+        if (!inProgress) {
+          project.service<EvoConfiguringTracker>().nodeId = null   // stop attributing the fade to a tool
+          // A configuration can retype an interpreter in place, keeping the SDK's name and every root, so neither the
+          // key this data is held under nor its model stamp moves and nothing else would retire it (PY-92507). Safe to
+          // drop unconditionally: nothing cached is on screen while the lock is held.
+          cache.clear()
+          dropPopupTree()
+        }
         update()
       }
     }
