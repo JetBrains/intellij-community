@@ -4,7 +4,6 @@
 package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.ide.DataManager
-import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
@@ -26,6 +25,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.charset.StandardCharsets
@@ -45,7 +45,7 @@ fun MavenImportingTestFixture.createProjectPom(@Language(value = "XML", prefix =
 
 /**
  * Writes [content] verbatim to the project-root `pom.xml` and makes it the project pom. Unlike [createProjectPom], it
- * does NOT wrap the content via [MavenTestCase.createPomXml], so the test keeps full control over the file (e.g. a
+ * does NOT wrap the content via [createPomXml], so the test keeps full control over the file (e.g. a
  * custom `<?xml ...?>` declaration, explicit `xmlns`, or model version).
  */
 fun MavenImportingTestFixture.setRawPomFile(content: String) {
@@ -75,7 +75,7 @@ fun MavenImportingTestFixture.updateModulePom(relativePath: String, @Language(va
 
 fun MavenImportingTestFixture.createPomFile(dir: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val filePath = Path.of(dir.path, "pom.xml")
-  Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, false))
+  Files.writeString(filePath, createPomXml(modelVersion, xml, false))
   dir.refresh(false, false)
   val f = dir.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml ${filePath.absolutePathString()} in VFS")
   refreshFiles(listOf(f))
@@ -175,7 +175,7 @@ fun MavenTestFixture.updateProjectSubFile(relativePath: String, content: String)
 }
 
 fun MavenImportingTestFixture.setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
-  Files.writeString(file.toNioPath(), MavenTestCase.createPomXml(modelVersion, xml, false))
+  Files.writeString(file.toNioPath(), createPomXml(modelVersion, xml, false))
   refreshFiles(listOf(file))
 }
 
@@ -221,7 +221,28 @@ fun MavenTestFixture.configConfirmationForNoAnswer(): AtomicInteger {
 }
 
 fun MavenImportingTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
-  return MavenTestCase.createPomXml(modelVersion, xml, false)
+  return createPomXml(modelVersion, xml, false)
+}
+
+/** Wraps [xml] into a full `pom.xml` document with the namespace of [modelVersion]. */
+@Language("XML")
+fun createPomXml(
+  modelVersion: String,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?,
+  omitModelVersionTag: Boolean,
+): @NonNls String {
+  val projectStartTag = """
+        <?xml version="1.0"?>
+        <project xmlns="http://maven.apache.org/POM/$modelVersion"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+      """.trimIndent()
+  return if (omitModelVersionTag) {
+    "$projectStartTag\n$xml</project>"
+  }
+  else {
+    "$projectStartTag\n  <modelVersion>$modelVersion</modelVersion>\n$xml</project>"
+  }
 }
 
 val MavenTestFixture.projectPath: Path
@@ -292,7 +313,7 @@ fun MavenImportingTestFixture.createPomFile(
   omitModelVersionTag: Boolean,
 ): VirtualFile {
   val filePath = Path.of(dir.path, "pom.xml")
-  Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, omitModelVersionTag))
+  Files.writeString(filePath, createPomXml(modelVersion, xml, omitModelVersionTag))
   dir.refresh(false, false)
   val f = dir.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml ${filePath.absolutePathString()} in VFS")
   refreshFiles(listOf(f))
@@ -306,7 +327,7 @@ fun MavenImportingTestFixture.createPomFile(
   omitModelVersionTag: Boolean = false,
 ): VirtualFile {
   val filePath = Path.of(dir.path, fileName)
-  Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, omitModelVersionTag))
+  Files.writeString(filePath, createPomXml(modelVersion, xml, omitModelVersionTag))
   dir.refresh(false, false)
   val f = dir.findChild(fileName) ?: throw AssertionError("can't find $fileName ${filePath.absolutePathString()} in VFS")
   refreshFiles(listOf(f))

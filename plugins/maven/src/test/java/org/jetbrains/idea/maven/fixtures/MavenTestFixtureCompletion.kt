@@ -9,6 +9,7 @@ import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertDoNotContain
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.configTest
+import com.intellij.maven.testFramework.fixtures.createPomXml
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -108,24 +109,4 @@ fun MavenDomTestFixture.createPomXml(
   omitModelVersionTag: Boolean = false,
 ): @NonNls String {
   return createPomXml(modelVersion, xml, omitModelVersionTag)
-}
-
-@Language("XML")
-fun createPomXml(
-  modelVersion: String,
-  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?,
-  omitModelVersionTag: Boolean,
-): @NonNls String {
-  val projectStartTag = """
-        <?xml version="1.0"?>
-        <project xmlns="http://maven.apache.org/POM/$modelVersion"
-                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
-      """.trimIndent()
-  return if (omitModelVersionTag) {
-    "$projectStartTag\n$xml</project>"
-  }
-  else {
-    "$projectStartTag\n  <modelVersion>$modelVersion</modelVersion>\n$xml</project>"
-  }
 }
