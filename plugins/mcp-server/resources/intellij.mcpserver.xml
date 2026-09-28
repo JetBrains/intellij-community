@@ -58,6 +58,7 @@
     <extensionPoint qualifiedName="com.intellij.mcpServer.mcpProjectPathCustomizer" interface="com.intellij.mcpserver.McpProjectPathCustomizer" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.mcpManagedSessionSupport" interface="com.intellij.mcpserver.McpManagedSessionSupport" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.elicitationProvider" interface="com.intellij.mcpserver.elicitation.McpElicitationProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.freshInstallPolicy" interface="com.intellij.mcpserver.McpServerFreshInstallPolicy" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.projectDependenciesProvider" interface="com.intellij.mcpserver.McpProjectDependenciesProvider" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.statusBarWidgetProvider" interface="com.intellij.mcpserver.widget.McpServerStatusBarWidgetProvider" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.mcpCallOwnerTelemetryProvider" interface="com.intellij.mcpserver.McpCallOwnerTelemetryProvider" dynamic="true" />
@@ -66,6 +67,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+    <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerConsentGate"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService" os="windows"/>
     <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl" open="true"/>
 

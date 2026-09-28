@@ -31,11 +31,15 @@ internal class McpServerSettingsPersistenceTest {
     settings.enableMcpServer = true
     settings.enableBraveMode = true
     settings.mcpServerPort = 64445
+    settings.consent = McpServerConsent.DENIED
+    settings.enabledByFreshInstallPolicy = true
 
     val persisted = settings.getState()
     assertThat(persisted.enableMcpServer).isTrue()
     assertThat(persisted.enableBraveMode).isTrue()
     assertThat(persisted.mcpServerPort).isEqualTo(64445)
+    assertThat(persisted.consent).isEqualTo(McpServerConsent.DENIED)
+    assertThat(persisted.enabledByFreshInstallPolicy).isTrue()
   }
 
   private fun withRestoredSettings(action: (McpServerSettingsImpl) -> Unit) {

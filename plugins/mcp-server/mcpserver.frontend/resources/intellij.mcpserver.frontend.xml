@@ -28,6 +28,9 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.mcpserver.McpServerConsentUi"
+                        serviceImplementation="com.intellij.mcpserver.frontend.util.McpServerConsentUiImpl"/>
+
     <serviceViewContributor implementation="com.intellij.mcpserver.frontend.services.McpServiceViewContributor"/>
 
     <statusBarWidgetFactory id="McpServerStatusBarWidget"

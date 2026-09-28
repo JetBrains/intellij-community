@@ -1153,7 +1153,45 @@ Implementation details:
 
 These overrides are **not a public API** — they are JetBrains-internal knobs for evaluation and should not be depended on by downstream plugins.
 
-### 17.7 Session lifetime registry keys
+### 17.7 First-call consent
+
+Most products ship the server off, and the user turns it on in the settings or in the status-bar popup. Each of those paths shows the consent
+dialog first, so the user always agrees before the server starts.
+
+A product can instead start the server on a fresh install, so a client connects without any setup. This plugin is shared and does not know
+which product it runs in, so the product opts in from its own code through the `com.intellij.mcpServer.freshInstallPolicy` extension point,
+which [`McpServerSettingsImpl.noStateLoaded()`](src/com/intellij/mcpserver/settings/McpServerSettings.kt) consults. DataGrip is the only
+product that does this today, from `intellij.datagrip.mcp`, a content module of the DataGrip-only `com.intellij.datagrip.customization`
+plugin.
+
+The policy can also enable the server for an existing settings store. DataGrip stores its one-time marker in `mcpServer.xml`.
+Thus, an existing disabled server starts once after the update. Deleting this file resets the settings and the marker.
+
+The user has agreed to nothing at that point, so the server listens but serves nothing until it gets an answer.
+`McpServerSettings.consent` holds that answer:
+
+| State       | Meaning                                                                                                     |
+|-------------|-------------------------------------------------------------------------------------------------------------|
+| `NOT_ASKED` | A fresh-install policy started the server, and no answer has arrived yet. The next call asks the user.       |
+| `GRANTED`   | The user agreed, in the consent dialog or by an explicit `McpServerService.start()`. Nothing asks again.     |
+| `DENIED`    | The user refused. The server is off, and nothing asks again. The user can still turn it on in the settings.  |
+
+[`McpServerConsentGate`](src/com/intellij/mcpserver/impl/McpServerConsentGate.kt) enforces this. It runs in the `prePhase` of the global
+server, the same per-request hook that carries the token check, so it covers `/sse`, `/message` and `/stream` alike. A refused call gets
+`403`, and the refusal also stops the server. The private token-authorized server of `authorizedSession` is not gated, because the IDE starts
+it for a flow the user already began.
+
+The dialog itself lives on the frontend, so the frontend registers `McpServerConsentUi` as an application service. A host with no frontend
+has no service, and the gate then refuses the call without recording a decision.
+
+`enabledByFreshInstallPolicy` records that a policy started the server, rather than the user. `BaseState` writes only a value that differs from
+its declared default, and `NOT_ASKED` is the default of `consent`, so `consent` never reaches `mcpServer.xml` while the answer is missing.
+Without the extra flag an unanswered server on disk looks exactly like a server that a user of an earlier build turned on, and `loadState`
+would grant a consent that nobody gave as soon as the IDE restarts. The gate clears the flag together with the answer.
+
+`idea.mcp.server.force.enable` bypasses the gate, the same way it bypasses the enabled flag.
+
+### 17.8 Session lifetime registry keys
 
 | Registry key                                    | Default  | Effect                                                                                                                               |
 |-------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|

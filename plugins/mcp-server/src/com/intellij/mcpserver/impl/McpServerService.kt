@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
@@ -15,6 +16,7 @@ import com.intellij.mcpserver.impl.util.network.installHostValidation
 import com.intellij.mcpserver.impl.util.network.installHttpRequestPropagation
 import com.intellij.mcpserver.impl.util.network.isPortAvailable
 import com.intellij.mcpserver.impl.util.network.mcpPatched
+import com.intellij.mcpserver.settings.McpServerConsent
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
@@ -31,7 +33,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
@@ -250,7 +251,10 @@ open class McpServerService(val cs: CoroutineScope) {
     get() = connectionAddressProvider.serverStreamUrl
 
   fun start() {
-    McpServerSettings.getInstance().enableMcpServer = true
+    val settings = McpServerSettings.getInstance()
+    settings.enableMcpServer = true
+    // Every caller either showed the consent dialog first, or is an explicit command such as the headless starter.
+    settings.consent = McpServerConsent.GRANTED
     settingsChanged(true)
   }
 
@@ -490,7 +494,14 @@ open class McpServerService(val cs: CoroutineScope) {
       installHostValidation()
       installHttpRequestPropagation()
 
-      mcpPatched(prePhase = {
+      mcpPatched(prePhase = prePhase@{
+        // The global server may run before the user agreed to it, so the first call asks. The private server is
+        // started by the IDE itself for a flow the user already began, so it needs no consent.
+        if (!authCheck && !serviceAsync<McpServerConsentGate>().awaitConsent()) {
+          call.respond(HttpStatusCode.Forbidden, McpServerBundle.message("mcp.server.consent.not.granted"))
+          finish()
+          return@prePhase
+        }
         if (authCheck) {
           val authToken = call.request.headers[IJ_MCP_AUTH_TOKEN]
           if (authToken == null || !isKnownToken(authToken)) {

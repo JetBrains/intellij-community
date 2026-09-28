@@ -8,15 +8,25 @@ import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.settings.McpServerConsent
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 
 internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector() {
-  // v10: mcp.tools.exposed, the aggregate cost of what the IDE exposes.
-  private val GROUP = EventLogGroup("mcpserver", 10)
+  // v11: mcp.consent, the answer to the first-call consent request.
+  private val GROUP = EventLogGroup("mcpserver", 11)
   private val MCP_RUNNING = GROUP.registerEvent("mcp.running", EventFields.Enabled)
   private val MCP_BRAVE_MODE_ENABLED = GROUP.registerEvent("mcp.brave.mode.enabled", EventFields.Enabled)
+  private val MCP_CONSENT = GROUP.registerEvent(
+    "mcp.consent",
+    EventFields.Enum(
+      "consent",
+      McpServerConsent::class.java,
+      "Whether the user allowed the MCP server to serve requests. NOT_ASKED means the server runs by default in this " +
+      "product and no call has reached it yet.",
+    ),
+  )
   private val MCP_GLOBAL_CLIENTS = GROUP.registerEvent("mcp.global.clients",
                                                        EventFields.Enum<McpClientInfo.Name>("client_type") { it.baseName },
                                                        EventFields.Boolean("is_configured"),
@@ -66,6 +76,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
 
     metrics.add(MCP_RUNNING.metric(mcpServerService.isRunning))
     metrics.add(MCP_BRAVE_MODE_ENABLED.metric(settings.enableBraveMode))
+    metrics.add(MCP_CONSENT.metric(settings.consent))
     metrics.add(MCP_ROUTER_MODE.metric(McpToolFilterSettings.getInstance().invocationMode))
 
     McpClientDetector.detectGlobalMcpClients().forEach { client ->
