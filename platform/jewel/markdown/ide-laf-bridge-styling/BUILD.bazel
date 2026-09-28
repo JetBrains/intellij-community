@@ -34,6 +34,16 @@ jvm_provided_library(
     lib = "//platform/jewel/markdown/extensions/front-matter",
 )
 
+jvm_provided_library(
+    name = "platform_projectModel_provided",
+    lib = "//platform/projectModel-api:projectModel",
+)
+
+jvm_provided_library(
+    name = "libraries_ktor_client_provided",
+    lib = "//libraries/ktor/client",
+)
+
 jvm_library(
     name = "ide-laf-bridge-styling",
     srcs = glob(
@@ -68,7 +78,9 @@ jvm_library(
         "//platform/jewel/ui",
         "//platform/jewel/foundation",
         "//platform/jewel/ide-laf-bridge",
+        "//platform/jewel/markdown/extensions/images",
         "//platform/ide-core",
+        "//libraries/coil",
         "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
         "//libraries/compose-foundation-desktop",
@@ -77,6 +89,8 @@ jvm_library(
         ":platform_jewel_markdown_extensions_gfm-alerts_provided",
         ":platform_jewel_markdown_extensions_gfm-tables_provided",
         ":platform_jewel_markdown_extensions_front-matter_provided",
+        ":platform_projectModel_provided",
+        ":libraries_ktor_client_provided",
     ],
 )
 
@@ -116,7 +130,13 @@ jvm_library(
         "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
         "//platform/jewel/markdown/extensions/front-matter",
         "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
+        "//platform/jewel/markdown/extensions/images:images_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//libraries/coil:coil_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//libraries/ktor/client",
+        "//libraries/ktor/client:client_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",

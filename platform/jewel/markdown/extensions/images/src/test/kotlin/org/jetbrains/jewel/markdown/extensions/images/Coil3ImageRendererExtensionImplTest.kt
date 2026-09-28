@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import coil3.ColorImage
 import coil3.ImageLoader
 import coil3.PlatformContext
-import coil3.annotation.ExperimentalCoilApi
 import coil3.decode.DataSource
 import coil3.request.ErrorResult
 import coil3.request.SuccessResult
@@ -71,7 +70,7 @@ import org.junit.Test
 
 private const val PARAGRAPH_WRAPPER_TAG = "paragraph-wrapper"
 
-@OptIn(ExperimentalCoilApi::class, ExperimentalJewelApi::class)
+@OptIn(ExperimentalJewelApi::class)
 @Suppress("LargeClass")
 public class Coil3ImageRendererExtensionImplTest {
     @get:Rule public val composeTestRule: ComposeContentTestRule = createComposeRule()
@@ -1431,6 +1430,29 @@ public class Coil3ImageRendererExtensionImplTest {
         assertEquals(destination, link.tag)
     }
 
+    @Test
+    public fun `image should load successfully with custom overload`() {
+        val fakeImageWidth = 150
+        val fakeImageHeight = 100
+        val fakeImage = ColorImage(Color.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
+
+        val engine = FakeImageLoaderEngine.Builder().intercept({ it == loadingImageUrl }, fakeImage).build()
+
+        val imageRenderer =
+            Coil3ImageRendererExtension.withDefaultLoader(platformContext) { components { add(engine) } }
+
+        val imageMarkdown =
+            InlineMarkdown.Image(source = loadingImageUrl, alt = "Alt text", title = "Image loaded successfully")
+
+        setContent(imageRenderer, imageMarkdown)
+
+        composeTestRule
+            .onNodeWithContentDescription("Image loaded successfully")
+            .assertExists()
+            .assertWidthIsEqualTo(fakeImageWidth.dp)
+            .assertHeightIsEqualTo(fakeImageHeight.dp)
+    }
+
     private fun assertFailedLinkExists(altText: String) {
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodes(hasText(altText, substring = true)).fetchSemanticsNodes().isNotEmpty()
@@ -1442,20 +1464,32 @@ public class Coil3ImageRendererExtensionImplTest {
         setConstrainedContentWithParagraph(imageLoader, paragraph, containerWidthDp = Int.MAX_VALUE)
     }
 
+    private fun setContent(imageRenderer: Coil3ImageRendererExtension, vararg images: InlineMarkdown.Image) {
+        val paragraph = Paragraph(*images)
+        setConstrainedContentWithParagraph(imageRenderer, paragraph, containerWidthDp = Int.MAX_VALUE)
+    }
+
     private fun setConstrainedContentWithParagraph(
         imageLoader: ImageLoader,
         paragraph: Paragraph,
         containerWidthDp: Int,
     ) {
+        setConstrainedContentWithParagraph(Coil3ImageRendererExtension(imageLoader), paragraph, containerWidthDp)
+    }
+
+    private fun setConstrainedContentWithParagraph(
+        imageRenderer: Coil3ImageRendererExtension,
+        paragraph: Paragraph,
+        containerWidthDp: Int,
+    ) {
         composeTestRule.setContent {
             JewelTheme(createMarkdownTestThemeDefinition()) {
-                val imageExtension = Coil3ImageRendererExtension(imageLoader)
                 val markdownStyling = createMarkdownTestStyling()
                 val blockRenderer =
                     DefaultMarkdownBlockRenderer(
                         rootStyling = markdownStyling,
-                        rendererExtensions = listOf(imageExtension),
-                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageExtension)),
+                        rendererExtensions = listOf(imageRenderer),
+                        inlineRenderer = DefaultInlineMarkdownRenderer(listOf(imageRenderer)),
                     )
                 Box(modifier = Modifier.width(containerWidthDp.dp).testTag(PARAGRAPH_WRAPPER_TAG)) {
                     blockRenderer.RenderParagraph(

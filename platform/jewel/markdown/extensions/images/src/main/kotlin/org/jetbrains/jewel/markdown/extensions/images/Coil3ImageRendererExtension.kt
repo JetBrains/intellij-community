@@ -60,9 +60,36 @@ public class Coil3ImageRendererExtension(private val imageLoader: ImageLoader) :
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         public fun withDefaultLoader(context: PlatformContext): Coil3ImageRendererExtension =
+            withDefaultLoader(context) {}
+
+        /**
+         * A default image loader with a limited in-memory cache, with additional configuration.
+         *
+         * The [imageLoaderBuilder] lambda runs after the default configuration, so it can add to the defaults or
+         * override them. For example, a host application can register its own network fetcher with
+         * [ImageLoader.Builder.components].
+         *
+         * This shouldn't be used if there is an app-wide image loader already available; instead, use the constructor
+         * to pass in the already available image loader.
+         *
+         * Note that every invocation creates a new [ImageLoader]; it is not recommended to call this method multiple
+         * times in a process. Instead, create one top-level instance and share it throughout the process if at all
+         * possible.
+         *
+         * @param context The [PlatformContext] to use to create the [ImageLoader].
+         * @param imageLoaderBuilder Additional configuration for the [ImageLoader.Builder]. It runs after the default
+         *   configuration.
+         */
+        @ApiStatus.Experimental
+        @ExperimentalJewelApi
+        public fun withDefaultLoader(
+            context: PlatformContext,
+            imageLoaderBuilder: ImageLoader.Builder.() -> Unit,
+        ): Coil3ImageRendererExtension =
             Coil3ImageRendererExtension(
                 ImageLoader.Builder(context)
                     .memoryCache { MemoryCache.Builder().maxSizeBytes { DEFAULT_MEMORY_CACHE_SIZE }.build() }
+                    .apply(imageLoaderBuilder)
                     .build()
             )
     }

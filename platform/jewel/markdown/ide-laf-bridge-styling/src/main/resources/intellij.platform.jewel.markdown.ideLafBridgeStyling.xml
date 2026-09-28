@@ -4,6 +4,8 @@
       <module name="intellij.platform.jewel.markdown.extensions.frontMatter"/>
       <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
       <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
+      <module name="intellij.platform.jewel.markdown.extensions.images"/>
+      <module name="intellij.libraries.coil"/>
       <module name="intellij.libraries.jetbrains.annotations"/>
       <module name="intellij.libraries.kotlinx.coroutines.core"/>
       <module name="intellij.platform.core"/>
