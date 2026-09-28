@@ -20,15 +20,6 @@ class ProjectRootPersistentStateComponent : SerializablePersistentStateComponent
     }
   }
 
-  /**
-   * Removes every record of [projectRootUrl], because [addProjectRoot] appends without a check.
-   */
-  fun removeProjectRoot(projectRootUrl: String) {
-    updateState {
-      it.copy(projectRootUrls = it.projectRootUrls.filter { url -> url != projectRootUrl })
-    }
-  }
-
   var projectRootUrls: List<String>
     get() = state.projectRootUrls
     set(value) {
