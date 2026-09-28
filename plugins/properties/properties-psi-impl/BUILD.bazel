@@ -58,6 +58,7 @@ jvm_library(
         "//platform/util/concurrency",
         "//jps/model-api:model",
         "//platform/util:util-ui",
+        "//platform/projectModel-impl",
     ],
 )
 
@@ -109,6 +110,7 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.properties.backend.psi` end

@@ -2,7 +2,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,10 +10,7 @@ public interface BundleNameEvaluator {
   BundleNameEvaluator DEFAULT = new BundleNameEvaluator() {
     @Override
     public @Nullable String evaluateBundleName(final PsiFile psiFile) {
-      PsiDirectory directory = ReadAction.compute(() -> psiFile.getParent());
-      if (directory == null) return null;
-
-      String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
+      String packageQualifiedName = ReadAction.compute(() -> PropertiesImplUtil.getPackageQualifiedName(psiFile));
       if (packageQualifiedName == null) return null;
 
       StringBuilder qName = new StringBuilder(packageQualifiedName);

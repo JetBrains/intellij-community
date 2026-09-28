@@ -159,8 +159,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
 
   public @Nullable String getFullName(final @NotNull PropertiesFile propertiesFile) {
     return ReadAction.compute(() -> {
-      final PsiDirectory directory = propertiesFile.getParent();
-      final String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
+      final String packageQualifiedName = PropertiesImplUtil.getPackageQualifiedName(propertiesFile.getContainingFile());
       if (packageQualifiedName == null) {
         return null;
       }

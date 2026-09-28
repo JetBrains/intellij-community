@@ -21,6 +21,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,6 +162,21 @@ public final class PropertiesImplUtil extends PropertiesUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns the package of the properties file. A single-file resource root defines the package of its file, while the directory
+   * of the file can have no package, for example, under a source root whose directories do not correspond to packages.
+   */
+  @ApiStatus.Internal
+  public static @Nullable String getPackageQualifiedName(@NotNull PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+      String packageName = WorkspaceFileIndexEx.getInstance(file.getProject()).getPackageName(virtualFile);
+      if (packageName != null) return packageName;
+    }
+    PsiDirectory directory = file.getParent();
+    return directory == null ? null : getPackageQualifiedName(directory);
   }
 
   public static @Nullable IProperty getProperty(@Nullable PsiElement element) {
