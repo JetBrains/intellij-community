@@ -2,6 +2,7 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -10,6 +11,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.impl.TerminalKeyEventsHandler
@@ -34,25 +36,26 @@ internal class SendShortcutToTerminalAction(
   private val handler: TerminalKeyEventsHandler,
 ) : DumbAwareAction() {
 
-  private var actions: List<AnAction> = emptyList()
+  private var actionIds: List<String> = emptyList()
 
   init {
     templatePresentation.putClientProperty(KEY, Unit)
   }
 
-  internal fun register(component: JComponent, actions: List<AnAction>) {
+  internal fun register(component: JComponent, actionIds: List<String>) {
+    val keymap = KeymapManager.getInstance().activeKeymap
     val terminalShortcuts = CustomShortcutSet(
-      *actions
-        .flatMap { it.shortcutSet.shortcuts.toList() }
+      *actionIds
+        .flatMap { keymap.getShortcuts(it).toList() }
         .toTypedArray()
     )
     registerCustomShortcutSet(terminalShortcuts, component)
-    this.actions = actions
+    this.actionIds = actionIds
   }
 
   internal fun unregister(component: JComponent) {
     unregisterCustomShortcutSet(component)
-    this.actions = emptyList()
+    this.actionIds = emptyList()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -71,8 +74,10 @@ internal class SendShortcutToTerminalAction(
       e.presentation.isEnabledAndVisible = false
       return
     }
-    for (action in actions) {
-      if (action.shortcutSet.shortcuts.contains(shortcut)) {
+    val keymap = KeymapManager.getInstance().activeKeymap
+    for (actionId in actionIds) {
+      if (keymap.getShortcuts(actionId).contains(shortcut)) {
+        val action = ActionManager.getInstance().getAction(actionId) ?: continue
         if (e.updateSession.presentation(action).isEnabled) {
           e.presentation.isEnabledAndVisible = false
           return
