@@ -64,7 +64,7 @@
     </action>
 
     <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.dev.core.ShowEdtUtilizationChartAction">
-      <add-to-group group-id="Internal.Ex"/>
+      <add-to-group group-id="Internal.Performance"/>
     </action>
     <action id="ShortDumbMode" internal="true" class="com.intellij.dev.core.RunShortDumbModeAction">
       <add-to-group group-id="Internal.Ex"/>
@@ -144,7 +144,7 @@
     </action>
 
     <action id="UiDebugger" class="com.intellij.dev.core.ShowUiDebuggerAction">
-      <add-to-group group-id="MaintenanceGroup"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
     </action>
     <action id="ToggleEssentialHighlighting" internal="true" class="com.intellij.dev.core.ToggleEssentialHighlightingAction">
       <add-to-group group-id="PowerSaveGroup"/>
