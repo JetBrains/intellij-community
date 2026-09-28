@@ -27,7 +27,8 @@ enum class IdeInfoType(
   AQUA("QA", "aqua", "Aqua"),
   RUSTROVER("RR", "rustrover", "RustRover"),
   RIDER("RD", "rider", "Rider"),
-  GATEWAY("GW", "gateway", "Gateway");
+  GATEWAY("GW", "gateway", "Gateway"),
+  JETBRAINS_LIGHT("JB", "jetbrains", "JetBrains Light");
 
   companion object {
     fun fromProductCode(productCode: String): IdeInfoType =

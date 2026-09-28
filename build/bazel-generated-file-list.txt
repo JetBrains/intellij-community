@@ -1976,6 +1976,7 @@ tools/intellij.tools.ide.starter.product.gateway
 tools/intellij.tools.ide.starter.product.goland
 tools/intellij.tools.ide.starter.product.idea.community
 tools/intellij.tools.ide.starter.product.idea.ultimate
+tools/intellij.tools.ide.starter.product.jetbrains.light
 tools/intellij.tools.ide.starter.product.phpstorm
 tools/intellij.tools.ide.starter.product.pycharm
 tools/intellij.tools.ide.starter.product.pycharm.community
