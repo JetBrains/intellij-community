@@ -3492,6 +3492,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     List<CaretState> caretStates = new ArrayList<>(myCaretStateBeforeLastPress);
     if (myRectangularSelectionInProgress) {
       caretStates.addAll(EditorModificationUtil.calcBlockSelectionState(this, myLastMousePressedLocation, targetPosition));
+      mySelectionModel.setCaretsAndBlockSelection(myLastMousePressedLocation, targetPosition, caretStates);
     }
     else {
       LogicalPosition selectionStart = myLastMousePressedLocation;
@@ -3517,8 +3518,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         cancelAutoResetForMouseSelectionState();
       }
       caretStates.add(new CaretState(targetPosition, selectionStart, selectionEnd));
+      myCaretModel.setCaretsAndSelections(caretStates);
     }
-    myCaretModel.setCaretsAndSelections(caretStates);
   }
 
   private @NotNull Caret getLeadCaret() {
