@@ -2892,6 +2892,62 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       # Thus, substitution `T` -> `int | str` is considered valid.
       func(42, accepts_anything)
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89185"])
+    fun `class with overloaded constructor matches callable when one overload matches`() = test("""
+      from typing import Callable, overload
+
+      class C:
+          @overload
+          def __init__(self) -> None: ...
+          @overload
+          def __init__(self, x: str) -> None: ...
+          def __init__(self, x: str = "") -> None: ...
+
+      def one_argument[S, T](c: Callable[[S], T]) -> T: ...
+      def two_arguments(c: Callable[[int, int], C]) -> None: ...
+
+      expr = one_argument(C)
+      # └ TYPE C
+      one_argument(dict)
+      one_argument(list)
+      two_arguments(C)
+      #             └ WARNING Expected type '(int, int) -> C', got 'type[C]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89185"])
+    fun `builtin collection class matches a generic one-argument callable`() = test("""
+      from typing import Callable, TypeVar
+
+      K = TypeVar("K")
+      V = TypeVar("V")
+
+      def test(func: Callable[[K], V]) -> V: ...
+
+      a: list[int] = test(func=list)
+      b: set[int] = test(func=set)
+      c: dict[str, int] = test(func=dict)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89185"])
+    fun `failed first constructor overload leaves no substitutions for the other overloads`() = test("""
+      from typing import Callable, overload
+
+      class C:
+          @overload
+          def __init__(self, x: str, y: str) -> None: ...
+          @overload
+          def __init__(self, x: bytes, y: int) -> None: ...
+          def __init__(self, x, y) -> None: ...
+
+      def f[S, T](c: Callable[[S, int], T]) -> tuple[S, T]: ...
+
+      expr = f(C)
+      # └ TYPE tuple[bytes, C]
+      """.trimIndent())
   }
 
   @Nested

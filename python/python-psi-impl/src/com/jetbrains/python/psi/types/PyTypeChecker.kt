@@ -493,10 +493,13 @@ object PyTypeChecker {
     }
 
     if (actual is PyCallableType && expected is PyCallableType) {
-      val match = match(expected, actual, context)
-      if (match.isPresent) {
-        return match
+      val match = if (actual is PyClassType && actual.isDefinition && expected !is PyClassLikeType) {
+        matchClassAsCallable(expected, actual, context)
       }
+      else {
+        match(expected, actual, context)
+      }
+      if (match.isPresent) return match
     }
 
     if (expected is PyModuleType) {
@@ -539,10 +542,11 @@ object PyTypeChecker {
         val matched = withoutRecording(context) { matchOverloadWithCallable(actual, expected, context, false) }
         return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
       }
-      // Otherwise, check if any overload in actual matches expected
+      // Otherwise, check if any overload in actual matches expected.
+      // An overload is tried on a copy first, so that a failed overload does not bind type parameters for the next one.
       val matched = withoutRecording(context) {
         actual.items.any { item ->
-          match(expected, item, context).orElse(false)!!
+          matchOnCopy(context) { match(expected, item, it) } == Optional.of(true)
         }
       }
       return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
@@ -1565,6 +1569,31 @@ object PyTypeChecker {
       return Optional.of(allMatched)
     }
     return Optional.empty()
+  }
+
+  /**
+   * Matches the class [actual] against the callable [expected]. A class used as a callable exposes only the first overload of
+   * its constructor. When that overload does not match, each constructor overload is tried.
+   */
+  private fun matchClassAsCallable(expected: PyCallableType, actual: PyCallableType, matchContext: MatchContext): Optional<Boolean> {
+    val firstOverloadMatch = matchOnCopy(matchContext) { match(expected, actual, it) }
+    if (firstOverloadMatch != Optional.of(false)) return firstOverloadMatch
+    val constructorType = PyCallExpressionHelper.createCallableFromClass(actual as PyClassType, PyResolveContext.defaultContext(matchContext.context))
+    // A failed match runs again on [matchContext], so that it records the breakdown.
+    return if (constructorType is PyOverloadType) match(expected, constructorType, matchContext) else match(expected, actual, matchContext)
+  }
+
+  /**
+   * Runs [body] on a copy of the substitutions and without a breakdown.
+   * A successful match keeps the substitutions of the copy. A failed match leaves no trace in [matchContext].
+   */
+  private inline fun matchOnCopy(matchContext: MatchContext, body: (MatchContext) -> Optional<Boolean>): Optional<Boolean> {
+    val substitutions = matchContext.mySubstitutions.copy(KeyImpl)
+    val result = body(MatchContext(matchContext.context, substitutions, matchContext.reversedSubstitutions))
+    if (result == Optional.of(true)) {
+      matchContext.mySubstitutions.replaceWith(substitutions, KeyImpl)
+    }
+    return result
   }
 
   private fun getActualReturnType(actual: PyCallableType, context: TypeEvalContext): PyType? {
@@ -3073,6 +3102,24 @@ object PyTypeChecker {
 
     @ApiStatus.Internal
     fun getFrozenTypeVars(@Suppress("unused") key: Key): Set<PyTypeVarType> = frozenTypeVars
+
+    /** An exact copy, with the frozen type variables. */
+    @ApiStatus.Internal
+    fun copy(key: Key): GenericSubstitutions = GenericSubstitutions().also { it.replaceWith(this, key) }
+
+    /** Replaces all substitutions and the frozen type variables with the ones of [other]. */
+    @ApiStatus.Internal
+    fun replaceWith(other: GenericSubstitutions, @Suppress("unused") key: Key) {
+      if (other === this) return
+      myTypeVars.clear()
+      myTypeVars.putAll(other.myTypeVars)
+      myTypeVarTuples.clear()
+      myTypeVarTuples.putAll(other.myTypeVarTuples)
+      myParamSpecs.clear()
+      myParamSpecs.putAll(other.myParamSpecs)
+      selfType = other.selfType
+      frozenTypeVars = other.frozenTypeVars
+    }
 
     @ApiStatus.Internal
     fun setFrozenTypeVars(value: Set<PyTypeVarType>, @Suppress("unused") key: Key) {
