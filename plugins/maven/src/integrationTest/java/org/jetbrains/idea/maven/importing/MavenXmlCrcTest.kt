@@ -1,15 +1,15 @@
 package org.jetbrains.idea.maven.importing
 
-import junit.framework.TestCase
-import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 
-class MavenXmlCrcTest : TestCase() {
+class MavenXmlCrcTest {
   @Test
-  fun testCrc() = runBlocking {
+  fun testCrc() {
     same("""
            <project a="a" b="b">
            </project>
@@ -160,19 +160,20 @@ class MavenXmlCrcTest : TestCase() {
       """.trimIndent())
   }
 
+  @Test
   fun testInvalidXml() {
-    assert(crc("""
+    assertEquals(-1, crc("""
                  <   project>
                  </project>
-                 """.trimIndent()) == -1)
-    assert(crc("""
+                 """.trimIndent()))
+    assertEquals(-1, crc("""
                  <project>
-                 """.trimIndent()) == -1)
-    assert(crc("""
+                 """.trimIndent()))
+    assertEquals(-1, crc("""
                  <project>
                    <sss>
                  </project>
-                 """.trimIndent()) == -1)
+                 """.trimIndent()))
   }
 
   companion object {
@@ -184,14 +185,14 @@ class MavenXmlCrcTest : TestCase() {
       val crc1 = crc(xml1)
       val crc2 = crc(xml2)
 
-      assert(crc1 == crc2)
+      assertEquals(crc1, crc2)
     }
 
     private fun different(@Language("XML") xml1: String, @Language("XML") xml2: String) {
       val crc1 = crc(xml1)
       val crc2 = crc(xml2)
 
-      assert(crc1 != crc2)
+      assertNotEquals(crc1, crc2)
     }
   }
 }

@@ -4,14 +4,17 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenSimpleConsoleTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class MavenSimpleConsoleTest {
 
 
+  @Test
   public void testSmoke() {
     doTest(false, new String[]{
              "first\n",
@@ -26,6 +29,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testIncompleteLine() {
     doTest(false, new String[]{
              "fi",
@@ -41,6 +45,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testIncompleteLineNewLine() {
     doTest(false, new String[]{
              "fi",
@@ -57,6 +62,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testFilterSpy() {
     doTest(false, new String[]{
              "fi",
@@ -74,6 +80,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testShortStrings() {
     doTest(false, new String[]{
              "1\n",
@@ -87,6 +94,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testFilterSpySplittedTimes() {
     doTest(false, new String[]{
              "fi",
@@ -102,6 +110,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testFilterSpySeveralTimes() {
     doTest(false, new String[]{
              "fi",
@@ -117,6 +126,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testFilterSpySeveralTimesIdea221227() {
     doTest(false, new String[]{
              "fi",
@@ -132,6 +142,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testDoNotFilterSpy() {
     doTest(true, new String[]{
              "fi",
@@ -155,6 +166,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testFilterMaven4OutputNoColor() {
     doTest(false, new String[]{
              "fi",
@@ -176,6 +188,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testFilterMaven4OutputColor() {
     doTest(false, new String[]{
              "fi",
@@ -197,6 +210,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  @Test
   public void testAnsiColors() {
     List<Pair<String, Key<Object>>> expected = List.of(
       new Pair<>("[", Key.create("color1")),

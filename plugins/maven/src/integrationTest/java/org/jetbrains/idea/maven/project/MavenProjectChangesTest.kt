@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.testFramework.UsefulTestCase
-import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class MavenProjectChangesTest : UsefulTestCase() {
+class MavenProjectChangesTest {
   @Test
-  fun `test basics`() = runBlocking {
+  fun `test basics`() {
     assertTrue(MavenProjectChanges.ALL.hasChanges())
     assertTrue(MavenProjectChanges.ALL.hasDependencyChanges())
     assertTrue(MavenProjectChanges.ALL.hasPackagingChanges())
@@ -18,7 +18,7 @@ class MavenProjectChangesTest : UsefulTestCase() {
   }
 
   @Test
-  fun `test builder`() = runBlocking {
+  fun `test builder`() {
     val builder = MavenProjectChangesBuilder()
     assertFalse(builder.hasChanges())
 

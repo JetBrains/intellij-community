@@ -1,84 +1,99 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.config;
 
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class MavenConfigParserTest extends CodeInsightFixtureTestCase {
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-  public void testParseShortNames() {
-    myFixture.addFileToProject(".mvn/maven.config",
-                               "-o -U -N -T3 -q -X -e -C -c -ff -fae -fn" +
-                               " -s user-settings.xml -gs global-settings.xml");
-    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.UPDATE_SNAPSHOTS));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.NON_RECURSIVE));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.QUIET));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.ERRORS));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.DEBUG));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_WARNING_POLICY));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_FAILURE_POLICY));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.FAIL_AT_END));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.FAIL_FAST));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.FAIL_NEVER));
-    Assert.assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
-    Assert.assertEquals("user-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_USER_SETTINGS));
-    Assert.assertEquals("global-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS));
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class MavenConfigParserTest {
+  @TempDir
+  Path myDir;
+
+  @Test
+  public void testParseShortNames() throws IOException {
+    writeMavenConfig("-o -U -N -T3 -q -X -e -C -c -ff -fae -fn" +
+                     " -s user-settings.xml -gs global-settings.xml");
+    MavenConfig config = MavenConfigParser.parse(myDir.toString());
+    assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
+    assertTrue(config.hasOption(MavenConfigSettings.UPDATE_SNAPSHOTS));
+    assertTrue(config.hasOption(MavenConfigSettings.NON_RECURSIVE));
+    assertTrue(config.hasOption(MavenConfigSettings.QUIET));
+    assertTrue(config.hasOption(MavenConfigSettings.ERRORS));
+    assertTrue(config.hasOption(MavenConfigSettings.DEBUG));
+    assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_WARNING_POLICY));
+    assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_FAILURE_POLICY));
+    assertTrue(config.hasOption(MavenConfigSettings.FAIL_AT_END));
+    assertTrue(config.hasOption(MavenConfigSettings.FAIL_FAST));
+    assertTrue(config.hasOption(MavenConfigSettings.FAIL_NEVER));
+    assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
+    assertEquals("user-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_USER_SETTINGS));
+    assertEquals("global-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS));
   }
 
-  public void testParseLongNames() {
-    myFixture.addFileToProject(".mvn/maven.config",
-                               "--offline --update-snapshots --non-recursive --quiet --debug --errors --strict-checksums " +
-                               "--lax-checksums --fail-fast --fail-at-end --fail-never --threads 3 " +
-                               "--settings user-settings.xml --global-settings global-settings.xml");
-    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.UPDATE_SNAPSHOTS));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.NON_RECURSIVE));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.QUIET));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.ERRORS));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.DEBUG));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_WARNING_POLICY));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_FAILURE_POLICY));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.FAIL_AT_END));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.FAIL_FAST));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.FAIL_NEVER));
-    Assert.assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
-    Assert.assertEquals("user-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_USER_SETTINGS));
-    Assert.assertEquals("global-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS));
+  @Test
+  public void testParseLongNames() throws IOException {
+    writeMavenConfig("--offline --update-snapshots --non-recursive --quiet --debug --errors --strict-checksums " +
+                     "--lax-checksums --fail-fast --fail-at-end --fail-never --threads 3 " +
+                     "--settings user-settings.xml --global-settings global-settings.xml");
+    MavenConfig config = MavenConfigParser.parse(myDir.toString());
+    assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
+    assertTrue(config.hasOption(MavenConfigSettings.UPDATE_SNAPSHOTS));
+    assertTrue(config.hasOption(MavenConfigSettings.NON_RECURSIVE));
+    assertTrue(config.hasOption(MavenConfigSettings.QUIET));
+    assertTrue(config.hasOption(MavenConfigSettings.ERRORS));
+    assertTrue(config.hasOption(MavenConfigSettings.DEBUG));
+    assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_WARNING_POLICY));
+    assertTrue(config.hasOption(MavenConfigSettings.CHECKSUM_FAILURE_POLICY));
+    assertTrue(config.hasOption(MavenConfigSettings.FAIL_AT_END));
+    assertTrue(config.hasOption(MavenConfigSettings.FAIL_FAST));
+    assertTrue(config.hasOption(MavenConfigSettings.FAIL_NEVER));
+    assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
+    assertEquals("user-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_USER_SETTINGS));
+    assertEquals("global-settings.xml", config.getOptionValue(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS));
   }
 
-
-  public void testParseJavaOptions() {
-    myFixture.addFileToProject(".mvn/maven.config",
-                               "-Dkey1=value -Dkey2=\"value with spaces\" " +
-                               "\"-Dkey3=another value with spaces\" -Dkey4");
-    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
-    Assert.assertEquals("value", config.getJavaProperties().get("key1"));
-    Assert.assertEquals("value with spaces", config.getJavaProperties().get("key2"));
-    Assert.assertEquals("another value with spaces", config.getJavaProperties().get("key3"));
-    Assert.assertEquals("", config.getJavaProperties().get("key4"));
-    Assert.assertNull(config.getJavaProperties().get("key"));
+  @Test
+  public void testParseJavaOptions() throws IOException {
+    writeMavenConfig("-Dkey1=value -Dkey2=\"value with spaces\" " +
+                     "\"-Dkey3=another value with spaces\" -Dkey4");
+    MavenConfig config = MavenConfigParser.parse(myDir.toString());
+    assertEquals("value", config.getJavaProperties().get("key1"));
+    assertEquals("value with spaces", config.getJavaProperties().get("key2"));
+    assertEquals("another value with spaces", config.getJavaProperties().get("key3"));
+    assertEquals("", config.getJavaProperties().get("key4"));
+    assertNull(config.getJavaProperties().get("key"));
   }
 
-  public void testParseJavaOptionsTogetherWithMaven() {
-    myFixture.addFileToProject(".mvn/maven.config",
-                               "-Dkey1=value -Dkey2=\"value with spaces\"  \"-Dkey3=another value with spaces\" -Dkey4 --offline --threads 3");
-    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
-    Assert.assertEquals("value", config.getJavaProperties().get("key1"));
-    Assert.assertEquals("value with spaces", config.getJavaProperties().get("key2"));
-    Assert.assertEquals("another value with spaces", config.getJavaProperties().get("key3"));
-    Assert.assertEquals("", config.getJavaProperties().get("key4"));
-    Assert.assertNull(config.getJavaProperties().get("key"));
-    Assert.assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
-    Assert.assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
-
+  @Test
+  public void testParseJavaOptionsTogetherWithMaven() throws IOException {
+    writeMavenConfig("-Dkey1=value -Dkey2=\"value with spaces\"  \"-Dkey3=another value with spaces\" -Dkey4 --offline --threads 3");
+    MavenConfig config = MavenConfigParser.parse(myDir.toString());
+    assertEquals("value", config.getJavaProperties().get("key1"));
+    assertEquals("value with spaces", config.getJavaProperties().get("key2"));
+    assertEquals("another value with spaces", config.getJavaProperties().get("key3"));
+    assertEquals("", config.getJavaProperties().get("key4"));
+    assertNull(config.getJavaProperties().get("key"));
+    assertTrue(config.hasOption(MavenConfigSettings.OFFLINE));
+    assertEquals("3", config.getOptionValue(MavenConfigSettings.THREADS));
   }
 
-  public void testUnknownNames() {
-    myFixture.addFileToProject(".mvn/maven.config", "-unknown -ZZ --badprop");
-    MavenConfig config = MavenConfigParser.parse(myFixture.getTempDirPath());
-    Assert.assertTrue(config.isEmpty());
+  @Test
+  public void testUnknownNames() throws IOException {
+    writeMavenConfig("-unknown -ZZ --badprop");
+    MavenConfig config = MavenConfigParser.parse(myDir.toString());
+    assertTrue(config.isEmpty());
+  }
+
+  private void writeMavenConfig(String content) throws IOException {
+    Path configFile = myDir.resolve(".mvn/maven.config");
+    Files.createDirectories(configFile.getParent());
+    Files.writeString(configFile, content);
   }
 }

@@ -1,10 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.jupiter.api.Test;
 
-public class MavenLogEntryReaderTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+public class MavenLogEntryReaderTest {
+
+  @Test
   public void testParser() {
     MavenLogEntryReader.MavenLogEntry entry = new MavenLogEntryReader.MavenLogEntry("[ERROR] error line");
     assertEquals(LogMessageType.ERROR, entry.myType);
@@ -23,6 +27,7 @@ public class MavenLogEntryReaderTest extends UsefulTestCase {
     assertEquals("line", entry.myLine);
   }
 
+  @Test
   public void testRemoveProgressFromOutput() {
     MavenLogEntryReader.MavenLogEntry entry = new MavenLogEntryReader.MavenLogEntry("Progress 1\r Progress 2\r Progress 3\r[INFO] Done");
     assertEquals(LogMessageType.INFO, entry.myType);

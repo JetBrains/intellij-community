@@ -2,14 +2,14 @@
 package org.jetbrains.idea.maven.server.ssl
 
 import com.intellij.maven.testFramework.assertNormalizedEquals
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.security.cert.X509Certificate
 import java.util.Scanner
 
-class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
+class SslDelegateHandlerStateMachineTest {
 
   private val CheckTrue = object : MavenTLSCertificateChecker {
     override fun checkCertificates(chain: Array<X509Certificate>, authType: String) = true
@@ -18,6 +18,7 @@ class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
   private val CheckFalse = object : MavenTLSCertificateChecker {
     override fun checkCertificates(chain: Array<X509Certificate>, authType: String) = false
   }
+  @Test
   fun testResultOk() {
     val data = fromFile("ssl_remote_query.txt");
     val machine = SslDelegateHandlerStateMachine(CheckTrue)
@@ -29,6 +30,7 @@ class SslDelegateHandlerStateMachineTest : UsefulTestCase() {
     assertNormalizedEquals(expected, actual)
   }
 
+  @Test
   fun testResultFail() {
     val data = fromFile("ssl_remote_query.txt");
     val machine = SslDelegateHandlerStateMachine(CheckFalse)

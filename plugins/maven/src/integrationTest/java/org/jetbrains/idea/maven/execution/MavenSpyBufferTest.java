@@ -2,13 +2,17 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class MavenSpyBufferTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
+public class MavenSpyBufferTest {
+
+  @Test
   public void testSmoke() {
     doTest(new String[]{
       "first\n",
@@ -21,6 +25,7 @@ public class MavenSpyBufferTest extends UsefulTestCase {
     });
   }
 
+  @Test
   public void testIncompleteLine() {
     doTest(new String[]{
       "fi",
@@ -34,6 +39,7 @@ public class MavenSpyBufferTest extends UsefulTestCase {
     });
   }
 
+  @Test
   public void testIncompleteLineNewLine() {
     doTest(new String[]{
       "fi",
@@ -48,6 +54,7 @@ public class MavenSpyBufferTest extends UsefulTestCase {
     });
   }
 
+  @Test
   public void testIJ() {
     doTest(new String[]{
       "[",
@@ -63,6 +70,7 @@ public class MavenSpyBufferTest extends UsefulTestCase {
     });
   }
 
+  @Test
   public void testShouldSplitLines() {
     doTest(new String[]{
       "some line\nwith another line\nwith",
@@ -81,6 +89,6 @@ public class MavenSpyBufferTest extends UsefulTestCase {
     for (String s : text) {
       spyEventsBuffer.addText(s, Key.create("test"));
     }
-    assertOrderedEquals(actual, expected);
+    assertIterableEquals(Arrays.asList(expected), actual);
   }
 }
