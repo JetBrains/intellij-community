@@ -66,6 +66,17 @@ class RefactoringToolsetTest : GeneralMcpToolsetTestBase() {
 
   private val renameMe by sourceRootFixture.virtualFileFixture("RenameMe.java", renameMeSource)
 
+  private val widgetSource = """
+    |public class Widget {
+    |  static Widget copyOf(Widget widget) {
+    |    Widget widgetCopy = widget;
+    |    return widgetCopy;
+    |  }
+    |}
+    |""".trimMargin()
+
+  private val widget by sourceRootFixture.virtualFileFixture("Widget.java", widgetSource)
+
   /** A method named after the word in its own comment. The comment holds no reference to it. */
   private val commentHostSource = """
     |public class CommentHost {
@@ -330,6 +341,29 @@ class RefactoringToolsetTest : GeneralMcpToolsetTestBase() {
     assertThat(renamedFile!!.previousPath).endsWith("RenameMe.java")
     assertThat(renamedFile.path).endsWith("Renamed.java")
     assertThat(renameMe.text()).contains("public class Renamed")
+  }
+
+  @Test
+  fun `renaming a class renames the variables named after it`(): Unit = runBlocking(Dispatchers.Default) {
+    val result = callRename(widget) {
+      put("symbolName", JsonPrimitive("Widget"))
+      put("newName", JsonPrimitive("Gadget"))
+    }
+    assertThat(result.error).isNull()
+    assertThat(result.applied).isTrue()
+    assertThat(widget.text()).contains("static Gadget copyOf(Gadget gadget)", "Gadget gadgetCopy = gadget;")
+  }
+
+  @Test
+  fun `renaming a class without automatic renamers keeps the variable names`(): Unit = runBlocking(Dispatchers.Default) {
+    val result = callRename(widget) {
+      put("symbolName", JsonPrimitive("Widget"))
+      put("newName", JsonPrimitive("Gadget"))
+      put("applyAutomaticRenamers", JsonPrimitive(false))
+    }
+    assertThat(result.error).isNull()
+    assertThat(result.applied).isTrue()
+    assertThat(widget.text()).contains("static Gadget copyOf(Gadget widget)", "Gadget widgetCopy = widget;")
   }
 
   @Test
