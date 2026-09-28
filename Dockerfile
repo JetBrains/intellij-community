@@ -39,7 +39,7 @@ RUN git init /community && \
 
 FROM build_env AS tests_env
 LABEL Description="Tests Environment"
-ENTRYPOINT ["/bin/sh", "./tests.cmd"]
+ENTRYPOINT ["/bin/sh", "./bazel.cmd", "test"]
 
 FROM build_env AS intellij_idea
 LABEL Description="IntelliJ IDEA Build Environment"
