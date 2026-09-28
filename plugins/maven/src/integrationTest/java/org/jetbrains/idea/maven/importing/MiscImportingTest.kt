@@ -5,6 +5,7 @@ import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
@@ -25,7 +26,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
@@ -383,6 +383,6 @@ class MiscImportingTest(mavenVersion: String, modelVersion: String) {
 
     // Both modules should be children of the parent
     val children = maven.projectsManager.projectsTree.getModules(parentProject!!)
-    assertSameElements("Parent should have two children", children.map { it.mavenId.artifactId }, listOf("module-a", "module-b"))
+    assertUnorderedElementsAreEqual("Parent should have two children", children.map { it.mavenId.artifactId }, listOf("module-a", "module-b"))
   }
 }

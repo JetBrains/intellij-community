@@ -2,9 +2,11 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.assertEqualPaths
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeMaven3
 import com.intellij.maven.testFramework.fixtures.assumeMaven4
@@ -33,8 +35,6 @@ import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil

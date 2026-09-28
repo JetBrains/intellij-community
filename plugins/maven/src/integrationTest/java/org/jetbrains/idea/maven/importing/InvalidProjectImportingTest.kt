@@ -24,6 +24,7 @@ import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.assumeMaven3
 import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
@@ -48,8 +49,6 @@ import com.intellij.maven.testFramework.fixtures.updateModulePom
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
@@ -335,7 +334,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
 
     val root = rootProjects[0]
     val problems = root.problems
-    UsefulTestCase.assertSize(1, problems)
+    assertSize(1, problems)
     val description = if (maven.mavenVersionIsOrMoreThan("3.9.0"))
       "test:parent:pom:1"
     else
@@ -819,7 +818,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
 
     val root = rootProjects[0]
     val problems = root.problems
-    UsefulTestCase.assertSize(1, problems)
+    assertSize(1, problems)
     maven.forMaven3 {
       val description = if (maven.mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"

@@ -8,6 +8,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
@@ -29,7 +30,6 @@ import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -943,7 +943,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
-    UsefulTestCase.assertEmpty(ideCompilerConfiguration.getAdditionalOptions(maven.getModule("project")))
+    assertEmpty(ideCompilerConfiguration.getAdditionalOptions(maven.getModule("project")))
   }
 
   @Test
@@ -968,7 +968,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
-    UsefulTestCase.assertEmpty(ideCompilerConfiguration.getAdditionalOptions(maven.getModule("project")))
+    assertEmpty(ideCompilerConfiguration.getAdditionalOptions(maven.getModule("project")))
   }
 
   @Test
@@ -1037,7 +1037,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
-    UsefulTestCase.assertEmpty(ideCompilerConfiguration.getAdditionalOptions(maven.getModule("project")))
+    assertEmpty(ideCompilerConfiguration.getAdditionalOptions(maven.getModule("project")))
   }
 
   @Test

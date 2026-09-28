@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.createModulePom
@@ -23,7 +24,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
@@ -203,7 +203,7 @@ class MavenImportingConnectorsTest(mavenVersion: String, modelVersion: String) {
 
       assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
-      assertContainsElements(
+      assertContain(
         MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
           maven.getRelativePath(maven.dir, it)
         },

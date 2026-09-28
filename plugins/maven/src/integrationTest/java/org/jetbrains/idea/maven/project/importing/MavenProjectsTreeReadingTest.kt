@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertEmpty
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
@@ -39,10 +41,6 @@ import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.maven.testFramework.fixtures.waitForImportWithinTimeout
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
-import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -299,7 +297,7 @@ class MavenProjectsTreeReadingTest(mavenVersion: String, modelVersion: String) {
     val allModules = collectAllModulesRecursively(
       maven.tree, roots[0])
     assertEquals(2, allModules.size)
-    UsefulTestCase.assertSameElements(Set.of(m1, m2), allModules.map({ m: MavenProject -> m.file }))
+    assertUnorderedElementsAreEqual(Set.of(m1, m2), allModules.map({ m: MavenProject -> m.file }))
   }
 
   @Test
@@ -2129,7 +2127,7 @@ class MavenProjectsTreeReadingTest(mavenVersion: String, modelVersion: String) {
     maven.updateAll(firstRootWithChild, m2)
     val roots = maven.tree.rootProjects
     assertEquals(2, roots.size)
-    assertSameElements(
+    assertUnorderedElementsAreEqual(
       maven.tree.workspaceMap.availableIds,
       MavenId("test:parentone:1.0"),
       MavenId("test:parentone:RELEASE"),

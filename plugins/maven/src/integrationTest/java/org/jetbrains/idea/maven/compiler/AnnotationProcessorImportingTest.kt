@@ -19,6 +19,9 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEmpty
+import com.intellij.maven.testFramework.fixtures.assertNotEmpty
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
@@ -27,9 +30,6 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE
@@ -424,7 +424,7 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
-    UsefulTestCase.assertNotEmpty(annotationProcessors)
+    assertNotEmpty(annotationProcessors)
 
     assertTrue(
       annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
@@ -463,7 +463,7 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
-    UsefulTestCase.assertNotEmpty(annotationProcessors)
+    assertNotEmpty(annotationProcessors)
 
     assertTrue(
       annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
@@ -528,17 +528,17 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
-    UsefulTestCase.assertEmpty(annotationProcessors)
+    assertEmpty(annotationProcessors)
 
     val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     val defaultProfile = config.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     assertNotNull(defaultProfile)
-    UsefulTestCase.assertSameElements(defaultProfile!!.moduleNames, "m1")
+    assertUnorderedElementsAreEqual(defaultProfile!!.moduleNames, "m1")
 
     val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
-    UsefulTestCase.assertSameElements(projectProfile!!.moduleNames, "m2")
+    assertUnorderedElementsAreEqual(projectProfile!!.moduleNames, "m2")
     val path = projectProfile.processorPath
     assertTrue(path.contains(FileUtil.toSystemDependentName("/m1/target/classes")))
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/guava/guava/19.0/guava-19.0.jar")))

@@ -19,7 +19,6 @@ import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -29,6 +28,7 @@ import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -86,7 +86,7 @@ class MavenModelValidationTest(mavenVersion: String, modelVersion: String) {
       //maybe readaction
       val elementAtCaret = writeIntentReadAction { maven.fixture.getElementAtCaret() }
 
-      UsefulTestCase.assertInstanceOf(elementAtCaret, PsiFile::class.java)
+      assertInstanceOf(PsiFile::class.java, elementAtCaret)
       assertEquals((elementAtCaret as PsiFile).getVirtualFile(), maven.projectPom)
     }
   }

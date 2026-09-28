@@ -7,6 +7,7 @@ import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
 import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertOrderedEquals
 import com.intellij.maven.testFramework.fixtures.createModule
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectSubDir
@@ -48,7 +49,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
@@ -246,7 +246,7 @@ class MavenClasspathsAndSearchScopesTest(mavenVersion: String, modelVersion: Str
     val module = maven.getModule("m")
     val jdkRoots = ModuleRootManager.getInstance(module).sdk!!.rootProvider.getFiles(OrderRootType.CLASSES)
     val junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(maven.project).getLibraryByName("Maven: junit:junit:4.0")!!.getFiles(OrderRootType.CLASSES)
-    UsefulTestCase.assertOrderedEquals(OrderEnumerator.orderEntries(module).allLibrariesAndSdkClassesRoots,
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).allLibrariesAndSdkClassesRoots,
                                        *ArrayUtil.mergeArrays(jdkRoots, junitRoots))
   }
 
@@ -1244,7 +1244,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(depModules, listOf(modules[2], modules[2], null, modules[2]))
     // m3 -> source
     val m3E2 = orderEntries[2]
-    UsefulTestCase.assertInstanceOf(m3E2, ModuleSourceOrderEntry::class.java)
+    Assertions.assertInstanceOf(ModuleSourceOrderEntry::class.java, m3E2)
 
     val m6javaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
@@ -1257,7 +1257,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(m6DepModules, listOf(modules[5], modules[5], modules[5], null))
     // m6 -> source
     val m6E3 = m6OrderEntries[3]
-    UsefulTestCase.assertInstanceOf(m6E3, ModuleSourceOrderEntry::class.java)
+    Assertions.assertInstanceOf(ModuleSourceOrderEntry::class.java, m6E3)
 
     val jmockDir = VfsUtil.findFile(maven.repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
@@ -1268,10 +1268,10 @@ $scope</scope>
     assertEquals(2, jmockOrderEntries.size)
     val jmockE0 = jmockOrderEntries[0]
     assertEquals(modules[1], jmockE0.ownerModule)
-    UsefulTestCase.assertInstanceOf(jmockE0, LibraryOrderEntry::class.java)
+    Assertions.assertInstanceOf(LibraryOrderEntry::class.java, jmockE0)
     val jmockE1 = jmockOrderEntries[1]
     assertEquals(modules[2], jmockE1.ownerModule)
-    UsefulTestCase.assertInstanceOf(jmockE1, LibraryOrderEntry::class.java)
+    Assertions.assertInstanceOf(LibraryOrderEntry::class.java, jmockE1)
   }
 
   @Test
@@ -1292,7 +1292,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(depModules, listOf(modules[2], null, modules[2]))
     // m3 -> source
     val m3E1 = orderEntries[1]
-    UsefulTestCase.assertInstanceOf(m3E1, ModuleSourceOrderEntry::class.java)
+    Assertions.assertInstanceOf(ModuleSourceOrderEntry::class.java, m3E1)
 
     val m6javaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
@@ -1306,7 +1306,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(m6DepModules, listOf(modules[5], modules[5], null))
     // m6 -> source
     val m6E2 = m6OrderEntries[2]
-    UsefulTestCase.assertInstanceOf(m6E2, ModuleSourceOrderEntry::class.java)
+    Assertions.assertInstanceOf(ModuleSourceOrderEntry::class.java, m6E2)
 
     val jmockDir = VfsUtil.findFile(maven.repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
@@ -1317,10 +1317,10 @@ $scope</scope>
     assertEquals(2, jmockOrderEntries.size)
     val jmockE0 = jmockOrderEntries[0]
     assertEquals(modules[1], jmockE0.ownerModule)
-    UsefulTestCase.assertInstanceOf(jmockE0, LibraryOrderEntry::class.java)
+    Assertions.assertInstanceOf(LibraryOrderEntry::class.java, jmockE0)
     val jmockE1 = jmockOrderEntries[1]
     assertEquals(modules[2], jmockE1.ownerModule)
-    UsefulTestCase.assertInstanceOf(jmockE1, LibraryOrderEntry::class.java)
+    Assertions.assertInstanceOf(LibraryOrderEntry::class.java, jmockE1)
 
     Unit
   }

@@ -5,13 +5,13 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.configTest
 import com.intellij.maven.testFramework.fixtures.createPomXml
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.maven.testFramework.fixtures.refreshFiles
 import com.intellij.openapi.application.EDT
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -66,7 +66,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.configTest(maven.projectPom)
     val elements = maven.fixture.completeBasic()
     maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "junit:junit")
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
 
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
@@ -167,7 +167,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.configTest(maven.projectPom)
 
     val elements = maven.fixture.completeBasic()
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
 
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
@@ -228,7 +228,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     }
 
     elements = maven.fixture.completeBasic()
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
     }
@@ -311,7 +311,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.refreshFiles(listOf(maven.projectPom))
     maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
     val elements = maven.fixture.completeBasic()
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
 
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
@@ -338,7 +338,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
     val elements = maven.fixture.completeBasic()
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
     }
@@ -394,13 +394,13 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
     var elements = maven.fixture.completeBasic()
-    UsefulTestCase.assertSize(1, elements!!)
+    assertSize(1, elements!!)
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
     }
 
     elements = maven.fixture.completeBasic()
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
     }
@@ -454,7 +454,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
     val elements = maven.fixture.complete(CompletionType.BASIC)
-    UsefulTestCase.assertSize(1, elements)
+    assertSize(1, elements)
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
     }

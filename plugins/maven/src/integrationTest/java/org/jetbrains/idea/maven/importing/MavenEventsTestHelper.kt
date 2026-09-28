@@ -9,7 +9,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.util.messages.MessageBusConnection
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 
 class MavenEventsTestHelper {
   private var beforeRootsChangedCount = 0
@@ -40,13 +40,13 @@ class MavenEventsTestHelper {
   }
 
   fun assertWorkspaceModelChanges(count: Int) {
-    Assert.assertEquals(count, workspaceChangesCount)
+    Assertions.assertEquals(count, workspaceChangesCount)
     workspaceChangesCount = 0
   }
 
   fun assertRootsChanged(count: Int) {
-    Assert.assertEquals(count, rootsChangedCount)
-    Assert.assertEquals(rootsChangedCount, beforeRootsChangedCount)
+    Assertions.assertEquals(count, rootsChangedCount)
+    Assertions.assertEquals(rootsChangedCount, beforeRootsChangedCount)
     rootsChangedCount = 0
     beforeRootsChangedCount = 0
   }

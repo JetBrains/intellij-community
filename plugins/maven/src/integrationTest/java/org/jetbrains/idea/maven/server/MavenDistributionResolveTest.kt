@@ -5,6 +5,8 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.assumeMaven3
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
@@ -16,8 +18,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
@@ -228,7 +228,7 @@ class MavenDistributionResolveTest(mavenVersion: String, modelVersion: String) {
           maven.importProjectAsync()
           val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
           assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
-          assertContainsElements(proxy.requestedFiles, "/apache-maven-3.6.3-bin.zip")
+          assertContain(proxy.requestedFiles, "/apache-maven-3.6.3-bin.zip")
         }
         finally {
           proxySettings.setProxyConfiguration(defaultConfig)

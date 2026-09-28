@@ -10,6 +10,7 @@ import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertProjectLibraryCoordinates
 import com.intellij.maven.testFramework.fixtures.assertSources
 import com.intellij.maven.testFramework.fixtures.assertTestSources
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
 import com.intellij.maven.testFramework.fixtures.createModulePom
@@ -25,7 +26,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.importProjectStaticSync
@@ -645,7 +645,7 @@ class MavenStaticSyncTest(mavenVersion: String, modelVersion: String) {
                 """.trimIndent())
 
     val projects = maven.projectsManager.projects.map { it.mavenId.displayString }
-    UsefulTestCase.assertSameElements(projects, "group:parent:1")
+    assertUnorderedElementsAreEqual(projects, "group:parent:1")
   }
 
   @Test

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.assumeMaven3
 import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ResourceUtil
 import com.intellij.util.xml.Converter
@@ -103,7 +103,7 @@ class MavenPluginConfigurationDomExtenderTest(mavenVersion: String, modelVersion
 
       val basedir = registeredExtensions.singleOrNull() { it.xmlName.localName == "basedir" }
       assertNotNull(basedir)
-      UsefulTestCase.assertEmpty(basedir!!.customAnnotations)
+      assertEmpty(basedir!!.customAnnotations)
     }
   }
 

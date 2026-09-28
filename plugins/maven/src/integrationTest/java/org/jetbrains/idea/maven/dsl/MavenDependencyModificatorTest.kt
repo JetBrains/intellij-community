@@ -3,11 +3,11 @@ package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -95,7 +95,7 @@ class MavenDependencyModificatorTest(mavenVersion: String, modelVersion: String)
   private fun assertDependencies(dependencyList: List<DeclaredDependency>?, vararg expected: String) {
     assertNotNull(dependencyList)
     Assertions.assertEquals(expected.size, dependencyList!!.size)
-    assertSameElements(dependencyList.map { "${it.coordinates.groupId}:${it.coordinates.artifactId}:${it.coordinates.version}" },
+    assertUnorderedElementsAreEqual(dependencyList.map { "${it.coordinates.groupId}:${it.coordinates.artifactId}:${it.coordinates.version}" },
       *expected)
   }
 }

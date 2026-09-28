@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.plugins.compatibility
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -16,7 +17,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.WaitFor

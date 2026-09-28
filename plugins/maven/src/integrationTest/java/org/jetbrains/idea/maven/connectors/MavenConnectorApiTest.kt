@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.connectors
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertOrderedEquals
 import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
@@ -9,7 +10,6 @@ import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.components.service
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler

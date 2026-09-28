@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.assertExportedDeps
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDepScope
@@ -62,7 +63,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking

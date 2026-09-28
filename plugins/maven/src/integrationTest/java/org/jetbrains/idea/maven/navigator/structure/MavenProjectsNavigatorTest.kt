@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.navigator.structure
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.awaitConfiguration
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
@@ -19,7 +20,6 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
@@ -215,7 +215,7 @@ class MavenProjectsNavigatorTest(mavenVersion: String, modelVersion: String) {
     maven.waitForImportWithinTimeout {
       maven.projectsManager.removeManagedFiles(listOf(maven.projectPom))
     }
-    UsefulTestCase.assertEmpty(maven.projectsManager.getRootProjects())
+    assertEmpty(maven.projectsManager.getRootProjects())
     assertEquals(0, rootNodes.size)
   }
 

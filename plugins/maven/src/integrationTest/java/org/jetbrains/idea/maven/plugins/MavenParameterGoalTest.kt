@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins
 
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
@@ -59,6 +59,6 @@ class MavenParameterGoalTest {
 
     fixture.completeBasic()
 
-    assertContainsElements(fixture.lookupElementStrings!!, "clean", "compile", "package")
+    assertContain(fixture.lookupElementStrings!!, "clean", "compile", "package")
   }
 }

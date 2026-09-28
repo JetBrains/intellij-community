@@ -7,10 +7,12 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertDefaultResources
 import com.intellij.maven.testFramework.fixtures.assertDefaultTestResources
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
 import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
 import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.assertSources
 import com.intellij.maven.testFramework.fixtures.assertTestSources
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
@@ -50,7 +52,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestActionEvent
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.FileContentUtil
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
@@ -526,8 +527,8 @@ class MavenProjectsManagerTest(mavenVersion: String, modelVersion: String) {
                                       """.trimIndent())
     maven.importProjectAsync()
     maven.assertModules("project", "m")
-    UsefulTestCase.assertSize(1, maven.projectsManager.getRootProjects())
-    UsefulTestCase.assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
+    assertSize(1, maven.projectsManager.getRootProjects())
+    assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
 
     maven.updateProjectPom("""
                     <groupId>test</groupId>
@@ -537,8 +538,8 @@ class MavenProjectsManagerTest(mavenVersion: String, modelVersion: String) {
                     """.trimIndent())
     maven.updateAllProjects()
     maven.assertModules("project")
-    UsefulTestCase.assertSize(1, maven.projectsManager.getRootProjects())
-    UsefulTestCase.assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
+    assertSize(1, maven.projectsManager.getRootProjects())
+    assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
   }
 
   @Test
@@ -562,8 +563,8 @@ class MavenProjectsManagerTest(mavenVersion: String, modelVersion: String) {
                     """.trimIndent()
     )
     maven.assertModules("project", "project.main", "project.test")
-    UsefulTestCase.assertSize(1, maven.projectsManager.getRootProjects())
-    UsefulTestCase.assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
+    assertSize(1, maven.projectsManager.getRootProjects())
+    assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
     maven.updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -571,8 +572,8 @@ class MavenProjectsManagerTest(mavenVersion: String, modelVersion: String) {
                     """.trimIndent())
     maven.updateAllProjects()
     maven.assertModules("project")
-    UsefulTestCase.assertSize(1, maven.projectsManager.getRootProjects())
-    UsefulTestCase.assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
+    assertSize(1, maven.projectsManager.getRootProjects())
+    assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
   }
 
   @Test
@@ -647,12 +648,12 @@ class MavenProjectsManagerTest(mavenVersion: String, modelVersion: String) {
     }
     assertEquals(1, ModuleManager.getInstance(maven.project).modules.size)
     assertEquals("non-maven", ModuleManager.getInstance(maven.project).modules[0].getName())
-    UsefulTestCase.assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
+    assertEmpty(maven.projectsManager.getIgnoredFilesPaths())
 
     //should then import project in non-ignored state again
     maven.importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(maven.project).modules.size)
-    UsefulTestCase.assertEmpty(maven.projectsManager.ignoredFilesPaths)
+    assertEmpty(maven.projectsManager.ignoredFilesPaths)
   }
 
   @Test
@@ -720,11 +721,11 @@ class MavenProjectsManagerTest(mavenVersion: String, modelVersion: String) {
                     <version>1</version>
                     """.trimIndent())
     maven.assertModules("project")
-    UsefulTestCase.assertSize(1, maven.projectsManager.getRootProjects())
+    assertSize(1, maven.projectsManager.getRootProjects())
     maven.waitForImportWithinTimeout {
       maven.projectsManager.removeManagedFiles(listOf(maven.projectPom))
     }
-    UsefulTestCase.assertSize(0, maven.projectsManager.getRootProjects())
+    assertSize(0, maven.projectsManager.getRootProjects())
   }
 
   @Test

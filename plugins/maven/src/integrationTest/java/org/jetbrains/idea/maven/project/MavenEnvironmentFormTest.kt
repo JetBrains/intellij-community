@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertDoNotContain
 import com.intellij.openapi.command.impl.DummyProject
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
-import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.TextFieldWithHistory
@@ -22,14 +22,14 @@ class MavenEnvironmentFormTest {
     val panel = MavenGeneralPanel()
 
     assertThat(panel) { t ->
-      assertContainsElements(
+      assertContain(
         t!!.history,
         setOf(title)
       )
     }
 
     assertThat(panel) { t ->
-      assertDoesntContain(
+      assertDoNotContain(
         t!!.history,
         MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toAbsolutePath().toString()
       )

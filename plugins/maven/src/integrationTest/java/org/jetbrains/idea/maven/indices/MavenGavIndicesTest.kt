@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.assertEmpty
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
@@ -26,10 +26,10 @@ class MavenGavIndicesTest {
     val progressIndicator = MavenProgressIndicator(maven.project, EmptyProgressIndicator(ModalityState.nonModal()), null)
     val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path.toString(), RepositoryKind.LOCAL))
     gavIndex.update(progressIndicator, false)
-    assertSameElements(gavIndex.groupIds, "asm", "commons-io", "junit", "org.deptest", "org.example", "org.intellijgroup", "org.ow2.asm")
-    assertSameElements(gavIndex.getArtifactIds("asm"), "asm", "asm-attrs")
-    assertSameElements(gavIndex.getArtifactIds("org.intellijgroup"), "intellijartifact", "intellijartifactanother")
-    assertSameElements(gavIndex.getVersions("junit", "junit"), "3.8.1", "3.8.2", "4.0")
+    assertUnorderedElementsAreEqual(gavIndex.groupIds, "asm", "commons-io", "junit", "org.deptest", "org.example", "org.intellijgroup", "org.ow2.asm")
+    assertUnorderedElementsAreEqual(gavIndex.getArtifactIds("asm"), "asm", "asm-attrs")
+    assertUnorderedElementsAreEqual(gavIndex.getArtifactIds("org.intellijgroup"), "intellijartifact", "intellijartifactanother")
+    assertUnorderedElementsAreEqual(gavIndex.getVersions("junit", "junit"), "3.8.1", "3.8.2", "4.0")
     assertEmpty(gavIndex.getVersions("com.example", "some-artifact"))
     assertEmpty(gavIndex.getVersions("junit", "some-artifact"))
     assertEmpty(gavIndex.getArtifactIds("unknown"))

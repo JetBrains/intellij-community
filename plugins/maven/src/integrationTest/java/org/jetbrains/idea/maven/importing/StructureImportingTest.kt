@@ -9,6 +9,7 @@ import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertNotMavenizedModule
 import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeMaven3
 import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
@@ -41,7 +42,6 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDire
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.PsiTestUtil.addContentRoot
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.executeGoal
@@ -937,10 +937,10 @@ class StructureImportingTest(mavenVersion: String, modelVersion: String) {
     maven.importProjectAsync()
 
     val m1Project = maven.projectsManager.findProject(m1)!!
-    assertSameElements("m1 enabled profiles", m1Project.activatedProfilesIds.enabledProfiles, emptyList())
+    assertUnorderedElementsAreEqual("m1 enabled profiles", m1Project.activatedProfilesIds.enabledProfiles, emptyList())
 
     val m2Project = maven.projectsManager.findProject(m2)!!
-    assertSameElements("m2 enabled profiles", m2Project.activatedProfilesIds.enabledProfiles, listOf("xxx"))
+    assertUnorderedElementsAreEqual("m2 enabled profiles", m2Project.activatedProfilesIds.enabledProfiles, listOf("xxx"))
   }
 
   @Test

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.toolchains
 
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
@@ -89,7 +89,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .build()
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
-    assertSameElements(allToolchainRequirements, expectedRequirement)
+    assertUnorderedElementsAreEqual(allToolchainRequirements, expectedRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
     assertEquals(expectedRequirement,
@@ -135,7 +135,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .discoverJdks(true)
       .build()
 
-    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertUnorderedElementsAreEqual(finder.allToolchainRequirements(mavenProject), expectedRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
   }
@@ -176,7 +176,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .discoverJdks(true)
       .build()
 
-    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertUnorderedElementsAreEqual(finder.allToolchainRequirements(mavenProject), expectedRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
   }
@@ -220,7 +220,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .discoverJdks(true)
       .build()
 
-    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertUnorderedElementsAreEqual(finder.allToolchainRequirements(mavenProject), expectedRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
   }
@@ -308,7 +308,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .discoverJdks(true)
       .build()
 
-    assertSameElements(finder.allToolchainRequirements(mavenProject), expectedRequirement)
+    assertUnorderedElementsAreEqual(finder.allToolchainRequirements(mavenProject), expectedRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
   }
@@ -363,7 +363,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .build()
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
-    assertSameElements(allToolchainRequirements, expectedRequirement)
+    assertUnorderedElementsAreEqual(allToolchainRequirements, expectedRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
     assertEquals(expectedRequirement,
@@ -433,7 +433,7 @@ class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String)
       .build()
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
-    assertSameElements(allToolchainRequirements, expectedRequirement, compilerRequirement)
+    assertUnorderedElementsAreEqual(allToolchainRequirements, expectedRequirement, compilerRequirement)
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
     assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
     assertEquals(compilerRequirement,

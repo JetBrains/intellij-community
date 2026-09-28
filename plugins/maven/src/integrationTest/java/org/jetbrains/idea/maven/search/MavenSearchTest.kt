@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.search
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,7 +11,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
@@ -68,8 +68,8 @@ class MavenSearchTest(mavenVersion: String, modelVersion: String) {
     runInEdtSmartMode {
       val m1Psi = PsiManager.getInstance(maven.project).findFile(m1File)
       val m2Psi = PsiManager.getInstance(maven.project).findFile(m2File)
-      UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
-      UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
+      assertContain(lookForFiles("module1"), m1Psi)
+      assertContain(lookForFiles("module2"), m2Psi)
     }
   }
 

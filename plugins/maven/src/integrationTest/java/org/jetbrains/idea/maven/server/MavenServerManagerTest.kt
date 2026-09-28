@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.execution.rmi.RemoteProcessSupport
+import com.intellij.maven.testFramework.fixtures.assertEmpty
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait

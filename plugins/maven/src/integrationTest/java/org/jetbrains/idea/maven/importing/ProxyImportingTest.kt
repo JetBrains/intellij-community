@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.utils.MavenHttpProxyServerFixture
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -164,7 +164,7 @@ class ProxyImportingTest(mavenVersion: String, modelVersion: String) {
                        </dependencies>
                        """.trimIndent()
     )
-    assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
+    assertContain(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
     assertTrue(maven.repositoryPath.resolve("org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile(), "File should be downloaded")
   }
 
@@ -189,7 +189,7 @@ class ProxyImportingTest(mavenVersion: String, modelVersion: String) {
                        </dependencies>
                        """.trimIndent()
     )
-    assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
+    assertContain(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
     assertTrue(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile(), "File should be downloaded")
   }
 
@@ -222,8 +222,8 @@ class ProxyImportingTest(mavenVersion: String, modelVersion: String) {
         .build()
     )
 
-    assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
-    assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar", "/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar")
+    assertContain(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
+    assertContain(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar", "/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar")
     assertTrue(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile(), "Source jar should be downloaded")
     assertTrue(myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar").isRegularFile(), "Javadoc jar should be downloaded")
   }
@@ -254,7 +254,7 @@ class ProxyImportingTest(mavenVersion: String, modelVersion: String) {
                        """.trimIndent())
     assertTrue(myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.pom").isRegularFile(), "Pom file should be downloaded")
     assertTrue(myHelper.getTestData("local1/intellij/test/maven-extension/1.0/maven-extension-1.0.jar").isRegularFile(), "Jar file should be downloaded")
-    assertContainsElements(myProxyFixture.requestedFiles, "/intellij/test/maven-extension/1.0/maven-extension-1.0.jar", "/intellij/test/maven-extension/1.0/maven-extension-1.0.pom")
+    assertContain(myProxyFixture.requestedFiles, "/intellij/test/maven-extension/1.0/maven-extension-1.0.jar", "/intellij/test/maven-extension/1.0/maven-extension-1.0.pom")
   }
 
   companion object {

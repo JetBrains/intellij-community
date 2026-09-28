@@ -20,6 +20,7 @@ import com.intellij.maven.jps.ide.execution.MavenJUnitPatcher
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertOrderedEquals
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
@@ -36,7 +37,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil

@@ -13,7 +13,6 @@ import com.intellij.maven.testFramework.fixtures.mn
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
@@ -21,6 +20,7 @@ import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.resolveReference
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
@@ -148,7 +148,7 @@ class MavenConfigImportingTest(mavenVersion: String, modelVersion: String) {
     val resolvedReference = maven.resolveReference(maven.projectPom, "config.version", 0)
     assertNotNull(resolvedReference)
 
-    UsefulTestCase.assertInstanceOf(resolvedReference, MavenPsiElementWrapper::class.java)
+    assertInstanceOf(MavenPsiElementWrapper::class.java, resolvedReference)
     assertEquals("1", (resolvedReference as MavenPsiElementWrapper?)!!.name)
   }
 

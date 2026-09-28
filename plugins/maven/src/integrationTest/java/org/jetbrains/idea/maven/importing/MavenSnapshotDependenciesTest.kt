@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertSize
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.fileContentEqual
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -15,7 +16,6 @@ import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking

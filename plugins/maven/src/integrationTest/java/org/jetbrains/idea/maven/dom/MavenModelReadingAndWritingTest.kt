@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertSameLines
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.openapi.application.readAction
@@ -10,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.runBlocking
@@ -61,7 +61,7 @@ class MavenModelReadingAndWritingTest(mavenVersion: String, modelVersion: String
       formatAndSaveProjectPomDocument()
     }
 
-    UsefulTestCase.assertSameLines("""
+    assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
                       <project xmlns="http://maven.apache.org/POM/${maven.modelVersion}"${'\r'}
                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
@@ -86,7 +86,7 @@ class MavenModelReadingAndWritingTest(mavenVersion: String, modelVersion: String
       formatAndSaveProjectPomDocument()
     }
 
-    UsefulTestCase.assertSameLines("""
+    assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
                       <project xmlns="http://maven.apache.org/POM/${maven.modelVersion}"${'\r'}
                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}

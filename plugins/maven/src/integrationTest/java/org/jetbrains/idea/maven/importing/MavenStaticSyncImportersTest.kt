@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.maven.testFramework.fixtures.assertContainsOrdered
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.util.Pair
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PairConsumer
 import kotlinx.coroutines.runBlocking
@@ -145,7 +145,7 @@ class MavenStaticSyncImportersTest(mavenVersion: String, modelVersion: String) {
     val mavenProject = myImporter.mavenProjects[0]
     val plugin = mavenProject.findPlugin("myplugin", "myartifact")
     Assertions.assertNotNull(plugin)
-    UsefulTestCase.assertContainsOrdered(plugin!!
+    assertContainsOrdered(plugin!!
                                            .executions
                                            .single { it.executionId == "some-exec" }
                                            .configurationElement!!.getChild("nestedList")!!

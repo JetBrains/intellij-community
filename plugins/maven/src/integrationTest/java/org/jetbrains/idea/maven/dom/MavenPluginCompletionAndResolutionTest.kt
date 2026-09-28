@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.findPsiFile
 import com.intellij.maven.testFramework.fixtures.getActualMavenVersion
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -14,7 +15,6 @@ import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.xml.XmlTag
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
@@ -190,7 +190,7 @@ class MavenPluginCompletionAndResolutionTest(mavenVersion: String, modelVersion:
     val variants = maven.getDependencyCompletionVariants(maven.projectPom) { it!!.getGroupId() + ":" + it.getArtifactId() }
 
 
-    UsefulTestCase.assertContainsElements(variants,
+    assertContain(variants,
                                           "org.apache.maven.plugins:maven-clean-plugin",
                                           "org.apache.maven.plugins:maven-compiler-plugin",
                                           "org.apache.maven.plugins:maven-deploy-plugin",

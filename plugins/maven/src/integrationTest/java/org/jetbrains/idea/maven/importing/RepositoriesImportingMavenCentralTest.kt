@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.createModulePom
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junit.jupiter.api.BeforeEach
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 
 @TestApplication
 @ParameterizedClass
@@ -50,7 +50,7 @@ class RepositoriesImportingMavenCentralTest(mavenVersion: String, modelVersion: 
                       """.trimIndent())
     //val mavenProject = projectsManager.findProject(projectPom)
     assertNotNull(mavenProject)
-    assertSameElements(mavenProject.remoteRepositories.map { it.url }, "https://repo.maven.apache.org/maven2")
+    assertUnorderedElementsAreEqual(mavenProject.remoteRepositories.map { it.url }, "https://repo.maven.apache.org/maven2")
   }
 
   @Test

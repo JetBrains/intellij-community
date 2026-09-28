@@ -3,12 +3,12 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.getActualMavenVersion
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,7 +53,7 @@ class Maven4SpecificImportingTest(mavenVersion: String, modelVersion: String) {
     val rootProject = maven.projectsManager.findProject(maven.projectPom)
     assertNotNull(moduleProject, "m1 project should not be null")
     assertNotNull(rootProject, "root project should not be null")
-    assertSameElements("Project root should have one child", maven.projectsManager.projectsTree.getModules(rootProject!!), listOf(moduleProject))
+    assertUnorderedElementsAreEqual("Project root should have one child", maven.projectsManager.projectsTree.getModules(rootProject!!), listOf(moduleProject))
     assertSame(maven.projectsManager.projectsTree.findRootProject(moduleProject!!), rootProject, "Root projecy should be same")
   }
 
@@ -124,7 +124,7 @@ class Maven4SpecificImportingTest(mavenVersion: String, modelVersion: String) {
     val rootProject = maven.projectsManager.findProject(maven.projectPom)
     assertNotNull(moduleProject, "m1 project should not be null")
     assertNotNull(rootProject, "root project should not be null")
-    assertSameElements("Project root should have one child", maven.projectsManager.projectsTree.getModules(rootProject!!), listOf(moduleProject))
+    assertUnorderedElementsAreEqual("Project root should have one child", maven.projectsManager.projectsTree.getModules(rootProject!!), listOf(moduleProject))
     assertSame(maven.projectsManager.projectsTree.findRootProject(moduleProject!!), rootProject, "Root projecy should be same")
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.arrayOfNotNull
 import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertDoNotContain
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
@@ -15,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -81,10 +81,10 @@ class MavenRunAnythingProviderTest(mavenVersion: String, modelVersion: String) {
         "install",
         "deploy",
         "site")
-      assertSameElements(groupedValues.keys, *expectedValues)
-      assertSameElements(groupedValues[""]!!, MavenConstants.BASIC_PHASES)
-      assertSameElements(groupedValues["clean"]!!, "clean:clean", "clean:help")
-      assertSameElements(groupedValues["compiler"]!!, "compiler:testCompile", "compiler:compile", "compiler:help")
+      assertUnorderedElementsAreEqual(groupedValues.keys, *expectedValues)
+      assertUnorderedElementsAreEqual(groupedValues[""]!!, MavenConstants.BASIC_PHASES)
+      assertUnorderedElementsAreEqual(groupedValues["clean"]!!, "clean:clean", "clean:help")
+      assertUnorderedElementsAreEqual(groupedValues["compiler"]!!, "compiler:testCompile", "compiler:compile", "compiler:help")
     }
     withVariantsFor("") { it: List<String> ->
       assertContain(it, "clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site")
