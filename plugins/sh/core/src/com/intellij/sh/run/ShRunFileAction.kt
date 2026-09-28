@@ -3,6 +3,7 @@ package com.intellij.sh.run
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.TrustedFiles
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -52,6 +53,7 @@ internal class ShRunFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecific
     val project = e.project ?: return
     val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val virtualFile = psiFile.virtualFile ?: return
+    if (!TrustedFiles.isTrusted(virtualFile, project)) return
     val runner = ApplicationManager.getApplication().getService(ShRunner::class.java) ?: return
     if (!runner.isAvailable(project)) return
 
@@ -99,6 +101,8 @@ internal class ShRunFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecific
     private fun isEnabled(e: AnActionEvent): Boolean {
       if (e.project == null) return false
       val file = e.getData(CommonDataKeys.PSI_FILE) ?: return false
+      val virtualFile = file.virtualFile
+      if (virtualFile != null && !TrustedFiles.isTrusted(virtualFile, file.project)) return false
       if (ApplicationManager.getApplication().getService(ShRunner::class.java) == null) return false
       if (ShRunnerAdditionalCondition.EP.extensionsIfPointIsRegistered.any { it.isRunningProhibitedForFile(file) }) return false
       return file is ShFile || startsWithShebang(file)
