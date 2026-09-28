@@ -14036,318 +14036,311 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_maven-maven-embedder-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-embedder-4.0.0-rc-6.jar",
-    sha256 = "ccac78c2c001bd1f742957db50b7001e4b62c019ae3d045c10e55b57141aa353",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/4.0.0-rc-6/maven-embedder-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-embedder-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-embedder-4.0.0-rc-7.jar",
+    sha256 = "b4be19bd266d8cefc560053b50c7e11f772db09d3be5e5f00f5bf137fecbd3eb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/4.0.0-rc-7/maven-embedder-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-annotations-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-annotations-4.0.0-rc-6.jar",
-    sha256 = "93a14f4aaef8aeac26bb80df784743d0fdac7b8eb699a928c19efa6c2745b565",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-annotations/4.0.0-rc-6/maven-api-annotations-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-annotations-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-annotations-4.0.0-rc-7.jar",
+    sha256 = "cf5a2a8b3df0e2e7fddb4ef9418d805071c1f55abaf9eb13dfc26c52e00e6810",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-annotations/4.0.0-rc-7/maven-api-annotations-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-core-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-core-4.0.0-rc-6.jar",
-    sha256 = "b593cfbb7fa4d92d6517a718619676474ad0829bd39ee7618aca57c8b0f21fe0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-core/4.0.0-rc-6/maven-api-core-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-core-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-core-4.0.0-rc-7.jar",
+    sha256 = "8f6fb00d62a09eb1d236a393b6f21d4c1076b7394780b0f31bc2ce87448407ae",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-core/4.0.0-rc-7/maven-api-core-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-di-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-di-4.0.0-rc-6.jar",
-    sha256 = "9e1bf8b0caeccd15a1a6d7d6f2df1ca698be017883a23a89f84d6c12c19f485f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-di/4.0.0-rc-6/maven-api-di-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-di-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-di-4.0.0-rc-7.jar",
+    sha256 = "2313eed052f4ced11156f5c47d7c22bada14ac8ed90bf6e8c1d8d8641749c37d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-di/4.0.0-rc-7/maven-api-di-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-settings-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-settings-4.0.0-rc-6.jar",
-    sha256 = "89ba4ca121c88a99b17e3494a7312f9d705e3c542622fbc11fb7655ae06dcefa",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-settings/4.0.0-rc-6/maven-api-settings-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-settings-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-settings-4.0.0-rc-7.jar",
+    sha256 = "59fa74683ff9581e4ea9e44d671e22340410a0f83fbdbcfb5a74efd82f523bfe",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-settings/4.0.0-rc-7/maven-api-settings-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-toolchain-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-toolchain-4.0.0-rc-6.jar",
-    sha256 = "4a13fbed0c2e0a434e5e12087524780972c4d5eac29d157b9a3d824f735b7815",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-toolchain/4.0.0-rc-6/maven-api-toolchain-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-toolchain-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-toolchain-4.0.0-rc-7.jar",
+    sha256 = "1cc1f062cd065965af58181c612cf023d2909a49df5c9ccf34ab8c50b9d9799c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-toolchain/4.0.0-rc-7/maven-api-toolchain-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-plugin-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-plugin-4.0.0-rc-6.jar",
-    sha256 = "ccb10824e7a11c9793d8a025fdbf229d551055d2a17c80f54ae24bf7dfaa41ff",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-plugin/4.0.0-rc-6/maven-api-plugin-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-plugin-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-plugin-4.0.0-rc-7.jar",
+    sha256 = "aaf5b9707398b60a291a16bb686ab85c990c36be242ce525c1665f00875321fe",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-plugin/4.0.0-rc-7/maven-api-plugin-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-cli-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-cli-4.0.0-rc-6.jar",
-    sha256 = "f255110ec1a1aba75aa2f39541e3840c2771879b3c1fbda8a17e9f1d2ef4f594",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-cli/4.0.0-rc-6/maven-api-cli-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-cli-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-cli-4.0.0-rc-7.jar",
+    sha256 = "e17d4fa2b59b9ca5d5d63d1650f7d7eb981fcc1acce0f698ca940a88ddc38703",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-cli/4.0.0-rc-7/maven-api-cli-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-model-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-model-4.0.0-rc-6.jar",
-    sha256 = "8ec60527455006fb5f3f7f749b948d0ec496f6300415cf1f805bd76dc369e0f5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-model/4.0.0-rc-6/maven-api-model-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-model-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-model-4.0.0-rc-7.jar",
+    sha256 = "5dfcaf5de153fa2aa5f70ecff3b05d42010e8b9a30af8f1a0011d50aa2aa5de6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-model/4.0.0-rc-7/maven-api-model-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-xml-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-xml-4.0.0-rc-6.jar",
-    sha256 = "9dad0b3b411a5ef2637f8ab01dbff28e4c78dc5ae5e8a90284d25d077e134439",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-xml/4.0.0-rc-6/maven-api-xml-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-xml-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-xml-4.0.0-rc-7.jar",
+    sha256 = "1f8940f04bc8b9582c2269ee39536d4971ef4877cb164c43ab5bb88eaab435fa",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-xml/4.0.0-rc-7/maven-api-xml-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-core-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-core-4.0.0-rc-6.jar",
-    sha256 = "2cb583577bae98309d28fd01b367aba84d8e80007c49ee4054d03f70ee79d93f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-core/4.0.0-rc-6/maven-core-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-core-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-core-4.0.0-rc-7.jar",
+    sha256 = "71aa633dfdac5aaecf0e0b2de31b578088c3b48e8cb0038cca009a3f0a155a0b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-core/4.0.0-rc-7/maven-core-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-metadata-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-metadata-4.0.0-rc-6.jar",
-    sha256 = "2b41c0a71b2953bf7e98e6a5ae30f3dd3373a2a97b1ad6a752b0344e6ed9bf80",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-metadata/4.0.0-rc-6/maven-api-metadata-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-metadata-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-metadata-4.0.0-rc-7.jar",
+    sha256 = "2389f2d32c16ee7e0f7a43e66105a1348ca3acd093370a7f8904d8d635f789e9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-metadata/4.0.0-rc-7/maven-api-metadata-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-spi-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-api-spi-4.0.0-rc-6.jar",
-    sha256 = "234999bf8e53dc475bc9aafdc35f7b9e7a5cad720e0dfb0400e419fc60c5534f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-spi/4.0.0-rc-6/maven-api-spi-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-api-spi-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-api-spi-4.0.0-rc-7.jar",
+    sha256 = "210a32ba25d1df9ce61c9cc98904f68b9b838ce5639a35c6cfe38f718b766edd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-spi/4.0.0-rc-7/maven-api-spi-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-impl-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-impl-4.0.0-rc-6.jar",
-    sha256 = "48005d8d80b65e74b326e994fc75841a841f572e734dd30487943532ac96e2ee",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-impl/4.0.0-rc-6/maven-impl-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-impl-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-impl-4.0.0-rc-7.jar",
+    sha256 = "66ab5a90f396b8baf7d645ad0b16ff08435ae85bf02de090e994fd64f21645c8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-impl/4.0.0-rc-7/maven-impl-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21_http",
-    downloaded_file_path = "maven-resolver-connector-basic-2.0.21.jar",
-    sha256 = "9fdc2a7d06dfdfef6e6617f3ed6284916b45dd17ea895e72a4c33fe5ffe8707f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/2.0.21/maven-resolver-connector-basic-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-connector-basic-2_0_23_http",
+    downloaded_file_path = "maven-resolver-connector-basic-2.0.23.jar",
+    sha256 = "bf8a706c2228c2f0f96f38377b85f3171206c52735054e3a8dc7e17e4fc033d4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/2.0.23/maven-resolver-connector-basic-2.0.23.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-repository-metadata-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-repository-metadata-4.0.0-rc-6.jar",
-    sha256 = "5538c45e7cd15253729f7d94c2fee1ea8ab6620e3531eed50802f83d1f7587dc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata/4.0.0-rc-6/maven-repository-metadata-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-repository-metadata-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-repository-metadata-4.0.0-rc-7.jar",
+    sha256 = "0366579722d43b46da20d4d38631e9911d360be6ba1b5d2eb2ef86ab5691a794",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata/4.0.0-rc-7/maven-repository-metadata-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-cli-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-cli-4.0.0-rc-6.jar",
-    sha256 = "c9ca2eaf245576be6aeeae9f84f5eff1bb5575c5c3b0c30ac2b73c0f96cad2a1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-cli/4.0.0-rc-6/maven-cli-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-cli-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-cli-4.0.0-rc-7.jar",
+    sha256 = "27fdd06519e1caaa975e92773f93085a3e050e276a66a29b8c7c54478000cdfe",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-cli/4.0.0-rc-7/maven-cli-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_21_http",
-    downloaded_file_path = "maven-resolver-transport-file-2.0.21.jar",
-    sha256 = "40b5ca50ecdb639d357d211594231825d9206b9ddaa51206de3ade3158351231",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/2.0.21/maven-resolver-transport-file-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_23_http",
+    downloaded_file_path = "maven-resolver-transport-file-2.0.23.jar",
+    sha256 = "1ced7e438ca32e5df21355df6320f290f127c8891c37abf31364c2c8a63942c6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/2.0.23/maven-resolver-transport-file-2.0.23.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21_http",
-    downloaded_file_path = "maven-resolver-transport-apache-2.0.21.jar",
-    sha256 = "0e81a181089d565b0963ade1468a56e7e32d27b309c11780ca66fb50c4fd04f4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-apache/2.0.21/maven-resolver-transport-apache-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-transport-apache-2_0_23_http",
+    downloaded_file_path = "maven-resolver-transport-apache-2.0.23.jar",
+    sha256 = "7e4148d1262faac91e248cab6f461f676c7810673a18939b0fff7028d7e00e24",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-apache/2.0.23/maven-resolver-transport-apache-2.0.23.jar",
 )
 
 http_file(
-    name = "commons-codec-commons-codec-1_22_0_http",
-    downloaded_file_path = "commons-codec-1.22.0.jar",
-    sha256 = "d164fe79f262c32d9b18a0b5b2d317d1c27653d5e98fd2b998c24bf901c72ce4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-codec/commons-codec/1.22.0/commons-codec-1.22.0.jar",
+    name = "org_slf4j-jcl-over-slf4j-2_0_19_http",
+    downloaded_file_path = "jcl-over-slf4j-2.0.19.jar",
+    sha256 = "efc3848f79638d9fa74ccbae3fd18c8735dcc0127b393ae53dce638827f8a2f3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jcl-over-slf4j/2.0.19/jcl-over-slf4j-2.0.19.jar",
 )
 
 http_file(
-    name = "org_slf4j-jcl-over-slf4j-2_0_18_http",
-    downloaded_file_path = "jcl-over-slf4j-2.0.18.jar",
-    sha256 = "ec5c36d57d2dbe100f84878f944575cb7871da32c7a115b8d7e0721277045d67",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jcl-over-slf4j/2.0.18/jcl-over-slf4j-2.0.18.jar",
+    name = "eu_maveniverse_maven_domtrip-domtrip-core-1_7_0_http",
+    downloaded_file_path = "domtrip-core-1.7.0.jar",
+    sha256 = "442e4eb9009a3d82cdfc25870a286150f91aecd1bbf689adfd7d8f2a4e755541",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-core/1.7.0/domtrip-core-1.7.0.jar",
 )
 
 http_file(
-    name = "eu_maveniverse_maven_domtrip-domtrip-core-1_6_0_http",
-    downloaded_file_path = "domtrip-core-1.6.0.jar",
-    sha256 = "2f3dda3c39f0775ea80490fa20fed3f9855d67ead5dbf66b88efbe9fe3a10332",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-core/1.6.0/domtrip-core-1.6.0.jar",
+    name = "eu_maveniverse_maven_domtrip-domtrip-maven-1_7_0_http",
+    downloaded_file_path = "domtrip-maven-1.7.0.jar",
+    sha256 = "0e16e197c2e6a211a0e4f600e588556c8c4ee0393f1529e3350d16065ed0c620",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-maven/1.7.0/domtrip-maven-1.7.0.jar",
 )
 
 http_file(
-    name = "eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0_http",
-    downloaded_file_path = "domtrip-maven-1.6.0.jar",
-    sha256 = "c11ff26ef8eca278c969500b897c3c5c40c321d26b832b273840f5a4481cf17d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-maven/1.6.0/domtrip-maven-1.6.0.jar",
+    name = "org_slf4j-jul-to-slf4j-2_0_19_http",
+    downloaded_file_path = "jul-to-slf4j-2.0.19.jar",
+    sha256 = "a5764fbd2f0053399ef75d40653c4e7c97e733b45676946b0a072416fc56ff30",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jul-to-slf4j/2.0.19/jul-to-slf4j-2.0.19.jar",
 )
 
 http_file(
-    name = "org_slf4j-jul-to-slf4j-2_0_18_http",
-    downloaded_file_path = "jul-to-slf4j-2.0.18.jar",
-    sha256 = "cbb7d1aaaa9e871eb1a06594abd911bf97027152976edf1edc315be75239204e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jul-to-slf4j/2.0.18/jul-to-slf4j-2.0.18.jar",
+    name = "org_apache_maven-maven-di-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-di-4.0.0-rc-7.jar",
+    sha256 = "1464687cb81692ff5002eb682c0eb049b624d2b246e1eb278a3c010f48c91e65",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-di/4.0.0-rc-7/maven-di-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-di-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-di-4.0.0-rc-6.jar",
-    sha256 = "fe11e1a2544e1972cc06ca8445695e2d8a1b04ddf928d8145d35c3cc9d9f2bfb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-di/4.0.0-rc-6/maven-di-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-jline-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-jline-4.0.0-rc-7.jar",
+    sha256 = "8a76f1fadc5c8517d0bd840295b5f9ee975f19242cc64f29b9cc5c27ea08639d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-jline/4.0.0-rc-7/maven-jline-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-jline-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-jline-4.0.0-rc-6.jar",
-    sha256 = "9361e125adc4e13f2f84c65f6f8cd313fb2f2d1df3a933b8e29ecbc6e0e07d8c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-jline/4.0.0-rc-6/maven-jline-4.0.0-rc-6.jar",
+    name = "org_jline-jline-reader-4_4_5_http",
+    downloaded_file_path = "jline-reader-4.4.5.jar",
+    sha256 = "e5a15ad546d6beba631315e635efd6959e360e41d1f0d4b1e7dd5ccf53c9db33",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-reader/4.4.5/jline-reader-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-reader-4_3_1_http",
-    downloaded_file_path = "jline-reader-4.3.1.jar",
-    sha256 = "02aa899906086ce9d9c992bb05aed776045e5915a180e717dcb661fb87ab84d3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-reader/4.3.1/jline-reader-4.3.1.jar",
+    name = "org_jline-jline-style-4_4_5_http",
+    downloaded_file_path = "jline-style-4.4.5.jar",
+    sha256 = "6033d1daf7951eb27898ee601ecdfe1de308f4c35577010738e066985645e385",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-style/4.4.5/jline-style-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-style-4_3_1_http",
-    downloaded_file_path = "jline-style-4.3.1.jar",
-    sha256 = "ba1f741d7faca9b624ea3c0ed1bd3d22c4663cfcba5784fda6dc50a233778e0a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-style/4.3.1/jline-style-4.3.1.jar",
+    name = "org_jline-jline-builtins-4_4_5_http",
+    downloaded_file_path = "jline-builtins-4.4.5.jar",
+    sha256 = "1ce08232eb185c50026164e5a6b59481dbf7aa5c697eef37e47f702b88745179",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-builtins/4.4.5/jline-builtins-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-builtins-4_3_1_http",
-    downloaded_file_path = "jline-builtins-4.3.1.jar",
-    sha256 = "1c9eb7a03796990cdc7266663f8330e27635dfc33904221d67ff1a8e21f1fbc3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-builtins/4.3.1/jline-builtins-4.3.1.jar",
+    name = "org_jline-jline-console-4_4_5_http",
+    downloaded_file_path = "jline-console-4.4.5.jar",
+    sha256 = "dd21e11924e07e9acc49d34921cc4e90486243fcb171205053c191ccf5d0c28f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console/4.4.5/jline-console-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-console-4_3_1_http",
-    downloaded_file_path = "jline-console-4.3.1.jar",
-    sha256 = "8be18f39b99491735b380f86bddd568404aa91bc46489ad63d3130f5f40c161c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console/4.3.1/jline-console-4.3.1.jar",
+    name = "org_jline-jline-shell-4_4_5_http",
+    downloaded_file_path = "jline-shell-4.4.5.jar",
+    sha256 = "a4d9ff194b3b0058906f1663521662ef2b78085dbb770bb44b900c7135064100",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-shell/4.4.5/jline-shell-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-shell-4_3_1_http",
-    downloaded_file_path = "jline-shell-4.3.1.jar",
-    sha256 = "ce72054bd9a874dd667562d018a4fb26df27cc2a7f896b0fd92a548b69b0ece8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-shell/4.3.1/jline-shell-4.3.1.jar",
+    name = "org_jline-jline-console-ui-4_4_5_http",
+    downloaded_file_path = "jline-console-ui-4.4.5.jar",
+    sha256 = "2a57c8b8a9591360471239799c821aaa5cfae0f88e6075eeb88b447f78db9010",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console-ui/4.4.5/jline-console-ui-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-console-ui-4_3_1_http",
-    downloaded_file_path = "jline-console-ui-4.3.1.jar",
-    sha256 = "046774dd25ad4db263961cd4f1219de8042af35e3c34e7d339be1e51dff791e3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console-ui/4.3.1/jline-console-ui-4.3.1.jar",
+    name = "org_jline-jline-terminal-4_4_5_http",
+    downloaded_file_path = "jline-terminal-4.4.5.jar",
+    sha256 = "5e21db227d537e4ea1d8934c9f79ed008314e92b2f7c123617aaf30170e2e017",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal/4.4.5/jline-terminal-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-terminal-4_3_1_http",
-    downloaded_file_path = "jline-terminal-4.3.1.jar",
-    sha256 = "272927363471fdbf2f38710befbfe866acc1ed3472062a8ced02b16686f27bcc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal/4.3.1/jline-terminal-4.3.1.jar",
+    name = "org_jline-jline-native-4_4_5_http",
+    downloaded_file_path = "jline-native-4.4.5.jar",
+    sha256 = "40477c200d6151236d4185e5af30892b118be87b716a3e8dfb5227d079e4677d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-native/4.4.5/jline-native-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-native-4_3_1_http",
-    downloaded_file_path = "jline-native-4.3.1.jar",
-    sha256 = "ff94ab4bccc3c1549444082ce07a2760cbf1ad4dae04e43508597bd802bcb231",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-native/4.3.1/jline-native-4.3.1.jar",
+    name = "org_jline-jline-terminal-jni-4_4_5_http",
+    downloaded_file_path = "jline-terminal-jni-4.4.5.jar",
+    sha256 = "c86e612ed1aa4ea22a0028831bb7d7d72c9d53e57490f750966462ae71f292db",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal-jni/4.4.5/jline-terminal-jni-4.4.5.jar",
 )
 
 http_file(
-    name = "org_jline-jline-terminal-jni-4_3_1_http",
-    downloaded_file_path = "jline-terminal-jni-4.3.1.jar",
-    sha256 = "1c4873798f36412827087013e424199bced29da7c8421f3850cfe7f31f274c1c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal-jni/4.3.1/jline-terminal-jni-4.3.1.jar",
+    name = "org_apache_maven-maven-logging-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-logging-4.0.0-rc-7.jar",
+    sha256 = "9527e617ae7f3909f0d676fcd5cd280389af581564437a95c1ba293c8ebb2daf",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-logging/4.0.0-rc-7/maven-logging-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-logging-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-logging-4.0.0-rc-6.jar",
-    sha256 = "54ac687e4dd2ae0a13048888ef08fe80cd266970fc974cc78fad8cdeb14543a3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-logging/4.0.0-rc-6/maven-logging-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-xml-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-xml-4.0.0-rc-7.jar",
+    sha256 = "3c4d6b0330f25f4d097b7af19be46d26be5a7e315cf1af24900f67138a6ad398",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-xml/4.0.0-rc-7/maven-xml-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-xml-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-xml-4.0.0-rc-6.jar",
-    sha256 = "1ba37789d4dd50cc31d6b838de71a8e73b440bdaf60d6264c2e2d1acef68d8bd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-xml/4.0.0-rc-6/maven-xml-4.0.0-rc-6.jar",
+    name = "com_fasterxml_woodstox-woodstox-core-7_2_2_http",
+    downloaded_file_path = "woodstox-core-7.2.2.jar",
+    sha256 = "3bd35f778fb15cd517fae51961ba7a9388eae8e4a836fac1166c7f70740e55cd",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/woodstox/woodstox-core/7.2.2/woodstox-core-7.2.2.jar",
 )
 
 http_file(
-    name = "com_fasterxml_woodstox-woodstox-core-7_2_1_http",
-    downloaded_file_path = "woodstox-core-7.2.1.jar",
-    sha256 = "95d5a916ab82aca0a8c4ca8a2cf7e4fd7eab18817c24f1fdc7738e15d2a58845",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/woodstox/woodstox-core/7.2.1/woodstox-core-7.2.1.jar",
+    name = "org_apache_maven-maven-artifact-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-artifact-4.0.0-rc-7.jar",
+    sha256 = "737daf46ee538938cc2f33332c950f2877f18265226eb1a92d52e09206f75905",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/4.0.0-rc-7/maven-artifact-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-artifact-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-artifact-4.0.0-rc-6.jar",
-    sha256 = "2398914b9fc883a5673c0a9c7e8345ae3adbba79e7125b6a85bdbf40f9fcaf92",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/4.0.0-rc-6/maven-artifact-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-builder-support-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-builder-support-4.0.0-rc-7.jar",
+    sha256 = "f45ecdc9a4389002b92d0e594fb9221f5c5a55f74ae288320199b6a80eb3975e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-builder-support/4.0.0-rc-7/maven-builder-support-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-builder-support-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-builder-support-4.0.0-rc-6.jar",
-    sha256 = "cbc1eaeaea100cea09a9d4155af5524dcdb3c5c6e49f2c5c8e0799a8fd34926e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-builder-support/4.0.0-rc-6/maven-builder-support-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-model-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-model-4.0.0-rc-7.jar",
+    sha256 = "6b7fb84c84199424b4246f904f4e58e76f1ff9b789d29774a4d34089ee03f5fb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model/4.0.0-rc-7/maven-model-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-model-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-model-4.0.0-rc-6.jar",
-    sha256 = "d06b8d814e56edc9747389448d851272ac9736ad38adda173ad532568bebea46",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model/4.0.0-rc-6/maven-model-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-support-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-support-4.0.0-rc-7.jar",
+    sha256 = "0de6df8d7330ad04c74ad94a4e1577e70340d209232159e4e69603b902fc8cfc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-support/4.0.0-rc-7/maven-support-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-support-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-support-4.0.0-rc-6.jar",
-    sha256 = "f1e1de5678a0334a7e72b5ecf9b7e3eeda9c2c8eba8cc4858ba9ac05a16f1b10",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-support/4.0.0-rc-6/maven-support-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-model-builder-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-model-builder-4.0.0-rc-7.jar",
+    sha256 = "b657f47ef526eb2e6a53bcc0f72fc23d70205610bb002a4e673f1a21eef4e045",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model-builder/4.0.0-rc-7/maven-model-builder-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-model-builder-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-model-builder-4.0.0-rc-6.jar",
-    sha256 = "067992f073c2afb1a57f13e461b22f0b3cf96006e977180100a7bb72dd37ba0b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model-builder/4.0.0-rc-6/maven-model-builder-4.0.0-rc-6.jar",
+    name = "org_codehaus_plexus-plexus-interpolation-1_30_0_http",
+    downloaded_file_path = "plexus-interpolation-1.30.0.jar",
+    sha256 = "457307267f6d2ea2582f5449df9350b86728f46c23ccd486341087ace473e9a1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.30.0/plexus-interpolation-1.30.0.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-interpolation-1_29_http",
-    downloaded_file_path = "plexus-interpolation-1.29.jar",
-    sha256 = "088d444dbcedfb384630d8686697ece3c401d6f33c8f8b3aa7259ea1c6996878",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.29/plexus-interpolation-1.29.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-plugin-api-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-plugin-api-4.0.0-rc-6.jar",
-    sha256 = "2c995fcf6cd8410f54aa2d849a279e1e6cc6635448e7f7d532378263806bf836",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/4.0.0-rc-6/maven-plugin-api-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-plugin-api-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-plugin-api-4.0.0-rc-7.jar",
+    sha256 = "a7be8aa6065b419b8074113ef214c7351595b272de7dbb525d6a9ed3d3b116ae",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/4.0.0-rc-7/maven-plugin-api-4.0.0-rc-7.jar",
 )
 
 http_file(
@@ -14358,66 +14351,66 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_maven-maven-settings-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-settings-4.0.0-rc-6.jar",
-    sha256 = "c5ee047782f1403c69d20456c9485e1b8c154142cb2da108ad3a7f7f70208343",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings/4.0.0-rc-6/maven-settings-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-settings-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-settings-4.0.0-rc-7.jar",
+    sha256 = "ac9b76dc5dd9f6480fb74b454a8ae95a8d991535cd0bf95190c6a3d08f9c579c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings/4.0.0-rc-7/maven-settings-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-settings-builder-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-settings-builder-4.0.0-rc-6.jar",
-    sha256 = "19877d86625dc60447c0304f944dcbf5efe9930aa31731a7cda2c4b91816994b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings-builder/4.0.0-rc-6/maven-settings-builder-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-settings-builder-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-settings-builder-4.0.0-rc-7.jar",
+    sha256 = "055a051971f185a8b31762479ddee21d0441dea511155dc2e4c6aafc7c4887c6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings-builder/4.0.0-rc-7/maven-settings-builder-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-toolchain-builder-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-toolchain-builder-4.0.0-rc-6.jar",
-    sha256 = "d77d50da526058970f12ac95f7d6cfc92e8c6b7ba4e604a476a0a9987dd41a5b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-builder/4.0.0-rc-6/maven-toolchain-builder-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-toolchain-builder-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-toolchain-builder-4.0.0-rc-7.jar",
+    sha256 = "4ef46e14d8e2e3b0570c772dd368d1f0e25c044c6c329d979187cfd3427ce721",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-builder/4.0.0-rc-7/maven-toolchain-builder-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-toolchain-model-4_0_0-rc-6_http",
-    downloaded_file_path = "maven-toolchain-model-4.0.0-rc-6.jar",
-    sha256 = "b5ba425e707c376e585dbfb8fd9a056d64dda9b966f74ef0dc449023c16ace62",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-model/4.0.0-rc-6/maven-toolchain-model-4.0.0-rc-6.jar",
+    name = "org_apache_maven-maven-toolchain-model-4_0_0-rc-7_http",
+    downloaded_file_path = "maven-toolchain-model-4.0.0-rc-7.jar",
+    sha256 = "e2ae28405ed1c943e7bccc2abe4925af9bae07d2ce8fdc254faeb97de28d7691",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-model/4.0.0-rc-7/maven-toolchain-model-4.0.0-rc-7.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-api-2_0_21_http",
-    downloaded_file_path = "maven-resolver-api-2.0.21.jar",
-    sha256 = "9594663269f16a26d285f9fe285ca5aeb215905b9454b1d2984398828ccf1fd8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-api/2.0.21/maven-resolver-api-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-api-2_0_23_http",
+    downloaded_file_path = "maven-resolver-api-2.0.23.jar",
+    sha256 = "09936824b41e3e4de07d795b32c61968f52df618ee5fa41f307dcedc52461ce6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-api/2.0.23/maven-resolver-api-2.0.23.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-spi-2_0_21_http",
-    downloaded_file_path = "maven-resolver-spi-2.0.21.jar",
-    sha256 = "d0dae81c5faec055fac4743c68734e4ee6282011b6dec226a3401b1e52af06c2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/2.0.21/maven-resolver-spi-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-spi-2_0_23_http",
+    downloaded_file_path = "maven-resolver-spi-2.0.23.jar",
+    sha256 = "9f7779351aa9946cbd20568df4a159f87f270b05f2c80c6c7f125a22284ea0a4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/2.0.23/maven-resolver-spi-2.0.23.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-util-2_0_21_http",
-    downloaded_file_path = "maven-resolver-util-2.0.21.jar",
-    sha256 = "ce707615455f3ceabb397a5790c023e54186ed6ec283b437711e7cd451fdd1bd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-util/2.0.21/maven-resolver-util-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-util-2_0_23_http",
+    downloaded_file_path = "maven-resolver-util-2.0.23.jar",
+    sha256 = "636215370348fc6f895d33ac7f1b40f68385f9262a5bba46019ff9545c161642",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-util/2.0.23/maven-resolver-util-2.0.23.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-impl-2_0_21_http",
-    downloaded_file_path = "maven-resolver-impl-2.0.21.jar",
-    sha256 = "25113caaae30ba17c641b13ae9da6dff968b2eee6a9dfed9279ee84957b805b3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-impl/2.0.21/maven-resolver-impl-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-impl-2_0_23_http",
+    downloaded_file_path = "maven-resolver-impl-2.0.23.jar",
+    sha256 = "54e689a66e69bf2c113054b22e4b54a838b268957db4781f742230cdea4bd9d3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-impl/2.0.23/maven-resolver-impl-2.0.23.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-named-locks-2_0_21_http",
-    downloaded_file_path = "maven-resolver-named-locks-2.0.21.jar",
-    sha256 = "3f900ec3f92a7270bba157fe679fc1fb684d98b063168039b6f9dc64c4d14470",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-named-locks/2.0.21/maven-resolver-named-locks-2.0.21.jar",
+    name = "org_apache_maven_resolver-maven-resolver-named-locks-2_0_23_http",
+    downloaded_file_path = "maven-resolver-named-locks-2.0.23.jar",
+    sha256 = "6254abd534b8159186f0e5432aad4de346fce7e2588d200356378aebf1e9305f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-named-locks/2.0.23/maven-resolver-named-locks-2.0.23.jar",
 )
 
 http_file(
@@ -14428,353 +14421,346 @@ http_file(
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-xml-4_1_1_http",
-    downloaded_file_path = "plexus-xml-4.1.1.jar",
-    sha256 = "e09b1fcc46da744a0e4dabe703f287ce133b631ea95c6e1a8a82ebad2b1a2815",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-xml/4.1.1/plexus-xml-4.1.1.jar",
+    name = "org_codehaus_plexus-plexus-xml-4_2_0_http",
+    downloaded_file_path = "plexus-xml-4.2.0.jar",
+    sha256 = "db143f794bd815ccff8025fd6758b168564f51ae1c78d20f5a1a356ba212303e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-xml/4.2.0/plexus-xml-4.2.0.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-classworlds-2_12_0_http",
-    downloaded_file_path = "plexus-classworlds-2.12.0.jar",
-    sha256 = "d3f81c616c288e7df055dcc1f40a8b0f210a070e9400619de0ae3a15c62d94eb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.12.0/plexus-classworlds-2.12.0.jar",
+    name = "org_codehaus_plexus-plexus-classworlds-2_12_1_http",
+    downloaded_file_path = "plexus-classworlds-2.12.1.jar",
+    sha256 = "7f88ef8b83d6f2be46b12f17b982439a5ec83c566f5e2a04dad2d684e73cda94",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.12.1/plexus-classworlds-2.12.1.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-sec-dispatcher-4_1_0_http",
-    downloaded_file_path = "plexus-sec-dispatcher-4.1.0.jar",
-    sha256 = "efc10a957d070940701a591685dab92c33f0ba3ffea9518b8d691b23897734fe",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-sec-dispatcher/4.1.0/plexus-sec-dispatcher-4.1.0.jar",
+    name = "org_codehaus_plexus-plexus-sec-dispatcher-4_2_0_http",
+    downloaded_file_path = "plexus-sec-dispatcher-4.2.0.jar",
+    sha256 = "49bcc4b481e24f38199e338e850562040acc6a34e120d734bd119c9c8c10a2fb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-sec-dispatcher/4.2.0/plexus-sec-dispatcher-4.2.0.jar",
 )
 
 http_file(
-    name = "org_slf4j-slf4j-api-2_0_18_http",
-    downloaded_file_path = "slf4j-api-2.0.18.jar",
-    sha256 = "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar",
+    name = "org_slf4j-slf4j-api-2_0_19_http",
+    downloaded_file_path = "slf4j-api-2.0.19.jar",
+    sha256 = "e91ff6d720609e7a194ffe758c3ed5c84e798617ae07b0a0f6a4fe229741b4bb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19.jar",
 )
 
 http_file(
-    name = "org_jline-jansi-core-4_3_1_http",
-    downloaded_file_path = "jansi-core-4.3.1.jar",
-    sha256 = "7a4cb36e8184dd728e356c50a5efef7361f21b9fef4e11a9234925faa65feae1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jansi-core/4.3.1/jansi-core-4.3.1.jar",
+    name = "org_jline-jansi-core-4_4_5_http",
+    downloaded_file_path = "jansi-core-4.4.5.jar",
+    sha256 = "0afda8b10b4da3c046d67de4bdf7e6b3c05bcfbf081ba3cd7a51426bb4c73215",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jansi-core/4.4.5/jansi-core-4.4.5.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-embedder-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-embedder-4.0.0-rc-6-sources.jar",
-    sha256 = "d6407b15aa0a35fe0ed1b63b8eec8d9a01b0b46fa4868f5c9253e0a6b81e1f4d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/4.0.0-rc-6/maven-embedder-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-embedder-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-embedder-4.0.0-rc-7-sources.jar",
+    sha256 = "09de683aaa3db142c210266389bce4977a0c622ccf0d82889c218e5cc13d03d5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/4.0.0-rc-7/maven-embedder-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-annotations-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-annotations-4.0.0-rc-6-sources.jar",
-    sha256 = "38a9644fc7d354089670a7360cfcbf3da37a7b67aea178251b7ac9bad371a7da",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-annotations/4.0.0-rc-6/maven-api-annotations-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-annotations-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-annotations-4.0.0-rc-7-sources.jar",
+    sha256 = "7559c325189745eba1c3a3312896de88172dbea59cfdba2a5f59c2f6d118e2cb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-annotations/4.0.0-rc-7/maven-api-annotations-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-core-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-core-4.0.0-rc-6-sources.jar",
-    sha256 = "595e5ada30f63f075953aca964b204eea1c0a96e3f9c5dd235c2e2fe4523bf97",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-core/4.0.0-rc-6/maven-api-core-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-core-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-core-4.0.0-rc-7-sources.jar",
+    sha256 = "a6d17a80c965aae842b0c3503e3dc001f67f8da67a221acbf9fe4beac045dc3f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-core/4.0.0-rc-7/maven-api-core-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-di-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-di-4.0.0-rc-6-sources.jar",
-    sha256 = "ca655e09927a2bbaf4e7774e999c0bf0d80949e7a3c2bcbaa13a789d6107a75e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-di/4.0.0-rc-6/maven-api-di-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-di-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-di-4.0.0-rc-7-sources.jar",
+    sha256 = "7cbfb6a261a9da7b1ac583569cd702eb6ef4b07a346346bf4557fadd90dfed2f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-di/4.0.0-rc-7/maven-api-di-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-settings-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-settings-4.0.0-rc-6-sources.jar",
-    sha256 = "340967ae34c609e827016286d0c79866549477a5baac0a58648f6c499d694b06",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-settings/4.0.0-rc-6/maven-api-settings-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-settings-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-settings-4.0.0-rc-7-sources.jar",
+    sha256 = "fb6451d60e6b09ee9974071f0ad0d9e68d45f779c3a6d34770a2dc1d3287b9f9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-settings/4.0.0-rc-7/maven-api-settings-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-toolchain-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-toolchain-4.0.0-rc-6-sources.jar",
-    sha256 = "424f0d5a9d14cff0d60558fee2f3b3a431214cccccbc2a474878208697ace737",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-toolchain/4.0.0-rc-6/maven-api-toolchain-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-toolchain-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-toolchain-4.0.0-rc-7-sources.jar",
+    sha256 = "799645264b8e351f2524fdcae949c924c1630136f0d4c88f6657661c5543d9f2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-toolchain/4.0.0-rc-7/maven-api-toolchain-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-plugin-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-plugin-4.0.0-rc-6-sources.jar",
-    sha256 = "7b8fd9d995b818f3a4058f07dcfee5d732f958595bbd6cac1940e25301b1c178",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-plugin/4.0.0-rc-6/maven-api-plugin-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-plugin-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-plugin-4.0.0-rc-7-sources.jar",
+    sha256 = "7342462f0dc450f7abeee062e8a1f71566a1244cc3732c9f4573471bf49cf9ad",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-plugin/4.0.0-rc-7/maven-api-plugin-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-cli-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-cli-4.0.0-rc-6-sources.jar",
-    sha256 = "ee2811efd3be7cb461a01ee5588ba44da335f8d29df9f4c930d2a2a403b5f813",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-cli/4.0.0-rc-6/maven-api-cli-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-cli-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-cli-4.0.0-rc-7-sources.jar",
+    sha256 = "8ecfb1b3e20063da6cc8951140dff8d7400ea0fa8b783d322120d50c1d50e676",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-cli/4.0.0-rc-7/maven-api-cli-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-model-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-model-4.0.0-rc-6-sources.jar",
-    sha256 = "4943f7ded57d36eab076b3562f708dcbff7ac7cd24eb82c26121242b4d69ccca",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-model/4.0.0-rc-6/maven-api-model-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-model-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-model-4.0.0-rc-7-sources.jar",
+    sha256 = "912cb6609232c84aef7fdf31a2be9867e5fa2ee4ddb45b2aad825b69fa8008e4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-model/4.0.0-rc-7/maven-api-model-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-xml-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-xml-4.0.0-rc-6-sources.jar",
-    sha256 = "2e3ffa51bca952e59d6f5baaefaa881da978a7edb08f06ded5c46244fe4be18e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-xml/4.0.0-rc-6/maven-api-xml-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-xml-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-xml-4.0.0-rc-7-sources.jar",
+    sha256 = "0e3f1d80228f437c6141e64fbcc3ebef11e80a97b5d81b82b9b54f6f17b100e9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-xml/4.0.0-rc-7/maven-api-xml-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-core-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-core-4.0.0-rc-6-sources.jar",
-    sha256 = "ba55f12a76e115a28fa10ea6cbd8fc7afc96ef8ec14c0980db3cbef2fda8e119",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-core/4.0.0-rc-6/maven-core-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-core-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-core-4.0.0-rc-7-sources.jar",
+    sha256 = "c7d4135aeceb427fa819b3063c760c648c086dadc6ee4913595b724a756972c3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-core/4.0.0-rc-7/maven-core-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-metadata-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-metadata-4.0.0-rc-6-sources.jar",
-    sha256 = "17b75a5487d4ed81935d0d79c8dddf2710dd1718f0a1700dc74b9d2a920374e1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-metadata/4.0.0-rc-6/maven-api-metadata-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-metadata-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-metadata-4.0.0-rc-7-sources.jar",
+    sha256 = "1c4d610d8bf9dea8572129665b6c2e2cf5e660feae5fb6ef6652420d5223784a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-metadata/4.0.0-rc-7/maven-api-metadata-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-api-spi-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-api-spi-4.0.0-rc-6-sources.jar",
-    sha256 = "4c25d6ac9841c736872ce41c0ec822df8da7e3893736d563ab15c8818c3b30a2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-spi/4.0.0-rc-6/maven-api-spi-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-api-spi-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-api-spi-4.0.0-rc-7-sources.jar",
+    sha256 = "afe7e02edc90b5a480e29411555376377eb1bd1b9db8bb71921cfbcb52179fce",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-api-spi/4.0.0-rc-7/maven-api-spi-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-impl-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-impl-4.0.0-rc-6-sources.jar",
-    sha256 = "d0fe6e1c6634c746d7da971a5c36ca5bac1d5c25bfec7c3a8f5edb43daf4768a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-impl/4.0.0-rc-6/maven-impl-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-impl-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-impl-4.0.0-rc-7-sources.jar",
+    sha256 = "cd1fe1c9d04546b8f93243fb5f6e0b8179bdd212b613b17e5b1d4986711cd59a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-impl/4.0.0-rc-7/maven-impl-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-connector-basic-2.0.21-sources.jar",
-    sha256 = "ef801cba1168bb22dfb4ade046bbfe69f6503182aafc4fd38a5b54ced186e023",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/2.0.21/maven-resolver-connector-basic-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-connector-basic-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-connector-basic-2.0.23-sources.jar",
+    sha256 = "a65e94d172edae8c7cc27efa7ed68873b2e2822997fe832ec6519c3309c62f15",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-connector-basic/2.0.23/maven-resolver-connector-basic-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-repository-metadata-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-repository-metadata-4.0.0-rc-6-sources.jar",
-    sha256 = "15fc78c044fce66c6de0ada9a94d555a35895a23e2ab2ee786e3f18813bae1f7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata/4.0.0-rc-6/maven-repository-metadata-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-repository-metadata-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-repository-metadata-4.0.0-rc-7-sources.jar",
+    sha256 = "e49a8470822f1fabd4104a5a0476f326039e8a5770ec37269fdb3ef7cfed56c4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata/4.0.0-rc-7/maven-repository-metadata-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-cli-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-cli-4.0.0-rc-6-sources.jar",
-    sha256 = "c307289485d1879392bc0d33a96dcae53f980ac00253ea159137a66d3278ae5e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-cli/4.0.0-rc-6/maven-cli-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-cli-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-cli-4.0.0-rc-7-sources.jar",
+    sha256 = "3c58e907ebe5142c8d3ba055bf088d0b85e05d090f228517aa8234d3328bab27",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-cli/4.0.0-rc-7/maven-cli-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-transport-file-2.0.21-sources.jar",
-    sha256 = "ab3b92babda583092fffbb24fd779ee12083244bce640e1526309a553b8a3b73",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/2.0.21/maven-resolver-transport-file-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-transport-file-2.0.23-sources.jar",
+    sha256 = "c106269082ec092fcda8b7e53762f784f0a74328be559641afa2341e55c91c0c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/2.0.23/maven-resolver-transport-file-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-transport-apache-2.0.21-sources.jar",
-    sha256 = "f2c9ab19af717647e0304e07a41079bed52db70bcc5190379c81b2d494d41d62",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-apache/2.0.21/maven-resolver-transport-apache-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-transport-apache-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-transport-apache-2.0.23-sources.jar",
+    sha256 = "e2a63eaa7ec2d88ec94cd8490873d8d0e62053240bd3334375e4d3efe5583f0f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-apache/2.0.23/maven-resolver-transport-apache-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "commons-codec-commons-codec-1_22_0-sources_http",
-    downloaded_file_path = "commons-codec-1.22.0-sources.jar",
-    sha256 = "217146b7a3cab98a1bca6b3f0aad5dae136b63a36c129bccb07ddfb69fed3561",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-codec/commons-codec/1.22.0/commons-codec-1.22.0-sources.jar",
+    name = "org_slf4j-jcl-over-slf4j-2_0_19-sources_http",
+    downloaded_file_path = "jcl-over-slf4j-2.0.19-sources.jar",
+    sha256 = "7094ba31c03577c48b641602e345da8452dd03d70a834eeaea965b7f0500941b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jcl-over-slf4j/2.0.19/jcl-over-slf4j-2.0.19-sources.jar",
 )
 
 http_file(
-    name = "org_slf4j-jcl-over-slf4j-2_0_18-sources_http",
-    downloaded_file_path = "jcl-over-slf4j-2.0.18-sources.jar",
-    sha256 = "d0a96716020e44f95f1d94c4d2deeda009056847a125453010d4258db6b53776",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jcl-over-slf4j/2.0.18/jcl-over-slf4j-2.0.18-sources.jar",
+    name = "eu_maveniverse_maven_domtrip-domtrip-core-1_7_0-sources_http",
+    downloaded_file_path = "domtrip-core-1.7.0-sources.jar",
+    sha256 = "9b248718fb0be4f6a28e650d5c7bbf03f3c60115a80a1948e7d5dbd9e2db9853",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-core/1.7.0/domtrip-core-1.7.0-sources.jar",
 )
 
 http_file(
-    name = "eu_maveniverse_maven_domtrip-domtrip-core-1_6_0-sources_http",
-    downloaded_file_path = "domtrip-core-1.6.0-sources.jar",
-    sha256 = "5602a513da4be9221a436be402561da0862215c6c92ddcb7ad57cef749be81fe",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-core/1.6.0/domtrip-core-1.6.0-sources.jar",
+    name = "eu_maveniverse_maven_domtrip-domtrip-maven-1_7_0-sources_http",
+    downloaded_file_path = "domtrip-maven-1.7.0-sources.jar",
+    sha256 = "692dfab16d4d692fe57ba00ccde04703bf5c3ff0f1f76ddfdc661f8b026cd948",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-maven/1.7.0/domtrip-maven-1.7.0-sources.jar",
 )
 
 http_file(
-    name = "eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0-sources_http",
-    downloaded_file_path = "domtrip-maven-1.6.0-sources.jar",
-    sha256 = "4760023158d3bc8350a699f620c8266f69c0e3c217671dc94b8066a4a9c4636c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/eu/maveniverse/maven/domtrip/domtrip-maven/1.6.0/domtrip-maven-1.6.0-sources.jar",
+    name = "org_slf4j-jul-to-slf4j-2_0_19-sources_http",
+    downloaded_file_path = "jul-to-slf4j-2.0.19-sources.jar",
+    sha256 = "db775bf5a3a0b9627a1a17ffe37cd02b56ba2a5e85ec3759c8bb6daa0d2c8b48",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jul-to-slf4j/2.0.19/jul-to-slf4j-2.0.19-sources.jar",
 )
 
 http_file(
-    name = "org_slf4j-jul-to-slf4j-2_0_18-sources_http",
-    downloaded_file_path = "jul-to-slf4j-2.0.18-sources.jar",
-    sha256 = "b6dd2138f3e83d876bf07206d09f2b48ca655bc36a8e80b0c2a32ad19ab8f1d5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/jul-to-slf4j/2.0.18/jul-to-slf4j-2.0.18-sources.jar",
+    name = "org_apache_maven-maven-di-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-di-4.0.0-rc-7-sources.jar",
+    sha256 = "ecafcd68383803dc512c8948357611c9e482464d7587c1cf11692088c1b2a461",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-di/4.0.0-rc-7/maven-di-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-di-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-di-4.0.0-rc-6-sources.jar",
-    sha256 = "12a7cff74ba575c955776222944476babce9bac65f17ac1213972c619440a348",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-di/4.0.0-rc-6/maven-di-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-jline-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-jline-4.0.0-rc-7-sources.jar",
+    sha256 = "590f07fea69130a331ff761e553a554e8838d5f7e5d006b288a2cddce78e9e41",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-jline/4.0.0-rc-7/maven-jline-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-jline-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-jline-4.0.0-rc-6-sources.jar",
-    sha256 = "58a2d29e344f77a64c7070b8f6d7c2af9810e2d3abf1ae4d7c454ce82308f658",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-jline/4.0.0-rc-6/maven-jline-4.0.0-rc-6-sources.jar",
+    name = "org_jline-jline-reader-4_4_5-sources_http",
+    downloaded_file_path = "jline-reader-4.4.5-sources.jar",
+    sha256 = "0dfa81cd934a39b9da89c14e64bc078e8fff303d9485c673b2c6453f2c5cd3fe",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-reader/4.4.5/jline-reader-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-reader-4_3_1-sources_http",
-    downloaded_file_path = "jline-reader-4.3.1-sources.jar",
-    sha256 = "4b282beaedd903ef59bb2697155f914d7954a47e278350e0eca648dec2ca8c9e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-reader/4.3.1/jline-reader-4.3.1-sources.jar",
+    name = "org_jline-jline-style-4_4_5-sources_http",
+    downloaded_file_path = "jline-style-4.4.5-sources.jar",
+    sha256 = "1007e68db99871fbac7b95ed952a324a0240118051cd896b0d848b853e044737",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-style/4.4.5/jline-style-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-style-4_3_1-sources_http",
-    downloaded_file_path = "jline-style-4.3.1-sources.jar",
-    sha256 = "97868c90dcdfa40235a223ba77c24529ed4e85af38c26467d79cd24701541f88",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-style/4.3.1/jline-style-4.3.1-sources.jar",
+    name = "org_jline-jline-builtins-4_4_5-sources_http",
+    downloaded_file_path = "jline-builtins-4.4.5-sources.jar",
+    sha256 = "d64c136ed15a7c188a980e27ce5582e517e04c83db03696e737aad0684411935",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-builtins/4.4.5/jline-builtins-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-builtins-4_3_1-sources_http",
-    downloaded_file_path = "jline-builtins-4.3.1-sources.jar",
-    sha256 = "fc4f7da0e1980394adf780671268494cd647787aaef235724aa433cfd7baac36",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-builtins/4.3.1/jline-builtins-4.3.1-sources.jar",
+    name = "org_jline-jline-console-4_4_5-sources_http",
+    downloaded_file_path = "jline-console-4.4.5-sources.jar",
+    sha256 = "c6746cb376be3032a59e2667de6cbc7dfb719c426d164d1db54419476e466d38",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console/4.4.5/jline-console-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-console-4_3_1-sources_http",
-    downloaded_file_path = "jline-console-4.3.1-sources.jar",
-    sha256 = "3ef0a8d1b90aba14543ce8e148b33cca1bc4e5f02a030f597ebf61c7aaaff503",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console/4.3.1/jline-console-4.3.1-sources.jar",
+    name = "org_jline-jline-shell-4_4_5-sources_http",
+    downloaded_file_path = "jline-shell-4.4.5-sources.jar",
+    sha256 = "eb29e332f27a6d0db3d7c5eccbd9a78ffdff0e77328ae9bdc1e4b76273b6df80",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-shell/4.4.5/jline-shell-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-shell-4_3_1-sources_http",
-    downloaded_file_path = "jline-shell-4.3.1-sources.jar",
-    sha256 = "a94f140077c0ef8085ff6c6715f026fb596ed90e1e517686ffa679d4a969e30c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-shell/4.3.1/jline-shell-4.3.1-sources.jar",
+    name = "org_jline-jline-console-ui-4_4_5-sources_http",
+    downloaded_file_path = "jline-console-ui-4.4.5-sources.jar",
+    sha256 = "1f3f8b03e92614152ccbd30db2c59c5b86f1107d487126b9e566a7172b5c1817",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console-ui/4.4.5/jline-console-ui-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-console-ui-4_3_1-sources_http",
-    downloaded_file_path = "jline-console-ui-4.3.1-sources.jar",
-    sha256 = "5ee4b18e86564db79319090489130a35d25ceb5dcb473f82bf296eba60ca3d47",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-console-ui/4.3.1/jline-console-ui-4.3.1-sources.jar",
+    name = "org_jline-jline-terminal-4_4_5-sources_http",
+    downloaded_file_path = "jline-terminal-4.4.5-sources.jar",
+    sha256 = "69ab6e41a29393a287068ccf481c06e12cde849e8848af119b17a478bcd8fa9b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal/4.4.5/jline-terminal-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-terminal-4_3_1-sources_http",
-    downloaded_file_path = "jline-terminal-4.3.1-sources.jar",
-    sha256 = "9290648ed190add84fa15f482d92d760a4217e4f26d79255d1770ccd7015d72c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal/4.3.1/jline-terminal-4.3.1-sources.jar",
+    name = "org_jline-jline-native-4_4_5-sources_http",
+    downloaded_file_path = "jline-native-4.4.5-sources.jar",
+    sha256 = "43187b13d05c3a7d247694a36903787ad486b07956626a5b8672e85f9cb51245",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-native/4.4.5/jline-native-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-native-4_3_1-sources_http",
-    downloaded_file_path = "jline-native-4.3.1-sources.jar",
-    sha256 = "bc19d0539f602db947f5d94fc9f53c13cc22d1cbecf5d47636daceefe3cbf9ce",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-native/4.3.1/jline-native-4.3.1-sources.jar",
+    name = "org_jline-jline-terminal-jni-4_4_5-sources_http",
+    downloaded_file_path = "jline-terminal-jni-4.4.5-sources.jar",
+    sha256 = "4267667c9827125d5c4f48bfb3fa6368dbb4b89ed1bbe09d6766020de7590a19",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal-jni/4.4.5/jline-terminal-jni-4.4.5-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jline-terminal-jni-4_3_1-sources_http",
-    downloaded_file_path = "jline-terminal-jni-4.3.1-sources.jar",
-    sha256 = "c75238127017279e956c85608ccd2aa40ff9dd18542e2e7ad534db9348c4c534",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jline-terminal-jni/4.3.1/jline-terminal-jni-4.3.1-sources.jar",
+    name = "org_apache_maven-maven-logging-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-logging-4.0.0-rc-7-sources.jar",
+    sha256 = "33a9312254a318c883fcda9ff494af6c1b83c59ef365410b30b2b96fd2d19e50",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-logging/4.0.0-rc-7/maven-logging-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-logging-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-logging-4.0.0-rc-6-sources.jar",
-    sha256 = "42a309cd4bde2f4d50ab7d23d0e1782aa173c57eeb962bbfddca9b170df1534a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-logging/4.0.0-rc-6/maven-logging-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-xml-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-xml-4.0.0-rc-7-sources.jar",
+    sha256 = "56529ea288252e4512e471f4e67407346846be5e371b00bb5f61b54c96a081f9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-xml/4.0.0-rc-7/maven-xml-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-xml-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-xml-4.0.0-rc-6-sources.jar",
-    sha256 = "625250a290291cbf428ae4ec217542e71fa2a371d12ff67ec4ad6a30f73c5645",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-xml/4.0.0-rc-6/maven-xml-4.0.0-rc-6-sources.jar",
+    name = "com_fasterxml_woodstox-woodstox-core-7_2_2-sources_http",
+    downloaded_file_path = "woodstox-core-7.2.2-sources.jar",
+    sha256 = "24669b0269917ca63270e81222c038b3ce737eba12bdb4a159e48e8b1d5a4822",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/woodstox/woodstox-core/7.2.2/woodstox-core-7.2.2-sources.jar",
 )
 
 http_file(
-    name = "com_fasterxml_woodstox-woodstox-core-7_2_1-sources_http",
-    downloaded_file_path = "woodstox-core-7.2.1-sources.jar",
-    sha256 = "cd8718deb6abfae5127435555d7a37fd44ad8068e3d4badcd9fbfd5ac2709407",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/woodstox/woodstox-core/7.2.1/woodstox-core-7.2.1-sources.jar",
+    name = "org_apache_maven-maven-artifact-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-artifact-4.0.0-rc-7-sources.jar",
+    sha256 = "87eb797d6c93397df30b0484612191047e83bf3994f1bace3582fedbe267985a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/4.0.0-rc-7/maven-artifact-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-artifact-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-artifact-4.0.0-rc-6-sources.jar",
-    sha256 = "3b628d796bf32e76e2f2301395dd5383202903ca824a56c1db0574253c7e0d56",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-artifact/4.0.0-rc-6/maven-artifact-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-builder-support-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-builder-support-4.0.0-rc-7-sources.jar",
+    sha256 = "8a50da5c071a805ab4053d00f30df0265e5f15b842877c2d724a8fc1d9af030c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-builder-support/4.0.0-rc-7/maven-builder-support-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-builder-support-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-builder-support-4.0.0-rc-6-sources.jar",
-    sha256 = "7411fdbde81ac547a13072054143f5c82939af823b12bedc151fb9bcc9f532fb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-builder-support/4.0.0-rc-6/maven-builder-support-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-model-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-model-4.0.0-rc-7-sources.jar",
+    sha256 = "5e2f10bba8476c1b6eeba857d852da1d8f27ecb65ea988c90f26ec0154181de0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model/4.0.0-rc-7/maven-model-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-model-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-model-4.0.0-rc-6-sources.jar",
-    sha256 = "48deb56ddd3cc751df7247b53285b97a87a8a7aee40802eeb69a492467159736",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model/4.0.0-rc-6/maven-model-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-support-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-support-4.0.0-rc-7-sources.jar",
+    sha256 = "f15e0feb79b85309530baf401c94718712db9b2a53e9533ccaa855297eaeadba",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-support/4.0.0-rc-7/maven-support-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-support-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-support-4.0.0-rc-6-sources.jar",
-    sha256 = "35e3fc4518edf0778f85c9dbe0296a61751305fb6f7ee1df81709b561698625e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-support/4.0.0-rc-6/maven-support-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-model-builder-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-model-builder-4.0.0-rc-7-sources.jar",
+    sha256 = "785eb3c41d2477d2d4123e4d657097ed56f18374dd8904df0c2e97473b53eb8d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model-builder/4.0.0-rc-7/maven-model-builder-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-model-builder-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-model-builder-4.0.0-rc-6-sources.jar",
-    sha256 = "fa2ddafd282c4096f32d87ac7d60fdee13a04470b7c9639c26fac125f79c726b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model-builder/4.0.0-rc-6/maven-model-builder-4.0.0-rc-6-sources.jar",
+    name = "org_codehaus_plexus-plexus-interpolation-1_30_0-sources_http",
+    downloaded_file_path = "plexus-interpolation-1.30.0-sources.jar",
+    sha256 = "feaa09cda50a32adfaab59e22be5bfb87caaaa3d1ee7a4214cd4b6acc41defc2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.30.0/plexus-interpolation-1.30.0-sources.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-interpolation-1_29-sources_http",
-    downloaded_file_path = "plexus-interpolation-1.29-sources.jar",
-    sha256 = "4269dfe3faeb29e0a3753341a20eb38184fd66c3178d14cc319e3d8198f9822c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.29/plexus-interpolation-1.29-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-plugin-api-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-plugin-api-4.0.0-rc-6-sources.jar",
-    sha256 = "930799c289256104c630f035558d469a44d9a1cb907a016e50c1f4d8f22b2ece",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/4.0.0-rc-6/maven-plugin-api-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-plugin-api-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-plugin-api-4.0.0-rc-7-sources.jar",
+    sha256 = "61afcd064d7690a05388ee10b7888256436c572d6df9c58f97753f80fd852d88",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/4.0.0-rc-7/maven-plugin-api-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
@@ -14785,66 +14771,66 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_maven-maven-settings-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-settings-4.0.0-rc-6-sources.jar",
-    sha256 = "e498757fc74adc0dac3f1b91c0942a13a64eff86fff324354dc53d5138826b49",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings/4.0.0-rc-6/maven-settings-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-settings-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-settings-4.0.0-rc-7-sources.jar",
+    sha256 = "122f760ab16cb8509fd0e655544987afed04810173a7a5f38fd437fdfe3cc34e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings/4.0.0-rc-7/maven-settings-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-settings-builder-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-settings-builder-4.0.0-rc-6-sources.jar",
-    sha256 = "7f3fa39a4c638e18e29b0e7d894bef5ba77ca05ccd4bd582bf7e1b3fab51fac3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings-builder/4.0.0-rc-6/maven-settings-builder-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-settings-builder-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-settings-builder-4.0.0-rc-7-sources.jar",
+    sha256 = "fe704e869df62e1dfafd9cc344fcbe3d1ff92f33a3fd6e8b60b38ef43cc8a124",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings-builder/4.0.0-rc-7/maven-settings-builder-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-toolchain-builder-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-toolchain-builder-4.0.0-rc-6-sources.jar",
-    sha256 = "1bb9d9554accc5c99b51b7e826a20edccf0c8d539fa5889848f17e027ba6dc3b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-builder/4.0.0-rc-6/maven-toolchain-builder-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-toolchain-builder-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-toolchain-builder-4.0.0-rc-7-sources.jar",
+    sha256 = "2bc656085e6a0d66688dc225d69fb053b3461dc1fc88df0f51ccb11448c54bf6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-builder/4.0.0-rc-7/maven-toolchain-builder-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven-maven-toolchain-model-4_0_0-rc-6-sources_http",
-    downloaded_file_path = "maven-toolchain-model-4.0.0-rc-6-sources.jar",
-    sha256 = "57842600d83880175bdfc0b99c0ff7df69c5e9dceb02b882ddcb8c16531f52c1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-model/4.0.0-rc-6/maven-toolchain-model-4.0.0-rc-6-sources.jar",
+    name = "org_apache_maven-maven-toolchain-model-4_0_0-rc-7-sources_http",
+    downloaded_file_path = "maven-toolchain-model-4.0.0-rc-7-sources.jar",
+    sha256 = "15613658ec9b8249d771dc801a6415eefccee5c0d2a94ddef67a844c56820aba",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-toolchain-model/4.0.0-rc-7/maven-toolchain-model-4.0.0-rc-7-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-api-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-api-2.0.21-sources.jar",
-    sha256 = "5e773f67cadd16b68d6afad06d8a2ad0c4eeea5bdf69661da244ae82c8aad23f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-api/2.0.21/maven-resolver-api-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-api-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-api-2.0.23-sources.jar",
+    sha256 = "a1c1ec36f5b69e0354b2c451c03bac14fb21da7755a91030c363e09913228304",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-api/2.0.23/maven-resolver-api-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-spi-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-spi-2.0.21-sources.jar",
-    sha256 = "30a964031c16ae186b91f7899ed5cc79fa0a53798c6a16be741791cd74d9ca7a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/2.0.21/maven-resolver-spi-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-spi-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-spi-2.0.23-sources.jar",
+    sha256 = "3ed5ba883be0f82ec9bcd742f830bc7b175a307ae05d76458631828b47f5d8a7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-spi/2.0.23/maven-resolver-spi-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-util-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-util-2.0.21-sources.jar",
-    sha256 = "fb3b142cd0fcedd12d3ce1ff8f65e74bb31be884a77bd5d65053fb39533a4fa5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-util/2.0.21/maven-resolver-util-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-util-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-util-2.0.23-sources.jar",
+    sha256 = "8d2f26daf2938bfe07b0771eab276e21260fcbf5b42dba50b12b5d8a4fc7e8d6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-util/2.0.23/maven-resolver-util-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-impl-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-impl-2.0.21-sources.jar",
-    sha256 = "5b0c29b7d2f087dd0d03e1ecdb3d9ed7d70d02c9c1f19714589dd0186ee68b0b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-impl/2.0.21/maven-resolver-impl-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-impl-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-impl-2.0.23-sources.jar",
+    sha256 = "f00c0b237b6f5add73f9e092ca4e193c4b15ccd57b7df2f87cc86b50445e7e71",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-impl/2.0.23/maven-resolver-impl-2.0.23-sources.jar",
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-named-locks-2_0_21-sources_http",
-    downloaded_file_path = "maven-resolver-named-locks-2.0.21-sources.jar",
-    sha256 = "a9c0f714bfa1f4ee809a07960ed20ff298b9ace89d56e44e724d30fb65c11ee9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-named-locks/2.0.21/maven-resolver-named-locks-2.0.21-sources.jar",
+    name = "org_apache_maven_resolver-maven-resolver-named-locks-2_0_23-sources_http",
+    downloaded_file_path = "maven-resolver-named-locks-2.0.23-sources.jar",
+    sha256 = "a4a10d10b076e16afdf04e40569f8b8e6a9c8fd411d45b9ce9bceee338f995e1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-named-locks/2.0.23/maven-resolver-named-locks-2.0.23-sources.jar",
 )
 
 http_file(
@@ -14855,38 +14841,38 @@ http_file(
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-xml-4_1_1-sources_http",
-    downloaded_file_path = "plexus-xml-4.1.1-sources.jar",
-    sha256 = "4ca7d4e3e2cb0f9365c2c0478021dbddc1a52e3e71bebf3f836320b7196bc3cb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-xml/4.1.1/plexus-xml-4.1.1-sources.jar",
+    name = "org_codehaus_plexus-plexus-xml-4_2_0-sources_http",
+    downloaded_file_path = "plexus-xml-4.2.0-sources.jar",
+    sha256 = "5f1c2930fa7c81e1cdacd8efbbbde260ef016c1f4315768d607771a79f227578",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-xml/4.2.0/plexus-xml-4.2.0-sources.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-classworlds-2_12_0-sources_http",
-    downloaded_file_path = "plexus-classworlds-2.12.0-sources.jar",
-    sha256 = "919888b83f880fbccdd495754cbdca8beae7a8f03e70972a73aadbc79cc4b4d0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.12.0/plexus-classworlds-2.12.0-sources.jar",
+    name = "org_codehaus_plexus-plexus-classworlds-2_12_1-sources_http",
+    downloaded_file_path = "plexus-classworlds-2.12.1-sources.jar",
+    sha256 = "cfe0bc04ba7b870d2b4f5791fb283ffdab5117f5e4a667d3ec35079b6c9a0190",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.12.1/plexus-classworlds-2.12.1-sources.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-sec-dispatcher-4_1_0-sources_http",
-    downloaded_file_path = "plexus-sec-dispatcher-4.1.0-sources.jar",
-    sha256 = "8a79dca5c9915418b3f5487c943755e90f5facfaf0b048e05b5da192ff65e3f3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-sec-dispatcher/4.1.0/plexus-sec-dispatcher-4.1.0-sources.jar",
+    name = "org_codehaus_plexus-plexus-sec-dispatcher-4_2_0-sources_http",
+    downloaded_file_path = "plexus-sec-dispatcher-4.2.0-sources.jar",
+    sha256 = "a27f362f0b56b17b203acf3de7e959ebdbbb9b9c630d06f154b3dd1971e381f8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-sec-dispatcher/4.2.0/plexus-sec-dispatcher-4.2.0-sources.jar",
 )
 
 http_file(
-    name = "org_slf4j-slf4j-api-2_0_18-sources_http",
-    downloaded_file_path = "slf4j-api-2.0.18-sources.jar",
-    sha256 = "192e007cf7f2be41d40574e44521fc0b7ce55e01f13dbe0fa8707c8ae3329075",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18-sources.jar",
+    name = "org_slf4j-slf4j-api-2_0_19-sources_http",
+    downloaded_file_path = "slf4j-api-2.0.19-sources.jar",
+    sha256 = "5653861a44b3865dd6a2d42c0a7c953568c06c4e36a9b172328d0341e9aaab41",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19-sources.jar",
 )
 
 http_file(
-    name = "org_jline-jansi-core-4_3_1-sources_http",
-    downloaded_file_path = "jansi-core-4.3.1-sources.jar",
-    sha256 = "121404e34fe2cf14641dd06e6daab6d441e63e01de165703369fa0ba55be4e05",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jansi-core/4.3.1/jansi-core-4.3.1-sources.jar",
+    name = "org_jline-jansi-core-4_4_5-sources_http",
+    downloaded_file_path = "jansi-core-4.4.5-sources.jar",
+    sha256 = "f52275e89460dba3004a579f3e702e3bc180234222e4fb7fbcddd12cf31de260",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jline/jansi-core/4.4.5/jansi-core-4.4.5-sources.jar",
 )
 
 http_file(
@@ -15706,20 +15692,6 @@ http_file(
     downloaded_file_path = "find-file-model-252.0.1-sources.jar",
     sha256 = "bb758035f8fa50e40de212810911f1b76f3201f144d4ea9a2c9d46c572e395d0",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252.0.1/find-file-model-252.0.1-sources.jar",
-)
-
-http_file(
-    name = "org_slf4j-slf4j-api-2_0_19_http",
-    downloaded_file_path = "slf4j-api-2.0.19.jar",
-    sha256 = "e91ff6d720609e7a194ffe758c3ed5c84e798617ae07b0a0f6a4fe229741b4bb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19.jar",
-)
-
-http_file(
-    name = "org_slf4j-slf4j-api-2_0_19-sources_http",
-    downloaded_file_path = "slf4j-api-2.0.19-sources.jar",
-    sha256 = "5653861a44b3865dd6a2d42c0a7c953568c06c4e36a9b172328d0341e9aaab41",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.19/slf4j-api-2.0.19-sources.jar",
 )
 
 http_file(
