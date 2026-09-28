@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.FutureTask;
@@ -51,26 +52,22 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private final boolean myAddUnambiguousImports;
 
   public OptimizeImportsProcessor(@NotNull Project project) {
-    super(project, getCommandName(), getProgressText(), false);
-    myAddUnambiguousImports = true;
+    this(project, ProjectTarget.INSTANCE, getCommandName(), null, false, true);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, @NotNull Module module) {
-    super(project, module, getCommandName(), getProgressText(), false);
-    myAddUnambiguousImports = true;
+    this(project, new ModuleTarget(module), getCommandName(), null, false, true);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project,
                                   @NotNull PsiDirectory directory,
                                   boolean includeSubdirs,
                                   boolean processOnlyVcsChangedFiles) {
-    super(project, directory, includeSubdirs, getProgressText(), getCommandName(), processOnlyVcsChangedFiles);
-    myAddUnambiguousImports = true;
+    this(project, new DirectoryTarget(directory, includeSubdirs), getCommandName(), null, processOnlyVcsChangedFiles, true);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, @NotNull PsiFile file) {
-    super(project, file, getProgressText(), getCommandName(), false);
-    myAddUnambiguousImports = true;
+    this(project, new SingleFileTarget(file), getCommandName(), null, false, true);
   }
 
   public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @Nullable Runnable postRunnable) {
@@ -94,7 +91,16 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
                                   @NotNull @NlsContexts.Command String commandName,
                                   @Nullable Runnable postRunnable,
                                   boolean addUnambiguousImports) {
-    super(project, files, getProgressText(), commandName, postRunnable, false);
+    this(project, new FilesTarget(Arrays.asList(files)), commandName, postRunnable, false, addUnambiguousImports);
+  }
+
+  private OptimizeImportsProcessor(@NotNull Project project,
+                                   @NotNull Target target,
+                                   @NotNull @NlsContexts.Command String commandName,
+                                   @Nullable Runnable postRunnable,
+                                   boolean processChangedTextOnly,
+                                   boolean addUnambiguousImports) {
+    super(project, target, getProgressText(), commandName, postRunnable, processChangedTextOnly);
     myAddUnambiguousImports = addUnambiguousImports;
   }
 

@@ -79,13 +79,37 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   var infoCollector: LayoutCodeInfoCollector? = null
     private set
 
-  private sealed interface Target
-  private object ProjectTarget : Target
-  private class ModuleTarget(val module: Module) : Target
+  @ApiStatus.Internal
+  protected sealed interface Target
+  @ApiStatus.Internal
+  protected object ProjectTarget : Target
+  @ApiStatus.Internal
+  protected class ModuleTarget(val module: Module) : Target
   // todo: BUG! includeSubdirs is unused
-  private class DirectoryTarget(val directory: PsiDirectory, val includeSubdirs: Boolean) : Target
-  private class FilesTarget(val files: List<PsiFile>) : Target
-  private class SingleFileTarget(val psiFile: PsiFile) : Target
+  @ApiStatus.Internal
+  protected class DirectoryTarget(val directory: PsiDirectory, val includeSubdirs: Boolean) : Target
+  @ApiStatus.Internal
+  protected class FilesTarget(val files: List<PsiFile>) : Target
+  @ApiStatus.Internal
+  protected class SingleFileTarget(val psiFile: PsiFile) : Target
+
+  @ApiStatus.Internal
+  protected constructor(
+    project: Project,
+    target: Target,
+    progressText: @NlsContexts.ProgressText String,
+    commandName: @NlsContexts.Command String,
+    postRunnable: Runnable?,
+    processChangedTextOnly: Boolean,
+  ) : this(
+    project,
+    target,
+    progressText,
+    commandName,
+    processChangedTextOnly
+  ) {
+    this.postRunnable = postRunnable
+  }
 
   protected constructor(
     project: Project,
