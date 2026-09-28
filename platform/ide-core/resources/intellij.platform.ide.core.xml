@@ -36,7 +36,7 @@
     <extensionPoint qualifiedName="com.intellij.dynamicApplicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="false"/>
+    <extensionPoint qualifiedName="com.intellij.registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.applicationSettings"
                     beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
                     dynamic="true">
