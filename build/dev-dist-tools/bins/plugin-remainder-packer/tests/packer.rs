@@ -219,12 +219,12 @@ fn outputs_pack_past_max_path() {
     write_file(&source.join("file"), b"long path");
     let mut arguments = projection_contracts(&root.path().join("contracts"), true, &source);
     let mut package = root.path().to_path_buf();
-    for index in 0..5 {
+    for index in 0..6 {
         package.push(format!("{index}-intellij.air.integrationTests.bridge.plugin"));
     }
     let output = package.join("plugin_remainder.plugin");
     let inventory = package.join("plugin_remainder.file-metadata.json");
-    assert!(inventory.as_os_str().len() > 300, "the test path is too short: {}", inventory.display());
+    assert!(inventory.as_os_str().len() > 260, "the test path is too short: {}", inventory.display());
     arguments.extend(outputs(
         &output.display().to_string(),
         &inventory.display().to_string(),
