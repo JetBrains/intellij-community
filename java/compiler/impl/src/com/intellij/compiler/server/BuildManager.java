@@ -1281,8 +1281,11 @@ public final class BuildManager implements Disposable {
           environmentName, requiredFeatureVersion));
       }
     }
-    @SuppressWarnings("removal")
-    var sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    var sdk = ProjectJdkTable.getInstance().getInternalJdk();
+    if (sdk == null) {
+      throw new IllegalStateException("No compatible JDK found and " + ProjectJdkTable.getInstance().getClass().getName() +
+                                      " provides no internal JDK");
+    }
     return new Pair<>(sdk, JavaSdk.getInstance().getVersion(sdk));
   }
 

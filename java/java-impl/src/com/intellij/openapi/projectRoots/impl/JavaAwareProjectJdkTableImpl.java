@@ -73,6 +73,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
    * @deprecated Bundled JDK must not be used. See IDEA-225960
    */
   @Deprecated(forRemoval = true)
+  @Override
   public @NotNull Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       Path javaHome = Paths.get(SystemProperties.getJavaHome());

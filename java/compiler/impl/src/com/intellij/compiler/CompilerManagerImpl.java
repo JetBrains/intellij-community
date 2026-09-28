@@ -560,7 +560,10 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public @Nullable File getJavacCompilerWorkingDir() {
-    final File projectBuildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
+    // a project without a presentable URL (e.g. in the language server) has no build system directory
+    final File projectBuildDir = myProject.getPresentableUrl() != null
+                                 ? BuildManager.getInstance().getProjectSystemDirectory(myProject)
+                                 : new File(CompilerPaths.getCompilerSystemDirectory(myProject), "javac");
     projectBuildDir.mkdirs();
     return projectBuildDir;
   }

@@ -86,6 +86,15 @@ public abstract class ProjectJdkTable {
   public abstract @NotNull Sdk createSdk(@NotNull String name, @NotNull SdkTypeId sdkType);
 
   /**
+   * Returns the JDK the IDE runs on, or {@code null} if this table does not provide one.
+   * It is a last-resort fallback when a project has no suitable JDK; the JDK is not added to the table.
+   */
+  @ApiStatus.Internal
+  public @Nullable Sdk getInternalJdk() {
+    return null;
+  }
+
+  /**
    * This method may automatically detect Sdk if none are configured.
    */
   public void preconfigure() {
