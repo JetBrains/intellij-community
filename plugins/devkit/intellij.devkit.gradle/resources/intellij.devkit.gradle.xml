@@ -43,6 +43,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <attachSourcesProvider implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformAttachSourcesProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.gradle.GradlePluginConsoleFilterProvider"/>
+    <console.folding implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleConsoleFolding"/>
     <completion.contributor language="kotlin"
                             implementationClass="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionsCompletionContributor"/>
     <externalProjectDataService implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleDataService"/>
