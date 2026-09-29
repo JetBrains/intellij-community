@@ -59,6 +59,8 @@
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <key>NSAutoFillRequiresTextContentTypeForOneTimeCodeOnMac</key>
+    <true/>
 
     <key>NSCameraUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the device's camera.</string>
