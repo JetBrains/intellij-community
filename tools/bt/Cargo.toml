@@ -127,15 +127,24 @@ verbose_file_reads = "warn"
 # and the features of this table.
 [workspace.dependencies]
 # Workspace crates.
+bt-core = { path = "crates/bt-core" }
 bt-junit = { path = "crates/bt-junit" }
 
+# Documents and text.
 jiff = "0.2.37"
+percent-encoding = "2.3.2"
 quick-xml = "0.42.0"
+regex = "1.13.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+strsim = "0.11.1"
+
+# System.
+tempfile = "3.27.0"
 
 # Tests.
 pretty_assertions = "1.4.1"
 proptest = "1.11.0"
-regex = "1.13.1"
 
 [profile.release]
 debug = "line-tables-only"

@@ -1,0 +1,6 @@
+load("//tools/bt:defs.bzl", "bt_rust_crate")
+
+bt_rust_crate(
+    name = "bt-core",
+    compile_data = ["testdata/lanes.json"],
+)

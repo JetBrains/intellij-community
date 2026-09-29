@@ -1,0 +1,150 @@
+{
+  "flowProfileDir": "plugins/air/tests/integration/flow-profiles/resources/flow-profiles",
+  "flowTextDir": "plugins/air/docs/flows",
+  "authoredSuitesFile": "plugins/air/tests/integration/flow-profiles/resources/authored-suites.json",
+  "specDir": "plugins/air/spec",
+  "integrationRoot": "//plugins/air/tests/integration",
+  "integrationCategoryTags": [
+    "air-integration-ui",
+    "air-integration-headless"
+  ],
+  "propertyTag": "air-property",
+  "dedicatedSuiteTags": [
+    "air-property"
+  ],
+  "excludedTestLibs": [
+    "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
+    "//plugins/air/tests/integration/gui-chat:gui-chat_test_lib",
+    "//plugins/air/tests/integration/headless/acp:acp_test_lib",
+    "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
+    "//plugins/air/tests/integration/headless/acp/runtime-installation:runtime-installation_test_lib",
+    "//plugins/air/tests/integration/headless/claude:claude_test_lib",
+    "//plugins/air/tests/integration/headless/codex:codex_test_lib",
+    "//plugins/air/tests/integration/headless/junie:junie_test_lib",
+    "//plugins/air/tests/integration/headless/pi:pi_test_lib",
+    "//plugins/air/tests/integration/ui-real:ui-real_test_lib",
+    "//plugins/air/tests/integration/ui:ui_test_lib",
+    "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
+    "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
+  ],
+  "laneWideModules": {
+    "intellij.air.integrationTests": [],
+    "intellij.air.integrationTests.flow": [],
+    "intellij.air.integrationTests.uiDaemon": [],
+    "intellij.air.integrationTests.bridge": [],
+    "intellij.air.integrationTests.bridge.plugin": [],
+    "intellij.air.integrationTests.testSupport": [],
+    "intellij.air.integrationTests.ui": ["ui"],
+    "intellij.air.integrationTests.uiReal": ["ui-real"],
+    "intellij.air.integrationTests.guiChat": ["gui-chat"]
+  },
+  "lanes": [
+    {
+      "name": "fast",
+      "target": "//plugins/air/...",
+      "extra": [
+        "--build_tests_only",
+        "--test_tag_filters=-air-integration-ui,-air-integration-headless,-air-property"
+      ],
+      "buildsExcludedTestLibs": true
+    },
+    {
+      "name": "property",
+      "target": "//plugins/air/...",
+      "extra": [
+        "--build_tests_only",
+        "--test_tag_filters=air-property"
+      ]
+    },
+    {
+      "name": "ui",
+      "target": "//plugins/air/tests/integration/ui/...",
+      "extra": [
+        "--build_tests_only",
+        "--test_tag_filters=air-integration-ui-flow"
+      ],
+      "shards": 1,
+      "integrationTag": "air-integration-ui-flow",
+      "catalogLane": "UI",
+      "testLabel": "//plugins/air/tests/integration/ui:ui_test",
+      "junitTag": "air-flow-ui"
+    },
+    {
+      "name": "ui-real",
+      "target": "//plugins/air/tests/integration/ui-real:ui-real_test",
+      "extra": [],
+      "shards": 1,
+      "integrationTag": "air-integration-ui-real",
+      "catalogLane": "UI_REAL",
+      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_test",
+      "junitTag": "air-flow-ui-real"
+    },
+    {
+      "name": "gui-chat",
+      "target": "//plugins/air/tests/integration/gui-chat/...",
+      "extra": [
+        "--build_tests_only",
+        "--test_tag_filters=air-integration-gui-chat"
+      ],
+      "shards": 1,
+      "integrationTag": "air-integration-gui-chat",
+      "catalogLane": "GUI_CHAT",
+      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_test",
+      "junitTag": "air-gui-chat"
+    },
+    {
+      "name": "headless",
+      "target": "//plugins/air/...",
+      "extra": [
+        "--build_tests_only",
+        "--test_tag_filters=air-integration-headless"
+      ]
+    },
+    {
+      "name": "all",
+      "target": "//plugins/air/...",
+      "extra": []
+    },
+    {
+      "name": "claude",
+      "target": "//plugins/air/tests/integration/headless/claude:claude_test",
+      "extra": [
+        "--test_env=CLAUDE_BIN",
+        "--test_env=NODE_BIN",
+        "--test_env=ANTHROPIC_API_KEY"
+      ]
+    },
+    {
+      "name": "codex",
+      "target": "//plugins/air/tests/integration/headless/codex:codex_test",
+      "extra": []
+    },
+    {
+      "name": "pi",
+      "target": "//plugins/air/tests/integration/headless/pi:pi_test",
+      "extra": []
+    },
+    {
+      "name": "junie",
+      "target": "//plugins/air/tests/integration/headless/junie:junie_test",
+      "extra": [
+        "--test_env=JUNIE_BIN",
+        "--test_env=JUNIE_API_KEY"
+      ]
+    },
+    {
+      "name": "acp",
+      "target": "//plugins/air/tests/integration/headless/acp/...",
+      "extra": [
+        "--build_tests_only",
+        "--test_tag_filters=air-integration-headless",
+        "--test_env=ANTHROPIC_API_KEY",
+        "--test_env=CLAUDE_BIN",
+        "--test_env=JUNIE_API_KEY",
+        "--test_env=NODE_BIN",
+        "--test_env=NPM_BIN",
+        "--test_env=OPENAI_API_KEY"
+      ]
+    }
+  ]
+}
