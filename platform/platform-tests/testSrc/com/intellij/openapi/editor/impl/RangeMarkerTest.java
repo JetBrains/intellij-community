@@ -120,8 +120,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class RangeMarkerTest {
   private static final Logger LOG = Logger.getInstance(RangeMarkerTest.class);
   private static final TestFixture<Project> PROJECT_FIXTURE = FixturesKt.projectFixture();
-  private static final TestFixture<Module> MODULE_FIXTURE =
-    FixturesKt.moduleFixture(PROJECT_FIXTURE, "range-marker", null);
+  private static final TestFixture<Module> MODULE_FIXTURE = FixturesKt.moduleFixture(PROJECT_FIXTURE, "range-marker", null);
 
   private final TestFixture<PsiDirectory> sourceRootFixture = FixturesKt.sourceRootFixture(MODULE_FIXTURE);
 
@@ -414,16 +413,16 @@ public class RangeMarkerTest {
     assertValidMarker(marker, 2, 4);
   }
 
-  private void deleteString(Document document, int startOffset, int endOffset) {
+  private static void deleteString(Document document, int startOffset, int endOffset) {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(startOffset, endOffset));
   }
-  private void replaceString(Document document, int startOffset, int endOffset, String xxx) {
+  private static void replaceString(Document document, int startOffset, int endOffset, String xxx) {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(startOffset, endOffset, xxx));
   }
-  private void insertString(Document document, int offset, String xxx) {
+  private static void insertString(Document document, int offset, String xxx) {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(offset, xxx));
   }
-  private void moveText(DocumentEx document, int srcStart, int srcEnd, int dstOffset) {
+  private static void moveText(DocumentEx document, int srcStart, int srcEnd, int dstOffset) {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.moveText(srcStart, srcEnd, dstOffset));
   }
 
@@ -872,7 +871,7 @@ public class RangeMarkerTest {
     delete(mm, 0);
   }
 
-  private void edit(DocumentEx document, int... offsets) {
+  private static void edit(DocumentEx document, int... offsets) {
     for (int i = 0; i < offsets.length; i+=3) {
       int offset = offsets[i];
       int oldlength = offsets[i+1];
@@ -1363,38 +1362,6 @@ public class RangeMarkerTest {
     });
   }
 
-  // in case of SnapshotRangeMarkerImpl we don't share nodes
-  @SuppressWarnings("unused")
-  public void _testRangeMarkersAreLazyCreated() {
-    Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
-    RangeMarker m1 = document.createRangeMarker(2, 4);
-    RangeMarker m2 = document.createRangeMarker(2, 4);
-
-    assertEquals(2, ((DocumentImpl)document).getRangeMarkersSize());
-    assertEquals(1, ((DocumentImpl)document).getRangeMarkersNodeSize());
-
-    RangeMarker m3 = document.createRangeMarker(2, 5);
-    assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
-    deleteString(document, 4, 5);
-    new TestDaemonCodeAnalyzerImpl(getProject()).waitForUpdateFileStatusBackgroundQueueInTests();
-    assertTrue(m1.isValid());
-    assertTrue(m2.isValid());
-    assertTrue(m3.isValid());
-    assertEquals(1, ((DocumentImpl)document).getRangeMarkersNodeSize());
-
-    m1.setGreedyToLeft(true);
-    assertTrue(m1.isValid());
-    assertEquals(3, ((DocumentImpl)document).getRangeMarkersSize());
-    assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
-
-    m3.dispose();
-    assertTrue(m1.isValid());
-    assertTrue(m2.isValid());
-    assertFalse(m3.isValid());
-    assertEquals(2, ((DocumentImpl)document).getRangeMarkersSize());
-    assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
-  }
-
   @Test
   public void testRangeHighlightersRecreateBug() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
@@ -1742,7 +1709,7 @@ public class RangeMarkerTest {
     doTextMoves(movesAndOffsets);
   }
 
-  private void doTextMoves(int[] movesAndOffsets) {
+  private static void doTextMoves(int[] movesAndOffsets) {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     for (int i = 0; i < movesAndOffsets.length; i+=4) {
@@ -1791,7 +1758,7 @@ public class RangeMarkerTest {
 
   @PerformanceUnitTest
   @Test
-  public void testGetOffsetDuringModificationsPerformance() {
+  public void testGetOffsetAfterStructuralModificationPerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
@@ -1803,10 +1770,10 @@ public class RangeMarkerTest {
     }
     Benchmark.newBenchmark(classPlusTestName(), ()->{
       insertString(doc, 0, " ");
-      for (int i=0; i<1000; i++) {
+      for (int i=0; i<100; i++) {
         for (int j = 0; j < markers.size(); j++) {
           RangeMarker rm = markers.get(j);
-          doc.setModificationStamp(i+j);
+          rm.setGreedyToLeft(!rm.isGreedyToLeft());
           int length = rm.getEndOffset() - rm.getStartOffset();
           assertEquals(1, length);
           assertTrue(rm.isValid());
@@ -1856,6 +1823,7 @@ public class RangeMarkerTest {
       for (RangeMarker marker : markers) {
         marker.dispose();
       }
+      markers.clear();
     }).runAsStressTest().start();
   }
 

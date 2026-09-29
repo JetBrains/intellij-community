@@ -477,18 +477,6 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
     return stripTrailingSpaces(project, inChangedLinesOnly, null);
   }
 
-  @TestOnly
-  @ApiStatus.Internal
-  public int getRangeMarkersSize() {
-    return rangeMarkers.getRangeMarkersSize();
-  }
-
-  @TestOnly
-  @ApiStatus.Internal
-  public int getRangeMarkersNodeSize() {
-    return rangeMarkers.getRangeMarkersNodeSize();
-  }
-
   private @NotNull DocumentImpl hostDocument() {
     return ObjectUtils.notNull(hostDocument, this);
   }

@@ -132,26 +132,14 @@ public final class RangeMarkersImpl implements RangeMarkers {
     }
   }
 
-  @TestOnly
-  @Override
-  public int getRangeMarkersSize() {
-    RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
-    return rangeMarkerTree == null ? 0 : rangeMarkerTree.size() + Objects.requireNonNull(myPersistentRangeMarkerTree).size();
-  }
-
-  @TestOnly
-  @Override
-  public int getRangeMarkersNodeSize() {
-    RangeMarkerTree<RangeMarkerEx> rangeMarkerTree = myRangeMarkerTree;
-    return rangeMarkerTree == null ? 0 : rangeMarkerTree.nodeSize() + Objects.requireNonNull(myPersistentRangeMarkerTree).nodeSize();
-  }
-
   private @NotNull RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
     return Objects.requireNonNull(rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkerTree : myRangeMarkerTree);
   }
+  @TestOnly
   public static <E extends Throwable> void usePMarkerImplementationIn(@NotNull ThrowableRunnable<E> runnable) throws E {
     usePMarkerImplementationIn(true, runnable);
   }
+  @TestOnly
   public static <E extends Throwable> void usePMarkerImplementationIn(boolean usePMarkerImpl, @NotNull ThrowableRunnable<E> runnable) throws E {
     boolean old = Holder.USE_PMARKER_IMPLEMENTATION;
     Holder.USE_PMARKER_IMPLEMENTATION = usePMarkerImpl;
