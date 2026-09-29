@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -10,6 +9,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.Version
 import com.intellij.python.pytools.backend.performToolInstallation
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -82,7 +83,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     basePythonComboBox.initialize(scope, model.baseInterpreters)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     val module = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
       is ModuleOrProject.ProjectOnly -> null
@@ -91,15 +92,15 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
                          ?: model.projectPathFlows.projectPath.first()
                          ?: error("module base path can't be recognized, both module and project are nulls")
 
-    val newSdk = setupEnvSdk(moduleBasePath).getOr { return it }
+    val pythonInterpreter = setupEnvSdk(moduleBasePath).getOr { return it }
 
     if (module != null) {
-      newSdk.setAssociationToModule(module)
+      pythonInterpreter.getSdkAPI().setAssociationToModule(module)
       module.baseDir?.refresh(true, false)
     }
 
 
-    return Result.success(newSdk)
+    return Result.success(pythonInterpreter)
   }
 
   /** Whether the created env inherits the base interpreter's site-packages; only tools that offer the choice override it. */
@@ -154,7 +155,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
 
   internal abstract val toolValidator: ToolValidator<P>
 
-  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk>
+  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<PythonInterpreter>
 
   internal open fun onVenvSelectExisting() {}
 }

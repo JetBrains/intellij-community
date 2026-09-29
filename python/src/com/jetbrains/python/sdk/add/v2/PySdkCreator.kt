@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -12,7 +13,7 @@ internal interface PySdkCreator {
   /**
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  suspend fun getSdk(moduleOrProject: ModuleOrProject): PyResult<Pair<Sdk, InterpreterStatisticsInfo>>
+  suspend fun getSdk(moduleOrProject: ModuleOrProject): PyResult<Pair<PythonInterpreter, InterpreterStatisticsInfo>>
 
   /**
    * Creates the Python module structure using tools (uv, poetry, hatch, etc) within the given project module.

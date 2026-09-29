@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle.message
@@ -116,7 +117,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     }
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<PythonInterpreter> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
                                ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
     val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder?.getOr { return it }

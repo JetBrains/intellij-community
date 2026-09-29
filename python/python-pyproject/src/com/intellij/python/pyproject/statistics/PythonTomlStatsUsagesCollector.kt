@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
@@ -170,8 +169,8 @@ internal class PythonTomlStatsUsagesCollector : ProjectUsagesCollector() {
    * them first and is not one a statistics collector has to survive.
    */
   private suspend fun modelStructureMetrics(project: Project): Set<MetricEvent> {
-    val snapshot = project.service<EvoPyProjectModel>().snapshot()
-    return setOf(PYTHON_PYPROJECT_MODEL_STRUCTURE.metric(snapshot.pyProjects.count(), snapshot.workspaces.size))
+    val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+    return setOf(PYTHON_PYPROJECT_MODEL_STRUCTURE.metric(snapshot.evoPyProjects.count(), snapshot.workspaces.size))
   }
 }
 

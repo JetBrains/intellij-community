@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
 import com.jetbrains.python.allure.Layers
@@ -34,7 +34,7 @@ internal class PyRelevantNonPythonFilesTest {
     val lateConfigurator = object : PyProjectSdkConfigurationExtension by PyProjectSdkConfigurationExtension.EP_NAME.extensionList.first() {
       override val potentialDependencyFiles: Set<String> = setOf(LATE_DEPENDENCY_FILE)
 
-      override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = null
+      override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? = null
 
       override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
     }

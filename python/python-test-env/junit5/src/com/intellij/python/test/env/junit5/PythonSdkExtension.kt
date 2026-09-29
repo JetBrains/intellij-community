@@ -3,6 +3,7 @@ package com.intellij.python.test.env.junit5
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.junit5Tests.framework.env.PythonSdk
+import com.intellij.python.sdk.backend.getSdkAPI
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -34,7 +35,7 @@ internal class PythonSdkExtension : ParameterResolver, AfterAllCallback {
   private fun createSdk(extensionContext: ExtensionContext): Sdk {
     val pythonEnv = RunOnEnvironmentsExtension.getPythonEnvironment(extensionContext)
     val sdk = runBlocking {
-      pythonEnv.prepareSdk()
+      pythonEnv.prepareSdk().getSdkAPI()
     }
     return sdk
   }

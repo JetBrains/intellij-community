@@ -14,6 +14,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.ToolCommandSpec
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyToolUIInfo
@@ -89,12 +90,12 @@ interface FileSystem<P : PathHolder> {
     sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
     suggestedSdkName: String?,
-  ): PyResult<Sdk>
+  ): PyResult<PythonInterpreter>
 
   fun createTargetRequest(): TargetEnvironmentRequest
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
-  suspend fun wrapSdk(sdk: Sdk): SdkWrapper<P>
+  suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<P>
   suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<P>>
   fun preferredInterpreterBasePath(): P? = null
   fun resolvePythonBinary(pythonHome: P): P?

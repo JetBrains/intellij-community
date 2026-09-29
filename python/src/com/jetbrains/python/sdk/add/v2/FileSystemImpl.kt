@@ -15,7 +15,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -56,8 +55,10 @@ import com.intellij.python.pytools.backend.ToolSearchPath
 import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
@@ -85,7 +86,6 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.ToolProbeResult
-import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getSdksToInstall
@@ -192,7 +192,7 @@ data class EelFileSystem(
     sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
     suggestedSdkName: String?,
-  ): PyResult<Sdk> {
+  ): PyResult<PythonInterpreter> {
     require(sdkAdditionalData.hasValidWorkingDirectory()) { "Python SDK working directory must be initialized before setup" }
     return createSdk(pythonBinaryPath, sdkAdditionalData, suggestedSdkName)
   }
@@ -287,9 +287,9 @@ data class EelFileSystem(
     return PyResult.success(interpreter)
   }
 
-  override suspend fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Eel> = withContext(Dispatchers.IO) {
-    val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(sdk.homePath!!)
-    SdkWrapper(sdk, PathHolder.Eel(Path.of(adjustedHomePath)))
+  override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Eel> = withContext(Dispatchers.IO) {
+    val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.getSdkAPI().homePath!!)
+    PythonInterpreterWrapper(pythonInterpreter, PathHolder.Eel(Path.of(adjustedHomePath)))
   }
 
   override suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
@@ -510,7 +510,7 @@ internal data class TargetFileSystem(
     sdkAdditionalData: PythonSdkAdditionalData,
     targetPanelExtension: TargetPanelExtension?,
     suggestedSdkName: String?,
-  ): PyResult<Sdk> {
+  ): PyResult<PythonInterpreter> {
     require(sdkAdditionalData.hasValidWorkingDirectory()) { "Python SDK working directory must be initialized before setup" }
     val languageLevel = getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }.languageLevel
 
@@ -608,8 +608,8 @@ internal data class TargetFileSystem(
     )
   }
 
-  override suspend fun wrapSdk(sdk: Sdk): SdkWrapper<PathHolder.Target> {
-    return SdkWrapper(sdk, PathHolder.Target(sdk.homePath!!))
+  override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Target> {
+    return PythonInterpreterWrapper(pythonInterpreter, PathHolder.Target(pythonInterpreter.getSdkAPI().homePath!!))
   }
 
   override fun getBinaryToExec(path: PathHolder.Target, workingDir: Path?): BinaryToExec {
@@ -892,18 +892,12 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
         false
       }
     }.mapNotNull { sdk ->
-      val languageLevel = sdk.versionString?.let {
-        LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it)
-      } ?: run {
-        val binToExecute = sdk.pythonInterpreterAsync().asBinToExecute().orLogException(LOG)
-        val pythonInfo = binToExecute?.let {
-          binToExecute.validatePythonAndGetInfo().orLogException(LOG)
-        }
-        pythonInfo?.languageLevel
-      }
+      val pythonInterpreter = sdk.pythonInterpreterAsync()
+      val pythonInfo = pythonInterpreter.getPythonInfo()
+      val languageLevel = pythonInfo.successOrNull?.languageLevel
 
       languageLevel?.let {
-        ExistingSelectableInterpreter<P>(wrapSdk(sdk), PythonInfo(it), sdk.isSystemWide)
+        ExistingSelectableInterpreter(wrapSdk(pythonInterpreter), PythonInfo(it), sdk.isSystemWide)
       }
     }
   allValidSdks

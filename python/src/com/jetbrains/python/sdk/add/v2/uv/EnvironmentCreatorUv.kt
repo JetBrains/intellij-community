@@ -6,7 +6,6 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.not
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -17,6 +16,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.cli.uv.UvInitVcs
 import com.intellij.python.uv.backend.runtime.uvCli
@@ -278,7 +278,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     }
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<PythonInterpreter> {
     val uv = toolExecutable.get()!!.pathHolder.getOr { return it }
     return setupNewUvSdkAndEnv(
       uvExecutable = uv,

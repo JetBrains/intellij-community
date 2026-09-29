@@ -3,7 +3,6 @@ package com.jetbrains.python.pipenv.sdk.configuration
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
@@ -15,7 +14,7 @@ import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.resolveFile
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -31,6 +30,7 @@ import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.module.getEel
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
@@ -52,7 +52,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val potentialDependencyFiles: Set<String> = setOf(PIP_FILE)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module) }
     ) { { createAndAddSdk(module) } }
@@ -89,7 +89,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     else EnvCheckerResult.CannotConfigure
   }
 
-  private suspend fun createAndAddSdk(module: Module): PyResult<Sdk> {
+  private suspend fun createAndAddSdk(module: Module): PyResult<PythonInterpreter> {
     LOGGER.debug("Creating pipenv environment")
     return withBackgroundProgress(module.project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
       val basePath = module.baseDir?.path

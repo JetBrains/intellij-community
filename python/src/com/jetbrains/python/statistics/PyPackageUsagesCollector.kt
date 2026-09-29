@@ -1,15 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
+import com.intellij.python.pyproject.model.evolution.pythonInterpreters
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.management.PythonPackageManager
 
@@ -21,8 +19,8 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     // The project model's own interpreters, rather than every module's raw SDK: an SDK built outside the blessed
     // creation path carries no PythonSdkAdditionalData, which `forSdk` is keyed by, and reporting statistics must not
     // fail over one (PY-90784).
-    for (interpreter in project.service<EvoPyProjectModel>().snapshot().interpreters) {
-      val manager = PythonPackageManager.forSdk(project, interpreter.getSdkAPI())
+    for (interpreter in project.pythonInterpreters()) {
+      val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
       addAll(manager.getDeclaredPackages())
       addAll(manager.getInstalledPackages())
     }

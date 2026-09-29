@@ -17,8 +17,8 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.executeOn
 import com.jetbrains.python.orLogException
+import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.CoroutineScope
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
@@ -290,10 +290,9 @@ class RuffService(val project: Project, val cs: CoroutineScope) {
    * as the server of that module does. Project scope stays for a project with no such module.
    */
   private suspend fun guessScope(): ModuleOrProject {
-    val modules = readAction { ModuleManager.getInstance(project).modules }
-    val module = modules.firstOrNull { !it.isDisposed && it.findPythonSdk() != null }
-                 ?: return ModuleOrProject.ProjectOnly(project)
-    return ModuleOrProject.ModuleAndProject(module)
+    val entry = project.evoPyProjects().firstOrNull { it.interpreter != null }
+                ?: return ModuleOrProject.ProjectOnly(project)
+    return ModuleOrProject.ModuleAndProject(entry.pyProject.residesOnModule)
   }
 
   companion object {

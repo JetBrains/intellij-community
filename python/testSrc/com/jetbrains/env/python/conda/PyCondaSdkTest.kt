@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.env.getPythonBinaryPath
@@ -108,7 +109,7 @@ internal class PyCondaSdkTest {
         condaIdentity = condaEnv.envIdentity,
         existingSdks = emptyList(),
         workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
-      ).getOrThrow()
+      ).getOrThrow().getSdkAPI()
       val request = LocalTargetEnvironmentRequest()
       val targetEnvironment = LocalTargetEnvironment(request)
 
@@ -138,7 +139,7 @@ internal class PyCondaSdkTest {
       condaIdentity = condaEnv.envIdentity,
       existingSdks = emptyList(),
       workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
-    ).getOrThrow()
+    ).getOrThrow().getSdkAPI()
     val request = LocalTargetEnvironmentRequest()
 
     repeat(10) { // To measure time to compare legacy and local
@@ -154,7 +155,7 @@ internal class PyCondaSdkTest {
       newCondaInfo,
       emptyList(),
       projectRule.project.basePath?.toNioPathOrNull()!!,
-    ).getOrThrow()
+    ).getOrThrow().getSdkAPI()
     val env = (sdk.pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env
     val namedEnv = env.envIdentity as PyCondaEnvIdentity.NamedEnv
     Assert.assertEquals("Wrong env name", yamlRule.envName, namedEnv.envName)
@@ -168,7 +169,7 @@ internal class PyCondaSdkTest {
       condaIdentity = env.envIdentity,
       existingSdks = emptyList(),
       workingDirectory = projectRule.project.basePath?.toNioPathOrNull()!!,
-    ).getOrThrow()
+    ).getOrThrow().getSdkAPI()
 
     Assert.assertEquals(CondaEnvSdkFlavor, sdk.pySdkAdditionalData.flavor)
     Assert.assertTrue(env.toString(), getPythonVersion(sdk, LocalTargetEnvironmentRequest())?.isNotBlank() == true)

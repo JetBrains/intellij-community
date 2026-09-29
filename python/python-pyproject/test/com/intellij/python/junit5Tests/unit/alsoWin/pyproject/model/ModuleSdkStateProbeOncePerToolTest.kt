@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.modules
@@ -16,7 +17,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
@@ -52,7 +53,7 @@ internal class ModuleSdkStateProbeOncePerToolTest {
    * the *second* entry point being taken for a module whose tool the probe already answered for — and that holds
    * however many times the background asks, since it runs the same code.
    *
-   * [EnvCheckerResult.EnvNotFound] becomes a [CreateSdkInfo.WillCreateEnv] — deliberately not an `ExistingEnv`,
+   * [EnvCheckerResult.EnvNotFound] becomes a [CreateInterpreterInfo.WillCreateEnv] — deliberately not an `ExistingEnv`,
    * which would short-circuit before the second ask and make the test pass for the wrong reason.
    */
   private class CountingConfigurator(override val toolId: ToolId) : PyProjectTomlConfigurationExtension {
@@ -61,19 +62,19 @@ internal class ModuleSdkStateProbeOncePerToolTest {
 
     override val potentialDependencyFiles: Set<String> = emptySet()
 
-    override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? {
+    override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? {
       probed.add(module.name)
       return envNotFound(FROM_THE_PROBE)
     }
 
-    override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? {
+    override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? {
       askedAgain.add(module.name)
       return envNotFound(FROM_THE_SECOND_ASK)
     }
 
     override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
-    private suspend fun envNotFound(intentionName: String): CreateSdkInfo? =
+    private suspend fun envNotFound(intentionName: String): CreateInterpreterInfo? =
       prepareSdkCreator({ EnvCheckerResult.EnvNotFound(intentionName) }) { { Result.localizedError("never created") } }
   }
 
@@ -110,7 +111,7 @@ internal class ModuleSdkStateProbeOncePerToolTest {
       ExtensionTestUtil.maskExtensions(PyProjectSdkConfigurationExtension.EP_NAME, listOf(counting), disposable)
 
       // `fresh` skips the shared cache, whose contents depend on what asked before this test.
-      val state = module.getModuleSdkState(mapOf(declaredTool to counting), fresh = true)
+      val state = checkNotNull(module.asPyProject()).getModuleSdkState(mapOf(declaredTool to counting), fresh = true)
 
       assertThat(counting.probed)
         .describedAs("the masked configurator should be the one answering, or the rest proves nothing")
@@ -120,7 +121,7 @@ internal class ModuleSdkStateProbeOncePerToolTest {
         .doesNotContain(module.name)
 
       val answer = when (state) {
-        is ModuleSdkState.HasSdk -> fail("the module should have no SDK yet, got ${state.sdk}")
+        is ModuleSdkState.HasSdk -> fail("the module should have no SDK yet, got ${state.interpreter}")
         is ModuleSdkState.NoSdk -> when (val instruction = state.sdkConfigInstruction) {
           is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> instruction.createSdkInfoWithTool
           is SdkForModuleConfigInstruction.SameAs, null ->

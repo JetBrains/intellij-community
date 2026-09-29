@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import kotlinx.coroutines.CoroutineScope
@@ -46,7 +47,7 @@ data class PyCondaEnv(
     }
   }
 
-  suspend fun createSdkFromThisEnv(targetConfig: TargetEnvironmentConfiguration?, existingSdk: List<Sdk>, workingDirectory: Path): PyResult<Sdk> =
+  suspend fun createSdkFromThisEnv(targetConfig: TargetEnvironmentConfiguration?, existingSdk: List<Sdk>, workingDirectory: Path): PyResult<PythonInterpreter> =
     PyCondaCommand(fullCondaPathOnTarget, targetConfig).createCondaSdkFromExistingEnvironment(envIdentity, existingSdk, workingDirectory)
 
 

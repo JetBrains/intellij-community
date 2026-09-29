@@ -3,8 +3,8 @@ package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
@@ -53,7 +53,7 @@ internal class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAd
     comboBox.initialize(scope, model.allInterpreters.mapDistinctSortedForExistingEnvironment(module))
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     // todo error handling, nullability issues
     val interpreter: InterpreterWithPath<P> = when (val interpreter = model.state.selectedInterpreter.get()) {
       is InstallableSelectableInterpreter, null -> throw AssertionError("This code should never be called and it is here due to lack of abstraction")
@@ -63,12 +63,12 @@ internal class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAd
         -> interpreter
     }
 
-    val sdk = interpreter.setupSdk(
+    val pythonInterpreter = interpreter.setupSdk(
       moduleOrProject = moduleOrProject,
       fileSystem = model.fileSystem,
       targetPanelExtension = model.state.targetPanelExtension.get(),
     )
-    return sdk
+    return pythonInterpreter
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

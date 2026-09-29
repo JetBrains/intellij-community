@@ -23,6 +23,7 @@ import com.jetbrains.python.sdk.add.v2.PythonNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.intellij.python.pytools.backend.Version
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField
@@ -74,7 +75,7 @@ internal class CondaNewEnvironmentCreator<P : PathHolder>(model: PythonMutableTa
     condaExecutable.initialize(scope)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     return withProgressText(message("python.sdk.progress.conda.creating")) {
       model.createCondaEnvironment(moduleOrProject, NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.condaViewModel.newCondaEnvName.get()))
     }

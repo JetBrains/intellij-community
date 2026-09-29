@@ -42,15 +42,15 @@ sealed class PythonSelectableInterpreter<P : PathHolder> : Comparable<PythonSele
 }
 
 class ExistingSelectableInterpreter<P : PathHolder>(
-  val sdkWrapper: SdkWrapper<P>,
+  val pythonInterpreterWrapper: PythonInterpreterWrapper<P>,
   override val pythonInfo: PythonInfo,
   val isSystemWide: Boolean,
 ) : PythonSelectableInterpreter<P>(), InterpreterWithPath<P> {
   override val homePath: P
-    get() = sdkWrapper.homePath
+    get() = pythonInterpreterWrapper.homePath
 
   override fun toString(): String {
-    return "ExistingSelectableInterpreter(sdk=${sdkWrapper.sdk}, pythonInfo=$pythonInfo, isSystemWide=$isSystemWide, homePath='${homePath.toStringForUI()}')"
+    return "ExistingSelectableInterpreter(sdk=${pythonInterpreterWrapper.pythonInterpreter}, pythonInfo=$pythonInfo, isSystemWide=$isSystemWide, homePath='${homePath.toStringForUI()}')"
   }
 }
 

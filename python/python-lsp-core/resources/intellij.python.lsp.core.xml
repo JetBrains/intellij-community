@@ -22,6 +22,7 @@
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.lsp.core.common"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.common"/>
   </dependencies>

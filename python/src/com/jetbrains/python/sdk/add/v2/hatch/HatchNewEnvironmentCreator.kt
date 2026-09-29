@@ -14,6 +14,7 @@ import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -90,7 +91,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<PythonInterpreter> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
                                ?: return Result.failure(HatchUIError.BasePythonExecutableIsNotAvailable())
 

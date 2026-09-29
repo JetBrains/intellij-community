@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.backend.Version
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyError
@@ -205,7 +206,7 @@ class MutableTargetState<P : PathHolder>(propertyGraph: PropertyGraph) : AddInte
 
 
 internal val <P : PathHolder> PythonAddInterpreterModel<P>.existingSdks: List<Sdk>
-  get() = allInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter<P>>()?.map { it.sdkWrapper.sdk } ?: emptyList()
+  get() = allInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter<P>>()?.map { it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI() } ?: emptyList()
 
 internal suspend fun PythonAddInterpreterModel<*>.getBasePath(module: Module?): Path = withContext(Dispatchers.IO) {
   val pyProjectTomlBased = module?.let { PyProjectToml.findPyProjectTomlFile(it)?.virtualFile?.toNioPathOrNull()?.parent }

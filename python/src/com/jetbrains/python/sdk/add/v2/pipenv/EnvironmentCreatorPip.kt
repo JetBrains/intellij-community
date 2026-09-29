@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -30,7 +31,7 @@ internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetA
     model.fileSystem.persistCustomToolPath(pathHolder, pyTool)
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<PythonInterpreter> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
                                ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
     val pipenvExecutable = model.pipenvViewModel.pipenvExecutable.get()?.pathHolder?.getOr { return it }

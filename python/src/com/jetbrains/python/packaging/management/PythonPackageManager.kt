@@ -15,6 +15,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
@@ -608,6 +610,14 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
       return pythonPackageManagerService.forSdk(project, sdk)
+    }
+
+    /** The manager of the environment [interpreter] runs in. */
+    @ApiStatus.Internal
+    @Throws(AlreadyDisposedException::class)
+    fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
+      @Suppress("DEPRECATION") // The managers are keyed by the SDK, so this is the one place that reaches it.
+      return forSdk(project, interpreter.getSdkAPI())
     }
 
     @Topic.AppLevel

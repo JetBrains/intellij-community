@@ -87,7 +87,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     service.forSdk(project, sdk)
 
     // The structure has landed, so an absent watcher is a decision and not a moment before one
-    project.service<EvoPyProjectModel>().snapshot()
+    EvoPyProjectModel.getInstance(project).snapshot()
     assertThat(service.impl().watchesInterpreterPaths(sdk)).isFalse()
   }
 
@@ -104,7 +104,7 @@ internal class PythonPackageManagerUnusedSdkTest {
     val sdk = registerSdk("PY-88315 packages attached later", home, disposable)
     val service = project.service<PythonPackageManagerService>()
     val manager = service.forSdk(project, sdk)
-    project.service<EvoPyProjectModel>().snapshot()
+    EvoPyProjectModel.getInstance(project).snapshot()
     assertThat(service.impl().watchesInterpreterPaths(sdk)).isFalse()
 
     module.useSdk(sdk)

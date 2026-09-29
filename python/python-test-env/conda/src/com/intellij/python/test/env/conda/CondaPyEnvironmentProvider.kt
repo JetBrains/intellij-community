@@ -4,11 +4,11 @@ package com.intellij.python.test.env.conda
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.test.env.core.CacheKey
 import com.intellij.python.test.env.core.PyEnvDownloadCache
 import com.intellij.python.test.env.core.PyEnvironment
@@ -325,7 +325,7 @@ class CondaPyEnvironment(
     }
   }
 
-  override suspend fun prepareSdk(): Sdk {
+  override suspend fun prepareSdk(): PythonInterpreter {
     // Save a path to conda because some legacy code might use it instead of a full conda path from additional data
     PyCondaPackageService.onCondaEnvCreated(condaExecutable.pathString)
     return PyCondaEnv(

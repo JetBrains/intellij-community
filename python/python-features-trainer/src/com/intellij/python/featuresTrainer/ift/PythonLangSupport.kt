@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.Result
@@ -75,7 +76,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
         errorSink.emit(r.error, project)
         null
       }
-      is Result.Success -> r.result
+      is Result.Success -> r.result.getSdkAPI()
     } ?: throw NoSdkException()
   }
 

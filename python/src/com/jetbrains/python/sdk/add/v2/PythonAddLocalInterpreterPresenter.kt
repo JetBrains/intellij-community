@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
@@ -53,7 +55,7 @@ class PythonAddLocalInterpreterPresenter(
       is Result.Success -> {
         val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
         PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(r.result, isPreviouslyConfigured)
-        _sdkShared.emit(r.result)
+        _sdkShared.emit(r.result.getSdkAPI())
       }
     }
   }

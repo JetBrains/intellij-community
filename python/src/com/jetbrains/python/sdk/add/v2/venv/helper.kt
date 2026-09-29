@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.venv
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
 import com.jetbrains.python.PyBundle.message
@@ -17,7 +17,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
-import com.jetbrains.python.sdk.add.v2.SdkWrapper
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterWrapper
 import com.jetbrains.python.sdk.add.v2.installBaseSdk
 import com.jetbrains.python.sdk.add.v2.setupSdk
 
@@ -48,7 +48,7 @@ internal fun unsupportedPythonManagementWarning(interpreter: PythonSelectableInt
 internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.setupVirtualenv(
   venvFolder: P,
   moduleOrProject: ModuleOrProject,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   val baseSdkPath = when (val baseSdk = state.baseInterpreter.get()!!) {
     is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.installableSdk)
       .getOrElse { return PyResult.localizedError(message("python.sdk.installation.balloon.error.message")) }
@@ -66,14 +66,14 @@ internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.
     pathToVenvHome = venvFolder,
   ).getOr { return it }
 
-  return PyResult.success(newSdk.sdk)
+  return PyResult.success(newSdk.pythonInterpreter)
 }
 
 private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromBasePython(
   moduleOrProject: ModuleOrProject,
   pathToBasePython: P,
   pathToVenvHome: P,
-): PyResult<SdkWrapper<P>> {
+): PyResult<PythonInterpreterWrapper<P>> {
   val basePython = fileSystem.getBinaryToExec(pathToBasePython)
   val inheritSitePackages = venvViewModel.inheritSitePackages.get()
   createVenv(basePython, pathToVenvHome.toStringForExecution(), inheritSitePackages).getOr(message("project.error.cant.venv")) { return it }

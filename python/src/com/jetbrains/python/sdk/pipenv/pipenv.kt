@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.pipenv
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.flavor
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -21,6 +23,10 @@ import java.nio.file.Path
 internal val Sdk.isPipEnv: Boolean
   get() = PythonSdkUtil.isPythonSdk(this) && pySdkAdditionalData.flavor == PyPipEnvSdkFlavor
 
+/** Whether the interpreter was added as a pipenv. */
+internal val PythonInterpreter.isPipEnv: Boolean
+  get() = flavor == PyPipEnvSdkFlavor
+
 @Internal
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Pipenv (${PathUtil.getFileName(basePath)})"
 
@@ -35,7 +41,7 @@ internal suspend fun <P : PathHolder> createPipenvSdk(
   pythonBinaryPath: P,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension? = null,
-): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.pipenv.configuring")) {
+): PyResult<PythonInterpreter> = withProgressText(PyBundle.message("python.sdk.progress.pipenv.configuring")) {
   fileSystem.setupSdk(
     project = null,
     pythonBinaryPath = pythonBinaryPath,

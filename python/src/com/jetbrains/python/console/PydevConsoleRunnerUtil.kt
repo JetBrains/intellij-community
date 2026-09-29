@@ -3,6 +3,9 @@
 
 package com.jetbrains.python.console
 
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.addedPathFiles
+import com.intellij.python.sdk.backend.targetAdditionalData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -13,7 +16,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
@@ -31,8 +33,9 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
-import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
@@ -66,6 +69,11 @@ fun getPathMapper(project: Project,
     else -> null
   }
 }
+
+/** [getPathMapper] for [interpreter]: `null` for an interpreter that runs on no target. */
+@ApiStatus.Internal
+fun getPathMapper(project: Project, interpreter: PythonInterpreter, consoleSettings: PyConsoleSettings): PyRemotePathMapper? =
+  interpreter.targetAdditionalData?.let { getPathMapper(project, consoleSettings, it) }
 
 private fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
   val remotePathMapper = appendBasicMappings(project, data)
@@ -117,38 +125,14 @@ private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): Py
 /**
  * The interpreter a console starts on, and the module it belongs to. Both `null` when the project offers neither.
  *
- * Two sources, in this order.
- *
- * 1. The Environment section of Settings | Build, Execution, Deployment | Console | Python Console. An interpreter
- *    pinned there, or "Use module SDK" naming a module, is the user's choice for every console in the project, so
- *    nothing below overrides it. The working directory beside it wins the same way, in `getWorkingDirFromSettings`.
- * 2. The interpreter of the subproject the console runs in — the one [getModuleToStartConsole] names when the caller
- *    named no module, which is the interpreter widget's own rule. One rule for both surfaces, so the console and the
- *    status bar never disagree.
+ * The interpreter is the one of the subproject the console runs in: [contextModule] when the caller names one, and
+ * otherwise the one [getModuleToStartConsole] names, which is the interpreter widget's own rule. One source for every
+ * surface, so the console, the widget and the packages tool window never disagree.
  */
 internal suspend fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
-  val settings = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-  val namedModule = settings.moduleName?.let { ModuleManager.getInstance(project).findModuleByName(it) }
-  val module = when {
-    // A pinned interpreter carries no module of its own, so the module only decides the working directory and the
-    // tab title. The module named beside the pin is the user's word on both.
-    settings.sdkHome != null -> namedModule ?: contextModule ?: getModuleToStartConsole(project)
-    // "Use module SDK" says which module the interpreter comes from, and the caller's module outranks the named one:
-    // it is the subproject the user acted on.
-    settings.isUseModuleSdk -> contextModule ?: namedModule ?: getModuleToStartConsole(project)
-    else -> contextModule ?: getModuleToStartConsole(project)
-  }
-  return Pair.create(findConsoleSdk(settings, module), module)
-}
-
-/**
- * The interpreter a console runs on: the one [settings] pin, and [module]'s own when they pin none.
- */
-@ApiStatus.Internal
-suspend fun findConsoleSdk(settings: PyConsoleSettings, module: Module?): Sdk? {
-  @Suppress("DEPRECATION")
-  settings.sdkHome?.let { PythonSdkUtil.findSdkByPath(it) }?.let { return it }
-  return module?.findPythonSdk()
+  val module = contextModule ?: getModuleToStartConsole(project)
+  @Suppress("DEPRECATION") // The console runner still takes an Sdk.
+  return Pair.create(module?.asPyProject()?.getInterpreter()?.getSdkAPI(), module)
 }
 
 @ApiStatus.Internal
@@ -187,6 +171,14 @@ fun addDefaultEnvironments(sdk: Sdk,
                            envs: Map<String, String>): Map<String, String> {
   setCorrectStdOutEncoding(envs)
   PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk))
+  return envs
+}
+
+/** [addDefaultEnvironments] for [interpreter]. */
+@ApiStatus.Internal
+fun addDefaultEnvironments(interpreter: PythonInterpreter, envs: Map<String, String>): Map<String, String> {
+  setCorrectStdOutEncoding(envs)
+  PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(interpreter.addedPathFiles))
   return envs
 }
 
@@ -250,5 +242,5 @@ internal fun getConsoleSdk(element: PsiElement): Sdk? {
 @ApiStatus.Internal
 suspend fun getModuleToStartConsole(project: Project): Module? {
   val selectedFile = readAction { FileEditorManager.getInstance(project).selectedFiles.firstOrNull() }
-  return resolveConsoleTarget(project, selectedFile)?.module
+  return resolveConsoleTarget(project, selectedFile)?.pyProject?.residesOnModule
 }

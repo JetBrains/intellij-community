@@ -15,6 +15,8 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.TargetFileSystemCache
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.intellij.python.pytools.runTool
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath
@@ -65,6 +67,13 @@ internal suspend fun <T> runPipEnv(dirPath: EelOrJustPath, vararg args: String, 
     transformer = transformer,
   )
 
+
+/** [runPipEnvWithSdk] in the environment of [interpreter]. */
+internal suspend fun runPipEnvWithInterpreter(interpreter: PythonInterpreter, vararg args: String): PyResult<String> {
+  // Pipenv reads the working directory and the target from the SDK data, which has no interpreter API yet.
+  @Suppress("DEPRECATION")
+  return runPipEnvWithSdk(interpreter.getSdkAPI(), *args)
+}
 
 internal suspend fun runPipEnvWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
   val data = sdk.pySdkAdditionalData
@@ -122,7 +131,7 @@ internal suspend fun <P : PathHolder> setupPipEnvSdkWithProgressReport(
   pipenvExecutable: P?,
   installPackages: Boolean,
   targetPanelExtension: TargetPanelExtension? = null,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   val pythonHomePath = setupPipEnv(
     projectPath = moduleBasePath,
     fileSystem = fileSystem,

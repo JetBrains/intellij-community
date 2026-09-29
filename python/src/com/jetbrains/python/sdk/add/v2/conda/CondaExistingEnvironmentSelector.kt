@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -30,6 +29,7 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
 import com.jetbrains.python.sdk.add.v2.successOrNull
@@ -156,7 +156,7 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
     condaExecutable.initialize(scope)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     return withProgressText(message("python.sdk.progress.conda.configuring")) {
       val env = model.getCondaEnvOrError(base = false).getOr { return@withProgressText it }
       val sdk = model.createSdkFromCondaEnv(moduleOrProject, env).getOr { return@withProgressText it }

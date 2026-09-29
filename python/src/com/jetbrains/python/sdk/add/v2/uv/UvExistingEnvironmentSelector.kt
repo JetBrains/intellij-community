@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -32,7 +33,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
     model.fileSystem.persistCustomToolPath(pathHolder, UvPyTool.getInstance())
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     val sdkHomePath = selectedEnv.get()?.homePath
     val selectedInterpreterPath =
       sdkHomePath ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePath))

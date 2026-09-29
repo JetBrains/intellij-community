@@ -1,5 +1,6 @@
 package com.intellij.python.sdkConfigurator.backend.impl
 
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
@@ -7,12 +8,12 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.model.api.CreateSdkNotFilesResult
-import com.intellij.python.pyproject.model.api.SdkConfigurationResult
+import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
 import com.intellij.python.pyproject.model.api.autoConfigureSdkDoNotCreateFiles
 import com.intellij.python.pyproject.model.api.autoConfigureSdkExistingOnly
 import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
 import com.jetbrains.python.module.PyModuleService
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -27,7 +28,7 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
     0 -> Unit
     1 -> {
       val module = pythonModules.first()
-      module.configureSdkIfNeeded { autoConfigureSdkDoNotCreateFiles() }?.run {
+      module.asPyProject()?.configureSdkIfNeeded { autoConfigureSdkDoNotCreateFiles() }?.run {
         log(module) { error ->
           when (error) {
             is CreateSdkNotFilesResult.NoFiles -> "No files found on disk"
@@ -41,11 +42,11 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
         for (module in pythonModules) {
           // If module is disposed, the coroutine gets cancelled, but we still need to configure other modules
           launch {
-            module.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }?.run {
+            module.asPyProject()?.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }?.run {
               log(module) { error ->
                 when (val r = error.createSdkInfo) {
-                  is CreateSdkInfo.ExistingEnv -> "Files exist on disk, but no SDK configured"
-                  is CreateSdkInfo.WillCreateEnv -> "Files must be created with ${r.intentionName}"
+                  is CreateInterpreterInfo.ExistingEnv -> "Files exist on disk, but no SDK configured"
+                  is CreateInterpreterInfo.WillCreateEnv -> "Files must be created with ${r.intentionName}"
                 }
               }
             }
@@ -56,18 +57,18 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
   }
 }
 
-private fun <T : Any> SdkConfigurationResult<T>.log(module: Module, logForConfigError: (err: T) -> @NlsSafe String) {
+private fun <T : Any> InterpreterConfigurationResult<T>.log(module: Module, logForConfigError: (err: T) -> @NlsSafe String) {
   val (success, message) = when (this) {
-    is SdkConfigurationResult.Configured -> {
-      Pair(true, "configured with ${this.sdk}")
+    is InterpreterConfigurationResult.Configured -> {
+      Pair(true, "configured with $interpreter")
     }
-    is SdkConfigurationResult.NotConfigured -> {
+    is InterpreterConfigurationResult.NotConfigured -> {
       Pair(false, logForConfigError(reason))
     }
-    is SdkConfigurationResult.ParentHasNoSdk -> {
+    is InterpreterConfigurationResult.ParentHasNoInterpreter -> {
       Pair(false, "parent module has no SDK")
     }
-    is SdkConfigurationResult.ToolNotInstalled -> {
+    is InterpreterConfigurationResult.ToolNotInstalled -> {
       Pair(false, "no required tool installed: ${this.tool.toolToInstall}")
     }
   }

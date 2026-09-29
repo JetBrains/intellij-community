@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.test.env.core
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -33,13 +34,17 @@ interface PyEnvironment : AutoCloseable {
    */
   val envPath: Path
 
-  suspend fun prepareSdk(): Sdk = withContext(Dispatchers.IO) {
+  suspend fun prepareSdk(): PythonInterpreter = withContext(Dispatchers.IO) {
     val vfsFile = VfsUtil.findFile(pythonPath, true) ?: error("Cannot find Python executable: ${pythonPath}")
     // The environment belongs to no project, and its working directory is the env dir rather than a module base dir:
     // drop the association the constructor derives from it. Fixtures that want one call setAssociationToModule.
     val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData, envPath).apply { associatedModulePath = null }
-    SdkConfigurationUtil.setupSdk(emptyArray(), vfsFile,
-                                  SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, data, null)
+    SdkConfigurationUtil.setupSdk(
+      emptyArray(), vfsFile,
+      SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!,
+      data,
+      null
+    ).pythonInterpreterAsync()
   }
 
   /**

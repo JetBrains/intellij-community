@@ -6,6 +6,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.community.impl.pipenv.common.icons.PythonCommunityImplPipenvCommonIcons
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
@@ -105,7 +106,7 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   }
 
   /** Adopts the project's existing pipenv environment as a pipenv-typed SDK. */
-  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> =
+  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<PythonInterpreter> =
     createPipenvSdk(context.workspace.baseDir, PathHolder.Eel(homePath), context.fileSystem)
 
   /**
@@ -114,7 +115,7 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * `folder` and `name` are unused: pipenv chooses both the location and the name itself — see [addNewEnvSpec].
    * Packages are not installed, matching the other nodes: the user asked for an interpreter, not for a sync.
    */
-  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
+  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<PythonInterpreter> {
     val pipenvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     return setupPipEnvSdkWithProgressReport(
       moduleBasePath = context.workspace.baseDir,

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.flavor
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -81,13 +82,13 @@ class EvoWorkspace(
   val members: List<EvoPyProject>,
 ) {
   /** The module every tool is driven from. */
-  val module: Module get() = root.module
+  val module: Module get() = root.pyProject.residesOnModule
 
   /** The directory every tool runs in. */
-  val baseDir: Directory get() = root.baseDir
+  val baseDir: Directory get() = root.pyProject.baseDir
 
   /** The project every member of this workspace belongs to. */
-  val project: Project get() = root.project
+  val project: Project get() = root.pyProject.project
 
   /** The wire identity of the [root]. See [keyOf]. */
   val rootKey: String get() = root.key
@@ -96,13 +97,14 @@ class EvoWorkspace(
 /**
  * The [PyProject] the widget acts on: one Python module, its own directory and the interpreter it uses.
  *
- * [module], [baseDir] and [interpreter] describe the project the user is looking at, which is what the status bar
+ * [pyProject] and [interpreter] describe the project the user is looking at, which is what the status bar
  * reflects. It states nothing about the workspace it belongs to, because the workspace owns its members and not the
  * other way round — see [EvoWorkspace] for what a tool acts on.
  */
 @ApiStatus.Internal
 class EvoPyProject(
-  private val self: PyProject,
+  /** The project this entry describes. */
+  val pyProject: PyProject,
   /**
    * The interpreter this project uses, as it stood when the snapshot was computed.
    *
@@ -120,19 +122,12 @@ class EvoPyProject(
    */
   val interpreter: PythonInterpreter?,
 ) {
-  val module: Module get() = self.residesOnModule
-
-  val project: Project get() = self.project
-
-  /** This project's own base dir. See [EvoWorkspace.baseDir] for the directory a tool runs in. */
-  val baseDir: Directory get() = self.baseDir
-
   /**
    * This project's wire identity. See [keyOf].
    *
    * A field, so the key travels with the project it addresses. A caller that holds one never has to derive the other.
    */
-  val key: String = keyOf(self)
+  val key: String = keyOf(pyProject)
 }
 
 /**
@@ -313,7 +308,7 @@ interface PyEvoEnvironmentProvider {
    * Returns a failure rather than a null when the tool cannot adopt the env, so "I could not" is never confused with
    * "not mine" — the pip node builds a generic path-based SDK itself rather than leaving the core to guess.
    */
-  suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> = notSupported()
+  suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<PythonInterpreter> = notSupported()
 
   /**
    * Builds the SDK for an environment that does not exist yet, creating it first via the tool's own "create" logic —
@@ -323,7 +318,7 @@ interface PyEvoEnvironmentProvider {
    * put in the leaf it built, and nothing outside this method interprets them. A failure travels back as the result —
    * the core reports it once, so an [ExecError] from a tool command still reaches the process-execution-error dialog.
    */
-  suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> = notSupported()
+  suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<PythonInterpreter> = notSupported()
 
   /**
    * The in-widget "add new environment" flow for one of this node's [section]s: the proposed name, where it goes,
@@ -363,7 +358,7 @@ interface PyEvoEnvironmentProvider {
    * There is no rollback and none is expected: destroy, create, and report a failure as the result. A provider that
    * could not destroy the environment must return that failure rather than build over the wreckage.
    */
-  suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> = notSupported()
+  suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<PythonInterpreter> = notSupported()
 
   companion object {
     @ApiStatus.Internal
@@ -410,6 +405,13 @@ fun List<PyEvoEnvironmentProvider>.nodeIdForSdk(sdk: Sdk): String? {
   // precondition rather than catch, since an IllegalStateException here could be a ProcessCanceledException.
   if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) return null
   val flavor = sdk.pySdkAdditionalData.flavor
+  return firstOrNull { provider -> provider.sdkFlavor?.isInstance(flavor) == true }?.toolId?.id
+}
+
+/** [nodeIdForSdk] for an interpreter. Null when its SDK records no flavor, or when no node owns the flavor. */
+@ApiStatus.Internal
+fun List<PyEvoEnvironmentProvider>.nodeIdFor(interpreter: PythonInterpreter): String? {
+  val flavor = interpreter.flavor ?: return null
   return firstOrNull { provider -> provider.sdkFlavor?.isInstance(flavor) == true }?.toolId?.id
 }
 

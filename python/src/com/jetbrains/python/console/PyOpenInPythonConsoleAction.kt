@@ -60,10 +60,11 @@ internal class PyOpenInPythonConsoleAction : AnAction(), DumbAware {
     val target = runWithModalProgressBlocking(project, PyBundle.message("progress.title.starting.python.console")) {
       resolveConsoleTarget(project, file)
     } ?: return
+    val module = target.pyProject.residesOnModule
 
-    if (focusExistingConsole(project, consoleTabTitle(project, target.module, PyConsoleType.PYTHON.title))) return
+    if (focusExistingConsole(project, consoleTabTitle(project, module, PyConsoleType.PYTHON.title))) return
 
-    launchPythonConsoleRunner(project, target.module) { runner ->
+    launchPythonConsoleRunner(project, module) { runner ->
       runner.addConsoleListener { PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null) }
       runner.run(true)
     }

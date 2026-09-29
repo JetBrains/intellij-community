@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
@@ -59,7 +60,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
     get() = object : DependenciesExporter {
       override fun export(file: PsiFile) {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return
-        syncWithImports(module)
+        PyPackageCoroutine.launch(module.project) { syncWithImports(module) }
       }
     }
 

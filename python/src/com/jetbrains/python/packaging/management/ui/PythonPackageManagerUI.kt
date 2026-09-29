@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -201,6 +202,10 @@ class PythonPackageManagerUI private constructor(
       val packageManager = PythonPackageManager.forSdk(project, sdk)
       return PythonPackageManagerUI(packageManager, sink)
     }
+
+    @ApiStatus.Internal
+    fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter, sink: ErrorSink = ErrorSink()): PythonPackageManagerUI =
+      PythonPackageManagerUI(PythonPackageManager.forPythonInterpreter(project, interpreter), sink)
 
     @ApiStatus.Experimental
     fun forPackageManager(

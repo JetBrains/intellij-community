@@ -7,10 +7,10 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.or
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.pytools.backend.Version
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.asDisposable
@@ -203,10 +203,10 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     }
   }
 
-  override suspend fun getSdk(moduleOrProject: ModuleOrProject): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> {
+  override suspend fun getSdk(moduleOrProject: ModuleOrProject): PyResult<Pair<PythonInterpreter, InterpreterStatisticsInfo>> {
     model.navigator.saveLastState()
 
-    val sdk = when (selectedMode.get()) {
+    val pythonInterpreter = when (selectedMode.get()) {
       PROJECT_VENV -> {
         val projectPath = model.projectPathFlows.projectPathWithDefault.first()
         // todo just keep venv path, all the rest is in the model
@@ -222,8 +222,8 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     }.getOr { return it }
 
     val statistics = withContext(Dispatchers.EDT) { createStatisticsInfo() }
-    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, statistics.previouslyConfigured)
-    return Result.success(Pair(sdk, statistics))
+    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(pythonInterpreter, statistics.previouslyConfigured)
+    return Result.success(Pair(pythonInterpreter, statistics))
   }
 
   private fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {

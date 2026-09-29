@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
@@ -403,8 +404,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
  * manager on the first call and does first-touch I/O.
  */
 private suspend fun PyLspToolIntegrationProvider.LspPackageListener.noServedModuleHolds(pyTool: PyTool): Boolean {
-  val sdks = readAction { pyLspServedModules(project).mapNotNull { it.pythonSdk } }
-  return sdks.none { pyLspToolVersionOf(it, project, pyTool) != null }
+  val modules = readAction { pyLspServedModules(project) }.toSet()
+  val interpreters = project.evoPyProjects().filter { it.pyProject.residesOnModule in modules }.mapNotNull { it.interpreter }
+  return interpreters.none { pyLspToolVersionOf(it, project, pyTool) != null }
 }
 
 /** Stands for an interpreter that holds no copy of the tool, so a map tells it from "never seen". */

@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
+import com.intellij.python.pyproject.model.evolution.pythonInterpreters
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
@@ -17,7 +16,7 @@ internal class PyInterpreterUsagesCollector : ProjectUsagesCollector() {
   // outside the blessed creation path, which carry no PythonSdkAdditionalData and make the reporting below throw
   // (PY-90784).
   override suspend fun collect(project: Project): Set<MetricEvent> =
-    project.service<EvoPyProjectModel>().snapshot().interpreters
+    project.pythonInterpreters()
       .mapTo(mutableSetOf()) { interpreter ->
         PYTHON_SDK_USED.metric(getPythonSpecificInfo(interpreter.getSdkAPI()))
       }

@@ -2,7 +2,6 @@
 package com.jetbrains.python.uv.sdk.configuration
 
 import com.intellij.openapi.module.Module
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.PyExecutableCache
@@ -11,7 +10,7 @@ import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.module.eelDescriptor
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
@@ -24,12 +23,12 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override suspend fun isExclusiveFor(module: Module): Boolean = uvOwnsSetupOf(module)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvWithUvLock(module, venvsInModule, tomlCheckedByWorkspaceTools = false) }
     ) { envExists -> { createUvSdk(module, venvsInModule, envExists) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvWithUvLock(module, venvsInModule, tomlCheckedByWorkspaceTools = true) }
     ) { envExists -> { createUvSdk(module, venvsInModule, envExists) } }

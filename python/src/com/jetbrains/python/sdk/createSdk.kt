@@ -10,6 +10,9 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -76,7 +79,7 @@ suspend fun createSdk(
   sdkAdditionalData: PythonSdkAdditionalData,
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
-): Result<Sdk, MessageError> =
+): Result<PythonInterpreter, MessageError> =
   createSdkImpl(SdkCreationRequest.EelSdk(pythonBinaryPath.path, sdkAdditionalData), suggestedSdkName, advancedOpts)
 
 /**
@@ -88,7 +91,7 @@ suspend fun createSdk(
   sdkAdditionalData: PyTargetAwareAdditionalData,
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
-): Result<Sdk, MessageError> =
+): Result<PythonInterpreter, MessageError> =
   createSdkImpl(SdkCreationRequest.TargetSdk(pythonBinaryPath.pathString, sdkAdditionalData), suggestedSdkName, advancedOpts)
 
 /**
@@ -97,7 +100,7 @@ suspend fun createSdk(
 internal suspend fun SdkCreationRequest<*, *>.createSdk(
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
-): Result<Sdk, MessageError> = createSdkImpl(this, suggestedSdkName, advancedOpts)
+): Result<PythonInterpreter, MessageError> = createSdkImpl(this, suggestedSdkName, advancedOpts)
 
 
 /**
@@ -109,7 +112,7 @@ suspend fun createLocalSdkGuessingTypeByPath(
   homePath: PythonBinary,
   moduleOrProject: ModuleOrProject,
   suggestedSdkName: String? = null,
-): PyResult<Sdk> =
+): PyResult<PythonInterpreter> =
   createSdkGuessingTypeByPath(PathHolder.Eel(homePath),
                               EelFileSystem(homePath.getEelDescriptor().toEelApi()),
                               moduleOrProject,
@@ -126,7 +129,7 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   moduleOrProject: ModuleOrProject,
   targetPanelExtension: TargetPanelExtension?,
   suggestedSdkName: String? = null,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   val flavorAndData = when (homePath) {
     is PathHolder.Eel -> withContext(Dispatchers.IO) {
       val detectedFlavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(homePath.path)
@@ -147,7 +150,7 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   val workingDirectory = moduleOrProject.workingDirectory
                          ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
 
-  val newSdk = fileSystem.setupSdk(
+  val newPythonInterpreter = fileSystem.setupSdk(
     project = moduleOrProject.project,
     pythonBinaryPath = homePath,
     sdkAdditionalData = PythonSdkAdditionalData(
@@ -158,21 +161,22 @@ internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
     suggestedSdkName = suggestedSdkName
   ).getOr { return it }
 
-  val module = PyProjectCreateHelpers.getModule(moduleOrProject, newSdk.homeDirectory)
+  val sdk = newPythonInterpreter.getSdkAPI()
+  val module = PyProjectCreateHelpers.getModule(moduleOrProject, sdk.homeDirectory)
   if (module != null) {
-    newSdk.setAssociationToModule(module)
+    sdk.setAssociationToModule(module)
   }
 
-  moduleOrProject.project.excludeInnerVirtualEnv(newSdk)
+  moduleOrProject.project.excludeInnerVirtualEnv(sdk)
 
-  return PyResult.success(newSdk)
+  return PyResult.success(newPythonInterpreter)
 }
 
 private suspend fun createSdkImpl(
   request: SdkCreationRequest<*, *>,
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts,
-): Result<Sdk, MessageError> {
+): Result<PythonInterpreter, MessageError> {
   val sdkType = PythonSdkType.getInstance()
   val existingSdks = PythonSdkUtil.getAllSdks()
 
@@ -188,7 +192,7 @@ private suspend fun createSdkImpl(
         val reused = findSdkToAdopt(pythonBinaryPath, existingSdks) {
           suggestedSdkName ?: sdkType.suggestSdkName(null, pythonBinaryPath.toString())
         }
-        if (reused != null) return PyResult.success(reused.adoptData(sdkAdditionalData))
+        if (reused != null) return PyResult.success(reused.adoptData(sdkAdditionalData).pythonInterpreterAsync())
       }
 
       val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
@@ -220,7 +224,7 @@ private suspend fun createSdkImpl(
   if (advancedOpts.setupPaths) {
     sdkType.setupSdkPaths(sdk)
   }
-  return Result.success(sdk)
+  return Result.success(sdk.pythonInterpreterAsync())
 }
 
 /**

@@ -3,15 +3,14 @@ package com.intellij.python.ml.features.imports.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ml.logs.IJFeatureDeclarations
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.jetbrains.mlapi.feature.Feature
 import com.jetbrains.mlapi.feature.FeatureContainer
 import com.jetbrains.mlapi.feature.FeatureDeclaration
 import com.jetbrains.mlapi.feature.FeatureSet
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
 enum class UnderscoresType {
@@ -34,9 +33,15 @@ enum class ModuleSourceType {
 
 object RelevanceEvaluationFeatures : ImportCandidateFeatures(Features) {
   object Features : FeatureContainer {
-    val UNDERSCORES_IN_PATH: FeatureDeclaration<Int?> = FeatureDeclaration.int("underscores_in_path") { "number of prefix and suffix underscores in path" }.nullable()
-    val MODULE_SOURCE_TYPE: FeatureDeclaration<ModuleSourceType?> = IJFeatureDeclarations.enum<ModuleSourceType>("module_source_type", lazyDescription = { "info about lib being std, local, or external" }).nullable()
-    val UNDERSCORES_TYPES_OF_PACKAGES: List<FeatureDeclaration<UnderscoresType?>> = (1..4).map { i -> IJFeatureDeclarations.enum<UnderscoresType>("underscores_types_of_package_$i", lazyDescription = { "underscores types of package #$i" }).nullable() }
+    val UNDERSCORES_IN_PATH: FeatureDeclaration<Int?> =
+      FeatureDeclaration.int("underscores_in_path") { "number of prefix and suffix underscores in path" }.nullable()
+    val MODULE_SOURCE_TYPE: FeatureDeclaration<ModuleSourceType?> = IJFeatureDeclarations.enum<ModuleSourceType>("module_source_type",
+                                                                                                                 lazyDescription = { "info about lib being std, local, or external" })
+      .nullable()
+    val UNDERSCORES_TYPES_OF_PACKAGES: List<FeatureDeclaration<UnderscoresType?>> = (1..4).map { i ->
+      IJFeatureDeclarations.enum<UnderscoresType>("underscores_types_of_package_$i",
+                                                  lazyDescription = { "underscores types of package #$i" }).nullable()
+    }
   }
 
   override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureSet): List<Feature> = buildList {
@@ -48,24 +53,15 @@ object RelevanceEvaluationFeatures : ImportCandidateFeatures(Features) {
       }
     }
     val baseElement = importCandidate.importable ?: return@buildList
-    var vFile: VirtualFile? = null
-    var sdk: Sdk? = null
-    val containingFile = baseElement.containingFile
-    if (containingFile != null) {
-      vFile = containingFile.virtualFile
-      sdk = readAction { PythonSdkUtil.findPythonSdk(containingFile) }
-    }
-    if (vFile != null) {
-      add(Features.MODULE_SOURCE_TYPE with
-            readAction {
-              when {
-                PySkeletonUtil.isStdLib(vFile, sdk) -> ModuleSourceType.STD_LIB
-                ModuleUtilCore.findModuleForFile(vFile, baseElement.project) == null -> ModuleSourceType.EXTERNAL_LIB
-                else -> ModuleSourceType.LOCAL_LIB
-              }
-            }
-      )
-    }
+    val vFile: VirtualFile = readAction { baseElement.containingFile?.virtualFile } ?: return@buildList
+    val interpreter = baseElement.project.findPythonInterpreter(vFile)
+    add(Features.MODULE_SOURCE_TYPE with readAction {
+      when {
+        PySkeletonUtil.isStdLib(vFile, interpreter) -> ModuleSourceType.STD_LIB
+        ModuleUtilCore.findModuleForFile(vFile, baseElement.project) == null -> ModuleSourceType.EXTERNAL_LIB
+        else -> ModuleSourceType.LOCAL_LIB
+      }
+    })
   }
 
   private fun countBoundaryUnderscores(qName: QualifiedName?): Int {

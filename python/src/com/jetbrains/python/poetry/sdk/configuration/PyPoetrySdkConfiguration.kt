@@ -4,7 +4,6 @@ package com.jetbrains.python.poetry.sdk.configuration
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.findPsiFile
@@ -13,7 +12,6 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -29,7 +27,7 @@ import com.jetbrains.python.projectCreation.getSystemPython
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.CheckToml
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
@@ -39,6 +37,7 @@ import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
 import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.poetry.runPoetry
 import com.jetbrains.python.sdk.poetry.setupPoetry
@@ -64,12 +63,12 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML, POETRY_TOML)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module, true) },
     ) { { createPoetry(module) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module, false) },
     ) { { createPoetry(module) } }
@@ -122,7 +121,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     else EnvCheckerResult.CannotConfigure
   }
 
-  private suspend fun createPoetry(module: Module): PyResult<Sdk> =
+  private suspend fun createPoetry(module: Module): PyResult<PythonInterpreter> =
     withBackgroundProgress(module.project, PyBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
       LOGGER.debug("Creating poetry environment")
 

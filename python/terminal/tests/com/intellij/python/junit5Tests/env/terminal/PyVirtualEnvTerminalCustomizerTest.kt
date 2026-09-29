@@ -25,6 +25,7 @@ import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -132,7 +133,8 @@ class PyVirtualEnvTerminalCustomizerTest {
     val (pythonBinary, venvDirName) =
       if (useConda) {
         val envDir = venvPath.resolve("some_path_with_underscores")
-        val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList(), envDir).getOrThrow()
+        val interpreter = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList(), envDir).getOrThrow()
+        val sdk = interpreter.getSdkAPI()
         sdkToDelete = sdk
         moduleFixture.get().pythonSdk = sdk
         Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)

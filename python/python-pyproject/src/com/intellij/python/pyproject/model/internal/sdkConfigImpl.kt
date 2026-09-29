@@ -1,20 +1,24 @@
 package com.intellij.python.pyproject.model.internal
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pyproject.model.api.ModuleSdkState
-import com.intellij.python.pyproject.model.api.SdkConfigurationResult
+import com.intellij.python.pyproject.model.api.InterpreterConfigurationError
+import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
 import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.autoConfigureSdkCompletely
 import com.intellij.python.pyproject.model.api.autoConfigureSdkDoNotCreateFiles
 import com.intellij.python.pyproject.model.api.autoConfigureSdkExistingOnly
 import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.setInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
-import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithSdkCreator
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfoWithInterpreterCreator
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithToolBase
-import com.jetbrains.python.sdk.configuration.getSdkCreator
+import com.jetbrains.python.sdk.configuration.getInterpreterCreator
 import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
@@ -34,14 +38,41 @@ import com.jetbrains.python.sdk.withSdkConfigurationLock
  *
  * To be called with [withSdkConfigurationLock] **only**!
  */
-internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(controller: AutoConfigurationController<T>): SdkConfigurationResult<T> =
-  withSdkConfigurationLock(module.project) {
+internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(controller: AutoConfigurationController<T>): InterpreterConfigurationResult<T> {
+  val outcome = withSdkConfigurationLock(module.project) {
     // We might have TOCTOU here (sdk might already be created), so we check SDK once again
-    module.findPythonSdk()?.let { currentSdk ->
-      SdkConfigurationResult.Configured(currentSdk)
-    } ?: autoConfigureSdkImpl(controller)
+    if (module.findPythonSdk() != null) ConfigOutcome.Configured() else autoConfigureSdkImpl(controller)
   }
+  return when (outcome) {
+    is ConfigOutcome.Configured -> {
+      // A parent that `SameAs` configured on the way is written too, so the snapshot must hold it as well.
+      val written = listOfNotNull(pyProject, (this as? SdkForModuleConfigInstruction.SameAs)?.parent)
+      val model = EvoPyProjectModel.getInstance(module.project)
+      model.awaitInterpreterOf(written)
+      // The wait above ends only when the snapshot holds the interpreter the module holds now.
+      val interpreter = checkNotNull(pyProject.getInterpreter()) {
+        "${pyProject.residesOnModule} has no interpreter in the snapshot after it was configured"
+      }
+      InterpreterConfigurationResult.Configured(interpreter)
+    }
+    is ConfigOutcome.Failed -> when (val error = outcome.error) {
+      is InterpreterConfigurationResult.NotConfigured -> error
+      is InterpreterConfigurationResult.ToolNotInstalled -> error
+      is InterpreterConfigurationResult.ParentHasNoInterpreter -> error
+    }
+  }
+}
 
+/**
+ * What [autoConfigureSdkImpl] ends with, while the configuration lock is held.
+ *
+ * A configured SDK is not a [InterpreterConfigurationResult] yet: that result carries the interpreter from the snapshot, and
+ * [autoConfigureSdk] waits for the snapshot only after it releases the lock.
+ */
+private sealed interface ConfigOutcome<T : Any> {
+  class Configured<T : Any> : ConfigOutcome<T>
+  class Failed<T : Any>(val error: InterpreterConfigurationError<T>) : ConfigOutcome<T>
+}
 
 /**
  * Controls SDK configuration process
@@ -51,7 +82,7 @@ internal fun interface AutoConfigurationController<T : Any> {
    * We need to create an SDK (either SDK or files) with [infoWithTool] (see its fields).
    * Decision is returned as [SdkSetupCallBack]
    */
-  fun onSdkSetupRequired(infoWithTool: CreateSdkInfoWithToolBase<CreateSdkInfoWithSdkCreator>): SdkSetupCallBack<T>
+  fun onSdkSetupRequired(infoWithTool: CreateSdkInfoWithToolBase<CreateInterpreterInfoWithInterpreterCreator>): SdkSetupCallBack<T>
 }
 
 internal sealed interface SdkSetupCallBack<T : Any> {
@@ -73,52 +104,53 @@ internal sealed interface SdkSetupCallBack<T : Any> {
  * Call with [withSdkConfigurationLock]. It can't use it internally as it is recursive, and [kotlinx.coroutines.sync.Mutex] is not
  * reenterable.
  */
-private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl(controller: AutoConfigurationController<T>): SdkConfigurationResult<T> =
+private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl(controller: AutoConfigurationController<T>): ConfigOutcome<T> =
   when (this) {
     is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> {
       when (val r = this.createSdkInfoWithTool.createSdkInfo) {
-        is CreateSdkInfoWithSdkCreator -> {
+        is CreateInterpreterInfoWithInterpreterCreator -> {
           // SDK needs to be created
           when (val sdkSetup = controller.onSdkSetupRequired(CreateSdkInfoWithToolBase(r, toolId))) {
             is SdkSetupCallBack.Accepted -> {
               // Allowed by a controller
-              when (val createSdk = r.getSdkCreator(module).createSdk()) {
+              when (val createSdk = r.getInterpreterCreator(module).createInterpreter()) {
                 // Creation failed
-                is Result.Failure -> SdkConfigurationResult.NotConfigured(sdkSetup.sdkResultMapper(createSdk.error))
+                is Result.Failure -> ConfigOutcome.Failed(InterpreterConfigurationResult.NotConfigured(sdkSetup.sdkResultMapper(createSdk.error)))
                 is Result.Success -> {
                   // Creation success, save it
-                  val sdk = createSdk.result
-                  module.pythonSdk = sdk
-                  sdk.setAssociationToModule(module)
+                  val pythonInterpreter = createSdk.result
+                  module.pythonSdk = pythonInterpreter.getSdkAPI().also {
+                    it.setAssociationToModule(module)
+                  }
                   PyProjectTomlCollector.sdkCreatedAutomatically(toolId)
-                  SdkConfigurationResult.Configured(sdk)
+                  ConfigOutcome.Configured()
                 }
               }
             }
             // Denied by a controller
-            is SdkSetupCallBack.Denied -> SdkConfigurationResult.NotConfigured(sdkSetup.reason)
+            is SdkSetupCallBack.Denied -> ConfigOutcome.Failed(InterpreterConfigurationResult.NotConfigured(sdkSetup.reason))
           }
         }
         // We do not install tools automatically
-        is CreateSdkInfo.WillInstallTool -> SdkConfigurationResult.ToolNotInstalled(r)
+        is CreateInterpreterInfo.WillInstallTool -> ConfigOutcome.Failed(InterpreterConfigurationResult.ToolNotInstalled(r))
       }
     }
     is SdkForModuleConfigInstruction.SameAs -> { // Same as a parent module
 
-      // Save SDK, but not assoc it with module as it is a parent SDK
-      fun Sdk.asSdkResult(): SdkConfigurationResult.Configured<T> {
-        module.pythonSdk = this@asSdkResult
-        return SdkConfigurationResult.Configured(this)
+      // Save the parent SDK, but do not associate it with this module, as it belongs to the parent
+      suspend fun inheritFromParent(): ConfigOutcome.Configured<T> {
+        module.pythonSdk = parent.residesOnModule.findPythonSdk()
+        return ConfigOutcome.Configured()
       }
 
-      check(parentModule != module) { "$parentModule can't be parent of the same module $module" }
       // Deliberately not the shared cache: this runs under the SDK-configuration lock, inside a loop that configures the
       // project's modules one by one, so the parent's SDK may have been created moments ago by an earlier iteration —
       // the same TOCTOU the check in `autoConfigureSdk` above guards against.
-      when (val parentSdkResult = parentModule.getModuleSdkState(fresh = true)) {
+      when (val parentSdkResult = parent.getModuleSdkState(fresh = true)) {
         is ModuleSdkState.HasSdk -> {
           // Parent already has SDK
-          parentSdkResult.sdk.asSdkResult()
+          pyProject.setInterpreter(parentSdkResult.interpreter)
+          ConfigOutcome.Configured()
         }
         is ModuleSdkState.NoSdk -> {
           val parentSdkInfo = parentSdkResult.sdkConfigInstruction
@@ -128,18 +160,16 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
           else {
             // It is important to use sdkImpl as it doesn't lock a mutex which is already taken
             when (val parentSdkResult = parentSdkInfo.autoConfigureSdkImpl(controller)) {
-              is SdkConfigurationResult.ToolNotInstalled,
-              is SdkConfigurationResult.ParentHasNoSdk,
-              is SdkConfigurationResult.NotConfigured,
-                -> parentSdkResult // Parent has problems with SDK, return it
-              is SdkConfigurationResult.Configured -> {
-                // Parent SDK was configured
-                return parentSdkResult.sdk.asSdkResult()
+              // Parent has problems with SDK, return it
+              is ConfigOutcome.Failed -> parentSdkResult.error
+              is ConfigOutcome.Configured -> {
+                // Parent SDK was configured. The snapshot does not hold it yet, so it is read from the parent module.
+                return inheritFromParent()
               }
             }
           }
           // Report parent SDK can't be configured
-          SdkConfigurationResult.ParentHasNoSdk(parentModule, error)
+          ConfigOutcome.Failed(InterpreterConfigurationResult.ParentHasNoInterpreter(parent, error))
         }
       }
     }

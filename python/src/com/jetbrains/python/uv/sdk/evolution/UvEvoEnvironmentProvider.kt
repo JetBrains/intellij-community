@@ -5,6 +5,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -84,7 +85,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * Adopts an existing virtualenv as a uv env — `usePip = false`, so the SDK is wired to uv rather than to pip even
    * though the env itself is an ordinary virtualenv either tool could claim.
    */
-  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> {
+  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<PythonInterpreter> {
     val uvPath = executableOrNull(context.fileSystem) ?: return toolMissing()
     return setupExistingEnvAndSdk(
       pythonBinary = PathHolder.Eel(homePath),
@@ -99,7 +100,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * Creates a new uv env in the folder the add-new row named; `token` is the chosen Python version as `major.minor`
    * ("" = uv's default), which is all `uv venv --python` is given — see [supportedPythonVersions].
    */
-  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
+  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<PythonInterpreter> {
     val uvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val venvDir = context.resolveNewVenvDir(ref)
     if (venvDir.exists()) return envExistsError(venvDir.fileName.toString())
@@ -150,7 +151,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * create. That suits the rule the widget works to: a failure leaves the folder standing and broken, and says so,
    * instead of leaving the project with nothing where an environment used to be.
    */
-  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
+  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<PythonInterpreter> {
     val uvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val version = parseVersion(spec.baseToken).getOr { return it }
     return setupNewUvSdkAndEnv(

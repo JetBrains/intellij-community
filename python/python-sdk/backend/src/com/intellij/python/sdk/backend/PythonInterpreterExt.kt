@@ -1,12 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.jetbrains.python.sdk.targetAdditionalData
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -27,6 +30,11 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
@@ -131,6 +139,56 @@ fun PyInterpreterItem.findSdk(): Sdk? {
   val ref = ref as? PyInterpreterRef.ExistingSdk ?: return null
   return PythonSdkUtil.findSdkByKey(ref.sdkName)
 }
+
+/**
+ * The flavor this interpreter was set up with, or `null` when its SDK records none.
+ *
+ * An SDK built outside the creation path has no additional data, so it has no flavor either.
+ */
+val PythonInterpreter.flavor: PythonSdkFlavor<*>?
+  get() = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor
+
+/** The name the user knows this interpreter by. */
+val PythonInterpreter.name: @NlsSafe String
+  get() = sdk.name
+
+/** The ref an interpreter list row carries for this interpreter. See [Sdk.asInterpreterRef]. */
+fun PythonInterpreter.asInterpreterRef(): PyInterpreterRef = sdk.asInterpreterRef()
+
+/** The target data of this interpreter, or `null` for an interpreter that runs on no target. */
+val PythonInterpreter.targetAdditionalData: PyTargetAwareAdditionalData?
+  get() = sdk.targetAdditionalData
+
+/** The requirements file path stored for this interpreter, or `null` when none is stored. */
+val PythonInterpreter.requirementsPath: Path?
+  get() = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath
+
+/** The paths the user added to the `sys.path` of this interpreter in the interpreter settings. */
+val PythonInterpreter.addedPathFiles: Set<VirtualFile>
+  get() = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.addedPathFiles.orEmpty()
+
+/** The directory of the module this interpreter was created for, or `null` when it records none. */
+val PythonInterpreter.associatedModuleDir: VirtualFile?
+  get() = sdk.associatedModuleDir
+
+/**
+ * Makes [interpreter] the interpreter of this project. The project stores it on its module.
+ *
+ * Must be called under [com.jetbrains.python.sdk.withSdkConfigurationLock] to prevent concurrent Module/SDK changes.
+ */
+@Internal
+@RequiresBackgroundThread(generateAssertion = false)
+fun PyProject.setInterpreter(interpreter: PythonInterpreter) {
+  residesOnModule.pythonSdk = interpreter.sdk
+}
+
+/**
+ * Whether this interpreter wraps [sdk].
+ *
+ * For code that holds an [Sdk] from an API not migrated yet, such as a listener, and must find the interpreter it
+ * names.
+ */
+fun PythonInterpreter.isFor(sdk: Sdk): Boolean = this.sdk == sdk
 
 /**
  * The ref an interpreter list row carries for this SDK.

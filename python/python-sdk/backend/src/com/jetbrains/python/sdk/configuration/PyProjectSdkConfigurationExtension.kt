@@ -126,10 +126,10 @@ interface PyProjectSdkConfigurationExtension {
    * This function is executed on a background thread and may perform I/O-intensive checks such as
    * reading project files (for example, pyproject.toml, Pipfile, requirements.txt, environment.yml), probing the
    * file system, or invoking external tools (poetry/hatch/pipenv/uv/etc.). No SDK must be created or registered here.
-   * Instead, the method returns a [CreateSdkInfo] descriptor that encapsulates:
+   * Instead, the method returns a [CreateInterpreterInfo] descriptor that encapsulates:
    * - user-facing labels (intentionName) and tool metadata (toolInfo), and
    * - a suspendable sdkCreator that will create and register the SDK when executed by the caller
-   *   (see [CreateSdkInfoWithSdkCreator.getSdkCreator]).
+   *   (see [CreateInterpreterInfoWithInterpreterCreator.getInterpreterCreator]).
    *
    * Return value semantics:
    * - Existing environment found: return a CreateSdkInfo.ExistingEnv whose creator simply registers the discovered SDK.
@@ -159,7 +159,7 @@ interface PyProjectSdkConfigurationExtension {
   suspend fun isExclusiveFor(module: Module): Boolean = false
 
   @CheckReturnValue
-  suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo?
+  suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo?
 
   /**
    * Returns this extension as a [PyProjectTomlConfigurationExtension] when a tool supports configuring with
@@ -176,7 +176,7 @@ interface PyProjectSdkConfigurationExtension {
  * [createSdkInfo] with [toolId] that created it
  */
 data class CreateSdkInfoWithToolBase<T>(val createSdkInfo: T, val toolId: ToolId)
-typealias CreateSdkInfoWithTool = CreateSdkInfoWithToolBase<CreateSdkInfo>
+typealias CreateSdkInfoWithTool = CreateSdkInfoWithToolBase<CreateInterpreterInfo>
 
 
 @ApiStatus.Internal

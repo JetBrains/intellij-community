@@ -8,11 +8,11 @@ import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
@@ -44,7 +44,7 @@ internal class PythonLanguageRuntimeUI(
   val module: Module,
   val config: PythonLanguageRuntimeConfiguration,
   val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
-) : BoundConfigurable(message("configurable.name.python.language")), CustomToolLanguageConfigurable<Sdk> {
+) : BoundConfigurable(message("configurable.name.python.language")), CustomToolLanguageConfigurable<PythonInterpreter> {
   private val project get() = module.project
 
   private var introspectable: LanguageRuntimeType.Introspectable? = null
@@ -113,10 +113,10 @@ internal class PythonLanguageRuntimeUI(
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  override fun createCustomTool(): Sdk? {
+  override fun createCustomTool(): PythonInterpreter? {
     val sdkManager = mainPanel.currentSdkManager
 
-    val sdk = runWithSdkConfigurationLock(project) {
+    val interpreter = runWithSdkConfigurationLock(project) {
       withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
         sdkManager.setupSdk(ModuleOrProject.ModuleAndProject(module)).onFailure {
           errorSink.emit(it)
@@ -128,7 +128,7 @@ internal class PythonLanguageRuntimeUI(
     }
 
 
-    return sdk
+    return interpreter
   }
 
   override fun validate(): Collection<ValidationInfo> = validationErrors

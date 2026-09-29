@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
@@ -21,6 +20,9 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -30,7 +32,6 @@ import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.SystemPythonRequirements
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,7 +86,7 @@ suspend fun createMiscProject(
   projectPath: Path = miscProjectDefaultPath,
   systemPythonService: SystemPythonService = SystemPythonService(),
   currentProject: Project? = null,
-): PyResult<Pair<Project, Sdk>> {
+): PyResult<Pair<Project, PythonInterpreter>> {
   return createOrOpenProjectAndSdk(
     projectPath,
     confirmInstallation = confirmInstallation,
@@ -94,10 +95,10 @@ suspend fun createMiscProject(
   )
 }
 
-private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, sdk: Sdk): PsiFile {
+private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, pythonInterpreter: PythonInterpreter): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
   val psiFile = openFile(project, generateFile)
-  fileType.fillFile(psiFile, sdk)
+  fileType.fillFile(psiFile, pythonInterpreter.getSdkAPI())
   return psiFile
 }
 
@@ -158,7 +159,7 @@ private suspend fun createOrOpenProjectAndSdk(
   confirmInstallation: suspend () -> Boolean,
   systemPythonService: SystemPythonService,
   currentProject: Project?,
-): PyResult<Pair<Project, Sdk>> {
+): PyResult<Pair<Project, PythonInterpreter>> {
   val isAlreadyMiscOrWelcomeScreenProject = currentProject != null && WelcomeScreenProjectProvider.isWelcomeScreenProject(currentProject)
   val project = if (isAlreadyMiscOrWelcomeScreenProject) {
     currentProject
@@ -167,9 +168,9 @@ private suspend fun createOrOpenProjectAndSdk(
     openProject(projectPath)
   }
 
-  val existingSdk = project.pythonSdk
-  if (isAlreadyMiscOrWelcomeScreenProject && existingSdk != null) {
-    return PyResult.success(project to existingSdk)
+  val existingMainInterpreter = project.findMainPythonInterpreter()
+  if (isAlreadyMiscOrWelcomeScreenProject && existingMainInterpreter != null) {
+    return PyResult.success(project to existingMainInterpreter)
   }
 
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }

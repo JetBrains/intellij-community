@@ -39,7 +39,7 @@ import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
 import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.venv.EnvironmentCreatorVenv
 import com.jetbrains.python.sdk.add.v2.venv.PythonExistingEnvironmentSelector
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -220,11 +220,11 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
 
   private fun selectBestTool(createSdkInfoWithTool: CreateSdkInfoWithTool) {
     val (manager, configurators) = when (createSdkInfoWithTool.createSdkInfo) {
-      is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool -> {
+      is CreateInterpreterInfo.WillCreateEnv, is CreateInterpreterInfo.WillInstallTool -> {
         selectionMethod.set(PythonInterpreterSelectionMethod.CREATE_NEW)
         newInterpreterManager to newInterpreterCreators
       }
-      is CreateSdkInfo.ExistingEnv -> {
+      is CreateInterpreterInfo.ExistingEnv -> {
         selectionMethod.set(PythonInterpreterSelectionMethod.SELECT_EXISTING)
         existingInterpreterManager to existingInterpreterSelectors
       }

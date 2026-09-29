@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
@@ -27,7 +28,7 @@ import kotlinx.coroutines.withContext
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
  internal lateinit var sdkCreator: PySdkCreator
 
- internal suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
+ internal suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<PythonInterpreter, InterpreterStatisticsInfo>> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(TraceContext(PyBundle.message("trace.context.generating.git")) + Dispatchers.IO) {
@@ -50,15 +51,15 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
     }
 
     val sdkResult = withSdkConfigurationLock(module.project) {
-      val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@withSdkConfigurationLock it }
+      val (pythonInterpreter: PythonInterpreter, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@withSdkConfigurationLock it }
 
-      configurePythonSdk(project, module, sdk)
-      Result.success(Pair(sdk, interpreterStatistics))
+      configurePythonSdk(project, module, pythonInterpreter)
+      Result.success(Pair(pythonInterpreter, interpreterStatistics))
     }
     return@coroutineScope sdkResult
   }
 
-  private suspend fun getSdkAndInterpreter(module: Module): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> =
+  private suspend fun getSdkAndInterpreter(module: Module): PyResult<Pair<PythonInterpreter, InterpreterStatisticsInfo>> =
     sdkCreator.getSdk(ModuleOrProject.ModuleAndProject(module))
 
 

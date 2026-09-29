@@ -6,7 +6,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.uv.common.UV_BASE_TOOL_ID
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
@@ -19,7 +19,7 @@ internal class PyUvBaseSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun isExclusiveFor(module: Module): Boolean = uvOwnsSetupOf(module)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableUvEnvBase(module, venvsInModule) }
     ) { envExists -> { createUvSdk(module, venvsInModule, envExists) } }

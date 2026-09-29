@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
+import com.intellij.python.pyproject.model.evolution.currentPythonInterpreter
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.notification.NotificationType
@@ -174,7 +175,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
       @Suppress("DEPRECATION")
-      val sdkToOpenOn = project.service<EvoPyProjectModel>().interpreter.value?.getSdkAPI()
+      val sdkToOpenOn = project.currentPythonInterpreter()?.getSdkAPI()
       val boundSdk = sdkContext?.sdk
       if (shouldReplayBoundSdk(boundSdk, sdkToOpenOn)) {
         checkNotNull(boundSdk)
@@ -574,7 +575,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   private fun followSharedInterpreter() {
     serviceScope.launch {
       @Suppress("DEPRECATION")
-      project.service<EvoPyProjectModel>().interpreter.collect { initForSdk(it?.getSdkAPI()) }
+      EvoPyProjectModel.getInstance(project).interpreter.collect { initForSdk(it?.getSdkAPI()) }
     }
   }
 

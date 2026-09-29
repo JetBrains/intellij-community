@@ -11,7 +11,6 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
@@ -26,6 +25,9 @@ import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.setCustomExecutablePath
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
@@ -83,20 +85,20 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
    *
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
+  protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter>
 
   @ApiStatus.Internal
-  suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     savePathToExecutableToProperties()
-    val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
-
+    val pythonInterpreter = getOrCreateSdk(moduleOrProject).getOr { return it }
+    val sdk = pythonInterpreter.getSdkAPI()
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
     moduleOrProject.moduleIfExists?.let {
       it.pythonSdk = sdk
       sdk.setAssociationToModule(it)
     }
 
-    return Result.success(sdk)
+    return Result.success(pythonInterpreter)
   }
 
   /**
@@ -187,7 +189,7 @@ enum class PythonInterpreterSelectionMethod {
 }
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-internal fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<Sdk> {
+internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<PythonInterpreter> {
   val installed = installRequest.install(null) {
     PythonSdkUtil.getAllSdks()
   }
@@ -209,7 +211,7 @@ internal fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result
       .getNotificationsManager()
       .showNotification(notification, IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project)
   }
-  return installed
+  return installed.map { it.pythonInterpreterAsync() }
 }
 
 
@@ -217,9 +219,9 @@ internal suspend fun <P : PathHolder> InterpreterWithPath<P>.setupSdk(
   moduleOrProject: ModuleOrProject,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   when (this) {
-    is ExistingSelectableInterpreter -> return PyResult.success(sdkWrapper.sdk)
+    is ExistingSelectableInterpreter -> return PyResult.success(pythonInterpreterWrapper.pythonInterpreter)
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit
   }
 

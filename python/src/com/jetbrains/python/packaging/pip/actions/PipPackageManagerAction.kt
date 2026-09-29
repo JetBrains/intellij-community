@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.intellij.python.requirements.RequirementsFileType
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager

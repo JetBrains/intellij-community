@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.inspections
 
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.ide.DataManager
@@ -15,7 +16,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
@@ -29,10 +29,11 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.model.api.CreateSdkNotFilesResult
 import com.intellij.python.pyproject.model.api.ModuleSdkState
-import com.intellij.python.pyproject.model.api.SdkConfigurationError
-import com.intellij.python.pyproject.model.api.SdkConfigurationResult
+import com.intellij.python.pyproject.model.api.InterpreterConfigurationError
+import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
 import com.intellij.python.pyproject.model.api.autoConfigureSdkDoNotCreateFiles
 import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
@@ -47,9 +48,9 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.impl.getRootModuleOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
-import com.jetbrains.python.sdk.configuration.getSdkCreator
+import com.jetbrains.python.sdk.configuration.getInterpreterCreator
 import com.jetbrains.python.sdk.configuration.suppressors.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.intellij.python.sdk.backend.PySdkBundle
@@ -212,17 +213,17 @@ private class UseProvidedInterpreterFix(
 
 private class SuggestToolInstallationFix(
   private val myModule: Module,
-  private val myCreateSdkInfo: CreateSdkInfo.WillInstallTool,
+  private val myCreateInterpreterInfo: CreateInterpreterInfo.WillInstallTool,
 ) : InterpreterFix {
   override fun createActionLink(module: Module, project: Project, psiFile: PsiFile, executor: BusyGuardExecutor): ActionLink {
-    return ActionLink(myCreateSdkInfo.intentionName) {
-      val pyTool = PyTool.findByPackageName(myCreateSdkInfo.toolToInstall) ?: return@ActionLink
+    return ActionLink(myCreateInterpreterInfo.intentionName) {
+      val pyTool = PyTool.findByPackageName(myCreateInterpreterInfo.toolToInstall) ?: return@ActionLink
       executor.execute {
-        val lifetime = suppressTipAndInspectionsFor(myModule, myCreateSdkInfo.toolToInstall)
-        withBackgroundProgress(project, myCreateSdkInfo.intentionName, false) {
+        val lifetime = suppressTipAndInspectionsFor(myModule, myCreateInterpreterInfo.toolToInstall)
+        withBackgroundProgress(project, myCreateInterpreterInfo.intentionName, false) {
           lifetime.use {
             val eel = project.getEelDescriptor().toEelApi()
-            pyTool.performToolInstallation(eel).mapSuccess(myCreateSdkInfo.pathPersister).errorOrNull?.also {
+            pyTool.performToolInstallation(eel).mapSuccess(myCreateInterpreterInfo.pathPersister).errorOrNull?.also {
               ErrorSink().emit(it, project)
             }
           }
@@ -232,19 +233,22 @@ private class SuggestToolInstallationFix(
   }
 }
 
-private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult =
-  when (val r = getModuleSdkState()) {
-    is ModuleSdkState.HasSdk -> FindQuickFixResult.SdkAppliedAutomatically(r.sdk)
+private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult {
+  // A module that is not a Python project has no suggestion, but it still needs an interpreter.
+  val pyProject = asPyProject() ?: return FindQuickFixResult.ShowUserFix(null)
+  return when (val r = pyProject.getModuleSdkState()) {
+    is ModuleSdkState.HasSdk -> FindQuickFixResult.SdkAppliedAutomatically
     is ModuleSdkState.NoSdk -> {
       r.sdkConfigInstruction?.let { instruction ->
         when (val r = instruction.autoConfigureSdkDoNotCreateFiles()) {
-          is SdkConfigurationResult.ToolNotInstalled, is SdkConfigurationResult.NotConfigured -> r
-          is SdkConfigurationResult.ParentHasNoSdk -> r.reason
-          is SdkConfigurationResult.Configured -> return FindQuickFixResult.SdkAppliedAutomatically(r.sdk) // SDK was configured automatically (e.g. existing env attached)
+          is InterpreterConfigurationResult.ToolNotInstalled, is InterpreterConfigurationResult.NotConfigured -> r
+          is InterpreterConfigurationResult.ParentHasNoInterpreter -> r.reason
+          is InterpreterConfigurationResult.Configured -> return FindQuickFixResult.SdkAppliedAutomatically // SDK was configured automatically (e.g. existing env attached)
         }
       }?.toQuickFix(this).let { FindQuickFixResult.ShowUserFix(it) }
     }
   }
+}
 
 private sealed interface FindQuickFixResult {
   /**
@@ -254,20 +258,20 @@ private sealed interface FindQuickFixResult {
   class ShowUserFix(val fix: InterpreterFix?) : FindQuickFixResult
 
   /**
-   * Module already has [sdk]
+   * Module already has an interpreter
    */
-  class SdkAppliedAutomatically(val sdk: Sdk) : FindQuickFixResult
+  data object SdkAppliedAutomatically : FindQuickFixResult
 }
 
 private val logger = fileLogger()
 
-private fun SdkConfigurationError<CreateSdkNotFilesResult>.toQuickFix(module: Module): InterpreterFix? =
+private fun InterpreterConfigurationError<CreateSdkNotFilesResult>.toQuickFix(module: Module): InterpreterFix? =
   when (val r = this@toQuickFix) {
-    is SdkConfigurationResult.ToolNotInstalled -> {
+    is InterpreterConfigurationResult.ToolNotInstalled -> {
       logger.trace { "$this: Tool installation will be suggested to the user" }
       SuggestToolInstallationFix(module, r.tool)
     }
-    is SdkConfigurationResult.NotConfigured -> {
+    is InterpreterConfigurationResult.NotConfigured -> {
       when (val r = r.reason) {
         is CreateSdkNotFilesResult.NoFiles -> {
           logger.trace { "$this: Ask user as it is a heavy operation" }
@@ -278,7 +282,7 @@ private fun SdkConfigurationError<CreateSdkNotFilesResult>.toQuickFix(module: Mo
       }
     }
     // TODO: null means parent module is unconfigurable, what should we do?
-    is SdkConfigurationResult.ParentHasNoSdk -> r.reason?.toQuickFix(r.parentModule)
+    is InterpreterConfigurationResult.ParentHasNoInterpreter -> r.reason?.toQuickFix(r.parent.residesOnModule)
   }
 
 
@@ -287,18 +291,21 @@ private suspend fun setSdkUsingCreateSdkInfo(module: Module, createSdkInfoWithTo
     logger.debug("Configuring sdk using ${createSdkInfoWithTool.toolId}")
 
     val sdk = when (val createSdkInfo = createSdkInfoWithTool.createSdkInfo) {
-      is CreateSdkInfo.WillInstallTool ->
+      is CreateInterpreterInfo.WillInstallTool ->
         // This specific CreateSdkInfo is only supposed to be used for proposing tool installation,
         // it never should be used for SDK creation.
         PyResult.localizedError(PySdkBundle.message("python.sdk.cannot.create.tool.should.be.installed"))
-      is CreateSdkInfo.ExistingEnv, is CreateSdkInfo.WillCreateEnv -> createSdkInfo.getSdkCreator(module).createSdk()
+      is CreateInterpreterInfo.ExistingEnv, is CreateInterpreterInfo.WillCreateEnv -> createSdkInfo.getInterpreterCreator(module).createInterpreter()
     }.getOr {
       ErrorSink().emit(it.error, module.project)
       return@withContext
     }
 
-    module.getRootModuleOrNull(createSdkInfoWithTool.toolId)?.also { configurePythonSdk(it.project, it, sdk) }
+    val rootModule = module.getRootModuleOrNull(createSdkInfoWithTool.toolId)?.also { configurePythonSdk(it.project, it, sdk) }
     configurePythonSdk(module.project, module, sdk)
+    // Before the waiter releases its callers, so they read the new interpreter from the snapshot.
+    val written = listOfNotNull(module, rootModule).mapNotNull { it.asPyProject() }
+    EvoPyProjectModel.getInstance(module.project).awaitInterpreterOf(written)
     logger.debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
   }
 }

@@ -5,8 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -24,6 +22,8 @@ import com.jetbrains.python.sdk.setAssociationToModule
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.module.getEel
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
@@ -48,7 +48,7 @@ internal suspend fun checkManageableUvEnvBase(
   return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
 }
 
-internal suspend fun createUvSdk(module: Module, venvsInModule: List<PythonBinary>, envExists: Boolean): PyResult<Sdk> {
+internal suspend fun createUvSdk(module: Module, venvsInModule: List<PythonBinary>, envExists: Boolean): PyResult<PythonInterpreter> {
   val uv = UvPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel()))?.path
            ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.find.uv.executable"))
   val target = uvEnvTarget(module, venvsInModule)
@@ -72,7 +72,7 @@ internal suspend fun createUvSdk(module: Module, venvsInModule: List<PythonBinar
 
   sdkSetupResult.onSuccess {
     withContext(Dispatchers.EDT) {
-      it.setAssociationToModule(sdkAssociatedModule)
+      it.getSdkAPI().setAssociationToModule(sdkAssociatedModule)
     }
   }
   return sdkSetupResult

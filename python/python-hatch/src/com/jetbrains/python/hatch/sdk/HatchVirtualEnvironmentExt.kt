@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.hatch.BasePythonExecutableNotFoundHatchError
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -31,7 +32,7 @@ suspend fun <P : PathHolder> HatchVirtualEnvironment<P>.createSdk(
   workingDirectoryPath: Path,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension? = null,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   val existingVirtualEnvironment = when (val virtualEnvironment = pythonVirtualEnvironment) {
     is PythonVirtualEnvironment.Existing -> virtualEnvironment
     is PythonVirtualEnvironment.NotExisting -> {

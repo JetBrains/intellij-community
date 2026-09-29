@@ -12,6 +12,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.DEFAULT_EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle
@@ -136,13 +137,13 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     }
 
     runWithSdkConfigurationLock(project) {
-      val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
+      val (pythonInterpreter, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
         errorSink.emit(it.error, project)
         return@runWithSdkConfigurationLock
       }
-      pythonSdk = sdk
+      pythonSdk = pythonInterpreter.getSdkAPI()
       moduleOrProject.moduleIfExists?.let { module ->
-        configurePythonSdk(project, module, sdk)
+        configurePythonSdk(project, module, pythonInterpreter)
       }
     }
   }

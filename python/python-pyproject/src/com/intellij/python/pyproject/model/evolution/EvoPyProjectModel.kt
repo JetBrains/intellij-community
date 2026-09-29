@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.isFor
 import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.sdk.findPythonSdk
 import com.intellij.openapi.util.io.FileUtil
@@ -29,6 +30,7 @@ import com.intellij.python.sdk.backend.evolution.EvoWorkspace
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.project
 import java.nio.file.Path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -93,7 +95,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * members, and a standalone project as a workspace of one.
      *
      * The structure itself, because a workspace owns its projects. A caller that acts on a tool walks these; one that
-     * asks about a single project reads [pyProjects], [forKey] or [forFile].
+     * asks about a single project reads [evoPyProjects], [forKey] or [forFile].
      */
     val workspaces: List<EvoWorkspace>,
     /**
@@ -109,10 +111,10 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * Each one states its own [EvoPyProject.key], so nothing outside has to hold a key to address one.
      *
      * A sequence, and not a list, because it is a view and not content: nothing here is held, every caller reduces it
-     * in one pass, and [forKey] and [forModule] stop at the project they answer instead of flattening the rest. A
+     * in one pass, and [forKey] and [forPyProject] stop at the project they answer instead of flattening the rest. A
      * caller that wants one of them by key or by file asks [forKey] or [forFile] instead.
      */
-    val pyProjects: Sequence<EvoPyProject> get() = workspaces.asSequence().flatMap { it.members }
+    val evoPyProjects: Sequence<EvoPyProject> get() = workspaces.asSequence().flatMap { it.members }
     /**
      * The target [key] addresses, or `null` when this generation has no such `PyProject` — a key the frontend held
      * across a change that removed it.
@@ -121,15 +123,18 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * one being published and this being read, and handing a disposed module to a tool provider is not a state any of
      * them are written for.
      */
-    fun forKey(key: String): EvoPyProject? = pyProjects.firstOrNull { it.key == key }?.takeUnless { it.module.isDisposed }
+    fun forKey(key: String): EvoPyProject? = evoPyProjects.firstOrNull { it.key == key }?.takeUnless { it.pyProject.residesOnModule.isDisposed }
 
     /**
-     * The `PyProject` residing on [module], or `null` when it is not a Python module at all.
+     * The entry of this generation for [pyProject], or `null` when this generation does not hold it.
      *
-     * The module is the identity [computeSnapshot] builds a generation from, so at most one project answers here.
-     * Private: [forFile] is the one way in, so no caller states the rule around this on its own.
+     * A disposed module is rejected, as [forKey] rejects one.
+     *
+     * For a caller that asks about several projects and wants every answer from one generation. A caller that asks
+     * about one project calls [getInterpreter] instead.
      */
-    private fun forModule(module: Module): EvoPyProject? = pyProjects.firstOrNull { it.module == module }?.takeUnless { it.module.isDisposed }
+    fun forPyProject(pyProject: PyProject): EvoPyProject? =
+      evoPyProjects.firstOrNull { it.pyProject == pyProject }?.takeUnless { it.pyProject.residesOnModule.isDisposed }
 
     /**
      * The `PyProject` [file] belongs to:
@@ -144,7 +149,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * [EvoPyProjectDto] and across the RPC boundary, so that copy cannot be shared. The two must stay the same: a
      * surface that answers on its own rule names an interpreter another surface does not (PY-90174).
      *
-     * Suspends, unlike [forKey] and [forModule], because it alone leaves the snapshot: the module lookup reads the
+     * Suspends, unlike [forKey] and [forPyProject], because it alone leaves the snapshot: the module lookup reads the
      * project model under a read action.
      *
      * [ProjectFileIndex.getModuleForFile] and not [com.intellij.openapi.module.ModuleUtilCore.findModuleForFile],
@@ -154,11 +159,12 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     suspend fun forFile(file: VirtualFile?): EvoPyProject? {
       if (file == null) return main
       val module = readAction { ProjectFileIndex.getInstance(project).getModuleForFile(file) } ?: return main
-      return forModule(module)
+      // The module is the identity a generation is built from, so at most one project answers here.
+      return evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.takeUnless { module.isDisposed }
     }
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
-    val baseDirs: Set<Path> = pyProjects.mapTo(mutableSetOf()) { it.baseDir }
+    val baseDirs: Set<Path> = evoPyProjects.mapTo(mutableSetOf()) { it.pyProject.baseDir }
 
     /**
      * Every interpreter a project of this generation uses.
@@ -168,7 +174,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      *
      * A set, so [PythonInterpreter] equality carries it: two wrappers of one SDK are one interpreter here.
      */
-    val interpreters: Set<PythonInterpreter> = pyProjects.mapNotNullTo(mutableSetOf()) { it.interpreter }
+    val interpreters: Set<PythonInterpreter> = evoPyProjects.mapNotNullTo(mutableSetOf()) { it.interpreter }
   }
 
   private val state = MutableStateFlow<Snapshot?>(null)
@@ -202,7 +208,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
       // is resolved against was recomputed.
       combine(state.filterNotNull(), selectionChanges) { _, _ -> }
         .conflate()
-        .collect { interpreterState.value = interpreterFor(selectedFile()) }
+        .collect { interpreterState.value = project.findPythonInterpreter(selectedFile()) }
     }
 
   }
@@ -232,18 +238,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   fun snapshotFlow(): Flow<Snapshot> = state.filterNotNull()
 
   /**
-   * The interpreter every Python surface shows for [file], which is what [interpreter] publishes.
-   *
-   * Private: it states nothing that [Snapshot.forFile] does not, so a caller that wants one file's interpreter reads
-   * `snapshot().forFile(file)?.interpreter` and a caller that wants the edited file's follows [interpreter].
-   */
-  private suspend fun interpreterFor(file: VirtualFile?): PythonInterpreter? {
-    val snapshot = snapshot()
-    return snapshot.forFile(file)?.interpreter
-  }
-
-  /**
-   * The interpreter for the file being edited, as [interpreterFor] resolves it, recomputed whenever the structure or
+   * The interpreter for the file being edited, as [findPythonInterpreter] resolves it, recomputed whenever the structure or
    * the selected file changes.
    *
    * One flow so every surface shows one interpreter. Resolving it per surface let them disagree: the packages tool
@@ -298,6 +293,31 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     val workspaces = sources.map { it.residesOnModule }.distinctBy(::workspaceKeyOf).map(::workspaceOf)
     return Snapshot(workspaces, projectsByModule.values.firstOrNull { it.key == mainKey })
   }
+
+  /**
+   * Suspends until a snapshot states the interpreter each of [pyProjects] holds now.
+   *
+   * For a function that sets an interpreter: it calls this after the write and before it returns. The model recomputes
+   * only when the workspace model reports the write, and that report arrives later. So without this wait, a caller
+   * that reads the snapshot right after such a function still sees the interpreter from before the write.
+   *
+   * Returns at once when the current snapshot already agrees.
+   */
+  suspend fun awaitInterpreterOf(pyProjects: Collection<PyProject>) {
+    snapshotFlow().first { snapshot ->
+      pyProjects.all { pyProject ->
+        val interpreter = snapshot.forPyProject(pyProject)?.interpreter
+        when (val sdk = pyProject.residesOnModule.findPythonSdk()) {
+          null -> interpreter == null
+          else -> interpreter?.isFor(sdk) == true
+        }
+      }
+    }
+  }
+
+  companion object {
+    fun getInstance(project: Project): EvoPyProjectModel = project.service()
+  }
 }
 
 /**
@@ -310,4 +330,57 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
  * information and it repeats no lookup.
  */
 @ApiStatus.Internal
-suspend fun Project.findMainPythonInterpreter(): PythonInterpreter? = service<EvoPyProjectModel>().snapshot().main?.interpreter
+suspend fun Project.findMainPythonInterpreter(): PythonInterpreter? = EvoPyProjectModel.getInstance(this).snapshot().main?.interpreter
+
+/**
+ * Every Python project of the current snapshot, with its interpreter. See [EvoPyProjectModel.Snapshot.evoPyProjects].
+ *
+ * [PyProject.Companion.getPyProjects] lists the same projects without their interpreters.
+ */
+@ApiStatus.Internal
+suspend fun Project.evoPyProjects(): Sequence<EvoPyProject> = EvoPyProjectModel.getInstance(this).snapshot().evoPyProjects
+
+/**
+ * Every interpreter a project of the current snapshot uses. See [EvoPyProjectModel.Snapshot.interpreters].
+ */
+@ApiStatus.Internal
+suspend fun Project.pythonInterpreters(): Set<PythonInterpreter> = EvoPyProjectModel.getInstance(this).snapshot().interpreters
+
+/**
+ * The Python project every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].
+ */
+@ApiStatus.Internal
+suspend fun Project.findEvoPyProject(file: VirtualFile?): EvoPyProject? = EvoPyProjectModel.getInstance(this).snapshot().forFile(file)
+
+/**
+ * The interpreter the widget and the packages tool window show: the one of the file being edited.
+ * See [EvoPyProjectModel.interpreter].
+ *
+ * `null` before the first structure lands, and when that file has no interpreter.
+ */
+@ApiStatus.Internal
+fun Project.currentPythonInterpreter(): PythonInterpreter? = EvoPyProjectModel.getInstance(this).interpreter.value
+
+/**
+ * The base dir of every Python project of the current snapshot. See [EvoPyProjectModel.Snapshot.baseDirs].
+ */
+@ApiStatus.Internal
+suspend fun Project.pythonProjectBaseDirs(): Set<Path> = EvoPyProjectModel.getInstance(this).snapshot().baseDirs
+
+/**
+ * The interpreter every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].
+ *
+ * A caller that wants the interpreter of the file being edited follows [EvoPyProjectModel.interpreter] instead.
+ */
+@ApiStatus.Internal
+suspend fun Project.findPythonInterpreter(file: VirtualFile?): PythonInterpreter? = findEvoPyProject(file)?.interpreter
+
+/**
+ * The interpreter this project uses, as the current [EvoPyProjectModel.Snapshot] states it.
+ *
+ * Waits for the first snapshot. A function that sets an interpreter calls [EvoPyProjectModel.awaitInterpreterOf]
+ * before it returns, so a caller that reads this after such a function sees the new interpreter.
+ */
+@ApiStatus.Internal
+suspend fun PyProject.getInterpreter(): PythonInterpreter? =
+  EvoPyProjectModel.getInstance(project).snapshot().forPyProject(this)?.interpreter

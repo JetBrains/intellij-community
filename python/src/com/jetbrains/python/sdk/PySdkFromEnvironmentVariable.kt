@@ -12,8 +12,10 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.Path
 import com.intellij.util.EnvironmentUtil
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -21,7 +23,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr
-import com.jetbrains.python.venvReader.tryResolvePath
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.file.InvalidPathException
@@ -110,14 +112,14 @@ class PySdkFromEnvironmentVariable private constructor(
 
     // Skip modules with same SDK
     val modules = modules.filter {
-      tryResolvePath(it.findPythonSdk()?.homePath) != python
+      it.asPyProject()?.getInterpreter()?.pythonBinaryPath != python
     }
 
     if (modules.isEmpty()) {
       return Result.success(Unit)
     }
 
-    val sdk = withSdkConfigurationLock(project) {
+    val pythonInterpreter = withSdkConfigurationLock(project) {
       createLocalSdkGuessingTypeByPath(python, ModuleOrProject.ProjectOnly(project))
     }.getOr(PyBundle.message("sdk.configuration.path.cant.create.sdk", python)) { return it }
 
@@ -126,7 +128,7 @@ class PySdkFromEnvironmentVariable private constructor(
     withSdkConfigurationLock(project) {
       for (module in modules) {
         check(module.project == project) { "Module $module is not in $project" }
-        module.pythonSdk = sdk
+        module.pythonSdk = pythonInterpreter.getSdkAPI()
       }
     }
     return Result.success(Unit)

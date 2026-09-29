@@ -15,6 +15,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.intellij.python.ty.TyLspClientDescriptor
@@ -140,6 +141,11 @@ internal class PyLspServedModulesTest {
       attachedSdk.get()
     }
 
+    /** The serve key of each module in [modules], read the way a refresh reads it. */
+    private fun serveKeysOf(modules: List<Module>): Map<Module, PyLspServeKey> = runBlocking {
+      modules.associateWith { module -> pyLspServeKeyOf(checkNotNull(module.asPyProject()) { "'${module.name}' is not a PyProject" }, tyTool) }
+    }
+
     @Test
     fun `a module inside the project directory belongs to the project workspace`() {
       allSdks()
@@ -190,7 +196,8 @@ internal class PyLspServedModulesTest {
         tyDescriptorServing(attached.get()),
       )
 
-      assertFalse(pyLspFolderSetIsStale(descriptors, served) { pyLspServeKeyOf(it, tyTool) })
+      val keys = serveKeysOf(served)
+      assertFalse(pyLspFolderSetIsStale(descriptors, served) { keys.getValue(it) })
     }
 
     @Test
@@ -199,7 +206,8 @@ internal class PyLspServedModulesTest {
       val served = listOf(inside.get(), alsoInside.get(), attached.get())
       val descriptor = tyDescriptorServing(inside.get(), alsoInside.get(), attached.get())
 
-      assertTrue(pyLspFolderSetIsStale(listOf(descriptor), served) { pyLspServeKeyOf(it, tyTool) })
+      val keys = serveKeysOf(served)
+      assertTrue(pyLspFolderSetIsStale(listOf(descriptor), served) { keys.getValue(it) })
     }
   }
 

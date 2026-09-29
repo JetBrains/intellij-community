@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.showcase
 
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -61,10 +62,10 @@ internal class PyUvWorkspaceMemberSdkTest(val project: Project) {
       // Mirror ModulesSdkConfigurator.configureSdkAutomatically (multi-module branch): each module is
       // configured "existing only" — for a member this resolves to SameAs(root), inheriting the root's SDK.
       for (module in ModuleManager.getInstance(project).modules) {
-        module.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }
+        module.asPyProject()?.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }
       }
 
-      assertThat(core.getModuleSdkState())
+      assertThat(checkNotNull(core.asPyProject()).getModuleSdkState())
         .describedAs("member 'core' must inherit the workspace root SDK")
         .isInstanceOf(ModuleSdkState.HasSdk::class.java)
 

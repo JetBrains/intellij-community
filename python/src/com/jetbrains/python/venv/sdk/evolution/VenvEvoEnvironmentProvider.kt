@@ -6,6 +6,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -105,16 +106,16 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * to take on this node's behalf. Owning it here means a failure is reported instead of silently yielding some other
    * kind of SDK.
    */
-  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> =
+  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<PythonInterpreter> =
     createSdkGuessingTypeByPath(
       PathHolder.Eel(homePath),
       context.fileSystem,
-      ModuleOrProject.ModuleAndProject(context.pyProject.module),
+      ModuleOrProject.ModuleAndProject(context.pyProject.pyProject.residesOnModule),
       null,
     )
 
   /** Creates a virtualenv from the system Python named by `token`, then types its SDK by path. */
-  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
+  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<PythonInterpreter> {
     val venvDir = context.resolveNewVenvDir(ref)
     if (venvDir.exists()) return envExistsError(venvDir.fileName.toString())
     return createVenvIn(context, venvDir, ref.token)
@@ -143,7 +144,7 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * The delete comes first and its failure ends this: building over a directory that refused to go would leave the two
    * environments mixed together in one folder.
    */
-  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
+  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<PythonInterpreter> {
     val venvDir = VirtualEnvReader().resolvePythonHomeFromPythonBinary(homePath)
     deleteEnvDir(venvDir).getOr { return it }
     return createVenvIn(context, venvDir, spec.baseToken)
@@ -157,14 +158,14 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * it — and an interpreter the scan did not list could then not build an environment at all, however the user had come
    * by it. `createVenv` validates the interpreter itself, so nothing was checked there either.
    */
-  private suspend fun createVenvIn(context: EvoToolContext, venvDir: Path, baseToken: String): PyResult<Sdk> {
+  private suspend fun createVenvIn(context: EvoToolContext, venvDir: Path, baseToken: String): PyResult<PythonInterpreter> {
     val basePython = baseToken.toNioPathOrNull()
                      ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", baseToken))
     val venvPython = createVenv(basePython, venvDir).getOr { return it }
     return createSdkGuessingTypeByPath(
       PathHolder.Eel(venvPython),
       context.fileSystem,
-      ModuleOrProject.ModuleAndProject(context.pyProject.module),
+      ModuleOrProject.ModuleAndProject(context.pyProject.pyProject.residesOnModule),
       null,
     )
   }

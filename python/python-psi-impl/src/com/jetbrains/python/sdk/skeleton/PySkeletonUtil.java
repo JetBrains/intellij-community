@@ -62,6 +62,15 @@ public final class PySkeletonUtil {
     return PythonInterpreterExtKt.sitePackagesDirectory(PythonInterpreterKt.pythonInterpreter(pythonSdk, false));
   }
 
+  /**
+   * Whether {@code vFile} belongs to the standard library of {@code interpreter}.
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable PythonInterpreter interpreter) {
+    //noinspection deprecation
+    return isStdLib(vFile, interpreter == null ? null : PythonInterpreterExtKt.getSdkAPI(interpreter));
+  }
+
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
     if (pythonSdk == null) {

@@ -9,6 +9,7 @@ import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImp
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -127,7 +128,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   }
 
   /** Adopts an existing poetry env (in-project `.venv` or a cache env) as a poetry-typed SDK. */
-  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<Sdk> =
+  override suspend fun createSdkForExistingEnv(context: EvoToolContext, homePath: Path): PyResult<PythonInterpreter> =
     createPoetrySdk(context.workspace.baseDir, PathHolder.Eel(homePath), context.fileSystem)
 
   /**
@@ -138,7 +139,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * frontend fills it with the row's own create token, and a per-version row's token is a base interpreter path. So
    * "is it set" answered yes for every row, and every environment was built in the project.
    */
-  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
+  override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<PythonInterpreter> {
     val poetryExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val baseDir = context.workspace.baseDir
     val inProject = ref.folder?.toNioPathOrNull()?.normalize() == defaultVenvDir(baseDir).normalize()
@@ -188,7 +189,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * `virtualenvs.in-project` then puts the new environment back in the same place. Passing it for a cache environment
    * moved that environment into the project, which is not what a rebuild does.
    */
-  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
+  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<PythonInterpreter> {
     val poetryExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val projectDir = context.workspace.baseDir
     val envHome = VirtualEnvReader().resolvePythonHomeFromPythonBinary(homePath)

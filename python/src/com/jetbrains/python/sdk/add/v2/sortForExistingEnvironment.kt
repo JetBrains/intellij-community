@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.isAssociatedWithModule
@@ -89,18 +90,18 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
         is ManuallyAddedSelectableInterpreter -> Unit // Those are pythons, and not SDKs
         is ExistingSelectableInterpreter -> { //SDKs
           if (module != null) {
-            if (it.sdkWrapper.sdk.isAssociatedWithModule(module)) {
+            if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().isAssociatedWithModule(module)) {
               return@groupBy Group.ASSOC_WITH_PROJ_ROOT
             }
-            else if (it.sdkWrapper.sdk.isAssociatedWithAnotherModule(module)) {
+            else if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().isAssociatedWithAnotherModule(module)) {
               return@groupBy Group.REDUNDANT // Foreign SDK
             }
           }
-          else if (it.sdkWrapper.sdk.pySdkAdditionalData.associatedModulePath != null) {
+          else if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().pySdkAdditionalData.associatedModulePath != null) {
             // module == null, associated path != null: associated sdk can't be used without a module
             return@groupBy Group.REDUNDANT
           }
-          if (it.sdkWrapper.sdk.associatedModulePath == null) { // Shared SDK
+          if (it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI().associatedModulePath == null) { // Shared SDK
             return@groupBy Group.SHARED_VENVS
           }
         }

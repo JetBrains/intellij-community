@@ -2,10 +2,11 @@
 package com.jetbrains.python.venv.sdk.configuration
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.createVenvAdditionalData
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -16,7 +17,7 @@ import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.EnvExists
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -36,7 +37,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override val toolId: ToolId = VENV_TOOL_ID
   override val potentialDependencyFiles: Set<String> = setOf(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.fileName.toString(), SETUP_PY)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableEnv(module, venvsInModule) }
     ) { envExists -> { setupVenv(module, venvsInModule, envExists) } }
@@ -56,7 +57,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private fun getVirtualEnv(venvsInModule: List<PythonBinary>): PythonBinary? = venvsInModule.firstOrNull { !it.isUvEnv() }
 
-  private suspend fun setupVenv(module: Module, venvsInModule: List<PythonBinary>, envExists: EnvExists): PyResult<Sdk> =
+  private suspend fun setupVenv(module: Module, venvsInModule: List<PythonBinary>, envExists: EnvExists): PyResult<PythonInterpreter> =
     if (envExists) {
       setupExistingVenv(module, venvsInModule)
     }
@@ -64,13 +65,13 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       createVenvAndSdk(ModuleOrProject.ModuleAndProject(module))
     }
 
-  private suspend fun setupExistingVenv(module: Module, venvsInModule: List<PythonBinary>): PyResult<Sdk> {
+  private suspend fun setupExistingVenv(module: Module, venvsInModule: List<PythonBinary>): PyResult<PythonInterpreter> {
     val pythonBinary = withContext(Dispatchers.IO) {
       getVirtualEnv(venvsInModule)?.refreshAndFindVirtualFile()
     } ?: return PyResult.failure(MessageError(PyBundle.message("sdk.cannot.find.venv.for.module")))
 
     val additionalData = createVenvAdditionalData(module).getOr { return it }
-    val sdk = withContext(Dispatchers.IO) {
+    val pythonInterpreter = withContext(Dispatchers.IO) {
       createSdk(
         PathHolder.Eel(pythonBinary.toNioPath()),
         additionalData,
@@ -78,8 +79,8 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       )
     }.getOr { return it }
 
-    sdk.setAssociationToModule(module)
+    pythonInterpreter.getSdkAPI().setAssociationToModule(module)
 
-    return PyResult.success(sdk)
+    return PyResult.success(pythonInterpreter)
   }
 }

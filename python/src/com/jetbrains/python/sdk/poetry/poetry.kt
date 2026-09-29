@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -34,7 +35,7 @@ internal suspend fun createNewPoetrySdk(
   installPackages: Boolean,
   errorSink: ErrorSink,
   inProjectEnv: Boolean = false,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   val fileSystem = moduleBasePath.toEelFileSystem()
   return createNewPoetrySdk(
     moduleBasePath = moduleBasePath,
@@ -56,7 +57,7 @@ internal suspend fun <P : PathHolder> createNewPoetrySdk(
   errorSink: ErrorSink,
   inProjectEnv: Boolean = false,
   targetPanelExtension: TargetPanelExtension? = null,
-): PyResult<Sdk> {
+): PyResult<PythonInterpreter> {
   val pythonBinaryPath = setUpPoetry(
     moduleBasePath = moduleBasePath,
     basePythonBinaryPath = basePythonBinaryPath,
@@ -80,7 +81,7 @@ internal suspend fun <P : PathHolder> createPoetrySdk(
   pythonBinaryPath: P,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension? = null,
-): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.poetry.configuring")) {
+): PyResult<PythonInterpreter> = withProgressText(PyBundle.message("python.sdk.progress.poetry.configuring")) {
   fileSystem.setupSdk(
     project = null,
     pythonBinaryPath = pythonBinaryPath,

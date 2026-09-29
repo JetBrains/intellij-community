@@ -8,8 +8,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -62,6 +60,9 @@ class PythonInterpreter internal constructor(
   override fun hashCode(): Int = sdk.hashCode()
 
   override fun toString(): String = "PythonInterpreter(${sdk.name})"
+  fun map() {
+    TODO("not implemented")
+  }
 }
 
 /**
@@ -93,9 +94,3 @@ fun Sdk.pythonInterpreter(forceRefresh: Boolean = false): PythonInterpreter {
 suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInterpreter = withContext(Dispatchers.IO) {
   this@pythonInterpreterAsync.pythonInterpreter(forceRefresh)
 }
-
-
-/**
- * Get [PythonInterpreter] if [PyProject] has it
- */
-suspend fun PyProject.getInterpreter(): PythonInterpreter? = residesOnModule.findPythonSdk()?.pythonInterpreterAsync()

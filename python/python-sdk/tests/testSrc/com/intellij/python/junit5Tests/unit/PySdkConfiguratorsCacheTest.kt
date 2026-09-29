@@ -13,7 +13,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -51,10 +51,10 @@ internal class PySdkConfiguratorsCacheTest {
       override val toolId: ToolId = ToolId("counting-test-tool")
       override val potentialDependencyFiles: Set<String> = emptySet()
 
-      override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo {
+      override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo {
         calls.incrementAndGet()
         gate?.await()
-        return CreateSdkInfo.ExistingEnv(PythonInfo(LanguageLevel.PYTHON312), "counting") { Result.localizedError("not used") }
+        return CreateInterpreterInfo.ExistingEnv(PythonInfo(LanguageLevel.PYTHON312), "counting") { Result.localizedError("not used") }
       }
 
       override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null

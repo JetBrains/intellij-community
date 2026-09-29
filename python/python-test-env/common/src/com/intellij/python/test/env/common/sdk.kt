@@ -6,6 +6,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.test.env.core.PyEnvironmentFactory
 import com.intellij.remote.RemoteSdkException
 import com.jetbrains.python.sdk.PythonSdkType
@@ -29,7 +30,7 @@ suspend fun PyEnvironmentFactory.createSdk(request: SdkCreationRequest): Pair<Sd
   when (request) {
     is SdkCreationRequest.LocalPython -> {
       val environment = createEnvironment(PredefinedPyEnvironments.VENV_3_12)
-      val sdk = environment.prepareSdk()
+      val sdk = environment.prepareSdk().getSdkAPI()
       Pair(sdk, environment)
     }
     is SdkCreationRequest.RemotePython -> {

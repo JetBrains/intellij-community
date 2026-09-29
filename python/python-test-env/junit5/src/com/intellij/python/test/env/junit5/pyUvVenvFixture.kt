@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.junit5Tests.framework.env.SdkFixture
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.uv.getOrDownloadUvExecutable
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -56,19 +57,19 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
     VirtualEnvReader().findPythonInPythonRoot(venvDir)
   } ?: error("Python executable not found in UV venv: $venvDir")
 
-  val venvSdk =
+  val interpreter =
     setupExistingEnvAndSdk(pythonBinary = venvPython, uvPath = uvExecutable, envWorkingDir = baseDirPath, usePip = true).getOrThrow()
-
+  val sdk = interpreter.getSdkAPI()
   if (addToSdkTable) {
-    module.pythonSdk = venvSdk
-    venvSdk.setAssociationToModule(module)
+    module.pythonSdk = sdk
+    sdk.setAssociationToModule(module)
   }
   // workaround interesting behavior of VFS_STRUCTURAL_MODIFICATIONS
-  PySkeletonUtil.getSitePackagesDirectory(venvSdk)?.getChildren()
+  PySkeletonUtil.getSitePackagesDirectory(sdk)?.getChildren()
 
-  initialized(venvSdk) {
+  initialized(sdk) {
     edtWriteAction {
-      ProjectJdkTable.getInstance().removeJdk(venvSdk)
+      ProjectJdkTable.getInstance().removeJdk(sdk)
     }
   }
 }

@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.add.collector
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.statistics.EXECUTION_TYPE
 import com.jetbrains.python.statistics.INTERPRETER_TYPE
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -28,7 +30,8 @@ internal object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
                                                                   PREVIOUSLY_CONFIGURED,
                                                                   )
 
-  fun logPythonNewInterpreterAdded(sdk: Sdk, isPreviouslyConfigured: Boolean) {
+  fun logPythonNewInterpreterAdded(pythonInterpreter: PythonInterpreter, isPreviouslyConfigured: Boolean) {
+    val sdk = pythonInterpreter.getSdkAPI()
     INTERPRETER_ADDED_EVENT.log(
       INTERPRETER_TYPE.with(sdk.interpreterType.value),
       EXECUTION_TYPE.with(sdk.executionType.value),

@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -42,7 +41,7 @@ internal class PythonPackageManagerServiceImpl(
     // change earlier, while `EvoPyProjectModel` still holds the generation before it, and reading that one would
     // reconcile against the interpreters of a moment that has passed.
     scope.launch {
-      project.service<EvoPyProjectModel>().snapshotFlow().collect { syncWatchers(it) }
+      EvoPyProjectModel.getInstance(project).snapshotFlow().collect { syncWatchers(it) }
     }
   }
 
@@ -155,7 +154,7 @@ internal class PythonPackageManagerServiceImpl(
     }
     // Only a new entry needs one: an entry that is already cached gets its watcher from the next structure that moves
     // its interpreter into use or out of it. A structure that has not landed yet arrives on the flow shortly.
-    if (newEntry) syncWatchers(project.service<EvoPyProjectModel>().snapshotOrNull())
+    if (newEntry) syncWatchers(EvoPyProjectModel.getInstance(project).snapshotOrNull())
     return entry.manager
   }
 

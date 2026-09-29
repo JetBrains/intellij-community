@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.env.venv.showCase
 
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -26,7 +27,8 @@ class PyVenvCreationManuallyShowCaseTest {
   fun createVenvTest(@PythonBinaryPath python: PythonBinary, @TempDir venvDir: Directory): Unit = timeoutRunBlocking(5.minutes) {
     val venvPython = createVenv(python, venvDir).getOrThrow()
     val additionalData = createVenvAdditionalData(venvDir.parent)
-    val sdk = createSdk(PathHolder.Eel(venvPython), additionalData).getOrThrow()
+    val interpreter = createSdk(PathHolder.Eel(venvPython), additionalData).getOrThrow()
+    val sdk = interpreter.getSdkAPI()
     val flavorAndData = sdk.pySdkAdditionalData.flavorAndData
     assertTrue(flavorAndData.sdkSeemsValid(sdk, null),
                "Sdk not valid after creation")

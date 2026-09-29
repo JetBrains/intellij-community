@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
@@ -75,6 +76,12 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
     constructor(project: Project, sdk: Sdk?, workingDirFunction: TargetEnvironmentFunction<String>?, envs: Map<String, String>,
                 consoleType: PyConsoleType, settingsProvider: PyConsoleSettings, setupScript: TargetEnvironmentFunction<String>)
       : this(project, sdk, null, workingDirFunction, envs, consoleType, settingsProvider, setupScript)
+
+    @Suppress("DEPRECATION") // The console runner still takes an Sdk.
+    constructor(project: Project, interpreter: PythonInterpreter, workingDirFunction: TargetEnvironmentFunction<String>?,
+                envs: Map<String, String>, consoleType: PyConsoleType, settingsProvider: PyConsoleSettings,
+                setupScript: TargetEnvironmentFunction<String>)
+      : this(project, interpreter.getSdkAPI(), null, workingDirFunction, envs, consoleType, settingsProvider, setupScript)
   }
 
   /**

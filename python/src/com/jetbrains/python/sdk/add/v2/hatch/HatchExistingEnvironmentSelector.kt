@@ -2,12 +2,13 @@
 package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -53,7 +54,7 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
     hatchFormFields.onShown(scope, model, isFilterOnlyExisting = true)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     val environment = model.hatchViewModel.selectedEnvFromExisting.get()
     val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing<P>
                             ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
@@ -64,9 +65,9 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
         ?.toStringForUI()
     } ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
-    val existingSdk = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }
+    val existingInterpreter = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }?.pythonInterpreterAsync()
     val result = when {
-      existingSdk != null -> Result.success(existingSdk)
+      existingInterpreter != null -> Result.success(existingInterpreter)
       else -> {
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }

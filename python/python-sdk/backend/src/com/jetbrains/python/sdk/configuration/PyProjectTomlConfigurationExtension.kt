@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PyProjectTomlConfigurationExtension : PyProjectSdkConfigurationExtension {
 
-  suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo?
+  suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo?
 }

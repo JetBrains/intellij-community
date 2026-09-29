@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.components.Service
@@ -25,10 +26,13 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pytools.backend.PyTool
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -253,10 +257,13 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
     val model = readAction {
       pyLspServedModules(project)
         .filterNot { it.isDisposed }
-        .map { module -> Triple(module, pyLspWorkspaceRootOf(module), module.pythonSdk) }
+        .map { module -> module to pyLspWorkspaceRootOf(module) }
     }
-    return model.associate { (module, workspaceRoot, sdk) ->
-      module to PyLspServeKey(workspaceRoot, sdk?.let { pyLspToolVersionOf(it, project, pyTool) })
+    // One generation for every module, so all the keys of one refresh agree.
+    val interpreters = project.evoPyProjects().associate { it.pyProject.residesOnModule to it.interpreter }
+    return model.associate { (module, workspaceRoot) ->
+      val interpreter = interpreters[module]
+      module to PyLspServeKey(workspaceRoot, interpreter?.let { pyLspToolVersionOf(it, project, pyTool) })
     }
   }
 }
@@ -270,12 +277,16 @@ private class PyLspServeKeyCache(private val project: Project, private val cs: C
 data class PyLspServeKey(val workspaceRoot: String?, val toolVersion: String?)
 
 /**
- * The [PyLspServeKey] of [module] for [pyTool]. Reads the interpreter, so never call it under a read
- * lock. [pyLspServeKeys] answers the same question from a snapshot for a caller that holds one.
+ * The [PyLspServeKey] of [pyProject] for [pyTool], with the interpreter from the current snapshot.
+ *
+ * [pyLspServeKeys] answers the same question for every served module at once.
  */
 @ApiStatus.Internal
-fun pyLspServeKeyOf(module: Module, pyTool: PyTool): PyLspServeKey =
-  PyLspServeKey(pyLspWorkspaceRootOf(module), pyLspToolVersionOf(module, pyTool))
+suspend fun pyLspServeKeyOf(pyProject: PyProject, pyTool: PyTool): PyLspServeKey {
+  val workspaceRoot = readAction { pyLspWorkspaceRootOf(pyProject.residesOnModule) }
+  val version = pyProject.getInterpreter()?.let { pyLspToolVersionOf(it, pyProject.project, pyTool) }
+  return PyLspServeKey(workspaceRoot, version)
+}
 
 /**
  * The [PyLspServeKey] of a module the serve-key snapshot does not name yet.
@@ -364,23 +375,21 @@ fun pyLspWorkspaceRootOf(module: Module): String? {
 private fun sharesTreeWith(one: String, other: String): Boolean =
   FileUtil.isAncestor(one, other, false) || FileUtil.isAncestor(other, one, false)
 
-/**
- * The version of [pyTool] installed in [module]'s environment, or `null` when it holds none.
- *
- * The snapshot needs no process and does not block. It reads an empty list until the package cache
- * of the environment is seeded, so every module states no version at first. `LspPackageListener`
- * restarts the clients once that changes.
- */
-@ApiStatus.Internal
-fun pyLspToolVersionOf(module: Module, pyTool: PyTool): String? {
-  val sdk = module.pythonSdk ?: return null
-  return pyLspToolVersionOf(sdk, module.project, pyTool)
-}
-
-/** [pyLspToolVersionOf] for an interpreter that no module has to own. */
+/** [pyLspToolVersionOf] for an interpreter that the package listener reports by its SDK. */
 @ApiStatus.Internal
 fun pyLspToolVersionOf(sdk: Sdk, project: Project, pyTool: PyTool): String? =
   PythonPackageManager.forSdk(project, sdk).getInstalledToolPackage(pyTool)?.version
+
+/**
+ * The version of [pyTool] installed in the environment of [interpreter], or `null` when it holds none.
+ *
+ * The snapshot needs no process and does not block. It reads an empty list until the package cache
+ * of the environment is seeded, so every interpreter states no version at first. `LspPackageListener`
+ * restarts the clients once that changes.
+ */
+@ApiStatus.Internal
+fun pyLspToolVersionOf(interpreter: PythonInterpreter, project: Project, pyTool: PyTool): String? =
+  PythonPackageManager.forPythonInterpreter(project, interpreter).getInstalledToolPackage(pyTool)?.version
 
 /**
  * The content roots of [modules], with no duplicate, ordered by path.
