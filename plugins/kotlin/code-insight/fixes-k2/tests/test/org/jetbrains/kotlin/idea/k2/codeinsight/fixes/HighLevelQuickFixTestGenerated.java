@@ -14554,6 +14554,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testEmptyTest() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/addVarianceModifier/emptyTest.kt");
         }
+
+        @TestMetadata("selfReferentialBound.kt")
+        public void testSelfReferentialBound() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addVarianceModifier/selfReferentialBound.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

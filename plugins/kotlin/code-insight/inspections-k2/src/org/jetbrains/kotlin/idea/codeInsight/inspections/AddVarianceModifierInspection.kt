@@ -45,7 +45,12 @@ internal class AddVarianceModifierInspection : KotlinApplicableInspectionBase.Si
     override fun prepareContext(element: KtTypeParameter): Variance? {
         val classSymbol = element.symbol.containingSymbol as? KaNamedClassSymbol ?: return null
         val typeParameterSymbol = element.symbol
-        
+
+        val typeParameterAppearsInOwnBounds = typeParameterSymbol.upperBounds.any { bound ->
+            typeReferencesTypeParameter(typeParameterSymbol, bound)
+        }
+        if (typeParameterAppearsInOwnBounds) return null
+
         var usedInContravariantPosition = false
         var usedInCovariantPosition = false
         
