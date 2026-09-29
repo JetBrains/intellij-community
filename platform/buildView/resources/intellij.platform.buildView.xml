@@ -44,6 +44,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.build.BuildContentManager"
                     serviceImplementation="com.intellij.build.BuildContentManagerImpl"/>
+    <toolWindowAllowlist id="Build"/>
     <projectService serviceInterface="com.intellij.build.BuildViewManager"
                     serviceImplementation="com.intellij.build.BuildViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>

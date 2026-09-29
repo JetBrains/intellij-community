@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
-import com.intellij.build.BuildContentManager;
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.ide.actions.ToolWindowMoveAction.Anchor;
 import com.intellij.ide.actions.ToolWindowViewModeAction.ViewMode;
@@ -93,7 +92,7 @@ public final class ToolWindowCollector {
   static {
     for (String id : List.of(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, ANALYZE_DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES,
                              EXTRACT_METHOD,
-                             DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS",
+                             DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, "CVS",
                              BUILD_DEPENDENCIES)) {
       toolwindowAllowList.put(id, getPlatformPlugin());
     }
