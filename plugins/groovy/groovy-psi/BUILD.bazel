@@ -4,11 +4,13 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 filegroup(
     name = "dev_dist_resources",
     srcs = glob(
-        [
-            "resources/conf/**",
-            "resources/standardDsls/**",
-        ],
+        ["standardDsls/**"],
     ),
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    ["resources/conf/console.groovy"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev intellij.groovy.psi` end

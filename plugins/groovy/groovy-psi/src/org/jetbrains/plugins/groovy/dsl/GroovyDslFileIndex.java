@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -309,18 +308,12 @@ public final class GroovyDslFileIndex {
     for (Class<?> aClass : classes) {
       File jarPath = new File(PathUtil.getJarPathForClass(aClass));
       if (jarPath.isFile()) {
-        String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
-        if (relevantJarsRoot != null && jarPath.toPath().startsWith(relevantJarsRoot)) {
-          // compilation output jar
-          jarPath = switch (jarPath.getParentFile().getName()) {
-            case "intellij.groovy.psi" -> new File(PathManager.getCommunityHomePath(), "plugins/groovy/groovy-psi/resources/");
-            default -> jarPath.getParentFile();
-          };
-        }
-        else {
-          // plugin jar file
-          jarPath = jarPath.getParentFile();
-        }
+        // a plugin jar or a compilation output jar: both live in a directory named after their owner
+        jarPath = jarPath.getParentFile();
+      }
+      if (jarPath.getName().equals("intellij.groovy.psi")) {
+        // the compilation output of the module: the bundled scripts live in the module directory, not in a resource root
+        jarPath = new File(PathManager.getCommunityHomePath(), "plugins/groovy/groovy-psi");
       }
       scriptFolders.add(new File(jarPath, "standardDsls"));
     }

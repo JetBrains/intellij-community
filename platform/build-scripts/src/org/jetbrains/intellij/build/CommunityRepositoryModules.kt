@@ -780,10 +780,9 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
     spec.withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
     spec.withModules(additionalModules)
 
-    spec.excludeFromModule("intellij.groovy.psi", "standardDsls/**")
-    spec.withResourceFromModule("intellij.groovy.psi", "resources/standardDsls", "lib/standardDsls")
+    spec.withResourceFromModule("intellij.groovy.psi", "standardDsls", "lib/standardDsls")
     spec.withResource("hotswap/gragent.jar", "lib/agent")
-    spec.withResourceFromModule("intellij.groovy.psi", "resources/conf", "lib")
+    spec.withResourceFromModule("intellij.groovy.psi", "resources/conf/console.groovy", "lib")
     addition?.invoke(spec)
   }
 }
