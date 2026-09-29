@@ -70,6 +70,7 @@ import org.jetbrains.idea.maven.execution.MavenResumeAction
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.project.BundledMaven
@@ -431,7 +432,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     val mavenVersion = MavenDistributionsCache.getInstance(myConfiguration.project)
       .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath).version
     val encodeProfiles = encodeProfiles(myConfiguration.runnerParameters.profilesMap, mavenVersion)
-    val runnerSettings = myConfiguration.runnerSettings ?: MavenRunner.getInstance(myConfiguration.project).state
+    val runnerSettings = effectiveRunnerSettings
     val generalSettings = myConfiguration.generalSettings ?: MavenProjectsManager.getInstance(myConfiguration.project).generalSettings
     if (encodeProfiles.isNotEmpty()) {
       args.addAll("-P", encodeProfiles)
@@ -534,24 +535,33 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     throw IllegalStateException("$pathToMavenListener does not exist")
   }
 
+  /**
+   * The runner settings of the configuration, or the project settings when the configuration inherits them.
+   *
+   * [MavenRunConfiguration.getRunnerSettings] returns null while the "Inherit from settings" option is on.
+   * A direct read of that property drops the project environment variables and the project VM options.
+   */
+  private val effectiveRunnerSettings: MavenRunnerSettings
+    get() = myConfiguration.runnerSettings ?: MavenRunner.getInstance(myConfiguration.project).state
+
   private suspend fun getJavaHome(): String? {
-    val defaultSettings = MavenRunner.getInstance(myConfiguration.project).state
-    val jreName = myConfiguration.runnerSettings?.jreName ?: defaultSettings.jreName
-    val isGlobalRunnerSettings = defaultSettings === myConfiguration.runnerSettings
+    val runnerSettings = effectiveRunnerSettings
+    val isGlobalRunnerSettings = runnerSettings === MavenRunner.getInstance(myConfiguration.project).state
     val javaHome = readAction {
-      MavenExternalParameters.getJdk(myConfiguration.project, jreName, isGlobalRunnerSettings)
+      MavenExternalParameters.getJdk(myConfiguration.project, runnerSettings.jreName, isGlobalRunnerSettings)
     }.homePath ?: return null
     return Path.of(javaHome).asEelPath().toString()
   }
 
   private suspend fun getEnv(existingEnv: Map<String, String>, debug: Boolean): MutableMap<String, String> {
+    val runnerSettings = effectiveRunnerSettings
     val map = HashMap<String, String>()
     map.putAll(existingEnv)
-    myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(map) }
     val javaHome = getJavaHome() ?: throw ExecutionException(MavenProjectBundle.message("exec.message.failed.to.find.maven.jdk"))
     map["JAVA_HOME"] = javaHome
+    map.putAll(runnerSettings.environmentProperties)
     val optsBuilder = StringBuilder(map["MAVEN_OPTS"] ?: "")
-    myConfiguration.runnerSettings?.vmOptions?.let {
+    runnerSettings.vmOptions.nullize(nullizeSpaces = true)?.let {
       if (optsBuilder.isNotEmpty()) optsBuilder.append(" ")
       optsBuilder.append(ProgramParametersUtil.expandPathAndMacros(it, null, myConfiguration.project))
     }
@@ -562,7 +572,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       optsBuilder.toString()
     }
     map["MAVEN_OPTS"] = mavenOpts
-    myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(it) }
     myConfiguration.runnerParameters.multimoduleDir?.nullize()?.let {
       map["MAVEN_BASEDIR"] = ProgramParametersUtil.expandPathAndMacros(it, null, myConfiguration.project)
     }

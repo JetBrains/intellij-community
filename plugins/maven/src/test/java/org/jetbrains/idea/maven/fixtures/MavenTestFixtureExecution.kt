@@ -2,7 +2,9 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.execution.Executor
 import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.process.BaseProcessHandler
@@ -104,12 +106,39 @@ fun MavenImportingTestFixture.execute(
   return ExecutionInfo(system.toString(), stdout.toString(), stderr.toString(), charset)
 }
 
+/**
+ * Runs [parameters] through a run configuration in the run mode.
+ */
+fun MavenImportingTestFixture.runMavenRunConfiguration(parameters: MavenRunnerParameters, maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
+  return runMavenRunConfiguration(parameters, DefaultRunExecutor.getRunExecutorInstance(), maxTimeToWait)
+}
+
+/**
+ * Runs [parameters] through a run configuration in the debug mode.
+ */
 fun MavenImportingTestFixture.debugMavenRunConfiguration(parameters: MavenRunnerParameters, maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
+  return runMavenRunConfiguration(parameters, DefaultDebugExecutor.getDebugExecutorInstance(), maxTimeToWait)
+}
+
+/**
+ * Runs [parameters] through a run configuration that the configuration factory makes.
+ *
+ * The new configuration keeps a null [MavenRunConfiguration.getRunnerSettings] and a null
+ * [MavenRunConfiguration.getGeneralSettings]. A user sees this state as "Inherit from settings".
+ * The execution then reads the project settings from [org.jetbrains.idea.maven.execution.MavenRunner]
+ * and [org.jetbrains.idea.maven.project.MavenProjectsManager].
+ *
+ * Use [execute] instead when the test must give explicit settings to the configuration.
+ */
+private fun MavenImportingTestFixture.runMavenRunConfiguration(
+  parameters: MavenRunnerParameters,
+  executor: Executor,
+  maxTimeToWait: Duration,
+): ExecutionInfo {
   val runManager = getInstanceImpl(project)
-  val mavenTemplateConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createTemplateConfiguration(
-    project)
-  val mavenConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createConfiguration("myConfiguration",
-                                                                                                                 mavenTemplateConfiguration)
+  val configurationFactory = MavenRunConfigurationType.getInstance().configurationFactories[0]
+  val mavenTemplateConfiguration = configurationFactory.createTemplateConfiguration(project)
+  val mavenConfiguration = configurationFactory.createConfiguration("myConfiguration", mavenTemplateConfiguration)
   (mavenConfiguration as MavenRunConfiguration).runnerParameters = parameters
 
   val configuration = RunnerAndConfigurationSettingsImpl(runManager, mavenConfiguration)
@@ -122,7 +151,7 @@ fun MavenImportingTestFixture.debugMavenRunConfiguration(parameters: MavenRunner
   var charset: Charset? = null
 
   runInEdtAndWait {
-    ExecutionUtil.doRunConfiguration(configuration, DefaultDebugExecutor.getDebugExecutorInstance(), null, null, null) { environment ->
+    ExecutionUtil.doRunConfiguration(configuration, executor, null, null, null) { environment ->
       environment.callback = ProgramRunner.Callback { descriptor ->
         descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))
         charset = (descriptor.processHandler as? BaseProcessHandler<*>)?.charset
