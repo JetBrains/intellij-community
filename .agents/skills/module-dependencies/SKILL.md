@@ -79,7 +79,7 @@ After you change the version of a repository library in an `*.iml` or in `.idea/
 ./fleet/build/generateProjectModel.cmd dump
 ```
 
-The Fleet generator copies the JPS library versions into `fleet/build/gradle/jps.versions.toml`, `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel` files. Its `check` mode fails on drift.
+The Fleet generator copies the JPS library versions into `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel` files. Its `check` mode fails on drift.
 
 When the dump changes a `kmp.MODULE.bazel`, update both Bazel lockfiles:
 

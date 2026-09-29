@@ -26,7 +26,7 @@ const OUT_DIR = join(REPO_ROOT, "out/libraries-dashboard")
 
 /**
  * The commands to run after a bump. The Fleet generator copies the JPS library versions into
- * `fleet/build/gradle/jps.versions.toml`, `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel`
+ * `fleet/build/jps-library-mappings.tsv` and both `fleet/kmp.MODULE.bazel`
  * files, and its `check` mode fails on drift. The `kmp` module extension records the artifact list of each
  * `kmp.MODULE.bazel` in the `MODULE.bazel.lock` of its module, and CI runs Bazel with `--lockfile_mode=error`,
  * so both lockfiles need an update after the dump. The generator exists only in the monorepo checkout.
