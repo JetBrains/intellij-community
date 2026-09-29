@@ -172,6 +172,15 @@
                                    order="last"/>
     <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
+    <!-- External Tools -->
+    <projectSettings service="com.intellij.tools.ToolsProjectConfig"/>
+    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
+    <applicationConfigurable groupId="tools" instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools"
+                             key="tools.settings.title"
+                             bundle="messages.ToolsBundle"/>
+    <stepsBeforeRunProvider implementation="com.intellij.tools.ToolBeforeRunTaskProvider"/>
+    <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
+    <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -204,6 +213,8 @@
     <extensionPoint qualifiedName="com.intellij.runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runAnything.helpGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runAnything.commandCustomizer" interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.toolsProvider" interface="com.intellij.tools.ToolsProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.toolsCustomizer" interface="com.intellij.tools.ToolsCustomizer" dynamic="true"/>
   </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"

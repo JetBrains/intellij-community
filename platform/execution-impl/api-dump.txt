@@ -943,3 +943,60 @@ f:com.intellij.terminal.ui.TtyConnectorAccessor
 com.intellij.testIntegration.TestLocationProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getLocation(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):java.util.List
+a:com.intellij.tools.AbstractToolBeforeRunTask
+- com.intellij.execution.BeforeRunTask
+- <init>(com.intellij.openapi.util.Key):V
+- setToolActionId(java.lang.String):V
+a:com.intellij.tools.BaseToolManager
+- com.intellij.openapi.Disposable
+- getGroups():java.util.List
+- getTools(java.lang.String):java.util.List
+c:com.intellij.tools.SimpleActionGroup
+- com.intellij.openapi.actionSystem.ActionGroup
+- <init>():V
+- add(com.intellij.openapi.actionSystem.AnAction):V
+c:com.intellij.tools.Tool
+- com.intellij.openapi.options.SchemeElement
+- <init>():V
+- createCommandLine(com.intellij.openapi.actionSystem.DataContext):com.intellij.execution.configurations.GeneralCommandLine
+- getActionId():java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+- isEnabled():Z
+- setEnabled(Z):V
+- setFilesSynchronizedAfterRun(Z):V
+- setName(java.lang.String):V
+- setParameters(java.lang.String):V
+- setProgram(java.lang.String):V
+- setShownInEditor(Z):V
+- setShownInMainMenu(Z):V
+- setShownInProjectViews(Z):V
+- setShownInSearchResultsPopup(Z):V
+- setUseConsole(Z):V
+- synchronizeAfterExecution():Z
+c:com.intellij.tools.ToolAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>(com.intellij.tools.Tool):V
+- s:getToolDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
+f:com.intellij.tools.ToolManager
+- com.intellij.tools.BaseToolManager
+- sf:Companion:com.intellij.tools.ToolManager$Companion
+- sf:getInstance():com.intellij.tools.ToolManager
+f:com.intellij.tools.ToolManager$Companion
+- f:getInstance():com.intellij.tools.ToolManager
+f:com.intellij.tools.ToolProcessAdapter
+- com.intellij.execution.process.ProcessAdapter
+a:com.intellij.tools.ToolsCustomizer
+- <init>():V
+f:com.intellij.tools.ToolsGroup
+- com.intellij.openapi.options.ExternalizableScheme
+- <init>(java.lang.String):V
+f:com.intellij.tools.ToolsPanel
+- javax.swing.JPanel
+- <init>():V
+a:com.intellij.tools.ToolsProcessor
+- com.intellij.openapi.options.NonLazySchemeProcessor
+- <init>():V
+a:com.intellij.tools.ToolsProvider
+- s:getAllTools():java.util.List

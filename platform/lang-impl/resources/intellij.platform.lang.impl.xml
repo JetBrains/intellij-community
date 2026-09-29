@@ -322,8 +322,6 @@
     <extensionPoint qualifiedName="com.intellij.project.converterProvider" interface="com.intellij.conversion.ConverterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.projectStructure.sourceRootEditHandler" interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.toolsProvider" interface="com.intellij.tools.ToolsProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.toolsCustomizer" interface="com.intellij.tools.ToolsCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer" dynamic="true"/>
@@ -541,7 +539,6 @@
     <projectSettings service="com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions"/>
     <projectSettings service="com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions"/>
     <projectSettings service="com.intellij.codeInsight.actions.onSave.FormatOnSaveOptions"/>
-    <projectSettings service="com.intellij.tools.ToolsProjectConfig"/>
     <projectSettings service="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
     <projectSettings service="com.intellij.slicer.SliceManager"/>
     <projectSettings service="com.intellij.slicer.SliceToolwindowSettings"/>
@@ -726,7 +723,6 @@
     <projectService serviceImplementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck"/>
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry" open="true"/>
-    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                     serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
     <projectService serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateSettings"/>
@@ -996,11 +992,6 @@
     <projectConfigurable groupId="editor" groupWeight="150"
                          provider="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable$Provider" id="fileTemplates"
                          key="title.file.templates" bundle="messages.IdeBundle"/>
-    <!-- External Tools -->
-    <applicationConfigurable groupId="tools" instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools"
-                             key="tools.settings.title"
-                             bundle="messages.ToolsBundle"/>
-    <stepsBeforeRunProvider implementation="com.intellij.tools.ToolBeforeRunTaskProvider"/>
     <bidiRegionsSeparator language="" implementationClass="com.intellij.openapi.editor.bidi.PlainTextBidiRegionsSeparator"/>
     <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>
     <lang.braceMatcher language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher"/>
@@ -1439,7 +1430,6 @@
     <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor$HeadlessRenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileDumbProcessor"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
-    <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
     <documentationProvider implementation="com.intellij.openapi.paths.WebReferenceDocumentationProvider"/>
     <refactoring.moveDirectoryWithClassesHelper
       implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default" order="last"/>
@@ -1465,7 +1455,6 @@
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.impl.UsageContextCallHierarchyPanel$Provider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.codeInsight.lookup.impl.LookupDocumentSavingVetoer"/>
-    <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
     <applicationService serviceInterface="com.intellij.codeInsight.FileModificationService"
                         serviceImplementation="com.intellij.codeInsight.CodeInsightUtilBase"/>
     <applicationService serviceInterface="com.intellij.ide.util.treeView.TreeAnchorizer"
