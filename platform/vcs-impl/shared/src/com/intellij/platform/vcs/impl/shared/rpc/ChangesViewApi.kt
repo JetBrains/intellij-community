@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.rpc
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
+import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -44,6 +46,6 @@ interface ChangesViewApi : RemoteApi<Unit> {
   suspend fun getEditedCommit(projectId: ProjectId): Flow<EditedCommitPresentation?>
 
   companion object {
-    suspend fun getInstance(): ChangesViewApi = RemoteApiProviderService.resolve(remoteApiDescriptor<ChangesViewApi>())
+    suspend fun getInstance(): ChangesViewApi = LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<ChangesViewApi>()) { service<ChangesViewApi>() }
   }
 }

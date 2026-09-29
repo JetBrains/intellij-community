@@ -22,7 +22,6 @@
     <module name="intellij.platform.lvcs"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
@@ -136,7 +135,8 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.dvcs.DvcsRemoteApiProvider"
-                                            apiInterfaces="com.intellij.dvcs.rpc.VcsRepositoryColorsApi"/>
+    <!-- The remote API implementation is an application service, so a light IDE reaches it without the rpc backend. -->
+    <applicationService serviceInterface="com.intellij.dvcs.rpc.VcsRepositoryColorsApi"
+                        serviceImplementation="com.intellij.dvcs.repo.VcsRepositoryColorsApiImpl"/>
   </extensions>
 </idea-plugin>
