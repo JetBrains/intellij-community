@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.util.system.GlibcVersion
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.Locale
@@ -19,7 +20,7 @@ import kotlin.io.path.name
 
 @OptIn(LowLevelLocalMachineAccess::class)
 internal class OsDataCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.os", 23)
+  private val GROUP = EventLogGroup("system.os", 24)
 
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "HarmonyOS", "Other")
 
@@ -64,8 +65,9 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     )
     if (OS.CURRENT == OS.Linux) {
       val osInfo = OS.CURRENT.osInfo as OS.LinuxInfo
+      val distro = if (isOmarchy()) "omarchy" else DISTROS.coerce(osInfo.distro)
       val linuxMetrics = mutableListOf(
-        DISTRO.with(DISTROS.coerce(osInfo.distro)),
+        DISTRO.with(distro),
         RELEASE.with(osInfo.release),
         UNDER_WSL.with(osInfo.isUnderWsl()),
         HAS_GDBUS.with(PathEnvironmentVariableUtil.isOnPath("gdbus")),
@@ -104,4 +106,18 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     in this -> value
     else -> "other"
   }
+
+  /**
+   * Omarchy is built on top of Arch, so `/etc/os-release` does not identify it.
+   * Detect it by its own markers instead: the `OMARCHY_PATH` variable, which an Omarchy session sets, or its install directories.
+   * The directories cover a JVM that starts outside a desktop session, for example from a systemd unit, where the variable is absent.
+   */
+  private fun isOmarchy(): Boolean = runCatching {
+    val omarchyPath = System.getenv("OMARCHY_PATH")
+    val home = Path.of(System.getProperty("user.home"))
+    (omarchyPath != null && Files.isDirectory(Path.of(omarchyPath))) ||
+    Files.isDirectory(Path.of("/usr/share/omarchy")) ||
+    Files.isDirectory(home.resolve(".local/share/omarchy")) ||
+    Files.isDirectory(home.resolve(".config/omarchy"))
+  }.getOrDefault(false)
 }
