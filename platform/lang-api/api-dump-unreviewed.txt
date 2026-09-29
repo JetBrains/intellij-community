@@ -3455,7 +3455,6 @@ f:com.intellij.psi.search.GlobalSearchScopes
 - s:directoriesScope(com.intellij.openapi.project.Project,Z,com.intellij.openapi.vfs.VirtualFile[]):com.intellij.psi.search.GlobalSearchScope
 - s:directoryScope(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.psi.search.GlobalSearchScope
 - s:directoryScope(com.intellij.psi.PsiDirectory,Z):com.intellij.psi.search.GlobalSearchScope
-- s:executionScope(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunProfile):com.intellij.psi.search.GlobalSearchScope
 - s:filterScope(com.intellij.openapi.project.Project,com.intellij.psi.search.scope.packageSet.NamedScope):com.intellij.psi.search.GlobalSearchScope
 a:com.intellij.psi.stubs.NamedStubBase
 - p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.stubs.IStubElementType,com.intellij.util.io.StringRef):V
