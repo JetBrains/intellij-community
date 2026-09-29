@@ -3,12 +3,6 @@
 
 package com.jetbrains.python.sdk.evolution
 
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
-import com.intellij.python.community.impl.uv.common.UV_UI_INFO
-import com.intellij.python.uv.backend.UvSystemPythonService
-import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
-import com.intellij.python.sdk.common.evolution.EvoCurrentRecreateDto
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
@@ -32,6 +26,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
@@ -41,8 +36,9 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
+import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
+import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
@@ -50,41 +46,48 @@ import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
-import com.intellij.python.sdk.backend.asInterpreterRef
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
-import com.intellij.python.sdk.backend.evolution.EvoWorkspace
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.asInterpreterRef
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
+import com.intellij.python.sdk.backend.evolution.EvoWorkspace
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
+import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
+import com.intellij.python.sdk.backend.evolution.nodeIdForSdk
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.withCreators
+import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
+import com.intellij.python.sdk.common.evolution.EvoCurrentRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeIds
+import com.intellij.python.sdk.common.evolution.EvoNodeKind
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.EvoRecreateRequestDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyEvoSdkApi
-import com.intellij.python.sdk.common.evolution.EvoNodeKind
-import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
-import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRefKind
 import com.intellij.python.sdk.common.evolution.evoReusesExistingEnv
-import com.intellij.python.sdk.backend.detectPythonEnvironment
-import com.intellij.python.sdk.backend.getPythonInfo
-import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.intellij.python.uv.backend.UvSystemPythonService
+import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -96,10 +99,10 @@ import com.jetbrains.python.impl.getRootModuleOrNull
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -116,42 +119,44 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.applySdk
+import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.dependencyFileContext
+import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.doSelectInterpreter
+import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.excludedRoots
+import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.installBaseIfRequested
+import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.refreshRebuiltSdk
 import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.rootScope
 import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.slowLoadThreshold
 import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.getAssignablePythonSdks
-import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.intellij.python.sdk.backend.asItem
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import fleet.rpc.remoteApiDescriptor
-import java.nio.file.Path
-import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.pathString
-import kotlin.time.Duration as KotlinDuration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.measureTimedValue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.Nls
-import com.intellij.python.sdk.backend.evolution.nodeIdForSdk
+import java.nio.file.Path
+import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTimedValue
+import kotlin.time.Duration as KotlinDuration
 
 private val LOG = logger<PyEvoSdkApiProvider>()
 
@@ -1120,7 +1125,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * A provider with nothing to offer for a section (no usable Python versions, say) returns `null` and the section keeps
    * the frontend's plain "add new" row.
    */
-  private suspend fun withProviderAddNewEnv(result: EvoLoadResultDto, provider: PyEvoEnvironmentProvider, context: EvoToolContext): EvoLoadResultDto {
+  private suspend fun withProviderAddNewEnv(
+    result: EvoLoadResultDto,
+    provider: PyEvoEnvironmentProvider,
+    context: EvoToolContext,
+  ): EvoLoadResultDto {
     if (result !is EvoLoadResultDto.Ok) return result
     return result.copy(sections = result.sections.map { section ->
       if (!section.addNew) section else section.copy(addNewEnv = provider.addNewEnvSpec(context, section) ?: section.addNewEnv)
@@ -1148,7 +1157,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * Such a row stays disabled for *selection*: adopting it here would type its SDK to a tool that does not manage it.
    * Rebuilding is the opposite — it makes the environment this node's own.
    */
-  private suspend fun withRecreate(result: EvoLoadResultDto, provider: PyEvoEnvironmentProvider, context: EvoToolContext): EvoLoadResultDto {
+  private suspend fun withRecreate(
+    result: EvoLoadResultDto,
+    provider: PyEvoEnvironmentProvider,
+    context: EvoToolContext,
+  ): EvoLoadResultDto {
     if (result !is EvoLoadResultDto.Ok) return result
     return result.copy(sections = result.sections.map { section ->
       section.copy(leaves = section.leaves.map { leaf ->
@@ -1327,7 +1340,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * `null` when no provider claims the id — an unknown or no-longer-available tool, which every caller treats as "no
    * tool logic for this", falling back to the central arm or a generic SDK.
    */
-  private fun toolContextFor(toolId: ToolId, target: EvoTarget, fileSystem: EelFileSystem): Pair<PyEvoEnvironmentProvider, EvoToolContext>? {
+  private fun toolContextFor(
+    toolId: ToolId,
+    target: EvoTarget,
+    fileSystem: EelFileSystem,
+  ): Pair<PyEvoEnvironmentProvider, EvoToolContext>? {
     val provider = providers.firstOrNull { it.toolId == toolId } ?: return null
     return provider to target.toolContext(fileSystem)
   }
