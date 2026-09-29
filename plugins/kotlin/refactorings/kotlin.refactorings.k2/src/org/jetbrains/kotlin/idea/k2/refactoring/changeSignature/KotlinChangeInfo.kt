@@ -37,6 +37,11 @@ class KotlinChangeInfo(
         return oldNameToParameterIndex[oldParameterName]
     }
 
+    override fun isValueParameterRemoved(): Boolean {
+        val receiverShift = if (oldReceiverInfo != null) 1 else 0
+        return parametersToRemove.drop(receiverShift).any { it }
+    }
+
     private val newParameters = parameterInfos.toMutableList()
     override fun addParameter(
         parameterInfo: KotlinParameterInfo,

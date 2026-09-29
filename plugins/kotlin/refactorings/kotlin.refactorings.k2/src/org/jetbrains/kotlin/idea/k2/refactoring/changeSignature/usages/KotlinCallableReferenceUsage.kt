@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
@@ -10,7 +11,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -19,10 +22,12 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableR
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.None
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.SetQualifier
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -85,6 +90,7 @@ private const val TYPE_CHANGE_CONFLICT = "change.signature.conflict.callable.ref
 private const val MEMBER_EXTENSION_CONFLICT = "change.signature.conflict.callable.reference.member.extension"
 private const val QUALIFIER_OCCUPIED_CONFLICT = "change.signature.conflict.callable.reference.qualifier.occupied"
 private const val BOUND_RECEIVER_LOST_CONFLICT = "change.signature.conflict.callable.reference.bound.receiver.lost"
+private const val CONTEXT_PARAMETER_UNAVAILABLE = "change.signature.conflict.callable.reference.context.argument.unavailable"
 
 private enum class ParamConversion {
     VALUE_TO_CONTEXT,
@@ -98,6 +104,7 @@ private enum class ParamConversion {
     RECEIVER_RETYPED,
     PARAMETERS_ADDED,
     PARAMETERS_REORDERED,
+    PARAMETERS_REMOVED,
 }
 
 private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConversion> {
@@ -105,7 +112,7 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
     val oldReceiverInfo = changeInfo.oldReceiverInfo
     val receiverAppeared = oldReceiverInfo == null && receiverInfo != null
     // A moved receiver keeps the same parameter-info instance.
-    val oldReceiverAsParam = oldReceiverInfo?.let { old -> changeInfo.newParameters.firstOrNull { it == old } }
+    val oldReceiverAsParam = oldReceiverInfo?.let { old -> changeInfo.newParameters.firstOrNull { it == old && it != receiverInfo } }
 
     val contextToReceiver = receiverAppeared && receiverInfo.wasContextParameter
     val valueToReceiver =
@@ -128,6 +135,7 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
         .filter { !it.isNewParameter && !it.isContextParameter && !it.wasContextParameter && it != receiverInfo && it != oldReceiverInfo }
         .map { it.oldIndex }
         .let { indexes -> indexes != indexes.sorted() }
+    val parametersRemoved = changeInfo.isValueParameterRemoved()
     return listOfNotNull(
         ParamConversion.VALUE_TO_CONTEXT.takeIf { valueToContext },
         ParamConversion.CONTEXT_TO_VALUE.takeIf { contextToValue },
@@ -140,6 +148,7 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
         ParamConversion.RECEIVER_RETYPED.takeIf { receiverRetyped },
         ParamConversion.PARAMETERS_ADDED.takeIf { parametersAdded },
         ParamConversion.PARAMETERS_REORDERED.takeIf { parametersReordered },
+        ParamConversion.PARAMETERS_REMOVED.takeIf { parametersRemoved },
     )
 }
 
@@ -153,12 +162,16 @@ private fun classifyConversion(
 
     return when (conversion) {
         ParamConversion.CONTEXT_TO_RECEIVER -> when {
-            // No callable-reference syntax for a member extension.
             isMemberCallable(changeInfo) -> conflictFix(expression, MEMBER_EXTENSION_CONFLICT)
             qualified -> conflictFix(expression, QUALIFIER_OCCUPIED_CONFLICT)
-            else -> SetQualifier(
-                boundReceiverText(expression, changeInfo) ?: fullyQualifiedReceiverType(changeInfo)
-            )
+            else -> {
+                val boundReceiverText = boundReceiverText(expression, changeInfo)
+                if (boundReceiverText != null) {
+                    SetQualifier(boundReceiverText)
+                } else {
+                    conflictFix(expression, CONTEXT_PARAMETER_UNAVAILABLE)
+                }
+            }
         }
 
         ParamConversion.VALUE_TO_RECEIVER -> when {
@@ -172,23 +185,24 @@ private fun classifyConversion(
         ParamConversion.RECEIVER_ADDED ->
             if (isResolvable(expression)) conflictFix(expression, TYPE_CHANGE_CONFLICT) else None
 
-        // A contextual callable reference can capture a different value from the usage scope.
         ParamConversion.RECEIVER_TO_CONTEXT ->
             conflictFix(expression, RECEIVER_TO_CONTEXT_CONFLICT)
 
         ParamConversion.RECEIVER_TO_VALUE -> when {
-            // The function type is preserved only when the receiver becomes the first value parameter.
             changeInfo.newParameters.firstOrNull { !it.isContextParameter } != changeInfo.oldReceiverInfo ->
                 conflictFix(expression, TYPE_CHANGE_CONFLICT)
 
             isUnboundTypeQualifier(expression) -> SetQualifier("")
-            // A bound receiver requires partial application to become a value argument.
             qualified || isResolvable(expression) -> conflictFix(expression, BOUND_RECEIVER_LOST_CONFLICT)
             else -> None
         }
-        // Removing a bound receiver discards its value.
         ParamConversion.RECEIVER_REMOVED -> when {
-            isUnboundTypeQualifier(expression) -> SetQualifier("")
+            isUnboundTypeQualifier(expression) ->
+                if (isResolvable(expression)) {
+                    conflictFix(expression, TYPE_CHANGE_CONFLICT)
+                } else {
+                    None
+                }
             qualified -> conflictFix(expression, BOUND_RECEIVER_LOST_CONFLICT)
             else -> None
         }
@@ -196,15 +210,13 @@ private fun classifyConversion(
         ParamConversion.RECEIVER_RETYPED ->
             if (isUnboundTypeQualifier(expression)) SetQualifier(fullyQualifiedReceiverType(changeInfo)) else None
 
-        // An explicit function argument cannot become an implicit context argument without an adapter.
         ParamConversion.VALUE_TO_CONTEXT ->
             conflictFix(expression, PARAMETER_TO_CONTEXT_CONFLICT, convertedToContextParameterName(changeInfo))
 
-        // Report a type regression only when the old reference is valid.
         ParamConversion.CONTEXT_TO_VALUE ->
             if (isResolvable(expression)) conflictFix(expression, TYPE_CHANGE_CONFLICT) else None
 
-        ParamConversion.PARAMETERS_ADDED, ParamConversion.PARAMETERS_REORDERED ->
+        ParamConversion.PARAMETERS_ADDED, ParamConversion.PARAMETERS_REORDERED, ParamConversion.PARAMETERS_REMOVED ->
             if (isResolvable(expression)) conflictFix(expression, TYPE_CHANGE_CONFLICT) else None
     }
 }
@@ -256,16 +268,32 @@ private fun convertedToContextParameterName(changeInfo: KotlinChangeInfoBase): S
 private fun isMemberCallable(changeInfo: KotlinChangeInfoBase): Boolean =
     (changeInfo.method.unwrapped as? KtCallableDeclaration)?.containingClassOrObject != null
 
-/** Distinguishes an unbound `Type::fn` reference from a bound `value::fn` reference. */
+private fun qualifierName(receiver: KtExpression?): KtSimpleNameExpression? = when (receiver) {
+    is KtSimpleNameExpression -> receiver
+    is KtDotQualifiedExpression -> qualifierName(receiver.selectorExpression)
+    is KtCallExpression ->
+        if (receiver.valueArgumentList == null &&
+            receiver.lambdaArguments.isEmpty()
+        ) {
+            receiver.calleeExpression as? KtSimpleNameExpression
+        } else {
+            null
+        }
+
+    else -> null
+}
+
 context(session: KaSession)
 private fun isUnboundTypeQualifier(expression: KtCallableReferenceExpression): Boolean {
-    val nameExpression = when (val receiver = expression.receiverExpression) {
-        is KtSimpleNameExpression -> receiver
-        is KtDotQualifiedExpression -> receiver.selectorExpression as? KtSimpleNameExpression
-        else -> null
-    } ?: return false
-    return nameExpression.resolveSuccessfulSymbol() is KaClassLikeSymbol
+    val nameExpression = qualifierName(expression.receiverExpression) ?: return false
+    val symbol = nameExpression.resolveSuccessfulSymbol()
+    if (symbol is KaNamedClassSymbol &&
+        symbol.classKind == KaClassKind.OBJECT
+    ) {
+        return false
+    }
+    return symbol is KaClassLikeSymbol
 }
 
 private fun conflictFix(expression: KtCallableReferenceExpression, messageKey: String, vararg args: Any): Conflict =
-    Conflict(KotlinBundle.message(messageKey, expression.text, *args))
+    Conflict(KotlinBundle.message(messageKey, CommonRefactoringUtil.htmlEmphasize(expression.text), *args))

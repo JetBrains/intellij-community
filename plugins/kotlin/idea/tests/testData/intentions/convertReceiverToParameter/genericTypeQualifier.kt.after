@@ -1,0 +1,7 @@
+class Foo<G>
+
+fun fn(foo: Foo<Int>, p: String) {}
+
+fun usages() {
+    val v = ::fn
+}

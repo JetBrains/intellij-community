@@ -14872,6 +14872,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/autoSuggestedName1.kt");
         }
 
+        @TestMetadata("boundReceiverFromConstuctorCall.kt")
+        public void testBoundReceiverFromConstuctorCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/boundReceiverFromConstuctorCall.kt");
+        }
+
         @TestMetadata("callVariableAsFunction.kt")
         public void testCallVariableAsFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/callVariableAsFunction.kt");
@@ -14900,6 +14905,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("genericReceiver.kt")
         public void testGenericReceiver() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/genericReceiver.kt");
+        }
+
+        @TestMetadata("genericTypeQualifier.kt")
+        public void testGenericTypeQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/genericTypeQualifier.kt");
         }
 
         @TestMetadata("implicitBoundCallableReferenceConflict.kt")

@@ -1,5 +1,7 @@
+// SHOULD_FAIL_WITH: Callable reference '::fn' cannot be updated: its receiver type cannot be changed
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // K2_ERROR: CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
+// K2_AFTER_ERROR: CALLABLE_REFERENCE_TO_CONTEXTUAL_DECLARATION
 
 interface Context
 

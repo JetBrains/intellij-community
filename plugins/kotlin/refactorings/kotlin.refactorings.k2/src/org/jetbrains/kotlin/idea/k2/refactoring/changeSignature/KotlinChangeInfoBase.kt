@@ -17,6 +17,8 @@ interface KotlinChangeInfoBase: ChangeInfo {
 
     fun getOldParameterIndex(oldParameterName: String): Int?
 
+    fun isValueParameterRemoved(): Boolean
+
     val aNewReturnType: String?
 
     val aNewVisibility: KaSymbolVisibility
