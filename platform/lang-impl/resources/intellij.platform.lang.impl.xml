@@ -238,10 +238,6 @@
     <extensionPoint qualifiedName="com.intellij.searchEverywhereReorderingService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.searchEverywherePreviewPrimaryUsageFinder" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewPrimaryUsageFinder" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.searchEverywhere.manager" interface="com.intellij.ide.actions.SearchEverywhereManagerFactory" dynamic="true" />
-    <extensionPoint qualifiedName="com.intellij.runAnything.executionProvider" interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runAnything.helpGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.runAnything.commandCustomizer" interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.highlightUsagesHandlerFactory" interface="com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.heavyBracesHighlighter" interface="com.intellij.codeInsight.highlighting.HeavyBraceHighlighter"/>
@@ -547,7 +543,6 @@
     <projectSettings service="com.intellij.codeInsight.actions.onSave.FormatOnSaveOptions"/>
     <projectSettings service="com.intellij.tools.ToolsProjectConfig"/>
     <projectSettings service="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
-    <projectSettings service="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectSettings service="com.intellij.slicer.SliceManager"/>
     <projectSettings service="com.intellij.slicer.SliceToolwindowSettings"/>
     <projectSettings service="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
@@ -560,7 +555,6 @@
     <projectSettings service="com.intellij.ide.util.gotoByName.GotoFileConfiguration"/>
     <projectSettings service="com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings"/>
     <applicationSettings service="com.intellij.find.actions.SearchOptionsService"/>
-    <projectSettings service="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
     <projectSettings service="com.intellij.find.findInProject.FindInProjectScopeService"/>
     <projectSettings service="com.intellij.refactoring.rename.RenameScopeService"/>
     <applicationSettings service="com.intellij.refactoring.rename.impl.TextOptionsService"/>
@@ -1429,7 +1423,6 @@
       implementationClass="com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.runAnything.RunAnythingUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.impl.SurroundWithLogger"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.FindUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.CreateDirectoryUsageCollector"/>
@@ -1564,12 +1557,6 @@
     <searchEverywherePreviewPrimaryUsageFinder id="base" implementation="com.intellij.ide.actions.searcheverywhere.PreviewPrimaryUsageFinderImpl"/>
     <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.remote.SearchEverywhereRemoteSupportService"
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereRemoteSupportServiceImpl"/>
-    <runAnything.executionProvider implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider"/>
-    <runAnything.executionProvider id="recentCommandProvider"
-                                   implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider"
-                                   order="last"/>
-    <runAnything.executionProvider implementation="com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider"
-                                   order="last"/>
     <moveLeftRightHandler language=""
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
                           order="last"/>
@@ -1785,8 +1772,6 @@
     <applicationSettings service="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>
     <applicationSettings service="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>
     <applicationSettings service="com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage"/>
-    <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
-                                   implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper" open="true"/>

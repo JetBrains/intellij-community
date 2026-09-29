@@ -90,5 +90,7 @@
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
     <orderEntry type="module" module-name="fleet.rhizomedb" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
   </component>
 </module>

@@ -50,6 +50,7 @@ jvm_library(
         "//plugins/gradle/java",
         "//platform/lang-core",
         "//plugins/maven/performanceTesting",
+        "//platform/execution-impl",
     ],
 )
 
@@ -90,6 +91,7 @@ jvm_library(
         "//plugins/gradle/java:java_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//plugins/maven/performanceTesting:performanceTesting_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.performance` end

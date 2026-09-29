@@ -336,7 +336,6 @@
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
     <action id="TestSearchContributors" class="com.intellij.ide.actions.searcheverywhere.setesting.TestSearchEverywhereAction"
             internal="true"/>
-    <action id="RunAnything" icon="AllIcons.Actions.RunAnything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
     <action id="FillParagraph" class="com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction"/>
     <action id="ExpandRecursively" class="com.intellij.ide.projectView.actions.ExpandRecursivelyAction" icon="AllIcons.Actions.Expandall"
             use-shortcut-of="ExpandRegion"/>

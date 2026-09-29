@@ -1426,6 +1426,163 @@ c:com.intellij.execution.util.StoringPropertyContainer
 - p:onPropertyChanged(com.intellij.util.config.AbstractProperty,java.lang.Object):V
 - setIfUndefined(com.intellij.util.config.AbstractProperty,Z):V
 - p:setValueOf(com.intellij.util.config.AbstractProperty,java.lang.Object):V
+c:com.intellij.ide.actions.runAnything.RunAnythingAction
+- sf:ALT_IS_PRESSED:java.util.concurrent.atomic.AtomicBoolean
+- sf:EXECUTOR_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:RUN_ANYTHING_ACTION_ID:java.lang.String
+- sf:SHIFT_IS_PRESSED:java.util.concurrent.atomic.AtomicBoolean
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.runAnything.RunAnythingCache
+- <init>():V
+- loadState(com.intellij.ide.actions.runAnything.RunAnythingCache$State):V
+- saveGroupVisibilityKey(java.lang.String,Z):V
+f:com.intellij.ide.actions.runAnything.RunAnythingCache$State
+- <init>():V
+a:com.intellij.ide.actions.runAnything.RunAnythingContext
+- b:<init>(java.lang.String,java.lang.String,javax.swing.Icon,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getDescription():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getLabel():java.lang.String
+- f:setDescription(java.lang.String):V
+f:com.intellij.ide.actions.runAnything.RunAnythingContext$BrowseRecentDirectoryContext
+- sf:INSTANCE:com.intellij.ide.actions.runAnything.RunAnythingContext$BrowseRecentDirectoryContext
+f:com.intellij.ide.actions.runAnything.RunAnythingContext$ModuleContext
+- <init>(com.intellij.openapi.module.Module):V
+- f:component1():com.intellij.openapi.module.Module
+- f:copy(com.intellij.openapi.module.Module):com.intellij.ide.actions.runAnything.RunAnythingContext$ModuleContext
+- bs:copy$default(com.intellij.ide.actions.runAnything.RunAnythingContext$ModuleContext,com.intellij.openapi.module.Module,I,java.lang.Object):com.intellij.ide.actions.runAnything.RunAnythingContext$ModuleContext
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.ide.actions.runAnything.RunAnythingContext$ProjectContext
+- f:component1():com.intellij.openapi.project.Project
+- f:copy(com.intellij.openapi.project.Project):com.intellij.ide.actions.runAnything.RunAnythingContext$ProjectContext
+- bs:copy$default(com.intellij.ide.actions.runAnything.RunAnythingContext$ProjectContext,com.intellij.openapi.project.Project,I,java.lang.Object):com.intellij.ide.actions.runAnything.RunAnythingContext$ProjectContext
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.ide.actions.runAnything.RunAnythingContext$RecentDirectoryContext
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.ide.actions.runAnything.RunAnythingContext$RecentDirectoryContext
+- bs:copy$default(com.intellij.ide.actions.runAnything.RunAnythingContext$RecentDirectoryContext,java.lang.String,I,java.lang.Object):com.intellij.ide.actions.runAnything.RunAnythingContext$RecentDirectoryContext
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.ide.actions.runAnything.RunAnythingManager
+- <init>(com.intellij.openapi.project.Project):V
+- isShown():Z
+- show(java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
+- show(java.lang.String,Z,com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider
+- <init>():V
+- getCompletionGroupTitle():java.lang.String
+- getExecutionContexts(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getHelpGroupTitle():java.lang.String
+- getValues(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.Collection
+f:com.intellij.ide.actions.runAnything.RunAnythingUtil
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- sf:SHIFT_SHORTCUT_TEXT:java.lang.String
+- <init>():V
+- s:executeMatched(com.intellij.openapi.actionSystem.DataContext,java.lang.String):V
+- s:getAdContextText():java.lang.String
+- s:getAdDebugText():java.lang.String
+- s:getAdDeleteCommandText():java.lang.String
+- s:getOrCreateWrappedCommands(com.intellij.openapi.project.Project):java.util.Collection
+a:com.intellij.ide.actions.runAnything.activity.RunAnythingAnActionProvider
+- execute(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.AnAction):V
+- getAdText():java.lang.String
+- getIcon(com.intellij.openapi.actionSystem.AnAction):javax.swing.Icon
+- getMainListItem(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.AnAction):com.intellij.ide.actions.runAnything.items.RunAnythingItem
+a:com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider
+- findMatchingValue(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.lang.String
+- a:getHelpCommand():java.lang.String
+- getHelpCommandAliases():java.util.List
+- getValues(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.List
+- pa:run(com.intellij.openapi.actionSystem.DataContext,com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider$CommandLine):Z
+- p:run(com.intellij.openapi.actionSystem.DataContext,java.lang.String):Z
+- pa:suggestCompletionVariants(com.intellij.openapi.actionSystem.DataContext,com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider$CommandLine):kotlin.sequences.Sequence
+f:com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider$CommandLine
+- <init>(java.util.List,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- f:getHelpCommand():java.lang.String
+- f:getPrefix():java.lang.String
+a:com.intellij.ide.actions.runAnything.activity.RunAnythingCommandProvider
+- execute(com.intellij.openapi.actionSystem.DataContext,java.lang.String):V
+- getAdText():java.lang.String
+- getCommand(java.lang.String):java.lang.String
+- getIcon(java.lang.String):javax.swing.Icon
+- s:runCommand(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.execution.Executor,com.intellij.openapi.actionSystem.DataContext):V
+a:com.intellij.ide.actions.runAnything.activity.RunAnythingMatchedRunConfigurationProvider
+- a:createConfiguration(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.execution.RunnerAndConfigurationSettings
+- a:getConfigurationFactory():com.intellij.execution.configurations.ConfigurationFactory
+- getHelpIcon():javax.swing.Icon
+a:com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
+- findMatchingValue(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.lang.Object
+- getAdText():java.lang.String
+- getCompletionGroupTitle():java.lang.String
+- getExecutionContexts(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getHelpCommand():java.lang.String
+- getHelpCommandPlaceholder():java.lang.String
+- getHelpDescription():java.lang.String
+- getHelpIcon():javax.swing.Icon
+- getHelpItem(com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem
+- getIcon(java.lang.Object):javax.swing.Icon
+- getMainListItem(com.intellij.openapi.actionSystem.DataContext,java.lang.Object):com.intellij.ide.actions.runAnything.items.RunAnythingItem
+- getMatcher(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.util.text.Matcher
+- getValues(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.Collection
+f:com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider
+- <init>():V
+- getCommand(com.intellij.openapi.actionSystem.AnAction):java.lang.String
+- getCompletionGroupTitle():java.lang.String
+- getExecutionContexts(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getHelpCommand():java.lang.String
+- getHelpCommandPlaceholder():java.lang.String
+- getHelpGroupTitle():java.lang.String
+- getMainListItem(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.AnAction):com.intellij.ide.actions.runAnything.items.RunAnythingItem
+- getValues(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.Collection
+a:com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:customizeCommandLine(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.vfs.VirtualFile,com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.configurations.GeneralCommandLine
+- p:customizeCommandLine(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.DataContext,com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.configurations.GeneralCommandLine
+- p:customizeDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
+c:com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile
+- <init>(com.intellij.execution.configurations.GeneralCommandLine,java.lang.String):V
+- getCommandLine():com.intellij.execution.configurations.GeneralCommandLine
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+c:com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- <init>(java.lang.String,java.util.List):V
+- getGroupItems(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.util.Collection
+- p:getMaxInitialItems():I
+- getProviders():java.util.Collection
+- getTitle():java.lang.String
+a:com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:getConsoleBuilder(com.intellij.openapi.project.Project):com.intellij.execution.filters.TextConsoleBuilder
+- s:getMatchedHandler(com.intellij.openapi.project.Project,java.lang.String):com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler
+- getProcessTerminatedCustomOutput(J):java.lang.String
+- a:isMatched(com.intellij.openapi.project.Project,java.lang.String):Z
+- shouldKillProcessSoftly():Z
+f:com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem
+- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon):V
+- createComponent(java.lang.String,Z,Z):java.awt.Component
+a:com.intellij.ide.actions.runAnything.items.RunAnythingItem
+- <init>():V
+- a:createComponent(java.lang.String,Z,Z):java.awt.Component
+- a:getCommand():java.lang.String
+c:com.intellij.ide.actions.runAnything.items.RunAnythingItemBase
+- pf:myIcon:javax.swing.Icon
+- <init>(java.lang.String,javax.swing.Icon):V
+- ps:appendDescription(com.intellij.ui.SimpleColoredComponent,java.lang.String,java.awt.Color):V
+- createComponent(java.lang.String,Z,Z):java.awt.Component
+- equals(java.lang.Object):Z
+- getDescription():java.lang.String
+- hashCode():I
+- setupIcon(com.intellij.ui.SimpleColoredComponent,javax.swing.Icon):V
 f:com.intellij.ide.browsers.OpenUrlHyperlinkInfo
 - <init>(java.lang.String,com.intellij.ide.browsers.WebBrowser):V
 - <init>(java.lang.String,com.intellij.openapi.util.Condition):V

@@ -5,13 +5,13 @@ import com.intellij.execution.Executor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientSystemInfo;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.KeymapUtilKt;
@@ -30,6 +31,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +70,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_RUN_ANYTHING);
 
       RunAnythingManager runAnythingManager = RunAnythingManager.getInstance(project);
-      String text = GotoActionBase.getInitialTextForNavigation(e);
+      String text = getInitialTextForNavigation(e);
       runAnythingManager.show(text, e);
     }
   }
@@ -77,6 +79,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public void update(@NotNull AnActionEvent e) {
     boolean isEnabled = !RunAnythingProvider.EP_NAME.getExtensionList().isEmpty();
     e.getPresentation().setEnabledAndVisible(isEnabled);
+  }
+
+  //todo reuse the same method from GotoActionBase after removing dependency from `lang.impl` to `execution.impl`
+  private static @Nullable String getInitialTextForNavigation(@NotNull AnActionEvent e) {
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+    if (selectedText == null) {
+      selectedText = e.getData(JBTerminalWidget.SELECTED_TEXT_DATA_KEY);
+    }
+    return selectedText != null && !selectedText.contains("\n") ? selectedText : null;
   }
 
   @Override

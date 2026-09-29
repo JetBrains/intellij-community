@@ -94,6 +94,8 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics",
         "//fleet/rhizomedb",
         "//platform/tracing:tracing-rt",
+        "//platform/analysis-impl",
+        "//platform/util/text-matching",
     ],
 )
 
@@ -170,6 +172,8 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/tracing:tracing-rt_test_lib",
+        "//platform/analysis-impl:analysis-impl_test_lib",
+        "//platform/util/text-matching:text-matching_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.impl` end
@@ -220,6 +224,7 @@ jvm_library(
         ":execution-tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
     ],
     deps = [
         # do not sort,
@@ -268,6 +273,11 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util/text-matching",
+        "//platform/util/text-matching:text-matching_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

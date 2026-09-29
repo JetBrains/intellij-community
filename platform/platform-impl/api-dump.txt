@@ -657,6 +657,23 @@ a:com.intellij.ide.actions.BaseNavigateToSourceAction
 - p:<init>(Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.ide.actions.BigPopupUI
+- com.intellij.util.ui.components.BorderLayoutPanel
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.openapi.project.Project):V
+- p:addListDataListener(javax.swing.AbstractListModel):V
+- getMinimumSize():java.awt.Dimension
+- getPreferredSize():java.awt.Dimension
+- getSearchField():javax.swing.JTextField
+- getViewType():com.intellij.ide.actions.BigPopupUI$ViewType
+- init():V
+- setSearchFinishedHandler(java.lang.Runnable):V
+- p:updateViewType(com.intellij.ide.actions.BigPopupUI$ViewType):V
+pc:com.intellij.ide.actions.BigPopupUI$SearchField
+- com.intellij.ui.components.fields.ExtendableTextField
+- <init>():V
+e:com.intellij.ide.actions.BigPopupUI$ViewType
+- java.lang.Enum
 c:com.intellij.ide.actions.CloseAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.actionSystem.AnAction
@@ -909,6 +926,10 @@ a:com.intellij.ide.actions.WindowAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - s:setEnabledFor(java.awt.Window,Z):V
+a:com.intellij.ide.actions.bigPopup.ShowFilterAction
+- com.intellij.openapi.actionSystem.ToggleAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
 a:com.intellij.ide.actionsOnSave.ActionOnSaveBackedByOwnConfigurable
 - com.intellij.ide.actionsOnSave.ActionOnSaveInfo
 - f:isActionOnSaveEnabled():Z
@@ -5852,6 +5873,12 @@ com.intellij.util.textCompletion.TextCompletionValueDescriptor
 c:com.intellij.util.textCompletion.TextFieldWithCompletion
 - com.intellij.ui.LanguageTextField
 - p:createEditor():com.intellij.openapi.editor.ex.EditorEx
+c:com.intellij.util.ui.Advertiser
+- <init>():V
+- getAdComponent():javax.swing.JComponent
+- setBackground(java.awt.Color):V
+- setBorder(javax.swing.border.Border):V
+- setForeground(java.awt.Color):V
 c:com.intellij.util.ui.ButtonlessScrollBarUI
 - javax.swing.plaf.basic.BasicScrollBarUI
 - p:<init>():V
