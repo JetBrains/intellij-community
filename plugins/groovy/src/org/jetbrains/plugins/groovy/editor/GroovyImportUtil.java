@@ -43,8 +43,8 @@ final class GroovyImportUtil {
         if (!(element instanceof GrImportStatement) && !(element instanceof GrPackageDefinition)) {
           super.visitElement(element);
         }
-        if (element instanceof GrReferenceElement) {
-          visitRefElement((GrReferenceElement)element);
+        if (element instanceof GrReferenceElement ref) {
+          visitRefElement(ref);
         }
       }
 
@@ -52,7 +52,6 @@ final class GroovyImportUtil {
         if (refElement.isQualified()) return;
 
         final String refName = refElement.getReferenceName();
-
         if ("super".equals(refName)) return;
 
         final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
@@ -68,7 +67,6 @@ final class GroovyImportUtil {
           if (resolved == null) return;
 
           if (context instanceof GrImportStatement importStatement) {
-
             usedImports.add(importStatement);
             if (GroovyImportHelper.isImplicitlyImported(resolved, refName, file)) {
               addImplicitClass(resolved);
@@ -77,7 +75,6 @@ final class GroovyImportUtil {
             if (!importStatement.isAliasedImport() && !isAnnotatedImport(importStatement)) {
               String importedName = null;
               if (importStatement.isOnDemand()) {
-
                 if (importStatement.isStatic()) {
                   if (resolved instanceof PsiMember member) {
                     final PsiClass clazz = member.getContainingClass();
@@ -103,7 +100,6 @@ final class GroovyImportUtil {
               if (importedName == null) return;
 
               final String importRef = importStatement.getImportFqn();
-
               if (importStatement.isAliasedImport()) {
                 aliased.put(importRef, importedName);
                 return;
@@ -117,14 +113,14 @@ final class GroovyImportUtil {
               }
               else {
                 importedClasses.add(importedName);
-                if (resolved instanceof PsiClass && ((PsiClass)resolved).getContainingClass() != null) {
+                if (resolved instanceof PsiClass aClass && aClass.getContainingClass() != null) {
                   innerClasses.add(importedName);
                 }
               }
             }
           }
           else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null &&
-                   (!(resolved instanceof PsiClass) || ((PsiClass)resolved).getContainingClass() == null)) {
+                   (!(resolved instanceof PsiClass aClass) || aClass.getContainingClass() == null)) {
             addImplicitClass(resolved);
           }
         }
@@ -139,8 +135,7 @@ final class GroovyImportUtil {
       }
     });
 
-    final Set<GrImportStatement> importsToCheck = new LinkedHashSet<>(PsiUtil.getValidImportStatements(file));
-    for (GrImportStatement anImport : importsToCheck) {
+    for (GrImportStatement anImport : PsiUtil.getValidImportStatements(file)) {
       if (usedImports.contains(anImport)) continue;
 
       final GrCodeReferenceElement ref = anImport.getImportReference();
@@ -157,7 +152,6 @@ final class GroovyImportUtil {
             usedImports.add(anImport);
 
             final String symbolName = anImport.getImportFqn();
-
             if (anImport.isAliasedImport()) {
               aliased.put(symbolName, importedName);
             }
@@ -184,11 +178,11 @@ final class GroovyImportUtil {
   }
 
   private static @Nullable String getTargetQualifiedName(PsiElement element) {
-    if (element instanceof PsiClass) {
-      return ((PsiClass)element).getQualifiedName();
+    if (element instanceof PsiClass aClass) {
+      return aClass.getQualifiedName();
     }
-    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-      PsiClass aClass = ((PsiMethod)element).getContainingClass();
+    if (element instanceof PsiMethod method && method.isConstructor()) {
+      PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         return aClass.getQualifiedName();
       }

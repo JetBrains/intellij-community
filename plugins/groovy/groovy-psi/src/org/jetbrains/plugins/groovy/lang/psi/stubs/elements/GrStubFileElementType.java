@@ -40,9 +40,9 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   public StubBuilder getBuilder() {
     return new DefaultStubBuilder() {
       @Override
-      protected @NotNull StubElement createStubForFile(final @NotNull PsiFile file) {
-        if (file instanceof GroovyFile) {
-          return new GrFileStub((GroovyFile)file);
+      protected @NotNull StubElement createStubForFile(@NotNull PsiFile file) {
+        if (file instanceof GroovyFile groovyFile) {
+          return new GrFileStub(groovyFile);
         }
 
         return super.createStubForFile(file);
@@ -83,14 +83,14 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   }
 
   @Override
-  public void serialize(final @NotNull GrFileStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrFileStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName().toString());
     dataStream.writeBoolean(stub.isScript());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
   }
 
   @Override
-  public @NotNull GrFileStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull GrFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
     return new GrFileStub(name, isScript, GrStubUtils.readStringArray(dataStream));

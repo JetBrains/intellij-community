@@ -59,12 +59,12 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
     final Comparator<GrImportStatement> comparator = GroovyImportOptimizer.getComparator(settings);
 
-    final int idx = getPackageEntryIdx(entries, statement);
+    final int idx = findPackageEntryIndex(entries, statement);
 
     PsiElement anchor = null;
 
     for (GrImportStatement importStatement : importStatements) {
-      final int i = getPackageEntryIdx(entries, importStatement);
+      final int i = findPackageEntryIndex(entries, importStatement);
       if (i < idx) {
         anchor = importStatement;
       }
@@ -85,7 +85,7 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     return anchor;
   }
 
-  private static int getPackageEntryIdx(PackageEntry @NotNull [] entries, @NotNull GrImportStatement statement) {
+  private static int findPackageEntryIndex(PackageEntry @NotNull [] entries, @NotNull GrImportStatement statement) {
     final GrCodeReferenceElement reference = statement.getImportReference();
     if (reference == null) return -1;
     final String packageName = StringUtil.getPackageName(reference.getCanonicalText());
@@ -119,7 +119,7 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     return allOther;
   }
 
-  private void addLineFeedBefore(@NotNull PsiElement psiFile, @NotNull GrImportStatement result) {
+  private static void addLineFeedBefore(@NotNull PsiElement psiFile, @NotNull GrImportStatement result) {
     final CodeStyleSettings rootSettings = CodeStyle.getSettings(psiFile.getContainingFile());
     final GroovyCodeStyleSettings settings = rootSettings.getCustomSettings(GroovyCodeStyleSettings.class);
 
@@ -134,9 +134,9 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     if (PsiImplUtil.isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
 
     ASTNode node = psiFile.getNode();
-    if (prev instanceof GrImportStatement) {
-      final int idx_before = getPackageEntryIdx(entries, (GrImportStatement)prev);
-      final int idx = getPackageEntryIdx(entries, result);
+    if (prev instanceof GrImportStatement statement) {
+      final int idx_before = findPackageEntryIndex(entries, statement);
+      final int idx = findPackageEntryIndex(entries, result);
       final int spaceCount = getMaxSpaceCount(entries, idx_before, idx);
 
       //skip space and semicolon after import
@@ -151,7 +151,7 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     }
   }
 
-  private void addLineFeedAfter(@NotNull PsiElement psiFile, GrImportStatement result) {
+  private static void addLineFeedAfter(@NotNull PsiElement psiFile, GrImportStatement result) {
     final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(psiFile.getContainingFile());
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();
@@ -162,9 +162,9 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     while (PsiImplUtil.isWhiteSpaceOrNls(next)) {
       next = next.getNextSibling();
     }
-    if (next instanceof GrImportStatement) {
-      final int idx_after = getPackageEntryIdx(entries, (GrImportStatement)next);
-      final int idx = getPackageEntryIdx(entries, result);
+    if (next instanceof GrImportStatement statement) {
+      final int idx_after = findPackageEntryIndex(entries, statement);
+      final int idx = findPackageEntryIndex(entries, result);
       final int spaceCount = getMaxSpaceCount(entries, idx, idx_after);
 
 
@@ -179,9 +179,8 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
   private static int getMaxSpaceCount(PackageEntry[] entries, int b1, int b2) {
     int start = Math.min(b1, b2);
-    int end = Math.max(b1, b2);
-
     if (start == -1) return 0;
+    int end = Math.max(b1, b2);
 
     int max = 0;
     int cur = 0;
@@ -200,7 +199,6 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
   @Override
   public void removeImport(@NotNull GroovyFileBase psiFile, @NotNull GrImportStatement importStatement) throws IncorrectOperationException {
-    PsiElement psiElement = psiFile;
     PsiElement before = importStatement;
     while (PsiImplUtil.isWhiteSpaceOrNls(before.getPrevSibling())) {
       before = before.getPrevSibling();
@@ -226,12 +224,12 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       psiFile.deleteChildRange(before, after);
     }
 
-    if (anchor_before instanceof GrImportStatement && anchor_after instanceof GrImportStatement) {
-      addLineFeedAfter(psiFile, (GrImportStatement)anchor_before);
+    if (anchor_before instanceof GrImportStatement statement && anchor_after instanceof GrImportStatement) {
+      addLineFeedAfter(psiFile, statement);
     }
     else if (anchor_before != null && anchor_after != null) {
       String text = anchor_after instanceof GrTopStatement && anchor_before instanceof GrTopStatement ? "\n\n" : "\n";
-      psiElement.getNode().addLeaf(GroovyTokenTypes.mNLS, text, anchor_after.getNode());
+      ((PsiElement)psiFile).getNode().addLeaf(GroovyTokenTypes.mNLS, text, anchor_after.getNode());
     }
   }
 }

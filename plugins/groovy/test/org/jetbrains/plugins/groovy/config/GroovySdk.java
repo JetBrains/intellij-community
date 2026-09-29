@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
  * The file to be published can be edited at
  * <a href="https://jetbrains.team/p/ld/repositories/frameworks-data/files/master/data/groovy/index.xml">https://jetbrains.team/p/ld/repositories/frameworks-data/files/master/data/groovy/index.xml</a>
  * <br>
- * Alternatively can be used to create a complete artifact tag section from a string of jar file names.
+ * Alternatively this class can be used to create a complete artifact tag section from a string of jar file names.
  *
  * @author Bas Leijdekkers
  */

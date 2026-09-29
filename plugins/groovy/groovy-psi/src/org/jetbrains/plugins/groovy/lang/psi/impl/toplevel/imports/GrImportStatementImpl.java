@@ -56,7 +56,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       GrCodeReferenceElement reference = getImportReference();
       GrCodeReferenceElement qualifier = reference == null ? null : reference.getQualifier();
       PsiElement target = qualifier == null ? null : qualifier.resolve();
-      PsiClass clazz = target instanceof PsiClass ? (PsiClass)target : null;
+      PsiClass clazz = target instanceof PsiClass aClass ? aClass : null;
       return CachedValueProvider.Result.create(clazz, PsiModificationTracker.MODIFICATION_COUNT, this);
     });
   }
@@ -112,11 +112,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   @Override
   public boolean isStatic() {
     GrImportStatementStub stub = getStub();
-    if (stub != null) {
-      return stub.isStatic();
-    }
-
-    return findChildByType(GroovyTokenTypes.kSTATIC) != null;
+    return stub != null ? stub.isStatic() : findChildByType(GroovyTokenTypes.kSTATIC) != null;
   }
 
   @Override
@@ -132,19 +128,14 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   @Override
   public boolean isOnDemand() {
     GrImportStatementStub stub = getStub();
-    if (stub != null) {
-      return stub.isOnDemand();
-    }
-    return findChildByType(GroovyTokenTypes.mSTAR) != null;
+    return stub != null ? stub.isOnDemand() : findChildByType(GroovyTokenTypes.mSTAR) != null;
   }
 
   @Override
   public @NotNull GrModifierList getAnnotationList() {
-    GrImportStatementStub stub = getStub();
-    if (stub != null) {
-      return Objects.requireNonNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST));
-    }
-    return findNotNullChildByClass(GrModifierList.class);
+    return getStub() != null
+           ? Objects.requireNonNull(getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST))
+           : findNotNullChildByClass(GrModifierList.class);
   }
 
   @Override
@@ -153,15 +144,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     final GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return null;
 
-    final PsiElement resolved;
-    if (!isStatic() || isOnDemand()) {
-      resolved = ref.resolve();
-    }
-    else {
-      resolved = resolveQualifier();
-    }
-
-    return resolved instanceof PsiClass ? (PsiClass)resolved : null;
+    final PsiElement resolved = !isStatic() || isOnDemand() ? ref.resolve() : resolveQualifier();
+    return resolved instanceof PsiClass aClass ? aClass : null;
   }
 
   @Override
