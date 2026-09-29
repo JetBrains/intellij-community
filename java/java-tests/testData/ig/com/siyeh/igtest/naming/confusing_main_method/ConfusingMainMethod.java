@@ -9,6 +9,15 @@ class One {
 class Two {
   void <warning descr="Method 'main()' does not have signature 'public static void main(String[])'">main</warning>(String[][] args) {}
 }
+/**
+ * {@snippet :
+ * enum Age {
+ *   CHILD, ADULT
+ * }
+ *
+ * void main() {}
+ * }
+ */
 class Three {
   public static void main(String[] args) {}
 

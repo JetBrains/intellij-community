@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -57,9 +58,10 @@ public final class ConfusingMainMethodInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!HardcodedMethodConstants.MAIN.equals(method.getName()) ||
-          method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-          MethodUtils.hasSuper(method)) {
+      if (!HardcodedMethodConstants.MAIN.equals(method.getName())
+          || method.hasModifierProperty(PsiModifier.ABSTRACT)
+          || MethodUtils.hasSuper(method)
+          || method.getContext() instanceof SyntheticElement) {
         return;
       }
       if (!PsiMethodUtil.isMainMethod(method)) {
