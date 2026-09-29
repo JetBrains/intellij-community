@@ -48,6 +48,8 @@ internal class HtmlExporter(
       appendInlineStylesContent(select("link[rel=\"stylesheet\"]"))
     }
 
+    document.body().select(".code-fence-highlighter-copy-button").remove()
+
     val images = document.body().getElementsByTag("img")
     if (savingSettings.isSaved) {
       saveImages(images)
