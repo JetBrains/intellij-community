@@ -5,6 +5,7 @@ import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
@@ -50,6 +51,17 @@ class LocalTerminalTtyConnector internal constructor(
       eelApi = shellProcessHolder.eelApi,
       ptyProcess = ptyProcess
     )
+
+  /**
+   * Indicates whether the underlying process is Windows ConPTY (either local or remote).
+   * It just compares the OS family because on Windows we use only ConPTY.
+   * WSL processes are started via IJent, so they have [EelOsFamily.Posix].
+   *
+   * `ptyProcess is WinConPtyProcess` check will work only for local process, so prefer using [isWinConPty].
+   */
+  fun isWinConPty(): Boolean {
+    return eelDescriptor.osFamily == EelOsFamily.Windows
+  }
 
   private val closingActivitiesStarted = AtomicBoolean(false)
 

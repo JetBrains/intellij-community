@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -292,7 +291,7 @@ class GhosttyTerminalSession internal constructor(
     // and when terminal size grows, it can't pull scrollback lines to the screen.
     // So, we have to disable the scrollback pull in the Windows case to ensure
     // that emulator and ConPTY buffers are in sync after resize.
-    emulator.setResizePullScrollback(eelDescriptor.osFamily != EelOsFamily.Windows)
+    emulator.setResizePullScrollback(localTtyConnector?.isWinConPty() != true)
 
     terminfoName?.let { name ->
       // TERM comes from the user environment, so a name that the emulator rejects must not stop the session.
