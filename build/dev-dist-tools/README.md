@@ -10,6 +10,8 @@ They use the crates of this workspace through path dependencies.
 The contracts are in the specs under `build/spec/` of the ultimate root. The guide
 [`dev-build-architecture.md`](../../../build/dev-build-architecture.md) names each tool by its Bazel label.
 [ADR 0020](../../../build/decisions/0020-the-dev-dist-tools-are-rust.md) records why the tools are Rust.
+[ADR 0027](../../../build/decisions/0027-four-jvm-tools-stay-on-the-distribution-path.md) lists the JVM tools that a
+distribution still runs. They are not in this workspace.
 
 ## The crate map
 
