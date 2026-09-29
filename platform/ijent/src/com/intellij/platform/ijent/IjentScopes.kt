@@ -63,9 +63,9 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
 
     // This supervisor scope exists only to prevent automatic propagation of IjentUnavailableException to the parent scope.
     // Instead, there's a logic below that decides if a specific IjentUnavailableException should be propagated to the parent scope.
-    val trickySupervisorScope = s.childScope(ijentLabel, context + dummyExceptionHandler, supervisor = true)
+    val sessionBoundaryScope = s.childScope(ijentLabel, context + dummyExceptionHandler, supervisor = true)
 
-    val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false, context = IjentScope.IjentContext())
+    val ijentProcessScope = sessionBoundaryScope.childScope(ijentLabel, supervisor = false, context = IjentScope.IjentContext())
 
     ijentProcessScope.coroutineContext.job.invokeOnCompletion { err ->
       // Unconditional: the categorized logging below mutes cancellations and expected exits, which leaves a
@@ -73,9 +73,9 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
       IjentLogger.LIFETIME_LOG.debug { "$ijentLabel session scope completed, cause: $err" }
 
       // Has to be read before the scope is cancelled below, otherwise every teardown looks application-initiated.
-      val closedByApplication = trickySupervisorScope.coroutineContext.job.isCancelled
+      val closedByApplication = sessionBoundaryScope.coroutineContext.job.isCancelled
 
-      trickySupervisorScope.cancel()
+      sessionBoundaryScope.cancel()
 
       if (err != null) {
         val actualError = IjentUnavailableException.unwrapFromCancellationExceptions(err) ?: err
