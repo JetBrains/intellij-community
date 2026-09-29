@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.runners
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -11,6 +12,7 @@ import java.awt.Graphics2D
 import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class IndicatorIcon(val base: Icon?, val emptyIconWidth: Int, val emptyIconHeight: Int, val color: Color): Icon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val iSize = JBUIScale.scale(4)

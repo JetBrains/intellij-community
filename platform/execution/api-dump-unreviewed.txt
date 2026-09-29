@@ -579,15 +579,6 @@ a:com.intellij.execution.runners.GenericProgramRunner
 - p:doExecute(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunProfileState,com.intellij.execution.ui.RunContentDescriptor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
 - p:execute(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):V
 - p:execute(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.runners.ProgramRunner$Callback,com.intellij.execution.configurations.RunProfileState):V
-f:com.intellij.execution.runners.IndicatorIcon
-- <init>(javax.swing.Icon,I,I,java.awt.Color):V
-- f:getBase():javax.swing.Icon
-- f:getColor():java.awt.Color
-- f:getEmptyIconHeight():I
-- f:getEmptyIconWidth():I
-- getIconHeight():I
-- getIconWidth():I
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 a:com.intellij.execution.target.BaseTargetEnvironmentRequest
 - com.intellij.execution.target.TargetEnvironmentRequest
 - <init>():V

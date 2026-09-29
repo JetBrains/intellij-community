@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
@@ -22,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.icons.LiveIndicatorIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,7 +228,7 @@ public abstract class ChooseByNameFilter<T> {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Icon icon = getTemplatePresentation().getIcon();
-      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+      e.getPresentation().setIcon(isActive() && icon != null ? LiveIndicatorIcons.getLiveIndicatorIcon(icon) : icon);
     }
     
     protected boolean isActive() {

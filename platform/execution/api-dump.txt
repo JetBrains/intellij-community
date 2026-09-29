@@ -814,8 +814,6 @@ a:com.intellij.execution.runners.GenericProgramRunner
 - com.intellij.execution.runners.ProgramRunner
 - <init>():V
 - f:execute(com.intellij.execution.runners.ExecutionEnvironment):V
-f:com.intellij.execution.runners.IndicatorIcon
-- javax.swing.Icon
 com.intellij.execution.runners.ProcessProxy
 - a:attach(com.intellij.execution.process.ProcessHandler):V
 - canSendBreak():Z

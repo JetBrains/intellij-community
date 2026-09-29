@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.ui.icons.getLiveIndicatorIcon
 import com.intellij.util.ui.JBUI.CurrentTheme.IconBadge
 import javax.swing.Icon
 
@@ -12,7 +12,7 @@ import javax.swing.Icon
  * @property originalIcon The original icon to which badges are to be applied.
  */
 class BadgeIconSupplier(val originalIcon: Icon) {
-  private val oldLiveIndicatorIcon by lazy { ExecutionUtil.getLiveIndicator(originalIcon) }
+  private val oldLiveIndicatorIcon by lazy { getLiveIndicatorIcon(originalIcon) }
 
   val errorIcon: Icon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.ERROR) }
   val warningIcon: Icon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.WARNING) }

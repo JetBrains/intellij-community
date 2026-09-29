@@ -2,5 +2,9 @@ f:com.intellij.ui.SimpleTextAttributes
 - *s:fromMarkupTextKind(com.intellij.openapi.util.text.MarkupText$Kind):com.intellij.ui.SimpleTextAttributes
 *f:com.intellij.ui.icons.IconWithAutoOverlayKt
 - *sf:iconWithOverlay(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+*f:com.intellij.ui.icons.LiveIndicatorIcons
+- sf:getLiveIndicatorIcon(javax.swing.Icon):javax.swing.Icon
+- sf:getLiveIndicatorIcon(javax.swing.Icon,java.awt.Color):javax.swing.Icon
+- sf:getLiveIndicatorIcon(javax.swing.Icon,Z):javax.swing.Icon
 f:com.intellij.util.IconUtil
 - *sf:downscaleIconToSize(javax.swing.Icon,I,I):javax.swing.Icon
