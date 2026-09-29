@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
-import java.io.Serializable
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
@@ -19,7 +18,7 @@ internal data class IntelliJPlatformGradleData(
   val bundledModules: List<IntelliJPlatformBundledModule> = emptyList(),
   val currentPluginVersion: String = "0.0.0",
   val latestPluginVersion: String = "0.0.0",
-) : Serializable {
+) {
   companion object {
     @JvmField
     val KEY = Key.create(IntelliJPlatformGradleData::class.java, ProjectKeys.MODULE.processingWeight + 1)
@@ -29,17 +28,17 @@ internal data class IntelliJPlatformGradleData(
 internal data class IntelliJPlatformProductRelease(
   val version: String = "",
   val channel: String = "",
-) : Serializable
+)
 
 internal data class IntelliJPlatformBundledPlugin(
   val id: String = "",
   val name: String = "",
-) : Serializable
+)
 
 internal data class IntelliJPlatformBundledModule(
   val id: String = "",
   val name: String = "",
-) : Serializable
+)
 
 internal fun IntelliJPlatformGradleModel.toIntelliJPlatformGradleData() = IntelliJPlatformGradleData(
   dependencyHelperProductCodes = dependencyHelperProductCodes,
