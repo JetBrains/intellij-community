@@ -1960,8 +1960,7 @@ private class MutablePayload {
    * The payload modules the platform jar table packs under a jar name that is not their own.
    *
    * The handover set leaves them out. A packing target of such a module writes the `<module>.jar` that a plugin ships,
-   * not the jar that the platform ships. `intellij.java.rt` is the case: the platform ships it as `lib/idea_rt.jar`, and
-   * one plugin ships it as `lib/intellij.java.rt.jar`, so it owns a packing target this payload must not claim.
+   * not the jar that the platform ships, so it owns a packing target this payload must not claim.
    */
   @JvmField val modulesPackedUnderAnotherName: MutableSet<String> = sortedSetOf()
 

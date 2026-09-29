@@ -43,12 +43,6 @@ _RESIDUAL_JAR_forms_rt = struct(
     ],
 )
 
-_RESIDUAL_JAR_idea_rt = struct(
-    modules = [
-        "//java/java-runtime:rt",
-    ],
-)
-
 _RESIDUAL_JAR_intellij_platform_starter = struct(
     modules = [
         "//platform/starter",
@@ -145,7 +139,6 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "intellij.java.guiForms.rt",
                 "intellij.java.ide.newUiOnboarding",
                 "intellij.java.ide.resources",
-                "intellij.java.rt",
                 "intellij.libraries.log4j.to.slf4j",
                 "intellij.libraries.sqlite",
                 "intellij.libraries.xmlbeans",
@@ -226,7 +219,6 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "external-system-rt.jar": _RESIDUAL_JAR_external_system_rt,
                 "externalProcess-rt.jar": _RESIDUAL_JAR_externalProcess_rt,
                 "forms_rt.jar": _RESIDUAL_JAR_forms_rt,
-                "idea_rt.jar": _RESIDUAL_JAR_idea_rt,
                 "intellij.idea.android.customization.jar": struct(
                     modules = [
                         "//android-customization:idea-android-customization",
@@ -265,7 +257,6 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "intellij.java.guiForms.rt",
                 "intellij.java.ide.newUiOnboarding",
                 "intellij.java.ide.resources",
-                "intellij.java.rt",
                 "intellij.libraries.log4j.to.slf4j",
                 "intellij.libraries.sqlite",
                 "intellij.libraries.xmlbeans",
@@ -345,7 +336,6 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "external-system-rt.jar": _RESIDUAL_JAR_external_system_rt,
                 "externalProcess-rt.jar": _RESIDUAL_JAR_externalProcess_rt,
                 "forms_rt.jar": _RESIDUAL_JAR_forms_rt,
-                "idea_rt.jar": _RESIDUAL_JAR_idea_rt,
                 "intellij.idea.community.customization.jar": struct(
                     modules = [
                         "//community-resources:customization",

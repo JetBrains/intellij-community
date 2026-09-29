@@ -60,7 +60,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
 
 val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "" to "25",
-  "lib/idea_rt.jar" to "1.8",
+  "plugins/java/lib/idea_rt.jar" to "1.8",
   "lib/forms_rt.jar" to "1.8",
   "lib/intellij.libraries.jetbrains.annotations.jar" to "1.8",
   "lib/util_rt.jar" to "1.8",
@@ -83,11 +83,6 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
 )
 
 fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProductProperties) {
-  properties.productLayout.addPlatformSpec { layout ->
-    //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
-    layout.withModule("intellij.java.rt", "idea_rt.jar")
-  }
-
   properties.productLayout.compatiblePluginsToIgnore += persistentListOf(
     JavaPluginLayout.MAIN_MODULE_NAME,
   )

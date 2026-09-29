@@ -118,7 +118,6 @@ class MPSProperties : JetBrainsProductProperties() {
 
             layout.excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
 
-            layout.withModule("intellij.java.rt", "idea_rt.jar")
             layout.withProjectLibrary("Eclipse", "lib.jar", "withProjectLibrary")
             // the JPS build process reads the library from lib/; the wrapper module itself ships with the aether dependency resolver plugin
             layout.withModuleLibrary("maven-resolver-provider", "intellij.libraries.maven.resolver.provider", "")

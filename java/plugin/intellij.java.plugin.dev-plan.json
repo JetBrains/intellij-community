@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.java.plugin",
     "variant": "",
-    "layoutSignature": "cxtqlyf9f194ad2gewih0tvvv",
+    "layoutSignature": "4t0z3v43u6vbco5z8xc9j4scv",
     "assets": [
         {
             "destination": "lib/intellij.java.syntax.jar",
@@ -468,6 +468,21 @@
                 "sources": [
                     {
                         "input": "intellij.platform.jps.build.launcher",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/idea_rt.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.java.rt",
                         "kind": "module",
                         "filter": "module-v1"
                     }

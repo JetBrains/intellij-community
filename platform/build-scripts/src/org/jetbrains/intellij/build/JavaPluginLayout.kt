@@ -12,6 +12,9 @@ object JavaPluginLayout {
       spec.mainJarName = "java-impl.jar"
 
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
+      // run configurations put this jar on the classpath of a user process, so it stays a jar of its own
+      // A layout jar and not a content module: the test plugins of every product declare intellij.java.rt themselves.
+      spec.withModule("intellij.java.rt", "idea_rt.jar")
 
       spec.withProjectLibrary("Eclipse", "ecj")
 
