@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
@@ -60,7 +59,7 @@ class JBCefOsrComponent extends JPanel {
 
   private @NotNull Disposable myDisposable;
 
-  private final int WHEEL_ROTATION_FACTOR = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");
+  private final @NotNull JBCefOsrWheelRotation myWheelRotation = new JBCefOsrWheelRotation();
 
   JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
@@ -225,10 +224,11 @@ class JBCefOsrComponent extends JPanel {
                                                  CefTouchEvent.PointerType.UNKNOWN));
     }
     else {
-      double val = e.getPreciseWheelRotation() * WHEEL_ROTATION_FACTOR;
+      double val = e.getPreciseWheelRotation() * myWheelRotation.getFactor(e);
       if (SystemInfoRt.isLinux || SystemInfoRt.isMac) {
         val *= -1;
       }
+      int rotation = myWheelRotation.accumulate(val, e.isShiftDown());
       myBrowser.sendMouseWheelEvent(new MouseWheelEvent(
         e.getComponent(),
         e.getID(),
@@ -241,8 +241,8 @@ class JBCefOsrComponent extends JPanel {
         e.getClickCount(),
         e.isPopupTrigger(),
         e.getScrollType(),
-        e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getScrollAmount() : 1,
-        (int)Math.round(val),
+        myWheelRotation.getScrollAmount(e),
+        rotation,
         val));
     }
   }
