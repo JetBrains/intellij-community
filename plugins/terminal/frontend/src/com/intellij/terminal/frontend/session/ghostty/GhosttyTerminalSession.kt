@@ -12,7 +12,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.emulator.ColorScheme
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.ScreenChange
-import com.intellij.terminal.emulator.ScrollbackPullPolicy
 import com.intellij.terminal.emulator.TerminalColor
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
@@ -291,13 +290,9 @@ class GhosttyTerminalSession internal constructor(
 
     // Windows host is using ConPTY that has its own buffer: it stores screen lines only,
     // and when terminal size grows, it can't pull scrollback lines to the screen.
-    // So, we have to use "ScrollbackPullPolicy.NEVER" in the Windows case to ensure
+    // So, we have to disable the scrollback pull in the Windows case to ensure
     // that emulator and ConPTY buffers are in sync after resize.
-    val scrollbackPullPolicy = if (eelDescriptor.osFamily == EelOsFamily.Windows) {
-      ScrollbackPullPolicy.NEVER
-    }
-    else ScrollbackPullPolicy.CURSOR_AT_BOTTOM
-    emulator.setResizeScrollbackPullPolicy(scrollbackPullPolicy)
+    emulator.setResizePullScrollback(eelDescriptor.osFamily != EelOsFamily.Windows)
 
     terminfoName?.let { name ->
       // TERM comes from the user environment, so a name that the emulator rejects must not stop the session.

@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 /**
  * Resize and reflow across the main/alternate screens, driven through the [TerminalEmulator] API.
@@ -17,19 +17,19 @@ import org.junit.jupiter.params.provider.EnumSource
  * "ENGINE-SPECIFIC" flag the spots where that is a deliberate engine choice rather than a universal
  * rule.
  *
- * [ScrollbackPullPolicy] only affects a resize that grows rows or widens the screen. [Common] holds
- * scenarios where all three policies agree; the other nested classes hold the ones that don't.
+ * [TerminalEmulator.setResizePullScrollback] only affects a resize that grows rows or widens the screen.
+ * [Common] holds scenarios where both values agree; the other nested classes hold the ones that don't.
  */
 class ResizeTest {
 
   @Nested
   @ParameterizedClass
-  @EnumSource(ScrollbackPullPolicy::class)
-  inner class Common(private val policy: ScrollbackPullPolicy) {
+  @ValueSource(booleans = [true, false])
+  inner class Common(private val pullScrollback: Boolean) {
 
     @Test
     fun resizeReflowsAndKeepsRendering() = session(20, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("abcdefghij")
       session.resize(5, 5)
       session.assertScreenLines("abcde", "fghij")
@@ -39,7 +39,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeToBiggerHeight() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("line").crlf()
         .write("line2").crlf()
@@ -56,7 +56,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeToSmallerHeight() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("line").crlf()
         .write("line2").crlf()
@@ -73,7 +73,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeToSmallerHeightAndKeepCursorVisible() = session(10, 4) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("line1")
       session.crlf()
       session.write("line2")
@@ -91,7 +91,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferClearAndResizeVertically() = session(10, 4) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("hi>").crlf()
         .write("hi2>")
@@ -112,7 +112,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferInitialResize() = session(10, 24) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("hi>")
 
       session.assertCursorPosition(4, 1)
@@ -128,7 +128,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeWidthScenario1() = session(15, 24) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("$ cat long.txt")
       session.crlf()
       session.write("1_2_3_4_5_6_7_8")
@@ -157,7 +157,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeWidthScenario2() = session(100, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("$ cat long.txt")
       session.crlf()
       session.write("1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_21_22_23_24_25_26_27_28_30")
@@ -190,7 +190,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferPointsTrackingDuringResize() = session(10, 4) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("line1").crlf()
         .write("line2").crlf()
@@ -207,7 +207,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeWidthIncrease() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("lin1").crlf()
         .write("lin2").crlf()
@@ -223,7 +223,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeWidthDecrease() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("line_one").crlf()
         .write("line_two").crlf()
@@ -239,7 +239,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeBothDimensionsIncrease() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("lin1").crlf()
         .write("lin2").crlf()
@@ -257,7 +257,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeBothDimensionsDecrease() = session(10, 8) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("first_line").crlf()
         .write("second_lin").crlf()
@@ -279,7 +279,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeWidthIncrease() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("lin1").crlf()
@@ -296,7 +296,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeWidthDecrease() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("line_one_A").crlf()
@@ -313,7 +313,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeHeightIncrease() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("lin1").crlf()
@@ -331,7 +331,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeHeightDecrease() = session(5, 8) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("lin1").crlf()
@@ -352,7 +352,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeBothDimensionsIncrease() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("AAA").crlf()
@@ -369,7 +369,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeBothDimensionsDecrease() = session(10, 8) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("0123456789").crlf()
@@ -390,7 +390,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeWidthIncreaseAndHeightDecrease() = session(5, 8) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("AAA").crlf()
@@ -411,7 +411,7 @@ class ResizeTest {
 
     @Test
     fun altBufferResizeWidthDecreaseAndHeightIncrease() = session(10, 4) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.useAlternateBuffer(true)
       session
         .write("0123456789").crlf()
@@ -430,7 +430,7 @@ class ResizeTest {
 
     @Test
     fun altMainSwitchWidthChangeDuringAltBuffer() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("main_line1").crlf()
         .write("main_line2").crlf()
@@ -455,7 +455,7 @@ class ResizeTest {
 
     @Test
     fun altMainSwitchHeightChangeDuringAltBuffer() = session(10, 8) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("line1").crlf()
         .write("line2").crlf()
@@ -481,7 +481,7 @@ class ResizeTest {
 
     @Test
     fun altMainSwitchBothDimensionsChangeDuringAltBuffer() = session(10, 8) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session
         .write("first_line").crlf()
         .write("second_lin").crlf()
@@ -512,7 +512,7 @@ class ResizeTest {
 
     @Test
     fun reflowJoinsWrappedLineWhenWidened() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("A".repeat(12)) // 10 on row 0, 2 on row 1
 
       session.assertScreenRow(0, "AAAAAAAAAA")
@@ -537,7 +537,7 @@ class ResizeTest {
 
     @Test
     fun reflowSplitsLineIntoContinuationsWhenNarrowed() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.write("ABCDEFGHI")
 
       session.assertScreenRow(0, "ABCDEFGHI")
@@ -562,7 +562,7 @@ class ResizeTest {
     // Narrowing to 1 column must not lose the cursor. See neovim/neovim#21124.
     @Test
     fun cursorStaysOnScreenWhenNarrowedToOneColumn() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       session.resize(1, 3)
       session.write(csi("2;1H") + "abc\r\n" + csi("H"))
 
@@ -573,7 +573,7 @@ class ResizeTest {
 
     @Test
     fun wrapStraddlingHistoryBoundaryStillUnwraps() = session(3, 3) { session ->
-      session.setResizeScrollbackPullPolicy(policy)
+      session.setResizePullScrollback(pullScrollback)
       // "E"x12 needs 4 rows at width 3: one in scrollback, three active — not fully in history
       // yet, so widening may still unwrap it. Only "AAA" (a whole line in scrollback) must stay.
       session.write("AAA").crlf().write("E".repeat(12))
@@ -589,13 +589,13 @@ class ResizeTest {
     // Out of scope: minimum-width clamping and selection remapping are UI/frontend concerns, not emulator behavior.
   }
 
-  /** [ScrollbackPullPolicy.CURSOR_AT_BOTTOM]: the default — pulls only when the cursor is on the bottom row. */
+  /** Scrollback pull is on, which is the default. A row growth pulls only when the cursor is on the bottom row. */
   @Nested
-  inner class CursorAtBottomPolicy {
+  inner class PullScrollbackEnabled {
 
     @Test
     fun mainBufferResizeInHeightWithScrolling() = session(5, 2) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.CURSOR_AT_BOTTOM)
+      session.setResizePullScrollback(true)
       // Let "line"/"line2" scroll off before growing.
       session
         .write("line").crlf()
@@ -613,7 +613,7 @@ class ResizeTest {
 
     @Test
     fun mainBufferResizeToSmallerHeightAndBack() = session(5, 5) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.CURSOR_AT_BOTTOM)
+      session.setResizePullScrollback(true)
       session
         .write("line").crlf()
         .write("line2").crlf()
@@ -639,7 +639,7 @@ class ResizeTest {
 
     @Test
     fun altMainSwitchMultipleResizesDuringAltBuffer() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.CURSOR_AT_BOTTOM)
+      session.setResizePullScrollback(true)
       session
         .write("main_lin1").crlf()
         .write("main_lin2").crlf()
@@ -663,11 +663,11 @@ class ResizeTest {
       session.assertCursorPosition(2, 3)
     }
 
-    // Policy-sensitive despite no row-count change: widening enough to rejoin the wrapped line frees a
-    // row, which this policy fills by pulling scrollback back. See NeverPolicy.wideningDoesNotUnwrapIntoHistory.
+    // Pull-sensitive despite no row-count change: widening enough to rejoin the wrapped line frees a
+    // row, which gets filled by pulling scrollback back. See PullScrollbackDisabled.wideningDoesNotUnwrapIntoHistory.
     @Test
     fun reflowOfAWrappedLineAboveThePrompt() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.CURSOR_AT_BOTTOM)
+      session.setResizePullScrollback(true)
       session.write("PROMPT GOES HERE\r\n> \r\n\r\nPROMPT GOES HERE\r\n> ")
 
       session.expectFullRebuild() // the writes above scrolled the screen
@@ -698,7 +698,7 @@ class ResizeTest {
 
       session.resize(16, 5)
 
-      // ENGINE-SPECIFIC: pulls scrollback to fill the freed rows; see NeverPolicy for the alternative.
+      // ENGINE-SPECIFIC: pulls scrollback to fill the freed rows; see PullScrollbackDisabled for the alternative.
       session.assertScreenRow(0, "PROMPT GOES HERE")
       assertThat(session.screenLine(0).wrapped).isFalse()
       session.assertScreenRow(1, "> ")
@@ -710,14 +710,14 @@ class ResizeTest {
     }
   }
 
-  /** [ScrollbackPullPolicy.NEVER]: never pulls, no matter the cursor. What Windows ConPTY needs. */
+  /** Scrollback pull is off: never pulls, no matter the cursor. What Windows ConPTY needs. */
   @Nested
-  inner class NeverPolicy {
+  inner class PullScrollbackDisabled {
 
     @Test
     fun mainBufferResizeInHeightWithScrollingKeepsHistory() = session(5, 2) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.NEVER)
-      // Same shape as CursorAtBottomPolicy's version, but NEVER must not pull.
+      session.setResizePullScrollback(false)
+      // Same shape as PullScrollbackEnabled's version, but this one must not pull.
       session
         .write("line").crlf()
         .write("line2").crlf()
@@ -735,8 +735,8 @@ class ResizeTest {
 
     @Test
     fun rowGrowthWithColumnChangeKeepsHistory() = session(6, 2) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.NEVER)
-      // Cols reflow before rows grow (dispatch order), so the policy must hold through both steps.
+      session.setResizePullScrollback(false)
+      // Cols reflow before rows grow (dispatch order), so the setting must hold through both steps.
       session
         .write("AAAAAAAAA").crlf()
         .write("BBB").crlf()
@@ -751,8 +751,8 @@ class ResizeTest {
 
     @Test
     fun wideningDoesNotUnwrapIntoHistory() = session(10, 5) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.NEVER)
-      // Same shape as CursorAtBottomPolicy.reflowOfAWrappedLineAboveThePrompt.
+      session.setResizePullScrollback(false)
+      // Same shape as PullScrollbackEnabled.reflowOfAWrappedLineAboveThePrompt.
       session.write("PROMPT GOES HERE\r\n> \r\n\r\nPROMPT GOES HERE\r\n> ")
       session.expectFullRebuild()
       session.assertScrollbackLines("PROMPT GOE", "S HERE")
@@ -761,7 +761,7 @@ class ResizeTest {
       session.resize(11, 5)
       session.resize(12, 5)
 
-      // Widening to 16 rejoins "PROMPT GOES HERE" (the default pulls scrollback here); NEVER must
+      // Widening to 16 rejoins "PROMPT GOES HERE" (the default pulls scrollback here); this one must
       // keep row 0 as "> " and leave scrollback alone.
       session.resize(16, 5)
 
@@ -773,31 +773,6 @@ class ResizeTest {
       session.assertScreenRow(4, "")
       session.assertScrollbackLines("PROMPT GOES HERE")
       session.assertCursorPosition(3, 4)
-    }
-  }
-
-  /** [ScrollbackPullPolicy.ALWAYS]: always pulls, even with the cursor off the bottom row. */
-  @Nested
-  inner class AlwaysPolicy {
-
-    @Test
-    fun mainBufferResizePullsEvenWithCursorNotAtBottom() = session(5, 2) { session ->
-      session.setResizeScrollbackPullPolicy(ScrollbackPullPolicy.ALWAYS)
-      session
-        .write("line").crlf()
-        .write("line2").crlf()
-        .write("line3").crlf()
-        .write("li")
-      session.assertCursorPosition(3, 2)
-
-      // Move the cursor off the bottom row, where the default policy would not pull.
-      session.cursorPosition(1, 1)
-
-      session.resize(10, 5)
-
-      assertThat(session.scrollbackRowCount()).isZero()
-      session.assertScreenLines("line", "line2", "line3", "li")
-      session.assertCursorPosition(1, 3)
     }
   }
 

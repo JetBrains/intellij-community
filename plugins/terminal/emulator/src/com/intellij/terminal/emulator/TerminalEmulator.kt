@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 //   TerminalGrid.kt          the grid to read back: TerminalSize, Cell (+ CellStyle, CellWidth,
 //                            TerminalColor, Underline), TerminalRow and its StyledText projection
 //                            (+ StyleRange, HyperlinkRange)
-//   TerminalResizePolicy.kt  ScrollbackPullPolicy — how a growing resize treats scrollback
 //   TerminalCursor.kt        Cursor, CursorShape
 //   TerminalMouseModes.kt    MouseProtocol, MouseEncoding
 //   TerminalKeyEvents.kt     TerminalKeyEvent (+ TerminalKey, TerminalKeyAction) — key events to
@@ -59,11 +58,20 @@ interface TerminalEmulator : AutoCloseable {
   fun resize(size: TerminalSize)
 
   /**
-   * Sets the policy for whether growing the row count on [resize] pulls rows back from
-   * scrollback.
-   * See [ScrollbackPullPolicy]. The default is [ScrollbackPullPolicy.CURSOR_AT_BOTTOM].
+   * Sets whether [resize] may pull rows from scrollback back onto the screen. The default is `true`.
+   *
+   * With `true`, a row growth pulls rows back when the cursor is on the bottom row.
+   * A column reflow that needs fewer rows also pulls rows back.
+   *
+   * With `false`, a row growth adds blank rows at the bottom, and the cursor keeps its row.
+   * A column reflow keeps the same content on the top screen row.
+   * A soft-wrapped line that still has a row on the screen can still unwrap back into view.
+   *
+   * Use `false` when the PTY keeps its own screen buffer without scrollback.
+   * Windows ConPTY is the motivating case.
+   * A full reset (RIS) keeps this setting.
    */
-  fun setResizeScrollbackPullPolicy(policy: ScrollbackPullPolicy)
+  fun setResizePullScrollback(pull: Boolean)
 
   // screen state (always current)
   val cursor: Cursor

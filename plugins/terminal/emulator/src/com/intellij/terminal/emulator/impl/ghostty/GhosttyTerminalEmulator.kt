@@ -13,7 +13,6 @@ import com.intellij.terminal.emulator.HistoryMark
 import com.intellij.terminal.emulator.MouseEncoding
 import com.intellij.terminal.emulator.MouseProtocol
 import com.intellij.terminal.emulator.ScreenChange
-import com.intellij.terminal.emulator.ScrollbackPullPolicy
 import com.intellij.terminal.emulator.TerminalColor
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
@@ -85,7 +84,6 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyStyleColorTag
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalOption
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalProgressState
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalScrollbackPull
 import com.intellij.terminal.emulator.impl.ghostty.bindings.LibGhosttyVt
 import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
@@ -631,23 +629,17 @@ internal class GhosttyTerminalEmulator(
     }
   }
 
-  override fun setResizeScrollbackPullPolicy(policy: ScrollbackPullPolicy) {
+  override fun setResizePullScrollback(pull: Boolean) {
     ensureOpen()
     try {
-      scratchOut.set(C_INT, 0L, policy.toGhosttyTerminalScrollbackPull().code)
-      val r = LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.RESIZE_SCROLLBACK_PULL.code, scratchOut)
+      scratchOut.set(C_BYTE, 0L, if (pull) 1 else 0)
+      val r = LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.RESIZE_PULL_SCROLLBACK.code, scratchOut)
       if (r != GhosttyResult.SUCCESS) {
-        throw IllegalStateException("ghostty_terminal_set(RESIZE_SCROLLBACK_PULL) returned $r")
+        throw IllegalStateException("ghostty_terminal_set(RESIZE_PULL_SCROLLBACK) returned $r")
       }
     } catch (t: Throwable) {
-      throw RuntimeException("ghostty_terminal_set(RESIZE_SCROLLBACK_PULL) failed", t)
+      throw RuntimeException("ghostty_terminal_set(RESIZE_PULL_SCROLLBACK) failed", t)
     }
-  }
-
-  private fun ScrollbackPullPolicy.toGhosttyTerminalScrollbackPull(): GhosttyTerminalScrollbackPull = when (this) {
-    ScrollbackPullPolicy.ALWAYS -> GhosttyTerminalScrollbackPull.ALWAYS
-    ScrollbackPullPolicy.CURSOR_AT_BOTTOM -> GhosttyTerminalScrollbackPull.CURSOR_AT_BOTTOM
-    ScrollbackPullPolicy.NEVER -> GhosttyTerminalScrollbackPull.NEVER
   }
 
   // ---- encoding input into PTY bytes ----
