@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,6 +205,10 @@ public final class PlatformUtils {
 
   public static boolean isQodana() {
     return SystemProperties.getBooleanProperty("qodana.application", false);
+  }
+
+  public static @NotNull @NlsSafe String freeIdePaidVersionName() {
+    return isPyCharm() ? "Pro" : "Ultimate";
   }
 
   private static boolean is(String idePrefix) {

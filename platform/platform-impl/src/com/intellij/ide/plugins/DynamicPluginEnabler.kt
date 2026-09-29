@@ -69,10 +69,9 @@ class DynamicPluginEnabler : PluginEnabler {
       pluginsLoaded = true
     }
     else {
-      // FIXME disregards custom title
       val loaded = AtomicBoolean(false)
       runInEdt {
-        loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project))
+        loaded.set(DynamicPlugins.loadPlugins(installedDescriptors, project, progressTitle))
       }
       pluginsLoaded = loaded.get()
     }

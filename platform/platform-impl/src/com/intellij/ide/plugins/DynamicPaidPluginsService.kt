@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -95,7 +96,8 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
 
     if (loadablePlugins.isNotEmpty()) {
       enablePlugins(pluginEnabler, loadablePlugins, restart = false, project = project,
-                    progressTitle = IdeBundle.message("progress.title.loading.paid.plugins"))
+                    progressTitle = IdeBundle.message("modal.progress.title.activating.ultimate.subscription",
+                                                      PlatformUtils.freeIdePaidVersionName()))
     }
     else {
       logger.debug("No plugins loadable without restart plugins found to be enabled.")

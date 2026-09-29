@@ -15,10 +15,12 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.ObjectUtils
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 private val LOG = Logger.getInstance(DynamicPlugins::class.java)
@@ -146,10 +148,10 @@ object DynamicPlugins {
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
   @RequiresEdt(generateAssertion = false)
-  fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?): Boolean {
+  fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?, progressTitle: @Nls String? = null): Boolean {
     return runWithModalProgressBlocking(
       project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(),
-      IdeBundle.message("modal.progress.title.loading.plugins"),
+      progressTitle ?: defaultLoadingTitle(plugins),
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(plugins, emptyList())
@@ -161,6 +163,18 @@ object DynamicPlugins {
       }
       val result = DynamicPluginsSupport.getInstance().performDynamicReconfiguration(newState)
       result is DynamicPluginsReconfigurationResult.Success
+    }
+  }
+
+  /**
+   * Enabling the Ultimate plugin is a subscription activation from the user's point of view
+   */
+  private fun defaultLoadingTitle(plugins: List<PluginMainDescriptor>): @NlsContexts.ModalProgressTitle String {
+    return if (plugins.any { it.pluginId == PluginManagerCore.ULTIMATE_PLUGIN_ID }) {
+      IdeBundle.message("modal.progress.title.activating.ultimate.subscription", PlatformUtils.freeIdePaidVersionName())
+    }
+    else {
+      IdeBundle.message("modal.progress.title.loading.plugins")
     }
   }
 
