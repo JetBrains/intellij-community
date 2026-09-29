@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.accessibility
 
-import com.intellij.ide.audioCues.AudioCueIdValidationRule
+import com.intellij.ide.soundSignals.SoundSignalIdValidationRule
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
@@ -27,7 +27,7 @@ internal object AccessibilityUsageTrackerCollector : CounterUsagesCollector() {
   }
 
   private val raisedEvents: Queue<EventId> = ConcurrentLinkedQueue()
-  private val GROUP = EventLogGroup("accessibility", 5)
+  private val GROUP = EventLogGroup("accessibility", 6)
 
   @JvmField
   val SCREEN_READER_DETECTED: EventId = GROUP.registerEvent("screen.reader.detected")
@@ -36,8 +36,8 @@ internal object AccessibilityUsageTrackerCollector : CounterUsagesCollector() {
   @JvmField
   val LINUX_ACCESSIBILITY_SUPPORT_ENABLED: EventId = GROUP.registerEvent("linux.accessibility.support.enabled")
   @JvmField
-  val AUDIO_CUE_PLAYED: EventId1<String> =
-    GROUP.registerEvent("audio.cue.played", EventFields.StringValidatedByCustomRule<AudioCueIdValidationRule>("cue"))
+  val SOUND_SIGNAL_PLAYED: EventId1<String> =
+    GROUP.registerEvent("sound.signal.played", EventFields.StringValidatedByCustomRule<SoundSignalIdValidationRule>("signal"))
 
   @JvmStatic
   fun featureTriggered(feature: EventId) {

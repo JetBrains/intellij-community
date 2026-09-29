@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.audioCues
+package com.intellij.ide.soundSignals
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
-/** A sound and its presentation in the shared audio cue settings. */
+/** A sound and its presentation in the shared sound signal settings. */
 @ApiStatus.Internal
-class AudioCue(
+class SoundSignal(
   val id: @NonNls String,
   private val titleSupplier: Supplier<@Nls String>,
   val resourcePath: @NonNls String,

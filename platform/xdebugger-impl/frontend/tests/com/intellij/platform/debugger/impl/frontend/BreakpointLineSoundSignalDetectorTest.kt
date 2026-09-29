@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
-import com.intellij.ide.audioCues.AudioCue
+import com.intellij.ide.soundSignals.SoundSignal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
@@ -29,20 +29,20 @@ import java.lang.reflect.Proxy
 
 @TestApplication
 @Timeout(30)
-class BreakpointLineAudioCueDetectorTest {
-  private val detector = BreakpointLineAudioCueDetector()
+class BreakpointLineSoundSignalDetectorTest {
+  private val detector = BreakpointLineSoundSignalDetector()
 
   @TestDisposable
   lateinit var testDisposable: Disposable
 
   @Test
-  fun `the debugger provider publishes a valid cue`() {
-    val cues = DebuggerAudioCueProvider().audioCues
+  fun `the debugger provider publishes a valid signal`() {
+    val signals = DebuggerSoundSignalProvider().soundSignals
 
-    assertEquals(listOf("breakpoint.line"), cues.map { it.id })
-    for (cue in cues) {
-      assertTrue(cue.title.isNotBlank())
-      val sound = checkNotNull(cue.ownerClass.classLoader.getResourceAsStream(cue.resourcePath)) { "No sound for '${cue.id}'" }
+    assertEquals(listOf("breakpoint.line"), signals.map { it.id })
+    for (signal in signals) {
+      assertTrue(signal.title.isNotBlank())
+      val sound = checkNotNull(signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)) { "No sound for '${signal.id}'" }
       assertTrue(sound.use { it.read() } != -1)
     }
   }
@@ -51,37 +51,37 @@ class BreakpointLineAudioCueDetectorTest {
   fun `a breakpoint on the line is reported`() = withEditor { editor ->
     installBreakpoints(1)
 
-    assertEquals(setOf(DebuggerAudioCues.BREAKPOINT_LINE), detect(editor, 1, LINE_1_START))
+    assertEquals(setOf(DebuggerSoundSignals.BREAKPOINT_LINE), detect(editor, 1, LINE_1_START))
   }
 
   @Test
   fun `only the breakpoint's own line is reported`() = withEditor { editor ->
     installBreakpoints(2)
 
-    assertEquals(emptySet<AudioCue>(), detect(editor, 1, LINE_1_START))
-    assertEquals(setOf(DebuggerAudioCues.BREAKPOINT_LINE), detect(editor, 2, LINE_2_START))
-    assertEquals(emptySet<AudioCue>(), detect(editor, 3, LINE_3_START))
+    assertEquals(emptySet<SoundSignal>(), detect(editor, 1, LINE_1_START))
+    assertEquals(setOf(DebuggerSoundSignals.BREAKPOINT_LINE), detect(editor, 2, LINE_2_START))
+    assertEquals(emptySet<SoundSignal>(), detect(editor, 3, LINE_3_START))
   }
 
   @Test
   fun `a line without breakpoints is not reported`() = withEditor { editor ->
     installBreakpoints()
 
-    assertEquals(emptySet<AudioCue>(), detect(editor, 1, LINE_1_START))
+    assertEquals(emptySet<SoundSignal>(), detect(editor, 1, LINE_1_START))
   }
 
   @Test
   fun `breakpoints are not reported in a diff editor`() = withEditor(EditorKind.DIFF) { editor ->
     installBreakpoints(1)
 
-    assertEquals(emptySet<AudioCue>(), detect(editor, 1, LINE_1_START))
+    assertEquals(emptySet<SoundSignal>(), detect(editor, 1, LINE_1_START))
   }
 
   @Test
   fun `breakpoints are not reported in an editor without a project`() = withEditor(project = null) { editor ->
     installBreakpoints(1)
 
-    assertEquals(emptySet<AudioCue>(), detect(editor, 1, LINE_1_START))
+    assertEquals(emptySet<SoundSignal>(), detect(editor, 1, LINE_1_START))
   }
 
   private fun installBreakpoints(vararg lines: Int) {
@@ -115,8 +115,8 @@ class BreakpointLineAudioCueDetectorTest {
     ExtensionTestUtil.maskExtensions(X_DEBUG_MANAGER_PROXY_EP, listOf(manager), testDisposable)
   }
 
-  private fun detect(editor: Editor, line: Int, caretOffset: Int): Set<AudioCue> =
-    detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.cue }
+  private fun detect(editor: Editor, line: Int, caretOffset: Int): Set<SoundSignal> =
+    detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.signal }
 
   private fun withEditor(
     kind: EditorKind = EditorKind.MAIN_EDITOR,

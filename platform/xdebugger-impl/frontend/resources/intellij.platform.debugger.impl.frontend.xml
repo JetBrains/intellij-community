@@ -56,8 +56,8 @@
 
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <gutterMarkPreprocessor implementation="com.intellij.platform.debugger.impl.frontend.breakpoints.BreakpointGutterIconMerge"/>
-    <editorAudioCueDetector implementation="com.intellij.platform.debugger.impl.frontend.BreakpointLineAudioCueDetector"/>
-    <audioCueProvider implementation="com.intellij.platform.debugger.impl.frontend.DebuggerAudioCueProvider"/>
+    <editorSoundSignalDetector implementation="com.intellij.platform.debugger.impl.frontend.BreakpointLineSoundSignalDetector"/>
+    <soundSignalProvider implementation="com.intellij.platform.debugger.impl.frontend.DebuggerSoundSignalProvider"/>
     <notificationSound group="Breakpoint hit" sound="sounds/breakpoint.wav"/>
     <projectService serviceInterface="com.intellij.platform.debugger.impl.shared.CustomDescriptorStateManager"
                     serviceImplementation="com.intellij.platform.debugger.impl.frontend.FrontendCustomDescriptorStateManager"/>

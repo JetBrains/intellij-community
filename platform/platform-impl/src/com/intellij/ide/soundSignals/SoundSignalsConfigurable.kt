@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.audioCues
+package com.intellij.ide.soundSignals
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.PersistentStateComponent
@@ -20,49 +20,49 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selectedValueMatches
 import java.awt.event.FocusEvent
 
-internal class AudioCuesConfigurable : BoundConfigurable(IdeBundle.message("configurable.AudioCuesConfigurable.display.name")), BackedByPersistentState {
+internal class SoundSignalsConfigurable : BoundConfigurable(IdeBundle.message("configurable.SoundSignalsConfigurable.display.name")), BackedByPersistentState {
   override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
-    listOf(service<AudioCuesSettings>())
+    listOf(service<SoundSignalsSettings>())
 
   override fun createPanel(): DialogPanel = panel {
-    val settings = service<AudioCuesSettings>()
-    val player = AudioCuePlayer.getInstance()
+    val settings = service<SoundSignalsSettings>()
+    val player = SoundSignalPlayer.getInstance()
 
     row {
-      text(IdeBundle.message("audio.cues.description"))
+      text(IdeBundle.message("sound.signals.description"))
     }.bottomGap(BottomGap.SMALL)
 
-    lateinit var mode: ComboBox<AudioCuesMode>
-    row(IdeBundle.message("audio.cues.mode.label")) {
-      mode = comboBox(AudioCuesMode.entries, textListCellRenderer("") { it.title })
+    lateinit var mode: ComboBox<SoundSignalsMode>
+    row(IdeBundle.message("sound.signals.mode.label")) {
+      mode = comboBox(SoundSignalsMode.entries, textListCellRenderer("") { it.title })
         .bindItem({ settings.state.mode }, { it?.let(settings::setMode) })
         .component
     }
     indent {
-      for (cue in getAudioCues()) {
+      for (signal in getSoundSignals()) {
         row {
-          checkBox(cue.title)
+          checkBox(signal.title)
             .bindSelected(
-              { cue.id !in settings.state.disabledCues },
-              { checked -> settings.setCueEnabled(cue, checked) },
+              { signal.id !in settings.state.disabledSignals },
+              { checked -> settings.setSignalEnabled(signal, checked) },
             )
-            .actionListener { _, _ -> player.preview(cue) }
+            .actionListener { _, _ -> player.preview(signal) }
             .applyToComponent {
               whenFocusGained { e ->
                 when (e.cause) {
-                  FocusEvent.Cause.TRAVERSAL_FORWARD, FocusEvent.Cause.TRAVERSAL_BACKWARD -> player.preview(cue)
+                  FocusEvent.Cause.TRAVERSAL_FORWARD, FocusEvent.Cause.TRAVERSAL_BACKWARD -> player.preview(signal)
                   else -> {}
                 }
               }
             }
         }
       }
-    }.enabledIf(mode.selectedValueMatches { it != AudioCuesMode.OFF })
+    }.enabledIf(mode.selectedValueMatches { it != SoundSignalsMode.OFF })
   }
 }
 
-internal class AudioCuesConfigurableProvider : ConfigurableProvider() {
-  override fun createConfigurable(): Configurable = AudioCuesConfigurable()
+internal class SoundSignalsConfigurableProvider : ConfigurableProvider() {
+  override fun createConfigurable(): Configurable = SoundSignalsConfigurable()
 
-  override fun canCreateConfigurable(): Boolean = isAudioCuesFeatureEnabled()
+  override fun canCreateConfigurable(): Boolean = isSoundSignalsFeatureEnabled()
 }

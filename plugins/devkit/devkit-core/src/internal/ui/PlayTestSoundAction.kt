@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.internal.ui
 
-import com.intellij.ide.audioCues.AudioCue
-import com.intellij.ide.audioCues.AudioCuePlayer
-import com.intellij.ide.audioCues.getAudioCues
+import com.intellij.ide.soundSignals.SoundSignal
+import com.intellij.ide.soundSignals.SoundSignalPlayer
+import com.intellij.ide.soundSignals.getSoundSignals
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -28,17 +28,17 @@ internal class PlayTestSoundAction : AnAction(), DumbAware {
     }
 
     override fun createCenterPanel(): JComponent = panel {
-      val checkBoxes = mutableListOf<Pair<AudioCue, JBCheckBox>>()
-      for (cue in getAudioCues()) {
+      val checkBoxes = mutableListOf<Pair<SoundSignal, JBCheckBox>>()
+      for (signal in getSoundSignals()) {
         row {
-          checkBox("").also { checkBoxes.add(cue to it.component) }
-          button(cue.title) { AudioCuePlayer.getInstance().preview(cue) }
+          checkBox("").also { checkBoxes.add(signal to it.component) }
+          button(signal.title) { SoundSignalPlayer.getInstance().preview(signal) }
         }
       }
       row {
         button("Play All Selected") {
           val selected = checkBoxes.filter { it.second.isSelected }.map { it.first }
-          if (selected.isNotEmpty()) AudioCuePlayer.getInstance().preview(*selected.toTypedArray())
+          if (selected.isNotEmpty()) SoundSignalPlayer.getInstance().preview(*selected.toTypedArray())
         }
       }
     }

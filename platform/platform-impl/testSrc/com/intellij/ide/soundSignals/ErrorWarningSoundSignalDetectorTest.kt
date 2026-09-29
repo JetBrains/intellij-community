@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.audioCues
+package com.intellij.ide.soundSignals
 
 import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -38,42 +38,42 @@ import java.awt.Font
  */
 @TestApplication
 @Timeout(30)
-class ErrorWarningAudioCueDetectorTest {
-  private val detector = ErrorWarningAudioCueDetector()
+class ErrorWarningSoundSignalDetectorTest {
+  private val detector = ErrorWarningSoundSignalDetector()
   private val sourceDocuments = mutableListOf<Document>()
 
   @Test
-  fun `error yields the error cues`() = withEditor { editor, project ->
+  fun `error yields the error signals`() = withEditor { editor, project ->
     addHighlight(editor.document, project, HighlightSeverity.ERROR, LINE_1_START + 1, LINE_1_START + 3)
 
-    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeAudioCues.ERROR_LINE)
+    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeSoundSignals.ERROR_LINE)
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.ERROR_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET)
   }
 
   @Test
-  fun `error in a diff editor yields the error cues`() = withEditor(EditorKind.DIFF) { editor, project ->
+  fun `error in a diff editor yields the error signals`() = withEditor(EditorKind.DIFF) { editor, project ->
     addHighlight(editor.document, project, HighlightSeverity.ERROR, LINE_1_START + 1, LINE_1_START + 3)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.ERROR_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET)
   }
 
   @Test
-  fun `an error copied from another document yields the error cues`() = withEditor(EditorKind.DIFF) { editor, project ->
+  fun `an error copied from another document yields the error signals`() = withEditor(EditorKind.DIFF) { editor, project ->
     copyHighlight(editor, project, HighlightSeverity.ERROR, LINE_1_START + 1, LINE_1_START + 3)
 
-    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeAudioCues.ERROR_LINE)
+    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeSoundSignals.ERROR_LINE)
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.ERROR_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET)
   }
 
   @Test
-  fun `a warning copied from another document yields the warning cues`() = withEditor(EditorKind.DIFF) { editor, project ->
+  fun `a warning copied from another document yields the warning signals`() = withEditor(EditorKind.DIFF) { editor, project ->
     copyHighlight(editor, project, HighlightSeverity.WARNING, LINE_1_START + 1, LINE_1_START + 3)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.WARNING_LINE, IdeAudioCues.WARNING_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.WARNING_LINE, IdeSoundSignals.WARNING_CARET)
   }
 
   @Test
@@ -82,8 +82,8 @@ class ErrorWarningAudioCueDetectorTest {
     copyHighlight(editor, project, HighlightSeverity.ERROR, LINE_1_START + 1, LINE_1_START + 3, sourceStart = LINE_3_START)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.ERROR_CARET)
-    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeAudioCues.ERROR_LINE)
+      .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET)
+    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeSoundSignals.ERROR_LINE)
   }
 
   @Test
@@ -108,7 +108,7 @@ class ErrorWarningAudioCueDetectorTest {
     addHighlight(editor.document, project, HighlightSeverity.WARNING, LINE_1_START + 1, LINE_1_START + 3)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.WARNING_LINE, IdeAudioCues.WARNING_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.WARNING_LINE, IdeSoundSignals.WARNING_CARET)
     assertThat(detect(editor, line = 3, caretOffset = LINE_3_START)).isEmpty()
   }
 
@@ -118,16 +118,16 @@ class ErrorWarningAudioCueDetectorTest {
     addHighlight(editor.document, project, HighlightSeverity.ERROR, LINE_1_START + 1, LINE_1_START + 3)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 3))
-      .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.ERROR_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET)
   }
 
   @Test
-  fun `warning yields the warning cues`() = withEditor { editor, project ->
+  fun `warning yields the warning signals`() = withEditor { editor, project ->
     addHighlight(editor.document, project, HighlightSeverity.WARNING, LINE_1_START + 1, LINE_1_START + 3)
 
-    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeAudioCues.WARNING_LINE)
+    assertThat(detect(editor, line = 1, caretOffset = LINE_1_END)).containsExactly(IdeSoundSignals.WARNING_LINE)
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.WARNING_LINE, IdeAudioCues.WARNING_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.WARNING_LINE, IdeSoundSignals.WARNING_CARET)
   }
 
   @Test
@@ -144,17 +144,17 @@ class ErrorWarningAudioCueDetectorTest {
       addHighlight(editor.document, project, FATAL_SEVERITY, LINE_1_START + 1, LINE_1_START + 3)
 
       assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-        .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.ERROR_CARET)
+        .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET)
     }
   }
 
   @Test
-  fun `an error and a warning on one line yield both cues`() = withEditor { editor, project ->
+  fun `an error and a warning on one line yield both signals`() = withEditor { editor, project ->
     addHighlight(editor.document, project, HighlightSeverity.ERROR, LINE_1_START, LINE_1_START + 1)
     addHighlight(editor.document, project, HighlightSeverity.WARNING, LINE_1_START + 3, LINE_1_START + 4)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START + 2))
-      .containsExactlyInAnyOrder(IdeAudioCues.ERROR_LINE, IdeAudioCues.WARNING_LINE)
+      .containsExactlyInAnyOrder(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.WARNING_LINE)
   }
 
   @Test
@@ -180,8 +180,8 @@ class ErrorWarningAudioCueDetectorTest {
     }
   }
 
-  private fun detect(editor: Editor, line: Int, caretOffset: Int): Set<AudioCue> =
-    detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.cue }
+  private fun detect(editor: Editor, line: Int, caretOffset: Int): Set<SoundSignal> =
+    detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.signal }
 
   private fun addHighlight(document: Document, project: Project, severity: HighlightSeverity, start: Int, end: Int): RangeHighlighterEx {
     val markupModel = DocumentMarkupModel.forDocument(document, project, true)
@@ -272,6 +272,6 @@ class ErrorWarningAudioCueDetectorTest {
     const val LINE_1_END: Int = 11
     const val LINE_3_START: Int = 18
 
-    val FATAL_SEVERITY: HighlightSeverity = HighlightSeverity("AUDIO_CUE_TEST_FATAL", HighlightSeverity.ERROR.myVal + 100)
+    val FATAL_SEVERITY: HighlightSeverity = HighlightSeverity("SOUND_SIGNAL_TEST_FATAL", HighlightSeverity.ERROR.myVal + 100)
   }
 }

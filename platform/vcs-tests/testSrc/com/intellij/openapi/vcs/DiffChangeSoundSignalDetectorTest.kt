@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
-import com.intellij.diff.audioCues.DiffAudioCueProvider
-import com.intellij.diff.audioCues.DiffAudioCues
-import com.intellij.diff.audioCues.DiffChangeAudioCueDetector
+import com.intellij.diff.soundSignals.DiffChangeSoundSignalDetector
+import com.intellij.diff.soundSignals.DiffSoundSignalProvider
+import com.intellij.diff.soundSignals.DiffSoundSignals
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.application.EDT
@@ -27,50 +27,50 @@ import org.junit.jupiter.api.Timeout
  */
 @TestApplication
 @Timeout(30)
-class DiffChangeAudioCueDetectorTest {
-  private val detector = DiffChangeAudioCueDetector()
+class DiffChangeSoundSignalDetectorTest {
+  private val detector = DiffChangeSoundSignalDetector()
 
   @Test
-  fun `the diff provider publishes valid cues`() {
-    val cues = DiffAudioCueProvider().audioCues
+  fun `the diff provider publishes valid signals`() {
+    val signals = DiffSoundSignalProvider().soundSignals
 
-    assertThat(cues.map { it.id })
+    assertThat(signals.map { it.id })
       .containsExactly("diff.line.inserted", "diff.line.deleted", "diff.line.modified", "diff.line.conflict")
-    assertThat(cues).allSatisfy { cue ->
-      assertThat(cue.title).isNotBlank()
-      val sound = cue.ownerClass.classLoader.getResourceAsStream(cue.resourcePath)
-      assertThat(sound).describedAs("sound of '%s'", cue.id).isNotNull()
+    assertThat(signals).allSatisfy { signal ->
+      assertThat(signal.title).isNotBlank()
+      val sound = signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)
+      assertThat(sound).describedAs("sound of '%s'", signal.id).isNotNull()
       assertThat(sound!!.use { it.read() }).isNotEqualTo(-1)
     }
   }
 
   @Test
-  fun `an inserted change yields the inserted cue`() = withEditor { editor ->
+  fun `an inserted change yields the inserted signal`() = withEditor { editor ->
     addChange(editor, line = 1, TextDiffType.INSERTED)
 
-    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffAudioCues.LINE_INSERTED)
+    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffSoundSignals.LINE_INSERTED)
   }
 
   @Test
-  fun `a deleted change yields the deleted cue`() = withEditor { editor ->
+  fun `a deleted change yields the deleted signal`() = withEditor { editor ->
     // a deletion is a real (non-empty) range on the side that still shows the removed lines
     addChange(editor, line = 1, TextDiffType.DELETED)
 
-    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffAudioCues.LINE_DELETED)
+    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffSoundSignals.LINE_DELETED)
   }
 
   @Test
-  fun `a modified change yields the modified cue`() = withEditor { editor ->
+  fun `a modified change yields the modified signal`() = withEditor { editor ->
     addChange(editor, line = 1, TextDiffType.MODIFIED)
 
-    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffAudioCues.LINE_MODIFIED)
+    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffSoundSignals.LINE_MODIFIED)
   }
 
   @Test
-  fun `a conflict yields the conflict cue`() = withEditor { editor ->
+  fun `a conflict yields the conflict signal`() = withEditor { editor ->
     addChange(editor, line = 1, TextDiffType.CONFLICT)
 
-    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffAudioCues.LINE_CONFLICT)
+    assertThat(detect(editor, 1, LINE_1_START)).containsExactly(DiffSoundSignals.LINE_CONFLICT)
   }
 
   @Test
@@ -83,12 +83,12 @@ class DiffChangeAudioCueDetectorTest {
   }
 
   @Test
-  fun `adjacent changes of different types on one line yield both cues`() = withEditor { editor ->
+  fun `adjacent changes of different types on one line yield both signals`() = withEditor { editor ->
     addChange(editor, line = 1, TextDiffType.INSERTED)
     addChange(editor, line = 1, TextDiffType.CONFLICT)
 
     assertThat(detect(editor, 1, LINE_1_START))
-      .containsExactlyInAnyOrder(DiffAudioCues.LINE_INSERTED, DiffAudioCues.LINE_CONFLICT)
+      .containsExactlyInAnyOrder(DiffSoundSignals.LINE_INSERTED, DiffSoundSignals.LINE_CONFLICT)
   }
 
   @Test
@@ -129,7 +129,7 @@ class DiffChangeAudioCueDetectorTest {
   }
 
   private fun detect(editor: Editor, line: Int, caretOffset: Int) =
-    detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.cue }
+    detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.signal }
 
   private fun withEditor(kind: EditorKind = EditorKind.DIFF, body: (Editor) -> Unit) = timeoutRunBlocking {
     val project = projectFixture.get()

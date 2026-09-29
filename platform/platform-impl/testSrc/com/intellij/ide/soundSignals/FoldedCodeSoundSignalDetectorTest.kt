@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.audioCues
+package com.intellij.ide.soundSignals
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -19,19 +19,19 @@ import org.junit.jupiter.api.Timeout
 
 /**
  * Pins the [FoldingModelEx][com.intellij.openapi.editor.ex.FoldingModelEx] offset semantics that
- * [FoldedCodeAudioCueDetector] relies on. None of them are guaranteed by documentation, and a change in any
- * makes the folding cue go silent (or fire everywhere) without any other symptom.
+ * [FoldedCodeSoundSignalDetector] relies on. None of them are guaranteed by documentation, and a change in any
+ * makes the folding signal go silent (or fire everywhere) without any other symptom.
  */
 @TestApplication
 @Timeout(30)
-class FoldedCodeAudioCueDetectorTest {
-  private val detector = FoldedCodeAudioCueDetector()
+class FoldedCodeSoundSignalDetectorTest {
+  private val detector = FoldedCodeSoundSignalDetector()
 
   @Test
   fun `collapsed region spanning the line is reported for that line`() = withFoldingEditor { editor ->
     collapse(editor, LINE_1_START, LINE_2_END)
 
-    assertThat(detect(editor, line = 1, caretOffset = LINE_0_START)).containsExactly(IdeAudioCues.FOLDED_LINE)
+    assertThat(detect(editor, line = 1, caretOffset = LINE_0_START)).containsExactly(IdeSoundSignals.FOLDED_LINE)
   }
 
   @Test
@@ -58,7 +58,7 @@ class FoldedCodeAudioCueDetectorTest {
     // touch-inclusive overlap: the region swallowed the preceding line break, so its placeholder renders here
     collapse(editor, LINE_0_START, LINE_1_START)
 
-    assertThat(detect(editor, line = 1, caretOffset = LINE_3_START)).containsExactly(IdeAudioCues.FOLDED_LINE)
+    assertThat(detect(editor, line = 1, caretOffset = LINE_3_START)).containsExactly(IdeSoundSignals.FOLDED_LINE)
   }
 
   @Test
@@ -73,7 +73,7 @@ class FoldedCodeAudioCueDetectorTest {
     collapse(editor, LINE_1_START, LINE_2_END)
 
     assertThat(detect(editor, line = 1, caretOffset = LINE_1_START))
-      .containsExactlyInAnyOrder(IdeAudioCues.FOLDED_LINE, IdeAudioCues.FOLDED_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.FOLDED_LINE, IdeSoundSignals.FOLDED_CARET)
   }
 
   @Test
@@ -82,30 +82,30 @@ class FoldedCodeAudioCueDetectorTest {
     collapse(editor, LINE_1_START, LINE_2_END)
 
     assertThat(detect(editor, line = 2, caretOffset = LINE_2_END))
-      .containsExactlyInAnyOrder(IdeAudioCues.FOLDED_LINE, IdeAudioCues.FOLDED_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.FOLDED_LINE, IdeSoundSignals.FOLDED_CARET)
   }
 
   @Test
   fun `a folded region nested in a wider one is reported at the caret off the EDT`() = withFoldingEditor { editor ->
     // getCollapsedRegionAtOffset only ever returned the *outermost* region; the overlap scan sees every one, so a
-    // caret at an inner region's start is cued even when a wider region starts elsewhere. Off the EDT because that
+    // caret at an inner region's start is signaled even when a wider region starts elsewhere. Off the EDT because that
     // is how the manager calls it: FoldRegionsTree's cached top-level data is rebuilt on the EDT only.
     collapse(editor, LINE_0_START, LINE_3_START)
     collapse(editor, LINE_1_START, LINE_2_END)
 
     assertThat(detectInBackground(editor, line = 1, caretOffset = LINE_1_START))
-      .containsExactlyInAnyOrder(IdeAudioCues.FOLDED_LINE, IdeAudioCues.FOLDED_CARET)
+      .containsExactlyInAnyOrder(IdeSoundSignals.FOLDED_LINE, IdeSoundSignals.FOLDED_CARET)
   }
 
-  private suspend fun detect(editor: Editor, line: Int, caretOffset: Int): Set<AudioCue> =
-    onEdt { detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.cue } }
+  private suspend fun detect(editor: Editor, line: Int, caretOffset: Int): Set<SoundSignal> =
+    onEdt { detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.signal } }
 
   /** How the manager calls it: a background read action, where the EDT-only folding caches are unavailable. */
-  private suspend fun detectInBackground(editor: Editor, line: Int, caretOffset: Int): Set<AudioCue> =
+  private suspend fun detectInBackground(editor: Editor, line: Int, caretOffset: Int): Set<SoundSignal> =
     withContext(Dispatchers.Default) {
       readAction {
         check(!ApplicationManager.getApplication().isDispatchThread) { "the detection did not leave the EDT" }
-        detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.cue }
+        detector.detect(editor, line, caretOffset).mapTo(HashSet()) { it.signal }
       }
     }
 

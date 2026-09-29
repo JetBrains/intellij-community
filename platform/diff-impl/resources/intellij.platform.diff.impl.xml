@@ -57,8 +57,8 @@
 
     <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
 
-    <editorAudioCueDetector implementation="com.intellij.diff.audioCues.DiffChangeAudioCueDetector"/>
-    <audioCueProvider implementation="com.intellij.diff.audioCues.DiffAudioCueProvider"/>
+    <editorSoundSignalDetector implementation="com.intellij.diff.soundSignals.DiffChangeSoundSignalDetector"/>
+    <soundSignalProvider implementation="com.intellij.diff.soundSignals.DiffSoundSignalProvider"/>
 
     <rdct.remoteSettingProvider implementation="com.intellij.diff.settings.DiffSettingsProvider"/>
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication" bundle="messages.IdeBundle" key="diff.help"/>

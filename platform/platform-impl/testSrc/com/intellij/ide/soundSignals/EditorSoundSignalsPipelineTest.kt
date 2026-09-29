@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.audioCues
+package com.intellij.ide.soundSignals
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -44,26 +44,26 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
-@RegistryKey(key = AUDIO_CUES_ENABLED_REGISTRY_KEY, value = "true")
+@RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "true")
 @Timeout(120)
-class EditorAudioCuesPipelineTest {
+class EditorSoundSignalsPipelineTest {
   @TestDisposable
   private lateinit var disposable: Disposable
 
   @Test
-  fun `a cue fires when the caret settles on a new line`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+  fun `a signal fires when the caret settles on a new line`() = pipelineTest { editor ->
+    detector.signals = setOf(LINE_SIGNAL)
 
     moveCaret(editor, LINE_1_START)
 
-    assertThat(awaitPlay()).containsExactly(LINE_CUE)
+    assertThat(awaitPlay()).containsExactly(LINE_SIGNAL)
   }
 
   @Test
-  fun `a line-scoped cue is not replayed while the caret stays on the line`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+  fun `a line-scoped signal is not replayed while the caret stays on the line`() = pipelineTest { editor ->
+    detector.signals = setOf(LINE_SIGNAL)
     moveCaret(editor, LINE_1_START)
-    assertThat(awaitPlay()).containsExactly(LINE_CUE)
+    assertThat(awaitPlay()).containsExactly(LINE_SIGNAL)
 
     moveCaret(editor, LINE_1_START + 2)
     awaitIdle()
@@ -73,19 +73,19 @@ class EditorAudioCuesPipelineTest {
   }
 
   @Test
-  fun `a caret-scoped cue does fire on intra-line movement`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+  fun `a caret-scoped signal does fire on intra-line movement`() = pipelineTest { editor ->
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     moveCaret(editor, LINE_1_START + 2)
 
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
   }
 
   @Test
   fun `a programmatic move rebases the settled line, so a later move within it is silent`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
     moveCaretWithoutCommand(editor, LINE_1_START)
     awaitIdle()
     assertThat(detector.detected()).isEmpty()
@@ -98,8 +98,8 @@ class EditorAudioCuesPipelineTest {
   }
 
   @Test
-  fun `editors of a kind the cues do not cover are ignored`() = pipelineTest(editorKind = EditorKind.PREVIEW) { editor ->
-    detector.cues = setOf(LINE_CUE)
+  fun `editors of a kind the signals do not cover are ignored`() = pipelineTest(editorKind = EditorKind.PREVIEW) { editor ->
+    detector.signals = setOf(LINE_SIGNAL)
 
     moveCaret(editor, LINE_1_START)
     awaitIdle()
@@ -109,7 +109,7 @@ class EditorAudioCuesPipelineTest {
 
   @Test
   fun `moving a secondary caret is ignored`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
 
     moveSecondaryCaret(editor, LINE_3_START)
     awaitIdle()
@@ -119,44 +119,44 @@ class EditorAudioCuesPipelineTest {
 
   @Test
   fun `rapid moves collapse into one detection at the last position`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+    detector.signals = setOf(CARET_SIGNAL)
 
     // all three in one EDT hop, so they land well inside the settle window
     moveCaretSequence(editor, LINE_1_START, LINE_2_START, LINE_3_START)
 
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
     awaitIdle()
     assertThat(detector.detected()).containsExactly(Detection(3, LINE_3_START))
   }
 
   @Test
   fun `a move right after an edit waits for the longer, edit-adjacent delay`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
 
     editThenMoveCaret(editor, LINE_1_START)
 
     delay(IDLE_WAIT)
     assertThat(detector.detected()).isEmpty()
 
-    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(LINE_CUE)
+    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(LINE_SIGNAL)
   }
 
   @Test
   fun `a move long after an edit uses the short delay`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
 
     editDocumentAtEnd(editor)
     delay(TYPING_WINDOW * 3)
     moveCaret(editor, LINE_1_START)
 
-    assertThat(awaitPlay(SHORT_PATH_BUDGET)).containsExactly(LINE_CUE)
+    assertThat(awaitPlay(SHORT_PATH_BUDGET)).containsExactly(LINE_SIGNAL)
   }
 
   @Test
-  fun `a deletion before the caret cues although it fires no caret event`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+  fun `a deletion before the caret signals although it fires no caret event`() = pipelineTest { editor ->
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 3)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     deleteBeforeCaret(editor)
 
@@ -164,40 +164,40 @@ class EditorAudioCuesPipelineTest {
     delay(IDLE_WAIT)
     assertThat(detector.detected()).containsExactly(Detection(1, LINE_1_START + 3))
 
-    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_CUE)
+    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_SIGNAL)
     // the deletion carried the caret one character back
     assertThat(detector.detected()).containsExactly(Detection(1, LINE_1_START + 3), Detection(1, LINE_1_START + 2))
   }
 
   @Test
-  fun `a deletion at the caret cues although the caret does not move at all`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+  fun `a deletion at the caret signals although the caret does not move at all`() = pipelineTest { editor ->
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 2)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     deleteAtCaret(editor)
 
-    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_CUE)
+    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_SIGNAL)
     assertThat(detector.detected()).containsExactly(Detection(1, LINE_1_START + 2), Detection(1, LINE_1_START + 2))
   }
 
   @Test
-  fun `an edit does not replay line-scoped cues`() = pipelineTest { editor ->
-    // an edit is scoped like intra-line movement, or every keystroke would replay the line's VCS gutter cue
-    detector.cues = setOf(LINE_CUE, CARET_CUE)
+  fun `an edit does not replay line-scoped signals`() = pipelineTest { editor ->
+    // an edit is scoped like intra-line movement, or every keystroke would replay the line's VCS gutter signal
+    detector.signals = setOf(LINE_SIGNAL, CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 3)
-    assertThat(awaitPlay()).containsExactlyInAnyOrder(LINE_CUE, CARET_CUE)
+    assertThat(awaitPlay()).containsExactlyInAnyOrder(LINE_SIGNAL, CARET_SIGNAL)
 
     deleteBeforeCaret(editor)
 
-    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_CUE)
+    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_SIGNAL)
   }
 
   @Test
   fun `an edit away from the caret is silent`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     editDocumentAtEnd(editor)
     delay(IDLE_WAIT_AFTER_EDIT)
@@ -208,9 +208,9 @@ class EditorAudioCuesPipelineTest {
 
   @Test
   fun `a document change outside a command is silent`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 3)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     deleteBeforeCaretWithoutCommand(editor)
     delay(IDLE_WAIT_AFTER_EDIT)
@@ -220,8 +220,8 @@ class EditorAudioCuesPipelineTest {
   }
 
   @Test
-  fun `an edit in an editor of a kind the cues do not cover is ignored`() = pipelineTest(editorKind = EditorKind.PREVIEW) { editor ->
-    detector.cues = setOf(CARET_CUE)
+  fun `an edit in an editor of a kind the signals do not cover is ignored`() = pipelineTest(editorKind = EditorKind.PREVIEW) { editor ->
+    detector.signals = setOf(CARET_SIGNAL)
 
     moveCaret(editor, LINE_1_START + 3)
     deleteBeforeCaret(editor)
@@ -232,9 +232,9 @@ class EditorAudioCuesPipelineTest {
 
   @Test
   fun `a document change delivered off the EDT is ignored`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 3)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     // a document created with allowUpdatesWithoutWriteAction (consoles, LSP formatting) drops every write assertion,
     // so the multicaster can deliver documentChanged off the EDT - where the caret model is unreadable and
@@ -260,10 +260,10 @@ class EditorAudioCuesPipelineTest {
   }
 
   @Test
-  fun `multi-caret typing cues the primary caret`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+  fun `multi-caret typing signals the primary caret`() = pipelineTest { editor ->
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 3)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
@@ -278,14 +278,14 @@ class EditorAudioCuesPipelineTest {
       }
     }
 
-    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_CUE)
-    // the cue must describe the primary caret, not the secondary one that was current for the last document event
+    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(CARET_SIGNAL)
+    // the signal must describe the primary caret, not the secondary one that was current for the last document event
     assertThat(detector.detected().last()).isEqualTo(Detection(1, LINE_1_START + 2))
   }
 
   @Test
   fun `a detector that cancels does not silence later caret moves`() = pipelineTest(extraDetectors = listOf(CancellingDetector())) { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
 
     // getOrLogException rethrows a ProcessCanceledException, and there is exactly one collector - but collectLatest
     // runs each request in a child coroutine, where a CancellationException is its own cancel-previous signal and
@@ -296,14 +296,14 @@ class EditorAudioCuesPipelineTest {
     assertThat(player.recorded).isEmpty()
 
     moveCaret(editor, LINE_2_START)
-    assertThat(awaitPlay()).containsExactly(LINE_CUE)
+    assertThat(awaitPlay()).containsExactly(LINE_SIGNAL)
   }
 
   @Test
   fun `an edit inside a bulk document update is silent`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_1_START + 3)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     bulkDeleteBeforeCaret(editor)
     delay(IDLE_WAIT_AFTER_EDIT)
@@ -314,21 +314,21 @@ class EditorAudioCuesPipelineTest {
 
   @Test
   fun `a move right after a bulk update still waits for the edit-adjacent delay`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
 
     bulkEditThenMoveCaret(editor, LINE_1_START)
 
     delay(IDLE_WAIT)
     assertThat(detector.detected()).isEmpty()
 
-    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(LINE_CUE)
+    assertThat(awaitPlay(EDIT_ADJACENT_BUDGET)).containsExactly(LINE_SIGNAL)
   }
 
   @Test
   fun `an edit that carries the caret along drops an already debounced request`() = pipelineTest { editor ->
-    detector.cues = setOf(CARET_CUE)
+    detector.signals = setOf(CARET_SIGNAL)
     moveCaret(editor, LINE_3_START)
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
 
     deleteAtCaret(editor)
     insertAtDocumentStart(editor)
@@ -339,55 +339,55 @@ class EditorAudioCuesPipelineTest {
   }
 
   @Test
-  fun `a caret cue is dropped when its line cue fires in the same batch`() = pipelineTest { editor ->
-    detector.cues = setOf(COUNTERPART_LINE_CUE, CARET_CUE)
+  fun `a caret signal is dropped when its line signal fires in the same batch`() = pipelineTest { editor ->
+    detector.signals = setOf(COUNTERPART_LINE_SIGNAL, CARET_SIGNAL)
 
     moveCaret(editor, LINE_1_START)
 
-    assertThat(awaitPlay()).containsExactly(COUNTERPART_LINE_CUE)
+    assertThat(awaitPlay()).containsExactly(COUNTERPART_LINE_SIGNAL)
   }
 
   @Test
-  fun `a caret cue survives when its line cue is muted`() = pipelineTest { editor ->
+  fun `a caret signal survives when its line signal is muted`() = pipelineTest { editor ->
     // the suppression runs ahead of the player's settings filter, so an ungated one would leave nothing to play
-    detector.cues = setOf(COUNTERPART_LINE_CUE, CARET_CUE)
-    settings.setCueEnabled(COUNTERPART_LINE_CUE, false)
+    detector.signals = setOf(COUNTERPART_LINE_SIGNAL, CARET_SIGNAL)
+    settings.setSignalEnabled(COUNTERPART_LINE_SIGNAL, false)
 
     moveCaret(editor, LINE_1_START)
 
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
   }
 
   @Test
-  fun `a caret cue still fires on intra-line movement while its line cue is detected`() = pipelineTest { editor ->
-    // the line cue is filtered out by the caret scoping first, so there is nothing left to suppress against
-    detector.cues = setOf(COUNTERPART_LINE_CUE, CARET_CUE)
+  fun `a caret signal still fires on intra-line movement while its line signal is detected`() = pipelineTest { editor ->
+    // the line signal is filtered out by the caret scoping first, so there is nothing left to suppress against
+    detector.signals = setOf(COUNTERPART_LINE_SIGNAL, CARET_SIGNAL)
     moveCaret(editor, LINE_1_START)
-    assertThat(awaitPlay()).containsExactly(COUNTERPART_LINE_CUE)
+    assertThat(awaitPlay()).containsExactly(COUNTERPART_LINE_SIGNAL)
 
     moveCaret(editor, LINE_1_START + 2)
 
-    assertThat(awaitPlay()).containsExactly(CARET_CUE)
+    assertThat(awaitPlay()).containsExactly(CARET_SIGNAL)
   }
 
   @Test
   fun `a position stale by the time the read action runs reaches no detector`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
     val document = editor.document
 
-    assertThat(detectCues(editor, line = -1, caretOffset = LINE_1_START)).isEmpty()
-    assertThat(detectCues(editor, line = document.lineCount, caretOffset = LINE_1_START)).isEmpty()
-    assertThat(detectCues(editor, line = 1, caretOffset = document.textLength + 1)).isEmpty()
+    assertThat(detectSignals(editor, line = -1, caretOffset = LINE_1_START)).isEmpty()
+    assertThat(detectSignals(editor, line = document.lineCount, caretOffset = LINE_1_START)).isEmpty()
+    assertThat(detectSignals(editor, line = 1, caretOffset = document.textLength + 1)).isEmpty()
 
     assertThat(detector.detected()).isEmpty()
   }
 
   @Test
   fun `disabling the feature detaches the listeners`() = pipelineTest { editor ->
-    detector.cues = setOf(LINE_CUE)
+    detector.signals = setOf(LINE_SIGNAL)
 
-    settings.setMode(AudioCuesMode.OFF)
-    // refreshAudioCuesState() only reaches the manager *service*, which this test deliberately does not create
+    settings.setMode(SoundSignalsMode.OFF)
+    // refreshSoundSignalsState() only reaches the manager *service*, which this test deliberately does not create
     manager.updateListenersState()
     moveCaret(editor, LINE_1_START)
     awaitIdle()
@@ -399,18 +399,18 @@ class EditorAudioCuesPipelineTest {
 
   private data class Detection(val line: Int, val offset: Int)
 
-  private class FakeDetector : EditorAudioCueDetector {
+  private class FakeDetector : EditorSoundSignalDetector {
     @Volatile
-    var cues: Set<AudioCue> = emptySet()
+    var signals: Set<SoundSignal> = emptySet()
 
     private val all = CopyOnWriteArrayList<Detection>()
 
-    override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorAudioCue> {
+    override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
       check(!ApplicationManager.getApplication().isDispatchThread) { "detector ran on the EDT" }
       check(ApplicationManager.getApplication().isReadAccessAllowed) { "detector ran without read access" }
       all += Detection(line, caretOffset)
-      return cues.mapTo(HashSet()) { cue ->
-        EditorAudioCue(cue, lineCounterpart = COUNTERPART_LINE_CUE.takeIf { cue === CARET_CUE })
+      return signals.mapTo(HashSet()) { signal ->
+        EditorSoundSignal(signal, lineCounterpart = COUNTERPART_LINE_SIGNAL.takeIf { signal === CARET_SIGNAL })
       }
     }
 
@@ -422,55 +422,55 @@ class EditorAudioCuesPipelineTest {
    * Only once, though: rethrowing means it aborts the whole detection, so a permanently cancelling detector would
    * keep every later batch empty as well and prove nothing about the collector.
    */
-  private class CancellingDetector : EditorAudioCueDetector {
+  private class CancellingDetector : EditorSoundSignalDetector {
     private val pending = AtomicBoolean(true)
 
-    override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorAudioCue> {
+    override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
       if (pending.getAndSet(false)) throw ProcessCanceledException()
       return emptySet()
     }
   }
 
-  private class RecordingPlayer : AudioCuePlayer() {
-    private val all = CopyOnWriteArrayList<List<AudioCue>>()
-    private val signals = Channel<List<AudioCue>>(Channel.UNLIMITED)
+  private class RecordingPlayer : SoundSignalPlayer() {
+    private val all = CopyOnWriteArrayList<List<SoundSignal>>()
+    private val batches = Channel<List<SoundSignal>>(Channel.UNLIMITED)
 
-    override fun playEnabled(cues: Collection<AudioCue>) {
-      val batch = cues.toList()
+    override fun playEnabled(signals: Collection<SoundSignal>) {
+      val batch = signals.toList()
       all += batch
-      signals.trySend(batch)
+      batches.trySend(batch)
     }
 
-    val recorded: List<List<AudioCue>> get() = all.toList()
+    val recorded: List<List<SoundSignal>> get() = all.toList()
 
-    suspend fun awaitPlay(): List<AudioCue> = signals.receive()
+    suspend fun awaitPlay(): List<SoundSignal> = batches.receive()
   }
 
   private lateinit var project: Project
-  private lateinit var settings: AudioCuesSettings
-  private lateinit var manager: EditorAudioCuesManager
+  private lateinit var settings: SoundSignalsSettings
+  private lateinit var manager: EditorSoundSignalsManager
   private lateinit var detector: FakeDetector
   private lateinit var player: RecordingPlayer
 
   private fun pipelineTest(
     editorKind: EditorKind = EditorKind.MAIN_EDITOR,
-    extraDetectors: List<EditorAudioCueDetector> = emptyList(),
+    extraDetectors: List<EditorSoundSignalDetector> = emptyList(),
     body: suspend (Editor) -> Unit,
   ) = timeoutRunBlocking(60.seconds) {
     project = projectFixture.get()
     detector = FakeDetector()
     player = RecordingPlayer()
 
-    withAudioCuesSettings { audioCuesSettings ->
-      settings = audioCuesSettings
-      val managerScope = childScope("EditorAudioCuesManager under test")
+    withSoundSignalsSettings { soundSignalsSettings ->
+      settings = soundSignalsSettings
+      val managerScope = childScope("EditorSoundSignalsManager under test")
       try {
         // ON, not AUTO: tests run without a screen reader, so AUTO would silence everything
-        settings.setMode(AudioCuesMode.ON)
-        ApplicationManager.getApplication().replaceService(AudioCuePlayer::class.java, player, disposable)
-        ExtensionTestUtil.maskExtensions(EditorAudioCueDetector.EP_NAME, extraDetectors + detector, disposable)
+        settings.setMode(SoundSignalsMode.ON)
+        ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, player, disposable)
+        ExtensionTestUtil.maskExtensions(EditorSoundSignalDetector.EP_NAME, extraDetectors + detector, disposable)
 
-        manager = EditorAudioCuesManager(managerScope, SETTLE_DELAY, EDIT_ADJACENT_DELAY)
+        manager = EditorSoundSignalsManager(managerScope, SETTLE_DELAY, EDIT_ADJACENT_DELAY)
 
         val factory = EditorFactory.getInstance()
         val editor = withContext(Dispatchers.EDT) {
@@ -605,10 +605,10 @@ class EditorAudioCuesPipelineTest {
     }
   }
 
-  private suspend fun detectCues(editor: Editor, line: Int, caretOffset: Int): Set<EditorAudioCue> =
-    readAction { manager.detectCues(editor, line, caretOffset) }
+  private suspend fun detectSignals(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> =
+    readAction { manager.detectSignals(editor, line, caretOffset) }
 
-  private suspend fun awaitPlay(within: Duration = AWAIT_BUDGET): List<AudioCue> = withTimeout(within) { player.awaitPlay() }
+  private suspend fun awaitPlay(within: Duration = AWAIT_BUDGET): List<SoundSignal> = withTimeout(within) { player.awaitPlay() }
 
   /** An absence cannot be awaited; this waits well past the normal settle delay instead. */
   private suspend fun awaitIdle() = delay(IDLE_WAIT)
@@ -633,17 +633,17 @@ class EditorAudioCuesPipelineTest {
     /** Silence after an edit has to outlast [EDIT_ADJACENT_DELAY], which [IDLE_WAIT] deliberately does not. */
     val IDLE_WAIT_AFTER_EDIT = 800.milliseconds
 
-    /** A normal move must have cued by now; anything slower means it took the edit-adjacent path. */
+    /** A normal move must have signaled by now; anything slower means it took the edit-adjacent path. */
     val SHORT_PATH_BUDGET = 250.milliseconds
     val EDIT_ADJACENT_BUDGET = 5.seconds
     val AWAIT_BUDGET = 10.seconds
 
-    /** Must stay a cue that is *not* [CARET_CUE]'s line counterpart: cases pairing the two rely on both surviving. */
-    val LINE_CUE = IdeAudioCues.FOLDED_LINE
-    val CARET_CUE = IdeAudioCues.ERROR_CARET
+    /** Must stay a signal that is *not* [CARET_SIGNAL]'s line counterpart: cases pairing the two rely on both surviving. */
+    val LINE_SIGNAL = IdeSoundSignals.FOLDED_LINE
+    val CARET_SIGNAL = IdeSoundSignals.ERROR_CARET
 
-    /** [CARET_CUE]'s line counterpart, for the cases that exercise that suppression. */
-    val COUNTERPART_LINE_CUE = IdeAudioCues.ERROR_LINE
+    /** [CARET_SIGNAL]'s line counterpart, for the cases that exercise that suppression. */
+    val COUNTERPART_LINE_SIGNAL = IdeSoundSignals.ERROR_LINE
 
     const val TEXT: String = "line0\nline1\nline2\nline3"
     const val LINE_1_START: Int = 6

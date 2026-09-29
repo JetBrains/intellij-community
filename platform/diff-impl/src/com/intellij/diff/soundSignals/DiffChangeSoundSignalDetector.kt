@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.audioCues
+package com.intellij.diff.soundSignals
 
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.TextDiffType
-import com.intellij.ide.audioCues.EditorAudioCue
-import com.intellij.ide.audioCues.EditorAudioCueDetector
+import com.intellij.ide.soundSignals.EditorSoundSignal
+import com.intellij.ide.soundSignals.EditorSoundSignalDetector
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
@@ -18,13 +18,13 @@ import org.jetbrains.annotations.ApiStatus
  * get no such attributes, so they stay silent.
  */
 @ApiStatus.Internal
-class DiffChangeAudioCueDetector : EditorAudioCueDetector {
-  private val lineInserted = EditorAudioCue(DiffAudioCues.LINE_INSERTED)
-  private val lineDeleted = EditorAudioCue(DiffAudioCues.LINE_DELETED)
-  private val lineModified = EditorAudioCue(DiffAudioCues.LINE_MODIFIED)
-  private val lineConflict = EditorAudioCue(DiffAudioCues.LINE_CONFLICT)
+class DiffChangeSoundSignalDetector : EditorSoundSignalDetector {
+  private val lineInserted = EditorSoundSignal(DiffSoundSignals.LINE_INSERTED)
+  private val lineDeleted = EditorSoundSignal(DiffSoundSignals.LINE_DELETED)
+  private val lineModified = EditorSoundSignal(DiffSoundSignals.LINE_MODIFIED)
+  private val lineConflict = EditorSoundSignal(DiffSoundSignals.LINE_CONFLICT)
 
-  override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorAudioCue> {
+  override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
     if (editor.editorKind != EditorKind.DIFF) return emptySet()
     val editorEx = editor as? EditorEx ?: return emptySet()
     val document = editorEx.document
@@ -39,7 +39,7 @@ class DiffChangeAudioCueDetector : EditorAudioCueDetector {
       true
     }
 
-    val result = mutableSetOf<EditorAudioCue>()
+    val result = mutableSetOf<EditorSoundSignal>()
     for (highlighter in lineHighlighters) {
       val attributes = highlighter.getTextAttributes(editorEx.colorsScheme) as? DiffDrawUtil.DiffTextAttributes
       when (attributes?.type) {

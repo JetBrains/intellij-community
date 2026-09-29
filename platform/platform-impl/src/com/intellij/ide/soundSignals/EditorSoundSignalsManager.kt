@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.audioCues
+package com.intellij.ide.soundSignals
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
@@ -42,7 +42,7 @@ import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 @OptIn(FlowPreview::class)
-class EditorAudioCuesManager internal constructor(
+class EditorSoundSignalsManager internal constructor(
   scope: CoroutineScope,
   private val settleDelay: Duration,
   private val editAdjacentSettleDelay: Duration,
@@ -50,18 +50,18 @@ class EditorAudioCuesManager internal constructor(
   constructor(scope: CoroutineScope) : this(
     scope,
     settleDelay = RegistryManager.getInstance()
-      .intValue("ide.audio.cues.editor.settle.delay.ms", 50)
+      .intValue("ide.sound.signals.editor.settle.delay.ms", 50)
       .coerceAtLeast(0).milliseconds,
     editAdjacentSettleDelay = EDIT_ADJACENT_SETTLE_DELAY,
   )
 
   companion object {
-    private val LAST_SETTLED_LINE = Key.create<Int>("editor.audio.cues.last.settled.line")
-    private val LAST_DOCUMENT_CHANGE_AT = Key.create<TimeSource.Monotonic.ValueTimeMark>("editor.audio.cues.last.document.change.at")
+    private val LAST_SETTLED_LINE = Key.create<Int>("editor.sound.signals.last.settled.line")
+    private val LAST_DOCUMENT_CHANGE_AT = Key.create<TimeSource.Monotonic.ValueTimeMark>("editor.sound.signals.last.document.change.at")
 
-    private val LOG = logger<EditorAudioCuesManager>()
+    private val LOG = logger<EditorSoundSignalsManager>()
 
-    /** Settle delay next to an edit: cues are played only once no further edit or caret move has arrived for this long. */
+    /** Settle delay next to an edit: signals are played only once no further edit or caret move has arrived for this long. */
     private val EDIT_ADJACENT_SETTLE_DELAY = 1000.milliseconds
 
     /** A caret move this soon after a document change belongs to that edit, so it settles for the edit-adjacent delay. */
@@ -71,7 +71,7 @@ class EditorAudioCuesManager internal constructor(
       editor.editorKind == EditorKind.MAIN_EDITOR || editor.editorKind == EditorKind.DIFF || editor.editorKind == EditorKind.CONSOLE
   }
 
-  private val settings = service<AudioCuesSettings>()
+  private val settings = service<SoundSignalsSettings>()
   private val managerJob = scope.coroutineContext.job
   private val caretPositionRequests =
     MutableSharedFlow<CaretPositionRequest>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -86,7 +86,7 @@ class EditorAudioCuesManager internal constructor(
       if (!isSupportedEditorKind(editor)) return
       if (CommandProcessor.getInstance().currentCommand == null || !AsyncEditorLoader.isEditorLoaded(editor)) {
         // a programmatic move (caret restore at file open, folding restore, ...) rebases the settled line
-        // silently, so that a later intra-line user move does not replay line cues
+        // silently, so that a later intra-line user move does not replay line signals
         editor.putUserData(LAST_SETTLED_LINE, e.newPosition.line)
         return
       }
@@ -120,10 +120,10 @@ class EditorAudioCuesManager internal constructor(
   }
 
   init {
-    RegistryManager.getInstance().get(AUDIO_CUES_ENABLED_REGISTRY_KEY).addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = refreshAudioCuesState()
+    RegistryManager.getInstance().get(SOUND_SIGNALS_ENABLED_REGISTRY_KEY).addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) = refreshSoundSignalsState()
     }, scope)
-    ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, scope.asDisposable()) { refreshAudioCuesState() }
+    ScreenReader.addPropertyChangeListener(ScreenReader.SCREEN_READER_ACTIVE_PROPERTY, scope.asDisposable()) { refreshSoundSignalsState() }
     managerJob.invokeOnCompletion { updateListenersState() }
     updateListenersState()
 
@@ -157,29 +157,29 @@ class EditorAudioCuesManager internal constructor(
     val editor = request.editorRef.get() ?: return
     val offset = request.offset
     val line = request.line
-    val cues = readAction {
+    val signals = readAction {
       if (editor.isDisposed || editor.caretModel.primaryCaret.offset != offset) null
-      else detectCues(editor, line, offset)
+      else detectSignals(editor, line, offset)
     } ?: return
     val newLine = editor.getUserData(LAST_SETTLED_LINE) != line
     editor.putUserData(LAST_SETTLED_LINE, line)
-    val scoped = if (newLine) cues else cues.filter { it.lineCounterpart != null }
+    val scoped = if (newLine) signals else signals.filter { it.lineCounterpart != null }
     val toPlay = scoped.filterNot { detected ->
       val counterpart = detected.lineCounterpart ?: return@filterNot false
-      scoped.any { it.cue === counterpart } && settings.isCueEnabled(counterpart)
+      scoped.any { it.signal === counterpart } && settings.isSignalEnabled(counterpart)
     }
-    if (toPlay.isNotEmpty()) AudioCuePlayer.getInstance().play(*toPlay.map { it.cue }.toTypedArray())
+    if (toPlay.isNotEmpty()) SoundSignalPlayer.getInstance().play(*toPlay.map { it.signal }.toTypedArray())
   }
 
-  internal fun detectCues(editor: Editor, line: Int, caretOffset: Int): Set<EditorAudioCue> {
+  internal fun detectSignals(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
     if (editor.isDisposed) return emptySet()
     val document = editor.document
     if (line < 0 || line >= document.lineCount) return emptySet()
     if (caretOffset < 0 || caretOffset > document.textLength) return emptySet()
 
-    val cues = mutableSetOf<EditorAudioCue>()
-    EditorAudioCueDetector.EP_NAME.forEachExtensionSafe { cues += it.detect(editor, line, caretOffset) }
-    return cues
+    val signals = mutableSetOf<EditorSoundSignal>()
+    EditorSoundSignalDetector.EP_NAME.forEachExtensionSafe { signals += it.detect(editor, line, caretOffset) }
+    return signals
   }
 
   private data class CaretPositionRequest(
