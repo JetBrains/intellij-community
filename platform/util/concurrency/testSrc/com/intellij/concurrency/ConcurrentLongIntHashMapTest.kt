@@ -2,6 +2,7 @@
 package com.intellij.concurrency
 
 import com.intellij.util.containers.ConcurrentLongIntMap
+import com.intellij.util.containers.Java11Shim
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
@@ -28,6 +29,17 @@ class ConcurrentLongIntHashMapTest {
     assertThat(map.put(2, 4)).isEqualTo(3)
     assertThat(map.get(2)).isEqualTo(4)
     assertThat(map.size()).isEqualTo(2)
+  }
+
+  @Test
+  fun `map with initial size`() {
+    val map = Java11Shim.createConcurrentLongIntMap(-1, 100)
+
+    for (key in 0L until 100L) {
+      assertThat(map.put(key, key.toInt())).isEqualTo(-1)
+    }
+    assertThat(map.size()).isEqualTo(100)
+    assertThatIllegalArgumentException().isThrownBy { Java11Shim.createConcurrentLongIntMap(0, -1) }
   }
 
   @Test

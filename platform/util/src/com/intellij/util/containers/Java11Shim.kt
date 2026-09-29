@@ -13,7 +13,8 @@ abstract class Java11Shim {
     @JvmField
     var INSTANCE: Java11Shim = DefaultJava11Shim()
     fun <V> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> = ConcurrentLongObjectHashMap()
-    fun createConcurrentLongIntMap(defaultValue: Int): ConcurrentLongIntMap = ConcurrentLongIntHashMap(defaultValue)
+    @JvmOverloads
+    fun createConcurrentLongIntMap(defaultValue: Int, initialSize: Int = 16): ConcurrentLongIntMap = ConcurrentLongIntHashMap(defaultValue, initialSize)
     fun <V> createConcurrentIntObjectMap(): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap()
     fun <V> createConcurrentIntObjectMap(initialCapacity:Int, loadFactor:Float, concurrencyLevel:Int): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap(initialCapacity, loadFactor, concurrencyLevel)
     fun <V> createConcurrentIntObjectSoftValueMap(): ConcurrentIntObjectMap<V> = ConcurrentIntKeySoftValueHashMap()

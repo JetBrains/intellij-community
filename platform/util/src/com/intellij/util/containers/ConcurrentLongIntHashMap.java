@@ -762,10 +762,17 @@ final class ConcurrentLongIntHashMap implements ConcurrentLongIntMap {
 
     /**
      * Creates an empty map that returns {@code defaultValue} for missing keys.
-     * The map cannot store {@code defaultValue}.
+     * The map can hold {@code initialSize} elements without resizing and cannot store {@code defaultValue}.
      */
-    ConcurrentLongIntHashMap(int defaultValue) {
+    ConcurrentLongIntHashMap(int defaultValue, int initialSize) {
+        if (initialSize < 0) {
+            throw new IllegalArgumentException();
+        }
         this.defaultValue = defaultValue;
+        int cap = ((initialSize >= (MAXIMUM_CAPACITY >>> 1)) ?
+                   MAXIMUM_CAPACITY :
+                   tableSizeFor(initialSize + (initialSize >>> 1) + 1));
+        sizeCtl = cap;
     }
 
     // Original (since JDK1.2) Map methods
