@@ -15,6 +15,7 @@ import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.projectDirectories
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.navigation.NavigationItem
@@ -89,7 +90,7 @@ private suspend fun chooseByNameSearchSymbols(
   val effectiveLimit = normalizeLimit(limit)
   val project = currentCoroutineContext().project
   val projectDir = project.projectDirectory
-  val pathScope = buildPathScope(projectDir, paths)
+  val pathScope = buildPathScope(projectDir, paths, project.projectDirectories())
   val directoryFilterPath = resolveDirectoryFilter(project, pathScope)
   val directoryFilterFile = directoryFilterPath?.let { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(it) }
   val baseSearchScope = directoryFilterFile?.let { GlobalSearchScopes.directoryScope(project, it, true) }
