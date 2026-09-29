@@ -25,12 +25,12 @@ import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_COMMAND
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_MAIN_CLASS
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.stdioMcpRunnerVmOptionsFilePath
 import org.jetbrains.intellij.build.loadDevDistributionApplicationInfo
+import org.jetbrains.intellij.build.productLayout.COMPOSE_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.JNA_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.PTY4J_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.SKIKO_NATIVE_DIR
-import org.jetbrains.intellij.build.productLayout.SKIKO_PLUGIN_MODULE
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
 
@@ -298,7 +298,7 @@ internal fun productJvmArguments(product: ProductLaunchInputs, bundledRuntimeVer
     pathsSelector = product.systemSelector,
     jnaNativeDir = JNA_NATIVE_DIR.takeIf { bundledPluginModules.contains(JNA_PLUGIN_MODULE) },
     pty4jNativeDir = PTY4J_NATIVE_DIR.takeIf { bundledPluginModules.contains(PTY4J_PLUGIN_MODULE) },
-    skikoNativeDir = SKIKO_NATIVE_DIR.takeIf { bundledPluginModules.contains(SKIKO_PLUGIN_MODULE) },
+    skikoNativeDir = SKIKO_NATIVE_DIR.takeIf { bundledPluginModules.contains(COMPOSE_PLUGIN_MODULE) },
     runtimeModuleRepository = product.useModularLoader || product.generateRuntimeModuleRepository,
     rootModule = if (product.useModularLoader) properties.rootModuleForModularLoader else null,
     productMode = if (product.useModularLoader) properties.productMode.id else null,

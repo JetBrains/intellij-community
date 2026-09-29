@@ -4,6 +4,7 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
+    <module name="intellij.libraries.jspecify"/>
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.squareup.okio.jvm"/>

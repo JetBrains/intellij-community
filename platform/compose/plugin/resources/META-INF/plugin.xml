@@ -1,0 +1,32 @@
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>com.intellij.modules.compose</id>
+  <name>Compose UI</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Holds the Compose, Jewel and Skiko modules that render Compose UI in the IDE, with the one Skiko copy and its native renderer.
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.skiko" loading="required"/>
+    <module name="intellij.libraries.compose.foundation.desktop" loading="required"/>
+    <module name="intellij.libraries.coil"/>
+    <module name="intellij.platform.jewel.foundation" loading="required"/>
+    <module name="intellij.platform.jewel.ui" loading="required"/>
+    <module name="intellij.platform.jewel.ideLafBridge" loading="required"/>
+    <module name="intellij.platform.compose" loading="required"/>
+    <module name="intellij.platform.jewel.markdown.core"/>
+    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
+    <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
+    <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
+    <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
+    <module name="intellij.platform.jewel.markdown.extensions.frontMatter"/>
+    <module name="intellij.platform.jewel.markdown.extensions.images"/>
+    <module name="intellij.platform.compose.markdown"/>
+  </content>
+</idea-plugin>

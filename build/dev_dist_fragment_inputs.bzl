@@ -196,6 +196,7 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "jetbrains.intellij.deps.java.atk.wrapper.linux",
             ],
             module_sets = [
+                "intellij.moduleSets.compose.runtime",
                 "intellij.moduleSets.ide.common",
                 "intellij.moduleSets.platform.resources.defaults",
             ],
@@ -315,6 +316,7 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "jetbrains.intellij.deps.java.atk.wrapper.linux",
             ],
             module_sets = [
+                "intellij.moduleSets.compose.runtime",
                 "intellij.moduleSets.ide.common",
                 "intellij.moduleSets.platform.resources.defaults",
             ],

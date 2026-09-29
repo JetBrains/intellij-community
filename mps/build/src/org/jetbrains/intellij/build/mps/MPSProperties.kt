@@ -191,6 +191,8 @@ class MPSProperties : JetBrainsProductProperties() {
         include(CommunityProductFragments.platformCoreFragment())
 
         moduleSet(CommunityModuleSets.ideCommon())
+        // the bundled Compose plugin needs the Compose runtime
+        moduleSet(CommunityModuleSets.composeRuntime())
         moduleSet(CommunityModuleSets.platformResourceDefaults())
 
         module("intellij.platform.whatsNew")

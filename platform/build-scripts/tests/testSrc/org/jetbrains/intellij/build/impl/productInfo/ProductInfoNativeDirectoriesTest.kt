@@ -17,14 +17,14 @@ internal class ProductInfoNativeDirectoriesTest {
         $$"-Djna.boot.library.path=$IDE_HOME/plugins/jna-plugin/lib/jna/amd64",
         "-Djna.nosys=true",
         $$"-Dpty4j.preferred.native.folder=$IDE_HOME/plugins/pty4j-plugin/lib/pty4j",
-        $$"-Dskiko.library.path=$IDE_HOME/plugins/skiko-plugin/lib/skiko-awt-runtime-all",
+        $$"-Dskiko.library.path=$IDE_HOME/plugins/platform-compose-plugin/lib/skiko-awt-runtime-all",
       ),
     )
 
     assertThat(nativeDirectoriesOfLaunch(launch)).containsExactly(
       "plugins/jna-plugin/lib/jna/amd64",
       "plugins/pty4j-plugin/lib/pty4j",
-      "plugins/skiko-plugin/lib/skiko-awt-runtime-all",
+      "plugins/platform-compose-plugin/lib/skiko-awt-runtime-all",
     )
   }
 

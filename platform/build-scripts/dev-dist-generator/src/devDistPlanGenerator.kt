@@ -48,7 +48,7 @@ import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.PTY4J_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.SKIKO_NATIVE_DIR
-import org.jetbrains.intellij.build.productLayout.SKIKO_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.COMPOSE_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.ProductContentBuildResult
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
@@ -532,7 +532,7 @@ internal fun checkPluginNativeTrees(entries: Collection<DevDistPluginPlanEntry>)
   val launcherDirs = mapOf(
     JNA_PLUGIN_MODULE to JNA_NATIVE_DIR,
     PTY4J_PLUGIN_MODULE to PTY4J_NATIVE_DIR,
-    SKIKO_PLUGIN_MODULE to SKIKO_NATIVE_DIR,
+    COMPOSE_PLUGIN_MODULE to SKIKO_NATIVE_DIR,
   )
   val owners = HashMap<Pair<String, String>, MutableSet<String>>()
   for (entry in entries) {

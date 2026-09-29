@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.ideCommon
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
 import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesGrpc
@@ -18,7 +17,7 @@ import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp
  * - **debugger**: Debugger platform
  * - **vcs**: Version control support
  * - **xml**: XML support
- * - **compose**: Compose UI
+ * - **composeRuntime**: Compose runtime and Compose Swing, for a product that bundles the Compose plugin
  * - **spellchecker/settingsSync/ml**: one feature with the library it needs
  * - **ideCommon**: Full IDE common modules
  *
@@ -284,30 +283,16 @@ object CommunityModuleSets {
   }
 
   /**
-   * Compose UI modules.
-   * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations.
-   * Skiko is content of the bundled plugin `intellij.skiko.plugin`, because its native renderer binds to one classloader per JVM.
+   * The Compose runtime and Compose Swing modules that stay in the platform.
+   * [ideCommon] does not nest this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds it,
+   * because the plugin content modules depend on `intellij.libraries.compose.runtime.desktop`.
+   * The renderer stack with Skiko, Compose Foundation and Jewel is content of that plugin.
+   * `intellij.libraries.compose.runtime.desktop` depends on the jspecify annotations from [LibraryModuleSets.librariesIdeCommon].
    */
-  fun compose(): ModuleSet = moduleSet("compose") {
-    module("intellij.libraries.jspecify")
-    module("intellij.libraries.coil")
-    module("intellij.libraries.compose.swing")
-    module("intellij.platform.compose")
-    module("intellij.platform.compose.markdown")
-    module("intellij.platform.compose.swing")
-    module("intellij.platform.jewel.foundation")
-    module("intellij.libraries.compose.foundation.desktop")
+  fun composeRuntime(): ModuleSet = moduleSet("compose.runtime") {
     module("intellij.libraries.compose.runtime.desktop")
-    module("intellij.platform.jewel.ui")
-    module("intellij.platform.jewel.ideLafBridge")
-    module("intellij.platform.jewel.markdown.ideLafBridgeStyling")
-    module("intellij.platform.jewel.markdown.extensions.autolink")
-    module("intellij.platform.jewel.markdown.extensions.gfmAlerts")
-    module("intellij.platform.jewel.markdown.extensions.gfmTables")
-    module("intellij.platform.jewel.markdown.extensions.gfmStrikethrough")
-    module("intellij.platform.jewel.markdown.extensions.frontMatter")
-    module("intellij.platform.jewel.markdown.extensions.images")
-    module("intellij.platform.jewel.markdown.core")
+    module("intellij.libraries.compose.swing")
+    module("intellij.platform.compose.swing")
   }
 
   /**
@@ -399,32 +384,13 @@ object CommunityModuleSets {
 
   /**
    * IDE common modules.
-   * Nests essential, debugger, compose, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
+   * Nests essential, debugger, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
    * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
+   * No Compose module is in this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds [composeRuntime].
    */
-  fun ideCommon(): ModuleSet = ideCommon(includeCompose = true)
-
-  /**
-   * [ideCommon] without the nested [compose] set (skiko, Compose, Jewel, coil).
-   *
-   * **Use when:** the product renders no Compose UI.
-   * The compose set is about 80 MB of jars plus the skiko native runtime.
-   *
-   * **Example products:**
-   * - **JetBrains Light**
-   */
-  fun ideCommonWithoutCompose(): ModuleSet = ideCommon(includeCompose = false)
-
-  /**
-   * The generator discovers a module set through a public function without parameters,
-   * so each variant has its own public entry point above.
-   */
-  private fun ideCommon(includeCompose: Boolean): ModuleSet = moduleSet(if (includeCompose) "ide.common" else "ide.common.without.compose") {
+  fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes coreLang from CoreModuleSets)
     moduleSet(essential())
-    if (includeCompose) {
-      moduleSet(compose())
-    }
     // `intellij.platform.scriptDebugger.ui` in this set depends on the debugger modules
     moduleSet(debugger())
     moduleSet(librariesIdeCommon())

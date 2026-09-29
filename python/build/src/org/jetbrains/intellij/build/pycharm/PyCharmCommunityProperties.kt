@@ -72,6 +72,8 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
 
     // Module sets
     moduleSet(CommunityModuleSets.ideCommon())
+    // the bundled Compose plugin needs the Compose runtime
+    moduleSet(CommunityModuleSets.composeRuntime())
     moduleSet(CommunityModuleSets.platformResourceDefaults())
     moduleSet(CommunityModuleSets.rdCommon())
 

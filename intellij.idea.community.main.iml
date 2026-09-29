@@ -157,7 +157,7 @@
     <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.compose.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.shared" scope="RUNTIME" />

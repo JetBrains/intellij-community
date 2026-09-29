@@ -12,10 +12,7 @@ jps_test(
 ### skip generation section `test intellij.platform.compose.tests`
 
 ### auto-generated section `dev intellij.platform.compose` start
-content_module_jar(
-    libraries = ["@lib//:jetbrains-compose-components-ui-tooling-preview-desktop"],
-    module = ":compose",
-)
+content_module_jar(module = ":compose")
 ### auto-generated section `dev intellij.platform.compose` end
 
 ### auto-generated section `build intellij.platform.compose` start
@@ -133,6 +130,7 @@ jvm_library(
         "//platform/jewel/ide-laf-bridge",
         "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     ],
+    runtime_deps = ["//platform/compose/plugin"],
 )
 
 jvm_library(
@@ -166,6 +164,7 @@ jvm_library(
         ":compose-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/compose/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

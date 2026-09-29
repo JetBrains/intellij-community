@@ -760,6 +760,7 @@ platform/completion/frontend
 platform/compose
 platform/compose/compiler-plugin
 platform/compose/markdown
+platform/compose/plugin
 platform/compose/swing-ui
 platform/configuration-store-impl
 platform/core-api
@@ -1754,7 +1755,6 @@ plugins/sh/plugin
 plugins/sh/python
 plugins/sh/terminal
 plugins/sh/terminal/frontend
-plugins/skiko/plugin
 plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger

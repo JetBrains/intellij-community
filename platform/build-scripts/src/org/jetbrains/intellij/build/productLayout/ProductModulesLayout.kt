@@ -36,11 +36,36 @@ const val JNA_PLUGIN_MODULE: String = "intellij.jna.plugin"
 const val PTY4J_PLUGIN_MODULE: String = "intellij.pty4j.plugin"
 
 /**
- * The main module of the bundled plugin that owns the Skiko copy.
+ * The main module of the bundled plugin that owns the Compose UI stack and the one Skiko copy.
  *
  * A product that bundles it ships the Skiko native tree [SKIKO_NATIVE_DIR], and its launcher gets the `skiko.*` JVM argument.
+ * The Compose runtime and Compose Swing modules stay in the platform, see [CommunityModuleSets.composeRuntime].
  */
-const val SKIKO_PLUGIN_MODULE: String = "intellij.skiko.plugin"
+const val COMPOSE_PLUGIN_MODULE: String = "intellij.platform.compose.plugin"
+
+/**
+ * The content modules of the plugin [COMPOSE_PLUGIN_MODULE], in the order of its `plugin.xml`.
+ *
+ * Keep this list equal to the `plugin.xml`. The shared-index generator and the Rider Android layout read it.
+ */
+val COMPOSE_PLUGIN_CONTENT_MODULES: List<String> = listOf(
+  "intellij.libraries.skiko",
+  "intellij.libraries.compose.foundation.desktop",
+  "intellij.libraries.coil",
+  "intellij.platform.jewel.foundation",
+  "intellij.platform.jewel.ui",
+  "intellij.platform.jewel.ideLafBridge",
+  "intellij.platform.compose",
+  "intellij.platform.jewel.markdown.core",
+  "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+  "intellij.platform.jewel.markdown.extensions.autolink",
+  "intellij.platform.jewel.markdown.extensions.gfmAlerts",
+  "intellij.platform.jewel.markdown.extensions.gfmTables",
+  "intellij.platform.jewel.markdown.extensions.gfmStrikethrough",
+  "intellij.platform.jewel.markdown.extensions.frontMatter",
+  "intellij.platform.jewel.markdown.extensions.images",
+  "intellij.platform.compose.markdown",
+)
 
 /**
  * The JNA native tree relative to the IDE home: `plugins/jna-plugin/lib/jna`. It holds one directory per architecture.
@@ -52,10 +77,10 @@ val JNA_NATIVE_DIR: String = pluginNativeDir(JNA_PLUGIN_MODULE, "jna")
 val PTY4J_NATIVE_DIR: String = pluginNativeDir(PTY4J_PLUGIN_MODULE, "pty4j")
 
 /**
- * The Skiko native tree relative to the IDE home: `plugins/skiko-plugin/lib/skiko-awt-runtime-all`, in the plugin
- * [SKIKO_PLUGIN_MODULE].
+ * The Skiko native tree relative to the IDE home: `plugins/platform-compose-plugin/lib/skiko-awt-runtime-all`, in the
+ * plugin [COMPOSE_PLUGIN_MODULE].
  */
-val SKIKO_NATIVE_DIR: String = pluginNativeDir(SKIKO_PLUGIN_MODULE, "skiko-awt-runtime-all")
+val SKIKO_NATIVE_DIR: String = pluginNativeDir(COMPOSE_PLUGIN_MODULE, "skiko-awt-runtime-all")
 
 /** The native tree of the presigned library [library] in the `lib/` directory of the plugin [pluginModule]. */
 private fun pluginNativeDir(pluginModule: String, library: String): String {
@@ -72,7 +97,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.grid.plugin",
   JNA_PLUGIN_MODULE,
   PTY4J_PLUGIN_MODULE,
-  SKIKO_PLUGIN_MODULE,
+  COMPOSE_PLUGIN_MODULE,
   "intellij.platform.bookmarks.plugin",
   "intellij.platform.navbar.plugin",
   "intellij.platform.problemView.plugin",

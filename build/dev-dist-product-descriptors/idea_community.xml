@@ -425,28 +425,6 @@
     <module name="intellij.platform.rpc.topics.frontend"/>
     <!-- endregion -->
 
-    <!-- region compose -->
-    <module name="intellij.libraries.jspecify"/>
-    <module name="intellij.libraries.coil"/>
-    <module name="intellij.libraries.compose.swing"/>
-    <module name="intellij.platform.compose"/>
-    <module name="intellij.platform.compose.markdown"/>
-    <module name="intellij.platform.compose.swing"/>
-    <module name="intellij.platform.jewel.foundation"/>
-    <module name="intellij.libraries.compose.foundation.desktop"/>
-    <module name="intellij.libraries.compose.runtime.desktop"/>
-    <module name="intellij.platform.jewel.ui"/>
-    <module name="intellij.platform.jewel.ideLafBridge"/>
-    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
-    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
-    <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
-    <module name="intellij.platform.jewel.markdown.extensions.frontMatter"/>
-    <module name="intellij.platform.jewel.markdown.extensions.images"/>
-    <module name="intellij.platform.jewel.markdown.core"/>
-    <!-- endregion -->
-
     <!-- region debugger -->
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
@@ -459,6 +437,7 @@
     <!-- endregion -->
 
     <!-- region libraries.ide.common -->
+    <module name="intellij.libraries.jspecify"/>
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.squareup.okio.jvm"/>
@@ -510,6 +489,12 @@
 
     <!-- region duplicates -->
     <module name="intellij.platform.duplicates.analysis" loading="embedded"/>
+    <!-- endregion -->
+
+    <!-- region compose.runtime -->
+    <module name="intellij.libraries.compose.runtime.desktop"/>
+    <module name="intellij.libraries.compose.swing"/>
+    <module name="intellij.platform.compose.swing"/>
     <!-- endregion -->
 
     <!-- region platform.resources.defaults -->

@@ -46,7 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.resources.iml",
-        "generated/META-INF/intellij.moduleSets.compose.xml",
+        "generated/META-INF/intellij.moduleSets.compose.runtime.xml",
         "generated/META-INF/intellij.moduleSets.core.ide.xml",
         "generated/META-INF/intellij.moduleSets.core.lang.xml",
         "generated/META-INF/intellij.moduleSets.debugger.xml",
@@ -55,7 +55,6 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.essential.minimal.xml",
         "generated/META-INF/intellij.moduleSets.essential.xml",
         "generated/META-INF/intellij.moduleSets.fleet.xml",
-        "generated/META-INF/intellij.moduleSets.ide.common.without.compose.xml",
         "generated/META-INF/intellij.moduleSets.ide.common.xml",
         "generated/META-INF/intellij.moduleSets.libraries.dap.xml",
         "generated/META-INF/intellij.moduleSets.libraries.grpc.xml",

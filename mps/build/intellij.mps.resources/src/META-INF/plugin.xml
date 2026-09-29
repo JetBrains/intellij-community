@@ -10,6 +10,7 @@
   <module value="com.intellij.modules.platform"/>
 
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.compose.runtime.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.platform.resources.defaults.xml"/>
   <!-- region additional -->
   <content namespace="jetbrains">

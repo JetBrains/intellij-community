@@ -1,0 +1,255 @@
+{
+    "version": 2,
+    "plugin": "intellij.platform.compose.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.skiko.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.skiko",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "nativeLib": "skiko-awt-runtime-all"
+                }
+            }
+        },
+        {
+            "destination": "lib/skiko-awt-runtime-all",
+            "inputs": [
+                "native-tree:intellij.libraries.skiko"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.compose.foundation.desktop.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.compose.foundation.desktop",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.coil.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.coil",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.jewel.foundation"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.jewel.ui.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.jewel.ui",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.jewel.ideLafBridge"
+        },
+        {
+            "module": "intellij.platform.compose"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.jewel.markdown.core.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.jewel.markdown.core",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.jewel.markdown.ideLafBridgeStyling"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.jewel.markdown.extensions.autolink.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.jewel.markdown.extensions.autolink",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.jewel.markdown.extensions.gfmAlerts"
+        },
+        {
+            "destination": "lib/modules/intellij.platform.jewel.markdown.extensions.gfmTables.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.jewel.markdown.extensions.gfmTables",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.platform.jewel.markdown.extensions.gfmStrikethrough.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.platform.jewel.markdown.extensions.gfmStrikethrough",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:platform-jewel-markdown-extensions-gfm_strikethrough-commonmark-ext-gfm-strikethrough",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "module": "intellij.platform.jewel.markdown.extensions.frontMatter"
+        },
+        {
+            "module": "intellij.platform.jewel.markdown.extensions.images"
+        },
+        {
+            "module": "intellij.platform.compose.markdown"
+        },
+        {
+            "destination": "lib/platform-compose-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.platform.compose.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.platform.compose.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

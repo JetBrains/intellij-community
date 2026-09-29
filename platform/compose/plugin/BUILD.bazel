@@ -1,0 +1,140 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+
+### auto-generated section `dev intellij.platform.compose.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.libraries.skiko",
+        "intellij.libraries.compose.foundation.desktop",
+        "intellij.libraries.coil",
+        "intellij.platform.jewel.foundation",
+        "intellij.platform.jewel.ui",
+        "intellij.platform.jewel.ideLafBridge",
+        "intellij.platform.compose",
+        "intellij.platform.jewel.markdown.core",
+        "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+        "intellij.platform.jewel.markdown.extensions.autolink",
+        "intellij.platform.jewel.markdown.extensions.gfmAlerts",
+        "intellij.platform.jewel.markdown.extensions.gfmTables",
+        "intellij.platform.jewel.markdown.extensions.gfmStrikethrough",
+        "intellij.platform.jewel.markdown.extensions.frontMatter",
+        "intellij.platform.jewel.markdown.extensions.images",
+        "intellij.platform.compose.markdown",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.coil",
+        "intellij.libraries.compose.foundation.desktop",
+        "intellij.libraries.skiko",
+        "intellij.platform.compose",
+        "intellij.platform.compose.markdown",
+        "intellij.platform.jewel.foundation",
+        "intellij.platform.jewel.ideLafBridge",
+        "intellij.platform.jewel.markdown.core",
+        "intellij.platform.jewel.markdown.extensions.autolink",
+        "intellij.platform.jewel.markdown.extensions.frontMatter",
+        "intellij.platform.jewel.markdown.extensions.gfmAlerts",
+        "intellij.platform.jewel.markdown.extensions.gfmStrikethrough",
+        "intellij.platform.jewel.markdown.extensions.gfmTables",
+        "intellij.platform.jewel.markdown.extensions.images",
+        "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+        "intellij.platform.jewel.ui",
+    ],
+    main_module = "intellij.platform.compose.plugin",
+)
+
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//platform/compose/plugin:plugin.jar": "intellij.platform.compose.plugin",
+    },
+    descriptor = "//platform/compose/plugin:intellij.platform.compose.plugin_dev_descriptor",
+    execution_version = 2,
+    independent_artifacts = [
+        "//libraries/skiko:skiko_content_module_jar",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_content_module_jar",
+        "//libraries/coil:coil_content_module_jar",
+        "//platform/jewel/foundation:foundation_content_module_jar",
+        "//platform/jewel/ui:ui_content_module_jar",
+        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_content_module_jar",
+        "//platform/compose:compose_content_module_jar",
+        "//platform/jewel/markdown/core:core_content_module_jar",
+        "//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling_content_module_jar",
+        "//platform/jewel/markdown/extensions/autolink:autolink_content_module_jar",
+        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_content_module_jar",
+        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_content_module_jar",
+        "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_content_module_jar",
+        "//platform/jewel/markdown/extensions/front-matter:front-matter_content_module_jar",
+        "//platform/jewel/markdown/extensions/images:images_content_module_jar",
+        "//platform/compose/markdown:markdown_content_module_jar",
+    ],
+    main_module = "intellij.platform.compose.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "2g07wyft6atqslujwy5s6ocnu",
+        },
+        "darwin_x64": {
+            "layoutSignature": "bnuoprdydz11ieunolqt7fc5m",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "8g24ksisoaet8m8bkqjoeolly",
+        },
+        "linux_x64": {
+            "layoutSignature": "7mgpeqagkmy93f0c3tilj2f5p",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "dentnqk9axzfkxf0qlxz6ijpa",
+        },
+        "windows_x64": {
+            "layoutSignature": "82w78enn4w96qnjix5is642kg",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+)
+### auto-generated section `dev intellij.platform.compose.plugin` end
+
+### auto-generated section `build intellij.platform.compose.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.compose.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.compose.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.platform.compose.plugin` end
+
+### auto-generated section `iml intellij.platform.compose.plugin` start
+exports_files(
+    [
+        "intellij.platform.compose.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.compose.plugin` end

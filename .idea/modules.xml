@@ -1535,6 +1535,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/compose/intellij.platform.compose.iml" filepath="$PROJECT_DIR$/platform/compose/intellij.platform.compose.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/compiler-plugin/intellij.platform.compose.compilerPlugin.iml" filepath="$PROJECT_DIR$/platform/compose/compiler-plugin/intellij.platform.compose.compilerPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/markdown/intellij.platform.compose.markdown.iml" filepath="$PROJECT_DIR$/platform/compose/markdown/intellij.platform.compose.markdown.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/compose/plugin/intellij.platform.compose.plugin.iml" filepath="$PROJECT_DIR$/platform/compose/plugin/intellij.platform.compose.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.iml" filepath="$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.tests.iml" filepath="$PROJECT_DIR$/platform/compose/swing-ui/intellij.platform.compose.swing.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/compose/intellij.platform.compose.tests.iml" filepath="$PROJECT_DIR$/platform/compose/intellij.platform.compose.tests.iml" />
@@ -2233,7 +2234,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/terminal/intellij.sh.terminal.iml" filepath="$PROJECT_DIR$/plugins/sh/terminal/intellij.sh.terminal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/terminal/frontend/intellij.sh.terminal.frontend.iml" filepath="$PROJECT_DIR$/plugins/sh/terminal/frontend/intellij.sh.terminal.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/core/intellij.sh.tests.iml" filepath="$PROJECT_DIR$/plugins/sh/core/intellij.sh.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/skiko/plugin/intellij.skiko.plugin.iml" filepath="$PROJECT_DIR$/plugins/skiko/plugin/intellij.skiko.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smart-update/intellij.smart.update.iml" filepath="$PROJECT_DIR$/platform/smart-update/intellij.smart.update.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/space/jps-plugin/intellij.space.java.jps.iml" filepath="$PROJECT_DIR$/plugins/space/jps-plugin/intellij.space.java.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" />
