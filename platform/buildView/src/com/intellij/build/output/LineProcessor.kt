@@ -6,35 +6,33 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 abstract class LineProcessor : AutoCloseable {
 
-  private var lineBuilder: StringBuilder? = StringBuilder()
+  private var buffer: StringBuilder? = StringBuilder()
 
   abstract fun process(line: String)
 
   fun notifyTextAvailable(text: String) {
-    if (lineBuilder == null) throw IllegalStateException("The line processor was closed")
+    val lineBuilder = buffer ?: throw IllegalStateException("The line processor was closed")
     for (c in text) {
       if (c == '\n') {
-        if (lineBuilder!!.lastOrNull() == '\r') {
-          lineBuilder!!.deleteCharAt(lineBuilder!!.length - 1)
+        if (lineBuilder.lastOrNull() == '\r') {
+          lineBuilder.deleteCharAt(lineBuilder.length - 1)
         }
-        flushBuffer()
+        lineBuilder.flushBuffer()
       }
       else {
-        lineBuilder!!.append(c)
+        lineBuilder.append(c)
       }
     }
   }
 
   override fun close() {
-    if (lineBuilder != null) {
-      flushBuffer(skipEmptyLine = true)
-      lineBuilder = null
-    }
+    buffer?.flushBuffer(skipEmptyLine = true)
+    buffer = null
   }
 
-  private fun flushBuffer(skipEmptyLine: Boolean = false) {
-    val line = lineBuilder!!.toString()
-    lineBuilder!!.setLength(0)
+  private fun StringBuilder.flushBuffer(skipEmptyLine: Boolean = false) {
+    val line = this.toString()
+    this.setLength(0)
     if (!skipEmptyLine || line.isNotEmpty()) {
       process(line)
     }
