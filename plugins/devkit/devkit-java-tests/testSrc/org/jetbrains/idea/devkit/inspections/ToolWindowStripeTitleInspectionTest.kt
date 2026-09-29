@@ -16,7 +16,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
         <id>com.example.plugin</id>
         <resource-bundle>messages.RightBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle'.">My Tool Window</warning>"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -87,7 +87,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
       "META-INF/optional.xml", """
       <idea-plugin>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle'.">My Tool Window</warning>"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -117,7 +117,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
       <idea-plugin>
         <resource-bundle>messages.OwnBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.OwnBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.ParentBundle'. Move the key to 'messages.OwnBundle', or declare 'messages.ParentBundle' in '$moduleName'.">My Tool Window</warning>"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.OwnBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.ParentBundle'. Move the key to 'messages.OwnBundle'.">My Tool Window</warning>"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -188,7 +188,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
         <id>com.example.plugin</id>
         <resource-bundle>messages.RightBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
-          <library.toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>"/>
+          <library.toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle'.">My Tool Window</warning>"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -304,7 +304,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
         <id>com.example.plugin</id>
         <resource-bundle>messages.RightBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="ShortTitleToolWindowFactory"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle'.">My Tool Window</warning>" factoryClass="ShortTitleToolWindowFactory"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -340,7 +340,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
         <id>com.example.plugin</id>
         <resource-bundle>messages.RightBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="LazyTitleToolWindowFactory"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle'.">My Tool Window</warning>" factoryClass="LazyTitleToolWindowFactory"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -375,7 +375,7 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
         <id>com.example.plugin</id>
         <resource-bundle>messages.RightBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="ReadingToolWindowFactory"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle'.">My Tool Window</warning>" factoryClass="ReadingToolWindowFactory"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
