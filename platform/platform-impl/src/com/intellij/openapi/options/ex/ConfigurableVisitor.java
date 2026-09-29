@@ -2,8 +2,10 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.Predicates;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +39,41 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     return find(configurable -> id.equals(getId(configurable)), groups);
   }
 
+  /**
+   * Finds the page of the given type in two passes.
+   * <p>
+   * The first pass reads the declaration of every node, so it loads no page class and constructs no page.
+   * It answers for a node that exists already, and for a {@link ConfigurableWrapper} whose declaration names
+   * the page class. The second pass is the cast walk, and it runs only when the first pass finds nothing.
+   * A {@code provider=} declaration names no page class, and a caller that passes a base type asks a wider
+   * question than a name comparison, so both shapes reach the second pass.
+   */
   public static @Nullable Configurable findByType(@NotNull Class<? extends Configurable> type, @NotNull List<? extends ConfigurableGroup> groups) {
-    return find(configurable -> ConfigurableWrapper.cast(type, configurable) != null, groups);
+    Configurable byDeclaredType = find(configurable -> matchesDeclaredType(type, configurable), groups);
+    if (byDeclaredType != null) {
+      return byDeclaredType;
+    }
+    return find(configurable -> ConfigurableWrapper.tryToCast(type, configurable), groups);
+  }
+
+  /**
+   * Tells whether the node is of the given type, without a page construction.
+   * The answer is exact for a node that exists, and it is a name comparison for a declaration.
+   */
+  private static boolean matchesDeclaredType(@NotNull Class<? extends Configurable> type, @NotNull Configurable configurable) {
+    if (configurable instanceof ConfigurableWrapper wrapper) {
+      UnnamedConfigurable page = wrapper.getRawConfigurable();
+      if (page != null) {
+        return type.isInstance(page);
+      }
+      ConfigurableEP<?> ep = wrapper.getExtensionPoint();
+      return type.getName().equals(ep.getDeclaredConfigurableClassName());
+    }
+    if (type.isInstance(configurable)) {
+      return true;
+    }
+    // a thin client page holds the class name of the backend page, and it answers the same question
+    return configurable instanceof Configurable.ClassCastChecker checker && checker.tryToCast(type);
   }
 
   public static @Nullable Configurable find(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {

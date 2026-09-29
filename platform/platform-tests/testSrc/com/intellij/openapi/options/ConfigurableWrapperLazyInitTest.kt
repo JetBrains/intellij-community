@@ -4,6 +4,7 @@ package com.intellij.openapi.options
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.newEditor.SettingsNewBadgeState
 import com.intellij.testFramework.junit5.TestApplication
@@ -106,8 +107,35 @@ internal class ConfigurableWrapperLazyInitTest {
     assertThat(InitLog.initialized()).isEmpty()
   }
 
+  @Test
+  fun `a search by the declared class constructs nothing`() {
+    val target = wrap(instanceEp("target", PlainConfigurable::class.java))
+    val groups = listOf(groupOf(wrap(instanceEp("other", PreferredFocusConfigurable::class.java)), target))
+
+    assertThat(ConfigurableVisitor.findByType(PlainConfigurable::class.java, groups)).isSameAs(target)
+    assertThat(InitLog.initialized()).isEmpty()
+  }
+
+  @Test
+  fun `a search by a base class still finds the page`() {
+    val target = wrap(instanceEp("target", PlainConfigurable::class.java))
+    val groups = listOf(groupOf(target))
+
+    // no declaration names the base class, so the fallback walk answers, and it constructs the page
+    assertThat(ConfigurableVisitor.findByType(TrackedConfigurable::class.java, groups)).isSameAs(target)
+    assertThat(InitLog.initialized()).containsExactly(PlainConfigurable::class.java)
+  }
+
   private fun wrap(ep: ConfigurableEP<Configurable>): Configurable {
     return requireNotNull(ConfigurableWrapper.wrapConfigurable(ep)) { "no wrapper for $ep" }
+  }
+
+  private fun groupOf(vararg configurables: Configurable): ConfigurableGroup {
+    return object : ConfigurableGroup {
+      override fun getDisplayName(): String = "test group"
+
+      override fun getConfigurables(): Array<Configurable> = arrayOf(*configurables)
+    }
   }
 
   private fun instanceEp(

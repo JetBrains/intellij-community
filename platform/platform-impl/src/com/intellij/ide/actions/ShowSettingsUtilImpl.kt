@@ -247,12 +247,16 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     additionalConfiguration: Consumer<in T>?,
   ) {
     assert(Configurable::class.java.isAssignableFrom(configurableClass)) { "Not a configurable: " + configurableClass.name }
-    showSettingsDialog(project, { it: Configurable? -> ConfigurableWrapper.tryToCast(configurableClass, it) }) { it: Configurable ->
+    // the search must go through `findByType`, because that one answers from the declaration and constructs no page
+    showSettingsDialogLazily(project, filter = null) { groups ->
+      val configurable = ConfigurableVisitor.findByType(configurableClass, groups)
+                         ?: error("Cannot find configurable: " + configurableClass.name)
       if (additionalConfiguration != null) {
-        val toConfigure = ConfigurableWrapper.cast(configurableClass, it)
-                          ?: error("Wrong configurable found: " + it.javaClass + " but expected: " + configurableClass)
+        val toConfigure = ConfigurableWrapper.cast(configurableClass, configurable)
+                          ?: error("Wrong configurable found: " + configurable.javaClass + " but expected: " + configurableClass)
         additionalConfiguration.accept(toConfigure)
       }
+      configurable
     }
   }
 
