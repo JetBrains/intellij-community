@@ -61,11 +61,6 @@ import java.nio.file.Path
  * start a specific LSP server, use [LspClient.descriptor], where the [LspClient] itself could be found using
  * [LspClientManager.getClients].
  *
- * To see all [window/logMessage](https://microsoft.github.io/language-server-protocol/specification/#window_logMessage)
- * and [$/logTrace](https://microsoft.github.io/language-server-protocol/specification/#traceValue) notifications from the server in the
- * `Notifications` tool window, select the `'Show in tool window'` check box for the `'LSP log: info, trace'` category
- * in Settings -> Appearance & Behavior -> Notifications.
- *
  * @param presentableName this string may appear in the UI in some cases, for example:
  * - `Language Services` status bar widget item
  * ([LspClientWidgetItem.getWidgetActionText][com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem.widgetActionText])
