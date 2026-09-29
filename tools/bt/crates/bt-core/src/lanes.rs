@@ -430,12 +430,20 @@ pub fn bep_override(passthrough: &[String]) -> Option<String> {
 /// which silently disables local sharding; `summary` is chosen over `errors` because failures are read from
 /// test.xml, so streaming whole logs into our pipe would only cost memory. The UI flags exist purely to keep
 /// bazel's progress chatter out of an agent's context.
+///
+/// `--noincompatible_check_sharding_support` is for the `rust_clippy_test` targets of the vm-lane crates. Their
+/// runner reads the markers of clippy actions that ran at build time, and it never touches
+/// `TEST_SHARD_STATUS_FILE`. With the check on, a forced shard count fails every one of them with "Sharding
+/// requested, but the test runner did not advertise support" (measured 2026-09-29, 19 targets). With the check
+/// off, each shard reads the same markers, which costs nothing. The check is never reached under `streamed`
+/// output, which is why a plain `bazel test` of the same targets passes.
 pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
     let resolution = &plan.resolution;
     let mut args: Vec<String> = [
         "test",
         "--test_output=summary",
         "--test_summary=terse",
+        "--noincompatible_check_sharding_support",
         "--noshow_progress",
         "--curses=no",
         "--color=no",

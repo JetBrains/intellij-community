@@ -40,10 +40,12 @@ fn the_repo_streamed_and_detailed_defaults_are_always_overridden() {
     let args = build_bazel_args(&base_plan(labelled("//p:t")));
     assert_eq!(args[0], "test");
     // `--test_output=streamed` is the repository default and it silently disables local sharding, so a run that
-    // did not override it would ignore every shard count below.
+    // did not override it would ignore every shard count below. The sharding-support check is off, because the
+    // clippy runner of a vm-lane crate never touches the shard status file.
     for expected in [
         "--test_output=summary",
         "--test_summary=terse",
+        "--noincompatible_check_sharding_support",
         "--noshow_progress",
         "--curses=no",
         "--color=no",
