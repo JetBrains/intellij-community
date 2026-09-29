@@ -36,7 +36,6 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
-    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
