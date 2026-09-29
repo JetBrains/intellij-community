@@ -3,6 +3,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -11,6 +12,7 @@ import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.removemiddleman.DelegationUtils;
 import com.intellij.refactoring.removemiddleman.RemoveMiddlemanProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.common.BazelTestUtil;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -20,6 +22,10 @@ import java.util.Set;
 public class RemoveMiddleManTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//plugins/rareJavaRefactorings:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath() + "/removemiddleman/";
+    }
     return PluginPathManager.getPluginHomePath("rareJavaRefactorings") + "/testData/removemiddleman/";
   }
 

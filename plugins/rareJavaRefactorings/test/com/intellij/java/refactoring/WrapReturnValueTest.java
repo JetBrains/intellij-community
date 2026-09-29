@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -9,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.wrapreturnvalue.WrapReturnValueProcessor;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -17,6 +19,10 @@ import org.jetbrains.annotations.NonNls;
 public class WrapReturnValueTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//plugins/rareJavaRefactorings:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath() + "/wrapReturnValue/";
+    }
     return PluginPathManager.getPluginHomePath("rareJavaRefactorings") + "/testData/wrapReturnValue/";
   }
 

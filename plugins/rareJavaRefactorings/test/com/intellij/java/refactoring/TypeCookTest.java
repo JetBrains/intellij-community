@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.LightMultiFileTestCase;
@@ -12,11 +13,16 @@ import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class TypeCookTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//plugins/rareJavaRefactorings:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath() + "/typeCook/";
+    }
     return PluginPathManager.getPluginHomePath("rareJavaRefactorings") + "/testData/typeCook/";
   }
 

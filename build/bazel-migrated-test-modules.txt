@@ -60,6 +60,7 @@ intellij.java.ide.customization.tests
 intellij.java.jshell.console.tests
 intellij.java.jshell.protocol.tests
 intellij.java.manifest.tests
+intellij.java.rareRefactorings.tests
 intellij.java.terminal.tests
 intellij.java.testFramework.tests
 intellij.java.typeMigration.tests
