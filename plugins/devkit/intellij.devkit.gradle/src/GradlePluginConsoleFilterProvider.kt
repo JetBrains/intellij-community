@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.execution.filters.ConsoleFilterProvider
@@ -20,7 +20,10 @@ internal class GradlePluginConsoleFilterProvider : ConsoleFilterProvider {
     }
     if (!isPluginProject) return Filter.EMPTY_ARRAY
 
-    return arrayOf(PluginVerifierFilter(project))
+    return arrayOf(
+      PluginVerifierFilter(project),
+      IntelliJPlatformGradleFilter(),
+    )
   }
 
   private fun <T> runSafeReadAction(project: Project, action: () -> T): T {
