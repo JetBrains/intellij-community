@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.lang.psi.util;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.editor;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -18,23 +17,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
-
-public final class GroovyImportUtil {
-  public static void processFile(final @NotNull GroovyFile file,
-                                 final @NotNull Set<? super String> importedClasses,
-                                 final @NotNull Set<? super String> staticallyImportedMembers,
-                                 final @NotNull Set<? super GrImportStatement> usedImports,
-                                 final @NotNull Set<? super GrImportStatement> unresolvedOnDemandImports,
-                                 final @NotNull Set<? super String> implicitlyImported,
-                                 final @NotNull Set<? super String> innerClasses,
-                                 final @NotNull Map<String, String> aliased,
-                                 final @NotNull Map<String, String> annotations) {
+final class GroovyImportUtil {
+  static void processFile(@NotNull GroovyFile file,
+                          @NotNull Set<String> importedModules,
+                          @NotNull Set<String> importedClasses,
+                          @NotNull Set<String> staticallyImportedMembers,
+                          @NotNull Set<GrImportStatement> usedImports,
+                          @NotNull Set<GrImportStatement> unresolvedOnDemandImports,
+                          @NotNull Set<String> implicitlyImported,
+                          @NotNull Set<String> innerClasses,
+                          @NotNull Map<String, String> aliased,
+                          @NotNull Map<String, String> annotations) {
     final Set<String> unresolvedReferenceNames = new LinkedHashSet<>();
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -112,6 +112,9 @@ public final class GroovyImportUtil {
               if (importStatement.isStatic()) {
                 staticallyImportedMembers.add(importedName);
               }
+              else if (importStatement.isModule()) {
+                importedModules.add(importedName);
+              }
               else {
                 importedClasses.add(importedName);
                 if (resolved instanceof PsiClass && ((PsiClass)resolved).getContainingClass() != null) {
@@ -172,14 +175,12 @@ public final class GroovyImportUtil {
     file.acceptChildren(new GroovyElementVisitor() {
       @Override
       public void visitImportStatement(@NotNull GrImportStatement importStatement) {
-        final String annotationText = importStatement.getAnnotationList().getText();
-        if (!StringUtil.isEmptyOrSpaces(annotationText)) {
-          final String importRef = importStatement.getImportFqn();
-          annotations.put(importRef, annotationText);
+        if (isAnnotatedImport(importStatement)) {
+          annotations.put(importStatement.getImportFqn(), importStatement.getAnnotationList().getText());
         }
       }
     });
-    usedImports.removeAll(unusedImports(file));
+    usedImports.removeAll(GroovyUnusedImportUtil.unusedImports(file));
   }
 
   private static @Nullable String getTargetQualifiedName(PsiElement element) {
@@ -196,6 +197,6 @@ public final class GroovyImportUtil {
   }
 
   public static boolean isAnnotatedImport(GrImportStatement anImport) {
-    return !StringUtil.isEmptyOrSpaces(anImport.getAnnotationList().getText());
+    return anImport.getAnnotationList().getFirstChild() != null;
   }
 }

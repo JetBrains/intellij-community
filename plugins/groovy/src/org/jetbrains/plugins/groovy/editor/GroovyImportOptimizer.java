@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ import java.util.Set;
 public final class GroovyImportOptimizer implements ImportOptimizer {
   public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
     return (statement1, statement2) -> {
+      if (statement1.isModule() && !statement2.isModule()) return -1;
+      if (statement2.isModule() && !statement1.isModule()) return 1;
       if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
         if (statement1.isStatic() && !statement2.isStatic()) return 1;
         if (statement2.isStatic() && !statement1.isStatic()) return -1;
@@ -58,7 +59,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
     return new MyProcessor((GroovyFile)file).compute();
   }
 
-  private static final class MyProcessor implements NotNullComputable<Runnable> {
+  private static final class MyProcessor implements Computable<@NotNull Runnable> {
     private final GroovyFile myFile;
 
     private MyProcessor(@NotNull GroovyFile file) {
@@ -67,6 +68,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
 
     @Override
     public @NotNull Runnable compute() {
+      final Set<String> importedModules = new LinkedHashSet<>();
       final Set<String> simplyImportedClasses = new LinkedHashSet<>();
       final Set<String> staticallyImportedMembers = new LinkedHashSet<>();
       final Set<GrImportStatement> usedImports = new HashSet<>();
@@ -76,15 +78,14 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
       final Map<String, String> aliasImported = new HashMap<>();
       final Map<String, String> annotatedImports = new HashMap<>();
 
-      GroovyImportUtil.processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, unresolvedOnDemandImports,
-                                   implicitlyImportedClasses, innerClasses,
-                                   aliasImported, annotatedImports);
+      GroovyImportUtil.processFile(myFile, importedModules, simplyImportedClasses, staticallyImportedMembers, usedImports,
+                                   unresolvedOnDemandImports, implicitlyImportedClasses, innerClasses, aliasImported, annotatedImports);
       final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(myFile);
 
       // Add new import statements
-      GrImportStatement[] newImports =
-        prepare(usedImports, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, aliasImported,
-                annotatedImports, unresolvedOnDemandImports);
+      final GrImportStatement[] newImports =
+        prepare(usedImports, importedModules, simplyImportedClasses, staticallyImportedMembers, implicitlyImportedClasses, innerClasses, 
+                aliasImported, annotatedImports, unresolvedOnDemandImports);
       if (oldImports.isEmpty() && newImports.length == 0 && aliasImported.isEmpty()) return EmptyRunnable.getInstance();
 
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
@@ -117,6 +118,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
     }
 
     private GrImportStatement[] prepare(final Set<GrImportStatement> usedImports,
+                                        Set<String> importedModules,
                                         Set<String> importedClasses,
                                         Set<String> staticallyImportedMembers,
                                         Set<String> implicitlyImported,
@@ -154,9 +156,12 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
         classCountMap.mergeInt(StringUtil.getPackageName(importedMember), 1, Math::addExact);
       }
 
-      final Set<String> onDemandImportedSimpleClassNames = new HashSet<>();
       final List<GrImportStatement> result = new ArrayList<>();
+      for (String module : importedModules) {
+        result.add(factory.createImportStatementFromText("import module " + module));
+      }
 
+      final Set<String> onDemandImportedSimpleClassNames = new HashSet<>();
       for (Object2IntMap.Entry<String> entry : packageCountMap.object2IntEntrySet()) {
         String s = entry.getKey();
         if (entry.getIntValue() >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND || settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(s)) {
@@ -175,18 +180,7 @@ public final class GroovyImportOptimizer implements ImportOptimizer {
         }
       }
 
-      for (Object2IntMap.Entry<String> entry : classCountMap.object2IntEntrySet()) {
-        if (entry.getIntValue() >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-          final GrImportStatement imp = factory.createImportStatementFromText(entry.getKey(), true, true, null);
-          String annos = annotations.remove(entry.getKey() + ".*");
-          if (annos != null) {
-            imp.getAnnotationList().replace(factory.createModifierList(annos));
-          }
-          result.add(imp);
-        }
-      }
-
-      List<GrImportStatement> explicated = new ArrayList<>();
+      final List<GrImportStatement> explicated = new ArrayList<>();
       for (String importedClass : importedClasses) {
         final String parentName = StringUtil.getPackageName(importedClass);
         if (!annotations.containsKey(importedClass) && !aliased.containsKey(importedClass)) {

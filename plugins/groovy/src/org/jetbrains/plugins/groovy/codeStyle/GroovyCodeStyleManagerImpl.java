@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -90,6 +90,7 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     if (reference == null) return -1;
     final String packageName = StringUtil.getPackageName(reference.getCanonicalText());
     final boolean isStatic = statement.isStatic();
+    final boolean isModule = statement.isModule();
 
     int best = -1;
     int allOtherStatic = -1;
@@ -97,7 +98,11 @@ public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     PackageEntry bestEntry = null;
     for (int i = 0, length = entries.length; i < length; i++) {
       PackageEntry entry = entries[i];
-      if (entry.isBetterMatchForPackageThan(bestEntry, packageName, isStatic)) {
+      if (isModule && entry == PackageEntry.ALL_MODULE_IMPORTS) {
+        best = i;
+        bestEntry = entry;
+      }
+      else if (entry.isBetterMatchForPackageThan(bestEntry, packageName, isStatic)) {
         best = i;
         bestEntry = entry;
       }

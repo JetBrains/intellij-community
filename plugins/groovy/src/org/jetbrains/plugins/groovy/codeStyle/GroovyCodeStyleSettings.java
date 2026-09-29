@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -11,6 +12,8 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaImportsLayoutSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -83,16 +86,25 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean INSERT_INNER_CLASS_IMPORTS = false;
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
-  public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+  public PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   @Property(externalName = "imports_layout")
   public PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   public int IMPORT_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
+
+  public GroovyCodeStyleSettings(CodeStyleSettings container) {
+    super("GroovyCodeStyleSettings", container);
+
+    initImportsByDefault();
+  }
+
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "javax.swing", false));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
@@ -101,10 +113,24 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
-  public GroovyCodeStyleSettings(CodeStyleSettings container) {
-    super("GroovyCodeStyleSettings", container);
+  @Override
+  public Object clone() {
+    GroovyCodeStyleSettings cloned = (GroovyCodeStyleSettings)super.clone();
+    cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+    cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    cloned.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    cloned.IMPORT_LAYOUT_TABLE.copyFrom(IMPORT_LAYOUT_TABLE);
+    return cloned;
+  }
 
-    initImportsByDefault();
+  @Override
+  public void readExternal(Element parentElement) throws InvalidDataException {
+    super.readExternal(parentElement);
+    if (!ContainerUtil.exists(IMPORT_LAYOUT_TABLE.getEntries(), entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
+      // insert `import module` entry when it is not present
+      IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.BLANK_LINE_ENTRY, 0);
+      IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+    }
   }
 
   @Override
@@ -181,7 +207,6 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     return ENABLE_GROOVYDOC_FORMATTING;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
     STATIC_FIELDS_ORDER_WEIGHT = rootSettings.STATIC_FIELDS_ORDER_WEIGHT;

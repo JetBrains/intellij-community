@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,7 +6,10 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -19,59 +22,27 @@ public class GroovyOptimizeImportsTest extends LightGroovyTestCase {
     ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
   }
 
-  public void testNewline() {
-    doTest();
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_6_0_REAL_JDK;
   }
 
-  public void testAliased() {
-    doTest();
-  }
-
-  public void testSimpleOptimize() {
-    doTest();
-  }
-
-  public void testCommented() {
-    doTest();
-  }
-
-  public void testOptimizeExists() {
-    doTest();
-  }
-
-  public void testOptimizeAlias() {
-    doTest();
-  }
-
-  public void testFoldImports() {
-    doTest();
-  }
-
-  public void testFoldImports2() {
-    doTest();
-  }
-
-  public void testUntypedCall() {
-    doTest();
-  }
-
-  public void testFoldImports3() {
-    doTest();
-  }
-
-  public void testFoldImports4() {
-    doTest();
-  }
-
-  public void testFoldImports5() {
-    doTest();
-  }
-
-  public void testFixPoint() {
-    doTest();
-  }
-
+  public void testNewline() { doTest(); }
+  public void testAliased() { doTest(); }
+  public void testSimpleOptimize() { doTest(); }
+  public void testCommented() { doTest(); }
+  public void testOptimizeExists() { doTest(); }
+  public void testOptimizeAlias() { doTest(); }
+  public void testFoldImports() { doTest(); }
+  public void testFoldImports2() { doTest(); }
+  public void testUntypedCall() { doTest(); }
+  public void testFoldImports3() { doTest(); }
+  public void testFoldImports4() { doTest(); }
+  public void testFoldImports5() { doTest(); }
+  public void testFixPoint() { doTest(); }
   public void testPreserveImportAnnotations() { doTest(); }
+  public void testModuleImports1() { doTest(); }
+  public void testModuleImports2() { doTest(); }
 
   public void testUtilListMasked() {
     myFixture.addClass("package java.awt; public class List {}");
@@ -87,13 +58,8 @@ public class GroovyOptimizeImportsTest extends LightGroovyTestCase {
     myFixture.checkResultByFile(getTestName(false) + ".groovy");
   }
 
-  public void testSemicolons() {
-    doTest();
-  }
-
-  public void testSameFile() {
-    doTest();
-  }
+  public void testSemicolons() { doTest(); }
+  public void testSameFile() { doTest(); }
 
   public void testSamePackage() {
     myFixture.addClass("package foo; public class Bar {}");
@@ -107,30 +73,17 @@ public class GroovyOptimizeImportsTest extends LightGroovyTestCase {
     doTest();
   }
 
-  public void testFileHeader() {
-    doTest();
-  }
-
+  public void testFileHeader() { doTest(); }
   public void testRemoveImplicitlyImported() { doTest(); }
-
   public void testRemoveImplicitlyDemandImported() { doTest(); }
-
   public void testDontRemoveRedImports() { doTest(); }
-
   public void testDontRemoveRedImports2() { doTest(); }
-
   public void testDontRemoveRedImports3() { doTest(); }
-
   public void testDontRemoveRedImports4() { doTest(); }
-
   public void testDontRemoveRedImports5() { doTest(); }
-
   public void testDontRemoveRedImports6() { doTest(); }
-
   public void testDontRemoveRedImports7() { doTest(); }
-
   public void testDontRemoveRedImports8() { doTest(); }
-
   public void testDontRemoveRedImports9() { doTest(); }
 
   public void testRemoveSamePackaged() {
