@@ -24,8 +24,12 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 import java.util.EnumSet
 
 internal class NonExistingWorkspaceRootsRegistry(
@@ -35,31 +39,19 @@ internal class NonExistingWorkspaceRootsRegistry(
   /** todo: replace by MostlySingularMultiMap to reduce memory usage  */
   private val nonExistingFiles = MultiMap.createConcurrent<VirtualFileUrl, NonExistingFileSetData>()
   
-  fun registerUrl(root: VirtualFileUrl,
-                  entity: WorkspaceEntity,
-                  storageKind: EntityStorageKind,
-                  fileSetKind: NonExistingFileSetKind,
-                  recursive: Boolean) {
-    registerUrl(root, entity.createPointer(), storageKind, fileSetKind, recursive)
-  }
-
-  fun registerUrl(root: VirtualFileUrl,
-                  reference: EntityPointer<WorkspaceEntity>,
-                  storageKind: EntityStorageKind,
-                  fileSetKind: NonExistingFileSetKind,
-                  recursive: Boolean) {
-    nonExistingFiles.putValue(root, NonExistingFileSetData(reference, storageKind, fileSetKind, recursive))
+  fun registerUrl(root: VirtualFileUrl, data: NonExistingFileSetData) {
+    nonExistingFiles.putValue(root, data)
   }
 
   fun unregisterUrl(fileUrl: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind) {
-    nonExistingFiles.removeValueIf(fileUrl) { (reference, kind) ->
-      kind == storageKind && reference.isPointerTo(entity)
+    nonExistingFiles.removeValueIf(fileUrl) { data ->
+      data.storageKind == storageKind && data.reference.isPointerTo(entity)
     }
   }
 
   fun unregisterUrl(fileUrl: VirtualFileUrl, reference: EntityPointer<WorkspaceEntity>, storageKind: EntityStorageKind) {
-    nonExistingFiles.removeValueIf(fileUrl) { (ref, kind) ->
-      kind == storageKind && ref == reference
+    nonExistingFiles.removeValueIf(fileUrl) { data ->
+      data.storageKind == storageKind && data.reference == reference
     }
   }
 
@@ -70,8 +62,18 @@ internal class NonExistingWorkspaceRootsRegistry(
   fun getFileSetKindsFor(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind> {
     val data = nonExistingFiles.get(url)
     if (data.isEmpty()) return emptySet()
-    return data.mapNotNullTo(EnumSet.noneOf(NonExistingFileSetKind::class.java)) { fileSetData ->
-      fileSetData.fileSetKind.takeIf { includeNonRecursive || fileSetData.recursive }
+    return data.mapNotNullTo(EnumSet.noneOf(NonExistingFileSetKind::class.java)) { fileSetData: NonExistingFileSetData ->
+      when (fileSetData) {
+        is NonExistingWorkspaceFileSet -> fileSetData.fileSetKind.takeIf { includeNonRecursive || fileSetData.recursive }
+        is NonExistingWorkspaceExclude.ByFileKind -> {
+          if (fileSetData.mask and CONTENT_KINDS_MASK != 0) NonExistingFileSetKind.EXCLUDED_FROM_CONTENT
+          else NonExistingFileSetKind.EXCLUDED_OTHER
+        }
+        is NonExistingWorkspaceExclude.UnscopedRoot -> NonExistingFileSetKind.EXCLUDED_FROM_CONTENT
+        is NonExistingWorkspaceExclude.ByPattern,
+        is NonExistingWorkspaceExclude.ByCondition,
+        is NonExistingWorkspaceExclude.ByUnscopedCondition -> NonExistingFileSetKind.EXCLUDED_OTHER
+      }
     }
   }
 
@@ -274,12 +276,73 @@ fun getOldAndNewUrls(event: VFileEvent): Pair<String, String> {
   }
 }
 
-internal data class NonExistingFileSetData(
-  val reference: EntityPointer<WorkspaceEntity>,
-  val storageKind: EntityStorageKind,
+private const val CONTENT_KINDS_MASK = WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
+
+/**
+ * Describes a file set or an exclusion registered for a file which doesn't exist.
+ */
+@ApiStatus.Internal
+sealed interface NonExistingFileSetData {
+  val reference: EntityPointer<WorkspaceEntity>
+  val storageKind: EntityStorageKind
+}
+
+/**
+ * A file set registered for a file which doesn't exist.
+ * The existing file counterpart is [WorkspaceFileSetImpl].
+ */
+@ApiStatus.Internal
+data class NonExistingWorkspaceFileSet(
+  override val reference: EntityPointer<WorkspaceEntity>,
+  override val storageKind: EntityStorageKind,
   val fileSetKind: NonExistingFileSetKind,
   val recursive: Boolean,
-)
+) : NonExistingFileSetData
+
+/**
+ * An exclusion registered for a file which doesn't exist.
+ * Each type matches the [ExcludedFileSet] type with the same name.
+ */
+@ApiStatus.Internal
+sealed interface NonExistingWorkspaceExclude : NonExistingFileSetData, WorkspaceExcludeFileSet {
+  data class ByFileKind(
+    override val reference: EntityPointer<WorkspaceEntity>,
+    override val storageKind: EntityStorageKind,
+    @MagicConstant(flagsFromClass = WorkspaceFileKindMask::class) override val mask: Int,
+  ) : NonExistingWorkspaceExclude, WorkspaceExcludeFileSet.ByFileKind
+
+  data class UnscopedRoot(
+    override val reference: EntityPointer<WorkspaceEntity>,
+    override val storageKind: EntityStorageKind,
+    override val directoryOnly: Boolean,
+  ) : NonExistingWorkspaceExclude, WorkspaceExcludeFileSet.UnscopedRoot
+
+  data class ByPattern(
+    override val reference: EntityPointer<WorkspaceEntity>,
+    override val storageKind: EntityStorageKind,
+    val patterns: List<String>,
+  ) : NonExistingWorkspaceExclude, WorkspaceExcludeFileSet.ByPattern {
+    private val table = FileTypeAssocTableUtil.newScalableFileTypeAssocTable<Boolean>().also { table ->
+      for (pattern in patterns) {
+        table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), true)
+      }
+    }
+
+    override fun matches(fileName: CharSequence): Boolean = table.findAssociatedFileType(fileName) != null
+  }
+
+  data class ByCondition(
+    override val reference: EntityPointer<WorkspaceEntity>,
+    override val storageKind: EntityStorageKind,
+    override val condition: WorkspaceFileSetExclusionCondition,
+  ) : NonExistingWorkspaceExclude, WorkspaceExcludeFileSet.ByCondition
+
+  data class ByUnscopedCondition(
+    override val reference: EntityPointer<WorkspaceEntity>,
+    override val storageKind: EntityStorageKind,
+    override val condition: WorkspaceFileSetExclusionCondition,
+  ) : NonExistingWorkspaceExclude, WorkspaceExcludeFileSet.ByUnscopedCondition
+}
 
 /**
  * Describes kind of workspace file set associated with a non-existing file.

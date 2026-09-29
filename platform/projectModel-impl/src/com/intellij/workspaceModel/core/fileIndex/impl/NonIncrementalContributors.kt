@@ -96,8 +96,10 @@ internal class NonIncrementalContributors(private val project: Project) {
             newRoots.add(it.key)
           }
           newExcludedUrls.forEach {
-            nonExistingFilesRegistry.registerUrl(it, NonIncrementalMarker, EntityStorageKind.MAIN,
-                                                 NonExistingFileSetKind.EXCLUDED_FROM_CONTENT, recursive = true)
+            nonExistingFilesRegistry.registerUrl(
+              it,
+              NonExistingWorkspaceExclude.ByFileKind(NonIncrementalMarker, EntityStorageKind.MAIN, WorkspaceFileKindMask.ALL),
+            )
           }
           newFileSets.forEach { (root, sets) ->
             sets.forEach { set ->
