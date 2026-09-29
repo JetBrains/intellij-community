@@ -5,6 +5,7 @@ import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.ComboBoxModel
@@ -12,13 +13,15 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
-internal fun <T : Any> MutableCollectionComboBoxModel<T>.setItems(value: List<T>) {
+@ApiStatus.Internal
+fun <T : Any> MutableCollectionComboBoxModel<T>.setItems(value: List<T>) {
   val delta = CollectionDelta(items, value)
   delta.removedItems.forEach { removeElement(it) }
   add(delta.newItems.toList())
 }
 
-internal class ComboBoxWithActionsModel<T>
+@ApiStatus.Internal
+class ComboBoxWithActionsModel<T>
   : ComboBoxModel<ComboBoxWithActionsModel.Item<T>> {
 
   private val itemsModel = MutableCollectionComboBoxModel<Item.Wrapper<T>>()

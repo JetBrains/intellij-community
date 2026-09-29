@@ -133,7 +133,8 @@ internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
   }
 }
 
-internal fun <T> ComboBoxWithActionsModel<T>.bindIn(
+@ApiStatus.Internal
+fun <T> ComboBoxWithActionsModel<T>.bindIn(
   scope: CoroutineScope,
   items: Flow<Collection<T>>,
   selectionState: MutableStateFlow<T?>,

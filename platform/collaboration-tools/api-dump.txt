@@ -289,9 +289,6 @@ a:com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
 - getOutputStream(java.lang.Object,J,J):java.lang.Void
 - pf:getSessionId():java.lang.String
 - hashCode():I
-f:com.intellij.collaboration.messages.CollaborationToolsBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 e:com.intellij.collaboration.snippets.PathHandlingMode
 - java.lang.Enum
 - sf:Companion:com.intellij.collaboration.snippets.PathHandlingMode$Companion
@@ -389,27 +386,6 @@ f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFact
 - hashCode():I
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig$Companion
 - f:of(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,com.intellij.collaboration.ui.icon.IconsProvider,java.lang.Object):com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig
-com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
-- a:getCanCreateReplies():kotlinx.coroutines.flow.StateFlow
-- a:getRepliesFolded():kotlinx.coroutines.flow.StateFlow
-- a:getRepliesState():kotlinx.coroutines.flow.StateFlow
-- a:isBusy():kotlinx.coroutines.flow.StateFlow
-- a:unfoldReplies():V
-com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData
-- a:getLastReplyDate():java.util.Date
-- a:getRepliesAuthors():java.util.Set
-- a:getRepliesCount():I
-f:com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData$Empty
-- com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData$Empty
-- getLastReplyDate():java.util.Date
-- getRepliesAuthors():java.util.Set
-- getRepliesCount():I
-com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
-- a:changeResolvedState():V
-- a:getCanChangeResolvedState():kotlinx.coroutines.flow.StateFlow
-- a:isBusy():kotlinx.coroutines.flow.StateFlow
-- a:isResolved():kotlinx.coroutines.flow.StateFlow
 f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.openapi.actionSystem.UiDataProvider
@@ -422,19 +398,11 @@ f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadComment
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel$Companion
 - f:createUnfoldComponent(I,kotlin.jvm.functions.Function1):javax.swing.JComponent
-com.intellij.collaboration.ui.codereview.user.CodeReviewUser
-- a:getAvatarUrl():java.lang.String
 f:com.intellij.collaboration.util.ChangesSelectionKt
 - sf:getSelectedChange(com.intellij.collaboration.util.ChangesSelection):com.intellij.collaboration.util.RefComparisonChange
 - sf:withLocation(com.intellij.collaboration.util.ChangesSelection$Precise,kotlin.Pair):com.intellij.collaboration.util.ChangesSelection$Precise
 f:com.intellij.collaboration.util.CodeReviewFilesUtil
 - sf:INSTANCE:com.intellij.collaboration.util.CodeReviewFilesUtil
-f:com.intellij.collaboration.util.CollectionDelta
-- <init>(java.util.Collection,java.util.Collection):V
-- f:getNewCollection():java.util.Collection
-- f:getNewItems():java.util.Collection
-- f:getRemovedItems():java.util.Collection
-- f:isEmpty():Z
 f:com.intellij.collaboration.util.ComputableSequenceKt
 f:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - sf:INSTANCE:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter

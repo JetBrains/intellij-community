@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
@@ -78,7 +78,8 @@ import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
-  internal val COMPONENT_SCOPE_KEY: Key<CoroutineScope> = Key.create("Collaboration.Component.Coroutine.Scope")
+  @ApiStatus.Internal
+  val COMPONENT_SCOPE_KEY: Key<CoroutineScope> = Key.create("Collaboration.Component.Coroutine.Scope")
 
   val animatedLoadingIcon: Icon = AnimatedIcon.Default.INSTANCE
 
@@ -455,7 +456,7 @@ fun FocusAwareClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBCo
  * A panel with rounded corners which rounds the corners of both its background and its children
  * Supposed to be used ONLY when there is not enough space between the children and panel edges, AND background color is dynamic
  *
- * For simpler cases where only the background should be rounded one should use [com.intellij.ui.components.panels.BackgroundRoundedPanel]
+ * For simpler cases where only the background should be rounded one should use [BackgroundRoundedPanel]
  */
 @Suppress("FunctionName")
 fun ClippingRoundedPanel(arcRadius: Int = 8, layoutManager: LayoutManager? = null): JPanel =
@@ -537,26 +538,27 @@ fun JComponent.requestFocusPreferred() {
   CollaborationToolsUIUtil.focusPanel(this)
 }
 
-internal fun <E> ListModel<E>.findIndex(item: E): Int {
+@ApiStatus.Internal
+fun <E> ListModel<E>.findIndex(item: E): Int {
   for (i in 0 until size) {
     if (getElementAt(i) == item) return i
   }
   return -1
 }
 
-internal val <E> ListModel<E>.items
-  get() = Iterable {
-    object : Iterator<E> {
-      private var idx = -1
+@ApiStatus.Internal
+fun <E> ListModel<E>.items(): Iterable<E> = Iterable {
+  object : Iterator<E> {
+    private var idx = -1
 
-      override fun hasNext(): Boolean = idx < size - 1
+    override fun hasNext(): Boolean = idx < size - 1
 
-      override fun next(): E {
-        idx++
-        return getElementAt(idx)
-      }
+    override fun next(): E {
+      idx++
+      return getElementAt(idx)
     }
   }
+}
 
 fun ComboBoxModel<*>.selectFirst() {
   val size = size

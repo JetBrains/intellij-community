@@ -38,7 +38,7 @@ class CompactAccountsPanelFactory<A : Account>(
     val iconRenderer = IconCellRenderer(detailsProvider, listAvatarSize)
 
     fun buildTooltipHtml(): String = HtmlBuilder()
-      .appendWithSeparators(HtmlChunk.br(), accountsListModel.items.map { HtmlChunk.text(it.name) })
+      .appendWithSeparators(HtmlChunk.br(), accountsListModel.items().map { HtmlChunk.text(it.name) })
       .toString()
 
     @Suppress("UndesirableClassUsage")
@@ -110,7 +110,7 @@ class CompactAccountsPanelFactory<A : Account>(
     private fun showPopupMenu(parentComponent: JComponent) {
       val menuItems = mutableListOf<AccountMenuItem>()
 
-      for ((index, account) in model.items.withIndex()) {
+      for ((index, account) in model.items().withIndex()) {
         val accountTitle = detailsProvider.getDetails(account)?.name ?: account.name
         val serverInfo = if (account is ServerAccount) CollaborationToolsUIUtil.cleanupUrl(account.server.toString()) else ""
         val avatar = detailsProvider.getIcon(account, popupConfig.avatarSize)

@@ -126,7 +126,7 @@ fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(listM
     }
 
     override fun intervalRemoved(e: ListDataEvent) {
-      val accounts = listModel.items.toSet()
+      val accounts = listModel.items().toSet()
       clearOutdatedDetails(accounts)
     }
 

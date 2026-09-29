@@ -65,7 +65,7 @@ object ComponentListPanelFactory {
       }
     })
 
-    for (item in model.items) {
+    for (item in model.items()) {
       panel.add(componentFactory(item))
     }
 

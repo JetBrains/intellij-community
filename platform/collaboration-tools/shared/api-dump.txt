@@ -1,3 +1,35 @@
+f:com.intellij.collaboration.messages.CollaborationToolsBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
+- a:getCanCreateReplies():kotlinx.coroutines.flow.StateFlow
+- a:getRepliesFolded():kotlinx.coroutines.flow.StateFlow
+- a:getRepliesState():kotlinx.coroutines.flow.StateFlow
+- a:isBusy():kotlinx.coroutines.flow.StateFlow
+- a:unfoldReplies():V
+com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData
+- a:getLastReplyDate():java.util.Date
+- a:getRepliesAuthors():java.util.Set
+- a:getRepliesCount():I
+f:com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData$Empty
+- com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel$RepliesStateData$Empty
+- getLastReplyDate():java.util.Date
+- getRepliesAuthors():java.util.Set
+- getRepliesCount():I
+com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+- a:changeResolvedState():V
+- a:getCanChangeResolvedState():kotlinx.coroutines.flow.StateFlow
+- a:isBusy():kotlinx.coroutines.flow.StateFlow
+- a:isResolved():kotlinx.coroutines.flow.StateFlow
+com.intellij.collaboration.ui.codereview.user.CodeReviewUser
+- a:getAvatarUrl():java.lang.String
+f:com.intellij.collaboration.util.CollectionDelta
+- <init>(java.util.Collection,java.util.Collection):V
+- f:getNewCollection():java.util.Collection
+- f:getNewItems():java.util.Collection
+- f:getRemovedItems():java.util.Collection
+- f:isEmpty():Z
 f:com.intellij.collaboration.util.ComputedResult
 - sf:Companion:com.intellij.collaboration.util.ComputedResult$Companion
 - bsf:box-impl(kotlin.Result):com.intellij.collaboration.util.ComputedResult
