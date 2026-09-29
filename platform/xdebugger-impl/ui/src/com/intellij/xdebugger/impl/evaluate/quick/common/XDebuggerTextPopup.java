@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
@@ -52,6 +53,7 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Experimental
@@ -101,14 +103,52 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
         @Override
         public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
           value.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
+            // Show presentation updates until a full value evaluator arrives.
+            // Then accept only the latest evaluation's results while the popup is open, with both checks on EDT.
+            private final AtomicInteger myEvaluationId = new AtomicInteger();
+
             @Override
             public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresenter, boolean hasChildren) {
-              callback.evaluated(StringUtil.notNullize(textValue.getValueText()));
+              if (myEvaluationId.get() == 0 && !isObsolete()) {
+                callback.evaluated(StringUtil.notNullize(textValue.getValueText()));
+              }
             }
 
             @Override
             public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
-              // do nothing - should already be set
+              AppUIUtil.invokeOnEdt(() -> {
+                if (isObsolete()) return;
+                var evaluationId = myEvaluationId.incrementAndGet();
+                fullValueEvaluator.startEvaluation(new XFullValueEvaluationCallback() {
+                  @Override
+                  public void evaluated(@NotNull String fullValue) {
+                    AppUIUtil.invokeOnEdt(() -> {
+                      if (!isObsolete()) {
+                        callback.evaluated(fullValue);
+                      }
+                    });
+                  }
+
+                  @Override
+                  public void errorOccurred(@NotNull String errorMessage) {
+                    AppUIUtil.invokeOnEdt(() -> {
+                      if (!isObsolete()) {
+                        callback.errorOccurred(errorMessage);
+                      }
+                    });
+                  }
+
+                  @Override
+                  public boolean isObsolete() {
+                    return evaluationId != myEvaluationId.get() || callback.isObsolete();
+                  }
+                });
+              });
+            }
+
+            @Override
+            public boolean isObsolete() {
+              return callback.isObsolete();
             }
           }, XValuePlace.TOOLTIP);
         }
