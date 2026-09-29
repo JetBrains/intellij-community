@@ -61,7 +61,7 @@ class PyDebugConsoleConfigurable(private val myProject: Project) : SearchableCon
           )
       }
       row {
-        checkBox(PyBundle.message("form.console.options.use.command.queue"))
+        checkBox(PyBundle.message("form.debug.console.options.use.command.queue"))
           .bindSelected(
             { debuggerOptions.isDebugConsoleCommandQueueEnabled },
             { debuggerOptions.isDebugConsoleCommandQueueEnabled = it },
