@@ -13,6 +13,12 @@
     <module name="intellij.platform.indexing"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.clsCustomNavigationPolicy"
+                    interface="org.jetbrains.kotlin.idea.navigation.KotlinClsCustomNavigationPolicy"
+                    dynamic="true"
+    />
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 
     <applicationService

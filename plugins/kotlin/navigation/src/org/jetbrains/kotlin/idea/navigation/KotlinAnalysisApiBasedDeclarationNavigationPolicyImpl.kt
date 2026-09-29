@@ -66,6 +66,10 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
 
+        KotlinClsCustomNavigationPolicy.getNavigationElement(declaration)?.let {
+            return it
+        }
+
         return CachedValuesManager.getProjectPsiDependentCache(declaration, ::calculateNavigationElement)
     }
 
