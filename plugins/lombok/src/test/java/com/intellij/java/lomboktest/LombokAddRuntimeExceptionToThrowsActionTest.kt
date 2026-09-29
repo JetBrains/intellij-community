@@ -4,12 +4,13 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.openapi.command.executeCommand
 import com.intellij.refactoring.suggested.LightJavaCodeInsightFixtureTestCaseWithUtils
 import com.intellij.testFramework.LightProjectDescriptor
+import de.plushnikov.intellij.plugin.LombokTestUtil
 import de.plushnikov.intellij.plugin.LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR
 
 class LombokAddRuntimeExceptionToThrowsActionTest: LightJavaCodeInsightFixtureTestCaseWithUtils() {
   override fun getProjectDescriptor(): LightProjectDescriptor = LOMBOK_JAVA21_DESCRIPTOR
 
-  override fun getBasePath(): String = "community/plugins/lombok/testData/intention/addExceptionToThrows"
+  override fun getTestDataPath(): String = LombokTestUtil.getTestDataPath() + "/intention/addExceptionToThrows"
 
 
   fun testOverridingSyntheticElement() = doTest()

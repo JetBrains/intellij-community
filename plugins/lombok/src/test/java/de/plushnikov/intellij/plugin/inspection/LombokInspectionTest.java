@@ -6,11 +6,16 @@ import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LombokInspectionTest extends LightJavaInspectionTestCase {
-  static final String TEST_DATA_INSPECTION_DIRECTORY = "testData/inspection";
+  static final String TEST_DATA_INSPECTION_DIRECTORY = "inspection";
 
   @Override
   protected String getBasePath() {
-    return "/plugins/lombok/";
+    return "";
+  }
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return LombokTestUtil.getTestDataPath() + getBasePath();
   }
 
   @NotNull

@@ -38,7 +38,7 @@ class LombokLoggerCompletionTest : LightFixtureCompletionTestCase() {
     doTest(LombokLoggingUtils.ID_LOMBOK_APACHE_COMMONS_LOGGING, "long", "log", "log", "clone")
   }
 
-  override fun getBasePath(): String = "community/plugins/lombok/testData/completion/logger"
+  override fun getTestDataPath(): String = LombokTestUtil.getTestDataPath() + "/completion/logger"
 
   override fun getProjectDescriptor(): LightProjectDescriptor = LombokTestUtil.LOMBOK_OLD_JAVA_1_8_DESCRIPTOR
 

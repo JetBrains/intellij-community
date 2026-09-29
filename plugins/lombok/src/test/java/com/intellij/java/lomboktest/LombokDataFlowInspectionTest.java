@@ -15,8 +15,8 @@ public class LombokDataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return "/plugins/lombok/testData/inspection/dataflow";
+  protected @NotNull String getTestDataPath() {
+    return LombokTestUtil.getTestDataPath() + "/inspection/dataflow";
   }
 
   public void testSpringNonNullApiOnPackage () {

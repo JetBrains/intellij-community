@@ -1,12 +1,15 @@
 package de.plushnikov.intellij.plugin;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +22,14 @@ public final class LombokTestUtil {
   private static final String SLF4J_ARTIFACT = "org.slf4j:slf4j-api:2.0.17";
   private static final String GUAVA_ARTIFACT = "com.google.guava:guava:33.4.8-jre";
   private static final String JSR305_ARTIFACT = "com.google.code.findbugs:jsr305:3.0.2";
+
+  public static @NotNull String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//plugins/lombok:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath().toString();
+    }
+    return PathManager.getCommunityHomePath() + "/plugins/lombok/testData";
+  }
 
   public static void addLombokDependency(@NotNull ModifiableRootModel model) {
     MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES, false, DependencyScope.PROVIDED);

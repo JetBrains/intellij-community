@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 public class ValModifierDataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   @Override
-  protected String getBasePath() {
-    return "/plugins/lombok/testData/augment/modifier";
+  protected @NotNull String getTestDataPath() {
+    return LombokTestUtil.getTestDataPath() + "/augment/modifier";
   }
 
   @NotNull

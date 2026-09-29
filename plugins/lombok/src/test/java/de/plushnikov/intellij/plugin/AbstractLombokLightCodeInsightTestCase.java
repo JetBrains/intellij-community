@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
-  protected String getBasePath() {
-    return "/plugins/lombok/testData";
+  protected @NotNull String getTestDataPath() {
+    return LombokTestUtil.getTestDataPath() + getBasePath();
   }
 
   @NotNull

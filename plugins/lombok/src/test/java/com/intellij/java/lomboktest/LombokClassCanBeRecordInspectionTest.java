@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -21,7 +20,7 @@ public class LombokClassCanBeRecordInspectionTest extends LightQuickFixParameter
 
   @Override
   protected @NotNull String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/lombok/testData";
+    return LombokTestUtil.getTestDataPath();
   }
 
   @Override

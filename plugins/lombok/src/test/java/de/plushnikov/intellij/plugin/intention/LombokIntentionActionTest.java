@@ -5,7 +5,7 @@ import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 public abstract class LombokIntentionActionTest extends AbstractLombokLightCodeInsightTestCase {
 
-  public static final String TEST_DATA_INTENTION_DIRECTORY = "/plugins/lombok/testData/intention";
+  public static final String TEST_DATA_INTENTION_DIRECTORY = "/intention";
 
   @Override
   protected String getBasePath() {

@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ public class LombokSetterMayBeUsedInspectionTest extends LightDaemonAnalyzerTest
 
   @Override
   protected @NotNull String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/lombok/testData";
+    return LombokTestUtil.getTestDataPath();
   }
 
   @NotNull

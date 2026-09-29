@@ -11,8 +11,8 @@ public class LombokLocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCa
   private LocalCanBeFinal myTool;
 
   @Override
-  protected String getBasePath() {
-    return "/plugins/lombok/testData/inspection/localCanBeFinal";
+  protected @NotNull String getTestDataPath() {
+    return LombokTestUtil.getTestDataPath() + "/inspection/localCanBeFinal";
   }
 
   @NotNull

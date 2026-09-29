@@ -14,7 +14,6 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.siyeh.ig.bugs.ObjectEqualityInspection;
 import com.siyeh.ig.bugs.ObjectToStringInspection;
 import com.siyeh.ig.style.FieldMayBeFinalInspection;
@@ -120,11 +119,11 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest() {
-    doTest("/plugins/lombok/testData/highlighting/" + getTestName(false) + ".java", true, false);
+    doTest(getTestName(false) + ".java", true, false);
   }
 
   @Override
   protected @NonNls @NotNull String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath();
+    return LombokTestUtil.getTestDataPath() + "/highlighting/";
   }
 }

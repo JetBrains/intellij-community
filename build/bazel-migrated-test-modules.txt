@@ -67,6 +67,7 @@ intellij.kotlin.gradle.tooling.impl.tests
 intellij.kotlin.jvm.debugger.eval4j.tests
 intellij.kotlin.onboarding.gradle.tests
 intellij.kotlin.onboarding.tests
+intellij.lombok.tests
 intellij.markdown.tests
 intellij.maven.groovy.tests
 intellij.maven.jps.tests

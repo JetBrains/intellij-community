@@ -21,7 +21,12 @@ public abstract class AbstractLombokHighlightsTest extends LightJavaInspectionTe
 
   @Override
   protected String getBasePath() {
-    return "/plugins/lombok/testData/highlights";
+    return "/highlights";
+  }
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return LombokTestUtil.getTestDataPath() + getBasePath();
   }
 
   @Override
@@ -29,4 +34,3 @@ public abstract class AbstractLombokHighlightsTest extends LightJavaInspectionTe
     return new LombokInspection();
   }
 }
-
