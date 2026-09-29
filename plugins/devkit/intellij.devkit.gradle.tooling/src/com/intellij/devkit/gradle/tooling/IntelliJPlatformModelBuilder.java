@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.gradle.tooling;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.provider.Provider;
@@ -39,7 +40,7 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
 
   @Override
   public boolean canBuild(@Nullable String modelName) {
-    return IntelliJPlatformGradleModel.class.getName().equals(modelName);
+    return GradleVersionUtil.isCurrentGradleAtLeast("9.0.0") && IntelliJPlatformGradleModel.class.getName().equals(modelName);
   }
 
   @Override
