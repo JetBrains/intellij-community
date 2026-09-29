@@ -3105,6 +3105,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("moveOverloadToCompanionBlock.kt")
+        public void testMoveOverloadToCompanionBlock() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOverloadToCompanionBlock.kt");
+        }
+
+        @TestMetadata("moveOverloadToCompanionObject.kt")
+        public void testMoveOverloadToCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/moveOverloadToCompanionObject.kt");
+        }
+
         @TestMetadata("removeReceiverCompanionExtensionInsideClass.kt")
         public void testRemoveReceiverCompanionExtensionInsideClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/companionBlocksAndObjects/removeReceiverCompanionExtensionInsideClass.kt");

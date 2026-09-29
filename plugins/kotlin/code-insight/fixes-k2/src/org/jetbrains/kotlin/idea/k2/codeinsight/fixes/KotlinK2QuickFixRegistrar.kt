@@ -234,6 +234,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeTypeQuickFixFactories.implicitNothingReturnTypeFixFactory)
         registerFactory(ChangeTypeQuickFixFactories.implicitNothingPropertyTypeFixFactory)
         registerFactory(InapplicableJvmFieldFixFactories.removeAnnotationFixFactory)
+        registerPsiQuickFixes(
+            KaFirDiagnostic.OfOverloadsInBlockAndObject::class,
+            CompanionMemberFixFactories.ofOverloadsInBlockAndObjectFactory
+        )
         registerFactory(OverridingIgnorableWithMustUseFixFactories.addIgnorableReturnValueAnnotationFixFactory)
         registerFactory(RemoveUnnamedPropertyFixFactory.unnamedPropertyWithImplicitIgnorableTypeFixFactory)
         registerFactory(AddNewLineAfterAnnotationsFixFactory.addNewLineAfterAnnotationsFixFactory)

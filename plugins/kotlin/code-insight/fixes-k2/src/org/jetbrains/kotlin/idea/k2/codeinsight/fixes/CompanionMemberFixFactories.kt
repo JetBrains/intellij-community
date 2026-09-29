@@ -2,11 +2,16 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -30,16 +35,30 @@ import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.isPure
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
@@ -50,6 +69,18 @@ internal object CompanionMemberFixFactories {
     val unresolvedReferenceFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnresolvedReference> =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
             createFixes(diagnostic.psi)
+        }
+
+    val ofOverloadsInBlockAndObjectFactory = quickFixesPsiBasedFactory<PsiElement> { psiElement ->
+        val declaration = psiElement.getNonStrictParentOfType<KtNamedDeclaration>() ?: return@quickFixesPsiBasedFactory emptyList()
+        listOfNotNull(createMoveOverloadFix(declaration))
+    }
+
+    private fun createMoveOverloadFix(declaration: KtNamedDeclaration): MoveOverloadToCompanionFix? =
+        when {
+            declaration.isFromCompanionBlock -> MoveOverloadToCompanionObjectFix(declaration)
+            (declaration.containingClassOrObject as? KtObjectDeclaration)?.isCompanion() == true -> MoveOverloadToCompanionBlockFix(declaration)
+            else -> return null
         }
 
     context(_: KaSession)
@@ -140,6 +171,78 @@ internal object CompanionMemberFixFactories {
         return analyze(content) {
             content.resolveSuccessfulCall()?.simple?.symbol?.psi in targets
         }
+    }
+}
+
+private sealed class MoveOverloadToCompanionFix(
+    declaration: KtNamedDeclaration
+) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
+    protected abstract val actionName: @IntentionName String
+
+    protected abstract fun getTarget(declaration: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*>?
+
+    override fun getText(): @IntentionName String = actionName
+
+    override fun getFamilyName(): @IntentionFamilyName String = actionName
+
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        val declaration = element ?: return false
+        return getTarget(declaration) != null
+    }
+
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        val declaration = element ?: return
+        val target = getTarget(declaration) ?: return
+        val moveDescriptor = K2MoveDescriptor.Declarations(
+            project = project,
+            source = K2MoveSourceDescriptor.ElementSource(setOf(declaration)),
+            target = target,
+        )
+        val descriptor = K2MoveOperationDescriptor.Declarations(
+            project = project,
+            moveDescriptors = listOf(moveDescriptor),
+            searchForText = false,
+            searchInComments = false,
+            searchReferences = true,
+            dirStructureMatchesPkg = false,
+        )
+        val processor = object : K2MoveDeclarationsRefactoringProcessor(descriptor) {
+            override fun openFilesAfterMoving(movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>>) {
+                movedElements.singleOrNull()?.element?.takeIf { it.isValid }?.let { movedElement ->
+                    editor?.takeIf { !it.isDisposed }?.caretModel?.moveToOffset(movedElement.startOffset)
+                }
+            }
+        }
+        processor.setPrepareSuccessfulSwingThreadCallback { }
+        processor.run()
+    }
+
+    override fun startInWriteAction(): Boolean = false
+}
+
+private class MoveOverloadToCompanionObjectFix(
+    declaration: KtNamedDeclaration
+) : MoveOverloadToCompanionFix(declaration) {
+    override val actionName: String
+        get() = KotlinBundle.message("move.to.companion.object")
+
+    override fun getTarget(declaration: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*>? {
+        val containingClass = declaration.containingClassOrObject as? KtClass ?: return null
+        return K2MoveTargetDescriptor.CompanionObject(containingClass)
+    }
+}
+
+private class MoveOverloadToCompanionBlockFix(
+    declaration: KtNamedDeclaration
+) : MoveOverloadToCompanionFix(declaration) {
+    override val actionName: String
+        get() = KotlinBundle.message("move.to.companion.block")
+
+    override fun getTarget(declaration: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*>? {
+        val companionObject = declaration.containingClassOrObject as? KtObjectDeclaration ?: return null
+        if (!companionObject.isCompanion()) return null
+        val containingClass = companionObject.containingClass() ?: return null
+        return K2MoveTargetDescriptor.CompanionBlock(containingClass)
     }
 }
 
