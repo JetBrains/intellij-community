@@ -1,20 +1,20 @@
-from _pydevd_bundle.pydevd_constants import ForkSafeLock, get_global_debugger
+from _pydevd_bundle.pydevd_constants import DAP_MAX_BODY_SIZE, ForkSafeLock, get_global_debugger
 import os
 import sys
 from contextlib import contextmanager
 
-# JetBrains extension (PY-92448): the DAP message reader of the adapter refuses a message whose body is over
-# MAX_BODY_SIZE and its reader thread dies on the refusal, after which no message of the session reaches the
-# client at all -- neither output nor a response to a request. A single write above that size arrives there as
-# one output event, so writes are split before they are sent.
+# JetBrains extension (PY-92448): a single write above what the DAP message reader accepts as one body
+# arrives at the adapter as one output event and is refused there, and the write is lost. Writes are split
+# before they are sent, so no single one of them reaches that size.
 #
-# The split counts characters while the limit counts bytes, so the size below is derived from the worst case
-# of the encoder rather than guessed: with ensure_ascii, json writes a non-BMP character as a surrogate pair,
-# twelve bytes for one character, and a BMP one as six. The subtracted kilobyte covers the envelope of the
-# event, which measures 130 bytes.
-_DAP_MAX_BODY_SIZE = 0xFFFFFF  # MAX_BODY_SIZE in debugpy/common/messaging.py
+# The chunk is deliberately a quarter of the cap rather than equal to it: a message near the cap costs about
+# four times its size while it is in flight, and output has no reason to be carried that way. It counts
+# characters while the cap counts bytes, so it is derived from the worst case of the encoder rather than
+# guessed: with ensure_ascii, json writes a non-BMP character as a surrogate pair, twelve bytes for one
+# character, and a BMP one as six. The subtracted kilobyte covers the envelope of the event, which
+# measures 130 bytes.
 _MAX_JSON_BYTES_PER_CHAR = 12
-MAX_IO_MSG_CHARS = (_DAP_MAX_BODY_SIZE - 1024) // _MAX_JSON_BYTES_PER_CHAR
+MAX_IO_MSG_CHARS = (DAP_MAX_BODY_SIZE // 4 - 1024) // _MAX_JSON_BYTES_PER_CHAR
 
 
 class IORedirector:

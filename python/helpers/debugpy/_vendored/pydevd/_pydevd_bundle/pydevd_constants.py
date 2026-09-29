@@ -804,6 +804,11 @@ ARGUMENT_HTTP_JSON_PROTOCOL = "json-dap-http"
 
 ARGUMENT_PPID = "ppid"
 
+# JetBrains extension (PY-92476): what the DAP message reader accepts as one message body --
+# MAX_BODY_SIZE in debugpy/common/messaging.py. Spelled out rather than imported, because pydevd runs
+# without debugpy around it; the two have to be moved together.
+DAP_MAX_BODY_SIZE = 0x3FFFFFF  # 64 MiB
+
 
 class _GlobalSettings:
     protocol = QUOTED_LINE_PROTOCOL

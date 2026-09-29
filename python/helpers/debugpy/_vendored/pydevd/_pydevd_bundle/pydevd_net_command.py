@@ -6,9 +6,38 @@ from _pydevd_bundle.pydevd_constants import (
 )  # Keep for backward compatibility @UnusedImport
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, to_string
 from _pydevd_bundle.pydevd_comm_constants import ID_TO_MEANING, CMD_EXIT
-from _pydevd_bundle.pydevd_constants import HTTP_PROTOCOL, HTTP_JSON_PROTOCOL, get_protocol, IS_JYTHON, ForkSafeLock
+from _pydevd_bundle.pydevd_constants import (
+    DAP_MAX_BODY_SIZE,
+    HTTP_PROTOCOL,
+    HTTP_JSON_PROTOCOL,
+    get_protocol,
+    IS_JYTHON,
+    ForkSafeLock,
+)
 import json
 from _pydev_bundle import pydev_log
+
+
+def _replacement_for_too_large(as_dict, size):
+    """JetBrains extension (PY-92476): returns what to send in place of a message that does not fit one
+    DAP body, or None when there is nothing smaller to send.
+    """
+
+    reason = "The debugger produced %s bytes for this, over the %s that one message carries." % (size, DAP_MAX_BODY_SIZE)
+    if as_dict.get("type") != "response":
+        pydev_log.info("Dropping a %s of %s bytes: %s", as_dict.get("type"), size, reason)
+        return None
+
+    pydev_log.info("Replacing a response of %s bytes with a failure: %s", size, reason)
+    return {
+        "pydevd_cmd_id": as_dict.get("pydevd_cmd_id"),
+        "seq": as_dict.get("seq"),
+        "type": "response",
+        "request_seq": as_dict.get("request_seq"),
+        "command": as_dict.get("command"),
+        "success": False,
+        "message": reason,
+    }
 
 
 class _BaseNetCommand(object):
@@ -82,6 +111,14 @@ class NetCommand(_BaseNetCommand):
             except TypeError:
                 text = json.dumps(as_dict, default=str)
 
+            # JetBrains extension (PY-92476): json.dumps escapes to ASCII, so the length of the text is
+            # the length of the body in bytes, and whether it fits is known before anything is sent.
+            if len(text) > DAP_MAX_BODY_SIZE:
+                as_dict = _replacement_for_too_large(as_dict, len(text))
+                text = "" if as_dict is None else json.dumps(as_dict)
+
+            self.as_dict = as_dict
+
         assert isinstance(text, str)
 
         if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 1:
@@ -106,6 +143,11 @@ class NetCommand(_BaseNetCommand):
 
     def send(self, sock):
         as_bytes = self._as_bytes
+        if not as_bytes:
+            # JetBrains extension (PY-92476): a message that did not fit one DAP body and had no smaller
+            # form was dropped when it was built. Sending an empty body instead would desynchronise the
+            # reader, which is the failure this is here to avoid.
+            return
         try:
             if get_protocol() in (HTTP_PROTOCOL, HTTP_JSON_PROTOCOL):
                 sock.sendall(("Content-Length: %s\r\n\r\n" % len(as_bytes)).encode("ascii"))

@@ -47,6 +47,12 @@ class JsonIOError(IOError):
         """The underlying exception, if any."""
 
 
+class MessageTooLarge(JsonIOError):
+    """JetBrains extension (PY-92476): indicates that the body of an incoming message was over
+    JsonIOStream.MAX_BODY_SIZE, and was read and thrown away.
+    """
+
+
 class NoMoreMessages(JsonIOError, EOFError):
     """Indicates that there are no more messages that can be read from or written
     to a stream.
@@ -63,7 +69,8 @@ class JsonIOStream(object):
     Each value is encoded as a DAP packet, with metadata headers and a JSON payload.
     """
 
-    MAX_BODY_SIZE = 0xFFFFFF
+    # JetBrains extension (PY-92476)
+    MAX_BODY_SIZE = 0x3FFFFFF  # 64 MiB
 
     json_decoder_factory = json.JsonDecoder
     """Used by read_json() when decoder is None."""
@@ -174,6 +181,23 @@ class JsonIOStream(object):
                 line = line[0:-2]
                 return line
 
+    def _discard_body(self, length):
+        """JetBrains extension (PY-92476): reads a message body of `length` bytes and throws it away.
+
+        Leaves the stream on the boundary that follows the body, so that the next message can be read.
+        """
+        reader = self._reader
+        remaining = length
+        while remaining > 0:
+            try:
+                chunk = reader.read(remaining)
+                if not chunk:
+                    raise EOFError
+            except Exception as exc:
+                # Not logged, for the same reason as where the body is read.
+                raise NoMoreMessages(str(exc), stream=self)
+            remaining -= len(chunk)
+
     def read_json(self, decoder=None):
         """Read a single JSON value from reader.
 
@@ -227,13 +251,22 @@ class JsonIOStream(object):
 
         try:
             length = int(headers[b"Content-Length"])
-            if not (0 <= length <= self.MAX_BODY_SIZE):
+            if length < 0:
                 raise ValueError
         except (KeyError, ValueError):  # pragma: no cover
             try:
                 raise IOError("Content-Length is missing or invalid:")
             except Exception:
                 log_message_and_reraise_exception()
+
+        # JetBrains extension (PY-92476): a body over the cap used to be refused before it was read.
+        if length > self.MAX_BODY_SIZE:
+            self._discard_body(length)
+            raise MessageTooLarge(
+                f"Message body of {length} bytes is over the {self.MAX_BODY_SIZE} byte limit "
+                f"and was discarded",
+                stream=self,
+            )
 
         body_start = len(raw_chunks)
         body_remaining = length
@@ -1293,10 +1326,18 @@ class JsonMessageChannel(object):
         log.debug("Starting message loop for channel {0}", self)
         try:
             while True:
-                self._parse_incoming_message()
+                try:
+                    self._parse_incoming_message()
+                except MessageTooLarge as exc:
+                    # JetBrains extension (PY-92476): the stream is still on a message boundary.
+                    log.error("{0}: {1}", self, exc)
 
-        except NoMoreMessages as exc:
-            log.debug("Exiting message loop for channel {0}: {1}", self, exc)
+        except Exception as exc:
+            if isinstance(exc, NoMoreMessages):
+                log.debug("Exiting message loop for channel {0}: {1}", self, exc)
+            else:
+                # JetBrains extension (PY-92476): the loop used to end on NoMoreMessages.
+                log.swallow_exception("Exiting message loop for channel {0} on an unexpected error:", self)
             with self:
                 # Generate dummy responses for all outstanding requests.
                 err_message = str(exc)
