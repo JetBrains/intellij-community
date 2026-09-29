@@ -27,8 +27,6 @@ interface ExternalSystemOutputDispatcherFactory {
    * Creates output dispatcher for current build with [buildId].
    *
    * @param buildProgressListener is main console progress listener.
-   * @param appendOutputToMainConsole is flag for output dispatcher.
-   * Dispatcher should transfer message events into [buildProgressListener], if this argument is true.
    * @param parsers are parsers for messages from text and build events.
    *
    * @see BuildProgressListener
@@ -36,7 +34,6 @@ interface ExternalSystemOutputDispatcherFactory {
    */
   fun create(buildId: Any,
              buildProgressListener: BuildProgressListener,
-             appendOutputToMainConsole: Boolean,
              parsers: List<BuildOutputParser>,
              consoleSettings: BuildViewSettingsProvider): ExternalSystemOutputMessageDispatcher
 

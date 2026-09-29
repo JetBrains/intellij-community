@@ -17,11 +17,8 @@ import java.util.function.Consumer
 class ExternalSystemEventDispatcher(
   taskId: ExternalSystemTaskId,
   progressListener: BuildProgressListener?,
-  appendOutputToMainConsole: Boolean,
   consoleSettings: BuildViewSettingsProvider,
 ) : BuildEventDispatcher {
-  constructor(taskId: ExternalSystemTaskId, progressListener: BuildProgressListener?, consoleSettings: BuildViewSettingsProvider)
-    : this(taskId, progressListener, true, consoleSettings)
 
   private lateinit var outputMessageDispatcher: ExternalSystemOutputMessageDispatcher
 
@@ -44,7 +41,7 @@ class ExternalSystemEventDispatcher(
         }
       }
       outputMessageDispatcher =
-        foundFactory?.create(taskId, progressListener, appendOutputToMainConsole, buildOutputParsers, consoleSettings)
+        foundFactory?.create(taskId, progressListener, buildOutputParsers, consoleSettings)
         ?: ExternalSystemOutputMessageDispatcherImpl(taskId, progressListener, buildOutputParsers, consoleSettings)
     }
   }

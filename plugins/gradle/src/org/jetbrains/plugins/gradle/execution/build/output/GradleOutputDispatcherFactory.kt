@@ -38,11 +38,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   override fun create(
     buildId: BuildId,
     buildProgressListener: BuildProgressListener,
-    appendOutputToMainConsole: Boolean,
     parsers: List<BuildOutputParser>,
     consoleSettings: BuildViewSettingsProvider
   ): ExternalSystemOutputMessageDispatcher {
-    return GradleOutputMessageDispatcher(buildId, buildProgressListener, appendOutputToMainConsole, parsers, consoleSettings)
+    return GradleOutputMessageDispatcher(buildId, buildProgressListener, parsers, consoleSettings)
   }
 
   @Internal
@@ -52,7 +51,6 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
   class GradleOutputMessageDispatcher(
     buildId: BuildId,
     listener: BuildProgressListener,
-    private val appendOutputToMainConsole: Boolean,
     parsers: List<BuildOutputParser>,
     consoleSettings: BuildViewSettingsProvider,
   ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
@@ -158,14 +156,12 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     }
 
     override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
-      if (appendOutputToMainConsole) {
-        notifyBuildEvent(
-          buildId,
-          OutputBuildEvent.builder(text) //NON-NLS
-            .withOutputType(outputType)
-            .build()
-        )
-      }
+      notifyBuildEvent(
+        buildId,
+        OutputBuildEvent.builder(text) //NON-NLS
+          .withOutputType(outputType)
+          .build()
+      )
       lineProcessor.append(text)
     }
 

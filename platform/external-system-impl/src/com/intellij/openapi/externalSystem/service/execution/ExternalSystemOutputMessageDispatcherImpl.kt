@@ -4,9 +4,11 @@ package com.intellij.openapi.externalSystem.service.execution
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildId
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,7 +22,11 @@ class ExternalSystemOutputMessageDispatcherImpl(
 
   private val readers: MutableMap<ProcessOutputType, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
 
-  override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
+  override fun notifyTextAvailable(text: @NlsSafe String, outputType: ProcessOutputType) {
+    notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
+      .withOutputType(outputType)
+      .build())
+
     readers.getOrPut(outputType) { BuildOutputInstantReaderImpl(buildId, buildId, ::notifyBuildEvent, parsers) }
       .append(text)
   }

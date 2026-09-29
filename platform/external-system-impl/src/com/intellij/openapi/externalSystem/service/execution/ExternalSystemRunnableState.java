@@ -251,7 +251,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     BackgroundTaskUtil.executeOnPooledThread(processHandler, () -> {
       var progressIndicator = ObjectUtils.notNull(myEnv.getUserData(PROGRESS_INDICATOR_KEY), () -> new EmptyProgressIndicator());
       var dataContext = BuildConsoleUtils.getDataContext(task.getId(), progressListener, consoleView);
-      try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false, consoleSettings)) {
+      try (var eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, consoleSettings)) {
         ExternalSystemTelemetryUtil.runWithSpan(mySettings.getExternalSystemId(), "ExternalSystemTaskExecution", _ ->
           task.execute(progressIndicator, new ExternalSystemTaskEventMulticaster(
             processHandler, eventDispatcher, buildDescriptor, dataContext,
@@ -446,8 +446,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     private final @Nullable ExecutionConsole myConsoleView;
     private final @Nullable BuildViewSettingsProvider myConsoleSettings;
 
-    private final @NotNull String mySettingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
-
     private ExternalSystemTaskEventMulticaster(
       @NotNull ExternalSystemProcessHandler processHandler,
       @NotNull BuildEventDispatcher eventDispatcher,
@@ -468,10 +466,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     @Override
     public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-      var startDateTime = DateFormatUtil.formatTimeWithSeconds(myBuildDescriptor.getStartTime());
-      var greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, mySettingsDescription) + "\n";
-      myProcessHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
-
       var eventMessage = BuildBundle.message("build.status.running");
       myEventDispatcher.notifyBuildEvent(id,
                                          StartBuildEvent.builder(eventMessage, myBuildDescriptor)
@@ -482,12 +476,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     @Override
     public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
-      if (myConsoleView != null) {
-        myConsoleManager.onOutput(myConsoleView, myProcessHandler, text, outputType);
-      }
-      else {
-        myProcessHandler.notifyTextAvailable(text, outputType);
-      }
       myEventDispatcher.notifyTextAvailable(text, outputType);
     }
 
@@ -540,9 +528,6 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     @Override
     public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-      final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, mySettingsDescription);
-      myProcessHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
       myProcessHandler.notifyProcessTerminated(0);
     }
   }
