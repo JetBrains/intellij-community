@@ -2,6 +2,7 @@
 package com.intellij.diff.soundSignals
 
 import com.intellij.ide.soundSignals.SoundSignal
+import com.intellij.ide.soundSignals.SoundSignalGroup
 import com.intellij.ide.soundSignals.SoundSignalProvider
 import com.intellij.openapi.diff.DiffBundle
 import org.jetbrains.annotations.ApiStatus
@@ -11,27 +12,30 @@ object DiffSoundSignals {
   private val OWNER = DiffSoundSignals::class.java
 
   @JvmField
+  val GROUP: SoundSignalGroup = SoundSignalGroup(DiffBundle.messagePointer("sound.signal.group.diff"))
+
+  @JvmField
   val LINE_INSERTED: SoundSignal = SoundSignal(
     "diff.line.inserted", DiffBundle.messagePointer("sound.signal.diff.line.inserted"),
-    "sounds/diff_line_inserted.wav", OWNER, 60,
+    "sounds/diff_line_inserted.wav", OWNER, 200, GROUP,
   )
 
   @JvmField
   val LINE_DELETED: SoundSignal = SoundSignal(
     "diff.line.deleted", DiffBundle.messagePointer("sound.signal.diff.line.deleted"),
-    "sounds/diff_line_deleted.wav", OWNER, 70,
+    "sounds/diff_line_deleted.wav", OWNER, 210, GROUP,
   )
 
   @JvmField
   val LINE_MODIFIED: SoundSignal = SoundSignal(
     "diff.line.modified", DiffBundle.messagePointer("sound.signal.diff.line.modified"),
-    "sounds/diff_line_modified.wav", OWNER, 80,
+    "sounds/diff_line_modified.wav", OWNER, 220, GROUP,
   )
 
   @JvmField
   val LINE_CONFLICT: SoundSignal = SoundSignal(
     "diff.line.conflict", DiffBundle.messagePointer("sound.signal.diff.line.conflict"),
-    "sounds/diff_line_conflict.wav", OWNER, 90,
+    "sounds/diff_line_conflict.wav", OWNER, 230, GROUP,
   )
 }
 

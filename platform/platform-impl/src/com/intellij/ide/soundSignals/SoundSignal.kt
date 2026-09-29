@@ -15,9 +15,16 @@ class SoundSignal(
   /** The class loader of this class reads [resourcePath]. */
   val ownerClass: Class<*>,
   val settingsOrder: Int,
+  val group: SoundSignalGroup? = null,
 ) {
   val title: @Nls String
     get() = titleSupplier.get()
 
   override fun toString(): String = id
+}
+
+@ApiStatus.Internal
+class SoundSignalGroup(private val titleSupplier: Supplier<@Nls String>) {
+  val title: @Nls String
+    get() = titleSupplier.get()
 }

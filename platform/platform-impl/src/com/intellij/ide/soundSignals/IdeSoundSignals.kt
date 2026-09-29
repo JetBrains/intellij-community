@@ -9,28 +9,49 @@ object IdeSoundSignals {
   private val OWNER = IdeSoundSignals::class.java
 
   @JvmField
-  val ERROR_LINE: SoundSignal =
-    SoundSignal("error.line", IdeBundle.messagePointer("sound.signal.error.line"), "sounds/error.wav", OWNER, 20)
+  val CODE_HIGHLIGHTING_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.code.highlighting"))
 
   @JvmField
-  val ERROR_CARET: SoundSignal =
-    SoundSignal("error.caret", IdeBundle.messagePointer("sound.signal.error.caret"), "sounds/error.wav", OWNER, 30)
+  val EDITOR_GUTTER_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.editor.gutter"))
 
   @JvmField
-  val WARNING_LINE: SoundSignal =
-    SoundSignal("warning.line", IdeBundle.messagePointer("sound.signal.warning.line"), "sounds/warning.wav", OWNER, 40)
+  val FOLDING_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.folding"))
 
   @JvmField
-  val WARNING_CARET: SoundSignal =
-    SoundSignal("warning.caret", IdeBundle.messagePointer("sound.signal.warning.caret"), "sounds/warning.wav", OWNER, 50)
+  val ERROR_LINE: SoundSignal = SoundSignal(
+    "error.line", IdeBundle.messagePointer("sound.signal.error.line"),
+    "sounds/error.wav", OWNER, 100, CODE_HIGHLIGHTING_GROUP,
+  )
 
   @JvmField
-  val FOLDED_LINE: SoundSignal =
-    SoundSignal("folded.line", IdeBundle.messagePointer("sound.signal.folded.line"), "sounds/code_folding.wav", OWNER, 130)
+  val ERROR_CARET: SoundSignal = SoundSignal(
+    "error.caret", IdeBundle.messagePointer("sound.signal.error.caret"),
+    "sounds/error.wav", OWNER, 110, CODE_HIGHLIGHTING_GROUP,
+  )
 
   @JvmField
-  val FOLDED_CARET: SoundSignal =
-    SoundSignal("folded.caret", IdeBundle.messagePointer("sound.signal.folded.caret"), "sounds/code_folding.wav", OWNER, 140)
+  val WARNING_LINE: SoundSignal = SoundSignal(
+    "warning.line", IdeBundle.messagePointer("sound.signal.warning.line"),
+    "sounds/warning.wav", OWNER, 120, CODE_HIGHLIGHTING_GROUP,
+  )
+
+  @JvmField
+  val WARNING_CARET: SoundSignal = SoundSignal(
+    "warning.caret", IdeBundle.messagePointer("sound.signal.warning.caret"),
+    "sounds/warning.wav", OWNER, 130, CODE_HIGHLIGHTING_GROUP,
+  )
+
+  @JvmField
+  val FOLDED_LINE: SoundSignal = SoundSignal(
+    "folded.line", IdeBundle.messagePointer("sound.signal.folded.line"),
+    "sounds/code_folding.wav", OWNER, 400, FOLDING_GROUP,
+  )
+
+  @JvmField
+  val FOLDED_CARET: SoundSignal = SoundSignal(
+    "folded.caret", IdeBundle.messagePointer("sound.signal.folded.caret"),
+    "sounds/code_folding.wav", OWNER, 410, FOLDING_GROUP,
+  )
 }
 
 @ApiStatus.Internal
