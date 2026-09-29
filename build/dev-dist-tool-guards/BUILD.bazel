@@ -11,7 +11,10 @@ _DEV_DISTRIBUTIONS = ["//build:%s" % row for row in DEV_RUN_CONFIGURATIONS]
 
 _BUILD_SCRIPTS = ["//platform/build-scripts:build-scripts"]
 
-_PLUGIN_MODEL_TOOL = ["//platform/build-scripts/plugin-model-tool"]
+_PLUGIN_MODEL_TOOL = [
+    "//platform/build-scripts/plugin-model-tool",
+    "//platform/build-scripts/dev-dist-generator",
+]
 
 genquery(
     name = "distribution_build_scripts_paths",

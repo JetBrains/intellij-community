@@ -1,0 +1,104 @@
+{
+    "version": 2,
+    "plugin": "intellij.webp",
+    "variant": "windows_x64",
+    "layoutSignature": "b2c72303eeb4719af87be052fb89f87c99323b8c8c6173802acd2eef9c1f0b60",
+    "assets": [
+        {
+            "destination": "lib/webp.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:idea:intellij.webp",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.webp",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/libwebp.jar.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@community//plugins/webp/lib:webp-libwebp",
+                        "kind": "library",
+                        "filter": "library-v1",
+                        "expansion": [
+                            "@community//plugins/webp/lib:libwebp.jar"
+                        ]
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/libwebp/win/amd64",
+            "inputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "inputs": [
+                "layout-source:platform-resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "modelSignature": "af9e3e774cf11f9b49485cf3a2cff02a2274d7be74218c8b12f16926c33a7d64"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:platform-resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:platform-resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/libwebp/win/amd64",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "Windows-X86_64/webp_jni.dll",
+                                    "stripComponents": 1
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

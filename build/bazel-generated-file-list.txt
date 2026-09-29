@@ -725,6 +725,7 @@ platform/build-scripts/api
 platform/build-scripts/bazel-rules/searchable-options-injector
 platform/build-scripts/codeOptimizer
 platform/build-scripts/concurrency
+platform/build-scripts/dev-dist-generator
 platform/build-scripts/dev-launch
 platform/build-scripts/dev-server-legacy
 platform/build-scripts/downloader

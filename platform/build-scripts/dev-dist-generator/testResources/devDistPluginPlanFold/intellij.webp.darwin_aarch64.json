@@ -1,0 +1,104 @@
+{
+    "version": 2,
+    "plugin": "intellij.webp",
+    "variant": "darwin_aarch64",
+    "layoutSignature": "d4f33281e93689a21569b44e84ea9b2f6de23331460b162bfdcb0c4057394454",
+    "assets": [
+        {
+            "destination": "lib/webp.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:idea:intellij.webp",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.webp",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/libwebp.jar.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "@community//plugins/webp/lib:webp-libwebp",
+                        "kind": "library",
+                        "filter": "library-v1",
+                        "expansion": [
+                            "@community//plugins/webp/lib:libwebp.jar"
+                        ]
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/libwebp/mac/aarch64",
+            "inputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "inputs": [
+                "layout-source:platform-resource-generator:0:0"
+            ],
+            "outputs": [
+                "layout-assets:platform-resource-generator:0:output"
+            ],
+            "modelSignature": "a45d6069d64d74da16dee3d27975433c876f6d8cd82fa3d1b578012a8c6411c7"
+        }
+    ],
+    "operations": [
+        {
+            "id": "layout-assets:platform-resource-generator:0",
+            "kind": "layout-assets",
+            "inputs": [
+                {
+                    "artifact": "layout-source:platform-resource-generator:0:0"
+                }
+            ],
+            "output": "layout-assets:platform-resource-generator:0:output",
+            "manifest": "keep",
+            "layoutAssets": {
+                "format": "tree",
+                "root": "lib/libwebp/mac/aarch64",
+                "assets": [
+                    {
+                        "destination": "",
+                        "sources": [
+                            0
+                        ],
+                        "transform": {
+                            "kind": "archive-tree",
+                            "mappings": [
+                                {
+                                    "pattern": "macOS-AArch64/libwebp_jni.dylib",
+                                    "stripComponents": 1
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

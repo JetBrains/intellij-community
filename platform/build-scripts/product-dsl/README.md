@@ -61,5 +61,6 @@ Module sets are defined in:
 Products are defined in:
 - `platform/buildScripts/src/productLayout/` - Product specifications
 - `platform/buildScripts/plugin-model/src/` - The generator, `ultimateGenerator.kt`
+- `community/platform/build-scripts/dev-dist-generator/src/` - The dev-distribution generator, which both halves run
 
 See [ultimateGenerator.kt](../../../../../../platform/buildScripts/plugin-model/src/ultimateGenerator.kt) for the main entry point.
