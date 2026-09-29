@@ -452,6 +452,7 @@ internal class WelcomeScreenRightTabImpl(
     toolbar.component.isOpaque = false
 
     val footerWrapper = JPanel(VerticalLayout(UIUtil.DEFAULT_VGAP, SwingConstants.CENTER))
+    footerWrapper.isOpaque = false
     component.add(footerWrapper)
     footerWrapper.add(toolbar.component)
 
@@ -484,6 +485,7 @@ internal class WelcomeScreenRightTabImpl(
               label.foreground = UIUtil.getInactiveTextColor()
 
               val horizontalPanel = JPanel(HorizontalLayout(UIUtil.DEFAULT_HGAP))
+              horizontalPanel.isOpaque = false
               horizontalPanel.add(label)
               horizontalPanel.add(ActionLink(IdeBundle.message("welcome.screen.ea.auto.report.configure.link")) {
                 ExceptionAutoReportUtil.recordUserVisitedConfigure()
