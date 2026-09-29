@@ -23,7 +23,6 @@ import org.gradle.api.logging.LogLevel
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.lang.AutoCloseable
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -63,12 +62,13 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
+    private val lineProcessors: MutableMap<ProcessOutputType, LineProcessor> = ConcurrentHashMap()
 
     private var currentTaskId: StartId = buildId
 
-    private val lineProcessor = GradleOutputLineProcessor()
-
-    private inner class GradleOutputLineProcessor : LineProcessor() {
+    private inner class GradleOutputLineProcessor(
+      private val outputType: ProcessOutputType,
+    ) : LineProcessor() {
 
       private val tasksOutputReaders: MutableMap<StartId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
 
@@ -92,7 +92,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         val taskId = currentTaskId
 
         if (taskId != buildId) {
-          notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line + '\n', ProcessOutputType.STDOUT)) //NON-NLS todo!!
+          notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line + '\n', outputType)) //NON-NLS todo!!
         }
 
         tasksOutputReaders.getOrPut(taskId) { BuildOutputInstantReaderImpl(buildId, taskId, ::notifyBuildEvent, parsers) }
@@ -150,7 +150,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     }
 
     override fun doClose() {
-      lineProcessor.close()
+      for (lineProcessor in lineProcessors.values) {
+        lineProcessor.close()
+      }
     }
 
     override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
@@ -160,7 +162,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           .withOutputType(outputType)
           .build()
       )
-      lineProcessor.append(text)
+      lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
+        .append(text)
     }
 
     private fun removeLoggerPrefix(line: String): String {
