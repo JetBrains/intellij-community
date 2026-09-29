@@ -12,7 +12,7 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -25,14 +25,15 @@ import java.util.List;
  * as a stable value (e.g., {@code arr[i]} or {@code map.get(key)}), as well as to expressions with side effects:
  * the generated condition tests the variable, so the original expression is neither re-evaluated nor left unchecked.
  */
+@NotNullByDefault
 public final class IntroduceVariableAndSurroundWithIfFix extends PsiUpdateModCommandQuickFix {
-  private final @NotNull SmartPsiElementPointer<PsiExpression> myExpressionPointer;
-  private final @NotNull String mySuffix;
-  private final @NotNull String myVariableName;
+  private final SmartPsiElementPointer<PsiExpression> myExpressionPointer;
+  private final String mySuffix;
+  private final String myVariableName;
 
-  private IntroduceVariableAndSurroundWithIfFix(@NotNull PsiExpression expression,
-                                                @NotNull String suffix,
-                                                @NotNull String variableName) {
+  private IntroduceVariableAndSurroundWithIfFix(PsiExpression expression,
+                                                String suffix,
+                                                String variableName) {
     myExpressionPointer = SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression);
     mySuffix = suffix;
     myVariableName = variableName;
@@ -44,24 +45,24 @@ public final class IntroduceVariableAndSurroundWithIfFix extends PsiUpdateModCom
    *                   (e.g., {@code " != null"})
    * @return a new fix, or null if the expression cannot be extracted into a local variable
    */
-  public static @Nullable IntroduceVariableAndSurroundWithIfFix create(@NotNull PsiExpression expression, @NotNull String suffix) {
+  public static @Nullable IntroduceVariableAndSurroundWithIfFix create(PsiExpression expression, String suffix) {
     List<String> names = ExtractedVariableInfo.suggestNames(expression);
     if (names.isEmpty()) return null;
     return new IntroduceVariableAndSurroundWithIfFix(expression, suffix, names.getFirst());
   }
 
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return JavaBundle.message("inspection.introduce.variable.and.surround.if.quickfix", myVariableName, mySuffix);
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return JavaBundle.message("inspection.introduce.variable.and.surround.if.family");
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  protected void applyFix(Project project, PsiElement element, ModPsiUpdater updater) {
     PsiExpression expression = updater.getWritable(myExpressionPointer.getElement());
     if (expression == null) return;
     ExtractedVariableInfo extracted = ExtractedVariableInfo.extract(expression);

@@ -15,7 +15,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,16 +29,17 @@ import java.util.function.Function;
  * as a stable value (e.g., {@code arr[i]} or {@code map.get(key)}): asserting such an expression in-place does not
  * remove the warning, as the next evaluation of the same expression may produce another value.
  */
+@NotNullByDefault
 public final class IntroduceVariableAndAssertFix extends PsiUpdateModCommandQuickFix {
-  private final @NotNull SmartPsiElementPointer<PsiExpression> myExpressionPointer;
-  private final @NonNls @NotNull String myAssertionPrefix;
-  private final @NonNls @NotNull String myAssertionSuffix;
-  private final @Nls @NotNull String myName;
+  private final SmartPsiElementPointer<PsiExpression> myExpressionPointer;
+  private final @NonNls String myAssertionPrefix;
+  private final @NonNls String myAssertionSuffix;
+  private final @Nls String myName;
 
-  private IntroduceVariableAndAssertFix(@NotNull PsiExpression expression,
-                                        @NonNls @NotNull String assertionPrefix,
-                                        @NonNls @NotNull String assertionSuffix,
-                                        @Nls @NotNull String name) {
+  private IntroduceVariableAndAssertFix(PsiExpression expression,
+                                        @NonNls String assertionPrefix,
+                                        @NonNls String assertionSuffix,
+                                        @Nls String name) {
     myExpressionPointer = SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression);
     myAssertionPrefix = assertionPrefix;
     myAssertionSuffix = assertionSuffix;
@@ -50,7 +51,7 @@ public final class IntroduceVariableAndAssertFix extends PsiUpdateModCommandQuic
    * @param suffix     text to append to the variable name to get the assertion condition (e.g., {@code " != null"})
    * @return a new fix that adds an {@code assert} statement; null if the expression cannot be extracted into a local variable
    */
-  public static @Nullable IntroduceVariableAndAssertFix create(@NotNull PsiExpression expression, @NotNull String suffix) {
+  public static @Nullable IntroduceVariableAndAssertFix create(PsiExpression expression, String suffix) {
     return create(expression, "assert ", suffix,
                   name -> JavaBundle.message("inspection.introduce.variable.and.assert.quickfix", name + suffix));
   }
@@ -60,33 +61,33 @@ public final class IntroduceVariableAndAssertFix extends PsiUpdateModCommandQuic
    * @param variant    test framework whose {@code assertNotNull} method should be called
    * @return a new fix that adds an {@code assertNotNull} call; null if the expression cannot be extracted into a local variable
    */
-  public static @Nullable IntroduceVariableAndAssertFix create(@NotNull PsiExpression expression, @NotNull Variant variant) {
+  public static @Nullable IntroduceVariableAndAssertFix create(PsiExpression expression, Variant variant) {
     return create(expression, variant.methodReference + "(", ")",
                   name -> JavaBundle.message("inspection.introduce.variable.and.testframework.assert.quickfix",
                                              variant.name, variant.replacement + "(" + name + ")"));
   }
 
-  private static @Nullable IntroduceVariableAndAssertFix create(@NotNull PsiExpression expression,
-                                                                @NonNls @NotNull String assertionPrefix,
-                                                                @NonNls @NotNull String assertionSuffix,
-                                                                @NotNull Function<@NotNull String, @Nls @NotNull String> presentation) {
+  private static @Nullable IntroduceVariableAndAssertFix create(PsiExpression expression,
+                                                                @NonNls String assertionPrefix,
+                                                                @NonNls String assertionSuffix,
+                                                                Function<String, @Nls String> presentation) {
     List<String> names = ExtractedVariableInfo.suggestNames(expression);
     if (names.isEmpty()) return null;
     return new IntroduceVariableAndAssertFix(expression, assertionPrefix, assertionSuffix, presentation.apply(names.getFirst()));
   }
 
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return myName;
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return JavaBundle.message("inspection.introduce.variable.and.assert.family");
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  protected void applyFix(Project project, PsiElement element, ModPsiUpdater updater) {
     PsiExpression expression = updater.getWritable(myExpressionPointer.getElement());
     if (expression == null) return;
     ExtractedVariableInfo extracted = ExtractedVariableInfo.extract(expression);

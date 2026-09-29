@@ -14,7 +14,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,11 +27,12 @@ import java.util.List;
  * represent as a stable value (e.g., {@code arr[i]} or {@code map.get(key)}), as well as to expressions with side effects:
  * the generated condition tests the variable, so the original expression is neither re-evaluated nor left unchecked.
  */
+@NotNullByDefault
 public final class IntroduceVariableAndReplaceWithTernaryFix extends PsiUpdateModCommandQuickFix {
-  private final @NotNull SmartPsiElementPointer<PsiExpression> myExpressionPointer;
-  private final @NotNull String myVariableName;
+  private final SmartPsiElementPointer<PsiExpression> myExpressionPointer;
+  private final String myVariableName;
 
-  private IntroduceVariableAndReplaceWithTernaryFix(@NotNull PsiExpression expression, @NotNull String variableName) {
+  private IntroduceVariableAndReplaceWithTernaryFix(PsiExpression expression, String variableName) {
     myExpressionPointer = SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression);
     myVariableName = variableName;
   }
@@ -40,7 +41,7 @@ public final class IntroduceVariableAndReplaceWithTernaryFix extends PsiUpdateMo
    * @param qualifier expression to extract into a local variable and to check for null
    * @return a new fix, or null if the expression cannot be extracted into a local variable
    */
-  public static @Nullable IntroduceVariableAndReplaceWithTernaryFix create(@NotNull PsiExpression qualifier) {
+  public static @Nullable IntroduceVariableAndReplaceWithTernaryFix create(PsiExpression qualifier) {
     // if nothing is dereferenced, the conditional expression would simply yield the variable back
     if (getOutermostDereference(qualifier) == qualifier) return null;
     List<String> names = ExtractedVariableInfo.suggestNames(qualifier);
@@ -49,17 +50,17 @@ public final class IntroduceVariableAndReplaceWithTernaryFix extends PsiUpdateMo
   }
 
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return JavaBundle.message("inspection.introduce.variable.and.replace.ternary.quickfix", myVariableName);
   }
 
   @Override
-  public @NotNull String getFamilyName() {
+  public String getFamilyName() {
     return JavaBundle.message("inspection.introduce.variable.and.replace.ternary.family");
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  protected void applyFix(Project project, PsiElement element, ModPsiUpdater updater) {
     PsiExpression qualifier = updater.getWritable(myExpressionPointer.getElement());
     if (qualifier == null) return;
     ExtractedVariableInfo extracted = ExtractedVariableInfo.extract(qualifier);
@@ -77,7 +78,7 @@ public final class IntroduceVariableAndReplaceWithTernaryFix extends PsiUpdateMo
    * @return the outermost expression that dereferences the given one, and thus produces a value only if the given
    * expression is not null; the expression itself if it's not dereferenced
    */
-  private static @NotNull PsiExpression getOutermostDereference(@NotNull PsiExpression expression) {
+  private static PsiExpression getOutermostDereference(PsiExpression expression) {
     PsiExpression result = expression;
     while (true) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(result.getParent());
