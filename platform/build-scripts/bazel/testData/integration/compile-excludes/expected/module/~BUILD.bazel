@@ -1,4 +1,3 @@
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.module` start
@@ -55,21 +54,13 @@ jvm_library(
     name = "module_test_lib",
     testonly = True,
     srcs = glob(
-        [
-            "testSrc/**/*.kt",
-            "testSrc/**/*.java",
-            "testSrc/**/*.form",
-        ],
+        [],
         allow_empty = True,
-        exclude = ["testSrc/excludedTestDir/**/*"],
     ),
-    associates = [":module"],
     kotlinc_opts = "@community//:k21",
-    resource_strip_prefix = "testResources",
-    resources = glob(
-        ["testResources/**/*"],
-    ),
+    module_name = "intellij.module",
     visibility = ["//visibility:public"],
+    runtime_deps = [":module"],
 )
 ### auto-generated section `build intellij.module` end
 
@@ -82,10 +73,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.module` end
-
-### auto-generated section `test intellij.module` start
-jps_test(
-    name = "module_test",
-    runtime_deps = [":module_test_lib"],
-)
-### auto-generated section `test intellij.module` end

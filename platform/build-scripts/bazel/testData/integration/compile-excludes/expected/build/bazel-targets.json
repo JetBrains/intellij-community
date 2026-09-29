@@ -15,9 +15,26 @@
       ],
       "exports": [],
       "moduleLibraries": {}
+    },
+    "intellij.module.tests": {
+      "productionTargets": [
+        "@community//module-tests:module-tests.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module-tests/module-tests.jar"
+      ],
+      "testTargets": [
+        "@community//module-tests:module-tests_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module-tests/module-tests_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
     }
   },
   "imlTargets": [
+    "@community//module-tests:intellij.module.tests.iml",
     "@community//module:intellij.module.iml"
   ],
   "projectLibraries": {},

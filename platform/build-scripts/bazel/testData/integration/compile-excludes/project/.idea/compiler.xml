@@ -7,7 +7,7 @@
       <directory url="file://$PROJECT_DIR$/module/resources/excluded" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/module/excludedResources" includeSubdirectories="true" />
       <file url="file://$PROJECT_DIR$/module/fileOnlyResources/META-INF/only-resource.xml" />
-      <directory url="file://$PROJECT_DIR$/module/testSrc/excludedTestDir" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/module-tests/testSrc/excludedTestDir" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/some/unrelated/path" includeSubdirectories="true" />
     </excludeFromCompile>
   </component>

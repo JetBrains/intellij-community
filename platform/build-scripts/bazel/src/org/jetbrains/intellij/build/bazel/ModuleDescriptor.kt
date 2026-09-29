@@ -43,6 +43,13 @@ internal data class ModuleDescriptor(
     require(imlFile.isRegularFile()) {
       "imlFile must be a regular file: $imlFile"
     }
+
+    // see https://youtrack.jetbrains.com/issue/MRI-3451#focus=Comments-27-13512542.0-0
+    require(module.name == "intellij.platform.buildScripts.bazel" ||
+            (sources.isEmpty() && resources.isEmpty()) ||
+            (testSources.isEmpty() && testResources.isEmpty())) {
+      "module must not have both production and test source roots, please keep them in separate modules: $imlFile"
+    }
   }
 
   val bazelBuildFile: Path

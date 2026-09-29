@@ -152,6 +152,37 @@ class BazelGeneratorIntegrationTests {
   }
 
   @Test
+  fun `module with both production and test roots is rejected`() {
+    val projectDir = createMetadataProject()
+    // the template module has a test source root only, add a production resource root to it
+    val imlFile = projectDir.resolve("module/intellij.module.iml")
+    imlFile.writeText(
+      """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module type="JAVA_MODULE" version="4">
+        <component name="NewModuleRootManager" inherit-compiler-output="true">
+          <exclude-output />
+          <content url="file://${'$'}MODULE_DIR${'$'}">
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/resources" type="java-resource" />
+            <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/test" isTestSource="true" />
+          </content>
+          <orderEntry type="jdk" jdkName="jbr-17" jdkType="JavaSDK" />
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>
+      </module>
+      """.trimIndent() + "\n"
+    )
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      generateMetadataProject(projectDir)
+    }
+    softly.assertThat(exception.message)
+      .contains("module must not have both production and test source roots")
+      .contains("intellij.module.iml")
+    assertTrue("The generator must not save module files when a module has both production and test source roots", !Files.exists(projectDir.resolve("module/BUILD.bazel")))
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  @Test
   fun `BUILD cleanup retains a skipped owner from a stale manifest`() {
     val projectDir = createMetadataProject()
     val directory = "platform/build-scripts/bazel"
