@@ -491,3 +491,25 @@ fn a_malformed_flow_or_suite_id_is_refused() {
         );
     }
 }
+
+/// A name has nothing to resolve against in a checkout without an area, and the refusal says which selector it was.
+#[test]
+fn a_name_selector_without_an_area_names_itself() {
+    let fake = fake_air_tree();
+    let empty = crate::Areas::default();
+    for raw in ["AgentThreadCliTest", "com.intellij.air.shared.core"] {
+        let failure = refusal(resolve_selector(
+            &fake,
+            &Selector::classify(raw).expect("classifies"),
+            &ResolutionInputs::new(&fake, &empty),
+        ));
+        assert_eq!(failure.exit, exit::USAGE, "{raw}");
+        assert!(failure.message.contains(raw), "{}", failure.message);
+        assert!(
+            failure.message.contains("names no area"),
+            "{}",
+            failure.message
+        );
+    }
+    assert!(fake.reads().is_empty(), "{:?}", fake.reads());
+}

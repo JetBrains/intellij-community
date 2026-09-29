@@ -77,6 +77,9 @@ pub struct Catalog<'a> {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LaneSpec {
     pub name: String,
+    /// One line for `bt --help`, which lists the lanes of every area.
+    #[serde(default)]
+    pub description: Option<String>,
     /// One target or pattern, or a list of them: `"target"` holds a string or an array.
     #[serde(rename = "target", deserialize_with = "one_or_many")]
     pub targets: Vec<String>,
@@ -395,7 +398,7 @@ pub fn default_shards(resolution: &Resolution, lane: Option<&LaneSpec>) -> u32 {
     if resolution.multi_target { 2 } else { 6 }
 }
 
-pub(crate) const BEP_FLAG: &str = "--build_event_json_file";
+pub const BEP_FLAG: &str = "--build_event_json_file";
 
 /// The BEP path the caller asked bazel for, or `None`.
 ///

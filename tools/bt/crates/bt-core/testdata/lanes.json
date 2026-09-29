@@ -41,7 +41,11 @@
   "lanes": [
     {
       "name": "fast",
-      "target": "//plugins/air/...",
+      "description": "all Air unit tests, excluding UI, GUI-chat, and headless integration (the default loop)",
+      "target": [
+        "//plugins/air/...",
+        "@community//tools/bt/..."
+      ],
       "extra": [
         "--build_tests_only",
         "--test_tag_filters=-air-integration-ui,-air-integration-headless,-air-property"
@@ -50,6 +54,7 @@
     },
     {
       "name": "property",
+      "description": "the jetCheck property tests under tests/property",
       "target": "//plugins/air/...",
       "extra": [
         "--build_tests_only",
@@ -58,6 +63,7 @@
     },
     {
       "name": "ui",
+      "description": "deterministic UI-flow scenarios (launches a real IDE via IDE Starter)",
       "target": "//plugins/air/tests/integration/ui/...",
       "extra": [
         "--build_tests_only",
@@ -71,6 +77,7 @@
     },
     {
       "name": "ui-real",
+      "description": "only the real-CLI flow scenarios (a real pi can open an interactive auth callback, so no unattended lane run should ever trigger one)",
       "target": "//plugins/air/tests/integration/ui-real:ui-real_test",
       "extra": [],
       "shards": 1,
@@ -81,6 +88,7 @@
     },
     {
       "name": "gui-chat",
+      "description": "ACP chat-flow, local-agent, and debug-tool-window scenarios",
       "target": "//plugins/air/tests/integration/gui-chat/...",
       "extra": [
         "--build_tests_only",
@@ -94,6 +102,7 @@
     },
     {
       "name": "headless",
+      "description": "only tests/integration/headless",
       "target": "//plugins/air/...",
       "extra": [
         "--build_tests_only",
@@ -102,11 +111,13 @@
     },
     {
       "name": "all",
+      "description": "every Air target, including the slow integration lanes",
       "target": "//plugins/air/...",
       "extra": []
     },
     {
       "name": "claude",
+      "description": "one real-agent target, with this lane's --test_env set applied",
       "target": "//plugins/air/tests/integration/headless/claude:claude_test",
       "extra": [
         "--test_env=CLAUDE_BIN",
@@ -116,16 +127,19 @@
     },
     {
       "name": "codex",
+      "description": "one real-agent target, with this lane's --test_env set applied",
       "target": "//plugins/air/tests/integration/headless/codex:codex_test",
       "extra": []
     },
     {
       "name": "pi",
+      "description": "one real-agent target, with this lane's --test_env set applied",
       "target": "//plugins/air/tests/integration/headless/pi:pi_test",
       "extra": []
     },
     {
       "name": "junie",
+      "description": "one real-agent target, with this lane's --test_env set applied",
       "target": "//plugins/air/tests/integration/headless/junie:junie_test",
       "extra": [
         "--test_env=JUNIE_BIN",
@@ -134,6 +148,7 @@
     },
     {
       "name": "acp",
+      "description": "one real-agent target, with this lane's --test_env set applied",
       "target": "//plugins/air/tests/integration/headless/acp/...",
       "extra": [
         "--build_tests_only",

@@ -251,6 +251,11 @@ common --repo_env=COURSIER_OPTS=-Dcoursier.exception-retry-backoff-initial-delay
 # Scale HTTP timeouts by 2x
 common --http_timeout_scaling=2.0
 
+# bt — the quiet `bazel run --script_path` of the wrappers: `community/tools/bt.cmd`, and the Air UI-lane wrappers
+# `plugins/air/scripts/vm.cmd` and `trace.cmd` of the ultimate root. A wrapper's contract is a one-line digest on
+# stdout, so Bazel's own progress and result lines would be noise; they are suppressed rather than parsed around.
+run:bt --ui_event_filters=-info --noshow_progress --show_result=0
+
 common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
 
 # Keep a packed content-module jar in the local disk cache and out of the remote cache. A CI build starts with an empty

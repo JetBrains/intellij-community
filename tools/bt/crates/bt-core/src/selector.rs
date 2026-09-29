@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 
+use crate::areas::AREAS_FILE;
 use crate::refusal::{Refusal, fail_usage};
 use crate::runtime::{Platform, Runtime};
 use crate::scan::{
@@ -271,6 +272,15 @@ pub fn resolve_selector(
                 multi_target: true,
                 ..Resolution::default()
             });
+        }
+        SelectorKind::Package | SelectorKind::SimpleName | SelectorKind::Fqn
+            if inputs.areas().is_empty() =>
+        {
+            return Err(fail_usage(format!(
+                "{} is a {} selector, and {AREAS_FILE} names no area to scan for it; pass a //label or a \
+                 //pkg/... pattern",
+                selector.name, selector.kind
+            )));
         }
         SelectorKind::Package => return resolve_package(runtime, selector, inputs),
         // Before the tree scan too: the committed suite documents answer both kinds.

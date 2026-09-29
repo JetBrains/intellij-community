@@ -1,0 +1,22 @@
+[package]
+name = "bt"
+description = "`bt`: the agent-facing wrapper over `bazel test`, with a one-line digest and a stable `--json` payload."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+bt-core.workspace = true
+bt-junit.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile.workspace = true

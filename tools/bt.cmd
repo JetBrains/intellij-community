@@ -3,12 +3,11 @@
 GOTO :CMDSCRIPT
 ::CMDLITERAL
 
-# `BT` - the Bazel test wrapper, running the Rust binary Bazel builds
-# (`//plugins/air/tests/integration/vm-lane:bt`, one file, always optimized).
+# `BT` - the Bazel test wrapper, running the Rust binary Bazel builds (`community/tools/bt`, one file, always
+# optimized): `@community//tools/bt:bt` in an ultimate checkout, `//tools/bt:bt` in a community-only one.
 #
-# It lives in `community/tools` so that every tree of the monorepo runs it from one path. The binary and the
-# `--config=bt` it uses stay in the ultimate checkout, so a community-only checkout gets exit 6 from the build
-# step below.
+# It lives in `community/tools` so that every tree of the monorepo runs it from one path, and so does its source,
+# so both checkout layouts build it. `bt.json` at the checkout root names the areas it resolves in.
 #
 # Same shape as `plugins/air/scripts/vm.cmd`, for the same reasons, and the differences from the bun wrapper
 # this replaced on 2026-08-24 are decisions rather than simplifications.
@@ -54,11 +53,12 @@ esac
 community_root="$(cd -- "$self_dir/.." && pwd)"
 parent="$(cd -- "$community_root/.." && pwd)"
 root="$community_root"
+target="//tools/bt:bt"
 if [ -f "$parent/MODULE.bazel" ] && [ -f "$parent/bazel.cmd" ] && [ -d "$parent/community" ] &&
    [ "$(cd -- "$parent/community" && pwd)" = "$community_root" ]; then
   root="$parent"
+  target="@community//tools/bt:bt"
 fi
-target="//plugins/air/tests/integration/vm-lane:bt"
 
 if [ $# -gt 0 ] && [ "$1" = "--refresh" ]; then
   echo "bt: --refresh no longer exists; the wrapper rebuilds on every invocation" >&2
@@ -83,7 +83,7 @@ fi
 
 mkdir -p "$root/out/air"
 launcher="$root/out/air/bt.launcher.$$"
-# `--config=bt` (//:.bazelrc) keeps Bazel's progress and result lines out of the wrapper's output contract,
+# `--config=bt` (`community/common.bazelrc`) keeps Bazel's progress and result lines out of the wrapper's output contract,
 # and `>&2` keeps whatever is left off stdout, where a `--json` run writes exactly one payload. A failure
 # here is infrastructure, which this wrapper reports as 6 - BT's own code for a run that said nothing about
 # the tests.
@@ -127,13 +127,14 @@ for %%d in ("%~dp0..") do set "COMMUNITY_ROOT=%%~fd"
 for %%d in ("%COMMUNITY_ROOT%\..") do set "PARENT=%%~fd"
 for %%d in ("%PARENT%\community") do set "PARENT_COMMUNITY=%%~fd"
 set "ROOT=%COMMUNITY_ROOT%"
+set "TARGET=//tools/bt:bt"
 if not exist "%PARENT%\MODULE.bazel" goto :ROOTREADY
 if not exist "%PARENT%\bazel.cmd" goto :ROOTREADY
 if not exist "%PARENT_COMMUNITY%\" goto :ROOTREADY
 if /I not "%PARENT_COMMUNITY%"=="%COMMUNITY_ROOT%" goto :ROOTREADY
 set "ROOT=%PARENT%"
+set "TARGET=@community//tools/bt:bt"
 :ROOTREADY
-set "TARGET=//plugins/air/tests/integration/vm-lane:bt"
 
 if "%~1"=="--refresh" (
   echo bt: --refresh no longer exists; the wrapper rebuilds on every invocation 1>&2

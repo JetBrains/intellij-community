@@ -2,7 +2,9 @@
 # `.cargo/config.toml` of this package to generate `@bt`. `defs.bzl` declares each crate and the shipped binaries.
 # The crate map is `README.md`.
 
+load("@rules_rust//rust:defs.bzl", "rust_clippy_test")
 load("//build/rust-lints:defs.bzl", "rust_lints_as_errors")
+load(":defs.bzl", "optimized_binary")
 
 # The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@bt` renders it, with every clippy warning
 # an error. `bt_rust_crate` passes it to each target.
@@ -18,3 +20,34 @@ exports_files([
     "Cargo.lock",
     "Cargo.toml",
 ])
+
+# `bt`, one file, always optimized. `community/tools/bt.cmd` runs it: `//tools/bt:bt` from a community root and
+# `@community//tools/bt:bt` from an ultimate root.
+optimized_binary(
+    name = "bt",
+    binary = "//tools/bt/bins/bt",
+    visibility = ["//visibility:public"],
+)
+
+# A compile check, built by hand (`manual`): `bt` must build for the Windows host, and a macOS or Linux host checks
+# that it does.
+optimized_binary(
+    name = "bt-windows-x86_64",
+    binary = "//tools/bt/bins/bt",
+    platform = "@rules_rs//rs/platforms:x86_64-pc-windows-msvc",
+    tags = ["manual"],
+)
+
+# Clippy over the `cfg(windows)` code a Unix host never compiles. It only checks, so it needs no linker for the
+# platform. Like every clippy test of this workspace it runs from the community root only; see `bt_rust_crate`.
+rust_clippy_test(
+    name = "clippy-windows-x86_64",
+    size = "small",
+    platform = "@rules_rs//rs/platforms:x86_64-pc-windows-msvc",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }) + (["@platforms//:incompatible"] if repo_name() else []),
+    targets = ["//tools/bt/bins/bt"],
+    transitive = True,
+)

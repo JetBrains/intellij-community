@@ -144,7 +144,7 @@ pub fn classify_run(input: ClassifyInput<'_>) -> (RunStatus, u8) {
 
 /// Whether any target's runner exited 42, "the test filter matched no test class". [`classify_run`] turns it into
 /// NO_TESTS and the digest names it as the cause; both must agree.
-pub(crate) fn filter_matched_no_class(targets: &[TargetResult]) -> bool {
+pub fn filter_matched_no_class(targets: &[TargetResult]) -> bool {
     targets
         .iter()
         .any(|target| target.wrapper_exit_code == Some(42))
