@@ -540,7 +540,7 @@ def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
         fail("chain %s declares %s_component with the visibility %s; expected %s" % (chain, chain, visibility, component_visibility))
 
 def _plan(variant, layout_signature, destination):
-    """The plan file of a fixture: one jar packed from a module-filter operation over the raw input. An analysis test
+    """The plan file of a fixture: one jar packed from a layout-assets operation over the raw input. An analysis test
     runs no action, so the packer never reads it. The content states what the chain would pack."""
     return json.encode({
         "version": 1,
@@ -551,14 +551,21 @@ def _plan(variant, layout_signature, destination):
             "destination": destination,
             "recipe": {
                 "sources": [
-                    {"input": "module-filter:raw:output", "kind": "prepared", "filter": "prepared"},
+                    {"input": "layout-assets:raw:output", "kind": "prepared", "filter": "prepared"},
                     {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]},
                 ],
                 "writer": {"manifest": "drop", "mergeEntities": True},
             },
         }],
-        "preparations": [{"id": "module-filter:raw", "inputs": ["raw"], "outputs": ["module-filter:raw:output"], "modelSignature": "0" * 64}],
-        "operations": [{"id": "module-filter:raw", "input": {"artifact": "raw"}, "output": "module-filter:raw:output", "manifest": "keep", "excludes": ["drop/**"]}],
+        "preparations": [{"id": "layout-assets:raw", "inputs": ["raw"], "outputs": ["layout-assets:raw:output"], "modelSignature": "0" * 64}],
+        "operations": [{
+            "id": "layout-assets:raw",
+            "kind": "layout-assets",
+            "inputs": [{"artifact": "raw"}],
+            "output": "layout-assets:raw:output",
+            "manifest": "keep",
+            "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]},
+        }],
     }) + "\n"
 
 _PLAN = _plan("", "0" * 64, "lib/test.jar")
@@ -1010,7 +1017,7 @@ def dev_plugin_remainder_test_suite(name):
         content_jar = ":" + content_jar,
     )
 
-    # A chain over a plan file with a module-filter operation. The packer executes the operation in the remainder
+    # A chain over a plan file with a layout-assets operation. The packer executes the operation in the remainder
     # action. The same action writes the asset table and the classpath record the component reads.
     plan_chain = name + "_plan_chain"
     dev_dist_complex_plugin_variant(

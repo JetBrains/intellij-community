@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.unity",
     "variant": "",
-    "layoutSignature": "awa01ecfp0s3yatwxwi13molo",
+    "layoutSignature": "8qwf344hy02veem12calynoc3",
     "assets": [
         {
             "module": "intellij.rider.plugins.unity.common"
@@ -78,7 +78,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "3nc8pp4m40hnan6xg9vvv9dev"
+            "modelSignature": "evmpkmjxst6rh7h23fypu5vy2"
         }
     ],
     "operations": [

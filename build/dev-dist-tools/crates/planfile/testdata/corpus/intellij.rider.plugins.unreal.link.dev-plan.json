@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.unreal.link",
     "variant": "",
-    "layoutSignature": "3j5oppdnakz2wtisa2felr2q6",
+    "layoutSignature": "bbnvbkhbvk3ju4q8h10jke5ug",
     "assets": [
         {
             "module": "intellij.rider.plugins.unreal.link.mcp"
@@ -49,7 +49,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "avn0z8nj1lzj3rch6ky8njo5f"
+            "modelSignature": "cyv79vj449cm1w57gfq6yyjwx"
         }
     ],
     "operations": [

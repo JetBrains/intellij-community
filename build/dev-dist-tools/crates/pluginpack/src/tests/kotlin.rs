@@ -7,8 +7,7 @@
 use std::path::Path;
 
 use planfile::contract::{
-    Catalogue, Filter, LayoutAssets, LayoutTransform, LayoutTransformKind, Manifest, Operation, Recipe, Reference, Source, TREE_VERSION,
-    VERSION,
+    Catalogue, LayoutAssets, LayoutTransform, LayoutTransformKind, Operation, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 use serde_json::{Value, json};
 
@@ -299,18 +298,6 @@ fn kotlin_json<T: serde::Serialize + ?Sized>(value: &T) -> String {
     serde_json::to_string(value).unwrap()
 }
 
-/// The kotlinx encoding of a module-filter operation, the text that its signature hashes.
-pub(crate) fn kotlin_module_filter_operation(id: &str, input: &str, output: &str, manifest: &str, excludes: &[String]) -> String {
-    format!(
-        r#"{{"id":{},"kind":"module-filter","input":{{"artifact":{},"path":""}},"output":{},"manifest":{},"excludes":{}}}"#,
-        kotlin_json(id),
-        kotlin_json(input),
-        kotlin_json(output),
-        kotlin_json(manifest),
-        kotlin_json(excludes)
-    )
-}
-
 fn transform_kind_name(kind: LayoutTransformKind) -> &'static str {
     match kind {
         LayoutTransformKind::ArchiveTree => "archive-tree",
@@ -379,7 +366,7 @@ pub(crate) fn kotlin_layout_assets_operation(id: &str, output: &str, format: &st
         format!(r#","inputs":[{}]"#, inputs.join(","))
     };
     format!(
-        r#"{{"id":{},"kind":"layout-assets"{inputs_field},"output":{},"manifest":"keep","excludes":[],"layoutAssets":{{"format":{},"root":{},"assets":[{}]}}}}"#,
+        r#"{{"id":{},"kind":"layout-assets"{inputs_field},"output":{},"manifest":"keep","layoutAssets":{{"format":{},"root":{},"assets":[{}]}}}}"#,
         kotlin_json(id),
         kotlin_json(output),
         kotlin_json(format),
@@ -491,12 +478,22 @@ pub(crate) fn signed_plan(mut plan: KotlinPlanFile, operations: &[String]) -> Ko
     plan
 }
 
-/// Pins the two signature helpers against the constants that the Kotlin generator wrote for the filtered demo
-/// projection.
+/// The one operation of the filtered demo projection: the entries of the raw input become `raw.txt` of `lib/main.jar`.
+/// `PluginPackingProjectionEncodingTest` of the Kotlin build scripts states the same operation.
+pub(crate) fn kotlin_filter_operation(output: &str) -> String {
+    let layout = LayoutAssets {
+        inputs: vec![Reference::artifact("raw")],
+        assets: vec![layout_asset("raw.txt", &[0], None)],
+    };
+    kotlin_layout_assets_operation("filter", output, "entries", "", &layout)
+}
+
+/// Pins the two signature helpers against the constants that `PluginPackingProjectionEncodingTest` of the Kotlin build
+/// scripts pins for the filtered demo projection.
 #[test]
 fn kotlin_signature_helpers_reproduce_the_fixture_constants() {
-    let filter = kotlin_module_filter_operation("filter", "raw", "filtered", "drop", &strings(&["drop/**"]));
-    assert_eq!(kotlin_model_signature(&filter), "4j4kth710fglswfsh1vosdrg4");
+    let filter = kotlin_filter_operation("filtered");
+    assert_eq!(kotlin_model_signature(&filter), "5nm0sqi8af0srealvdtoxpzqm");
     let filtered = KotlinPlanFile {
         version: VERSION,
         plugin: "filtered-plugin".to_owned(),
@@ -521,7 +518,7 @@ fn kotlin_signature_helpers_reproduce_the_fixture_constants() {
         }],
         ..KotlinPlanFile::default()
     };
-    assert_eq!(kotlin_layout_signature(&filtered), "ardmbz5a2oe6vf6br6theud68");
+    assert_eq!(kotlin_layout_signature(&filtered), "abd1jj2mitamhwlzozt2d0zlo");
 }
 
 /// The Kotlin half of the Go `TestLayoutTransformExcludesEncoding`: the kotlinx operation holds the transform in the
@@ -556,23 +553,6 @@ fn layout_transform_encoding_in_a_kotlin_operation() {
     }
 }
 
-/// The module output that the module-filter cases filter. It holds the names that the selection treats specially: the
-/// entity list, the manifest, `icon-robots.txt`, a nested glob target, and an anchored prefix.
-const MODULE_FILTER_FIXTURE_JAR: [(&str, &str); 12] = [
-    ("keep/Service.class", "retained"),
-    ("drop/Ignore.class", "excluded"),
-    ("keep/drop/Kept.class", "kept: the glob is anchored"),
-    ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\n\r\n"),
-    ("META-INF/listOfEntities.txt", "keep.Service\n"),
-    ("META-INF/services/x.Y", "impl"),
-    ("icon-robots.txt", "robots"),
-    ("keep/icon-robots.txt", "robots"),
-    ("a/x.txt", "ax"),
-    ("a/b/x.txt", "abx"),
-    ("x.txt", "x"),
-    ("a/y.txt", "ay"),
-];
-
 /// A plan of one preparation whose operation is the kotlinx text, signed.
 fn kotlin_plan(
     version: u32,
@@ -591,131 +571,6 @@ fn kotlin_plan(
         },
         &[operation.to_owned()],
     )
-}
-
-/// Packs the hand-written recipe of a module-filter operation, the archive source with the excludes. The jar must be
-/// identical to the golden of the Kotlin materialization.
-#[test]
-fn kotlin_module_filter_materialization_matches_the_excludes() {
-    let golden = Golden::open("kotlin-module-filter");
-    type Case<'a> = (&'a str, &'a [&'a str], bool, &'a [&'a str], &'a [&'a str]);
-    let cases: [Case<'_>; 5] = [
-        (
-            "an anchored prefix glob",
-            &["drop/**"],
-            false,
-            &["drop/Ignore.class"],
-            &["keep/drop/Kept.class", "META-INF/listOfEntities.txt"],
-        ),
-        (
-            "a nested glob",
-            &["**/x.txt"],
-            false,
-            &["a/x.txt", "a/b/x.txt"],
-            &["x.txt", "a/y.txt"],
-        ),
-        (
-            "listOfEntities under an excluded prefix",
-            &["META-INF/**"],
-            false,
-            &["META-INF/services/x.Y", "META-INF/MANIFEST.MF"],
-            &["META-INF/listOfEntities.txt"],
-        ),
-        (
-            "no declared excludes",
-            &[],
-            false,
-            &["icon-robots.txt", "keep/icon-robots.txt"],
-            &["drop/Ignore.class"],
-        ),
-        (
-            "a jar with directory entries",
-            &["drop/**"],
-            true,
-            &["keep/", "drop/", "META-INF/", "drop/Ignore.class"],
-            &["keep/Service.class"],
-        ),
-    ];
-    let mut checked = 0;
-    for (case, excludes, directories, absent, present) in cases {
-        for (manifest_name, manifest) in [("keep", Manifest::Keep), ("drop", Manifest::Drop)] {
-            let name = format!("{case} with manifest {manifest_name}");
-            let root = temp();
-            let module_jar = root.path().join("module.jar");
-            let mut entries: Vec<(&'static str, &str)> = Vec::new();
-            if directories {
-                entries.extend([("keep/", ""), ("drop/", ""), ("META-INF/", "")]);
-            }
-            entries.extend(MODULE_FILTER_FIXTURE_JAR);
-            archive_file(&module_jar, &entries);
-            let inputs = catalogue(vec![file_artifact("raw", &module_jar)]);
-            let operation = kotlin_module_filter_operation("filter", "raw", "filtered", manifest_name, &strings(excludes));
-            let plan_file = kotlin_plan(
-                VERSION,
-                "filtered-plugin",
-                vec![KotlinPlanAsset {
-                    destination: "lib/main.jar".to_owned(),
-                    inputs: Some(strings(&["filtered"])),
-                    recipe: Some(KotlinJarRecipe {
-                        sources: vec![prepared_source("filtered")],
-                        writer: KotlinJarWriter {
-                            manifest: manifest_name.to_owned(),
-                            merge_entities: true,
-                            ..KotlinJarWriter::default()
-                        },
-                    }),
-                    ..KotlinPlanAsset::default()
-                }],
-                KotlinPreparation {
-                    id: "filter".to_owned(),
-                    inputs: strings(&["raw"]),
-                    outputs: strings(&["filtered"]),
-                    ..KotlinPreparation::default()
-                },
-                &operation,
-            );
-            let recipe = Recipe {
-                version: VERSION,
-                plugin: plan_file.plugin.clone(),
-                layout_signature: plan_file.layout_signature.clone(),
-                assets: vec![remainder("lib/main.jar")],
-                operations: vec![Operation::Jar {
-                    destination: "lib/main.jar".to_owned(),
-                    mode: 0o644,
-                    sources: vec![Source::Archive {
-                        input: Reference::artifact("raw"),
-                        filter: Filter::Module,
-                        excludes: strings(excludes),
-                        manifest,
-                    }],
-                    merge_entities: true,
-                    directory_entries: false,
-                }],
-            };
-            let written = write_execution(&recipe, &inputs);
-            let record = materialization_record(&written.output);
-            require_inventory_matches_tree(&written.output, &written.inventory);
-            let (names, _) = read_archive(&written.output.join("lib/main.jar"));
-            for entry in absent {
-                assert!(
-                    !names.iter().any(|name| name == entry),
-                    "{name}: {entry} survived the excludes: {names:?}"
-                );
-            }
-            for entry in present {
-                assert!(names.iter().any(|name| name == entry), "{name}: {entry} is missing: {names:?}");
-            }
-            let manifest_excluded = absent.contains(&"META-INF/MANIFEST.MF");
-            assert_eq!(
-                names.iter().any(|name| name == "META-INF/MANIFEST.MF"),
-                manifest == Manifest::Keep && !manifest_excluded,
-                "{name}: the manifest policy produced {names:?}"
-            );
-            golden.check(&name, &record);
-            checked += 1;
-        }
-    }
-    assert_eq!(checked, golden.fixture_names().len(), "every golden fixture is checked");
 }
 
 /// One layout-assets operation with its raw inputs on disk. A tree fixture names its root, and an entries fixture names

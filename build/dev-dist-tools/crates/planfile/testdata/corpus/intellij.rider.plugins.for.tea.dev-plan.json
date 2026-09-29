@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.for.tea",
     "variant": "",
-    "layoutSignature": "a5l9nbl1b36y8ty646gtmf48j",
+    "layoutSignature": "38b935hl0ffnfki6mdr8li7y4",
     "assets": [
         {
             "destination": "lib/rider-plugins-for-tea.jar",
@@ -46,7 +46,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "1pa9b0fmchnseaj0ry3yzgp7i"
+            "modelSignature": "6kudqn16ojbo61wf6dkl045c4"
         }
     ],
     "operations": [

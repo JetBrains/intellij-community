@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.android.plugin.descriptor",
     "variant": "darwin_x64",
-    "layoutSignature": "9bu9wyt2li0crubs9cy51wjus",
+    "layoutSignature": "ekk92pqog9b4dal1l4rphf6e5",
     "assets": [
         {
             "destination": "lib/intellij.libraries.ffmpeg.jar",
@@ -1128,7 +1128,7 @@
             "outputs": [
                 "layout-assets:resource:3:output"
             ],
-            "modelSignature": "3w5ya8mxbq1w5lpcx3m8wh6kb"
+            "modelSignature": "2x9je1fco4o9lazaembjqtjq1"
         }
     ],
     "operations": [

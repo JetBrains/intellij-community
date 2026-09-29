@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.database.artifactsBundle",
     "variant": "",
-    "layoutSignature": "62xyso0g1cq078u04l94if5l8",
+    "layoutSignature": "8nnfi7tlpy6xuo87mx5obfsa7",
     "assets": [
         {
             "destination": "lib/database-artifactsBundle.jar",
@@ -46,7 +46,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "6mtsx0b9t6xgid31m6ppxi757"
+            "modelSignature": "b5ugoy6j43yvg11fbg8w2yowl"
         }
     ],
     "operations": [

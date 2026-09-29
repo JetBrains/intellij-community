@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.nativeDebug.plugin",
     "variant": "windows_aarch64",
-    "layoutSignature": "3ukzfljxut3x5fe6w250v7wc3",
+    "layoutSignature": "dzhn9e0q5tiy5tg6tue6hgpb3",
     "assets": [
         {
             "module": "intellij.nativeDebug.backend"
@@ -186,7 +186,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "89wlmsyz6ogff0xtzdsqrgujp"
+            "modelSignature": "7tn0zqxxnul664c8ijjsjw8v3"
         },
         {
             "id": "layout-assets:resource-generator:1",
@@ -200,7 +200,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "8ypqbo6tt96bgo1fyb0b6l0yu"
+            "modelSignature": "cxz3qas4zq5pf3mh6fv2apo9w"
         }
     ],
     "operations": [

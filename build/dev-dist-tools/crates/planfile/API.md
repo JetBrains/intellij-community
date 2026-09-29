@@ -9,7 +9,7 @@ The crate depends on `serde`, `serde_json` and `thiserror` only.
 
 ## The subset rule
 
-The crate ports only the shapes that the 103 checked-in `*.dev-plan.json` files use. It refuses every other shape with
+The crate ports only the shapes that the 92 checked-in `*.dev-plan.json` files use. It refuses every other shape with
 an error that names it. The table lists what the Go code supports and the port refuses.
 
 `testdata/corpus/` holds a copy of each of these files, without the Starlark test fixture. The corpus test reads and
@@ -28,12 +28,11 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | `preparedManifest`, and the writer keys `rewriteBootClassPath` and `outputName` | unknown field |
 | a writer manifest other than `single-meaningful-source`, `keep` and `drop` | unknown variant |
 | `preparationRoots`, `alwaysRun`, and every field of a Kotlin-executed operation | unknown field |
-| an operation kind other than `module-filter` and `layout-assets` | the kind |
+| an operation kind other than `layout-assets`, for example the retired `module-filter` | the kind |
 | an operation manifest other than `keep` | the manifest |
 | a layout format other than `tree` and `entries`, or a transform kind other than `archive-tree`, such as the removed `tree-map` and `gzip-xml-archive` | unknown variant |
 | the `tree-map` fields `excludes` and `directoryExcludes` on a transform | unknown field |
 | a preparation that reads the output of a preparation | no preparation chain |
-| a module-filter input that names a library | the library |
 | a plugin directory that is not `plugins/<name>` | the directory |
 | a plugin classpath name that is not ASCII, or that holds NUL | the name |
 | a refused module that no asset of the plan merges, an empty one, or one named twice | the module |
@@ -49,7 +48,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 - `JarWriter { manifest: ManifestPolicy, merge_entities: bool, directory_entries: bool, native_lib }`: the writer options. An empty `native_lib` means none.
 - `ManifestPolicy::{SingleMeaningfulSource, Keep, Drop}`: the manifest policy of a jar writer. The default is `SingleMeaningfulSource`.
 - `Preparation { id, inputs, outputs, model_signature }`: one preparation definition.
-- `Operation { id, kind, input: Option<contract::Reference>, inputs: Vec<contract::Reference>, output, excludes: Vec<String>, layout_assets: Option<LayoutAssetPreparation> }`: one preparation operation. `kind` is `module-filter` or `layout-assets`. The packer keeps the manifest of every operation output.
+- `Operation { id, kind, inputs: Vec<contract::Reference>, output, layout_assets: LayoutAssetPreparation }`: one preparation operation. `kind` is `layout-assets`, the one kind. The packer keeps the manifest of every operation output.
 - `LayoutAssetPreparation { format: LayoutFormat, root, assets: Vec<contract::LayoutAsset> }`: the `layoutAssets` payload.
 - `LayoutFormat::{Tree, Entries}`: a tree under the root, or the entries of one jar.
 - `read(path: &Path) -> Result<PlanFile, Error>`: reads, decodes and expands one plan file. Errors start with the path.
@@ -62,7 +61,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
   Where Go reports the first problem in map order, `derive` reports the first one in plan or catalogue order.
   `refused_modules` names the content modules that the product mode of the chain refuses. An asset that `omitted_assets` marks is omitted: it has no row, no classpath jar and no operation, and `catalogue` of the derivation drops the inputs that only an omitted asset reads. The Starlark catalogue still lists them.
 - `omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec<bool>, Error>`: whether each asset of the file, in plan order, is omitted for the refused modules.
-  The modules of an asset are its `module` sources, the module that a `prepared` source's `module-filter` operation reads, and the module of a reused native tree. An asset with at least one module, all of them refused, is omitted. An asset that merges a refused module with a kept one stays whole, and an asset without a module is never omitted. The packer and the runtime layout tool both read this answer.
+  The modules of an asset are its `module` sources and the module of a reused native tree. A `prepared` source has none. An asset with at least one module, all of them refused, is omitted. An asset that merges a refused module with a kept one stays whole, and an asset without a module is never omitted. The packer and the runtime layout tool both read this answer.
 
 The plan-file types derive `Clone`, `Debug`, `PartialEq`, `Eq`. Only `read` and `from_slice` make them from JSON.
 
@@ -86,7 +85,7 @@ catalogue.
   - `CopyTree { destination, input: Reference }`: one declared directory with its source modes.
   - `LayoutTree { destination, layout: LayoutAssets }`: the layout assets under the destination, with their source modes.
 - `enum Source`: one jar source.
-  - `Archive { input: Reference, filter: Filter, excludes: Vec<String>, manifest: Manifest }`: only a module-filter output has excludes (java.nio globs).
+  - `Archive { input: Reference, filter: Filter, manifest: Manifest }`: the entries of one archive through the filter.
   - `Patch { entry, input: Reference, manifest: Manifest }`: one file at the entry name. The jar writer patches it.
   - `Layout(LayoutAssets)`: the entries of the layout assets. It keeps their manifests.
 - `Filter::{Module, Library}`, `Manifest::{Keep, Drop}`.

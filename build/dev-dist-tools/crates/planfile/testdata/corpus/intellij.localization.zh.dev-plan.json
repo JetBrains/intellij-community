@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.localization.zh",
     "variant": "",
-    "layoutSignature": "7f25gwjd72cetq1pukxnynhiu",
+    "layoutSignature": "8pkg2nt1mqe8q4af72f85tpzz",
     "assets": [
         {
             "destination": "lib/localization-zh.jar",
@@ -45,7 +45,7 @@
             "outputs": [
                 "layout-assets:custom-asset:0:output"
             ],
-            "modelSignature": "d0xgd76itqfy81edx79brnda8"
+            "modelSignature": "1u4q8dt9dt6qdoriwau4c8tpg"
         }
     ],
     "operations": [

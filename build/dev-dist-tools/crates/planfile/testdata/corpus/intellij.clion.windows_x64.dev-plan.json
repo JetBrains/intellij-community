@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.clion",
     "variant": "windows_x64",
-    "layoutSignature": "18cah8cgqeeh89a7sb0yhu4cu",
+    "layoutSignature": "rf6r29ly3q5qo16l6motfmf4",
     "assets": [
         {
             "module": "intellij.cidr.apinotes"
@@ -209,7 +209,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "9bgo9z5ehy54w1xnqsucur0n8"
+            "modelSignature": "5dkerlkbo65cid4sggpnm930w"
         }
     ],
     "operations": [

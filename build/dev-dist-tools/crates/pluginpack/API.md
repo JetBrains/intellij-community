@@ -6,7 +6,7 @@ validation functions again on the produced table.
 
 ## The subset rule
 
-The crate executes only the shapes that the 103 checked-in `*.dev-plan.json` files use, and it refuses every other shape
+The crate executes only the shapes that the 92 checked-in `*.dev-plan.json` files use, and it refuses every other shape
 with an error that names it. `planfile` refuses most unused shapes at decode time, so its typed recipe cannot state
 them. The table lists what the Go packer supported and this crate refuses.
 

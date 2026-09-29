@@ -110,7 +110,7 @@ data class PluginSymbolicNativeUse(
 
 /**
  * Keys name layout slots: `layout-patcher:N`, `custom-asset:N`, `resource:N`, `resource-generator:N`,
- * `platform-resource-generator:N`, `platform-custom-asset:N`, `module-filter:MODULE`, `searchable-options:MODULE`,
+ * `platform-resource-generator:N`, `platform-custom-asset:N`, `searchable-options:MODULE`,
  * or an artifact's preparation key. A `platform-*` index counts only the callbacks that serve the variant's distribution.
  * [modulePatches] gives the final patch order, including the descriptor, after every declared patcher runs.
  * [preparedSourceManifests] is keyed by prepared output ID and records original counts and concrete execution policies.

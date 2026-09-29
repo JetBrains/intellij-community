@@ -23,9 +23,9 @@ fn testdata_directory() -> PathBuf {
     )
 }
 
-/// Every distinct glob of the plan file corpus of the planfile crate. The packer compiles the excludes of an operation as
-/// globs. It also compiles the includes, executables and mapping patterns of a layout transform. An include loses its
-/// leading `!`, and an empty mapping pattern is `**`.
+/// Every distinct glob of the plan file corpus of the planfile crate. The packer compiles the includes, executables and
+/// mapping patterns of a layout transform as globs. An include loses its leading `!`, and an empty mapping pattern is
+/// `**`.
 fn corpus_patterns() -> BTreeSet<String> {
     // The corpus is in the testdata of the sibling crate. The lexical path holds in the Bazel runfiles too.
     let corpus = testdata_directory()
@@ -44,8 +44,7 @@ fn corpus_patterns() -> BTreeSet<String> {
         files += 1;
         let plan = planfile::read(&file).unwrap_or_else(|error| panic!("{error}"));
         for operation in &plan.operations {
-            patterns.extend(operation.excludes.iter().cloned());
-            let assets = operation.layout_assets.iter().flat_map(|layout| &layout.assets);
+            let assets = operation.layout_assets.assets.iter();
             for transform in assets.filter_map(|asset| asset.transform.as_ref()) {
                 patterns.extend(transform.executables.iter().cloned());
                 patterns.extend(

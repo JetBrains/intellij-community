@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.fsharp",
     "variant": "",
-    "layoutSignature": "a7f6n71axj5wb0fdvlubziq7x",
+    "layoutSignature": "37no1tdgzmyob1c6m38csltkc",
     "assets": [
         {
             "destination": "lib/rider-plugins-fsharp.jar",
@@ -59,7 +59,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "2i3qltzbv3sv70vy6z4aqel23"
+            "modelSignature": "28tyh7n5abey5zmmwx6nwqps8"
         }
     ],
     "operations": [

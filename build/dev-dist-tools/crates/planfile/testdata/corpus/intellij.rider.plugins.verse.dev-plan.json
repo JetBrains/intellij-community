@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.verse",
     "variant": "",
-    "layoutSignature": "ap06r1f7tfta71hid96sb4hht",
+    "layoutSignature": "3tax6ewvb79x7f0ac0uv1umiu",
     "assets": [
         {
             "destination": "lib/rider-plugins-verse.jar",
@@ -46,7 +46,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "3kzw3w083x64t6ozvowum10to"
+            "modelSignature": "4oal8bksv13crn9yl4m7q01zd"
         }
     ],
     "operations": [

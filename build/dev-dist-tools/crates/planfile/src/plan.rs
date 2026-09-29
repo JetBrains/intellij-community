@@ -17,7 +17,6 @@ pub const DEFAULT_MODE: u32 = 0o644;
 /// The mode of an executable plan asset: 0755, or 493 in the plan file.
 pub const EXECUTABLE_MODE: u32 = 0o755;
 
-pub(crate) const MODULE_FILTER_KIND: &str = "module-filter";
 pub(crate) const LAYOUT_ASSETS_KIND: &str = "layout-assets";
 
 /// One decoded plan file in its full form. A reused jar is one of its module assets. The chain names the reused
@@ -95,18 +94,15 @@ pub struct Preparation {
     pub model_signature: String,
 }
 
-/// One preparation operation: `module-filter` or `layout-assets`. A module-filter reads the input and filters it by
-/// the excludes. A layout-assets operation reads the inputs into the layout assets. The packer keeps the manifest of
-/// every operation output.
+/// One preparation operation. The one kind is `layout-assets`: the operation reads the inputs into the layout assets.
+/// The packer keeps the manifest of every operation output.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Operation {
     pub id: String,
     pub kind: String,
-    pub input: Option<Reference>,
     pub inputs: Vec<Reference>,
     pub output: String,
-    pub excludes: Vec<String>,
-    pub layout_assets: Option<LayoutAssetPreparation>,
+    pub layout_assets: LayoutAssetPreparation,
 }
 
 /// The `layoutAssets` payload of one operation. Only a tree has a root.
@@ -184,14 +180,11 @@ struct RawJarWriter {
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct RawOperation {
     id: String,
-    kind: Option<String>,
-    input: Option<Reference>,
+    kind: String,
     #[serde(default)]
     inputs: Vec<Reference>,
     output: String,
     manifest: String,
-    #[serde(default)]
-    excludes: Vec<String>,
     layout_assets: Option<RawLayoutAssets>,
 }
 
@@ -387,48 +380,34 @@ impl RawOperation {
         let Self {
             id,
             kind,
-            input,
             inputs,
             output,
             manifest,
-            excludes,
             layout_assets,
         } = self;
-        let kind = kind.unwrap_or_else(|| MODULE_FILTER_KIND.to_owned());
+        if kind != LAYOUT_ASSETS_KIND {
+            fail!("operation {id:?} has the kind {kind:?}; the packer executes only layout-assets");
+        }
         if manifest != "keep" {
             fail!("operation {id:?} has the manifest {manifest:?}; the packer keeps the manifest of a prepared output");
         }
-        let layout_assets = match kind.as_str() {
-            MODULE_FILTER_KIND => {
-                if input.is_none() || !inputs.is_empty() || layout_assets.is_some() {
-                    fail!("module-filter operation {id:?} requires one input and no layout assets");
-                }
-                None
-            }
-            LAYOUT_ASSETS_KIND => {
-                let Some(layout) = layout_assets.filter(|_| input.is_none() && excludes.is_empty()) else {
-                    fail!("layout-assets operation {id:?} requires layoutAssets, and no primary input or excludes");
-                };
-                let root = layout.root.unwrap_or_default();
-                if layout.format == LayoutFormat::Entries && !root.is_empty() {
-                    fail!("operation {id:?} must not declare a tree root for its entries");
-                }
-                Some(LayoutAssetPreparation {
-                    format: layout.format,
-                    root,
-                    assets: layout.assets,
-                })
-            }
-            _ => fail!("operation {id:?} has the kind {kind:?}; the packer executes only module-filter and layout-assets"),
+        let Some(layout) = layout_assets else {
+            fail!("layout-assets operation {id:?} requires layoutAssets");
         };
+        let root = layout.root.unwrap_or_default();
+        if layout.format == LayoutFormat::Entries && !root.is_empty() {
+            fail!("operation {id:?} must not declare a tree root for its entries");
+        }
         Ok(Operation {
             id,
             kind,
-            input,
             inputs,
             output,
-            excludes,
-            layout_assets,
+            layout_assets: LayoutAssetPreparation {
+                format: layout.format,
+                root,
+                assets: layout.assets,
+            },
         })
     }
 }

@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.kotlin.plugin",
     "variant": "",
-    "layoutSignature": "d5mcgkgft0oz3e1hj9gc0ysyd",
+    "layoutSignature": "c0vvqq8o5rxyljpy7vtoyrtab",
     "assets": [
         {
             "module": "intellij.kotlin.highlighting.minimal"
@@ -1240,7 +1240,7 @@
             "outputs": [
                 "layout-assets:layout-patcher:0:output"
             ],
-            "modelSignature": "5nwvwsnvbng4vmgyls2l3ts5k"
+            "modelSignature": "9rrjhjkhq9mupnbiblcj6344c"
         },
         {
             "id": "layout-assets:resource-generator:0",
@@ -1250,7 +1250,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "a19ow67xiytxbdv1o3r3ng8p4"
+            "modelSignature": "cdis0yg6w4w17k5of34bo9jwl"
         }
     ],
     "operations": [

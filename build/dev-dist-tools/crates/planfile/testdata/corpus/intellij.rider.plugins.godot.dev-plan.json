@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.godot",
     "variant": "",
-    "layoutSignature": "clipkgt4fauyoqmpkk1biiv57",
+    "layoutSignature": "an08xvuaf269xyr7jc8c46yok",
     "assets": [
         {
             "destination": "lib/rider-plugins-godot.jar",
@@ -46,7 +46,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "90xbv6lqsub2fzb3ab6uq047o"
+            "modelSignature": "ber1cndt4s9yktakdnmrwr6ts"
         }
     ],
     "operations": [

@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.python.plugin",
     "variant": "",
-    "layoutSignature": "2bnvarel15iggkreszlkcu1ds",
+    "layoutSignature": "62x0fvc6vhlr8jat9luima8ro",
     "assets": [
         {
             "module": "intellij.python.frontend.base"
@@ -182,7 +182,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "6zpl46vvoybrmets61ltsi9wr"
+            "modelSignature": "bq631cvvfx4rtdyl0kanyyskt"
         }
     ],
     "operations": [

@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.lambda.test.plugin",
     "variant": "",
-    "layoutSignature": "4cqgkfcji5oalwjqofo2knx0c",
+    "layoutSignature": "e99184tqz86rbsvbb98hckxn1",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.allure.java.commons.jar",
@@ -83,86 +83,6 @@
             }
         },
         {
-            "destination": "lib/modules/intellij.libraries.junit5.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.junit5",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-junit5-_j_unit6",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
-            "destination": "lib/modules/intellij.libraries.junit5.jupiter.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.junit5.jupiter",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-junit5-jupiter-_j_unit6_jupiter",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
-            "destination": "lib/modules/intellij.libraries.junit5.launcher.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.junit5.launcher",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-junit5-launcher-_j_unit6_launcher",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
-            "destination": "lib/modules/intellij.libraries.junit5.params.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.junit5.params",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-junit5-params-_j_unit6_params",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
             "destination": "lib/modules/intellij.libraries.junit5.pioneer.jar",
             "recipe": {
                 "sources": [
@@ -183,16 +103,96 @@
             }
         },
         {
-            "destination": "lib/modules/intellij.libraries.junit5.vintage.jar",
+            "destination": "lib/modules/intellij.libraries.junit6.jar",
             "recipe": {
                 "sources": [
                     {
-                        "input": "intellij.libraries.junit5.vintage",
+                        "input": "intellij.libraries.junit6",
                         "kind": "module",
                         "filter": "module-v1"
                     },
                     {
-                        "input": "@lib//:libraries-junit5-vintage-_j_unit6_vintage",
+                        "input": "@lib//:libraries-junit6-_j_unit6",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit6.jupiter.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit6.jupiter",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit6-jupiter-_j_unit6_jupiter",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit6.launcher.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit6.launcher",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit6-launcher-_j_unit6_launcher",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit6.params.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit6.params",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit6-params-_j_unit6_params",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
+            "destination": "lib/modules/intellij.libraries.junit6.vintage.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.junit6.vintage",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-junit6-vintage-_j_unit6_vintage",
                         "kind": "library",
                         "filter": "library-v1"
                     }

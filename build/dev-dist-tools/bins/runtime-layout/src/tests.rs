@@ -39,7 +39,7 @@ const TEST_PLAN: &str = r#"{
     ], "writer": {"mergeEntities": true, "nativeLib": "natives"}}},
     {"destination": "lib/p.jar", "recipe": {"sources": [
       {"input": "descriptor:p.main", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]},
-      {"input": "module-filter:p.main:output", "kind": "prepared", "filter": "prepared"},
+      {"input": "p.main", "kind": "module", "filter": "module-v1"},
       {"input": "p.other", "kind": "module", "filter": "module-v1"},
       {"input": "@lib//:a", "kind": "library", "filter": "library-v1"}
     ], "writer": {"manifest": "drop", "mergeEntities": true}}},
@@ -52,10 +52,9 @@ const TEST_PLAN: &str = r#"{
     {"destination": "js", "inputs": ["module-resource:0:source"], "kind": "tree", "classPath": false}
   ],
   "preparations": [
-    {"id": "module-filter:p.main", "inputs": ["p.main"], "outputs": ["module-filter:p.main:output"], "modelSignature": "m"}
+    {"id": "layout-assets:0", "inputs": ["p.main"], "outputs": ["layout-assets:0:output"], "modelSignature": "m"}
   ],
   "operations": [
-    {"id": "module-filter:p.main", "input": {"artifact": "p.main"}, "output": "module-filter:p.main:output", "manifest": "keep", "excludes": ["js/**"]},
     {"id": "layout-assets:0", "kind": "layout-assets", "inputs": [{"artifact": "p.main"}], "output": "layout-assets:0:output", "manifest": "keep",
       "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}
   ]
@@ -907,7 +906,16 @@ fn plan_part_refusals() {
                 r#""other:0:output", "kind": "prepared""#,
                 1,
             ),
-            "which no module-filter or layout-assets operation writes",
+            "which no layout-assets operation writes",
+        ),
+        (
+            TEST_PLAN.replacen(
+                r#""kind": "layout-assets", "inputs": [{"artifact": "p.main"}]"#,
+                r#""kind": "module-filter", "inputs": [{"artifact": "p.main"}]"#,
+                1,
+            ),
+            // The plan file reader refuses the retired kind by name.
+            r#"operation "layout-assets:0" has the kind "module-filter"; the packer executes only layout-assets"#,
         ),
         (
             TEST_PLAN.replacen(

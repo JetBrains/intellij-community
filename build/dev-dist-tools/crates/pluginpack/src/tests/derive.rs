@@ -1,50 +1,30 @@
 //! The port of `kotlin_derivation_test.go`, and the `pluginpack.Plan` check of the Go `mustDerive` in
 //! `planfile_test.go`. The binary half of the Go derivation test is in `bins/plugin-remainder-packer/tests`.
 
-use std::path::Path;
-
 use planfile::contract::{Artifact, Catalogue, Library, Reference, SCOPED_VERSION, TREE_VERSION, VERSION};
-use serde::Serialize;
 
 use super::kotlin::{
     KotlinJarRecipe, KotlinJarSource, KotlinJarWriter, KotlinPlanAsset, KotlinPlanFile, KotlinPreparation, KotlinPreparedManifest,
-    kotlin_layout_assets_operation, kotlin_module_filter_operation, module_source, plan_json, prepared_source, signed_plan,
+    kotlin_layout_assets_operation, module_source, plan_json, prepared_source, signed_plan,
 };
 use super::*;
 
-/// One plan file with its raw inputs on disk. `inputs` is the Starlark-shaped input catalogue, libraries included.
-/// `reused` names the modules whose plain module jar the chain reuses. `present` lists the output paths that the
-/// fixture exists for.
-pub(crate) struct DerivationFixture {
-    pub(crate) plan: KotlinPlanFile,
-    pub(crate) inputs: Catalogue,
-    pub(crate) reused: Vec<String>,
-    pub(crate) present: Vec<&'static str>,
+/// The kotlinx encoding of a `module-filter` operation, the retired kind. No generator writes it, so the text lives
+/// here alone, and the derivation test proves that the plan file reader refuses it by name.
+fn retired_module_filter_operation(id: &str, input: &str, output: &str, manifest: &str, excludes: &[&str]) -> String {
+    format!(
+        r#"{{"id":{},"kind":"module-filter","input":{{"artifact":{},"path":""}},"output":{},"manifest":{},"excludes":{}}}"#,
+        serde_json::to_string(id).unwrap(),
+        serde_json::to_string(input).unwrap(),
+        serde_json::to_string(output).unwrap(),
+        serde_json::to_string(manifest).unwrap(),
+        serde_json::to_string(excludes).unwrap()
+    )
 }
 
-/// A module output jar with one class under the package of the module.
-pub(crate) fn module_jar(inputs: &Path, module: &str) -> Artifact {
-    let jar = inputs.join(format!("{module}.jar"));
-    let class = format!("{}/Main.class", module.replace('.', "/"));
-    let manifest = format!("Manifest-Version: 1.0\r\nModule: {module}\r\n\r\n");
-    let class: &'static str = Box::leak(class.into_boxed_str());
-    archive_file(&jar, &[(class, &format!("class of {module}")), ("META-INF/MANIFEST.MF", &manifest)]);
-    file_artifact(module, &jar)
-}
-
-/// One module-filter operation whose prepared source enters `lib/main.jar` beside a module source. The writer manifest
-/// and the prepared manifest select the manifest policy of every source.
-pub(crate) fn module_filter_fixture(inputs: &Path, manifest: &str, prepared_manifest: Option<KotlinPreparedManifest>) -> DerivationFixture {
-    let raw = inputs.join("raw.jar");
-    archive_file(
-        &raw,
-        &[
-            ("keep/Service.class", "retained"),
-            ("drop/Ignore.class", "excluded"),
-            ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\n\r\n"),
-            ("META-INF/listOfEntities.txt", "keep.Service\n"),
-        ],
-    );
+/// The plan of a golden fixture of the deleted Kotlin preparer: one module-filter operation whose prepared source enters
+/// `lib/main.jar` beside a module source. The reader refuses the kind, so the fixture needs no input on disk.
+fn module_filter_plan(manifest: &str, prepared_manifest: Option<KotlinPreparedManifest>) -> KotlinPlanFile {
     let extra = if prepared_manifest.is_some() {
         "intellij.libraries.bar"
     } else {
@@ -80,13 +60,8 @@ pub(crate) fn module_filter_fixture(inputs: &Path, manifest: &str, prepared_mani
         }],
         ..KotlinPlanFile::default()
     };
-    let operation = kotlin_module_filter_operation("filter", "raw", "filtered:output", operation_manifest, &strings(&["drop/**"]));
-    DerivationFixture {
-        plan: signed_plan(plan, &[operation]),
-        inputs: catalogue(vec![file_artifact("raw", &raw), module_jar(inputs, extra)]),
-        reused: Vec::new(),
-        present: vec!["lib/main.jar"],
-    }
+    let operation = retired_module_filter_operation("filter", "raw", "filtered:output", operation_manifest, &["drop/**"]);
+    signed_plan(plan, &[operation])
 }
 
 /// The plan of the Go fixture of jars, ownership rows and the classpath order. It states a link and a directory
@@ -280,68 +255,12 @@ fn distribution_scope_copy_plan() -> KotlinPlanFile {
     signed_plan(plan, &[])
 }
 
-/// Renders the asset rows the way Go `json.MarshalIndent(assets, "", " ")` did, the bytes that the golden hashes.
-fn canonical_rows(assets: &[Asset]) -> String {
-    let mut buffer = Vec::new();
-    let mut serializer = serde_json::Serializer::with_formatter(&mut buffer, serde_json::ser::PrettyFormatter::with_indent(b" "));
-    assets.serialize(&mut serializer).unwrap();
-    String::from_utf8(buffer).unwrap()
-}
-
-/// The golden record of one packed plugin directory with its asset rows and classpath record. A jar is listed by its
-/// entries, sorted by name, so the record does not follow the readdir order of the host.
-fn derivation_record(output: &Path, assets: &[Asset], class_path: &[u8]) -> Vec<String> {
-    let mut record = Vec::new();
-    for line in materialization_record(output) {
-        let path = line.split('\t').next().unwrap();
-        if path.ends_with(".jar") && line.contains("\tfile\t") {
-            for entry in jar_entry_record(&crate::paths::host(output, path)) {
-                record.push(format!("{path}!{entry}"));
-            }
-            continue;
-        }
-        record.push(line);
-    }
-    record.push(format!("assets.json\tjson\t-\t{}", sha256_hex(canonical_rows(assets).as_bytes())));
-    record.push(format!("plugin-classpath.txt\tfile\t-\t{}", sha256_hex(class_path)));
-    record
-}
-
-/// The descriptor of a fixture plugin.
-pub(crate) fn fixture_descriptor(plugin: &str) -> Vec<u8> {
-    format!("<idea-plugin><id>{plugin}</id><version>1</version></idea-plugin>").into_bytes()
-}
-
-/// Runs the derivation on the fixture and compares the result with the golden that the deleted Kotlin preparer wrote.
-/// The result is the packed directory, the asset rows and the plugin classpath record. Five of the six golden fixtures
-/// state a shape that no plan file uses. `planfile` refuses them, and the test pins the refusal that names the shape.
+/// Every golden fixture of the deleted Kotlin preparer states a shape that no plan file uses. `planfile` refuses each
+/// one, and the test pins the refusal that names the shape. The module-filter fixtures are refused by the retired kind,
+/// or by a field of the retired kind.
 #[test]
-fn plan_derivation_matches_the_kotlin_preparer() {
+fn plan_derivation_refuses_every_kotlin_preparer_fixture() {
     let golden = Golden::open("kotlin-derivation");
-    let inputs = temp();
-    let fixture = module_filter_fixture(inputs.path(), "keep", None);
-    let file = planfile::from_slice(plan_json(&fixture.plan).as_bytes()).unwrap_or_else(|error| panic!("{error}"));
-    let descriptor = fixture_descriptor(&fixture.plan.plugin);
-    let derivation = planfile::derive(
-        &file,
-        &fixture.inputs,
-        &format!("plugins/{}", fixture.plan.plugin),
-        &descriptor,
-        fixture.plan.version,
-        &fixture.reused,
-        &[],
-    )
-    .unwrap_or_else(|error| panic!("{error}"));
-    let written = write_execution(&derivation.recipe, &derivation.catalogue);
-    let record = materialization_record(&written.output);
-    require_inventory_matches_tree(&written.output, &written.inventory);
-    require_recorded_paths(&record, &fixture.present);
-    golden.check(
-        "module-filter with manifest keep",
-        &derivation_record(&written.output, &derivation.assets, &derivation.class_path),
-    );
-
-    let refused_inputs = temp();
     let refused = [
         (
             "jars, ownership rows, and the classpath order",
@@ -349,21 +268,24 @@ fn plan_derivation_matches_the_kotlin_preparer() {
             "unknown field `symlinkTarget`",
         ),
         (
+            "module-filter with manifest keep",
+            module_filter_plan("keep", None),
+            "unknown field `input`",
+        ),
+        (
             "module-filter with manifest drop",
-            module_filter_fixture(refused_inputs.path(), "drop", None).plan,
-            "has the manifest \"drop\"",
+            module_filter_plan("drop", None),
+            "unknown field `input`",
         ),
         (
             "module-filter with a prepared manifest under single-meaningful-source",
-            module_filter_fixture(
-                refused_inputs.path(),
+            module_filter_plan(
                 "",
                 Some(KotlinPreparedManifest {
                     source_manifest_policies: strings(&["keep"]),
                     ..KotlinPreparedManifest::default()
                 }),
-            )
-            .plan,
+            ),
             "unknown field `preparedManifest`",
         ),
         (
@@ -398,7 +320,7 @@ fn plan_derivation_matches_the_kotlin_preparer() {
             Ok(_) => panic!("{name}: planfile accepted a shape that no plan file uses"),
         }
     }
-    assert_eq!(golden.fixture_names().len(), refused.len() + 1);
+    assert_eq!(golden.fixture_names().len(), refused.len());
 }
 
 fn plan_text(version: u32, assets: &str, sections: &[&str]) -> String {
@@ -450,7 +372,8 @@ fn every_planfile_derivation_plans() {
     let every_kind_preparations = r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"},
       {"id": "tree", "inputs": ["archive"], "outputs": ["tree:output"], "modelSignature": "y"},
       {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"}]"#;
-    let every_kind_operations = r#""operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]},
+    let every_kind_operations = r#""operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep",
+        "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}},
       {"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
         "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}},
       {"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",

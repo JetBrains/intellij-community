@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.cidr.clangd",
     "variant": "darwin_aarch64",
-    "layoutSignature": "4wrsmckq9gm752kkeczs35ev4",
+    "layoutSignature": "9mr62aueqqe09xln08xdp0vq3",
     "assets": [
         {
             "module": "intellij.cidr.clangd.core"
@@ -75,7 +75,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "eq4tdvttqchpjv47rusar6mlc"
+            "modelSignature": "2v9ldfhns5j33ei1gkqoxjjs8"
         },
         {
             "id": "layout-assets:resource-generator:1",
@@ -85,7 +85,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "5pz833n6f6wzax8pqa7npljjr"
+            "modelSignature": "bugmguqr6iufm8phew520hf4z"
         }
     ],
     "operations": [

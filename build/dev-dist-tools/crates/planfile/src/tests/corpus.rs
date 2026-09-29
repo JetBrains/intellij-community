@@ -4,7 +4,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::contract::{Artifact, Catalogue, Library, Reference, VERSION};
-use crate::plan::{LAYOUT_ASSETS_KIND, MODULE_FILTER_KIND};
+use crate::plan::LAYOUT_ASSETS_KIND;
 use crate::{Asset, PlanFile, derive, read};
 
 /// `testdata/` of the crate. Bazel names it in `DDT_TESTDATA_DIR`, and `cargo test` sets the run-time
@@ -137,6 +137,6 @@ fn every_checked_in_plan_file_reads_and_derives() {
     }
     let strings = |values: &[&str]| values.iter().map(|value| (*value).to_owned()).collect::<BTreeSet<_>>();
     assert_eq!(source_kinds, strings(&["archive", "file", "library", "module", "prepared"]));
-    assert_eq!(operation_kinds, strings(&[LAYOUT_ASSETS_KIND, MODULE_FILTER_KIND]));
+    assert_eq!(operation_kinds, strings(&[LAYOUT_ASSETS_KIND]));
     assert_ne!(layout_libraries, 0, "no layout-assets operation reads a library");
 }

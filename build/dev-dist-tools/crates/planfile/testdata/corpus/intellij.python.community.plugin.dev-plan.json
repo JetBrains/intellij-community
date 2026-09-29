@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.python.community.plugin",
     "variant": "",
-    "layoutSignature": "15xpwdadcfoobu9juepsknci4",
+    "layoutSignature": "em2yml51kl7nfdeltob0c4mn3",
     "assets": [
         {
             "module": "intellij.python.community.common"
@@ -451,7 +451,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "5b8b0p3zxt1wre0xihc1bmgdp"
+            "modelSignature": "4p384kmi9ffzsi8wnlbn5rpcv"
         }
     ],
     "operations": [

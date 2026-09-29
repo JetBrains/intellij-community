@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.maven.plugin",
     "variant": "",
-    "layoutSignature": "cvw6zvcya13piz5y3p063vg4a",
+    "layoutSignature": "bli4e8o0bxmgla8w7u9e5rkhu",
     "assets": [
         {
             "destination": "lib/intellij.maven.model.jar",
@@ -365,7 +365,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "5cihu15nbbpo4cwyliz1o8siw"
+            "modelSignature": "97mqrgywqmbjwcehk4ebap5vv"
         },
         {
             "id": "layout-assets:resource-generator:1",
@@ -376,7 +376,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "8dd3on47wmc2zy9wzkxfxqvow"
+            "modelSignature": "cvk2804w8nfq4ih5v4pihg4se"
         },
         {
             "id": "layout-assets:resource-generator:2",
@@ -386,7 +386,7 @@
             "outputs": [
                 "layout-assets:resource-generator:2:output"
             ],
-            "modelSignature": "ddl9woloxmxgucy2j416epkwj"
+            "modelSignature": "6vyidf1uc25f330tru59x74bm"
         }
     ],
     "operations": [

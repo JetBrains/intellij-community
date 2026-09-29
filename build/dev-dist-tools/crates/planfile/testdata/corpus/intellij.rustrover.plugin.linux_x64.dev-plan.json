@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rustrover.plugin",
     "variant": "linux_x64",
-    "layoutSignature": "dtc672oeq4m48naufrqipfsae",
+    "layoutSignature": "574pepdiw019n5l0f33v7kaaj",
     "assets": [
         {
             "destination": "lib/intellij.rustrover.common.jar",
@@ -201,7 +201,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "ca2dc6t4zchsnocnsvcswpg58"
+            "modelSignature": "aji8axdokfso5dj9v160sk2db"
         }
     ],
     "operations": [

@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.gateway.plugin",
     "variant": "",
-    "layoutSignature": "bjqc5x44oq9xlqnt0sm8yu0fi",
+    "layoutSignature": "1wuh1iamunkgzjikbfoikshtl",
     "assets": [
         {
             "module": "intellij.gateway.core"
@@ -141,7 +141,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "2tfdxmmkmlaogoczzzslqadil"
+            "modelSignature": "a9f0735xblbroenxna68l0bzn"
         }
     ],
     "operations": [

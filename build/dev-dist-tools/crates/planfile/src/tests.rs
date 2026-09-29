@@ -7,7 +7,7 @@ use crate::contract::{
     self, Artifact, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Library, Manifest, Reference,
     Source,
 };
-use crate::plan::MODULE_FILTER_KIND;
+use crate::plan::LAYOUT_ASSETS_KIND;
 use crate::{
     DEFAULT_MODE, Derivation, EXECUTABLE_MODE, Error, JarWriter, ManifestPolicy, PlanFile, classpath, derive, module_jar_asset, read,
 };
@@ -63,8 +63,11 @@ fn strings(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
 }
 
-const MODULE_FILTER_SECTION: &str = r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"}],
-  "operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}]"#;
+/// A layout-assets entries operation over the raw input. Its output is the one prepared source of [`FILTERED_JAR`].
+const ENTRIES_OPERATION: &str = r#"{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep", "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}}"#;
+
+const ENTRIES_SECTION: &str = r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"}],
+  "operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep", "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}}]"#;
 
 const FILTERED_JAR: &str = r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}}"#;
 
@@ -139,7 +142,6 @@ fn archive(input: &str, filter: Filter, manifest: Manifest) -> Source {
     Source::Archive {
         input: Reference::artifact(input),
         filter,
-        excludes: Vec::new(),
         manifest,
     }
 }
@@ -149,6 +151,16 @@ fn layout_source(inputs: &[&str], assets: Vec<LayoutAsset>) -> Source {
         inputs: inputs.iter().map(|input| Reference::artifact(*input)).collect(),
         assets,
     })
+}
+
+/// The one layout asset of [`ENTRIES_OPERATION`]: the plain copy of the raw input at `raw.txt`.
+fn raw_entry() -> LayoutAsset {
+    LayoutAsset {
+        destination: "raw.txt".to_owned(),
+        sources: vec![0],
+        transform: None,
+        mode: 0,
+    }
 }
 
 fn transform_asset(sources: Vec<usize>, transform: LayoutTransform) -> LayoutAsset {
@@ -178,7 +190,7 @@ fn read_expands_the_compact_forms() {
     {"destination": "lib/demo.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
     {"destination": "bin/tool", "inputs": ["native"], "mode": 493, "classPath": false},
     {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false, "scope": "distribution"}"#,
-        &[r#""operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep"}]"#],
+        &[&format!(r#""operations": [{ENTRIES_OPERATION}]"#)],
     ));
     let content = module_jar_asset("demo.content");
     assert_eq!(file.assets[0], content);
@@ -213,9 +225,10 @@ fn read_expands_the_compact_forms() {
     assert_eq!((native.kind.as_str(), native.scope.as_str()), ("tree", "distribution"));
 
     let operation = &file.operations[0];
-    assert_eq!(operation.kind, MODULE_FILTER_KIND, "the default operation kind");
-    assert_eq!(operation.input.as_ref().unwrap().artifact, "raw");
-    assert!(operation.excludes.is_empty() && operation.layout_assets.is_none());
+    assert_eq!(operation.kind, LAYOUT_ASSETS_KIND);
+    assert_eq!(operation.inputs, [Reference::artifact("raw")]);
+    assert_eq!(operation.layout_assets.root, "", "an entries operation has no tree root");
+    assert_eq!(operation.layout_assets.assets[0].destination, "raw.txt");
 }
 
 /// The Go table, with a message for each refusal. The decoder refuses every shape that no checked-in plan file uses.
@@ -369,12 +382,29 @@ fn read_refuses_malformed_forms() {
         (
             "a Kotlin operation kind",
             operation(r#"{"id": "n", "kind": "native-archive", "output": "o", "manifest": "keep"}"#),
-            r#"has the kind "native-archive"; the packer executes only module-filter and layout-assets"#,
+            r#"has the kind "native-archive"; the packer executes only layout-assets"#,
+        ),
+        (
+            "the retired module-filter kind",
+            operation(r#"{"id": "n", "kind": "module-filter", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}"#),
+            r#"operation "n" has the kind "module-filter"; the packer executes only layout-assets"#,
+        ),
+        (
+            "the primary input of the retired module-filter kind",
+            operation(
+                r#"{"id": "n", "kind": "module-filter", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "excludes": ["drop/**"]}"#,
+            ),
+            "unknown field `input`",
+        ),
+        (
+            "an operation without a kind",
+            operation(r#"{"id": "n", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}"#),
+            "missing field `kind`",
         ),
         (
             "a Kotlin operation field",
             operation(
-                r#"{"id": "n", "kind": "native-presigned", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "filter": "library"}"#,
+                r#"{"id": "n", "kind": "native-presigned", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep", "filter": "library"}"#,
             ),
             "unknown field `filter`",
         ),
@@ -385,26 +415,23 @@ fn read_refuses_malformed_forms() {
         ),
         (
             "a Kotlin field with the value null",
-            operation(r#"{"id": "n", "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "entry": null}"#),
+            operation(
+                r#"{"id": "n", "kind": "layout-assets", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep", "entry": null}"#,
+            ),
             "unknown field `entry`",
         ),
         (
             "an operation that drops the manifest",
-            operation(r#"{"id": "n", "input": {"artifact": "a"}, "output": "o", "manifest": "drop"}"#),
+            operation(
+                r#"{"id": "n", "kind": "layout-assets", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "drop",
+          "layoutAssets": {"format": "tree", "assets": []}}"#,
+            ),
             r#"has the manifest "drop"; the packer keeps the manifest of a prepared output"#,
         ),
         (
-            "a module-filter without input",
-            operation(r#"{"id": "n", "output": "o", "manifest": "keep"}"#),
-            "requires one input and no layout assets",
-        ),
-        (
-            "a layout-assets with a primary input",
-            operation(
-                r#"{"id": "n", "kind": "layout-assets", "input": {"artifact": "a"}, "output": "o", "manifest": "keep",
-          "layoutAssets": {"format": "tree", "assets": []}}"#,
-            ),
-            "no primary input or excludes",
+            "a layout-assets without layout assets",
+            operation(r#"{"id": "n", "kind": "layout-assets", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}"#),
+            r#"layout-assets operation "n" requires layoutAssets"#,
         ),
         (
             "a layout file",
@@ -478,7 +505,7 @@ fn read_names_the_file_and_the_operation() {
     let error = read_plan(&plan(
         1,
         r#"{"module": "m"}"#,
-        &[r#""operations": [{"id": "n", "kind": "native-presigned", "input": {"artifact": "a"}, "output": "o", "manifest": "keep"}]"#],
+        &[r#""operations": [{"id": "n", "kind": "native-presigned", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}]"#],
     ))
     .unwrap_err();
     assert!(
@@ -498,7 +525,8 @@ fn read_treats_null_as_absent_for_an_optional_field() {
     {"destination": "lib/y.jar", "recipe": {"sources": [{"input": "y", "kind": "module", "filter": "module-v1"}],
       "writer": {"manifest": null, "mergeEntities": null, "directoryEntries": null, "nativeLib": null}}}"#,
         &[
-            r#""operations": [{"id": "n", "kind": null, "input": {"artifact": "a"}, "output": "o", "manifest": "keep", "layoutAssets": null}]"#,
+            r#""operations": [{"id": "n", "kind": "layout-assets", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep",
+          "layoutAssets": {"format": "tree", "root": null, "assets": [{"destination": "", "sources": [0], "transform": null}]}}]"#,
         ],
     ));
     let tool = &file.assets[0];
@@ -509,8 +537,9 @@ fn read_treats_null_as_absent_for_an_optional_field() {
     );
     assert_eq!(tool.recipe.as_ref().unwrap().writer, JarWriter::default());
     assert_eq!(file.assets[1].recipe.as_ref().unwrap().writer, JarWriter::default());
-    assert_eq!(file.operations[0].kind, MODULE_FILTER_KIND);
-    assert!(file.operations[0].layout_assets.is_none());
+    let layout = &file.operations[0].layout_assets;
+    assert_eq!(layout.root, "", "a null root is an absent root");
+    assert!(layout.assets[0].transform.is_none(), "a null transform is an absent transform");
 }
 
 /// A content_module_jar target packs the module output first and then the library containers. An asset of that shape
@@ -765,7 +794,7 @@ fn library_catalogue(libraries: &[(&str, &[&str])]) -> Catalogue {
 }
 
 /// The plan names the library, and the derivation reads the member files from the catalogue. A layout input stands
-/// for every member, and the asset sources follow the expanded positions. A module filter reads only a module jar.
+/// for every member, and the asset sources follow the expanded positions.
 #[test]
 fn derive_resolves_a_library_input_to_its_members() {
     let entries = r#""preparations": [{"id": "entries", "inputs": ["@lib//:one", "raw"], "outputs": ["entries:output"], "modelSignature": "e"}],
@@ -802,18 +831,6 @@ fn derive_resolves_a_library_input_to_its_members() {
         )];
         assert_eq!(derivation.recipe.operations, want, "{name}");
     }
-
-    let filter = r#""preparations": [{"id": "filter", "inputs": ["@lib//:one"], "outputs": ["filtered"], "modelSignature": "x"}],
-    "operations": [{"id": "filter", "input": {"artifact": "@lib//:one"}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}]"#;
-    expect_error(
-        derive_plan(
-            &plan(1, FILTERED_JAR, &[filter]),
-            &library_catalogue(&[("@lib//:one", &["one-1.0.jar"])]),
-            1,
-            &[],
-        ),
-        r#"module-filter operation "filter" reads the library "@lib//:one"; the packer filters only a module jar"#,
-    );
 }
 
 #[test]
@@ -830,9 +847,7 @@ fn derive_compiles_every_operation_kind() {
     "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}}"#;
     let entries = r#"{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",
     "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]}}"#;
-    let operations = format!(
-        r#""operations": [{{"id": "filter", "input": {{"artifact": "raw"}}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}}, {tree}, {entries}]"#
-    );
+    let operations = format!(r#""operations": [{ENTRIES_OPERATION}, {tree}, {entries}]"#);
     let derivation = must_derive(
         &plan(
             2,
@@ -864,12 +879,7 @@ fn derive_compiles_every_operation_kind() {
             "lib/main.jar",
             true,
             vec![
-                Source::Archive {
-                    input: Reference::artifact("raw"),
-                    filter: Filter::Module,
-                    excludes: strings(&["drop/**"]),
-                    manifest: Manifest::Keep,
-                },
+                layout_source(&["raw"], vec![raw_entry()]),
                 Source::Patch {
                     entry: "META-INF/plugin.xml".to_owned(),
                     input: Reference::artifact("descriptor"),
@@ -963,17 +973,13 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a copy of a Go-executed output",
-            plan(
-                1,
-                r#"{"destination": "lib/x.jar", "inputs": ["filtered"]}"#,
-                &[MODULE_FILTER_SECTION],
-            ),
+            plan(1, r#"{"destination": "lib/x.jar", "inputs": ["filtered"]}"#, &[ENTRIES_SECTION]),
             filter_inputs(),
             "requires a prepared jar source",
         ),
         (
             "an operation no asset needs",
-            plan(1, r#"{"destination": "bin/tool", "inputs": ["raw"]}"#, &[MODULE_FILTER_SECTION]),
+            plan(1, r#"{"destination": "bin/tool", "inputs": ["raw"]}"#, &[ENTRIES_SECTION]),
             filter_inputs(),
             "unexpected preparation operation",
         ),
@@ -989,13 +995,13 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "stale preparation inputs",
-            plan(1, FILTERED_JAR, &[MODULE_FILTER_SECTION]),
+            plan(1, FILTERED_JAR, &[ENTRIES_SECTION]),
             catalogue(vec![file_artifact("raw"), file_artifact("extra")]),
             "stale preparation inputs",
         ),
         (
             "a missing catalogue input",
-            plan(1, FILTERED_JAR, &[MODULE_FILTER_SECTION]),
+            plan(1, FILTERED_JAR, &[ENTRIES_SECTION]),
             catalogue(Vec::new()),
             "stale preparation inputs",
         ),
@@ -1004,10 +1010,10 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             plan(
                 1,
                 FILTERED_JAR,
-                &[
-                    r#""preparations": [{"id": "filter", "inputs": ["raw", "more"], "outputs": ["filtered"], "modelSignature": "x"}],
-          "operations": [{"id": "filter", "input": {"artifact": "raw"}, "output": "filtered", "manifest": "keep"}]"#,
-                ],
+                &[&format!(
+                    r#""preparations": [{{"id": "filter", "inputs": ["raw", "more"], "outputs": ["filtered"], "modelSignature": "x"}}],
+          "operations": [{ENTRIES_OPERATION}]"#
+                )],
             ),
             filter_inputs(),
             r#"must declare exactly the inputs ["raw"]"#,
@@ -1041,7 +1047,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             plan(
                 1,
                 r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"}]}}"#,
-                &[MODULE_FILTER_SECTION],
+                &[ENTRIES_SECTION],
             ),
             filter_inputs(),
             "explicit manifest policy",
@@ -1159,17 +1165,19 @@ fn derive_refuses_an_invalid_plugin_directory() {
 #[test]
 fn derive_omits_an_asset_whose_every_module_is_refused() {
     let backend = r#"{"input": "demo.backend", "kind": "module", "filter": "module-v1"}"#;
+    let only = r#"{"input": "demo.only", "kind": "module", "filter": "module-v1"}"#;
     let main = r#"{"input": "demo.main", "kind": "module", "filter": "module-v1"}"#;
     let library = r#"{"input": "@lib//:demo-lib", "kind": "library", "filter": "library-v1"}"#;
     let assets = format!(
         r#"{{"module": "demo.content"}}, {{"module": "demo.shared"}},
-    {{"destination": "lib/backend.jar", "recipe": {{"sources": [{backend}], "writer": {{"mergeEntities": true}}}}}},
+    {{"destination": "lib/backend.jar", "recipe": {{"sources": [{backend}, {only}], "writer": {{"mergeEntities": true}}}}}},
     {{"destination": "lib/demo.jar", "recipe": {{"sources": [{main}, {backend}], "writer": {{"mergeEntities": true}}}}}},
     {{"destination": "lib/demo-lib.jar", "recipe": {{"sources": [{library}], "writer": {{"mergeEntities": true}}}}}},
     {FILTERED_JAR}"#
     );
     let mut inputs = catalogue(vec![
         file_artifact("demo.backend"),
+        file_artifact("demo.only"),
         file_artifact("demo.main"),
         file_artifact("@lib//:demo-lib/a.jar"),
         file_artifact("raw"),
@@ -1178,8 +1186,8 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
         id: "@lib//:demo-lib".to_owned(),
         files: vec![Reference::artifact("@lib//:demo-lib/a.jar")],
     }];
-    let text = plan(1, &assets, &[MODULE_FILTER_SECTION]);
-    let refused = ["demo.backend", "demo.content", "raw"];
+    let text = plan(1, &assets, &[ENTRIES_SECTION]);
+    let refused = ["demo.backend", "demo.only", "demo.content"];
     let derivation =
         derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], &refused).unwrap_or_else(|error| panic!("{error}"));
     assert_eq!(
@@ -1188,6 +1196,7 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
             row("lib/modules/demo.shared.jar", "independent", "demo.shared"),
             row("lib/demo.jar", "remainder", ""),
             row("lib/demo-lib.jar", "remainder", ""),
+            row("lib/main.jar", "remainder", ""),
         ]
     );
     assert_eq!(derivation.recipe.assets, derivation.assets);
@@ -1198,7 +1207,7 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
             .iter()
             .map(contract::Operation::destination)
             .collect::<Vec<_>>(),
-        ["lib/demo.jar", "lib/demo-lib.jar"]
+        ["lib/demo.jar", "lib/demo-lib.jar", "lib/main.jar"]
     );
     assert_eq!(
         derivation
@@ -1207,16 +1216,16 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
             .iter()
             .map(|artifact| artifact.id.as_str())
             .collect::<Vec<_>>(),
-        ["demo.backend", "demo.main", "@lib//:demo-lib/a.jar"],
-        "the module-filter input that only the omitted jar reads left the catalogue, and the merged input stayed"
+        ["demo.backend", "demo.main", "@lib//:demo-lib/a.jar", "raw"],
+        "the module input that only the omitted jar reads left the catalogue, and the merged input stayed"
     );
-    let expected = classpath::record("demo", b"<idea-plugin/>", &["lib/demo.jar", "lib/demo-lib.jar"]).unwrap();
+    let expected = classpath::record("demo", b"<idea-plugin/>", &["lib/demo.jar", "lib/demo-lib.jar", "lib/main.jar"]).unwrap();
     assert_eq!(derivation.class_path, expected);
 
     // Without a refusal the same plan derives every asset, so the refused list alone changes the derivation.
     let complete = derive_plan(&text, &inputs, 1, &["demo.content", "demo.shared"]).unwrap_or_else(|error| panic!("{error}"));
     assert_eq!(complete.assets.len(), 6);
-    assert_eq!(complete.catalogue.artifacts.len(), 4);
+    assert_eq!(complete.catalogue.artifacts.len(), 5);
 
     for (name, refused, message) in [
         (

@@ -269,34 +269,15 @@ private class SymbolicLayoutProjector(
     val moduleRoots = catalogue.moduleRoots.get(module.name)
     if (moduleRoots == null) gap("module-roots:${module.name}", "Declare the ordered output roots, including an explicit empty list")
     val orderedRoots = moduleRoots.orEmpty()
-    val excludes = layout.moduleExcludes.get(module.name).orEmpty()
-    val directoryFilterIdentity = if (excludes.isEmpty()) "common-module-excludes" else Any()
-    val filteredSources by lazy(LazyThreadSafetyMode.NONE) {
-      val prepared = effect("module-filter:${module.name}", "Custom module filters require their root inputs and prepared sources")
-      if (prepared == null) null else {
-        val contributions = prepared.sourceContributions
-        val outputs = contributions.values.flatten()
-        if (prepared.sources.isNotEmpty() || orderedRoots.distinct().size != orderedRoots.size || contributions.keys != orderedRoots.toSet() ||
-            contributions.values.any { it.isEmpty() } || outputs.any { it.kind != "prepared" || it.input !in prepared.preparation.outputs } ||
-            outputs.map { it.input }.distinct().size != outputs.size || outputs.map { it.input }.toSet() != prepared.preparation.outputs.toSet()) {
-          gap("module-filter-sources:${module.name}", "Declare exactly one ordered contribution for each module root, with distinct prepared outputs")
-          null
-        }
-        else {
-          requireInputs(prepared, orderedRoots)
-          contributions
-        }
-      }
+    if (layout.moduleExcludes.get(module.name).orEmpty().isNotEmpty()) {
+      // The dev distribution has no module filter. A directory the module jar must not carry lives outside the resource root.
+      gap("module-excludes:${module.name}", "Move the excluded directory out of the resource root; the dev distribution has no module filter")
     }
     for (input in orderedRoots) {
-      val identity = if (artifacts.get(input)?.kind == "directory") directoryFilterIdentity to input else Any()
+      val identity = if (artifacts.get(input)?.kind == "directory") "common-module-excludes" to input else Any()
       moduleSources.add(PluginSymbolicJarSource(identity) {
-        val use = nativeUse(
-          input, destination, PluginSymbolicNativeSourceChannel.MODULE_OUTPUT,
-          "module-filter:${module.name}".takeIf { excludes.isNotEmpty() },
-        )
-        val original = if (excludes.isEmpty()) sources(input, "module-v1") else filteredSources?.get(input).orEmpty()
-        applyNative(use, original)
+        val use = nativeUse(input, destination, PluginSymbolicNativeSourceChannel.MODULE_OUTPUT)
+        applyNative(use, sources(input, "module-v1"))
       })
     }
     assembly.addOriginalModule(destination, moduleSources, testOutput = module.name in catalogue.testModules, descriptorModule = module.name == layout.mainModule)
@@ -494,7 +475,6 @@ private class SymbolicLayoutProjector(
     input: String,
     destination: String,
     channel: PluginSymbolicNativeSourceChannel,
-    filterKey: String? = null,
   ): PluginSymbolicNativeUse? {
     val policy = nativePolicy ?: return null
     val artifact = artifacts.get(input) ?: return null
@@ -511,8 +491,8 @@ private class SymbolicLayoutProjector(
     }
     if (requirement.handling == PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION) {
       // The reused natives jar and its tree replace the extraction, so no preparation may change this source.
-      val keys = listOfNotNull(artifact.preparationKey, filterKey).distinct()
-      if (keys.isNotEmpty()) gap("native-binding:$occurrence", "A presigned native library must not have a preparation: $keys")
+      val key = artifact.preparationKey
+      if (key != null) gap("native-binding:$occurrence", "A presigned native library must not have a preparation: $key")
     }
     return PluginSymbolicNativeUse(occurrence, requirement.handling, requirement.distributionPrefix)
   }

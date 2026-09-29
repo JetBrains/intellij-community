@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.remoteDevelopment.plugin",
     "variant": "",
-    "layoutSignature": "7h04ft9xa3iacgd5demaxavnj",
+    "layoutSignature": "384xubqk6pjng85svq0xqn1ai",
     "assets": [
         {
             "module": "intellij.platform.kernel.backend.split"
@@ -390,7 +390,7 @@
             "outputs": [
                 "layout-assets:layout-patcher:1:output"
             ],
-            "modelSignature": "2qfjnsyl4pzve4o6ypimn8nhp"
+            "modelSignature": "apsalhfl93fd3tw5f16ub70oh"
         }
     ],
     "operations": [

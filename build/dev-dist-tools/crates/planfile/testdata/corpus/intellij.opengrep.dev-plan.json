@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.opengrep",
     "variant": "",
-    "layoutSignature": "bb16ml6h4p44l172ytxyn9b8q",
+    "layoutSignature": "9ok2rjxi8qyeqa7dufn8y24w3",
     "assets": [
         {
             "destination": "lib/intellij.opengrep.common.jar",
@@ -202,7 +202,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "4atgqvj2qtc8dtm4eknw4878y"
+            "modelSignature": "4d9n186fxbaoxawwx8qoc60p9"
         }
     ],
     "operations": [

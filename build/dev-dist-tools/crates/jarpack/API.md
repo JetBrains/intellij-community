@@ -106,9 +106,8 @@ pub const MANIFEST_ENTRY_NAME: &str = "META-INF/MANIFEST.MF";
 `resolve_path` joins a relative value to `base_dir` and keeps an absolute one. It refuses a value with a `.` or `..`
 component, because the recipe checks compare the paths as they are written. The packer applies it to `--trace-file=`.
 
-A pluginpack source filter that composes the module filter with Java globs is a capturing closure, and `Filter` accepts
-it. The Go `Source.EntryOverrides` has no port. Only natives mode set it, and natives mode now reserves its names inside
-the merge.
+`Filter` is an `Arc` closure, so a caller can compose a name filter with its own rule. The Go `Source.EntryOverrides`
+has no port. Only natives mode set it, and natives mode now reserves its names inside the merge.
 
 ## Natives
 

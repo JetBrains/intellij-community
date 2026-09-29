@@ -153,12 +153,7 @@ pub(crate) fn jar(destination: &str, sources: Vec<Source>) -> Operation {
 }
 
 pub(crate) fn archive_source(input: Reference, filter: Filter, manifest: Manifest) -> Source {
-    Source::Archive {
-        input,
-        filter,
-        excludes: Vec::new(),
-        manifest,
-    }
+    Source::Archive { input, filter, manifest }
 }
 
 pub(crate) fn transform(kind: LayoutTransformKind) -> LayoutTransform {

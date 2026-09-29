@@ -2,7 +2,6 @@ package org.jetbrains.intellij.build.dev
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
@@ -26,59 +25,34 @@ data class DevPluginPreparationRecipe(
 )
 
 /**
- * One operation of a plan file. A `module-filter` operation filters one module jar with Java globs. A `layout-assets`
- * operation writes a tree, a file or jar entries from [layoutAssets].
+ * One operation of a plan file. The one kind is `layout-assets`: the operation writes a tree, a file or jar entries
+ * from [layoutAssets] over its [inputs].
  */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class DevPluginPreparationOperation(
   @JvmField val id: String,
-  @JvmField val kind: String = "module-filter",
-  @SerialName("input") @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val serializedInput: DevPluginReference? = null,
+  @JvmField val kind: String,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val inputs: List<DevPluginReference> = emptyList(),
   @JvmField val output: String,
   @JvmField val manifest: String,
-  @JvmField val excludes: List<String> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val filter: String = "",
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val layoutAssets: DevPluginLayoutAssetPreparation? = null,
-) {
-  val input: DevPluginReference
-    get() = requireNotNull(serializedInput) { "Preparation operation '$id' has no primary input" }
-
-  constructor(
-    id: String,
-    kind: String = "module-filter",
-    input: DevPluginReference,
-    output: String,
-    manifest: String,
-    excludes: List<String> = emptyList(),
-    filter: String = "",
-  ) : this(
-    id = id,
-    kind = kind,
-    serializedInput = input,
-    output = output,
-    manifest = manifest,
-    excludes = excludes,
-    filter = filter,
-  )
-}
+)
 
 /** The layout-assets transforms the remainder packer executes, with the plain copy of a `null` transform. */
 @ApiStatus.Internal
 val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree")
 
 /**
- * The one statement of what the remainder packer executes from a plan file. A `module-filter` operation and a
- * `layout-assets` operation in every layout format (`tree`, `entries`) with every transform in [GO_LAYOUT_TRANSFORMS]
- * are packer-executed. [devPluginPreparationOperationSignature] refuses every
- * other operation, so a plan file never holds one. The chain of a complex plugin declares no preparation target, and
- * the packer reads the plan file directly.
+ * The one statement of what the remainder packer executes from a plan file. A `layout-assets` operation in every
+ * layout format (`tree`, `entries`) with every transform in [GO_LAYOUT_TRANSFORMS] is packer-executed.
+ * [devPluginPreparationOperationSignature] refuses every other operation, so a plan file never holds one. The chain of
+ * a complex plugin declares no preparation target, and the packer reads the plan file directly.
  */
 @ApiStatus.Internal
 fun isPackerExecutedOperation(operation: DevPluginPreparationOperation): Boolean {
-  if (operation.kind == "module-filter") return true
   if (operation.kind != "layout-assets") return false
   val layoutAssets = requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }
   return layoutAssets.format in setOf("tree", "entries") &&
@@ -88,8 +62,7 @@ fun isPackerExecutedOperation(operation: DevPluginPreparationOperation): Boolean
 /**
  * Returns the SHA-256 signature for [PluginPackingPreparation.modelSignature].
  * The canonical input is compact UTF-8 JSON for a recipe with this operation alone, in declaration order.
- * Default never-encoded fields are omitted to preserve the signatures of existing module-filter operations. Other defaults are included.
- * The recipe version and the exclusion order are part of the signature.
+ * Default never-encoded fields are omitted. Other defaults are included. The recipe version is part of the signature.
  */
 @ApiStatus.Internal
 fun devPluginPreparationOperationSignature(
@@ -138,16 +111,11 @@ private fun validatePreparationOperation(operation: DevPluginPreparationOperatio
       validatePreparationPath(reference.path)
     }
   }
-  when (operation.kind) {
-    "layout-assets" -> {
-      require(version == 2) { "A layout-assets operation requires preparation recipe version 2" }
-      require(operation.serializedInput == null && operation.manifest == "keep" && operation.excludes.isEmpty() && operation.filter.isEmpty()) {
-        "A layout-assets operation requires its original layout policy"
-      }
-      validateDevPluginLayoutAssetPreparation(requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }, operation.inputs)
-    }
-    "module-filter" -> require(operation.filter.isEmpty()) { "A module-filter operation must not declare a filter" }
+  require(version == 2) { "A layout-assets operation requires preparation recipe version 2" }
+  require(operation.manifest == "keep" && operation.filter.isEmpty()) {
+    "A layout-assets operation requires its original layout policy"
   }
+  validateDevPluginLayoutAssetPreparation(requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }, operation.inputs)
 }
 
 /** Copies mutable recipe values before they cross the generation and execution boundary. */
@@ -156,7 +124,6 @@ fun snapshotDevPluginPreparationRecipe(recipe: DevPluginPreparationRecipe): DevP
   return recipe.copy(operations = java.util.List.copyOf(recipe.operations.map { operation ->
     operation.copy(
       inputs = java.util.List.copyOf(operation.inputs),
-      excludes = java.util.List.copyOf(operation.excludes),
       layoutAssets = operation.layoutAssets?.let { preparation ->
         preparation.copy(assets = java.util.List.copyOf(preparation.assets.map { asset ->
           asset.copy(
@@ -173,9 +140,7 @@ fun snapshotDevPluginPreparationRecipe(recipe: DevPluginPreparationRecipe): DevP
 
 /** The catalogue references an operation reads. */
 @ApiStatus.Internal
-fun DevPluginPreparationOperation.sourceReferences(): List<DevPluginReference> {
-  return if (kind == "layout-assets") inputs else listOf(input)
-}
+fun DevPluginPreparationOperation.sourceReferences(): List<DevPluginReference> = inputs
 
 @ApiStatus.Internal
 fun validatePreparationPath(path: String) {

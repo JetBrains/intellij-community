@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.grid.loader.json",
     "variant": "",
-    "layoutSignature": "dms42pfq1d3fklegww67t27fp",
+    "layoutSignature": "5f5avi3liwib27xz3lustimdv",
     "assets": [
         {
             "destination": "lib/grid-loader-json.jar",
@@ -54,7 +54,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "1tazlojijzo0w2ie9n6kd6fzx"
+            "modelSignature": "8i3eyd7cedrjslsecni3f9axp"
         },
         {
             "id": "layout-assets:resource-generator:1",
@@ -64,7 +64,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "1ukcvz0odd8k4pyrifccery79"
+            "modelSignature": "45t7xz07ph5c0hs5vgyng9yhy"
         }
     ],
     "operations": [

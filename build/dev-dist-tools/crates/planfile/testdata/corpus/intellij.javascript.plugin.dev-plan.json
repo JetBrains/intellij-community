@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.javascript.plugin",
     "variant": "",
-    "layoutSignature": "9kblgvxmrqped282n09dslqqi",
+    "layoutSignature": "an4dtmqnc4c443hsccawcibd2",
     "assets": [
         {
             "module": "intellij.javascript.testing"
@@ -255,7 +255,7 @@
             "outputs": [
                 "resource-tree-overlay:0:output"
             ],
-            "modelSignature": "6ade3om6g11trqidbe69ud4jl"
+            "modelSignature": "dfk28fyp9ai0mqy24af3ezh4d"
         }
     ],
     "operations": [

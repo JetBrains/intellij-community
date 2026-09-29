@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.ruby.plugin",
     "variant": "",
-    "layoutSignature": "3lsypvbbzucnonl4tb3nfp8j0",
+    "layoutSignature": "cewdrcae8pjmgx3t34vbmpi2s",
     "assets": [
         {
             "module": "intellij.ruby.profiler"
@@ -15,9 +15,9 @@
             "recipe": {
                 "sources": [
                     {
-                        "input": "module-filter:intellij.ruby.backend:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
+                        "input": "intellij.ruby.backend",
+                        "kind": "module",
+                        "filter": "module-v1"
                     },
                     {
                         "input": "@ultimate_lib//:ruby-backend-bytelist",
@@ -26,7 +26,6 @@
                     }
                 ],
                 "writer": {
-                    "manifest": "drop",
                     "mergeEntities": true
                 }
             }
@@ -520,32 +519,10 @@
             "outputs": [
                 "resource-tree-overlay:0:output"
             ],
-            "modelSignature": "dlmpmnc3n38filwg4mp57azhj"
-        },
-        {
-            "id": "module-filter:intellij.ruby.backend",
-            "inputs": [
-                "intellij.ruby.backend"
-            ],
-            "outputs": [
-                "module-filter:intellij.ruby.backend:output"
-            ],
-            "modelSignature": "4eo42dm9ctgtqgwy06fao42h7"
+            "modelSignature": "e2xvi8k6gyt2fy66s92eksp2e"
         }
     ],
     "operations": [
-        {
-            "id": "module-filter:intellij.ruby.backend",
-            "input": {
-                "artifact": "intellij.ruby.backend"
-            },
-            "output": "module-filter:intellij.ruby.backend:output",
-            "manifest": "keep",
-            "excludes": [
-                "rubystubs*/**",
-                "rubysigs*/**"
-            ]
-        },
         {
             "id": "resource-tree-overlay:0",
             "kind": "layout-assets",

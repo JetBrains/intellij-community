@@ -125,12 +125,10 @@ impl Operation {
 /// One jar source.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Source {
-    /// The entries of one archive through the filter. Only the output of a module-filter operation has excludes, which
-    /// are java.nio globs.
+    /// The entries of one archive through the filter.
     Archive {
         input: Reference,
         filter: Filter,
-        excludes: Vec<String>,
         manifest: Manifest,
     },
     /// One file at the entry name. The jar writer patches it.

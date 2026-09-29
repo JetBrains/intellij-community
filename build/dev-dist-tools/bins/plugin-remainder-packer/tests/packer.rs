@@ -224,12 +224,12 @@ fn outputs_pack_past_max_path() {
     }
     let output = package.join("plugin_remainder.plugin");
     let inventory = package.join("plugin_remainder.file-metadata.json");
-    assert!(inventory.as_os_str().len() > 260, "the test path is too short: {}", inventory.display());
-    arguments.extend(outputs(
-        &output.display().to_string(),
-        &inventory.display().to_string(),
-        &package,
-    ));
+    assert!(
+        inventory.as_os_str().len() > 260,
+        "the test path is too short: {}",
+        inventory.display()
+    );
+    arguments.extend(outputs(&output.display().to_string(), &inventory.display().to_string(), &package));
     let result = run(&packer, &arguments, root.path());
     assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
     assert_eq!(fs::read(output.join("resources/file")).unwrap(), b"long path");
@@ -270,15 +270,7 @@ fn projection_mode_matches_the_in_process_derivation() {
     let Some(packer) = packer() else { return };
     let root = tempfile::tempdir().unwrap();
     let inputs = root.path().join("inputs");
-    write_file(
-        &inputs.join("raw.jar"),
-        &jar(&[
-            ("keep/Service.class", "retained"),
-            ("drop/Ignore.class", "excluded"),
-            ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\n\r\n"),
-            ("META-INF/listOfEntities.txt", "keep.Service\n"),
-        ]),
-    );
+    write_file(&inputs.join("raw/keep/Service.txt"), b"copied into the jar");
     write_file(
         &inputs.join("demo.extra.jar"),
         &jar(&[
@@ -289,9 +281,10 @@ fn projection_mode_matches_the_in_process_derivation() {
     let plan = r#"{"version": 1, "plugin": "filtered", "variant": "", "layoutSignature": "signature", "assets": [
       {"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered:output", "kind": "prepared", "filter": "prepared"}, {"input": "demo.extra", "kind": "module", "filter": "module-v1"}], "writer": {"manifest": "keep", "mergeEntities": true}}}],
       "preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered:output"], "modelSignature": "x"}],
-      "operations": [{"id": "filter", "kind": "module-filter", "input": {"artifact": "raw", "path": ""}, "output": "filtered:output", "manifest": "keep", "excludes": ["drop/**"]}]}"#;
+      "operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered:output", "manifest": "keep",
+        "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]}}]}"#;
     let catalogue_json = serde_json::json!({"version": 1, "artifacts": [
-        {"id": "raw", "kind": "file", "root": inputs.join("raw.jar")},
+        {"id": "raw", "kind": "directory", "root": inputs.join("raw")},
         {"id": "demo.extra", "kind": "file", "root": inputs.join("demo.extra.jar")},
     ]});
     let descriptor = b"<idea-plugin><id>filtered</id><version>1</version></idea-plugin>";

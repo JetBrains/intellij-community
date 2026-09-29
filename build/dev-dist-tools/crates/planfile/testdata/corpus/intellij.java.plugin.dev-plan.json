@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.java.plugin",
     "variant": "",
-    "layoutSignature": "c69ny4ot7zlua9s1ki5mstzbz",
+    "layoutSignature": "7yubggtthexvh7t87jky0098s",
     "assets": [
         {
             "destination": "lib/intellij.java.syntax.jar",
@@ -643,7 +643,7 @@
             "outputs": [
                 "layout-assets:resource:0:output"
             ],
-            "modelSignature": "bj52932yweylpttyjcwv79c3i"
+            "modelSignature": "46hv095kevag1u3mloywj2lfu"
         }
     ],
     "operations": [

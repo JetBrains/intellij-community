@@ -30,8 +30,6 @@ pub(crate) enum InputKind {
     Directory,
 }
 
-pub(crate) const ENTITIES_ENTRY_NAME: &str = "META-INF/listOfEntities.txt";
-
 pub(crate) fn asset_kind(asset: &Asset) -> &str {
     if asset.kind.is_empty() { "file" } else { &asset.kind }
 }
@@ -270,12 +268,7 @@ impl Execution {
     fn validate_source(&self, source: &Source, used: &mut HashSet<String>) -> Result<()> {
         match source {
             Source::Layout(layout) => self.validate_layout(layout, LayoutFormat::Entries, used),
-            Source::Archive {
-                input, filter, excludes, ..
-            } => {
-                source_filter(*filter, excludes)?;
-                self.validate_reference(input, used)
-            }
+            Source::Archive { input, .. } => self.validate_reference(input, used),
             Source::Patch { entry, input, .. } => {
                 jarpack::validate_entry_name(entry)?;
                 self.validate_reference(input, used)
@@ -423,23 +416,13 @@ pub(crate) fn includes_entry(rules: &[IncludeRule], name: &str) -> bool {
     included
 }
 
-/// Selects the entries of one archive source. With excludes, the module filter is composed with the Java globs.
-/// `META-INF/listOfEntities.txt` is never excluded. The manifest policy stays with jarpack.
-pub(crate) fn source_filter(filter: Filter, excludes: &[String]) -> Result<jarpack::Filter> {
+/// Selects the entries of one archive source. The manifest policy stays with jarpack.
+pub(crate) fn source_filter(filter: Filter) -> jarpack::Filter {
     let base: fn(&str) -> bool = match filter {
         Filter::Module => jarpack::module_output_name_filter,
         Filter::Library => jarpack::library_name_filter,
     };
-    if excludes.is_empty() {
-        return Ok(Arc::new(base));
-    }
-    if filter != Filter::Module {
-        fail!("excludes require an archive source with the module filter");
-    }
-    let matchers = compile_globs(excludes, "invalid exclude")?;
-    Ok(Arc::new(move |name: &str| {
-        name == ENTITIES_ENTRY_NAME || base(name) && !matchers.iter().any(|matcher| matcher.matches(name))
-    }))
+    Arc::new(base)
 }
 
 pub(crate) fn valid_id(value: &str) -> bool {

@@ -882,34 +882,33 @@ fn write_rejects_file_directory_collisions_across_independent_assets() {
     }
 }
 
-/// One module jar in a deliberate central-directory order. The Kotlin preparer reads a module jar in this order, and so
+/// One module jar in a deliberate central-directory order. The Kotlin packager reads a module jar in this order, and so
 /// does jarpack.
-const MODULE_EXCLUDES_FIXTURE: [(&str, &str); 8] = [
-    ("drop/Ignore.class", "excluded by the glob"),
-    ("keep/Service.class", "kept"),
+const MODULE_FILTER_FIXTURE: [(&str, &str); 7] = [
+    ("first/Service.class", "kept"),
     ("META-INF/listOfEntities.txt", " Module "),
     ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n"),
     ("icon-robots.txt", "excluded by the module filter"),
-    ("drop/nested/Deep.class", "excluded by the glob"),
-    ("keep/drop/Kept.class", "kept: the glob is anchored"),
+    ("nested/deep/Deep.class", "kept"),
     ("module-info.class", "excluded by the module filter"),
+    ("last/Kept.class", "kept: the order is the central directory"),
 ];
 
-/// The Go test also compared the jar with the jar of the prepared `file` entries that the Kotlin preparer wrote. The
-/// typed recipe has no prepared file entry, so that half has no port.
+/// The module filter of an archive source is the common module excludes alone. The entries keep the central-directory
+/// order of the module jar, and the entities entry moves to the end when the writer merges entities.
 #[test]
-fn module_excludes_select_entries_in_central_directory_order() {
-    type Case<'a> = (&'a str, Manifest, bool, &'a [&'a str], &'a [&'a str]);
+fn module_filter_selects_entries_in_central_directory_order() {
+    type Case<'a> = (&'a str, Manifest, bool, &'a [&'a str]);
     let tests: [Case<'_>; 3] = [
         (
             "keep",
             Manifest::Keep,
             true,
-            &["drop/**"],
             &[
-                "keep/Service.class",
+                "first/Service.class",
                 "META-INF/MANIFEST.MF",
-                "keep/drop/Kept.class",
+                "nested/deep/Deep.class",
+                "last/Kept.class",
                 "META-INF/listOfEntities.txt",
                 "__index__",
             ],
@@ -918,31 +917,32 @@ fn module_excludes_select_entries_in_central_directory_order() {
             "drop",
             Manifest::Drop,
             true,
-            &["drop/**"],
             &[
-                "keep/Service.class",
-                "keep/drop/Kept.class",
+                "first/Service.class",
+                "nested/deep/Deep.class",
+                "last/Kept.class",
                 "META-INF/listOfEntities.txt",
                 "__index__",
             ],
         ),
         (
-            "entities survive an exclude",
+            "entities stay in place",
             Manifest::Keep,
             false,
-            &["drop/**", "META-INF/**"],
             &[
-                "keep/Service.class",
+                "first/Service.class",
                 "META-INF/listOfEntities.txt",
-                "keep/drop/Kept.class",
+                "META-INF/MANIFEST.MF",
+                "nested/deep/Deep.class",
+                "last/Kept.class",
                 "__index__",
             ],
         ),
     ];
-    for (name, manifest, entities, excludes, want) in tests {
+    for (name, manifest, entities, want) in tests {
         let root = temp();
         let (mut recipe, catalogue) = sample_plan(root.path());
-        archive_file(&root.path().join("module.jar"), &MODULE_EXCLUDES_FIXTURE);
+        archive_file(&root.path().join("module.jar"), &MODULE_FILTER_FIXTURE);
         if let Operation::Jar {
             merge_entities, sources, ..
         } = &mut recipe.operations[0]
@@ -951,21 +951,24 @@ fn module_excludes_select_entries_in_central_directory_order() {
             *sources = vec![Source::Archive {
                 input: Reference::artifact("module"),
                 filter: Filter::Module,
-                excludes: strings(excludes),
                 manifest,
             }];
         }
         let written = write_execution(&recipe, &catalogue);
         let (names, entries) = read_archive(&written.output.join("lib/plugin.jar"));
         assert_eq!(names, want, "{name}: the selected entries");
-        assert_eq!(text(&entries["keep/drop/Kept.class"]), "kept: the glob is anchored", "{name}");
+        assert_eq!(
+            text(&entries["last/Kept.class"]),
+            "kept: the order is the central directory",
+            "{name}"
+        );
     }
 }
 
-/// Pins that `jarpack::module_output_name_filter` is `commonModuleExcludes`. A module-filter source composes both, so
-/// the two statements of the common excludes must agree on every name.
+/// Pins that `jarpack::module_output_name_filter` is `commonModuleExcludes`. The module filter of every archive source
+/// is this one statement, so the two statements of the common excludes must agree on every name.
 #[test]
-fn module_filter_agrees_with_common_module_excludes() {
+fn module_output_name_filter_agrees_with_common_module_excludes() {
     let common: Vec<javaglob::JavaGlob> = [
         "**/icon-robots.txt",
         "icon-robots.txt",

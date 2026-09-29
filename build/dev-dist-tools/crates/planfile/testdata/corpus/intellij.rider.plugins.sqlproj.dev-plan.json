@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.sqlproj",
     "variant": "",
-    "layoutSignature": "cfscfgz24lj8tt7lnz0bk3wz8",
+    "layoutSignature": "72h9fph01l698fqaufww2f3vw",
     "assets": [
         {
             "destination": "lib/rider-plugins-sqlproj.jar",
@@ -46,7 +46,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "f0oa0drjcbohag21wn06a5nv7"
+            "modelSignature": "8rlzfm87aa3f9adzyrwpj7owx"
         }
     ],
     "operations": [

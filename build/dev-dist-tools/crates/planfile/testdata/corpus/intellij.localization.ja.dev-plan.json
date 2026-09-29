@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.localization.ja",
     "variant": "",
-    "layoutSignature": "bi8mu0gzsjsnqx8euapkdgoju",
+    "layoutSignature": "dtydcsq3mj67zusk9i98ru3et",
     "assets": [
         {
             "destination": "lib/localization-ja.jar",
@@ -45,7 +45,7 @@
             "outputs": [
                 "layout-assets:custom-asset:0:output"
             ],
-            "modelSignature": "ax6nmnw60cb3rp5i3udq14rfs"
+            "modelSignature": "67b01hxmi4eskp6p1vgcpiq7e"
         }
     ],
     "operations": [

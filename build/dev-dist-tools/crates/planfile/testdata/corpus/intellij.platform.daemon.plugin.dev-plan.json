@@ -29,22 +29,22 @@
                         "filter": "library-v1"
                     },
                     {
-                        "input": "@ultimate_lib//:com.jetbrains.app.daemon/daemon-client-ssh-0.9.8913.jar",
+                        "input": "@ultimate_lib//:com.jetbrains.app.daemon/daemon-client-ssh-0.9.8975.jar",
                         "kind": "archive",
                         "filter": "library-v1"
                     },
                     {
-                        "input": "@ultimate_lib//:com.jetbrains.app.daemon/daemon-openssh-0.9.8913.jar",
+                        "input": "@ultimate_lib//:com.jetbrains.app.daemon/daemon-openssh-0.9.8975.jar",
                         "kind": "archive",
                         "filter": "library-v1"
                     },
                     {
-                        "input": "@ultimate_lib//:com.jetbrains.app/app-ssh-util-0.9.8913.jar",
+                        "input": "@ultimate_lib//:com.jetbrains.app/app-ssh-util-0.9.8975.jar",
                         "kind": "archive",
                         "filter": "library-v1"
                     },
                     {
-                        "input": "@ultimate_lib//:com.jetbrains.app/app-ssh-0.9.8913.jar",
+                        "input": "@ultimate_lib//:com.jetbrains.app/app-ssh-0.9.8975.jar",
                         "kind": "archive",
                         "filter": "library-v1"
                     },

@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.cidr.debugger.plugin",
     "variant": "linux_aarch64",
-    "layoutSignature": "6dw87xue9mgcg1npokb1qhqkv",
+    "layoutSignature": "ee1mnoarfge96dyov10luiqeq",
     "assets": [
         {
             "module": "intellij.cidr.debugger.backend"
@@ -176,7 +176,7 @@
             "outputs": [
                 "layout-assets:platform-custom-asset:0:output"
             ],
-            "modelSignature": "4rfkzc1xljegovqbkdturbs2g"
+            "modelSignature": "4jo3jfwk028rgi7vnljicnzbi"
         }
     ],
     "operations": [

@@ -241,14 +241,8 @@ impl Execution {
                                 patch.manifest = Some(manifest_mode(*manifest));
                                 spec.sources.push(patch);
                             }
-                            Source::Archive {
-                                input,
-                                filter,
-                                excludes,
-                                manifest,
-                            } => {
-                                let filter = source_filter(*filter, excludes)?;
-                                let mut archive = jarpack::Source::archive(resolver.resolve(input)?, filter);
+                            Source::Archive { input, filter, manifest } => {
+                                let mut archive = jarpack::Source::archive(resolver.resolve(input)?, source_filter(*filter));
                                 archive.manifest = Some(manifest_mode(*manifest));
                                 spec.sources.push(archive);
                             }

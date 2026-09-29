@@ -3,8 +3,11 @@ package org.jetbrains.intellij.build.devDist
 
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.devPluginPreparationOperationSignature
 import org.junit.jupiter.api.Test
 
 /** The compact projection encoding round-trips, and the full form still decodes; see `PluginPackingProjectionEncoding.kt`. */
@@ -91,11 +94,19 @@ class PluginPackingProjectionEncodingTest {
     explicitNulls = true
   }
 
+  /** The one operation of the filtered demo projection: the entries of the raw input become `raw.txt` of `lib/main.jar`. */
+  private val filterOperation = DevPluginPreparationOperation(
+    id = "filter",
+    kind = "layout-assets",
+    inputs = listOf(DevPluginReference("raw")),
+    output = "filtered",
+    manifest = "keep",
+    layoutAssets = DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(DevPluginLayoutAsset(destination = "raw.txt", sources = listOf(0)))),
+  )
+
   @Test
   fun `the operations survive the plan file encoding and the preparer decoder`() {
-    val operation = DevPluginPreparationOperation(
-      id = "filter", input = DevPluginReference("raw"), output = "filtered", manifest = "drop", excludes = listOf("drop/**"),
-    )
+    val operation = filterOperation
     val text = planJson.encodeToString(PluginPackingProjection.serializer(), projection.copy(operations = listOf(operation)))
 
     val decoded = Json.decodeFromString(PluginPackingProjection.serializer(), text)
@@ -104,9 +115,12 @@ class PluginPackingProjectionEncodingTest {
     assertThat(decoded.copy(operations = emptyList())).isEqualTo(projection)
   }
 
-  /** The packer mirror of the layout signature pins the same constant in `tests/kotlin.rs` of the `pluginpack` crate. */
+  /** The packer mirror of the two signatures pins the same constants in `tests/kotlin.rs` of the `pluginpack` crate. */
   @Test
-  fun `the layout signature of the filtered projection is what the packer mirror pins`() {
+  fun `the signatures of the filtered projection are what the packer mirror pins`() {
+    val modelSignature = devPluginPreparationOperationSignature(filterOperation, version = 2)
+    assertThat(modelSignature).isEqualTo("5nm0sqi8af0srealvdtoxpzqm")
+
     val signature = pluginPackingLayoutSignature(
       plugin = "filtered-plugin",
       variant = "linux",
@@ -115,11 +129,11 @@ class PluginPackingProjectionEncodingTest {
         inputs = listOf("filtered"),
         recipe = CanonicalJarRecipe(sources = listOf(JarSourceRecipe("filtered", "prepared", "prepared")), writer = JarWriterRecipe(manifest = "drop")),
       )),
-      preparations = listOf(PluginPackingPreparation(id = "filter", inputs = listOf("raw"), outputs = listOf("filtered"), modelSignature = "4j4kth710fglswfsh1vosdrg4")),
+      preparations = listOf(PluginPackingPreparation(id = "filter", inputs = listOf("raw"), outputs = listOf("filtered"), modelSignature = modelSignature)),
       preparationRoots = emptyList(),
     )
 
-    assertThat(signature).isEqualTo("ardmbz5a2oe6vf6br6theud68")
+    assertThat(signature).isEqualTo("abd1jj2mitamhwlzozt2d0zlo")
   }
 
   @Test

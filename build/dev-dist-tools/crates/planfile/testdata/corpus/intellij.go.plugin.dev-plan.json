@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.go.plugin",
     "variant": "",
-    "layoutSignature": "65irmb9l56obtkckxt51z7pv3",
+    "layoutSignature": "bzfn4adocr3l8hd4s03jzvc95",
     "assets": [
         {
             "module": "intellij.go.template.integration"
@@ -207,7 +207,7 @@
             "outputs": [
                 "layout-assets:resource-generator:1:output"
             ],
-            "modelSignature": "5p75hlfrkxembyxlreuj33frt"
+            "modelSignature": "48feujsg04i97g99r4v4lzyog"
         }
     ],
     "operations": [

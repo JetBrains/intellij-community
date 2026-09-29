@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.jupyter.plugin",
     "variant": "",
-    "layoutSignature": "177tomh7c4el54ji0s79myyt8",
+    "layoutSignature": "1ts1kgsliyonillk4izk185zo",
     "assets": [
         {
             "module": "intellij.jupyter.psi"
@@ -337,7 +337,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "6zpl46vvoybrmets61ltsi9wr"
+            "modelSignature": "bq631cvvfx4rtdyl0kanyyskt"
         }
     ],
     "operations": [

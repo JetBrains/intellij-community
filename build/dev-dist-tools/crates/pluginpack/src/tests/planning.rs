@@ -245,7 +245,7 @@ fn plan_does_not_read_payloads() {
 #[test]
 fn plan_rejects_invalid_contracts() {
     type Change = fn(&mut Recipe, &mut Catalogue);
-    let tests: [(&str, Change, &str); 21] = [
+    let tests: [(&str, Change, &str); 19] = [
         ("recipe version", |recipe, _| recipe.version = 0, "version"),
         ("catalogue version", |_, catalogue| catalogue.version = 2, "version"),
         ("missing operation", |recipe, _| recipe.operations.clear(), "missing remainder"),
@@ -304,27 +304,6 @@ fn plan_rejects_invalid_contracts() {
             "file child",
             |recipe, _| first_input(recipe).path = "child".to_owned(),
             "relative path",
-        ),
-        (
-            "excludes off the module filter",
-            |recipe, _| {
-                jar_sources(recipe, 0)[0] = Source::Archive {
-                    input: Reference::artifact("module"),
-                    filter: Filter::Library,
-                    excludes: strings(&["drop/**"]),
-                    manifest: Manifest::Drop,
-                };
-            },
-            "excludes require",
-        ),
-        (
-            "invalid exclude",
-            |recipe, _| {
-                if let Source::Archive { excludes, .. } = &mut jar_sources(recipe, 0)[0] {
-                    *excludes = strings(&["drop/**", "{unclosed"]);
-                }
-            },
-            "invalid exclude",
         ),
         (
             "catalogue library",

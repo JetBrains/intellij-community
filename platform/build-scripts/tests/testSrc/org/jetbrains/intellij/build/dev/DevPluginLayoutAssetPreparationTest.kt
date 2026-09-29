@@ -35,10 +35,6 @@ internal class DevPluginLayoutAssetPreparationTest {
     val treeAssets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1)))
     val operations = listOf(
       DevPluginPreparationOperation(
-        id = "module-filter:module", input = DevPluginReference("module"), output = "module-filter:module:output", manifest = "drop",
-        excludes = listOf("drop/**"),
-      ),
-      DevPluginPreparationOperation(
         id = "layout-assets:tree", kind = "layout-assets", inputs = listOf(DevPluginReference("archive")), output = "layout-assets:tree:output",
         manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "payload", assets = treeAssets),
       ),
@@ -52,10 +48,6 @@ internal class DevPluginLayoutAssetPreparationTest {
       plugin = "test.plugin",
       variant = "linux_x64",
       assets = listOf(
-        PluginPackingAsset(
-          destination = "lib/main.jar", inputs = listOf("module-filter:module:output"),
-          recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("module-filter:module:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
-        ),
         PluginPackingAsset(destination = "payload", inputs = listOf("layout-assets:tree:output"), kind = "tree", classPath = false),
         PluginPackingAsset(
           destination = "lib/resources.jar", inputs = listOf("layout-assets:entries:output"),
@@ -74,16 +66,18 @@ internal class DevPluginLayoutAssetPreparationTest {
       artifacts = emptyList(),
     )
 
-    for (operation in operations.filter { it.kind == "layout-assets" }) {
+    for (operation in operations) {
       validateDevPluginLayoutAssetConsumers(operation, plan)
     }
-    val misplacedTree = operations[1].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
+    val misplacedTree = operations[0].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
     assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedTree, plan) }.hasMessageContaining("one tree asset at 'other'")
   }
 
   @Test
   fun `every operation of a plan file is packer-executed`() {
-    val moduleFilter = DevPluginPreparationOperation(id = "filter", input = DevPluginReference("module"), output = "filtered", manifest = "keep")
+    val moduleFilter = DevPluginPreparationOperation(
+      id = "filter", kind = "module-filter", inputs = listOf(DevPluginReference("module")), output = "filtered", manifest = "keep",
+    )
     val entries = DevPluginPreparationOperation(
       id = "entries", kind = "layout-assets", inputs = listOf(DevPluginReference("resources")), output = "entries:output", manifest = "keep",
       layoutAssets = plainCopyEntriesPreparation(sources = listOf(0)),
@@ -96,13 +90,15 @@ internal class DevPluginLayoutAssetPreparationTest {
       ),
     )
     val presigned = DevPluginPreparationOperation(
-      id = "presigned", kind = "native-presigned", input = DevPluginReference("library"), output = "presigned:output", manifest = "keep", filter = "library",
+      id = "presigned", kind = "native-presigned", inputs = listOf(DevPluginReference("library")), output = "presigned:output", manifest = "keep", filter = "library",
     )
 
-    assertThat(isPackerExecutedOperation(moduleFilter)).isTrue()
+    assertThat(isPackerExecutedOperation(moduleFilter)).isFalse()
     assertThat(isPackerExecutedOperation(entries)).isTrue()
     assertThat(isPackerExecutedOperation(file)).isFalse()
     assertThat(isPackerExecutedOperation(presigned)).isFalse()
+    assertThatThrownBy { devPluginPreparationOperationSignature(moduleFilter, version = 2) }
+      .hasMessageContaining("No packer operation executes 'filter' of kind 'module-filter'")
     assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
       .hasMessageContaining("No packer operation executes 'presigned' of kind 'native-presigned'")
     assertThatThrownBy { devPluginPreparationOperationSignature(file, version = 2) }

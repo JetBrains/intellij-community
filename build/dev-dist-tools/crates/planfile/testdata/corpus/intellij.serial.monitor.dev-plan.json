@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.serial.monitor",
     "variant": "",
-    "layoutSignature": "a0sqb5gt40nl87uy7uq5m4twv",
+    "layoutSignature": "8yg9wx20qnpqr3vejonvk65jy",
     "assets": [
         {
             "destination": "lib/serial-monitor.jar",
@@ -61,7 +61,7 @@
             "outputs": [
                 "layout-assets:resource-generator:0:output"
             ],
-            "modelSignature": "3g6jhqihdrtwik2412642q1d4"
+            "modelSignature": "4pwoiccpfmtj7fcc7y3t7jiwz"
         }
     ],
     "operations": [

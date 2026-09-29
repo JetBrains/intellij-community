@@ -7,9 +7,7 @@ use crate::contract::{
     self, Artifact, Catalogue, DISTRIBUTION_SCOPE, Filter, LayoutAssets, Library, Manifest, PLUGIN_SCOPE, Recipe, Reference,
     SCOPED_VERSION, Source, TREE_VERSION, VERSION,
 };
-use crate::plan::{
-    Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, MODULE_FILTER_KIND, ManifestPolicy, Operation, PlanFile, Preparation, module_jar_recipe,
-};
+use crate::plan::{Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, ManifestPolicy, Operation, PlanFile, Preparation, module_jar_recipe};
 use crate::{Error, classpath, fail};
 
 /// The prefix of a module that holds only a library. Such a module is no meaningful jar source.
@@ -91,9 +89,9 @@ pub fn derive(
     })
 }
 
-/// The modules of one asset: the `module` sources of its recipe, the module that a `prepared` source's module-filter
-/// operation reads, and the module of a reused native tree. A library jar, a file copy and a layout tree have none.
-fn asset_modules<'a>(file: &'a PlanFile, asset: &'a Asset) -> Vec<&'a str> {
+/// The modules of one asset: the `module` sources of its recipe and the module of a reused native tree. A library jar,
+/// a file copy, a layout tree and a prepared source have none.
+fn asset_modules(asset: &Asset) -> Vec<&str> {
     if let Some(module) = native_tree_module(asset) {
         return vec![module];
     }
@@ -102,19 +100,8 @@ fn asset_modules<'a>(file: &'a PlanFile, asset: &'a Asset) -> Vec<&'a str> {
     };
     let mut modules = Vec::new();
     for source in &recipe.sources {
-        match source.kind.as_str() {
-            "module" => push_new(&mut modules, &source.input),
-            "prepared" => {
-                let module = file
-                    .operations
-                    .iter()
-                    .find(|operation| operation.kind == MODULE_FILTER_KIND && operation.output == source.input)
-                    .and_then(|operation| operation.input.as_ref());
-                if let Some(input) = module {
-                    push_new(&mut modules, &input.artifact);
-                }
-            }
-            _ => {}
+        if source.kind == "module" {
+            push_new(&mut modules, &source.input);
         }
     }
     modules
@@ -139,7 +126,7 @@ pub fn omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec
     let mut matched = HashSet::new();
     let mut omitted = Vec::with_capacity(file.assets.len());
     for asset in &file.assets {
-        let modules = asset_modules(file, asset);
+        let modules = asset_modules(asset);
         for module in &modules {
             if refused.contains(module) {
                 matched.insert(*module);
@@ -389,12 +376,8 @@ impl<'a> Compiler<'a> {
                 fail!("unexpected preparation operation {:?}", operation.id);
             };
             let mut expected_inputs: Vec<&str> = Vec::new();
-            if operation.kind == MODULE_FILTER_KIND {
-                expected_inputs.extend(operation.input.iter().map(|input| input.artifact.as_str()));
-            } else {
-                for reference in &operation.inputs {
-                    push_new(&mut expected_inputs, &reference.artifact);
-                }
+            for reference in &operation.inputs {
+                push_new(&mut expected_inputs, &reference.artifact);
             }
             if definition.inputs != expected_inputs {
                 fail!("preparation {:?} must declare exactly the inputs {expected_inputs:?}", operation.id);
@@ -415,8 +398,8 @@ impl<'a> Compiler<'a> {
         Ok(())
     }
 
-    /// Applies the consumer rules of the Kotlin generator. A tree output has one tree asset at its root. A module-filter
-    /// or entries output is a prepared jar source.
+    /// Applies the consumer rules of the Kotlin generator. A tree output has one tree asset at its root. An entries
+    /// output is a prepared jar source.
     fn validate_consumers(&self, operation: &Operation) -> Result<(), Error> {
         let mut consumers = Vec::new();
         for planned in &self.assets {
@@ -431,9 +414,8 @@ impl<'a> Compiler<'a> {
                 consumers.push(planned.asset);
             }
         }
-        if let Some(layout) = &operation.layout_assets
-            && layout.format == LayoutFormat::Tree
-        {
+        let layout = &operation.layout_assets;
+        if layout.format == LayoutFormat::Tree {
             if !matches!(consumers.as_slice(), [consumer] if consumer.kind == "tree" && consumer.destination == layout.root) {
                 fail!(
                     "layout asset preparation {:?} requires one tree asset at {:?}",
@@ -542,15 +524,6 @@ impl<'a> Compiler<'a> {
     fn resolve_operation_inputs(&mut self) -> Result<(), Error> {
         let file = self.file;
         for operation in &file.operations {
-            if let Some(input) = &operation.input
-                && self.libraries.contains_key(input.artifact.as_str())
-            {
-                fail!(
-                    "module-filter operation {:?} reads the library {:?}; the packer filters only a module jar",
-                    operation.id,
-                    input.artifact
-                );
-            }
             if operation.inputs.is_empty() {
                 continue;
             }
@@ -564,21 +537,19 @@ impl<'a> Compiler<'a> {
             }
             let mut resolved = operation.clone();
             resolved.inputs = inputs;
-            if let Some(layout) = &mut resolved.layout_assets {
-                for asset in &mut layout.assets {
-                    let mut sources = Vec::with_capacity(asset.sources.len());
-                    for &source in &asset.sources {
-                        let Some(expanded) = positions.get(source) else {
-                            fail!(
-                                "operation {:?}: layout asset {:?} names the input {source}, which the operation lacks",
-                                operation.id,
-                                asset.destination
-                            );
-                        };
-                        sources.extend_from_slice(expanded);
-                    }
-                    asset.sources = sources;
+            for asset in &mut resolved.layout_assets.assets {
+                let mut sources = Vec::with_capacity(asset.sources.len());
+                for &source in &asset.sources {
+                    let Some(expanded) = positions.get(source) else {
+                        fail!(
+                            "operation {:?}: layout asset {:?} names the input {source}, which the operation lacks",
+                            operation.id,
+                            asset.destination
+                        );
+                    };
+                    sources.extend_from_slice(expanded);
                 }
+                asset.sources = sources;
             }
             self.go_executed.insert(&operation.output, resolved);
         }
@@ -693,17 +664,11 @@ impl<'a> Compiler<'a> {
             let operation = if asset.kind == "tree" {
                 let input = asset.inputs[0].as_str();
                 if let Some(operation) = self.go_executed.get(input) {
-                    let Some(layout) = &operation.layout_assets else {
-                        fail!(
-                            "tree {:?} requires a layout-assets tree operation at its destination",
-                            asset.destination
-                        );
-                    };
                     contract::Operation::LayoutTree {
                         destination,
                         layout: LayoutAssets {
                             inputs: operation.inputs.clone(),
-                            assets: layout.assets.clone(),
+                            assets: operation.layout_assets.assets.clone(),
                         },
                     }
                 } else {
@@ -739,7 +704,7 @@ impl<'a> Compiler<'a> {
     }
 
     /// The Kotlin `compileSources`: it turns the recipe sources into the sources the packer reads. A prepared source of
-    /// a Go-executed operation becomes the archive source with its excludes, or the layout source.
+    /// a Go-executed operation becomes the layout source.
     fn compile_sources(&self, recipe: &JarRecipe) -> Result<Vec<Source>, Error> {
         let mut meaningful = 0usize;
         for source in &recipe.sources {
@@ -796,12 +761,7 @@ impl<'a> Compiler<'a> {
         if !self.artifacts.contains_key(input.artifact.as_str()) {
             fail!("unresolved input {:?}", input.artifact);
         }
-        Ok(Source::Archive {
-            input,
-            filter,
-            excludes: Vec::new(),
-            manifest,
-        })
+        Ok(Source::Archive { input, filter, manifest })
     }
 }
 
@@ -821,20 +781,12 @@ fn validate_asset(asset: &Asset) -> Result<(), Error> {
 
 /// The jar source that the packer executes in place of the prepared output of a Go-executed operation.
 fn go_executed_source(operation: &Operation) -> Result<Source, Error> {
-    match (&operation.input, &operation.layout_assets) {
-        (Some(input), _) if operation.kind == MODULE_FILTER_KIND => Ok(Source::Archive {
-            input: input.clone(),
-            filter: Filter::Module,
-            excludes: operation.excludes.clone(),
-            manifest: Manifest::Keep,
-        }),
-        (_, Some(layout)) if layout.format == LayoutFormat::Entries => Ok(Source::Layout(LayoutAssets {
-            inputs: operation.inputs.clone(),
-            assets: layout.assets.clone(),
-        })),
-        _ => fail!(
-            "prepared source {:?} requires a module-filter or a layout-assets entries operation",
-            operation.output
-        ),
+    let layout = &operation.layout_assets;
+    if layout.format != LayoutFormat::Entries {
+        fail!("prepared source {:?} requires a layout-assets entries operation", operation.output);
     }
+    Ok(Source::Layout(LayoutAssets {
+        inputs: operation.inputs.clone(),
+        assets: layout.assets.clone(),
+    }))
 }
