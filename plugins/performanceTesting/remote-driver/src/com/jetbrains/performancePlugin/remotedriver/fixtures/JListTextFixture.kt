@@ -2,6 +2,7 @@
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.popup.list.SelectablePanel
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.BasicComponentFinder
@@ -45,11 +46,25 @@ class JListTextFixture(robot: Robot, component: JList<*>) : JListFixture(robot, 
   }
 
   fun getComponentAtIndex(index: Int): Component {
-    return computeOnEdt {
-      val list = target()
-      @Suppress("UNCHECKED_CAST") val renderer = list.cellRenderer as ListCellRenderer<Any>
-      renderer.getListCellRendererComponent(JList(), list.model.getElementAt(index), index, list.isSelectedIndex(index), list.hasFocus() && list.isSelectedIndex(index))
+    return computeOnEdt { renderComponentAtIndex(index) }
+  }
+
+  fun visibleBackgroundAtIndex(index: Int): String = computeOnEdt {
+    val component = renderComponentAtIndex(index)
+
+    (component as? Container)?.components?.firstOrNull {
+      it is SelectablePanel
+    }?.let {
+      it.background?.toString()
     }
+    ?: component.background?.toString()
+    ?: ""
+  }
+
+  private fun renderComponentAtIndex(index: Int): Component {
+    val list = target()
+    @Suppress("UNCHECKED_CAST") val renderer = list.cellRenderer as ListCellRenderer<Any>
+    return renderer.getListCellRendererComponent(JList(), list.model.getElementAt(index), index, list.isSelectedIndex(index), list.hasFocus() && list.isSelectedIndex(index))
   }
 
   fun getTextAttributes(index: Int): List<Pair<String, SimpleTextAttributes>> {

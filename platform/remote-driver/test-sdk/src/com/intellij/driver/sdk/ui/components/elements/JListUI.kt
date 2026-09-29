@@ -132,6 +132,8 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun collectIconsAtIndex(index: Int) = fixture.collectIconsAtIndex(index)
 
+  fun visibleBackgroundAtIndex(index: Int): String = fixture.visibleBackgroundAtIndex(index)
+
   fun hoverItemAtIndex(index: Int) {
     val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
     moveMouse(cellBounds.center)
@@ -170,6 +172,7 @@ interface JListFixtureRef {
   fun collectSelectedItems(): List<String>
   fun clickItemAtIndex(index: Int)
   fun collectIconsAtIndex(index: Int): List<String>
+  fun visibleBackgroundAtIndex(index: Int): String
   fun getComponentAtIndex(index: Int): Component
   fun getTextAttributes(index: Int): List<Pair<String, SimpleTextAttributes>>?
 }
