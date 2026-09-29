@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
-import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.lightEdit.LightEdit
@@ -57,7 +56,7 @@ object TrustedProjects {
 
   @ApiStatus.Internal
   fun getProjectTrustedState(locatedProject: LocatedProject): ThreeState {
-    val explicitTrustedState = TrustedPaths.getInstance().getProjectTrustedState(locatedProject)
+    val explicitTrustedState = getStateProvider(locatedProject).getProjectTrustedState(locatedProject)
     return when {
       isTrustedCheckDisabledForProduct() -> ThreeState.YES
       // before the explicit state: a recorded answer for a system path is stale and must not win
@@ -79,10 +78,10 @@ object TrustedProjects {
     if (isSystemTrusted(locatedProject)) {
       return
     }
-    val trustedPaths = TrustedPaths.getInstance()
-    val oldState = trustedPaths.getProjectTrustedState(locatedProject)
-    trustedPaths.setProjectTrustedState(locatedProject, isTrusted)
-    val newState = trustedPaths.getProjectTrustedState(locatedProject)
+    val stateProvider = getStateProvider(locatedProject)
+    val oldState = stateProvider.getProjectTrustedState(locatedProject)
+    stateProvider.setProjectTrusted(locatedProject, isTrusted)
+    val newState = stateProvider.getProjectTrustedState(locatedProject)
     if (oldState != newState) {
       val syncPublisher = application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
       when (isTrusted) {
@@ -118,6 +117,12 @@ object TrustedProjects {
   fun isSystemTrustedPath(path: Path): Boolean {
     val welcomeScreenProjectPath = WelcomeScreenProjectProvider.getWelcomeScreenProjectPath() ?: return false
     return path.startsWith(welcomeScreenProjectPath)
+  }
+
+  private fun getStateProvider(locatedProject: LocatedProject): TrustedProjectsStateProvider {
+    // the default provider is registered with order="last" and is applicable to every project
+    return TrustedProjectsStateProvider.EP_NAME.findFirstSafe { it.isApplicable(locatedProject) }
+           ?: error("No TrustedProjectsStateProvider is applicable to ${locatedProject.projectRoots}")
   }
 
   /** Whether every root of [locatedProject] is a [system path][isSystemTrustedPath]. */

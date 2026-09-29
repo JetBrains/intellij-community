@@ -334,6 +334,8 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.trustedProjectsLocator" interface="com.intellij.ide.trustedProjects.TrustedProjectsLocator"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.trustedProjectsStateProvider"
+                    interface="com.intellij.ide.trustedProjects.TrustedProjectsStateProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.settingsEntryPointActionProvider" interface="com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.settingsEntryPointIconCustomizer" interface="com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
@@ -799,6 +801,7 @@
                              instance="com.intellij.ide.impl.TrustedHostsConfigurable"
                              groupId="appearance"/>
     <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
+    <trustedProjectsStateProvider implementation="com.intellij.ide.trustedProjects.impl.TrustedPathsStateProvider" order="last"/>
     <activityTracker implementation="com.intellij.openapi.project.DumbServiceTracker"/>
     <activityTracker implementation="com.intellij.openapi.project.ScanningTracker"/>
     <activityTracker implementation="com.intellij.ide.startup.StartupActivityTracker"/>
