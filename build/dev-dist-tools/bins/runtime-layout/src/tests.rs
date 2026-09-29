@@ -875,6 +875,31 @@ fn plan_part_leaves_out_the_jars_of_refused_modules() {
     );
 }
 
+/// The native tree of the reused natives jar is not a jar, so the part is the same in both scopes of the tree.
+#[test]
+fn plan_part_skips_the_native_tree_in_both_scopes() {
+    let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;
+    let native_tree = r#"{"destination": "lib/native", "inputs": ["native-tree:p.natives"], "kind": "tree", "classPath": false"#;
+    let part = |plan: &str| {
+        let files = Files::new();
+        let output = files.path("part.json").display().to_string();
+        let result = run_tool(&plan_part_args(&files, plan, independent, "plugin.xml", &output));
+        assert_eq!(result.code, 0, "{}", result.errors);
+        std::fs::read_to_string(&output).unwrap()
+    };
+    let expected = part(TEST_PLAN);
+    let tree_anchor = r#"    {"destination": "js","#;
+    let plugin_scope = TEST_PLAN.replacen(tree_anchor, &format!("    {native_tree}}},\n{tree_anchor}"), 1);
+    assert_ne!(plugin_scope, TEST_PLAN);
+    assert_eq!(part(&plugin_scope), expected, "a native tree of the plugin scope");
+    let distribution_scope = TEST_PLAN.replacen(r#""version": 2,"#, r#""version": 3,"#, 1).replacen(
+        tree_anchor,
+        &format!("    {native_tree}, \"scope\": \"distribution\"}},\n{tree_anchor}"),
+        1,
+    );
+    assert_eq!(part(&distribution_scope), expected, "a native tree of the distribution scope");
+}
+
 #[test]
 fn plan_part_refusals() {
     let independent = r#"{"version": 1, "libraries": [{"library": "@lib//:natives", "jars": ["external/lib+/natives.jar"]}]}"#;

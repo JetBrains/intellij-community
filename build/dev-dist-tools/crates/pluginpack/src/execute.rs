@@ -7,12 +7,12 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use jarpack::{DirectoryMode, ManifestMode, MergeSpec};
-use planfile::contract::{Manifest, Operation, PLUGIN_SCOPE, Reference, Source};
+use planfile::contract::{Asset, Manifest, Operation, PLUGIN_SCOPE, Reference, Source};
 
 use crate::error::{Error, IoContext, Result, fail};
 use crate::layout::LayoutScratch;
 use crate::paths::{self, FileId};
-use crate::plan::{Execution, asset_scope, identity, source_filter, validate_relative_path, validate_scoped_links};
+use crate::plan::{Execution, asset_kind, asset_scope, identity, source_filter, validate_relative_path, validate_scoped_links};
 
 /// What one resolved operation writes at its destination.
 pub(crate) enum Action {
@@ -256,16 +256,17 @@ impl Execution {
                 }
             }
         }
-        let independent: Vec<&str> = (self.recipe.assets.iter())
+        let independent: Vec<&Asset> = (self.recipe.assets.iter())
             .filter(|asset| asset.producer == "independent" && asset_scope(asset) == PLUGIN_SCOPE)
-            .map(|asset| asset.destination.as_str())
             .collect();
-        check_independent_namespace(&independent, &operations)?;
+        let destinations: Vec<&str> = independent.iter().map(|asset| asset.destination.as_str()).collect();
+        check_independent_namespace(&destinations, &operations)?;
         let mut nodes: Vec<(String, bool)> = operations
             .iter()
             .map(|resolved| (resolved.destination.clone(), resolved.is_directory()))
             .collect();
-        nodes.extend(independent.iter().map(|destination| ((*destination).to_owned(), false)));
+        // An independent jar is a file node. The native tree of a reused natives jar is a directory node.
+        nodes.extend((independent.iter()).map(|asset| (asset.destination.clone(), asset_kind(asset) == "tree")));
         validate_scoped_links(&nodes, &links_of(&operations))?;
         Ok((operations, backing_roots))
     }

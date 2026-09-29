@@ -373,7 +373,7 @@ fn kind(asset: &Asset) -> &str {
 }
 
 /// The destination in the distribution: a distribution-scope asset, the native tree of a reused jar, is at the root.
-/// Any other asset is below the plugin directory.
+/// Any other asset is below the plugin directory, also a native tree of the plugin scope.
 fn component_destination(plugin_directory: &str, asset: &Asset, destination: &str) -> String {
     if scope(asset) == DISTRIBUTION_SCOPE {
         destination.to_owned()

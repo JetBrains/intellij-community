@@ -210,6 +210,62 @@ fn plan_accepts_only_a_reused_native_tree_in_the_distribution_scope() {
     );
 }
 
+/// The native tree of a reused natives jar can also have the plugin scope. Such a plan has version 2, and the tree
+/// requires an independent jar of the same module.
+#[test]
+fn plan_accepts_a_reused_native_tree_in_the_plugin_scope() {
+    let native_tree = Asset {
+        kind: "tree".to_owned(),
+        class_path: Some(false),
+        ..independent("lib/native", "demo.natives")
+    };
+    let recipe = |version: u32, assets: Vec<Asset>| Recipe {
+        version,
+        plugin: "natives".to_owned(),
+        layout_signature: "natives-v2".to_owned(),
+        assets,
+        operations: Vec::new(),
+    };
+    let jar = independent("lib/modules/demo.natives.jar", "demo.natives");
+    plan(
+        &recipe(TREE_VERSION, vec![native_tree.clone(), jar.clone()]),
+        &catalogue(Vec::new()),
+    )
+    .unwrap();
+    expect_plan_error(
+        &recipe(VERSION, vec![jar.clone(), native_tree.clone()]),
+        &catalogue(Vec::new()),
+        r#"tree "lib/native" requires version 2 or 3"#,
+    );
+    expect_plan_error(
+        &recipe(SCOPED_VERSION, vec![jar.clone(), native_tree.clone()]),
+        &catalogue(Vec::new()),
+        "version 3 requires a distribution asset",
+    );
+    expect_plan_error(
+        &recipe(TREE_VERSION, vec![native_tree.clone()]),
+        &catalogue(Vec::new()),
+        "remainder or native tree ownership",
+    );
+    expect_plan_error(
+        &recipe(
+            TREE_VERSION,
+            vec![independent("lib/modules/other.jar", "other"), native_tree.clone()],
+        ),
+        &catalogue(Vec::new()),
+        "remainder or native tree ownership",
+    );
+    let class_path = Asset {
+        class_path: None,
+        ..native_tree
+    };
+    expect_plan_error(
+        &recipe(TREE_VERSION, vec![jar, class_path]),
+        &catalogue(Vec::new()),
+        "and classPath false",
+    );
+}
+
 /// The Go test covered the directory operation. The typed recipe has none, so only the refusal of the kind remains.
 #[test]
 fn directory_assets_are_refused() {

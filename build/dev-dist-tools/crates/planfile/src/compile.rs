@@ -140,7 +140,8 @@ pub fn omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec
     Ok(omitted)
 }
 
-/// `pluginPackingExecutionVersion`: 3 with a distribution asset, 2 with a tree, else 1.
+/// `pluginPackingExecutionVersion`: 3 with a distribution asset, 2 with a tree, else 1. A native tree of the plugin
+/// scope gives 2.
 fn execution_version_of(assets: &[Asset]) -> u32 {
     if assets.iter().any(|asset| asset.scope == DISTRIBUTION_SCOPE) {
         SCOPED_VERSION
@@ -268,10 +269,11 @@ impl<'a> Compiler<'a> {
         }
         let mut used = HashSet::new();
         for (asset, &omitted) in file.assets.iter().zip(&self.omitted) {
+            // The native tree of a reused natives jar has the plugin scope or the distribution scope.
             if let Some(module) = native_tree_module(asset) {
-                if asset.scope != DISTRIBUTION_SCOPE || !native_jars.contains(module) {
+                if !native_jars.contains(module) {
                     fail!(
-                        "{}: the native tree of {module:?} requires the distribution scope and its reused natives jar",
+                        "{}: the native tree of {module:?} requires its reused natives jar",
                         asset.destination
                     );
                 }

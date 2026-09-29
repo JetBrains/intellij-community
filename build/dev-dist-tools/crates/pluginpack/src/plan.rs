@@ -59,6 +59,11 @@ fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: b
     let mut validated = BTreeMap::new();
     let mut spellings: HashMap<(&str, String), String> = HashMap::new();
     let mut has_distribution_assets = false;
+    // The modules of the reused jars. An independent tree of the plugin scope is the native tree of one of them.
+    let reused_jars: HashSet<&str> = (assets.iter())
+        .filter(|asset| asset.producer == "independent" && asset_kind(asset) == "file")
+        .map(|asset| asset.artifact.as_str())
+        .collect();
     for asset in assets {
         let kind = asset_kind(asset);
         let scope = asset_scope(asset);
@@ -88,11 +93,13 @@ fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: b
         if kind != "file" && kind != "tree" {
             fail!("unknown asset kind {:?}; the packer writes only file and tree assets", asset.kind);
         }
-        // A remainder tree, or the native tree of a reused natives jar at the distribution root.
-        let owned_tree = asset.producer == "remainder" || asset.producer == "independent" && scope == DISTRIBUTION_SCOPE;
+        // A remainder tree, or the native tree of a reused natives jar. The native tree is in the plugin or at the
+        // distribution root.
+        let owned_tree = asset.producer == "remainder"
+            || asset.producer == "independent" && (scope == DISTRIBUTION_SCOPE || reused_jars.contains(asset.artifact.as_str()));
         if kind == "tree" && (version < TREE_VERSION || !owned_tree || asset.class_path != Some(false)) {
             fail!(
-                "tree {:?} requires version 2 or 3, remainder or distribution independent ownership, and classPath false",
+                "tree {:?} requires version 2 or 3, remainder or native tree ownership, and classPath false",
                 asset.destination
             );
         }
@@ -135,9 +142,8 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
     for asset in &recipe.assets {
         match asset.producer.as_str() {
             "independent" => {
-                // A file is a reused jar. A tree is the native tree of a reused natives jar, at the distribution root.
-                let kind = asset_kind(asset);
-                if !valid_id(&asset.artifact) || kind != "file" && (kind != "tree" || asset.scope != DISTRIBUTION_SCOPE) {
+                // A file is a reused jar. A tree is the native tree of a reused natives jar, see `validated_assets`.
+                if !valid_id(&asset.artifact) {
                     fail!("independent asset {:?} requires an artifact ID", asset.destination);
                 }
             }

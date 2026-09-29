@@ -23,6 +23,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | an asset mode other than 0644 and 0755 | the mode |
 | a recipe asset that also states `inputs` | inputs and a recipe |
 | a `distribution` asset that is not a reused native tree | only a reused native tree has the distribution scope |
+| a tree `native-tree:<module>` whose module has no reused natives jar | requires its reused natives jar |
 | a jar source of the kind `zip`, or a kind with another filter than its one filter | the kind, or the filter |
 | a source option other than `patch`, and a `file` source without `patch` and an entry | the entry and the options |
 | `preparedManifest`, and the writer keys `rewriteBootClassPath` and `outputName` | unknown field |
@@ -42,7 +43,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 - `Error`: one refusal or I/O failure. `Display` gives the message. `Error::message(&self) -> &str`.
 - `DEFAULT_MODE: u32 = 0o644`, `EXECUTABLE_MODE: u32 = 0o755`: the two asset modes.
 - `PlanFile { version: u32, plugin, layout_signature, assets: Vec<Asset>, preparations: Vec<Preparation>, operations: Vec<Operation> }`: one decoded plan file in its full form.
-- `Asset { destination, inputs: Vec<String>, recipe: Option<JarRecipe>, mode: u32, kind, class_path: bool, scope }`: one plan asset. `kind` is `file` or `tree`. `scope` is `plugin` or `distribution`. The inputs of a jar asset are the inputs of its recipe sources.
+- `Asset { destination, inputs: Vec<String>, recipe: Option<JarRecipe>, mode: u32, kind, class_path: bool, scope }`: one plan asset. `kind` is `file` or `tree`. `scope` is `plugin` or `distribution`. The native tree of a reused natives jar has either scope, and every other asset has the `plugin` scope. The inputs of a jar asset are the inputs of its recipe sources.
 - `JarRecipe { sources: Vec<JarSource>, writer: JarWriter }`: the canonical recipe of one jar.
 - `JarSource { input, kind, entry }`: one ordered jar source. `kind` is `module`, `library`, `archive`, `file` or `prepared`. Only a `file` source has an entry, and the jar writer patches that file into the jar.
 - `JarWriter { manifest: ManifestPolicy, merge_entities: bool, directory_entries: bool, native_lib }`: the writer options. An empty `native_lib` means none.
@@ -70,7 +71,7 @@ The plan-file types derive `Clone`, `Debug`, `PartialEq`, `Eq`. Only `read` and 
 The recipe stays in the process, so it has no JSON form. The asset rows go to `assets.json`, and Starlark writes the
 catalogue.
 
-- `VERSION: u32 = 1`, `TREE_VERSION: u32 = 2`, `SCOPED_VERSION: u32 = 3`: the execution versions. Version 3 has a reused native tree of the distribution scope. The remainder writes only plugin files in every version, so no transport root exists.
+- `VERSION: u32 = 1`, `TREE_VERSION: u32 = 2`, `SCOPED_VERSION: u32 = 3`: the execution versions. Version 2 has a tree, and a reused native tree of the plugin scope is such a tree. Version 3 has a reused native tree of the distribution scope. The distribution scope retires in a later change. The remainder writes only plugin files in every version, so no transport root exists.
 - `PLUGIN_SCOPE = "plugin"`, `DISTRIBUTION_SCOPE = "distribution"`.
 - `Recipe { version: u32, plugin, layout_signature, assets: Vec<Asset>, operations: Vec<Operation> }`.
 - `Asset { destination, producer, artifact, kind, class_path: Option<bool>, scope }`: one row of `assets.json` (`Serialize`, `Deserialize`). `producer` is `remainder` or `independent`. An empty `kind` is `file`, an empty `scope` is `plugin`. `serde_json::to_vec(&rows)` writes the bytes of Go `json.Marshal`, because no plan file holds `<`, `>`, `&`, U+2028 or U+2029.

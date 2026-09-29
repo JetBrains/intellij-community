@@ -87,6 +87,58 @@ fn independent_destinations_collide_with_remainder_tree_entries() {
     }
 }
 
+/// The native tree of a reused natives jar in the plugin scope reserves its directory. The remainder can write beside
+/// the tree, but not in it.
+#[test]
+fn plugin_native_tree_collides_with_remainder_tree_entries() {
+    for (name, entry, want) in [
+        (
+            "entry in the native tree",
+            "native/libx.so",
+            r#"conflicting output destination "lib/native""#,
+        ),
+        ("entry beside the native tree", "other.txt", ""),
+    ] {
+        let root = temp();
+        let tree = root.path().join("tree");
+        write_test_file(&tree.join(entry), b"entry");
+        let recipe = Recipe {
+            version: TREE_VERSION,
+            plugin: "natives".to_owned(),
+            layout_signature: "natives-v2".to_owned(),
+            assets: vec![
+                tree_asset("lib"),
+                independent("lib/modules/demo.natives.jar", "demo.natives"),
+                Asset {
+                    kind: "tree".to_owned(),
+                    class_path: Some(false),
+                    ..independent("lib/native", "demo.natives")
+                },
+            ],
+            operations: vec![Operation::CopyTree {
+                destination: "lib".to_owned(),
+                input: Reference::artifact("tree"),
+            }],
+        };
+        let catalogue = catalogue(vec![directory_artifact("tree", &tree)]);
+        if want.is_empty() {
+            let written = write_execution(&recipe, &catalogue);
+            assert_content(&written.output.join("lib/other.txt"), "entry");
+            assert!(
+                !exists(&written.output.join("lib/native")),
+                "{name}: the remainder wrote the native tree"
+            );
+            continue;
+        }
+        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error}"));
+        let error = execution
+            .write(&root.path().join("output"), &root.path().join("inventory.json"))
+            .unwrap_err();
+        assert!(error.message().contains(want), "{name}: expected {want:?}, got {error}");
+        assert_no_published_outputs(root.path());
+    }
+}
+
 /// The Go test wrote a distribution-scope copy beside a plugin copy of the same destination. The remainder writes only
 /// plugin files now, so the plan refuses a remainder asset of the distribution scope.
 #[test]

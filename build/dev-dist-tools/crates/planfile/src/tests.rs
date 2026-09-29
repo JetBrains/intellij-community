@@ -78,6 +78,10 @@ const RT_RECIPE: &str =
 const NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
   {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false, "scope": "distribution"}"#;
 
+/// A reused natives jar and its native tree of the plugin scope.
+const PLUGIN_NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
+  {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false}"#;
+
 fn derive_plan(text: &str, inputs: &Catalogue, version: u32, independent_modules: &[&str]) -> Result<Derivation, Error> {
     derive_refusing(text, inputs, version, independent_modules, &[])
 }
@@ -668,6 +672,13 @@ fn derive_requires_the_execution_version_of_the_assets() {
             3,
             &["demo.natives"][..],
         ),
+        (
+            "a native tree of the plugin scope",
+            plan(2, PLUGIN_NATIVES, &[]),
+            catalogue(Vec::new()),
+            2,
+            &["demo.natives"][..],
+        ),
     ] {
         assert_eq!(must_derive(&text, &inputs, version, independent).recipe.version, version, "{name}");
         for wrong in [1, 2, 3].into_iter().filter(|wrong| *wrong != version) {
@@ -696,6 +707,26 @@ fn derive_requires_the_execution_version_of_the_assets() {
         ]
     );
     assert!(derivation.recipe.operations.is_empty(), "the remainder writes no distribution file");
+
+    let derivation = must_derive(&plan(2, PLUGIN_NATIVES, &[]), &catalogue(Vec::new()), 2, &["demo.natives"]);
+    assert_eq!(
+        derivation.assets,
+        [
+            row("lib/modules/demo.natives.jar", "independent", "demo.natives"),
+            tree_row("lib/native", "independent", "demo.natives"),
+        ]
+    );
+    assert!(derivation.recipe.operations.is_empty(), "the remainder writes no native file");
+
+    // The tree names a reused jar without a native library, so it is not a native tree.
+    let not_native = format!(
+        r#"{{"destination": "lib/rt.jar", "recipe": {RT_RECIPE}}},
+  {{"destination": "lib/native", "inputs": ["native-tree:demo.rt"], "kind": "tree", "classPath": false}}"#
+    );
+    expect_error(
+        derive_plan(&plan(2, &not_native, &[]), &catalogue(Vec::new()), 2, &["demo.rt"]),
+        r#"lib/native: the native tree of "demo.rt" requires its reused natives jar"#,
+    );
 }
 
 fn jar_manifests(derivation: &Derivation, destination: &str) -> Vec<Manifest> {
@@ -1108,16 +1139,16 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             "only a reused native tree has the distribution scope",
         ),
         (
-            "a native tree without its jar",
+            "a native tree of the distribution scope without its jar",
             plan(3, &format!(r#"{native_tree}, "scope": "distribution"}}"#), &[]),
             catalogue(Vec::new()),
-            "requires the distribution scope and its reused natives jar",
+            "requires its reused natives jar",
         ),
         (
-            "a native tree of the plugin scope",
+            "a native tree of the plugin scope without its jar",
             plan(2, &format!("{native_tree}}}"), &[]),
             catalogue(Vec::new()),
-            "requires the distribution scope and its reused natives jar",
+            "requires its reused natives jar",
         ),
     ];
     for (name, text, inputs, message) in scenarios {

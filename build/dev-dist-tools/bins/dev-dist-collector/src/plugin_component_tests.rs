@@ -255,7 +255,7 @@ fn prepared_component_refuses_a_stale_tree_inventory() {
         ("classpath", |fixture| {
             fixture.assets[5].as_object_mut().unwrap().remove("classPath");
         }),
-        ("independent tree", |fixture| {
+        ("independent tree without its native tree", |fixture| {
             fixture.assets[5]["producer"] = json!("independent");
             fixture.assets[5]["artifact"] = json!("shared");
         }),
@@ -487,6 +487,47 @@ fn prepared_component_places_the_native_tree_of_a_reused_jar() {
     fixture.spec["independent"][0]["nativeTree"]["source"] = json!("payload/jna/other");
     fixture.write();
     run_collector(&plugin_component_args()).assert_error("is not named native");
+}
+
+/// A reused natives jar of version 2 places its tree of the plugin scope below the plugin directory.
+#[cfg(unix)]
+#[test]
+fn prepared_component_places_the_plugin_native_tree_of_a_reused_jar() {
+    let _directory = WorkDir::new();
+    let mut fixture = Prepared::new();
+    fixture.spec["version"] = json!(2);
+    fixture.spec["independent"][0]["nativeTree"] = json!({"source": "payload/jna/native", "metadata": "metadata/jna-native.json"});
+    fixture.assets.push(json!({
+        "destination": "lib/jna", "producer": "independent", "artifact": "shared", "kind": "tree", "classPath": false,
+    }));
+    write_inventory(
+        "metadata/jna-native.json",
+        &[
+            directory_entry("native", 0o755),
+            directory_entry("native/aarch64", 0o755),
+            file_entry("native/aarch64/libjnidispatch.jnilib", 41, 20, 0o644),
+        ],
+    );
+    fixture.write();
+    run_collector(&plugin_component_args()).assert_success();
+    let entries = manifest_entries("component.json");
+    let native = &entries["plugins/demo/lib/jna/aarch64/libjnidispatch.jnilib"];
+    assert_eq!(native["source"], "payload/jna/native/aarch64/libjnidispatch.jnilib");
+    assert_eq!(native["hash"], 41);
+    assert_eq!(entries["plugins/demo/lib/jna"]["type"], "directory");
+    assert_eq!(entries["plugins/demo/lib/jna/aarch64"]["type"], "directory");
+    assert!(
+        !entries.contains_key("lib/jna"),
+        "the plugin native tree is at the distribution root"
+    );
+
+    // Version 3 requires a distribution asset, and version 1 has no tree.
+    fixture.spec["version"] = json!(3);
+    fixture.write();
+    run_collector(&plugin_component_args()).assert_error("version 3 requires a distribution asset");
+    fixture.spec["version"] = json!(1);
+    fixture.write();
+    run_collector(&plugin_component_args()).assert_error(r#"tree "lib/jna" requires version 2 or 3"#);
 }
 
 #[cfg(unix)]
