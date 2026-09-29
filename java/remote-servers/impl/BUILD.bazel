@@ -50,6 +50,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/execution",
         "//platform/execution-impl",
+        "//platform/consoleView",
+        "//platform/consoleView/impl",
     ],
 )
 
@@ -91,6 +93,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.remoteServers.impl` end

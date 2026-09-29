@@ -48,6 +48,8 @@ jvm_library(
         "//plugins/terminal:terminal_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/testFramework/junit5",

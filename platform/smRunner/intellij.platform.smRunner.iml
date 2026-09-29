@@ -30,6 +30,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
   </component>
 </module>

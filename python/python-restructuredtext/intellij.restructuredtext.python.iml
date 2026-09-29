@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />

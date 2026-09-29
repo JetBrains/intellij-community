@@ -98,6 +98,7 @@ jvm_library(
         "//platform/analysis-impl",
         "//platform/util/text-matching",
         "//platform/consoleView",
+        "//platform/consoleView/impl",
     ],
 )
 
@@ -178,6 +179,7 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/util/text-matching:text-matching_test_lib",
         "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution.impl` end
@@ -244,6 +246,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//platform/lang-api:lang",

@@ -161,6 +161,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/testRunner/plugin",

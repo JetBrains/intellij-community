@@ -55,6 +55,7 @@ jvm_library(
         "//platform/core-impl",
         "//platform/lang-impl",
         "//platform/statistics",
+        "//platform/consoleView",
     ],
 )
 
@@ -94,6 +95,7 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.decompiler` end
@@ -175,6 +177,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "//platform/platform-impl:ide-impl",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//java/testFramework",

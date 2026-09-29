@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />

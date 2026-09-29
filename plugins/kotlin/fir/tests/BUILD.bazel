@@ -121,6 +121,8 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//platform/lang-core",

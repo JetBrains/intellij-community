@@ -145,5 +145,6 @@
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
   </component>
 </module>

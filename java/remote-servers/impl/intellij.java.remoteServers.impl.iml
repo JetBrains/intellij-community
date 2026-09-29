@@ -34,5 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
   </component>
 </module>

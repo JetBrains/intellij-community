@@ -96,6 +96,8 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/ide-core",
         "//platform/testRunner",
         "//platform/testRunner:testRunner_test_lib",

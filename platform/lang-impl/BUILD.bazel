@@ -185,6 +185,7 @@ jvm_library(
         "//platform/testIntegration-ui",
         "//platform/eel-nioFs",
         "//platform/consoleView",
+        "//platform/consoleView/impl",
     ],
 )
 
@@ -322,6 +323,7 @@ jvm_library(
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.impl` end
@@ -451,6 +453,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl",
+        "//platform/consoleView/impl:impl_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//jps/model-serialization",

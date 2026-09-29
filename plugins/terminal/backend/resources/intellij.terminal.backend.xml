@@ -6,6 +6,8 @@
     <module name="intellij.libraries.jediterm.core"/>
     <module name="intellij.libraries.jediterm.ui"/>
     <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

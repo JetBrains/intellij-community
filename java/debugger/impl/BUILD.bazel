@@ -100,6 +100,8 @@ jvm_library(
         "//platform/kernel/rpc",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/execution",
+        "//platform/consoleView",
+        "//platform/consoleView/impl",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
@@ -181,6 +183,8 @@ jvm_library(
         "//platform/kernel/rpc:rpc_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )

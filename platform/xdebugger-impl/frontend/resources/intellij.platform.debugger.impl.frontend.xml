@@ -7,6 +7,8 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>

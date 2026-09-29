@@ -97,6 +97,8 @@ jvm_library(
         "//java/idea-ui:ui",
         "//java/openapi:java",
         "//platform/execution-impl",
+        "//platform/consoleView",
+        "//platform/consoleView/impl",
     ],
 )
 
@@ -165,6 +167,8 @@ jvm_library(
         "//java/idea-ui:ui_test_lib",
         "//java/openapi:java_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch` end
@@ -257,6 +261,10 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView",
+        "//platform/consoleView:consoleView_test_lib",
+        "//platform/consoleView/impl",
+        "//platform/consoleView/impl:impl_test_lib",
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",

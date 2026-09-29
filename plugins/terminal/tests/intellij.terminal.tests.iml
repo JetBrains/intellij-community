@@ -73,6 +73,8 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />

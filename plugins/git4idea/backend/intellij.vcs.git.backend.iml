@@ -127,6 +127,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />

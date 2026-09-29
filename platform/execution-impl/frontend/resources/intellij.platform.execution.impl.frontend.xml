@@ -5,6 +5,8 @@
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.consoleView.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>

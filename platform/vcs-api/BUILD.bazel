@@ -48,6 +48,7 @@ jvm_library(
         "//libraries/caffeine",
         "//platform/vcs-api/shared",
         "//platform/execution",
+        "//platform/consoleView",
         "//platform/util/concurrency",
     ],
 )
@@ -89,6 +90,7 @@ jvm_library(
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/vcs-api/shared:shared_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
     ],
 )

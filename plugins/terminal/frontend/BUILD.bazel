@@ -67,6 +67,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//fleet/rhizomedb",
         "//platform/execution",
+        "//platform/consoleView",
         "//platform/eel-impl",
     ],
 )
@@ -126,6 +127,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/eel-impl:eel-impl_test_lib",
     ],
 )

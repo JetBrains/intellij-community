@@ -111,6 +111,8 @@
     <orderEntry type="module" module-name="intellij.platform.rpc" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
   </component>
   <component name="copyright">

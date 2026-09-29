@@ -76,6 +76,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>

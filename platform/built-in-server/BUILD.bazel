@@ -69,6 +69,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//libraries/netty/codec-compression:libraries-netty-codec-compression",
         "//platform/execution",
+        "//platform/consoleView",
         "//platform/eel-nioFs",
     ],
 )
@@ -120,6 +121,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/netty/codec-compression:libraries-netty-codec-compression_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )

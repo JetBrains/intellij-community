@@ -4,8 +4,9 @@
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.diff"/>
