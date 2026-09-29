@@ -14,8 +14,8 @@ import kotlin.io.path.readLines
 internal data class IntelliJPlatformGradleData(
   val dependencyHelperProductCodes: Map<String, String> = emptyMap(),
   val productReleases: Map<String, List<IntelliJPlatformProductRelease>> = emptyMap(),
-  val bundledPlugins: List<IntelliJPlatformBundledPlugin> = emptyList(),
-  val bundledModules: List<IntelliJPlatformBundledModule> = emptyList(),
+  val bundledPlugins: List<IntelliJPlatformBundledArtifact> = emptyList(),
+  val bundledModules: List<IntelliJPlatformBundledArtifact> = emptyList(),
   val currentPluginVersion: String = "0.0.0",
   val latestPluginVersion: String = "0.0.0",
 ) {
@@ -30,12 +30,7 @@ internal data class IntelliJPlatformProductRelease(
   val channel: String = "",
 )
 
-internal data class IntelliJPlatformBundledPlugin(
-  val id: String = "",
-  val name: String = "",
-)
-
-internal data class IntelliJPlatformBundledModule(
+internal data class IntelliJPlatformBundledArtifact(
   val id: String = "",
   val name: String = "",
 )
@@ -64,12 +59,12 @@ internal fun String?.readProductReleases(): Map<String, List<IntelliJPlatformPro
   )
 
 /** Reads `plugin-id<TAB>plugin-name` records written by the Gradle task. */
-internal fun String?.readBundledPlugins(): List<IntelliJPlatformBundledPlugin> =
-  readTsv { parseTsvPair(it, ::IntelliJPlatformBundledPlugin) }
+internal fun String?.readBundledPlugins(): List<IntelliJPlatformBundledArtifact> =
+  readTsv { parseTsvPair(it, ::IntelliJPlatformBundledArtifact) }
 
 /** Reads `module-id<TAB>module-name` records written by the Gradle task. */
-internal fun String?.readBundledModules(): List<IntelliJPlatformBundledModule> =
-  readTsv { parseTsvPair(it, ::IntelliJPlatformBundledModule) }
+internal fun String?.readBundledModules(): List<IntelliJPlatformBundledArtifact> =
+  readTsv { parseTsvPair(it, ::IntelliJPlatformBundledArtifact) }
 
 private inline fun <T> String?.readTsv(transform: (List<String>) -> T?): List<T> {
   val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyList()
