@@ -8,4 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 public interface VirtualFileUrlWithVirtualFile {
   public fun cacheVirtualFile(file: VirtualFile)
+
+  /**
+   * Returns the file cached by [cacheVirtualFile] or by an earlier search, if VFS didn't change after that.
+   * Otherwise, returns `null`. The function doesn't search VFS.
+   */
+  public fun getCachedVirtualFile(): VirtualFile?
 }

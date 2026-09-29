@@ -23,4 +23,6 @@ internal class VirtualFileUrlBridge(
   override fun cacheVirtualFile(file: VirtualFile) {
     fileFinder.cacheVirtualFile(file)
   }
+
+  override fun getCachedVirtualFile(): VirtualFile? = fileFinder.getCachedVirtualFile()
 }

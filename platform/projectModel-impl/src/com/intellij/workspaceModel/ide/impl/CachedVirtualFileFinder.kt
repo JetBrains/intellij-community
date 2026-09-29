@@ -12,6 +12,11 @@ internal class CachedVirtualFileFinder {
     cachedFile.set(Pair(file, VirtualFileManager.getInstance().modificationCount))
   }
 
+  fun getCachedVirtualFile(): VirtualFile? {
+    val (file, timestamp) = cachedFile.get()
+    return file.takeIf { timestamp == VirtualFileManager.getInstance().modificationCount }
+  }
+
   fun findVirtualFile(url: String): VirtualFile? {
     val fileManager = VirtualFileManager.getInstance()
     val cached = cachedFile.get()
