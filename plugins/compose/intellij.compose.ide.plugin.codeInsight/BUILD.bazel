@@ -77,6 +77,7 @@ jvm_library(
         "//plugins/kotlin/references",
         "//uast/uast-common:uast",
         "//plugins/kotlin/base/util",
+        "//platform/monolith",
         ":libraries_kotlinc_libraries-kotlinc-compose-compiler-plugin_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
@@ -136,6 +137,7 @@ jvm_library(
         "//plugins/kotlin/references:references_test_lib",
         "//uast/uast-common:uast_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
+        "//platform/monolith:monolith_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.codeInsight` end
