@@ -304,7 +304,7 @@ public final class JavaParametersUtil {
     }
 
     int separator = moduleFile.getPath().indexOf(JarFileSystem.JAR_SEPARATOR);
-    return separator < 0 ? null : moduleFile.getPath().substring(0, separator);
+    return separator < 0 ? null : PathUtil.getLocalPath(moduleFile.getPath().substring(0, separator));
   }
 
   public static void applyModifications(JavaParameters parameters, List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {
