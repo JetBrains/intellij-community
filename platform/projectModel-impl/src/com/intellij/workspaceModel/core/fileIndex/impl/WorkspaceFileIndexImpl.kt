@@ -24,9 +24,11 @@ import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.PathUtil
@@ -186,6 +188,14 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     }
 
     return false
+  }
+
+  override fun getFileSetsAt(url: VirtualFileUrl): WorkspaceFileSets {
+    val file = (url as? VirtualFileUrlWithVirtualFile)?.getCachedVirtualFile() ?: findFileByUrlIfCached(url.url)
+    if (file != null) {
+      return getMainIndexData().getFileSetsAt(file)
+    }
+    return getMainIndexData().getNonExistentFileSets(url).toFileSetsAt()
   }
 
   override fun processContentUnderDirectory(

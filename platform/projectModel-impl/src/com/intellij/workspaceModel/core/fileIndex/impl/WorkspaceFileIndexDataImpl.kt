@@ -703,7 +703,15 @@ internal class WorkspaceFileIndexDataImpl(
     packageDirectoryCache.clear()
   }
 
-  override fun getNonExistentFileSets(url: VirtualFileUrl): Collection<NonExistingFileSetData> = nonExistingFilesRegistry.getFileSetsFor(url)
+  override fun getNonExistentFileSets(url: VirtualFileUrl): Collection<NonExistingFileSetData> {
+    ensureIsUpToDate()
+    return nonExistingFilesRegistry.getFileSetsFor(url)
+  }
+
+  override fun getFileSetsAt(file: VirtualFile): WorkspaceFileSets {
+    ensureIsUpToDate()
+    return fileSets[file]?.toFileSetsAt() ?: WorkspaceFileSets.EMPTY
+  }
 
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? = nonExistingFilesRegistry.analyzeVfsChanges(events, this)
 }

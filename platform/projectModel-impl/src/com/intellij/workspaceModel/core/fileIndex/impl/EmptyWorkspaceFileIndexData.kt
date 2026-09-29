@@ -41,6 +41,7 @@ class EmptyWorkspaceFileIndexData private constructor(private val debugName: Str
   override fun getFilesByPackageName(packageName: String): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun resetCustomContributors() {}
   override fun getNonExistentFileSets(url: VirtualFileUrl): Collection<NonExistingFileSetData> = emptyList()
+  override fun getFileSetsAt(file: VirtualFile): WorkspaceFileSets = WorkspaceFileSets.EMPTY
 
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? = null
   override fun onLowMemory() {}
