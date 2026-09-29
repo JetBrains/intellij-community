@@ -13511,6 +13511,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("catchParameter.kt")
+        public void testCatchParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameToUnderscore/catchParameter.kt");
+        }
+
         @TestMetadata("commonDestructuring.kt")
         public void testCommonDestructuring() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/renameToUnderscore/commonDestructuring.kt");
