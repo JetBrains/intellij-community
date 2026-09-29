@@ -4,6 +4,7 @@ package com.intellij.ui.content;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Computable;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +49,8 @@ public interface Content extends UserDataHolder, ComponentContainer {
   Key<ContentManagerListener> CLOSE_LISTENER_KEY = Key.create("CloseListener");
   Key<Boolean> SIMPLIFIED_TAB_RENDERING_KEY = Key.create("simplifiedTabRendering");
   Key<JComponent> REPLACEMENT_COMPONENT = Key.create("replacementComponent");
+  @ApiStatus.Internal
+  DataKey<Content[]> CONTENT_KEY = DataKey.create("currentContents");
 
   void setComponent(JComponent component);
 

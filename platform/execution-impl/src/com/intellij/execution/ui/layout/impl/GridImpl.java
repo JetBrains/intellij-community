@@ -404,6 +404,6 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(ViewContext.CONTEXT_KEY, myViewContext);
-    sink.set(ViewContext.CONTENT_KEY, myContents.toArray(new Content[0]));
+    sink.set(Content.CONTENT_KEY, myContents.toArray(new Content[0]));
   }
 }

@@ -241,7 +241,7 @@ public final class GridCellImpl implements GridCell {
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(ViewContext.CONTENT_KEY, new Content[]{myContent});
+      sink.set(Content.CONTENT_KEY, new Content[]{myContent});
       sink.set(ViewContext.CONTEXT_KEY, myContext);
     }
   }
@@ -460,7 +460,7 @@ public final class GridCellImpl implements GridCell {
       super.uiDataSnapshot(sink);
       TabInfo target = getTargetInfo();
       Content content = target == null ? null : myContents.getKey(target);
-      sink.set(ViewContext.CONTENT_KEY, content == null ? null : new Content[]{content});
+      sink.set(Content.CONTENT_KEY, content == null ? null : new Content[]{content});
       sink.set(ViewContext.CONTEXT_KEY, myContext);
     }
 

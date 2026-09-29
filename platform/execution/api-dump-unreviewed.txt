@@ -1079,7 +1079,6 @@ com.intellij.execution.ui.layout.ViewContext
 - com.intellij.openapi.Disposable
 - sf:CELL_POPUP_PLACE:java.lang.String
 - sf:CELL_TOOLBAR_PLACE:java.lang.String
-- sf:CONTENT_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:CONTEXT_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:TAB_POPUP_PLACE:java.lang.String
 - sf:TAB_TOOLBAR_PLACE:java.lang.String

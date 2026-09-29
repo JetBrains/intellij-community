@@ -66,7 +66,7 @@ public abstract class BaseViewAction extends DumbAwareAction implements ActionRe
   }
 
   private static Content @Nullable [] getContent(@NotNull AnActionEvent e) {
-    return e.getData(ViewContext.CONTENT_KEY);
+    return e.getData(Content.CONTENT_KEY);
   }
 
   protected static @Nullable Tab getTabFor(final ViewContext context, final Content[] content) {

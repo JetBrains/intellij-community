@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.ui.layout;
 
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ViewContext extends Disposable {
 
-  DataKey<Content[]> CONTENT_KEY = DataKey.create("runnerContents");
   DataKey<ViewContext> CONTEXT_KEY = DataKey.create("runnerUiContext");
 
   String CELL_TOOLBAR_PLACE = "debuggerCellToolbar";

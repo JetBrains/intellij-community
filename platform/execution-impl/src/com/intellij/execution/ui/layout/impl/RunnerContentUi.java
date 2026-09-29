@@ -342,7 +342,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       public void uiDataSnapshot(@NotNull DataSink sink) {
         super.uiDataSnapshot(sink);
         TabInfo info = tabs.getTargetInfo();
-        sink.set(CONTENT_KEY, info == null ? null : getGridFor(info).getContents().toArray(new Content[0]));
+        sink.set(Content.CONTENT_KEY, info == null ? null : getGridFor(info).getContents().toArray(new Content[0]));
         sink.set(CONTEXT_KEY, RunnerContentUi.this);
       }
     };
@@ -2058,7 +2058,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
       JComponent component = info.getComponent();
       DataContext dataContext = DataManager.getInstance().getDataContext(component);
-      Content[] data = CONTENT_KEY.getData(dataContext);
+      Content[] data = Content.CONTENT_KEY.getData(dataContext);
       assert data != null;
       storeDefaultIndices(data);
 
