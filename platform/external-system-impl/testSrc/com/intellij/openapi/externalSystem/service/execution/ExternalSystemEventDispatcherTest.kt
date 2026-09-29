@@ -62,7 +62,7 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
       BuildViewSettingsProvider.EMPTY
     )
     dispatcher.use {
-      val buildRootProgress = BuildRootProgressImpl(dispatcher)
+      val buildRootProgress = BuildRootProgressImpl { buildId, event -> dispatcher.onEvent(buildId, event) }
       buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
       dispatcher.invokeOnCompletion { eventMessages += "completion message 1" }
       val task1Progress = buildRootProgress.startChildProgress("sub task1 started")

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
+import com.intellij.build.events.BuildEvent;
 import com.intellij.execution.process.ProcessOutputType;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
@@ -22,7 +23,9 @@ import java.util.function.Consumer;
  */
 @Internal
 @NonExtendable
-public interface BuildEventDispatcher extends Closeable, BuildProgressListener {
+public interface BuildEventDispatcher extends Closeable {
+
+  void onEvent(@NotNull Object buildId, @NotNull BuildEvent event);
 
   /**
    * Dispatches a chunk of the build process output.
