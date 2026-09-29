@@ -25,8 +25,16 @@ import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
   private final Set<VirtualFile> myDirs;
+  /**
+   * The URL of each directory of {@link #myDirs}. An environment can represent one file by more than one
+   * {@link VirtualFile} instance, and {@link #myDirs} then misses the instance which the caller holds.
+   */
   private final Set<String> myDirUrls;
   private final Set<VirtualFile> myFiles;
+  /**
+   * The URL of each file of {@link #myFiles}. An environment can represent one file by more than one
+   * {@link VirtualFile} instance, and {@link #myFiles} then misses the instance which the caller holds.
+   */
   private final Set<String> myFileUrls;
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
