@@ -69,6 +69,7 @@
     "intellij.database.connectivity.tests",
     "intellij.database.core.impl",
     "intellij.database.crossQueries",
+    "intellij.database.dbimport.core",
     "intellij.database.dbimport.impl",
     "intellij.database.diagrams",
     "intellij.database.dialects",
