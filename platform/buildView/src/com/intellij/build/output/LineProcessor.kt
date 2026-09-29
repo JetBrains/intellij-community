@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build.output
 
-import java.io.Closeable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class LineProcessor : Closeable {
+abstract class LineProcessor : AutoCloseable {
+
   private var lineBuilder: StringBuilder? = StringBuilder()
 
   abstract fun process(line: String)
