@@ -60,8 +60,9 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     private var currentTaskId: StartId = buildId
 
-    private val lineProcessor = object : LineProcessor() {
+    private val lineProcessor = GradleOutputLineProcessor()
 
+    private inner class GradleOutputLineProcessor : LineProcessor() {
       override fun process(line: String) {
         val cleanLine = removeLoggerPrefix(line)
         // skip Gradle test runner output
