@@ -1,6 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.name
+import kotlin.io.path.writeText
+
 class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestBase() {
 
   fun `test reports the extension and the key when the key is in another bundle`() {
@@ -341,6 +347,30 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
     val localizationBundle = addFile("localization/zh/messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=Translated\n")
 
     myFixture.testHighlightingAllFiles(true, false, false, localizationBundle)
+  }
+
+  fun `test does not report a key in a library`() {
+    // A library root must be outside the content root of the fixture.
+    val libraryDir = TemporaryDirectory.generateTemporaryPath("stripeTitleLibrary")
+    libraryDir.resolve("messages/LibraryBundle.properties").apply {
+      createParentDirectories()
+      writeText("toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+    }
+    PsiTestUtil.addLibrary(testRootDisposable, module, "stripeTitleLibrary", libraryDir.parent.toString(), libraryDir.name)
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.MyBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="My Tool Window"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/MyBundle.properties", "unrelated.key=Value\n")
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml)
   }
 
   fun `test fix declares the resource bundle of the descriptor`() {

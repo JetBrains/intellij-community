@@ -35,7 +35,6 @@ import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
-import org.jetbrains.idea.devkit.inspections.DeclareResourceBundleFix
 import org.jetbrains.idea.devkit.references.PluginConfigReference
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.uast.UBinaryExpression
@@ -257,9 +256,12 @@ private fun bundleHasKey(module: Module, bundleName: String, key: String): Boole
     .any { it.findPropertyByKey(key) != null }
 }
 
+/**
+ * Only a bundle in the project counts. The plugin author cannot move a key in a library or declare the bundle of another plugin.
+ */
 private fun bundlesWithKey(module: Module, key: String): List<String> {
   val project = module.project
-  val scope = GlobalSearchScope.moduleRuntimeScope(module, false)
+  val scope = GlobalSearchScope.moduleRuntimeScope(module, false).intersectWith(GlobalSearchScope.projectScope(project))
   return PropertyKeyIndex.getInstance().getProperties(key, project, scope)
     .mapNotNull { property -> property.containingFile?.let { bundleNameOf(it) } }
     .filterNot { isLocalizedCopy(it) }
