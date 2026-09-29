@@ -2,6 +2,20 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
+jps_test(
+    name = "featuresTrainer-tests_test",
+    timeout = "moderate",
+    data = [":testData"],
+    tags = ["community-java-tests"],
+    runtime_deps = [":featuresTrainer-tests_test_lib"],
+)
+### skip generation section `test intellij.java.featuresTrainer.tests`
+
 ### auto-generated section `dev intellij.java.featuresTrainer` start
 content_module_jar(module = ":featuresTrainer")
 ### auto-generated section `dev intellij.java.featuresTrainer` end
@@ -214,6 +228,8 @@ jvm_library(
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.featuresTrainer.tests` end
@@ -226,10 +242,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.featuresTrainer.tests` end
-
-### auto-generated section `test intellij.java.featuresTrainer.tests` start
-jps_test(
-    name = "featuresTrainer-tests_test",
-    runtime_deps = [":featuresTrainer-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.featuresTrainer.tests` end
