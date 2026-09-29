@@ -67,7 +67,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-09-28
+Date: 2026-09-29
 
 ## Purpose
 
@@ -203,6 +203,12 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
   )
 
 ## Search and Navigation
+
+- Settings search must find the Plugins page by an installed plugin's name or description.
+- Action search must omit the Plugins page options for plugin names and descriptions.
+  [@test] ../../testSrc/com/intellij/ide/ui/search/PluginSearchableOptionContributorTest.kt (
+    `Settings search finds Plugins by installed plugin name and description`
+  )
 
 - An empty query must make local, Suggested, Internal, and custom repository sources eligible.
 - A general nonempty query must replace Suggested with Marketplace.
