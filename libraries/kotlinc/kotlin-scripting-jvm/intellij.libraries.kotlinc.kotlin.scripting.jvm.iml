@@ -24,20 +24,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.5.0-dev-8864">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-dev-8864/kotlin-scripting-jvm-2.5.0-dev-8864.jar">
-              <sha256sum>c8b832a6f3f723b84e1e1d865e9c15fe1e4e6d7645e64e09b98e97bac8d3daef</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.kotlin-scripting-jvm">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-dev-8864/kotlin-scripting-jvm-2.5.0-dev-8864.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.255-dev-255/kotlin-scripting-jvm-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-dev-8864/kotlin-scripting-jvm-2.5.0-dev-8864-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.255-dev-255/kotlin-scripting-jvm-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
