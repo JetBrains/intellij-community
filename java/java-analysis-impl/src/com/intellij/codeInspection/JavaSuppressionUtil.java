@@ -313,7 +313,8 @@ public final class JavaSuppressionUtil {
   }
 
   public static boolean canHave15Suppressions(@NotNull PsiElement element) {
-    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, element);
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance(); // null in the language server
+    return (settings == null || settings.isSuppressWarnings()) && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, element);
   }
 
   public static @Nullable PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
