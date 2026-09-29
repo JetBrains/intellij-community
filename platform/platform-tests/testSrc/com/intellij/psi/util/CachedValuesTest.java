@@ -51,6 +51,7 @@ public class CachedValuesTest extends BasePlatformTestCase {
   }
 
   public void testCalculateValueAtMostOncePerThread() throws ExecutionException, InterruptedException {
+    IdempotenceChecker.disableRandomChecksUntil(getTestRootDisposable());
     AtomicInteger calcCount = new AtomicInteger();
     SimpleModificationTracker dependency = new SimpleModificationTracker();
     Supplier<String> getCached = () -> CachedValuesManager.getManager(getProject()).getCachedValue(holder, () -> {
