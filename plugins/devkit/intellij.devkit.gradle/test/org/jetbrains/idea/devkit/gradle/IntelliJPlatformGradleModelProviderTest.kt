@@ -156,8 +156,8 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
 
       assertEquals(
         IntelliJPlatformGradleData(
-          bundledPlugins = listOf(IntelliJPlatformBundledPlugin("com.intellij.java", "Java")),
-          bundledModules = listOf(IntelliJPlatformBundledModule("intellij.platform.vcs.impl", "VCS Implementation")),
+          bundledPlugins = listOf(IntelliJPlatformBundledArtifact("com.intellij.java", "Java")),
+          bundledModules = listOf(IntelliJPlatformBundledArtifact("intellij.platform.vcs.impl", "VCS Implementation")),
         ),
         provider.getModel(file),
       )

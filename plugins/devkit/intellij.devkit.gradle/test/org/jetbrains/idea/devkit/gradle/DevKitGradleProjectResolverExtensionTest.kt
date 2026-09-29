@@ -77,9 +77,9 @@ internal class DevKitGradleProjectResolverExtensionTest : TestCase() {
 
       assertEquals(
         listOf(
-          IntelliJPlatformBundledPlugin("com.intellij.java", "Java"),
-          IntelliJPlatformBundledPlugin("org.jetbrains.kotlin", "Kotlin"),
-          IntelliJPlatformBundledPlugin("com.intellij.copyright", ""),
+          IntelliJPlatformBundledArtifact("com.intellij.java", "Java"),
+          IntelliJPlatformBundledArtifact("org.jetbrains.kotlin", "Kotlin"),
+          IntelliJPlatformBundledArtifact("com.intellij.copyright", ""),
         ),
         file.toString().readBundledPlugins(),
       )
@@ -103,9 +103,9 @@ internal class DevKitGradleProjectResolverExtensionTest : TestCase() {
 
       assertEquals(
         listOf(
-          IntelliJPlatformBundledModule("intellij.platform.vcs.impl", "VCS Implementation"),
-          IntelliJPlatformBundledModule("intellij.java.psi", "Java PSI"),
-          IntelliJPlatformBundledModule("intellij.platform.core", ""),
+          IntelliJPlatformBundledArtifact("intellij.platform.vcs.impl", "VCS Implementation"),
+          IntelliJPlatformBundledArtifact("intellij.java.psi", "Java PSI"),
+          IntelliJPlatformBundledArtifact("intellij.platform.core", ""),
         ),
         file.toString().readBundledModules(),
       )

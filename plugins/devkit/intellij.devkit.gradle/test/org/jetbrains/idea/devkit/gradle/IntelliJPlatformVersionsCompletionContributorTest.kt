@@ -28,12 +28,12 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
       "IU" to listOf(release("2023.2"), release("2024.1")),
     ),
     bundledPlugins = listOf(
-      IntelliJPlatformBundledPlugin("com.intellij.java", "Java"),
-      IntelliJPlatformBundledPlugin("org.jetbrains.kotlin", "Kotlin"),
+      IntelliJPlatformBundledArtifact("com.intellij.java", "Java"),
+      IntelliJPlatformBundledArtifact("org.jetbrains.kotlin", "Kotlin"),
     ),
     bundledModules = listOf(
-      IntelliJPlatformBundledModule("intellij.platform.vcs.impl", "VCS Implementation"),
-      IntelliJPlatformBundledModule("intellij.java.psi", "Java PSI"),
+      IntelliJPlatformBundledArtifact("intellij.platform.vcs.impl", "VCS Implementation"),
+      IntelliJPlatformBundledArtifact("intellij.java.psi", "Java PSI"),
     ),
   )
   private var modelRequestFile: PsiFile? = null
