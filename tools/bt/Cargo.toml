@@ -1,0 +1,141 @@
+# BT, the agent-facing wrapper over `bazel test`: a cargo workspace that Bazel builds too, from the community root and
+# from the ultimate root (`@bt` in `community/MODULE.bazel`, `defs.bzl`). `README.md` is the crate map.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+license = "Apache-2.0"
+
+# BEGIN rust-lints: generated from community/build/rust-lints/lints.toml by sync.mjs. Edit that file.
+[workspace.lints.rust]
+rust_2018_idioms = { level = "warn", priority = -1 }
+meta_variable_misuse = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unit_bindings = "warn"
+# Replaces clippy's redundant_pub_crate, which asks for the opposite; the code already writes pub(crate).
+unreachable_pub = "warn"
+unused_lifetimes = "warn"
+unused_macro_rules = "warn"
+unused_qualifications = "warn"
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+# Pedantic lints the workspaces do not follow.
+# No crate is published; an `# Errors` section would restate the refusal the body already names.
+missing_errors_doc = "allow"
+# Same as missing_errors_doc; the hits are test fixtures.
+missing_panics_doc = "allow"
+# A third of the hits are proper nouns (JUnit, VirtioFS, XQuartz); a word list needs a clippy.toml Bazel cannot scope.
+doc_markdown = "allow"
+# Nearly every pure fn qualifies; return_self_not_must_use stays on for builder methods.
+must_use_candidate = "allow"
+# A command future of 17-31 KB boxed moves the same bytes to the heap once per command.
+large_futures = "allow"
+# Length is not a defect; the long fns are command drivers.
+too_many_lines = "allow"
+# Command drivers take their settings, context and reporter explicitly.
+too_many_arguments = "allow"
+# Domain pairs such as pid/pgid and argv/args are the right names.
+similar_names = "allow"
+# Diagnostics and cache keys built once; write! would add an ignored fmt::Result per site.
+format_push_string = "allow"
+# Same as format_push_string: fold plus write! reads worse than map(format!).collect() for one-off strings.
+format_collect = "allow"
+# The compared names (.jar, .zip, .json, .webp) come from our own packers and recorders, always lower-case.
+case_sensitive_file_extension_comparisons = "allow"
+# Counts and durations turned into f64 for ratios and seconds displays stay far below 2^53.
+cast_precision_loss = "allow"
+# `x.clone_from(&y)` reads worse than `x = y.clone()`, and no hit is on a path where the allocation matters.
+assigning_clones = "allow"
+# A local type, use or static beside its only use reads better than one hoisted to the top of the block.
+items_after_statements = "allow"
+# serde's skip_serializing_if calls fn(&T), so the is_false/is_zero/is_unset helpers must borrow.
+trivially_copy_pass_by_ref = "allow"
+# The flagged fields are serde document keys; renaming them changes the documents.
+struct_field_names = "allow"
+
+# Nursery lints, by name: the group changes from release to release, and these find bugs or fix themselves.
+branches_sharing_code = "warn"
+clear_with_drain = "warn"
+collection_is_never_read = "warn"
+debug_assert_with_mut_call = "warn"
+derive_partial_eq_without_eq = "warn"
+equatable_if_let = "warn"
+fallible_impl_from = "warn"
+iter_on_empty_collections = "warn"
+iter_on_single_items = "warn"
+iter_with_drain = "warn"
+literal_string_with_formatting_args = "warn"
+missing_const_for_fn = "warn"
+needless_collect = "warn"
+needless_pass_by_ref_mut = "warn"
+non_send_fields_in_send_ty = "warn"
+path_buf_push_overwrite = "warn"
+read_zero_byte_vec = "warn"
+redundant_clone = "warn"
+set_contains_or_insert = "warn"
+significant_drop_in_scrutinee = "warn"
+string_lit_as_bytes = "warn"
+trait_duplication_in_bounds = "warn"
+trivial_regex = "warn"
+type_repetition_in_bounds = "warn"
+unnecessary_struct_initialization = "warn"
+unused_peekable = "warn"
+unused_rounding = "warn"
+use_self = "warn"
+useless_let_if_seq = "warn"
+while_float = "warn"
+
+# Restriction lints, by name.
+allow_attributes_without_reason = "warn"
+assertions_on_result_states = "warn"
+dbg_macro = "warn"
+empty_drop = "warn"
+get_unwrap = "warn"
+iter_over_hash_type = "warn"
+lossy_float_literal = "warn"
+map_err_ignore = "warn"
+mem_forget = "warn"
+mod_module_files = "warn"
+multiple_unsafe_ops_per_block = "warn"
+rc_mutex = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+string_lit_chars_any = "warn"
+tests_outside_test_module = "warn"
+todo = "warn"
+try_err = "warn"
+undocumented_unsafe_blocks = "warn"
+unimplemented = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+unused_result_ok = "warn"
+verbose_file_reads = "warn"
+# END rust-lints
+
+# Features are additive, and rules_rs resolves one feature set per crate for the whole workspace, so every feature is
+# named here. A crate lists a dependency with `.workspace = true`, with one exception. The Air UI-lane workspace,
+# `plugins/air/tests/integration/vm-lane`, links `bt-junit` and `bt-core` through path dependencies, and rules_rs reads
+# their `[dependencies]` without this workspace. Those two crates spell each normal dependency inline, with the version
+# and the features of this table.
+[workspace.dependencies]
+# Workspace crates.
+bt-junit = { path = "crates/bt-junit" }
+
+jiff = "0.2.37"
+quick-xml = "0.42.0"
+
+# Tests.
+pretty_assertions = "1.4.1"
+proptest = "1.11.0"
+regex = "1.13.1"
+
+[profile.release]
+debug = "line-tables-only"

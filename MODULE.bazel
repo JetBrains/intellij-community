@@ -266,4 +266,29 @@ crate.from_cargo(
 )
 use_repo(crate, "ddt")
 
+# The crates of //tools/bt, resolved from its `Cargo.lock`. The name is short for the same reason. BT runs on every
+# host, and the Air UI-lane workspace links `bt-junit` into its guest agent, so the triples also cover the guests.
+crate.from_cargo(
+    name = "bt",
+    cargo_config = "//tools/bt:.cargo/config.toml",
+    cargo_lock = "//tools/bt:Cargo.lock",
+    cargo_toml = "//tools/bt:Cargo.toml",
+    # Renders `[workspace.lints]` as `@bt//:workspace_cargo_lints`, the lint policy of every crate.
+    generate_lint_config = True,
+    platform_triples = [
+        # A macOS host, and the macOS guest agent.
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        # A Windows host, and the Windows compile and clippy checks of `bt`.
+        "aarch64-pc-windows-msvc",
+        "x86_64-pc-windows-msvc",
+        # A Linux host.
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+        # The Linux guest agent.
+        "aarch64-unknown-linux-musl",
+    ],
+)
+use_repo(crate, "bt")
+
 include("//:fleet/kmp.MODULE.bazel")

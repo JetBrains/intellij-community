@@ -1,0 +1,20 @@
+# BT, the Cargo workspace in this directory. `community/MODULE.bazel` reads `Cargo.toml`, `Cargo.lock` and
+# `.cargo/config.toml` of this package to generate `@bt`. `defs.bzl` declares each crate and the shipped binaries.
+# The crate map is `README.md`.
+
+load("//build/rust-lints:defs.bzl", "rust_lints_as_errors")
+
+# The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@bt` renders it, with every clippy warning
+# an error. `bt_rust_crate` passes it to each target.
+rust_lints_as_errors(
+    name = "lints",
+    cargo = "@bt//:workspace_cargo_lints",
+    visibility = ["//visibility:public"],
+)
+
+# The cargo workspace, which `community/MODULE.bazel` reads.
+exports_files([
+    ".cargo/config.toml",
+    "Cargo.lock",
+    "Cargo.toml",
+])

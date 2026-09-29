@@ -17,6 +17,7 @@ export const endMarker = "# END rust-lints"
 export const manifestPaths = [
   "community/build/dev-dist-tools/Cargo.toml",
   "build/dev-dist-tools/Cargo.toml",
+  "community/tools/bt/Cargo.toml",
   "plugins/air/tests/integration/vm-lane/Cargo.toml",
 ]
 

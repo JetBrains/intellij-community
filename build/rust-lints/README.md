@@ -1,7 +1,8 @@
 # rust-lints
 
 The one Rust lint policy of the build tools: the dev-dist tools in `community/build/dev-dist-tools` and
-`build/dev-dist-tools`, and the Air UI-lane tooling in `plugins/air/tests/integration/vm-lane`.
+`build/dev-dist-tools`, BT in `community/tools/bt`, and the Air UI-lane tooling in
+`plugins/air/tests/integration/vm-lane`.
 
 ## What is shared and what is copied
 

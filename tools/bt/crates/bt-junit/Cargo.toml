@@ -1,0 +1,22 @@
+[package]
+name = "bt-junit"
+description = "The JUnit XML reader: a scanner that keeps the cases of a truncated test.xml, and the simple-name class pattern."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+# Inline rather than `.workspace = true`: the Air UI-lane workspace links this crate through a path dependency, and
+# rules_rs reads the `[dependencies]` of such a crate without its workspace. See `[workspace.dependencies]`.
+[dependencies]
+jiff = "0.2.37"
+quick-xml = "0.42.0"
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+proptest.workspace = true
+regex.workspace = true
