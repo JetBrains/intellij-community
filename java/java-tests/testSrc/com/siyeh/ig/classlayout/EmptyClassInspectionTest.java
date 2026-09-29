@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -22,9 +23,8 @@ public class EmptyClassInspectionTest extends LightJavaInspectionTestCase {
     doTest();
   }
 
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
+  protected @Nullable InspectionProfileEntry getInspection() {
     final EmptyClassInspection inspection = new EmptyClassInspection();
     inspection.ignoreClassWithParameterization = true;
     inspection.ignoreThrowables = true;

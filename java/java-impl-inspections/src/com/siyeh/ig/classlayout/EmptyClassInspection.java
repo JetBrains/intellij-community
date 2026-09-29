@@ -42,7 +42,6 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiReferenceParameterList;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiWhiteSpace;
@@ -92,9 +91,9 @@ public final class EmptyClassInspection extends BaseInspection {
     if (element instanceof PsiAnonymousClass) {
       return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
     }
-    else if (element instanceof PsiClass) {
-      return ((PsiClass)element).isEnum() ?
-             InspectionGadgetsBundle.message("empty.enum.problem.descriptor"):
+    else if (element instanceof PsiClass aClass) {
+      return aClass.isEnum() ?
+             InspectionGadgetsBundle.message("empty.enum.problem.descriptor") :
              InspectionGadgetsBundle.message("empty.class.problem.descriptor");
     }
     else {
@@ -124,10 +123,10 @@ public final class EmptyClassInspection extends BaseInspection {
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       final PsiAnonymousClass aClass;
-      if (parent instanceof PsiAnonymousClass) {
-        aClass = (PsiAnonymousClass)parent;
-      } else if (parent instanceof PsiEnumConstant) {
-        aClass = ((PsiEnumConstant)parent).getInitializingClass();
+      if (parent instanceof PsiAnonymousClass anonymous) {
+        aClass = anonymous;
+      } else if (parent instanceof PsiEnumConstant constant) {
+        aClass = constant.getInitializingClass();
         if (aClass == null) return;
       } else {
         return;
@@ -212,33 +211,27 @@ public final class EmptyClassInspection extends BaseInspection {
       if (extendsList == null) {
         return false;
       }
-      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+      for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
         final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
         if (parameterList == null) {
           continue;
         }
-        final PsiType[] typeArguments = parameterList.getTypeArguments();
-        if (typeArguments.length != 0) {
+        if (parameterList.getTypeArguments().length != 0) {
           return true;
         }
       }
       return false;
     }
 
-    private boolean isSuperParametrization(PsiClass aClass) {
+    private static boolean isSuperParametrization(PsiClass aClass) {
       if (!(aClass instanceof PsiAnonymousClass anonymousClass)) {
-        final PsiReferenceList extendsList = aClass.getExtendsList();
-        final PsiReferenceList implementsList = aClass.getImplementsList();
-        return hasTypeArguments(extendsList) || hasTypeArguments(implementsList);
+        return hasTypeArguments(aClass.getExtendsList()) || hasTypeArguments(aClass.getImplementsList());
       }
-      final PsiJavaCodeReferenceElement reference = anonymousClass.getBaseClassReference();
-      final PsiReferenceParameterList parameterList = reference.getParameterList();
+      final PsiReferenceParameterList parameterList = anonymousClass.getBaseClassReference().getParameterList();
       if (parameterList == null) {
         return false;
       }
-      final PsiTypeElement[] elements = parameterList.getTypeParameterElements();
-      for (PsiTypeElement element : elements) {
+      for (PsiTypeElement element : parameterList.getTypeParameterElements()) {
         if (element != null) {
           return true;
         }
