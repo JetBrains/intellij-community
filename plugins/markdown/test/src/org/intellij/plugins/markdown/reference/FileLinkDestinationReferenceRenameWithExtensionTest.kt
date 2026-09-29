@@ -33,6 +33,18 @@ class FileLinkDestinationReferenceWithExtensionTest : BaseLinkDestinationReferen
     myFixture.checkResultByFile("moveOutOfFolderWithUnderscoreAfter.md")
   }
 
+  @TestFor(issues = ["IJPL-257043"])
+  fun testRenameWithFileNameInLinkText() = testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
+
+  @TestFor(issues = ["IJPL-257042"])
+  fun testMoveWithFileNameInLinkText() {
+    myFixture.configureByFile("moveWithFileNameInLinkText.md")
+    val target = PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir("underscore_/moved_stub.md"))!!
+    val targetDirectory = runWriteActionAndWait { myFixture.file.containingDirectory.createSubdirectory("moved") }
+    MoveFilesOrDirectoriesHandler().doMove(project, arrayOf<PsiElement>(target), targetDirectory, null)
+    myFixture.checkResultByFile("moveWithFileNameInLinkTextAfter.md")
+  }
+
   fun testRenameWithSpaceAndParentDirectory() {
     myFixture.configureByFile("source/renameWithSpace.md")
     val target = PsiUtilCore.findFileSystemItem(project, myFixture.findFileInTempDir("test2/test data.md"))!!

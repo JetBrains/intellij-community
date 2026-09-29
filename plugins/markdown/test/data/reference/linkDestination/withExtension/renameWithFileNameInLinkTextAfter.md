@@ -1,0 +1,1 @@
+[stub_in_root](renamed.md)
