@@ -63,6 +63,9 @@ a:com.intellij.codeInsight.hint.HintManager
 - java.lang.annotation.Annotation
 @:com.intellij.codeInsight.hint.HintManager$PositionFlags
 - java.lang.annotation.Annotation
+a:com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
+- com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx
+- <init>(com.intellij.openapi.editor.actionSystem.TypedActionHandler):V
 c:com.intellij.execution.ExecutionFinishedException
 - com.intellij.execution.ExecutionException
 - <init>():V

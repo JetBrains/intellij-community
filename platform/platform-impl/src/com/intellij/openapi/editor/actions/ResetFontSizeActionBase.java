@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -61,7 +61,7 @@ class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehavi
     @Override
     public float getFontSize() {
       UISettingsUtils uiSettings = UISettingsUtils.getInstance();
-      return ConsoleViewUtil.isConsoleViewEditor(myEditorEx) ? uiSettings.getScaledConsoleFontSize() : uiSettings.getScaledEditorFontSize();
+      return myEditorEx.getEditorKind() == EditorKind.CONSOLE ? uiSettings.getScaledConsoleFontSize() : uiSettings.getScaledEditorFontSize();
     }
 
     @Override
@@ -89,7 +89,7 @@ class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehavi
 
     private float getUnscaledFontSize() {
       PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
+      if (myEditorEx.getEditorKind() == EditorKind.CONSOLE) {
         return propertyComponent.getFloat(UNSCALED_FONT_SIZE_TO_RESET_CONSOLE, -1);
       }
       return propertyComponent.getFloat(UNSCALED_FONT_SIZE_TO_RESET_EDITOR, -1);

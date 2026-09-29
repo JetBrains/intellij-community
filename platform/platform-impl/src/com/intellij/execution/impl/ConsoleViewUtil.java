@@ -28,8 +28,6 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -49,8 +47,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -127,53 +123,7 @@ public final class ConsoleViewUtil {
   }
 
   public static @NotNull DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
-    return new DelegateColorScheme(scheme) {
-      @Override
-      public @NotNull Color getDefaultBackground() {
-        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null ? super.getDefaultBackground() : color;
-      }
-
-      @Override
-      public @NotNull FontPreferences getFontPreferences() {
-        return getConsoleFontPreferences();
-      }
-
-      @Override
-      public int getEditorFontSize() {
-        return getConsoleFontSize();
-      }
-
-      @Override
-      public float getEditorFontSize2D() {
-        return getConsoleFontSize2D();
-      }
-
-      @Override
-      public String getEditorFontName() {
-        return getConsoleFontName();
-      }
-
-      @Override
-      public float getLineSpacing() {
-        return getConsoleLineSpacing();
-      }
-
-      @Override
-      public @NotNull Font getFont(EditorFontType key) {
-        return super.getFont(EditorFontType.getConsoleType(key));
-      }
-
-      @Override
-      public void setEditorFontSize(int fontSize) {
-        setConsoleFontSize(fontSize);
-      }
-
-      @Override
-      public void setEditorFontSize(float fontSize) {
-        setConsoleFontSize(fontSize);
-      }
-    };
+    return ConsoleColorSchemeKt.createConsoleColorScheme(scheme);
   }
 
   public static boolean isConsoleViewEditor(@NotNull Editor editor) {

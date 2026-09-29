@@ -1516,9 +1516,6 @@ f:com.intellij.codeInsight.template.impl.TemplateSettings
 - removeTemplate(com.intellij.codeInsight.template.Template):V
 c:com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
-a:com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
-- com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx
-- <init>(com.intellij.openapi.editor.actionSystem.TypedActionHandler):V
 c:com.intellij.codeInsight.template.macro.CompleteMacro
 - com.intellij.codeInsight.template.Macro
 - <init>():V

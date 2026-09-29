@@ -5,7 +5,7 @@ package com.intellij.execution.impl
 
 import com.google.common.base.CharMatcher
 import com.intellij.codeInsight.folding.impl.FoldingUtil
-import com.intellij.codeInsight.navigation.IncrementalSearchHandler
+import com.intellij.platform.ide.impl.navigation.IncrementalSearchEditorData
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
@@ -1240,7 +1240,7 @@ open class ConsoleViewImpl protected constructor(
     private val myParentActionId: String,
   ) : ConsoleActionHandler(originalHandler) {
     override fun execute(console: ConsoleViewImpl, editor: Editor, context: DataContext) {
-      if (IncrementalSearchHandler.isHintVisible(editor)) {
+      if (IncrementalSearchEditorData.isHintVisible(editor)) {
         getDefaultActionHandler(myParentActionId).execute(editor, null, context)
         return
       }

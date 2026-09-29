@@ -2270,9 +2270,6 @@ f:com.intellij.codeInsight.template.impl.TemplateSettings
 c:com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction
 - <init>():V
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
-a:com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
-- pf:myOriginalHandler:com.intellij.openapi.editor.actionSystem.TypedActionHandler
-- beforeExecute(com.intellij.openapi.editor.Editor,C,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.actionSystem.ActionPlan):V
 c:com.intellij.codeInsight.template.macro.CompleteMacro
 - <init>(Z):V
 - p:invokeCompletionHandler(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
