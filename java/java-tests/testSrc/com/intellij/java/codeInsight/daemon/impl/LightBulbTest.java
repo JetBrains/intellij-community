@@ -22,6 +22,8 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -287,6 +289,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
     assertTrue("updateCount:"+updateCount, updateCount.get() > 0);
     myDaemonCodeAnalyzer.restart(getTestName(false));
     TestDaemonCodeAnalyzerImpl.runWithReparseDelay(0, () -> {
+      CodeInsightContext editorContext = EditorContextManager.getEditorContext(myEditor, getProject());
       for (int i = 0; i < 1000; i++) {
         LOG.debug("i = " + i);
         int updateCount0 = updateCount.get();
@@ -294,7 +297,7 @@ public class LightBulbTest extends ProductionDaemonAnalyzerTestCase {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         caretLeft();
         myDaemonCodeAnalyzer.restart(this);
-        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNullFor(myEditor.getDocument()));
+        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNullFor(myEditor.getDocument(), editorContext));
         myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
         assertNotSame("updateCount0: "+updateCount0+"; updateCount:"+updateCount, updateCount.get(), updateCount0);

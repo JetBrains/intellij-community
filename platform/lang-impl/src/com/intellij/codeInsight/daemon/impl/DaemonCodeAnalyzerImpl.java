@@ -688,7 +688,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return document != null &&
            PsiDocumentManager.getInstance(myProject).isCommitted(document) &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.allDirtyScopesAreNullFor(document);
+           myFileStatusMap.allDirtyScopesAreNullFor(document, CodeInsightContextUtil.getCachedCodeInsightContext(psiFile));
   }
 
   @ApiStatus.Internal
@@ -699,21 +699,44 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (myDisposed) {
       return false;
     }
-    boolean updateCompleted;
-    synchronized (this) {
-      updateCompleted = myUpdateRunnableFuture.isDone();
+    if (!isUpdateRunnableDone()) {
+      return false;
     }
-    List<Document> documents = ContainerUtil.mapNotNull(getSelectedEditors(), fe -> {
-      Editor editor = fe instanceof TextEditor te ? te.getEditor() : null;
-      VirtualFile virtualFile = getVirtualFile(fe);
-      return editor == null
-             ? virtualFile == null ? null : FileDocumentManager.getInstance().getCachedDocument(virtualFile)
-             : editor.getDocument();
-    });
-    return
-      !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
-      ContainerUtil.all(documents, document -> myFileStatusMap.allDirtyScopesAreNullFor(document)) &&
-      updateCompleted;
+    if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
+      return false;
+    }
+    return ContainerUtil.all(getSelectedEditors(), fileEditor -> isAnalysisFinishedFor(fileEditor));
+  }
+
+  private synchronized boolean isUpdateRunnableDone() {
+    return myUpdateRunnableFuture.isDone();
+  }
+
+  /**
+   * @return true if nothing is left to highlight in {@code fileEditor}, in the context this editor is shown in
+   */
+  private boolean isAnalysisFinishedFor(@NotNull FileEditor fileEditor) {
+    Editor editor = fileEditor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
+    Document document = getCachedDocument(editor, getVirtualFile(fileEditor));
+    if (document == null) {
+      return true;
+    }
+    // a non-text editor has no editor context, so the daemon highlights it in any context, as in queuePassesCreation
+    CodeInsightContext context = editor == null
+                                 ? CodeInsightContexts.anyContext()
+                                 : EditorContextManager.getCachedEditorContext(editor, myProject);
+    return context != null && myFileStatusMap.allDirtyScopesAreNullFor(document, context);
+  }
+
+  /**
+   * @return the document the daemon would highlight: the one shown in {@code editor}, or, for a non-text editor, the already loaded
+   * document of {@code virtualFile} (never loading it from disk, since that must not happen in EDT)
+   */
+  private static @Nullable Document getCachedDocument(@Nullable Editor editor, @Nullable VirtualFile virtualFile) {
+    if (editor != null) {
+      return editor.getDocument();
+    }
+    return virtualFile == null ? null : FileDocumentManager.getInstance().getCachedDocument(virtualFile);
   }
 
   @Override
@@ -1379,7 +1402,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     DaemonProgressIndicator progress;
     HighlightingSessionImpl session;
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-      Document document = editor == null ? FileDocumentManager.getInstance().getCachedDocument(virtualFile) : editor.getDocument();
+      Document document = getCachedDocument(editor, virtualFile);
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
       CodeInsightContext cachedContext = editor != null ? EditorContextManager.getCachedEditorContext(editor, myProject) : null;
       CodeInsightContext context = cachedContext != null ? cachedContext : CodeInsightContexts.anyContext();

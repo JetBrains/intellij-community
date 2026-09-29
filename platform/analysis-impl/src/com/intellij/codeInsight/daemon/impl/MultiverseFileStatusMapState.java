@@ -76,20 +76,6 @@ final class MultiverseFileStatusMapState implements FileStatusMapState {
   }
 
   @Override
-  public boolean allDirtyScopesAreNullFor(@NotNull Document document) {
-    Map<CodeInsightContext, FileStatus> map = myDocumentToStatusMap.get(document);
-    if (map == null) {
-      return false;
-    }
-    for (FileStatus status : map.values()) {
-      if (status.isDefensivelyMarkedForAnyPass() || !status.isWolfPassFinished() || !status.allDirtyScopesAreNull()) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Override
   public void markDefensivelyForAllPasses(@NotNull Project project) {
     for (Map<CodeInsightContext, FileStatus> map : myDocumentToStatusMap.values()) {
       for (FileStatus status : map.values()) {

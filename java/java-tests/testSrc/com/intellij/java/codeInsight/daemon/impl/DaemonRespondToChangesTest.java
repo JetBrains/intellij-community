@@ -32,6 +32,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
@@ -1920,9 +1922,10 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     type("String i=0;");
     LOG.debug("---");
     TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
+    CodeInsightContext editorContext = EditorContextManager.getEditorContext(getEditor(), getProject());
     while (myDaemonCodeAnalyzer.isRunningOrPending()
            || PsiDocumentManager.getInstance(myProject).isUncommited(getEditor().getDocument())
-           || !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNullFor(getEditor().getDocument())) {
+           || !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNullFor(getEditor().getDocument(), editorContext)) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       timeOut.assertNoTimeout("daemon");
     }

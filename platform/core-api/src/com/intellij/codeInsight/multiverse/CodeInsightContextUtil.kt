@@ -33,6 +33,10 @@ val FileViewProvider.codeInsightContext: CodeInsightContext
 val PsiFile.codeInsightContext: CodeInsightContext
   get() = this.viewProvider.codeInsightContext
 
+// the context of the file without inference: anyContext until the platform infers it
+val PsiFile.cachedCodeInsightContext: CodeInsightContext
+  get() = CodeInsightContextManager.getInstance(project).getCodeInsightContextRaw(viewProvider)
+
 val PsiElement.codeInsightContext: CodeInsightContext
   get() = this.containingFile.codeInsightContext
 
