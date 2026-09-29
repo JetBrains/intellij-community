@@ -4,5 +4,13 @@
 # Its own package, and not `//build`, for the reason `//build/dev-dist-content` of the ultimate checkout gives: the
 # map stays readable without the module extension that `build/BUILD.bazel` loads.
 #
-# Hand-written, and empty for now. The component targets of each product follow when the community platform sets
-# load the map.
+# Hand-written. It holds one `<product>_plugin_components` target per product, so `bazel build //...` builds every
+# component once under a product, on every platform.
+
+load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_component_builds")
+load(":dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
+
+dev_dist_plugin_component_builds(
+    components = DEV_DIST_PLUGIN_COMPONENTS,
+    product_info = "//build/dev-dist-descriptors:%s_product_info",
+)

@@ -1,0 +1,37 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//build:dev_server_run_configurations.bzl", "DEV_RUN_CONFIGURATIONS")
+
+# The twin of `//build/dev-dist-tool-guards` of the ultimate checkout, for the community launchers.
+#
+# No community dev distribution and no community launcher may reach the build scripts or the plugin-model-tool
+# generator: an edit there would re-run the actions of every distribution. The query keeps the implicit dependencies,
+# because an exec tool that reaches the build scripts re-runs actions too.
+_DEV_DISTRIBUTIONS = ["//build:%s" % row for row in DEV_RUN_CONFIGURATIONS]
+
+_BUILD_SCRIPTS = ["//platform/build-scripts:build-scripts"]
+
+_PLUGIN_MODEL_TOOL = ["//platform/build-scripts/plugin-model-tool"]
+
+genquery(
+    name = "distribution_build_scripts_paths",
+    expression = "somepath(set(%s), set(%s))" % (
+        " ".join(_DEV_DISTRIBUTIONS),
+        " ".join(_BUILD_SCRIPTS + _PLUGIN_MODEL_TOOL),
+    ),
+    scope = _DEV_DISTRIBUTIONS + _BUILD_SCRIPTS + _PLUGIN_MODEL_TOOL,
+)
+
+write_file(
+    name = "no_paths",
+    out = "no_paths.txt",
+    content = [],
+)
+
+diff_test(
+    name = "distribution_build_scripts_guard_test",
+    failure_message = "A community dev distribution or a launcher reaches the build scripts or the plugin-model-tool generator. " +
+                      "Build //build/dev-dist-tool-guards:distribution_build_scripts_paths and read its output for the path.",
+    file1 = ":no_paths",
+    file2 = ":distribution_build_scripts_paths",
+)

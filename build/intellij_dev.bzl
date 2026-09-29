@@ -85,9 +85,6 @@ _PREBUILT_DEV_MAIN_CLASS = "com.intellij.platform.bootstrap.dev.PreBuiltDevMain"
 # `PreBuiltDevMain`. The module carries no build scripts.
 _LAUNCHER_MODULE = "@community//platform/bootstrap/dev"
 
-# For `intellij_dev_legacy.bzl`, which cannot load a private name.
-runtime_jvm_flags = _runtime_jvm_flags
-
 def intellij_dev_prebuilt_binary(
         name,
         dist,

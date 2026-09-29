@@ -1,12 +1,16 @@
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
+load("//build:dev_dist_local_launch_test.bzl", "dev_dist_local_launch_test")
+load("//build:dev_dist_products.bzl", "DEV_DIST_PRODUCTS")
+load("//build:intellij_dev_community.bzl", "intellij_dev_platform_set_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
 load(":dev_launch_dependencies_test.bzl", "dev_launch_dependencies_test_suite")
+load(":dev_run_configuration_test.bzl", "dev_run_configuration_test_suite")
 load(":intellij_add_opens_test.bzl", "intellij_add_opens_test_suite")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
@@ -17,6 +21,8 @@ dev_launch_dependencies_test_suite(name = "dev_launch_dependencies_test")
 
 intellij_add_opens_test_suite(name = "intellij_add_opens_test")
 
+dev_run_configuration_test_suite(name = "dev_run_configuration_test")
+
 # The pinned build-dependency versions, for tests that gate shared dev-launch dependency sets
 # against version bumps, and for a dev assembly that reads them out of a materialized project tree
 # rather than a checkout (see `DependenciesProperties`).
@@ -25,6 +31,12 @@ exports_files(
         "dependencies/dependencies.properties",
         "dependencies/runtime.properties",
     ],
+    visibility = ["//visibility:public"],
+)
+
+# The product registry, for a dev assembly that materializes its own project tree.
+exports_files(
+    ["dev-build.json"],
     visibility = ["//visibility:public"],
 )
 
@@ -51,12 +63,20 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
-# == BAZEL_TARGETS_JSON_COMMUNITY
-jps_to_bazel_targets_json(
-    name = "community_bazel_targets_json",
+# The JPS project model of the community half, named once: the targets-json generator and the project model tree
+# of `intellij_dev_project_model_tree_community` read exactly this set.
+filegroup(
+    name = "community_project_model_files",
     srcs = [
         "//:jps_to_bazel_community_model_root_files",
     ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS,
+    visibility = ["//visibility:public"],
+)
+
+# == BAZEL_TARGETS_JSON_COMMUNITY
+jps_to_bazel_targets_json(
+    name = "community_bazel_targets_json",
+    srcs = [":community_project_model_files"],
     jps_to_bazel_treat_kotlin_dev_version_as_snapshot = JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT,
     mode = "community",
     starlark_iml_targets = ALL_COMMUNITY_IML_TARGETS,
@@ -166,22 +186,67 @@ java_binary(
     runtime_deps = [":build"],
 )
 
-# Dev-build targets for running IDEs locally via `bazel run //build:<target>`
-intellij_dev_binary_community(
-    name = "idea_community",
-    platform_prefix = "community",
+# Turns the `lib/` jars that `jvm_library` packs into a distribution component. It evaluates no layout and reads no
+# project model.
+alias(
+    name = "dev_dist_packed_jars",
+    actual = "//platform/build-scripts/bazel-rules:dev_dist_collector",
+    visibility = ["//visibility:public"],
 )
 
-intellij_dev_binary_community(
+alias(
+    name = "dev_dist_composer",
+    actual = "//platform/build-scripts/bazel-rules:dev_dist_composer",
+    visibility = ["//visibility:public"],
+)
+
+# The platform set of every community split product. The distribution of every community run configuration comes from
+# `dev_server_run_configurations()` below and reads these components. `DEV_DIST_PRODUCTS` in
+# `build/dev_dist_products.bzl` is the one list of the products.
+[
+    intellij_dev_platform_set_community(product = product)
+    for product in DEV_DIST_PRODUCTS
+]
+
+# The names of the launchers before they became rows of `dev_server_run_configurations.bzl`.
+alias(
     name = "idea_community_devkit",
-    additional_modules = "intellij.devkit",
-    platform_prefix = "community",
+    actual = ":idea_with_compose_dev_build",
 )
 
-intellij_dev_binary_community(
+alias(
     name = "android_studio",
-    platform_prefix = "AndroidStudio",
+    actual = ":android_studio_dev_build",
 )
+
+# The plain `Idea` run configuration on the split path, `:idea_community`. The first test checks that the launch-only
+# distribution states its home. The second test checks that the launcher and its distribution build.
+dev_dist_local_launch_test(
+    name = "idea_community_local_launch_test",
+    target_under_test = ":idea_community_dist_launch",
+)
+
+build_test(
+    name = "idea_community_assembles_test",
+    targets = [":idea_community"],
+)
+
+# The `AndroidStudio` run configuration on the split path, `:android_studio_dev_build`: the same pair of checks.
+dev_dist_local_launch_test(
+    name = "android_studio_dev_build_local_launch_test",
+    target_under_test = ":android_studio_dev_build_dist_launch",
+)
+
+build_test(
+    name = "android_studio_dev_build_assembles_test",
+    targets = [":android_studio_dev_build"],
+)
+
+# buildifier: disable=load-on-top
+load("//build:dev_server_run_configurations.bzl", "dev_server_run_configurations")
+
+# Dev-build targets for running IDEs locally via `bazel run //build:<target>`.
+dev_server_run_configurations()
 
 ### auto-generated section `dev intellij.platform.jps.build.dependencyGraph` start
 content_module_jar(module = ":dependency-graph")

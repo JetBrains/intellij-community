@@ -1,11 +1,11 @@
-"""The legacy launch macros: they assemble the product in the launching JVM through the build scripts.
+"""The legacy dev-mode test macro: it assembles the product in the test JVM through the build scripts.
 
-A Bazel dev distribution and the launcher in `intellij_dev.bzl` replace them. These stay for the community
-launchers and the dev-mode tests that still run `DevMainKt` or `JUnitDevMainKt`.
+The dev-mode tests are the last Bazel path that runs `JUnitDevMainKt`. Every dev launcher runs from a split dev
+distribution and the launcher in `intellij_dev.bzl`.
 """
 
 load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
-load("@rules_java//java:defs.bzl", "java_binary", "java_test")
+load("@rules_java//java:defs.bzl", "java_test")
 load(
     ":dev_launch_dependencies.bzl",
     "preloaded_downloads_data",
@@ -13,58 +13,9 @@ load(
     "preloaded_downloads_manifest_data",
     "preloaded_downloads_only_flag",
 )
-load(":intellij_dev.bzl", "runtime_jvm_flags")
 
-_DEV_MAIN_CLASS = "org.jetbrains.intellij.build.devServer.DevMainKt"
-
-# `DevMainKt` and `JUnitDevMainKt`, which assemble the product in process with the build scripts.
+# `JUnitDevMainKt`, which assembles the product in process with the build scripts.
 _LEGACY_LAUNCHER_MODULE = "@community//platform/bootstrap/dev-legacy"
-
-def intellij_dev_binary(
-        name,
-        visibility,
-        data,
-        jvm_flags,
-        env,
-        platform_prefix,
-        bazel_targets_json,
-        config_path,
-        system_path,
-        additional_modules,
-        program_args,
-        preloaded_download_repos,
-        preloaded_downloads_exhaustive_on):
-    all_jvm_flags = runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
-        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % bazel_targets_json,
-    ]
-
-    if additional_modules:
-        all_jvm_flags = all_jvm_flags + ["-Dadditional.modules=\"" + additional_modules + "\""]
-
-    # The archives the assembly would otherwise download at launch, as runfiles for the host platform,
-    # with their manifests. `preloaded_downloads_exhaustive_on` names the platforms where the declared set
-    # was measured to be this product's whole set, so an undeclared URL is an error rather than a
-    # download; a product that fetches its own archives - the CIDR toolchains, a locally overridden
-    # front-end - has none. See PreloadedDownloads and the caller that decides.
-    all_jvm_flags = all_jvm_flags + preloaded_downloads_flag(preloaded_download_repos)
-    if preloaded_downloads_exhaustive_on:
-        all_jvm_flags = all_jvm_flags + preloaded_downloads_only_flag(preloaded_downloads_exhaustive_on)
-    preloaded_data = (
-        preloaded_downloads_data(preloaded_download_repos) +
-        preloaded_downloads_manifest_data(preloaded_download_repos)
-    )
-
-    java_binary(
-        name = name,
-        visibility = visibility,
-        runtime_deps = [_LEGACY_LAUNCHER_MODULE],
-        main_class = _DEV_MAIN_CLASS,
-        data = data + [bazel_targets_json] + preloaded_data,
-        jvm_flags = all_jvm_flags,
-        env = env,
-        add_opens = INTELLIJ_ADD_OPENS,
-        args = program_args,
-    )
 
 def intellij_dev_test(
         name,
@@ -102,8 +53,9 @@ def intellij_dev_test(
         additional_modules: `-Dadditional.modules`: the test plugin and the non-bundled plugins the tests need.
         test_module: the JPS module whose tests run; its jar inside the assembled product is scanned for tests.
         entry_point_module: the content module whose class loader the tests run in; empty means `test_module`.
-        preloaded_download_repos: see `intellij_dev_binary`.
-        preloaded_downloads_exhaustive_on: see `intellij_dev_binary`.
+        preloaded_download_repos: the download repositories whose archives the test gets as runfiles.
+        preloaded_downloads_exhaustive_on: the platforms where those archives are the whole download set, so an
+            undeclared URL is an error and not a download.
         sandbox: as the `jps_test` parameter of the same name.
         tags: extra tags.
         add_opens: packages to open beyond `INTELLIJ_ADD_OPENS`, as `module/package`.
