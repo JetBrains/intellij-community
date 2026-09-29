@@ -31,8 +31,14 @@ open class ConfigurableFactory {
       }
     }
     if (provider is Configurable.Beta) {
-      return object : CodeStyleConfigurableWrapper(provider, panelFactory, owner), Configurable.Beta {}
+      return BetaCodeStyleConfigurableWrapper(provider, panelFactory, owner)
     }
     return CodeStyleConfigurableWrapper(provider, panelFactory, owner)
   }
 }
+
+private class BetaCodeStyleConfigurableWrapper(
+  provider: CodeStyleSettingsProvider,
+  factory: CodeStyleSettingsPanelFactory,
+  owner: CodeStyleSchemesConfigurable,
+) : CodeStyleConfigurableWrapper(provider, factory, owner), Configurable.Beta
