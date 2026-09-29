@@ -6245,9 +6245,24 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("callableReferenceWithExternalReceiver.kt")
+        public void testCallableReferenceWithExternalReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/callableReferenceWithExternalReceiver.kt");
+        }
+
+        @TestMetadata("capturedValueReceiver.kt")
+        public void testCapturedValueReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/capturedValueReceiver.kt");
+        }
+
         @TestMetadata("defaultParameter.kt")
         public void testDefaultParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/defaultParameter.kt");
+        }
+
+        @TestMetadata("defaultParameterNamed.kt")
+        public void testDefaultParameterNamed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/defaultParameterNamed.kt");
         }
 
         @TestMetadata("expectedFunction.kt")
@@ -6335,6 +6350,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/explicitThisReceiver.kt");
         }
 
+        @TestMetadata("functionRefArityMismatch.kt")
+        public void testFunctionRefArityMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/functionRefArityMismatch.kt");
+        }
+
+        @TestMetadata("genericReceiver.kt")
+        public void testGenericReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/genericReceiver.kt");
+        }
+
         @TestMetadata("hasExplicitType.kt")
         public void testHasExplicitType() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType.kt");
@@ -6380,9 +6405,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference4.kt");
         }
 
+        @TestMetadata("invokeArityMismatch.kt")
+        public void testInvokeArityMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invokeArityMismatch.kt");
+        }
+
         @TestMetadata("it.kt")
         public void testIt() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/it.kt");
+        }
+
+        @TestMetadata("lambdaAtSecondParam.kt")
+        public void testLambdaAtSecondParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaAtSecondParam.kt");
         }
 
         @TestMetadata("lambdaInsideLambda.kt")
