@@ -17,10 +17,16 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.LocalQuickFixWithModCommandFallback;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
@@ -33,8 +39,11 @@ import com.intellij.usageView.UsageViewUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class RenameFix extends RefactoringInspectionGadgetsFix {
+import java.util.List;
+
+public class RenameFix extends RefactoringInspectionGadgetsFix implements LocalQuickFixWithModCommandFallback {
 
   private final String m_targetName;
   private boolean m_searchInStrings = true;
@@ -113,5 +122,46 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
       return IntentionPreviewInfo.DIFF;
     }
     return IntentionPreviewInfo.EMPTY;
+  }
+
+  @Override
+  public @NotNull ModCommandAction getFallbackModCommandAction() {
+    return new RenameAction();
+  }
+
+  private final class RenameAction implements ModCommandAction {
+    @Override
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      PsiElement element = context.element();
+      if (element == null || !(getElementToRefactor(element) instanceof PsiNamedElement)) return null;
+      return Presentation.of(getName());
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      PsiElement element = context.element();
+
+      if (element == null) return ModCommand.nop();
+      if (!(getElementToRefactor(element) instanceof PsiNamedElement namedElement)) return ModCommand.nop();
+
+      PsiElement nameIdentifier;
+      if (namedElement instanceof PsiNameIdentifierOwner owner) {
+        nameIdentifier = owner.getNameIdentifier();
+      }
+      else if (element != namedElement) {
+        nameIdentifier = element;
+      }
+      else {
+        nameIdentifier = null;
+      }
+      List<String> suggestedNames = m_targetName == null ? List.of() : List.of(m_targetName);
+      return ModCommand.psiUpdate(namedElement, (writable, updater) ->
+        updater.rename(writable, nameIdentifier == null ? null : updater.getWritable(nameIdentifier), suggestedNames));
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return RenameFix.this.getFamilyName();
+    }
   }
 }
