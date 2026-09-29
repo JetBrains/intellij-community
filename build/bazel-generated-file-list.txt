@@ -763,6 +763,7 @@ platform/compose/markdown
 platform/compose/plugin
 platform/compose/swing-ui
 platform/configuration-store-impl
+platform/consoleView
 platform/core-api
 platform/core-impl
 platform/core-nio-fs

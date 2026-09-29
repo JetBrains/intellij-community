@@ -275,6 +275,7 @@
     <module name="intellij.platform.usageView.impl" loading="embedded"/>
     <module name="intellij.platform.welcomeScreen.impl" loading="embedded"/>
     <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
+    <module name="intellij.platform.consoleView" loading="embedded"/>
     <module name="intellij.platform.execution" loading="embedded"/>
     <module name="intellij.platform.execution.impl" loading="embedded"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>

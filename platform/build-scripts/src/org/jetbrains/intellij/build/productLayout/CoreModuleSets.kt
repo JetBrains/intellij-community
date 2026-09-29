@@ -257,6 +257,7 @@ object CoreModuleSets {
     // consumed by intellij.platform.ide.bootstrap; also PROVIDED-depends on intellij.platform.ide.impl
     embeddedModule("intellij.platform.icons.impl.intellij")
 
+    embeddedModule("intellij.platform.consoleView")
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")
 
