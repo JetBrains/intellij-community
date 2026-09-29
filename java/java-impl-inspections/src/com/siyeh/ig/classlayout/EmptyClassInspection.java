@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -56,7 +57,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -154,13 +154,12 @@ public final class EmptyClassInspection extends BaseInspection {
     @Override
     public void visitFile(@NotNull PsiFile psiFile) {
       super.visitFile(psiFile);
-      if (!(psiFile instanceof PsiJavaFile javaFile)) {
+      if (!(psiFile instanceof PsiJavaFile javaFile)
+          || javaFile.getContext() instanceof PsiSnippetDocTag
+          || javaFile.getClasses().length != 0) {
         return;
       }
-      if (javaFile.getClasses().length != 0) {
-        return;
-      }
-      final @NonNls String fileName = javaFile.getName();
+      final String fileName = javaFile.getName();
       if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName) || PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
         return;
       }

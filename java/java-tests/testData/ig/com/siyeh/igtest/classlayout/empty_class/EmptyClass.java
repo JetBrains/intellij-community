@@ -18,6 +18,11 @@ interface Interface {
     new Interface() { };
   }
 }
+/**
+ * {@snippet :
+ * import java.util.regex.Pattern; // example import line
+ * }
+ */
 class EmptyClassTest implements Interface {
 }
 enum <warning descr="Enum 'EmptyEnum' is empty">EmptyEnum</warning> {}
