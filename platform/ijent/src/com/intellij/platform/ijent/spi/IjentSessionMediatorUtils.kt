@@ -65,7 +65,7 @@ object IjentSessionMediatorUtils {
           is IjentUnavailableException.ClosedByApplication -> Unit
 
           is IjentUnavailableException.CommunicationFailure -> {
-            if (!exception.exitedExpectedly && loggedErrors.add(exception)) {
+            if (!exception.diagnosed && loggedErrors.add(exception)) {
               IjentLogger.OTHER_LOG.error("Exception in connection with IJent $ijentLabel: ${exception.message}", exception)
             }
           }

@@ -31,7 +31,11 @@ sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithA
     cause: Throwable?,
     vararg attachments: Attachment,
   ) : IjentUnavailableException(message, cause, *attachments) {
-    var exitedExpectedly: Boolean = false
+    /**
+     * The failure has a cause the IDE could name and has already put in front of the user: a condition of the
+     * environment, not a defect. It still ends the session, but it is not an IDE error report.
+     */
+    var diagnosed: Boolean = false
   }
 
   override fun getAttachments(): Array<out Attachment> = attachments

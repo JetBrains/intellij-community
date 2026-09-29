@@ -90,7 +90,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
           is CancellationException -> false
           is IjentUnavailableException -> when (errorToPropagate) {
             is IjentUnavailableException.ClosedByApplication -> false
-            is IjentUnavailableException.CommunicationFailure -> !errorToPropagate.exitedExpectedly
+            is IjentUnavailableException.CommunicationFailure -> !errorToPropagate.diagnosed
           }
           else -> !closedByApplication
         }
