@@ -4404,6 +4404,7 @@ com.intellij.toolWindow.DefaultToolWindowDescriptorBuilder
 - a:getId():java.lang.String
 - a:getSideWeight():F
 - a:getWeight():F
+- hideStripeButton():V
 - a:isSplit():Z
 - a:isVisible():Z
 - a:setContentUiType(com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowContentUiType):V

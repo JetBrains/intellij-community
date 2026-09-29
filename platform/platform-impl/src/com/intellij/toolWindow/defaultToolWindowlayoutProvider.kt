@@ -153,6 +153,11 @@ interface DefaultToolWindowDescriptorBuilder {
    * Defaults to 0.5.
    */
   var sideWeight: Float
+
+  /**
+   * Hides stripe button if the product wants to hide standard platform tool window to More menu.
+   */
+  fun hideStripeButton() {}
 }
 
 // Old (server-based API)
@@ -294,6 +299,7 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
           id = it.id,
           anchor = it.anchor,
           isVisible = it.isVisible,
+          isShowStripeButton = it.isShowStripeButton,
           weight = it.weight,
           contentUiType = it.contentUiType,
           isSplit = it.isSplit,
@@ -309,6 +315,12 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
     override var contentUiType: ToolWindowDescriptor.ToolWindowContentUiType = ToolWindowDescriptor.ToolWindowContentUiType.TABBED
     override var isSplit: Boolean = false
     override var sideWeight: Float = 0.5f
+
+    var isShowStripeButton: Boolean = true
+
+    override fun hideStripeButton() {
+      this.isShowStripeButton = false
+    }
   }
 }
 
