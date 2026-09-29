@@ -309,12 +309,6 @@ public final class FileStatusMap implements Disposable {
       return myFileStatusMapState.allDirtyScopesAreNullFor(document);
     }
   }
-  @ApiStatus.Internal
-  public boolean allDirtyScopesAreNull() {
-    synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNull();
-    }
-  }
 
   @Override
   public String toString() {
