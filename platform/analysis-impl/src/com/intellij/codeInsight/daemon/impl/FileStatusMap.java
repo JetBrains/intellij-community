@@ -300,13 +300,15 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
-   * @return true when all registered statuses are clean
+   * @return true when the status of {@code document} in {@code context} is clean.
+   * This method ignores the statuses of other contexts.
    */
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public boolean allDirtyScopesAreNullFor(@NotNull Document document) {
+  public boolean allDirtyScopesAreNullFor(@NotNull Document document, @NotNull CodeInsightContext context) {
     synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNullFor(document);
+      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
+      return status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
     }
   }
 

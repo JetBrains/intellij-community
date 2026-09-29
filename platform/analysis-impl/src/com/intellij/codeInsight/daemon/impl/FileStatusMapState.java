@@ -30,7 +30,5 @@ sealed interface FileStatusMapState permits ClassicFileStatusMapState, Multivers
 
   @NotNull String toString(@NotNull Document document);
 
-  boolean allDirtyScopesAreNullFor(@NotNull Document document);
-
   void markDefensivelyForAllPasses(@NotNull Project project);
 }
