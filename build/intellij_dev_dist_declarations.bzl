@@ -513,14 +513,14 @@ def _declare_fragments_dist(
 def _check_plan(tables, name, product):
     """Fails when the generated plan cannot serve the launcher `name` of `product`.
 
-    The one place a run configuration reads the generator's switch. `SPLIT_DEV_DISTRIBUTIONS` in
-    `devDistPlanGenerator.kt` writes a plan entry for a listed product and nothing for the others. The message names
+    The one place a run configuration reads the generator's switch. The split distributions of a generator half
+    write a plan entry for a listed product and nothing for the others. The message names
     the recipe: the map to edit and the tool run that writes the plan. The generator stops on a module that a run
     configuration names and that it cannot plan. A module outside the plugin components of the product fails in the
     distribution macro.
     """
     if product not in tables.plans:
-        fail("%s: product '%s' has no generated dev-distribution plan; add it to SPLIT_DEV_DISTRIBUTIONS (devDistPlanGenerator.kt) and run plugin-model-tool" % (name, product))
+        fail("%s: product '%s' has no generated dev-distribution plan; add it to the split distributions of its generator half and run plugin-model-tool" % (name, product))
 
 def _distribution_name(names):
     """The distribution name of a group of rows: the shortest row name, ties in alphabetical order."""
@@ -703,8 +703,8 @@ _RUN_CONFIGURATION_DOC = """One dev launcher written by hand, `bazel run //<pack
     use this macro: `dev_server_run_configurations.bzl` passes them to `run_configurations`, which lets rows share a
     distribution.
 
-    A launcher the generated plan cannot serve fails at load time (`check_plan`): a product that
-    `SPLIT_DEV_DISTRIBUTIONS` (`devDistPlanGenerator.kt`) does not name. A module of `additional_modules` without a
+    A launcher the generated plan cannot serve fails at load time (`check_plan`): a product that the split
+    distributions of its generator half do not name. A module of `additional_modules` without a
     generated component fails in the distribution macro.
     """
 
