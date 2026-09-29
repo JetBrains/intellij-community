@@ -5,16 +5,14 @@ package com.intellij.execution.impl
 
 import com.google.common.base.CharMatcher
 import com.intellij.codeInsight.folding.impl.FoldingUtil
-import com.intellij.platform.ide.impl.navigation.IncrementalSearchEditorData
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.execution.ConsoleFolding
-import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ConsoleViewBundle
 import com.intellij.execution.actions.ClearConsoleAction
 import com.intellij.execution.actions.ConsoleActionsPostProcessor
-import com.intellij.execution.actions.EOFAction
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.Filter
@@ -45,7 +43,6 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -97,6 +94,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.ide.impl.navigation.IncrementalSearchEditorData
 import com.intellij.pom.Navigatable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.toolWindow.InternalDecoratorImpl.Companion.componentWithEditorBackgroundAdded
@@ -798,7 +796,7 @@ open class ConsoleViewImpl protected constructor(
   override fun uiDataSnapshot(sink: DataSink) {
     val editor = editor as EditorEx?
     sink.set(CommonDataKeys.EDITOR, this.editor)
-    sink.set(ExecutionDataKeys.CONSOLE_VIEW, this)
+    sink.set(ConsoleView.DATA_KEY, this)
     sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId)
 
     if (editor == null) return
@@ -871,7 +869,7 @@ open class ConsoleViewImpl protected constructor(
     val shortcutSet = CustomShortcutSet(*ArrayUtil.mergeArrays(shortcuts, CommonShortcuts.ENTER.shortcuts))
     HyperlinkNavigationAction().registerCustomShortcutSet(shortcutSet, editor.contentComponent)
     if (!isViewer) {
-      registerActionHandler(editor, EOFAction.ACTION_ID)
+      registerActionHandler(editor, SEND_EOF_ACTION_ID)
     }
   }
 
@@ -1332,11 +1330,11 @@ open class ConsoleViewImpl protected constructor(
   }
 
   override fun getNextOccurenceActionName(): String {
-    return ExecutionBundle.message("down.the.stack.trace")
+    return ConsoleViewBundle.message("down.the.stack.trace")
   }
 
   override fun getPreviousOccurenceActionName(): String {
-    return ExecutionBundle.message("up.the.stack.trace")
+    return ConsoleViewBundle.message("up.the.stack.trace")
   }
 
   fun addCustomConsoleAction(action: AnAction) {
@@ -1689,6 +1687,9 @@ open class ConsoleViewImpl protected constructor(
 
 private var ourTypedHandlerInitialized = false
 private val NEW_LINE_MATCHER: CharMatcher = CharMatcher.anyOf("\n\r")
+
+/** The ID of the `EOFAction` action. */
+private const val SEND_EOF_ACTION_ID = "SendEOF"
 
 private fun initTypedHandler() {
   if (ourTypedHandlerInitialized) return

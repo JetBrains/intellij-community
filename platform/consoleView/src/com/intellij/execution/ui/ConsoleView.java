@@ -5,10 +5,15 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ConsoleView extends ExecutionConsole {
+  @SuppressWarnings({"unchecked", "deprecation"})
+  DataKey<ConsoleView> DATA_KEY = (DataKey<ConsoleView>)LangDataKeys.CONSOLE_VIEW;
+
   void print(@NotNull String text, @NotNull ConsoleViewContentType contentType);
 
   void clear();

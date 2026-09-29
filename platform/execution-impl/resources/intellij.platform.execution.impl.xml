@@ -18,6 +18,7 @@
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -189,7 +190,6 @@
     <extensionPoint qualifiedName="com.intellij.beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT" dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationTemplateProvider" interface="com.intellij.execution.impl.RunConfigurationTemplateProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.console.folding" interface="com.intellij.execution.ConsoleFolding" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.testSrcLocator" interface="com.intellij.testIntegration.TestLocationProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runningApplicationUpdaterProvider" interface="com.intellij.execution.update.RunningApplicationUpdaterProvider" dynamic="true"/>

@@ -184,6 +184,7 @@ jvm_library(
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
         "//platform/eel-nioFs",
+        "//platform/consoleView",
     ],
 )
 
@@ -320,6 +321,7 @@ jvm_library(
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/consoleView:consoleView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.impl` end

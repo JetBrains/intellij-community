@@ -38,6 +38,7 @@
     <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.configurationStore.impl"/>
+    <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -729,8 +730,6 @@
     <applicationService serviceImplementation="com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringActionHandlerFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
-                        serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.execution.filters.HyperlinkInfoFactory"
                         serviceImplementation="com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.impl.TemplateSettings"/>
@@ -1273,17 +1272,6 @@
                   order="first"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler" id="selectionQuoting"/>
     <templateCompletionProcessor implementation="com.intellij.codeInsight.template.macro.DirectoryTemplateCompletionProcessor"/>
-    <!-- ConsoleViewImplActions -->
-    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$EnterHandler"
-                         order="first" id="console.view.impl.enter"/>
-    <editorActionHandler action="EditorTab" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$TabHandler"
-                         order="first" id="console.view.impl.tab"/>
-    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$BackspaceHandler"
-                         order="first" id="console.view.impl.backspace"/>
-    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$DeleteHandler"
-                         order="first" id="console.view.impl.delete"/>
-    <editorActionHandler action="EditorPaste" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$PasteHandler"
-                         order="first" id="console.view.impl.paste"/>
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleOptionsProvider"/>

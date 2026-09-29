@@ -1,8 +1,32 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
+                        serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$EnterHandler"
+                         order="first" id="console.view.impl.enter"/>
+    <editorActionHandler action="EditorTab" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$TabHandler"
+                         order="first" id="console.view.impl.tab"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$BackspaceHandler"
+                         order="first" id="console.view.impl.backspace"/>
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$DeleteHandler"
+                         order="first" id="console.view.impl.delete"/>
+    <editorActionHandler action="EditorPaste" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$PasteHandler"
+                         order="first" id="console.view.impl.paste"/>
+  </extensions>
 </idea-plugin>

@@ -93,5 +93,6 @@
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" />
   </component>
 </module>

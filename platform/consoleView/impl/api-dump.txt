@@ -1,0 +1,81 @@
+c:com.intellij.execution.actions.ClearConsoleAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+c:com.intellij.execution.filters.TextConsoleBuilderImpl
+- com.intellij.execution.filters.TextConsoleBuilder
+- <init>(com.intellij.openapi.project.Project):V
+- p:createConsole():com.intellij.execution.ui.ConsoleView
+- filters(java.util.List):com.intellij.execution.filters.TextConsoleBuilder
+- getConsole():com.intellij.execution.ui.ConsoleView
+- p:getProject():com.intellij.openapi.project.Project
+- p:getScope():com.intellij.psi.search.GlobalSearchScope
+- isUsePredefinedMessageFilter():Z
+- p:isViewer():Z
+- setUsePredefinedMessageFilter(Z):V
+- setViewer(Z):V
+f:com.intellij.execution.impl.ConsoleBuffer
+- s:getCycleBufferSize():I
+- s:useCycleBuffer():Z
+a:com.intellij.execution.impl.ConsoleState$NotStartedStated
+- com.intellij.execution.impl.ConsoleState
+- <init>():V
+- dispose():com.intellij.execution.impl.ConsoleState
+c:com.intellij.execution.impl.ConsoleViewImpl
+- javax.swing.JPanel
+- com.intellij.execution.ui.ConsoleView
+- com.intellij.execution.ui.ObservableConsoleView
+- com.intellij.ide.OccurenceNavigator
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+- f:addCustomConsoleAction(com.intellij.openapi.actionSystem.AnAction):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- allowHeavyFilters():V
+- attachToProcess(com.intellij.execution.process.ProcessHandler):V
+- clear():V
+- pf:clearThisConsoleAction():com.intellij.openapi.actionSystem.AnAction
+- p:createCompositeFilter():com.intellij.execution.filters.CompositeFilter
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
+- dispose():V
+- p:doClear():V
+- p:doCreateConsoleEditor():com.intellij.openapi.editor.ex.EditorEx
+- flushDeferredText():V
+- f:foldImmediately():V
+- getComponent():javax.swing.JComponent
+- getContentSize():I
+- getEditor():com.intellij.openapi.editor.Editor
+- f:getHyperlinks():com.intellij.execution.impl.EditorHyperlinkSupport
+- getNextOccurenceActionName():java.lang.String
+- getPreferredFocusableComponent():javax.swing.JComponent
+- getPreviousOccurenceActionName():java.lang.String
+- f:getProject():com.intellij.openapi.project.Project
+- f:getText():java.lang.String
+- goNextOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- goPreviousOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- hasDeferredOutput():Z
+- hasNextOccurence():Z
+- hasPreviousOccurence():Z
+- isRunning():Z
+- performWhenNoDeferredOutput(java.lang.Runnable):V
+- rehighlightHyperlinksAndFoldings():V
+- requestScrollingToEnd():V
+- scrollTo(I):V
+- scrollToEnd():V
+- setHelpId(java.lang.String):V
+- setOutputPaused(Z):V
+- f:setUpdateFoldingsEnabled(Z):V
+f:com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction
+- com.intellij.execution.actions.ClearConsoleAction
+f:com.intellij.execution.impl.ConsoleViewRunningState
+- com.intellij.execution.impl.ConsoleState
+f:com.intellij.execution.impl.ConsoleViewUtil
+- s:enableReplaceActionForConsoleViewEditor(com.intellij.openapi.editor.Editor):V
+- s:isConsoleViewEditor(com.intellij.openapi.editor.Editor):Z
+- s:updateConsoleColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.colors.impl.DelegateColorScheme
+f:com.intellij.execution.impl.EditorHyperlinkSupport
+- clearHyperlinks():V
+- findAllHyperlinksOnLine(I):java.util.List
+- s:get(com.intellij.openapi.editor.Editor):com.intellij.execution.impl.EditorHyperlinkSupport
+- getHyperlinkAt(I):com.intellij.execution.filters.HyperlinkInfo
+- s:getHyperlinkInfo(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.execution.filters.HyperlinkInfo
+- getHyperlinkInfoByEvent(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.execution.filters.HyperlinkInfo
+- getHyperlinks():java.util.Map
+- removeHyperlink(com.intellij.openapi.editor.markup.RangeHighlighter):V

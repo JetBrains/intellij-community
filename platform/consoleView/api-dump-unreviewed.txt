@@ -1,0 +1,85 @@
+a:com.intellij.execution.ConsoleFolding
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getNestingPriority():I
+- getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
+- shouldFoldLine(com.intellij.openapi.project.Project,java.lang.String):Z
+c:com.intellij.execution.filters.CompositeFilter
+- <init>(com.intellij.openapi.project.Project,java.util.List):V
+- applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
+- applyHeavyFilter(com.intellij.openapi.editor.Document,I,I,com.intellij.util.Consumer):V
+- getUpdateMessage():java.lang.String
+- isAnyHeavy():Z
+- isEmpty():Z
+- shouldRunHeavy():Z
+c:com.intellij.execution.filters.CompositeFilter$ApplyFilterException
+- java.lang.RuntimeException
+c:com.intellij.execution.filters.CompositeInputFilter
+- com.intellij.execution.filters.InputFilter
+- <init>(com.intellij.openapi.project.Project,java.util.Collection):V
+- applyFilter(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):java.util.List
+a:com.intellij.execution.filters.ConsoleDependentFilterProvider
+- a:getDefaultFilters(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.Filter[]
+a:com.intellij.execution.filters.ConsoleDependentInputFilterProvider
+- a:getDefaultFilters(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):java.util.List
+- f:getDefaultFilters(com.intellij.openapi.project.Project):com.intellij.execution.filters.InputFilter[]
+a:com.intellij.execution.filters.FileHyperlinkInfoBase
+- <init>(com.intellij.openapi.project.Project,I,I):V
+- <init>(com.intellij.openapi.project.Project,I,I,Z):V
+- b:<init>(com.intellij.openapi.project.Project,I,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- p:calculateOffset(com.intellij.openapi.editor.Document,I,I):java.lang.Integer
+- pa:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+e:com.intellij.execution.filters.Filter$NextAction
+- sf:CONTINUE_FILTERING:com.intellij.execution.filters.Filter$NextAction
+- sf:EXIT:com.intellij.execution.filters.Filter$NextAction
+- s:valueOf(java.lang.String):com.intellij.execution.filters.Filter$NextAction
+- s:values():com.intellij.execution.filters.Filter$NextAction[]
+c:com.intellij.execution.filters.Filter$Result
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo):V
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes):V
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.openapi.editor.markup.TextAttributes):V
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,Z):V
+- getHighlightAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- getHighlightEndOffset():I
+- getHighlightStartOffset():I
+- getHyperlinkInfo():com.intellij.execution.filters.HyperlinkInfo
+- getNextAction():com.intellij.execution.filters.Filter$NextAction
+c:com.intellij.execution.filters.Filter$ResultItem
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo):V
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes):V
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,com.intellij.openapi.editor.markup.TextAttributes,com.intellij.openapi.editor.markup.TextAttributes):V
+- <init>(I,I,com.intellij.execution.filters.HyperlinkInfo,Z):V
+- getHighlighterLayer():I
+com.intellij.execution.filters.FilterMixin
+- a:applyHeavyFilter(com.intellij.openapi.editor.Document,I,I,com.intellij.util.Consumer):V
+- a:getUpdateMessage():java.lang.String
+- a:shouldRunHeavy():Z
+c:com.intellij.execution.filters.FilterMixin$AdditionalHighlight
+- <init>(I,I):V
+- <init>(java.util.List):V
+- getTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.openapi.editor.markup.TextAttributes
+c:com.intellij.execution.filters.LazyFileHyperlinkInfo
+- <init>(com.intellij.openapi.project.Project,java.lang.String,I,I):V
+- <init>(com.intellij.openapi.project.Project,java.lang.String,I,I,Z):V
+- b:<init>(com.intellij.openapi.project.Project,java.lang.String,I,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- p:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+c:com.intellij.execution.filters.LineNumbersMapping$ArrayBasedMapping
+- bytecodeToSource(I):I
+- sourceToBytecode(I):I
+c:com.intellij.execution.filters.OpenFileHyperlinkInfo
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I,I):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I,I,Z):V
+c:com.intellij.execution.filters.RegexpFilter
+- sf:COLUMN_MACROS:java.lang.String
+- sf:FILE_PATH_MACROS:java.lang.String
+- sf:LINE_MACROS:java.lang.String
+- <init>(com.intellij.openapi.project.Project,java.lang.String):V
+- applyFilter(java.lang.String,I):com.intellij.execution.filters.Filter$Result
+- p:createOpenFileHyperlink(java.lang.String,I,I):com.intellij.execution.filters.HyperlinkInfo
+- s:getMacrosName():java.lang.String[]
+- s:validate(java.lang.String):V
+a:com.intellij.execution.filters.TextConsoleBuilderFactory
+- <init>():V
+- a:createBuilder(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.filters.TextConsoleBuilder
+c:com.intellij.execution.ui.ConsoleViewPlace
+- sf:UNKNOWN:com.intellij.execution.ui.ConsoleViewPlace

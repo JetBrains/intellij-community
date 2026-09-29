@@ -1,7 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ConsoleViewBundle;
 import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.LocalProcessService;
 import com.intellij.execution.process.OSProcessHandler;
@@ -109,7 +109,7 @@ public final class ConsoleViewRunningState extends ConsoleState {
   @Override
   public void sendUserInput(@NotNull String input) throws IOException {
     if (myUserInputWriter == null) {
-      throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
+      throw new IOException(ConsoleViewBundle.message("no.user.process.input.error.message"));
     }
     char enterKeyCode = getEnterKeyCode();
     String inputToSend = input.replace(LF, enterKeyCode);

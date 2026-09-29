@@ -48,11 +48,6 @@ f:com.intellij.diagnostic.logging.LogsGroupFragment
 f:com.intellij.diagnostic.logging.OutputFileUtil
 - s:attachDumpListener(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.process.ProcessHandler,com.intellij.execution.ui.ExecutionConsole):V
 - s:getOutputFile(com.intellij.execution.configurations.RunConfigurationBase):java.io.File
-a:com.intellij.execution.ConsoleFolding
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- getNestingPriority():I
-- getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
-- shouldFoldLine(com.intellij.openapi.project.Project,java.lang.String):Z
 com.intellij.execution.DisplayDescriptorChooser
 - sf:Companion:com.intellij.execution.DisplayDescriptorChooser$Companion
 - a:chooseDescriptor(java.util.List,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
@@ -189,10 +184,6 @@ c:com.intellij.execution.actions.ChooseRunConfigurationPopupAction
 - p:getAdKey():java.lang.String
 - p:getAlternativeExecutor():com.intellij.execution.Executor
 - p:getDefaultExecutor():com.intellij.execution.Executor
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.execution.actions.ClearConsoleAction
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.execution.actions.CreateAction
 - <init>(javax.swing.Icon):V
@@ -431,9 +422,6 @@ f:com.intellij.execution.impl.ConfigurationSettingsEditorWrapper
 - selectTabAndGetEditor(java.lang.Class):com.intellij.openapi.options.SettingsEditor
 - targetChanged(java.lang.String):V
 - titleChanged(java.lang.String):V
-f:com.intellij.execution.impl.ConsoleBuffer
-- <init>():V
-- s:getLegacyCycleBufferSize():I
 c:com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory
 - createChildElements(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor):com.intellij.ide.util.treeView.NodeDescriptor[]
 - p:createGroups(com.intellij.openapi.project.Project,java.util.List):java.util.List
@@ -444,9 +432,6 @@ pf:com.intellij.execution.impl.DefaultNewRunConfigurationTreePopupFactory$GroupD
 - <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor,javax.swing.Icon,java.lang.String,java.util.List):V
 - getWeight():I
 - update():Z
-f:com.intellij.execution.impl.DisposedPsiManagerCheck
-- <init>(com.intellij.openapi.project.Project):V
-- performCheck():V
 c:com.intellij.execution.impl.EditConfigurationsDialog
 - p:myExecutor:com.intellij.execution.Executor
 - <init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory):V

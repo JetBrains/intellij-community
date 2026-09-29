@@ -56,10 +56,6 @@ com.intellij.execution.ConfigurationWithCommandLineShortener
 - a:getProject():com.intellij.openapi.project.Project
 - a:getShortenCommandLine():com.intellij.execution.ShortenCommandLine
 - a:setShortenCommandLine(com.intellij.execution.ShortenCommandLine):V
-a:com.intellij.execution.ConsoleFolding
-- <init>():V
-- isEnabledForConsole(com.intellij.execution.ui.ConsoleView):Z
-- shouldBeAttachedToThePreviousLine():Z
 com.intellij.execution.EnvFilesOptions
 - a:getEnvFilePaths():java.util.List
 - a:setEnvFilePaths(java.util.List):V
@@ -138,9 +134,6 @@ f:com.intellij.execution.actions.ChooseRunConfigurationManager
 - s:createSettingsList(com.intellij.execution.impl.RunManagerImpl,com.intellij.execution.actions.ExecutorProvider,Z,Z,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - s:createSettingsList(com.intellij.openapi.project.Project,com.intellij.execution.actions.ExecutorProvider,com.intellij.openapi.actionSystem.DataContext,Z):java.util.List
 - s:deleteConfiguration(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.ui.popup.JBPopup):V
-c:com.intellij.execution.actions.ClearConsoleAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
 c:com.intellij.execution.actions.CreateAction
 - com.intellij.execution.actions.BaseRunConfigurationAction
 - <init>():V
@@ -247,9 +240,6 @@ com.intellij.execution.filters.HyperlinkWithHoverInfo
 - com.intellij.execution.filters.HyperlinkInfo
 - a:onMouseEntered(javax.swing.JComponent,java.awt.Rectangle):V
 - a:onMouseExited():V
-com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
-- com.intellij.execution.filters.HyperlinkInfo
-- a:getPopupMenuGroup(java.awt.event.MouseEvent):com.intellij.openapi.actionSystem.ActionGroup
 c:com.intellij.execution.filters.PatternBasedFileHyperlinkFilter
 - com.intellij.execution.filters.AbstractFileHyperlinkFilter
 - com.intellij.openapi.project.DumbAware
@@ -280,9 +270,6 @@ f:com.intellij.execution.impl.ConfigurationSettingsEditorWrapper
 - fireStepsBeforeRunChanged():V
 - getStepsBeforeLaunch():java.util.List
 - replaceBeforeLaunchSteps(java.util.List):V
-f:com.intellij.execution.impl.ConsoleBuffer
-- s:getCycleBufferSize():I
-- s:useCycleBuffer():Z
 a:com.intellij.execution.impl.DefaultExecutorGroup
 - com.intellij.execution.executors.ExecutorGroup
 - <init>():V

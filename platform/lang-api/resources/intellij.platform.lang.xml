@@ -10,7 +10,6 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.indexing"/>
@@ -133,9 +132,6 @@
     <!-- File-Based Index-->
     <extensionPoint qualifiedName="com.intellij.include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.printHandler" interface="com.intellij.ide.actions.PrintActionHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.invisibleHyperlinkFilterProvider" interface="com.intellij.execution.filters.InvisibleHyperlinkFilterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.parameterNameHintsSuppressor" dynamic="true" interface="com.intellij.codeInsight.hints.ParameterNameHintsSuppressor"/>

@@ -2,7 +2,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.lang.LangBundle;
+import com.intellij.execution.ConsoleViewBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -199,7 +199,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
         updateMessage.add(((FilterMixin)filter).getUpdateMessage());
       }
     }
-    return updateMessage.size() == 1 ? updateMessage.get(0) : LangBundle.message("updating.filters");
+    return updateMessage.size() == 1 ? updateMessage.get(0) : ConsoleViewBundle.message("updating.filters");
   }
 
   public boolean isEmpty() {
