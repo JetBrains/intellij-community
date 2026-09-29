@@ -2,11 +2,13 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -94,6 +96,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       }
     }
 
+  @RegistryKey(key = "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users", value = "false")
   @Test
   fun `plugin update sources are initialized only for unambiguous plugins and only once with nightly servers`(): Unit = timeoutRunBlocking {
     val customServer = createTestServer()
@@ -102,7 +105,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
     setInstalledPluginMocks(*INSTALLED_PLUGINS.toTypedArray())
     setCustomRepositoryHosts(listOf(customServer.url))
-    withSystemProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY, "${firstNightlyServer.url},${secondNightlyServer.url}") {
+    withCustomRepoAndInternalUserFlag("${firstNightlyServer.url},${secondNightlyServer.url}") {
       setCustomRepositoryPlugins(customServer, listOf(CustomRepositoryPlugin(NIGHTLY_AND_CUSTOM_REPOSITORIES_PLUGIN, "9.0")))
       setCustomRepositoryPlugins(firstNightlyServer,
                                  listOf(
@@ -214,13 +217,17 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     }
   }
 
-  private suspend fun withSystemProperty(key: String, value: String?, task: suspend () -> Unit) {
-    val original = if (value != null) System.setProperty(key, value) else System.clearProperty(key)
+  private suspend fun withCustomRepoAndInternalUserFlag(customRepositories: String?, task: suspend () -> Unit) {
+    val key = CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY
+    val flag = FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
+    val oldValue = TestModeFlags.set(flag, true)
+    val original = if (customRepositories != null) System.setProperty(key, customRepositories) else System.clearProperty(key)
     try {
       task.invoke()
     }
     finally {
       SystemProperties.setProperty(key, original)
+      TestModeFlags.set(flag, oldValue)
     }
   }
 

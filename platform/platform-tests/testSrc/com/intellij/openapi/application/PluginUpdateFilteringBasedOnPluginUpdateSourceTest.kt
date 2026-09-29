@@ -147,6 +147,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     assertEquals(setOf(UPDATEABLE_BUNDLED_JETBRAINS, UPDATEABLE_BUNDLED_NOT_JETBRAINS), marketplaceRequestedIds)
   }
 
+  @RegistryKey(key = "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users", value = "false")
   @Test
   fun `plugins from nightly servers are updated from current nightly servers, and from Marketplace if added to source`() {
     val oldNightlyServer = createTestServer("old-nightly-server")
