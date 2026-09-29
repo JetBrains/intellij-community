@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
-import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
@@ -24,9 +23,11 @@ import org.jsoup.parser.TagSet
 class IncrementalDOMBuilder(
   html: String,
   private val sourceFile: VirtualFile?,
-  private val imageResourceProvider: ResourceProvider? = null,
+  private val imageResourceProvider: MarkdownImageResourceProvider? = null,
   private val previewResourceProvider: ResourceProvider? = null,
 ) {
+  /** The sources of the served images. Read it after the build. */
+  val imageSources: MutableSet<String> = LinkedHashSet()
 
   private val document = Jsoup.parse(html, createSelfClosingSpanAwareParser())
   private val builder = StringBuilder()
@@ -126,7 +127,8 @@ class IncrementalDOMBuilder(
     }
     try {
       node.attr("data-original-src", source)
-      node.attr("src", PreviewStaticServer.getStaticUrl(provider, MarkdownImageResourceProvider.resourceName(source)))
+      imageSources += source
+      node.attr("src", provider.imageUrl(source))
     }
     catch (exception: Throwable) {
       thisLogger().warn("Failed to rewrite the source of an image node: $source", exception)

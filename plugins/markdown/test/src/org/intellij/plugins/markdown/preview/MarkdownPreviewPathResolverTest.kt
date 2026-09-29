@@ -166,6 +166,12 @@ class MarkdownPreviewPathResolverTest : BasePlatformTestCase() {
     assertTrue(MarkdownImageResourceProvider.resourceName("img/logo.SVG").endsWith(".SVG"))
   }
 
+  fun `test the path names of a source`() {
+    assertEquals(setOf("img", "near.png"), MarkdownPreviewPathResolver.pathNames("./img/../img/near.png"))
+    assertEquals(setOf("img", "spaced name.png"), MarkdownPreviewPathResolver.pathNames("img/spaced%20name.png?v=1#anchor"))
+    assertEmpty(MarkdownPreviewPathResolver.pathNames("https://example.com/a.png"))
+  }
+
   private fun createFile(path: String): VirtualFile = myFixture.tempDirFixture.createFile(path)
 
   private fun projectRoot(): VirtualFile = myFixture.tempDirFixture.getFile("")!!

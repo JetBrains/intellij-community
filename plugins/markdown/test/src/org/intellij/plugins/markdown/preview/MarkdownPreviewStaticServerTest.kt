@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.preview
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.io.HttpRequests
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.jetbrains.ide.BuiltInServerManager
@@ -67,6 +68,13 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
     withServedResource(provider, PageResourceProvider.RESOURCE_NAME) { url ->
       assertNull(headerOf(url, "Content-Security-Policy"))
     }
+  }
+
+  fun `test an image URL keeps the stamp before the fragment`() {
+    val provider = TestResourceProvider()
+    assertFalse(MarkdownImageResourceProvider.imageUrl(provider, "img/a.png", null).contains("?v="))
+    assertTrue(MarkdownImageResourceProvider.imageUrl(provider, "img/a.png", 42).endsWith(".png?v=42"))
+    assertTrue(MarkdownImageResourceProvider.imageUrl(provider, "logo.svg#dark", 42).endsWith(".svg?v=42#dark"))
   }
 
   private fun headerOf(url: String, name: String): String? {

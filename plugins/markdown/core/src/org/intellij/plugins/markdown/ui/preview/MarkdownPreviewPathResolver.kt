@@ -74,6 +74,16 @@ object MarkdownPreviewPathResolver {
     return Resolution.Found(file)
   }
 
+  /** The names on the path that [rawSource] names, or none if the browser loads [rawSource] itself. */
+  fun pathNames(rawSource: String): Set<String> {
+    if (rawSource.isEmpty() || isBrowserOwned(rawSource)) {
+      return emptySet()
+    }
+    val trimmed = trimQueryAndFragment(rawSource)
+    val path = if (trimmed.startsWith("file:", ignoreCase = true)) runCatching { URI(trimmed).path }.getOrNull() else decode(trimmed)
+    return path.orEmpty().split('/').filterTo(LinkedHashSet()) { it.isNotEmpty() && it != "." && it != ".." }
+  }
+
   private suspend fun find(document: VirtualFile?, projectRoot: VirtualFile?, rawSource: String): VirtualFile? {
     if (rawSource.isEmpty() || isBrowserOwned(rawSource)) {
       return null

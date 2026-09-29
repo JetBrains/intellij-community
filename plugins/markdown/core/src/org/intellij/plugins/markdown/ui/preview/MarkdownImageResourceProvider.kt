@@ -20,6 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 class MarkdownImageResourceProvider(
   private val project: Project?,
   private val document: VirtualFile?,
+  private val watcher: MarkdownImageWatcher<*>? = null,
 ) : ResourceProvider {
   override fun canProvide(resourceName: String): Boolean = resourceName.startsWith(PREFIX)
 
@@ -36,21 +37,35 @@ class MarkdownImageResourceProvider(
     if (document.parent == null) {
       return loadFromBackend(source, document, project)
     }
-    val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(document)
-    val resolution = awaitWithTimeout(source) {
-      MarkdownPreviewPathResolver.resolve(
-        document = document,
-        projectRoot = projectRoot,
-        rawSource = source,
-        allowOutsideProjectRoot = TrustedProjects.isProjectTrusted(project),
-      )
-    } ?: return null
+    val resolution = awaitWithTimeout(source) { resolve(source, project, document) } ?: return null
     if (resolution is MarkdownPreviewPathResolver.Resolution.Forbidden) {
       thisLogger().warn("The Markdown preview refused $source outside the root of an untrusted project.")
+    }
+    val file = (resolution as? MarkdownPreviewPathResolver.Resolution.Found)?.file
+    watcher?.onImageLoaded(source, file)
+    if (file == null) {
       return null
     }
-    val file = (resolution as? MarkdownPreviewPathResolver.Resolution.Found)?.file ?: return null
     return runCatching { file.inputStream.use { it.readBytes() } }.getOrNull()
+  }
+
+  /** The URL of the image of [source], with the stamp of its file if the file changed. */
+  fun imageUrl(source: String): String = imageUrl(this, source, watcher?.versionOf(source))
+
+  /** The file of [source] by the rule of [loadResource]. */
+  suspend fun resolveFile(source: String): VirtualFile? {
+    val project = project ?: return null
+    val document = document ?: return null
+    return (resolve(source, project, document) as? MarkdownPreviewPathResolver.Resolution.Found)?.file
+  }
+
+  private suspend fun resolve(source: String, project: Project, document: VirtualFile): MarkdownPreviewPathResolver.Resolution {
+    return MarkdownPreviewPathResolver.resolve(
+      document = document,
+      projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(document),
+      rawSource = source,
+      allowOutsideProjectRoot = TrustedProjects.isProjectTrusted(project),
+    )
   }
 
   private fun loadFromBackend(source: String, document: VirtualFile, project: Project): ByteArray? {
@@ -74,6 +89,16 @@ class MarkdownImageResourceProvider(
   companion object {
     private const val PREFIX = "image/"
     private val LOAD_TIMEOUT = 10.seconds
+
+    /** The URL of the image of [source]. A new [stamp] makes the browser load the image again. */
+    fun imageUrl(provider: ResourceProvider, source: String, stamp: Long?): String {
+      val url = PreviewStaticServer.getStaticUrl(provider, resourceName(source))
+      if (stamp == null) {
+        return url
+      }
+      val fragmentStart = url.indexOf('#').takeIf { it >= 0 } ?: url.length
+      return "${url.substring(0, fragmentStart)}?v=$stamp${url.substring(fragmentStart)}"
+    }
 
     fun resourceName(source: String): String {
       val extension = source.substringAfterLast('/').substringAfterLast('.', "")

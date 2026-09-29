@@ -2,10 +2,19 @@
 package org.intellij.plugins.markdown.preview
 
 import com.intellij.markdown.jcef.preview.impl.IncrementalDOMBuilder
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.plus
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageWatcher
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
+import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import java.io.File
 
 /**
@@ -56,10 +65,37 @@ class MarkdownIncrementalDOMTest : BasePlatformTestCase() {
       override fun canProvide(resourceName: String): Boolean = resourceName == "alertIcons/note.png"
       override fun loadResource(resourceName: String): ResourceProvider.Resource? = null
     }
-    val js = IncrementalDOMBuilder(html, document, previewResources, previewResources).generateDomBuildCalls()
+    val imageResources = MarkdownImageResourceProvider(project, document)
+    val js = IncrementalDOMBuilder(html, document, imageResources, previewResources).generateDomBuildCalls()
     assertGeneratedContains(js, "o('img','src','alertIcons%2Fnote.png')")
     assertGeneratedDoesNotContain(js, "'src','picture.png'")
     assertGeneratedContains(js, "'data-original-src','picture.png'")
+  }
+
+  fun testStampOfChangedImageGoesToSource() {
+    val document = myFixture.addFileToProject("document.md", "").virtualFile
+    val changed = myFixture.addFileToProject("changed.png", "old").virtualFile
+    myFixture.addFileToProject("same.png", "old")
+    val scope = MarkdownPluginScope.createChildScope(project) + Dispatchers.Unconfined
+    Disposer.register(testRootDisposable) { scope.cancel() }
+    lateinit var provider: MarkdownImageResourceProvider
+    val watcher = MarkdownImageWatcher<Unit>(scope) { provider.resolveFile(it) }
+    provider = MarkdownImageResourceProvider(project, document, watcher)
+    watcher.watch(setOf("changed.png", "same.png"))
+    provider.loadResource(MarkdownImageResourceProvider.resourceName("changed.png"))
+    provider.loadResource(MarkdownImageResourceProvider.resourceName("same.png"))
+    runWriteActionAndWait { changed.setBinaryContent("new".toByteArray()) }
+
+    val html = """<body><img src="changed.png"><img src="same.png"></body>"""
+    val builder = IncrementalDOMBuilder(html, document, provider)
+    val js = builder.generateDomBuildCalls()
+    assertGeneratedContains(js, encodedName("changed.png") + "%3Fv%3D${changed.modificationStamp}'")
+    assertGeneratedContains(js, encodedName("same.png") + "'")
+    assertEquals(setOf("changed.png", "same.png"), builder.imageSources)
+  }
+
+  private fun encodedName(source: String): String {
+    return PreviewEncodingUtil.encodeUrl(MarkdownImageResourceProvider.resourceName(source))
   }
 
   private fun assertGeneratedContains(js: String, expected: String) {
