@@ -7,6 +7,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.CoroutineScope
@@ -114,8 +115,21 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
         allKeys: List<SelectableLazyListKey>,
         key: Any,
     ) {
+        if (selectionMode == SelectionMode.None) return
+
+        // When mouse is used, we're no longer in keyboard navigation mode
+        selectableLazyListState.isKeyboardNavigating = false
+
         with(keybindings) {
             when {
+                pointerEvent.buttons.isSecondaryPressed && key in selectableLazyListState.selectedKeys -> {
+                    // do nothing
+                }
+
+                pointerEvent.buttons.isSecondaryPressed -> {
+                    resetSelection(selectableLazyListState, key, allKeys)
+                }
+
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {
                     // do nothing
@@ -130,10 +144,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                 }
 
                 else -> {
-                    if (selectionMode == SelectionMode.None) return
-
-                    selectableLazyListState.selectedKeys = setOf(key)
-                    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
+                    resetSelection(selectableLazyListState, key, allKeys)
                 }
             }
         }
@@ -196,41 +207,6 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
 /** [DefaultSelectableLazyColumnEventAction] for tree views, adding single/double-click detection for node expansion. */
 public open class DefaultTreeViewPointerEventAction(private val treeState: TreeState) :
     DefaultSelectableLazyColumnEventAction() {
-    override fun handlePointerEventPress(
-        pointerEvent: PointerEvent,
-        keybindings: SelectableColumnKeybindings,
-        selectableLazyListState: SelectableLazyListState,
-        selectionMode: SelectionMode,
-        allKeys: List<SelectableLazyListKey>,
-        key: Any,
-    ) {
-        if (selectionMode == SelectionMode.None) return
-
-        // When mouse is used, we're no longer in keyboard navigation mode
-        selectableLazyListState.isKeyboardNavigating = false
-
-        with(keybindings) {
-            when {
-                pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
-                    pointerEvent.keyboardModifiers.isCtrlPressed -> {}
-
-                pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed -> {
-                    super.onExtendSelectionToKey(key, allKeys, selectableLazyListState, selectionMode)
-                }
-
-                pointerEvent.keyboardModifiers.isMultiSelectionKeyPressed -> {
-                    selectableLazyListState.lastKeyEventUsedMouse = false
-                    super.toggleKeySelection(key, allKeys, selectableLazyListState, selectionMode)
-                }
-
-                else -> {
-                    selectableLazyListState.selectedKeys = setOf(key)
-                    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
-                }
-            }
-        }
-    }
-
     // todo warning: move this away from here
     // for item click that lose focus and fail to match if a operation is a double-click
     private var elementClickedTmpHolder: Any? = null
@@ -289,6 +265,15 @@ public fun DefaultTreeViewKeyActions(treeState: TreeState): DefaultTreeViewKeyAc
     return DefaultTreeViewKeyActions(keybindings, DefaultTreeViewOnKeyEvent(keybindings, treeState))
 }
 
+private fun resetSelection(
+    selectableLazyListState: SelectableLazyListState,
+    key: Any,
+    allKeys: List<SelectableLazyListKey>,
+) {
+    selectableLazyListState.selectedKeys = setOf(key)
+    selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
+}
+
 /**
  * [KeyActions] for tree views, adding expand/collapse key handling on top of [DefaultSelectableLazyColumnKeyActions].
  */
@@ -311,7 +296,6 @@ public class DefaultTreeViewKeyActions(
         val keyEvent = this
 
         // Always mark keyboard navigation mode active for all keyboard interactions
-        state.lastKeyEventUsedMouse = false
         state.isKeyboardNavigating = true
 
         with(keybindings) {
@@ -360,7 +344,6 @@ public open class DefaultSelectableLazyColumnKeyActions(
 
         // More aggressively mark keyboard navigation for all key interactions
         // This improves screen reader behavior
-        state.lastKeyEventUsedMouse = false
         state.isKeyboardNavigating = true
 
         execute(
