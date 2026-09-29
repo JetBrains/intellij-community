@@ -48,6 +48,7 @@ intellij.java.coverage.tests
 intellij.java.debugger.impl.tests
 intellij.java.debugger.streams.tests
 intellij.java.decompiler.engine.tests
+intellij.java.decompiler.tests
 intellij.java.frontback.tests
 intellij.java.guiForms.compiler.tests
 intellij.java.guiForms.designer.tests

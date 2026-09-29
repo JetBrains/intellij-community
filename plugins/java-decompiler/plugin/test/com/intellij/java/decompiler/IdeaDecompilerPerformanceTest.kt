@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.decompiler
 
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -17,11 +16,6 @@ import org.jetbrains.java.decompiler.IdeaDecompilerSettings
 @PerformanceUnitTest
 class IdeaDecompilerPerformanceTest : LightJavaCodeInsightFixtureTestCase() {
   override fun runInDispatchThread(): Boolean = false
-
-  override fun setUp() {
-    super.setUp()
-    myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
-  }
 
   override fun tearDown() {
     try {
