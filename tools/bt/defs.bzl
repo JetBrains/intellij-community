@@ -47,13 +47,16 @@ def bt_rust_crate(name, compile_data = []):
         visibility = ["//visibility:public"],
     )
 
-    # A `rust_test` does not take `lint_config` from its `crate`, so it is passed again.
+    # A `rust_test` does not take `lint_config` from its `crate`, so it is passed again. The Air fast lane runs these
+    # tests with `--test_sharding_strategy=forced=2`, and a test runner that does not report sharding fails there, so
+    # the rules_rust wrapper splits the libtest cases across the shards.
     rust_test(
         name = name + "_test",
         crate = ":" + name,
         compile_data = compile_data,
         data = compile_data,
         deps = all_crate_deps(normal_dev = True),
+        experimental_enable_sharding = True,
         lint_config = _LINTS,
     )
 
