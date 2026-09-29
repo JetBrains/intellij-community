@@ -362,7 +362,7 @@
                  description="Enable async stack traces for coroutines"/>
     <registryKey key="debugger.async.stacks.max.depth" defaultValue="500"
                  description="Maximum depth of captured async stacks"/>
-    <registryKey key="debugger.log.async.stacks" defaultValue="false"
+    <registryKey key="debugger.log.async.stacks" defaultValue="true"
                  description="Log async stack trace when log stack trace is checked in breakpoint properties"/>
     <registryKey key="debugger.batch.evaluation" defaultValue="true"
                  description="Evaluate multiple values in a single batch request to the debuggee"/>
