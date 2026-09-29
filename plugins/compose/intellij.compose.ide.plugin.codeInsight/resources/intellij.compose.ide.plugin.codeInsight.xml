@@ -38,6 +38,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="com.intellij.compose.ide.plugin.codeInsight.intentions.ComposableQuickFixesRegistrar"/>
     <callHighlighterExtension
       implementation="com.intellij.compose.ide.plugin.codeInsight.highlighting.ComposableFunctionCallHighlighterExtension"/>
     <extractFunctionDescriptorModifier implementation="com.intellij.compose.ide.plugin.codeInsight.ComposableAnnotationToExtractedFunctionAdder"
