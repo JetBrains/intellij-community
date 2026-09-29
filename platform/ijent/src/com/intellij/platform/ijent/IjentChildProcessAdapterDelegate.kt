@@ -62,7 +62,7 @@ internal class IjentChildProcessAdapterDelegate(
 
   fun isAlive(): Boolean = when (ijentChildProcess.exitCode.state) {
     SafeDeferred.State.Active -> true
-    is SafeDeferred.State.Canceled, is SafeDeferred.State.Completed<*>, is SafeDeferred.State.Failed -> false
+    is SafeDeferred.State.Finished<*> -> false
   }
 
   fun onExit(): CompletableFuture<Any?> =
@@ -71,7 +71,7 @@ internal class IjentChildProcessAdapterDelegate(
   fun exitValue(): Int = when (val s = ijentChildProcess.exitCode.state) {
     is SafeDeferred.State.Completed -> s.value
 
-    SafeDeferred.State.Active, is SafeDeferred.State.Canceled, is SafeDeferred.State.Failed -> throw IllegalThreadStateException()
+    SafeDeferred.State.Active, is SafeDeferred.State.Finished -> throw IllegalThreadStateException()
   }
 
   fun destroy() {

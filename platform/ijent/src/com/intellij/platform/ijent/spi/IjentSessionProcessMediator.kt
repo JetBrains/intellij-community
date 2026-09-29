@@ -7,7 +7,6 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.PeekableEelReceiveChannel
 import com.intellij.platform.eel.channels.peekable
-import com.intellij.platform.eel.map
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.ijent.IJENT_DEAD_SESSION_SAFE_DEFERRED_MAPPER

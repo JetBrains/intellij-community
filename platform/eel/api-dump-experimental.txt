@@ -537,6 +537,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - f:await(kotlin.coroutines.Continuation):java.lang.Object
 - f:getState():com.intellij.platform.eel.SafeDeferred$State
 - f:invokeWhenCompleted(kotlin.jvm.functions.Function1):V
+- *f:map(kotlin.jvm.functions.Function1):com.intellij.platform.eel.SafeDeferred
 *f:com.intellij.platform.eel.SafeDeferred$CancelledDeferred
 - com.intellij.platform.eel.SafeDeferred$DeferredException
 - <init>(java.util.concurrent.CancellationException):V
@@ -547,12 +548,13 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 *f:com.intellij.platform.eel.SafeDeferred$FailedDeferred
 - com.intellij.platform.eel.SafeDeferred$DeferredException
 - <init>(java.lang.Throwable):V
+- getCause():java.lang.Throwable
 *:com.intellij.platform.eel.SafeDeferred$State
 *f:com.intellij.platform.eel.SafeDeferred$State$Active
 - com.intellij.platform.eel.SafeDeferred$State
 - sf:INSTANCE:com.intellij.platform.eel.SafeDeferred$State$Active
 *f:com.intellij.platform.eel.SafeDeferred$State$Canceled
-- com.intellij.platform.eel.SafeDeferred$State$FinishedUnsuccessfully
+- com.intellij.platform.eel.SafeDeferred$State$MappedError
 - <init>(java.util.concurrent.CancellationException):V
 - getError():java.util.concurrent.CancellationException
 - throwWrapped():java.lang.Void
@@ -561,19 +563,24 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - <init>(java.lang.Object):V
 - f:getValue():java.lang.Object
 *f:com.intellij.platform.eel.SafeDeferred$State$Failed
-- com.intellij.platform.eel.SafeDeferred$State$FinishedUnsuccessfully
-- <init>(java.lang.Throwable):V
+- com.intellij.platform.eel.SafeDeferred$State$MappedError
+- <init>(java.lang.Throwable,java.lang.Throwable):V
 - getError():java.lang.Throwable
 - throwWrapped():java.lang.Void
 *:com.intellij.platform.eel.SafeDeferred$State$Finished
 - com.intellij.platform.eel.SafeDeferred$State
-*:com.intellij.platform.eel.SafeDeferred$State$FinishedUnsuccessfully
-- com.intellij.platform.eel.SafeDeferred$State$Finished
+*:com.intellij.platform.eel.SafeDeferred$State$MappedError
+- com.intellij.platform.eel.SafeDeferred$State$Unsuccessful
 - a:getError():java.lang.Throwable
 - a:throwWrapped():java.lang.Void
+*f:com.intellij.platform.eel.SafeDeferred$State$UnmappedError
+- com.intellij.platform.eel.SafeDeferred$State$Unsuccessful
+- <init>(com.intellij.platform.eel.SafeDeferred,java.lang.Throwable):V
+- f:await(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.SafeDeferred$State$Unsuccessful
+- com.intellij.platform.eel.SafeDeferred$State$Finished
 f:com.intellij.platform.eel.SafeDeferredKt
 - *sf:computeDeferred(java.util.Map,kotlinx.coroutines.CoroutineScope,java.lang.Object,kotlin.jvm.functions.Function2):com.intellij.platform.eel.SafeDeferred
-- *sf:map(com.intellij.platform.eel.SafeDeferred,kotlin.jvm.functions.Function1):com.intellij.platform.eel.SafeDeferred
 - *sf:toSafeDeferred(kotlinx.coroutines.Deferred,kotlin.jvm.functions.Function2):com.intellij.platform.eel.SafeDeferred
 *e:com.intellij.platform.eel.UnixSignal
 - java.lang.Enum

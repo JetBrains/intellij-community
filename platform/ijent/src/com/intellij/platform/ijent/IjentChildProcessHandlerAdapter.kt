@@ -169,7 +169,7 @@ class IjentChildProcessHandlerAdapter internal constructor(
     if (ownProcess != null) {
       return when (ownProcess.exitCode.state) {
         SafeDeferred.State.Active -> true
-        is SafeDeferred.State.Canceled, is SafeDeferred.State.Completed<*>, is SafeDeferred.State.Failed -> false
+        is SafeDeferred.State.Finished -> false
       }
     }
     return processInfoFor(pidValue) != null
