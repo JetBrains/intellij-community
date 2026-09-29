@@ -10,15 +10,26 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.universal.SingleRootContributor
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooser
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
+import com.intellij.openapi.fileChooser.universal.findOwner
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getRemoteProjectBaseNioPath
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.MutableProperty
@@ -27,11 +38,14 @@ import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.net.NetUtils
 import com.intellij.util.ui.JBDimension
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 
 internal class LspServerConfigurable(
   private val project: Project,
@@ -86,7 +100,8 @@ internal class LspServerConfigurable(
           )
 
         row(LspUiBundle.message("lsp.settings.server.executable")) {
-          textFieldWithBrowseButton(LspUiBundle.message("lsp.settings.server.executable.browse"))
+          cell(createExecutablePathField())
+            .columns(COLUMNS_SHORT)
             .bindText(configuration::executablePath)
             .comment(LspUiBundle.message("lsp.settings.server.executable.comment"))
             .align(AlignX.FILL)
@@ -172,6 +187,45 @@ internal class LspServerConfigurable(
           }
         panel {}
       }.resizableRow()
+    }
+  }
+
+  private fun createExecutablePathField(): TextFieldWithBrowseButton = TextFieldWithBrowseButton().apply {
+    val descriptor = FileChooserDescriptorFactory.singleFile()
+      .withTitle(LspUiBundle.message("lsp.settings.server.executable.browse"))
+    val environment = project.getEelDescriptor()
+    if (environment is LocalEelDescriptor) {
+      addBrowseFolderListener(project, descriptor.withEnvironmentRestricted(true))
+    }
+    else {
+      addActionListener {
+        val backendPath = project.getRemoteProjectBaseNioPath()
+        val contributor = backendPath?.let { UniversalFileChooserContributor.EP_NAME.extensionList.findOwner(it) }
+        if (backendPath == null || contributor == null) {
+          Messages.showErrorDialog(
+            project,
+            LspUiBundle.message("lsp.settings.server.executable.backend.unavailable"),
+            LspUiBundle.message("lsp.settings.server.executable.browse"),
+          )
+          return@addActionListener
+        }
+        val selectedPath = try {
+          Path.of(text).takeIf { it.isAbsolute && it.getEelDescriptor() == environment }
+        }
+        catch (_: InvalidPathException) {
+          null
+        }
+        val dialog = UniversalFileChooser.Dialog(
+          project = project,
+          parent = this,
+          descriptor = descriptor,
+          contributors = listOf(SingleRootContributor(contributor, backendPath)),
+          preselectPath = selectedPath ?: backendPath,
+        )
+        if (dialog.showAndGet()) {
+          dialog.getSelectedFiles().singleOrNull()?.let { text = it.toString() }
+        }
+      }
     }
   }
 

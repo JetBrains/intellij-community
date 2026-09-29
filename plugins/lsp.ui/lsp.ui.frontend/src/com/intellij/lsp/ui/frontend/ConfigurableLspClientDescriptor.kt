@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.lsp.ui.frontend.settings.LspServerConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.provider.getRemoteProjectBaseNioPath
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
 import com.intellij.platform.lsp.api.customization.LspCustomization
@@ -16,6 +17,7 @@ import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.psi.PsiFile
+import com.intellij.util.PlatformUtils
 
 internal class ConfigurableLspClientDescriptor(
   project: Project,
@@ -46,11 +48,15 @@ internal class ConfigurableLspClientDescriptor(
 
     val commandLine = GeneralCommandLine(configuration.executablePath)
 
-    configuration.getArgumentsList().forEach { arg ->
-      commandLine.addParameter(arg)
-    }
+    commandLine.addParameters(configuration.getArgumentsList())
 
-    roots.getOrNull(0)?.let { commandLine.withWorkingDirectory(it.toNioPath()) }
+    val workingDirectory = if (PlatformUtils.isJetBrainsClient()) {
+      project.getRemoteProjectBaseNioPath()
+    }
+    else {
+      roots.firstOrNull()?.toNioPath()
+    }
+    commandLine.withWorkingDirectory(workingDirectory)
 
     configuration.envVars.get().configureCommandLine(commandLine, true)
 

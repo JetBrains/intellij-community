@@ -148,7 +148,14 @@ abstract class LspClientDescriptor protected constructor(
         val workingDir = commandLine.workDirectory?.toPath()?.let { nioPath ->
           runCatching { nioPath.asEelPath() }.getOrNull()
         }
-        eelApi.exec.spawnProcess(commandLine.exePath)
+        val executablePath = Path.of(commandLine.exePath)
+        val executable = if (executablePath.isAbsolute && executablePath.getEelDescriptor() == descriptor) {
+          executablePath.asEelPath().toString()
+        }
+        else {
+          commandLine.exePath
+        }
+        eelApi.exec.spawnProcess(executable)
           .args(commandLine.parametersList.list)
           .env(env)
           .let { if (workingDir != null) it.workingDirectory(workingDir) else it }
