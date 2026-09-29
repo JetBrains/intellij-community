@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.withTracer
 import org.jetbrains.intellij.build.telemetry.withoutTracer
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
@@ -325,17 +326,29 @@ fun parseJsonArgument(
   }
 }
 
-private fun createModuleOutputProvider(projectRoot: Path, lifetime: BuildLifetime): ModuleOutputProvider {
-  val useTestCompilationOutput = true
-  val project = buildSpan("load project") { span ->
+/**
+ * Loads the JPS project under [projectRoot], with the local Maven repository as `MAVEN_REPOSITORY`.
+ *
+ * The generator reads the model of each repository half that it writes, so a caller can load the community project
+ * beside the ultimate one.
+ */
+@ApiStatus.Internal
+fun loadGeneratorJpsProject(projectRoot: Path): JpsProject {
+  return buildSpan("load project") { span ->
     val project = JpsSerializationManager.getInstance().loadProject(
       projectRoot.toString(),
       mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
       false
     )
+    span.setAttribute("projectRoot", projectRoot.toString())
     span.setAttribute("moduleCount", project.modules.size.toLong())
     project
   }
+}
+
+private fun createModuleOutputProvider(projectRoot: Path, lifetime: BuildLifetime): ModuleOutputProvider {
+  val useTestCompilationOutput = true
+  val project = loadGeneratorJpsProject(projectRoot)
   val bazelOutputRoot = bazelOutputRoot ?: return JpsModuleOutputProvider(project, useTestCompilationOutput = useTestCompilationOutput)
   return BazelModuleOutputProvider(
     modules = project.modules,

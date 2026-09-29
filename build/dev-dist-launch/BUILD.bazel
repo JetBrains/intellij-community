@@ -1,0 +1,7 @@
+# The launch model of every community split product, `<product>.launch.json`, which `plugin-model-tool` writes. The
+# `platform_resources` component of a platform set renders `build.txt`, `bin/idea.properties`, the vmoptions file and
+# `bin/product-info.json` from it, see `dev_dist_product_files`.
+exports_files(
+    glob(["*.launch.json"]),
+    visibility = ["//build:__pkg__"],
+)

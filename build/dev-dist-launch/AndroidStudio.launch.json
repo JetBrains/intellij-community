@@ -1,0 +1,195 @@
+{
+  "productCode": "AI",
+  "buildNumber": "263.SNAPSHOT",
+  "productName": "Android Studio",
+  "version": "2026.3",
+  "versionSuffix": "EAP",
+  "envVarBaseName": "IDEA",
+  "dataDirectoryName": "IdeaIC2026.3",
+  "svgIcon": true,
+  "productVendor": "Google",
+  "majorVersionReleaseDate": "20260101",
+  "minRequiredJavaVersion": 25,
+  "baseFileName": "idea",
+  "launch": {
+    "mainClass": "com.intellij.idea.Main",
+    "bootClassPathJarNames": [
+      "platform-loader.jar"
+    ],
+    "jvmArguments": {
+      "multiRoutingFileSystem": true,
+      "classLoader": "com.intellij.util.lang.PathClassLoader",
+      "vendorName": "Google",
+      "pathsSelector": "IdeaIC2026.3",
+      "jna": true,
+      "pty4j": true,
+      "skiko": true,
+      "platformPrefix": "AndroidStudio",
+      "splash": true,
+      "nativeAccess": true
+    },
+    "linuxStartupWmClass": "jetbrains-studio"
+  },
+  "customCommands": [
+    {
+      "commands": [
+        "qodana"
+      ],
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "nio-fs.jar"
+      ],
+      "jvmArguments": {
+        "multiRoutingFileSystem": true,
+        "classLoader": "com.intellij.util.lang.PathClassLoader",
+        "vendorName": "Google",
+        "pathsSelector": "IdeaIC2026.3",
+        "jna": true,
+        "pty4j": true,
+        "skiko": true,
+        "platformPrefix": "AndroidStudio",
+        "splash": true,
+        "nativeAccess": true
+      },
+      "qodana": true,
+      "extraJvmArguments": [
+        "-Dqodana.application=true",
+        "-Dfus.internal.reduce.initial.delay=true",
+        "-Didea.headless.statistics.max.files.to.send=5000",
+        "-Djava.awt.headless=true",
+        "-Didea.qodana.thirdpartyplugins.accept=true",
+        "-Dide.warmup.use.predicates=false",
+        "-Dvcs.log.index.enable=false",
+        "-Didea.job.launcher.without.timeout=true",
+        "-Dscanning.in.smart.mode=false",
+        "-Deap.login.enabled=false",
+        "-Dsdk.download.consent=true",
+        "-Dide.activity.tracking.enable.debug=true",
+        "-Deslint.service.expiration.timeout.ms=5000",
+        "-Dtypescript.service.node.defaultMemoryLimit=1024",
+        "-Djetbrains.security.package-checker.requestTimeoutSeconds=15",
+        "-Dphp.additional.library.manager.new.updater=true",
+        "-Dide.region.url.mapping.expiration.timeout=7200",
+        "-Dexternal.system.auto.import.headless.async=true",
+        "-Dmaven.default.headless.import=true",
+        "-Dide.do.not.check.ls.on.startup=true",
+        "-Dqodana.product.name=Qodana Community for JVM",
+        "-Dqodana.build.number=QDJVMC-263.SNAPSHOT",
+        "-Dqodana.eap=true"
+      ]
+    },
+    {
+      "commands": [
+        "stdioMcpServer"
+      ],
+      "vmOptionsFilePath": {
+        "Windows": "bin/mcp-server.vmoptions",
+        "macOS": "../bin/mcp-server.vmoptions",
+        "Linux": "bin/mcp-server.vmoptions"
+      },
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar",
+        "../plugins/mcpserver-plugin/lib/intellij.libraries.kotlin.logging.jar",
+        "../plugins/mcpserver-plugin/lib/intellij.libraries.ktor.server.sse.jar",
+        "../plugins/mcpserver-plugin/lib/intellij.libraries.mcp.kotlin.sdk.jar"
+      ],
+      "mainClass": "com.intellij.mcpserver.stdio.McpStdioRunnerKt"
+    }
+  ],
+  "vmOptions": {
+    "Windows": [
+      "-Xms128m",
+      "-Xmx2048m",
+      "-XX:JbrShrinkingGcMaxHeapFreeRatio=40",
+      "-XX:ReservedCodeCacheSize=512m",
+      "-XX:+HeapDumpOnOutOfMemoryError",
+      "-XX:-OmitStackTraceInFastThrow",
+      "-XX:CICompilerCount=2",
+      "-XX:+IgnoreUnrecognizedVMOptions",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:TieredOldPercentage=100000",
+      "-XX:+UseCompactObjectHeaders",
+      "--sun-misc-unsafe-memory-access=allow",
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-ea",
+      "-Dsun.io.useCanonCaches=false",
+      "-Dsun.java2d.metal=true",
+      "-Djbr.catch.SIGABRT=true",
+      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
+      "-Djdk.attach.allowAttachSelf=true",
+      "-Djdk.module.illegalAccess.silent=true",
+      "-Djdk.nio.maxCachedBufferSize=2097152",
+      "-Djava.util.zip.use.nio.for.zip.file.access=true",
+      "-Dkotlinx.coroutines.debug=off",
+      "-Dskiko.rendering.useScreenMenuBar=false",
+      "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+      "-Dllm.show.ai.promotion.window.on.start=false"
+    ],
+    "macOS": [
+      "-Xms128m",
+      "-Xmx2048m",
+      "-XX:JbrShrinkingGcMaxHeapFreeRatio=40",
+      "-XX:ReservedCodeCacheSize=512m",
+      "-XX:+HeapDumpOnOutOfMemoryError",
+      "-XX:-OmitStackTraceInFastThrow",
+      "-XX:CICompilerCount=2",
+      "-XX:+IgnoreUnrecognizedVMOptions",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:TieredOldPercentage=100000",
+      "-XX:+UseCompactObjectHeaders",
+      "--sun-misc-unsafe-memory-access=allow",
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-ea",
+      "-Dsun.io.useCanonCaches=false",
+      "-Dsun.java2d.metal=true",
+      "-Djbr.catch.SIGABRT=true",
+      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
+      "-Djdk.attach.allowAttachSelf=true",
+      "-Djdk.module.illegalAccess.silent=true",
+      "-Djdk.nio.maxCachedBufferSize=2097152",
+      "-Djava.util.zip.use.nio.for.zip.file.access=true",
+      "-Dkotlinx.coroutines.debug=off",
+      "-Dskiko.rendering.useScreenMenuBar=false",
+      "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+      "-Dllm.show.ai.promotion.window.on.start=false",
+      "-Dapple.awt.application.appearance=system"
+    ],
+    "Linux": [
+      "-Xms128m",
+      "-Xmx2048m",
+      "-XX:JbrShrinkingGcMaxHeapFreeRatio=40",
+      "-XX:ReservedCodeCacheSize=512m",
+      "-XX:+HeapDumpOnOutOfMemoryError",
+      "-XX:-OmitStackTraceInFastThrow",
+      "-XX:CICompilerCount=2",
+      "-XX:+IgnoreUnrecognizedVMOptions",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:TieredOldPercentage=100000",
+      "-XX:+UseCompactObjectHeaders",
+      "--sun-misc-unsafe-memory-access=allow",
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-ea",
+      "-Dsun.io.useCanonCaches=false",
+      "-Dsun.java2d.metal=true",
+      "-Djbr.catch.SIGABRT=true",
+      "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
+      "-Djdk.attach.allowAttachSelf=true",
+      "-Djdk.module.illegalAccess.silent=true",
+      "-Djdk.nio.maxCachedBufferSize=2097152",
+      "-Djava.util.zip.use.nio.for.zip.file.access=true",
+      "-Dkotlinx.coroutines.debug=off",
+      "-Dskiko.rendering.useScreenMenuBar=false",
+      "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+      "-Dllm.show.ai.promotion.window.on.start=false",
+      "-Dsun.tools.attach.tmp.only=true",
+      "-Dawt.lock.fair=true",
+      "-Dawt.toolkit.name=auto",
+      "-Dsun.java2d.vulkan=True"
+    ]
+  },
+  "ideaProperties": {
+    "settingsDir": "IdeaIC",
+    "suffix": "\n#-----------------------------------------------------------------------\n# Change to 'disabled' if you don't want to receive instant visual notifications\n# about fatal errors that happen to an IDE or plugins installed.\n#-----------------------------------------------------------------------\nidea.fatal.error.notification=enabled\n"
+  }
+}

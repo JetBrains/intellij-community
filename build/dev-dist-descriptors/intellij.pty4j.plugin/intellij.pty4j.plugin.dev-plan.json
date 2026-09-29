@@ -1,0 +1,62 @@
+{
+    "version": 3,
+    "plugin": "intellij.pty4j.plugin",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/modules/intellij.libraries.pty4j.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.pty4j",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-pty4j-pty4j",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true,
+                    "nativeLib": "pty4j"
+                }
+            }
+        },
+        {
+            "destination": "lib/pty4j",
+            "inputs": [
+                "native-tree:intellij.libraries.pty4j"
+            ],
+            "kind": "tree",
+            "classPath": false,
+            "scope": "distribution"
+        },
+        {
+            "destination": "lib/pty4j-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.pty4j.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.pty4j.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

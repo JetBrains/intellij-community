@@ -1,0 +1,27 @@
+load("//build:dev_dist_product_info.bzl", "DEV_DIST_PRODUCT_INFO")
+load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
+
+# The twin of `//build/dev-dist-descriptors` of the ultimate checkout, for the community products. The generated
+# plugin packages of the community pass sit under this package.
+#
+# One `<product>_product_info` per product: the descriptor stamps a consumer sets `dev_dist_product_info` to. The
+# generated map is the one owner of the product list, so no product name is hand-written here.
+#
+# `platform_prefix` is the `community/build/dev-build.json` key of the product, not its `idea.platform.prefix`. The
+# components carry that key in their manifests, so the composer compares like with like.
+#
+# Every target is `manual`: it runs no action and declares no output, and the tag keeps the rule of the package simple.
+[
+    dev_dist_product_info(
+        name = product + "_product_info",
+        eap = stamps.eap,
+        marketplace_names = stamps.marketplace_names,
+        mode = stamps.mode,
+        platform_prefix = product,
+        release_date = stamps.release_date,
+        release_version = stamps.release_version,
+        tags = ["manual"],
+        visibility = ["//visibility:public"],
+    )
+    for product, stamps in DEV_DIST_PRODUCT_INFO.items()
+]
