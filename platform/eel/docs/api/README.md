@@ -12,8 +12,9 @@ These documents explain how to call the Eel API from a plugin or from platform c
 6. [LocalEelDescriptor](EelApi_LocalEelDescriptor.md) explains `LocalEelDescriptor` and `LocalEelMachine`, and when a check for the local environment is appropriate.
 7. [Real-World Examples](EelApi_Real_World_Examples.md) shows how IntelliJ plugins and features use the Eel API.
 8. [Opening Projects with Eel API](Opening_Projects_with_EelApi.md) explains how to open a project in WSL or Docker, with configuration options.
+9. [Exhaustive `when`](exhaustive-when.md) states how to check a sealed type or an enum such as `EelOsFamily` and `EelPlatform`.
 
-`images/` holds the screenshots for the last document.
+`images/` holds the screenshots for [Opening Projects with Eel API](Opening_Projects_with_EelApi.md).
 
 ## API Status
 
