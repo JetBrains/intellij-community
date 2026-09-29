@@ -1,7 +1,7 @@
 """Composes a dev-mode IDE distribution from components, and declares the reference fragments of the gates.
 
 A component names the files it places, and the composer copies them into the distribution. A reference fragment
-runs the Kotlin assembler, which produces the same files a second time, so a gate can compare the two producers. No
+runs the reference assembler, which produces the same files a second time, so a gate can compare the two producers. No
 distribution composes a reference.
 
 Split assembly deliberately supports only builds with scrambling disabled. Platform co-scrambling and per-plugin
@@ -208,7 +208,7 @@ def _composer_resources(_os, _inputs):
     return {"cpu": 4, "memory": 256}
 
 def _assembler_resources(_os, _inputs):
-    """The fragment assembler: `-Xmx8g`, G1 with a few worker threads."""
+    """The reference assembler: `-Xmx8g`, G1 with a few worker threads."""
     return {"cpu": 2, "memory": 9216}
 
 # The switch that turns span output on, carried by every rule here that runs a packaging tool.
@@ -225,7 +225,8 @@ _TRACE_SPANS_ATTR = {
     ),
 }
 
-# The switch that turns the executed packaging recipe on, carried by the one rule here that runs the assembler.
+# The switch that turns the executed packaging recipe on, carried by the one rule here that runs the reference
+# assembler.
 #
 # A sibling of the above with the same shape rather than a reuse of it: a recipe and a measurement are wanted at
 # different times, and `trace_spans` has a protocol - hold it constant across a comparison, read it only from a cold
@@ -436,7 +437,8 @@ def _fragment_impl(ctx):
         )
     runtime_module_repository_layout = None
     if ctx.attr.runtime_module_repository:
-        # The assembler lays the platform and the bundled plugins out without files, then writes only `modules/`.
+        # The reference assembler lays the platform and the bundled plugins out without files, then writes only
+        # `modules/`.
         args.add("--runtime-module-repository")
 
         # The layout the repository is generated from, the reference of `./build/dev-dist.cmd runtime-repo`. Not in the
@@ -495,7 +497,8 @@ def _fragment_impl(ctx):
     ]
 
 intellij_dev_fragment = rule(
-    doc = """A reference fragment: files of a dev distribution that the Kotlin assembler packs a second time for a gate.
+    doc = """A reference fragment: files of a dev distribution that the reference assembler packs a second time for a
+    gate.
 
     It publishes `IntellijDevReferenceInfo`, so no distribution can compose it. What the fragment owns is a selector
     over names, not a file list. `platform = "only"` owns the `lib/` jars that a generated jar-name set names.

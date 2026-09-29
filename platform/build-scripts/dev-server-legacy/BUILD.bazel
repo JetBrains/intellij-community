@@ -2,8 +2,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # `DevDistMain` has no binary of its own here. It resolves every module and library jar by label through the
 # runfiles tree, so an assembler that can actually assemble has to carry a repository's whole jar set as `data`;
-# that binary is `//build:dev_dist_assembler` in the ultimate repository, and its community counterpart will
-# live beside the community jar set the same way.
+# that binary is `//build:dev_dist_reference_assembler` in the ultimate repository, and its community counterpart
+# will live beside the community jar set the same way.
 
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer.legacy` start
 jvm_library(
