@@ -36,13 +36,11 @@ public interface BuildEventDispatcher extends AutoCloseable {
   /**
    * Registers handler which is invoked once the build process is finished and the build messages are dispatched.
    */
-  default void invokeOnCompletion(@NotNull Consumer<? super Throwable> consumer) {
-    throw new UnsupportedOperationException("invokeOnCompletion is not supported by this BuildEventDispatcher");
-  }
+  void invokeOnCompletion(@NotNull Consumer<? super Throwable> consumer);
 
   /**
    * Executes completion handlers and finalizes the build process orchestration.
    */
   @Override
-  default void close() {}
+  void close();
 }
