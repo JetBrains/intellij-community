@@ -5,35 +5,24 @@ import java.io.Closeable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class LineProcessor : Appendable, Closeable {
+abstract class LineProcessor : Closeable {
   private var lineBuilder: StringBuilder? = StringBuilder()
 
   abstract fun process(line: String)
 
-  override fun append(csq: CharSequence): LineProcessor {
-    for (element in csq) {
-      append(element)
-    }
-    return this
-  }
-
-  override fun append(csq: CharSequence, start: Int, end: Int): LineProcessor {
-    append(csq.subSequence(start, end))
-    return this
-  }
-
-  override fun append(c: Char): LineProcessor {
+  fun notifyTextAvailable(text: String) {
     if (lineBuilder == null) throw IllegalStateException("The line processor was closed")
-    if (c == '\n') {
-      if (lineBuilder!!.lastOrNull() == '\r') {
-        lineBuilder!!.deleteCharAt(lineBuilder!!.length - 1)
+    for (c in text) {
+      if (c == '\n') {
+        if (lineBuilder!!.lastOrNull() == '\r') {
+          lineBuilder!!.deleteCharAt(lineBuilder!!.length - 1)
+        }
+        flushBuffer()
       }
-      flushBuffer()
+      else {
+        lineBuilder!!.append(c)
+      }
     }
-    else {
-      lineBuilder!!.append(c)
-    }
-    return this
   }
 
   override fun close() {

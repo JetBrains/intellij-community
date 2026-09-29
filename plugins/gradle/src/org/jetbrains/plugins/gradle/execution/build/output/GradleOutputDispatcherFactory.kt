@@ -163,7 +163,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           .build()
       )
       lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
-        .append(text)
+        .notifyTextAvailable(text)
     }
 
     private fun removeLoggerPrefix(line: String): String {
