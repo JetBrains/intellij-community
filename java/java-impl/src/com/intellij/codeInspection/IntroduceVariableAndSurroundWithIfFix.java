@@ -74,6 +74,6 @@ public final class IntroduceVariableAndSurroundWithIfFix extends PsiUpdateModCom
     if (ifStatement == null) return;
     new MergeIfAndIntention().invoke(ifStatement.getFirstChild());
 
-    updater.rename(extracted.variable(), extracted.names());
+    extracted.templateRename(updater);
   }
 }

@@ -572,9 +572,6 @@ final class PsiUpdateImpl {
 
     @Override
     public @NotNull ModTemplateBuilder templateBuilder() {
-      if (!myTemplateFields.isEmpty()) {
-        throw new IllegalStateException("Template was already created");
-      }
       return new ModTemplateBuilder() {
         @Override
         public @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull Expression expression) {

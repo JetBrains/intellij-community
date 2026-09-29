@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -10,6 +13,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
@@ -21,11 +25,13 @@ import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ReorderingUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A local variable extracted from an expression, so that a generated check may test the variable instead of the original
@@ -39,17 +45,18 @@ import java.util.List;
  * @param statement statement that uses the variable
  * @param reference the reference to the variable that took the place of the extracted expression
  */
-record ExtractedVariableInfo(@NotNull PsiLocalVariable variable,
-                             @NotNull List<String> names,
-                             @NotNull PsiElement anchor,
-                             @NotNull PsiStatement statement,
-                             @NotNull PsiExpression reference) {
+@NotNullByDefault
+record ExtractedVariableInfo(PsiLocalVariable variable,
+                             List<String> names,
+                             PsiElement anchor,
+                             PsiStatement statement,
+                             PsiExpression reference) {
 
   /**
    * @return the statement that uses the variable, preceded by the inspection suppression comment that must stay attached
    * to it; the returned elements are adjacent siblings
    */
-  PsiElement @NotNull [] statementWithSuppression() {
+  PsiElement[] statementWithSuppression() {
     return anchor == statement ? new PsiElement[]{statement} : new PsiElement[]{anchor, statement};
   }
 
@@ -58,7 +65,7 @@ record ExtractedVariableInfo(@NotNull PsiLocalVariable variable,
    * @return names to suggest for the new variable, the preferred one first;
    * an empty list if the expression cannot be extracted
    */
-  static @NotNull List<String> suggestNames(@NotNull PsiExpression expression) {
+  static List<String> suggestNames(PsiExpression expression) {
     PsiExpression stripped = deparenthesize(expression);
     PsiType type = getVariableType(stripped);
     if (type == null) return List.of();
@@ -75,7 +82,7 @@ record ExtractedVariableInfo(@NotNull PsiLocalVariable variable,
    * @param expression expression to extract; must belong to a writable file
    * @return the extracted variable, or null if the expression cannot be extracted
    */
-  static @Nullable ExtractedVariableInfo extract(@NotNull PsiExpression expression) {
+  static @Nullable ExtractedVariableInfo extract(PsiExpression expression) {
     Project project = expression.getProject();
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
     if (surrounder == null) return null;
@@ -102,16 +109,16 @@ record ExtractedVariableInfo(@NotNull PsiLocalVariable variable,
     return variable == null ? null : new ExtractedVariableInfo(variable, names, anchor, result.getAnchor(), reference);
   }
 
-  private static @NotNull List<String> suggestNames(@NotNull PsiExpression expression, @NotNull PsiType type) {
+  private static List<String> suggestNames(PsiExpression expression, PsiType type) {
     return new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byExpression(expression).byType(type).generateAll(true);
   }
 
-  private static @NotNull PsiExpression deparenthesize(@NotNull PsiExpression expression) {
+  private static PsiExpression deparenthesize(PsiExpression expression) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(expression);
     return stripped == null ? expression : stripped;
   }
 
-  private static @Nullable PsiType getVariableType(@NotNull PsiExpression expression) {
+  private static @Nullable PsiType getVariableType(PsiExpression expression) {
     PsiType type = GenericsUtil.getVariableTypeByExpressionType(expression.getType());
     if (type == null || PsiTypes.voidType().equals(type) || PsiTypes.nullType().equals(type)) return null;
     if (!PsiTypesUtil.isDenotableType(type, expression)) return null;
@@ -119,5 +126,16 @@ record ExtractedVariableInfo(@NotNull PsiLocalVariable variable,
     // so a copied '@Nullable' would contradict the check
     if (!type.hasAnnotations()) return type;
     return JavaPsiFacade.getElementFactory(expression.getProject()).createTypeFromText(type.getCanonicalText(false), expression);
+  }
+
+  void templateRename(ModPsiUpdater updater) {
+    PsiLocalVariable variable = variable();
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable);
+    ModTemplateBuilder builder = updater.templateBuilder();
+    builder.field(Objects.requireNonNull(variable.getNameIdentifier()), "var",
+                  new ConstantNode(variable.getName()).withLookupStrings(names()));
+    for (PsiReferenceExpression ref : refs) {
+      builder.field(ref, "var", "var", false);
+    }
   }
 }

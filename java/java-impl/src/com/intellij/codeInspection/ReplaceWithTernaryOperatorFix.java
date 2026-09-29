@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -59,33 +61,33 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
       return;
     }
 
-    PsiConditionalExpression conditionalExpression =
-      replaceWithConditionalExpression(project, myText + "!=null", expression, suggestDefaultValue(expression));
-
-    selectElseBranch(conditionalExpression, updater);
+    replaceWithConditionalExpression(updater, myText, expression);
   }
 
-  private static void selectElseBranch(PsiConditionalExpression conditionalExpression, @NotNull ModPsiUpdater updater) {
-    PsiExpression elseExpression = conditionalExpression.getElseExpression();
-    if (elseExpression != null) {
-      updater.templateBuilder().field(elseExpression, elseExpression.getText());
-    }
-  }
-
-  static @NotNull PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
-                                                                            @NotNull String condition,
-                                                                            @NotNull PsiExpression expression,
-                                                                            @NotNull String defaultValue) {
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+  static void replaceWithConditionalExpression(@NotNull ModPsiUpdater updater,
+                                               @NotNull String varToCheck,
+                                               @NotNull PsiExpression expression) {
+    PsiType type = expression.getType();
+    String defaultValue = PsiTypesUtil.getDefaultValueOfType(type);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(updater.getProject());
 
     final PsiElement parent = expression.getParent();
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)factory.createExpressionFromText(
-      condition + " ? " + expression.getText() + " : " + defaultValue,
+      varToCheck + "!=null ? " + expression.getText() + " : " + defaultValue,
       parent
     );
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    return (PsiConditionalExpression)expression.replace( codeStyleManager.reformat(conditionalExpression));
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(updater.getProject());
+    PsiConditionalExpression result = (PsiConditionalExpression)expression.replace(codeStyleManager.reformat(conditionalExpression));
+    PsiExpression elseExpression = result.getElseExpression();
+    if (elseExpression != null) {
+      if (elseExpression.textMatches(JavaKeywords.FALSE)) {
+        updater.templateBuilder()
+          .field(elseExpression, new ConstantNode(JavaKeywords.FALSE).withLookupStrings(JavaKeywords.FALSE, JavaKeywords.TRUE));
+      } else {
+        updater.templateBuilder().field(elseExpression, elseExpression.getText());
+      }
+    }
   }
 
   public static boolean isAvailable(@NotNull PsiExpression qualifier, @NotNull PsiExpression expression) {
@@ -94,11 +96,6 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
     }
 
     return !(expression.getParent() instanceof PsiExpressionStatement) && !PsiUtil.isAccessedForWriting(expression);
-  }
-
-  static String suggestDefaultValue(@NotNull PsiExpression expression) {
-    PsiType type = expression.getType();
-    return PsiTypesUtil.getDefaultValueOfType(type);
   }
 
   public static class ReplaceMethodRefWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
@@ -119,9 +116,7 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
       PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
       if (parameter == null) return;
       String text = parameter.getName();
-      PsiConditionalExpression conditionalExpression = replaceWithConditionalExpression(project, text + "!=null", expression,
-                                                                                        suggestDefaultValue(expression));
-      selectElseBranch(conditionalExpression, updater);
+      replaceWithConditionalExpression(updater, text, expression);
     }
   }
 }

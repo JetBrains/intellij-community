@@ -99,6 +99,6 @@ public final class IntroduceVariableAndAssertFix extends PsiUpdateModCommandQuic
     PsiElement addedAssertion = anchor.getParent().addBefore(assertion, anchor);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedAssertion);
 
-    updater.rename(extracted.variable(), extracted.names());
+    extracted.templateRename(updater);
   }
 }

@@ -68,9 +68,9 @@ public final class IntroduceVariableAndReplaceWithTernaryFix extends PsiUpdateMo
 
     PsiExpression dereference = getOutermostDereference(extracted.reference());
     ReplaceWithTernaryOperatorFix.replaceWithConditionalExpression(
-      project, extracted.variable().getName() + "!=null", dereference, ReplaceWithTernaryOperatorFix.suggestDefaultValue(dereference));
+      updater, extracted.variable().getName(), dereference);
 
-    updater.rename(extracted.variable(), extracted.names());
+    extracted.templateRename(updater);
   }
 
   /**
