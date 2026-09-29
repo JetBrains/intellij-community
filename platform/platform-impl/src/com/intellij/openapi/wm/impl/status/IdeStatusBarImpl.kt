@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.soundSignals.ProgressSoundSignalTracker
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
@@ -659,6 +660,7 @@ open class IdeStatusBarImpl @Internal constructor(
       existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList(),
     )))
     createInfoAndProgressPanel().addProgress(progressModel, info)
+    ProgressSoundSignalTracker.getInstanceIfEnabled()?.track(project, progressModel, info)
   }
 
   internal fun notifyProgressRemoved(backgroundProcesses: List<Pair<TaskInfo, ProgressModel>>) {

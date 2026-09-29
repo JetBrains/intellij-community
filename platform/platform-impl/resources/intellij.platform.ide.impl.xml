@@ -512,6 +512,18 @@
       restartRequired="true"
     />
     <registryKey
+      key="ide.sound.signals.progress.initial.delay.ms"
+      defaultValue="5000"
+      description="How long a status bar progress must run, in milliseconds, before the progress sound signal first plays"
+      restartRequired="true"
+    />
+    <registryKey
+      key="ide.sound.signals.progress.repeat.delay.ms"
+      defaultValue="10000"
+      description="How long the IDE waits, in milliseconds, before it repeats the progress sound signal"
+      restartRequired="true"
+    />
+    <registryKey
       key="ea.diagnostic.endpoint"
       defaultValue=""
       description="Custom ITN error reporting endpoint. Only HTTPS URLs whose host ends with .jetbrains.com are accepted"

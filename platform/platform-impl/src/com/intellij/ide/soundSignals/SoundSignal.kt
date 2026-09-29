@@ -24,7 +24,11 @@ class SoundSignal(
 }
 
 @ApiStatus.Internal
-class SoundSignalGroup(private val titleSupplier: Supplier<@Nls String>) {
+class SoundSignalGroup(
+  private val titleSupplier: Supplier<@Nls String>,
+  /** The group shows as a single settings entry, with no entry per signal. Its preview plays only the first signal in settings order. */
+  val collapsed: Boolean = false,
+) {
   val title: @Nls String
     get() = titleSupplier.get()
 }

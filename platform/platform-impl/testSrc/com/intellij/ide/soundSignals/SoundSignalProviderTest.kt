@@ -35,7 +35,8 @@ class SoundSignalProviderTest {
     val ideIds = IdeSoundSignalProvider().soundSignals.map { it.id }.toSet()
 
     assertThat(getSoundSignals().map { it.id }.filter { it in ideIds })
-      .containsExactly("error.line", "error.caret", "warning.line", "warning.caret", "folded.line", "folded.caret")
+      .containsExactly("progress.indeterminate", "progress.determinate.stage.1", "progress.determinate.stage.2",
+                       "progress.determinate.stage.3", "error.line", "error.caret", "warning.line", "warning.caret", "folded.line", "folded.caret")
   }
 
   @Test

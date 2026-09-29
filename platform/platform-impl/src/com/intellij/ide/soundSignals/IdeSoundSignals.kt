@@ -18,6 +18,33 @@ object IdeSoundSignals {
   val FOLDING_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.folding"))
 
   @JvmField
+  val PROGRESS_GROUP: SoundSignalGroup = SoundSignalGroup(IdeBundle.messagePointer("sound.signal.group.progress"), collapsed = true)
+
+  @JvmField
+  val PROGRESS_INDETERMINATE: SoundSignal = SoundSignal(
+    "progress.indeterminate", IdeBundle.messagePointer("sound.signal.progress.indeterminate"),
+    "sounds/progress_indeterminate.wav", OWNER, 70, PROGRESS_GROUP,
+  )
+
+  @JvmField
+  val PROGRESS_DETERMINATE_STAGE_1: SoundSignal = SoundSignal(
+    "progress.determinate.stage.1", IdeBundle.messagePointer("sound.signal.progress.determinate.stage.1"),
+    "sounds/progress_determinate_stage_1.wav", OWNER, 71, PROGRESS_GROUP,
+  )
+
+  @JvmField
+  val PROGRESS_DETERMINATE_STAGE_2: SoundSignal = SoundSignal(
+    "progress.determinate.stage.2", IdeBundle.messagePointer("sound.signal.progress.determinate.stage.2"),
+    "sounds/progress_determinate_stage_2.wav", OWNER, 72, PROGRESS_GROUP,
+  )
+
+  @JvmField
+  val PROGRESS_DETERMINATE_STAGE_3: SoundSignal = SoundSignal(
+    "progress.determinate.stage.3", IdeBundle.messagePointer("sound.signal.progress.determinate.stage.3"),
+    "sounds/progress_determinate_stage_3.wav", OWNER, 73, PROGRESS_GROUP,
+  )
+
+  @JvmField
   val ERROR_LINE: SoundSignal = SoundSignal(
     "error.line", IdeBundle.messagePointer("sound.signal.error.line"),
     "sounds/error.wav", OWNER, 100, CODE_HIGHLIGHTING_GROUP,
@@ -57,6 +84,6 @@ object IdeSoundSignals {
 @ApiStatus.Internal
 class IdeSoundSignalProvider : SoundSignalProvider {
   override val soundSignals: List<SoundSignal> = with(IdeSoundSignals) {
-    listOf(ERROR_LINE, ERROR_CARET, WARNING_LINE, WARNING_CARET, FOLDED_LINE, FOLDED_CARET)
+    listOf(PROGRESS_INDETERMINATE, PROGRESS_DETERMINATE_STAGE_1, PROGRESS_DETERMINATE_STAGE_2, PROGRESS_DETERMINATE_STAGE_3, ERROR_LINE, ERROR_CARET, WARNING_LINE, WARNING_CARET, FOLDED_LINE, FOLDED_CARET)
   }
 }

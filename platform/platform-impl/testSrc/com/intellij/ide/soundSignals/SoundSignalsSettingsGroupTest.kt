@@ -146,6 +146,37 @@ class SoundSignalsSettingsGroupTest {
       .isEqualTo(IdeBundle.message("sound.signals.group.accessible.description"))
   }
 
+  @Test
+  fun `a collapsed group has one checkbox, stores every signal and previews only the first`() = groupTest(playingState()) { page ->
+    val progress = page.checkBox(IdeSoundSignals.PROGRESS_GROUP.title)
+    assertThat(UIUtil.findComponentsOfType(page.panel, ThreeStateCheckBox::class.java))
+      .noneMatch { it.text == IdeSoundSignals.PROGRESS_GROUP.title }
+    assertThat(UIUtil.findComponentsOfType(page.panel, JBCheckBox::class.java))
+      .noneMatch { checkBox -> PROGRESS_SIGNALS.any { it.title == checkBox.text } }
+    assertThat(progress.isSelected).isTrue()
+
+    progress.doClick()
+    assertThat(progress.isSelected).isFalse()
+    focusByTab(progress)
+    assertThat(player.previewed).containsExactly(listOf(IdeSoundSignals.PROGRESS_INDETERMINATE), listOf(IdeSoundSignals.PROGRESS_INDETERMINATE))
+
+    page.panel.apply()
+    assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(PROGRESS_SIGNALS.associate { it.id to false })
+  }
+
+  @Test
+  fun `a collapsed group is selected only while every signal is on`() = groupTest(
+    playingState(disabled = listOf(IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2)),
+  ) { page ->
+    val progress = page.checkBox(IdeSoundSignals.PROGRESS_GROUP.title)
+    assertThat(progress.isSelected).isFalse()
+
+    progress.doClick()
+    assertThat(progress.isSelected).isTrue()
+    page.panel.apply()
+    assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(PROGRESS_SIGNALS.associate { it.id to true })
+  }
+
   private lateinit var player: RecordingPlayer
 
   private fun playingState(disabled: List<SoundSignal> = emptyList()): SoundSignalsSettingsState =
@@ -170,8 +201,10 @@ class SoundSignalsSettingsGroupTest {
     fun group(group: SoundSignalGroup): ThreeStateCheckBox =
       UIUtil.findComponentsOfType(panel, ThreeStateCheckBox::class.java).single { it.text == group.title }
 
-    fun signal(signal: SoundSignal): JBCheckBox =
-      UIUtil.findComponentsOfType(panel, JBCheckBox::class.java).single { it.text == signal.title }
+    fun signal(signal: SoundSignal): JBCheckBox = checkBox(signal.title)
+
+    fun checkBox(title: String): JBCheckBox =
+      UIUtil.findComponentsOfType(panel, JBCheckBox::class.java).single { it.text == title }
   }
 
   private fun focusByTab(component: JComponent) {
@@ -189,5 +222,8 @@ class SoundSignalsSettingsGroupTest {
 
   private companion object {
     val CODE_HIGHLIGHTING_SIGNALS = with(IdeSoundSignals) { listOf(ERROR_LINE, ERROR_CARET, WARNING_LINE, WARNING_CARET) }
+    val PROGRESS_SIGNALS = with(IdeSoundSignals) {
+      listOf(PROGRESS_INDETERMINATE, PROGRESS_DETERMINATE_STAGE_1, PROGRESS_DETERMINATE_STAGE_2, PROGRESS_DETERMINATE_STAGE_3)
+    }
   }
 }

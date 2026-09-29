@@ -42,11 +42,10 @@ internal fun Panel.soundSignalsGroup(screenReaderSupportCheckbox: JCheckBox) {
       for ((index, signal) in signals.distinctBy { it.group ?: it }.withIndex()) {
         val topGap = if (index == 0) SIGNAL_ROW_GAP else SIGNAL_ROW_GAP + SIGNAL_SECTION_GAP
         val group = signal.group
-        if (group == null) {
-          signalCheckBox(signal, pending, topGap)
-        }
-        else {
-          groupCheckBoxes(group, signals.filter { it.group === group }, pending, topGap)
+        when {
+          group == null -> signalCheckBox(signal.title, listOf(signal), pending, topGap)
+          group.collapsed -> signalCheckBox(group.title, signals.filter { it.group === group }, pending, topGap)
+          else -> groupCheckBoxes(group, signals.filter { it.group === group }, pending, topGap)
         }
       }
     }.enabledIf(playSignals.selectedValueMatches { it == true })
@@ -106,7 +105,9 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
       .component
   }.customize(UnscaledGapsY(top = topGap))
   indent {
-    children = signals.map { signalCheckBox(it, pending) }
+    children = signals.map { signal ->
+      signalCheckBox(signal.title, listOf(signal), pending, accessibleGroup = group)
+    }
   }
   fun updateGroupState() {
     groupCheckBox.state = when (children.count { it.isSelected }) {
@@ -121,29 +122,37 @@ private fun Panel.groupCheckBoxes(group: SoundSignalGroup, signals: List<SoundSi
   }
 }
 
-private fun Panel.signalCheckBox(signal: SoundSignal, pending: PendingSoundSignals, topGap: Int = SIGNAL_ROW_GAP): JBCheckBox {
+/** Previews only the first of [signals]. */
+private fun Panel.signalCheckBox(
+  title: @Nls String,
+  signals: List<SoundSignal>,
+  pending: PendingSoundSignals,
+  topGap: Int = SIGNAL_ROW_GAP,
+  accessibleGroup: SoundSignalGroup? = null,
+): JBCheckBox {
   val player = SoundSignalPlayer.getInstance()
+  val previewSignal = signals.first()
   lateinit var checkBox: JBCheckBox
   row {
-    checkBox = checkBox(signal.title)
+    checkBox = checkBox(title)
       .apply {
-        signal.group?.let { accessibleDescription(IdeBundle.message("sound.signals.group.member.accessible.description", it.title)) }
+        accessibleGroup?.let { accessibleDescription(IdeBundle.message("sound.signals.group.member.accessible.description", it.title)) }
       }
       .actionListener { _, component ->
-        pending.edit { it.copy(signals = it.signals + (signal.id to component.isSelected)) }
-        player.preview(signal)
+        pending.edit { it.copy(signals = it.signals + signals.associate { signal -> signal.id to component.isSelected }) }
+        player.preview(previewSignal)
       }
       .applyToComponent {
         whenFocusGained { e ->
           when (e.cause) {
-            FocusEvent.Cause.TRAVERSAL_FORWARD, FocusEvent.Cause.TRAVERSAL_BACKWARD -> player.preview(signal)
+            FocusEvent.Cause.TRAVERSAL_FORWARD, FocusEvent.Cause.TRAVERSAL_BACKWARD -> player.preview(previewSignal)
             else -> {}
           }
         }
       }
       .component
   }.customize(UnscaledGapsY(top = topGap))
-  pending.view { checkBox.isSelected = it.isSignalOn(signal.id) }
+  pending.view { policy -> checkBox.isSelected = signals.all { policy.isSignalOn(it.id) } }
   return checkBox
 }
 
