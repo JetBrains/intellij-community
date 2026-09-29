@@ -494,7 +494,7 @@ private class SymbolicLayoutProjector(
       val key = artifact.preparationKey
       if (key != null) gap("native-binding:$occurrence", "A presigned native library must not have a preparation: $key")
     }
-    return PluginSymbolicNativeUse(occurrence, requirement.handling, requirement.distributionPrefix)
+    return PluginSymbolicNativeUse(occurrence, requirement.handling, requirement.nativeTreePrefix)
   }
 
   private fun applyNative(use: PluginSymbolicNativeUse?, original: List<JarSourceRecipe>): List<JarSourceRecipe> {
@@ -504,7 +504,7 @@ private class SymbolicLayoutProjector(
       PluginSymbolicNativeHandling.PRESIGNED_EXTRACTION -> {
         val occurrence = use.occurrence
         val library = getLibNameBySourceFile(Path.of(artifacts.getValue(occurrence.input).fileName))
-        assembly.markNatives(occurrence.destination, library, checkNotNull(use.distributionPrefix)) { gap(it.key, it.detail) }
+        assembly.markNatives(occurrence.destination, library, checkNotNull(use.nativeTreePrefix)) { gap(it.key, it.detail) }
         return recordNativeSources(use, original)
       }
       PluginSymbolicNativeHandling.INLINE_SIGNING -> {

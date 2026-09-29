@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.intellij.build.impl.DevPlatformPatchOwner
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -42,6 +43,12 @@ import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchMode
 import org.jetbrains.intellij.build.impl.productInfo.encodeProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.vmOptionsFileName
 import org.jetbrains.intellij.build.mapConcurrent
+import org.jetbrains.intellij.build.productLayout.JNA_NATIVE_DIR
+import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.PTY4J_NATIVE_DIR
+import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.SKIKO_NATIVE_DIR
+import org.jetbrains.intellij.build.productLayout.SKIKO_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.ProductContentBuildResult
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
@@ -551,6 +558,43 @@ private fun renderCrossHalfDevPluginTargets(sections: DevDistBuildSections): Map
     result.put(path, renderCrossHalfDevPluginTarget(packaging, descriptorLabel, sections.index, sections::contentModuleJarLabel))
   }
   return result
+}
+
+/**
+ * Checks the presigned native trees of the plugin plans in [entries].
+ *
+ * A native tree sits in the `lib/` directory of the plugin that owns its natives jar. The build scripts refused two
+ * owners of one tree when the tree was at the distribution root. A tree below the plugin directory loses that check, so
+ * this function refuses a tree that two plugins of one product pack. It also requires that the launcher path of the JNA,
+ * pty4j and Skiko trees is the path the plan gives: `plugins/<plugin directory>/<tree destination>`.
+ */
+internal fun checkPluginNativeTrees(entries: Collection<DevDistPluginPlanEntry>) {
+  val launcherDirs = mapOf(
+    JNA_PLUGIN_MODULE to JNA_NATIVE_DIR,
+    PTY4J_PLUGIN_MODULE to PTY4J_NATIVE_DIR,
+    SKIKO_PLUGIN_MODULE to SKIKO_NATIVE_DIR,
+  )
+  val owners = HashMap<Pair<String, String>, MutableSet<String>>()
+  for (entry in entries) {
+    for ((variant, record) in entry.records) {
+      val layout = entry.layout(variant)
+      val trees = record.plan.projection.assets.filter(::isNativeTreeAsset)
+      for (tree in trees) {
+        owners.computeIfAbsent(entry.product to tree.destination) { LinkedHashSet() }.add(entry.mainModule)
+      }
+      val launcherDir = launcherDirs.get(entry.mainModule) ?: continue
+      val planDirs = trees.map { "plugins/${layout.directoryName}/${it.destination}" }
+      check(planDirs == listOf(launcherDir)) {
+        "${entry.product}: the launcher reads the native tree of '${entry.mainModule}' at '$launcherDir', " +
+        "but the plan of variant '$variant' places the native trees at $planDirs"
+      }
+    }
+  }
+  val shared = owners.filterValues { it.size > 1 }
+  check(shared.isEmpty()) {
+    "Two or more plugins of one product pack the same presigned native tree: " +
+    shared.entries.joinToString { (key, plugins) -> "${key.first}/${key.second} in $plugins" }
+  }
 }
 
 /** The fragment owning `lib/`, minus the jars the per-module packer produces. */
@@ -1410,8 +1454,8 @@ private fun collectFragmentPlan(
           item.moduleName to mergedLibraryNames(item, outputProvider.findRequiredModule(item.moduleName), layout).toSet()
         }
         val libraryNames = librariesByMember.values.flatten().toSet()
-        // A presigned library packs as a `content_module_jar` in natives mode. Only `JarPackager` extracts the natives
-        // of a residual jar that still merges one.
+        // A platform jar never merges a presigned library. The library packs as a `content_module_jar` in natives mode,
+        // so the packer refuses a residual jar that merges one.
         val nativeLibs = mergedPresignedNativeLibs(
           packedModuleNames = memberNames,
           findModule = outputProvider::findRequiredModule,

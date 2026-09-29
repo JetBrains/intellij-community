@@ -325,7 +325,9 @@ abstract class ProductProperties {
 
   /**
    * Maps each native library name (as extracted by `getLibNameBySourceFile`) to its output folder name under `lib/`.
-   * Libraries listed here have their native files extracted to `lib/<folderName>/` rather than embedded in JARs.
+   * The build extracts the native files of a library listed here to a folder instead of the jar.
+   * For a plugin jar, the folder is `plugins/<plugin directory>/lib/<folderName>/`, next to the jar.
+   * For a platform jar, the folder is `lib/<folderName>/` of the distribution root.
    * Use the same string for key and value when no renaming is needed.
    */
   var presignedNativeLibs: Map<String, String> = emptyMap()

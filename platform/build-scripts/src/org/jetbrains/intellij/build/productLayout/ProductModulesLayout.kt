@@ -12,31 +12,55 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PRESIGNED_NATIVE_LIBS
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.getCommunityRepositoryPlugins
+import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
+import org.jetbrains.intellij.build.impl.PLUGINS_DIRECTORY
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.convertModuleNameToFileName
 
 /**
  * The main module of the bundled plugin that owns the JNA copy.
  *
- * A product that bundles it ships `lib/jna/<arch>`, and its launcher gets the `jna.*` JVM arguments.
+ * A product that bundles it ships the JNA native tree [JNA_NATIVE_DIR], and its launcher gets the `jna.*` JVM arguments.
  */
 const val JNA_PLUGIN_MODULE: String = "intellij.jna.plugin"
 
 /**
  * The main module of the bundled plugin that owns the pty4j copy. The plugin depends on the plugin [JNA_PLUGIN_MODULE].
  *
- * A product that bundles it ships `lib/pty4j`, and its launcher gets the `pty4j.*` JVM argument.
+ * A product that bundles it ships the pty4j native tree [PTY4J_NATIVE_DIR], and its launcher gets the `pty4j.*` JVM argument.
  */
 const val PTY4J_PLUGIN_MODULE: String = "intellij.pty4j.plugin"
 
 /**
  * The main module of the bundled plugin that owns the Skiko copy.
  *
- * A product that bundles it ships `lib/skiko-awt-runtime-all`, and its launcher gets the `skiko.*` JVM argument.
+ * A product that bundles it ships the Skiko native tree [SKIKO_NATIVE_DIR], and its launcher gets the `skiko.*` JVM argument.
  */
 const val SKIKO_PLUGIN_MODULE: String = "intellij.skiko.plugin"
+
+/**
+ * The JNA native tree relative to the IDE home: `plugins/jna-plugin/lib/jna`. It holds one directory per architecture.
+ * The tree is in the `lib/` directory of the plugin [JNA_PLUGIN_MODULE], next to the jar that owns it.
+ */
+val JNA_NATIVE_DIR: String = pluginNativeDir(JNA_PLUGIN_MODULE, "jna")
+
+/** The pty4j native tree relative to the IDE home: `plugins/pty4j-plugin/lib/pty4j`, in the plugin [PTY4J_PLUGIN_MODULE]. */
+val PTY4J_NATIVE_DIR: String = pluginNativeDir(PTY4J_PLUGIN_MODULE, "pty4j")
+
+/**
+ * The Skiko native tree relative to the IDE home: `plugins/skiko-plugin/lib/skiko-awt-runtime-all`, in the plugin
+ * [SKIKO_PLUGIN_MODULE].
+ */
+val SKIKO_NATIVE_DIR: String = pluginNativeDir(SKIKO_PLUGIN_MODULE, "skiko-awt-runtime-all")
+
+/** The native tree of the presigned library [library] in the `lib/` directory of the plugin [pluginModule]. */
+private fun pluginNativeDir(pluginModule: String, library: String): String {
+  return "$PLUGINS_DIRECTORY/${convertModuleNameToFileName(pluginModule)}/$LIB_DIRECTORY/${PRESIGNED_NATIVE_LIBS.getValue(library)}"
+}
 
 /**
  * Default bundled plugins for all products.

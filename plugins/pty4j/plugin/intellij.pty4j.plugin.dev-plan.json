@@ -1,5 +1,5 @@
 {
-    "version": 3,
+    "version": 2,
     "plugin": "intellij.pty4j.plugin",
     "variant": "{platform}",
     "layoutSignature": "{platform:layoutSignature}",
@@ -31,8 +31,7 @@
                 "native-tree:intellij.libraries.pty4j"
             ],
             "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
+            "classPath": false
         },
         {
             "destination": "lib/pty4j-plugin.jar",

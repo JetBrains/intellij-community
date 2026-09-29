@@ -25,8 +25,11 @@ import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_COMMAND
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_MAIN_CLASS
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.stdioMcpRunnerVmOptionsFilePath
 import org.jetbrains.intellij.build.loadDevDistributionApplicationInfo
+import org.jetbrains.intellij.build.productLayout.JNA_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.JNA_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.PTY4J_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
+import org.jetbrains.intellij.build.productLayout.SKIKO_NATIVE_DIR
 import org.jetbrains.intellij.build.productLayout.SKIKO_PLUGIN_MODULE
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
@@ -116,9 +119,12 @@ data class ProductJvmArguments(
   @JvmField val classLoader: String? = null,
   @JvmField val vendorName: String,
   @JvmField val pathsSelector: String,
-  @JvmField val jna: Boolean = false,
-  @JvmField val pty4j: Boolean = false,
-  @JvmField val skiko: Boolean = false,
+  /** The JNA native tree relative to the IDE home, when the product bundles the JNA plugin. See [JNA_NATIVE_DIR]. */
+  @JvmField val jnaNativeDir: String? = null,
+  /** The pty4j native tree relative to the IDE home, when the product bundles the pty4j plugin. See [PTY4J_NATIVE_DIR]. */
+  @JvmField val pty4jNativeDir: String? = null,
+  /** The Skiko native tree relative to the IDE home, when the product bundles the Skiko plugin. See [SKIKO_NATIVE_DIR]. */
+  @JvmField val skikoNativeDir: String? = null,
   @JvmField val runtimeModuleRepository: Boolean = false,
   /** The root module of the modular loader, when the product starts through it. */
   @JvmField val rootModule: String? = null,
@@ -290,9 +296,9 @@ internal fun productJvmArguments(product: ProductLaunchInputs, bundledRuntimeVer
     classLoader = if (properties.enableCds) null else properties.classLoader,
     vendorName = product.applicationInfo.shortCompanyName,
     pathsSelector = product.systemSelector,
-    jna = bundledPluginModules.contains(JNA_PLUGIN_MODULE),
-    pty4j = bundledPluginModules.contains(PTY4J_PLUGIN_MODULE),
-    skiko = bundledPluginModules.contains(SKIKO_PLUGIN_MODULE),
+    jnaNativeDir = JNA_NATIVE_DIR.takeIf { bundledPluginModules.contains(JNA_PLUGIN_MODULE) },
+    pty4jNativeDir = PTY4J_NATIVE_DIR.takeIf { bundledPluginModules.contains(PTY4J_PLUGIN_MODULE) },
+    skikoNativeDir = SKIKO_NATIVE_DIR.takeIf { bundledPluginModules.contains(SKIKO_PLUGIN_MODULE) },
     runtimeModuleRepository = product.useModularLoader || product.generateRuntimeModuleRepository,
     rootModule = if (product.useModularLoader) properties.rootModuleForModularLoader else null,
     productMode = if (product.useModularLoader) properties.productMode.id else null,

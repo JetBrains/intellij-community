@@ -825,7 +825,7 @@ def _dev_plugin_component_impl(ctx):
         }
 
         # A natives jar has a tree per platform. The component takes the tree of its own platform, and the plan
-        # places it at the distribution root.
+        # places it in the `lib/` directory of the plugin.
         if info.native_trees:
             if not ctx.attr.target_platform:
                 fail("independent artifact %s packs native files, so the component needs a target platform" % identifier)

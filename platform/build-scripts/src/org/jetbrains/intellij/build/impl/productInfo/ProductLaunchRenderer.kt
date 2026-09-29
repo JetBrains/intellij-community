@@ -53,17 +53,17 @@ fun renderAdditionalJvmArguments(
   result.add("-Didea.vendor.name=${jvm.vendorName}")
   result.add("-Didea.paths.selector=${jvm.pathsSelector}")
 
-  if (jvm.jna) {
-    result.add("-Djna.boot.library.path=$macroName/lib/jna/${arch.dirName}".quoteIfNeeded())
+  jvm.jnaNativeDir?.let {
+    result.add("-Djna.boot.library.path=$macroName/$it/${arch.dirName}".quoteIfNeeded())
     result.add("-Djna.nosys=true")
     result.add("-Djna.noclasspath=true")
   }
-  if (jvm.pty4j) {
-    result.add("-Dpty4j.preferred.native.folder=$macroName/lib/pty4j".quoteIfNeeded())
+  jvm.pty4jNativeDir?.let {
+    result.add("-Dpty4j.preferred.native.folder=$macroName/$it".quoteIfNeeded())
   }
   result.add("-Dio.netty.allocator.type=pooled")
-  if (jvm.skiko) {
-    result.add("-Dskiko.library.path=$macroName/lib/skiko-awt-runtime-all".quoteIfNeeded())
+  jvm.skikoNativeDir?.let {
+    result.add("-Dskiko.library.path=$macroName/$it".quoteIfNeeded())
   }
 
   if (jvm.runtimeModuleRepository) {

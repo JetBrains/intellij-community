@@ -138,17 +138,17 @@ pub(crate) fn additional_jvm_arguments(jvm: &JvmArguments, target: Platform, ope
 
     result.push(format!("-Didea.vendor.name={}", jvm.vendor_name));
     result.push(format!("-Didea.paths.selector={}", jvm.paths_selector));
-    if jvm.jna {
-        result.push(format!("-Djna.boot.library.path={macro_name}/lib/jna/{}", target.arch));
+    if let Some(jna_native_dir) = &jvm.jna_native_dir {
+        result.push(format!("-Djna.boot.library.path={macro_name}/{jna_native_dir}/{}", target.arch));
         result.push("-Djna.nosys=true".to_owned());
         result.push("-Djna.noclasspath=true".to_owned());
     }
-    if jvm.pty4j {
-        result.push(format!("-Dpty4j.preferred.native.folder={macro_name}/lib/pty4j"));
+    if let Some(pty4j_native_dir) = &jvm.pty4j_native_dir {
+        result.push(format!("-Dpty4j.preferred.native.folder={macro_name}/{pty4j_native_dir}"));
     }
     result.push("-Dio.netty.allocator.type=pooled".to_owned());
-    if jvm.skiko {
-        result.push(format!("-Dskiko.library.path={macro_name}/lib/skiko-awt-runtime-all"));
+    if let Some(skiko_native_dir) = &jvm.skiko_native_dir {
+        result.push(format!("-Dskiko.library.path={macro_name}/{skiko_native_dir}"));
     }
     if jvm.runtime_module_repository {
         result.push(format!(

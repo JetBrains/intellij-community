@@ -191,7 +191,7 @@ fn jvm_arguments_follow_the_system_conventions() {
         class_loader: Some("com.intellij.util.lang.PathClassLoader".to_owned()),
         vendor_name: "JetBrains".to_owned(),
         paths_selector: "IntelliJIdea2026.3".to_owned(),
-        jna: true,
+        jna_native_dir: Some("plugins/jna-plugin/lib/jna".to_owned()),
         native_access: true,
         ..JvmArguments::default()
     };
@@ -209,7 +209,7 @@ fn jvm_arguments_follow_the_system_conventions() {
         "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
         "-Didea.vendor.name=JetBrains",
         "-Didea.paths.selector=IntelliJIdea2026.3",
-        "-Djna.boot.library.path=%IDE_HOME%/lib/jna/amd64",
+        "-Djna.boot.library.path=%IDE_HOME%/plugins/jna-plugin/lib/jna/amd64",
         "-Djna.nosys=true",
         "-Djna.noclasspath=true",
         "-Dio.netty.allocator.type=pooled",

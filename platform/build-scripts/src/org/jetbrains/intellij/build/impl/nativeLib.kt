@@ -138,11 +138,14 @@ private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
 /**
  * Forks one task per source archive into the group of the caller.
  *
- * The native files of a library go to `lib/<dir>/` of the distribution root, where `<dir>` is the value of
- * `ProductProperties.presignedNativeLibs` for the library.
+ * The native files of a library go to `<libDirPrefix>/<dir>/`, where `<dir>` is the value of
+ * `ProductProperties.presignedNativeLibs` for the library. [libDirPrefix] is relative to the distribution root.
+ * For a plugin, it is `plugins/<plugin directory>/lib`, so the tree is next to the jar that owns it.
+ * For platform content, it is `lib`.
  */
 internal fun TaskScope.packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
+  libDirPrefix: String,
   dryRun: Boolean,
   context: BuildContext,
 ) {
@@ -152,6 +155,7 @@ internal fun TaskScope.packNativePresignedFiles(
       unpackNativeLibraries(
         sourceFile = sourceFile,
         paths = paths,
+        libDirPrefix = libDirPrefix,
         dryRun = dryRun,
         context = context,
       )
@@ -162,6 +166,7 @@ internal fun TaskScope.packNativePresignedFiles(
 private fun unpackNativeLibraries(
   sourceFile: Path,
   paths: List<String>,
+  libDirPrefix: String,
   dryRun: Boolean,
   context: BuildContext,
 ) {
@@ -174,7 +179,7 @@ private fun unpackNativeLibraries(
   val sourceFileName = sourceFile.name
   check(sourceFileName.startsWith("$libName-")) { "Unexpected source file name (should start with '$libName-'): $sourceFileName" }
   val libVersion = sourceFileName.removePrefix("$libName-").substringBeforeLast('.')
-  val libDir = "lib/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}"
+  val libDir = "$libDirPrefix/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}"
 
   // we need to keep async-profiler agents for all platforms to support remote target profiling,
   // as a suitable agent is copied to a remote machine

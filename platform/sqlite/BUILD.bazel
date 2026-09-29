@@ -38,7 +38,7 @@ jvm_library(
         "//platform/util",
         "@lib//:kotlin-stdlib",
         "//platform/util-ex",
-        "//platform/extensions",
+        "//platform/core-impl",
     ],
 )
 
@@ -57,7 +57,7 @@ jvm_library(
         "//libraries/sqlite-native:sqlite-native_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util-ex:util-ex_test_lib",
-        "//platform/extensions:extensions_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.sqlite` end

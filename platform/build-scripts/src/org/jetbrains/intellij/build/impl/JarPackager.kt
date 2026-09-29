@@ -165,7 +165,9 @@ class JarPackager private constructor(
 
       return taskScope {
         if (buildAssetResult.sourceToNativeFiles.isNotEmpty()) {
-          packNativePresignedFiles(nativeFiles = buildAssetResult.sourceToNativeFiles, dryRun = dryRun, context = context)
+          // A plugin keeps the native tree in its own `lib/`, next to the jar that owns it. Platform content keeps it in `lib/`.
+          val libDirPrefix = if (layout is PluginLayout) "$PLUGINS_DIRECTORY/${layout.directoryName}/$LIB_DIRECTORY" else LIB_DIRECTORY
+          packNativePresignedFiles(nativeFiles = buildAssetResult.sourceToNativeFiles, libDirPrefix = libDirPrefix, dryRun = dryRun, context = context)
         }
 
         val list = mutableListOf<DistributionFileEntry>()

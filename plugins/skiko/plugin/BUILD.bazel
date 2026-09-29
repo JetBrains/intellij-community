@@ -15,27 +15,27 @@ dev_dist_complex_plugin(
         "//plugins/skiko/plugin:plugin.jar": "intellij.skiko.plugin",
     },
     descriptor = "//plugins/skiko/plugin:intellij.skiko.plugin_dev_descriptor",
-    execution_version = 3,
+    execution_version = 2,
     independent_artifacts = ["//libraries/skiko:skiko_content_module_jar"],
     main_module = "intellij.skiko.plugin",
     platform_values = {
         "darwin_aarch64": {
-            "layoutSignature": "6132q7su0pu8x8oc92s7kbo7g",
+            "layoutSignature": "6o9hta1c6u3low3mkc3yec2ol",
         },
         "darwin_x64": {
-            "layoutSignature": "c2f863i7iqki30iy5v60151oh",
+            "layoutSignature": "8rxiqm3ke2gto43srg5n4289l",
         },
         "linux_aarch64": {
-            "layoutSignature": "302dpeea35w73jqmtcw8g846d",
+            "layoutSignature": "a026ewga7zakdt4ahp5h2tmu3",
         },
         "linux_x64": {
-            "layoutSignature": "4k1uq6szbg06bjn2zr54aplml",
+            "layoutSignature": "61nlhkbrizhodbydefpau6hy2",
         },
         "windows_aarch64": {
-            "layoutSignature": "1xh7xy5e3fcdc7xfr5h7cq12m",
+            "layoutSignature": "ec5249hz2j8aj6v5lu9ll2qod",
         },
         "windows_x64": {
-            "layoutSignature": "brgssvhezedj6e322581d52pv",
+            "layoutSignature": "en3558lxq7plao50qwhg99o15",
         },
     },
     platforms = [

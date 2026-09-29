@@ -1,5 +1,5 @@
 {
-    "version": 3,
+    "version": 2,
     "plugin": "intellij.profiler.asyncOne.plugin",
     "variant": "{platform}",
     "layoutSignature": "{platform:layoutSignature}",
@@ -31,8 +31,7 @@
                 "native-tree:intellij.profiler.asyncOne"
             ],
             "kind": "tree",
-            "classPath": false,
-            "scope": "distribution"
+            "classPath": false
         },
         {
             "destination": "lib/profiler-asyncOne-plugin.jar",

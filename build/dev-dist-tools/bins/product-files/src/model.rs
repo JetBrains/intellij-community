@@ -84,12 +84,12 @@ pub(crate) struct JvmArguments {
     pub class_loader: Option<String>,
     pub vendor_name: String,
     pub paths_selector: String,
-    #[serde(default)]
-    pub jna: bool,
-    #[serde(default)]
-    pub pty4j: bool,
-    #[serde(default)]
-    pub skiko: bool,
+    /// The JNA native tree relative to the IDE home, when the product bundles the JNA plugin.
+    pub jna_native_dir: Option<String>,
+    /// The pty4j native tree relative to the IDE home, when the product bundles the pty4j plugin.
+    pub pty4j_native_dir: Option<String>,
+    /// The Skiko native tree relative to the IDE home, when the product bundles the Skiko plugin.
+    pub skiko_native_dir: Option<String>,
     #[serde(default)]
     pub runtime_module_repository: bool,
     pub root_module: Option<String>,

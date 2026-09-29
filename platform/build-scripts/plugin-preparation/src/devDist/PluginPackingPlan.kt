@@ -126,8 +126,8 @@ const val PLUGIN_ASSET_SCOPE: String = "plugin"
 const val DISTRIBUTION_ASSET_SCOPE: String = "distribution"
 
 /**
- * The input of the native tree a reused natives jar writes: `native-tree:<module>`. The tree asset is at the
- * distribution root, and the reused `content_module_jar` of the module produces it.
+ * The input of the native tree a reused natives jar writes: `native-tree:<module>`. The tree asset is in the plugin
+ * directory, next to the jar, and the reused `content_module_jar` of the module produces it.
  */
 @ApiStatus.Internal
 const val NATIVE_TREE_INPUT_PREFIX: String = "native-tree:"
@@ -257,7 +257,7 @@ fun planPluginPacking(
     val recipe = asset.recipe
     val nativeTreeModule = if (isNativeTreeAsset(asset)) asset.inputs.single().removePrefix(NATIVE_TREE_INPUT_PREFIX) else null
     if (nativeTreeModule != null) {
-      require(asset.scope == DISTRIBUTION_ASSET_SCOPE) { "Plugin '$plugin' places the native tree '${asset.destination}' in the plugin" }
+      require(asset.scope == PLUGIN_ASSET_SCOPE) { "Plugin '$plugin' places the native tree '${asset.destination}' outside the plugin" }
       // No owner in a plan without reuse. The caller refuses a native tree that its final plan leaves unowned.
       val owner = recipes.values.firstOrNull { it.module == nativeTreeModule && it.recipe.writer.nativeLib.isNotEmpty() }
       return@map PlannedPluginAsset(asset = asset, artifact = owner)

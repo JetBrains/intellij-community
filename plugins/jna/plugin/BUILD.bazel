@@ -15,27 +15,27 @@ dev_dist_complex_plugin(
         "//plugins/jna/plugin:plugin.jar": "intellij.jna.plugin",
     },
     descriptor = "//plugins/jna/plugin:intellij.jna.plugin_dev_descriptor",
-    execution_version = 3,
+    execution_version = 2,
     independent_artifacts = ["//libraries/jna:jna_content_module_jar"],
     main_module = "intellij.jna.plugin",
     platform_values = {
         "darwin_aarch64": {
-            "layoutSignature": "6awjsm3ypmtjxrerlzvaam43e",
+            "layoutSignature": "d2ln36u7cgl7ck8k3tfqaxey",
         },
         "darwin_x64": {
-            "layoutSignature": "7ou3skua4b6waf90vmla4w5jn",
+            "layoutSignature": "ctdt13famncziek48nftyhs1v",
         },
         "linux_aarch64": {
-            "layoutSignature": "8dueljk51mfazq917dfpj1601",
+            "layoutSignature": "7fkrc4i24um63l0bvqfxpr7to",
         },
         "linux_x64": {
-            "layoutSignature": "c6lfat88ubv8d9zae3g2sbo5z",
+            "layoutSignature": "2okon4rnhp3j7akgjx6q7hhna",
         },
         "windows_aarch64": {
-            "layoutSignature": "4zop6kw3fab2v8qa8ciw122d4",
+            "layoutSignature": "citya3bpm1aw4lm9jznrniczk",
         },
         "windows_x64": {
-            "layoutSignature": "9hsrlizmsqnrsprym5j2nbzt3",
+            "layoutSignature": "i11elp3wte3fqx2k6qemx39d",
         },
     },
     platforms = [

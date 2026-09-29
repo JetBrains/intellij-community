@@ -4,7 +4,6 @@ package com.intellij.platform.buildScripts.pluginModelTool
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.DISTRIBUTION_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.NATIVE_TREE_INPUT_PREFIX
@@ -105,7 +104,7 @@ data class PluginSymbolicNativeOccurrence(
 data class PluginSymbolicNativeUse(
   @JvmField val occurrence: PluginSymbolicNativeOccurrence,
   @JvmField val handling: PluginSymbolicNativeHandling,
-  @JvmField val distributionPrefix: String?,
+  @JvmField val nativeTreePrefix: String?,
 )
 
 /**
@@ -235,12 +234,12 @@ class PluginSymbolicJarAssembly {
 
   /**
    * Marks the jar at [destination] as the jar of the presigned native library [library]. The jar leaves the library's
-   * native entries out, and its native tree goes to [distributionPrefix] at the distribution root. Only a reused
+   * native entries out, and its native tree goes to [nativeTreePrefix] in the plugin directory. Only a reused
    * `content_module_jar` packs such a jar, and the tree is its output.
    */
-  internal fun markNatives(destination: String, library: String, distributionPrefix: String, reportGap: (PluginSymbolicLayoutGap) -> Unit) {
+  internal fun markNatives(destination: String, library: String, nativeTreePrefix: String, reportGap: (PluginSymbolicLayoutGap) -> Unit) {
     val jar = jars.computeIfAbsent(destination) { SymbolicJar() }
-    val natives = PluginSymbolicJarNatives(library, distributionPrefix)
+    val natives = PluginSymbolicJarNatives(library, nativeTreePrefix)
     val previous = jar.natives
     if (previous != null && previous != natives) {
       reportGap(PluginSymbolicLayoutGap("native-library:$destination", "A jar merges two presigned native libraries: ${previous.library} and $library"))
@@ -296,11 +295,10 @@ class PluginSymbolicJarAssembly {
             recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, nativeLib = natives.library)),
           ),
           PluginPackingAsset(
-            destination = natives.distributionPrefix.removeSuffix("/"),
+            destination = natives.nativeTreePrefix.removeSuffix("/"),
             inputs = listOf(NATIVE_TREE_INPUT_PREFIX + owner.input),
             kind = "tree",
             classPath = false,
-            scope = DISTRIBUTION_ASSET_SCOPE,
           ),
         )
       }
@@ -345,4 +343,4 @@ class PluginSymbolicJarAssembly {
   }
 }
 
-private data class PluginSymbolicJarNatives(val library: String, val distributionPrefix: String)
+private data class PluginSymbolicJarNatives(val library: String, val nativeTreePrefix: String)

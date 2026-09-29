@@ -50,6 +50,8 @@ val knownMissingModuleDependencies: List<String> = java.util.List.of(
 /**
  * The presigned native libraries of every JetBrains product: the Maven artifact name of each, as
  * `getLibNameBySourceFile` reads it, to its folder under `lib/`. See [ProductProperties.presignedNativeLibs].
+ * The folder is in the `lib/` directory of the plugin that owns the library jar.
+ * Only `intellij-deps-rocksdbjni` is platform content, so its folder is `lib/rocksdbjni` of the distribution root.
  *
  * One map for all products, because the dev distribution packs a content module jar once for all of them. Only the
  * language servers ship `intellij-deps-rocksdbjni`.

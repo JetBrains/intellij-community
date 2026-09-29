@@ -51,7 +51,7 @@ enum class PluginSymbolicNativeHandling {
 @ApiStatus.Internal
 data class PluginSymbolicNativeRequirement(
   @JvmField val handling: PluginSymbolicNativeHandling,
-  @JvmField val distributionPrefix: String?,
+  @JvmField val nativeTreePrefix: String?,
 )
 
 /**
@@ -94,10 +94,10 @@ fun derivePluginSymbolicNativeRequirements(
       nativePolicy.macSigningEnabled && nativePolicy.signingMode == SignNativeFileMode.ENABLED -> PluginSymbolicNativeHandling.INLINE_SIGNING
       else -> PluginSymbolicNativeHandling.UNTOUCHED
     }
-    val distributionPrefix = if (extraction) "lib/${nativePolicy.presignedLibraries.getValue(checkNotNull(library))}/" else null
+    val nativeTreePrefix = if (extraction) "lib/${nativePolicy.presignedLibraries.getValue(checkNotNull(library))}/" else null
     PluginSymbolicNativeRequirement(
       handling = handling,
-      distributionPrefix = distributionPrefix,
+      nativeTreePrefix = nativeTreePrefix,
     )
   }
 }

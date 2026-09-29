@@ -50,7 +50,7 @@ dev_dist_complex_plugin(
         "//platform/vcs/plugin:plugin.jar": "intellij.platform.vcs.plugin",
     },
     descriptor = "//build/dev-dist-descriptors/intellij.platform.vcs.plugin:intellij.platform.vcs.plugin_dev_descriptor",
-    execution_version = 3,
+    execution_version = 2,
     independent_artifacts = [
         "//platform/vcs-api:vcs_content_module_jar",
         "//platform/vcs-impl:vcs-impl_content_module_jar",
@@ -71,22 +71,22 @@ dev_dist_complex_plugin(
     main_module = "intellij.platform.vcs.plugin",
     platform_values = {
         "darwin_aarch64": {
-            "layoutSignature": "aiza0l1cg69665pg7a5cdt108",
+            "layoutSignature": "r4hddiq0se9dka2mg84a8p0f",
         },
         "darwin_x64": {
-            "layoutSignature": "7rhyulvhebqoodbcopr3p0zjz",
+            "layoutSignature": "8aho7ppial2l8nh6m3xlitjv2",
         },
         "linux_aarch64": {
-            "layoutSignature": "oc3kciv9xyp9usyt35m2xnxx",
+            "layoutSignature": "531zq99yy0e1y5wuy1t9bl419",
         },
         "linux_x64": {
-            "layoutSignature": "8gga2revf9d5gj4jtxjn3weqe",
+            "layoutSignature": "28lqriwtb7ti2bdgqwab7pwst",
         },
         "windows_aarch64": {
-            "layoutSignature": "9guwwym2nq2isr0snig2799c1",
+            "layoutSignature": "5qt3644sr12m581lwlzh06azs",
         },
         "windows_x64": {
-            "layoutSignature": "84b1x9hkrp30uwrnspkjnxgdf",
+            "layoutSignature": "9ls444o8o44g48fxf9gcymca6",
         },
     },
     platforms = [

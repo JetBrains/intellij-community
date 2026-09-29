@@ -109,6 +109,7 @@ internal fun registerGeneratedDevDistPluginPlans(
   check(failures.isEmpty()) {
     "Cannot generate ${failures.size} of ${requestsByPlugin.size} dev-plugin plans:\n" + failures.joinToString("\n")
   }
+  checkPluginNativeTrees(entries)
   owner.bindPluginPlanEntries(entries)
 }
 
