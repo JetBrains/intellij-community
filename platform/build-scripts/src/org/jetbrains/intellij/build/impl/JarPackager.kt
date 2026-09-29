@@ -85,6 +85,7 @@ class JarPackager private constructor(
   private val context: BuildContext,
   private val platformLayout: PlatformLayout?,
   @JvmField internal val moduleOutputPatcher: ModuleOutputPatcher,
+  private val dryRun: Boolean,
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
@@ -94,7 +95,7 @@ class JarPackager private constructor(
 
   companion object {
     fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
-      val packager = JarPackager(outDir = outputDir, context = context, platformLayout = null, moduleOutputPatcher = ModuleOutputPatcher())
+      val packager = JarPackager(outDir = outputDir, context = context, platformLayout = null, moduleOutputPatcher = ModuleOutputPatcher(), dryRun = false)
       packager.computeModuleSources(includedModules = includedModules, layout = null, searchableOptionSet = null, cachedDescriptorWriterProvider = null)
       buildJars(
         assets = packager.assets.values,
@@ -125,6 +126,7 @@ class JarPackager private constructor(
         context = context,
         platformLayout = platformLayout,
         moduleOutputPatcher = moduleOutputPatcher,
+        dryRun = dryRun,
       )
       packager.computeModuleSources(
         includedModules = includedModules,
@@ -295,6 +297,13 @@ class JarPackager private constructor(
   }
 
   private fun handleCustomAssets(layout: PluginLayout, jarAsset: AssetDescriptor) {
+    // A dry layout packs no jar, and every reader of its entries drops a `CustomAssetEntry`. An asset supplier
+    // resolves the library roots and the files it reads, and a reference fragment declares only the files it packs.
+    // So a dry layout evaluates no custom asset.
+    if (dryRun) {
+      return
+    }
+
     for (customAsset in layout.customAssets) {
       if (customAsset.platformSpecific != null) {
         continue
