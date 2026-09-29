@@ -254,7 +254,6 @@ internal class DevDistPluginExecutions(
  * [DevDistOwnPackagePlans.acceptsUpstreamPlans]. The run then collects and renders once more with the community home.
  */
 internal fun computeDevDistPluginExecutions(
-  root: DevDistGenerationRoot,
   sections: DevDistBuildSections,
   upstreamPackagePlans: DevDistOwnPackagePlans? = null,
 ): DevDistPluginExecutions {
@@ -263,11 +262,10 @@ internal fun computeDevDistPluginExecutions(
   val planFileRecords = sections.pluginPlanRecords.filterKeys { sections.simplePackaging(it.plugin) == null }
   fun collect(reusedUpstream: Set<String> = emptySet()): DevDistPluginPlanFiles {
     return collectDevDistPluginPlanFiles(
-      projectRoot = root.outputRoot,
+      projectRoot = sections.index.projectRoot,
       records = planFileRecords,
       index = sections.index,
-      half = root.half,
-      writtenText = root::respellQuotedLabels,
+      half = sections.half,
       ownHome = { plugin, _ -> if (plugin in reusedUpstream) checkNotNull(upstreamPackagePlans).upstreamHome(plugin) else null },
     )
   }
@@ -293,7 +291,7 @@ internal fun computeDevDistPluginExecutions(
       for (plugin in reused) {
         val calls = rendering.calls.getValue(plugin)
         check(calls.sectionText != null && upstreamPackagePlans.acceptsCalls(plugin, calls)) {
-          "The ${root.passName} renders another call of $plugin in its community package than the community half:\n" + calls.sectionText
+          "The ${sections.half.name} half renders another call of $plugin in its community package than the community half:\n" + calls.sectionText
         }
       }
     }
@@ -312,12 +310,12 @@ internal fun computeDevDistPluginExecutions(
  * [executions] holds the plan files and the calls of every complex plugin. The calls of a community plugin go into its
  * cross-half package here. [targets] is the JSON the module and library labels still come from.
  *
- * [root] names the half the run writes. A half writes the reference plan, the platform patches and the embedded
- * descriptors only when it has the capability, see [requireHalfCapabilities]. A half writes only into its own packages,
- * see [DevDistGenerationRoot.writesPackage].
+ * [half] is the half the run writes, and every path is relative to its root, the project root of the index of
+ * [sections]. A half writes the reference plan, the platform patches and the embedded descriptors only when it has the
+ * capability, see [requireHalfCapabilities]. A half writes only into its own packages, see [DevDistHalf.ownsPackage].
  */
 internal fun computeDevDistPlan(
-  root: DevDistGenerationRoot,
+  half: DevDistHalf,
   outputProvider: ModuleOutputProvider,
   products: List<DiscoveredProduct>,
   walk: DescriptorWalk,
@@ -336,12 +334,13 @@ internal fun computeDevDistPlan(
     check(crossHalfPluginCalls.put(call.crossHalfPath, text) == null) { "Two complex plugins render into '${call.crossHalfPath}'" }
   }
   val verdicts = sections.verdicts
-  val projectRoot = root.projectRoot
-  val splitProducts = root.splitProducts(products.map { it.name })
+  val index = sections.index
+  val projectRoot = index.projectRoot
+  val splitProducts = half.registrySplitProducts(products.map { it.name })
   val runConfigurations = runConfigurationRows
   val collected = collectDescriptorFiles(
-    root = root,
-    index = sections.index,
+    half = half,
+    index = index,
     outputProvider = outputProvider,
     products = products,
     walk = walk,
@@ -362,7 +361,8 @@ internal fun computeDevDistPlan(
     }
   }
   requireHalfCapabilities(
-    root = root,
+    half = half,
+    projectRoot = projectRoot,
     registryProducts = products.map { it.name },
     plannedProducts = sortedProducts.map(ProductFragmentPlan::platformPrefix) +
                       collected.pluginDescriptorPlans.map(PluginDescriptorPlan::platformPrefix),
@@ -372,28 +372,26 @@ internal fun computeDevDistPlan(
       .filter(ProductFragmentPlan::runtimeModuleRepository)
       .map(ProductFragmentPlan::platformPrefix),
   )
-  val outputRoot = root.outputRoot
   // The generation pipeline's own writer. It reports a write the same way the rest of the pipeline does.
-  val updater = DeferredFileUpdater(outputRoot)
+  val updater = DeferredFileUpdater(projectRoot)
   // The descriptor leaf of every plugin whose own package cannot declare one, in the same table as the central files,
   // so the `model-generation` validation diff-gates a stale package exactly as it gates a stale `.bzl`.
   val crossHalfDescriptorPackages = sections.crossHalfDescriptorPackages
-  val productDescriptorFiles = renderProductDescriptorPackage(sortedProducts.mapNotNull(ProductFragmentPlan::productDescriptor).distinct())
-  val descriptorFiles = collected.files.map { it.copy(relativePath = root.outputRelativePath(it.relativePath)) }
+  val productDescriptorFiles = renderProductDescriptorPackage(sortedProducts.mapNotNull(ProductFragmentPlan::productDescriptor).distinct(), index)
   val relocatedContentModuleJarPackage = renderRelocatedContentModuleJarPackage(sections.relocatedContentModuleJarCalls)
   val relocatedContentModuleJarPackagePath = "$DEV_DIST_CONTENT_MODULE_JARS_PACKAGE/BUILD.bazel"
   val fileContents = buildList {
-    add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(descriptorFiles))
+    add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files))
     add(DEV_DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans))
-    add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, root))
-    if (DevDistCapability.REFERENCE_PLAN in root.half.capabilities) {
+    add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half))
+    if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
       add(DEV_DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts))
     }
-    add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, root))
-    add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, root))
+    add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
+    add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
     add(DEV_DIST_CORE_CLASSPATH_RELATIVE_PATH to renderCoreClassPath(sortedProducts))
-    add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, root))
-    add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, root.macrosBzl, root.half.refusedRowProperties))
+    add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
+    add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties))
     addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
     generatedPluginFiles.entries.mapTo(this) { it.key to it.value }
     productDescriptorFiles.entries.mapTo(this) { it.key to it.value }
@@ -404,48 +402,48 @@ internal fun computeDevDistPlan(
       platformJarOrderRelativePath(product)?.let { add(it to product.platformJarOrder.joinToString(separator = "\n", postfix = "\n")) }
     }
   }
-  // A half writes only into its own packages, see `DevDistGenerationRoot.writesPackage`.
+  // A half writes only into its own packages, see `DevDistHalf.ownsPackage`.
   val files = fileContents.map { (relativePath, newContent) ->
-    root.requireWritable(relativePath)
+    half.requireWritable(relativePath)
     DevDistPlanFileResult(
       relativePath = relativePath,
-      status = updater.updateIfChanged(path = outputRoot.resolve(relativePath), newContent = root.respellQuotedLabels(newContent)),
+      status = updater.updateIfChanged(path = projectRoot.resolve(relativePath), newContent = newContent),
     )
   }
-  pluginPlans.updates.results.forEach { root.requireWritable(it.relativePath) }
+  pluginPlans.updates.results.forEach { half.requireWritable(it.relativePath) }
   // The run deletes every descriptor package on disk that it does not write, see `CrossHalfDescriptorPackages.stale`.
-  val stalePackages = crossHalfDescriptorPackages.stale(outputRoot, crossHalfPluginTargets, crossHalfPluginCalls)
+  val stalePackages = crossHalfDescriptorPackages.stale(projectRoot, crossHalfPluginTargets, crossHalfPluginCalls)
   for (relativePath in stalePackages) {
-    updater.delete(outputRoot.resolve(relativePath))
+    updater.delete(projectRoot.resolve(relativePath))
   }
   // A run without a relocated call leaves no package of relocated calls behind. Only the ultimate half writes one.
-  if (relocatedContentModuleJarPackage == null && !root.dependentIsCommunity && Files.exists(outputRoot.resolve(relocatedContentModuleJarPackagePath))) {
-    updater.delete(outputRoot.resolve(relocatedContentModuleJarPackagePath))
+  if (relocatedContentModuleJarPackage == null && !half.writesCommunityPackages && Files.exists(projectRoot.resolve(relocatedContentModuleJarPackagePath))) {
+    updater.delete(projectRoot.resolve(relocatedContentModuleJarPackagePath))
   }
   // A product that leaves the split path leaves its launch model behind.
   val launchModels = sortedProducts.mapTo(HashSet()) { it.launchModelRelativePath }
-  for (relativePath in listLaunchModels(outputRoot)) {
+  for (relativePath in listLaunchModels(projectRoot)) {
     if (relativePath !in launchModels) {
-      updater.delete(outputRoot.resolve(relativePath))
+      updater.delete(projectRoot.resolve(relativePath))
     }
   }
   // A product that loses its runtime module repository fragment leaves its platform jar order behind.
   val platformJarOrders = sortedProducts.mapNotNullTo(HashSet(), ::platformJarOrderRelativePath)
-  for (relativePath in listPlatformJarOrders(outputRoot)) {
+  for (relativePath in listPlatformJarOrders(projectRoot)) {
     if (relativePath !in platformJarOrders) {
-      updater.delete(outputRoot.resolve(relativePath))
+      updater.delete(projectRoot.resolve(relativePath))
     }
   }
   // Only the home of a class writes its embedded descriptor, so a product that joins a class leaves a file to delete.
   // A half without an embedded frontend writes no embedded descriptor.
-  root.half.embeddedFrontend?.let { embeddedFrontend ->
+  half.embeddedFrontend?.let { embeddedFrontend ->
     for (relativePath in embeddedFrontend.staleDescriptors(projectRoot, generatedPluginFiles.keys)) {
       updater.delete(projectRoot.resolve(relativePath))
     }
   }
   // A product whose `platform_lib` packs its application-info module jar again leaves its Product DSL content behind.
-  for (relativePath in staleProductDescriptorSources(outputRoot, productDescriptorFiles.keys)) {
-    updater.delete(outputRoot.resolve(relativePath))
+  for (relativePath in staleProductDescriptorSources(projectRoot, productDescriptorFiles.keys)) {
+    updater.delete(projectRoot.resolve(relativePath))
   }
   val productClasses = products.associate { it.name to (it.properties?.javaClass?.name ?: "") }
   return DevDistPlanCompute(
@@ -461,11 +459,12 @@ internal fun computeDevDistPlan(
 /**
  * Fails when a half would write what it cannot plan: a product outside its registry, or an embedded descriptor, a
  * platform patch or a runtime module repository without the capability, see [DevDistHalf.capabilities].
- * [registryProducts] are the keys of `build/dev-build.json` of the half, so no generated file of the community half names
- * a product of another registry.
+ * [registryProducts] are the keys of `build/dev-build.json` under [projectRoot], the root of [half], so no generated file of
+ * the community half names a product of another registry.
  */
 internal fun requireHalfCapabilities(
-  root: DevDistGenerationRoot,
+  half: DevDistHalf,
+  projectRoot: Path,
   registryProducts: Collection<String>,
   plannedProducts: Collection<String>,
   generatedPluginFiles: Collection<String>,
@@ -475,15 +474,15 @@ internal fun requireHalfCapabilities(
   val registry = registryProducts.toHashSet()
   val foreign = plannedProducts.filterNot { it in registry }.distinct().sorted()
   check(foreign.isEmpty()) {
-    "The ${root.passName} renders products outside ${root.outputRoot.resolve(PRODUCT_REGISTRY_RELATIVE_PATH)}: $foreign"
+    "The ${half.name} half renders products outside ${projectRoot.resolve(PRODUCT_REGISTRY_RELATIVE_PATH)}: $foreign"
   }
-  val capabilities = root.half.capabilities
+  val capabilities = half.capabilities
   check(DevDistCapability.EMBEDDED_FRONTENDS in capabilities || generatedPluginFiles.isEmpty()) {
-    "The ${root.passName} cannot write an embedded descriptor: ${generatedPluginFiles.sorted()}"
+    "The ${half.name} half cannot write an embedded descriptor: ${generatedPluginFiles.sorted()}"
   }
-  check(DevDistCapability.PLATFORM_PATCHES in capabilities || !hasPlatformPatches) { "The ${root.passName} cannot write a platform patch" }
+  check(DevDistCapability.PLATFORM_PATCHES in capabilities || !hasPlatformPatches) { "The ${half.name} half cannot write a platform patch" }
   check(DevDistCapability.RUNTIME_MODULE_REPOSITORY in capabilities || runtimeModuleRepositoryProducts.isEmpty()) {
-    "The ${root.passName} cannot write a runtime module repository, and these products ask for one: " +
+    "The ${half.name} half cannot write a runtime module repository, and these products ask for one: " +
     runtimeModuleRepositoryProducts.sorted()
   }
 }
@@ -738,17 +737,16 @@ private class CollectedPlan(
  *
  * After the flat walk, because the per-plugin partition needs the flat walk's resolutions, so that both walks credit
  * one module with a load path. The dev sections read these entries first, and the plan reads the same entries after
- * them. [targets] is the JSON the module and library labels come from. A plugin the plan cannot state stops the run.
+ * them. [index] gives the module and library labels and the root of the half. A plugin the plan cannot state stops the run.
  *
  * Each entry states the refusals of every mode of [DEV_DIST_STATED_PRODUCT_MODES], and not only of the modes of the
  * split products of [half]. So both halves render one leaf of a community plugin.
  */
 internal fun collectPluginDescriptorPlans(
   walk: DescriptorWalk,
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   outputProvider: ModuleOutputProvider,
   products: List<DiscoveredProduct>,
-  targets: BazelTargetsInfo.TargetsFile,
   requestLayoutsByProduct: Map<String, List<PluginLayout>>,
   testPluginsByProduct: Map<String, Map<String, TestPluginSpec>> = emptyMap(),
   half: DevDistHalf,
@@ -766,11 +764,11 @@ internal fun collectPluginDescriptorPlans(
     if (product.name !in half.splitDistributions) return@mapConcurrent null
     val properties = product.properties as? ProductProperties ?: return@mapConcurrent null
     collectPluginDescriptorPlan(
-      projectRoot = projectRoot,
+      index = index,
       outputProvider = outputProvider,
       properties = properties,
       platformPrefix = product.name,
-      bazelTargets = targets,
+      bazelTargets = index.targets,
       layouts = requireNotNull(requestLayoutsByProduct.get(product.name)) {
         "Split product '${product.name}' has no dev-plugin request layouts"
       },
@@ -991,7 +989,7 @@ private fun ProductContentBuildResult.withoutModules(modules: Set<String>): Prod
  * [devDistRuntimeModuleRepositoryProducts].
  */
 private fun collectDescriptorFiles(
-  root: DevDistGenerationRoot,
+  half: DevDistHalf,
   index: DevDistBazelIndex,
   outputProvider: ModuleOutputProvider,
   products: List<DiscoveredProduct>,
@@ -1006,7 +1004,6 @@ private fun collectDescriptorFiles(
   val contentByProduct = walk.contentByProduct
   // In the product order, so the first product of a group of equal plans names the shared action, as an embedded
   // descriptor class does.
-  val half = root.half
   val plannedDescriptors = pluginDescriptorPlans.mapNotNull { plan -> plan.productDescriptor?.let { plan.platformPrefix to it } }.toMap()
   val productDescriptors = shareEqualProductDescriptors(
     half.splitProducts.mapNotNull { product -> plannedDescriptors.get(product)?.let { product to it } }.toMap()
@@ -1033,7 +1030,7 @@ private fun collectDescriptorFiles(
     val content = contentByProduct[productIndex] ?: return@mapNotNull null
     val moduleToSetChain = content.moduleToSetChainMapping.mapKeys { it.key.value }
     collectFragmentPlan(
-      root = root,
+      half = half,
       index = index,
       outputProvider = outputProvider,
       product = product,
@@ -1155,8 +1152,8 @@ internal fun collectContentVetoModules(products: List<DiscoveredProduct>): List<
  * that test had run.
  */
 private fun collectFragmentPlan(
-  root: DevDistGenerationRoot,
-  /** The index of the run, which spells a label for a plan package of [root]. */
+  half: DevDistHalf,
+  /** The index of the run, which spells a label for a plan package of [half]. Its project root is the root of [half]. */
   index: DevDistBazelIndex,
   outputProvider: ModuleOutputProvider,
   product: DiscoveredProduct,
@@ -1178,12 +1175,10 @@ private fun collectFragmentPlan(
   /** The actions that write the two generated entries of the application-info module jar, or `null` when none do. */
   productDescriptor: ProductDescriptorPlan?,
 ): ProductFragmentPlan? {
-  val half = root.half
   val config = half.splitDistributions.get(product.name) ?: return null
   val properties = product.properties as? ProductProperties
                    ?: error("Split dev distribution '${product.name}' has no ProductProperties")
-  val projectRoot = root.projectRoot
-  val productToken = devDistProductToken(projectHome = root.outputRoot, productProperties = properties)
+  val productToken = devDistProductToken(projectHome = index.projectRoot, productProperties = properties)
 
   // One fragment owns `lib/`, minus the jars another producer packs - which it is told by name, see the `except`
   // selector. Splitting it buys nothing: a fragment's action key covers the shared project model tree, so an `.iml`
@@ -1291,7 +1286,7 @@ private fun collectFragmentPlan(
       val embeddedFrontend = checkNotNull(half.embeddedFrontend) {
         "${product.name}: the ${half.name} half has no embedded frontend, so it cannot plan a frontend product"
       }
-      put(embeddedFrontend.iconsModule, frontendIconPatches(support = embeddedFrontend, projectRoot = projectRoot, product = product.name, properties = properties))
+      put(embeddedFrontend.iconsModule, frontendIconPatches(support = embeddedFrontend, index = index, product = product.name, properties = properties))
     }
   }
 
@@ -1506,7 +1501,7 @@ private fun collectFragmentPlan(
     checkRuntimeModuleRepositoryDescriptors(
       outputProvider = outputProvider,
       properties = properties,
-      bazelTargets = bazelTargets,
+      index = index,
       descriptorCollector = descriptorCollector,
     )
   }
@@ -1518,12 +1513,12 @@ private fun collectFragmentPlan(
     embeddedFrontend = embeddedFrontend,
     modularLoader = modularLoader,
     payloads = listOf(platformLibPayload) + runtimeModuleRepositoryPayload,
-    platformAssets = collectPlatformAssets(layout = layout, properties = properties, communityRoot = projectRoot.resolve("community")),
+    platformAssets = collectPlatformAssets(layout = layout, properties = properties, index = index),
     launchModel = launchModel,
     launchModelRelativePath = launchModelRelativePath(half.caseSafeProductName(product.name)),
-    ideaProperties = half.baseIdeaProperties(product.name, languageServerBase = launchModel.ideaProperties.languageServerBase),
+    ideaProperties = index.planLabel(half.baseIdeaProperties(product.name, languageServerBase = launchModel.ideaProperties.languageServerBase)),
     applicationInfoSources = applicationInfoSources(
-      projectRoot = projectRoot,
+      index = index,
       project = jpsProject,
       properties = properties,
       product = product.name,
@@ -1536,23 +1531,23 @@ private fun collectFragmentPlan(
 }
 
 /**
- * [ApplicationInfoSources] of [product]. A frontend takes the application info of its host product [hostProperties] as
- * the host, the same file that `applicationInfoOverride` reads.
+ * [ApplicationInfoSources] of [product], spelled for a plan package of [index]. A frontend takes the application info of
+ * its host product [hostProperties] as the host, the same file that `applicationInfoOverride` reads.
  */
 private fun applicationInfoSources(
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   project: JpsProject,
   properties: ProductProperties,
   product: String,
   hostProperties: ProductProperties?,
 ): ApplicationInfoSources {
-  val host = hostProperties?.let { applicationInfoLabel(projectRoot = projectRoot, project = project, properties = it, platformPrefix = product) }
+  val host = hostProperties?.let { index.planLabel(applicationInfoLabel(index = index, project = project, properties = it, platformPrefix = product)) }
   @Suppress("DEPRECATION")
   check(host != null || properties.applicationInfoOverride(project) == null) {
     "$product overrides its application info, and the plan knows no source for it"
   }
   return ApplicationInfoSources(
-    source = applicationInfoLabel(projectRoot = projectRoot, project = project, properties = properties, platformPrefix = product),
+    source = index.planLabel(applicationInfoLabel(index = index, project = project, properties = properties, platformPrefix = product)),
     host = host,
     replacements = properties.appInfoXmlReplacements.orEmpty().map { (key, value) -> "$key=$value" },
   )
@@ -1580,7 +1575,7 @@ internal fun shareEqualProductDescriptors(plans: Map<String, ProductDescriptorPl
  */
 private fun frontendIconPatches(
   support: DevDistEmbeddedFrontendSupport,
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   product: String,
   properties: ProductProperties,
 ): Map<String, String> {
@@ -1591,8 +1586,8 @@ private fun frontendIconPatches(
   for ((fileName, entry) in support.iconPatches) {
     val file = imagesDirectory.resolve(fileName)
     check(Files.isRegularFile(file)) { "Frontend '$product' has no icon '$file'" }
-    val relativePath = projectRoot.relativize(file).invariantSeparatorsPathString
-    val label = requireNotNull(containingBazelPackageLabel(projectRoot = projectRoot, projectRelativePath = relativePath)) {
+    val relativePath = index.projectRoot.relativize(file).invariantSeparatorsPathString
+    val label = requireNotNull(index.containingPackageLabel(relativePath)) {
       "No Bazel package holds the icon '$relativePath' of frontend '$product'"
     }
     result.put(label, entry)
@@ -1683,7 +1678,7 @@ private fun checkBundledPluginsHaveComponents(
 private fun checkRuntimeModuleRepositoryDescriptors(
   outputProvider: ModuleOutputProvider,
   properties: ProductProperties,
-  bazelTargets: BazelTargetsInfo.TargetsFile,
+  index: DevDistBazelIndex,
   descriptorCollector: DescriptorCollector,
 ) {
   val treeFiles = descriptorCollector.result.mapTo(HashSet()) { it.relativePath }
@@ -1709,10 +1704,10 @@ private fun checkRuntimeModuleRepositoryDescriptors(
         if (conventionalDescriptor(descriptor = descriptor, contentModules = closure.contentModules)) {
           continue
         }
-        val moduleTarget = moduleRuleTarget(module = descriptor.moduleName, targets = bazelTargets)
+        val moduleTarget = moduleRuleTarget(module = descriptor.moduleName, targets = index.targets)
         if (descriptor.relativePath !in treeFiles ||
             moduleTarget == null ||
-            !descriptor.relativePath.startsWith("${bazelPackageDirectory(moduleTarget)}/")) {
+            !descriptor.relativePath.startsWith("${index.packageDirectory(moduleTarget)}/")) {
           missing.add("${descriptor.relativePath} (module ${descriptor.moduleName})")
         }
       }
@@ -1862,7 +1857,7 @@ private fun hostPlatformName(os: OsFamily, arch: JvmArchitecture): String = "${i
  * The natives and the additional files are executable, unless a declaration says otherwise. The Kotlin fragment that
  * placed them before copied them out of the project model tree, a Bazel output, so every copy had the executable bits.
  */
-internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductProperties, communityRoot: Path): PlatformAssets {
+internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductProperties, index: DevDistBazelIndex): PlatformAssets {
   val files = TreeMap<String, MutableList<PlatformAssetFile>>()
   val archives = sortedSetOf<String>()
   for ((platform, declarations) in layout.distFileDeclarations) {
@@ -1906,6 +1901,7 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
     "${copyMethod.declaringClass.name} overrides copyAdditionalOsSpecificFiles, which a split dev distribution does not call." +
     " Declare the files with additionalOsSpecificFiles instead."
   }
+  val communityRoot = index.communityRoot
   val binDir = communityRoot.resolve("bin")
   for (os in OsFamily.entries) {
     for (arch in JvmArchitecture.entries) {
@@ -1913,13 +1909,13 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
       val platformFiles = files.getOrPut(hostPlatform) { ArrayList() }
       for (native in nativeBinFiles(communityHome = communityRoot, os = os, arch = arch)) {
         platformFiles.add(PlatformAssetFile(
-          source = "@community//bin:${binDir.relativize(native).invariantSeparatorsPathString}",
+          source = index.planLabel("${COMMUNITY_REPOSITORY_PREFIX}bin:${binDir.relativize(native).invariantSeparatorsPathString}"),
           path = "bin/${native.fileName}",
           executable = true,
         ))
       }
       for (file in properties.additionalOsSpecificFiles(os, arch)) {
-        platformFiles.add(PlatformAssetFile(source = file.label, path = file.relativePath, executable = file.executable))
+        platformFiles.add(PlatformAssetFile(source = index.planLabel(file.label), path = file.relativePath, executable = file.executable))
       }
       val duplicates = platformFiles.groupBy { it.path }.filterValues { it.size > 1 }.keys
       check(duplicates.isEmpty()) { "Two platform dist files on $hostPlatform share a destination: $duplicates" }
@@ -2223,7 +2219,7 @@ internal class DescriptorCollector(
    */
   fun collectGeneratedModuleSetDescriptors(relativeRoot: String, moduleName: String) {
     val root = projectRoot.resolve(relativeRoot)
-    // The community model has no module of the ultimate module sets, so the community pass lists none of their files.
+    // The community model has no module of the ultimate module sets, so the community half lists none of their files.
     if (!Files.exists(root) || outputProvider.findModule(moduleName) == null) return
 
     Files.walk(root).use { files ->
@@ -2793,13 +2789,13 @@ private fun renderDescriptors(files: List<DescriptorFile>): String = buildString
   append("]\n")
 }
 
-private fun renderPartition(products: List<ProductFragmentPlan>, root: DevDistGenerationRoot): String = buildString {
+private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHalf): String = buildString {
   append(GENERATED_BY_HEADER)
   append("#\n")
   append("# The plan of every split product: the facts that its dev distribution reads. Bazel consumes this plan directly\n")
   append("# and fails when the requested product is absent.\n")
   append("#\n")
-  if (root.dependentIsCommunity) {
+  if (half.writesCommunityPackages) {
     append("# What the fragments of a product declare as their inputs lives in `dev_dist_fragment_inputs.bzl`, which churns\n")
     append("# with every model change.\n")
   }
@@ -3024,14 +3020,14 @@ private fun renderPlanFields(product: ProductFragmentPlan, indent: String, share
   appendField("launch")
 }
 
-private fun renderFragmentInputs(products: List<ProductFragmentPlan>, root: DevDistGenerationRoot): String = buildString {
+private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: DevDistHalf): String = buildString {
   append(GENERATED_BY_HEADER)
   append("#\n")
   append("# The exact module and library names each fragment declares as its Bazel inputs, so a fragment reads the\n")
   append("# jars its slice of the layout needs instead of the whole production target set.\n")
   append("#\n")
   append("# Names, not labels, everywhere but one field: this generator has no Bazel-package knowledge, so\n")
-  append("# `").append(root.jpsBridge).append("` resolves each name through its Starlark re-derivation of the converter's package\n")
+  append("# `").append(half.jpsBridge).append("` resolves each name through its Starlark re-derivation of the converter's package\n")
   append("# layout and drops, with a warning, a name the model no longer has; the model-generation validation reports\n")
   append("# staleness. The exception is `packed_content_module_jars`, which is labels because it is the one fact\n")
   append("# no re-derivation can reach: whether a module packs a `lib/` jar is now a target of its own, and a repository\n")
@@ -3197,12 +3193,12 @@ private fun renderCoreClassPath(products: List<ProductFragmentPlan>): String = b
   append("}\n")
 }
 
-private fun renderModuleSets(moduleSets: List<ModuleSetData>, root: DevDistGenerationRoot): String = buildString {
+private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf): String = buildString {
   append(GENERATED_BY_HEADER)
   append("#\n")
   append("# What each module set a split product references contains: the modules it declares itself, and the sets it\n")
   append("# nests. `dev_dist_fragment_inputs.bzl` names the sets a product's platform payload references and\n")
-  append("# `").append(root.jpsBridge).append("` walks them from here, so a set two products share is written once instead of\n")
+  append("# `").append(half.jpsBridge).append("` walks them from here, so a set two products share is written once instead of\n")
   append("# flattened into both payloads - which is what made that file grow by ~450 names per split product.\n")
   append("#\n")
   append("# The same `moduleSet { }` declarations the generated module-set descriptors come from, so this stays in step\n")
@@ -3233,14 +3229,14 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, root: DevDistGener
   append("}\n")
 }
 
-private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering, root: DevDistGenerationRoot): String = buildString {
+private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering, half: DevDistHalf): String = buildString {
   append(GENERATED_BY_HEADER)
   append("#\n")
   append("# `DEV_DIST_PLUGIN_COMPONENTS`, derived from the Product DSL, the layouts and the plugin descriptors: the\n")
   append("# component of every plugin by product key, tier and main module. The tier is `bundled` or `additional`. The\n")
   append("# value is one label, or a dict from host platform to label for a platform-specific plugin. The bundled tier is\n")
   append("# in composition order: the generator's frozen list first. A simple plugin's component is its `dev_plugin`\n")
-  if (root.dependentIsCommunity) {
+  if (half.writesCommunityPackages) {
     append("# target. A complex plugin's component is the component of its `dev_dist_complex_plugin` call. The call sits in\n")
     append("# the `dev` section of the plugin when its own package holds the same plan files and calls. Otherwise it sits in\n")
     append("# `build/dev-dist-descriptors/<main module>/BUILD.bazel`.\n")
@@ -3252,7 +3248,7 @@ private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering,
   }
   append("#\n")
   append("# Labels, not names: a target Bazel cannot resolve is an analysis error, not a fragment that quietly packs\n")
-  val macrosBzlPath = root.macrosBzl.removePrefix("//").replace(':', '/')
+  val macrosBzlPath = half.macrosBzl.removePrefix("//").replace(':', '/')
   append("# less. `").append(macrosBzlPath).append("` loads this file, not a module extension, so nothing here is\n")
   append("# fail-open and the file does not have to keep its own generator buildable.\n")
   append("\n")

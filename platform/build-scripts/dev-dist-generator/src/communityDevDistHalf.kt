@@ -46,7 +46,7 @@ object CommunityDevDistHalf : DevDistHalf {
     get() = null
 
   override val generatedModuleSetDescriptors: Map<String, String> = linkedMapOf(
-    "community/platform/platform-resources/generated/META-INF" to "intellij.platform.resources",
+    "platform/platform-resources/generated/META-INF" to "intellij.platform.resources",
   )
 
   override val rowFieldProperties: Map<String, String>
@@ -60,9 +60,14 @@ object CommunityDevDistHalf : DevDistHalf {
     return COMMUNITY_IDEA_PROPERTIES
   }
 
-  override fun ownsPackage(directory: String): Boolean {
-    return directory == COMMUNITY_ROOT_DIRECTORY || directory.startsWith("$COMMUNITY_ROOT_DIRECTORY/")
-  }
+  /** Every package below the community root is a package of the half. */
+  override fun ownsPackage(directory: String): Boolean = true
+}
+
+/** Whether [directory], a path relative to the monorepo root, is the root of the community half or a directory below it. */
+@ApiStatus.Internal
+fun isCommunityDirectory(directory: String): Boolean {
+  return directory == COMMUNITY_ROOT_DIRECTORY || directory.startsWith("$COMMUNITY_ROOT_DIRECTORY/")
 }
 
 /** The directory of the community checkout, relative to the monorepo root. */

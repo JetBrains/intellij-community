@@ -79,9 +79,11 @@ private fun descriptorTargetName(entry: PluginDescriptorEntry): String = when {
  * Which cross-half descriptor packages one run states, and which packages on disk no plugin needs any more.
  *
  * [files] is keyed by project-relative path. [stale] lists every package under the root that [files] does not hold.
- * The caller deletes them.
+ * The caller deletes them. [planLabel] spells a label in the recorded form for a package of the half of the run, see
+ * [DevDistBazelIndex.planLabel].
  */
 internal class CrossHalfDescriptorPackages(
+  private val planLabel: (String) -> String,
   /** The rendered descriptor targets of each package, keyed by project-relative path. */
   private val descriptorTargets: Map<String, List<String>>,
   /** The declaration of every baseline entry a plugin package holds, keyed by [planEntryKey]. */
@@ -113,6 +115,7 @@ internal class CrossHalfDescriptorPackages(
       check(calls == null || productOfPackagePath(path) == null) { "The product package '$path' cannot hold a complex plugin call" }
       check(calls == null || !pluginTargets.containsKey(path)) { "The package '$path' holds a dev_plugin target and a complex plugin call" }
       result.put(path, renderCrossHalfPackage(
+        planLabel = planLabel,
         product = productOfPackagePath(path),
         descriptorTargets = descriptorTargets.get(path).orEmpty(),
         pluginTarget = pluginTargets.get(path),
@@ -189,10 +192,14 @@ private fun listDirectories(directory: Path): List<Path> {
  * section cannot name an ultimate one. So the leaf goes into `build/dev-dist-descriptors/<module>/<product>/BUILD.bazel`
  * under its plain name, whatever half the plugin is in, and `<product>` is the home of the class
  * ([DescriptorResidueClasses.home]).
+ *
+ * A declaration keeps the labels of its entry in the recorded form. [planLabel] spells them for a package of the half
+ * of the run when a leaf renders, see [DevDistBazelIndex.planLabel].
  */
 internal fun collectCrossHalfDescriptorPackages(
   verdicts: DevDistToolVerdicts,
   classes: Map<String, DescriptorResidueClasses>,
+  planLabel: (String) -> String,
 ): CrossHalfDescriptorPackages {
   val targetsByPackage = TreeMap<String, MutableList<CrossHalfDescriptorTarget>>()
   val shared = LinkedHashMap<String, DevDistDescriptorDeclaration>()
@@ -222,9 +229,10 @@ internal fun collectCrossHalfDescriptorPackages(
   }
   val files = LinkedHashMap<String, List<String>>()
   for ((path, targets) in targetsByPackage) {
-    files.put(path, targets.sortedBy { it.declaration.entry.variant }.map(CrossHalfDescriptorTarget::render))
+    files.put(path, targets.sortedBy { it.declaration.entry.variant }.map { it.render(planLabel) })
   }
   return CrossHalfDescriptorPackages(
+    planLabel = planLabel,
     descriptorTargets = Collections.unmodifiableMap(files),
     shared = Collections.unmodifiableMap(shared),
     perProduct = Collections.unmodifiableMap(perProduct.mapValues { Collections.unmodifiableMap(it.value) }),
@@ -258,9 +266,11 @@ private fun productOfPackagePath(path: String): String? {
 /**
  * One cross-half package. [complexPluginCalls] is the rendered `dev_dist_complex_plugin` calls of a community complex
  * plugin, or `null`. A call names the product info of the main repository, so the community section cannot hold it.
- * The plan file it reads sits in the community package, exported, or in this package.
+ * The plan file it reads sits in the community package, exported, or in this package. [planLabel] spells the label of a
+ * load line for the package.
  */
 private fun renderCrossHalfPackage(
+  planLabel: (String) -> String,
   product: String?,
   descriptorTargets: List<String>,
   pluginTarget: String?,
@@ -295,13 +305,13 @@ private fun renderCrossHalfPackage(
   append("\n")
   // The load lines in the order buildifier sorts them: by file, so the descriptor rule comes first.
   if (descriptorTargets.isNotEmpty()) {
-    append("load(\"@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl\", \"dev_dist_plugin_descriptor\")\n")
+    append("load(\"").append(planLabel(DEV_DIST_PLUGIN_DESCRIPTOR_RULE)).append("\", \"dev_dist_plugin_descriptor\")\n")
   }
   if (pluginTarget != null) {
-    append("load(\"@community//platform/build-scripts/bazel-rules:dev_plugin.bzl\", \"dev_plugin\")\n")
+    append("load(\"").append(planLabel(DEV_PLUGIN_RULE)).append("\", \"dev_plugin\")\n")
   }
   if (complexPluginCalls != null) {
-    append("load(\"").append(DEV_PLUGIN_REMAINDER_RULE).append("\", \"dev_dist_complex_plugin\")\n")
+    append("load(\"").append(planLabel(DEV_PLUGIN_REMAINDER_RULE)).append("\", \"dev_dist_complex_plugin\")\n")
   }
   for (target in descriptorTargets) {
     append("\n")
@@ -319,9 +329,10 @@ private fun renderCrossHalfPackage(
 
 /**
  * The `dev_plugin` target of a cross-half simple plugin. Every label is explicit, because the ultimate package has no
- * JPS bridge map for community modules. The copies keep the ultimate spelling of their labels. The component index
- * names this target. [contentModuleJarLabel] gives the label of the jar of a reused module, which is a label of the
- * product package of the ultimate half for a relocated call, see [DevDistBuildSections.relocatedContentModuleJarCalls].
+ * JPS bridge map for community modules. Every label is spelled for a package of the half of [index], see
+ * [DevDistBazelIndex.planLabel]. The component index names this target. [contentModuleJarLabel] gives the label of the
+ * jar of a reused module, which is a label of the product package of the ultimate half for a relocated call, see
+ * [DevDistBuildSections.relocatedContentModuleJarCalls].
  */
 internal fun renderCrossHalfDevPluginTarget(
   packaging: DevDistSimplePackaging,
@@ -336,25 +347,25 @@ internal fun renderCrossHalfDevPluginTarget(
   }
   append("dev_plugin(\n")
   appendStarlarkString(name = "name", value = mainModule + DEV_PLUGIN_TARGET_SUFFIX)
-  appendStarlarkStringList(name = "classpath_jars", values = packaging.classpathJars)
+  appendStarlarkStringList(name = "classpath_jars", values = packaging.classpathJars.map(index::planLabel))
   appendStarlarkStringList(
     name = "content_module_jars",
     values = packaging.reusedModules.map { contentModuleJarLabel(it) ?: error("Module '$it' has no content_module_jar label") }.sorted(),
   )
-  appendStarlarkString(name = "descriptor", value = descriptorLabel)
+  appendStarlarkString(name = "descriptor", value = index.planLabel(descriptorLabel))
   appendStarlarkStringList(name = "executable_files", values = packaging.executableFiles.sorted())
   appendStarlarkStringDict(name = "file_prefixes", rows = packaging.filePrefixes)
-  appendStarlarkStringDict(name = "files", rows = packaging.files)
+  appendStarlarkStringDict(name = "files", rows = packaging.files.mapValues { index.planLabel(it.value) })
   append("    jars = {\n")
   for ((destination, tokens) in packaging.jars) {
     append("        \"").append(destination).append("\": [\n")
     for (token in tokens) {
-      append("            \"").append(token).append("\",\n")
+      append("            \"").append(if (isLabelToken(token)) index.planLabel(token) else token).append("\",\n")
     }
     append("        ],\n")
   }
   append("    },\n")
-  appendStarlarkStringList(name = "libraries", values = packaging.labelTokens.sorted())
+  appendStarlarkStringList(name = "libraries", values = packaging.labelTokens.sorted().map(index::planLabel))
   appendStarlarkString(name = "main_module", value = mainModule)
   appendStarlarkStringDict(name = "module_jar_paths", rows = packaging.moduleJarPaths)
   appendStarlarkStringDict(name = "modules", rows = packaging.moduleTokens.associateBy(::moduleLabel))
@@ -369,24 +380,25 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
     entry = entry,
   )
 
-  fun render(): String = buildString {
+  /** The leaf with every label spelled by [planLabel]. */
+  fun render(planLabel: (String) -> String): String = buildString {
     val entry = declaration.entry
     append("dev_dist_plugin_descriptor(\n")
     if (entry.descriptorInTestOutput) {
       appendStarlarkString(name = "descriptor_entry", value = entry.descriptor)
-      appendStarlarkString(name = "descriptor_jar", value = entry.moduleTarget + ".jar")
+      appendStarlarkString(name = "descriptor_jar", value = planLabel(entry.moduleTarget + ".jar"))
     }
     else {
       appendStarlarkString(name = "descriptor", value = entry.descriptor)
-      appendStarlarkString(name = "descriptor_module", value = entry.moduleTarget)
+      appendStarlarkString(name = "descriptor_module", value = planLabel(entry.moduleTarget))
     }
     appendStarlarkStringDict(
       name = "descriptor_jars",
-      rows = entry.descriptors.filter(DeclaredDescriptor::testOutput).associate { it.label to it.loadPath },
+      rows = entry.descriptors.filter(DeclaredDescriptor::testOutput).associate { planLabel(it.label) to it.loadPath },
     )
     appendStarlarkStringDict(
       name = "descriptors",
-      rows = entry.descriptors.filterNot(DeclaredDescriptor::testOutput).associate { it.label to it.loadPath },
+      rows = entry.descriptors.filterNot(DeclaredDescriptor::testOutput).associate { planLabel(it.label) to it.loadPath },
     )
     if (!entry.embedsContentModules) {
       append("    embed_content_modules = False,\n")
@@ -405,7 +417,7 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
     }
     appendStarlarkStringDict(
       name = "library_descriptors",
-      rows = entry.libraryDescriptors.groupBy { it.containerLabel }
+      rows = entry.libraryDescriptors.groupBy { planLabel(it.containerLabel) }
         .mapValues { (_, declared) -> declared.joinToString(" ") { it.loadPath } },
     )
     appendStarlarkString(name = "main_module", value = entry.mainModule)

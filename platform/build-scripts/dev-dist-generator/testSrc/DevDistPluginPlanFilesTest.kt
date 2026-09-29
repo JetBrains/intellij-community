@@ -337,17 +337,15 @@ class DevDistPluginPlanFilesTest {
 
   /** The plans that the community half writes into the own package of [communityPlugin] for [records], with [sectionCall]. */
   private fun communityHalfPlans(records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>, sectionCall: String): Pair<DevDistPluginPlanFiles, DevDistOwnPackagePlans> {
-    val root = DevDistGenerationRoot.community(dir)
     val files = collectDevDistPluginPlanFiles(
-      projectRoot = root.outputRoot,
+      projectRoot = CommunityDevDistHalf.root(dir),
       records = records,
       index = communityIndex(),
       half = CommunityDevDistHalf,
       productOrder = listOf("idea"),
-      writtenText = root::respellQuotedLabels,
     )
     val rendering = DevDistPluginExecutionRendering(calls = mapOf(communityPlugin to sectionCalls(sectionCall)), components = "")
-    return files to DevDistOwnPackagePlans.of(files, rendering, root)
+    return files to DevDistOwnPackagePlans.of(files, rendering, CommunityDevDistHalf)
   }
 
   /** The plan files of the ultimate half over [records]. It reads the own package of a plugin in [reused] as the upstream home. */
@@ -372,7 +370,8 @@ class DevDistPluginPlanFilesTest {
 
   @Test
   fun `the community half keeps the plan file of a community plugin in its own package with the call in its section`() {
-    val records = neutralRecords(communityPlugin, library = "@community//libraries/c:c")
+    // The community half renders its records through its index, so a record spells a community label as `//`.
+    val records = neutralRecords(communityPlugin, library = "//libraries/c:c")
 
     val (files, plans) = communityHalfPlans(records, sectionCall = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n")
 
@@ -391,8 +390,9 @@ class DevDistPluginPlanFilesTest {
   @Test
   fun `the ultimate half reuses an equal plan file and call of the community half and writes nothing under community`() {
     val call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
-    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@community//libraries/c:c"), sectionCall = call)
-    val records = neutralRecords(communityPlugin, library = "@community//libraries/c:c")
+    // The layout signature hashes the input labels, so only a text whose labels both halves spell alike is equal.
+    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@lib//:c"), sectionCall = call)
+    val records = neutralRecords(communityPlugin, library = "@lib//:c")
 
     val first = ultimateHalfPlans(records, plans)
     val planTexts = first.files.mapKeys { it.key.substringAfterLast('/') }
@@ -415,7 +415,7 @@ class DevDistPluginPlanFilesTest {
 
   @Test
   fun `the ultimate half keeps a differing plan file in the product package of the plugin`() {
-    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@community//libraries/c:c"), sectionCall = "dev_dist_complex_plugin()\n")
+    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "//libraries/c:c"), sectionCall = "dev_dist_complex_plugin()\n")
     val records = neutralRecords(communityPlugin, library = "@ultimate_lib//:profiler")
 
     val files = ultimateHalfPlans(records, plans)

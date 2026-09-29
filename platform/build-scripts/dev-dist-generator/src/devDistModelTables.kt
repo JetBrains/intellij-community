@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import java.nio.file.Path
 import java.util.TreeSet
 
 /**
@@ -34,19 +35,20 @@ internal class PluginPackingDerivation(
 /**
  * The plugins the dev distribution states content for: the population of the dev sections.
  *
- * [derivePluginPopulation] uses the discovered products, the extra plugins of [DevDistHalf.extraPopulation] of the half
- * of [root], and source-derived platform rows.
+ * [derivePluginPopulation] uses the discovered products, the extra plugins of [DevDistHalf.extraPopulation] of [half],
+ * and source-derived platform rows. [root] is the root of [half], whose run configurations the population reads.
  */
 @ApiStatus.Internal
 fun deriveContentPluginPopulation(
-  root: DevDistGenerationRoot,
+  half: DevDistHalf,
+  root: Path,
   outputProvider: ModuleOutputProvider,
   products: List<DiscoveredProduct>,
   platformTable: DevDistPlatformJars,
 ): Set<String> {
   return derivePluginPopulation(
     products = products.mapNotNull { it.properties as? ProductProperties },
-    extraPopulation = root.half.extraPopulation(DevDistRunConfigurations.read(root, outputProvider)),
+    extraPopulation = half.extraPopulation(DevDistRunConfigurations.read(half, root, outputProvider)),
     platformJars = platformTable,
     outputProvider = outputProvider,
   )
@@ -56,7 +58,8 @@ fun deriveContentPluginPopulation(
  * Derives the packing of every plugin of the population; see [deriveContentPluginPopulation].
  *
  * [ProductDerivation.pluginJars] over the products of [derivation]. No input is a Bazel label, so the derivation runs
- * on every checkout. The dev sections and the plan add the labels. [root] names the run configurations of the half.
+ * on every checkout. The dev sections and the plan add the labels. [root] is the root of [half], whose run
+ * configurations the derivation reads.
  *
  * The community half writes the `content_module_jar` call of every community module that a layout of its registry
  * packs, whether a community product plans the layout or not. The ultimate half then reuses the call. So the community
@@ -64,15 +67,16 @@ fun deriveContentPluginPopulation(
  * [PluginPackingDerivation.registryCandidacies]. The registry is the plugin layouts of the split products of the half.
  */
 internal fun derivePluginPackings(
-  root: DevDistGenerationRoot,
+  half: DevDistHalf,
+  root: Path,
   outputProvider: ModuleOutputProvider,
   derivation: ProductDerivation,
 ): PluginPackingDerivation {
-  val runConfigurations = DevDistRunConfigurations.read(root, outputProvider)
+  val runConfigurations = DevDistRunConfigurations.read(half, root, outputProvider)
   val platformRows = derivation.platformJars
-  val splitProducts = root.splitProducts(derivation.products.map { it.name })
-  val extraPopulation = root.half.extraPopulation(runConfigurations, splitProducts)
-  val registryLayouts = if (root.dependentIsCommunity) {
+  val splitProducts = half.registrySplitProducts(derivation.products.map { it.name })
+  val extraPopulation = half.extraPopulation(runConfigurations, splitProducts)
+  val registryLayouts = if (half.writesCommunityPackages) {
     val population = derivePluginPopulation(
       products = derivation.properties,
       extraPopulation = extraPopulation,

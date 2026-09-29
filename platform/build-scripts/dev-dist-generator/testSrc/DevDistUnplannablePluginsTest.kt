@@ -226,7 +226,7 @@ class DevDistUnplannablePluginsTest {
     val plans = listOf<PluginDescriptorPlan>(descriptorPlan("idea", plainLayout("intellij.x")), descriptorPlan("server", plainLayout("intellij.x")))
 
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea", "server"))
-    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes)
+    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it })
 
     val residue = classes.getValue("intellij.x")
     assertThat(residue.classes.size).isEqualTo(1)
@@ -249,7 +249,7 @@ class DevDistUnplannablePluginsTest {
     val serverPackage = "build/dev-dist-descriptors/intellij.x/server/BUILD.bazel"
 
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea", "server"))
-    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes)
+    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it })
 
     val residue = classes.getValue("intellij.x")
     assertThat(residue.classes.size).isEqualTo(2)
@@ -269,7 +269,7 @@ class DevDistUnplannablePluginsTest {
     assertThat(packages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dev-dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
 
     // A plugin whose own package declares the leaf keeps that leaf for the baseline, and the product home is the same.
-    val ownPackages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = "@community//plugins/x:intellij.x_dev_descriptor"), classes)
+    val ownPackages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = "@community//plugins/x:intellij.x_dev_descriptor"), classes, planLabel = { it })
     assertThat(ownPackages.files(emptyMap()).keys).containsExactly(serverPackage)
     assertThat(ownPackages.sharedDeclaration(ideaEntry)).isNull()
     assertThat(ownPackages.productDeclaration("server", serverEntry)?.label).isEqualTo("//build/dev-dist-descriptors/intellij.x/server:intellij.x_dev_descriptor")
@@ -351,7 +351,7 @@ class DevDistUnplannablePluginsTest {
   fun `the sweep names every descriptor package on disk that the run does not write`() {
     val plans = listOf<PluginDescriptorPlan>(descriptorPlan("idea", plainLayout("intellij.x")))
     val classes = computeDescriptorResidueClasses(plans, productOrder = listOf("idea"))
-    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes)
+    val packages = collectCrossHalfDescriptorPackages(verdicts(ownLeaf = null), classes, planLabel = { it })
     // On disk: the root package, the written plugin package, and a file that is no package. Also a product that left
     // the split products, and a plugin that left the population with a product package of its own.
     for (relativePath in listOf("BUILD.bazel", "intellij.x/BUILD.bazel", "intellij.x/gone/BUILD.bazel", "intellij.y/BUILD.bazel", "intellij.y/idea/BUILD.bazel", "intellij.z/notes.txt")) {

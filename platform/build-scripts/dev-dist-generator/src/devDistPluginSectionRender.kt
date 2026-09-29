@@ -205,8 +205,6 @@ internal class PluginDescriptorLeaf(
   @JvmField val embeddedProductDescriptor: EmbeddedProductDescriptorPlan?,
 )
 
-private const val COMMUNITY_PATH_PREFIX: String = "community/"
-
 /**
  * One leaf per variant, or an empty list when the plugin gets no descriptor leaf.
  *
@@ -268,7 +266,7 @@ private fun descriptorPackagePaths(context: DevSectionContext, module: JpsModule
 private fun residueDescriptorLabels(context: DevSectionContext, entry: PluginDescriptorEntry): Map<String, String>? {
   val result = LinkedHashMap<String, String>()
   for (row in entry.includeDescriptors) {
-    if (context.isCommunity && !row.relativePath.startsWith(COMMUNITY_PATH_PREFIX)) {
+    if (context.isCommunity && context.index.communityRelativePath(row.relativePath) == null) {
       return null
     }
     val label = containingPackageLabel(context = context, projectRelativePath = row.relativePath)
@@ -287,9 +285,10 @@ private fun residueDescriptorLabels(context: DevSectionContext, entry: PluginDes
  * an ultimate one. `null` when no ancestor is a package.
  */
 private fun containingPackageLabel(context: DevSectionContext, projectRelativePath: String): String? {
-  val inCommunity = projectRelativePath.startsWith(COMMUNITY_PATH_PREFIX)
+  val communityPath = context.index.communityRelativePath(projectRelativePath)
+  val inCommunity = communityPath != null
   val root = if (inCommunity) context.index.communityRoot else context.index.projectRoot
-  val insideRoot = if (inCommunity) projectRelativePath.removePrefix(COMMUNITY_PATH_PREFIX) else projectRelativePath
+  val insideRoot = communityPath ?: projectRelativePath
   val segments = insideRoot.split('/')
   for (depth in segments.size - 1 downTo 0) {
     val packageSegments = segments.subList(0, depth)
@@ -353,12 +352,10 @@ private fun contentDescriptorLabels(
   return result
 }
 
-/** A residue row path as a file: a `community/` path against the community root, any other against the project root. */
+/** A residue row path as a file: a community path against the community root, any other against the project root. */
 private fun residueRowFile(context: DevSectionContext, row: String): Path {
-  if (row.startsWith(COMMUNITY_PATH_PREFIX)) {
-    return context.index.communityRoot.resolve(row.removePrefix(COMMUNITY_PATH_PREFIX))
-  }
-  return context.index.projectRoot.resolve(row)
+  val communityPath = context.index.communityRelativePath(row) ?: return context.index.projectRoot.resolve(row)
+  return context.index.communityRoot.resolve(communityPath)
 }
 
 /**

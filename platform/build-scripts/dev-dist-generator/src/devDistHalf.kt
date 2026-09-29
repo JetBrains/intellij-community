@@ -55,7 +55,7 @@ interface DevDistHalf {
   val platformPatches: DevDistPlatformPatchSupport?
 
   /**
-   * The directories of the generated module-set descriptors, relative to the monorepo root, each with the module that
+   * The directories of the generated module-set descriptors, relative to the root of the half, each with the module that
    * owns it. The descriptor walk lists every file of a directory whose module the project model holds.
    */
   val generatedModuleSetDescriptors: Map<String, String>
@@ -72,8 +72,53 @@ interface DevDistHalf {
    */
   fun baseIdeaProperties(product: String, languageServerBase: Boolean): String
 
-  /** Whether the half writes the generated files of the package in [directory], a path relative to the monorepo root. */
+  /**
+   * Whether the half writes the generated files of the package in [directory], a path relative to the root of the half:
+   * a `dev` section, a `content_module_jar` call, a plan file or a generated package.
+   */
   fun ownsPackage(directory: String): Boolean
+}
+
+/**
+ * The root of the half below the monorepo root [monorepoRoot], see [DevDistHalf.rootDirectory].
+ *
+ * The half reads `build/dev-build.json`, `.idea/runConfigurations` and its JPS model there. Every project-relative path
+ * of a run of the half is relative to it, and the half writes every output there.
+ */
+@ApiStatus.Internal
+fun DevDistHalf.root(monorepoRoot: Path): Path = if (rootDirectory.isEmpty()) monorepoRoot else monorepoRoot.resolve(rootDirectory)
+
+/**
+ * Whether the packages of the half are community packages, so that a generated file spells a label for a community
+ * dependent. A half below the monorepo root is the community half.
+ */
+internal val DevDistHalf.writesCommunityPackages: Boolean
+  get() = rootDirectory.isNotEmpty()
+
+/** The community checkout, for the half whose root is [root]: [root] itself for the community half. */
+internal fun DevDistHalf.communityRoot(root: Path): Path = if (writesCommunityPackages) root else root.resolve(COMMUNITY_ROOT_DIRECTORY)
+
+/**
+ * The split products of the half that a run renders: every split product for the ultimate half, and the split products
+ * of [registryProducts] for the community half. [registryProducts] are the keys of `build/dev-build.json` of the half.
+ */
+internal fun DevDistHalf.registrySplitProducts(registryProducts: Collection<String>): Set<String> {
+  if (!writesCommunityPackages) {
+    return splitProducts
+  }
+  val registry = registryProducts.toHashSet()
+  return splitProducts.filterTo(LinkedHashSet()) { it in registry }
+}
+
+/**
+ * Fails when the half writes [relativePath], a path relative to the root of the half, into a package that it does not
+ * own, see [DevDistHalf.ownsPackage]. The message names the path.
+ */
+internal fun DevDistHalf.requireWritable(relativePath: String) {
+  val directory = relativePath.substringBeforeLast('/', missingDelimiterValue = "")
+  check(ownsPackage(directory)) {
+    "The $name half cannot write '$relativePath', because the package '$directory' belongs to the other half"
+  }
 }
 
 /** What a half can plan beyond the common facts. */

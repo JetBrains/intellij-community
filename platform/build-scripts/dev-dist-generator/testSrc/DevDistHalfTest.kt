@@ -7,81 +7,115 @@ import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * The two passes of the dev-distribution generator: where each pass reads and writes, how the community pass spells a
- * label, and which output the community pass refuses.
+ * The facts of a repository half that are paths or spellings: the root of each half, how an index of the half spells a
+ * label and resolves a path, and which output the community half refuses.
  */
-class DevDistGenerationRootTest {
+class DevDistHalfTest {
   @TempDir
   lateinit var dir: Path
 
   @Test
-  fun `the community half reads and writes under community and writes only community packages`() {
-    val root = DevDistGenerationRoot.community(dir)
+  fun `the community half has the community checkout as its root and owns every package below it`() {
+    val half = CommunityDevDistHalf
+    val root = half.root(dir)
 
-    assertThat(root.projectRoot).isEqualTo(dir)
-    assertThat(root.outputRoot).isEqualTo(dir.resolve("community"))
-    assertThat(root.communityRoot).isEqualTo(dir.resolve("community"))
-    assertThat(root.runConfigurationsDir).isEqualTo(dir.resolve("community/.idea/runConfigurations"))
-    assertThat(root.macrosBzl).isEqualTo("//build:intellij_dev_community.bzl")
-    assertThat(root.writesPackage("community/plugins/c")).isTrue()
-    assertThat(root.writesPackage("build/dev-dist-descriptors/intellij.c")).isFalse()
-    assertThat(root.dependentIsCommunity).isTrue()
+    assertThat(root).isEqualTo(dir.resolve("community"))
+    assertThat(half.communityRoot(root)).isEqualTo(root)
+    assertThat(root.resolve(RUN_CONFIGURATIONS_DIRECTORY)).isEqualTo(dir.resolve("community/.idea/runConfigurations"))
+    assertThat(half.macrosBzl).isEqualTo("//build:intellij_dev_community.bzl")
+    assertThat(half.writesCommunityPackages).isTrue()
+    assertThat(half.ownsPackage("plugins/c")).isTrue()
+    assertThat(half.ownsPackage("build/dev-dist-descriptors/intellij.c")).isTrue()
+    half.requireWritable("plugins/c/BUILD.bazel")
+    assertThat(half.generatedModuleSetDescriptors.keys).containsExactly("platform/platform-resources/generated/META-INF")
   }
 
   @Test
-  fun `the community pass drops the community repository of a label and keeps every other repository`() {
-    val root = DevDistGenerationRoot.community(dir)
-
-    assertThat(root.respellLabel("@community//platform/core:core")).isEqualTo("//platform/core:core")
-    assertThat(root.respellLabel("@lib//:kotlin-stdlib")).isEqualTo("@lib//:kotlin-stdlib")
-    assertThat(root.respellLabel("@dev_launch_restarter_extracted//:x")).isEqualTo("@dev_launch_restarter_extracted//:x")
-    assertThat(root.respellLabel("//build/dev-dist-descriptors/intellij.java.plugin:x"))
-      .isEqualTo("//build/dev-dist-descriptors/intellij.java.plugin:x")
-    assertThat(root.respellQuotedLabels("""load("@community//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")"""))
-      .isEqualTo("""load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")""")
-    // A comment names a label in backquotes, and the respelling keeps it.
-    assertThat(root.respellQuotedLabels("# `@community//build:dev_dist_product_info`"))
-      .isEqualTo("# `@community//build:dev_dist_product_info`")
+  fun `a directory below the community checkout of the monorepo is a community directory`() {
+    assertThat(isCommunityDirectory("community")).isTrue()
+    assertThat(isCommunityDirectory("community/plugins/c")).isTrue()
+    assertThat(isCommunityDirectory("communityx/plugins/c")).isFalse()
+    assertThat(isCommunityDirectory("build/dev-dist-descriptors/intellij.c")).isFalse()
+    assertThat(isCommunityDirectory("")).isFalse()
   }
 
   @Test
-  fun `the community pass writes a project-relative path relative to community and refuses a path outside it`() {
-    val root = DevDistGenerationRoot.community(dir)
-
-    assertThat(root.outputRelativePath("community/android/adt-ui/resources/META-INF/adt-ui.xml"))
-      .isEqualTo("android/adt-ui/resources/META-INF/adt-ui.xml")
-    assertThatThrownBy { root.outputRelativePath("licenseCommon/generated/META-INF/x.xml") }
-      .isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("community pass")
-      .hasMessageContaining("licenseCommon/generated/META-INF/x.xml")
+  fun `the community half plans only the split products of the community registry`() {
+    assertThat(CommunityDevDistHalf.registrySplitProducts(listOf("community", "Idea", "AndroidStudio"))).containsExactly("AndroidStudio", "Idea")
   }
 
   @Test
-  fun `the community pass plans only the split products of the community registry`() {
-    val root = DevDistGenerationRoot.community(dir)
-
-    assertThat(root.splitProducts(listOf("community", "Idea", "AndroidStudio"))).containsExactly("AndroidStudio", "Idea")
-  }
-
-  @Test
-  fun `an index of the community pass spells a plan label for a community package`() {
-    val ultimateIndex = syntheticIndex(dir, "intellij.community" to "@community//plugins/community:community.jar")
+  fun `an index of the community half spells a plan label for a community package`() {
+    val monorepoIndex = syntheticIndex(dir, "intellij.community" to "@community//plugins/community:community.jar")
+    val communityRoot = CommunityDevDistHalf.root(dir)
     val communityIndex = DevDistBazelIndex(
-      targets = ultimateIndex.targets,
-      projectRoot = dir,
-      communityRoot = dir.resolve("community"),
+      targets = monorepoIndex.targets,
+      projectRoot = communityRoot,
+      communityRoot = communityRoot,
       planPackageIsCommunity = true,
     )
 
-    assertThat(ultimateIndex.contentModuleJarLabel("intellij.community", dependentIsCommunity = ultimateIndex.planPackageIsCommunity))
+    assertThat(monorepoIndex.contentModuleJarLabel("intellij.community", dependentIsCommunity = monorepoIndex.planPackageIsCommunity))
       .isEqualTo("@community//plugins/community:community_content_module_jar")
     assertThat(communityIndex.contentModuleJarLabel("intellij.community", dependentIsCommunity = communityIndex.planPackageIsCommunity))
       .isEqualTo("//plugins/community:community_content_module_jar")
     assertThat(communityIndex.packageDir("intellij.community")).isEqualTo(dir.resolve("community/plugins/community"))
     assertThat(snapshotDevDistBazelIndex(communityIndex).planPackageIsCommunity).isTrue()
+
+    assertThat(communityIndex.planLabel("@community//platform/core:core")).isEqualTo("//platform/core:core")
+    assertThat(communityIndex.planLabel("@lib//:kotlin-stdlib")).isEqualTo("@lib//:kotlin-stdlib")
+    assertThat(communityIndex.planLabel("@dev_launch_restarter_extracted//:x")).isEqualTo("@dev_launch_restarter_extracted//:x")
+    assertThat(communityIndex.planLabel("//build/dev-dist-descriptors/intellij.java.plugin:x"))
+      .isEqualTo("//build/dev-dist-descriptors/intellij.java.plugin:x")
+    assertThat(monorepoIndex.planLabel("@community//platform/core:core")).isEqualTo("@community//platform/core:core")
+  }
+
+  @Test
+  fun `an index resolves a path of its half against the community checkout`() {
+    val monorepoIndex = syntheticIndex(dir)
+    val communityRoot = CommunityDevDistHalf.root(dir)
+    val communityIndex = DevDistBazelIndex(targets = monorepoIndex.targets, projectRoot = communityRoot, communityRoot = communityRoot)
+
+    assertThat(monorepoIndex.communityRelativePath("community/plugins/c/x.xml")).isEqualTo("plugins/c/x.xml")
+    assertThat(monorepoIndex.communityRelativePath("community")).isEqualTo("")
+    assertThat(monorepoIndex.communityRelativePath("plugins/c/x.xml")).isNull()
+    assertThat(communityIndex.communityRelativePath("plugins/c/x.xml")).isEqualTo("plugins/c/x.xml")
+
+    assertThat(monorepoIndex.packageDirectory("@community//plugins/xpath:xpath")).isEqualTo("community/plugins/xpath")
+    assertThat(monorepoIndex.packageDirectory("@community//:root")).isEqualTo("community")
+    assertThat(monorepoIndex.packageDirectory("//plugins/tailwindcss:tailwindcss")).isEqualTo("plugins/tailwindcss")
+    assertThat(communityIndex.packageDirectory("@community//plugins/xpath:xpath")).isEqualTo("plugins/xpath")
+    assertThat(communityIndex.packageDirectory("@community//:root")).isEqualTo("")
+  }
+
+  @Test
+  fun `a containing package label keeps the recorded form in both halves`() {
+    val communityRoot = CommunityDevDistHalf.root(dir)
+    for (directory in listOf("", "community", "community/plugins/c", "plugins/u")) {
+      Files.createDirectories(dir.resolve(directory))
+      Files.writeString(dir.resolve(directory).resolve("BUILD.bazel"), "")
+    }
+    val monorepoIndex = syntheticIndex(dir)
+    val communityIndex = DevDistBazelIndex(targets = monorepoIndex.targets, projectRoot = communityRoot, communityRoot = communityRoot)
+
+    assertThat(monorepoIndex.containingPackageLabel("community/plugins/c/resources/x.xml")).isEqualTo("@community//plugins/c:resources/x.xml")
+    assertThat(monorepoIndex.containingPackageLabel("community/other/x.xml")).isEqualTo("@community//:other/x.xml")
+    assertThat(monorepoIndex.containingPackageLabel("plugins/u/resources/x.xml")).isEqualTo("//plugins/u:resources/x.xml")
+    assertThat(monorepoIndex.containingPackageLabel("licenseCommon/x.xml")).isEqualTo("//:licenseCommon/x.xml")
+    assertThat(communityIndex.containingPackageLabel("plugins/c/resources/x.xml")).isEqualTo("@community//plugins/c:resources/x.xml")
+    assertThat(communityIndex.containingPackageLabel("other/x.xml")).isEqualTo("@community//:other/x.xml")
+  }
+
+  @Test
+  fun `a community path that reaches the monorepo root package has no label`() {
+    Files.writeString(dir.resolve("BUILD.bazel"), "")
+    val monorepoIndex = syntheticIndex(dir)
+
+    assertThat(monorepoIndex.containingPackageLabel("community/plugins/c/x.xml")).isNull()
   }
 
   @Test
@@ -166,7 +200,8 @@ class DevDistGenerationRootTest {
   @Test
   fun `the capability check accepts the products of the community registry`() {
     requireHalfCapabilities(
-      root = DevDistGenerationRoot.community(dir),
+      half = CommunityDevDistHalf,
+      projectRoot = CommunityDevDistHalf.root(dir),
       registryProducts = listOf("community", "Idea", "AndroidStudio"),
       plannedProducts = listOf("AndroidStudio", "Idea", "Idea"),
       generatedPluginFiles = emptyList(),
@@ -179,7 +214,8 @@ class DevDistGenerationRootTest {
   fun `the capability check fails for a product outside the community registry and names it`() {
     assertThatThrownBy {
       requireHalfCapabilities(
-        root = DevDistGenerationRoot.community(dir),
+        half = CommunityDevDistHalf,
+      projectRoot = CommunityDevDistHalf.root(dir),
         registryProducts = listOf("community", "Idea", "AndroidStudio"),
         plannedProducts = listOf("Idea", "Other"),
         generatedPluginFiles = emptyList(),
@@ -200,7 +236,8 @@ class DevDistGenerationRootTest {
       runtimeModuleRepositoryProducts: List<String> = emptyList(),
     ) {
       requireHalfCapabilities(
-        root = DevDistGenerationRoot.community(dir),
+        half = CommunityDevDistHalf,
+      projectRoot = CommunityDevDistHalf.root(dir),
         registryProducts = listOf("Idea"),
         plannedProducts = listOf("Idea"),
         generatedPluginFiles = generatedPluginFiles,

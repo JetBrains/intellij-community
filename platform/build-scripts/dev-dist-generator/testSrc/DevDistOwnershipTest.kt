@@ -27,33 +27,28 @@ class DevDistOwnershipTest {
     override val rootDirectory: String
       get() = ""
 
-    override fun ownsPackage(directory: String): Boolean = !CommunityDevDistHalf.ownsPackage(directory)
+    override fun ownsPackage(directory: String): Boolean = !isCommunityDirectory(directory)
   }
 
   @Test
   fun `each half writes only the packages of its own half`() {
-    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf)
-    val community = DevDistGenerationRoot.community(dir)
-
-    assertThat(ultimate.writesPackage("community/plugins/c")).isFalse()
-    assertThat(ultimate.writesPackage("plugins/x")).isTrue()
-    assertThat(ultimate.writesPackage(DEV_DIST_CONTENT_MODULE_JARS_PACKAGE)).isTrue()
-    assertThat(community.writesPackage("community/plugins/c")).isTrue()
-    assertThat(community.writesPackage("community/build/dev-dist-descriptors/intellij.c")).isTrue()
-    assertThat(community.writesPackage("plugins/x")).isFalse()
+    assertThat(monorepoHalf.ownsPackage("community/plugins/c")).isFalse()
+    assertThat(monorepoHalf.ownsPackage("plugins/x")).isTrue()
+    assertThat(monorepoHalf.ownsPackage(DEV_DIST_CONTENT_MODULE_JARS_PACKAGE)).isTrue()
+    // The community half writes relative to its root, so every package it names is a community package.
+    assertThat(CommunityDevDistHalf.ownsPackage("plugins/c")).isTrue()
+    assertThat(CommunityDevDistHalf.ownsPackage("build/dev-dist-descriptors/intellij.c")).isTrue()
   }
 
   @Test
   fun `a write outside the packages of the half fails and names the path`() {
-    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf)
-    ultimate.requireWritable("build/dev-dist-descriptors/$communityPlugin/BUILD.bazel")
-    assertThatThrownBy { ultimate.requireWritable("community/plugins/c/intellij.c.dev-plan.json") }
+    monorepoHalf.requireWritable("build/dev-dist-descriptors/$communityPlugin/BUILD.bazel")
+    assertThatThrownBy { monorepoHalf.requireWritable("community/plugins/c/intellij.c.dev-plan.json") }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("community/plugins/c/intellij.c.dev-plan.json")
-      .hasMessageContaining("monorepo pass")
+      .hasMessageContaining("monorepo half")
 
-    // The community half writes relative to `community/`, so every path it writes is a community package.
-    DevDistGenerationRoot.community(dir).requireWritable("plugins/c/BUILD.bazel")
+    CommunityDevDistHalf.requireWritable("plugins/c/BUILD.bazel")
   }
 
   @Test
@@ -130,13 +125,13 @@ class DevDistOwnershipTest {
 
   @Test
   fun `the launch models of one key and one class must be equal`() {
-    val root = DevDistGenerationRoot.community(dir)
+    val half = CommunityDevDistHalf
     val community = mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n"), "AndroidStudio" to DevDistLaunchModel("A", "{}\n"))
 
-    checkSharedLaunchModels(community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n")), root)
+    checkSharedLaunchModels(half, community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n")))
     // A key with two classes states two products.
-    checkSharedLaunchModels(community, mapOf("AndroidStudio" to DevDistLaunchModel("B", "{\"b\": 2}\n")), root)
-    assertThatThrownBy { checkSharedLaunchModels(community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 2}\n")), root) }
+    checkSharedLaunchModels(half, community, mapOf("AndroidStudio" to DevDistLaunchModel("B", "{\"b\": 2}\n")))
+    assertThatThrownBy { checkSharedLaunchModels(half, community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 2}\n"))) }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("'Idea'")
       .hasMessageContaining("IdeaCommunityProperties")

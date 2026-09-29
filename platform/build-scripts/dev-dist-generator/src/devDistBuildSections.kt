@@ -603,7 +603,6 @@ internal class DevDistBuildSections private constructor(
 
   companion object {
     fun compute(
-      projectRoot: Path,
       outputProvider: ModuleOutputProvider,
       products: List<DiscoveredProduct>,
       walk: DescriptorWalk,
@@ -686,10 +685,9 @@ internal class DevDistBuildSections private constructor(
       val plans = buildSpan("dev sections: descriptor plans") {
         collectPluginDescriptorPlans(
           walk = walk,
-          projectRoot = projectRoot,
+          index = index,
           outputProvider = outputProvider,
           products = products,
-          targets = index.targets,
           requestLayoutsByProduct = pluginRequests.groupBy(DevDistPluginRequest::product).mapValues { (_, ofProduct) ->
             val seen = Collections.newSetFromMap(IdentityHashMap<PluginLayout, Boolean>())
             ofProduct.mapNotNull { request -> if (seen.add(request.layout)) request.layout else null }
@@ -791,7 +789,7 @@ internal class DevDistBuildSections private constructor(
         frontendRootDescriptorJars = embeddedClasses.frontendRootDescriptorJars(),
       )
       val crossHalfDescriptorPackages = buildSpan("dev sections: cross-half descriptor packages") {
-        collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = residueClasses)
+        collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = residueClasses, planLabel = index::planLabel)
       }
       val result = DevDistBuildSections(
         contentModuleJarCalls = contentModuleJarCalls,
@@ -862,6 +860,12 @@ internal const val DEV_PLUGIN_TARGET_SUFFIX: String = "_dev_plugin"
 /** The `.bzl` file that exports `dev_dist_complex_plugin`. The `dev` section of an ultimate complex plugin loads it. */
 internal const val DEV_PLUGIN_REMAINDER_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl"
 
+/** The `.bzl` file that exports `dev_dist_plugin_descriptor`. A cross-half descriptor package loads it. */
+internal const val DEV_DIST_PLUGIN_DESCRIPTOR_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl"
+
+/** The `.bzl` file that exports `dev_plugin`. A cross-half descriptor package loads it for a simple plugin. */
+internal const val DEV_PLUGIN_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin.bzl"
+
 /** The `.bzl` file that exports `dev_dist_embedded_product_descriptor` for the helper of a divergent product that embeds the frontend. */
 internal const val DEV_DIST_EMBEDDED_PRODUCT_DESCRIPTOR_RULE: String =
   "@community//platform/build-scripts/bazel-rules:dev_dist_embedded_product_descriptor.bzl"
@@ -898,7 +902,6 @@ internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors
  * [upstream] goes to the product package, see [DevDistBuildSections.relocatedContentModuleJarCalls].
  */
 internal fun computeDevDistBuildSections(
-  projectRoot: Path,
   outputProvider: ModuleOutputProvider,
   products: List<DiscoveredProduct>,
   walk: DescriptorWalk,
@@ -912,7 +915,7 @@ internal fun computeDevDistBuildSections(
   upstream: DevDistBuildSections? = null,
 ): DevDistBuildSections {
   return DevDistBuildSections.compute(
-    projectRoot, outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections, upstream,
+    outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections, upstream,
   )
 }
 
@@ -1104,8 +1107,8 @@ private fun hasSameBuildPlan(a: DevDistPluginBuildPlan, b: DevDistPluginBuildPla
  * The result holds every visited file, the unchanged ones included, so the generation summary can state how many
  * files it covers. [finish][DevDistPlanCompute.finish] writes or reports the changed files.
  *
- * [writesPackage] answers whether the run writes the package of a directory relative to [projectRoot], see
- * [DevDistGenerationRoot.writesPackage]. The run leaves the file of another package alone.
+ * [writesPackage] answers whether the run writes the package of a directory relative to [projectRoot], the root of the
+ * half of the run, see [DevDistHalf.ownsPackage]. The run leaves the file of another package alone.
  */
 internal fun writeDevDistBuildSectionFiles(
   projectRoot: Path,

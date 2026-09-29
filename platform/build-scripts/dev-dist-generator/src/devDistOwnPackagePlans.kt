@@ -20,7 +20,7 @@ private val QUOTED_LABEL = Regex("\"([^\"\\s]*//[^\"\\s]*)\"")
 internal class DevDistOwnPackagePlans(
   /** The plan home of every community plugin whose plan files sit in its own package, keyed by main module. */
   private val homes: Map<String, DevDistPluginPlanHome>,
-  /** The written text of every plan file of such a home, keyed by main module and then by file name. */
+  /** The text of every plan file of such a home, keyed by main module and then by file name. */
   private val planFiles: Map<String, Map<String, String>>,
   /** The calls that the own `dev` section of such a plugin states, keyed by main module. */
   private val sectionCalls: Map<String, String>,
@@ -41,10 +41,9 @@ internal class DevDistOwnPackagePlans(
    *
    * [planTexts] are the plan files of the ultimate half in its cross-half plugin package, keyed by file name, with
    * their ultimate spelling. [crossHalfCalls] are its calls there. The plan texts and the calls must name only community
-   * call labels, see [isCommunityCallLabel]. The plan texts must equal the written community texts after the community
-   * respelling. The community calls with every `//`
-   * label spelled `@community//` must equal [crossHalfCalls]. A plan file and a call name no package of their own, so
-   * the text of either does not depend on its package.
+   * call labels, see [isCommunityCallLabel]. The plan texts with every `@community//` label spelled `//` must equal the
+   * community texts. The community calls with every `//` label spelled `@community//` must equal [crossHalfCalls]. A
+   * plan file and a call name no package of their own, so the text of either does not depend on its package.
    */
   fun acceptsUpstreamPlans(mainModule: String, planTexts: Map<String, String>, crossHalfCalls: String?): Boolean {
     if (!homes.containsKey(mainModule) || crossHalfCalls == null) {
@@ -71,15 +70,15 @@ internal class DevDistOwnPackagePlans(
 
   companion object {
     /**
-     * Reads the plans that the half of [root] writes into the own package of a plugin: its plan files [files] and its
-     * rendered calls [rendering]. The community half records every such home with the written text of every plan file
-     * there. The ultimate half records none, because no half reads its plans.
+     * Reads the plans that [half] writes into the own package of a plugin: its plan files [files] and its rendered calls
+     * [rendering]. The community half records every such home with the text of every plan file there. The ultimate half
+     * records none, because no half reads its plans.
      */
-    fun of(files: DevDistPluginPlanFiles, rendering: DevDistPluginExecutionRendering, root: DevDistGenerationRoot): DevDistOwnPackagePlans {
+    fun of(files: DevDistPluginPlanFiles, rendering: DevDistPluginExecutionRendering, half: DevDistHalf): DevDistOwnPackagePlans {
       val homes = TreeMap<String, DevDistPluginPlanHome>()
       val planFiles = TreeMap<String, Map<String, String>>()
       val sectionCalls = TreeMap<String, String>()
-      if (root.dependentIsCommunity) {
+      if (half.writesCommunityPackages) {
         for ((mainModule, home) in files.homes) {
           if (!home.isModulePackage || home.callIsCrossHalf) {
             continue
@@ -87,7 +86,7 @@ internal class DevDistOwnPackagePlans(
           homes.put(mainModule, home)
           planFiles.put(mainModule, files.files.entries
             .filter { (path, _) -> path.substringBeforeLast('/', missingDelimiterValue = "") == home.directory }
-            .associateTo(TreeMap()) { (path, text) -> path.substringAfterLast('/') to root.respellQuotedLabels(text) })
+            .associateTo(TreeMap()) { (path, text) -> path.substringAfterLast('/') to text })
           rendering.calls.get(mainModule)?.sectionText?.let { sectionCalls.put(mainModule, it) }
         }
       }
@@ -95,7 +94,7 @@ internal class DevDistOwnPackagePlans(
         homes = Collections.unmodifiableMap(homes),
         planFiles = Collections.unmodifiableMap(planFiles),
         sectionCalls = Collections.unmodifiableMap(sectionCalls),
-        rootDirectory = if (root.dependentIsCommunity) root.half.rootDirectory else "",
+        rootDirectory = half.rootDirectory,
       )
     }
   }

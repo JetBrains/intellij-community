@@ -270,11 +270,11 @@ internal class DevDistRunConfigurations private constructor(
   @JvmField val modulesByProduct: Map<String, List<String>>,
 ) {
   companion object {
-    /** Reads the rows of the `.idea/runConfigurations` of the half of [root]. */
-    fun read(root: DevDistGenerationRoot, outputProvider: ModuleOutputProvider): DevDistRunConfigurations {
-      val rows = readDevRunConfigurationRows(root.runConfigurationsDir, root.half.rowFieldProperties)
+    /** Reads the rows of `.idea/runConfigurations` under [root], the root of [half], see [DevDistHalf.root]. */
+    fun read(half: DevDistHalf, root: Path, outputProvider: ModuleOutputProvider): DevDistRunConfigurations {
+      val rows = readDevRunConfigurationRows(root.resolve(RUN_CONFIGURATIONS_DIRECTORY), half.rowFieldProperties)
       val modules = devDistRunConfigurationModules(
-        named = devDistRunConfigurationModules(rows, root.half.splitProducts),
+        named = devDistRunConfigurationModules(rows, half.splitProducts),
         moduleReason = { module ->
           val jpsModule = outputProvider.findModule(module)
           when {
@@ -288,6 +288,10 @@ internal class DevDistRunConfigurations private constructor(
     }
   }
 }
+
+/** The directory of the `DevMainKt` run configurations of a half, relative to the root of the half. */
+@ApiStatus.Internal
+const val RUN_CONFIGURATIONS_DIRECTORY: String = ".idea/runConfigurations"
 
 /**
  * [DevDistRunConfigurations.modulesByProduct] over the modules [named] per product. [moduleReason] returns the reason a module

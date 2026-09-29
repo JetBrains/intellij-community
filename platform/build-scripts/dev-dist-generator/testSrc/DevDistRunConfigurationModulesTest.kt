@@ -346,17 +346,18 @@ class DevDistRunConfigurationModulesTest {
   }
 
   @Test
-  fun `the community pass reads the rows of community and loads the community macros`() {
+  fun `the community half reads the rows of its root and loads the community macros`() {
     write("Root.xml", devMain("Root", "-Didea.platform.prefix=idea"))
-    val root = DevDistGenerationRoot.community(dir)
-    Files.createDirectories(root.runConfigurationsDir)
-    Files.writeString(root.runConfigurationsDir.resolve("IDEA_Community.xml"), devMain("IDEA Community", "-Didea.platform.prefix=Idea"))
+    val half = CommunityDevDistHalf
+    val runConfigurations = half.root(dir).resolve(RUN_CONFIGURATIONS_DIRECTORY)
+    Files.createDirectories(runConfigurations)
+    Files.writeString(runConfigurations.resolve("IDEA_Community.xml"), devMain("IDEA Community", "-Didea.platform.prefix=Idea"))
 
-    val rows = readDevRunConfigurationRows(root.runConfigurationsDir)
+    val rows = readDevRunConfigurationRows(runConfigurations)
     assertThat(rows.map { it.name }).containsExactly("idea_community")
 
-    val splitProducts = root.splitProducts(listOf("community", "Idea"))
-    val text = renderDevServerRunConfigurations(rows, splitProducts = splitProducts, macrosBzl = root.macrosBzl)
+    val splitProducts = half.registrySplitProducts(listOf("community", "Idea"))
+    val text = renderDevServerRunConfigurations(rows, splitProducts = splitProducts, macrosBzl = half.macrosBzl)
     assertThat(text).contains("load(\"//build:intellij_dev_community.bzl\", \"intellij_dev_run_configurations\")")
     assertThat(text).contains("see `intellij_dev_run_configurations` in `intellij_dev_community.bzl`")
     assertThat(text).containsOnlyOnce("load(")
@@ -364,13 +365,13 @@ class DevDistRunConfigurationModulesTest {
 
   @Test
   fun `a community row of a product outside the community registry fails the rendering`() {
-    val root = DevDistGenerationRoot.community(dir)
+    val half = CommunityDevDistHalf
 
     assertThatThrownBy {
       renderDevServerRunConfigurations(
         rows = listOf(row("c", product = "community")),
-        splitProducts = root.splitProducts(listOf("community", "Idea")),
-        macrosBzl = root.macrosBzl,
+        splitProducts = half.registrySplitProducts(listOf("community", "Idea")),
+        macrosBzl = half.macrosBzl,
       )
     }
       .isInstanceOf(IllegalStateException::class.java)

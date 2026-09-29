@@ -36,8 +36,9 @@ import java.nio.file.Path
  * without the community targets JSON forks no section and no plan render. A fork carries the current context, so a
  * span that a render starts nests under the span of the run.
  *
- * [testPlugins] are the Product DSL test plugins that a run-configuration module can be. Both halves read the same
- * specifications.
+ * [projectRoot] is the monorepo root, and [half] has it as its root. The community half renders against its own root,
+ * see [DevDistHalf.root]. [testPlugins] are the Product DSL test plugins that a run-configuration module can be. Both
+ * halves read the same specifications, whose paths are relative to the monorepo root.
  */
 @ApiStatus.Internal
 fun TaskScope.forkDevDistHalves(
@@ -48,14 +49,14 @@ fun TaskScope.forkDevDistHalves(
   testPlugins: List<TestPluginSpec>,
   verifyPlanUnits: Boolean,
 ): DevDistHalvesRun {
-  val root = DevDistGenerationRoot.of(projectRoot, half)
+  val root = half.root(projectRoot)
   val products = productDerivation.products
   // The derivation carries no Bazel label, so it runs on every checkout. The dev sections and the plan need
   // `bazel-targets.json`. Both read one plugin packing derivation, so they state one packing per plugin. The plan
   // reads the labels the dev sections decide, so it renders after them.
   val derivationTask = fork("derive plugin packings") {
     buildSpan("derive plugin packings") {
-      derivePluginPackings(root = root, outputProvider = outputProvider, derivation = productDerivation)
+      derivePluginPackings(half = half, root = root, outputProvider = outputProvider, derivation = productDerivation)
     }
   }
   var bazelTask: Subtask<DevDistBazelComputes>? = null
@@ -69,6 +70,7 @@ fun TaskScope.forkDevDistHalves(
     communityTask = upstreamTask
     bazelTask = fork("generate dev-distribution build sections and plan") {
       computeDevDistBazelFiles(
+        half = half,
         root = root,
         outputProvider = outputProvider,
         products = products,
@@ -81,7 +83,8 @@ fun TaskScope.forkDevDistHalves(
     }
   }
   return DevDistHalvesRun(
-    root = root,
+    half = half,
+    projectRoot = projectRoot,
     outputProvider = outputProvider,
     products = products,
     testPlugins = testPlugins,
@@ -106,7 +109,9 @@ private fun requireUpstream(upstream: DevDistBazelComputes?, projectRoot: Path):
 /** The dev-distribution renders that [forkDevDistHalves] started. */
 @ApiStatus.Internal
 class DevDistHalvesRun internal constructor(
-  private val root: DevDistGenerationRoot,
+  private val half: DevDistHalf,
+  /** The monorepo root. */
+  private val projectRoot: Path,
   private val outputProvider: ModuleOutputProvider,
   private val products: List<DiscoveredProduct>,
   private val testPlugins: List<TestPluginSpec>,
@@ -122,7 +127,6 @@ class DevDistHalvesRun internal constructor(
    * result even when they changed nothing, so the `All files unchanged` line counts them too.
    */
   fun finish(commitPlan: Boolean): DevDistHalvesFiles {
-    val projectRoot = root.projectRoot
     val derivation = derivationTask.await()
     // This run has no `bazel-targets.json` when no task was forked. A validating run reports nothing rather than failing
     // on the missing file: the same validation also runs under Bazel, where the file is a declared input, and that run is
@@ -135,7 +139,8 @@ class DevDistHalvesRun internal constructor(
     check(!commitPlan || communityFiles != null) { communityHalfMissing(projectRoot) }
     val bazelFiles = bazelTask?.await() ?: communityFiles?.takeIf { commitPlan }?.let { upstream ->
       computeDevDistBazelFiles(
-        root = root,
+        half = half,
+        root = half.root(projectRoot),
         outputProvider = outputProvider,
         products = products,
         derivation = derivation,
@@ -181,11 +186,13 @@ internal class DevDistBazelComputes(
  * render get a span of their own. The JSON is read once, and the index gives it to every render. The descriptor walk
  * runs once, and every render reads it.
  *
- * [upstream] is the result of the community half, which the ultimate half reads. It is `null` for the community half,
- * which renders first. [testPlugins] are the Product DSL test plugins that a run-configuration module can be.
+ * [root] is the root of [half], and every path of the run is relative to it, see [DevDistHalf.root]. [upstream] is the
+ * result of the community half, which the ultimate half reads. It is `null` for the community half, which renders first.
+ * [testPlugins] are the Product DSL test plugins that a run-configuration module can be.
  */
 internal fun computeDevDistBazelFiles(
-  root: DevDistGenerationRoot,
+  half: DevDistHalf,
+  root: Path,
   outputProvider: ModuleOutputProvider,
   products: List<DiscoveredProduct>,
   derivation: PluginPackingDerivation,
@@ -194,35 +201,33 @@ internal fun computeDevDistBazelFiles(
   testPlugins: List<TestPluginSpec>,
   upstream: DevDistBazelComputes? = null,
 ): DevDistBazelComputes {
-  check(upstream == null || !root.dependentIsCommunity) { "The ${root.passName} renders first, so it reads no upstream result" }
+  check(upstream == null || !half.writesCommunityPackages) { "The ${half.name} half renders first, so it reads no upstream result" }
   val upstreamSections = upstream?.buildSections
-  val projectRoot = root.projectRoot
   val index = DevDistBazelIndex(
     targets = targets,
-    projectRoot = projectRoot,
-    communityRoot = root.communityRoot,
-    planPackageIsCommunity = root.dependentIsCommunity,
+    projectRoot = root,
+    communityRoot = half.communityRoot(root),
+    planPackageIsCommunity = half.writesCommunityPackages,
   )
   val files = DevDistBuildFiles(index)
   val walk = buildSpan("walk dev-distribution descriptors") {
     walkDescriptors(
-      projectRoot = projectRoot,
+      projectRoot = root,
       outputProvider = outputProvider,
       products = products,
-      generatedModuleSetDescriptors = root.half.generatedModuleSetDescriptors,
+      generatedModuleSetDescriptors = half.generatedModuleSetDescriptors,
     )
   }
   fun computeSections(foreignSections: Set<String>): DevDistBuildSections {
     return buildSpan("generate dev-distribution build sections") {
       computeDevDistBuildSections(
-        projectRoot = projectRoot,
         outputProvider = outputProvider,
         products = products,
         walk = walk,
         derivation = derivation,
         index = index,
         files = files,
-        half = root.half,
+        half = half,
         testPlugins = testPlugins,
         verifyPlanUnits = verifyPlanUnits,
         foreignSections = foreignSections,
@@ -234,17 +239,16 @@ internal fun computeDevDistBazelFiles(
   upstreamSections?.let(sections::requireResourcesDeclaredBy)
   val executions = buildSpan("generate dev-distribution plugin executions") {
     computeDevDistPluginExecutions(
-      root = root,
       sections = sections,
       upstreamPackagePlans = upstream?.ownPackagePlans,
     )
   }
   val sectionFiles = buildSpan("write dev-distribution build sections") {
-    writeDevDistBuildSectionFiles(projectRoot = projectRoot, sections = sections, index = index, files = files, writesPackage = root::writesPackage)
+    writeDevDistBuildSectionFiles(projectRoot = root, sections = sections, index = index, files = files, writesPackage = half::ownsPackage)
   }
   val plan = buildSpan("generate dev-distribution plan") {
     computeDevDistPlan(
-      root = root,
+      half = half,
       outputProvider = outputProvider,
       products = products,
       walk = walk,
@@ -255,12 +259,12 @@ internal fun computeDevDistBazelFiles(
     )
   }
   // One key of both registries with one product class states one product, so the two halves render one launch model.
-  upstream?.let { other -> checkSharedLaunchModels(half = plan.launchModels, otherHalf = other.plan.launchModels, root = root) }
+  upstream?.let { other -> checkSharedLaunchModels(half = half, launchModels = plan.launchModels, otherLaunchModels = other.plan.launchModels) }
   return DevDistBazelComputes(
     sections = sectionFiles,
     plan = plan,
     buildSections = sections,
-    ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, root),
+    ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, half),
   )
 }
 
@@ -290,18 +294,23 @@ private fun computeUpstreamAwareSections(
 internal data class DevDistLaunchModel(@JvmField val productClass: String, @JvmField val text: String)
 
 /**
- * Fails when a key of both registries has one product class and two launch models. [half] and [otherHalf] are keyed
- * by the `dev-build.json` key. A key with two classes, such as `AndroidStudio`, states two products, so its models
- * may differ. The message names the key and the class.
+ * Fails when a key of both registries has one product class and two launch models. [launchModels] are the models of
+ * [half], and [otherLaunchModels] are the models of the other half. Both are keyed by the `dev-build.json` key. A key
+ * with two classes, such as `AndroidStudio`, states two products, so its models may differ. The message names the key
+ * and the class.
  */
-internal fun checkSharedLaunchModels(half: Map<String, DevDistLaunchModel>, otherHalf: Map<String, DevDistLaunchModel>, root: DevDistGenerationRoot) {
-  for ((product, model) in half) {
-    val other = otherHalf.get(product) ?: continue
+internal fun checkSharedLaunchModels(
+  half: DevDistHalf,
+  launchModels: Map<String, DevDistLaunchModel>,
+  otherLaunchModels: Map<String, DevDistLaunchModel>,
+) {
+  for ((product, model) in launchModels) {
+    val other = otherLaunchModels.get(product) ?: continue
     if (other.productClass != model.productClass) {
       continue
     }
     check(other.text == model.text) {
-      "The two halves render two launch models for '$product' of ${model.productClass}. The ${root.passName} renders:\n" +
+      "The two halves render two launch models for '$product' of ${model.productClass}. The ${half.name} half renders:\n" +
       model.text + "\nand the other half renders:\n" + other.text
     }
   }
@@ -321,7 +330,7 @@ private const val COMMUNITY_TARGETS_JSON_FILE_PROPERTY: String = "intellij.build
 @ApiStatus.Internal
 fun communityTargetsJson(projectRoot: Path): Path {
   val configured = System.getProperty(COMMUNITY_TARGETS_JSON_FILE_PROPERTY)
-    ?: return DevDistGenerationRoot.community(projectRoot).outputRoot.resolve("build/bazel-targets.json")
+    ?: return CommunityDevDistHalf.root(projectRoot).resolve("build/bazel-targets.json")
   val path = Path.of(configured)
   val file = if (path.isAbsolute) path else BazelRunfiles.resolveRunfilePath(configured)
   check(Files.exists(file)) {
@@ -335,23 +344,28 @@ fun communityTargetsJson(projectRoot: Path): Path {
  * The community half: the `dev` sections and the plan of the community products over the community JPS model, written
  * under `community/`.
  *
- * The pass reads the community targets JSON, see [communityTargetsJson]. Both targets JSON files spell a community label
+ * The half renders against its own root: its JPS model, its registry, its run configurations and every path of its
+ * outputs are relative to `community/` of the monorepo root [projectRoot], see [DevDistHalf.root].
+ *
+ * The half reads the community targets JSON, see [communityTargetsJson]. Both targets JSON files spell a community label
  * alike, so under Bazel a module jar resolves through the runfiles of the tool. Out of Bazel, a jar path of the community
- * targets JSON is below the community output directory of the monorepo, and the provider resolves it there. `null` when
- * the property is not set and the workspace file does not exist. The caller decides what that means.
+ * targets JSON is below the community output directory of the monorepo, and the provider resolves it there. So the
+ * provider keeps the monorepo root as its project home. `null` when the property is not set and the workspace file does
+ * not exist. The caller decides what that means.
  */
 internal fun computeCommunityDevDistFiles(
   projectRoot: Path,
   verifyPlanUnits: Boolean,
   testPlugins: List<TestPluginSpec>,
 ): DevDistBazelComputes? {
-  val root = DevDistGenerationRoot.community(projectRoot)
+  val half = CommunityDevDistHalf
+  val root = half.root(projectRoot)
   val targetsFile = communityTargetsJson(projectRoot)
   if (!Files.exists(targetsFile)) {
     return null
   }
   val targets = buildSpan("load community bazel-targets.json") { communityTargetsSeenFromMonorepo(readBazelTargetsJson(targetsFile)) }
-  val project = loadGeneratorJpsProject(root.outputRoot)
+  val project = loadGeneratorJpsProject(root)
   val outputProvider = BazelModuleOutputProvider(
     state = BazelModuleOutputProviderState(
       modules = project.modules,
@@ -361,11 +375,12 @@ internal fun computeCommunityDevDistFiles(
     lifetime = null,
     useTestCompilationOutput = true,
   )
-  val derivation = productDerivation(root.outputRoot, outputProvider)
+  val derivation = productDerivation(root, outputProvider)
   val packings = buildSpan("derive community plugin packings") {
-    derivePluginPackings(root = root, outputProvider = outputProvider, derivation = derivation)
+    derivePluginPackings(half = half, root = root, outputProvider = outputProvider, derivation = derivation)
   }
   return computeDevDistBazelFiles(
+    half = half,
     root = root,
     outputProvider = outputProvider,
     products = derivation.products,

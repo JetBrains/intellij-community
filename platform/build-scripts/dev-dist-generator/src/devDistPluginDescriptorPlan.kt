@@ -32,8 +32,6 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.JpsProject
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -383,7 +381,7 @@ internal const val PINNED_BUILD_DATE_IN_SECONDS: Long = 1767225600 // 2026-01-01
  * A plugin with a layout fact the plan cannot state stops the run, see [statedDescriptorFacts].
  */
 internal fun collectPluginDescriptorPlan(
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   outputProvider: ModuleOutputProvider,
   properties: ProductProperties,
   platformPrefix: String,
@@ -448,7 +446,7 @@ internal fun collectPluginDescriptorPlan(
     embeddedFrontend == null || layouts.none(embeddedFrontend::packsEmbeddedFrontend) -> null
     else -> collectEmbeddedProductDescriptor(
       support = embeddedFrontend,
-      projectRoot = projectRoot,
+      index = index,
       properties = properties,
       platformPrefix = platformPrefix,
       outputProvider = outputProvider,
@@ -487,7 +485,7 @@ internal fun collectPluginDescriptorPlan(
         }
       }
       entries.add(planEntry(
-        projectRoot = projectRoot,
+        index = index,
         mainModule = mainModule,
         layout = layout,
         variant = restriction,
@@ -522,12 +520,11 @@ internal fun collectPluginDescriptorPlan(
       embeddedDescriptor?.let { descriptor -> descriptor.content?.let { put(descriptor.relativePath, it) } }
     },
     productDescriptor = collectProductDescriptor(
-      projectRoot = projectRoot,
+      index = index,
       project = project,
       properties = properties,
       platformPrefix = platformPrefix,
       outputProvider = outputProvider,
-      bazelTargets = bazelTargets,
       productCode = applicationInfo.productCode,
       contentModuleFilter = contentModuleFilter,
       generatedClosureOf = generatedClosureOf,
@@ -544,12 +541,11 @@ internal fun collectPluginDescriptorPlan(
  * `platform_lib` no longer packs the jar for it.
  */
 private fun collectProductDescriptor(
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   project: JpsProject,
   properties: ProductProperties,
   platformPrefix: String,
   outputProvider: ModuleOutputProvider,
-  bazelTargets: BazelTargetsInfo.TargetsFile,
   productCode: String,
   contentModuleFilter: ContentModuleFilter,
   generatedClosureOf: (
@@ -578,8 +574,8 @@ private fun collectProductDescriptor(
   check(closure.unmodelledContentIncludes.isEmpty()) {
     "The product descriptor of '$platformPrefix' has an unsupported content include: ${closure.unmodelledContentIncludes}"
   }
-  val labels = closureDescriptorLabels(closure = closure, projectRoot = projectRoot, bazelTargets = bazelTargets, owner = "the product descriptor of '$platformPrefix'")
-  val communityHomeDir = projectRoot.resolve(COMMUNITY_DIRECTORY)
+  val labels = closureDescriptorLabels(closure = closure, index = index, owner = "the product descriptor of '$platformPrefix'")
+  val communityHomeDir = index.communityRoot
   val scrambled = closure.declaredContentModules.filter { contentModule ->
     isProductContentModuleScrambled(
       moduleName = contentModule.name,
@@ -606,7 +602,7 @@ private fun collectProductDescriptor(
     libraryDescriptors = labels.libraryDescriptors,
     refusedContentModules = closure.refusedContentModules,
     scrambledContentModules = scrambled.map { it.name },
-    applicationInfo = applicationInfoLabel(projectRoot = projectRoot, project = project, properties = properties, platformPrefix = platformPrefix),
+    applicationInfo = applicationInfoLabel(index = index, project = project, properties = properties, platformPrefix = platformPrefix),
     applicationInfoPath = "idea/${properties.platformPrefix ?: ""}ApplicationInfo.xml",
     productCode = productCode,
     replacements = properties.appInfoXmlReplacements.orEmpty().map { (key, value) -> "$key=$value" },
@@ -622,13 +618,12 @@ private class ClosureDescriptorLabels(
 /** [ClosureDescriptorLabels] of [closure]. [owner] names the reader in a failure. */
 private fun closureDescriptorLabels(
   closure: PluginDescriptorClosure,
-  projectRoot: Path,
-  bazelTargets: BazelTargetsInfo.TargetsFile,
+  index: DevDistBazelIndex,
   owner: String,
 ): ClosureDescriptorLabels {
   val descriptors = TreeMap<String, String>()
   for (descriptor in closure.reached) {
-    val label = requireNotNull(descriptorLabel(descriptor = descriptor, projectRoot = projectRoot, bazelTargets = bazelTargets)) {
+    val label = requireNotNull(descriptorLabel(descriptor = descriptor, index = index)) {
       "No label names '${descriptor.relativePath}' of '${descriptor.moduleName}', which $owner reads"
     }
     check(descriptors.put(label, descriptor.loadPath) == null) {
@@ -638,7 +633,7 @@ private fun closureDescriptorLabels(
 
   val libraryLoadPaths = TreeMap<String, MutableList<String>>()
   for (descriptor in closure.libraryJarDescriptors.values) {
-    val label = requireNotNull(libraryContainerLabel(descriptor = descriptor, targets = bazelTargets)) {
+    val label = requireNotNull(libraryContainerLabel(descriptor = descriptor, targets = index.targets)) {
       "No container label names library '${descriptor.libraryName}' in '${descriptor.moduleName}', which answers '${descriptor.loadPath}'"
     }
     check(' ' !in descriptor.loadPath) {
@@ -652,11 +647,14 @@ private fun closureDescriptorLabels(
   )
 }
 
-/** The label of the `idea/<prefix>ApplicationInfo.xml` source of [properties], composed from the package that exports it. */
-internal fun applicationInfoLabel(projectRoot: Path, project: JpsProject, properties: ProductProperties, platformPrefix: String): String {
+/**
+ * The label of the `idea/<prefix>ApplicationInfo.xml` source of [properties] in the recorded form, composed from the
+ * package that exports it, see [DevDistBazelIndex.containingPackageLabel].
+ */
+internal fun applicationInfoLabel(index: DevDistBazelIndex, project: JpsProject, properties: ProductProperties, platformPrefix: String): String {
   val appInfoPath = findApplicationInfoInSources(project, properties)
-  val relativePath = projectRoot.relativize(appInfoPath).invariantSeparatorsPathString
-  return requireNotNull(containingBazelPackageLabel(projectRoot = projectRoot, projectRelativePath = relativePath)) {
+  val relativePath = index.projectRoot.relativize(appInfoPath).invariantSeparatorsPathString
+  return requireNotNull(index.containingPackageLabel(relativePath)) {
     "No Bazel package exports the application info of '$platformPrefix' at '$relativePath'"
   }
 }
@@ -877,7 +875,7 @@ private fun unplannableDescriptorMessage(mainModule: String, variant: String, de
  * descriptor fact the plan cannot state, such as a load path with no label, stops the run.
  */
 private fun planEntry(
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   mainModule: String,
   layout: PluginLayout,
   variant: LayoutVariant,
@@ -955,7 +953,7 @@ private fun planEntry(
     val outputKind = if (testPlugin == null) "production" else "test"
     "Bundled plugin '$mainModule' has no single $outputKind jar target; run ./build/jpsModelToBazel.cmd"
   }
-  val packageDirectory = bazelPackageDirectory(moduleTarget)
+  val packageDirectory = index.packageDirectory(moduleTarget)
   val descriptorPath = closure.descriptor.relativePath
   check(descriptorPath.startsWith("$packageDirectory/")) {
     "'$descriptorPath' of plugin '$mainModule' is outside the Bazel package '$packageDirectory' of $moduleTarget," +
@@ -965,7 +963,7 @@ private fun planEntry(
   // path `contentModuleNameToDescriptorFileName` derives, which is the key the action's request uses. A non-embedding
   // layout still declares them, because the classpath descriptor action embeds the survivors.
   val reached = closure.reached.sortedBy { it.loadPath }
-  val labelless = reached.filter { descriptorLabel(descriptor = it, projectRoot = projectRoot, bazelTargets = bazelTargets) == null }
+  val labelless = reached.filter { descriptorLabel(descriptor = it, index = index) == null }
   if (labelless.isNotEmpty()) {
     unstatable(labelless.joinToString(prefix = "no label names the descriptor it reads: ") { "'${it.relativePath}' of '${it.moduleName}'" })
   }
@@ -999,7 +997,7 @@ private fun planEntry(
     descriptors = reached.map {
       DeclaredDescriptor(
         loadPath = it.loadPath,
-        label = descriptorLabel(descriptor = it, projectRoot = projectRoot, bazelTargets = bazelTargets)!!,
+        label = descriptorLabel(descriptor = it, index = index)!!,
         testOutput = it.testOutput,
         moduleName = it.moduleName,
       )
@@ -1045,14 +1043,14 @@ private val includeAllContentModules: ContentModuleFilter = object : ContentModu
  */
 private fun embeddedFrontendApplicationInfo(
   support: DevDistEmbeddedFrontendSupport,
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   project: JpsProject,
   properties: ProductProperties,
   platformPrefix: String,
 ): FrontendApplicationInfoPlan {
   return FrontendApplicationInfoPlan(
     clientApplicationInfo = support.clientApplicationInfo,
-    productApplicationInfo = applicationInfoLabel(projectRoot = projectRoot, project = project, properties = properties, platformPrefix = platformPrefix),
+    productApplicationInfo = applicationInfoLabel(index = index, project = project, properties = properties, platformPrefix = platformPrefix),
     buildNumber = support.frontendBuildNumber,
   )
 }
@@ -1075,7 +1073,7 @@ private class GeneratedEmbeddedProductDescriptor(
  */
 private fun collectEmbeddedProductDescriptor(
   support: DevDistEmbeddedFrontendSupport,
-  projectRoot: Path,
+  index: DevDistBazelIndex,
   properties: ProductProperties,
   platformPrefix: String,
   outputProvider: ModuleOutputProvider,
@@ -1096,7 +1094,7 @@ private fun collectEmbeddedProductDescriptor(
   val project = outputProvider.findRequiredModule(properties.applicationInfoModule).project
   val frontendApplicationInfo = embeddedFrontendApplicationInfo(
     support = support,
-    projectRoot = projectRoot,
+    index = index,
     project = project,
     properties = properties,
     platformPrefix = platformPrefix,
@@ -1107,7 +1105,7 @@ private fun collectEmbeddedProductDescriptor(
   }
   val home = embeddedClasses.home(platformPrefix)
   val fileName = support.descriptorFileName(home)
-  val relativePath = "${bazelPackageDirectory(pluginTarget)}/$fileName"
+  val relativePath = "${index.packageDirectory(pluginTarget)}/$fileName"
   val closure = generatedClosureOf(
     support.descriptorModule,
     support.descriptorLoadPath,
@@ -1118,7 +1116,7 @@ private fun collectEmbeddedProductDescriptor(
     "The generated embedded frontend descriptor has an unsupported content include: ${closure.unmodelledContentIncludes}"
   }
 
-  val labels = closureDescriptorLabels(closure = closure, projectRoot = projectRoot, bazelTargets = bazelTargets, owner = "the embedded frontend descriptor")
+  val labels = closureDescriptorLabels(closure = closure, index = index, owner = "the embedded frontend descriptor")
 
   val modules = sortedSetOf(support.descriptorModule)
   closure.contentModules.mapTo(modules) { it.substringBeforeLast('/') }
@@ -1248,90 +1246,27 @@ internal fun conventionalDescriptor(descriptor: ReachedDescriptor, contentModule
 }
 
 /**
- * The label that names one reached descriptor, or `null` when no label does.
+ * The label that names one reached descriptor in the recorded form, or `null` when no label does.
  *
  * `exportDescriptorFiles` exports every XML under a production resource root from the owning module's own Bazel
  * package, so the label is that package plus the path inside it. That is the composition the macro already applies to
  * the plugin's own descriptor, and it is the reason the plan carries a label rather than a module name: no `.bzl`
  * exposes a module-to-package map over both repository halves, so Starlark cannot compose it.
  *
- * A file the module's own package does not hold falls back to [containingBazelPackageLabel], which asks the tree which
+ * A file the module's own package does not hold falls back to [DevDistBazelIndex.containingPackageLabel], which asks the tree which
  * package holds it. That is the `dotenv-ultimate` and `php.dev` shape, where an ultimate module keeps its resources in
  * the community tree. Generation fails when neither rule answers.
  */
-internal fun descriptorLabel(descriptor: ReachedDescriptor, projectRoot: Path, bazelTargets: BazelTargetsInfo.TargetsFile): String? {
+internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelIndex): String? {
   if (descriptor.testOutput) {
-    return testModuleJarTarget(module = descriptor.moduleName, targets = bazelTargets)
+    return testModuleJarTarget(module = descriptor.moduleName, targets = index.targets)
   }
-  val moduleTarget = moduleRuleTarget(module = descriptor.moduleName, targets = bazelTargets) ?: return null
-  val packageDirectory = bazelPackageDirectory(moduleTarget)
+  val moduleTarget = moduleRuleTarget(module = descriptor.moduleName, targets = index.targets) ?: return null
+  val packageDirectory = index.packageDirectory(moduleTarget)
   if (descriptor.relativePath.startsWith("$packageDirectory/")) {
     return moduleTarget.substringBeforeLast(':') + ":" + descriptor.relativePath.removePrefix("$packageDirectory/")
   }
-  return containingBazelPackageLabel(projectRoot = projectRoot, projectRelativePath = descriptor.relativePath)
-}
-
-/**
- * The label of [projectRelativePath] composed from the Bazel package that holds the file, or `null` when no directory
- * above it holds a `BUILD.bazel`.
- *
- * ### Why a second rule, and why it reads the tree
- *
- * An ultimate module keeps its resources in the community tree in seven places today, `intellij.php.dev` and the six
- * `dotenv-ultimate` ones. `getModuleDescriptor` walks such a module's Bazel package up until it holds every content
- * root, which lands it on the ultimate root, and `exportDescriptorFiles` then writes the `exports_files` entry there.
- * **That entry is inert.** `community` is a `.bazelignore` entry of the ultimate root, so Bazel leaves the whole subtree
- * out of the main repository's execroot symlink farm: `//:community/<path>` resolves and analyses, and an action that
- * declares it gets a symlink to a file that is not there.
- *
- * So the label has to name the community package that holds the file, and no module lives in that package for
- * `bazel-targets.json` to name. The tree is the authority Bazel itself uses - the first ancestor directory with a
- * `BUILD.bazel` is the package - and this asks the tree the same question.
- *
- * ### What happens when the export is missing
- *
- * The package must export the file. Such a package is hand-written, because the generator's file writing is scoped to
- * one repository half, and an entry it is missing fails the descriptor action at analysis with the label it could not
- * find. That is loud, and it is the reason this rule may compose a label it cannot verify.
- */
-internal fun containingBazelPackageLabel(projectRoot: Path, projectRelativePath: String): String? {
-  val segments = projectRelativePath.split('/')
-  for (depth in segments.size - 1 downTo 0) {
-    val packageSegments = segments.subList(0, depth)
-    val packageDirectory = packageSegments.fold(projectRoot) { directory, segment -> directory.resolve(segment) }
-    if (!Files.exists(packageDirectory.resolve("BUILD.bazel"))) {
-      continue
-    }
-    val insidePackage = segments.subList(depth, segments.size).joinToString("/")
-    if (packageSegments.firstOrNull() != COMMUNITY_DIRECTORY) {
-      // A `community/` path that reached the root package would compose `//:community/<path>`, which the main
-      // repository cannot materialize. `community/BUILD.bazel` exists, so the loop stops above this depth; the refusal
-      // keeps the rule local.
-      if (segments.firstOrNull() == COMMUNITY_DIRECTORY) {
-        return null
-      }
-      return "//" + packageSegments.joinToString("/") + ":" + insidePackage
-    }
-    return COMMUNITY_REPOSITORY_PREFIX + packageSegments.drop(1).joinToString("/") + ":" + insidePackage
-  }
-  return null
-}
-
-/** The directory of the community repository inside the ultimate monorepo. */
-private const val COMMUNITY_DIRECTORY: String = "community"
-
-/**
- * The project-relative directory of a module target's Bazel package - `@community//plugins/xpath:xpath` is
- * `community/plugins/xpath`.
- */
-internal fun bazelPackageDirectory(moduleTarget: String): String {
-  val withoutTargetName = moduleTarget.substringBeforeLast(':')
-  val insideRepository = when {
-    withoutTargetName.startsWith(COMMUNITY_REPOSITORY_PREFIX) -> withoutTargetName.removePrefix(COMMUNITY_REPOSITORY_PREFIX)
-    withoutTargetName.startsWith("//") -> return withoutTargetName.removePrefix("//")
-    else -> error("Module target '$moduleTarget' names a repository this plan cannot map to a directory")
-  }
-  return if (insideRepository.isEmpty()) "community" else "community/$insideRepository"
+  return index.containingPackageLabel(descriptor.relativePath)
 }
 
 /**

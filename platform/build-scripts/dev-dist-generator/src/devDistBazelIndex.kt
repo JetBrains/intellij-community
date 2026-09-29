@@ -5,9 +5,11 @@ package com.intellij.platform.buildScripts.devDistGenerator
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.invariantSeparatorsPathString
 
 /** The repository half a Bazel package belongs to. The converter spells a label by the half of the module that writes it. */
 @ApiStatus.Internal
@@ -42,19 +44,28 @@ class BazelModuleLocation(
  * records the result, so the tool reads the result instead of repeating the derivation. Every label rule here composes
  * from the recorded absolute form. A function returns `null` for a module the JSON does not place. A skipped module and
  * an unknown module are both unplaced.
+ *
+ * A label inside the run keeps the recorded absolute form, `@community//pkg` for a community package, so the index
+ * compares it with a label of the JSON as it is. A generated file of the run spells it through [planLabel].
+ *
+ * A project-relative path is relative to [projectRoot], the root of the half of the run. For the community half,
+ * [projectRoot] and [communityRoot] are one directory, so every path is a community path.
  */
 @ApiStatus.Internal
 class DevDistBazelIndex(
   @JvmField val targets: BazelTargetsInfo.TargetsFile,
+  /** The root of the half of the run. Every project-relative path of the run is relative to it. */
   @JvmField val projectRoot: Path,
-  /** The community checkout inside the ultimate monorepo. */
+  /** The community checkout: a directory below [projectRoot] for the ultimate half, and [projectRoot] itself for the community half. */
   @JvmField val communityRoot: Path = projectRoot.resolve("community"),
   /**
-   * Whether the generated plan packages of the run are community packages. The community pass sets it, so a plan label
-   * is spelled for a community dependent, see [DevDistGenerationRoot.dependentIsCommunity].
+   * Whether the generated plan packages of the run are community packages. The community half sets it, so a plan label
+   * is spelled for a community dependent, see [planLabel].
    */
   @JvmField val planPackageIsCommunity: Boolean = false,
 ) {
+  /** The path of [communityRoot] relative to [projectRoot]: `community`, or the empty string for the community half. */
+  private val communityDirectory: String = projectRoot.relativize(communityRoot).invariantSeparatorsPathString
 
   // The index is read beside itself, so the memo takes concurrent readers. Two readers of one module may both
   // compute it; the result is the same, and the first one in stays. `Optional` holds the `null` of an unplaced module.
@@ -190,6 +201,86 @@ class DevDistBazelIndex(
   /** A recorded library label as a dependent of the given half writes it: `@community//` becomes `//` for a community dependent. */
   fun respellLibraryLabel(label: String, dependentIsCommunity: Boolean): String {
     return if (dependentIsCommunity && label.startsWith(COMMUNITY_REPOSITORY_PREFIX)) "//" + label.removePrefix(COMMUNITY_REPOSITORY_PREFIX) else label
+  }
+
+  /**
+   * [label], an absolute label in the recorded form, as a generated plan package of the run writes it: `@community//`
+   * becomes `//` in the community half. Every other label stays as it is.
+   */
+  fun planLabel(label: String): String = respellLibraryLabel(label, dependentIsCommunity = planPackageIsCommunity)
+
+  /** [projectRelativePath] relative to [communityRoot], or `null` for a path outside the community checkout. */
+  fun communityRelativePath(projectRelativePath: String): String? {
+    return when {
+      communityDirectory.isEmpty() -> projectRelativePath
+      projectRelativePath == communityDirectory -> ""
+      projectRelativePath.startsWith("$communityDirectory/") -> projectRelativePath.substring(communityDirectory.length + 1)
+      else -> null
+    }
+  }
+
+  /**
+   * The project-relative directory of the package of [moduleTarget], a label in the recorded form:
+   * `@community//plugins/xpath:xpath` is `community/plugins/xpath` for the ultimate half and `plugins/xpath` for the
+   * community half.
+   */
+  fun packageDirectory(moduleTarget: String): String {
+    val withoutTargetName = moduleTarget.substringBeforeLast(':')
+    val insideCommunity = when {
+      withoutTargetName.startsWith(COMMUNITY_REPOSITORY_PREFIX) -> withoutTargetName.removePrefix(COMMUNITY_REPOSITORY_PREFIX)
+      withoutTargetName.startsWith("//") -> return withoutTargetName.removePrefix("//")
+      else -> error("Module target '$moduleTarget' names a repository this plan cannot map to a directory")
+    }
+    return when {
+      communityDirectory.isEmpty() -> insideCommunity
+      insideCommunity.isEmpty() -> communityDirectory
+      else -> "$communityDirectory/$insideCommunity"
+    }
+  }
+
+  /**
+   * The label of [projectRelativePath] in the recorded form, composed from the Bazel package that holds the file, or
+   * `null` when no directory above it holds a `BUILD.bazel`. A package below [communityRoot] is `@community//pkg`, and
+   * every other package is `//pkg`.
+   *
+   * ### Why a second rule, and why it reads the tree
+   *
+   * An ultimate module keeps its resources in the community tree in seven places today, `intellij.php.dev` and the six
+   * `dotenv-ultimate` ones. `getModuleDescriptor` walks such a module's Bazel package up until it holds every content
+   * root, which lands it on the ultimate root, and `exportDescriptorFiles` then writes the `exports_files` entry there.
+   * **That entry is inert.** `community` is a `.bazelignore` entry of the ultimate root, so Bazel leaves the whole subtree
+   * out of the main repository's execroot symlink farm: `//:community/<path>` resolves and analyses, and an action that
+   * declares it gets a symlink to a file that is not there. So a community path that reaches a package outside
+   * [communityRoot] gives `null`.
+   *
+   * So the label has to name the community package that holds the file, and no module lives in that package for
+   * `bazel-targets.json` to name. The tree is the authority Bazel itself uses - the first ancestor directory with a
+   * `BUILD.bazel` is the package - and this asks the tree the same question.
+   *
+   * ### What happens when the export is missing
+   *
+   * The package must export the file. Such a package is hand-written, because the generator's file writing is scoped to
+   * one repository half, and an entry it is missing fails the descriptor action at analysis with the label it could not
+   * find. That is loud, and it is the reason this rule may compose a label it cannot verify.
+   */
+  fun containingPackageLabel(projectRelativePath: String): String? {
+    val segments = projectRelativePath.split('/')
+    val pathIsCommunity = communityRelativePath(projectRelativePath) != null
+    for (depth in segments.size - 1 downTo 0) {
+      val packageSegments = segments.subList(0, depth)
+      val packageDirectory = packageSegments.fold(projectRoot) { directory, segment -> directory.resolve(segment) }
+      if (!Files.exists(packageDirectory.resolve("BUILD.bazel"))) {
+        continue
+      }
+      val insidePackage = segments.subList(depth, segments.size).joinToString("/")
+      val packagePath = packageSegments.joinToString("/")
+      val communityPackage = communityRelativePath(packagePath)
+      if (communityPackage == null) {
+        return if (pathIsCommunity) null else "//$packagePath:$insidePackage"
+      }
+      return "$COMMUNITY_REPOSITORY_PREFIX$communityPackage:$insidePackage"
+    }
+    return null
   }
 
   /**

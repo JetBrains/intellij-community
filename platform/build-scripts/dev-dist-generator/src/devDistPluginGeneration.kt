@@ -897,7 +897,7 @@ internal fun renderGeneratedDevDistPluginExecutions(
   checkComponentMembership(components)
   return DevDistPluginExecutionRendering(
     calls = Collections.unmodifiableMap(calls),
-    components = renderPluginComponents(components) { product -> owner.half.compositionOrder(product) },
+    components = renderPluginComponents(components, planLabel = owner.index::planLabel) { product -> owner.half.compositionOrder(product) },
   )
 }
 
@@ -1058,10 +1058,12 @@ private fun checkComponentMembership(products: Map<String, Map<DevDistPluginTier
  * The bundled tier is in composition order: [compositionOrder] first, then the rest in request order. A
  * distribution composes the neutral bundled entries in list order, then the platform-specific entries in list order.
  * The composer writes `plugin-classpath.txt` in that order. The fingerprint hashes that file, so a re-sort is a
- * fingerprint change.
+ * fingerprint change. A component keeps its label in the recorded form, and [planLabel] spells it for the package of the
+ * table, see [DevDistBazelIndex.planLabel].
  */
 private fun renderPluginComponents(
   products: Map<String, Map<DevDistPluginTier, List<GeneratedPluginComponent>>>,
+  planLabel: (String) -> String,
   compositionOrder: (String) -> List<String>,
 ): String = buildString {
   append("DEV_DIST_PLUGIN_COMPONENTS = {\n")
@@ -1075,12 +1077,12 @@ private fun renderPluginComponents(
         append("            \"").append(component.mainModule).append("\": ")
         val label = component.label
         if (label != null) {
-          append("\"").append(label).append("\",\n")
+          append("\"").append(planLabel(label)).append("\",\n")
         }
         else {
           append("{\n")
           for ((platform, platformLabel) in component.labels.toSortedMap()) {
-            append("                \"").append(platform).append("\": \"").append(platformLabel).append("\",\n")
+            append("                \"").append(platform).append("\": \"").append(planLabel(platformLabel)).append("\",\n")
           }
           append("            },\n")
         }

@@ -10,18 +10,20 @@ import java.nio.file.Path
  * The files of [PRODUCT_DESCRIPTOR_PACKAGE], keyed by their project-relative paths: the `BUILD.bazel` of the package and
  * the Product DSL content of every product in [plans].
  *
- * A package of its own, so a product in `//build` is not analysed again when the content of one product changes.
+ * A package of its own, so a product in `//build` is not analysed again when the content of one product changes. A plan
+ * keeps its labels in the recorded form, and the `BUILD.bazel` spells them for a package of the half of [index], see
+ * [DevDistBazelIndex.planLabel].
  */
-internal fun renderProductDescriptorPackage(plans: List<ProductDescriptorPlan>): Map<String, String> {
+internal fun renderProductDescriptorPackage(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex): Map<String, String> {
   val result = LinkedHashMap<String, String>()
-  result.put("$PRODUCT_DESCRIPTOR_PACKAGE/BUILD.bazel", renderProductDescriptorBuildFile(plans))
+  result.put("$PRODUCT_DESCRIPTOR_PACKAGE/BUILD.bazel", renderProductDescriptorBuildFile(plans, index))
   for (plan in plans) {
     check(result.put(plan.sourceRelativePath, plan.content) == null) { "Two products write '${plan.sourceRelativePath}'" }
   }
   return result
 }
 
-private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>): String = buildString {
+private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex): String = buildString {
   append(GENERATED_BY_HEADER)
   append("#\n")
   append("# The two generated entries of the application-info module jar of each product: the product descriptor and the\n")
@@ -36,7 +38,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>)
   }
   append("\n")
   append(LoadStatement(
-    bzlFile = "@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl",
+    bzlFile = index.planLabel("@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl"),
     symbols = listOf("dev_dist_product_application_info", "dev_dist_product_descriptor"),
   ).render())
   append("\n")
@@ -46,10 +48,10 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>)
     val descriptor = Target("dev_dist_product_descriptor")
     descriptor.option("name", "${plan.name}_product_descriptor")
     if (plan.descriptors.isNotEmpty()) {
-      descriptor.option("descriptors", LinkedHashMap(plan.descriptors))
+      descriptor.option("descriptors", plan.descriptors.entries.associateTo(LinkedHashMap()) { index.planLabel(it.key) to it.value })
     }
     if (plan.libraryDescriptors.isNotEmpty()) {
-      descriptor.option("library_descriptors", LinkedHashMap(plan.libraryDescriptors))
+      descriptor.option("library_descriptors", plan.libraryDescriptors.entries.associateTo(LinkedHashMap()) { index.planLabel(it.key) to it.value })
     }
     descriptor.option("main_module", plan.mainModule)
     if (plan.refusedContentModules.isNotEmpty()) {
@@ -68,7 +70,7 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>)
     if (plan.replacements.isNotEmpty()) {
       applicationInfo.option("replacements", plan.replacements.unsorted())
     }
-    applicationInfo.option("source", plan.applicationInfo)
+    applicationInfo.option("source", index.planLabel(plan.applicationInfo))
     append(applicationInfo.render())
   }
 }
