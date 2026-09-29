@@ -36,6 +36,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
@@ -142,19 +143,16 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       if (file != null) {
         return ThreeState.fromBoolean(isInContent(file))
       }
-        val virtualFileUrl = urlManager.get(currentUrl)
+      val virtualFileUrl = urlManager.get(currentUrl)
       if (virtualFileUrl != null) {
-        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl, includeNonRecursive)
-        if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
+        val fileSets = getMainIndexData().getNonExistentFileSets(virtualFileUrl)
+        if (fileSets.any { it is NonExistingWorkspaceExclude && it.excludesFromContent() }) {
           return ThreeState.NO
         }
-        if (NonExistingFileSetKind.EXCLUDED_OTHER in kinds) {
+        if (fileSets.any { it is NonExistingWorkspaceExclude }) {
           return ThreeState.UNSURE
         }
-        if (NonExistingFileSetKind.INCLUDED_CONTENT in kinds) {
-          return ThreeState.YES
-        }
-        if (NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE in kinds) {
+        if (fileSets.any { it is NonExistingWorkspaceFileSet && it.kind.isContent && (includeNonRecursive || it.recursive) }) {
           return ThreeState.YES
         }
       }
@@ -169,13 +167,12 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     // MAYBE IM: do early return if virtualFileUrl == null, when all filesets must be registered by VirtualFileUrl
 
     if (virtualFileUrl != null) {
-      val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl, false)
+      val fileSets = getMainIndexData().getNonExistentFileSets(virtualFileUrl)
+      val recursiveKinds = fileSets.mapNotNull { (it as? NonExistingWorkspaceFileSet)?.takeIf { fileSet -> fileSet.recursive }?.kind }
       when {
-        NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds -> return false
-        NonExistingFileSetKind.EXCLUDED_OTHER in kinds -> return false
-        NonExistingFileSetKind.INCLUDED_CONTENT in kinds -> return true
-        NonExistingFileSetKind.INCLUDED_OTHER in kinds -> return true
-        NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE in kinds -> return false
+        fileSets.any { it is NonExistingWorkspaceExclude } -> return false
+        recursiveKinds.any { it != WorkspaceFileKind.CONTENT_NON_INDEXABLE } -> return true
+        recursiveKinds.isNotEmpty() -> return false
       }
     }
 

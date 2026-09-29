@@ -703,7 +703,7 @@ internal class WorkspaceFileIndexDataImpl(
     packageDirectoryCache.clear()
   }
 
-  override fun getNonExistentFileSetKinds(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind> = nonExistingFilesRegistry.getFileSetKindsFor(url, includeNonRecursive)
+  override fun getNonExistentFileSets(url: VirtualFileUrl): Collection<NonExistingFileSetData> = nonExistingFilesRegistry.getFileSetsFor(url)
 
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? = nonExistingFilesRegistry.analyzeVfsChanges(events, this)
 }
@@ -863,14 +863,6 @@ private class RemoveFileSetsRegistrarImpl(
   }
 }
 
-private fun WorkspaceFileKind.toNonExistingFileSetKind(): NonExistingFileSetKind {
-  return when (this) {
-    WorkspaceFileKind.CONTENT, WorkspaceFileKind.TEST_CONTENT -> NonExistingFileSetKind.INCLUDED_CONTENT
-    WorkspaceFileKind.CONTENT_NON_INDEXABLE -> NonExistingFileSetKind.INCLUDED_CONTENT_NON_INDEXABLE
-    else -> NonExistingFileSetKind.INCLUDED_OTHER
-  }
-}
-
 internal fun WorkspaceFileKind.toMask(): Int {
   val mask = when (this) {
     WorkspaceFileKind.CONTENT, WorkspaceFileKind.TEST_CONTENT -> WorkspaceFileKindMask.CONTENT
@@ -915,7 +907,7 @@ private class StoreFileSetsRegistrarImpl(
     else {
       nonExistingFilesRegistry.registerUrl(
         root,
-        NonExistingWorkspaceFileSet(entity.createPointer(), storageKind, kind.toNonExistingFileSetKind(), recursive),
+        NonExistingWorkspaceFileSet(entity.createPointer(), storageKind, kind, recursive),
       )
     }
   }

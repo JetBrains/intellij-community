@@ -24,13 +24,13 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
-import java.util.EnumSet
 
 internal class NonExistingWorkspaceRootsRegistry(
   private val project: Project,
@@ -59,23 +59,7 @@ internal class NonExistingWorkspaceRootsRegistry(
     nonExistingFiles.remove(url)
   }
   
-  fun getFileSetKindsFor(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind> {
-    val data = nonExistingFiles.get(url)
-    if (data.isEmpty()) return emptySet()
-    return data.mapNotNullTo(EnumSet.noneOf(NonExistingFileSetKind::class.java)) { fileSetData: NonExistingFileSetData ->
-      when (fileSetData) {
-        is NonExistingWorkspaceFileSet -> fileSetData.fileSetKind.takeIf { includeNonRecursive || fileSetData.recursive }
-        is NonExistingWorkspaceExclude.ByFileKind -> {
-          if (fileSetData.mask and CONTENT_KINDS_MASK != 0) NonExistingFileSetKind.EXCLUDED_FROM_CONTENT
-          else NonExistingFileSetKind.EXCLUDED_OTHER
-        }
-        is NonExistingWorkspaceExclude.UnscopedRoot -> NonExistingFileSetKind.EXCLUDED_FROM_CONTENT
-        is NonExistingWorkspaceExclude.ByPattern,
-        is NonExistingWorkspaceExclude.ByCondition,
-        is NonExistingWorkspaceExclude.ByUnscopedCondition -> NonExistingFileSetKind.EXCLUDED_OTHER
-      }
-    }
-  }
+  fun getFileSetsFor(url: VirtualFileUrl): Collection<NonExistingFileSetData> = nonExistingFiles.get(url)
 
   private inline fun <K, V> MultiMap<K, V>.removeValueIf(key: K, crossinline valuePredicate: (V) -> Boolean) {
     val collection = get(key)
@@ -276,8 +260,6 @@ fun getOldAndNewUrls(event: VFileEvent): Pair<String, String> {
   }
 }
 
-private const val CONTENT_KINDS_MASK = WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE
-
 /**
  * Describes a file set or an exclusion registered for a file which doesn't exist.
  */
@@ -295,7 +277,7 @@ sealed interface NonExistingFileSetData {
 data class NonExistingWorkspaceFileSet(
   override val reference: EntityPointer<WorkspaceEntity>,
   override val storageKind: EntityStorageKind,
-  val fileSetKind: NonExistingFileSetKind,
+  val kind: WorkspaceFileKind,
   val recursive: Boolean,
 ) : NonExistingFileSetData
 
@@ -345,32 +327,14 @@ sealed interface NonExistingWorkspaceExclude : NonExistingFileSetData, Workspace
 }
 
 /**
- * Describes kind of workspace file set associated with a non-existing file.
+ * Returns `true` if this exclusion excludes its root from the [content][WorkspaceFileKind.isContent] kinds.
  */
-enum class NonExistingFileSetKind {
-  /**
-   * File set of [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] and
-   * [indexable][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isIndexable]
-   */                                
-  INCLUDED_CONTENT,
-
-  /**
-   * File set of [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] kind which shouldn't be indexed
-   */
-  INCLUDED_CONTENT_NON_INDEXABLE,
-
-  /**
-   * File set of other kinds
-   */
-  INCLUDED_OTHER,
-
-  /**
-   * Root excluded from [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent]
-   */
-  EXCLUDED_FROM_CONTENT,
-
-  /**
-   * Root for files some of them are excluded by pattern, condition, etc.
-   */
-  EXCLUDED_OTHER
+internal fun NonExistingWorkspaceExclude.excludesFromContent(): Boolean {
+  return when (this) {
+    is NonExistingWorkspaceExclude.ByFileKind -> mask and (WorkspaceFileKindMask.CONTENT or WorkspaceFileKindMask.CONTENT_NON_INDEXABLE) != 0
+    is NonExistingWorkspaceExclude.UnscopedRoot -> true
+    is NonExistingWorkspaceExclude.ByPattern,
+    is NonExistingWorkspaceExclude.ByCondition,
+    is NonExistingWorkspaceExclude.ByUnscopedCondition -> false
+  }
 }

@@ -74,9 +74,10 @@ interface WorkspaceFileIndexData {
   fun resetCustomContributors()
 
   /**
-   * Returns kinds of workspace file sets registered for [url] if the corresponding file doesn't exist. If [url] exists, return an empty set.
+   * Returns the file sets and the exclusions registered for [url] if the corresponding file doesn't exist.
+   * If [url] exists, returns an empty collection.
    */
-  fun getNonExistentFileSetKinds(url: VirtualFileUrl, includeNonRecursive: Boolean): Set<NonExistingFileSetKind>
+  fun getNonExistentFileSets(url: VirtualFileUrl): Collection<NonExistingFileSetData>
   
   fun onLowMemory()
   fun clearPackageDirectoryCache()
