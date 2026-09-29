@@ -30,7 +30,8 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | `preparationRoots`, `alwaysRun`, and every field of a Kotlin-executed operation | unknown field |
 | an operation kind other than `module-filter` and `layout-assets` | the kind |
 | an operation manifest other than `keep` | the manifest |
-| a layout format other than `tree` and `entries`, or an unknown transform kind | unknown variant |
+| a layout format other than `tree` and `entries`, or a transform kind other than `archive-tree`, such as the removed `tree-map` and `gzip-xml-archive` | unknown variant |
+| the `tree-map` fields `excludes` and `directoryExcludes` on a transform | unknown field |
 | a preparation that reads the output of a preparation | no preparation chain |
 | a module-filter input that names a library | the library |
 | a plugin directory that is not `plugins/<name>` | the directory |
@@ -91,8 +92,8 @@ catalogue.
 - `Filter::{Module, Library}`, `Manifest::{Keep, Drop}`.
 - `LayoutAssets { inputs: Vec<Reference>, assets: Vec<LayoutAsset> }`.
 - `LayoutAsset { destination, sources: Vec<usize>, transform: Option<LayoutTransform>, mode: u32 }` (`Deserialize`). No transform is a plain copy. Mode zero keeps the source mode.
-- `LayoutTransform { kind: LayoutTransformKind, strip_components: u32, mappings: Vec<LayoutMapping>, excludes, directory_excludes, includes, executables: Vec<String> }` (`Deserialize`).
-- `LayoutTransformKind::{ArchiveTree, TreeMap}`.
+- `LayoutTransform { kind: LayoutTransformKind, strip_components: u32, mappings: Vec<LayoutMapping>, includes, executables: Vec<String> }` (`Deserialize`).
+- `LayoutTransformKind::{ArchiveTree}`. A tree needs no transform: a plain copy places it.
 - `LayoutMapping { pattern, strip_components: u32, destination }` (`Deserialize`). An empty pattern is `**`.
 
 ## `planfile::json` (Go `pluginpack.ReadJSON`)

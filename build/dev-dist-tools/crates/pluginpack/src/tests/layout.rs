@@ -4,12 +4,10 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-use planfile::LayoutFormat;
-use planfile::contract::{Catalogue, LayoutAsset, LayoutTransform, LayoutTransformKind, Recipe, Reference, VERSION};
+use planfile::contract::{Catalogue, LayoutAsset, LayoutTransform, Recipe, Reference, VERSION};
 
 use super::*;
 use crate::layout_archive::{EntryKind, LayoutArchive};
-use crate::plan::{InputKind, validate_layout_asset};
 
 fn archive_catalogue(file: &Path) -> Catalogue {
     catalogue(vec![file_artifact("archive", file)])
@@ -192,29 +190,6 @@ fn archive_preparation_rejects_a_mismatched_transport_path() {
 }
 
 #[test]
-fn tree_mappings_use_declaration_order_and_first_source_precedence() {
-    let root = temp();
-    let (first, second) = (root.path().join("first-tree"), root.path().join("second-tree"));
-    write_test_file(&first.join("jackson-core.jar"), b"first");
-    write_test_file(&first.join("ignored.txt"), b"ignored");
-    write_test_file(&second.join("jackson-core.jar"), b"second");
-    write_test_file(&second.join("jackson-data.jar"), b"data");
-    let layout = layout(
-        &[Reference::artifact("first"), Reference::artifact("second")],
-        vec![layout_asset(
-            "lib",
-            &[0, 1],
-            Some(tree_map(vec![mapping("jackson-*.jar", 0, ""), mapping("**", 0, "fallback")])),
-        )],
-    );
-    let catalogue = catalogue(vec![directory_artifact("first", &first), directory_artifact("second", &second)]);
-    let written = write_execution(&layout_tree_recipe("libraries", layout), &catalogue);
-    assert_content(&written.output.join("libraries/lib/jackson-core.jar"), "first");
-    assert_content(&written.output.join("libraries/lib/jackson-data.jar"), "data");
-    assert_content(&written.output.join("libraries/lib/fallback/ignored.txt"), "ignored");
-}
-
-#[test]
 fn declared_mode_overrides_executable_transport_modes() {
     let root = temp();
     let (direct, tree) = (root.path().join("direct.jar"), root.path().join("tree"));
@@ -231,7 +206,7 @@ fn declared_mode_overrides_executable_transport_modes() {
             },
             LayoutAsset {
                 mode: 0o644,
-                ..layout_asset("mapped", &[1], Some(tree_map(vec![mapping("*.jar", 0, "")])))
+                ..layout_asset("mapped", &[1], None)
             },
         ],
     );
@@ -280,7 +255,7 @@ fn a_declared_mode_applies_to_the_files_of_a_directory_copy() {
 
 #[test]
 fn tree_copies_materialize_bazel_transport_links() {
-    for transform in [Some(tree_map(vec![mapping("", 0, "")])), None] {
+    {
         let root = temp();
         write_test_file(&root.path().join("backing/nested/resource.txt"), b"resource");
         let transport = root.path().join("transport");
@@ -288,7 +263,7 @@ fn tree_copies_materialize_bazel_transport_links() {
             root.path().join("backing/nested/resource.txt"),
             &transport.join("nested/resource.txt"),
         );
-        let layout = layout(&[Reference::artifact("tree")], vec![layout_asset("", &[0], transform)]);
+        let layout = layout(&[Reference::artifact("tree")], vec![layout_asset("", &[0], None)]);
         let written = write_execution(
             &layout_tree_recipe("resources", layout),
             &catalogue(vec![directory_artifact("tree", &transport)]),
@@ -361,60 +336,6 @@ fn direct_tree_copies_reject_a_mismatched_transport_path() {
         &catalogue(vec![directory_artifact("tree", &transport)]),
         "path conflicts",
     );
-}
-
-#[test]
-fn localization_mappings_include_only_supported_resource_directories() {
-    let root = temp();
-    let source = root.path().join("source");
-    let included = [
-        "intellij.platform.lang/fileTemplates/empty/description.html",
-        "intellij.platform.lang/inspectionDescriptions/Unused/description.html",
-        "intellij.platform.lang/intentionDescriptions/Convert/description.html",
-        "intellij.platform.lang/postfixTemplates/assert/description.html",
-    ];
-    let excluded = [
-        "intellij.tide.impl/intensionDescriptions/Misspelled/description.html",
-        "intellij.platform.lang/com/intellij/package.html",
-        "intellij.platform.lang.impl/com/intellij/codeInsight/templates/first.template",
-        "intellij.platform.lang.impl/com/intellij/codeInsight/templates/second.template",
-    ];
-    for name in included.iter().chain(&excluded) {
-        write_test_file(&crate::paths::host(&source, name), format!("ja:{name}").as_bytes());
-    }
-    let mappings = [
-        "fileTemplates",
-        "inspectionDescriptions",
-        "intentionDescriptions",
-        "postfixTemplates",
-    ]
-    .iter()
-    .map(|directory| mapping(&format!("*/{directory}/**"), 1, ""))
-    .collect();
-    let layout = layout(
-        &[Reference::artifact("localization")],
-        vec![layout_asset("", &[0], Some(tree_map(mappings)))],
-    );
-    let written = write_execution(
-        &layout_tree_recipe("localization", layout),
-        &catalogue(vec![directory_artifact("localization", &source)]),
-    );
-    for name in included {
-        let (_, relative) = name.split_once('/').unwrap();
-        assert_content(
-            &crate::paths::host(&written.output.join("localization"), relative),
-            &format!("ja:{name}"),
-        );
-    }
-    for entry in &written.inventory {
-        if entry.entry_type == filemeta::EntryType::File {
-            assert!(
-                entry.relative_path.contains("Descriptions/") || entry.relative_path.contains("Templates/"),
-                "copied an excluded file: {}",
-                entry.relative_path
-            );
-        }
-    }
 }
 
 #[test]
@@ -786,7 +707,7 @@ fn layout_entries_take_the_first_destination_skip_directories_and_refuse_a_link(
     write_test_file(&second.join("messages/Other.properties"), b"other");
     let layout = layout(
         &[Reference::artifact("first"), Reference::artifact("second")],
-        vec![layout_asset("", &[0, 1], Some(tree_map(vec![mapping("", 0, "")])))],
+        vec![layout_asset("", &[0], None), layout_asset("", &[1], None)],
     );
     let catalogue = catalogue(vec![directory_artifact("first", &first), directory_artifact("second", &second)]);
     let written = write_execution(&layout_jar_recipe(layout.clone()), &catalogue);
@@ -812,229 +733,6 @@ fn the_scratch_directory_is_gone_after_a_write() {
         .filter(|name| name.starts_with(".plugin-layout-"))
         .collect();
     assert!(leftovers.is_empty(), "left a layout scratch directory: {leftovers:?}");
-}
-
-#[test]
-fn layout_tree_map_excludes() {
-    let files = [
-        "root.pyc",
-        "root.pyo",
-        "keep.py",
-        "nested/cache.pyc",
-        "nested/deep/cache.pyo",
-        "nested/keep.py",
-        "tests/keep.py",
-        "nested/tests/keep.py",
-        "nested/deep/tests/keep.py",
-        "ordinary/tests",
-        "pydev/pydev_tests/keep.py",
-        "nested/pydev/pydev_test2/keep.py",
-        "nested/deep/pydev/pydev_test3/keep.py",
-        "ordinary/pydev/pydev_tests",
-        "other/pydev_test/keep.py",
-    ];
-    type Case<'a> = (&'a str, &'a [&'a str], &'a [&'a str], &'a [&'a str], &'a [&'a str]);
-    let tests: [Case<'_>; 8] = [
-        ("root file glob", &["*.pyc"], &[], &["root.pyc"], &[]),
-        ("nested file glob", &["**/*.pyc"], &[], &["nested/cache.pyc"], &[]),
-        (
-            "brace globs",
-            &["*.{pyc,pyo}", "**/*.{pyc,pyo}"],
-            &[],
-            &["root.pyc", "root.pyo", "nested/cache.pyc", "nested/deep/cache.pyo"],
-            &[],
-        ),
-        (
-            "file filters keep directories",
-            &["tests", "**/tests"],
-            &[],
-            &["ordinary/tests"],
-            &["tests", "nested/tests", "nested/deep/tests", "empty/tests"],
-        ),
-        (
-            "file subtree globs keep empty directories",
-            &["tests/**", "**/tests/**"],
-            &[],
-            &["tests/keep.py", "nested/tests/keep.py", "nested/deep/tests/keep.py"],
-            &["tests", "nested/tests", "nested/deep/tests", "empty/tests"],
-        ),
-        (
-            "directory filters keep ordinary files",
-            &[],
-            &["tests", "**/tests", "pydev/pydev_test*", "**/pydev/pydev_test*"],
-            &[
-                "tests",
-                "nested/tests",
-                "nested/deep/tests",
-                "empty/tests",
-                "pydev/pydev_tests",
-                "nested/pydev/pydev_test2",
-                "nested/deep/pydev/pydev_test3",
-            ],
-            &[],
-        ),
-        (
-            "nested directory glob keeps the root directory",
-            &[],
-            &["**/tests"],
-            &["nested/tests", "nested/deep/tests", "empty/tests"],
-            &["tests"],
-        ),
-        (
-            "both filters",
-            &["*.pyc", "**/*.pyc"],
-            &["tests", "**/tests"],
-            &[
-                "root.pyc",
-                "nested/cache.pyc",
-                "tests",
-                "nested/tests",
-                "nested/deep/tests",
-                "empty/tests",
-            ],
-            &[],
-        ),
-    ];
-    for (name, excludes, directory_excludes, absent, directories) in tests {
-        let source = temp();
-        for file in files {
-            write_test_file(&crate::paths::host(source.path(), file), file.as_bytes());
-        }
-        fs::create_dir_all(source.path().join("empty/tests")).unwrap();
-        let transform = LayoutTransform {
-            excludes: strings(excludes),
-            directory_excludes: strings(directory_excludes),
-            ..tree_map(vec![mapping("", 0, "mapped")])
-        };
-        let layout = layout(&[Reference::artifact("tree")], vec![layout_asset("", &[0], Some(transform))]);
-        let catalogue = catalogue(vec![directory_artifact("tree", source.path())]);
-        let written = write_execution(&layout_tree_recipe("payload", layout.clone()), &catalogue);
-        let jar_written = write_execution(&layout_jar_recipe(layout), &catalogue);
-        let (_, entries) = read_archive(&jar_written.output.join("lib/layout.jar"));
-        let mapped = written.output.join("payload/mapped");
-        for excluded in absent {
-            assert_absent(&crate::paths::host(&mapped, excluded));
-        }
-        for file in files {
-            let is_absent = absent
-                .iter()
-                .any(|excluded| file == *excluded || file.starts_with(&format!("{excluded}/")));
-            let entry = entries.get(&format!("mapped/{file}"));
-            if is_absent {
-                assert!(entry.is_none(), "{name}: the excluded jar entry {file}");
-            } else {
-                assert_content(&crate::paths::host(&mapped, file), file);
-                assert_eq!(
-                    entry.map(|entry| text(entry)),
-                    Some(file.to_owned()),
-                    "{name}: the jar entry {file}"
-                );
-            }
-        }
-        for directory in directories {
-            assert!(
-                crate::paths::host(&mapped, directory).is_dir(),
-                "{name}: the missing directory {directory}"
-            );
-        }
-    }
-}
-
-#[test]
-fn layout_tree_map_excludes_before_first_claim() {
-    let root = temp();
-    let (first, second) = (root.path().join("first"), root.path().join("second"));
-    write_test_file(&first.join("tests/keep.py"), b"excluded directory");
-    write_test_file(&first.join("drop/shared.txt"), b"excluded file");
-    write_test_file(&second.join("tests"), b"ordinary file");
-    write_test_file(&second.join("keep/shared.txt"), b"first retained file");
-    let later = root.path().join("later.txt");
-    write_test_file(&later, b"later asset");
-    let transform = LayoutTransform {
-        excludes: strings(&["drop/**"]),
-        directory_excludes: strings(&["tests"]),
-        ..tree_map(vec![mapping("*/*.txt", 1, ""), mapping("", 0, "")])
-    };
-    let layout = layout(
-        &[
-            Reference::artifact("first"),
-            Reference::artifact("second"),
-            Reference::artifact("later"),
-        ],
-        vec![layout_asset("", &[0, 1], Some(transform)), layout_asset("shared.txt", &[2], None)],
-    );
-    let catalogue = catalogue(vec![
-        directory_artifact("first", &first),
-        directory_artifact("second", &second),
-        file_artifact("later", &later),
-    ]);
-    let written = write_execution(&layout_tree_recipe("payload", layout.clone()), &catalogue);
-    assert_content(&written.output.join("payload/tests"), "ordinary file");
-    assert_content(&written.output.join("payload/shared.txt"), "first retained file");
-    let jar_written = write_execution(&layout_jar_recipe(layout), &catalogue);
-    let (_, entries) = read_archive(&jar_written.output.join("lib/layout.jar"));
-    assert_eq!(text(&entries["tests"]), "ordinary file");
-    assert_eq!(text(&entries["shared.txt"]), "first retained file");
-}
-
-#[test]
-fn layout_tree_map_excludes_preserve_modes_and_links() {
-    let source = temp();
-    write_test_file(&source.path().join("keep/tool"), b"tool");
-    chmod(&source.path().join("keep/tool"), 0o755);
-    symlink("keep", &source.path().join("tests"));
-    symlink("absent", &source.path().join("drop.pyc"));
-    let transform = LayoutTransform {
-        excludes: strings(&["*.pyc"]),
-        directory_excludes: strings(&["tests"]),
-        ..tree_map(vec![mapping("", 0, "")])
-    };
-    let layout = layout(&[Reference::artifact("tree")], vec![layout_asset("", &[0], Some(transform))]);
-    let written = write_execution(
-        &layout_tree_recipe("payload", layout),
-        &catalogue(vec![directory_artifact("tree", source.path())]),
-    );
-    assert_link(&written.output.join("payload/tests"), "keep");
-    assert_mode(&written.output.join("payload/keep/tool"), 0o755);
-    assert_absent(&written.output.join("payload/drop.pyc"));
-}
-
-#[test]
-fn layout_tree_map_excludes_validation() {
-    for directory in [false, true] {
-        for pattern in ["[", "{a", "\\", "[z-a]"] {
-            let mut transform = tree_map(vec![mapping("", 0, "")]);
-            if directory {
-                transform.directory_excludes = strings(&[pattern]);
-            } else {
-                transform.excludes = strings(&[pattern]);
-            }
-            let layout = layout(&[Reference::artifact("tree")], vec![layout_asset("", &[0], Some(transform))]);
-            let root = temp();
-            for recipe in [layout_tree_recipe("payload", layout.clone()), layout_jar_recipe(layout)] {
-                expect_plan_error(
-                    &recipe,
-                    &catalogue(vec![directory_artifact("tree", root.path())]),
-                    "invalid exclude",
-                );
-            }
-        }
-        for (kind, format) in [
-            (LayoutTransformKind::ArchiveTree, LayoutFormat::Tree),
-            (LayoutTransformKind::ArchiveTree, LayoutFormat::Entries),
-        ] {
-            let mut asset = layout_asset("out", &[0], Some(transform(kind)));
-            validate_layout_asset(&asset, format, &[InputKind::File]).unwrap();
-            let transform = asset.transform.as_mut().unwrap();
-            if directory {
-                transform.directory_excludes = strings(&["tests"]);
-            } else {
-                transform.excludes = strings(&["*.pyc"]);
-            }
-            let error = validate_layout_asset(&asset, format, &[InputKind::File]).unwrap_err();
-            assert!(error.message().contains("excludes require tree-map"), "{kind:?}: {error}");
-        }
-    }
 }
 
 /// The CIDR `filePatterns` rules: an ordered list where `!` excludes, the last match decides, and a list with a positive
@@ -1213,57 +911,10 @@ fn a_zip_without_unix_modes_gets_the_default_mode_plus_the_bits() {
     assert_mode(&written.output.join("payload/bin/tool.dll"), 0o644);
 }
 
-/// The Go packer made tree-map files executable by pattern. No plan file does, so the plan refuses the pattern.
-#[test]
-fn tree_map_executable_patterns_are_refused() {
-    let source = temp();
-    write_test_file(&source.path().join("DotFiles/run.sh"), b"run");
-    let transform = LayoutTransform {
-        executables: strings(&["DotFiles/*.sh"]),
-        ..tree_map(vec![mapping("", 0, "")])
-    };
-    let layout = layout(&[Reference::artifact("tree")], vec![layout_asset("", &[0], Some(transform))]);
-    expect_plan_error(
-        &layout_tree_recipe("payload", layout),
-        &catalogue(vec![directory_artifact("tree", source.path())]),
-        "layout executable patterns require archive-tree",
-    );
-}
-
-#[test]
-fn tree_map_links_stay_links() {
-    let source = temp();
-    write_test_file(&source.path().join("DotFiles/run.sh"), b"run");
-    chmod(&source.path().join("DotFiles/run.sh"), 0o755);
-    write_test_file(&source.path().join("DotFiles/notes.txt"), b"notes");
-    symlink("run.sh", &source.path().join("DotFiles/current"));
-    let layout = layout(
-        &[Reference::artifact("tree")],
-        vec![layout_asset("", &[0], Some(tree_map(vec![mapping("", 0, "")])))],
-    );
-    let written = write_execution(
-        &layout_tree_recipe("payload", layout),
-        &catalogue(vec![directory_artifact("tree", source.path())]),
-    );
-    assert_mode(&written.output.join("payload/DotFiles/run.sh"), 0o755);
-    assert_mode(&written.output.join("payload/DotFiles/notes.txt"), 0o644);
-    assert_link(&written.output.join("payload/DotFiles/current"), "run.sh");
-}
-
 #[test]
 fn layout_includes_and_executables_validation() {
     let archive = file_artifact("archive", "archive.zip");
-    let directory = directory_artifact("tree", "tree");
-    let tests: [(&str, LayoutTransform, &Artifact, &str); 4] = [
-        (
-            "includes on tree-map",
-            LayoutTransform {
-                includes: strings(&["bin/**"]),
-                ..tree_map(vec![mapping("", 0, "")])
-            },
-            &directory,
-            "layout includes require archive-tree",
-        ),
+    let tests: [(&str, LayoutTransform, &Artifact, &str); 3] = [
         (
             "an invalid include",
             LayoutTransform {
@@ -1350,39 +1001,15 @@ fn layout_plan_rejects_invalid_payloads() {
             "a plain copy requires one source",
         ),
         (
-            "tree-map without mappings",
-            layout_tree_recipe(
-                "payload",
-                layout(
-                    &[Reference::artifact("tree")],
-                    vec![layout_asset("", &[0], Some(transform(LayoutTransformKind::TreeMap)))],
-                ),
-            ),
-            directory(),
-            "tree-map requires",
-        ),
-        (
-            "tree-map over a file",
-            layout_tree_recipe(
-                "payload",
-                layout(
-                    &[Reference::artifact("archive")],
-                    vec![layout_asset("", &[0], Some(tree_map(vec![mapping("", 0, "")])))],
-                ),
-            ),
-            file(),
-            "tree-map requires",
-        ),
-        (
             "invalid mapping pattern",
             layout_tree_recipe(
                 "payload",
                 layout(
-                    &[Reference::artifact("tree")],
-                    vec![layout_asset("", &[0], Some(tree_map(vec![mapping("{a", 0, "")])))],
+                    &[Reference::artifact("archive")],
+                    vec![layout_asset("", &[0], Some(archive_tree(0, vec![mapping("{a", 0, "")])))],
                 ),
             ),
-            directory(),
+            file(),
             "invalid mapping pattern",
         ),
         (
@@ -1437,8 +1064,8 @@ fn layout_plan_rejects_invalid_payloads() {
 }
 
 /// The compact shapes of the plan files: an empty mapping, a root destination in a tree, and a directory input for a
-/// plain copy. The root-destination jar entries of a mapped tree, an extracted archive, and a copied directory are
-/// shapes too. Planning reads no file.
+/// plain copy. The root-destination jar entries of an extracted archive and of a copied directory are shapes too.
+/// Planning reads no file.
 #[test]
 fn layout_plan_accepts_the_plan_file_shapes() {
     let inputs = [Reference::artifact("tree"), Reference::artifact("archive")];
@@ -1450,11 +1077,6 @@ fn layout_plan_accepts_the_plan_file_shapes() {
         &inputs,
         vec![
             layout_asset("", &[0], None),
-            layout_asset(
-                "",
-                &[0],
-                Some(tree_map(vec![mapping("*.properties", 0, "messages"), mapping("", 0, "")])),
-            ),
             layout_asset("", &[1], Some(archive_tree(1, vec![mapping("", 1, "")]))),
         ],
     );
@@ -1462,7 +1084,6 @@ fn layout_plan_accepts_the_plan_file_shapes() {
     let entries = layout(
         &inputs,
         vec![
-            layout_asset("", &[0], Some(tree_map(vec![mapping("", 0, "")]))),
             layout_asset("", &[1], Some(archive_tree(0, vec![mapping("META-INF/extensions/**", 0, "")]))),
             layout_asset("", &[0], None),
         ],

@@ -3,7 +3,7 @@
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
-use planfile::contract::{Artifact, Catalogue, LayoutTransformKind, Library, Reference, VERSION};
+use planfile::contract::{Artifact, Catalogue, Library, Reference, VERSION};
 use planfile::{PlanFile, derive};
 
 use super::testdata;
@@ -40,8 +40,8 @@ fn is_independent(asset: &planfile::Asset) -> bool {
         || asset.inputs.iter().any(|input| input.starts_with("native-tree:"))
 }
 
-/// The layout inputs that Starlark declares as directories. They are an input with a path, a tree-map source, and the
-/// source of a plain copy at the output root.
+/// The layout inputs that Starlark declares as directories. They are an input with a path and the source of a plain
+/// copy at the output root.
 fn directory_inputs(file: &PlanFile) -> HashSet<&str> {
     let mut directories = HashSet::new();
     for operation in &file.operations {
@@ -52,10 +52,7 @@ fn directory_inputs(file: &PlanFile) -> HashSet<&str> {
                 .map(|input| input.artifact.as_str()),
         );
         for asset in &layout.assets {
-            let directory = match &asset.transform {
-                Some(transform) => transform.kind == LayoutTransformKind::TreeMap,
-                None => asset.destination.is_empty(),
-            };
+            let directory = asset.transform.is_none() && asset.destination.is_empty();
             if directory {
                 directories.extend(asset.sources.iter().map(|index| operation.inputs[*index].artifact.as_str()));
             }

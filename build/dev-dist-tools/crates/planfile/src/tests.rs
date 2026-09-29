@@ -4,8 +4,8 @@
 mod corpus;
 
 use crate::contract::{
-    self, Artifact, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransform, LayoutTransformKind, Library, Manifest,
-    Reference, Source,
+    self, Artifact, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Library, Manifest, Reference,
+    Source,
 };
 use crate::plan::MODULE_FILTER_KIND;
 use crate::{
@@ -165,8 +165,6 @@ fn transform(kind: LayoutTransformKind) -> LayoutTransform {
         kind,
         strip_components: 0,
         mappings: Vec::new(),
-        excludes: Vec::new(),
-        directory_excludes: Vec::new(),
         includes: Vec::new(),
         executables: Vec::new(),
     }
@@ -831,8 +829,7 @@ fn derive_compiles_every_operation_kind() {
     let tree = r#"{"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
     "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}}"#;
     let entries = r#"{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",
-    "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "tree-map", "mappings": [{"pattern": "*.properties", "destination": "messages"}, {}],
-      "excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}}"#;
+    "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]}}"#;
     let operations = format!(
         r#""operations": [{{"id": "filter", "input": {{"artifact": "raw"}}, "output": "filtered", "manifest": "keep", "excludes": ["drop/**"]}}, {tree}, {entries}]"#
     );
@@ -856,18 +853,11 @@ fn derive_compiles_every_operation_kind() {
         2,
         &[],
     );
-    let tree_map = LayoutTransform {
-        mappings: vec![
-            LayoutMapping {
-                pattern: "*.properties".to_owned(),
-                destination: "messages".to_owned(),
-                ..LayoutMapping::default()
-            },
-            LayoutMapping::default(),
-        ],
-        excludes: strings(&["*.pyc", "**/*.pyc"]),
-        directory_excludes: strings(&["tests", "**/tests"]),
-        ..transform(LayoutTransformKind::TreeMap)
+    let plain_copy = LayoutAsset {
+        destination: String::new(),
+        sources: vec![0],
+        transform: None,
+        mode: 0,
     };
     let want = vec![
         jar(
@@ -887,11 +877,7 @@ fn derive_compiles_every_operation_kind() {
                 },
             ],
         ),
-        jar(
-            "lib/l10n.jar",
-            false,
-            vec![layout_source(&["properties"], vec![transform_asset(vec![0], tree_map)])],
-        ),
+        jar("lib/l10n.jar", false, vec![layout_source(&["properties"], vec![plain_copy])]),
         contract::Operation::LayoutTree {
             destination: "payload".to_owned(),
             layout: LayoutAssets {

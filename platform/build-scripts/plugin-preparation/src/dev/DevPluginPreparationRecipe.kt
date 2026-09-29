@@ -67,7 +67,7 @@ data class DevPluginPreparationOperation(
 
 /** The layout-assets transforms the remainder packer executes, with the plain copy of a `null` transform. */
 @ApiStatus.Internal
-val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree", "tree-map")
+val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree")
 
 /**
  * The one statement of what the remainder packer executes from a plan file. A `module-filter` operation and a

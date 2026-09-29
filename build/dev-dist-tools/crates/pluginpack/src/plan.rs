@@ -346,11 +346,11 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
     let sources_are = |kind: InputKind| asset.sources.iter().all(|index| kinds[*index] == kind);
     let kind = asset.transform.as_ref().map(|transform| transform.kind);
     if asset.destination.is_empty() {
-        // An entry asset can write its output root when each entry brings its own relative path. A mapped tree, an
-        // extracted archive, and a copied directory do that.
+        // An entry asset can write its output root when each entry brings its own relative path. An extracted archive
+        // and a copied directory do that.
         let expands = kind.is_some() || asset.sources.len() == 1 && sources_are(InputKind::Directory);
         if format != LayoutFormat::Tree && !expands {
-            fail!("only a tree, a mapped entry asset, an extracted archive, or a copied directory can use its output root");
+            fail!("only a tree, an extracted archive, or a copied directory can use its output root");
         }
     } else {
         validate_relative_path(&asset.destination)?;
@@ -361,19 +361,7 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
         }
         return Ok(());
     };
-    if transform.kind != LayoutTransformKind::TreeMap && (!transform.excludes.is_empty() || !transform.directory_excludes.is_empty()) {
-        fail!("layout excludes require tree-map");
-    }
-    compile_globs(&transform.excludes, "invalid exclude")?;
-    compile_globs(&transform.directory_excludes, "invalid exclude")?;
-    if transform.kind != LayoutTransformKind::ArchiveTree && !transform.includes.is_empty() {
-        fail!("layout includes require archive-tree");
-    }
     compile_includes(&transform.includes)?;
-    // No plan file marks a tree-map file executable, so only an extracted archive takes executable patterns.
-    if transform.kind != LayoutTransformKind::ArchiveTree && !transform.executables.is_empty() {
-        fail!("layout executable patterns require archive-tree");
-    }
     compile_globs(&transform.executables, "invalid executable pattern")?;
     for mapping in &transform.mappings {
         if !mapping.destination.is_empty() {
@@ -385,15 +373,6 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
         LayoutTransformKind::ArchiveTree => {
             if asset.sources.len() != 1 || !sources_are(InputKind::File) {
                 fail!("archive-tree requires one archive file");
-            }
-        }
-        LayoutTransformKind::TreeMap => {
-            if asset.sources.is_empty()
-                || transform.strip_components != 0
-                || transform.mappings.is_empty()
-                || !sources_are(InputKind::Directory)
-            {
-                fail!("tree-map requires ordered directories and mappings");
             }
         }
     }

@@ -314,7 +314,6 @@ pub(crate) fn kotlin_module_filter_operation(id: &str, input: &str, output: &str
 fn transform_kind_name(kind: LayoutTransformKind) -> &'static str {
     match kind {
         LayoutTransformKind::ArchiveTree => "archive-tree",
-        LayoutTransformKind::TreeMap => "tree-map",
     }
 }
 
@@ -361,12 +360,7 @@ pub(crate) fn kotlin_layout_assets_operation(id: &str, output: &str, format: &st
                         .collect();
                     text += &format!(r#","mappings":[{}]"#, mappings.join(","));
                 }
-                for (key, values) in [
-                    ("excludes", &transform.excludes),
-                    ("directoryExcludes", &transform.directory_excludes),
-                    ("includes", &transform.includes),
-                    ("executables", &transform.executables),
-                ] {
+                for (key, values) in [("includes", &transform.includes), ("executables", &transform.executables)] {
                     if !values.is_empty() {
                         text += &format!(r#","{key}":{}"#, kotlin_json(values));
                     }
@@ -534,23 +528,8 @@ fn kotlin_signature_helpers_reproduce_the_fixture_constants() {
 /// encoding that the `planfile` crate reads. The encoding half is in the `planfile` crate.
 #[test]
 fn layout_transform_encoding_in_a_kotlin_operation() {
-    let tree_map = |excludes: &[&str], directory_excludes: &[&str], executables: &[&str]| LayoutTransform {
-        excludes: strings(excludes),
-        directory_excludes: strings(directory_excludes),
-        executables: strings(executables),
-        ..transform(LayoutTransformKind::TreeMap)
-    };
     for (transform, want) in [
-        (tree_map(&[], &[], &[]), r#"{"kind":"tree-map"}"#),
-        (tree_map(&["*.pyc"], &[], &[]), r#"{"kind":"tree-map","excludes":["*.pyc"]}"#),
-        (
-            tree_map(&[], &["tests"], &[]),
-            r#"{"kind":"tree-map","directoryExcludes":["tests"]}"#,
-        ),
-        (
-            tree_map(&["*.pyc"], &["tests", "**/tests"], &[]),
-            r#"{"kind":"tree-map","excludes":["*.pyc"],"directoryExcludes":["tests","**/tests"]}"#,
-        ),
+        (transform(LayoutTransformKind::ArchiveTree), r#"{"kind":"archive-tree"}"#),
         (
             LayoutTransform {
                 includes: strings(&["bin/**", "!bin/LLDBFrontend"]),
@@ -560,8 +539,8 @@ fn layout_transform_encoding_in_a_kotlin_operation() {
             r#"{"kind":"archive-tree","includes":["bin/**","!bin/LLDBFrontend"],"executables":["bin/*"]}"#,
         ),
         (
-            tree_map(&[], &[], &["DotFiles/*.sh"]),
-            r#"{"kind":"tree-map","executables":["DotFiles/*.sh"]}"#,
+            archive_tree(1, vec![mapping("dlv/**", 1, "")]),
+            r#"{"kind":"archive-tree","stripComponents":1,"mappings":[{"pattern":"dlv/**","stripComponents":1,"destination":""}]}"#,
         ),
     ] {
         let layout = LayoutAssets {
@@ -751,66 +730,6 @@ struct LayoutParityFixture {
     present: Vec<&'static str>,
 }
 
-/// Maps two directories with the localization mapping shape. The first directory is written in non-lexical order so
-/// the readdir order reaches the jar. The second holds a Bazel transport link and a losing name.
-fn tree_map_fixture(inputs: &Path, format: &'static str) -> LayoutParityFixture {
-    let properties = inputs.join("properties");
-    let resources = inputs.join("resources");
-    for name in [
-        "zeta.properties",
-        "alpha.properties",
-        "mid.properties",
-        "notes.txt",
-        "nested/deep.properties",
-    ] {
-        write_test_file(&crate::paths::host(&properties, name), format!("properties:{name}").as_bytes());
-    }
-    write_test_file(&resources.join("zeta.properties"), b"resources: the first source wins");
-    write_test_file(&inputs.join("backing/nested/resource.txt"), b"transported");
-    symlink(inputs.join("backing/nested/resource.txt"), &resources.join("nested/resource.txt"));
-    for root in [&properties, &resources, &inputs.join("backing")] {
-        chmod_tree(root);
-    }
-    chmod(&properties.join("mid.properties"), 0o640);
-    let layout = layout(
-        &[Reference::artifact("properties"), Reference::artifact("resources")],
-        vec![layout_asset(
-            "",
-            &[0, 1],
-            Some(tree_map(vec![mapping("*.properties", 0, "messages"), mapping("", 0, "")])),
-        )],
-    );
-    let inputs = catalogue(vec![
-        directory_artifact("properties", &properties),
-        directory_artifact("resources", &resources),
-    ]);
-    if format == "entries" {
-        LayoutParityFixture {
-            format,
-            root: "localization.jar",
-            host_order: true,
-            layout,
-            inputs,
-            present: vec!["lib/localization.jar"],
-        }
-    } else {
-        LayoutParityFixture {
-            format,
-            root: "resources",
-            host_order: false,
-            layout,
-            inputs,
-            present: vec![
-                "resources/messages/zeta.properties",
-                "resources/messages/mid.properties",
-                "resources/notes.txt",
-                "resources/nested/deep.properties",
-                "resources/nested/resource.txt",
-            ],
-        }
-    }
-}
-
 type FixtureBuilder = fn(&Path) -> LayoutParityFixture;
 
 fn tree_fixture(root: &'static str, layout: LayoutAssets, inputs: Catalogue, present: Vec<&'static str>) -> LayoutParityFixture {
@@ -825,9 +744,10 @@ fn tree_fixture(root: &'static str, layout: LayoutAssets, inputs: Catalogue, pre
 }
 
 /// The layout-assets operations that the packer executes: one per transform, per archive reader rule, and per format.
-/// The golden fixture "strip and mapping selection with normalized tree modes" has no port. No plan file normalizes
-/// the modes of a tree, so the typed layout-tree operation has no mode.
-const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 7] = [
+/// Three golden fixtures have no port. "strip and mapping selection with normalized tree modes": no plan file
+/// normalizes the modes of a tree, so the typed layout-tree operation has no mode. The two `tree-map` fixtures: the
+/// localization trees have the jar layout, so the transform is gone.
+const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 5] = [
     ("archive-tree from a tar.gz keeps modes, a link, and an empty directory", |inputs| {
         // The link `latest` carries a trailing slash, which the Kotlin writer removed through Path.of.
         let archive = inputs.join("assets.tar.gz");
@@ -937,14 +857,6 @@ const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 7] = [
             vec!["terminal/libghostty.so", "terminal/libghostty.so.1"],
         )
     }),
-    (
-        "tree-map entries keep the readdir order, the first source, and a transport link",
-        |inputs| tree_map_fixture(inputs, "entries"),
-    ),
-    (
-        "tree-map tree keeps source modes, the first source, and a transport link",
-        |inputs| tree_map_fixture(inputs, "tree"),
-    ),
     ("plain overlay of two trees keeps the first claim and a relative link", |inputs| {
         let (first, second) = (inputs.join("first"), inputs.join("second"));
         write_test_file(&first.join("shared.txt"), b"first");
@@ -1098,11 +1010,17 @@ fn kotlin_layout_materialization_matches_the_transforms() {
         golden.check(name, &golden_record);
     }
     let dropped = "strip and mapping selection with normalized tree modes";
-    assert!(
-        golden.fixture_names().contains(&dropped),
-        "the golden lost the dropped fixture {dropped:?}"
-    );
-    assert_eq!(golden.fixture_names().len(), LAYOUT_PARITY_FIXTURES.len() + 1);
+    for name in [
+        dropped,
+        "tree-map entries keep the readdir order, the first source, and a transport link",
+        "tree-map tree keeps source modes, the first source, and a transport link",
+    ] {
+        assert!(
+            golden.fixture_names().contains(&name),
+            "the golden lost the dropped fixture {name:?}"
+        );
+    }
+    assert_eq!(golden.fixture_names().len(), LAYOUT_PARITY_FIXTURES.len() + 3);
     // The dropped fixture is a tree asset that normalizes the copied modes. `planfile` refuses that shape.
     let normalized_layout = layout(
         &[Reference::artifact("selected")],

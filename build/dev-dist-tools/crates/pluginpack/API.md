@@ -15,7 +15,6 @@ them. The table lists what the Go packer supported and this crate refuses.
 | an asset of the kind `directory` | `unknown asset kind "directory"` |
 | a distribution asset that is not the independent native tree of a reused natives jar | `must be the native tree of a reused natives jar` |
 | a jar or copy mode other than 0644 and 0755, also mode zero | `unsupported file mode` |
-| `executables` on a `tree-map` transform | `layout executable patterns require archive-tree` |
 | a layout archive named `.tgz`, or any name other than `.zip`, `.jar`, `.zip.zst` and `.tar.gz` | `unsupported layout archive` |
 | a `.zip.zst` with data after its one zstd frame | `the archive holds data after its zstd frame` |
 | a zip with two central-directory records of one name | `the zip repeats the entry name` |

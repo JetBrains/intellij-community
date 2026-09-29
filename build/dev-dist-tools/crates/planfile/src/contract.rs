@@ -177,7 +177,8 @@ pub struct LayoutAsset {
     pub mode: u32,
 }
 
-/// One layout transform. The Go `LayoutTransform` states the rules of each field, and the executor applies them.
+/// One layout transform. The Kotlin `DevPluginLayoutAssetTransform` states the rules of each field, and the executor
+/// applies them. A tree needs no transform, because a plain copy places it.
 #[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct LayoutTransform {
@@ -186,10 +187,6 @@ pub struct LayoutTransform {
     pub strip_components: u32,
     #[serde(default)]
     pub mappings: Vec<LayoutMapping>,
-    #[serde(default)]
-    pub excludes: Vec<String>,
-    #[serde(default)]
-    pub directory_excludes: Vec<String>,
     #[serde(default)]
     pub includes: Vec<String>,
     #[serde(default)]
@@ -200,7 +197,6 @@ pub struct LayoutTransform {
 #[serde(rename_all = "kebab-case")]
 pub enum LayoutTransformKind {
     ArchiveTree,
-    TreeMap,
 }
 
 /// Selects entries by a java.nio glob over the whole relative path. An empty pattern is `**`.

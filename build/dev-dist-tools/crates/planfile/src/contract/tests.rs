@@ -13,8 +13,6 @@ fn transform(kind: LayoutTransformKind) -> LayoutTransform {
         kind,
         strip_components: 0,
         mappings: Vec::new(),
-        excludes: Vec::new(),
-        directory_excludes: Vec::new(),
         includes: Vec::new(),
         executables: Vec::new(),
     }
@@ -23,27 +21,12 @@ fn transform(kind: LayoutTransformKind) -> LayoutTransform {
 /// The decode half of the Go test. The Go test also compares the transform with its kotlinx encoding in a
 /// layout-assets operation, which the Kotlin golden tests of the `pluginpack` crate do.
 #[test]
-fn layout_transform_excludes_encoding() {
-    let tree_map = |excludes: &[&str], directory_excludes: &[&str], executables: &[&str]| LayoutTransform {
-        excludes: strings(excludes),
-        directory_excludes: strings(directory_excludes),
-        executables: strings(executables),
-        ..transform(LayoutTransformKind::TreeMap)
-    };
+fn layout_transform_encoding() {
     for (text, want) in [
-        (r#"{"kind":"tree-map"}"#, tree_map(&[], &[], &[])),
+        (r#"{"kind":"archive-tree"}"#, transform(LayoutTransformKind::ArchiveTree)),
         (
-            r#"{"kind":"tree-map","excludes":[],"directoryExcludes":[],"includes":[],"executables":[]}"#,
-            tree_map(&[], &[], &[]),
-        ),
-        (r#"{"kind":"tree-map","excludes":["*.pyc"]}"#, tree_map(&["*.pyc"], &[], &[])),
-        (
-            r#"{"kind":"tree-map","directoryExcludes":["tests"]}"#,
-            tree_map(&[], &["tests"], &[]),
-        ),
-        (
-            r#"{"kind":"tree-map","excludes":["*.pyc"],"directoryExcludes":["tests","**/tests"]}"#,
-            tree_map(&["*.pyc"], &["tests", "**/tests"], &[]),
+            r#"{"kind":"archive-tree","mappings":[],"includes":[],"executables":[]}"#,
+            transform(LayoutTransformKind::ArchiveTree),
         ),
         (
             r#"{"kind":"archive-tree","includes":["bin/**","!bin/LLDBFrontend"],"executables":["bin/*"]}"#,
@@ -52,10 +35,6 @@ fn layout_transform_excludes_encoding() {
                 executables: strings(&["bin/*"]),
                 ..transform(LayoutTransformKind::ArchiveTree)
             },
-        ),
-        (
-            r#"{"kind":"tree-map","executables":["DotFiles/*.sh"]}"#,
-            tree_map(&[], &[], &["DotFiles/*.sh"]),
         ),
         (
             r#"{"kind":"archive-tree","stripComponents":1,"mappings":[{},{"pattern":"*.xml","stripComponents":2,"destination":"d"}]}"#,
@@ -75,15 +54,22 @@ fn layout_transform_excludes_encoding() {
     ] {
         assert_eq!(from_slice::<LayoutTransform>(text.as_bytes()).unwrap(), want, "{text}");
     }
-    let error = from_slice::<LayoutTransform>(br#"{"excludes":[]}"#).unwrap_err();
+    let error = from_slice::<LayoutTransform>(br#"{"includes":[]}"#).unwrap_err();
     assert!(error.message().contains("missing field `kind`"), "{error}");
 }
 
-/// The gzip resources of a module are a Bazel action now. So the removed kind `gzip-xml-archive` does not read.
+/// The gzip resources of a module are a Bazel action now, and the localization trees have the jar layout. So the
+/// removed kinds `gzip-xml-archive` and `tree-map` do not read, and neither do the exclusions of `tree-map`.
 #[test]
-fn layout_transform_refuses_the_gzip_xml_archive_kind() {
-    let error = from_slice::<LayoutTransform>(br#"{"kind":"gzip-xml-archive"}"#).unwrap_err();
-    assert!(error.message().contains("unknown variant `gzip-xml-archive`"), "{error}");
+fn layout_transform_refuses_the_removed_kinds() {
+    for kind in ["gzip-xml-archive", "tree-map"] {
+        let error = from_slice::<LayoutTransform>(format!(r#"{{"kind":"{kind}"}}"#).as_bytes()).unwrap_err();
+        assert!(error.message().contains(&format!("unknown variant `{kind}`")), "{error}");
+    }
+    for field in ["excludes", "directoryExcludes"] {
+        let error = from_slice::<LayoutTransform>(format!(r#"{{"kind":"archive-tree","{field}":[]}}"#).as_bytes()).unwrap_err();
+        assert!(error.message().contains(&format!("unknown field `{field}`")), "{error}");
+    }
 }
 
 #[test]

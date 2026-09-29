@@ -190,14 +190,7 @@ fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
         &[Reference::artifact("archive")],
         vec![layout_asset("", &[0], Some(archive_tree(1, Vec::new())))],
     );
-    let entries = layout(
-        &[Reference::artifact("properties")],
-        vec![layout_asset(
-            "",
-            &[0],
-            Some(tree_map(vec![mapping("*.properties", 0, "messages"), mapping("", 0, "")])),
-        )],
-    );
+    let entries = layout(&[Reference::artifact("properties")], vec![layout_asset("", &[0], None)]);
     let plan = KotlinPlanFile {
         version: TREE_VERSION,
         plugin: "layout".to_owned(),
@@ -461,8 +454,7 @@ fn every_planfile_derivation_plans() {
       {"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
         "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree", "stripComponents": 1}}]}},
       {"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "properties"}], "output": "entries:output", "manifest": "keep",
-        "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "tree-map", "mappings": [{"pattern": "*.properties", "destination": "messages"}, {}],
-          "excludes": ["*.pyc", "**/*.pyc"], "directoryExcludes": ["tests", "**/tests"]}}]}}]"#;
+        "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]}}]"#;
     let every_kind_assets = r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
         {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop", "directoryEntries": true}}},
       {"destination": "lib/l10n.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}},

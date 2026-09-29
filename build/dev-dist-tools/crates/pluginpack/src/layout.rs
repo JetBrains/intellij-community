@@ -136,30 +136,20 @@ struct TreeEntry {
     metadata: fs::Metadata,
 }
 
-enum Walk {
-    Continue,
-    SkipDirectory,
-}
-
-/// Visits a directory in pre-order and raw directory order, the order of Kotlin's `Files.walk`. It does not sort and
-/// does not follow links. A visitor can skip the descendants of a directory.
-fn walk_layout_tree(root: &Path, mut visit: impl FnMut(TreeEntry) -> Result<Walk>) -> Result<()> {
-    let mut walker = walkdir::WalkDir::new(root).min_depth(1).into_iter();
-    while let Some(item) = walker.next() {
+/// Lists a directory in pre-order and raw directory order, the order of Kotlin's `Files.walk`. It does not sort and
+/// does not follow links.
+fn walk_layout_tree(root: &Path) -> Result<Vec<TreeEntry>> {
+    let mut entries = Vec::new();
+    for item in walkdir::WalkDir::new(root).min_depth(1) {
         let item = item.map_err(|error| Error::new(error.to_string()))?;
         let metadata = item.metadata().map_err(|error| Error::new(error.to_string()))?;
-        let relative = slash_relative(root, item.path())?;
-        let directory = metadata.is_dir();
-        let entry = TreeEntry {
-            relative,
+        entries.push(TreeEntry {
+            relative: slash_relative(root, item.path())?,
             full: item.path().to_path_buf(),
             metadata,
-        };
-        if matches!(visit(entry)?, Walk::SkipDirectory) && directory {
-            walker.skip_current_dir();
-        }
+        });
     }
-    Ok(())
+    Ok(entries)
 }
 
 fn slash_relative(root: &Path, path: &Path) -> Result<String> {
@@ -243,7 +233,6 @@ impl Resolver<'_> {
                 None => Self::copy_asset(&inputs[0], asset, writer),
                 Some(transform) => match transform.kind {
                     LayoutTransformKind::ArchiveTree => self.extract_archive(&inputs[0], asset, transform, writer),
-                    LayoutTransformKind::TreeMap => Self::map_trees(&inputs, asset, transform, writer),
                 },
             };
             result.map_err(|error| error.context(format_args!("layout asset {:?}", asset.destination)))?;
@@ -306,11 +295,7 @@ impl Resolver<'_> {
             &asset.destination,
             mode_or(copy_directory_mode(asset.mode), filemeta::permissions(&metadata)),
         )?;
-        let mut entries = Vec::new();
-        walk_layout_tree(root, |entry| {
-            entries.push(entry);
-            Ok(Walk::Continue)
-        })?;
+        let mut entries = walk_layout_tree(root)?;
         entries.sort_by(|first, second| first.relative.cmp(&second.relative));
         let mut transport_root = None;
         for entry in &entries {
@@ -322,45 +307,6 @@ impl Resolver<'_> {
                 asset.mode
             };
             copy_layout_entry(&source, &metadata, &destination, mode, writer)?;
-        }
-        Ok(())
-    }
-
-    /// Copies the entries of every source directory that a mapping selects. The first mapping per entry wins.
-    fn map_trees(inputs: &[LayoutInput], asset: &LayoutAsset, transform: &LayoutTransform, writer: &mut dyn LayoutWriter) -> Result<()> {
-        let excludes = compile_globs(&transform.excludes, "invalid exclude")?;
-        let directory_excludes = compile_globs(&transform.directory_excludes, "invalid exclude")?;
-        let matchers = transform
-            .mappings
-            .iter()
-            .map(|mapping| JavaGlob::compile(mapping_pattern(mapping)).map_err(|error| Error::new(error.to_string())))
-            .collect::<Result<Vec<_>>>()?;
-        let matches = |globs: &[JavaGlob], name: &str| globs.iter().any(|glob| glob.matches(name));
-        for input in inputs {
-            let LayoutInput::Directory(root) = input else {
-                fail!("a tree-map source must be a directory: {}", input.path().display());
-            };
-            let mut transport_root = None;
-            walk_layout_tree(root, |entry| {
-                if entry.metadata.is_dir() {
-                    if matches(&directory_excludes, &entry.relative) {
-                        return Ok(Walk::SkipDirectory);
-                    }
-                } else if matches(&excludes, &entry.relative) {
-                    return Ok(Walk::Continue);
-                }
-                let Some(index) = matchers.iter().position(|matcher| matcher.matches(&entry.relative)) else {
-                    return Ok(Walk::Continue);
-                };
-                let mapping = &transform.mappings[index];
-                let Some(remainder) = strip_layout_path(&entry.relative, mapping.strip_components) else {
-                    return Ok(Walk::Continue);
-                };
-                let target = join_layout_path(&asset.destination, &join_layout_path(&mapping.destination, &remainder));
-                let (source, metadata) = transport_entry(&entry, &mut transport_root)?;
-                copy_layout_entry(&source, &metadata, &target, asset.mode, writer)?;
-                Ok(Walk::Continue)
-            })?;
         }
         Ok(())
     }

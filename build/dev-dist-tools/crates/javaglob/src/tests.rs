@@ -24,8 +24,8 @@ fn testdata_directory() -> PathBuf {
 }
 
 /// Every distinct glob of the plan file corpus of the planfile crate. The packer compiles the excludes of an operation as
-/// globs. It also compiles the excludes, directory excludes, includes, executables and mapping patterns of a layout
-/// transform. An include loses its leading `!`, and an empty mapping pattern is `**`.
+/// globs. It also compiles the includes, executables and mapping patterns of a layout transform. An include loses its
+/// leading `!`, and an empty mapping pattern is `**`.
 fn corpus_patterns() -> BTreeSet<String> {
     // The corpus is in the testdata of the sibling crate. The lexical path holds in the Bazel runfiles too.
     let corpus = testdata_directory()
@@ -47,8 +47,6 @@ fn corpus_patterns() -> BTreeSet<String> {
             patterns.extend(operation.excludes.iter().cloned());
             let assets = operation.layout_assets.iter().flat_map(|layout| &layout.assets);
             for transform in assets.filter_map(|asset| asset.transform.as_ref()) {
-                patterns.extend(transform.excludes.iter().cloned());
-                patterns.extend(transform.directory_excludes.iter().cloned());
                 patterns.extend(transform.executables.iter().cloned());
                 patterns.extend(
                     transform
@@ -116,11 +114,11 @@ fn read_record() -> Vec<RecordedCase> {
 }
 
 /// The Go port recorded 184 JDK vectors. The record keeps the 111 vectors inside the subset and drops the other 73.
-/// It adds 126 vectors for the patterns of the plan file corpus.
+/// It adds 112 vectors for the patterns of the plan file corpus.
 #[test]
 fn match_agrees_with_the_recorded_path_matcher() {
     let record = read_record();
-    assert_eq!(record.len(), 237, "the record lost or gained a vector");
+    assert_eq!(record.len(), 223, "the record lost or gained a vector");
     let mut failures = Vec::new();
     for recorded in record {
         match JavaGlob::compile(&recorded.pattern) {
