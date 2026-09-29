@@ -80,6 +80,7 @@
     <lang.commenter language="Lombok.Config"
                     implementationClass="de.plushnikov.intellij.plugin.language.LombokConfigCommentor"/>
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
+    <vfs.asyncListenerBackgroundable implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigChangeListener"/>
 
     <custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
     <java.errorFixProvider
@@ -299,11 +300,6 @@
     <listener class="de.plushnikov.intellij.plugin.activity.LombokBuildManagerListener"
               topic="com.intellij.compiler.server.BuildManagerListener"/>
   </projectListeners>
-
-  <applicationListeners>
-    <listener class="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigChangeListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-  </applicationListeners>
 
   <actions>
     <group id="LombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
