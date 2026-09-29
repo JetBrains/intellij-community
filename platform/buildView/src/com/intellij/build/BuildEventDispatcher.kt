@@ -32,7 +32,7 @@ interface BuildEventDispatcher : AutoCloseable {
    *
    * @param outputType the output stream that produced the `text`.
    */
-  fun onTextAvailable(text: String, outputType: ProcessOutputType)
+  fun notifyTextAvailable(text: String, outputType: ProcessOutputType)
 
   /**
    * Registers handler which is invoked once the build process is finished and the build messages are dispatched.

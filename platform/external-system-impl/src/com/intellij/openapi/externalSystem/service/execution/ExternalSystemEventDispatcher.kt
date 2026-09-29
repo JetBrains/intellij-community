@@ -53,7 +53,7 @@ class ExternalSystemEventDispatcher(
     outputMessageDispatcher.onEvent(buildId, event)
   }
 
-  override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
+  override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
     outputMessageDispatcher.onTextAvailable(text, outputType)
   }
 
