@@ -24,6 +24,7 @@ import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.notebook.editor.BackedVirtualFileProvider;
@@ -134,7 +135,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doAddFileLevelInfoComponent;
 import static com.intellij.codeInsight.daemon.impl.FileLevelComponentUtil.doRemoveFileLevelInfoComponent;
-import static com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesKt.isBackgroundActivitiesSuppressedSync;
 
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 @ApiStatus.Internal
@@ -1155,7 +1155,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       long requestDelta = analyzer.getDelta();
       try {
         if (!project.isDefault() && project.isInitialized() &&
-            (!isBackgroundActivitiesSuppressedSync(project) || WelcomeScreenProjectProvider.isWelcomeScreenProject(project))) {
+            (!(project instanceof LightEditCompatible) || WelcomeScreenProjectProvider.isWelcomeScreenProject(project))) {
           String result = analyzer.runUpdate();
           if (LOG.isDebugEnabled()) {
             LOG.debug("runUpdate result: " + result+"; requestDelta:"+requestDelta);
