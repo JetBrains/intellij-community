@@ -175,6 +175,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(MissingConstructorKeywordFixFactory.missingConstructorFix)
         registerPsiQuickFixes(KaFirDiagnostic.InvalidIfAsExpression::class, AddIfElseBranchFix)
         registerFactory(RemoveSupertypeFixFactory.removeSupertypeFixFactory)
+        registerFactory(RemoveSupertypeFixFactory.valueClassCannotExtendIdentityClassesFixFactory)
         registerFactory(NumberConversionFixFactory.numberConversionFixFactory)
         registerFactory(ChangeToUseSpreadOperatorFixFactory.changeToUseSpreadOperatorFixFactory)
         registerFactory(ReplacePrimitiveCastWithNumberConversionFixFactory.replaceIncompatibleNumberCastWithNumberConversionFixFactory)
