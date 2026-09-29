@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.handlers.fixers
 
@@ -20,24 +20,24 @@ class KotlinPropertySetterParametersFixer : SmartEnterProcessorWithFixers.Fixer<
 
         val parameter = psiElement.parameter
 
-        if (!parameter?.text.isNullOrBlank() && psiElement.rightParenthesis != null) return
+        if (!parameter?.text.isNullOrBlank() && psiElement.parameterList?.rightParenthesis != null) return
 
         //setter without parameter and body is valid
         if (psiElement.namePlaceholder.endOffset == psiElement.endOffset) return
 
         val doc = editor.document
 
-        val leftParenthesis = psiElement.leftParenthesis ?: psiElement.parameterList?.leftParenthesis
+        val leftParenthesis = psiElement.parameterList?.leftParenthesis ?: psiElement.parameterList?.leftParenthesis
 
         val parameterOffset = (leftParenthesis?.node?.startOffset ?: return) + 1
 
         if (parameter?.text.isNullOrBlank()) {
-            if (psiElement.rightParenthesis == null) {
+            if (psiElement.parameterList?.rightParenthesis == null) {
                 doc.insertString(parameterOffset, "value)")
             } else {
                 doc.insertString(parameterOffset, "value")
             }
-        } else if (psiElement.rightParenthesis == null) {
+        } else if (psiElement.parameterList?.rightParenthesis == null) {
             doc.insertString(parameterOffset + parameter!!.text.length, ")")
         }
     }

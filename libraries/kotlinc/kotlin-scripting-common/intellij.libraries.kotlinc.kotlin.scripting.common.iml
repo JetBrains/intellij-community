@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-common" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.5.0-dev-8355">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.5.0-dev-8864">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-8355/kotlin-scripting-common-2.5.0-dev-8355.jar">
-              <sha256sum>170cdc565047e0baca33914170555de1d373ff5cc96f6add18a6f3a6b9963bc8</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-8864/kotlin-scripting-common-2.5.0-dev-8864.jar">
+              <sha256sum>3a940d89d06a0372a014ed140781b3c11a9c805b8580836b2f53ad50433c350c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-8355/kotlin-scripting-common-2.5.0-dev-8355.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-8864/kotlin-scripting-common-2.5.0-dev-8864.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-8355/kotlin-scripting-common-2.5.0-dev-8355-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-8864/kotlin-scripting-common-2.5.0-dev-8864-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

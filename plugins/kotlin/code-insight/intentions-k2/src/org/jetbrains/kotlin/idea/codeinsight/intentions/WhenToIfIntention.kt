@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.combineWhenConditions
@@ -199,7 +200,7 @@ internal class WhenToIfIntention :
         return PropertyForWhenSubject(
             psiFactory.buildExpression {
                 val property = psiFactory.createProperty(varNameForSubject, type = null, isVar = false)
-                property.initializer = subject
+                property.setPropertyInitializer(subject)
                 appendExpression(property)
             },
             psiFactory.createExpressionByPattern(varNameForSubject)
