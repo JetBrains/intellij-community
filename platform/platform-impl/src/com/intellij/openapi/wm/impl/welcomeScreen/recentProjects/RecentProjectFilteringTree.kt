@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
@@ -993,10 +992,6 @@ class RecentProjectFilteringTree(
   }
 }
 
-private const val RECENT_PROJECT_VCS_ACTIONS_ENABLED = "ide.welcome.screen.recent.project.vcs.actions"
-
-private fun isVcsActionsEnabled(): Boolean = Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED)
-
 private sealed class RecentProjectRowButton(
   val icon: Icon,
   val hoveredIcon: Icon = icon,
@@ -1035,7 +1030,7 @@ private sealed class RecentProjectRowButton(
 private fun rowButtons(item: RecentProjectTreeItem, isProjectValid: Boolean): List<RecentProjectRowButton> =
   when (item) {
     is RecentProjectItem -> listOfNotNull(
-      RecentProjectRowButton.VcsActions.takeIf { isVcsActionsEnabled() && isProjectValid && item.branchName != null },
+      RecentProjectRowButton.VcsActions.takeIf { isProjectValid && item.vcsActionsEnabled },
       if (isProjectValid) RecentProjectRowButton.MoreActions else RecentProjectRowButton.Remove,
     )
     is CloneableProjectItem -> when (item.cloneableProject.cloneStatus) {

@@ -74,6 +74,11 @@ internal data class RecentProjectItem(
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
   @NlsSafe val branchName: String? = null,
+  /**
+   * Whether the welcome screen offers VCS actions for this project: the feature is enabled and the project is under version control.
+   * Not the same as having a [branchName], which a display setting or a detached HEAD hides for a project under version control all the same.
+   */
+  val vcsActionsEnabled: Boolean = false,
   val projectGroup: ProjectGroup?,
   val activationTimestamp: Long?,
 ) : RecentProjectTreeItem {

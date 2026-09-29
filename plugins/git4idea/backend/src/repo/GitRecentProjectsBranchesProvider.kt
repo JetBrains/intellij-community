@@ -44,6 +44,10 @@ internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvide
   override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
     return application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
   }
+
+  override fun hasRepository(projectPath: String): Boolean {
+    return application.service<GitRecentProjectsBranchesService>().hasRepository(projectPath)
+  }
 }
 
 internal enum class RecentProjectsShowBranchMode {
@@ -107,6 +111,12 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
     }
     val branchFuture = cache.get(projectPath)
     return (branchFuture.getNow(GitRecentProjectCachedBranch.Unknown) as? GitRecentProjectCachedBranch.KnownBranch)?.branchName
+  }
+
+  fun hasRepository(projectPath: String): Boolean {
+    // The same guard [getCurrentBranch] uses. See IJPL-194035
+    return Path(projectPath).getEelDescriptor() == LocalEelDescriptor && cache.get(projectPath)
+      .getNow(GitRecentProjectCachedBranch.Unknown).headFilePath != null
   }
 
   private inner class BranchesLoader : AsyncCacheLoader<String, GitRecentProjectCachedBranch> {

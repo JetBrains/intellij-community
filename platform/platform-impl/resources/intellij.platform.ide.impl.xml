@@ -383,9 +383,6 @@
     <extensionPoint qualifiedName="com.intellij.recentProjectUpdater"
                     interface="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectUpdater"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.recentProjectUpdater"
-                    interface="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectUpdater"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.recentProjectsProvider"
                     interface="com.intellij.ide.RecentProjectProvider"
                     dynamic="true"/>
