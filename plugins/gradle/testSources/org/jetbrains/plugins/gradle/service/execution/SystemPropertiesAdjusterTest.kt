@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.jna.JnaLoader
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.SystemProperties
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
@@ -30,6 +32,8 @@ class SystemPropertiesAdjusterTest {
 
   @BeforeEach
   fun setUp() {
+    // The adjuster loads JNA before a mask. Load it here, before the test sets a boot path that holds no library.
+    JnaLoader.load()
     for ((key, value) in JNA_PROPERTIES + (JANSI_PROPERTY to "/ide/lib/jansi")) {
       originalValues[key] = SystemProperties.setProperty(key, value)
     }
@@ -57,6 +61,7 @@ class SystemPropertiesAdjusterTest {
   fun `Gradle 7_5 masks the JNA properties`() {
     SystemPropertiesAdjuster.executeAdjusted("/project", GradleVersion.version("7.5")) {
       assertJnaPropertiesMasked()
+      assertTrue(JnaLoader.isLoaded(), "JNA is loaded before the mask")
     }
     assertJnaPropertiesUnchanged()
   }

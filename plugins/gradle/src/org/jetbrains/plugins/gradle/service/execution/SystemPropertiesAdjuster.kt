@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+import com.intellij.jna.JnaLoader
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
@@ -9,9 +10,15 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+/** The directory of the JNA dispatch library. `com.sun.jna.Native` reads it once, in its static initializer. */
+private const val JNA_BOOT_LIBRARY_PATH = "jna.boot.library.path"
+
 /**
  * Use with caution! IDE system properties will be changed for the period of running Gradle long-running operations.
  * This is a workaround to fix leaking unwanted IDE system properties to the Gradle process.
+ *
+ * A mask of the `jna.*` properties loads JNA first. JNA reads the properties once, so a load before the mask keeps
+ * the JNA of the IDE process intact, and a first JNA user during the operation does not fail (IJPL-256293).
  */
 @ApiStatus.Internal
 open class SystemPropertiesAdjuster {
@@ -34,7 +41,7 @@ open class SystemPropertiesAdjuster {
     if (gradleVersion == null || GradleVersionUtil.isGradleOlderThan(gradleVersion, "7.6")) {
       properties["java.system.class.loader"] = null
       properties["jna.noclasspath"] = null
-      properties["jna.boot.library.path"] = null
+      properties[JNA_BOOT_LIBRARY_PATH] = null
       properties["jna.nosys"] = null
       properties["java.nio.file.spi.DefaultFileSystemProvider"] = null
       properties["java.util.concurrent.ForkJoinPool.common.threadFactory"] = null
@@ -59,6 +66,9 @@ open class SystemPropertiesAdjuster {
     @JvmStatic
     fun <T> executeAdjusted(projectDir: String, gradleVersion: GradleVersion?, supplier: Supplier<T>): T {
       val keyToMask = service<SystemPropertiesAdjuster>().getKeyToMask(projectDir, gradleVersion)
+      if (keyToMask.containsKey(JNA_BOOT_LIBRARY_PATH)) {
+        JnaLoader.load()
+      }
       mask(keyToMask)
       try {
         return supplier.get()

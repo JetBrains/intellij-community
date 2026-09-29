@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.libraries.mockito.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
