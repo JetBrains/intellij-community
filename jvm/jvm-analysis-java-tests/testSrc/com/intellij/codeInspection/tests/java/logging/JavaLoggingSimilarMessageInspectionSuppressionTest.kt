@@ -103,8 +103,8 @@ class JavaLoggingSimilarMessageInspectionSuppressionTest : LightJavaCodeInsightF
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, File(getTestDataPath(), getTestName(false)).path)
   }
 
-  override fun getBasePath(): String {
-    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
+  override fun getTestDataPath(): String {
+    return JavaJvmAnalysisTestUtil.testDataPath + inspectionPath
   }
 }
 

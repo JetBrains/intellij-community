@@ -3,13 +3,14 @@ package com.intellij.codeInspection.tests.java;
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
 import com.intellij.jvm.analysis.internal.testFramework.StringToUpperWithoutLocaleInspectionTestBase;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/toUpperWithoutLocale")
 public class JavaStringToUpperWithoutLocaleInspectionTest extends StringToUpperWithoutLocaleInspectionTestBase {
 
   @Override
-  protected String getBasePath() {
-    return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/toUpperWithoutLocale";
+  public @NotNull String getTestDataPath() {
+    return JavaJvmAnalysisTestUtil.getTestDataPath() + "/codeInspection/toUpperWithoutLocale";
   }
 
   public void testSimpleCases() {

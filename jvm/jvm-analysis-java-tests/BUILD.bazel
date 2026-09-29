@@ -1,13 +1,23 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 jps_test(
     name = "analysis-java-tests_test",
     timeout = "long",
-    tags = ["community-aggregator"],
+    data = [
+        ":testData",
+        "@community//java/java-tests:testData",
+        "@community//jvm/jvm-analysis-kotlin-tests-shared:testData",
+    ],
+    tags = ["community-java-tests"],
     runtime_deps = [":analysis-java-tests_test_lib"],
 )
-
 ### skip generation section `test intellij.jvm.analysis.java.tests`
 
 ### auto-generated section `build intellij.jvm.analysis.java.tests` start
@@ -107,6 +117,8 @@ jvm_library(
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "@lib//:easymock",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.jvm.analysis.java.tests` end

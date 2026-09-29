@@ -5,7 +5,7 @@ import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.JvmAutomaticTestMethodRenamerTestBase
 
 class JavaAutomaticTestMethodRenamerTest : JvmAutomaticTestMethodRenamerTestBase() {
-  override fun getBasePath(): String = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/refactoring/renameTestMethod"
+  override fun getTestDataPath(): String = JavaJvmAnalysisTestUtil.testDataPath + "/refactoring/renameTestMethod"
 
   fun testTestMethod() = doTest("ClassTest.java")
 

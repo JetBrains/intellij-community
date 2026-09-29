@@ -8,7 +8,7 @@ private const val inspectionPath = "/codeInspection/threadrun"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
 class JavaThreadRunInspectionTest : ThreadRunInspectionTestBase() {
-  override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
+  override fun getTestDataPath(): String = JavaJvmAnalysisTestUtil.testDataPath + inspectionPath
 
   fun `test highlighting`() {
     myFixture.testHighlighting("ThreadRunTest.java")
