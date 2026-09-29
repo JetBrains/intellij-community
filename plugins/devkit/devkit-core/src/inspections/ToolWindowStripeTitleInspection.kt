@@ -98,19 +98,20 @@ private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElement
     val actualBundle = bundlesWithKey(source.module, key).firstOrNull { it != expectedName } ?: return
 
     val idRange = ElementManipulators.getValueTextRange(target)
+    val moduleName = source.module.name
 
     when (readBundle) {
       is ReadBundle.Declared -> holder.registerProblem(
         target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.wrong.bundle", readBundle.name, key, actualBundle)
+        DevKitBundle.message("inspection.tool.window.stripe.title.wrong.bundle", moduleName, readBundle.name, key, actualBundle)
       )
       is ReadBundle.CoreIdeBundle -> holder.registerProblem(
         target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.core.bundle", key, actualBundle)
+        DevKitBundle.message("inspection.tool.window.stripe.title.core.bundle", moduleName, key, actualBundle)
       )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", key, actualBundle)
+        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", moduleName, key, actualBundle)
       )
     }
   }
@@ -138,20 +139,17 @@ private class BundleVisitor(private val holder: ProblemsHolder) : PsiElementVisi
     // The key is also in the bundle the platform reads, so the stripe title works. This copy is only dead weight.
     if (expectedName != null && bundleHasKey(source.module, expectedName, key)) return
 
-    val toolWindowId = key.removePrefix(STRIPE_TITLE_KEY_PREFIX).replace('_', ' ')
+    // The key turns every space into an underscore, so only the extension knows the real ID.
+    val toolWindowId = extension.getAttributeValue("id")?.trim() ?: return
     val moduleName = source.module.name
     when (readBundle) {
-      is ReadBundle.Declared -> holder.registerProblem(
+      is ReadBundle.Declared, is ReadBundle.CoreIdeBundle -> holder.registerProblem(
         element,
-        DevKitBundle.message("inspection.tool.window.stripe.title.property.wrong.bundle", toolWindowId, readBundle.name, moduleName)
-      )
-      is ReadBundle.CoreIdeBundle -> holder.registerProblem(
-        element,
-        DevKitBundle.message("inspection.tool.window.stripe.title.property.wrong.bundle", toolWindowId, IDE_BUNDLE_NAME, moduleName)
+        DevKitBundle.message("inspection.tool.window.stripe.title.property.wrong.bundle", moduleName, toolWindowId, readBundle.name)
       )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         element,
-        DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle", toolWindowId, thisBundleName, moduleName)
+        DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle", moduleName, toolWindowId)
       )
     }
   }
