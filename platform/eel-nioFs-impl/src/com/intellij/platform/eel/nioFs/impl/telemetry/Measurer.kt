@@ -61,7 +61,6 @@ object Measurer {
             when {
               "com.intellij.platform.ide.impl.wsl.WslEelDescriptor" in names -> wsl
               "com.intellij.platform.ijent.ssh.SshEelDescriptor" in names -> ssh
-              "com.intellij.platform.eel.tcp.SshEelDescriptor" in names -> ssh
               "com.intellij.platform.eel.tcp.TcpEelDescriptor" in names -> tcp
               else -> null
             }

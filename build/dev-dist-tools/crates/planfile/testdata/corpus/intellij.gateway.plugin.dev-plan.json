@@ -19,9 +19,6 @@
             "module": "intellij.gateway.station"
         },
         {
-            "module": "intellij.gateway.eel"
-        },
-        {
             "module": "intellij.gateway.daemon.bridge"
         },
         {
@@ -50,31 +47,6 @@
                     },
                     {
                         "input": "intellij.platform.commercial.dependencies",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
-            "destination": "lib/gateway-standalone/platform-resources.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.platform.resources.fileTypes",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "intellij.platform.resources.applicationInfo",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "intellij.platform.resources.en.fileTemplates",
                         "kind": "module",
                         "filter": "module-v1"
                     }
