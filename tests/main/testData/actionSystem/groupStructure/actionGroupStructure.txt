@@ -878,13 +878,13 @@
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
-      PythonPsiInternalGroup
-        PyTypeBenchmarkAction
       FeatureUsage.Internal
         OpenStatisticsEventLogAction
         RecordStateCollectors
         AddGroupToTestSchemeAction
         CollectFUStatisticsAction
+      PythonPsiInternalGroup
+        PyTypeBenchmarkAction
       Vcs.Internal
         Vcs.Log.Internal
           Vcs.Log.InvalidateCaches
