@@ -9,6 +9,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
@@ -28,7 +29,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -124,8 +124,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     }
     String text = layout(button, button.getText(), button.getIcon(), fm, width, height);
 
-    Graphics g2 = g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       g2.setColor(button.getForeground());
       if (button.getIcon() != null) {
         paintIcon(g, button, iconRect);
@@ -147,10 +146,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
         int y = height / 2 - EXPAND_ICON.getIconHeight() / 2;
         EXPAND_ICON.paintIcon(button, g2, x, y);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   //@Override
@@ -190,8 +186,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   }
 
   private static void doFill(Graphics g, JComponent c, Color color, boolean rounded) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       g2.setColor(color);
       Rectangle bounds = c.getVisibleRect();
       if (rounded) {
@@ -203,9 +198,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
       else {
         g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
-    } finally {
-      g2.dispose();
-    }
+    });
   }
 
   private static void paintFocusBorder(Graphics g, ComboBoxAction.ComboBoxButton button) {

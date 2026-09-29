@@ -7,6 +7,7 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBValue;
 
@@ -133,14 +134,10 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
   private void paintCell(Graphics g, Rectangle bounds, TableColumn column, int index, boolean focused) {
     Component component = TableUtil.getRendererComponent(header, column, index, focused);
     if (component != null && isExpandableHintShown(column)) {
-      Graphics cg = g.create(bounds.x, bounds.y, bounds.width, bounds.height);
-      try {
+      PaintUtil.use(g.create(bounds.x, bounds.y, bounds.width, bounds.height), cg -> {
         int width = Math.max(component.getPreferredSize().width, bounds.width);
         rendererPane.paintComponent(cg, component, header, 0, 0, width, bounds.height, true);
-      }
-      finally {
-        cg.dispose();
-      }
+      });
     }
     else {
       rendererPane.paintComponent(g, component, header, bounds.x, bounds.y, bounds.width, bounds.height, true);

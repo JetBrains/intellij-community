@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -42,13 +43,7 @@ public class ComboBoxButtonUI extends DarculaButtonUI {
       icon.paintIcon(null, g, x, y);
     }
     else {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        paintArrow(g2, button);
-      }
-      finally {
-        g2.dispose();
-      }
+      PaintUtil.useCopy(g, g2 -> paintArrow(g2, button));
     }
   }
 

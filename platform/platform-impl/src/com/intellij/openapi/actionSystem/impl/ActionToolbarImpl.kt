@@ -71,6 +71,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale.addUserScaleChangeListener
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.switcher.QuickActionProvider
@@ -886,7 +887,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     val size = comp.size
     if (size.width < 1 || size.height < 1) return null
     val image = UIUtil.createImage(comp, size.width, size.height, BufferedImage.TYPE_INT_ARGB)
-    UIUtil.useSafely(image.graphics) { comp.paint(it) }
+    image.graphics.useCopy { comp.paint(it) }
     return image
   }
 

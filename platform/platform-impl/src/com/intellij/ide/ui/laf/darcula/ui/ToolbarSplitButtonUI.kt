@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.impl.TOOLBAR_SPLIT_BUTTON_SEPARATOR_WIDTH as SEPA
 import com.intellij.openapi.wm.impl.ToolbarSplitButton
 import com.intellij.ui.ClickListener
 import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Point
 import java.awt.Rectangle
@@ -119,8 +119,7 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
     JBInsets.removeFrom(paintRect, button.leftPartMargin.getTopBottom())
     paintRect.cutLeft(c.leftPartMargin.left)
     val maxTextWidth = calcMaxTextWidth(button, innerRect)
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.clip(paintRect)
       GraphicsUtil.setupAAPainting(g2)
 
@@ -158,9 +157,6 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
       paintRect.cutLeft(button.rightPartMargin.left)
       JBInsets.removeFrom(paintRect, button.rightPartMargin.getTopBottom())
       paintIcons(listOf(AllIcons.General.ChevronDown), button, g2, paintRect)
-    }
-    finally {
-      g2.dispose()
     }
   }
 
@@ -231,11 +227,10 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
   }
 
   private fun paintBackground(g: Graphics, button: ToolbarSplitButton) {
-    val g2 = g.create() as Graphics2D
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+    g.useCopy { g2 ->
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
 
-    try {
       if (button.isOpaque) {
         g2.color = button.background
         val bounds = g2.clipBounds
@@ -256,9 +251,6 @@ class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
         val arc = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().float
         DarculaNewUIUtil.drawRoundedRectangle(g2, rect, JBUI.CurrentTheme.Focus.focusColor(), arc, DarculaUIUtil.BW.float)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

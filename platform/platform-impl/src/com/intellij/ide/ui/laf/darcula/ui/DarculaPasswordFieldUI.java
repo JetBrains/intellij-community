@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DrawUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +18,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
@@ -104,11 +104,9 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
         g.fillRect(0, 0, component.getWidth(), component.getHeight());
       }
 
-      Graphics2D g2 = (Graphics2D)g.create();
       Rectangle r = new Rectangle(component.getSize());
       JBInsets.removeFrom(r, JBUI.insets(1));
-
-      try {
+      PaintUtil.useCopy(g, g2 -> {
         DrawUtil.setupRenderingHints(g2);
         g2.translate(r.x, r.y);
 
@@ -119,10 +117,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
         }
 
         g2.fill(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2));
-      }
-      finally {
-        g2.dispose();
-      }
+      });
     }
   }
 

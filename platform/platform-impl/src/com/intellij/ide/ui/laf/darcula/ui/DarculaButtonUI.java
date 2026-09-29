@@ -17,6 +17,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
@@ -183,8 +184,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
 
     InternalUICustomization service = InternalUICustomization.getInstance();
-    Graphics2D g2 = (Graphics2D) ((service != null) ? service.transformButtonGraphics(g.create()) : g.create()) ;
-    try {
+    PaintUtil.use((Graphics2D)((service != null) ? service.transformButtonGraphics(g.create()) : g.create()), g2 -> {
       DrawUtil.setupRenderingHints(g2);
 
       g2.translate(r.x, r.y);
@@ -215,10 +215,7 @@ public class DarculaButtonUI extends BasicButtonUI {
         g2.setPaint(paint);
         g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
     return true;
   }
 

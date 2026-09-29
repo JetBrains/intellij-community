@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
@@ -95,12 +96,8 @@ fun copyIcon(icon: Icon, ancestor: Component?, deepCopy: Boolean): Icon {
   }
 
   val image = ImageUtil.createImage(ancestor?.graphicsConfiguration, icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
-  val g = image.createGraphics()
-  try {
+  image.createGraphics().use { g ->
     icon.paintIcon(ancestor, g, 0, 0)
-  }
-  finally {
-    g.dispose()
   }
 
   return object : JBImageIcon(image) {

@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.WeakFocusStackManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -120,8 +121,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-
-import static com.intellij.util.ui.UIUtil.useSafely;
 
 public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
   private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
@@ -1980,7 +1979,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
       BufferedImage image = ImageUtil.createImage(g, getWidth(), getHeight(),
                                                   BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-      useSafely(image.createGraphics(), imageGraphics -> {
+      PaintUtil.useCopy(image.createGraphics(), imageGraphics -> {
         //noinspection UseJBColor
         imageGraphics.setPaint(new Color(myFillColor.getRGB())); // create a copy to remove alpha
         imageGraphics.fillRect(0, 0, getWidth(), getHeight());
@@ -2101,7 +2100,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       if (myImage != null) return;
 
       myImage = UIUtil.createImage(component, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      useSafely(myImage.getGraphics(), imageGraphics -> {
+      PaintUtil.useCopy(myImage.getGraphics(), imageGraphics -> {
         myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
         paintChildrenImpl(imageGraphics);
       });

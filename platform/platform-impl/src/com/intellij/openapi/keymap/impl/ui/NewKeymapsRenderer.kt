@@ -2,9 +2,9 @@
 package com.intellij.openapi.keymap.impl.ui
 
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -85,7 +85,7 @@ internal class NewKeymapsRenderer(private val actionsTree: ActionsTree) : Action
 
     val squeezedShortcutTextList = ShortcutTextList(data.rendererHelper.shortcuts, data.rendererHelper.abbreviations, tree, maxShortcutWidth)
 
-    UIUtil.useSafely(g) {
+    g.useCopy {
       it.clipRect(0, 0, width - extraGaps() - squeezedShortcutTextList.getWidth(), height)
       super.doPaint(it)
     }

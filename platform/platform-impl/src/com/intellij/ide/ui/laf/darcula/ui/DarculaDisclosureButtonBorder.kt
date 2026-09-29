@@ -5,11 +5,11 @@ import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ui.DrawUtil
 import com.intellij.ui.components.DisclosureButton
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.border.Border
@@ -23,9 +23,7 @@ class DarculaDisclosureButtonBorder : Border, UIResource {
       return
     }
 
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       DrawUtil.setupRenderingHints(g2)
 
       val r = Rectangle(x, y, width, height)
@@ -34,9 +32,6 @@ class DarculaDisclosureButtonBorder : Border, UIResource {
       if (c.hasFocus()) {
         DarculaNewUIUtil.paintComponentBorder(g2, r, DarculaUIUtil.Outline.focus, true, true, arc = c.arc.toFloat())
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

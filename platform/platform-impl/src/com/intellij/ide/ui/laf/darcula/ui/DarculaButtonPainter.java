@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -55,9 +56,7 @@ public class DarculaButtonPainter implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     InternalUICustomization service = InternalUICustomization.getInstance();
-    Graphics2D g2 = (Graphics2D) ((service != null) ? service.transformButtonGraphics(g.create()) : g.create()) ;
-
-    try {
+    PaintUtil.use((Graphics2D)((service != null) ? service.transformButtonGraphics(g.create()) : g.create()), g2 -> {
       Object avoidExtendingObject = ClientProperty.get(c, AVOID_EXTENDING_BORDER_GRAPHICS);
       g2.setRenderingHint(IdeBackgroundUtil.NO_BACKGROUND_HINT, avoidExtendingObject != null && avoidExtendingObject.equals(Boolean.TRUE));
       DrawUtil.setupRenderingHints(g2);
@@ -123,10 +122,7 @@ public class DarculaButtonPainter implements Border, UIResource {
 
         g2.fill(border);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   public Paint getBorderPaint(Component button) {

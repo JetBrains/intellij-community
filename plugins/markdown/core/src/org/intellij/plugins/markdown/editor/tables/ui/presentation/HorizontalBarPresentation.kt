@@ -22,13 +22,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.selectColumn
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
-import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.useCopy
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow

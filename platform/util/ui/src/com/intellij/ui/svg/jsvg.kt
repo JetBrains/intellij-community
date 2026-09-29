@@ -3,6 +3,7 @@ package com.intellij.ui.svg
 
 import com.github.weisj.jsvg.attributes.font.SVGFont
 import com.github.weisj.jsvg.view.ViewBox
+import com.intellij.ui.paint.use
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 
@@ -53,15 +54,11 @@ internal inline fun <T> withSvgSize(document: ParsedSvgDocument, baseWidth: Floa
 internal fun renderSvgWithSize(document: ParsedSvgDocument, width: Float, height: Float): BufferedImage {
   @Suppress("UndesirableClassUsage")
   val result = BufferedImage((width + 0.5f).toInt(), (height + 0.5f).toInt(), BufferedImage.TYPE_INT_ARGB)
-  val g = result.createGraphics()
-  try {
+  result.createGraphics().use { g ->
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
     document.document.render(null, g, ViewBox(width, height))
-  }
-  finally {
-    g.dispose()
   }
   return result
 }

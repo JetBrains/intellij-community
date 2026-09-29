@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -73,8 +74,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
       paintCellEditorBorder((Graphics2D)g, c, r, hasFocus);
     }
     else {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
+      PaintUtil.useCopy(g, g2 -> {
         DrawUtil.setupRenderingHints(g2);
 
         if (c.isOpaque()) {
@@ -108,10 +108,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
           g2.setColor(getOutlineColor(editorTextField.isEnabled(), hasFocus));
           g2.fill(border);
         }
-      }
-      finally {
-        g2.dispose();
-      }
+      });
     }
   }
 

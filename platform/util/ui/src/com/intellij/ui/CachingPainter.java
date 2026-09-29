@@ -44,7 +44,7 @@ public final class CachingPainter {
     float scale = JBUIScale.sysScale(config);
     if ((int) scale != scale || config == null) {
       // fractional-scale setups are not supported currently
-      paintAndDispose((Graphics2D)g.create(), _g -> {
+      PaintUtil.useCopy(g, _g -> {
         _g.setComposite(AlphaComposite.SrcOver);
         _g.translate(x, y);
         painter.accept(_g);
@@ -66,12 +66,12 @@ public final class CachingPainter {
     if (validationResult != VolatileImage.IMAGE_OK) {
       // We cannot perform antialiased rendering onto volatile image using Src composite, so we draw to a buffered image first.
       BufferedImage bi = new HiDPIImage(config, widthInt, heightInt, BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
-      paintAndDispose(bi.createGraphics(), _g -> {
+      PaintUtil.use(bi.createGraphics(), _g -> {
         _g.setComposite(AlphaComposite.Src);
         _g.translate(x - xInt, y - yInt);
         painter.accept(_g);
       });
-      paintAndDispose(painting.image.createGraphics(), _g -> {
+      PaintUtil.use(painting.image.createGraphics(), _g -> {
         _g.setComposite(AlphaComposite.Src);
         StartupUiUtil.drawImage(_g, bi, 0, 0, null);
       });
@@ -82,15 +82,6 @@ public final class CachingPainter {
     g.setComposite(savedComposite);
     // We don't check whether volatile image's content was lost at this point,
     // because we cannot repeat painting over the initial graphics reliably anyway (without restoring its initial contents first).
-  }
-
-  private static void paintAndDispose(Graphics2D g, Consumer<? super Graphics2D> painter) {
-    try {
-      painter.accept(g);
-    }
-    finally {
-      g.dispose();
-    }
   }
 
   private static final class CachedPainting {

@@ -37,6 +37,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
@@ -714,7 +715,7 @@ public final class ActionsTree {
         RectanglePainter.FILL.paint(g, 0, getHeight() / 2, getWidth(), 1, null);
       }
       else if (myHaveLink) {
-        UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), super::doPaint);
+        PaintUtil.use((Graphics2D)g.create(0, 0, myLinkOffset, g.getClipBounds().height), super::doPaint);
 
         g.translate(myLinkOffset, 0);
         myLink.setSize(myLink.getWidth(), getHeight());

@@ -3,6 +3,7 @@ package com.intellij.ui.svg
 
 import com.github.weisj.jsvg.view.ViewBox
 import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -98,13 +99,9 @@ class JSvgDocument private constructor(
       BufferedImage.TYPE_INT_ARGB,
       PaintUtil.RoundingMode.ROUND,
     )
-    val g = image.createGraphics()
-    try {
+    image.createGraphics().use { g ->
       ImageUtil.applyQualityRenderingHints(g)
       parsed.document.render(null, g, ViewBox(width, height))
-    }
-    finally {
-      g.dispose()
     }
     return image
   }

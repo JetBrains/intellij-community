@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
@@ -30,7 +31,6 @@ import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearHalfOvalOverEditor
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
-import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.useCopy
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.jetbrains.annotations.VisibleForTesting

@@ -3295,6 +3295,8 @@ f:com.intellij.ui.paint.PaintUtil
 - s:isFractionalScale(java.awt.geom.AffineTransform):Z
 - s:negate(java.awt.geom.Point2D):java.awt.geom.Point2D
 - s:paintWithAA(java.awt.Graphics2D,java.lang.Object,java.lang.Runnable):V
+- s:use(java.awt.Graphics,java.util.function.Consumer):V
+- s:useCopy(java.awt.Graphics,java.util.function.Consumer):V
 e:com.intellij.ui.paint.PaintUtil$ParityMode
 - java.lang.Enum
 - sf:EVEN:com.intellij.ui.paint.PaintUtil$ParityMode
@@ -3315,7 +3317,8 @@ e:com.intellij.ui.paint.PaintUtil$RoundingMode
 - s:values():com.intellij.ui.paint.PaintUtil$RoundingMode[]
 f:com.intellij.ui.paint.PaintUtilKt
 - sf:alignToInt(java.awt.Graphics):V
-- sf:use(java.awt.Graphics,kotlin.jvm.functions.Function1):java.lang.Object
+- bsf:use(java.awt.Graphics,kotlin.jvm.functions.Function1):java.lang.Object
+- bsf:useCopy(java.awt.Graphics,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:withTxAndClipAligned(java.awt.Graphics,I,I,I,I,kotlin.jvm.functions.Function1):V
 e:com.intellij.ui.paint.RectanglePainter
 - java.lang.Enum

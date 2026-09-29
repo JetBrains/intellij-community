@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.ui.DrawUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -81,8 +82,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
   protected void paintNormalBorder(@NotNull Graphics2D g, @NotNull JComponent c, @NotNull Rectangle r) {
     boolean focused = isFocused(c);
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       DrawUtil.setupRenderingHints(g2);
 
       JBInsets.removeFrom(r, paddings());
@@ -109,10 +109,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         g2.setColor(getOutlineColor(c.isEnabled() && editable, focused));
         g2.fill(border);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   @ApiStatus.Internal
@@ -128,8 +125,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
                                             boolean fillBackground,
                                             boolean enabled,
                                             boolean customFocusBorder) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       DrawUtil.setupRenderingHints(g2);
 
       JBInsets.removeFrom(r, JBUI.insets(1));
@@ -166,10 +162,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         g2.setColor(DarculaUIUtil.getOutlineColor(enabled, c.hasFocus()));
         g2.fill(path);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   protected boolean isFocused(Component c) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.ui.paint.use
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.io.mvstore.createOrResetMvStore
@@ -247,9 +248,9 @@ private fun writeImage(image: BufferedImage): ByteArray {
     else -> {
       @Suppress("UndesirableClassUsage")
       val convertedImage = BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR)
-      val g = convertedImage.createGraphics()
-      g.drawImage(image, 0, 0, null)
-      g.dispose()
+      convertedImage.createGraphics().use { g ->
+        g.drawImage(image, 0, 0, null)
+      }
       return SunWritableRaster.stealData(convertedImage.raster.dataBuffer as DataBufferByte, 0)
     }
   }

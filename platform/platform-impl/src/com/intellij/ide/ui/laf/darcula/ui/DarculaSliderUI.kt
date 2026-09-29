@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -30,9 +31,8 @@ class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   private val theme = DarculaSliderUIThemes()
 
   override fun paintThumb(g: Graphics) {
-    val g2d = g.create() as Graphics2D
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    try {
+    g.useCopy { g2d ->
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       val path = if (slider.orientation == SwingConstants.HORIZONTAL) {
         val x1 = thumbRect.x + theme.focusBorderThickness
         val x2 = x1 + thumbRect.width - (theme.focusBorderThickness * 2)
@@ -73,9 +73,6 @@ class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
 
       g2d.stroke = BasicStroke(theme.borderThickness.toFloat())
       g2d.draw(path)
-    }
-    finally {
-      g2d.dispose()
     }
   }
 
@@ -150,10 +147,9 @@ class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   }
 
   override fun paintTrack(g: Graphics) {
-    val g2d = g.create() as Graphics2D
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2d.paint = if (slider.isEnabled) theme.trackColor else theme.disabledTrackColor
-    try {
+    g.useCopy { g2d ->
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2d.paint = if (slider.isEnabled) theme.trackColor else theme.disabledTrackColor
       if (slider.orientation == SwingConstants.HORIZONTAL) {
         val y = thumbRect.y + theme.focusBorderThickness + theme.thumbOverhang - theme.trackThickness
         LinePainter2D.paint(g2d, trackRect.getX(), y.toDouble(), trackRect.maxX, y.toDouble(),
@@ -165,9 +161,6 @@ class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
         LinePainter2D.paint(g2d, x.toDouble(), trackRect.y.toDouble(), x.toDouble(), trackRect.maxY, LinePainter2D.StrokeType.INSIDE,
                             theme.trackThickness.toDouble())
       }
-    }
-    finally {
-      g2d.dispose()
     }
   }
 

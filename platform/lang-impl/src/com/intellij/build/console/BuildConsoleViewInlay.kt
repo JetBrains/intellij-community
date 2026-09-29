@@ -16,6 +16,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -151,16 +152,6 @@ internal object BuildConsoleViewInlay {
         GraphicsUtil.setupRoundedBorderAntialiasing(graphics)
         graphics.color = background
         graphics.fillRoundRect(0, 0, width, height, arcWidth, arcHeight)
-      }
-    }
-
-    private inline fun <reified G : Graphics, T> G.useCopy(block: (G) -> T): T {
-      val local = create() as G
-      try {
-        return block(local)
-      }
-      finally {
-        local.dispose()
       }
     }
   }

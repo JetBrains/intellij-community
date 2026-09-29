@@ -61,6 +61,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -830,7 +831,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
           Rectangle r = new Rectangle(x, y, width, height);
           JBInsets.removeFrom(r, SEARCH_FIELD_EMPTY_INSETS);
           JComponent unwrappedComponent = c instanceof SearchTextArea area ? area.getTextArea() : (JComponent)c;
-          UIUtil.useSafely(g, g2 -> {
+          PaintUtil.useCopy(g, g2 -> {
             var arc = COMPONENT_ARC.getFloat();
             if (JBColor.isBright()) {
               DarculaNewUIUtil.INSTANCE.fillInsideComponentBorder(g2, r, UIUtil.getTextFieldBackground(), arc);

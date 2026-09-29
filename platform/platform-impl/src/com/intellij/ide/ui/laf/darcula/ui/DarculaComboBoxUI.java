@@ -24,6 +24,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -303,9 +304,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       @Override
       public void paint(Graphics g) {
-        Graphics2D g2 = (Graphics2D)g.create();
-
-        try {
+        PaintUtil.useCopy(g, g2 -> {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
           Rectangle r = getArrowButtonRect(this);
@@ -338,10 +337,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           g2.translate(-r.x, -r.y + JBUI.scale(1));
           paintArrow(g2, this);
-        }
-        finally {
-          g2.dispose();
-        }
+        });
       }
 
       @Override
@@ -418,13 +414,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
 
-    Graphics2D g2 = (Graphics2D)g.create();
-
-    if (comboBox.getBorder() instanceof DarculaComboBoxBorder comboBoxBorder && isNewBorderSupported(comboBox)) {
-      comboBoxBorder.paintComboBoxBackground(g2, comboBox, getBackgroundColor());
-    }
-    else {
-      try {
+    PaintUtil.useCopy(g, g2 -> {
+      if (comboBox.getBorder() instanceof DarculaComboBoxBorder comboBoxBorder && isNewBorderSupported(comboBox)) {
+        comboBoxBorder.paintComboBoxBackground(g2, comboBox, getBackgroundColor());
+      }
+      else {
         Rectangle r = new Rectangle(c.getSize());
         JBInsets.removeFrom(r, myBorderCompensation);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -436,10 +430,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         g2.setColor(getBackgroundColor());
         g2.fill(getOuterShape(r, bw, myArc));
       }
-      finally {
-        g2.dispose();
-      }
-    }
+    });
 
     if (!comboBox.isEditable()) {
       paintCurrentValue(g, rectangleForCurrentValue(), hasFocus);
@@ -633,11 +624,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof JComponent)) return;
 
-    Graphics2D g2 = (Graphics2D)g.create();
     float bw = BW.getFloat();
     Rectangle r = new Rectangle(x, y, width, height);
-
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       checkFocus();
       if (!DarculaUIUtil.isTableCellEditor(c)) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -663,10 +652,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       else {
         paintCellEditorBorder(g2, c, r, hasFocus);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   /**

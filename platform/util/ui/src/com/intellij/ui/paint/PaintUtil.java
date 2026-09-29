@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JRootPane;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
@@ -24,6 +25,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.LinkedList;
+import java.util.function.Consumer;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.CEIL;
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
@@ -516,5 +518,24 @@ public final class PaintUtil {
     }
     int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + 3);
     return StringUtil.trimMiddle(adjustedText, adjustedWidth);
+  }
+
+  /**
+   * Java-friendly variant of {@code PaintUtilKt.use}
+   */
+  public static <G extends Graphics> void use(@NotNull G g, @NotNull Consumer<? super G> block) {
+    try {
+      block.accept(g);
+    }
+    finally {
+      g.dispose();
+    }
+  }
+
+  /**
+   * Java-friendly variant of {@code PaintUtilKt.useCopy}
+   */
+  public static void useCopy(@NotNull Graphics g, @NotNull Consumer<? super Graphics2D> block) {
+    use((Graphics2D)g.create(), block);
   }
 }

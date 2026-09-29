@@ -66,8 +66,6 @@ import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.util.ui.UIUtil.useSafely;
-
 /**
  * @author Pavel Fatin
  */
@@ -275,7 +273,7 @@ public final class ImmediatePainter {
 
     createOrUpdateImageBuffer(myEditor.getComponent(), graphics, bounds.getSize());
 
-    useSafely(myImage.getGraphics(), imageGraphics -> {
+    PaintUtil.useCopy(myImage.getGraphics(), imageGraphics -> {
       imageGraphics.translate(-bounds.x, -bounds.y);
       painter.accept(imageGraphics);
     });

@@ -5,6 +5,7 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
@@ -81,11 +81,9 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       return;
     }
 
-    Graphics2D g2 = (Graphics2D)g.create();
     Rectangle r = new Rectangle(component.getSize());
     JBInsets.removeFrom(r, paddings());
-
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       var darculaTextBorderNew = getDarculaTextBorderNew(component);
       if (darculaTextBorderNew != null) {
         darculaTextBorderNew.paintTextBackground(g2, component, component.getBackground());
@@ -101,10 +99,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
       g2.setColor(component.getBackground());
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   @Override

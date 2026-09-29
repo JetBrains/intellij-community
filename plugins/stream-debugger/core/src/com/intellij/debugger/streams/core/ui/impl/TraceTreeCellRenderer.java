@@ -7,6 +7,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -26,7 +27,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.util.ui.UIUtil.useSafely;
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
 /**
@@ -108,7 +108,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
   @Override
   protected void doPaint(Graphics2D g) {
     if (myHaveLink) {
-      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), textGraphics -> super.doPaint(textGraphics));
+      PaintUtil.use((Graphics2D)g.create(0, 0, myLinkOffset, g.getClipBounds().height), textGraphics -> super.doPaint(textGraphics));
       g.translate(myLinkOffset, 0);
       myLink.setHeight(getHeight());
       myLink.doPaint(g);

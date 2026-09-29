@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ErrorBorderCapable
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -71,13 +72,9 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
     val r = Rectangle(comboBox.size)
     when (getType(comboBox)) {
       Type.EMBEDDED -> {
-        val g2 = g.create() as Graphics2D
-        try {
+        g.useCopy { g2 ->
           g2.color = color
           g2.fillRect(r.x, r.y, r.width, r.height)
-        }
-        finally {
-          g2.dispose()
         }
       }
       else -> {
@@ -90,9 +87,7 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
   private fun paintBorderImpl(comboBox: JComboBox<*>, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val focused = DarculaComboBoxUI.hasComboBoxFocus(comboBox)
     val r = Rectangle(x, y, width, height)
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       when (getType(comboBox)) {
         Type.TABLE_CELL_EDITOR, Type.EMBEDDED -> {
           DarculaUIUtil.paintCellEditorBorder(g2, comboBox, r, focused)
@@ -104,9 +99,6 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
           paintNormalBorder(g2, comboBox, r, focused)
         }
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBFont
@@ -82,7 +83,7 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : 
     val verticalOffset = JBUIScale.scale(if (UISettings.getInstance().compactMode) 1 else 2)
     val leftStripeVerticalOffset = JBUIScale.scale(1)
 
-    UIUtil.useSafely(g!!) { g2 ->
+    g!!.useCopy { g2 ->
       g2.color = getForegroundColor()
       g2.font = f
       UISettings.setupAntialiasing(g2)

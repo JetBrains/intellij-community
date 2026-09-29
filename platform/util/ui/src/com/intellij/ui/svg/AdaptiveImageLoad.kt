@@ -5,6 +5,7 @@ import com.github.weisj.jsvg.view.ViewBox
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.paint.use
 import org.jetbrains.annotations.ApiStatus
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
@@ -138,15 +139,11 @@ fun rasterizeSVGImage(config: SVGRasterizationConfig): RasterizedVectorImage {
     BufferedImage.TYPE_INT_ARGB,
     PaintUtil.RoundingMode.FLOOR,
   )
-  val g = image.createUnscaledGraphics()
-  try {
+  image.createUnscaledGraphics().use { g ->
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
     config.svgImage.parsed.document.render(null, g, ViewBox(image.width.toFloat(), image.height.toFloat()))
-  }
-  finally {
-    g.dispose()
   }
   return RasterizedVectorImage(image)
 }

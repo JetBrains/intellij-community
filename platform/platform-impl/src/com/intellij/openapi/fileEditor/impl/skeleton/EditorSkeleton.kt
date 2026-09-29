@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonCol
 import com.intellij.openapi.fileEditor.impl.skeleton.rendering.EditorSkeletonRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.ui.paint.use
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBDimension
@@ -65,7 +65,7 @@ class EditorSkeleton(
 
   fun paintFrame(g: Graphics2D, width: Int, height: Int, scale: Float = JBUIScale.scale(1f)) {
     val colors = colorManager.frameColors()
-    (g.create() as Graphics2D).use { graphics ->
+    g.useCopy { graphics ->
       graphics.composite = AlphaComposite.Src
       graphics.color = colors.background
       graphics.fillRect(0, 0, width, height)

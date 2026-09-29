@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.impl.TextCutStrategy;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -142,10 +143,9 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     List<Icon> rightIcons = combo.getRightIcons();
 
     Rectangle innerArea = SwingUtilities.calculateInnerArea(c, null);
-    Graphics2D g2 = (Graphics2D)g.create(innerArea.x, innerArea.y, innerArea.width, innerArea.height);
     Rectangle paintRect = new Rectangle(0, 0, innerArea.width, innerArea.height);
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
-    try {
+    PaintUtil.use((Graphics2D)g.create(innerArea.x, innerArea.y, innerArea.width, innerArea.height), g2 -> {
       GraphicsUtil.setupAAPainting(g2);
       boolean skipNextGap = false;
       if (!leftIcons.isEmpty()) {
@@ -182,10 +182,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
         if (!skipNextGap) doClip(paintRect, getGapBeforeExpandIcon());
         paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   @Override
@@ -210,11 +207,10 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
   }
 
   private void paintBackground(Graphics g, ToolbarComboWidget c) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+    PaintUtil.useCopy(g, g2 -> {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    try {
       if (c.isOpaque()) {
         g2.setColor(c.getBackground());
         Rectangle bounds = g2.getClipBounds();
@@ -238,10 +234,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
           g2.fillRoundRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height, arc, arc);
         }
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   private void drawText(JComponent c, @NotNull String fullText, Graphics2D g, Rectangle textBounds) {

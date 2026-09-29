@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.progress.util.ProgressBarUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -68,8 +69,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   @Override
   protected void paintIndeterminate(Graphics g, JComponent c) {
 
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
@@ -155,10 +155,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
           paintString((Graphics2D)g, i.left, i.top, r.width, r.height, boxRect.y, boxRect.height);
         }
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   protected Color getStartColor(JComponent c) {
@@ -199,8 +196,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
   @Override
   protected void paintDeterminate(Graphics g, JComponent c) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
@@ -257,10 +253,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       if (progressBar.isStringPainted()) {
         paintString(g, i.left, i.top, r.width, r.height, amountFull, i);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   protected Color getRemainderColor() {

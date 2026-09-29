@@ -8,6 +8,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
@@ -216,9 +217,8 @@ public final class DarculaUIUtil {
     return -1;
   }
 
-  public static void paintCellEditorBorder(Graphics2D g2, Component c, Rectangle r, boolean hasFocus) {
-    g2 = (Graphics2D)g2.create();
-    try {
+  public static void paintCellEditorBorder(Graphics2D g, Component c, Rectangle r, boolean hasFocus) {
+    PaintUtil.useCopy(g, g2 -> {
       DrawUtil.setupRenderingHints(g2);
 
       float bw = CELL_EDITOR_BW.getFloat();
@@ -233,10 +233,7 @@ public final class DarculaUIUtil {
         outline.setGraphicsColor(g2, true);
         g2.fill(border);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   public static final class MouseHoverPropertyTrigger extends MouseAdapter {

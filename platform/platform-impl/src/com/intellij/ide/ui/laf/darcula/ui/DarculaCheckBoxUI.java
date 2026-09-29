@@ -6,6 +6,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.EmptyIcon;
@@ -111,8 +112,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
 
       DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(b);
@@ -143,10 +143,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
         DrawUtil.setupRenderingHints(g2);
         g2.fill(outline);
       }
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   protected int getMnemonicIndex(AbstractButton b) {

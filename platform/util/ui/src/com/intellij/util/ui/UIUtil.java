@@ -34,6 +34,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -3041,7 +3042,10 @@ public final class UIUtil {
    *
    * @param originGraphics  graphics to work with
    * @param drawingConsumer you can use the Graphics2D object here safely
+   *
+   * @deprecated Use {@link PaintUtil#useCopy(Graphics, java.util.function.Consumer)} instead
    */
+  @Deprecated
   public static void useSafely(@NotNull Graphics originGraphics, @NotNull Consumer<? super Graphics2D> drawingConsumer) {
     Graphics2D graphics = (Graphics2D)originGraphics.create();
     try {

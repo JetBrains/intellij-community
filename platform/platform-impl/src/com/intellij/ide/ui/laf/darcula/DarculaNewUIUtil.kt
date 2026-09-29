@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula
 
 import com.intellij.ui.DrawUtil
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -20,9 +21,7 @@ object DarculaNewUIUtil {
    */
   fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean,
                            bw: Int = DarculaUIUtil.BW.get(), arc: Float = DarculaUIUtil.COMPONENT_ARC.float) {
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       DrawUtil.setupRenderingHints(g2)
 
       val lw = DarculaUIUtil.LW.get()
@@ -44,22 +43,14 @@ object DarculaNewUIUtil {
         }
       }
     }
-    finally {
-      g2.dispose()
-    }
   }
 
   fun drawRoundedComponentRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       DrawUtil.setupRenderingHints(g2)
 
       g2.color = color
       paintComponentRectangle(g2, rect, arc, thick)
-    }
-    finally {
-      g2.dispose()
     }
   }
 
@@ -78,9 +69,7 @@ object DarculaNewUIUtil {
       return
     }
 
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       DrawUtil.setupRenderingHints(g2)
 
       val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
@@ -90,22 +79,14 @@ object DarculaNewUIUtil {
       g2.color = color
       g2.fill(border)
     }
-    finally {
-      g2.dispose()
-    }
   }
 
   fun drawRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Float) {
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       DrawUtil.setupRenderingHints(g2)
 
       g2.color = color
       paintRectangleImpl(g2, rect, arc, thick)
-    }
-    finally {
-      g2.dispose()
     }
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.fakeComponent
 import com.intellij.ui.Gray
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
@@ -142,15 +143,15 @@ private fun renderFilteredIcon(icon: Icon,
                                ancestor: Component?): JBImageIcon {
   @Suppress("UndesirableClassUsage")
   val image = BufferedImage((scale * icon.iconWidth).toInt(), (scale * icon.iconHeight).toInt(), BufferedImage.TYPE_INT_ARGB)
-  val graphics = image.createGraphics()
-  graphics.color = Gray.TRANSPARENT
-  graphics.fillRect(0, 0, icon.iconWidth, icon.iconHeight)
-  graphics.scale(scale, scale)
-  // We want to paint here on the fake component:
-  // painting on the real component will have other coordinates at least.
-  // Also, it may be significant if the icon contains updatable icon (e.g., DeferredIcon), and it will schedule incorrect repaint
-  icon.paintIcon(fakeComponent, graphics, 0, 0)
-  graphics.dispose()
+  image.createGraphics().use { graphics ->
+    graphics.color = Gray.TRANSPARENT
+    graphics.fillRect(0, 0, icon.iconWidth, icon.iconHeight)
+    graphics.scale(scale, scale)
+    // We want to paint here on the fake component:
+    // painting on the real component will have other coordinates at least.
+    // Also, it may be significant if the icon contains updatable icon (e.g., DeferredIcon), and it will schedule incorrect repaint
+    icon.paintIcon(fakeComponent, graphics, 0, 0)
+  }
 
   var img = Toolkit.getDefaultToolkit().createImage(FilteredImageSource(image.source, filterSupplier.getFilter()))
   if (StartupUiUtil.isJreHiDPI(ancestor)) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ClickListener
 import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -21,7 +22,6 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.event.FocusAdapter
@@ -99,8 +99,7 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     val paintRect = Rectangle(innerRect)
     JBInsets.removeFrom(paintRect, c.margin)
     val maxTextWidth = calcMaxTextWidth(combo, paintRect)
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.clip(paintRect)
       GraphicsUtil.setupAAPainting(g2)
       if (!leftIcons.isEmpty()) {
@@ -125,9 +124,6 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
         paintRect.cutLeft(BEFORE_CHEVRON_GAP)
         paintIcons(listOf(chevron), combo, g2, paintRect)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 
@@ -200,11 +196,10 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     get() = if (showChevron) AllIcons.General.ChevronDown else null
 
   private fun paintBackground(g: Graphics, combo: ToolbarComboButton) {
-    val g2 = g.create() as Graphics2D
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+    g.useCopy { g2 ->
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
 
-    try {
       if (combo.isOpaque) {
         g2.color = combo.background
         val bounds = g2.clipBounds
@@ -227,9 +222,6 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
         DarculaNewUIUtil.drawRoundedRectangle(g2, innerRect, JBUI.CurrentTheme.Focus.focusColor(),
                                               JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().float, DarculaUIUtil.BW.float)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

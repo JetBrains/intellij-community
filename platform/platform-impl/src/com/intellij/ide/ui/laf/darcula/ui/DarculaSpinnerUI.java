@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.DrawUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -21,7 +22,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.Rectangle;
@@ -112,11 +112,9 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    Graphics2D g2 = (Graphics2D)g.create();
     Rectangle r = new Rectangle(c.getSize());
     JBInsets.removeFrom(r, JBUI.insets(1));
-
-    try {
+    PaintUtil.useCopy(g, g2 -> {
       DrawUtil.setupRenderingHints(g2);
       g2.translate(r.x, r.y);
 
@@ -125,10 +123,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
       g2.setColor(getBackground());
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-    }
-    finally {
-      g2.dispose();
-    }
+    });
   }
 
   protected Color getBackground() {
@@ -242,8 +237,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
 
       @Override
       public void paintTriangle(Graphics g, int x, int y, int size, int direction, boolean isEnabled) {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
+        PaintUtil.useCopy(g, g2 -> {
           DrawUtil.setupRenderingHints(g2);
 
           float lw = LW.getFloat();
@@ -265,10 +259,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
           g2.translate(x, y);
           g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled));
           g2.fill(getArrowShape());
-        }
-        finally {
-          g2.dispose();
-        }
+        });
       }
 
       private Shape getInnerShape(float lw, float bw) {
