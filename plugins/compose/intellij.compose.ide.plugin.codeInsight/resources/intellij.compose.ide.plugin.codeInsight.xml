@@ -57,6 +57,7 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/IntelliJComposeColorSchemeDarcula.xml"/>
     <codeInsight.lineMarkerProvider language="kotlin"
                                     implementationClass="com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ComposeColorLineMarkerProviderDescriptor"/>
+    <lang.foldingBuilder language="kotlin" implementationClass="com.intellij.compose.ide.plugin.codeInsight.folding.ComposeFoldingBuilder"/>
     <codeInsight.unresolvedReferenceQuickFixProvider
       implementation="com.intellij.compose.ide.plugin.codeInsight.intentions.AddComposeRuntimeQuickFixProvider"/>
     <completion.contributor language="kotlin"

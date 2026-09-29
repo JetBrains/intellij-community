@@ -279,8 +279,6 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
-        "//android/android-plugin:plugin",
-        "//android/android-plugin:plugin_test_lib",
         "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
         "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin_test_lib",
     ],
