@@ -283,7 +283,7 @@ fn prepared_component_refuses_a_stale_tree_inventory() {
             let duplicate = fixture.remainder[3].clone();
             fixture.remainder.push(duplicate);
         }),
-        ("distribution scope of version 2", |fixture| {
+        ("the retired distribution scope", |fixture| {
             fixture.assets.push(json!({
                 "destination": "lib/jna", "producer": "independent", "artifact": "shared", "kind": "tree",
                 "classPath": false, "scope": "distribution",
@@ -301,8 +301,8 @@ fn prepared_component_refuses_a_stale_tree_inventory() {
     }
 }
 
-/// The packer writes only file and tree assets, and the remainder writes only plugin files. So the collector refuses a
-/// directory asset and a distribution-scope remainder asset.
+/// The packer writes only file and tree assets, and every asset is below the plugin directory. So the collector refuses
+/// a directory asset and an asset row that states the retired scope.
 #[cfg(unix)]
 #[test]
 fn prepared_component_refuses_the_asset_shapes_that_no_plan_file_has() {
@@ -317,15 +317,12 @@ fn prepared_component_refuses_the_asset_shapes_that_no_plan_file_has() {
     assert_no_outputs();
 
     let mut fixture = Prepared::new();
-    fixture.spec["version"] = json!(3);
     fixture.assets.push(json!({
         "destination": "lib/native/tool", "producer": "remainder", "classPath": false, "scope": "distribution",
     }));
-    fixture
-        .remainder
-        .push(file_entry(".distribution-root/lib/native/tool", 31, 17, 0o755));
+    fixture.remainder.push(file_entry("lib/native/tool", 31, 17, 0o755));
     fixture.write();
-    run_collector(&plugin_component_args()).assert_error("must be the native tree of a reused natives jar");
+    run_collector(&plugin_component_args()).assert_error("unknown field `scope`");
     assert_no_outputs();
 
     let mut fixture = Prepared::new();
@@ -438,61 +435,10 @@ fn prepared_component_uses_only_metadata() {
     }
 }
 
-/// A reused natives jar of version 3 places its tree for the platform of the component at the distribution root.
+/// A reused natives jar of version 2 places its tree for the platform of the component below the plugin directory.
 #[cfg(unix)]
 #[test]
 fn prepared_component_places_the_native_tree_of_a_reused_jar() {
-    let _directory = WorkDir::new();
-    let mut fixture = Prepared::new();
-    fixture.spec["version"] = json!(3);
-    fixture.spec["independent"][0]["nativeTree"] = json!({"source": "payload/jna/native", "metadata": "metadata/jna-native.json"});
-    fixture.assets.push(json!({
-        "destination": "lib/jna", "producer": "independent", "artifact": "shared", "kind": "tree",
-        "classPath": false, "scope": "distribution",
-    }));
-    write_inventory(
-        "metadata/jna-native.json",
-        &[
-            directory_entry("native", 0o755),
-            directory_entry("native/aarch64", 0o755),
-            file_entry("native/aarch64/libjnidispatch.jnilib", 41, 20, 0o644),
-        ],
-    );
-    fixture.write();
-    run_collector(&plugin_component_args()).assert_success();
-    let entries = manifest_entries("component.json");
-    let native = &entries["lib/jna/aarch64/libjnidispatch.jnilib"];
-    assert_eq!(native["source"], "payload/jna/native/aarch64/libjnidispatch.jnilib");
-    assert_eq!(native["hash"], 41);
-    assert_eq!(entries["lib/jna"]["type"], "directory");
-    assert_eq!(entries["lib/jna/aarch64"]["type"], "directory");
-
-    // A tree that no asset places is stale, and so is a tree that is not named `native`.
-    let mut unused = fixture.spec["independent"][0].clone();
-    unused["artifact"] = json!("other");
-    unused["source"] = json!("payload/other.jar");
-    unused["metadata"] = json!("metadata/other.json");
-    unused["relativePath"] = json!("other.jar");
-    unused["nativeTree"] = json!({"source": "payload/other/native", "metadata": "metadata/jna-native.json"});
-    write_inventory("metadata/other.json", &[file_entry("other.jar", 51, 10, 0o644)]);
-    let mut stale = Prepared {
-        spec: fixture.spec.clone(),
-        assets: fixture.assets.clone(),
-        remainder: fixture.remainder.clone(),
-    };
-    stale.spec["independent"].as_array_mut().unwrap().push(unused);
-    stale.assets.push(independent_asset("lib/other.jar", "other"));
-    stale.write();
-    run_collector(&plugin_component_args()).assert_error("1 unused native trees");
-    fixture.spec["independent"][0]["nativeTree"]["source"] = json!("payload/jna/other");
-    fixture.write();
-    run_collector(&plugin_component_args()).assert_error("is not named native");
-}
-
-/// A reused natives jar of version 2 places its tree of the plugin scope below the plugin directory.
-#[cfg(unix)]
-#[test]
-fn prepared_component_places_the_plugin_native_tree_of_a_reused_jar() {
     let _directory = WorkDir::new();
     let mut fixture = Prepared::new();
     fixture.spec["version"] = json!(2);
@@ -516,18 +462,41 @@ fn prepared_component_places_the_plugin_native_tree_of_a_reused_jar() {
     assert_eq!(native["hash"], 41);
     assert_eq!(entries["plugins/demo/lib/jna"]["type"], "directory");
     assert_eq!(entries["plugins/demo/lib/jna/aarch64"]["type"], "directory");
-    assert!(
-        !entries.contains_key("lib/jna"),
-        "the plugin native tree is at the distribution root"
-    );
+    assert!(!entries.contains_key("lib/jna"), "the native tree is at the distribution root");
 
-    // Version 3 requires a distribution asset, and version 1 has no tree.
-    fixture.spec["version"] = json!(3);
+    // The retired version 3 is unsupported, and version 1 has no tree.
+    let mut retired = Prepared {
+        spec: fixture.spec.clone(),
+        assets: fixture.assets.clone(),
+        remainder: fixture.remainder.clone(),
+    };
+    retired.spec["version"] = json!(3);
+    retired.write();
+    run_collector(&plugin_component_args()).assert_error("unsupported plugin component version: 3");
+    retired.spec["version"] = json!(1);
+    retired.write();
+    run_collector(&plugin_component_args()).assert_error(r#"tree "lib/jna" requires version 2,"#);
+
+    // A tree that no asset places is stale, and so is a tree that is not named `native`.
+    let mut unused = fixture.spec["independent"][0].clone();
+    unused["artifact"] = json!("other");
+    unused["source"] = json!("payload/other.jar");
+    unused["metadata"] = json!("metadata/other.json");
+    unused["relativePath"] = json!("other.jar");
+    unused["nativeTree"] = json!({"source": "payload/other/native", "metadata": "metadata/jna-native.json"});
+    write_inventory("metadata/other.json", &[file_entry("other.jar", 51, 10, 0o644)]);
+    let mut stale = Prepared {
+        spec: fixture.spec.clone(),
+        assets: fixture.assets.clone(),
+        remainder: fixture.remainder.clone(),
+    };
+    stale.spec["independent"].as_array_mut().unwrap().push(unused);
+    stale.assets.push(independent_asset("lib/other.jar", "other"));
+    stale.write();
+    run_collector(&plugin_component_args()).assert_error("1 unused native trees");
+    fixture.spec["independent"][0]["nativeTree"]["source"] = json!("payload/jna/other");
     fixture.write();
-    run_collector(&plugin_component_args()).assert_error("version 3 requires a distribution asset");
-    fixture.spec["version"] = json!(1);
-    fixture.write();
-    run_collector(&plugin_component_args()).assert_error(r#"tree "lib/jna" requires version 2 or 3"#);
+    run_collector(&plugin_component_args()).assert_error("is not named native");
 }
 
 #[cfg(unix)]

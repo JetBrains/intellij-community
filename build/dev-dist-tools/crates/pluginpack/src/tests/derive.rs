@@ -1,7 +1,7 @@
 //! The port of `kotlin_derivation_test.go`, and the `pluginpack.Plan` check of the Go `mustDerive` in
 //! `planfile_test.go`. The binary half of the Go derivation test is in `bins/plugin-remainder-packer/tests`.
 
-use planfile::contract::{Artifact, Catalogue, Library, Reference, SCOPED_VERSION, TREE_VERSION, VERSION};
+use planfile::contract::{Artifact, Catalogue, Library, Reference, TREE_VERSION, VERSION};
 
 use super::kotlin::{
     KotlinJarRecipe, KotlinJarSource, KotlinJarWriter, KotlinPlanAsset, KotlinPlanFile, KotlinPreparation, KotlinPreparedManifest,
@@ -223,11 +223,11 @@ fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
     )
 }
 
-/// The plan of the Go fixture of version 3 with a distribution-scope copy. The remainder writes only plugin files, so
-/// `planfile::derive` refuses it.
+/// The plan of the Go fixture of version 3 with a distribution-scope copy. The distribution scope is retired, so
+/// `planfile` refuses the `scope` key.
 fn distribution_scope_copy_plan() -> KotlinPlanFile {
     let plan = KotlinPlanFile {
-        version: SCOPED_VERSION,
+        version: 3,
         plugin: "scoped".to_owned(),
         assets: vec![
             KotlinPlanAsset {
@@ -296,7 +296,7 @@ fn plan_derivation_refuses_every_kotlin_preparer_fixture() {
         (
             "version 3 with a distribution-scope asset",
             distribution_scope_copy_plan(),
-            "only a reused native tree has the distribution scope",
+            "unknown field `scope`",
         ),
     ];
     for (name, plan, shape) in &refused {
@@ -355,7 +355,7 @@ fn library(id: &str, members: &[&str]) -> Library {
 #[test]
 fn every_planfile_derivation_plans() {
     const NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
-  {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false, "scope": "distribution"}"#;
+  {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false}"#;
     const RT_RECIPE: &str =
         r#"{"sources": [{"input": "demo.rt", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}"#;
     let main = r#"{"input": "demo.main", "kind": "module", "filter": "module-v1"}"#;
@@ -420,10 +420,10 @@ fn every_planfile_derivation_plans() {
             &[],
         ),
         (
-            "a native tree of the distribution scope",
-            plan_text(3, NATIVES, &[]),
+            "a native tree",
+            plan_text(2, NATIVES, &[]),
             catalogue(Vec::new()),
-            3,
+            2,
             &["demo.natives"],
         ),
         (

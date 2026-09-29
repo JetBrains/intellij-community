@@ -74,12 +74,8 @@ const FILTERED_JAR: &str = r#"{"destination": "lib/main.jar", "recipe": {"source
 const RT_RECIPE: &str =
     r#"{"sources": [{"input": "demo.rt", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}"#;
 
-/// A reused natives jar and its native tree of the distribution scope.
+/// A reused natives jar and its native tree next to the jar.
 const NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
-  {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false, "scope": "distribution"}"#;
-
-/// A reused natives jar and its native tree of the plugin scope.
-const PLUGIN_NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
   {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false}"#;
 
 fn derive_plan(text: &str, inputs: &Catalogue, version: u32, independent_modules: &[&str]) -> Result<Derivation, Error> {
@@ -189,11 +185,11 @@ fn transform(kind: LayoutTransformKind) -> LayoutTransform {
 #[test]
 fn read_expands_the_compact_forms() {
     let file = must_read_plan(&plan(
-        3,
+        2,
         r#"{"module": "demo.content"},
     {"destination": "lib/demo.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
     {"destination": "bin/tool", "inputs": ["native"], "mode": 493, "classPath": false},
-    {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false, "scope": "distribution"}"#,
+    {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false}"#,
         &[&format!(r#""operations": [{ENTRIES_OPERATION}]"#)],
     ));
     let content = module_jar_asset("demo.content");
@@ -202,8 +198,8 @@ fn read_expands_the_compact_forms() {
     assert_eq!(content.destination, "lib/modules/demo.content.jar");
     assert_eq!(content.inputs, ["demo.content"]);
     assert_eq!(
-        (content.mode, content.kind.as_str(), content.class_path, content.scope.as_str()),
-        (DEFAULT_MODE, "file", true, "plugin")
+        (content.mode, content.kind.as_str(), content.class_path),
+        (DEFAULT_MODE, "file", true)
     );
     assert_eq!(
         (writer.manifest, writer.merge_entities),
@@ -212,21 +208,15 @@ fn read_expands_the_compact_forms() {
 
     let demo = &file.assets[1];
     assert_eq!(demo.inputs, ["demo.main"], "the inputs of a recipe asset repeat its sources");
-    assert_eq!(
-        (demo.mode, demo.kind.as_str(), demo.class_path, demo.scope.as_str()),
-        (DEFAULT_MODE, "file", true, "plugin")
-    );
+    assert_eq!((demo.mode, demo.kind.as_str(), demo.class_path), (DEFAULT_MODE, "file", true));
 
     let tool = &file.assets[2];
     assert_eq!(tool.inputs, ["native"]);
-    assert_eq!(
-        (tool.mode, tool.class_path, tool.scope.as_str()),
-        (EXECUTABLE_MODE, false, "plugin")
-    );
+    assert_eq!((tool.mode, tool.class_path), (EXECUTABLE_MODE, false));
     assert!(tool.recipe.is_none());
 
     let native = &file.assets[3];
-    assert_eq!((native.kind.as_str(), native.scope.as_str()), ("tree", "distribution"));
+    assert_eq!((native.kind.as_str(), native.class_path), ("tree", false));
 
     let operation = &file.operations[0];
     assert_eq!(operation.kind, LAYOUT_ASSETS_KIND);
@@ -307,9 +297,14 @@ fn read_refuses_malformed_forms() {
             r#"has the kind "directory"; the packer writes only file and tree assets"#,
         ),
         (
-            "another scope",
-            asset(r#"{"destination": "bin/tool", "inputs": ["x"], "scope": "product"}"#),
-            r#"has the scope "product""#,
+            "the retired distribution scope",
+            asset(r#"{"destination": "bin/tool", "inputs": ["x"], "scope": "distribution"}"#),
+            "unknown field `scope`",
+        ),
+        (
+            "the plugin scope",
+            asset(r#"{"destination": "bin/tool", "inputs": ["x"], "scope": "plugin"}"#),
+            "unknown field `scope`",
         ),
         (
             "another mode",
@@ -525,7 +520,7 @@ fn read_treats_null_as_absent_for_an_optional_field() {
         1,
         r#"{"module": null, "destination": "bin/tool", "inputs": null,
       "recipe": {"sources": [{"input": "x", "kind": "module", "filter": "module-v1", "entry": null}], "writer": null},
-      "mode": null, "kind": null, "classPath": null, "scope": null},
+      "mode": null, "kind": null, "classPath": null},
     {"destination": "lib/y.jar", "recipe": {"sources": [{"input": "y", "kind": "module", "filter": "module-v1"}],
       "writer": {"manifest": null, "mergeEntities": null, "directoryEntries": null, "nativeLib": null}}}"#,
         &[
@@ -535,10 +530,7 @@ fn read_treats_null_as_absent_for_an_optional_field() {
     ));
     let tool = &file.assets[0];
     assert_eq!(tool.inputs, ["x"]);
-    assert_eq!(
-        (tool.mode, tool.kind.as_str(), tool.class_path, tool.scope.as_str()),
-        (DEFAULT_MODE, "file", true, "plugin")
-    );
+    assert_eq!((tool.mode, tool.kind.as_str(), tool.class_path), (DEFAULT_MODE, "file", true));
     assert_eq!(tool.recipe.as_ref().unwrap().writer, JarWriter::default());
     assert_eq!(file.assets[1].recipe.as_ref().unwrap().writer, JarWriter::default());
     let layout = &file.operations[0].layout_assets;
@@ -666,15 +658,8 @@ fn derive_requires_the_execution_version_of_the_assets() {
             &[][..],
         ),
         (
-            "a native tree of the distribution scope",
-            plan(3, NATIVES, &[]),
-            catalogue(Vec::new()),
-            3,
-            &["demo.natives"][..],
-        ),
-        (
-            "a native tree of the plugin scope",
-            plan(2, PLUGIN_NATIVES, &[]),
+            "a native tree",
+            plan(2, NATIVES, &[]),
             catalogue(Vec::new()),
             2,
             &["demo.natives"][..],
@@ -694,21 +679,13 @@ fn derive_requires_the_execution_version_of_the_assets() {
         ),
         "stale execution version",
     );
-
-    let derivation = must_derive(&plan(3, NATIVES, &[]), &catalogue(Vec::new()), 3, &["demo.natives"]);
-    assert_eq!(
-        derivation.assets,
-        [
-            row("lib/modules/demo.natives.jar", "independent", "demo.natives"),
-            contract::Asset {
-                scope: "distribution".to_owned(),
-                ..tree_row("lib/native", "independent", "demo.natives")
-            },
-        ]
+    // Version 3 is retired. A plan file of version 3 and a chain that declares it are stale.
+    expect_error(
+        derive_plan(&plan(3, NATIVES, &[]), &catalogue(Vec::new()), 3, &["demo.natives"]),
+        "stale execution version: file=3 declared=3 required=2",
     );
-    assert!(derivation.recipe.operations.is_empty(), "the remainder writes no distribution file");
 
-    let derivation = must_derive(&plan(2, PLUGIN_NATIVES, &[]), &catalogue(Vec::new()), 2, &["demo.natives"]);
+    let derivation = must_derive(&plan(2, NATIVES, &[]), &catalogue(Vec::new()), 2, &["demo.natives"]);
     assert_eq!(
         derivation.assets,
         [
@@ -1129,23 +1106,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             r#"preparation "filter" reads the output "filtered" of a preparation; the packer executes no preparation chain"#,
         ),
         (
-            "a distribution file of the remainder",
-            plan(
-                3,
-                r#"{"destination": "bin/run", "inputs": ["run"], "classPath": false, "scope": "distribution"}"#,
-                &[],
-            ),
-            catalogue(vec![file_artifact("run")]),
-            "only a reused native tree has the distribution scope",
-        ),
-        (
-            "a native tree of the distribution scope without its jar",
-            plan(3, &format!(r#"{native_tree}, "scope": "distribution"}}"#), &[]),
-            catalogue(Vec::new()),
-            "requires its reused natives jar",
-        ),
-        (
-            "a native tree of the plugin scope without its jar",
+            "a native tree without its jar",
             plan(2, &format!("{native_tree}}}"), &[]),
             catalogue(Vec::new()),
             "requires its reused natives jar",

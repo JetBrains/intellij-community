@@ -328,7 +328,7 @@ dev_plugin_file_graph = rule(
         "platform_values": attr.string_dict(
             doc = "The value of each `{platform:<name>}` slot of the plan file for this chain's platform, keyed by name. Empty for a chain that serves every platform.",
         ),
-        "execution_version": attr.int(mandatory = True, values = [1, 2, 3], doc = "Derived execution_version from the private owner record. The packer checks it against the plan file."),
+        "execution_version": attr.int(mandatory = True, values = [1, 2], doc = "Derived execution_version from the private owner record. The packer checks it against the plan file."),
         "source_tree_targets": attr.string_keyed_label_dict(
             allow_files = True,
             doc = "Declared source targets keyed by the stable artifact ID of each normalized directory. One target may serve two IDs with different prefixes.",
@@ -349,7 +349,7 @@ dev_plugin_file_graph = rule(
 
 def _execution_version(info, name):
     version = getattr(info, "execution_version", None)
-    if type(version) != "int" or version not in [1, 2, 3]:
+    if type(version) != "int" or version not in [1, 2]:
         fail("%s has an invalid execution version: %r" % (name, version))
     graph = getattr(info, "graph", None)
     if type(graph) != "Target" or DevPluginGraphInfo not in graph:

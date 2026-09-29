@@ -9,14 +9,8 @@ use serde::{Deserialize, Serialize};
 
 /// The execution version of a plan with files only.
 pub const VERSION: u32 = 1;
-/// The execution version of a plan with a tree.
+/// The execution version of a plan with a tree. The native tree of a reused natives jar is such a tree.
 pub const TREE_VERSION: u32 = 2;
-/// The execution version of a plan with a distribution-scope asset. Only a reused native tree has that scope, so the
-/// remainder writes only plugin files in every version.
-pub const SCOPED_VERSION: u32 = 3;
-
-pub const PLUGIN_SCOPE: &str = "plugin";
-pub const DISTRIBUTION_SCOPE: &str = "distribution";
 
 /// The remainder recipe of one plugin. It keeps the complete asset order and the producer of each asset. It holds the
 /// operations of the remainder assets in plan order.
@@ -30,7 +24,7 @@ pub struct Recipe {
 }
 
 /// One row of `assets.json`. The producer is `remainder` or `independent`. An independent asset names the module of
-/// its reused jar as the artifact. An empty kind is `file`, and an empty scope is `plugin`.
+/// its reused jar as the artifact. An empty kind is `file`. Every asset is below the plugin directory.
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(default, deny_unknown_fields, rename_all = "camelCase")]
 pub struct Asset {
@@ -42,8 +36,6 @@ pub struct Asset {
     pub kind: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub class_path: Option<bool>,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub scope: String,
 }
 
 /// The input catalogue that the Starlark rule writes. Only this document holds file system roots. Its artifacts are the

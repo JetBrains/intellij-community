@@ -7,8 +7,8 @@ use std::sync::Arc;
 use javaglob::JavaGlob;
 use planfile::LayoutFormat;
 use planfile::contract::{
-    Artifact, Asset, Catalogue, DISTRIBUTION_SCOPE, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransformKind, Operation,
-    PLUGIN_SCOPE, Recipe, Reference, SCOPED_VERSION, Source, TREE_VERSION, VERSION,
+    Artifact, Asset, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransformKind, Operation, Recipe, Reference,
+    Source, TREE_VERSION, VERSION,
 };
 
 use crate::error::{Error, Result, fail};
@@ -34,19 +34,15 @@ pub(crate) fn asset_kind(asset: &Asset) -> &str {
     if asset.kind.is_empty() { "file" } else { &asset.kind }
 }
 
-pub(crate) fn asset_scope(asset: &Asset) -> &str {
-    if asset.scope.is_empty() { PLUGIN_SCOPE } else { &asset.scope }
-}
-
 /// The identity of a destination: `filemeta::path_identity`. It refuses a path that the inventory cannot hold, so a
 /// refused name fails before any write.
 pub(crate) fn identity(path: &str) -> Result<String> {
     Ok(filemeta::path_identity(path)?)
 }
 
-/// Applies the shared asset rules to one asset table. The rules cover the scope, the version, the plugin root target,
-/// and the relative path. They also cover the kind, the trees, the distribution assets, and the destination collisions.
-/// The directory-spellings check runs only when `check_directory_spellings` is true.
+/// Applies the shared asset rules to one asset table. The rules cover the version, the plugin root target, and the
+/// relative path. They also cover the kind, the trees, and the destination collisions. Every asset is below the plugin
+/// directory. The directory-spellings check runs only when `check_directory_spellings` is true.
 ///
 /// The packer calls it in [`plan`] before it writes. The collector calls it again on the produced table in a second
 /// process, because the collector does not trust the producer.
@@ -54,62 +50,41 @@ pub fn validate_assets(version: u32, assets: &[Asset], check_directory_spellings
     validated_assets(version, assets, check_directory_spellings).map(|_| ())
 }
 
-/// [`validate_assets`] with the result: each asset keyed by its scope and the identity of its destination.
-fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: bool) -> Result<BTreeMap<(&str, String), &Asset>> {
+/// [`validate_assets`] with the result: each asset keyed by the identity of its destination.
+fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: bool) -> Result<BTreeMap<String, &Asset>> {
     let mut validated = BTreeMap::new();
-    let mut spellings: HashMap<(&str, String), String> = HashMap::new();
-    let mut has_distribution_assets = false;
-    // The modules of the reused jars. An independent tree of the plugin scope is the native tree of one of them.
+    let mut spellings: HashMap<String, String> = HashMap::new();
+    // The modules of the reused jars. An independent tree is the native tree of one of them.
     let reused_jars: HashSet<&str> = (assets.iter())
         .filter(|asset| asset.producer == "independent" && asset_kind(asset) == "file")
         .map(|asset| asset.artifact.as_str())
         .collect();
     for asset in assets {
         let kind = asset_kind(asset);
-        let scope = asset_scope(asset);
-        if scope != PLUGIN_SCOPE && scope != DISTRIBUTION_SCOPE {
-            fail!("unknown asset scope {:?}", asset.scope);
-        }
-        if scope == DISTRIBUTION_SCOPE && version != SCOPED_VERSION {
-            fail!("distribution asset {:?} requires version 3", asset.destination);
-        }
-        // The remainder writes only plugin files. Only the native tree of a reused natives jar has the other scope.
-        if scope == DISTRIBUTION_SCOPE && (asset.producer != "independent" || kind != "tree") {
-            fail!(
-                "distribution asset {:?} must be the native tree of a reused natives jar; the remainder writes only plugin files",
-                asset.destination
-            );
-        }
-        has_distribution_assets |= scope == DISTRIBUTION_SCOPE;
-        if asset.destination.is_empty() && (kind != "tree" || scope != PLUGIN_SCOPE) {
+        if asset.destination.is_empty() && kind != "tree" {
             fail!("only a declared tree can target the plugin root");
         }
         if !asset.destination.is_empty() {
             validate_relative_path(&asset.destination)?;
         }
-        if validated.insert((scope, identity(&asset.destination)?), asset).is_some() {
+        if validated.insert(identity(&asset.destination)?, asset).is_some() {
             fail!("destination collision at {:?}", asset.destination);
         }
         if kind != "file" && kind != "tree" {
             fail!("unknown asset kind {:?}; the packer writes only file and tree assets", asset.kind);
         }
-        // A remainder tree, or the native tree of a reused natives jar. The native tree is in the plugin or at the
-        // distribution root.
-        let owned_tree = asset.producer == "remainder"
-            || asset.producer == "independent" && (scope == DISTRIBUTION_SCOPE || reused_jars.contains(asset.artifact.as_str()));
+        // A remainder tree, or the native tree of a reused natives jar next to the jar.
+        let owned_tree = asset.producer == "remainder" || asset.producer == "independent" && reused_jars.contains(asset.artifact.as_str());
         if kind == "tree" && (version < TREE_VERSION || !owned_tree || asset.class_path != Some(false)) {
             fail!(
-                "tree {:?} requires version 2 or 3, remainder or native tree ownership, and classPath false",
+                "tree {:?} requires version 2, remainder or native tree ownership, and classPath false",
                 asset.destination
             );
-        }
-        if scope == DISTRIBUTION_SCOPE && asset.class_path != Some(false) {
-            fail!("distribution asset {:?} requires classPath false", asset.destination);
         }
         if check_directory_spellings {
             let mut prefix = asset.destination.clone();
             while !prefix.is_empty() && prefix != "." {
-                let spelling = (scope, identity(&prefix)?);
+                let spelling = identity(&prefix)?;
                 if let Some(previous) = spellings.get(&spelling)
                     && *previous != prefix
                 {
@@ -121,16 +96,13 @@ fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: b
             }
         }
     }
-    if version == SCOPED_VERSION && !has_distribution_assets {
-        fail!("version 3 requires a distribution asset");
-    }
     Ok(validated)
 }
 
 /// Validates the recipe against the catalogue. The catalogue artifacts, in their order, become the execution inputs.
 pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
-    if !(VERSION..=SCOPED_VERSION).contains(&recipe.version) || catalogue.version != VERSION {
-        fail!("unsupported contract version; the recipe must use version 1, 2, or 3, the catalogue version 1");
+    if !(VERSION..=TREE_VERSION).contains(&recipe.version) || catalogue.version != VERSION {
+        fail!("unsupported contract version; the recipe must use version 1 or 2, the catalogue version 1");
     }
     if !valid_id(&recipe.plugin) || !valid_id(&recipe.layout_signature) {
         fail!("invalid plugin identity or layout signature");
@@ -155,10 +127,10 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
             producer => fail!("unknown producer {producer:?}"),
         }
     }
-    for (scope, name) in assets.keys() {
+    for name in assets.keys() {
         let mut parent = paths::dir(name);
         while parent != "." {
-            if let Some(ancestor) = assets.get(&(*scope, parent.clone()))
+            if let Some(ancestor) = assets.get(&parent)
                 && asset_kind(ancestor) == "file"
             {
                 fail!("destination collision between {parent:?} and {name:?}");
@@ -197,16 +169,9 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
     let mut operations = HashSet::new();
     for operation in &recipe.operations {
         let destination = operation.destination();
-        let key = (PLUGIN_SCOPE, identity(destination)?);
+        let key = identity(destination)?;
         let asset = match assets.get(&key) {
-            Some(asset)
-                if !operations.contains(&key)
-                    && asset.destination == destination
-                    && asset_scope(asset) == PLUGIN_SCOPE
-                    && asset.producer == "remainder" =>
-            {
-                *asset
-            }
+            Some(asset) if !operations.contains(&key) && asset.destination == destination && asset.producer == "remainder" => *asset,
             _ => fail!("conflicting or unowned remainder destination {destination:?}"),
         };
         execution
@@ -219,7 +184,7 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
         operations.insert(key);
     }
     for asset in &recipe.assets {
-        let key = (asset_scope(asset), identity(&asset.destination)?);
+        let key = identity(&asset.destination)?;
         if asset.producer == "remainder" && !operations.contains(&key) {
             fail!("missing remainder operation for {:?}", asset.destination);
         }
@@ -241,13 +206,13 @@ impl Execution {
         match operation {
             Operation::LayoutTree { layout, .. } => {
                 if self.recipe.version < TREE_VERSION {
-                    fail!("layout-tree requires version 2 or 3");
+                    fail!("layout-tree requires version 2");
                 }
                 self.validate_layout(layout, LayoutFormat::Tree, used)
             }
             Operation::CopyTree { input, .. } => {
                 if self.recipe.version < TREE_VERSION || !input.path.is_empty() {
-                    fail!("copy-tree requires version 2 or 3 and one directory root");
+                    fail!("copy-tree requires version 2 and one directory root");
                 }
                 match self.artifacts.get(&input.artifact) {
                     Some(artifact) if artifact.kind == "directory" => {
@@ -532,8 +497,8 @@ fn visit_directory<'e>(directory: &'e str, edges: &'e BTreeMap<String, Vec<Strin
     Ok(())
 }
 
-/// Checks the links of one scope. `nodes` holds each file and directory of the scope with its kind.
-pub(crate) fn validate_scoped_links(nodes: &[(String, bool)], links: &BTreeMap<String, String>) -> Result<()> {
+/// Checks the links of the plugin. `nodes` holds each file and directory of the plugin with its kind.
+pub(crate) fn validate_plugin_links(nodes: &[(String, bool)], links: &BTreeMap<String, String>) -> Result<()> {
     if links.is_empty() {
         return Ok(());
     }

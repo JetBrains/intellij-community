@@ -15,7 +15,7 @@ use std::path::Path;
 use anyhow::{Context, bail};
 use component::inventory::SourcedFile;
 use filemeta::{Entry, EntryType};
-use planfile::contract::{self, Asset, DISTRIBUTION_SCOPE, PLUGIN_SCOPE, SCOPED_VERSION};
+use planfile::contract::{self, Asset, TREE_VERSION};
 use serde::Deserialize;
 use tracing::field::Empty;
 
@@ -125,7 +125,7 @@ impl PluginComponentSpec {
 
     fn prepared(file: &str, spec: SpecFile, outputs: &Outputs<'_>) -> anyhow::Result<Self> {
         let version = match u32::try_from(spec.version) {
-            Ok(version) if (contract::VERSION..=SCOPED_VERSION).contains(&version) => version,
+            Ok(version) if (contract::VERSION..=TREE_VERSION).contains(&version) => version,
             _ => bail!("unsupported plugin component version: {}", spec.version),
         };
         validate_plugin_directory(&spec.plugin_directory)?;
@@ -364,22 +364,14 @@ fn validate_packed_destinations(destinations: &[&str]) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn scope(asset: &Asset) -> &str {
-    if asset.scope.is_empty() { PLUGIN_SCOPE } else { &asset.scope }
-}
-
 fn kind(asset: &Asset) -> &str {
     if asset.kind.is_empty() { "file" } else { &asset.kind }
 }
 
-/// The destination in the distribution: a distribution-scope asset, the native tree of a reused jar, is at the root.
-/// Any other asset is below the plugin directory, also a native tree of the plugin scope.
-fn component_destination(plugin_directory: &str, asset: &Asset, destination: &str) -> String {
-    if scope(asset) == DISTRIBUTION_SCOPE {
-        destination.to_owned()
-    } else {
-        format!("{plugin_directory}/{destination}")
-    }
+/// The destination in the distribution. Every asset is below the plugin directory, also the native tree of a reused
+/// jar.
+fn component_destination(plugin_directory: &str, destination: &str) -> String {
+    format!("{plugin_directory}/{destination}")
 }
 
 /// Tells if a plugin-relative destination is `lib/<name>.jar`, the shape that the plugin classpath lists.
@@ -450,7 +442,7 @@ fn tree_inventory(root: &str, inventory: &[Entry]) -> anyhow::Result<Vec<Entry>>
 }
 
 /// Applies the shared asset rules and two rules that only the collector holds. Only a tree of the producer
-/// `independent` names an artifact. No tree lies at or below a file asset of the same scope.
+/// `independent` names an artifact. No tree lies at or below a file asset.
 pub(crate) fn validate_assets(version: u32, assets: &[Asset]) -> anyhow::Result<()> {
     pluginpack::validate_assets(version, assets, true)?;
     for asset in assets {
@@ -464,7 +456,7 @@ pub(crate) fn validate_assets(version: u32, assets: &[Asset]) -> anyhow::Result<
         }
         let tree_identity = filemeta::path_identity(&tree.destination)?;
         for (asset_index, asset) in assets.iter().enumerate() {
-            if asset_index == tree_index || scope(asset) != scope(tree) || kind(asset) != "file" {
+            if asset_index == tree_index || kind(asset) != "file" {
                 continue;
             }
             let asset_identity = filemeta::path_identity(&asset.destination)?;
@@ -586,11 +578,11 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
                 let (source, destination) = match entry.relative_path.strip_prefix(&format!("{NATIVE_TREE_ROOT}/")) {
                     Some(relative) => (
                         format!("{}/{relative}", tree.source),
-                        component_destination(&spec.plugin_directory, asset, &format!("{}/{relative}", asset.destination)),
+                        component_destination(&spec.plugin_directory, &format!("{}/{relative}", asset.destination)),
                     ),
                     None => (
                         tree.source.clone(),
-                        component_destination(&spec.plugin_directory, asset, &asset.destination),
+                        component_destination(&spec.plugin_directory, &asset.destination),
                     ),
                 };
                 place(tree_file(source, destination, entry), entry.clone());
@@ -624,8 +616,8 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             }
             producer => bail!("unknown asset producer {producer:?}"),
         };
-        file.relative_path = component_destination(&spec.plugin_directory, asset, &asset.destination);
-        file.class_path = scope(asset) == PLUGIN_SCOPE && asset.class_path.unwrap_or(true) && is_plugin_lib_jar(&asset.destination);
+        file.relative_path = component_destination(&spec.plugin_directory, &asset.destination);
+        file.class_path = asset.class_path.unwrap_or(true) && is_plugin_lib_jar(&asset.destination);
         let entry = file.metadata.clone().expect("every asset file has metadata");
         if entry.entry_type != EntryType::Symlink {
             file.mode = Some(entry.mode);

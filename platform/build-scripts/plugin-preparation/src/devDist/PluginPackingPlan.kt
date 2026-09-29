@@ -100,6 +100,7 @@ data class ReusableJarArtifact(
  * Preparation resolves its entries, modes, and links. The default asset mode does not override the source modes.
  * Tree projections, execution recipes, and collector specifications require version 2.
  * Version 1 retains its file and empty-directory semantics. Catalogues and inventories still use version 1.
+ * Every asset is below the plugin directory. The plan has no asset scope.
  */
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
@@ -115,15 +116,7 @@ data class PluginPackingAsset(
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val classPath: Boolean = true,
   /** Whether the writer gives copied tree files and directories the standard resource modes. */
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val normalizeTreeModes: Boolean = false,
-  /** Selects the plugin root or the distribution root for [destination]. */
-  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val scope: String = PLUGIN_ASSET_SCOPE,
 )
-
-@ApiStatus.Internal
-const val PLUGIN_ASSET_SCOPE: String = "plugin"
-
-@ApiStatus.Internal
-const val DISTRIBUTION_ASSET_SCOPE: String = "distribution"
 
 /**
  * The input of the native tree a reused natives jar writes: `native-tree:<module>`. The tree asset is in the plugin
@@ -138,13 +131,10 @@ fun isNativeTreeAsset(asset: PluginPackingAsset): Boolean {
   return asset.kind == "tree" && asset.inputs.singleOrNull()?.startsWith(NATIVE_TREE_INPUT_PREFIX) == true
 }
 
+/** The execution version of a plan: 2 with a tree, else 1. A native tree is a tree. */
 @ApiStatus.Internal
 fun pluginPackingExecutionVersion(assets: List<PluginPackingAsset>): Int {
-  return when {
-    assets.any { it.scope == DISTRIBUTION_ASSET_SCOPE } -> 3
-    assets.any { it.kind == "tree" } -> 2
-    else -> 1
-  }
+  return if (assets.any { it.kind == "tree" }) 2 else 1
 }
 
 @ApiStatus.Internal
@@ -193,16 +183,13 @@ fun planPluginPacking(
   require(plugin.isNotEmpty()) { "A plugin plan requires a plugin" }
   val hasDirectories = assets.any { it.kind == "directory" || it.kind == "tree" }
   if (hasDirectories) {
-    for (scope in assets.map(PluginPackingAsset::scope).distinct()) {
-      validateDevBuildDirectorySpellings(assets.filter { it.scope == scope }.map { it.destination }.filter(String::isNotEmpty))
-    }
+    validateDevBuildDirectorySpellings(assets.map { it.destination }.filter(String::isNotEmpty))
   }
   fun pathIdentity(path: String): String = if (hasDirectories) devBuildPathIdentity(path) else path
-  val destinations = HashMap<Pair<String, String>, PluginPackingAsset>()
+  val destinations = HashMap<String, PluginPackingAsset>()
   for (asset in assets) {
-    require(asset.scope in setOf(PLUGIN_ASSET_SCOPE, DISTRIBUTION_ASSET_SCOPE)) { "Unknown plugin asset scope '${asset.scope}'" }
-    validateDestination(asset.destination, allowRoot = asset.kind == "tree" && asset.scope == PLUGIN_ASSET_SCOPE)
-    require(destinations.putIfAbsent(asset.scope to pathIdentity(asset.destination), asset) == null) {
+    validateDestination(asset.destination, allowRoot = asset.kind == "tree")
+    require(destinations.putIfAbsent(pathIdentity(asset.destination), asset) == null) {
       "Plugin '$plugin' has conflicting destination '${asset.destination}'"
     }
     require(asset.inputs.none(String::isEmpty)) { "Plugin '${plugin}' has an empty input" }
@@ -220,9 +207,6 @@ fun planPluginPacking(
     require(asset.kind != "directory" || (asset.inputs.isEmpty() && asset.recipe == null && asset.symlinkTarget == null)) {
       "Plugin directory '${asset.destination}' must not declare file inputs or a link target"
     }
-    require(asset.scope != DISTRIBUTION_ASSET_SCOPE || !asset.classPath) {
-      "Distribution asset '${asset.destination}' must not contribute to the plugin classpath"
-    }
     asset.symlinkTarget?.let { target ->
       require(asset.recipe == null && asset.inputs.isEmpty()) { "Plugin link '${asset.destination}' must not declare file inputs" }
       val resolved = Path.of(asset.destination).parent?.resolve(target) ?: Path.of(target)
@@ -233,11 +217,10 @@ fun planPluginPacking(
       "Plugin '$plugin' does not declare every source of '${asset.destination}'"
     }
   }
-  for ((scope, destination) in destinations.keys) {
+  for (destination in destinations.keys) {
     var parent = destination.substringBeforeLast('/', "")
     while (parent.isNotEmpty()) {
-      val parentKey = scope to parent
-      require(parentKey !in destinations || destinations.getValue(parentKey).kind in setOf("directory", "tree")) {
+      require(parent !in destinations || destinations.getValue(parent).kind in setOf("directory", "tree")) {
         "Plugin '$plugin' has conflicting destinations '$parent' and '$destination'"
       }
       parent = parent.substringBeforeLast('/', "")
@@ -257,7 +240,6 @@ fun planPluginPacking(
     val recipe = asset.recipe
     val nativeTreeModule = if (isNativeTreeAsset(asset)) asset.inputs.single().removePrefix(NATIVE_TREE_INPUT_PREFIX) else null
     if (nativeTreeModule != null) {
-      require(asset.scope == PLUGIN_ASSET_SCOPE) { "Plugin '$plugin' places the native tree '${asset.destination}' outside the plugin" }
       // No owner in a plan without reuse. The caller refuses a native tree that its final plan leaves unowned.
       val owner = recipes.values.firstOrNull { it.module == nativeTreeModule && it.recipe.writer.nativeLib.isNotEmpty() }
       return@map PlannedPluginAsset(asset = asset, artifact = owner)
@@ -335,18 +317,16 @@ fun pluginPackingLayoutSignature(
       for (value in values) putString(value)
     }
 
-    val scopedAssets = assets.any { it.scope != PLUGIN_ASSET_SCOPE }
     val trees = assets.any { it.kind == "tree" }
     val preparedManifests = trees || assets.any { asset -> asset.recipe?.sources?.any { it.preparedManifest != null } == true }
     val classPathFacts = preparedManifests || assets.any { !it.classPath }
     val directories = classPathFacts || assets.any { it.kind != "file" } || preparations.any { it.alwaysRun }
-    putInt(if (scopedAssets) 6 else if (trees) 5 else if (preparedManifests) 4 else if (classPathFacts) 3 else if (directories) 2 else 1)
+    putInt(if (trees) 5 else if (preparedManifests) 4 else if (classPathFacts) 3 else if (directories) 2 else 1)
     putString(plugin)
     putString(variant)
     putInt(assets.size)
     for (asset in assets) {
       putString(asset.destination)
-      if (scopedAssets) putString(asset.scope)
       if (directories) putString(asset.kind)
       if (classPathFacts) putBoolean(asset.classPath)
       putInt(asset.mode)

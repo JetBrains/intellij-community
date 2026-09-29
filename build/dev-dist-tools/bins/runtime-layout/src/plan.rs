@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::bail;
 use planfile::PlanFile;
-use planfile::contract::{Catalogue, PLUGIN_SCOPE};
+use planfile::contract::Catalogue;
 
 use crate::part::{Member, PART_VERSION, PLUGIN_ORDER, Part, PartJar};
 use crate::targets::apparent_label;
@@ -20,8 +20,7 @@ use crate::targets::apparent_label;
 /// module. The plan file keeps the ID of a library, which is the label of its container. The plan file reader refuses
 /// every other kind of source. Thus a new kind cannot silently leave a jar out.
 ///
-/// Only a reused native tree has the distribution scope, and it is not a jar. This command reads the plan without
-/// `planfile::derive`, so it refuses a jar of that scope with the text of `derive`.
+/// A reused native tree is not a jar, so the part skips it.
 ///
 /// A reused content module jar is not in the catalogue, because its own target packs it. `independent_libraries`
 /// states the libraries of such jars, by label.
@@ -84,9 +83,6 @@ pub(crate) fn part_from_plan(
         }
         if !destination.ends_with(".jar") {
             bail!("{destination} has a jar recipe, but its name does not end in .jar");
-        }
-        if asset.scope != PLUGIN_SCOPE {
-            bail!("{destination}: only a reused native tree has the distribution scope; the remainder writes only plugin files");
         }
         let mut members = Vec::new();
         for source in &recipe.sources {

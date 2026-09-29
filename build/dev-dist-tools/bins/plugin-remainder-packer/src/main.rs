@@ -11,7 +11,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use planfile::contract::{Catalogue, SCOPED_VERSION, VERSION};
+use planfile::contract::{Catalogue, TREE_VERSION, VERSION};
 
 /// The options of the packer, each in the form `--name=value`. Every one is required.
 const OPTIONS: [&str; 9] = [
@@ -74,9 +74,9 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
         }
     };
     let version = match arguments.value("--execution-version").parse::<u32>() {
-        Ok(version) if (VERSION..=SCOPED_VERSION).contains(&version) => version,
+        Ok(version) if (VERSION..=TREE_VERSION).contains(&version) => version,
         _ => {
-            let _ = writeln!(errors, "ERROR: --execution-version must be 1, 2, or 3");
+            let _ = writeln!(errors, "ERROR: --execution-version must be 1 or 2");
             return 2;
         }
     };

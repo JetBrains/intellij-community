@@ -4,8 +4,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::contract::{
-    self, Artifact, Catalogue, DISTRIBUTION_SCOPE, Filter, LayoutAssets, Library, Manifest, PLUGIN_SCOPE, Recipe, Reference,
-    SCOPED_VERSION, Source, TREE_VERSION, VERSION,
+    self, Artifact, Catalogue, Filter, LayoutAssets, Library, Manifest, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 use crate::plan::{Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, ManifestPolicy, Operation, PlanFile, Preparation, module_jar_recipe};
 use crate::{Error, classpath, fail};
@@ -140,12 +139,9 @@ pub fn omitted_assets(file: &PlanFile, refused_modules: &[String]) -> Result<Vec
     Ok(omitted)
 }
 
-/// `pluginPackingExecutionVersion`: 3 with a distribution asset, 2 with a tree, else 1. A native tree of the plugin
-/// scope gives 2.
+/// `pluginPackingExecutionVersion`: 2 with a tree, else 1. A native tree is a tree, so it gives 2.
 fn execution_version_of(assets: &[Asset]) -> u32 {
-    if assets.iter().any(|asset| asset.scope == DISTRIBUTION_SCOPE) {
-        SCOPED_VERSION
-    } else if assets.iter().any(|asset| asset.kind == "tree") {
+    if assets.iter().any(|asset| asset.kind == "tree") {
         TREE_VERSION
     } else {
         VERSION
@@ -269,7 +265,7 @@ impl<'a> Compiler<'a> {
         }
         let mut used = HashSet::new();
         for (asset, &omitted) in file.assets.iter().zip(&self.omitted) {
-            // The native tree of a reused natives jar has the plugin scope or the distribution scope.
+            // The native tree of a reused natives jar lies below the plugin directory, next to the jar.
             if let Some(module) = native_tree_module(asset) {
                 if !native_jars.contains(module) {
                     fail!(
@@ -284,12 +280,6 @@ impl<'a> Compiler<'a> {
                     omitted,
                 });
                 continue;
-            }
-            if asset.scope != PLUGIN_SCOPE {
-                fail!(
-                    "{}: only a reused native tree has the distribution scope; the remainder writes only plugin files",
-                    asset.destination
-                );
             }
             let artifact = asset
                 .recipe
@@ -629,17 +619,12 @@ impl<'a> Compiler<'a> {
                     artifact: planned.artifact.unwrap_or_default().to_owned(),
                     kind: if asset.kind == "file" { String::new() } else { asset.kind.clone() },
                     class_path: (!asset.class_path).then_some(false),
-                    scope: if asset.scope == PLUGIN_SCOPE {
-                        String::new()
-                    } else {
-                        asset.scope.clone()
-                    },
                 }
             })
             .collect()
     }
 
-    /// The classpath jars directly under `lib/`, in plan order. Only a tree has the distribution scope.
+    /// The classpath jars directly under `lib/`, in plan order.
     fn class_path_jars(&self) -> Vec<&'a str> {
         self.assets
             .iter()
@@ -769,7 +754,7 @@ impl<'a> Compiler<'a> {
 
 fn validate_asset(asset: &Asset) -> Result<(), Error> {
     let destination = asset.destination.as_str();
-    if destination.is_empty() && !(asset.kind == "tree" && asset.scope == PLUGIN_SCOPE) {
+    if destination.is_empty() && asset.kind != "tree" {
         fail!("only a declared tree can target the plugin root");
     }
     if asset.inputs.iter().any(String::is_empty) {

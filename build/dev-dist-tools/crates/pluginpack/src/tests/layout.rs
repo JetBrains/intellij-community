@@ -969,7 +969,7 @@ fn layout_plan_rejects_invalid_payloads() {
     version_one.version = VERSION;
     let tests: Vec<(&str, Recipe, Catalogue, &str)> = vec![
         ("layout-tree on a file asset", file_asset, directory(), "stale asset kind"),
-        ("layout-tree in version 1", version_one, directory(), "requires version 2 or 3"),
+        ("layout-tree in version 1", version_one, directory(), "requires version 2"),
         (
             "archive-tree on a directory",
             layout_tree_recipe(

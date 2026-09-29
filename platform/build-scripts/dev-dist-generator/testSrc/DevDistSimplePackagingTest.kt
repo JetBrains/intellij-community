@@ -10,7 +10,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
-import org.jetbrains.intellij.build.devDist.DISTRIBUTION_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
@@ -270,14 +269,6 @@ class DevDistSimplePackagingTest {
     val assets = listOf(mainJar(), PluginPackingAsset(destination = "jcef", inputs = listOf(output), kind = "tree", classPath = false))
 
     assertKeepsPlanTier(planEntry(assets = assets, inputs = emptyList(), preparations = listOf(preparation)))
-  }
-
-  @Test
-  fun `a distribution-scope asset keeps the plan tier`() {
-    val input: DevDistPluginRawInput = fileInput("layout-source:custom-asset:0:0", "//plugins/x:helper.sh")
-    val distribution = PluginPackingAsset(destination = "bin/helper.sh", inputs = listOf(input.id), classPath = false, scope = DISTRIBUTION_ASSET_SCOPE)
-
-    assertKeepsPlanTier(planEntry(assets = listOf(mainJar(), distribution), inputs = listOf(input)))
   }
 
   @Test

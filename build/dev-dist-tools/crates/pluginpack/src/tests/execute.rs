@@ -3,9 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use planfile::contract::{
-    Asset, Catalogue, DISTRIBUTION_SCOPE, Filter, Manifest, Operation, Recipe, Reference, SCOPED_VERSION, Source, VERSION,
-};
+use planfile::contract::{Asset, Catalogue, Filter, Manifest, Operation, Recipe, Reference, Source, VERSION};
 
 use super::planning::{jar_sources, sample_plan};
 use super::*;
@@ -87,7 +85,7 @@ fn independent_destinations_collide_with_remainder_tree_entries() {
     }
 }
 
-/// The native tree of a reused natives jar in the plugin scope reserves its directory. The remainder can write beside
+/// The native tree of a reused natives jar reserves its directory. The remainder can write beside
 /// the tree, but not in it.
 #[test]
 fn plugin_native_tree_collides_with_remainder_tree_entries() {
@@ -139,20 +137,19 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
     }
 }
 
-/// The Go test wrote a distribution-scope copy beside a plugin copy of the same destination. The remainder writes only
-/// plugin files now, so the plan refuses a remainder asset of the distribution scope.
+/// The Go test wrote a distribution-scope copy beside a plugin copy of the same destination. The distribution scope and
+/// its version 3 are retired, so the plan refuses a recipe of version 3.
 #[test]
-fn distribution_scope_is_refused_for_a_remainder_asset() {
+fn version_three_is_refused() {
     let root = temp();
     let input = root.path().join("input");
     write_test_file(&input, b"distribution");
     let recipe = Recipe {
-        version: SCOPED_VERSION,
+        version: 3,
         plugin: "scoped".to_owned(),
         layout_signature: "scoped-v3".to_owned(),
         assets: vec![Asset {
             class_path: Some(false),
-            scope: DISTRIBUTION_SCOPE.to_owned(),
             ..remainder("lib/native.bin")
         }],
         operations: vec![Operation::Copy {
@@ -164,7 +161,7 @@ fn distribution_scope_is_refused_for_a_remainder_asset() {
     expect_plan_error(
         &recipe,
         &catalogue(vec![file_artifact("input", &input)]),
-        "the remainder writes only plugin files",
+        "the recipe must use version 1 or 2",
     );
 }
 

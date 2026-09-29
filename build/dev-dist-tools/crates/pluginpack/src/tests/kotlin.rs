@@ -42,6 +42,7 @@ pub(crate) struct KotlinPlanAsset {
     pub(crate) kind: String,
     pub(crate) class_path: Option<bool>,
     pub(crate) normalize_tree_modes: bool,
+    /// The retired asset scope. Only the frozen fixture of version 3 states it, and the layout signature ignores it.
     pub(crate) scope: String,
 }
 
@@ -135,9 +136,6 @@ impl KotlinPlanAsset {
         }
         if asset.kind.is_empty() {
             asset.kind = "file".to_owned();
-        }
-        if asset.scope.is_empty() {
-            asset.scope = "plugin".to_owned();
         }
         asset
     }
@@ -379,7 +377,6 @@ pub(crate) fn kotlin_layout_assets_operation(id: &str, output: &str, format: &st
 pub(crate) fn kotlin_layout_signature(plan: &KotlinPlanFile) -> String {
     let mut stream = Hash4jStream::default();
     let assets: Vec<KotlinPlanAsset> = plan.assets.iter().map(KotlinPlanAsset::expanded).collect();
-    let scoped_assets = assets.iter().any(|asset| asset.scope != "plugin");
     let trees = assets.iter().any(|asset| asset.kind == "tree");
     let prepared_manifests = trees
         || assets.iter().any(|asset| {
@@ -390,9 +387,7 @@ pub(crate) fn kotlin_layout_signature(plan: &KotlinPlanFile) -> String {
         });
     let class_path_facts = prepared_manifests || assets.iter().any(|asset| asset.class_path == Some(false));
     let directories = class_path_facts || assets.iter().any(|asset| asset.kind != "file");
-    stream.put_int(if scoped_assets {
-        6
-    } else if trees {
+    stream.put_int(if trees {
         5
     } else if prepared_manifests {
         4
@@ -408,9 +403,6 @@ pub(crate) fn kotlin_layout_signature(plan: &KotlinPlanFile) -> String {
     stream.put_int(assets.len() as i32);
     for asset in &assets {
         stream.put_string(&asset.destination);
-        if scoped_assets {
-            stream.put_string(&asset.scope);
-        }
         if directories {
             stream.put_string(&asset.kind);
         }

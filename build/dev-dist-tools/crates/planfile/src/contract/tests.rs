@@ -86,7 +86,6 @@ fn asset_rows_keep_the_go_field_order_and_omitempty_rules() {
             artifact: "demo.natives".to_owned(),
             kind: "tree".to_owned(),
             class_path: Some(false),
-            scope: DISTRIBUTION_SCOPE.to_owned(),
         },
         Asset {
             destination: "lib/b.jar".to_owned(),
@@ -100,8 +99,7 @@ fn asset_rows_keep_the_go_field_order_and_omitempty_rules() {
         text,
         concat!(
             r#"[{"destination":"lib/a.jar","producer":"remainder"},"#,
-            r#"{"destination":"lib/native","producer":"independent","artifact":"demo.natives","kind":"tree","classPath":false,"#,
-            r#""scope":"distribution"},"#,
+            r#"{"destination":"lib/native","producer":"independent","artifact":"demo.natives","kind":"tree","classPath":false},"#,
             r#"{"destination":"lib/b.jar","producer":"remainder","classPath":true}]"#,
         )
     );
@@ -110,6 +108,13 @@ fn asset_rows_keep_the_go_field_order_and_omitempty_rules() {
         rows,
         "the collector reads the rows back"
     );
+}
+
+/// The distribution scope is retired, so a row that states a scope does not read.
+#[test]
+fn asset_row_refuses_a_scope() {
+    let error = from_slice::<Vec<Asset>>(br#"[{"destination":"lib/native","producer":"independent","scope":"plugin"}]"#).unwrap_err();
+    assert!(error.message().contains("unknown field `scope`"), "{error}");
 }
 
 #[test]

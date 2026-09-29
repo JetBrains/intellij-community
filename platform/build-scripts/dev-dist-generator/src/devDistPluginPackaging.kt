@@ -5,7 +5,6 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
-import org.jetbrains.intellij.build.devDist.PLUGIN_ASSET_SCOPE
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.nio.file.Path
@@ -93,11 +92,11 @@ private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
 /**
  * Classifies one folded plan as simple, or returns `null` for a plugin that keeps its plan file.
  *
- * Simple means: one neutral record, no preparation, every asset a plugin-scope jar of mode 420 on the classpath or a
- * plain copy, the default writer, sources that are single-root modules, library containers, single archives and one
- * descriptor patch, and a reuse set that covers the section's content modules minus the modules the jars name. The last
- * rule lets the macro infer reuse from `content_modules` without a second list. A plugin that reuses more is declared
- * cross-half. A plain copy is a `withResource*` file or directory, or a one-file layout callback, see [plainCopy].
+ * Simple means: one neutral record, no preparation, every asset a jar of mode 420 on the classpath or a plain copy, the
+ * default writer, sources that are single-root modules, library containers, single archives and one descriptor patch,
+ * and a reuse set that covers the section's content modules minus the modules the jars name. The last rule lets the
+ * macro infer reuse from `content_modules` without a second list. A plugin that reuses more is declared cross-half.
+ * A plain copy is a `withResource*` file or directory, or a one-file layout callback, see [plainCopy].
  * No destination sits below another, because the rule refuses a copy that overlaps a jar or another copy.
  *
  * [baseline] says whether the product is in the baseline residue class of the plugin. A divergent product states its
@@ -148,7 +147,7 @@ internal fun classifySimplePluginPackaging(
       if (copy.executable) executableFiles.add(copy.destination)
       continue
     }
-    if (asset.kind != "file" || asset.mode != 420 || asset.symlinkTarget != null || !asset.classPath || asset.scope != PLUGIN_ASSET_SCOPE) return null
+    if (asset.kind != "file" || asset.mode != 420 || asset.symlinkTarget != null || !asset.classPath) return null
     val artifact = planned.artifact
     if (artifact != null) {
       val owner = artifact.module.takeIf { it in contentModuleJarModules } ?: return null
@@ -252,13 +251,12 @@ private class PlainCopy(
 /**
  * The copy a recipe-free asset states, or `null` when the packer must resolve the asset.
  *
- * A plain file copy is a plugin-scope file of mode 420 or 493 over one raw input that is one file, an archive included,
- * without a prefix. A plain tree copy is a plugin-scope tree that keeps the source modes over one raw directory input
- * with a prefix. A symlink, a transform output, an overlay of two trees and a distribution-scope asset are not plain,
- * because a preparation or the packer resolves them.
+ * A plain file copy is a file of mode 420 or 493 over one raw input that is one file, an archive included, without a
+ * prefix. A plain tree copy is a tree that keeps the source modes over one raw directory input with a prefix. A symlink,
+ * a transform output and an overlay of two trees are not plain, because a preparation or the packer resolves them.
  */
 private fun plainCopy(asset: PluginPackingAsset, rawInputs: Map<String, DevDistPluginRawInput>): PlainCopy? {
-  if (asset.recipe != null || asset.symlinkTarget != null || asset.classPath || asset.scope != PLUGIN_ASSET_SCOPE || asset.destination.isEmpty()) {
+  if (asset.recipe != null || asset.symlinkTarget != null || asset.classPath || asset.destination.isEmpty()) {
     return null
   }
   val input = asset.inputs.singleOrNull()?.let(rawInputs::get) ?: return null
