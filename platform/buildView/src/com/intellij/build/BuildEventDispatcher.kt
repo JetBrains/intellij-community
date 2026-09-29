@@ -2,6 +2,7 @@
 package com.intellij.build
 
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildId
 import com.intellij.execution.process.ProcessOutputType
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -24,7 +25,7 @@ interface BuildEventDispatcher : AutoCloseable {
   /**
    * Dispatches an event of the build process.
    */
-  fun onEvent(buildId: Any, event: BuildEvent)
+  fun onEvent(buildId: BuildId, event: BuildEvent)
 
   /**
    * Dispatches a chunk of the build process output.
