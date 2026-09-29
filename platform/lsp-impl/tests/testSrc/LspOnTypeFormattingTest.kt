@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.PlatformTestUtil
@@ -42,7 +42,7 @@ class LspOnTypeFormattingTest {
   private val triggerCharacters = listOf("\n", "{", "}", ";", "\"")
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = object : LspCustomization() {
       override val onTypeFormattingCustomizer = LspOnTypeFormattingSupport()
     },

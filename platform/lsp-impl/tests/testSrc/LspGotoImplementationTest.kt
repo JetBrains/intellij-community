@@ -11,7 +11,7 @@ import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationDisabled
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.withCurrentAction
 import com.intellij.platform.lsp.impl.features.navigation.CurrentActionHolder
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -76,7 +76,7 @@ internal class LspGotoImplementationTest {
   @Nested
   inner class ImplementationSupported {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         implementationProvider = Either.forLeft(true)
       },
@@ -165,7 +165,7 @@ internal class LspGotoImplementationTest {
   @Nested
   inner class ImplementationNotSupportedByServer {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
     fun `no request when the server has no implementation capability`() = timeoutRunBlocking {
@@ -184,7 +184,7 @@ internal class LspGotoImplementationTest {
   @Nested
   inner class ImplementationDisabledByCustomizer {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = object : LspCustomization() {
         override val goToImplementationCustomizer: LspGoToImplementationCustomizer = LspGoToImplementationDisabled
       },

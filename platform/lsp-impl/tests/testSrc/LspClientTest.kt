@@ -1,10 +1,10 @@
 package com.intellij.platform.lsp
 
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.common.FakeLspServerDescriptor
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.common.FakeLspClientDescriptor
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 
 
 @TestApplication
-internal class LspServerTest {
+internal class LspClientTest {
   companion object {
     private val tempDirFixture = tempPathFixture()
     private val projectFixture = projectFixture(tempDirFixture, openAfterCreation = true)
@@ -31,28 +31,28 @@ internal class LspServerTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
   fun `module initialization`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val servers0 = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
-    Assertions.assertTrue(servers0.isEmpty(), "No LSP servers should exist initially")
+    val clients0 = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+    Assertions.assertTrue(clients0.isEmpty(), "No LSP clients should exist initially")
   }
 
   @Test
-  fun `server initialization`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `client initialization`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     codeInsightFixture.configureByText("test.txt", "hello world")
     awaitFileOpenedByLspServer(project, codeInsightFixture.file.virtualFile)
-    val servers = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
-    Assertions.assertTrue(servers.isNotEmpty(), "LSP server should be started after the file is opened")
+    val clients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+    Assertions.assertTrue(clients.isNotEmpty(), "LSP client should be started after the file is opened")
   }
 
   @Test
   fun `server received initialized notification`() = timeoutRunBlocking {
     codeInsightFixture.configureByText("test.txt", "hello world")
     awaitFileOpenedByLspServer(project, codeInsightFixture.file.virtualFile)
-    val servers = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
-    val descriptor = servers.first().descriptor as FakeLspServerDescriptor
+    val clients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+    val descriptor = clients.first().descriptor as FakeLspClientDescriptor
     Assertions.assertTrue(descriptor.server.initialized, "FakeServer should have received 'initialized' notification")
   }
 }

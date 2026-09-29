@@ -17,13 +17,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.documentation.DocumentationData
-import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.withCurrentAction
 import com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
 import com.intellij.platform.lsp.impl.features.usages.LspUsageSearcher
@@ -95,7 +95,7 @@ internal class LspTextDocumentProtocolTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = object : LspCustomization() {
       override val formattingCustomizer = object : LspFormattingSupport() {
         override fun shouldFormatThisFileExclusivelyByServer(
@@ -604,12 +604,12 @@ internal class LspTextDocumentProtocolTest {
         emptyList()
       }
 
-      val lspServers = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
+      val lspClients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
       val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)!! }
       val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
       val position = readAction { getLsp4jPosition(document, offset) }
 
-      val searchTarget = LspSearchTarget(lspServers, virtualFile, position)
+      val searchTarget = LspSearchTarget(lspClients, virtualFile, position)
       val params = DefaultUsageSearchParameters(project, searchTarget, GlobalSearchScope.projectScope(project))
       LspUsageSearcher().collectSearchRequest(params)?.forEach { }
 

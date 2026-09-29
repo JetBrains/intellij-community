@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
@@ -42,7 +42,7 @@ internal class LspDocumentColorTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       colorProvider = Either.forLeft(true)
     },

@@ -12,7 +12,7 @@ import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiFile
@@ -76,7 +76,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithExtractCapability {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -171,7 +171,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithoutExtractCapability {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -223,7 +223,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithVariableExtractCapabilityOnly {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -275,7 +275,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithConstantExtractCapabilityOnly {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -358,7 +358,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithVariableAndConstantExtractCapabilities {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -447,7 +447,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithDroppingCustomization {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = DroppingCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -495,7 +495,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithQuickFixCapabilityOnly {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -539,7 +539,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithSimilarlyNamedExtractCapability {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
         codeActionProvider = Either.forRight(CodeActionOptions().apply {
@@ -566,7 +566,7 @@ internal class LspInlineTest {
   @Nested
   inner class WithoutCodeActionCapability {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
     )
 

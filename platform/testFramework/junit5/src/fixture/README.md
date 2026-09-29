@@ -139,7 +139,7 @@ private val project = projectFixture(openAfterCreation = true)
 Representative usages:
 
 - showcase: `community/platform/testFramework/junit5/test/showcase/JUnit5ProjectFixtureTest.kt`
-- LSP: `platform/lsp-impl/tests/testSrc/LspServerTest.kt`
+- LSP: `platform/lsp-impl/tests/testSrc/LspClientTest.kt`
 - Python: `community/python/testSrc/com/intellij/python/junit5Tests/unit/PyInterpreterInspectionTest.kt`
 
 ### Recipe 3: Physical Module Root Equals Source Root
@@ -156,7 +156,7 @@ private val module = project.moduleFixture(tempDir, addPathToSourceRoot = true)
 Representative usages:
 
 - `community/python/testSrc/com/intellij/python/junit5Tests/env/venv/showCase/PyEnvWithVenvShowCaseTest.kt`
-- `platform/lsp-impl/tests/testSrc/LspServerTest.kt`
+- `platform/lsp-impl/tests/testSrc/LspClientTest.kt`
 - `community/java/java-tests/testSrc/com/siyeh/ig/migration/ForCanBeForeachInspectionTest.java`
 
 ### Recipe 4: Classic Project -> Module -> Source Root -> File -> Editor Chain
@@ -661,7 +661,7 @@ private val fixture by codeInsightFixture(project, tempDir)
 
 Representative usages:
 
-- generic code insight: `platform/lsp-impl/tests/testSrc/LspServerTest.kt`
+- generic code insight: `platform/lsp-impl/tests/testSrc/LspClientTest.kt`
 - Java code insight wrapper: `community/java/java-tests/testSrc/com/siyeh/ig/migration/ForCanBeForeachInspectionTest.java`
 - Java-specific helper API: `community/java/testFramework/src/com/intellij/testFramework/javaCodeInsightFixture.kt`
 
@@ -992,7 +992,7 @@ LSP tests use:
 
 Reference:
 
-- `platform/lsp-impl/tests/testSrc/LspServerTest.kt`
+- `platform/lsp-impl/tests/testSrc/LspClientTest.kt`
 
 ### CLion
 
@@ -1095,7 +1095,7 @@ Cross-language and subsystem examples:
 - Python large source-tree bootstrap: `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTest.kt`
 - JS debugger wrapper: `plugins/JavaScriptDebugger/testSrc/testFramework/junit5/projectFixtures.kt`
 - EEL-backed project: `community/platform/testFramework/junit5/eel/test/showcase/EelProjectShowcase.kt`
-- LSP plus code insight: `platform/lsp-impl/tests/testSrc/LspServerTest.kt`
+- LSP plus code insight: `platform/lsp-impl/tests/testSrc/LspClientTest.kt`
 - CLion wrappers: `CIDR/clion-testFramework-nolang/junit5/core/src/com/intellij/clion/testFramework/nolang/junit5/core/fixtures.kt`
 
 ## Final Guidance For Agents

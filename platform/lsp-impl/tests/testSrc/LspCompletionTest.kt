@@ -10,9 +10,9 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.completion.LspCompletionObject
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -67,7 +67,7 @@ internal class LspCompletionTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       completionProvider = CompletionOptions().apply {
         resolveProvider = true
@@ -807,7 +807,7 @@ internal class LspCompletionTest {
       ) { pendingResponse }
 
       val requestExecutor = LspClientManagerImpl.getInstanceImpl(project)
-        .getClients(FakeLspServerSupportProvider::class.java).first().requestExecutor
+        .getClients(FakeLspIntegrationProvider::class.java).first().requestExecutor
 
       val indicator = EmptyProgressIndicator()
       val caller = launch(Dispatchers.IO) {

@@ -5,10 +5,10 @@ import com.intellij.platform.lsp.api.Lsp4jClient
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.common.FakeLspServerDescriptor
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.common.FakeLspClientDescriptor
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -38,7 +38,7 @@ internal class LspListenerThreadFailureTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     createLsp4jClient = { handler -> Lsp4jClient(ThrowingPublishDiagnosticsHandler(handler)) },
   )
 
@@ -56,8 +56,8 @@ internal class LspListenerThreadFailureTest {
     val serverSession = configureServerSession(project, virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
-    val lspClient = LspClientManager.getInstance(project).getClients(FakeLspServerSupportProvider::class.java).first()
-    val fakeServerProcess = (lspClient.descriptor as FakeLspServerDescriptor).server
+    val lspClient = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java).first()
+    val fakeServerProcess = (lspClient.descriptor as FakeLspClientDescriptor).server
 
     // The handler throws on the listener thread, so the loop dies and the server-to-IDE channel is dead.
     serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {

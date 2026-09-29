@@ -5,10 +5,10 @@ import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewContributor
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.lsp.impl.serviceView.LspTrafficPayloadHyperlinkInfo
@@ -42,7 +42,7 @@ internal class LspServiceViewTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
   fun `lsp server is shown in services view and its console receives messages`() = timeoutRunBlocking {
@@ -108,8 +108,7 @@ internal class LspServiceViewTest {
       assertTrue(logMessageNotificationLink.header.startsWith("←"), "An inbound payload popup title should use the inbound arrow")
     }
 
-    @Suppress("DEPRECATION")
-    LspServerManager.getInstance(project).stopServers(FakeLspServerSupportProvider::class.java)
+    LspClientManager.getInstance(project).stopClients(FakeLspIntegrationProvider::class.java)
     while (contributor.getServices(project).isNotEmpty()) {
       delay(50.milliseconds)
     }

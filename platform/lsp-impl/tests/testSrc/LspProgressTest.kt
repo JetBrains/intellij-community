@@ -2,9 +2,9 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -43,7 +43,7 @@ internal class LspProgressTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   private fun beginParams(token: String, title: String): ProgressParams =
     ProgressParams(
@@ -90,7 +90,7 @@ internal class LspProgressTest {
 
     val manager = LspClientManagerImpl.getInstanceImpl(project)
     // Get the client and its handler before the stop: an explicit stop removes the client from the manager
-    val lspClient = manager.getClients(FakeLspServerSupportProvider::class.java).first()
+    val lspClient = manager.getClients(FakeLspIntegrationProvider::class.java).first()
     val handler = lspClient.serverNotificationsHandler
 
     withContext(Dispatchers.Default) { manager.stopRunningServer(lspClient) }

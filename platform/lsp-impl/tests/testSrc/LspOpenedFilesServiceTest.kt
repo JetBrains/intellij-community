@@ -9,7 +9,7 @@ import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.customization.LspCustomization
-import com.intellij.platform.lsp.common.FakeLspServerDescriptor
+import com.intellij.platform.lsp.common.FakeLspClientDescriptor
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -112,7 +112,7 @@ internal class LspOpenedFilesServiceTest {
 
     awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
     val client = manager.getClients(providerClass).single()
-    val siblingDescriptor = FakeLspServerDescriptor(project, LspCustomization(), null, null, presentableName = "FakeLspServerSibling")
+    val siblingDescriptor = FakeLspClientDescriptor(project, LspCustomization(), null, null, presentableName = "FakeLspServerSibling")
     val staleRequestStamp = manager.startRequestStamp()
 
     stopAndWait(manager) { manager.stopRunningServer(client) }
@@ -197,7 +197,7 @@ private class CoveredFileLspProvider : LspIntegrationProvider {
 
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
     clientStarter.ensureClientStarted(
-      FakeLspServerDescriptor(project, LspCustomization(), null, null, supportedFilePredicate = { it.name == "covered.txt" }))
+      FakeLspClientDescriptor(project, LspCustomization(), null, null, supportedFilePredicate = { it.name == "covered.txt" }))
     if (file.name != "covered.txt") uncoveredFileOpened.complete(file)
   }
 }

@@ -11,12 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.SpaceTokenizingFileType
 import com.intellij.platform.lsp.common.assertCustomPsiTree
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.problemFileHighlightFilterFixture
 import com.intellij.platform.lsp.common.spaceTokenizingLanguageFixture
 import com.intellij.platform.lsp.common.wolfFixture
@@ -84,7 +83,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class PublishDiagnostics {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
     fun `publish diagnostics twice for the same document version`() = timeoutRunBlocking {
@@ -223,7 +222,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class PullDiagnostics {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
       },
@@ -547,7 +546,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspServerSupportProvider::class.java).first()
+      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
 
       // Phase 1: establish a cached snapshot, so the burst below is not the "first pull" that skips the delay.
       // The test reads the cache directly: collectAndCheckHighlighting bumps the PSI counter on every call
@@ -602,7 +601,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspServerSupportProvider::class.java).first()
+      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
 
       // Hold the first pull pending.
       val pendingResponse = CompletableFuture<DocumentDiagnosticReport>()
@@ -634,7 +633,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspServerSupportProvider::class.java).first()
+      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
 
       // Phase 1: a full report without a resultId, so the next pull carries no previousResultId.
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
@@ -696,7 +695,7 @@ internal class LspDiagnosticsTest {
       }
       diagnosticsArrived.await()
 
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspServerSupportProvider::class.java).first()
+      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
       assertTrue(
         readAction { client.getDiagnosticsAndQuickFixes(newFile) }.isNotEmpty(),
         "the diagnostics of a just-opened file must be pulled without a highlighting pass",
@@ -808,7 +807,7 @@ internal class LspDiagnosticsTest {
         )))
       }
       LspClientManager.getInstance(project)
-        .getClients(FakeLspServerSupportProvider::class.java)
+        .getClients(FakeLspIntegrationProvider::class.java)
         .single()
         .invalidateServerResults()
 
@@ -822,7 +821,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class WolfTheProblemSolverInterop {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
       },
@@ -976,7 +975,7 @@ internal class LspDiagnosticsTest {
     private val spaceTokenizingLang = spaceTokenizingLanguageFixture()
 
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
       },
@@ -1030,7 +1029,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class DiagnosticsClearedOnServerStop {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
     fun `diagnostics are cleared when the server stops`(): Unit = timeoutRunBlocking {
@@ -1054,7 +1053,7 @@ internal class LspDiagnosticsTest {
       publishJob.start()
       verifyDiagnosticsShown.await()
 
-      LspServerManager.getInstance(project).stopServers(FakeLspServerSupportProvider::class.java)
+      LspClientManager.getInstance(project).stopClients(FakeLspIntegrationProvider::class.java)
 
       val expectedClean = createExpectedDataFromText("hello world")
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expectedClean)
@@ -1070,7 +1069,7 @@ internal class LspDiagnosticsTest {
   @Nested
   inner class UncommittedPsiReparse {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture()
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
     fun `diagnostic in not-yet-reparsed region is skipped without exception`(): Unit = timeoutRunBlocking {

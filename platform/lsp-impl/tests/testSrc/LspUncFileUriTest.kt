@@ -4,7 +4,7 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCustomization
-import com.intellij.platform.lsp.common.FakeLspServerDescriptor
+import com.intellij.platform.lsp.common.FakeLspClientDescriptor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -30,22 +30,22 @@ internal class LspUncFileUriTest {
     private val tempDir by tempDirFixture
   }
 
-  private fun plainDescriptor(): FakeLspServerDescriptor = FakeLspServerDescriptor(project, LspCustomization(), null, null)
+  private fun plainDescriptor(): FakeLspClientDescriptor = FakeLspClientDescriptor(project, LspCustomization(), null, null)
 
   /**
    * A descriptor that reports every file under [UNC_PREFIX], the way the VFS reports a project that is open over a UNC path.
-   * The share does not exist, so [FakeLspServerDescriptor.findLocalFileByPath] removes the prefix again.
+   * The share does not exist, so [FakeLspClientDescriptor.findLocalFileByPath] removes the prefix again.
    * A Windows path such as `C:/dir` gets a `/` separator after the prefix, and a Unix path such as `/dir` keeps its own.
    */
-  private fun uncDescriptor(): FakeLspServerDescriptor =
-    object : FakeLspServerDescriptor(project, LspCustomization(), null, null) {
+  private fun uncDescriptor(): FakeLspClientDescriptor =
+    object : FakeLspClientDescriptor(project, LspCustomization(), null, null) {
       override fun getFilePath(file: VirtualFile): String = UNC_PREFIX + "/" + super.getFilePath(file).trimStart('/')
       override fun findLocalFileByPath(path: String): VirtualFile? = super.findLocalFileByPath(path.removePrefix(UNC_PREFIX))
     }
 
   /** A descriptor that reports one fixed path, so the URI is the same on every OS. */
-  private fun fixedPathDescriptor(path: String): FakeLspServerDescriptor =
-    object : FakeLspServerDescriptor(project, LspCustomization(), null, null) {
+  private fun fixedPathDescriptor(path: String): FakeLspClientDescriptor =
+    object : FakeLspClientDescriptor(project, LspCustomization(), null, null) {
       override fun getFilePath(file: VirtualFile): String = path
     }
 
@@ -127,7 +127,7 @@ internal class LspUncFileUriTest {
   @Test
   fun `a localhost authority tries the local path before the unc path`() {
     val lookups = mutableListOf<String>()
-    val descriptor = object : FakeLspServerDescriptor(project, LspCustomization(), null, null) {
+    val descriptor = object : FakeLspClientDescriptor(project, LspCustomization(), null, null) {
       override fun findLocalFileByPath(path: String): VirtualFile? {
         lookups.add(path)
         return null

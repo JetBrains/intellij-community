@@ -2,7 +2,7 @@ package com.intellij.platform.lsp.common
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -15,19 +15,19 @@ import java.util.concurrent.CompletableFuture
 internal suspend fun CoroutineScope.configureServerSession(
   project: Project,
   file: VirtualFile,
-): ServerSession {
+): FakeLspServerSession {
   awaitFileOpenedByLspServer(project, file)
   return currentServerSession(project)
 }
 
 /** The session of the already started fake server. Use when no local file open can settle the start. */
-internal fun CoroutineScope.currentServerSession(project: Project): ServerSession {
-  val servers = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
-  val descriptor = servers.first().descriptor as FakeLspServerDescriptor
-  return ServerSessionImpl(descriptor, this)
+internal fun CoroutineScope.currentServerSession(project: Project): FakeLspServerSession {
+  val clients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+  val descriptor = clients.first().descriptor as FakeLspClientDescriptor
+  return FakeLspServerSessionImpl(descriptor, this)
 }
 
-internal abstract class ServerSession : ServerSessionProtocolScope(), CoroutineScope {
+internal abstract class FakeLspServerSession : ServerSessionProtocolScope(), CoroutineScope {
   abstract fun fileUri(file: VirtualFile): String
 
   abstract suspend fun <Params : Any, Response> awaitRequest(
@@ -101,10 +101,10 @@ internal data class ExpectedRequest(
   val deferred: CompletableDeferred<Unit>,
 )
 
-private class ServerSessionImpl(
-  private val descriptor: FakeLspServerDescriptor,
+private class FakeLspServerSessionImpl(
+  private val descriptor: FakeLspClientDescriptor,
   scope: CoroutineScope,
-) : ServerSession(), CoroutineScope by scope {
+) : FakeLspServerSession(), CoroutineScope by scope {
   private val server = descriptor.server
   private val expectations = server.expectations
   private val pendingExpectations = mutableListOf<Deferred<Unit>>()

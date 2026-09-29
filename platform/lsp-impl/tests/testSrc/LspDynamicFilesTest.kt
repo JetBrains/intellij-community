@@ -13,14 +13,14 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.currentServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.documentation.LspDocumentationTargetProvider
@@ -73,7 +73,7 @@ internal class LspDynamicFilesTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       hoverProvider = Either.forLeft(true)
       workspace = WorkspaceServerCapabilities().apply {
@@ -176,7 +176,7 @@ internal class LspDynamicFilesTest {
     assertNotNull(decompiled)
 
     stopClientsAndWait(manager)
-    manager.startClientsIfNeeded(FakeLspServerSupportProvider::class.java)
+    manager.startClientsIfNeeded(FakeLspIntegrationProvider::class.java)
     val restartedSession = configureServerSession(project, virtualFile)
     val restarted = manager.getRunningClients().single()
     assertNotSame(client, restarted)
@@ -241,7 +241,7 @@ internal class LspDynamicFilesTest {
     decompiled!!.putUserData(LspDynamicFiles.CONTENT_BY_SERVER_ID, getServerId(AnotherLspProvider::class.java, client.descriptor))
 
     stopClientsAndWait(manager)
-    manager.startClientsIfNeeded(FakeLspServerSupportProvider::class.java)
+    manager.startClientsIfNeeded(FakeLspIntegrationProvider::class.java)
     configureServerSession(project, virtualFile)
 
     val clients = readAction { manager.getClientsForFileRequests(decompiled) }
@@ -411,7 +411,7 @@ internal class LspDynamicFilesTest {
           removed.complete(Unit)
         }
       }, disposable, false)
-      LspServerManager.getInstance(project).stopServers(FakeLspServerSupportProvider::class.java)
+      LspClientManager.getInstance(project).stopClients(FakeLspIntegrationProvider::class.java)
       removed.await()
     }
     finally {
@@ -420,7 +420,7 @@ internal class LspDynamicFilesTest {
   }
 }
 
-/** A provider that shares the descriptor with [FakeLspServerSupportProvider], to prove that the server identity includes the provider. */
+/** A provider that shares the descriptor with [FakeLspIntegrationProvider], to prove that the client identity includes the provider. */
 private class AnotherLspProvider : LspIntegrationProvider {
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) = Unit
 }

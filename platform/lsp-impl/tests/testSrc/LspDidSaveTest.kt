@@ -3,11 +3,11 @@ package com.intellij.platform.lsp
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.common.FakeLspServerDescriptor
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.common.FakeLspClientDescriptor
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -41,7 +41,7 @@ class LspDidSaveTest {
   @Nested
   inner class DidSaveWithoutText {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -74,7 +74,7 @@ class LspDidSaveTest {
   @Nested
   inner class DidSaveWithText {
     @Suppress("unused")
-    private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -118,7 +118,7 @@ class LspDidSaveTest {
     private val codeInsightFixture2 by codeInsightFixture(projectFixture2, tempDirFixture2)
 
     @Suppress("unused")
-    private val fakeLspServerProvider1 by projectFixture.fakeLspServerProviderFixture(
+    private val fakeLspIntegration1 by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -128,7 +128,7 @@ class LspDidSaveTest {
     )
 
     @Suppress("unused")
-    private val fakeLspServerProvider2 by projectFixture2.fakeLspServerProviderFixture(
+    private val fakeLspIntegration2 by projectFixture2.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
           openClose = true
@@ -148,12 +148,12 @@ class LspDidSaveTest {
       configureServerSession(project2, virtualFile2)
 
       // Get the fake servers for both projects to track notifications
-      val servers1 = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
-      val descriptor1 = servers1.first().descriptor as FakeLspServerDescriptor
+      val clients1 = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+      val descriptor1 = clients1.first().descriptor as FakeLspClientDescriptor
       val fakeServer1 = descriptor1.server
 
-      val servers2 = LspServerManager.getInstance(project2).getServersForProvider(FakeLspServerSupportProvider::class.java)
-      val descriptor2 = servers2.first().descriptor as FakeLspServerDescriptor
+      val clients2 = LspClientManager.getInstance(project2).getClients(FakeLspIntegrationProvider::class.java)
+      val descriptor2 = clients2.first().descriptor as FakeLspClientDescriptor
       val fakeServer2 = descriptor2.server
 
       val fileUri1 = serverSession1.fileUri(virtualFile1)

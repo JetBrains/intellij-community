@@ -13,10 +13,10 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
-import com.intellij.platform.lsp.common.ServerSession
+import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
+import com.intellij.platform.lsp.common.FakeLspServerSession
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -63,7 +63,7 @@ internal class LspHighlightingApplierTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       semanticTokensProvider = SemanticTokensWithRegistrationOptions().apply {
         full = Either.forLeft(true)
@@ -161,7 +161,7 @@ internal class LspHighlightingApplierTest {
   private class TokenSession(
     val virtualFile: VirtualFile,
     val document: Document,
-    val serverSession: ServerSession,
+    val serverSession: FakeLspServerSession,
     val uri: String,
   )
 
@@ -176,7 +176,7 @@ internal class LspHighlightingApplierTest {
     val document = codeInsightFixture.editor.document
     val serverSession = configureServerSession(project, virtualFile)
     val uri = serverSession.fileUri(virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspServerSupportProvider::class.java).first()
+    val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
 
     serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) {
       SemanticTokens(listOf(0, 0, 5, 0, 0))

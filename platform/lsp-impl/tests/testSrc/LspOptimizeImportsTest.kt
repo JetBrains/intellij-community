@@ -6,7 +6,7 @@ import com.intellij.lang.ImportOptimizer
 import com.intellij.lang.LanguageImportStatements
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiFile
@@ -45,7 +45,7 @@ class LspOptimizeImportsTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   @Suppress("unused")
-  private val fakeLspServerProvider by projectFixture.fakeLspServerProviderFixture(
+  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       val codeActionOptions = CodeActionOptions().apply {
         resolveProvider = true
