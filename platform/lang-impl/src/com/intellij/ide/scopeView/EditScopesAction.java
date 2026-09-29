@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,14 +23,11 @@ public final class EditScopesAction extends AnAction implements DumbAware {
     Project project = event.getData(CommonDataKeys.PROJECT);
     ProjectView view = project == null ? null : ProjectView.getInstance(project);
     if (view != null) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, 
-                                                        c -> ConfigurableWrapper.cast(ScopeChooserConfigurable.class, c) != null, 
-                                                        c -> {
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, ScopeChooserConfigurable.class, configurable -> {
         AbstractProjectViewPane pane = view.getCurrentProjectViewPane();
         if (pane instanceof ScopeViewPane) {
           NamedScopeFilter filter = ((ScopeViewPane)pane).getFilter(pane.getSubId());
-          ScopeChooserConfigurable configurable = ConfigurableWrapper.cast(ScopeChooserConfigurable.class, c);
-          if (configurable != null && filter != null) configurable.selectNodeInTree(filter.getScope().getScopeId());
+          if (filter != null) configurable.selectNodeInTree(filter.getScope().getScopeId());
         }
       });
     }
