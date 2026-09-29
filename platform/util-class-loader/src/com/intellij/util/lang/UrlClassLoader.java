@@ -124,9 +124,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   protected static void registerInClassLoaderValueMap(@NotNull ClassLoader parent, @NotNull ClassLoader classLoader) {
     // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
     try {
-      Field f = ClassLoader.class.getDeclaredField("classLoaderValueMap");
-      f.setAccessible(true);
-      f.set(classLoader, f.get(parent));
+      Method method = ClassLoader.class.getDeclaredMethod("createOrGetClassLoaderValueMap");
+      method.setAccessible(true);
+      Map<?, ?> parentMap = (Map<?, ?>)method.invoke(parent);
+      @SuppressWarnings("unchecked")
+      Map<Object, Object> classLoaderMap = (Map<Object, Object>)method.invoke(classLoader);
+      classLoaderMap.putAll(parentMap);
     }
     catch (Exception ignored) {
     }
