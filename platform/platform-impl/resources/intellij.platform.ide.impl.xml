@@ -495,6 +495,7 @@
       key="ide.welcome.screen.recent.project.vcs.actions"
       defaultValue="false"
       description="Show the VCS actions icon and menu for a recent version control project on the welcome screen"
+      restartRequired="true"
     />
     <registryKey
       key="ide.hide.default.project.directory.for.isolated.workspace"

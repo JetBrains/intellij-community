@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -77,10 +78,20 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
     .buildAsync(BranchesLoader())
 
   init {
-    application.messageBus.connect(coroutineScope).subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+    val connection = application.messageBus.connect(coroutineScope)
+    connection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
       override fun applicationActivated(ideFrame: IdeFrame) {
         if (ideFrame.project?.isDefault == true) {
           cache.synchronous().refreshAll(cache.asMap().keys)
+        }
+      }
+    })
+
+    // The mode is read while a recent project row is built, so a changed setting shows nothing until the rows are rebuilt.
+    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+      override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+        if (id == SHOW_BRANCH_SETTING) {
+          updateRecentProjectsSignal.tryEmit(Unit)
         }
       }
     })
@@ -97,7 +108,7 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
   }
 
   fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
-    val showBranchMode = AdvancedSettings.getEnum("git.recent.projects.show.branch", RecentProjectsShowBranchMode::class.java)
+    val showBranchMode = AdvancedSettings.getEnum(SHOW_BRANCH_SETTING, RecentProjectsShowBranchMode::class.java)
     if (!showBranchMode.shouldShow(nameIsDistinct)) {
       return null
     }
@@ -142,6 +153,8 @@ internal class GitRecentProjectsBranchesService(private val coroutineScope: Coro
   }
 
   companion object {
+    private const val SHOW_BRANCH_SETTING = "git.recent.projects.show.branch"
+
     private val REFRESH_IN = Duration.ofSeconds(30)
     private val EXPIRE_IN = Duration.ofSeconds(60)
 
