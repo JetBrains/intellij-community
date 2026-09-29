@@ -73,6 +73,65 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
+  fun `test reports a sub-descriptor against the bundle of the descriptor that loads it`() {
+    addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <depends optional="true" config-file="optional.xml">com.example.other</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val optionalXml = addFile(
+      "META-INF/optional.xml", """
+      <idea-plugin>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
+    val wrongBundle = addFile(
+      "messages/WrongBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.RightBundle'. It does not read this bundle. Move this key to 'messages.RightBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, optionalXml, wrongBundle)
+  }
+
+  fun `test reports a sub-descriptor against its own bundle`() {
+    addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.ParentBundle</resource-bundle>
+        <depends optional="true" config-file="optional.xml">com.example.other</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val optionalXml = addFile(
+      "META-INF/optional.xml", """
+      <idea-plugin>
+        <resource-bundle>messages.OwnBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.OwnBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.ParentBundle'. Move the key to 'messages.OwnBundle', or declare 'messages.ParentBundle' in '$moduleName'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/OwnBundle.properties", "unrelated.key=Value\n")
+    val parentBundle = addFile(
+      "messages/ParentBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.OwnBundle'. It does not read this bundle. Move this key to 'messages.OwnBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, optionalXml, parentBundle)
+  }
+
   fun `test does not report a key in the declared bundle`() {
     val pluginXml = addFile(
       "META-INF/plugin.xml", """

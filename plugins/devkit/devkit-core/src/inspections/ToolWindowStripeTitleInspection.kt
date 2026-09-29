@@ -207,12 +207,24 @@ private sealed class ReadBundle(val name: String?) {
 /**
  * Answers `null` when the owner of the descriptor is unclear. The inspection then stays silent.
  */
-private fun readBundle(descriptor: XmlFile): ReadBundle? {
+private fun readBundle(descriptor: XmlFile, currentPath: MutableSet<XmlFile> = HashSet()): ReadBundle? {
   val plugin = DescriptorUtil.getIdeaPlugin(descriptor) ?: return null
   val declared = plugin.resourceBundle.stringValue?.trim()?.takeIf { it.isNotEmpty() }
 
   // A descriptor with its own <id> is a main plugin descriptor.
   plugin.pluginId?.let { return readBundle(it, declared) }
+
+  // A <depends config-file> sub-descriptor uses its own bundle, or else the bundle of the descriptor that loads it.
+  val loaders = findProductionConfigFileDependsEdges(descriptor).map { it.declaring }.distinct()
+  if (loaders.isNotEmpty()) {
+    val loader = loaders.singleOrNull() ?: return null
+    val inherited = visitOnce(currentPath, loader, onCycle = null) { readBundle(loader, currentPath) } ?: return null
+    return when {
+      inherited is ReadBundle.CoreIdeBundle -> inherited
+      declared != null -> ReadBundle.Declared(declared)
+      else -> inherited
+    }
+  }
 
   // A descriptor without an <id> is a content module. It does not inherit the bundle of its plugin.
   val virtualFile = descriptor.virtualFile ?: return null
