@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.impl
 
 import com.intellij.platform.util.io.storages.database.impl.layout.BlockHeaderLayout
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout
+import com.intellij.util.WaitFor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -89,7 +90,9 @@ class RetireUnusedChunksHousekeeperTest {
     BlocksDatabaseImpl.open(
       directory, CHUNK_SIZE, true, false, listOf(DropRetiredChunksHousekeeper()),
     ).use {
-      assertFalse(Files.exists(firstChunkPath), "Startup housekeeping must delete the retired chunk file")
+      assertTrue(object : WaitFor(10_000) {
+        override fun condition(): Boolean = Files.notExists(firstChunkPath)
+      }.isConditionRealized, "Startup housekeeping must delete the retired chunk file")
       assertTrue(Files.exists(secondChunkPath), "Startup housekeeping must keep the live chunk file")
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.impl;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.util.io.CorruptedException;
@@ -26,16 +27,20 @@ import java.util.Locale;
 import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatalog.ChunkState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatalog.ChunkState.RETIRED;
 import static com.intellij.platform.util.io.storages.database.impl.DatabaseCatalog.ChunkState.SEALED;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /** The set of chunks that belong to the database */
 final class DatabaseChunks implements Closeable, Flushable {
   private static final Logger LOG = Logger.getInstance(DatabaseChunks.class);
+  /// Enables asynchronous chunk file deletion
+  private static final boolean DELETE_FILES_ASYNC = getBooleanProperty("DatabaseChunks.DELETE_FILES_ASYNC", true);
 
   private static final int MAX_ACTIVE_CHUNKS = 2;
 
   //TODO RC: use MessageFormat?
   private static final String CHUNK_FILE_PREFIX = "chunk-";
   private static final String CHUNK_FILE_SUFFIX = ".dat";
+
 
   private final @NotNull Path databaseDirectory;
   private final @NotNull DatabaseCatalog databaseCatalog;
@@ -341,10 +346,7 @@ final class DatabaseChunks implements Closeable, Flushable {
           if (chunkId > 0 &&
               !registeredChunkIds.contains(chunkId) &&
               Files.isRegularFile(file)) {
-            if (Files.deleteIfExists(file)) {
-              chunkFilesDeleted++;
-              LOG.debug("Deleted unregistered chunk " + chunkId + ": " + file);
-            }
+            requestChunkFileDeletion(file, chunkId, "unregistered");
           }
         }
       }
@@ -371,12 +373,44 @@ final class DatabaseChunks implements Closeable, Flushable {
           }
 
           var file = chunkPath(databaseDirectory, chunkId);
-          if (Files.deleteIfExists(file)) {
-            chunkFilesDeleted++;
-            LOG.debug("Deleted retired chunk " + chunkId + ": " + file);
-          }
+          requestChunkFileDeletion(file, chunkId, "retired");
         }
       }
+    }
+  }
+
+  /// Requests the deletion of the chunk file; the chunk-file might not exist already.
+  /// if [#DELETE_FILES_ASYNC]: the deletion is postponed, and executed async -- i.e. this method may return
+  /// when the file still exists.
+  private void requestChunkFileDeletion(@NotNull Path chunkFile, int chunkId, @NotNull String reason) throws IOException {
+    if (!DELETE_FILES_ASYNC) {
+      ensureChunkFileDeleted(chunkFile, chunkId, reason);
+      return;
+    }
+
+    LOG.debug("Deletion of chunk #" + chunkId + " (" + reason + ") queued (chunk file [" + chunkFile + "] may not exist already)");
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
+      try {
+        //TODO RC: we should keep a handle, and ensure this is finished _before_ current db session is closed
+        //         otherwise there is a risk of deleting chunks created by the next session!
+        ensureChunkFileDeleted(chunkFile, chunkId, reason);
+      }
+      catch (Throwable t) {
+        LOG.warn("Failed to delete chunk #" + chunkId + " (" + reason + ") [" + chunkFile + "]", t);
+      }
+    });
+  }
+
+  private void ensureChunkFileDeleted(@NotNull Path chunkFile, int chunkId, @NotNull String reason) throws IOException {
+    boolean wasDeleted = Files.deleteIfExists(chunkFile);
+    if (wasDeleted) {
+      synchronized (lock) {
+        chunkFilesDeleted++;
+      }
+      LOG.debug("Chunk #" + chunkId + " (" + reason + "): file is deleted [" + chunkFile + "]");
+    }
+    else {
+      LOG.debug("Chunk #" + chunkId + " (" + reason + "): file is already absent [" + chunkFile + "]");
     }
   }
 

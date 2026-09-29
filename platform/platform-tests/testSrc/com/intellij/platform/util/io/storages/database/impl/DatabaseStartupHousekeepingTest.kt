@@ -10,6 +10,7 @@ import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLa
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.WaitFor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
@@ -114,7 +115,9 @@ class DatabaseStartupHousekeepingTest {
                    "Startup drop must release the retired source chunk")
       assertEquals(1, implementation.metrics(true).chunks().released(),
                    "Startup drop must report the released source chunk")
-      assertFalse(Files.exists(firstChunkPath), "Startup drop must delete the retired source chunk file")
+      assertTrue(object : WaitFor(10_000) {
+        override fun condition(): Boolean = Files.notExists(firstChunkPath)
+      }.isConditionRealized, "Startup drop must delete the retired source chunk file")
     }
 
     BlocksDatabaseFactory(CHUNK_SIZE).open(directory).use { database ->

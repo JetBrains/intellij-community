@@ -2,6 +2,8 @@
 package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.platform.util.io.storages.database.impl.layout.ChunkHeaderLayout;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.WaitFor;
 import com.intellij.util.io.CorruptedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /** Verifies full chunk mapping, catalog publication, and file reconciliation. */
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
@@ -173,8 +176,7 @@ public class DatabaseChunksTest {
       assertEquals(0, metrics.filesDeleted(), "Recovery must not report the retired chunk as an orphan file");
 
       chunks.dropRetiredChunks();
-      assertFalse(Files.exists(chunkPath), "Startup housekeeping must delete the retired chunk file");
-      assertEquals(1, chunks.metrics(true).filesDeleted(), "Startup housekeeping must report the deleted retired chunk file");
+      assertFileDeletedAndReported(chunkPath, chunks, "Startup housekeeping must delete and report the retired chunk file");
     }
   }
 
@@ -189,9 +191,8 @@ public class DatabaseChunksTest {
       }
 
       try (var chunks = DatabaseChunks.open(databaseDirectory, metadata, true)) {
-        assertFalse(Files.exists(chunkPath), "Recovery must remove an unpublished chunk file");
         assertTrue(chunks.chunks().isEmpty(), "An orphan file must not become a catalog chunk");
-        assertEquals(1, chunks.metrics(true).filesDeleted(), "Recovery must report the deleted unpublished chunk file");
+        assertFileDeletedAndReported(chunkPath, chunks, "Recovery must delete and report the unpublished chunk file");
       }
     }
   }
@@ -248,7 +249,11 @@ public class DatabaseChunksTest {
   }
 
   @Test
-  public void openingKeepsRetiredChunkFilesUntilDrop(@TempDir Path databaseDirectory) throws Exception {
+  public void openingKeepsRetiredChunkFilesUntilAsyncDrop(@TempDir Path databaseDirectory) throws Exception {
+    assumeTrue(
+      SystemProperties.getBooleanProperty("DatabaseChunks.DELETE_FILES_ASYNC", true),
+      "Asynchronous chunk file deletion is disabled"
+    );
     try (var metadata = DatabaseCatalogOverAppendOnlyLog.open(databaseDirectory.resolve("database.meta"), CHUNK_SIZE)) {
       var retiredChunkId = metadata.nextChunkId();
       var retiredChunkPath = DatabaseChunks.chunkPath(databaseDirectory, retiredChunkId);
@@ -263,7 +268,11 @@ public class DatabaseChunksTest {
         assertTrue(Files.exists(retiredChunkPath), "Recovery must keep a retired chunk file for startup housekeeping");
         assertTrue(chunks.chunks().isEmpty(), "A retired chunk must not become accessible");
         chunks.dropRetiredChunks();
-        assertFalse(Files.exists(retiredChunkPath), "Startup housekeeping must delete a retired chunk file");
+        assertFileDeletedAndReported(
+          retiredChunkPath,
+          chunks,
+          "Asynchronous startup housekeeping must delete and report the retired chunk file"
+        );
       }
     }
   }
@@ -285,5 +294,16 @@ public class DatabaseChunksTest {
         "A chunk from another database must not become accessible"
       );
     }
+  }
+
+  private static void assertFileDeletedAndReported(Path chunkPath,
+                                                   DatabaseChunks chunks,
+                                                   String message) {
+    assertTrue(new WaitFor(10_000) {
+      @Override
+      protected boolean condition() {
+        return Files.notExists(chunkPath) && chunks.metrics(true).filesDeleted() == 1;
+      }
+    }.isConditionRealized(), message);
   }
 }
