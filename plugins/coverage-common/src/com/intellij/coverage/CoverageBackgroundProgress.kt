@@ -20,7 +20,8 @@ internal fun launchCoverageDataRenewal(
   onSuccess: Runnable,
   onCancel: Runnable,
 ) {
-  project.service<ProgressScopeProvider>().cs.launch(Dispatchers.Default) {
+  val scope = project.service<ProgressScopeProvider>().cs
+  scope.launch(Dispatchers.Default) {
     withBackgroundProgress(project, CoverageBundle.message("coverage.view.loading.data")) {
       action.run()
     }
@@ -29,7 +30,7 @@ internal fun launchCoverageDataRenewal(
     }
   }.invokeOnCompletion { cause ->
     if (cause != null) {
-      project.service<ProgressScopeProvider>().cs.launch(Dispatchers.EDT) {
+      scope.launch(Dispatchers.EDT) {
         if (!project.isDisposed) onCancel.run()
       }
     }
