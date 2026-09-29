@@ -288,12 +288,14 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     // we cannot break compatibility / risk to change the existing plugin dir name
+    @Deprecated("A new plugin takes the directory name of its main module. Use `pluginAuto`.")
     @Suppress("DEPRECATION")
     fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName = mainModuleName, auto = true, body = body)
     }
 
     // we cannot break compatibility / risk to change the existing plugin dir name
+    @Deprecated("A new plugin takes the directory name of its main module. Use `pluginAuto`.")
     @Suppress("DEPRECATION")
     fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName, auto = true) { spec ->
@@ -539,6 +541,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
        * (with stripped `intellij` prefix and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
+      @Deprecated("A new plugin takes the directory name of its main module.")
       set(value) {
         field = value
         directoryNameSetExplicitly = true

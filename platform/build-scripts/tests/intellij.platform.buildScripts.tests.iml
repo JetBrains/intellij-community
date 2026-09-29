@@ -31,6 +31,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.pluginPreparation" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.pluginModelTool" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.devLaunch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.searchableOptionsInjector" scope="TEST" />
