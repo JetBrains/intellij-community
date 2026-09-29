@@ -4,7 +4,7 @@
 #
 # The ultimate pass of the generator owns the `dev` section of the plugin. The community pass writes this package
 # when that section declares no descriptor, when the community products state the plugin differently from it, or
-# for the calls and the plan files of a complex plugin.
+# for a complex plugin whose own package holds other plan files or does not hold its calls.
 #
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
@@ -27,6 +27,7 @@ dev_dist_complex_plugin(
         "//platform/platform-impl/internal/jcef:jcef_content_module_jar",
     ],
     main_module = "intellij.jcef.plugin",
+    plan_package = "//plugins/jcef/plugin",
     platform_values = {
         "darwin_aarch64": {
             "layoutSignature": "8h6a23jfp4jkl8yg7i5s0vt62",
