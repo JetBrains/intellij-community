@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.remote
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.GraziePlugin
@@ -62,16 +63,18 @@ internal object LanguageDownloader {
       val missingLanguages = languages.filterNot { isAvailableLocally(it) }
       if (missingLanguages.isEmpty()) return@withLock
 
-      withContext(Dispatchers.IO) {
-        try {
+      try {
+        withContext(Dispatchers.IO) {
           performDownload(missingLanguages)
         }
-        catch (exception: Throwable) {
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            promptToSelectLanguageBundleManually(missingLanguages)
-          }
-          thisLogger().warn(exception)
+      }
+      catch (exception: Throwable) {
+        rethrowControlFlowException(exception)
+        thisLogger().warn(exception)
+        val installed = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          promptToSelectLanguageBundleManually(missingLanguages)
         }
+        if (!installed) return@withLock
       }
       performGrazieUpdate(missingLanguages)
     }
