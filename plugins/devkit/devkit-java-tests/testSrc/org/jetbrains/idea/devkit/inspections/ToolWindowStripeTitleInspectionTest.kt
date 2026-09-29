@@ -268,6 +268,38 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent())
   }
 
+  fun `test fix on the key declares the resource bundle of the descriptor`() {
+    // The fix formats the new tag with the default XML indent of 4 spaces, so the descriptor uses it too.
+    addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+          <id>com.example.plugin</id>
+          <extensions defaultExtensionNs="com.intellij">
+              <toolWindow id="My Tool Window"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val bundle = addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+    myFixture.configureFromExistingVirtualFile(bundle)
+    // The key starts the file, so this puts the caret on the key.
+    myFixture.editor.caretModel.moveToOffset(1)
+
+    myFixture.launchAction(myFixture.findSingleIntention("Declare 'messages.MyBundle' as the resource bundle"))
+
+    myFixture.checkResult(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+          <id>com.example.plugin</id>
+          <extensions defaultExtensionNs="com.intellij">
+              <toolWindow id="My Tool Window"/>
+          </extensions>
+          <resource-bundle>messages.MyBundle</resource-bundle>
+      </idea-plugin>
+      """.trimIndent(), true
+    )
+  }
+
   /** The fixture creates the JPS module that holds the descriptor, so its name is not a literal. */
   private val moduleName: String get() = myFixture.module.name
 
