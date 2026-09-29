@@ -28,7 +28,7 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
-  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(Int.MIN_VALUE),
+  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(Int.MIN_VALUE/*, states.size()*/),
 ) : PMarkerRoot {
   internal val resolutionCacheIdentity: Any
     get() = cachedDelta
@@ -881,17 +881,27 @@ open class PMarkerRootImpl private constructor(
     }
 
     private fun extractMinimum(editor: MapBatchEditor, rootId: Long): ExtractMinimumResult {
-      val root = push(editor, rootId)
-      if (root.leftId == NULL_NODE) {
-        val remainingRoot = root.rightId
-        editor.setParent(remainingRoot, root.parentId)
-        rewrite(editor, rootId, root, NULL_NODE, NULL_NODE, NULL_NODE)
-        return ExtractMinimumResult(remainingRoot, rootId)
+      var minimumId = rootId
+      var minimum = push(editor, minimumId)
+      val subtreeParentId = minimum.parentId
+      while (minimum.leftId != NULL_NODE) {
+        minimumId = minimum.leftId
+        minimum = push(editor, minimumId)
       }
 
-      val extracted = extractMinimum(editor, root.leftId)
-      rewrite(editor, rootId, root, root.parentId, extracted.rootId, root.rightId)
-      return ExtractMinimumResult(rebalance(editor, rootId), extracted.minimumId)
+      var ancestorId = minimum.parentId
+      var remainingRoot = minimum.rightId
+      editor.setParent(remainingRoot, minimum.parentId)
+      rewrite(editor, minimumId, minimum, NULL_NODE, NULL_NODE, NULL_NODE)
+
+      while (ancestorId != subtreeParentId) {
+        val ancestor = editor.valid(ancestorId)
+        val parentId = ancestor.parentId
+        rewrite(editor, ancestorId, ancestor, parentId, remainingRoot, ancestor.rightId)
+        remainingRoot = rebalance(editor, ancestorId)
+        ancestorId = parentId
+      }
+      return ExtractMinimumResult(remainingRoot, minimumId)
     }
 
     private fun checkNotNull(id: Long): Long {
