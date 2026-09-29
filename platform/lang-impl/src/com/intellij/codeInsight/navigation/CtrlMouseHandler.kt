@@ -114,6 +114,27 @@ class CtrlMouseHandler2(
 
   private var myLastMouseLocation: Point? = null
 
+  private val computing: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+  /**
+   * `true` while this handler computes the Ctrl/Cmd-hover data on the current thread, as opposed to an explicit navigation action.
+   * Providers may use this to answer from cheap sources only, because the hover is recomputed on every mouse move.
+   */
+  @ApiStatus.Internal
+  fun isComputing(): Boolean = computing.get()
+
+  @VisibleForTesting
+  internal fun <T> computing(block: () -> T): T {
+    val previous = computing.get()
+    computing.set(true)
+    try {
+      return block()
+    }
+    finally {
+      computing.set(previous)
+    }
+  }
+
   override fun mouseMoved(e: EditorMouseEvent) {
     if (e.isConsumed) {
       return
@@ -256,7 +277,8 @@ class CtrlMouseHandler2(
 
   private fun computeInReadAction(request: CtrlMouseRequest): CtrlMouseResult? {
     return injectedThenHost(project, request.editor, request.offset) { editor, file, offset ->
-      val data: CtrlMouseData = request.action.getCtrlMouseData(editor, file, offset) ?: return@injectedThenHost null
+      val data: CtrlMouseData = computing { request.action.getCtrlMouseData(editor, file, offset) }
+                                ?: return@injectedThenHost null
       val result = CtrlMouseResult(
         data.isNavigatable,
         data.ranges,
