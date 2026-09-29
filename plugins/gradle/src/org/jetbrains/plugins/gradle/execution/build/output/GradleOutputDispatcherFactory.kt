@@ -5,6 +5,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.OutputBuildEventImpl
@@ -16,6 +17,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcherImpl
+import com.intellij.util.containers.addIfNotNull
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -54,12 +56,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     consoleSettings: BuildViewSettingsProvider
   ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers, consoleSettings) {
 
-    private var currentReader: BuildOutputInstantReaderImpl = reader
-
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
+    private val tasksOutputReaders: MutableMap<TaskNameId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+    private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
 
     private val lineProcessor = object : LineProcessor() {
+
+      private var currentReader = reader
 
       override fun process(line: String) {
         val cleanLine = removeLoggerPrefix(line)
@@ -68,7 +72,16 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         if (cleanLine.startsWith("> Task :")) {
           val taskNameId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
-          setCurrentReader(BuildOutputInstantReaderImpl(buildId, taskNameId, this@GradleOutputMessageDispatcher, parsers))
+          val taskOutputReader = BuildOutputInstantReaderImpl(
+            buildId,
+            taskNameId,
+            { buildId, event -> onEvent(buildId, event) },
+            parsers
+          )
+          val oldTaskOutputReader = tasksOutputReaders.put(taskNameId, taskOutputReader)
+          // multiple invocations of the same task during the build session
+          tasksOutputRedefinedReaders.addIfNotNull(oldTaskOutputReader)
+          currentReader = taskOutputReader
         }
         else if (cleanLine.startsWith("> Configure") ||
                  cleanLine.startsWith("FAILURE: Build failed") ||
@@ -76,7 +89,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
                  cleanLine.startsWith("[Incubating] Problems report is available at:") ||
                  cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
                  cleanLine.startsWith("BUILD SUCCESSFUL")) {
-          setCurrentReader(reader)
+          currentReader = reader
         }
 
         if (currentReader != reader) {
@@ -85,14 +98,6 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         currentReader.appendLine(cleanLine)
       }
-    }
-
-    private fun setCurrentReader(newReader: BuildOutputInstantReaderImpl) {
-      val oldReader = currentReader
-      if (oldReader !== reader) {
-        oldReader.close()
-      }
-      currentReader = newReader
     }
 
     override fun onEvent(buildId: BuildId, event: BuildEvent) {
@@ -141,31 +146,19 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
       super.doClose()
 
-      setCurrentReader(reader)
+      for (taskOutputReader in tasksOutputReaders.values) {
+        taskOutputReader.close()
+      }
+      for (redefinedReader in tasksOutputRedefinedReaders) {
+        redefinedReader.close()
+      }
     }
 
-    override fun append(csq: CharSequence): Appendable {
+    override fun onTextAvailable(text: String) {
       if (appendOutputToMainConsole) {
-        onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut)) //NON-NLS
+        onEvent(buildId, OutputBuildEvent.builder(text).build()) //NON-NLS
       }
-      lineProcessor.append(csq)
-      return this
-    }
-
-    override fun append(csq: CharSequence, start: Int, end: Int): Appendable {
-      if (appendOutputToMainConsole) {
-        onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut)) //NON-NLS
-      }
-      lineProcessor.append(csq, start, end)
-      return this
-    }
-
-    override fun append(c: Char): Appendable {
-      if (appendOutputToMainConsole) {
-        onEvent(buildId, OutputBuildEventImpl(buildId, c.toString(), stdOut))
-      }
-      lineProcessor.append(c)
-      return this
+      lineProcessor.append(text)
     }
 
     private fun removeLoggerPrefix(line: String): String {

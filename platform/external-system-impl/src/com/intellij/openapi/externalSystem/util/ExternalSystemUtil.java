@@ -1238,7 +1238,7 @@ public final class ExternalSystemUtil {
     public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
       processHandler.notifyTextAvailable(text, outputType);
       eventDispatcher.setStdOut(outputType.isStdout());
-      eventDispatcher.append(text);
+      eventDispatcher.onTextAvailable(text);
     }
 
     @Override

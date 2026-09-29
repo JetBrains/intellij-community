@@ -13,15 +13,9 @@ import java.util.function.Consumer;
  */
 @Internal
 @NonExtendable
-public interface BuildEventDispatcher extends Appendable, Closeable, BuildProgressListener {
-  @Override
-  default BuildEventDispatcher append(CharSequence csq) {return this;}
+public interface BuildEventDispatcher extends Closeable, BuildProgressListener {
 
-  @Override
-  default BuildEventDispatcher append(CharSequence csq, int start, int end) {return this;}
-
-  @Override
-  default BuildEventDispatcher append(char c) {return this;}
+  void onTextAvailable(@NotNull String text);
 
   /**
    * Registers handler which is invoked once the build process is finished and the build messages are dispatched.

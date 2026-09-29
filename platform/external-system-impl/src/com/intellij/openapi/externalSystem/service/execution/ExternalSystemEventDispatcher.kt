@@ -58,20 +58,12 @@ class ExternalSystemEventDispatcher(
     outputMessageDispatcher.onEvent(buildId, event)
   }
 
+  override fun onTextAvailable(text: String) {
+    outputMessageDispatcher.onTextAvailable(text)
+  }
+
   override fun invokeOnCompletion(consumer: Consumer<in Throwable?>) {
     outputMessageDispatcher.invokeOnCompletion(consumer)
-  }
-
-  override fun append(csq: CharSequence): ExternalSystemEventDispatcher = apply {
-    outputMessageDispatcher.append(csq)
-  }
-
-  override fun append(csq: CharSequence, start: Int, end: Int): ExternalSystemEventDispatcher = apply {
-    outputMessageDispatcher.append(csq, start, end)
-  }
-
-  override fun append(c: Char): ExternalSystemEventDispatcher = apply {
-    outputMessageDispatcher.append(c)
   }
 
   override fun close() {

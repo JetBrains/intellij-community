@@ -489,7 +489,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         myProcessHandler.notifyTextAvailable(text, outputType);
       }
       myEventDispatcher.setStdOut(outputType.isStdout());
-      myEventDispatcher.append(text);
+      myEventDispatcher.onTextAvailable(text);
     }
 
     @Override

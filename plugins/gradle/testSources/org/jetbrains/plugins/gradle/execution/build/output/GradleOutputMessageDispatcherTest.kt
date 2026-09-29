@@ -49,8 +49,8 @@ class GradleOutputMessageDispatcherTest {
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
-        dispatcher.appendLine("> Task :task")
-        dispatcher.appendLine("task output")
+        dispatcher.onTextAvailable("> Task :task")
+        dispatcher.onTextAvailable("task output")
         dispatcher.onEvent(buildId, finishEvent)
         dispatcher.onEvent(buildId, finishBuildEvent)
       }
@@ -82,10 +82,10 @@ class GradleOutputMessageDispatcherTest {
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent1)
         dispatcher.onEvent(buildId, startEvent2)
-        dispatcher.appendLine("> Task :task1")
-        dispatcher.appendLine("task1 output")
-        dispatcher.appendLine("> Task :task2")
-        dispatcher.appendLine("task2 output")
+        dispatcher.onTextAvailable("> Task :task1")
+        dispatcher.onTextAvailable("task1 output")
+        dispatcher.onTextAvailable("> Task :task2")
+        dispatcher.onTextAvailable("task2 output")
         dispatcher.onEvent(buildId, finishEvent1)
         dispatcher.onEvent(buildId, finishEvent2)
         dispatcher.onEvent(buildId, finishBuildEvent)
@@ -117,9 +117,9 @@ class GradleOutputMessageDispatcherTest {
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
-        dispatcher.appendLine("> Task :task")
+        dispatcher.onTextAvailable("> Task :task")
         dispatcher.onEvent(buildId, finishEvent)
-        dispatcher.appendLine("output after finish event")
+        dispatcher.onTextAvailable("output after finish event")
         dispatcher.onEvent(buildId, finishBuildEvent)
       }
 
@@ -174,12 +174,12 @@ class GradleOutputMessageDispatcherTest {
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent1)
-        dispatcher.appendLine("> Task :task")
-        dispatcher.appendLine("first run")
+        dispatcher.onTextAvailable("> Task :task")
+        dispatcher.onTextAvailable("first run")
         dispatcher.onEvent(buildId, finishEvent1)
         dispatcher.onEvent(buildId, startEvent2)
-        dispatcher.appendLine("> Task :task")
-        dispatcher.appendLine("second run")
+        dispatcher.onTextAvailable("> Task :task")
+        dispatcher.onTextAvailable("second run")
         dispatcher.onEvent(buildId, finishEvent2)
         dispatcher.onEvent(buildId, finishBuildEvent)
       }
@@ -207,7 +207,7 @@ class GradleOutputMessageDispatcherTest {
     GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY)
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
-        dispatcher.appendLine("root output")
+        dispatcher.onTextAvailable("root output")
         dispatcher.onEvent(buildId, finishBuildEvent)
       }
 
@@ -233,11 +233,11 @@ class GradleOutputMessageDispatcherTest {
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
-        dispatcher.appendLine("> Task :task")
-        dispatcher.appendLine("task output")
+        dispatcher.onTextAvailable("> Task :task")
+        dispatcher.onTextAvailable("task output")
         dispatcher.onEvent(buildId, finishEvent)
-        dispatcher.appendLine("BUILD SUCCESSFUL in 1s")
-        dispatcher.appendLine("2 actionable tasks: 2 executed")
+        dispatcher.onTextAvailable("BUILD SUCCESSFUL in 1s")
+        dispatcher.onTextAvailable("2 actionable tasks: 2 executed")
         dispatcher.onEvent(buildId, finishBuildEvent)
       }
 
@@ -274,8 +274,8 @@ class GradleOutputMessageDispatcherTest {
     GradleOutputMessageDispatcher(buildId, listener, false, listOf(parser), BuildViewSettingsProvider.EMPTY).use { dispatcher ->
       dispatcher.onEvent(buildId, startBuildEvent)
       dispatcher.onEvent(buildId, startEvent)
-      dispatcher.appendLine("> Task :task")
-      dispatcher.appendLine("task output")
+      dispatcher.onTextAvailable("> Task :task")
+      dispatcher.onTextAvailable("task output")
       dispatcher.onEvent(buildId, finishEvent)
       dispatcher.onEvent(buildId, finishBuildEvent)
     }
@@ -298,8 +298,8 @@ class GradleOutputMessageDispatcherTest {
     val listener = RecordingBuildProgressListener()
     GradleOutputMessageDispatcher(buildId, listener, false, emptyList(), BuildViewSettingsProvider.EMPTY).use { dispatcher ->
       dispatcher.onEvent(buildId, startBuildEvent)
-      dispatcher.appendLine("> Task :task")
-      dispatcher.appendLine("task output")
+      dispatcher.onTextAvailable("> Task :task")
+      dispatcher.onTextAvailable("task output")
       dispatcher.onEvent(buildId, startEvent)
       dispatcher.onEvent(buildId, finishEvent)
       dispatcher.onEvent(buildId, finishBuildEvent)
@@ -326,11 +326,11 @@ class GradleOutputMessageDispatcherTest {
       .use { dispatcher ->
         dispatcher.onEvent(buildId, startBuildEvent)
         dispatcher.onEvent(buildId, startEvent)
-        dispatcher.appendLine("> Task :task")
-        dispatcher.appendLine("task output")
+        dispatcher.onTextAvailable("> Task :task")
+        dispatcher.onTextAvailable("task output")
         dispatcher.onEvent(buildId, finishEvent)
-        dispatcher.appendLine("> Configure project :project")
-        dispatcher.appendLine("configure output")
+        dispatcher.onTextAvailable("> Configure project :project")
+        dispatcher.onTextAvailable("configure output")
         dispatcher.onEvent(buildId, finishBuildEvent)
       }
 

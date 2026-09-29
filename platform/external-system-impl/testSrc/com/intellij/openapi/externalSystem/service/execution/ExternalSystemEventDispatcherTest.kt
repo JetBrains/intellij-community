@@ -65,16 +65,16 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
       buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
       dispatcher.invokeOnCompletion { eventMessages += "completion message 1" }
       val task1Progress = buildRootProgress.startChildProgress("sub task1 started")
-      dispatcher.appendLine("Task output line 1")
+      dispatcher.onTextAvailable("Task output line 1\n")
       val task2Progress = buildRootProgress.startChildProgress("sub task2 started")
-      dispatcher.appendLine("Task output line 2")
+      dispatcher.onTextAvailable("Task output line 2\n")
       task2Progress.finish("sub task2 finished", SuccessResultImpl())
       task1Progress.finish("sub task1 finished", SuccessResultImpl())
       buildRootProgress.finish("Build finished", SuccessResultImpl())
       dispatcher.invokeOnCompletion { throw RuntimeException("Bad happens") }
       dispatcher.invokeOnCompletion { eventMessages += "completion message 2" }
       dispatcher.invokeOnCompletion { semaphore.up() }
-      dispatcher.appendLine("Task output line 3")
+      dispatcher.onTextAvailable("Task output line 3\n")
     }
     dispatcher.invokeOnCompletion { eventMessages += "Late completion message" }
 

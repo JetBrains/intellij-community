@@ -8,8 +8,8 @@ import com.intellij.build.events.BuildId
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
@@ -24,21 +24,21 @@ open class ExternalSystemOutputMessageDispatcherImpl(
 
   override var stdOut: Boolean = true
 
-  protected val reader: BuildOutputInstantReaderImpl = BuildOutputInstantReaderImpl(buildId, buildId, this, parsers)
+  protected val reader: BuildOutputInstantReaderImpl = BuildOutputInstantReaderImpl(
+    buildId,
+    buildId,
+    { buildId, event -> onEvent(buildId, event) },
+    parsers
+  )
 
   @Volatile
   private var isClosed: Boolean = false
 
   private val onCompletionHandlers = ContainerUtil.createConcurrentList<Consumer<in Throwable?>>()
 
-  override fun append(csq: CharSequence): Appendable =
-    apply { reader.append(csq) }
-
-  override fun append(csq: CharSequence, start: Int, end: Int): Appendable =
-    apply { reader.append(csq, start, end) }
-
-  override fun append(c: Char): Appendable =
-    apply { reader.append(c) }
+  override fun onTextAvailable(text: String) {
+    reader.append(text)
+  }
 
   override fun onEvent(buildId: BuildId, event: BuildEvent) {
     when (event) {

@@ -2,9 +2,11 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildId
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
-import java.io.Closeable
+import java.lang.AutoCloseable
 import java.util.function.Consumer
 
 /**
@@ -14,7 +16,8 @@ import java.util.function.Consumer
  */
 @Internal
 @OverrideOnly
-interface ExternalSystemOutputMessageDispatcher : Closeable, Appendable, BuildProgressListener {
+interface ExternalSystemOutputMessageDispatcher : AutoCloseable {
+
   /**
    * Output type for next [append] and [onEvent] calls.
    * True value means process standard output stream [com.intellij.execution.process.ProcessOutputType.STDOUT]
@@ -24,6 +27,10 @@ interface ExternalSystemOutputMessageDispatcher : Closeable, Appendable, BuildPr
    * @see BuildProgressListener
    */
   var stdOut: Boolean
+
+  fun onTextAvailable(text: String)
+
+  fun onEvent(buildId: BuildId, event: BuildEvent)
 
   /**
    * Subscribes on output close event.
