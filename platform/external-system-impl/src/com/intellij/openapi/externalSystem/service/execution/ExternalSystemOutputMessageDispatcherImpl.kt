@@ -9,6 +9,7 @@ import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -22,8 +23,6 @@ open class ExternalSystemOutputMessageDispatcherImpl(
   val consoleSettings: BuildViewSettingsProvider
 ) : ExternalSystemOutputMessageDispatcher {
 
-  override var stdOut: Boolean = true
-
   protected val reader: BuildOutputInstantReaderImpl = BuildOutputInstantReaderImpl(
     buildId,
     buildId,
@@ -36,7 +35,7 @@ open class ExternalSystemOutputMessageDispatcherImpl(
 
   private val onCompletionHandlers = ContainerUtil.createConcurrentList<Consumer<in Throwable?>>()
 
-  override fun onTextAvailable(text: String) {
+  override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
     reader.append(text)
   }
 

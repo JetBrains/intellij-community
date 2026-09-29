@@ -12,6 +12,7 @@ import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.LineProcessor
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
@@ -93,7 +94,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         }
 
         if (currentReader != reader) {
-          onEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', stdOut)) //NON-NLS
+          onEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', ProcessOutputType.STDOUT)) //NON-NLS todo!!
         }
 
         currentReader.appendLine(cleanLine)
@@ -154,9 +155,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
     }
 
-    override fun onTextAvailable(text: String) {
+    override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
       if (appendOutputToMainConsole) {
-        onEvent(buildId, OutputBuildEvent.builder(text).build()) //NON-NLS
+        onEvent(
+          buildId,
+          OutputBuildEvent.builder(text) //NON-NLS
+            .withOutputType(outputType)
+            .build()
+        )
       }
       lineProcessor.append(text)
     }

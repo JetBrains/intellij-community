@@ -6,6 +6,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory.Companion.EP_NAME
 import com.intellij.util.SmartList
@@ -23,11 +24,10 @@ class ExternalSystemEventDispatcher(
     : this(taskId, progressListener, true, consoleSettings)
 
   private lateinit var outputMessageDispatcher: ExternalSystemOutputMessageDispatcher
-  private var isStdOut: Boolean = true
+  private var outputType: ProcessOutputType = ProcessOutputType.STDOUT
 
   override fun setStdOut(stdOut: Boolean) {
-    this.isStdOut = stdOut
-    outputMessageDispatcher.stdOut = stdOut
+    outputType = if (stdOut) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
   }
 
   init {
@@ -59,7 +59,7 @@ class ExternalSystemEventDispatcher(
   }
 
   override fun onTextAvailable(text: String) {
-    outputMessageDispatcher.onTextAvailable(text)
+    outputMessageDispatcher.onTextAvailable(text, outputType)
   }
 
   override fun invokeOnCompletion(consumer: Consumer<in Throwable?>) {

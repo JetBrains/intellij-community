@@ -94,6 +94,7 @@ jvm_library(
         "//platform/consoleView",
         "//platform/forms_rt:java-guiForms-rt",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/util",
     ],
 )
 ### auto-generated section `build intellij.platform.externalSystem.impl` end
