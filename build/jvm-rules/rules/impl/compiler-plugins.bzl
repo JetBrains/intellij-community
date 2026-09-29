@@ -62,9 +62,9 @@ def compiler_plugins_from(targets):
             all_plugins[plugin.id] = plugin
 
     if plugins_without_phase:
-        fail("has plugin without a phase defined: %s" % cfgs_without_plugin)
+        fail("has plugin without a phase defined: %s" % plugins_without_phase)
 
-    plugin_id_to_configuration = {}
+    plugin_id_to_configurations = {}
     cfgs_without_plugin = []
     for t in targets:
         if _KtPluginConfiguration not in t:
@@ -72,30 +72,45 @@ def compiler_plugins_from(targets):
         cfg = t[_KtPluginConfiguration]
         if cfg.id not in all_plugins:
             cfgs_without_plugin.append("%s: %s" % (t.label, cfg.id))
-        plugin_id_to_configuration[cfg.id] = cfg
+        plugin_id_to_configurations.setdefault(cfg.id, []).append(cfg)
 
     if cfgs_without_plugin:
         fail("has plugin configurations without corresponding plugins: %s" % cfgs_without_plugin)
 
     return struct(
         stubs_phase = [],
-        compile_phase = _new_plugin_from(plugin_id_to_configuration, [p for p in all_plugins.values() if p.compile]),
+        compile_phase = _new_plugin_from(plugin_id_to_configurations, [p for p in all_plugins.values() if p.compile]),
     )
 
-def _new_plugin_from(plugin_id_to_configuration, plugins_for_phase):
+def _new_plugin_from(plugin_id_to_configurations, plugins_for_phase):
+    """Merges every kt_plugin_cfg of a plugin into the plugin, as rules_kotlin does: the options follow the plugin's own
+    options in target order, and the classpaths join."""
     classpath = {}
     options = {}
+    data = {}
     for p in plugins_for_phase:
-        if p.id in plugin_id_to_configuration:
-            cfg = plugin_id_to_configuration[p.id]
-            classpath[p.id] = depset(transitive = p.classpath + cfg.classpath)
-            options[p.id] = p.options + cfg.options
-        else:
-            classpath[p.id] = p.classpath
-            if p.options:
-                options[p.id] = p.options
+        cfgs = plugin_id_to_configurations.get(p.id, [])
+        classpath[p.id] = depset(transitive = [p.classpath] + [cfg.classpath for cfg in cfgs])
+        plugin_options = list(p.options)
+        for cfg in cfgs:
+            plugin_options.extend(cfg.options)
+        if plugin_options:
+            options[p.id] = plugin_options
+
+        # kt_plugin_cfg carries the runfiles of its deps as data; the worker gets their files as inputs, like the plugin
+        # classpath. A depset is accepted too. The files that $(location) names in an option value are not in the
+        # provider, so they are not inputs.
+        data_files = []
+        for cfg in cfgs:
+            if type(cfg.data) == "depset":
+                data_files.append(cfg.data)
+            elif type(cfg.data) == "runfiles":
+                data_files.append(cfg.data.files)
+        if data_files:
+            data[p.id] = depset(transitive = data_files)
 
     return struct(
         classpath = classpath,
         options = options,
+        data = data,
     )

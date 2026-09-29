@@ -1,5 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 java_binary(
@@ -17,9 +18,16 @@ create_kotlinc_options(
         "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
         "org.jetbrains.jewel.foundation.InternalJewelApi",
     ],
-    plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
     x_context_parameters = True,
     x_explicit_api_mode = "strict",
+)
+
+kt_plugin_cfg(
+    name = "compose_plugin_standalone",
+    options = {
+        "generateFunctionKeyMetaAnnotations": ["true"],
+    },
+    plugin = "@lib//:compose-plugin",
 )
 
 jvm_library(
@@ -34,6 +42,7 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_standalone",
     module_name = "intellij.platform.jewel.samples.standalone",
+    plugins = [":compose_plugin_standalone"],
     resource_strip_prefix = "src/main/resources",
     resources = glob(
         ["src/main/resources/**/*"],

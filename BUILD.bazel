@@ -2,6 +2,7 @@ load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//build:source_tree.bzl", "source_tree_files")
 
@@ -342,8 +343,15 @@ exports_files(
 create_kotlinc_options(
     name = "custom_main-tests",
     opt_in = ["kotlin.ExperimentalStdlibApi"],
-    plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition"],
     x_context_parameters = True,
+)
+
+kt_plugin_cfg(
+    name = "compose_plugin_main-tests",
+    options = {
+        "featureFlag": ["-PausableComposition"],
+    },
+    plugin = "@lib//:compose-plugin",
 )
 
 jvm_library(
@@ -359,6 +367,7 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_main-tests",
     module_name = "intellij.idea.community.main.tests",
+    plugins = [":compose_plugin_main-tests"],
     resource_strip_prefix = "tests/main/testData",
     resources = glob(
         ["tests/main/testData/**/*"],

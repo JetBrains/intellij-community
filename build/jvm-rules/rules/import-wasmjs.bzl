@@ -32,8 +32,9 @@ wasmjs_import = rule(
             doc = "Source jars exposed by this imported dependency.",
         ),
         "exported_compiler_plugins": attr.label_list(
-            doc = """Exported compiler plugins.""",
+            doc = """Exported compiler plugins. They resolve in the execution configuration, like `plugins`.""",
             default = [],
+            cfg = "exec",
             providers = [[_KtCompilerPluginInfo]],
         ),
         "deps": attr.label_list(

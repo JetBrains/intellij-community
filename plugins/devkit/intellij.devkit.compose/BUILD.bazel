@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:core.bzl", "kt_plugin_cfg")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -13,7 +14,14 @@ create_kotlinc_options(
         "androidx.compose.foundation.ExperimentalFoundationApi",
         "kotlinx.coroutines.ExperimentalCoroutinesApi",
     ],
-    plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"],
+)
+
+kt_plugin_cfg(
+    name = "compose_plugin_compose",
+    options = {
+        "generateFunctionKeyMetaAnnotations": ["true"],
+    },
+    plugin = "@lib//:compose-plugin",
 )
 
 jvm_library(
@@ -30,6 +38,7 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_compose",
     module_name = "intellij.devkit.compose",
+    plugins = [":compose_plugin_compose"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

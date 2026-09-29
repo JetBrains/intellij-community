@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("//:rules/impl/associates.bzl", "get_associates")
-load("//:rules/impl/kotlinc-options.bzl", "KotlincExtraOptionsInfo", "KotlincOptions", "kotlinc_options_to_args")
+load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_args")
 
 visibility("private")
 
@@ -14,9 +14,7 @@ def init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugin
     args.add("--target_label", ctx.label)
     args.add("--kotlin_module_name", associates.module_name)
 
-    kotlinc_opts_target = ctx.attr.kotlinc_opts
-    kotlinc_options = kotlinc_opts_target[KotlincOptions]
-    kotlinc_extra_options = kotlinc_opts_target[KotlincExtraOptionsInfo]
+    kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
 
     if associates:
         args.add_all("--friends", associates.jars, map_each = _flatten_jars)
@@ -24,7 +22,7 @@ def init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugin
     if ctx.attr._trace[BuildSettingInfo].value:
         args.add("--trace")
 
-    kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options)
+    kotlinc_options_to_args(kotlinc_options, args)
 
     args.add_all("--srcs", srcs.all_srcs)
     args.add_all("--src-jars", srcs.src_jars)
@@ -43,6 +41,16 @@ def init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugin
         args.add("--plugin-id", id)
         args.add_joined("--plugin-classpath", classpath, omit_if_empty = False, join_with = ":")
         transitiveInputs.append(classpath)
+
+    # The options of kt_compiler_plugin and kt_plugin_cfg targets, in the form the compiler takes after -P; the
+    # worker hands them to the CommandLineProcessor that answers to the plugin id. The data files of the
+    # configurations are inputs of the action; the worker digests them together with the plugin classpath.
+    for id, options in plugins.compile_phase.options.items():
+        args.add_all("--plugin_options", ["plugin:%s:%s=%s" % (id, option.key, option.value) for option in options])
+    plugin_data = plugins.compile_phase.data.values()
+    if plugin_data:
+        args.add_all("--plugin_data", depset(transitive = plugin_data))
+        transitiveInputs.extend(plugin_data)
 
     return args
 

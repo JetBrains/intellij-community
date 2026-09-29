@@ -14,7 +14,9 @@ kt_compiler_plugin(
 
 kt_compiler_plugin(
     name = "compose-plugin",
-    id = "org.jetbrains.kotlin.kotlin-compose-compiler-plugin",
+    # The id the plugin's CommandLineProcessor answers to: rules_kotlin and rules_jvm pass plugin options as
+    # `-P plugin:<id>:<key>=<value>`.
+    id = "androidx.compose.compiler.plugins.kotlin",
     # The plugin jar is the embeddable dialect.
     target_embedded_compiler = True,
     visibility = ["//visibility:public"],
