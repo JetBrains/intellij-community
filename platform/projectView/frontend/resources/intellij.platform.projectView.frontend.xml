@@ -38,7 +38,7 @@
       serviceInterface="com.intellij.platform.projectView.actions.SelectInSplitProjectView"
       serviceImplementation="com.intellij.platform.projectView.frontend.actions.SelectInSplitProjectViewImpl"
     />
-    <projectViewSelectInTargetProvider implementation="com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTargetProvider"/>
+    <projectViewSelectInTargetProvider implementation="com.intellij.platform.projectView.frontend.actions.FrontendProjectViewSelectInTargetProvider"/>
     <uiDataRule implementation="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneUiDataRule"/>
   </extensions>
 </idea-plugin>

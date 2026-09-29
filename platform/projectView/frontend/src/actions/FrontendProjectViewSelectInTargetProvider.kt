@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
 
-internal class SplitProjectViewSelectInTargetProvider : ProjectViewSelectInTargetProvider {
+internal class FrontendProjectViewSelectInTargetProvider : ProjectViewSelectInTargetProvider {
   override fun getSelectInTargets(project: Project): Collection<SelectInTarget> {
     if (!isProjectViewSplit()) return emptyList()
     return buildList {
