@@ -76,7 +76,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           val taskOutputReader = BuildOutputInstantReaderImpl(
             buildId,
             taskNameId,
-            { buildId, event -> onEvent(buildId, event) },
+            { buildId, event -> notifyBuildEvent(buildId, event) },
             parsers
           )
           val oldTaskOutputReader = tasksOutputReaders.put(taskNameId, taskOutputReader)
@@ -94,14 +94,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         }
 
         if (currentReader != reader) {
-          onEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', ProcessOutputType.STDOUT)) //NON-NLS todo!!
+          notifyBuildEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', ProcessOutputType.STDOUT)) //NON-NLS todo!!
         }
 
         currentReader.appendLine(cleanLine)
       }
     }
 
-    override fun onEvent(buildId: BuildId, event: BuildEvent) {
+    override fun notifyBuildEvent(buildId: BuildId, event: BuildEvent) {
       val buildEvent = when (val parentId = event.parentId) {
         buildId -> event
         is TaskNameId -> {
@@ -128,7 +128,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         else -> event
       }
 
-      super.onEvent(buildId, buildEvent)
+      super.notifyBuildEvent(buildId, buildEvent)
 
       if (event.parentId == buildId && event is StartEvent) {
         val taskEventId = event.id
@@ -137,7 +137,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         val deferredEvents = deferredTaskEvents.remove(taskNameId) ?: emptyList()
         for (deferredEvent in deferredEvents) {
-          onEvent(buildId, deferredEvent)
+          notifyBuildEvent(buildId, deferredEvent)
         }
       }
     }
@@ -157,7 +157,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
       if (appendOutputToMainConsole) {
-        onEvent(
+        notifyBuildEvent(
           buildId,
           OutputBuildEvent.builder(text) //NON-NLS
             .withOutputType(outputType)

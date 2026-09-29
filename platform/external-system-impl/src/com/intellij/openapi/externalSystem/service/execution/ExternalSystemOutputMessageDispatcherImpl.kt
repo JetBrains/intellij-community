@@ -26,7 +26,7 @@ open class ExternalSystemOutputMessageDispatcherImpl(
   protected val reader: BuildOutputInstantReaderImpl = BuildOutputInstantReaderImpl(
     buildId,
     buildId,
-    { buildId, event -> onEvent(buildId, event) },
+    { buildId, event -> notifyBuildEvent(buildId, event) },
     parsers
   )
 
@@ -39,7 +39,7 @@ open class ExternalSystemOutputMessageDispatcherImpl(
     reader.append(text)
   }
 
-  override fun onEvent(buildId: BuildId, event: BuildEvent) {
+  override fun notifyBuildEvent(buildId: BuildId, event: BuildEvent) {
     when (event) {
       is FinishBuildEvent -> invokeOnCompletion(Consumer { listener.onEvent(buildId, event) })
       else -> listener.onEvent(buildId, event)

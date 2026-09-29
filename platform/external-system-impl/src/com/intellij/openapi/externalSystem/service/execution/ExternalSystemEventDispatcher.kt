@@ -50,7 +50,7 @@ class ExternalSystemEventDispatcher(
   }
 
   override fun notifyBuildEvent(buildId: Any, event: BuildEvent) {
-    outputMessageDispatcher.onEvent(buildId, event)
+    outputMessageDispatcher.notifyBuildEvent(buildId, event)
   }
 
   override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {

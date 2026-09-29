@@ -23,7 +23,7 @@ interface ExternalSystemOutputMessageDispatcher : AutoCloseable {
   /**
    * Dispatches an event of the build process.
    */
-  fun onEvent(buildId: BuildId, event: BuildEvent)
+  fun notifyBuildEvent(buildId: BuildId, event: BuildEvent)
 
   /**
    * Dispatches a chunk of the build process output.
