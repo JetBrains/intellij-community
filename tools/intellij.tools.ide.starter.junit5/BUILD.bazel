@@ -14,11 +14,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit6-params_provided",
-    lib = "//libraries/junit6-params",
-)
-
-jvm_provided_library(
     name = "libraries_junit6-launcher_provided",
     lib = "//libraries/junit6-launcher",
 )
@@ -52,7 +47,6 @@ jvm_library(
         "//libraries/opentelemetry",
         "//platform/testFramework/common",
         ":libraries_junit6_provided",
-        ":libraries_junit6-params_provided",
         ":libraries_junit6-launcher_provided",
     ],
 )
@@ -79,8 +73,6 @@ jvm_library(
         "//platform/remote-driver/model:model_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
-        "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/junit6-launcher",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",

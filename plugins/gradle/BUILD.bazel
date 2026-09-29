@@ -21,11 +21,6 @@ jvm_provided_library(
     lib = "//libraries/groovy",
 )
 
-jvm_provided_library(
-    name = "libraries_groovy_ant_provided",
-    lib = "//libraries/groovy/ant",
-)
-
 jvm_library(
     name = "gradle",
     srcs = glob(
@@ -124,7 +119,6 @@ jvm_library(
         "//platform/util-ex",
         "//platform/testRunner",
         ":libraries_groovy_provided",
-        ":libraries_groovy_ant_provided",
     ],
 )
 
@@ -220,8 +214,6 @@ jvm_library(
         "//platform/testRunner:testRunner_test_lib",
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
-        "//libraries/groovy/ant",
-        "//libraries/groovy/ant:ant_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle` end

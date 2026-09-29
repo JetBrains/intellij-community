@@ -23,11 +23,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "platform_core-ui_provided",
-    lib = "//platform/core-ui",
-)
-
-jvm_provided_library(
     name = "spellchecker_provided",
     lib = "//spellchecker",
 )
@@ -72,7 +67,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//jps/model-api:model",
         ":platform_lang-impl_provided",
-        ":platform_core-ui_provided",
         ":spellchecker_provided",
     ],
 )
@@ -103,8 +97,6 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/indexing-impl:indexing-impl_test_lib",
-        "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/jcef:jcef_test_lib",

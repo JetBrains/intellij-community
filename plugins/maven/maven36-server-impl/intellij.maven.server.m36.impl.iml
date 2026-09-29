@@ -647,23 +647,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library name="org.apache.maven.shared:maven-dependency-tree:1.2" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.maven.shared:maven-dependency-tree:1.2">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar">
-              <sha256sum>dbb8c53ccc0b16a9dd8370d6e7de63102468caedac1e5fa2eb418319a6875293</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
   </component>
 </module>

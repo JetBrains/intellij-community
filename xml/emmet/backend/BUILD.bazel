@@ -90,7 +90,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//xml/emmet/shared",
-        "@lib//:kotlin-stdlib-provided",
         "//platform/kernel/rpc.backend",
         ":xml_emmet_provided",
         ":libraries_jetbrains_annotations_provided",
@@ -121,7 +120,6 @@ jvm_library(
         # do not sort,
         ":backend",
         "//xml/emmet/shared:shared_test_lib",
-        "@lib//:kotlin-stdlib-provided",
         "//xml/emmet",
         "//xml/emmet:emmet_test_lib",
         "//libraries/jetbrains/annotations",

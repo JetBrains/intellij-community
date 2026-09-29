@@ -134,11 +134,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_opentelemetry-semconv_provided",
-    lib = "//libraries/opentelemetry-semconv",
-)
-
-jvm_provided_library(
     name = "libraries_opentelemetry-extension-kotlin_provided",
     lib = "//libraries/opentelemetry-extension-kotlin",
 )
@@ -220,7 +215,6 @@ jvm_library(
         "//platform/ijent",
         "//platform/util/diff",
         ":libraries_opentelemetry_provided",
-        ":libraries_opentelemetry-semconv_provided",
         ":libraries_opentelemetry-extension-kotlin_provided",
     ],
 )
@@ -279,8 +273,6 @@ jvm_library(
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-semconv",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//libraries/opentelemetry-extension-kotlin",
         "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
