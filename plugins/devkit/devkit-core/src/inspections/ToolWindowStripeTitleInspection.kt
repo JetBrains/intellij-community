@@ -31,7 +31,9 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.inspections.DeclareResourceBundleFix
 import org.jetbrains.idea.devkit.references.PluginConfigReference
@@ -47,7 +49,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val STRIPE_TITLE_KEY_PREFIX = "toolwindow.stripe."
 private const val IDE_BUNDLE_NAME = "messages.IdeBundle"
 
-private val TOOL_WINDOW_EXTENSION_TAGS = setOf("toolWindow", "library.toolWindow", "facet.toolWindow")
+private const val TOOL_WINDOW_EP_CLASS = "com.intellij.openapi.wm.ToolWindowEP"
 
 private const val TOOL_WINDOW_CLASS = "com.intellij.openapi.wm.ToolWindow"
 
@@ -230,10 +232,16 @@ private fun readBundle(pluginId: String, declaredBundleName: String?): ReadBundl
 
 private fun stripeTitleKey(toolWindowId: String): String = STRIPE_TITLE_KEY_PREFIX + toolWindowId.replace(' ', '_')
 
+/**
+ * The platform reads the stripe title for every extension with a [TOOL_WINDOW_EP_CLASS] bean,
+ * such as `toolWindow`, `library.toolWindow` and `facet.toolWindow`.
+ *
+ * @see com.intellij.openapi.wm.impl.ToolWindowManagerImpl.initToolWindow
+ */
 private fun isToolWindowExtension(tag: XmlTag): Boolean {
   if (tag.parentTag?.localName != "extensions") return false
-  val name = tag.localName
-  return name in TOOL_WINDOW_EXTENSION_TAGS || TOOL_WINDOW_EXTENSION_TAGS.any { name.endsWith(".$it") }
+  val extension = DomManager.getDomManager(tag.project).getDomElement(tag) as? Extension ?: return false
+  return InheritanceUtil.isInheritor(extension.extensionPoint?.beanClass?.value, TOOL_WINDOW_EP_CLASS)
 }
 
 private fun bundleNameOf(file: PsiFile): String? = BundleNameEvaluator.DEFAULT.evaluateBundleName(file)
@@ -262,6 +270,7 @@ private fun bundlesWithKey(module: Module, key: String): List<String> {
  * Follows the reference that [org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor] puts on the key.
  *
  * The reference resolves to the `id` attribute of the extension, so the result is its enclosing tag.
+ * The reference resolves only to a `com.intellij.toolWindow` extension. A key of any other tool window extension stays silent.
  */
 private fun resolveToolWindowExtension(propertyKey: PsiElement): XmlTag? {
   for (reference in propertyKey.references) {

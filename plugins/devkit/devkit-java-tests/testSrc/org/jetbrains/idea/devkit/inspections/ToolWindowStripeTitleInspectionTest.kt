@@ -101,6 +101,70 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml)
   }
 
+  fun `test reports an extension point with a subclass of the tool window bean`() {
+    myFixture.addClass(
+      """
+      package com.intellij.openapi.wm.ext;
+      public class LibraryDependentToolWindow extends com.intellij.openapi.wm.ToolWindowEP {}
+      """.trimIndent()
+    )
+    addFile(
+      "META-INF/libraryExtensionPoints.xml", """
+      <idea-plugin>
+        <extensionPoints>
+          <extensionPoint name="library.toolWindow" beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow"/>
+        </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <library.toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
+    // The key side cannot find this extension. See resolveToolWindowExtension.
+    addFile("messages/WrongBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml)
+  }
+
+  fun `test does not report an extension point with the same name and another bean`() {
+    myFixture.addClass(
+      """
+      package com.example;
+      import com.intellij.util.xmlb.annotations.Attribute;
+      public class OtherBean {
+        @Attribute public String id;
+      }
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensionPoints>
+          <extensionPoint name="toolWindow" beanClass="com.example.OtherBean"/>
+        </extensionPoints>
+        <extensions defaultExtensionNs="com.example.plugin">
+          <toolWindow id="My Tool Window"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
+    val wrongBundle = addFile("messages/WrongBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, wrongBundle)
+  }
+
   fun `test does not report when the factory sets the stripe title itself`() {
     addFactory(
       "MyToolWindowFactory.java", """
