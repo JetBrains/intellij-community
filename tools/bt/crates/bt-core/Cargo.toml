@@ -1,17 +1,18 @@
+# Inline rather than `.workspace = true`: the Air UI-lane workspace links this crate through a path dependency, and
+# rules_rs reads the `[package]` and `[dependencies]` of such a crate without its workspace. Keep the values equal to
+# `[workspace.package]` and `[workspace.dependencies]`.
 [package]
 name = "bt-core"
 description = "`bt`'s core: the areas and their lanes, selector resolution, the suite catalog, Bazel test runs, BEP and test.xml reading."
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
-publish.workspace = true
-license.workspace = true
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+license = "Apache-2.0"
 
 [lints]
 workspace = true
 
-# Inline rather than `.workspace = true`: the Air UI-lane workspace links this crate through a path dependency, and
-# rules_rs reads the `[dependencies]` of such a crate without its workspace. See `[workspace.dependencies]`.
 [dependencies]
 bt-junit = { path = "../bt-junit" }
 percent-encoding = "2.3.2"

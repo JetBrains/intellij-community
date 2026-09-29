@@ -34,8 +34,9 @@ refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins
 
 The Air UI-lane workspace, `plugins/air/tests/integration/vm-lane`, links crates of this workspace through path
 dependencies. `avl.bzl` there maps each such crate to its label in this module (`_CROSS_MODULE_CRATES`), so Bazel
-builds it once. rules_rs reads the `[dependencies]` of such a crate without this workspace, so the crate spells each
-normal dependency inline. Keep the version and the features equal to `[workspace.dependencies]`.
+builds it once. rules_rs reads the `[package]` and `[dependencies]` of such a crate without this workspace, so the
+crate spells each `[package]` field and each normal dependency inline. Keep the values equal to `[workspace.package]`
+and `[workspace.dependencies]`.
 
 That build links this workspace's `serde`, `serde_json` and `regex`, which are other crates than the ones the Air
 workspace links. Cargo unifies them, so only Bazel shows the difference. A public API of a linked crate therefore
