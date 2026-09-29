@@ -94,17 +94,10 @@ private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElement
     val expectedName = readBundle.name
     if (expectedName != null && bundleHasKey(source.module, expectedName, key)) return
 
-    val actualBundle = bundlesWithKey(source.module, key).firstOrNull { it != expectedName }
+    // No bundle holds the key, so the ID is the title. That is normal for a tool window that isn't localized.
+    val actualBundle = bundlesWithKey(source.module, key).firstOrNull { it != expectedName } ?: return
 
     val idRange = ElementManipulators.getValueTextRange(target)
-
-    if (actualBundle == null) {
-      holder.registerProblem(
-        target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.not.found", key)
-      )
-      return
-    }
 
     when (readBundle) {
       is ReadBundle.Declared -> holder.registerProblem(
