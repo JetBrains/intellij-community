@@ -248,8 +248,8 @@ abstract class GitLabConnectedProjectViewModelBase(
     cs.launch {
       val details = loadMergeRequestFullDetails(mrIid) ?: return@launch
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(connection.repo.gitRepository, connection.repo.repository.serverPath, details)
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
   }
 
   override fun checkoutMergeRequestInNewWorktree(mrIid: String) {
@@ -259,8 +259,8 @@ abstract class GitLabConnectedProjectViewModelBase(
                                                                        connection.repo.repository.serverPath,
                                                                        details,
                                                                        preferredProjectAndAccount)
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
