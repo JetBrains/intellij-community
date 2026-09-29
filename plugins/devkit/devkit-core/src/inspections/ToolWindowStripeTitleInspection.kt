@@ -18,15 +18,16 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
@@ -35,10 +36,11 @@ import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
 import org.jetbrains.idea.devkit.inspections.DeclareResourceBundleFix
 import org.jetbrains.idea.devkit.references.PluginConfigReference
 import org.jetbrains.idea.devkit.util.DescriptorUtil
+import org.jetbrains.uast.UBinaryExpression
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -47,18 +49,20 @@ private const val IDE_BUNDLE_NAME = "messages.IdeBundle"
 
 private val TOOL_WINDOW_EXTENSION_TAGS = setOf("toolWindow", "library.toolWindow", "facet.toolWindow")
 
+private const val TOOL_WINDOW_CLASS = "com.intellij.openapi.wm.ToolWindow"
+
 /**
- * A factory that calls one of these sets the stripe title itself, so the resource bundle does not matter.
+ * A factory that calls one of these from `init` sets the stripe title itself, so the resource bundle does not matter.
  *
  * The short title is a separate string. A factory that sets only the short title still needs the key,
  * so `setStripeShortTitleProvider` does not belong here.
  *
  * @see com.intellij.openapi.wm.ToolWindowFactory.init
  */
-private val STRIPE_TITLE_SETTERS = setOf(
-  "stripeTitle", "stripeTitleProvider",
-  "setStripeTitle", "setStripeTitleProvider",
-)
+private val STRIPE_TITLE_SETTERS = setOf("setStripeTitle", "setStripeTitleProvider")
+
+/** Kotlin assigns `toolWindow.stripeTitle = ...` through a synthetic property, which can resolve to its getter. */
+private val STRIPE_TITLE_PROPERTY_ACCESSORS = STRIPE_TITLE_SETTERS + setOf("getStripeTitle", "getStripeTitleProvider")
 
 /**
  * Reports wrong `toolwindow.stripe.<ID>` keys
@@ -289,35 +293,44 @@ private fun stripeTitleSource(extension: XmlTag): StripeTitleSource? {
   return StripeTitleSource(descriptor, module, readBundle)
 }
 
+/**
+ * Only a call from `init` counts. The platform calls `createToolWindowContent` when the tool window first opens,
+ * so a title set there leaves the bundle title on the stripe until then.
+ * A call under a condition counts too. The inspection cannot tell when the condition holds, so it stays silent.
+ */
 private fun setsStripeTitleInCode(tag: XmlTag, module: Module): Boolean {
   val factoryClassName = tag.getAttributeValue("factoryClass") ?: return false
   val scope = GlobalSearchScope.moduleRuntimeScope(module, false)
   val factoryClass = JavaPsiFacade.getInstance(tag.project).findClass(factoryClassName, scope) ?: return false
-  return setsStripeTitleInCode(factoryClass, HashSet())
+  return factoryClass.findMethodsByName("init", true).any { callsStripeTitleSetter(it) }
 }
 
-private fun setsStripeTitleInCode(psiClass: PsiClass, visited: MutableSet<PsiClass>): Boolean {
-  if (visited.size > 16 || !visited.add(psiClass)) return false
-  if (mentionsStripeTitleSetter(psiClass)) return true
-  return psiClass.supers.any { setsStripeTitleInCode(it, visited) }
-}
+private fun callsStripeTitleSetter(method: PsiMethod): Boolean {
+  if (method is PsiCompiledElement) return false
 
-private fun mentionsStripeTitleSetter(psiClass: PsiClass): Boolean {
-  if (psiClass is PsiCompiledElement) return false
-
-  val uClass = psiClass.toUElementOfType<UClass>() ?: return false
+  val uMethod = method.toUElementOfType<UMethod>() ?: return false
   var found = false
-  uClass.accept(object : AbstractUastVisitor() {
-    override fun visitElement(node: UElement): Boolean {
-      if (found) return true
-      val name = when (node) {
-        is UCallExpression -> node.methodName
-        is USimpleNameReferenceExpression -> node.identifier
-        else -> null
+  uMethod.accept(object : AbstractUastVisitor() {
+    override fun visitCallExpression(node: UCallExpression): Boolean {
+      if (!found && isToolWindowMethod(node.resolve(), STRIPE_TITLE_SETTERS)) found = true
+      return found
+    }
+
+    override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
+      if (!found && node.operator == UastBinaryOperator.ASSIGN) {
+        val resolved = (node.leftOperand as? UResolvable)?.resolve()
+        if (isToolWindowMethod(resolved, STRIPE_TITLE_PROPERTY_ACCESSORS)) found = true
       }
-      if (name != null && name in STRIPE_TITLE_SETTERS) found = true
       return found
     }
   })
   return found
+}
+
+/**
+ * The resolve keeps out a read of the title and an unrelated method with the same name.
+ */
+private fun isToolWindowMethod(element: PsiElement?, names: Set<String>): Boolean {
+  val method = element as? PsiMethod ?: return false
+  return method.name in names && InheritanceUtil.isInheritor(method.containingClass, TOOL_WINDOW_CLASS)
 }

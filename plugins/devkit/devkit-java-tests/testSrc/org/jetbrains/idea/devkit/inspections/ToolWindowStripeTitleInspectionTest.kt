@@ -1,40 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import org.intellij.lang.annotations.Language
-
-class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    // DevKit recognizes a plugin project by this class, see PsiUtil.IDE_PROJECT_MARKER_CLASS.
-    myFixture.addClass("package com.intellij.ui.components; public class JBList {}")
-    // DOM takes the allowed attributes from the bean. Without the annotations, it reports its own problems.
-    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute { String value() default \"\"; }")
-    myFixture.addClass(
-      """
-      package com.intellij.openapi.wm;
-      import com.intellij.util.xmlb.annotations.Attribute;
-      public class ToolWindowEP {
-        @Attribute public String id;
-        @Attribute public String factoryClass;
-      }
-      """.trimIndent()
-    )
-    // An id-less descriptor declares the extension point under the 'com.intellij' prefix.
-    addFile(
-      "META-INF/extensionPoints.xml", """
-      <idea-plugin>
-        <extensionPoints>
-          <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
-        </extensionPoints>
-      </idea-plugin>
-      """.trimIndent()
-    )
-    myFixture.enableInspections(ToolWindowStripeTitleInspection())
-  }
+class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestBase() {
 
   fun `test reports the extension and the key when the key is in another bundle`() {
     val pluginXml = addFile(
@@ -137,12 +104,12 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
   fun `test does not report when the factory sets the stripe title itself`() {
     addFactory(
       "MyToolWindowFactory.java", """
-      public class MyToolWindowFactory {
-        public void init(Object toolWindow) {
-          setStripeTitle("My Tool Window");
-        }
+      import com.intellij.openapi.wm.ToolWindow;
 
-        void setStripeTitle(String title) {}
+      public class MyToolWindowFactory {
+        public void init(ToolWindow toolWindow) {
+          toolWindow.setStripeTitle("My Tool Window");
+        }
       }
       """.trimIndent()
     )
@@ -166,12 +133,12 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
   fun `test does not report when the factory sets the title and the descriptor declares no bundle`() {
     addFactory(
       "MyToolWindowFactory.java", """
-      public class MyToolWindowFactory {
-        public void init(Object toolWindow) {
-          setStripeTitle("My Tool Window");
-        }
+      import com.intellij.openapi.wm.ToolWindow;
 
-        void setStripeTitle(String title) {}
+      public class MyToolWindowFactory {
+        public void init(ToolWindow toolWindow) {
+          toolWindow.setStripeTitleProvider(() -> "My Tool Window");
+        }
       }
       """.trimIndent()
     )
@@ -193,12 +160,12 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
   fun `test reports when the factory sets only the short title`() {
     addFactory(
       "ShortTitleToolWindowFactory.java", """
-      public class ShortTitleToolWindowFactory {
-        public void init(Object toolWindow) {
-          setStripeShortTitleProvider("TW");
-        }
+      import com.intellij.openapi.wm.ToolWindow;
 
-        void setStripeShortTitleProvider(String title) {}
+      public class ShortTitleToolWindowFactory {
+        public void init(ToolWindow toolWindow) {
+          toolWindow.setStripeShortTitleProvider(() -> "TW");
+        }
       }
       """.trimIndent()
     )
@@ -209,6 +176,77 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
         <resource-bundle>messages.RightBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
           <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="ShortTitleToolWindowFactory"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
+    val wrongBundle = addFile(
+      "messages/WrongBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.RightBundle'. It does not read this bundle. Move this key to 'messages.RightBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, wrongBundle)
+  }
+
+  fun `test reports when the factory sets the title only when the content is created`() {
+    addFactory(
+      "LazyTitleToolWindowFactory.java", """
+      import com.intellij.openapi.wm.ToolWindow;
+
+      public class LazyTitleToolWindowFactory {
+        public void init(ToolWindow toolWindow) {
+        }
+
+        public void createToolWindowContent(Object project, ToolWindow toolWindow) {
+          toolWindow.setStripeTitle("My Tool Window");
+        }
+      }
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="LazyTitleToolWindowFactory"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
+    val wrongBundle = addFile(
+      "messages/WrongBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.RightBundle'. It does not read this bundle. Move this key to 'messages.RightBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, wrongBundle)
+  }
+
+  fun `test reports when the factory only reads the title or calls an unrelated setter`() {
+    addFactory(
+      "ReadingToolWindowFactory.java", """
+      import com.intellij.openapi.wm.ToolWindow;
+
+      public class ReadingToolWindowFactory {
+        public void init(ToolWindow toolWindow) {
+          setStripeTitle(toolWindow.getStripeTitle());
+        }
+
+        void setStripeTitle(String title) {}
+      }
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="ReadingToolWindowFactory"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
@@ -299,19 +337,4 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent(), true
     )
   }
-
-  /** The fixture creates the JPS module that holds the descriptor, so its name is not a literal. */
-  private val moduleName: String get() = myFixture.module.name
-
-  private fun addFile(path: String, @Language("") text: String): VirtualFile = myFixture.addFileToProject(path, text).virtualFile
-
-  /**
-   * The inspection reads the body of the factory class. The fixture forbids the tree of any file except the checked one,
-   * and it cannot allow a single file, so this allows all files.
-   */
-  private fun addFactory(path: String, @Language("JAVA") text: String) {
-    myFixture.allowTreeAccessForAllFiles()
-    addFile(path, text)
-  }
-
 }
