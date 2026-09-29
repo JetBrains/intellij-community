@@ -155,7 +155,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       }
     }
 
-    override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
+    override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
       if (appendOutputToMainConsole) {
         notifyBuildEvent(
           buildId,

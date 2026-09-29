@@ -35,7 +35,7 @@ open class ExternalSystemOutputMessageDispatcherImpl(
 
   private val onCompletionHandlers = ContainerUtil.createConcurrentList<Consumer<in Throwable?>>()
 
-  override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
+  override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
     reader.append(text)
   }
 

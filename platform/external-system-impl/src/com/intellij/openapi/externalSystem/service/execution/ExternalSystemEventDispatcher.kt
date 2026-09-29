@@ -54,7 +54,7 @@ class ExternalSystemEventDispatcher(
   }
 
   override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
-    outputMessageDispatcher.onTextAvailable(text, outputType)
+    outputMessageDispatcher.notifyTextAvailable(text, outputType)
   }
 
   override fun invokeOnCompletion(consumer: Consumer<in Throwable?>) {
