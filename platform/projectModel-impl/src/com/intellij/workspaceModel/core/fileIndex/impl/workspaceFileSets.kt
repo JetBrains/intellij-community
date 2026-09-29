@@ -13,7 +13,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondi
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Base interface for collections of file sets associated with a file in [WorkspaceFileIndexData]. 
@@ -119,7 +118,7 @@ internal class WorkspaceFileSetImpl(
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
 
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
-    return if (fileSet is WorkspaceFileSetImpl) TwoWorkspaceFileSets(this, fileSet) else MultipleStoredWorkspaceFileSets(CopyOnWriteArrayList(arrayOf(fileSet, this)))
+    return if (fileSet is WorkspaceFileSetImpl) TwoWorkspaceFileSets(this, fileSet) else MultipleStoredWorkspaceFileSets(listOf(fileSet, this))
   }
 
   override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
@@ -176,7 +175,7 @@ internal class WorkspaceFileSetImpl(
  */
 private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl, private val second: WorkspaceFileSetImpl): StoredFileSetCollection, MultipleWorkspaceFileSets {
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
-    return MultipleStoredWorkspaceFileSets(CopyOnWriteArrayList(arrayOf(fileSet, first, second)))
+    return MultipleStoredWorkspaceFileSets(listOf(fileSet, first, second))
   }
 
   override fun removeIf(predicate: (StoredFileSet) -> Boolean): StoredFileSetCollection? {
@@ -236,27 +235,27 @@ private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl,
 /**
  * Represents a generic case with multiple elements in [StoredFileSetCollection].
  */
-internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: MutableList<StoredFileSet>) : StoredFileSetCollection, MultipleWorkspaceFileSets {
+internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: List<StoredFileSet>) : StoredFileSetCollection, MultipleWorkspaceFileSets {
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
-    if (fileSet is ExcludedFileSet && storedFileSets.last() !is ExcludedFileSet) {
-      storedFileSets.add(0, fileSet)
+    val updated = if (fileSet is ExcludedFileSet && storedFileSets.last() !is ExcludedFileSet) {
+      listOf(fileSet) + storedFileSets
     }
     else {
-      storedFileSets.add(fileSet)
+      storedFileSets + fileSet
     }
-    return this
+    return MultipleStoredWorkspaceFileSets(updated)
   }
 
   override fun removeIf(predicate: (StoredFileSet) -> Boolean): StoredFileSetCollection? {
-    storedFileSets.removeIf(predicate)
-    return when (storedFileSets.size) {
+    val remaining = storedFileSets.filterNot(predicate)
+    return when (remaining.size) {
       0 -> null
-      1 -> storedFileSets.single()
+      1 -> remaining.single()
       2 -> {
-        val (first, second) = storedFileSets
-        if (first is WorkspaceFileSetImpl && second is WorkspaceFileSetImpl) TwoWorkspaceFileSets(first, second) else this
+        val (first, second) = remaining
+        if (first is WorkspaceFileSetImpl && second is WorkspaceFileSetImpl) TwoWorkspaceFileSets(first, second) else MultipleStoredWorkspaceFileSets(remaining)
       }
-      else -> this
+      else -> MultipleStoredWorkspaceFileSets(remaining)
     }
   }
 
@@ -357,7 +356,7 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
   val root: VirtualFile
 
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
-    return MultipleStoredWorkspaceFileSets(CopyOnWriteArrayList(arrayOf(this, fileSet)))
+    return MultipleStoredWorkspaceFileSets(listOf(this, fileSet))
   }
 
   /**

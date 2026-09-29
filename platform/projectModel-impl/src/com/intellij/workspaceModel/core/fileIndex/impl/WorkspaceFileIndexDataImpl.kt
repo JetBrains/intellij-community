@@ -218,7 +218,7 @@ internal class WorkspaceFileIndexDataImpl(
             if (honorExclusion && hasUnscopedExclusions && isExcludedAbove(file, current, acceptedKindsMask)) {
               return@addMeasuredTime WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED
             }
-            val result: WorkspaceFileInternalInfo
+            val result: WorkspaceFileInternalInfo?
             if (storedKindMask == StoredFileSetKindMask.ACCEPTED_FILE_SET) {
               result = storedFileSets as WorkspaceFileInternalInfo
             }
@@ -232,9 +232,11 @@ internal class WorkspaceFileIndexDataImpl(
                   acceptedFileSets.add(fileSet)
                 }
               }
-              result = if (acceptedFileSets.size > 1) MultipleWorkspaceFileSetsImpl(acceptedFileSets) else acceptedFileSets.first()
+              result = if (acceptedFileSets.size > 1) MultipleWorkspaceFileSetsImpl(acceptedFileSets) else acceptedFileSets.firstOrNull()
             }
-            return@addMeasuredTime result
+            if (result != null) {
+              return@addMeasuredTime result
+            }
           }
         }
         if (fileTypeRegistry.isFileIgnored(current)) {
