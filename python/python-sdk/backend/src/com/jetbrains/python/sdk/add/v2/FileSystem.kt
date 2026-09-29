@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -11,6 +12,7 @@ import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
@@ -38,11 +40,10 @@ interface FileSystem<P : PathHolder> {
   val platformAndRoot: PlatformAndRoot
 
   /**
-   * The Eel machine this file system targets, used to key per-machine custom tool paths
-   * (`PyCustomExecutablePaths`). `null` for backends with no Eel (e.g. the legacy
-   * target-based remote SDK), which then have no custom-path override.
+   * The machine of this file system: an Eel machine or a legacy target.
+   * Use an exhaustive `when`. Do not cast to an implementation.
    */
-  val eelDescriptor: EelDescriptor?
+  val eelOrTarget: EelOrTarget
 
   /**
    * Path on remote machine. As an exception, MRFS path is also supported by Eel impl.
@@ -129,4 +130,30 @@ interface FileSystem<P : PathHolder> {
    * target's namespace rather than the host's. Null if the remote lookup fails.
    */
   suspend fun resolveInWorkingDir(workingDir: Path, dirName: String): P?
+
+  /**
+   * Saves [pathHolder] as the custom path of [executable] for the machine of this file system
+   * (`PyCustomExecutablePaths`, one entry for each Eel machine).
+   * Does nothing for a legacy target: it has no Eel machine to use as a key.
+   */
+  fun persistCustomToolPath(pathHolder: P, executable: PyExecutable)
+}
+
+/**
+ * A [FileSystem] on an Eel machine. Use it where the code needs [eelDescriptor].
+ */
+@ApiStatus.Internal
+interface FileSystemWithEel : FileSystem<PathHolder.Eel> {
+  override val eelOrTarget: EelOrTarget.IsEel
+}
+
+/** The Eel machine of this file system. */
+@get:ApiStatus.Internal
+val FileSystemWithEel.eelDescriptor: EelDescriptor get() = eelOrTarget.eel
+
+@ApiStatus.Internal
+sealed interface EelOrTarget {
+  data class IsEel(val eel: EelDescriptor) : EelOrTarget
+
+  data class IsTarget(val target: TargetEnvironmentConfiguration) : EelOrTarget
 }

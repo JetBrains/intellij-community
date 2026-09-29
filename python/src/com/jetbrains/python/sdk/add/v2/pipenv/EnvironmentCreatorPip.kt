@@ -16,7 +16,6 @@ import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
 import com.jetbrains.python.sdk.add.v2.pathHolder
-import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path

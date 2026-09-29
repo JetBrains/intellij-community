@@ -4,5 +4,5 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.platform.eel.EelApi
 
 internal class EelFileSystemFactoryImpl : EelFileSystemFactory {
-  override fun create(eelApi: EelApi): FileSystem<PathHolder.Eel> = EelFileSystem(eelApi)
+  override fun create(eelApi: EelApi): FileSystemWithEel = EelFileSystem(eelApi)
 }

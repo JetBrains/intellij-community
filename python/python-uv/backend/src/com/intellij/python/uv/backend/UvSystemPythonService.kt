@@ -14,7 +14,9 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.eelDescriptor
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -72,7 +74,7 @@ object UvSystemPythonService {
    * [baseDir] is where uv runs, so it reads that project's `.python-version` and `pyproject.toml`, exactly as the uv
    * node's own listing does.
    */
-  suspend fun findSystemPythons(fileSystem: FileSystem<PathHolder.Eel>, baseDir: Path): List<UvSystemPython> {
+  suspend fun findSystemPythons(fileSystem: FileSystemWithEel, baseDir: Path): List<UvSystemPython> {
     val snapshot = snapshot(fileSystem, baseDir)
     return snapshot.entries.toSystemPythons(snapshot.uvPythonDir)
   }
@@ -83,11 +85,11 @@ object UvSystemPythonService {
    * For a caller that wants uv's own entries rather than the interpreters they amount to — the uv node builds its
    * version rows from them. Shares the one listing, so asking costs no process of its own.
    */
-  suspend fun listEntries(fileSystem: FileSystem<PathHolder.Eel>, baseDir: Path): List<UvPythonEntry> =
+  suspend fun listEntries(fileSystem: FileSystemWithEel, baseDir: Path): List<UvPythonEntry> =
     snapshot(fileSystem, baseDir).entries
 
   /** Where uv installs the interpreters it manages, which is how one it installed is told from one it merely found. */
-  suspend fun uvPythonDir(fileSystem: FileSystem<PathHolder.Eel>, baseDir: Path): Path? =
+  suspend fun uvPythonDir(fileSystem: FileSystemWithEel, baseDir: Path): Path? =
     snapshot(fileSystem, baseDir).uvPythonDir
 
   /**
@@ -96,7 +98,7 @@ object UvSystemPythonService {
    * The path is read back from a fresh listing rather than guessed from `uv python dir`: uv decides the layout of what
    * it installs, and the listing is where it says so.
    */
-  suspend fun installPython(fileSystem: FileSystem<PathHolder.Eel>, baseDir: Path, target: String): PyResult<Path> {
+  suspend fun installPython(fileSystem: FileSystemWithEel, baseDir: Path, target: String): PyResult<Path> {
     val runtime = runtimeOrNull(fileSystem, baseDir)
                   ?: return PyResult.localizedError(PyUvBundle.message("uv.system.python.executable.not.found"))
     runtime.uvCli().python().install(target).getOr { return it }
@@ -130,7 +132,7 @@ object UvSystemPythonService {
    * [CACHE_TTL_MS] is short next to the ten minutes `SystemPythonService` holds the same kind of answer for, and an
    * install through this service clears it outright, so a version that arrives through the widget is never missed.
    */
-  private suspend fun snapshot(fileSystem: FileSystem<PathHolder.Eel>, baseDir: Path): Snapshot = lock.withLock {
+  private suspend fun snapshot(fileSystem: FileSystemWithEel, baseDir: Path): Snapshot = lock.withLock {
     val key = SnapshotKey(fileSystem.eelDescriptor, baseDir)
     snapshots[key]?.takeIf { System.currentTimeMillis() - it.takenAt < CACHE_TTL_MS }?.let { return it }
     val runtime = runtimeOrNull(fileSystem, baseDir) ?: return Snapshot(emptyList(), null, System.currentTimeMillis())

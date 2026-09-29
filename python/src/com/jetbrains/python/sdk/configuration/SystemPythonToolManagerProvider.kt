@@ -18,6 +18,7 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.intellij.python.sdk.backend.detectExecutableInPath
 import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
@@ -47,7 +48,7 @@ class SystemPythonToolManagerProvider : GenericPyToolManagerProvider {
 /** pip-installs tools into [systemPython] via the `pycharm_package_installer.py` helper. */
 private class SystemPythonToolManager(
   private val eelDescriptor: EelDescriptor,
-  private val fileSystem: FileSystem<PathHolder.Eel>,
+  private val fileSystem: FileSystemWithEel,
   private val systemPython: SystemPython,
 ) : GenericPyToolManager {
   override suspend fun install(tool: PyTool): PyResult<Path> {

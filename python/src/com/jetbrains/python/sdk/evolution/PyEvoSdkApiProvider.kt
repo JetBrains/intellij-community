@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -106,10 +105,12 @@ import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
+import com.jetbrains.python.sdk.add.v2.eelDescriptor
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
@@ -220,12 +221,11 @@ internal suspend fun requiresPython(baseDir: Path): String? = withContext(Dispat
  */
 internal suspend fun systemPythonOptions(
   baseDir: Path,
-  fileSystem: FileSystem<PathHolder.Eel>,
+  fileSystem: FileSystemWithEel,
   envSpecifiers: String? = null,
 ): List<EvoAddNewOptionDto> {
   if (useUvPythons(fileSystem)) return uvPythonOptions(baseDir, fileSystem, envSpecifiers)
-  // A machine-less (legacy Target) filesystem has no descriptor; fall back to the local machine, as the poetry node did.
-  val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
+  val eelApi = fileSystem.eelDescriptor.toEelApi()
   val accepts = versionFilter(baseDir, envSpecifiers)
   val installed = SystemPythonService().findSystemPythons(eelApi)
     .filter { accepts(it.pythonInfo.languageLevel) }
@@ -272,11 +272,11 @@ private suspend fun versionFilter(baseDir: Path, envSpecifiers: String?): (Langu
  * offers a download it could not perform.
  */
 private suspend fun installableLevels(
-  fileSystem: FileSystem<PathHolder.Eel>,
+  fileSystem: FileSystemWithEel,
   accepts: (LanguageLevel) -> Boolean,
   installedLevels: Set<LanguageLevel>,
 ): Set<LanguageLevel> {
-  val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
+  val eelApi = fileSystem.eelDescriptor.toEelApi()
   if (SystemPythonService().getInstaller(eelApi) == null) return emptySet()
   val available = withContext(Dispatchers.IO) { PySdkToInstallManager.getAvailableVersionsToInstall().keys }
   return available.filterTo(mutableSetOf()) { it !in installedLevels && accepts(it) }
@@ -290,7 +290,7 @@ private suspend fun installableLevels(
  * does *not* see is a version manager's own directory: pyenv reaches uv only through its shims, so a version pyenv
  * holds but does not currently point at is not on this list. The registry key turns the whole thing off.
  */
-private suspend fun useUvPythons(fileSystem: FileSystem<PathHolder.Eel>): Boolean =
+private suspend fun useUvPythons(fileSystem: FileSystemWithEel): Boolean =
   PyEvoRegistry.useUvSystemPythons && UvSystemPythonService.isAvailable(fileSystem)
 
 /**
@@ -306,7 +306,7 @@ private suspend fun useUvPythons(fileSystem: FileSystem<PathHolder.Eel>): Boolea
  */
 private suspend fun uvPythonOptions(
   baseDir: Path,
-  fileSystem: FileSystem<PathHolder.Eel>,
+  fileSystem: FileSystemWithEel,
   envSpecifiers: String?,
 ): List<EvoAddNewOptionDto> {
   val accepts = versionFilter(baseDir, envSpecifiers)

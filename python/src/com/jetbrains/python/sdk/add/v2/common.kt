@@ -228,13 +228,3 @@ internal suspend fun <P : PathHolder> InterpreterWithPath<P>.setupSdk(
 }
 
 
-/**
- * Persist the user-chosen executable [pathHolder] as the custom path for [executable] on the machine
- * this file system targets (per-Eel-machine store). No-op for the legacy target-based backend, which
- * has no Eel machine to key on.
- */
-internal fun FileSystem<*>.persistCustomToolPath(pathHolder: PathHolder, executable: PyExecutable) {
-  val eelPath = (pathHolder as? PathHolder.Eel)?.path ?: return
-  val eelDescriptor = eelDescriptor ?: return
-  executable.setCustomExecutablePath(eelDescriptor, eelPath)
-}

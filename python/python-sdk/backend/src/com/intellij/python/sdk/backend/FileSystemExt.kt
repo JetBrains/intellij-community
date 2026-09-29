@@ -10,6 +10,7 @@ import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.pytools.backend.pyExecutable
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.EelOrTarget
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.runExecutableWithProgress
@@ -37,7 +38,10 @@ suspend fun <P : PathHolder> FileSystem<P>.resolveExecutable(
   pathFromSdk: FullPathOnTarget? = null,
 ): P? {
   pathFromSdk?.let { parsePath(it).successOrNull }?.let { return it }
-  val eelDescriptor = eelDescriptor ?: return detectTool(executable.toolCommandSpec)
+  val eelDescriptor = when (val r = eelOrTarget) {
+    is EelOrTarget.IsEel -> r.eel
+    is EelOrTarget.IsTarget -> return detectTool(executable.toolCommandSpec)
+  }
   val path = PyExecutableCache.getInstance().get(eelDescriptor, executable) ?: return null
   return parsePath(path.toString()).successOrNull
 }

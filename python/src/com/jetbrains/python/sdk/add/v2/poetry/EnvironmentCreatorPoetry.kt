@@ -37,7 +37,6 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Invisible
 import com.jetbrains.python.sdk.add.v2.getBasePath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
 import com.jetbrains.python.sdk.add.v2.pathHolder
-import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.statistics.InterpreterType

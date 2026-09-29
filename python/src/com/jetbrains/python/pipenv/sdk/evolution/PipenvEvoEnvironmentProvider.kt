@@ -25,6 +25,7 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.intellij.python.sdk.backend.resolvePythonBinary
+import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.createPipenvSdk
 import com.jetbrains.python.sdk.pipenv.pipfileRequiresPython
@@ -94,7 +95,7 @@ internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * so in a project without one it can answer with an unrelated environment belonging to a directory above — the user's
    * home included. That is the same trap `setupPipEnv` avoids by writing an empty `Pipfile` before it runs pipenv.
    */
-  private suspend fun existingEnvRoot(projectDir: Path, fileSystem: FileSystem<PathHolder.Eel>): Path? {
+  private suspend fun existingEnvRoot(projectDir: Path, fileSystem: FileSystemWithEel): Path? {
     if (!projectDir.resolve(PIP_FILE).exists()) return null
     // `pipenv --venv` exits non-zero when the project has no environment, which arrives here as a null.
     val stdout = runPipEnv(fileSystem = fileSystem, dirPath = projectDir, "--venv").getOrNull() ?: return null

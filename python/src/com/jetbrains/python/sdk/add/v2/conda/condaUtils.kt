@@ -14,9 +14,9 @@ import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.add.v2.existingSdks
 import com.jetbrains.python.sdk.add.v2.pathHolder
+import com.jetbrains.python.sdk.add.v2.targetEnvironmentConfiguration
 import com.jetbrains.python.sdk.add.v2.validationResult
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.takeWhile
 
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyCondaCommand> {
-  val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
+  val targetEnvironmentConfiguration = fileSystem.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
   val path = executable.pathHolder.getOr { return it }
   return PyCondaCommand(fullCondaPathOnTarget = path.toStringForExecution(),
@@ -80,9 +80,8 @@ internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleO
 
   val workingDirectory =
     moduleOrProject.workingDirectory ?: return PyResult.localizedError(message("python.sdk.project.working.directory.not.found"))
-  // TODO: Use polymorphism
   val sdk = PyCondaCommand(fullCondaPathOnTarget = pathHolder.toStringForExecution(),
-                           targetConfig = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration).createCondaSdkFromExistingEnvironment(
+                           targetConfig = fileSystem.targetEnvironmentConfiguration).createCondaSdkFromExistingEnvironment(
     condaIdentity = pyCondaEnv.envIdentity,
     existingSdks = this@selectCondaEnvironment.existingSdks,
     workingDirectory = workingDirectory,

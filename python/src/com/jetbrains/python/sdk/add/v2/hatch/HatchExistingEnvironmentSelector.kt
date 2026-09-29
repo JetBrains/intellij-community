@@ -21,7 +21,6 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil

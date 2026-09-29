@@ -35,8 +35,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.add.v2.FileSystem
-import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
@@ -167,7 +166,7 @@ private const val SYSTEM_PYTHONS_KEY: String = "core.systemPythons"
 class EvoToolContext(
   val workspace: EvoWorkspace,
   val pyProject: EvoPyProject,
-  val fileSystem: FileSystem<PathHolder.Eel>,
+  val fileSystem: FileSystemWithEel,
   val errorSink: ErrorSink,
   private val systemPythons: suspend (String?) -> List<EvoAddNewOptionDto>,
 ) {

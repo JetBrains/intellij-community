@@ -165,8 +165,9 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
         }.visibleIf(_selectExisting and existingInterpreterManager.equalsTo(type))
       }
 
+      // TODO: Move to FilesystemFacade
       module?.project?.let { project ->
-        (model.fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration?.let { configuration ->
+        model.fileSystem.targetEnvironmentConfiguration?.let { configuration ->
           findPanelExtension(project, configuration)?.let { extension ->
             collapsibleGroup(message("sdk.create.custom.target.specific.properties"), indent = false) {
               extension.extendDialogPanelWithOptionalFields(this)

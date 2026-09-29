@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface EelFileSystemFactory {
-  fun create(eelApi: EelApi): FileSystem<PathHolder.Eel>
+  fun create(eelApi: EelApi): FileSystemWithEel
 
   companion object {
     fun getInstance(): EelFileSystemFactory = service()
@@ -22,4 +22,4 @@ interface EelFileSystemFactory {
  * Returns a [FileSystem] backed by this [EelApi]. Equivalent to `EelFileSystemFactory.getInstance().create(this)`.
  */
 @ApiStatus.Internal
-fun EelApi.toFileSystem(): FileSystem<PathHolder.Eel> = EelFileSystemFactory.getInstance().create(this)
+fun EelApi.toFileSystem(): FileSystemWithEel = EelFileSystemFactory.getInstance().create(this)

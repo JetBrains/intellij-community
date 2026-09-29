@@ -131,7 +131,10 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   protected fun createInstallFix(errorSink: ErrorSink): ActionLink? {
     // We can only install things on eel
-    val eelDescriptor = model.fileSystem.eelDescriptor ?: return null
+    val eelDescriptor = when (val r = model.fileSystem.eelOrTarget) {
+      is EelOrTarget.IsEel -> r.eel
+      is EelOrTarget.IsTarget -> return null
+    }
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
       PythonSdkFlavor.clearExecutablesCache()
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {

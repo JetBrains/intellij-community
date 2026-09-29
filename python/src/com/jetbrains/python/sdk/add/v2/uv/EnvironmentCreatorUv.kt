@@ -44,7 +44,6 @@ import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.errorOrNull
 import com.jetbrains.python.sdk.add.v2.pathHolder
-import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.successOrNull
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.baseDir

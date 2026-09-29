@@ -50,9 +50,11 @@ import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
 import com.intellij.python.community.services.systemPython.SysPythonRegisterError
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.python.pytools.backend.ToolSearchPath
 import com.intellij.python.pytools.backend.impl.detectExecutableOnEel
+import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
@@ -119,14 +121,14 @@ internal class VenvAlreadyExistsError<P : PathHolder>(
 
 data class EelFileSystem(
   val eelApi: EelApi,
-) : FileSystem<PathHolder.Eel> {
+) : FileSystemWithEel {
   override val isBrowsable: Boolean = true
   override val isReadOnly: Boolean = false
   override val isLocal: Boolean = eelApi == localEel
   override val toolPathCanBePersisted: Boolean = isLocal
   override val userReadableName: @NonNls String = eelApi.descriptor.name
   override val platformAndRoot: PlatformAndRoot = eelApi.getPlatformAndRoot()
-  override val eelDescriptor: EelDescriptor = eelApi.descriptor
+  override val eelOrTarget: EelOrTarget.IsEel = EelOrTarget.IsEel(eelApi.descriptor)
   override fun createBrowseFolderListener(
     textField: TextFieldWithBrowseButton,
     descriptor: FileChooserDescriptor,
@@ -214,6 +216,7 @@ data class EelFileSystem(
       }
     }
   }
+
   override suspend fun validateExecutable(path: PathHolder.Eel): PyResult<Unit> {
     return when {
       !path.path.exists() -> PyResult.localizedError(message("sdk.create.not.executable.does.not.exist.error"))
@@ -403,17 +406,26 @@ data class EelFileSystem(
     return PathHolder.Eel(pathComponents.fold(home, Path::resolve))
   }
 
+  override fun persistCustomToolPath(pathHolder: PathHolder.Eel, executable: PyExecutable) {
+    executable.setCustomExecutablePath(eelDescriptor, pathHolder.path)
+  }
+
   override suspend fun resolveInWorkingDir(workingDir: Path, dirName: String): PathHolder.Eel {
     return PathHolder.Eel(workingDir.resolve(dirName))
   }
 }
 
+/**
+ * A [FileSystem] on a legacy target (see [TargetEnvironmentConfiguration]).
+ *
+ * Do not check if a [FileSystem] is a [TargetFileSystem]. Use [FileSystem.eelOrTarget].
+ */
 internal data class TargetFileSystem(
-  val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
+  private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
   private val pythonLanguageRuntimeConfiguration: PythonLanguageRuntimeConfiguration,
   private val targetProbeWorkingDirectory: Path? = null,
 ) : FileSystem<PathHolder.Target> {
-
+  override val eelOrTarget: EelOrTarget.IsTarget = EelOrTarget.IsTarget(targetEnvironmentConfiguration)
 
   override fun createBrowseFolderListener(
     textField: TextFieldWithBrowseButton,
@@ -446,7 +458,6 @@ internal data class TargetFileSystem(
   override val toolPathCanBePersisted: Boolean = false
   override val userReadableName: @NonNls String = targetEnvironmentConfiguration.displayName
   override val platformAndRoot: PlatformAndRoot = targetEnvironmentConfiguration.getPlatformAndRoot()
-  override val eelDescriptor: EelDescriptor? = null
 
   private val systemPythonCache = mutableMapOf<PathHolder.Target, CachedSystemPython>()
   private lateinit var shellImpl: String
@@ -472,7 +483,7 @@ internal data class TargetFileSystem(
     val targetType = targetEnvironmentConfiguration.getTargetType()
     if (targetType is BrowsableTargetEnvironmentType) {
       val descriptor =
-          FileChooserDescriptorFactory.singleFileOrDir().withTitle(browseTitle)
+        FileChooserDescriptorFactory.singleFileOrDir().withTitle(browseTitle)
       val hints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
 
       val actionListener = targetType.createBrowser(
@@ -785,6 +796,8 @@ internal data class TargetFileSystem(
     return getFullPathWithPrefix(homePath, pathComponents)
   }
 
+  override fun persistCustomToolPath(pathHolder: PathHolder.Target, executable: PyExecutable) = Unit
+
   override suspend fun resolveInWorkingDir(workingDir: Path, dirName: String): PathHolder.Target? {
     val remoteWorkingDir = executeCommand("pwd", workingDir).successOrNull ?: return null
     return PathHolder.Target("$remoteWorkingDir/$dirName")
@@ -905,3 +918,11 @@ private suspend fun <P : PathHolder> FileSystem<P>.resolveToolSearchPaths(toolSp
     }
   }
 }
+
+// This is a bad design: conda still needs the target configuration.
+// TODO: Drop as soon as conda migrates to ExecService
+internal val FileSystem<*>.targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
+  get() = when (val r = eelOrTarget) {
+    is EelOrTarget.IsEel -> null
+    is EelOrTarget.IsTarget -> r.target
+  }
