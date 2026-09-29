@@ -135,7 +135,7 @@ private class Osc8HyperlinksRenderer(
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   fun reconcile() {
-    val links = outputModel.getOsc8Hyperlinks()
+    val links = Osc8HyperlinkUtil.mergeSplitUrls(outputModel, outputModel.getOsc8Hyperlinks())
     val toAdd = ArrayList<EditorTextDecoration>()
     val addedUriById = LinkedHashMap<EditorTextDecorationId, String>()
     for (link in links) {

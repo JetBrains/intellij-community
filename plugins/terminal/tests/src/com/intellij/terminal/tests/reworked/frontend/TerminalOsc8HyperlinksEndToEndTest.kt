@@ -119,6 +119,91 @@ internal class TerminalOsc8HyperlinksEndToEndTest(emulatorType: TerminalEmulator
   }
 
   @Test
+  fun `a URL split over two lines is merged into one hyperlink`() = doTest { fixture ->
+    val uri = "https://example.com/two-lines"
+    fixture.connector.feed(osc8(uri, "https://example.com/") + "\r\n" + osc8(uri, "two-lines"))
+
+    val highlighter = fixture.awaitHyperlinkTexts("https://example.com/\ntwo-lines").single()
+    assertThat(fixture.uriOf(highlighter)).isEqualTo(uri)
+  }
+
+  @Test
+  fun `a URL split over three lines with an indent is merged into one hyperlink`() = doTest { fixture ->
+    val uri = "https://example.com/three/lines"
+    fixture.connector.feed(osc8(uri, "https://") + "\r\n  " + osc8(uri, "example.com/") + "  \r\n  " + osc8(uri, "three/lines"))
+
+    val highlighter = fixture.awaitHyperlinkTexts("https://\n  example.com/  \n  three/lines").single()
+    assertThat(fixture.uriOf(highlighter)).isEqualTo(uri)
+  }
+
+  @Test
+  fun `parts of a URL separated by an empty line are not merged`() = doTest { fixture ->
+    val uri = "https://example.com/empty-line"
+    fixture.connector.feed(osc8(uri, "https://example.com/") + "\r\n\r\n" + osc8(uri, "empty-line"))
+
+    fixture.awaitHyperlinkTexts("https://example.com/", "empty-line")
+  }
+
+  @Test
+  fun `parts of a URL on the same line separated by a space are not merged`() = doTest { fixture ->
+    val uri = "https://example.com/same-line"
+    fixture.connector.feed(osc8(uri, "https://example.com/") + " " + osc8(uri, "same-line"))
+
+    fixture.awaitHyperlinkTexts("https://example.com/", "same-line")
+  }
+
+  @Test
+  fun `parts with the same URI are not merged if their text is not the URI`() = doTest { fixture ->
+    val uri = "https://example.com/docs"
+    fixture.connector.feed(osc8(uri, "see the") + "\r\n" + osc8(uri, "docs"))
+
+    fixture.awaitHyperlinkTexts("see the", "docs")
+  }
+
+  @Test
+  fun `parts are not merged if their joined text has the URI length but differs from the URI`() = doTest { fixture ->
+    val uri = "https://example.com/ab"
+    fixture.connector.feed(osc8(uri, "https://example.com/") + "\r\n" + osc8(uri, "xy"))
+
+    fixture.awaitHyperlinkTexts("https://example.com/", "xy")
+  }
+
+  @Test
+  fun `a URL printed twice on neighboring lines stays two hyperlinks`() = doTest { fixture ->
+    val uri = "https://example.com/twice"
+    fixture.connector.feed(osc8(uri, uri) + "\r\n" + osc8(uri, uri))
+
+    fixture.awaitHyperlinkTexts(uri, uri)
+  }
+
+  @Test
+  fun `parts of URLs with different targets are not merged`() = doTest { fixture ->
+    fixture.connector.feed(osc8("https://example.com/", "https://example.com/") + "\r\n" + osc8("https://example.com/other", "other"))
+
+    fixture.awaitHyperlinkTexts("https://example.com/", "other")
+  }
+
+  @Test
+  fun `parts of a URL separated by other text are not merged`() = doTest { fixture ->
+    val uri = "https://example.com/other-text"
+    fixture.connector.feed(osc8(uri, "https://example.com/") + " x\r\n" + osc8(uri, "other-text"))
+
+    fixture.awaitHyperlinkTexts("https://example.com/", "other-text")
+  }
+
+  @Test
+  fun `hovering the second line of a merged URL shows its target URI as a tooltip`() = doTest { fixture ->
+    fixture.resize(columns = 80, rows = 24)
+    val uri = "https://example.com/hover"
+    fixture.connector.feed(osc8(uri, "https://example.com/") + "\r\n" + osc8(uri, "hover"))
+
+    val highlighter = fixture.awaitHyperlinkTexts("https://example.com/\nhover").single()
+    fixture.hover(highlighter.endOffset - 2)
+
+    assertThat(fixture.view.outputEditor.contentComponent.toolTipText).contains(uri)
+  }
+
+  @Test
   fun `OSC8 hyperlink in the alternate screen is rendered in the alternate buffer editor`() = doTest { fixture ->
     fixture.enterAlternateScreen()
     fixture.connector.feed("before ${osc8("https://example.com", "link text")} after")
@@ -180,19 +265,24 @@ private fun TerminalViewFixture.textOf(highlighter: RangeHighlighter): String {
 /**
  * The target URI of the OSC8 link rendered as [highlighter], read from the active output model - the markup model's
  * own decoration doesn't expose it (it's only used internally to build the click action).
+ *
+ * A highlighter of merged links starts where its first link starts, so the start offset is enough to find it.
  */
 private fun TerminalViewFixture.uriOf(highlighter: RangeHighlighter): String {
   val model = view.outputModels.active.value
   return model.getOsc8Hyperlinks().single {
-    (it.startOffset - model.startOffset).toInt() == highlighter.startOffset &&
-    (it.endOffset - model.startOffset).toInt() == highlighter.endOffset
+    (it.startOffset - model.startOffset).toInt() == highlighter.startOffset
   }.uri
 }
 
 /** Moves the mouse over the middle of [highlighter]'s range, as a real mouse move would. */
 private fun TerminalViewFixture.hover(highlighter: RangeHighlighter) {
+  hover((highlighter.startOffset + highlighter.endOffset) / 2)
+}
+
+/** Moves the mouse over [offset] of the active editor, as a real mouse move would. */
+private fun TerminalViewFixture.hover(offset: Int) {
   val editor = activeEditor
-  val offset = (highlighter.startOffset + highlighter.endOffset) / 2
   val point = editor.offsetToXY(offset)
   val event = MouseEvent(
     editor.contentComponent, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, point.x, point.y, 1, false, MouseEvent.BUTTON1
@@ -201,6 +291,18 @@ private fun TerminalViewFixture.hover(highlighter: RangeHighlighter) {
 }
 
 private suspend fun TerminalViewFixture.awaitHyperlink(): RangeHighlighter = awaitHyperlinks(1).single()
+
+/**
+ * Polls the active editor's markup model until the hyperlink highlighters cover exactly [texts], then returns
+ * them sorted by position.
+ */
+private suspend fun TerminalViewFixture.awaitHyperlinkTexts(vararg texts: String): List<RangeHighlighter> {
+  while (true) {
+    val highlighters = awaitHyperlinks(texts.size)
+    if (highlighters.map { textOf(it) } == texts.toList()) return highlighters
+    delay(50.milliseconds)
+  }
+}
 
 /**
  * Polls the active editor's markup model until exactly [count] hyperlink highlighters are present, then returns
