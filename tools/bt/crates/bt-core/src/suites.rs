@@ -105,9 +105,10 @@ pub struct Affected {
 }
 
 impl Affected {
-    /// The answer as JSON text, for a caller that links another build of `serde`.
+    /// The answer as JSON text in field order, for a caller that links another build of `serde`.
     pub fn to_json_text(&self) -> String {
-        json!(self).to_string()
+        serde_json::to_string(self)
+            .unwrap_or_else(|error| json!({"unencodable": error.to_string()}).to_string())
     }
 }
 
@@ -530,9 +531,10 @@ pub struct LaneCount {
 }
 
 impl LaneCount {
-    /// The count as JSON text, for a caller that links another build of `serde`.
+    /// The count as JSON text in field order, for a caller that links another build of `serde`.
     pub fn to_json_text(&self) -> String {
-        json!(self).to_string()
+        serde_json::to_string(self)
+            .unwrap_or_else(|error| json!({"unencodable": error.to_string()}).to_string())
     }
 }
 

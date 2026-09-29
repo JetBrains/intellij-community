@@ -350,3 +350,12 @@ fn one_lane_is_chosen_and_the_counts_follow_the_declared_order() {
         Ok("gui-chat".to_owned())
     );
 }
+
+/// An answer reads back as the answer it was, so a caller that parses the JSON text sees every field.
+#[test]
+fn an_answer_reads_back_from_its_json_text() {
+    let affected =
+        named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
+    let read: Affected = serde_json::from_str(&affected.to_json_text()).expect("reads back");
+    assert_eq!(read, affected);
+}
