@@ -709,4 +709,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testJSpecifyStreamConcatOfNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }

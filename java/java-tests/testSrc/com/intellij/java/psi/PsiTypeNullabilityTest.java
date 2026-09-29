@@ -741,6 +741,44 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
   }
 
   /**
+   * The not-null usage of a type variable in a return type must reach the type parameter of the
+   * enclosing call, whose type argument is inferred from that return type.
+   */
+  public void testNotNullTypeArgumentOfNestedCall() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiFile file = myFixture.configureByText("Test.java", """
+      import org.jspecify.annotations.NotNull;
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      @NullMarked
+      class Sample {
+        interface Box<T extends @Nullable Object> {}
+
+        static <A extends @Nullable Object> Box<@NotNull A> notNullBox(A a) { return null; }
+
+        static <A extends @Nullable Object> Box<A> box(A a) { return null; }
+
+        static <B extends @Nullable Object> Box<B> concat(Box<? extends B> a, Box<? extends B> b) { return null; }
+
+        static void test(Integer x, @Nullable Integer y) {
+          concat(notNullBox(x), notNullBox(y));
+          concat(box(x), box(y));
+        }
+      }
+      """);
+    List<PsiMethodCallExpression> calls = new ArrayList<>();
+    PsiTreeUtil.processElements(file, PsiMethodCallExpression.class, call -> {
+      if ("concat".equals(call.getMethodExpression().getReferenceName())) calls.add(call);
+      return true;
+    });
+    assertEquals(2, calls.size());
+    assertEquals(Nullability.NOT_NULL, typeArgumentNullabilityOf(calls.get(0)));
+    assertEquals(Nullability.NULLABLE, typeArgumentNullabilityOf(calls.get(1)));
+  }
+
+  /**
    * The least upper bound of two equal intersection types joins the nullability of the arguments,
    * so the order of the conditional branches does not change the result.
    */
@@ -843,6 +881,12 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     PsiPatternVariable variable = PsiTreeUtil.findChildOfType(file, PsiPatternVariable.class);
     assertNotNull(variable);
     return variable.getType().getNullability().toString();
+  }
+
+  private static @NotNull Nullability typeArgumentNullabilityOf(@NotNull PsiMethodCallExpression call) {
+    PsiClassType type = (PsiClassType)call.getType();
+    assertNotNull(type);
+    return type.getParameters()[0].getNullability().nullability();
   }
 
   private static @NotNull String argumentNullabilityOf(@NotNull PsiMethodCallExpression call) {

@@ -32,4 +32,10 @@ public class DataFlowInspection11Test extends DataFlowInspectionTestCase {
   public void testMethodReturnTypeUnmodifiableAnnotation() { 
     doTest();
   }
+
+  public void testJSpecifyStreamConcatOfNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }

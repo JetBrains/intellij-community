@@ -212,6 +212,19 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
    *   // T is the non-null Lib, but the return type is @Nullable Lib, so X must be @Nullable Lib too
    *   consume(get(Lib.class));
    * }}</pre>
+   * A {@code @NonNull a} usage also holds for every instantiation of {@code a}, because it removes null from the type.
+   * The usage is recorded as a lower bound of {@code T} in the same way. The incorporation phase then gives the
+   * not-null nullness to each lower bound of {@code a} that it copies to {@code T}.
+   * The case (in a {@code @NullMarked} scope):
+   * <pre>{@code
+   * static <A extends @Nullable Object> Stream<@NonNull A> ofNullable(A a) { ... }
+   *
+   * static <B extends @Nullable Object> Stream<B> concat(Stream<? extends B> a, Stream<? extends B> b) { ... }
+   *
+   * void test(@Nullable String s) {
+   *   // A is @Nullable String, but the elements are @NonNull String, so B must be the non-null String
+   *   concat(ofNullable(s), ofNullable(s));
+   * }}</pre>
    * A nullness inherited from the bound of the type parameter is not recorded. It does not hold for every
    * instantiation. The plain {@code T} of a {@code T get()} declared as {@code T extends @Nullable Lib} is the
    * non-null {@code Lib} once {@code T} is instantiated with the non-null {@code Lib}.
@@ -219,7 +232,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
   private void recordUsageNullability(@NotNull InferenceSession session) {
     if (session.getInferenceVariable(myT) == null) return;
     TypeNullability nullability = myS.getNullability();
-    if (nullability.nullability() == Nullability.NULLABLE && !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
+    if (nullability.nullability() != Nullability.UNKNOWN && !(nullability.source() instanceof NullabilitySource.ExtendsBound)) {
       InferenceVariable.addBound(myT, myS, InferenceBound.LOWER, session);
     }
   }
