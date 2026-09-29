@@ -4,5 +4,5 @@ package com.intellij.openapi.editor.impl.marker;
 import com.intellij.openapi.editor.impl.RangeMarkerTest;
 
 @UsePMarkerImplementation
-public final class PRangeMarkerTest extends RangeMarkerTest {
+final class PRangeMarkerTest extends RangeMarkerTest {
 }

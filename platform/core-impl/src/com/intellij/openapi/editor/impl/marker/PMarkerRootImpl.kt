@@ -28,7 +28,7 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
-  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(Int.MIN_VALUE/*, states.size()*/),
+  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(UNCACHED_DELTA),
 ) : PMarkerRoot {
   internal val resolutionCacheIdentity: Any
     get() = cachedDelta
@@ -83,9 +83,7 @@ open class PMarkerRootImpl private constructor(
 
     val newRoot = insertAvl(editor, rootId, markerId)
     editor.setParent(newRoot, NULL_NODE)
-    val result = PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
-    result.cachedDelta.putIfAbsent(markerId, 0)
-    return result
+    return PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
@@ -432,8 +430,8 @@ open class PMarkerRootImpl private constructor(
   }
 
   private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
-    val cached = cachedDelta.getOrDefault(markerId, -1)
-    if (cached != -1) {
+    val cached = cachedDelta.get(markerId)
+    if (cached != UNCACHED_DELTA) {
       return cached
     }
 
@@ -445,7 +443,9 @@ open class PMarkerRootImpl private constructor(
       val parentId = node.parentId
       if (parentId == NULL_NODE) {
         result = 0
-        cachedDelta.putIfAbsent(nodeId, result)
+        if (nodeId != markerId) {
+          cachedDelta.putIfAbsent(nodeId, result)
+        }
         break
       }
 
@@ -453,8 +453,8 @@ open class PMarkerRootImpl private constructor(
       node = states.getUnchecked(parentId) as? ValidNode
              ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
       nodeId = parentId
-      val cached = cachedDelta.getOrDefault(nodeId, -1)
-      if (cached != -1) {
+      val cached = cachedDelta.get(nodeId)
+      if (cached != UNCACHED_DELTA) {
         result = cached
         break
       }
@@ -463,7 +463,9 @@ open class PMarkerRootImpl private constructor(
     while (path.isNotEmpty()) {
       result += node.lazyOffsetDelta
       node = path.removeLast()
-      cachedDelta.putIfAbsent(node.entry.markerId, result)
+      if (node.entry.markerId != markerId) {
+        cachedDelta.putIfAbsent(node.entry.markerId, result)
+      }
     }
     return result
   }
@@ -646,6 +648,7 @@ open class PMarkerRootImpl private constructor(
 
   companion object {
     private const val ALL_FLAVOR_FLAGS: Int = 0xFF
+    private const val UNCACHED_DELTA: Int = Int.MIN_VALUE
 
     private val ENTRY_COMPARATOR: Comparator<MarkerEntry> = Comparator { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
