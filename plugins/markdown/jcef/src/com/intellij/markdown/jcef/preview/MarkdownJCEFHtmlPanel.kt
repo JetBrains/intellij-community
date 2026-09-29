@@ -81,6 +81,10 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
   private val pageBaseName = "markdown-preview-index-${DigestUtil.randomToken()}.html"
   private val resourceProvider = MyAggregatingResourceProvider()
+
+  @get:ApiStatus.Internal
+  val imageResourceProvider: ResourceProvider = MarkdownImageResourceProvider(project, virtualFile)
+
   private val pageUrl = PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName)
   private val browserPipe: BrowserPipe = JcefBrowserPipeImpl(browser = this, injectionAllowedUrls = listOf(pageUrl))
 
@@ -152,6 +156,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
+    Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(imageResourceProvider))
 
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
@@ -169,8 +174,6 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
     coroutineScope.launch {
       try {
-        val imageResourceProvider = createImageResourceProvider()
-
         loadIndexContent()
         initialization.complete(Unit)
         updateHandler.requests.collectLatest { request ->
@@ -405,13 +408,6 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
   override fun openDevtools() {
     super.openDevtools()
-  }
-
-  @ApiStatus.Internal
-  fun createImageResourceProvider(): ResourceProvider {
-    val provider = MarkdownImageResourceProvider(project, virtualFile)
-    Disposer.register(this@MarkdownJCEFHtmlPanel, PreviewStaticServer.instance.registerResourceProvider(provider))
-    return provider
   }
 
   private inner class MyAggregatingResourceProvider : ResourceProvider {
