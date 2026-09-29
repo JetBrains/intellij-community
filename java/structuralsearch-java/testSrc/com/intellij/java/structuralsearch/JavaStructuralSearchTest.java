@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiCatchSection;
@@ -26,6 +27,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -2317,6 +2319,10 @@ public class JavaStructuralSearchTest extends StructuralSearchTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      var label = BazelLabel.Companion.fromString("@community//platform/structuralsearch:testData");
+      return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath() + "/java/";
+    }
     return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/java/";
   }
 
