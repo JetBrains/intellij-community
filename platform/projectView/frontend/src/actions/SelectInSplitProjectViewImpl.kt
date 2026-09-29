@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.projectView.frontend.actions
 
 import com.intellij.diagnostic.rethrowControlFlowException
@@ -24,22 +26,40 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.seconds
 
 internal class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope: CoroutineScope) : SelectInSplitProjectView {
 
-  private val tasks = Channel<SelectTask>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val finishedTaskFlow = MutableSharedFlow<SelectTask>(
+    replay = 0,
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.SUSPEND,
+  )
+
+  private val tasks = Channel<SelectTask>(
+    capacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    onUndeliveredElement = { task -> 
+      check(finishedTaskFlow.tryEmit(task))
+    }
+  )
 
   init {
     coroutineScope.launch(CoroutineName("SelectInSplitProjectViewImpl")) {
@@ -59,8 +79,30 @@ internal class SelectInSplitProjectViewImpl(private val project: Project, corout
   }
 
   override fun selectIn(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean) {
+    startTask(target, context, requestFocus)
+  }
+
+  override suspend fun selectInAndWait(
+    context: SelectInContext,
+    target: SelectInTarget,
+    requestFocus: Boolean,
+  ) {
+    coroutineScope {
+      val ourTask = AtomicReference<SelectInTask?>(null)
+      launch(start = CoroutineStart.UNDISPATCHED) { 
+        finishedTaskFlow.first { finishedTask ->
+          finishedTask == ourTask.load()
+        }
+      }
+      ourTask.store(startTask(target, context, requestFocus))
+    }
+  }
+
+  private fun startTask(target: SelectInTarget, context: SelectInContext, requestFocus: Boolean): SelectInTask {
     LOG.debug { "Scheduling selection, target = ${target.minorViewId}, context = $context, requestFocus = $requestFocus" }
-    check(tasks.trySend(SelectInTask(context, target, requestFocus)).isSuccess)
+    val task = SelectInTask(context, target, requestFocus)
+    check(tasks.trySend(task).isSuccess)
+    return task
   }
 
   private suspend fun performTasks() {
@@ -72,6 +114,9 @@ internal class SelectInSplitProjectViewImpl(private val project: Project, corout
       catch (e: Exception) {
         rethrowControlFlowException(e)
         LOG.error("An exception occurred while selecting a node: $task", e)
+      }
+      finally {
+        check(finishedTaskFlow.tryEmit(task))
       }
     }
   }
@@ -183,7 +228,8 @@ private data class SelectInTask(
   }
 
   private fun serialize(context: SelectInContext): SelectInContextDTO {
-    return SelectInContextDTO(context.virtualFile.rpcId())
+    val fileId = context.virtualFile.rpcId()
+    return SelectInContextDTO(fileId)
   }
 }
 

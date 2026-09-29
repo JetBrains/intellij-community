@@ -9,6 +9,7 @@ import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 interface ProjectViewToolWindowService {
@@ -28,4 +29,7 @@ interface ProjectViewToolWindowService {
   suspend fun show(requestFocus: Boolean)
 
   suspend fun selectNode(nodePath: ProjectViewNodePath)
+  
+  @TestOnly
+  suspend fun awaitInitialization()
 }

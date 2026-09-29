@@ -1,6 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.backend.rpc
 
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.rpcId
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.projectView.actions.EditorChoice
@@ -71,5 +75,12 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
 
   override suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO> {
     return ProjectViewUpdateRequestsService.getInstance(projectId.findProject()).createRpcChannel()
+  }
+
+  override suspend fun getFileInFirstContentRoot(projectId: ProjectId, relativePath: String): VirtualFileId {
+    return ProjectRootManager.getInstance(projectId.findProject()).contentRoots
+      .firstNotNullOf { it }
+      .resolveFromRootOrRelative(relativePath)!!
+      .rpcId()
   }
 }

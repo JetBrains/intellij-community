@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 interface ProjectViewSelectInTargetProvider {
@@ -19,7 +20,8 @@ interface ProjectViewSelectInTargetProvider {
 internal val ProjectViewSelectInTargetProviderEP: ExtensionPointName<ProjectViewSelectInTargetProvider> =
   ExtensionPointName.create("com.intellij.projectViewSelectInTargetProvider")
 
-internal fun getProjectViewSelectInTargets(project: Project): Collection<SelectInTarget> {
+@VisibleForTesting
+fun getProjectViewSelectInTargets(project: Project): Collection<SelectInTarget> {
   return buildList {
     for (provider in ProjectViewSelectInTargetProviderEP.extensionList) {
       try {

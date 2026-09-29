@@ -24,4 +24,5 @@ interface SelectInSplitProjectView {
   fun isSelectOpenedFileEnabled(): Boolean
   fun selectOpenedFile(editorChoice: EditorChoice, invokedManually: Boolean)
   fun selectIn(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean)
+  suspend fun selectInAndWait(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean)
 }

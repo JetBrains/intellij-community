@@ -66,6 +66,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -686,6 +687,10 @@ internal class ProjectViewToolWindowServiceImpl(
         contentManager.addContent(content, contentManager.contentCount)
       }
     }
+  }
+
+  override suspend fun awaitInitialization() {
+    currentPaneMutableFlow.first { it != null } as TreeBasedFrontendProjectViewPane
   }
 }
 
