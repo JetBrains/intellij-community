@@ -1,5 +1,6 @@
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
 
 ### auto-generated section `dev intellij.maven.plugin` start
 dev_dist_plugin(
@@ -30,9 +31,57 @@ dev_dist_plugin(
     main_module = "intellij.maven.plugin",
 )
 
-exports_files(
-    ["intellij.maven.plugin.dev-plan.json"],
-    visibility = ["//visibility:public"],
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//plugins/maven:maven.jar": "intellij.maven",
+        "//plugins/maven/maven3-server-common:server-m3-common.jar": "intellij.maven.server.m3.common",
+        "//plugins/maven/maven3-server-impl:server-m3-impl.jar": "intellij.maven.server.m3.impl",
+        "//plugins/maven/maven-server-telemetry:server-telemetry.jar": "intellij.maven.server.telemetry",
+        "//plugins/maven/maven36-server-impl:server-m36-impl.jar": "intellij.maven.server.m36.impl",
+        "//plugins/maven/maven40-server-impl:server-m40.jar": "intellij.maven.server.m40",
+        "//plugins/maven/maven-event-listener:server-eventListener.jar": "intellij.maven.server.eventListener",
+        "//plugins/maven/maven-server-indexer:server-indexer.jar": "intellij.maven.server.indexer",
+        "//plugins/maven/plugin:plugin.jar": "intellij.maven.plugin",
+        "//build/deps:dependencies.jar": "intellij.idea.community.build.dependencies",
+        "//plugins/maven/artifact-resolver-m31:artifactResolver-m31.jar": "intellij.maven.artifactResolver.m31",
+        "//plugins/maven/artifact-resolver/common:common.jar": "intellij.maven.artifactResolver.common",
+        "//plugins/maven-server-api:maven-server.jar": "intellij.maven.server",
+    },
+    descriptor = "//build/dev-dist-descriptors/intellij.maven.plugin:intellij.maven.plugin_dev_descriptor",
+    execution_version = 2,
+    independent_artifacts = [
+        "//plugins/maven/model:model_content_module_jar",
+        "//plugins/maven/proofreading:proofreading_content_module_jar",
+        "//plugins/maven/performanceTesting:performanceTesting_content_module_jar",
+        "//plugins/maven/groovy:groovy_content_module_jar",
+        "//plugins/maven/completion:completion_content_module_jar",
+        "//plugins/maven/delegation/junit:junit_content_module_jar",
+        "//plugins/maven/delegation/testng:testng_content_module_jar",
+        "//plugins/maven/jps:jps_content_module_jar",
+        "//plugins/maven/jps/ide:ide_content_module_jar",
+    ],
+    libraries = {
+        "@lib//:maven-plexus-archiver": "@lib//:maven-plexus-archiver",
+        "@lib//:maven-jetbrains-idea-maven-indexer-api-rt": "@lib//:maven-jetbrains-idea-maven-indexer-api-rt",
+        "@lib//:maven-server-indexer-apache-maven-core-3-8-3": "@lib//:maven-server-indexer-apache-maven-core-3-8-3",
+        "@lib//:maven-server-indexer-apache-maven-wagon-provider-api-3-5-2": "@lib//:maven-server-indexer-apache-maven-wagon-provider-api-3-5-2",
+        "@lib//:maven-server-indexer-apache-maven-archetype-common-no-trans-3-2-1": "@lib//:maven-server-indexer-apache-maven-archetype-common-no-trans-3-2-1",
+        "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321": "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321",
+    },
+    main_module = "intellij.maven.plugin",
+    resource_inputs = {
+        "@dev_launch_maven//:files": "layout-source:resource-generator:0:0",
+    },
+    source_tree_prefixes = {
+        "layout-source:resource-generator:1:0": "",
+        "layout-source:resource-generator:1:1": "",
+        "layout-source:resource-generator:2:0": "",
+    },
+    source_tree_targets = {
+        "layout-source:resource-generator:1:0": "@dev_launch_maven3_libraries//:files",
+        "layout-source:resource-generator:1:1": "@dev_launch_maven_telemetry_libraries//:files",
+        "layout-source:resource-generator:2:0": "@dev_launch_maven_telemetry_libraries//:files",
+    },
 )
 ### auto-generated section `dev intellij.maven.plugin` end
 

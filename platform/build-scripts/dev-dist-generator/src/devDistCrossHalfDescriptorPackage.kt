@@ -101,13 +101,9 @@ internal class CrossHalfDescriptorPackages(
    * Every package file with its final text. [pluginTargets] adds the rendered `dev_plugin` target of a simple plugin to
    * its package, keyed by the package path. [complexPluginCalls] adds the rendered `dev_dist_complex_plugin` calls of a
    * community complex plugin to its plugin package, keyed the same way. A package without a descriptor leaf gets one
-   * for the target or the calls. [communityPass] says that the community pass writes the packages under `community/`.
+   * for the target or the calls.
    */
-  fun files(
-    pluginTargets: Map<String, String>,
-    complexPluginCalls: Map<String, String> = emptyMap(),
-    communityPass: Boolean = false,
-  ): Map<String, String> {
+  fun files(pluginTargets: Map<String, String>, complexPluginCalls: Map<String, String> = emptyMap()): Map<String, String> {
     val result = LinkedHashMap<String, String>()
     val paths = LinkedHashSet(descriptorTargets.keys)
     paths.addAll(pluginTargets.keys)
@@ -121,7 +117,6 @@ internal class CrossHalfDescriptorPackages(
         descriptorTargets = descriptorTargets.get(path).orEmpty(),
         pluginTarget = pluginTargets.get(path),
         complexPluginCalls = calls,
-        communityPass = communityPass,
       ))
     }
     return Collections.unmodifiableMap(result)
@@ -133,13 +128,8 @@ internal class CrossHalfDescriptorPackages(
    * own section. It is also the product package of a product that states the plugin like the baseline again. And it is
    * every package of a product that left the split products. The root package itself is never listed.
    */
-  fun stale(
-    projectRoot: Path,
-    pluginTargets: Map<String, String>,
-    complexPluginCalls: Map<String, String> = emptyMap(),
-    communityPass: Boolean = false,
-  ): List<String> {
-    val present = files(pluginTargets, complexPluginCalls, communityPass).keys
+  fun stale(projectRoot: Path, pluginTargets: Map<String, String>, complexPluginCalls: Map<String, String> = emptyMap()): List<String> {
+    val present = files(pluginTargets, complexPluginCalls).keys
     return crossHalfDescriptorPackagesOnDisk(projectRoot).filterNot { it in present }.sorted()
   }
 }
@@ -268,26 +258,17 @@ private fun productOfPackagePath(path: String): String? {
 /**
  * One cross-half package. [complexPluginCalls] is the rendered `dev_dist_complex_plugin` calls of a community complex
  * plugin, or `null`. A call names the product info of the main repository, so the community section cannot hold it.
- * The plan file it reads sits in the community package, exported, or in this package. [communityPass] says that the
- * community pass writes the package under `community/`.
+ * The plan file it reads sits in the community package, exported, or in this package.
  */
 private fun renderCrossHalfPackage(
   product: String?,
   descriptorTargets: List<String>,
   pluginTarget: String?,
   complexPluginCalls: String?,
-  communityPass: Boolean,
 ): String = buildString {
   append(GENERATED_BY_HEADER)
   append("#\n")
   when {
-    product == null && communityPass -> {
-      append("# The dev-distribution targets of one plugin for the community products, in a package of its own.\n")
-      append("#\n")
-      append("# The ultimate pass of the generator owns the `dev` section of the plugin. The community pass writes this package\n")
-      append("# when that section declares no descriptor, when the community products state the plugin differently from it, or\n")
-      append("# for a complex plugin whose own package holds other plan files or does not hold its calls.\n")
-    }
     product == null -> {
       append("# The dev-distribution targets of one plugin, in a package of its own.\n")
       append("#\n")

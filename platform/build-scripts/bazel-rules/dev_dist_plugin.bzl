@@ -59,6 +59,7 @@ def dev_dist_plugin(
         frontend_build_number = "",
         jars = {},
         module_jar_paths = {},
+        content_module_jar_labels = {},
         classpath_jars = [],
         files = {},
         file_prefixes = {},
@@ -82,6 +83,9 @@ def dev_dist_plugin(
             plugin the plan driven chain packs.
         module_jar_paths: The destination of a reused content module jar when it is not `lib/modules/<module>.jar`,
             keyed by module name.
+        content_module_jar_labels: The `content_module_jar` label of a reused content module whose call is not in the
+            package of the module, keyed by module name. The generator states it for a call it relocates. Any other
+            reused module takes the label the package of the module gives.
         classpath_jars: The classpath order of every jar of a simple plugin, when the default order is not the plan's
             order. The default order is the `jars` keys, then the reused content module jars in `content_modules` order.
         files: The plain copies of a simple plugin, keyed by destination relative to the plugin directory and valued by
@@ -126,6 +130,10 @@ def dev_dist_plugin(
     for destination in file_prefixes:
         if destination not in files:
             fail("dev_dist_plugin: %s states a file prefix for '%s', which `files` does not copy" % (main_module, destination))
+    jar_tokens = [token for tokens in jars.values() for token in tokens]
+    for module in content_module_jar_labels:
+        if module not in content_modules or module in jar_tokens:
+            fail("dev_dist_plugin: %s states a content_module_jar label for '%s', which it does not reuse" % (main_module, module))
     for destination in executable_files:
         if destination not in files:
             fail("dev_dist_plugin: %s marks '%s' executable, which `files` does not copy" % (main_module, destination))
@@ -188,12 +196,13 @@ def dev_dist_plugin(
             )
     if jars and not stale:
         # A content module no jar merges is reused from its own packing target. Its label follows from the module's
-        # label, and a module without such a target fails when Bazel analyses the component.
+        # label unless `content_module_jar_labels` states it, and a module without such a target fails when Bazel
+        # analyses the component.
         content_module_jars = []
         for name in content_modules:
             label = module_rule_label(name, module_targets)
             if label not in packed_modules and label != None:
-                content_module_jars.append(_content_module_jar_label(label))
+                content_module_jars.append(content_module_jar_labels.get(name) or _content_module_jar_label(label))
         dev_plugin(
             name = dev_dist_plugin_component_target_name(main_module),
             main_module = main_module,

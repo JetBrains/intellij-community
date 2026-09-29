@@ -1,4 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.kotlinc.low.level.api.fir` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
+    module = ":libraries-kotlinc-low-level-api-fir",
+)
+### auto-generated section `dev intellij.libraries.kotlinc.low.level.api.fir` end
 
 ### auto-generated section `build intellij.libraries.kotlinc.low.level.api.fir` start
 jvm_library(

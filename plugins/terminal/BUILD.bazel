@@ -1,5 +1,6 @@
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
 
 ### auto-generated section `dev intellij.terminal` start
 filegroup(
@@ -25,9 +26,83 @@ dev_dist_plugin(
     main_module = "intellij.terminal",
 )
 
-exports_files(
-    ["intellij.terminal.dev-plan.json"],
-    visibility = ["//visibility:public"],
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//libraries/completion-ranking-sh:completion-ranking-sh.jar": "intellij.libraries.completion.ranking.sh",
+        "//plugins/terminal/libraries:libraries-completionDbWithExtensions.jar": "intellij.terminal.libraries.completionDbWithExtensions",
+        "//plugins/terminal:terminal.jar": "intellij.terminal",
+        "//plugins/terminal/completion:completion.jar": "intellij.terminal.completion",
+    },
+    descriptor = "//build/dev-dist-descriptors/intellij.terminal:intellij.terminal_dev_descriptor",
+    execution_version = 2,
+    independent_artifacts = [
+        "//plugins/terminal/backend:backend_content_module_jar",
+        "//plugins/terminal/emulator:emulator_content_module_jar",
+        "//plugins/terminal/frontend:frontend_content_module_jar",
+        "//plugins/terminal/cloud:cloud_content_module_jar",
+        "//plugins/terminal/sh:sh_content_module_jar",
+    ],
+    libraries = {
+        "@lib//:libraries-completion-ranking-sh-completion-ranking-sh": "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
+        "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions": "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
+        "@lib//:terminal-completion-terminal-completion-spec": "@lib//:terminal-completion-terminal-completion-spec",
+    },
+    main_module = "intellij.terminal",
+    platform_values = {
+        "darwin_aarch64": {
+            "destination": "libghostty-vt/macos-aarch64",
+            "layoutSignature": "5e6nyeqkngf2k9821ozzje5iq",
+            "modelSignature": "bl17ak84xi6zy07qccita3ugi",
+            "pattern": "macos-aarch64/libghostty-vt.dylib",
+        },
+        "darwin_x64": {
+            "destination": "libghostty-vt/macos-x86_64",
+            "layoutSignature": "a2pk9njbati45ai5xz9mbgc4o",
+            "modelSignature": "kx1wq3zfk390ntxzvethgphp",
+            "pattern": "macos-x86_64/libghostty-vt.dylib",
+        },
+        "linux_aarch64": {
+            "destination": "libghostty-vt/linux-aarch64",
+            "layoutSignature": "38amtodn4c7kbbxoby7spbj1o",
+            "modelSignature": "cttjgv17svtlvj4yxqhbtykc4",
+            "pattern": "linux-aarch64/libghostty-vt.so",
+        },
+        "linux_x64": {
+            "destination": "libghostty-vt/linux-x86_64",
+            "layoutSignature": "cfwa5a7e6xjyddavj8filqvwm",
+            "modelSignature": "74b929htgze7w1iw54s9leskk",
+            "pattern": "linux-x86_64/libghostty-vt.so",
+        },
+        "windows_aarch64": {
+            "destination": "libghostty-vt/windows-aarch64",
+            "layoutSignature": "cdphjlzqa136fzg52pp7auqr0",
+            "modelSignature": "2ng9tk18owca2r9lxlppc3mqh",
+            "pattern": "windows-aarch64/ghostty-vt.dll",
+        },
+        "windows_x64": {
+            "destination": "libghostty-vt/windows-x86_64",
+            "layoutSignature": "e7e1fziaexbepnvg3abijjno0",
+            "modelSignature": "50g6ndkc9p1wxr1e4hf1nv25x",
+            "pattern": "windows-x86_64/ghostty-vt.dll",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+    resource_inputs = {
+        "@dev_launch_libghostty//:files": "layout-source:platform-resource-generator:0:0",
+    },
+    source_tree_prefixes = {
+        "module-resource:0:source": "plugins/terminal/resources/shell-integrations",
+    },
+    source_tree_targets = {
+        "module-resource:0:source": "//plugins/terminal:dev_dist_resources",
+    },
 )
 ### auto-generated section `dev intellij.terminal` end
 

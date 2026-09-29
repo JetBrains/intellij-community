@@ -9,7 +9,6 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicLibrary
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
@@ -200,7 +199,7 @@ class DevDistPluginPlanFilesTest {
   }
 
   @Test
-  fun `the plan file of a community plugin's non-baseline text sits in its cross-half package and is not exported`() {
+  fun `the ultimate half writes every plan file of a community plugin into its cross-half package`() {
     val records = LinkedHashMap<DevDistPluginPlanKey, DevDistPluginPlanRecord>()
     records.put(key("idea", plugin = communityPlugin), record("lib/c.jar", plugin = communityPlugin))
     records.put(key("server", plugin = communityPlugin), record("lib/c-server.jar", plugin = communityPlugin))
@@ -208,8 +207,8 @@ class DevDistPluginPlanFilesTest {
     val files = collectDevDistPluginPlanFiles(dir, records, index, CommunityDevDistHalf, productOrder = listOf("idea", "server"))
 
     val crossHalf = "build/dev-dist-descriptors/$communityPlugin"
-    assertThat(files.files.keys).containsExactlyInAnyOrder("community/plugins/c/$communityPlugin.dev-plan.json", "$crossHalf/$communityPlugin.server.dev-plan.json")
-    assertThat(files.exportedFiles.getValue(communityPlugin)).containsExactly("$communityPlugin.dev-plan.json")
+    assertThat(files.files.keys).containsExactlyInAnyOrder("$crossHalf/$communityPlugin.dev-plan.json", "$crossHalf/$communityPlugin.server.dev-plan.json")
+    assertThat(files.exportedFiles).isEmpty()
     val serverRecord: DevDistPluginPlanRecord = records.getValue(key("server", plugin = communityPlugin))
     val server: DevDistPluginExecutionGraphLabels = files.executionGraphLabels(key("server", plugin = communityPlugin), serverRecord)
     assertThat(server.projection).isEqualTo("//$crossHalf:$communityPlugin.server.dev-plan.json")
@@ -305,27 +304,7 @@ class DevDistPluginPlanFilesTest {
   }
 
   @Test
-  fun `a community plugin whose plan names community labels only keeps its plan file in its community package and exports it`() {
-    val records = neutralRecords(communityPlugin, library = "@lib//:community-lib")
-
-    val files = collectDevDistPluginPlanFiles(dir, records, index, CommunityDevDistHalf, productOrder = listOf("idea"))
-
-    val home = files.home(communityPlugin)
-    assertThat(home.directory).isEqualTo("community/plugins/c")
-    assertThat(home.packageLabel).isEqualTo("@community//plugins/c")
-    assertThat(home.callIsCrossHalf).isTrue()
-    assertThat(home.exportsPlanFiles).isTrue()
-    assertThat(home.isModulePackage).isTrue()
-    assertThat(files.files.keys).containsExactly("community/plugins/c/$communityPlugin.dev-plan.json")
-    assertThat(files.exportedFiles).containsExactly(entry(communityPlugin, listOf("$communityPlugin.dev-plan.json")))
-    val record = records.getValue(key("idea", plugin = communityPlugin))
-    val labels = files.executionGraphLabels(key("idea", plugin = communityPlugin), record)
-    assertThat(labels.projection).isEqualTo("@community//plugins/c:$communityPlugin.dev-plan.json")
-    files.checkExecutionGraph(key("idea", plugin = communityPlugin), record, labels)
-  }
-
-  @Test
-  fun `a community plugin whose plan names another repository gets the cross-half package and no export`() {
+  fun `the ultimate half homes a community plugin in the cross-half package and exports nothing`() {
     val records = neutralRecords(communityPlugin, library = "@ultimate_lib//:profiler")
 
     val files = collectDevDistPluginPlanFiles(dir, records, index, CommunityDevDistHalf, productOrder = listOf("idea"))
@@ -345,118 +324,105 @@ class DevDistPluginPlanFilesTest {
     files.checkExecutionGraph(key("idea", plugin = communityPlugin), record, labels)
   }
 
-  /**
-   * The plans of an ultimate pass whose own package of [communityPlugin] holds the plan file of [records]. The own
-   * section states [sectionCall], and it exports the plan file when [exported] is true.
-   */
-  private fun ownPackagePlans(
-    records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>,
-    sectionCall: String?,
-    exported: Boolean,
-  ): DevDistOwnPackagePlans {
-    val files = collectDevDistPluginPlanFiles(dir, records, index, CommunityDevDistHalf, productOrder = listOf("idea"))
-    val calls = DevDistPluginCallRendering(
-      sectionText = sectionCall,
-      crossHalfPath = crossHalfPackagePath(communityPlugin, product = null),
-      crossHalfText = if (exported) "dev_dist_complex_plugin()\n" else null,
-      exportsPlanFiles = exported,
-    )
-    return DevDistOwnPackagePlans.of(files, DevDistPluginExecutionRendering(calls = mapOf(communityPlugin to calls), components = ""))
-  }
+  /** The community half: an index of the community packages, written relative to `community/`. */
+  private fun communityIndex(): DevDistBazelIndex = DevDistBazelIndex(targets = index.targets, projectRoot = dir, planPackageIsCommunity = true)
 
-  /** The plan files of the community pass over [records], which reuses a plan file of [ownPackagePlans]. */
-  private fun collectCommunityPass(
-    records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>,
-    ownPackagePlans: DevDistOwnPackagePlans,
-  ): DevDistPluginPlanFiles {
+  /** The calls of a community complex plugin whose `dev` section states [sectionText]. */
+  private fun sectionCalls(sectionText: String?, crossHalfText: String? = null) = DevDistPluginCallRendering(
+    sectionText = sectionText,
+    crossHalfPath = crossHalfPackagePath(communityPlugin, product = null),
+    crossHalfText = crossHalfText,
+    exportsPlanFiles = false,
+  )
+
+  /** The plans that the community half writes into the own package of [communityPlugin] for [records], with [sectionCall]. */
+  private fun communityHalfPlans(records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>, sectionCall: String): Pair<DevDistPluginPlanFiles, DevDistOwnPackagePlans> {
     val root = DevDistGenerationRoot.community(dir)
-    val communityIndex = DevDistBazelIndex(targets = index.targets, projectRoot = dir, planPackageIsCommunity = true)
-    return collectDevDistPluginPlanFiles(
+    val files = collectDevDistPluginPlanFiles(
       projectRoot = root.outputRoot,
       records = records,
-      index = communityIndex,
+      index = communityIndex(),
       half = CommunityDevDistHalf,
       productOrder = listOf("idea"),
       writtenText = root::respellQuotedLabels,
-      ownHome = { plugin, writtenFiles -> ownPackagePlans.reusableHome(plugin, writtenFiles, root) },
+    )
+    val rendering = DevDistPluginExecutionRendering(calls = mapOf(communityPlugin to sectionCalls(sectionCall)), components = "")
+    return files to DevDistOwnPackagePlans.of(files, rendering, root)
+  }
+
+  /** The plan files of the ultimate half over [records]. It reads the own package of a plugin in [reused] as the upstream home. */
+  private fun ultimateHalfPlans(
+    records: Map<DevDistPluginPlanKey, DevDistPluginPlanRecord>,
+    upstream: DevDistOwnPackagePlans,
+    reused: Set<String> = emptySet(),
+  ): DevDistPluginPlanFiles {
+    return collectDevDistPluginPlanFiles(
+      projectRoot = dir,
+      records = records,
+      index = index,
+      half = CommunityDevDistHalf,
+      productOrder = listOf("idea"),
+      ownHome = { plugin, _ -> if (plugin in reused) upstream.upstreamHome(plugin) else null },
     )
   }
 
-  private fun relativePaths(files: DevDistPluginPlanFiles, changeType: FileChangeType): List<String> {
-    return files.updates.getDiffs().filter { it.changeType == changeType }.map { dir.relativize(it.path).toString().replace('\\', '/') }
+  private fun createdPaths(files: DevDistPluginPlanFiles): List<String> {
+    return files.updates.getDiffs().filter { it.changeType == FileChangeType.CREATE }.map { dir.relativize(it.path).toString().replace('\\', '/') }
   }
 
   @Test
-  fun `the community pass reuses an identical plan file of the own package and writes a differing one in its generated package`() {
-    val ultimateRecords = neutralRecords(communityPlugin, library = "@lib//:community-lib")
-    val own = ownPackagePlans(ultimateRecords, sectionCall = "dev_dist_complex_plugin()\n", exported = false)
-    // The ultimate pass wrote the own plan file, and an earlier community pass wrote a copy into the generated package.
-    val ownFile = "community/plugins/c/$communityPlugin.dev-plan.json"
-    val copy = "community/build/dev-dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json"
-    for (path in listOf(ownFile, copy)) {
-      Files.writeString(Files.createDirectories(dir.resolve(path).parent).resolve(path.substringAfterLast('/')), "{}\n")
-    }
+  fun `the community half keeps the plan file of a community plugin in its own package with the call in its section`() {
+    val records = neutralRecords(communityPlugin, library = "@community//libraries/c:c")
 
-    val communityRecords = neutralRecords(communityPlugin, library = "@lib//:community-lib")
-    val identical = collectCommunityPass(communityRecords, own)
+    val (files, plans) = communityHalfPlans(records, sectionCall = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n")
 
-    assertThat(identical.reusedHomes).containsExactly(communityPlugin)
-    val home = identical.home(communityPlugin)
+    val home = files.home(communityPlugin)
     assertThat(home.directory).isEqualTo("plugins/c")
     assertThat(home.packageLabel).isEqualTo("@community//plugins/c")
-    assertThat(home.exportsPlanFiles).isTrue()
-    // The pass neither writes nor sweeps the own package, and it deletes the copy.
-    assertThat(relativePaths(identical, FileChangeType.CREATE)).isEmpty()
-    assertThat(relativePaths(identical, FileChangeType.MODIFY)).isEmpty()
-    assertThat(relativePaths(identical, FileChangeType.DELETE)).containsExactly(copy)
-    // A call reads the plan file of the own package.
-    val key = key("idea", plugin = communityPlugin)
-    val record = communityRecords.getValue(key)
-    val labels = identical.executionGraphLabels(key, record)
-    assertThat(labels.projection).isEqualTo("@community//plugins/c:$communityPlugin.dev-plan.json")
-    identical.checkExecutionGraph(key, record, labels)
-
-    val differing = collectCommunityPass(neutralRecords(communityPlugin, library = "@lib//:other-lib"), own)
-
-    assertThat(differing.reusedHomes).isEmpty()
-    assertThat(differing.home(communityPlugin).directory).isEqualTo("build/dev-dist-descriptors/$communityPlugin")
-    assertThat(relativePaths(differing, FileChangeType.MODIFY)).containsExactly(copy)
-    assertThat(relativePaths(differing, FileChangeType.DELETE)).isEmpty()
+    assertThat(home.callIsCrossHalf).isFalse()
+    assertThat(home.exportsPlanFiles).isFalse()
+    // The community half writes the file relative to `community/`, and the text names no community repository.
+    assertThat(createdPaths(files)).containsExactly("community/plugins/c/$communityPlugin.dev-plan.json")
+    assertThat(files.updates.results.single().relativePath).isEqualTo("plugins/c/$communityPlugin.dev-plan.json")
+    assertThat(plans.hasHome(communityPlugin)).isTrue()
+    assertThat(plans.upstreamHome(communityPlugin).directory).isEqualTo("community/plugins/c")
   }
 
   @Test
-  fun `a plan file that differs from the own one only in the label spelling is not reused`() {
+  fun `the ultimate half reuses an equal plan file and call of the community half and writes nothing under community`() {
+    val call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
+    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@community//libraries/c:c"), sectionCall = call)
     val records = neutralRecords(communityPlugin, library = "@community//libraries/c:c")
-    val own = ownPackagePlans(records, sectionCall = null, exported = true)
 
-    val files = collectCommunityPass(records, own)
+    val first = ultimateHalfPlans(records, plans)
+    val planTexts = first.files.mapKeys { it.key.substringAfterLast('/') }
+    val crossHalfCall = call.replace("\"//", "\"@community//")
+    assertThat(first.home(communityPlugin).directory).isEqualTo("build/dev-dist-descriptors/$communityPlugin")
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, crossHalfCall)).isTrue()
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, crossHalfCall.replace(":d", ":e"))).isFalse()
 
-    assertThat(files.reusedHomes).isEmpty()
-    assertThat(files.files.values.single()).contains("\"@community//libraries/c:c\"")
-    assertThat(relativePaths(files, FileChangeType.CREATE))
-      .containsExactly("community/build/dev-dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json")
+    val reused = ultimateHalfPlans(records, plans, reused = setOf(communityPlugin))
+
+    assertThat(reused.reusedHomes).containsExactly(communityPlugin)
+    assertThat(reused.updates.results).isEmpty()
+    val key = key("idea", plugin = communityPlugin)
+    val labels = reused.executionGraphLabels(key, records.getValue(key))
+    assertThat(labels.projection).isEqualTo("@community//plugins/c:$communityPlugin.dev-plan.json")
+    reused.checkExecutionGraph(key, records.getValue(key), labels)
+    assertThat(plans.acceptsCalls(communityPlugin, sectionCalls(call))).isTrue()
+    assertThat(plans.acceptsCalls(communityPlugin, sectionCalls("dev_dist_complex_plugin()\n"))).isFalse()
   }
 
   @Test
-  fun `the own package serves the calls of the community pass only when it states the same call or exports the plan file`() {
-    val records = neutralRecords(communityPlugin, library = "@lib//:community-lib")
-    val fileNames = listOf("$communityPlugin.dev-plan.json")
-    fun calls(sectionText: String?, exportsPlanFiles: Boolean) = DevDistPluginCallRendering(
-      sectionText = sectionText,
-      crossHalfPath = crossHalfPackagePath(communityPlugin, product = null),
-      crossHalfText = if (exportsPlanFiles) "dev_dist_complex_plugin()\n" else null,
-      exportsPlanFiles = exportsPlanFiles,
-    )
+  fun `the ultimate half keeps a differing plan file in the product package of the plugin`() {
+    val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@community//libraries/c:c"), sectionCall = "dev_dist_complex_plugin()\n")
+    val records = neutralRecords(communityPlugin, library = "@ultimate_lib//:profiler")
 
-    val inSection = ownPackagePlans(records, sectionCall = "dev_dist_complex_plugin(a)\n", exported = false)
-    assertThat(inSection.acceptsCalls(communityPlugin, calls("dev_dist_complex_plugin(a)\n", exportsPlanFiles = false), fileNames)).isTrue()
-    assertThat(inSection.acceptsCalls(communityPlugin, calls("dev_dist_complex_plugin(b)\n", exportsPlanFiles = false), fileNames)).isFalse()
-    // The own section holds the call beside the plan file, so it exports nothing that a call of the generated package reads.
-    assertThat(inSection.acceptsCalls(communityPlugin, calls(sectionText = null, exportsPlanFiles = true), fileNames)).isFalse()
+    val files = ultimateHalfPlans(records, plans)
 
-    val exported = ownPackagePlans(records, sectionCall = null, exported = true)
-    assertThat(exported.acceptsCalls(communityPlugin, calls(sectionText = null, exportsPlanFiles = true), fileNames)).isTrue()
-    assertThat(exported.acceptsCalls(communityPlugin, calls("dev_dist_complex_plugin(a)\n", exportsPlanFiles = false), fileNames)).isFalse()
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, files.files.mapKeys { it.key.substringAfterLast('/') }, "dev_dist_complex_plugin()\n")).isFalse()
+    assertThat(createdPaths(files))
+      .containsExactly("build/dev-dist-descriptors/$communityPlugin/$communityPlugin.dev-plan.json")
   }
 
   @Test
@@ -478,13 +444,13 @@ class DevDistPluginPlanFilesTest {
   }
 
   @Test
-  fun `the sweep deletes every plan file the run did not emit, in every module package and every cross-half package`() {
+  fun `the sweep deletes every plan file the run did not emit, in every package of its half`() {
     val stale = listOf(
       "plugins/x/intellij.x.linux_x64.dev-plan.json",
-      "community/plugins/c/intellij.c.dev-plan.json",
       "build/dev-dist-descriptors/intellij.gone/intellij.gone.dev-plan.json",
     )
-    val kept = listOf("plugins/x/notes.json", "build/dev-dist-descriptors/intellij.gone/BUILD.bazel")
+    // The ultimate half writes no community package, so it sweeps none there.
+    val kept = listOf("plugins/x/notes.json", "build/dev-dist-descriptors/intellij.gone/BUILD.bazel", "community/plugins/c/intellij.c.dev-plan.json")
     for (path in stale + kept) {
       val file = dir.resolve(path)
       Files.createDirectories(file.parent)

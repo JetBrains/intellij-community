@@ -56,6 +56,11 @@ dev_dist_plugin(
         "intellij.xml.vcs",
     ],
     jars = {
+        "lib/modules/intellij.relaxng.jar": [
+            "intellij.relaxng",
+            "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
+            "//xml/relaxng/lib:relaxng-trang-core",
+        ],
         "lib/xml-plugin.jar": ["intellij.xml.plugin"],
     },
     main_module = "intellij.xml.plugin",

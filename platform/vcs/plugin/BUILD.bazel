@@ -1,5 +1,6 @@
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
 
 ### auto-generated section `dev intellij.platform.vcs.plugin` start
 dev_dist_plugin(
@@ -24,9 +25,58 @@ dev_dist_plugin(
     main_module = "intellij.platform.vcs.plugin",
 )
 
-exports_files(
-    ["intellij.platform.vcs.plugin.dev-plan.json"],
-    visibility = ["//visibility:public"],
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//platform/vcs/plugin:plugin.jar": "intellij.platform.vcs.plugin",
+    },
+    descriptor = "//build/dev-dist-descriptors/intellij.platform.vcs.plugin:intellij.platform.vcs.plugin_dev_descriptor",
+    execution_version = 2,
+    independent_artifacts = [
+        "//platform/vcs-api:vcs_content_module_jar",
+        "//platform/vcs-impl:vcs-impl_content_module_jar",
+        "//platform/vcs-impl/exec:exec_content_module_jar",
+        "//platform/vcs-impl/debugger:debugger_content_module_jar",
+        "//platform/vcs-impl/lang:lang_content_module_jar",
+        "//platform/vcs-impl/lang/actions:actions_content_module_jar",
+        "//platform/vcs-log/api:vcs-log_content_module_jar",
+        "//platform/vcs-log/impl:impl_content_module_jar",
+        "//platform/sqlite:sqlite_content_module_jar",
+        "//platform/vcs-log/graph-api:vcs-log-graph_content_module_jar",
+        "//platform/vcs-log/graph:vcs-log-graph-impl_content_module_jar",
+        "//platform/dvcs-api:vcs-dvcs_content_module_jar",
+        "//platform/dvcs-impl:vcs-dvcs-impl_content_module_jar",
+        "//platform/vcs-impl/frontend:frontend_content_module_jar",
+        "//libraries/sqlite-native:sqlite-native_content_module_jar",
+    ],
+    main_module = "intellij.platform.vcs.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "r4hddiq0se9dka2mg84a8p0f",
+        },
+        "darwin_x64": {
+            "layoutSignature": "8aho7ppial2l8nh6m3xlitjv2",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "531zq99yy0e1y5wuy1t9bl419",
+        },
+        "linux_x64": {
+            "layoutSignature": "28lqriwtb7ti2bdgqwab7pwst",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "5qt3644sr12m581lwlzh06azs",
+        },
+        "windows_x64": {
+            "layoutSignature": "9ls444o8o44g48fxf9gcymca6",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
 )
 ### auto-generated section `dev intellij.platform.vcs.plugin` end
 

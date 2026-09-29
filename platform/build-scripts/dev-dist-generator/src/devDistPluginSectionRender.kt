@@ -63,13 +63,9 @@ internal class PendingDevSection(
   val refusedContentModules: Set<String>
     get() = descriptors.flatMapTo(HashSet()) { it.refusedContentModules }
 
-  /**
-   * The section with the packaging [packaging]. [modes] keeps only the mode refusals of these product modes, or every
-   * refusal when it is `null`. A leaf applies only the refusals of the mode of its product, so a refusal of another mode
-   * changes no output of that product.
-   */
-  fun render(packaging: DevDistSimplePackaging?, modes: Set<String>? = null): DevSectionRender {
-    val body = checkNotNull(renderBody(context = context, content = content, descriptors = descriptors, packaging = packaging, modes = modes))
+  /** The section with the packaging [packaging]. */
+  fun render(packaging: DevDistSimplePackaging?): DevSectionRender {
+    val body = checkNotNull(renderBody(context = context, content = content, descriptors = descriptors, packaging = packaging))
     return DevSectionRender(body = body, record = record, loadStatements = loadStatements)
   }
 }
@@ -439,16 +435,14 @@ private fun PluginDescriptorLeaf.deviatesFrom(other: PluginDescriptorLeaf): List
 /**
  * The section body, or `null` when the plugin states no content and no descriptor.
  *
- * [packaging] adds `jars`, `module_jar_paths` and the copies for a plugin Bazel packs from the declaration. A
- * cross-half packaging is declared in the ultimate package instead, so the section states nothing for it. [modes] keeps
- * only the mode refusals of these modes, or every refusal when it is `null`.
+ * [packaging] adds `jars`, `module_jar_paths`, `content_module_jar_labels` and the copies for a plugin Bazel packs from the declaration. A
+ * cross-half packaging is declared in the ultimate package instead, so the section states nothing for it.
  */
 private fun renderBody(
   context: DevSectionContext,
   content: PluginContentModules?,
   descriptors: List<PluginDescriptorLeaf>,
   packaging: DevDistSimplePackaging?,
-  modes: Set<String>? = null,
 ): String? {
   if (content == null && descriptors.isEmpty()) {
     return null
@@ -459,6 +453,7 @@ private fun renderBody(
   // The attributes in alphabetical order, each only where it states something.
   declaredPackaging?.classpathJars?.ifNotEmpty { call.option("classpath_jars", it.unsorted()) }
   descriptor?.compatibleBuildRange?.let { call.option("compatible_build_range", it) }
+  declaredPackaging?.contentModuleJarLabels?.ifNotEmpty { call.option("content_module_jar_labels", LinkedHashMap(it)) }
   content?.contentModuleNames?.ifNotEmpty { call.option("content_modules", it.unsorted()) }
   descriptor?.descriptor?.ifNotEmpty { call.option("descriptor", it) }
   descriptor?.descriptorModules?.ifNotEmpty { call.option("descriptor_modules", it) }
@@ -489,7 +484,7 @@ private fun renderBody(
   descriptor?.libraryDescriptors?.ifNotEmpty { call.option("library_descriptors", LinkedHashMap(it)) }
   call.option("main_module", context.mainModule)
   descriptor?.markers?.ifNotEmpty { call.option("markers", it) }
-  descriptor?.modeRefusedContentModules?.filterKeys { modes == null || it in modes }?.ifNotEmpty { refusals ->
+  descriptor?.modeRefusedContentModules?.ifNotEmpty { refusals ->
     call.option("mode_refused_content_modules", LinkedHashMap(refusals.toSortedMap().mapValues { NestedStringList(it.value) }))
   }
   declaredPackaging?.moduleJarPaths?.ifNotEmpty { call.option("module_jar_paths", LinkedHashMap(it)) }

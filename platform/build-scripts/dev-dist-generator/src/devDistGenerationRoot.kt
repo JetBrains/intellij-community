@@ -7,11 +7,10 @@ import java.nio.file.Path
 /**
  * The repository half that one pass of the dev-distribution generator writes, as the paths of the pass.
  *
- * The ultimate pass writes under the monorepo root and owns every `dev <module>` section. The community pass writes the
+ * Each half writes the generated files of its own packages, see [writesPackage]. The community half writes the
  * declarations of the community products under `community/`. It reads the community registry, the community run
- * configurations and the community JPS model, and it writes no `dev` section. Under
- * [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], each pass writes the files of its own packages instead, see
- * [writesPackage]. Every fact of a half that is not a path comes from [half], see [DevDistHalf].
+ * configurations and the community JPS model. The ultimate half writes every other package under the monorepo root.
+ * Every fact of a half that is not a path comes from [half], see [DevDistHalf].
  *
  * Every project-relative path that a pass computes stays relative to [projectRoot], the monorepo root, in both passes.
  * So a descriptor row or a package path has one spelling, and the community pass renders a `dev` section exactly as the
@@ -23,8 +22,6 @@ class DevDistGenerationRoot private constructor(
   @JvmField val projectRoot: Path,
   /** The half of the pass. */
   @JvmField internal val half: DevDistHalf,
-  /** Which half writes the generated files of a community package, see [DevDistOwnership]. */
-  @JvmField val ownership: DevDistOwnership,
 ) {
   /** The root of the half: the pass reads `build/dev-build.json` and `.idea/runConfigurations` here, and writes every output here. */
   @JvmField
@@ -54,34 +51,11 @@ class DevDistGenerationRoot private constructor(
   val runConfigurationsDir: Path = outputRoot.resolve(".idea/runConfigurations")
 
   /**
-   * Whether this pass writes the `dev <module>` sections. Under [DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS],
-   * only the ultimate pass writes them, so a second writer cannot flip them. Under
-   * [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], each half writes the sections of its own packages.
+   * Whether this pass writes the generated files of the package in [directory], a path relative to the monorepo root:
+   * a `dev` section, a `content_module_jar` call, a plan file or a generated package. A pass writes only the packages of
+   * its half, see [DevDistHalf.ownsPackage].
    */
-  @JvmField
-  val writesDevSections: Boolean = ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES || !dependentIsCommunity
-
-  /**
-   * Whether this pass writes the generated files in the package of a community module: a `dev` section, a
-   * `content_module_jar` call and a plan file. Exactly one half does, see [DevDistOwnership].
-   */
-  @JvmField
-  val writesCommunityModulePackages: Boolean = when (ownership) {
-    DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS -> !dependentIsCommunity
-    DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES -> dependentIsCommunity
-  }
-
-  /**
-   * Whether this pass writes the generated files of the package in [directory], a path relative to the monorepo root.
-   * Under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], a pass writes only the packages of its half, see
-   * [DevDistHalf.ownsPackage].
-   */
-  fun writesPackage(directory: String): Boolean {
-    return when (ownership) {
-      DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS -> !dependentIsCommunity || half.ownsPackage(directory)
-      DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES -> half.ownsPackage(directory)
-    }
-  }
+  fun writesPackage(directory: String): Boolean = half.ownsPackage(directory)
 
   /**
    * Fails when this pass writes [outputRelativePath], a path relative to [outputRoot], into a package that it does not
@@ -146,14 +120,10 @@ class DevDistGenerationRoot private constructor(
   }
 
   companion object {
-    /** The pass of [half] under the monorepo root [projectRoot], with the package ownership [ownership]. */
-    fun of(projectRoot: Path, half: DevDistHalf, ownership: DevDistOwnership = DevDistOwnership.DEFAULT): DevDistGenerationRoot {
-      return DevDistGenerationRoot(projectRoot = projectRoot, half = half, ownership = ownership)
-    }
+    /** The pass of [half] under the monorepo root [projectRoot]. */
+    fun of(projectRoot: Path, half: DevDistHalf): DevDistGenerationRoot = DevDistGenerationRoot(projectRoot = projectRoot, half = half)
 
-    /** The pass that writes under `community/` of the monorepo root [projectRoot], with the package ownership [ownership]. */
-    fun community(projectRoot: Path, ownership: DevDistOwnership = DevDistOwnership.DEFAULT): DevDistGenerationRoot {
-      return of(projectRoot, CommunityDevDistHalf, ownership)
-    }
+    /** The pass that writes under `community/` of the monorepo root [projectRoot]. */
+    fun community(projectRoot: Path): DevDistGenerationRoot = of(projectRoot, CommunityDevDistHalf)
   }
 }

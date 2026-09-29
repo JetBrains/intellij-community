@@ -1,9 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
-
-### auto-generated section `dev intellij.platform.ijent.community.ui` start
-content_module_jar(module = ":ui")
-### auto-generated section `dev intellij.platform.ijent.community.ui` end
 
 ### auto-generated section `build intellij.platform.ijent.community.ui` start
 jvm_library(

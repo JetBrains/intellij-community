@@ -7,7 +7,6 @@
   <module value="com.intellij.modules.all"/>
   <module value="com.intellij.modules.androidstudio"/>
   <module value="com.intellij.modules.java-capable"/>
-  <module value="com.intellij.modules.jsp.base"/>
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.lang.actions"/>
   <module value="com.intellij.modules.platform"/>
@@ -18,10 +17,6 @@
     <xi:fallback/>
   </xi:include>
   <content namespace="jetbrains">
-    <!-- region jsp.base -->
-    <module name="intellij.jsp.base"/>
-    <!-- endregion -->
-
     <!-- region ide.common -->
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.collaborationTools"/>

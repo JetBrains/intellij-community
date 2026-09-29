@@ -5,9 +5,6 @@
     "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
-            "module": "intellij.terminal.backend.split"
-        },
-        {
             "module": "intellij.terminal.backend"
         },
         {
@@ -17,16 +14,10 @@
             "module": "intellij.terminal.frontend"
         },
         {
-            "module": "intellij.terminal.frontend.split"
-        },
-        {
             "module": "intellij.terminal.cloud"
         },
         {
             "module": "intellij.terminal.sh"
-        },
-        {
-            "module": "intellij.terminal.agentsProvider"
         },
         {
             "destination": "lib/intellij.libraries.completion.ranking.sh.jar",

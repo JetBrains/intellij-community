@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
-/** The plan home rule over a synthetic index: the half of the main module, and the labels a community plan text names. */
+/** The plan home rule over a synthetic index: the half of the main module and the half of the run. */
 class DevDistPluginPlanHomeTest {
   @TempDir
   lateinit var dir: Path
@@ -26,21 +26,9 @@ class DevDistPluginPlanHomeTest {
     )
   }
 
-  /** A plan text with one library source per label of [labels]. */
-  private fun planText(vararg labels: String): String {
-    return labels.joinToString(prefix = "{\"sources\": [", postfix = "]}") { "{\"input\": \"$it\", \"kind\": \"library\"}" }
-  }
-
   @Test
-  fun `the label scan finds every quoted label and skips a URL`() {
-    val text = """{"a": "@ultimate_lib//:foo", "url": "https://example.com//x", "b": "//plugins/x:y", "c": "@lib//:z", "d": "plugins//x"}"""
-
-    assertThat(planTextLabels(text).toList()).containsExactly("@ultimate_lib//:foo", "//plugins/x:y", "@lib//:z")
-  }
-
-  @Test
-  fun `an ultimate plugin has its own package whatever its plan names`() {
-    val home = devDistPluginPlanHome("intellij.ultimate", listOf(planText("@ultimate_lib//:foo", "@community//platform:core")), index)
+  fun `an ultimate plugin has its own package`() {
+    val home = devDistPluginPlanHome("intellij.ultimate", index)
 
     assertThat(home.directory).isEqualTo("plugins/ultimate")
     assertThat(home.packageLabel).isEqualTo("//plugins/ultimate")
@@ -53,7 +41,7 @@ class DevDistPluginPlanHomeTest {
 
   @Test
   fun `an ultimate plugin in the root package has an empty directory`() {
-    val home = devDistPluginPlanHome("intellij.root", emptyList(), index)
+    val home = devDistPluginPlanHome("intellij.root", index)
 
     assertThat(home.directory).isEmpty()
     assertThat(home.packageLabel).isEqualTo("//")
@@ -62,24 +50,8 @@ class DevDistPluginPlanHomeTest {
   }
 
   @Test
-  fun `a community plugin whose plan names only community repositories has its community package and exports the plan files`() {
-    val texts = listOf(planText("@lib//:foo", "@community//platform:core"), planText("//plugins/community:resources"))
-
-    val home = devDistPluginPlanHome("intellij.community", texts, index)
-
-    assertThat(home.directory).isEqualTo("community/plugins/community")
-    assertThat(home.packageLabel).isEqualTo("@community//plugins/community")
-    assertThat(home.callIsCrossHalf).isTrue()
-    assertThat(home.exportsPlanFiles).isTrue()
-    assertThat(home.isModulePackage).isTrue()
-    assertThat(home.label("intellij.community.dev-plan.json")).isEqualTo("@community//plugins/community:intellij.community.dev-plan.json")
-  }
-
-  @Test
-  fun `a community plugin whose plan names another repository has the cross-half package`() {
-    val texts = listOf(planText("@lib//:foo"), planText("@ultimate_lib//:profiler-ultimate-jmc-flightrecorder"))
-
-    val home = devDistPluginPlanHome("intellij.community", texts, index)
+  fun `the ultimate half homes a community plugin in the cross-half package`() {
+    val home = devDistPluginPlanHome("intellij.community", index)
 
     assertThat(home.directory).isEqualTo("build/dev-dist-descriptors/intellij.community")
     assertThat(home.packageLabel).isEqualTo("//build/dev-dist-descriptors/intellij.community")
@@ -90,8 +62,21 @@ class DevDistPluginPlanHomeTest {
   }
 
   @Test
+  fun `the community half homes a community plugin in its own package, relative to the community root`() {
+    val communityIndex = DevDistBazelIndex(targets = index.targets, projectRoot = dir, planPackageIsCommunity = true)
+
+    val home = devDistPluginPlanHome("intellij.community", communityIndex)
+
+    assertThat(home.directory).isEqualTo("plugins/community")
+    assertThat(home.packageLabel).isEqualTo("@community//plugins/community")
+    assertThat(home.callIsCrossHalf).isFalse()
+    assertThat(home.exportsPlanFiles).isFalse()
+    assertThat(home.isModulePackage).isTrue()
+  }
+
+  @Test
   fun `a plugin the index does not place has no home`() {
-    assertThatThrownBy { devDistPluginPlanHome("intellij.unplaced", emptyList(), index) }
+    assertThatThrownBy { devDistPluginPlanHome("intellij.unplaced", index) }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessage("Plugin 'intellij.unplaced' has no Bazel package, so its plan files have no home")
   }

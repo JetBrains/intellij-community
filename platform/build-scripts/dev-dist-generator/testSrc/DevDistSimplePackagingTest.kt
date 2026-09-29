@@ -38,11 +38,19 @@ class DevDistSimplePackagingTest {
   /** The community plugin of the synthetic index, in `@community//plugins/c`. */
   private val communityPlugin = "intellij.c"
 
+  /** A community content module of the synthetic index, in `@community//plugins/c/content`. */
+  private val communityContentModule = "intellij.c.content"
+
   private lateinit var index: DevDistBazelIndex
 
   @BeforeEach
   fun createIndex() {
-    index = syntheticIndex(dir, plugin to "//plugins/x:x.jar", communityPlugin to "@community//plugins/c:c.jar")
+    index = syntheticIndex(
+      dir,
+      plugin to "//plugins/x:x.jar",
+      communityPlugin to "@community//plugins/c:c.jar",
+      communityContentModule to "@community//plugins/c/content:content.jar",
+    )
   }
 
   /** The main jar of [plugin] with the descriptor patch, the one jar every simple plugin has. */
@@ -89,6 +97,7 @@ class DevDistSimplePackagingTest {
     inputs: List<DevDistPluginRawInput>,
     plugin: String = this.plugin,
     preparations: List<PluginPackingPreparation> = emptyList(),
+    reusable: List<ReusableJarArtifact> = emptyList(),
   ): DevDistPluginPlanEntry {
     val signature = pluginPackingLayoutSignature(plugin, "", assets, preparations, emptyList())
     val moduleLabel = if (plugin == communityPlugin) "@community//plugins/c:c" else "//plugins/x:x"
@@ -108,7 +117,7 @@ class DevDistSimplePackagingTest {
       )
       override val requiredRawInputs = listOf(DevDistPluginRawInput(id = plugin, label = moduleLabel, kind = "directory", fileName = plugin)) + inputs
       override val requiredLibraries = emptyList<String>()
-      override val reusableArtifacts = emptyList<ReusableJarArtifact>()
+      override val reusableArtifacts = reusable
       override val layoutSignature = signature
     }
     val record = DevDistPluginPlanRecord(variant = PluginSymbolicVariant(id = ""), plan = plan)
@@ -383,5 +392,51 @@ class DevDistSimplePackagingTest {
       )
       """.trimIndent() + "\n",
     )
+  }
+
+  @Test
+  fun `an ultimate section names the relocated jar, and a community plugin that reuses it is declared cross-half`() {
+    val recipe = CanonicalJarRecipe(sources = listOf(JarSourceRecipe(communityContentModule, "module", "module-v1")))
+    val reusedJar = PluginPackingAsset(destination = "lib/modules/$communityContentModule.jar", inputs = listOf(communityContentModule), recipe = recipe)
+    val relocatedLabel = relocatedContentModuleJarLabel(communityContentModule)
+    fun classify(plugin: String, relocatedModules: Set<String>): DevDistSimplePackaging {
+      val entry = planEntry(
+        assets = listOf(mainJar(plugin), reusedJar),
+        inputs = listOf(fileInput(communityContentModule, "@community//plugins/c/content:content", kind = "directory")),
+        plugin = plugin,
+        reusable = listOf(ReusableJarArtifact(module = communityContentModule, recipe = recipe)),
+      )
+      return requireNotNull(classifySimplePluginPackaging(
+        entry = entry,
+        descriptorInput = devDistDescriptorInputId(plugin),
+        contentModuleNames = listOf(communityContentModule),
+        ownDescriptorDeclared = true,
+        contentModuleJarModules = setOf(communityContentModule),
+        index = index,
+        baseline = true,
+        relocatedModules = relocatedModules,
+        contentModuleJarLabel = { if (it in relocatedModules) relocatedLabel else index.contentModuleJarLabel(it, dependentIsCommunity = false) },
+      ))
+    }
+
+    // The ultimate half reuses the community call, so the own section of the plugin names the jar by convention.
+    val reused = classify(plugin, relocatedModules = emptySet())
+    assertThat(reused.reusedModules).containsExactly(communityContentModule)
+    assertThat(reused.crossHalf).isFalse()
+    assertThat(reused.contentModuleJarLabels).isEmpty()
+
+    // The call is relocated, and the own section of the ultimate plugin states the relocated label.
+    val relocated = classify(plugin, relocatedModules = setOf(communityContentModule))
+    assertThat(relocated.crossHalf).isFalse()
+    assertThat(relocated.contentModuleJarLabels).containsExactly(entry(communityContentModule, relocatedLabel))
+
+    // A community section cannot name the product package, so the cross-half package names the relocated label.
+    val community = classify(communityPlugin, relocatedModules = setOf(communityContentModule))
+    assertThat(community.crossHalf).isTrue()
+    assertThat(community.contentModuleJarLabels).isEmpty()
+    val target = renderCrossHalfDevPluginTarget(community, "//build/dev-dist-descriptors/$communityPlugin:${communityPlugin}_dev_descriptor", index) {
+      relocatedLabel
+    }
+    assertThat(target).contains("\"$relocatedLabel\"")
   }
 }

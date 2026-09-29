@@ -1,5 +1,6 @@
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
 
 ### auto-generated section `dev intellij.jcef.plugin` start
 dev_dist_plugin(
@@ -32,9 +33,52 @@ dev_dist_plugin(
     ],
 )
 
-exports_files(
-    ["intellij.jcef.plugin.dev-plan.json"],
-    visibility = ["//visibility:public"],
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//plugins/jcef/plugin:plugin.jar": "intellij.jcef.plugin",
+    },
+    descriptor = "//plugins/jcef/plugin:intellij.jcef.plugin_{platform}_dev_descriptor",
+    execution_version = 2,
+    independent_artifacts = [
+        "//libraries/jcef:jcef_content_module_jar",
+        "//platform/ui.jcef:ui.jcef_content_module_jar",
+        "//platform/platform-impl/jcef:jcef_content_module_jar",
+        "//platform/new-ui-onboarding/jcef:jcef_content_module_jar",
+        "//plugins/jcef/frontend:frontend_content_module_jar",
+        "//platform/platform-impl/internal/jcef:jcef_content_module_jar",
+    ],
+    main_module = "intellij.jcef.plugin",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "8h6a23jfp4jkl8yg7i5s0vt62",
+        },
+        "darwin_x64": {
+            "layoutSignature": "65rrdrtju4xh2zniuin5h3ti5",
+        },
+        "linux_aarch64": {
+            "layoutSignature": "95o1ie15fd5pkm31dwkg2cw7y",
+        },
+        "linux_x64": {
+            "layoutSignature": "bn97nn4r89p15noon3h81evg9",
+        },
+        "windows_aarch64": {
+            "layoutSignature": "6bwm09yto0k4ucu8edmzcqy7u",
+        },
+        "windows_x64": {
+            "layoutSignature": "2w4sbyse5pre5ms94uk26n3l",
+        },
+    },
+    platforms = [
+        "windows_x64",
+        "windows_aarch64",
+        "darwin_x64",
+        "darwin_aarch64",
+        "linux_x64",
+        "linux_aarch64",
+    ],
+    resource_inputs = {
+        "@dev_launch_{platform}_jcef//:files": "layout-source:resource-generator:0:0",
+    },
 )
 ### auto-generated section `dev intellij.jcef.plugin` end
 

@@ -249,43 +249,29 @@ internal class DevDistPluginExecutions(
  * exports its plan files. So this runs after [computeDevDistBuildSections] and before [writeDevDistBuildSectionFiles],
  * and [computeDevDistPlan] reads the result to write the cross-half calls and the two maps.
  *
- * [ownPackagePlans] are the plans of the ultimate pass, which the community pass passes. A plugin whose own package
- * holds the same baseline plan files keeps them there, and the pass writes no copy. The pass then renders the calls,
- * and [DevDistOwnPackagePlans.acceptsCalls] must accept them. Else the plugin keeps its plan files in its generated
- * package, and the pass collects and renders once more. The census prints one line per plugin.
- *
- * [upstreamPackagePlans] are the plans of the community half, which the ultimate half passes under
- * [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES]. The first collection homes every community plugin in its cross-half
- * plugin package. A plugin whose plan files and calls equal the community ones there reuses the community targets, see
+ * [upstreamPackagePlans] are the plans of the community half, which the ultimate half passes. The first collection
+ * homes every community plugin in its cross-half plugin package. A plugin whose plan files and calls equal the community ones there reuses the community targets, see
  * [DevDistOwnPackagePlans.acceptsUpstreamPlans]. The run then collects and renders once more with the community home.
  */
 internal fun computeDevDistPluginExecutions(
   root: DevDistGenerationRoot,
   sections: DevDistBuildSections,
-  ownPackagePlans: DevDistOwnPackagePlans? = null,
   upstreamPackagePlans: DevDistOwnPackagePlans? = null,
 ): DevDistPluginExecutions {
   sections.requireDescriptorDeclarationsUnchanged()
   // A simple plugin has no plan file: its own section or its cross-half package declares the packaging.
   val planFileRecords = sections.pluginPlanRecords.filterKeys { sections.simplePackaging(it.plugin) == null }
-  fun collect(refused: Set<String>, reusedUpstream: Set<String> = emptySet()): DevDistPluginPlanFiles {
+  fun collect(reusedUpstream: Set<String> = emptySet()): DevDistPluginPlanFiles {
     return collectDevDistPluginPlanFiles(
       projectRoot = root.outputRoot,
       records = planFileRecords,
       index = sections.index,
       half = root.half,
       writtenText = root::respellQuotedLabels,
-      ownHome = { plugin, writtenFiles ->
-        when (plugin) {
-          in reusedUpstream -> checkNotNull(upstreamPackagePlans).upstreamHome(plugin)
-          in refused -> null
-          else -> ownPackagePlans?.reusableHome(plugin, writtenFiles, root)
-        }
-      },
-      writesCommunityModulePackages = root.writesCommunityModulePackages,
+      ownHome = { plugin, _ -> if (plugin in reusedUpstream) checkNotNull(upstreamPackagePlans).upstreamHome(plugin) else null },
     )
   }
-  var files = collect(refused = emptySet())
+  var files = collect()
   var rendering = renderGeneratedDevDistPluginExecutions(sections, files)
   if (upstreamPackagePlans != null) {
     val reused = files.homes.keys.filterTo(TreeSet()) { plugin ->
@@ -302,34 +288,14 @@ internal fun computeDevDistPluginExecutions(
       }
     }
     if (reused.isNotEmpty()) {
-      files = collect(refused = emptySet(), reusedUpstream = reused)
+      files = collect(reusedUpstream = reused)
       rendering = renderGeneratedDevDistPluginExecutions(sections, files)
       for (plugin in reused) {
         val calls = rendering.calls.getValue(plugin)
-        check(calls.sectionText != null && upstreamPackagePlans.acceptsCalls(plugin, calls, homeFiles = emptyList())) {
+        check(calls.sectionText != null && upstreamPackagePlans.acceptsCalls(plugin, calls)) {
           "The ${root.passName} renders another call of $plugin in its community package than the community half:\n" + calls.sectionText
         }
       }
-    }
-  }
-  if (ownPackagePlans != null) {
-    val refused = files.reusedHomes.filterNotTo(TreeSet()) { plugin ->
-      ownPackagePlans.acceptsCalls(plugin, rendering.calls.getValue(plugin), files.exportedFiles.get(plugin).orEmpty())
-    }
-    if (refused.isNotEmpty()) {
-      files = collect(refused)
-      rendering = renderGeneratedDevDistPluginExecutions(sections, files)
-    }
-    for (plugin in files.homes.keys) {
-      val line = when {
-        plugin in files.reusedHomes && rendering.calls.getValue(plugin).sectionText != null ->
-          "reused the plan files and the calls of $plugin in ${files.home(plugin).directory}"
-        plugin in files.reusedHomes -> "reused the plan files of $plugin in ${files.home(plugin).directory}, and the generated package holds the calls"
-        plugin in refused -> "kept the plan files of $plugin in its generated package: its own package states other calls or exports no plan file"
-        ownPackagePlans.hasHome(plugin) -> "kept the plan files of $plugin in its generated package: its own package holds other plan texts"
-        else -> continue
-      }
-      println(line)
     }
   }
   sections.bindPluginExecutions(rendering, files)
@@ -347,7 +313,8 @@ internal fun computeDevDistPluginExecutions(
  * cross-half package here. [targets] is the JSON the module and library labels still come from.
  *
  * [root] names the half the run writes. A half writes the reference plan, the platform patches and the embedded
- * descriptors only when it has the capability. The community pass fails for a product outside the community registry.
+ * descriptors only when it has the capability, see [requireHalfCapabilities]. A half writes only into its own packages,
+ * see [DevDistGenerationRoot.writesPackage].
  */
 internal fun computeDevDistPlan(
   root: DevDistGenerationRoot,
@@ -394,19 +361,17 @@ internal fun computeDevDistPlan(
       }
     }
   }
-  if (root.dependentIsCommunity) {
-    requireCommunityPassOutput(
-      root = root,
-      registryProducts = products.map { it.name },
-      plannedProducts = sortedProducts.map(ProductFragmentPlan::platformPrefix) +
-                        collected.pluginDescriptorPlans.map(PluginDescriptorPlan::platformPrefix),
-      generatedPluginFiles = generatedPluginFiles.keys,
-      hasPlatformPatches = collected.platformPatches?.isEmpty == false,
-      runtimeModuleRepositoryProducts = sortedProducts
-        .filter(ProductFragmentPlan::runtimeModuleRepository)
-        .map(ProductFragmentPlan::platformPrefix),
-    )
-  }
+  requireHalfCapabilities(
+    root = root,
+    registryProducts = products.map { it.name },
+    plannedProducts = sortedProducts.map(ProductFragmentPlan::platformPrefix) +
+                      collected.pluginDescriptorPlans.map(PluginDescriptorPlan::platformPrefix),
+    generatedPluginFiles = generatedPluginFiles.keys,
+    hasPlatformPatches = collected.platformPatches?.isEmpty == false,
+    runtimeModuleRepositoryProducts = sortedProducts
+      .filter(ProductFragmentPlan::runtimeModuleRepository)
+      .map(ProductFragmentPlan::platformPrefix),
+  )
   val outputRoot = root.outputRoot
   // The generation pipeline's own writer. It reports a write the same way the rest of the pipeline does.
   val updater = DeferredFileUpdater(outputRoot)
@@ -415,8 +380,6 @@ internal fun computeDevDistPlan(
   val crossHalfDescriptorPackages = sections.crossHalfDescriptorPackages
   val productDescriptorFiles = renderProductDescriptorPackage(sortedProducts.mapNotNull(ProductFragmentPlan::productDescriptor).distinct())
   val descriptorFiles = collected.files.map { it.copy(relativePath = root.outputRelativePath(it.relativePath)) }
-  // The header of a community package names the pass that writes the community sections.
-  val communityPass = root.dependentIsCommunity && !root.writesCommunityModulePackages
   val relocatedContentModuleJarPackage = renderRelocatedContentModuleJarPackage(sections.relocatedContentModuleJarCalls)
   val relocatedContentModuleJarPackagePath = "$DEV_DIST_CONTENT_MODULE_JARS_PACKAGE/BUILD.bazel"
   val fileContents = buildList {
@@ -431,7 +394,7 @@ internal fun computeDevDistPlan(
     add(DEV_DIST_CORE_CLASSPATH_RELATIVE_PATH to renderCoreClassPath(sortedProducts))
     add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, root))
     add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, root.macrosBzl, root.half.refusedRowProperties))
-    addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls, communityPass).toList())
+    addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
     generatedPluginFiles.entries.mapTo(this) { it.key to it.value }
     productDescriptorFiles.entries.mapTo(this) { it.key to it.value }
     collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
@@ -441,25 +404,22 @@ internal fun computeDevDistPlan(
       platformJarOrderRelativePath(product)?.let { add(it to product.platformJarOrder.joinToString(separator = "\n", postfix = "\n")) }
     }
   }
-  // Under `EACH_HALF_OWNS_ITS_PACKAGES`, a half writes only into its own packages, see `DevDistGenerationRoot.writesPackage`.
-  val checksOwnership = root.ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES
+  // A half writes only into its own packages, see `DevDistGenerationRoot.writesPackage`.
   val files = fileContents.map { (relativePath, newContent) ->
-    if (checksOwnership) root.requireWritable(relativePath)
+    root.requireWritable(relativePath)
     DevDistPlanFileResult(
       relativePath = relativePath,
       status = updater.updateIfChanged(path = outputRoot.resolve(relativePath), newContent = root.respellQuotedLabels(newContent)),
     )
   }
-  if (checksOwnership) {
-    pluginPlans.updates.results.forEach { root.requireWritable(it.relativePath) }
-  }
+  pluginPlans.updates.results.forEach { root.requireWritable(it.relativePath) }
   // The run deletes every descriptor package on disk that it does not write, see `CrossHalfDescriptorPackages.stale`.
-  val stalePackages = crossHalfDescriptorPackages.stale(outputRoot, crossHalfPluginTargets, crossHalfPluginCalls, communityPass)
+  val stalePackages = crossHalfDescriptorPackages.stale(outputRoot, crossHalfPluginTargets, crossHalfPluginCalls)
   for (relativePath in stalePackages) {
     updater.delete(outputRoot.resolve(relativePath))
   }
   // A run without a relocated call leaves no package of relocated calls behind. Only the ultimate half writes one.
-  if (relocatedContentModuleJarPackage == null && checksOwnership && !root.dependentIsCommunity && Files.exists(outputRoot.resolve(relocatedContentModuleJarPackagePath))) {
+  if (relocatedContentModuleJarPackage == null && !root.dependentIsCommunity && Files.exists(outputRoot.resolve(relocatedContentModuleJarPackagePath))) {
     updater.delete(outputRoot.resolve(relocatedContentModuleJarPackagePath))
   }
   // A product that leaves the split path leaves its launch model behind.
@@ -499,11 +459,12 @@ internal fun computeDevDistPlan(
 }
 
 /**
- * Fails when the community pass would write what its half cannot plan: a product outside the community registry, or an
- * embedded descriptor, a platform patch or a runtime module repository without the capability. [registryProducts] are
- * the keys of `community/build/dev-build.json`, so no generated community file names a product of another registry.
+ * Fails when a half would write what it cannot plan: a product outside its registry, or an embedded descriptor, a
+ * platform patch or a runtime module repository without the capability, see [DevDistHalf.capabilities].
+ * [registryProducts] are the keys of `build/dev-build.json` of the half, so no generated file of the community half names
+ * a product of another registry.
  */
-internal fun requireCommunityPassOutput(
+internal fun requireHalfCapabilities(
   root: DevDistGenerationRoot,
   registryProducts: Collection<String>,
   plannedProducts: Collection<String>,
@@ -633,7 +594,7 @@ private data class FragmentPayload(
    *
    * [collectFragmentPlan] fills the whole handover set. [collectDescriptorFiles] then keeps only the labels no
    * referenced module set carries, see [sharePackedLabels]: a set member's label lives in [ModuleSetData.packed], and
-   * `_expand_module_sets` in `jps_dynamic_deps_ultimate.bzl` unions the two halves back.
+   * the binder unions the two halves back at load time with `dev_dist_packed_labels`.
    */
   @JvmField val packedContentModuleJars: List<String> = emptyList(),
   @JvmField val residualJars: Map<String, ResidualPlatformJar> = emptyMap(),
@@ -779,8 +740,8 @@ private class CollectedPlan(
  * one module with a load path. The dev sections read these entries first, and the plan reads the same entries after
  * them. [targets] is the JSON the module and library labels come from. A plugin the plan cannot state stops the run.
  *
- * [everyStatedMode] makes each entry state the refusals of every mode of [DEV_DIST_STATED_PRODUCT_MODES], and not only
- * of the modes of the split products of [half]. So both halves render one leaf of a community plugin.
+ * Each entry states the refusals of every mode of [DEV_DIST_STATED_PRODUCT_MODES], and not only of the modes of the
+ * split products of [half]. So both halves render one leaf of a community plugin.
  */
 internal fun collectPluginDescriptorPlans(
   walk: DescriptorWalk,
@@ -792,13 +753,12 @@ internal fun collectPluginDescriptorPlans(
   testPluginsByProduct: Map<String, Map<String, TestPluginSpec>> = emptyMap(),
   half: DevDistHalf,
   embeddedClasses: DevDistEmbeddedFrontendClasses,
-  everyStatedMode: Boolean = false,
 ): List<PluginDescriptorPlan> {
   val splitModes = products
     .filter { it.name in half.splitDistributions }
     .mapNotNull { product -> (product.properties as? ProductProperties)?.productMode?.let { product.name to it } }
   val modesById = (splitModes.map { it.second } + DEV_DIST_STATED_PRODUCT_MODES).associateBy { it.id }
-  val refusingModes = devDistRefusingModeIds(splitModes.map { (product, mode) -> product to mode.id }, everyStatedMode).map(modesById::getValue)
+  val refusingModes = devDistRefusingModeIds(splitModes.map { (product, mode) -> product to mode.id }).map(modesById::getValue)
   // The products plan beside each other. The collector memos take concurrent callers, and the closure walks read the
   // finished flat walk.
   val plans = products.mapConcurrent { product ->
@@ -843,25 +803,21 @@ internal fun collectPluginDescriptorPlans(
 }
 
 /**
- * The modes other than the monolith that a split product of either half uses, sorted by id. Under
- * [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], every descriptor entry states the refusals of each of them. A split
- * product of another mode stops the run, so the list grows with the products.
+ * The modes other than the monolith that a split product of either half uses, sorted by id. Every descriptor entry
+ * states the refusals of each of them. A split product of another mode stops the run, so the list grows with the
+ * products.
  */
 internal val DEV_DIST_STATED_PRODUCT_MODES: List<ProductMode> = listOf(ProductMode.FRONTEND)
 
 /**
- * The ids of the modes whose refusals every descriptor entry states, sorted. [splitModes] are the split products of the
- * run with the ids of their modes.
+ * The ids of the modes whose refusals every descriptor entry states: [DEV_DIST_STATED_PRODUCT_MODES], sorted.
+ * [splitModes] are the split products of the run with the ids of their modes.
  *
- * Every mode a split product uses, except the monolith, is one of them. So the entries of one plugin are equal across
- * the products, and one leaf serves them all. [everyStatedMode] gives [DEV_DIST_STATED_PRODUCT_MODES] instead, so both
- * halves state the same refusals. A split product of a mode outside that list stops the run then.
+ * Both halves state the same refusals, so the entries of one plugin are equal across the products and the halves, and
+ * one leaf serves them all. A split product of a mode outside that list stops the run.
  */
-internal fun devDistRefusingModeIds(splitModes: List<Pair<String, String>>, everyStatedMode: Boolean): List<String> {
+internal fun devDistRefusingModeIds(splitModes: List<Pair<String, String>>): List<String> {
   val monolith = ProductMode.MONOLITH.id
-  if (!everyStatedMode) {
-    return splitModes.map { it.second }.filter { it != monolith }.distinct().sorted()
-  }
   val stated = DEV_DIST_STATED_PRODUCT_MODES.map { it.id }
   val unstated = splitModes.filter { (_, mode) -> mode != monolith && mode !in stated }
   check(unstated.isEmpty()) {
@@ -3084,8 +3040,8 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, root: DevD
   append("# `module_sets` is a reference, not a name list: the modules a set contains live in `dev_dist_module_sets.bzl`\n")
   append("# and are shared by every product referencing that set, so this file carries only what no set covers.\n")
   append("# The same holds for the packing labels: the label of a set member lives in the `packed` dict of its set, and\n")
-  append("# `packed_content_module_jars` names only the labels of the modules no set covers. `_expand_module_sets`\n")
-  append("# unions the set labels into the payload.\n")
+  append("# `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set\n")
+  append("# labels into the payload at load time with `dev_dist_packed_labels`.\n")
   append("#\n")
   append("# The plugins are absent. A plugin's own `dev_plugin` target and the `content_module_jar` targets of its\n")
   append("# members pack its jars and state their inputs as labels. What is left is the platform, whose flat core\n")

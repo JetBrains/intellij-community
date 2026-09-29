@@ -60,6 +60,11 @@ internal class DevDistSimplePackaging(
   /** Whether the plugin's own package cannot state a token, so the ultimate cross-half package declares the packaging. */
   @JvmField val crossHalf: Boolean,
   /**
+   * The label of each reused jar whose `content_module_jar` call is relocated, keyed by module and sorted. The own
+   * section states it, because the macro derives any other label from the package of the module.
+   */
+  @JvmField val contentModuleJarLabels: Map<String, String>,
+  /**
    * The classpath order of every jar, or empty when the rule's default order sorts to the same classpath.
    * The default order is the packed jars in `jars` order, then the reused jars in their declaration order.
    */
@@ -107,9 +112,9 @@ private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
  * packer does not ship them. They are not part of the reuse set the section must cover.
  *
  * [relocatedModules] are the modules whose `content_module_jar` call sits in the product package of the ultimate half,
- * see [DevDistBuildSections.relocatedContentModuleJarCalls]. A section infers the jar of a content module from the
- * package of the module, so a plugin that reuses such a jar is declared cross-half. [contentModuleJarLabel] gives the
- * label of the jar of a reused module.
+ * see [DevDistBuildSections.relocatedContentModuleJarCalls]. An ultimate section states the label of such a jar in
+ * [DevDistSimplePackaging.contentModuleJarLabels]. A community section cannot name that package, so a community plugin
+ * that reuses such a jar is declared cross-half. [contentModuleJarLabel] gives the label of the jar of a reused module.
  */
 internal fun classifySimplePluginPackaging(
   entry: DevDistPluginPlanEntry,
@@ -206,10 +211,11 @@ internal fun classifySimplePluginPackaging(
   if (baseline && !reusedSet.containsAll(sectionReuse)) return null
   val sectionIsCommunity = index.isCommunity(mainModule) ?: return null
   val labelTokens = jars.values.flatten().filter(::isLabelToken)
+  val relocatedReuse = reused.filter { it in relocatedModules }.sorted()
   val crossHalf = !ownDescriptorDeclared ||
                   reusedSet != sectionReuse ||
-                  reused.any { it in relocatedModules } ||
                   sectionIsCommunity && (
+                    relocatedReuse.isNotEmpty() ||
                     moduleTokens.any { index.isCommunity(it) != true } ||
                     labelTokens.any { !index.canName(it, dependentIsCommunity = true) } ||
                     files.values.any { !index.canName(it, dependentIsCommunity = true) }
@@ -233,6 +239,14 @@ internal fun classifySimplePluginPackaging(
     moduleJarPaths = Collections.unmodifiableMap(moduleJarPaths),
     reusedModules = java.util.List.copyOf(reused),
     crossHalf = crossHalf,
+    contentModuleJarLabels = if (crossHalf) {
+      emptyMap()
+    }
+    else {
+      Collections.unmodifiableMap(relocatedReuse.associateWithTo(LinkedHashMap()) {
+        contentModuleJarLabel(it) ?: error("Module '$it' has no content_module_jar label")
+      })
+    },
     classpathJars = if (planOrder == defaultOrder) emptyList() else java.util.List.copyOf(planDestinations),
     files = Collections.unmodifiableMap(files),
     filePrefixes = Collections.unmodifiableMap(filePrefixes),

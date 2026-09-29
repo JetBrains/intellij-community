@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.kotlin.plugin",
     "variant": "",
-    "layoutSignature": "2qisis1jn4wyc3zk9gvx33dqo",
+    "layoutSignature": "4wpshd4d8g0y1cdr73alp805k",
     "assets": [
         {
             "module": "intellij.kotlin.highlighting.minimal"
@@ -15,12 +15,6 @@
         },
         {
             "module": "intellij.kotlin.base.resources"
-        },
-        {
-            "module": "intellij.kotlin.frontend.split"
-        },
-        {
-            "module": "intellij.kotlin.frontend.client.split"
         },
         {
             "module": "intellij.kotlin.formatter"
@@ -974,96 +968,6 @@
             }
         },
         {
-            "module": "intellij.kotlin.browser.debug"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.common.native"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.native.debugger"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.javascript.debugger"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.javascript.nodeJs"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.wasm.debugger"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.native"
-        },
-        {
-            "module": "intellij.kotlin.ultimate.profiler"
-        },
-        {
-            "module": "intellij.kotlin.duplicate.scope"
-        },
-        {
-            "destination": "lib/kotlin-plugin.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "descriptor:intellij.kotlin.plugin",
-                        "kind": "file",
-                        "filter": "none",
-                        "entry": "META-INF/plugin.xml",
-                        "options": [
-                            "patch"
-                        ]
-                    },
-                    {
-                        "input": "layout-assets:layout-patcher:0:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
-                    },
-                    {
-                        "input": "intellij.kotlin.plugin",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "intellij.debugger.jvm.advanced.kotlin",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "intellij.debugger.logpoints.kotlin",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:kotlinc-kotlin-build-tools-api",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    },
-                    {
-                        "input": "@lib//:kotlinc-kotlin-build-tools-cri-impl",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    },
-                    {
-                        "input": "@lib//:kotlinc-kotlin-build-tools-impl",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    },
-                    {
-                        "input": "@lib//:kotlinc-kotlin-gradle-statistics",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "manifest": "drop",
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
-            "module": "intellij.platform.commercial.verifier"
-        },
-        {
             "destination": "lib/modules/intellij.libraries.completion.ranking.kotlin.jar",
             "recipe": {
                 "sources": [
@@ -1199,6 +1103,56 @@
             }
         },
         {
+            "destination": "lib/kotlin-plugin.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.kotlin.plugin",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "layout-assets:layout-patcher:0:output",
+                        "kind": "prepared",
+                        "filter": "prepared"
+                    },
+                    {
+                        "input": "intellij.kotlin.plugin",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-build-tools-api",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-build-tools-cri-impl",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-build-tools-impl",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    },
+                    {
+                        "input": "@lib//:kotlinc-kotlin-gradle-statistics",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "manifest": "drop",
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "destination": "lib/javax-inject.jar",
             "recipe": {
                 "sources": [
@@ -1247,14 +1201,6 @@
             "destination": "kotlinc",
             "inputs": [
                 "layout-assets:resource-generator:0:output"
-            ],
-            "kind": "tree",
-            "classPath": false
-        },
-        {
-            "destination": "scripts",
-            "inputs": [
-                "module-resource:0:source"
             ],
             "kind": "tree",
             "classPath": false

@@ -104,15 +104,20 @@ internal class DevDistBuildSections private constructor(
   /**
    * The `content_module_jar` call of every community module that the ultimate half packs differently from the community
    * half, keyed by module and sorted. The product package [DEV_DIST_CONTENT_MODULE_JARS_PACKAGE] holds these calls. Only
-   * the ultimate half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES] has any.
+   * the ultimate half has any.
    */
   @JvmField val relocatedContentModuleJarCalls: Map<String, String> = emptyMap(),
   /**
    * The `withResource*` inputs of every layout of the community registry that no product of the run plans, keyed by main
-   * module. Only the community half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES] has any, because it writes the
+   * module. Only the community half has any, because it writes the
    * resource statements of every community package, see [collectRegistryLayoutResourceInputs].
    */
   private val registryResourceInputs: Map<String, List<DevDistPluginRawInput>> = emptyMap(),
+  /**
+   * The source trees that the layouts of the community registry declare for a target of another layout, keyed by main
+   * module and sorted. Only the community half has any, see [collectRegistrySourceTrees].
+   */
+  private val registrySourceTrees: Map<String, List<DeclaredResourceSource>> = emptyMap(),
 ) {
   private val canonicalOwnerIndex = DevDistCanonicalOwners(verdicts.contentModuleJarLabels.mapValues { it.value.canonicalArtifact }, index)
   private val completedPluginPlans = LinkedHashMap<DevDistPluginPlanKey, DevDistPluginPlanRecord>()
@@ -237,19 +242,6 @@ internal class DevDistBuildSections private constructor(
       return Collections.unmodifiableMap(renderedDevSections)
     }
 
-  /** The mode of every product of the run, see [PluginDescriptorPlan.mode], sorted. */
-  val productModes: Set<String>
-    get() = descriptorPlans.mapTo(TreeSet()) { it.mode }
-
-  /**
-   * The body of the `dev` section of [mainModule] with only the mode refusals of [modes], or `null` when the plugin
-   * states no section. Another run compares its own section with it, see [foreignDevSections].
-   */
-  fun devSectionBody(mainModule: String, modes: Set<String>): String? {
-    check(boundPluginPlanEntries != null) { "The dev sections render after the plugin plan entries are bound" }
-    return pendingSections.get(mainModule)?.render(simplePackagings.get(mainModule), modes)?.body
-  }
-
   /**
    * Binds the folded entries, classifies each plugin's packaging, and renders every dev section.
    *
@@ -332,6 +324,11 @@ internal class DevDistBuildSections private constructor(
     for ((plugin, inputs) in registryResourceInputs) {
       statements.addPlanInputs(plugin = plugin, inputs = inputs)
     }
+    for ((plugin, sources) in registrySourceTrees) {
+      for ((_, absolutePackage, _, packageRelativePath) in sources) {
+        statements.addDirectory(absolutePackage = absolutePackage, packageRelativePath = packageRelativePath, requester = plugin)
+      }
+    }
     resourceStatements = statements
     return statements.render(index)
   }
@@ -341,7 +338,7 @@ internal class DevDistBuildSections private constructor(
 
   /**
    * Fails when a plan of this run names a resource filegroup or an exported file of a community package that the section
-   * of [upstream] does not declare. The ultimate half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES] writes no
+   * of [upstream] does not declare. The ultimate half writes no
    * community section, so the community half must declare every such statement. The message names the package, the
    * missing statements and the layouts that need them.
    */
@@ -617,8 +614,6 @@ internal class DevDistBuildSections private constructor(
       testPlugins: List<TestPluginSpec>,
       verifyPlanUnits: Boolean = false,
       foreignSections: Set<String> = emptySet(),
-      writtenContentModuleJarModules: Set<String>? = null,
-      ownership: DevDistOwnership = DevDistOwnership.DEFAULT,
       upstream: DevDistBuildSections? = null,
     ): DevDistBuildSections {
       val index = snapshotDevDistBazelIndex(sourceIndex)
@@ -672,12 +667,18 @@ internal class DevDistBuildSections private constructor(
           .also { span.setAttribute("count", it.size.toLong()) }
       }
       val halfStatements = half.assetBinder.sectionStatements(pluginRequests, index)
-      // A half that writes the community packages declares the resources of every layout of its registry, so that a plan
-      // of the other half can name them.
-      val registryResourceInputs = if (ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES && index.planPackageIsCommunity) {
+      // The community half writes the community packages, so it declares the resources of every layout of its registry.
+      // A plan of the other half can name them then.
+      val registryResourceInputs = if (index.planPackageIsCommunity) {
         buildSpan("dev sections: registry layout resources") {
           collectRegistryLayoutResourceInputs(products = products, requests = pluginRequests, index = index, outputProvider = outputProvider, half = half)
         }
+      }
+      else {
+        emptyMap()
+      }
+      val registrySourceTrees = if (index.planPackageIsCommunity) {
+        collectRegistrySourceTrees(products = products, index = index, outputProvider = outputProvider, half = half)
       }
       else {
         emptyMap()
@@ -696,13 +697,12 @@ internal class DevDistBuildSections private constructor(
           testPluginsByProduct = testPluginsByProduct(pluginRequests),
           half = half,
           embeddedClasses = embeddedClasses,
-          everyStatedMode = ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES,
         )
       }
 
       val candidacy = buildSpan("dev sections: content module jar candidacy") {
         deriveContentModuleJarCandidacy(
-          pluginCandidacies = derivation.plugins.map { it.packing.candidacy },
+          pluginCandidacies = derivation.plugins.map { it.packing.candidacy } + derivation.registryCandidacies,
           contentVetoes = collectContentVetoModules(products),
           platform = derivation.platformJars,
         )
@@ -723,10 +723,6 @@ internal class DevDistBuildSections private constructor(
       }
       buildSpan("dev sections: content module jar calls") {
         for (module in statements.modules) {
-          // The community pass names only a call that the ultimate pass writes. It packs any other module in the plugin.
-          if (writtenContentModuleJarModules != null && module !in writtenContentModuleJarModules) {
-            continue
-          }
           val call = statements.renderFor(module) ?: continue
           contentModuleJarCalls.put(module, call)
           loadStatements.computeIfAbsent(module) { ArrayList() }.add(statements.loadStatement(module))
@@ -779,8 +775,8 @@ internal class DevDistBuildSections private constructor(
             index = index,
             outputProvider = outputProvider,
           )
-          // The pass cannot read the section of a foreign plugin, so the plugin declares no leaf of its own here. Its
-          // leaf and its `dev_plugin` go to the generated plugin package, see `collectCrossHalfDescriptorPackages`.
+          // The ultimate half cannot reuse the community section of a foreign plugin, so the plugin declares no leaf of its
+          // own here. Its leaf and its `dev_plugin` go to the product package, see `collectCrossHalfDescriptorPackages`.
           val record = if (mainModule in foreignSections) DevSectionRecord(descriptorTargets = emptyMap()) else outcome.record
           check(pluginRecords.put(mainModule, record) == null) { "Duplicate plugin declaration '$mainModule'" }
           val draft = outcome.draft ?: continue
@@ -814,6 +810,7 @@ internal class DevDistBuildSections private constructor(
         verifyPlanUnits = verifyPlanUnits,
         relocatedContentModuleJarCalls = Collections.unmodifiableMap(relocatedCalls),
         registryResourceInputs = registryResourceInputs,
+        registrySourceTrees = registrySourceTrees,
       )
       buildSpan("dev sections: register plugin plans") { span ->
         registerGeneratedDevDistPluginPlans(
@@ -849,6 +846,7 @@ private fun packagingDifference(first: DevDistSimplePackaging, second: DevDistSi
     Triple("moduleJarPaths", first.moduleJarPaths, second.moduleJarPaths),
     Triple("reusedModules", first.reusedModules, second.reusedModules),
     Triple("crossHalf", first.crossHalf, second.crossHalf),
+    Triple("contentModuleJarLabels", first.contentModuleJarLabels, second.contentModuleJarLabels),
     Triple("classpathJars", first.classpathJars, second.classpathJars),
     Triple("files", first.files, second.files),
     Triple("filePrefixes", first.filePrefixes, second.filePrefixes),
@@ -891,15 +889,12 @@ internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors
  * A module the JSON does not place writes no `BUILD.bazel` section, so it is not in any map. The plan reads the same
  * computation through [DevDistBuildSections.verdicts], so the plan and the sections state one label per target.
  *
- * [foreignSections] names the plugins whose own `dev` section states another leaf or packaging than this run. Only the
- * community pass names any, see [foreignDevSections]. Such a plugin declares no own leaf, so the run writes its leaf and
- * its `dev_plugin` into the generated plugin package. [writtenContentModuleJarModules] names the modules with a
- * `content_module_jar` call on disk, or `null` for the ultimate pass, which writes every call.
+ * [foreignSections] names the community plugins whose community `dev` section states another leaf or packaging than
+ * this run. Only the ultimate half names any, see [foreignCommunitySections]. Such a plugin declares no own leaf, so the
+ * run writes its leaf and its `dev_plugin` into the product package of the plugin.
  *
- * [ownership] decides which half writes a community package, see [DevDistOwnership]. Under
- * [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], every descriptor entry states the refusals of every stated mode, and
- * the community half states the resources of every layout of its registry. [upstream] is the result of the community
- * half, which the ultimate half reads. A `content_module_jar` call of a community module that differs from the one of
+ * Every descriptor entry states the refusals of every stated mode, and the community half states the resources of every
+ * layout of its registry. [upstream] is the result of the community half, which the ultimate half reads. A `content_module_jar` call of a community module that differs from the one of
  * [upstream] goes to the product package, see [DevDistBuildSections.relocatedContentModuleJarCalls].
  */
 internal fun computeDevDistBuildSections(
@@ -914,21 +909,17 @@ internal fun computeDevDistBuildSections(
   testPlugins: List<TestPluginSpec>,
   verifyPlanUnits: Boolean = false,
   foreignSections: Set<String> = emptySet(),
-  writtenContentModuleJarModules: Set<String>? = null,
-  ownership: DevDistOwnership = DevDistOwnership.DEFAULT,
   upstream: DevDistBuildSections? = null,
 ): DevDistBuildSections {
   return DevDistBuildSections.compute(
-    projectRoot, outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections,
-    writtenContentModuleJarModules, ownership, upstream,
+    projectRoot, outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections, upstream,
   )
 }
 
 /**
  * The community plugins that [ultimate] plans and whose `dev` section differs from the one of [upstream], sorted.
  *
- * Under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], the community half writes every community section. The
- * ultimate half reuses the leaf and the `dev_plugin` of such a section when it renders the same body. Both halves
+ * The community half writes every community section. The ultimate half reuses the leaf and the `dev_plugin` of such a section when it renders the same body. Both halves
  * state the refusals of every stated mode, so the whole bodies compare. A plugin that no community product plans has
  * no community section, so it is in the result.
  */
@@ -1053,38 +1044,31 @@ internal fun collectRegistryLayoutResourceInputs(
 }
 
 /**
- * The plugins of [community] whose `dev` section differs from the one of [ultimate], sorted.
+ * The source trees that the layouts of the registry of [half] declare with `withDevDistSourceTree`, keyed by main module
+ * and sorted. The registry is the plugin layouts of the split products of [half], planned or not.
  *
- * The ultimate pass owns every `dev` section, so the community pass reads a section only when it states the same text.
- * A plugin that the community products plan compares its section body. Both passes render a section body for the
- * package of the plugin, so the two bodies are equal exactly when the leaf and the packaging are equal. The two JSON
- * files place the same community modules, so no name of an ultimate body is one that the `dev_dist_plugin` macro drops
- * in a community checkout.
- *
- * The ultimate body keeps only the mode refusals of the community product modes. A leaf applies the refusals of the
- * mode of its product, so the refusals of a mode that no community product has change no output of the leaf.
+ * A target of another layout reads such a tree, and a glob cannot cross a package, so the half of the package declares
+ * its filegroup. A tree that breaks the resource rule stops the run, see [DevDistResourceSources].
  */
-internal fun foreignDevSections(community: DevDistBuildSections, ultimate: DevDistBuildSections): Set<String> {
-  val planned = community.pluginPlanEntries.mapTo(HashSet()) { it.mainModule }
-  val modes = community.productModes
-  val result = TreeSet<String>()
-  for (mainModule in planned) {
-    if (community.devSections.get(mainModule) != ultimate.devSectionBody(mainModule, modes)) {
-      result.add(mainModule)
+internal fun collectRegistrySourceTrees(
+  products: List<DiscoveredProduct>,
+  index: DevDistBazelIndex,
+  outputProvider: ModuleOutputProvider,
+  half: DevDistHalf,
+): Map<String, List<DeclaredResourceSource>> {
+  val resources = DevDistResourceSources(index, outputProvider)
+  val result = TreeMap<String, List<DeclaredResourceSource>>()
+  for ((product, _, productProperties) in products) {
+    if (product !in half.splitDistributions) continue
+    val properties = productProperties as? ProductProperties ?: continue
+    for (layout in properties.productLayout.pluginLayouts.value) {
+      if (layout.devDistSourceTrees.isEmpty() || layout.mainModule in result) continue
+      result.put(layout.mainModule, layout.devDistSourceTrees.map { tree ->
+        resources.declaredResourceSource(mainModule = layout.mainModule, moduleName = tree.moduleName, resourcePath = tree.path)
+      })
     }
   }
   return result
-}
-
-/**
- * The modules whose `content_module_jar` call differs between [community] and [ultimate], sorted. The community pass
- * names the target of such a call, and the ultimate pass writes the call, so the two must agree.
- */
-internal fun divergentContentModuleJarCalls(community: DevDistBuildSections, ultimate: DevDistBuildSections): List<String> {
-  return community.contentModuleJarCalls.entries
-    .filter { (module, call) -> ultimate.contentModuleJarCalls.get(module) != call }
-    .map { it.key }
-    .sorted()
 }
 
 /**

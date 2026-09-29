@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.maven.plugin",
     "variant": "",
-    "layoutSignature": "bli4e8o0bxmgla8w7u9e5rkhu",
+    "layoutSignature": "5awru0q8dwdlagrmnbh8sxths",
     "assets": [
         {
             "destination": "lib/intellij.maven.model.jar",
@@ -55,16 +55,10 @@
             }
         },
         {
-            "module": "intellij.maven.profiler"
-        },
-        {
             "module": "intellij.maven.proofreading"
         },
         {
             "module": "intellij.maven.performanceTesting"
-        },
-        {
-            "module": "intellij.maven.errorProne.compiler"
         },
         {
             "module": "intellij.maven.groovy"
@@ -77,9 +71,6 @@
         },
         {
             "module": "intellij.maven.delegation.testng"
-        },
-        {
-            "module": "intellij.maven.completion.ex"
         },
         {
             "module": "intellij.maven.jps"

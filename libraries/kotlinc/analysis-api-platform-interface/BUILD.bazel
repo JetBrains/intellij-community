@@ -1,4 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.kotlinc.analysis.api.platform.interface` start
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface"],
+    module = ":libraries-kotlinc-analysis-api-platform-interface",
+)
+### auto-generated section `dev intellij.libraries.kotlinc.analysis.api.platform.interface` end
 
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.platform.interface` start
 jvm_library(

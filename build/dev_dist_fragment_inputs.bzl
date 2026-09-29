@@ -13,8 +13,8 @@
 # `module_sets` is a reference, not a name list: the modules a set contains live in `dev_dist_module_sets.bzl`
 # and are shared by every product referencing that set, so this file carries only what no set covers.
 # The same holds for the packing labels: the label of a set member lives in the `packed` dict of its set, and
-# `packed_content_module_jars` names only the labels of the modules no set covers. `_expand_module_sets`
-# unions the set labels into the payload.
+# `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set
+# labels into the payload at load time with `dev_dist_packed_labels`.
 #
 # The plugins are absent. A plugin's own `dev_plugin` target and the `content_module_jar` targets of its
 # members pack its jars and state their inputs as labels. What is left is the platform, whose flat core
@@ -197,7 +197,6 @@ DEV_DIST_FRAGMENT_INPUTS = {
             ],
             module_sets = [
                 "intellij.moduleSets.ide.common",
-                "intellij.moduleSets.jsp.base",
                 "intellij.moduleSets.platform.resources.defaults",
             ],
             packed_content_module_jars = [
@@ -317,7 +316,6 @@ DEV_DIST_FRAGMENT_INPUTS = {
             ],
             module_sets = [
                 "intellij.moduleSets.ide.common",
-                "intellij.moduleSets.jsp.base",
                 "intellij.moduleSets.platform.resources.defaults",
             ],
             packed_content_module_jars = [

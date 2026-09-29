@@ -607,16 +607,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.spellchecker.xml": "//spellchecker/xml:xml_content_module_jar",
         },
     ),
-    "intellij.moduleSets.jsp.base": struct(
-        modules = [
-            "intellij.jsp.base",
-        ],
-        nested = [
-        ],
-        packed = {
-            "intellij.jsp.base": "//java/jsp-base-openapi:jsp-base_content_module_jar",
-        },
-    ),
     "intellij.moduleSets.libraries.dap": struct(
         modules = [
             "intellij.libraries.eclipse.lsp4j.debug",

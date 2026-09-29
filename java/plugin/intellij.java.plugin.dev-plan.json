@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.java.plugin",
     "variant": "",
-    "layoutSignature": "5zwtkvusebkpbm8n0kklehitv",
+    "layoutSignature": "cxtqlyf9f194ad2gewih0tvvv",
     "assets": [
         {
             "destination": "lib/intellij.java.syntax.jar",
@@ -123,6 +123,9 @@
         },
         {
             "module": "intellij.jvm.analysis"
+        },
+        {
+            "module": "intellij.jsp.base"
         },
         {
             "module": "intellij.jsp"

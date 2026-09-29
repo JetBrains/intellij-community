@@ -18,7 +18,7 @@ class DevDistGenerationRootTest {
   lateinit var dir: Path
 
   @Test
-  fun `the community pass reads and writes under community and writes no dev section`() {
+  fun `the community half reads and writes under community and writes only community packages`() {
     val root = DevDistGenerationRoot.community(dir)
 
     assertThat(root.projectRoot).isEqualTo(dir)
@@ -26,7 +26,8 @@ class DevDistGenerationRootTest {
     assertThat(root.communityRoot).isEqualTo(dir.resolve("community"))
     assertThat(root.runConfigurationsDir).isEqualTo(dir.resolve("community/.idea/runConfigurations"))
     assertThat(root.macrosBzl).isEqualTo("//build:intellij_dev_community.bzl")
-    assertThat(root.writesDevSections).isFalse()
+    assertThat(root.writesPackage("community/plugins/c")).isTrue()
+    assertThat(root.writesPackage("build/dev-dist-descriptors/intellij.c")).isFalse()
     assertThat(root.dependentIsCommunity).isTrue()
   }
 
@@ -84,24 +85,7 @@ class DevDistGenerationRootTest {
   }
 
   @Test
-  fun `the community pass homes a complex community plugin in its generated package`() {
-    val index = DevDistBazelIndex(
-      targets = syntheticIndex(dir, "intellij.community" to "@community//plugins/community:community.jar").targets,
-      projectRoot = dir,
-      planPackageIsCommunity = true,
-    )
-
-    val home = devDistPluginPlanHome("intellij.community", listOf("""{"input": "@lib//:foo"}"""), index)
-
-    assertThat(home.directory).isEqualTo("build/dev-dist-descriptors/intellij.community")
-    assertThat(home.packageLabel).isEqualTo("//build/dev-dist-descriptors/intellij.community")
-    assertThat(home.callIsCrossHalf).isTrue()
-    assertThat(home.exportsPlanFiles).isFalse()
-    assertThat(home.isModulePackage).isFalse()
-  }
-
-  @Test
-  fun `a section compared for the community products drops the refusals of a mode that no community product has`() {
+  fun `a section states the refusals of every mode`() {
     val project = JpsElementFactory.getInstance().createModel().project
     val context = DevSectionContext(
       mainModule = "intellij.c",
@@ -136,11 +120,9 @@ class DevDistGenerationRootTest {
       loadStatements = emptyList(),
     )
 
-    assertThat(draft.render(packaging = null).body).contains("mode_refused_content_modules")
-    assertThat(draft.render(packaging = null, modes = setOf("frontend")).body).isEqualTo(draft.render(packaging = null).body)
-    val monolith = draft.render(packaging = null, modes = setOf("monolith")).body
-    assertThat(monolith).doesNotContain("mode_refused_content_modules")
-    assertThat(monolith).contains("descriptor_modules = [\"intellij.c.frontend\"]")
+    val body = draft.render(packaging = null).body
+    assertThat(body).contains("mode_refused_content_modules")
+    assertThat(body).contains("descriptor_modules = [\"intellij.c.frontend\"]")
   }
 
   @Test
@@ -182,8 +164,8 @@ class DevDistGenerationRootTest {
   }
 
   @Test
-  fun `the community pass accepts the products of the community registry`() {
-    requireCommunityPassOutput(
+  fun `the capability check accepts the products of the community registry`() {
+    requireHalfCapabilities(
       root = DevDistGenerationRoot.community(dir),
       registryProducts = listOf("community", "Idea", "AndroidStudio"),
       plannedProducts = listOf("AndroidStudio", "Idea", "Idea"),
@@ -194,9 +176,9 @@ class DevDistGenerationRootTest {
   }
 
   @Test
-  fun `the community pass fails for a product outside the community registry and names it`() {
+  fun `the capability check fails for a product outside the community registry and names it`() {
     assertThatThrownBy {
-      requireCommunityPassOutput(
+      requireHalfCapabilities(
         root = DevDistGenerationRoot.community(dir),
         registryProducts = listOf("community", "Idea", "AndroidStudio"),
         plannedProducts = listOf("Idea", "Other"),
@@ -211,13 +193,13 @@ class DevDistGenerationRootTest {
   }
 
   @Test
-  fun `the community pass fails for an output that its half has no capability for`() {
+  fun `the capability check fails for an output that the half has no capability for`() {
     fun check(
       generatedPluginFiles: List<String> = emptyList(),
       hasPlatformPatches: Boolean = false,
       runtimeModuleRepositoryProducts: List<String> = emptyList(),
     ) {
-      requireCommunityPassOutput(
+      requireHalfCapabilities(
         root = DevDistGenerationRoot.community(dir),
         registryProducts = listOf("Idea"),
         plannedProducts = listOf("Idea"),

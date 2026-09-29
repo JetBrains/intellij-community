@@ -9,8 +9,8 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 /**
- * The two values of [DevDistOwnership]: which half writes the generated files of a community package, and what the
- * ultimate half reuses of the community half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES].
+ * The package ownership of the two halves: each half writes only its own packages, and the ultimate half reuses a
+ * community target when its own text is equal.
  */
 class DevDistOwnershipTest {
   @TempDir
@@ -31,47 +31,29 @@ class DevDistOwnershipTest {
   }
 
   @Test
-  fun `the default keeps the ultimate half as the writer of the community sections`() {
-    assertThat(DevDistOwnership.DEFAULT).isEqualTo(DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS)
-    assertThat(withOwnershipProperty(null) { DevDistOwnership.configured() }).isEqualTo(DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS)
-    assertThat(withOwnershipProperty("EACH_HALF_OWNS_ITS_PACKAGES") { DevDistOwnership.configured() })
-      .isEqualTo(DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
-    assertThatThrownBy { withOwnershipProperty("BOTH") { DevDistOwnership.configured() } }.hasMessageContaining("'BOTH'")
-  }
+  fun `each half writes only the packages of its own half`() {
+    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf)
+    val community = DevDistGenerationRoot.community(dir)
 
-  @Test
-  fun `exactly one half writes the packages of the community modules under each value`() {
-    val ultimateToday = DevDistGenerationRoot.of(dir, monorepoHalf)
-    val communityToday = DevDistGenerationRoot.community(dir)
-    assertThat(ultimateToday.writesDevSections).isTrue()
-    assertThat(ultimateToday.writesCommunityModulePackages).isTrue()
-    assertThat(communityToday.writesDevSections).isFalse()
-    assertThat(communityToday.writesCommunityModulePackages).isFalse()
-
-    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
-    val community = DevDistGenerationRoot.community(dir, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
-    assertThat(ultimate.writesDevSections).isTrue()
-    assertThat(ultimate.writesCommunityModulePackages).isFalse()
-    assertThat(community.writesDevSections).isTrue()
-    assertThat(community.writesCommunityModulePackages).isTrue()
     assertThat(ultimate.writesPackage("community/plugins/c")).isFalse()
     assertThat(ultimate.writesPackage("plugins/x")).isTrue()
+    assertThat(ultimate.writesPackage(DEV_DIST_CONTENT_MODULE_JARS_PACKAGE)).isTrue()
     assertThat(community.writesPackage("community/plugins/c")).isTrue()
+    assertThat(community.writesPackage("community/build/dev-dist-descriptors/intellij.c")).isTrue()
+    assertThat(community.writesPackage("plugins/x")).isFalse()
   }
 
   @Test
   fun `a write outside the packages of the half fails and names the path`() {
-    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
+    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf)
     ultimate.requireWritable("build/dev-dist-descriptors/$communityPlugin/BUILD.bazel")
     assertThatThrownBy { ultimate.requireWritable("community/plugins/c/intellij.c.dev-plan.json") }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("community/plugins/c/intellij.c.dev-plan.json")
       .hasMessageContaining("monorepo pass")
 
-    // The community half writes relative to `community/`.
-    DevDistGenerationRoot.community(dir, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES).requireWritable("plugins/c/BUILD.bazel")
-    // The default lets the ultimate half write a community package.
-    DevDistGenerationRoot.of(dir, monorepoHalf).requireWritable("community/plugins/c/BUILD.bazel")
+    // The community half writes relative to `community/`, so every path it writes is a community package.
+    DevDistGenerationRoot.community(dir).requireWritable("plugins/c/BUILD.bazel")
   }
 
   @Test
@@ -161,13 +143,12 @@ class DevDistOwnershipTest {
   }
 
   @Test
-  fun `each half states the refusals of every stated mode under the new value`() {
+  fun `each half states the refusals of every stated mode`() {
     val community = listOf("Idea" to "monolith", "AndroidStudio" to "monolith")
 
-    assertThat(devDistRefusingModeIds(community, everyStatedMode = false)).isEmpty()
-    assertThat(devDistRefusingModeIds(community, everyStatedMode = true)).containsExactly("frontend")
-    assertThat(devDistRefusingModeIds(community + ("Client" to "frontend"), everyStatedMode = false)).containsExactly("frontend")
-    assertThatThrownBy { devDistRefusingModeIds(listOf("Server" to "backend"), everyStatedMode = true) }
+    assertThat(devDistRefusingModeIds(community)).containsExactly("frontend")
+    assertThat(devDistRefusingModeIds(community + ("Client" to "frontend"))).containsExactly("frontend")
+    assertThatThrownBy { devDistRefusingModeIds(listOf("Server" to "backend")) }
       .hasMessageContaining("[Server]")
       .hasMessageContaining("backend")
   }
@@ -192,20 +173,7 @@ class DevDistOwnershipTest {
       homes = mapOf(communityPlugin to DevDistPluginPlanHome("plugins/c", "@community//plugins/c", callIsCrossHalf = false, exportsPlanFiles = false)),
       planFiles = mapOf(communityPlugin to mapOf("intellij.c.dev-plan.json" to planText)),
       sectionCalls = mapOf(communityPlugin to call),
-      exportedFiles = emptyMap(),
       rootDirectory = "community",
     )
-  }
-
-  private fun <T> withOwnershipProperty(value: String?, action: () -> T): T {
-    val name = "intellij.build.dev.dist.ownership"
-    val previous = System.getProperty(name)
-    if (value == null) System.clearProperty(name) else System.setProperty(name, value)
-    try {
-      return action()
-    }
-    finally {
-      if (previous == null) System.clearProperty(name) else System.setProperty(name, previous)
-    }
   }
 }

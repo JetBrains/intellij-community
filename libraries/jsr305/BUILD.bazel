@@ -1,4 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.jsr305` start
+content_module_jar(
+    libraries = ["@lib//:libraries-jsr305-jsr305"],
+    module = ":jsr305",
+)
+### auto-generated section `dev intellij.libraries.jsr305` end
 
 ### auto-generated section `build intellij.libraries.jsr305` start
 jvm_library(

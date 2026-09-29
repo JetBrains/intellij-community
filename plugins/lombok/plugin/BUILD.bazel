@@ -8,15 +8,6 @@ dev_dist_plugin(
         "intellij.lombok",
         "intellij.lombok.generated",
     ],
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.lombok",
-        "intellij.lombok.generated",
-    ],
-    directory_name = "lombok",
-    jars = {
-        "lib/lombok-plugin.jar": ["intellij.lombok.plugin"],
-    },
     main_module = "intellij.lombok.plugin",
 )
 ### auto-generated section `dev intellij.lombok.plugin` end

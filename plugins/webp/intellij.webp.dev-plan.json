@@ -33,7 +33,7 @@
             "recipe": {
                 "sources": [
                     {
-                        "input": "@community//plugins/webp/lib:webp-libwebp",
+                        "input": "//plugins/webp/lib:webp-libwebp",
                         "kind": "library",
                         "filter": "library-v1"
                     }

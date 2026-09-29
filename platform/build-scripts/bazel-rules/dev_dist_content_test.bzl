@@ -606,9 +606,43 @@ def _plugin_macro_tests(name):
         ]),
     )
 
+    # A reused content module whose call is relocated takes the label `content_module_jar_labels` states. Any other
+    # reused module takes the label of its own package.
+    relocated_owner = name + "_macro_relocated_owner"
+    relocated_member = name + "_macro_relocated_member"
+    relocated_kept = name + "_macro_relocated_kept"
+    relocated_source = name + "_macro_relocated_descriptor"
+    relocated_jar = name + "_macro_relocated_jar"
+    _fake_module(name = relocated_jar, module_name = "intellij.test.relocated.member")
+    _fake_module(name = relocated_owner, module_name = "intellij.test.relocated")
+    _fake_module(name = relocated_member, module_name = "intellij.test.relocated.member")
+    _fake_module(name = relocated_kept, module_name = "intellij.test.relocated.kept")
+    _fake_descriptor(name = relocated_source)
+    dev_dist_plugin(
+        main_module = "intellij.test.relocated",
+        module_targets = {
+            "intellij.test.relocated": [":" + relocated_owner + ".jar"],
+            "intellij.test.relocated.kept": [":" + relocated_kept + ".jar"],
+            "intellij.test.relocated.member": [":" + relocated_member + ".jar"],
+        },
+        content_modules = ["intellij.test.relocated.member", "intellij.test.relocated.kept"],
+        content_module_jar_labels = {"intellij.test.relocated.member": ":" + relocated_jar},
+        descriptor = relocated_source,
+        jars = {"lib/test-relocated.jar": ["intellij.test.relocated"]},
+    )
+    relocated_test = name + "_plugin_macro_relocated_test"
+    _declaration_test(
+        name = relocated_test,
+        actual = json.encode(native.existing_rule("intellij.test.relocated_dev_plugin_inputs")["content_module_jars"]),
+        expected = json.encode([
+            ":" + relocated_jar,
+            ":" + relocated_kept + "_content_module_jar",
+        ]),
+    )
+
     # The stale-module case of the macro lives in `dev_plugin_test.bzl`: its warning must not print in a dist analysis,
     # and every dist loads this package for `:trace_spans`.
-    return [test, packed_test]
+    return [test, packed_test, relocated_test]
 
 def dev_dist_content_test_suite(name):
     library = name + "_library"

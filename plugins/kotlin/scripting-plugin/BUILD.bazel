@@ -1,23 +1,5 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-
-### auto-generated section `dev intellij.kotlin.jsr223.plugin` start
-dev_dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.kotlin.jsr223",
-        "intellij.libraries.kotlinc.kotlin.script.runtime",
-        "intellij.libraries.kotlinc.kotlin.scripting.common",
-        "intellij.libraries.kotlinc.kotlin.scripting.jvm",
-        "intellij.kotlin.buildToolsRuntime",
-        "intellij.libraries.kotlin.tooling.core",
-        "intellij.libraries.kotlinc.kotlin.compiler.common",
-        "intellij.libraries.kotlinc.kotlin.compiler.fe10",
-    ],
-    main_module = "intellij.kotlin.jsr223.plugin",
-)
-### auto-generated section `dev intellij.kotlin.jsr223.plugin` end
 
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` start
 create_kotlinc_options(

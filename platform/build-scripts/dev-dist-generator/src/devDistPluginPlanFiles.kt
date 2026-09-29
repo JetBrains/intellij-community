@@ -139,9 +139,6 @@ internal class DevDistPluginPlanFiles private constructor(
      * [ownHome] gives the home of a plugin whose own package already holds its baseline files, or `null`. It gets the
      * baseline files with their written text, keyed by file name. The run writes no file into such a home and sweeps
      * none there, because another pass owns the files, see [DevDistOwnPackagePlans].
-     *
-     * [writesCommunityModulePackages] says whether the run writes and sweeps the package of a community module, see
-     * [DevDistGenerationRoot.writesCommunityModulePackages].
      */
     fun collect(
       projectRoot: Path,
@@ -151,7 +148,6 @@ internal class DevDistPluginPlanFiles private constructor(
       productOrder: Collection<String> = half.splitProducts,
       writtenText: (String) -> String = { it },
       ownHome: (plugin: String, writtenFiles: Map<String, String>) -> DevDistPluginPlanHome? = { _, _ -> null },
-      writesCommunityModulePackages: Boolean = !index.planPackageIsCommunity,
     ): DevDistPluginPlanFiles {
       val files = TreeMap<String, String>()
       val bindings = HashMap<DevDistPluginPlanKey, EmittedRecord>()
@@ -190,7 +186,7 @@ internal class DevDistPluginPlanFiles private constructor(
           "$plugin$suffix$PLAN_FILE_SUFFIX" to writtenText(text)
         }
         val reusedHome = ownHome(plugin, baselineFiles)
-        val home = reusedHome ?: devDistPluginPlanHome(plugin, textsByProduct.values.flatMap { it.files.values }, index, writesCommunityModulePackages)
+        val home = reusedHome ?: devDistPluginPlanHome(plugin, index)
         if (reusedHome != null) {
           reusedHomes.put(plugin, reusedHome)
         }
@@ -256,7 +252,7 @@ internal class DevDistPluginPlanFiles private constructor(
       val updates = DevDistPluginPlanUpdates(
         projectRoot = projectRoot,
         files = files.filterKeys { it.substringBeforeLast('/', "") !in reusedDirectories }.mapValues { writtenText(it.value) },
-        sweepDirectories = planSweepDirectories(projectRoot, index, planHomes, writesCommunityModulePackages),
+        sweepDirectories = planSweepDirectories(projectRoot, index, planHomes),
       )
       return DevDistPluginPlanFiles(files, updates, bindings, homes, exportedFiles, reusedHomes.keys)
     }
@@ -274,20 +270,14 @@ private fun requirePlanHomePackage(projectRoot: Path, plugin: String, home: DevD
  * The project-relative directory of every package a plan file may sit in: the package of every module [index] places,
  * every plugin package under [CROSS_HALF_PACKAGE_ROOT] on disk, and the directory of every home of [homes]. Sorted
  * and without a duplicate. A cross-half home of this run is listed through [homes],
- * because its package may not exist on disk yet. A run that does not write the package of a community module sweeps
- * none, see [writesCommunityModulePackages].
+ * because its package may not exist on disk yet. The ultimate half writes no community package, so it sweeps none.
  */
-private fun planSweepDirectories(
-  projectRoot: Path,
-  index: DevDistBazelIndex,
-  homes: Collection<DevDistPluginPlanHome>,
-  writesCommunityModulePackages: Boolean,
-): List<String> {
+private fun planSweepDirectories(projectRoot: Path, index: DevDistBazelIndex, homes: Collection<DevDistPluginPlanHome>): List<String> {
   val result = TreeSet<String>()
   homes.mapTo(result) { it.directory }
-  // Only the half that writes the package of a community module writes a plan file there, so only it sweeps one.
+  // Only the community half writes a plan file into the package of a community module, so only it sweeps one there.
   for (module in index.targets.modules.keys) {
-    if (!writesCommunityModulePackages && index.isCommunity(module) == true) {
+    if (!index.planPackageIsCommunity && index.isCommunity(module) == true) {
       continue
     }
     val directory = index.packageDir(module) ?: continue
@@ -391,9 +381,8 @@ internal fun collectDevDistPluginPlanFiles(
   productOrder: Collection<String> = half.splitProducts,
   writtenText: (String) -> String = { it },
   ownHome: (plugin: String, writtenFiles: Map<String, String>) -> DevDistPluginPlanHome? = { _, _ -> null },
-  writesCommunityModulePackages: Boolean = !index.planPackageIsCommunity,
 ): DevDistPluginPlanFiles {
-  return DevDistPluginPlanFiles.collect(projectRoot, records, index, half, productOrder, writtenText, ownHome, writesCommunityModulePackages)
+  return DevDistPluginPlanFiles.collect(projectRoot, records, index, half, productOrder, writtenText, ownHome)
 }
 
 private fun validatePlanIdentity(value: String) {

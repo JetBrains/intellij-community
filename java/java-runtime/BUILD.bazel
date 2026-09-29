@@ -1,9 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
-
-### auto-generated section `dev intellij.java.rt` start
-content_module_jar(module = ":rt")
-### auto-generated section `dev intellij.java.rt` end
 
 ### auto-generated section `build intellij.java.rt` start
 jvm_provided_library(
