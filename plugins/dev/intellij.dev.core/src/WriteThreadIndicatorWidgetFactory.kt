@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.status
+package com.intellij.dev.core
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
-import com.intellij.ui.UIBundle
 import com.intellij.util.ThreeState
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
@@ -33,7 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class WriteThreadIndicatorWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
-  override fun getDisplayName(): String = UIBundle.message("status.bar.write.thread.widget.name")
+  override fun getDisplayName(): String = DevCoreBundle.message("status.bar.write.thread.widget.name")
   override fun isInternal(): Boolean = true
 
   override fun isAvailable(project: Project): Boolean {

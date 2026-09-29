@@ -53,6 +53,15 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup id="editor.state.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
+
+    <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.dev.core.WriteThreadIndicatorWidgetFactory"
+                            order="last"/>
+    <statusBarWidgetFactory id="EditorAnimationCacheStatistics"
+                            implementation="com.intellij.dev.core.EditorAnimationCacheStatisticsWidgetFactory"
+                            order="first"/>
+    <statusBarWidgetFactory id="SmartModeIndicator" implementation="com.intellij.dev.core.SmartModeIndicatorWidgetFactory"/>
+    <statusBarWidgetFactory id="IndexesAndVfsFlushIndicator"
+                            implementation="com.intellij.dev.core.IndexesAndVfsFlushIndicatorWidgetFactory"/>
   </extensions>
 
   <actions resource-bundle="messages.DevCoreBundle">

@@ -2,26 +2,31 @@
 package com.intellij.openapi.editor.impl.view.animation
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-internal val STATISTICS_BUCKET_DURATION: Duration = 500.milliseconds
-internal const val STATISTICS_BUCKET_COUNT = 10
+@ApiStatus.Internal
+val STATISTICS_BUCKET_DURATION: Duration = 500.milliseconds
 
-internal object EditorAnimationCacheStatistics {
+@ApiStatus.Internal
+const val STATISTICS_BUCKET_COUNT: Int = 10
+
+@ApiStatus.Internal
+object EditorAnimationCacheStatistics {
   private val startedAt = AnimationClock.now()
   private val hits = IntArray(STATISTICS_BUCKET_COUNT)
   private val misses = IntArray(STATISTICS_BUCKET_COUNT)
   private val stamps = arrayOfNulls<AnimationTimeMark>(STATISTICS_BUCKET_COUNT)
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun recordHit(): Boolean {
+  internal fun recordHit(): Boolean {
     hits[bucketAt()]++
     return true
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun recordMiss(): Boolean {
+  internal fun recordMiss(): Boolean {
     misses[bucketAt()]++
     return false
   }

@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.view.animation
+package com.intellij.dev.core
 
 import com.intellij.ide.setToolTipText
+import com.intellij.openapi.editor.impl.view.animation.CacheHitRate
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics
+import com.intellij.openapi.editor.impl.view.animation.STATISTICS_BUCKET_COUNT
+import com.intellij.openapi.editor.impl.view.animation.STATISTICS_BUCKET_DURATION
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.CustomStatusBarWidget
@@ -11,7 +15,6 @@ import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.Gray
 import com.intellij.ui.IslandsState
 import com.intellij.ui.JBColor
-import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
@@ -26,7 +29,7 @@ import javax.swing.JComponent
 
 internal class EditorAnimationCacheStatisticsWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
-  override fun getDisplayName(): String = UIBundle.message("status.bar.editor.animation.cache.widget.name")
+  override fun getDisplayName(): String = DevCoreBundle.message("status.bar.editor.animation.cache.widget.name")
   override fun isEnabledByDefault(): Boolean = false
   override fun isInternal(): Boolean = true
 
@@ -85,7 +88,7 @@ private class HitRateBar : TextPanel() {
   override fun getBackground(): Color? = null
 
   override val textForPreferredSize: String
-    get() = " " + UIBundle.message("status.bar.editor.animation.cache.widget.text", 100)
+    get() = " " + DevCoreBundle.message("status.bar.editor.animation.cache.widget.text", 100)
 
   fun updateState() {
     if (!isShowing) {
@@ -127,17 +130,17 @@ private class HitRateBar : TextPanel() {
 
   private fun labelFor(hitRate: CacheHitRate?): @Nls String {
     return if (hitRate == null) {
-      UIBundle.message("status.bar.editor.animation.cache.widget.idle")
+      DevCoreBundle.message("status.bar.editor.animation.cache.widget.idle")
     } else {
-      UIBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
+      DevCoreBundle.message("status.bar.editor.animation.cache.widget.text", hitRate.hitPercent)
     }
   }
 
   private fun tooltipFor(hitRate: CacheHitRate?): @Nls String {
     return if (hitRate == null) {
-      UIBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
+      DevCoreBundle.message("status.bar.editor.animation.cache.widget.tooltip.idle", WINDOW_SECONDS.inWholeSeconds)
     } else {
-      UIBundle.message(
+      DevCoreBundle.message(
         "status.bar.editor.animation.cache.widget.tooltip",
         hitRate.hits,
         hitRate.misses,
