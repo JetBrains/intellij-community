@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports name-based destructuring entries whose destination name is <code>_</code>.
+Because <code>_</code> is unusable, such an entry only extracts a value to discard it and can be removed without changing the semantics.
+<p><b>Full-form example:</b></p>
+<pre><code>
+  data class Foo(val bar: String, val qux: Int)
+
+  (val _ = bar, val qux) = Foo("", 0)
+</code></pre>
+<p>The quick-fix removes the redundant underscore entry:</p>
+<pre><code>
+  (val qux) = Foo("", 0)
+</code></pre>
+<p><b>Short-form example</b> (when name-based destructuring short form is enabled):</p>
+<pre><code>
+  val (_ = bar, qux) = Foo("", 0)
+</code></pre>
+<p>becomes:</p>
+<pre><code>
+  val (qux) = Foo("", 0)
+</code></pre>
+</body>
+</html>

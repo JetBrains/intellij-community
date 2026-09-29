@@ -1,0 +1,9 @@
+// "Remove redundant underscore entry" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+
+data class Foo(val a: String, val b: String, val c: String)
+
+fun test() {
+    (val _ = b, val c) = Foo("", "", "")
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.RemoveRedundantDestructuringUnderscoreFix

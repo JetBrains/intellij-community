@@ -19724,6 +19724,74 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantDestructuringUnderscore")
+        public static class RedundantDestructuringUnderscore extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("customGetterNoWarn.kt")
+            public void testCustomGetterNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/customGetterNoWarn.kt");
+            }
+
+            @TestMetadata("delegatedNoWarn.kt")
+            public void testDelegatedNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/delegatedNoWarn.kt");
+            }
+
+            @TestMetadata("forLoopNoWarn.kt")
+            public void testForLoopNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/forLoopNoWarn.kt");
+            }
+
+            @TestMetadata("fullForm.kt")
+            public void testFullForm() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/fullForm.kt");
+            }
+
+            @TestMetadata("fullFormNoRename.kt")
+            public void testFullFormNoRename() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/fullFormNoRename.kt");
+            }
+
+            @TestMetadata("lateinitNoWarn.kt")
+            public void testLateinitNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/lateinitNoWarn.kt");
+            }
+
+            @TestMetadata("multipleUnderscores.kt")
+            public void testMultipleUnderscores() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/multipleUnderscores.kt");
+            }
+
+            @TestMetadata("positionalFormNoWarn.kt")
+            public void testPositionalFormNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/positionalFormNoWarn.kt");
+            }
+
+            @TestMetadata("shortFormComplete.kt")
+            public void testShortFormComplete() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/shortFormComplete.kt");
+            }
+
+            @TestMetadata("shortFormNameMismatch.kt")
+            public void testShortFormNameMismatch() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/shortFormNameMismatch.kt");
+            }
+
+            @TestMetadata("shortFormNoRename.kt")
+            public void testShortFormNoRename() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/shortFormNoRename.kt");
+            }
+
+            @TestMetadata("singleEntryNoWarn.kt")
+            public void testSingleEntryNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/redundantDestructuringUnderscore/singleEntryNoWarn.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantEmptyInitializerBlock")
         public static class RedundantEmptyInitializerBlock extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
