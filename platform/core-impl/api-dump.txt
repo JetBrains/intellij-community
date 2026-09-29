@@ -150,6 +150,38 @@ a:com.intellij.ide.highlighter.custom.tokens.TokenParser
 c:com.intellij.ide.highlighter.custom.tokens.WhitespaceParser
 - com.intellij.ide.highlighter.custom.tokens.TokenParser
 - <init>():V
+f:com.intellij.ide.plugins.PluginDetailsService
+- sf:Companion:com.intellij.ide.plugins.PluginDetailsService$Companion
+- <init>():V
+- f:findDetails(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginDetailsService$PluginDetails
+- f:getActivePlugins():kotlin.sequences.Sequence
+- sf:getInstance():com.intellij.ide.plugins.PluginDetailsService
+- f:isBuiltIn(com.intellij.openapi.extensions.PluginId):Z
+- f:isDisabled(com.intellij.openapi.extensions.PluginId):Z
+- f:isLoaded(com.intellij.openapi.extensions.PluginId):Z
+f:com.intellij.ide.plugins.PluginDetailsService$Companion
+- f:getInstance():com.intellij.ide.plugins.PluginDetailsService
+com.intellij.ide.plugins.PluginDetailsService$ModuleDependencyInfo
+f:com.intellij.ide.plugins.PluginDetailsService$PluginDetails
+- f:getChangeNotes():java.lang.String
+- f:getDependencies():java.util.Collection
+- f:getDescription():java.lang.String
+- f:getId():com.intellij.openapi.extensions.PluginId
+- f:getModules():java.util.Collection
+- f:getName():java.lang.String
+- f:getReleaseDate():java.time.LocalDate
+- f:getReleaseVersion():I
+- f:getVendor():com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo
+- f:getVersion():java.lang.String
+- f:isBuiltIn():Z
+- f:isLicenseOptional():Z
+f:com.intellij.ide.plugins.PluginDetailsService$PluginModuleInfo
+- f:getName():java.lang.String
+f:com.intellij.ide.plugins.PluginDetailsService$PluginVendorInfo
+- f:getEmail():java.lang.String
+- f:getName():java.lang.String
+- f:getOrganization():java.lang.String
+- f:getUrl():java.lang.String
 f:com.intellij.ide.plugins.PluginManager
 - s:getInstance():com.intellij.ide.plugins.PluginManager
 - s:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId

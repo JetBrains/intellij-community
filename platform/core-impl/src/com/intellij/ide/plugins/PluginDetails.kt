@@ -18,7 +18,6 @@ import java.time.ZoneOffset
  * @see com.intellij.openapi.application.PluginPathManager to load plugin resources
  * @see com.intellij.openapi.updateSettings.PluginUpdateCheckService to check for updates in the Marketplace
  */
-@ApiStatus.Experimental
 @Service(Service.Level.APP)
 class PluginDetailsService {
   companion object {
@@ -66,7 +65,6 @@ class PluginDetailsService {
    *
    * @see PluginDetails.vendor
    */
-  @ApiStatus.Experimental
   class PluginVendorInfo internal constructor(
     val name: @NlsSafe String?,
     val email: String?,
@@ -86,7 +84,6 @@ class PluginDetailsService {
    *
    * @see PluginDetails.dependencies
    */
-  @ApiStatus.Experimental
   sealed interface ModuleDependencyInfo {
     /**
      * A dependency on the implicit main module of another plugin, identified by [pluginId].
@@ -110,7 +107,6 @@ class PluginDetailsService {
    *
    * @see PluginDetails.modules
    */
-  @ApiStatus.Experimental
   class PluginModuleInfo internal constructor(
     val name: String,
   ) {
@@ -124,7 +120,6 @@ class PluginDetailsService {
    *
    * Use [PluginDetailsService] to obtain instances of this class; do not construct them directly.
    */
-  @ApiStatus.Experimental
   class PluginDetails internal constructor(
     val id: PluginId,
     val name: @NlsSafe String,
