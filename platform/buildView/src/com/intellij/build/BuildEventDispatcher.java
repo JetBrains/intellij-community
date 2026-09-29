@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.util.function.Consumer;
 
 /**
@@ -23,7 +22,7 @@ import java.util.function.Consumer;
  */
 @Internal
 @NonExtendable
-public interface BuildEventDispatcher extends Closeable {
+public interface BuildEventDispatcher extends AutoCloseable {
 
   void onEvent(@NotNull Object buildId, @NotNull BuildEvent event);
 
