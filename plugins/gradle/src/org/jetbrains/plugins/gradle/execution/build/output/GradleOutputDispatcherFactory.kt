@@ -18,7 +18,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemOutputMessageDispatcher
-import com.intellij.util.containers.addIfNotNull
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -55,16 +54,13 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     consoleSettings: BuildViewSettingsProvider,
   ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
 
-    private val reader = BuildOutputInstantReaderImpl(buildId, buildId, ::notifyBuildEvent, parsers)
-
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
-    private val tasksOutputReaders: MutableMap<TaskNameId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
-    private val tasksOutputRedefinedReaders = mutableListOf<BuildOutputInstantReaderImpl>()
+    private val tasksOutputReaders: MutableMap<StartId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+
+    private var currentTaskId: StartId = buildId
 
     private val lineProcessor = object : LineProcessor() {
-
-      private var currentReader = reader
 
       override fun process(line: String) {
         val cleanLine = removeLoggerPrefix(line)
@@ -72,17 +68,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         if (cleanLine.startsWith("<ijLog>")) return
 
         if (cleanLine.startsWith("> Task :")) {
-          val taskNameId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
-          val taskOutputReader = BuildOutputInstantReaderImpl(
-            buildId,
-            taskNameId,
-            { buildId, event -> notifyBuildEvent(buildId, event) },
-            parsers
-          )
-          val oldTaskOutputReader = tasksOutputReaders.put(taskNameId, taskOutputReader)
-          // multiple invocations of the same task during the build session
-          tasksOutputRedefinedReaders.addIfNotNull(oldTaskOutputReader)
-          currentReader = taskOutputReader
+          currentTaskId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
         }
         else if (cleanLine.startsWith("> Configure") ||
                  cleanLine.startsWith("FAILURE: Build failed") ||
@@ -90,14 +76,17 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
                  cleanLine.startsWith("[Incubating] Problems report is available at:") ||
                  cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
                  cleanLine.startsWith("BUILD SUCCESSFUL")) {
-          currentReader = reader
+          currentTaskId = buildId
         }
 
-        if (currentReader != reader) {
-          notifyBuildEvent(buildId, OutputBuildEventImpl(currentReader.parentEventId, line + '\n', ProcessOutputType.STDOUT)) //NON-NLS todo!!
+        val taskId = currentTaskId
+
+        if (taskId != buildId) {
+          notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line + '\n', ProcessOutputType.STDOUT)) //NON-NLS todo!!
         }
 
-        currentReader.appendLine(cleanLine)
+        tasksOutputReaders.getOrPut(taskId) { BuildOutputInstantReaderImpl(buildId, taskId, ::notifyBuildEvent, parsers) }
+          .appendLine(cleanLine)
       }
     }
 
@@ -145,13 +134,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     override fun doClose() {
       lineProcessor.close()
 
-      reader.close()
-
       for (taskOutputReader in tasksOutputReaders.values) {
         taskOutputReader.close()
-      }
-      for (redefinedReader in tasksOutputRedefinedReaders) {
-        redefinedReader.close()
       }
     }
 
