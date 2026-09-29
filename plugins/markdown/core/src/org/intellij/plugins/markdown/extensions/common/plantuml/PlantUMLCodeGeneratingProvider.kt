@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.extensions.common.plantuml
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -12,13 +13,14 @@ import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadabl
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.ApiStatus
-import java.io.ByteArrayOutputStream
-import java.io.IOException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.future.asCompletableFuture
 import java.util.Base64
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExtensionWithDownloadableFiles, MarkdownBrowserPreviewExtension.Provider {
-  private val cache = Caffeine.newBuilder().softValues().build<String, String>()
+  private val cache = Caffeine.newBuilder().softValues().build<String, CompletableFuture<String>>()
 
   override val externalFiles: Iterable<String>
     get() = ownFiles
@@ -36,16 +38,9 @@ class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExten
     return """<img src="$header$content" from-extension=true/>"""
   }
 
-  // Not thread safe
   private fun obtainGeneratedContent(raw: String): String {
     val key = MarkdownUtil.md5(raw, "salt")
-    val cached = cache.getIfPresent(key)
-    if (cached != null) {
-      return cached
-    }
-    val generated = generateDiagram(raw)
-    cache.put(key, generated)
-    return generated
+    return cache.get(key) { generateDiagram(raw).asCompletableFuture() }.awaitWithCheckCanceled()
   }
 
   override val displayName: String
@@ -71,8 +66,7 @@ class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExten
     return null
   }
 
-  @Throws(IOException::class)
-  private fun generateDiagram(text: CharSequence): String {
+  private fun generateDiagram(text: CharSequence): Deferred<String> {
     val content = buildString {
       if (!text.startsWith("@startuml")) {
         append("@startuml\n")
@@ -82,10 +76,7 @@ class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExten
         append("\n@enduml")
       }
     }
-    val stream = ByteArrayOutputStream()
-    PlantUMLJarManager.getInstance().generateImage(content, stream)
-    val encodedContent = Base64.getEncoder().encode(stream.toByteArray())
-    return encodedContent.toString(Charsets.UTF_8)
+    return PlantUMLJarManager.getInstance().generateImage(content, Base64.getEncoder()::encodeToString)
   }
 
   companion object {

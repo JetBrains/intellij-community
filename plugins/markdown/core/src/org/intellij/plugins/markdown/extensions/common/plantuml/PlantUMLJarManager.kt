@@ -5,11 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.jetbrains.annotations.ApiStatus
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.OutputStream
 import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantLock
@@ -23,7 +27,7 @@ import java.util.concurrent.locks.ReentrantLock
  */
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-class PlantUMLJarManager: Disposable {
+class PlantUMLJarManager(private val coroutineScope: CoroutineScope): Disposable {
   private data class Holder(
     val loadedClass: Class<*>,
     val method: Method
@@ -32,6 +36,7 @@ class PlantUMLJarManager: Disposable {
   private val lock = ReentrantLock()
   private var loadedClassAndMethod: Holder? = null
   private var isDisposed = false
+  private val renderDispatcher = Dispatchers.IO.limitedParallelism(1)
 
   private fun loadClass(path: File): Class<*>? {
     val classLoader = URLClassLoader(arrayOf(path.toURI().toURL()), this::class.java.classLoader)
@@ -82,14 +87,20 @@ class PlantUMLJarManager: Disposable {
     }
   }
 
-  fun generateImage(source: String, outputStream: OutputStream) {
+  fun <T> generateImage(source: String, transform: (ByteArray) -> T): Deferred<T> {
+    return coroutineScope.async(renderDispatcher) { transform(render(source)) }
+  }
+
+  private fun render(source: String): ByteArray {
     synchronized(lock) {
-      val (loadedClass, method) = obtainCurrentHolder() ?: return
+      val (loadedClass, method) = obtainCurrentHolder() ?: return ByteArray(0)
+      val stream = ByteArrayOutputStream()
       try {
-        method.invoke(loadedClass.getConstructor(String::class.java).newInstance(source), outputStream)
+        method.invoke(loadedClass.getConstructor(String::class.java).newInstance(source), stream)
       } catch (exception: Throwable) {
         logger.warn("Failed to invoke method.", exception)
       }
+      return stream.toByteArray()
     }
   }
 
