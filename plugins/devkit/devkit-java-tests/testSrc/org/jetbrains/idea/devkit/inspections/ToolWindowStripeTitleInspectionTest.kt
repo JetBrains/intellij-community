@@ -243,20 +243,29 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
 
   fun `test fix declares the resource bundle of the descriptor`() {
     addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-    val descriptor = myFixture.configureByText(
+    // The fix formats the new tag with the default XML indent of 4 spaces, so the descriptor uses it too.
+    myFixture.configureByText(
       "plugin.xml", """
       <idea-plugin>
-        <id>com.example.plugin</id>
-        <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="My Tool<caret> Window"/>
-        </extensions>
+          <id>com.example.plugin</id>
+          <extensions defaultExtensionNs="com.intellij">
+              <toolWindow id="My Tool<caret> Window"/>
+          </extensions>
       </idea-plugin>
       """.trimIndent()
     )
 
     myFixture.launchAction(myFixture.findSingleIntention("Declare 'messages.MyBundle' as the resource bundle"))
 
-    assertTrue(descriptor.text, descriptor.text.contains("<resource-bundle>messages.MyBundle</resource-bundle>"))
+    myFixture.checkResult("""
+      <idea-plugin>
+          <id>com.example.plugin</id>
+          <extensions defaultExtensionNs="com.intellij">
+              <toolWindow id="My Tool Window"/>
+          </extensions>
+          <resource-bundle>messages.MyBundle</resource-bundle>
+      </idea-plugin>
+      """.trimIndent())
   }
 
   /** The fixture creates the JPS module that holds the descriptor, so its name is not a literal. */

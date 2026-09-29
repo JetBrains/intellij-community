@@ -2,15 +2,17 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.properties.BundleNameEvaluator
 import com.intellij.lang.properties.PropertiesImplUtil
 import com.intellij.lang.properties.PropertiesReferenceManager
 import com.intellij.lang.properties.psi.PropertyKeyIndex
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -28,6 +30,7 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.inspections.DeclareResourceBundleFix
 import org.jetbrains.idea.devkit.references.PluginConfigReference
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.uast.UCallExpression
@@ -94,8 +97,8 @@ private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElement
     val expectedName = readBundle.name
     if (expectedName != null && bundleHasKey(source.module, expectedName, key)) return
 
-    // No bundle holds the key, so the ID is the title. That is normal for a tool window that isn't localized.
-    val actualBundle = bundlesWithKey(source.module, key).firstOrNull { it != expectedName } ?: return
+    val actualBundle = bundlesWithKey(source.module, key).firstOrNull { it != expectedName }
+      ?: return // No bundle holds the key, so the ID is the title. That is normal for a tool window that isn't localized.
 
     val idRange = ElementManipulators.getValueTextRange(target)
     val moduleName = source.module.name
@@ -111,7 +114,8 @@ private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElement
       )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", moduleName, key, actualBundle)
+        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", moduleName, key, actualBundle),
+        DeclareResourceBundleFix(actualBundle)
       )
     }
   }
@@ -152,6 +156,24 @@ private class BundleVisitor(private val holder: ProblemsHolder) : PsiElementVisi
         DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle", moduleName, toolWindowId)
       )
     }
+  }
+}
+
+/**
+ * Declares the bundle that holds the key. Only a descriptor without a declaration gets this fix:
+ * a change of an existing declaration also moves every other key that the descriptor reads through it.
+ */
+private class DeclareResourceBundleFix(private val bundleName: String) : PsiUpdateModCommandQuickFix() {
+
+  override fun getName(): @IntentionName String =
+    DevKitBundle.message("inspection.tool.window.stripe.title.declare.bundle.fix", bundleName)
+
+  override fun getFamilyName(): @IntentionFamilyName String =
+    DevKitBundle.message("inspection.tool.window.stripe.title.declare.bundle.fix.family")
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val ideaPlugin = DescriptorUtil.getIdeaPlugin(element.containingFile as? XmlFile ?: return) ?: return
+    ideaPlugin.resourceBundle.stringValue = bundleName
   }
 }
 
