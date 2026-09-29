@@ -743,6 +743,8 @@ jvm_library(
         "//platform/util/progress:progress-tests_test_lib",
         "//platform/util/nanoxml:nanoxml-tests",
         "//platform/util/nanoxml:nanoxml-tests_test_lib",
+        "//platform/versionDownloadManager:versionDownloadManager-tests",
+        "//platform/versionDownloadManager:versionDownloadManager-tests_test_lib",
         "//platform/testFramework/junit5.jimfs",
         "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
         "//platform/whatsNew",

@@ -44,6 +44,7 @@
     <module name="intellij.regexp"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
+    <module name="intellij.platform.versionDownloadManager"/>
     <module name="intellij.libraries.cglib" loading="embedded"/>
     <!-- endregion -->
 

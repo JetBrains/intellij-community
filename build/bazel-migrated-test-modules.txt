@@ -189,6 +189,7 @@ intellij.platform.vcs.dvcs.impl.tests
 intellij.platform.vcs.impl.frontend.tests
 intellij.platform.vcs.impl.shared.tests
 intellij.platform.vcs.impl.tests
+intellij.platform.versionDownloadManager.tests
 intellij.platform.whatsNew.tests
 intellij.platform.workspace.jps.tests
 intellij.platform.workspace.storage.tests

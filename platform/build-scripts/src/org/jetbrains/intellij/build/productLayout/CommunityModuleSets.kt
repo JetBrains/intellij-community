@@ -429,6 +429,7 @@ object CommunityModuleSets {
     module("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")
+    module("intellij.platform.versionDownloadManager")
 
     moduleSet(vcs())
     moduleSet(lsp())
