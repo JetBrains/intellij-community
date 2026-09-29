@@ -6,9 +6,12 @@ import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.vfs.DiskQueryRelay
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
+
+private val LOG = logger<IntelliJPlatformGradleData>()
 
 /** IDE-side completion metadata imported from [IntelliJPlatformGradleModel]. */
 internal data class IntelliJPlatformGradleData(
@@ -66,12 +69,19 @@ internal fun String?.readBundledPlugins(): List<IntelliJPlatformBundledArtifact>
 internal fun String?.readBundledModules(): List<IntelliJPlatformBundledArtifact> =
   readTsv { parseTsvPair(it, ::IntelliJPlatformBundledArtifact) }
 
-private inline fun <T> String?.readTsv(transform: (List<String>) -> T?): List<T> {
-  val file = this?.let { Path.of(it) }?.takeIf { it.isRegularFile() } ?: return emptyList()
+private inline fun <T> String?.readTsv(crossinline transform: (List<String>) -> T?): List<T> {
+  val path = this ?: return emptyList()
 
   return runCatching {
-    file.readLines().mapNotNull { line -> transform(line.split('\t')) }
-  }.getOrDefault(emptyList())
+    DiskQueryRelay.compute<List<T>, Exception> {
+      val file = Path.of(path).takeIf { it.isRegularFile() } ?: return@compute emptyList()
+      file.readLines().mapNotNull { line -> transform(line.split('\t')) }
+    }
+  }.getOrElse { e ->
+    rethrowControlFlowException(e)
+    LOG.error("Failed to read TSV file '$path'", e)
+    emptyList()
+  }
 }
 
 private inline fun <T> parseTsvPair(fields: List<String>, create: (first: String, second: String) -> T): T? {
