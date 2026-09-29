@@ -15,8 +15,12 @@ defined there, not in a community-only checkout.
 
 1. **Run Generator** (performs compilation via Bazel — no extra compilation step needed):
    ```bash
+   ./community/build/jpsModelToBazelCommunityOnly.cmd
    bazel run //platform/buildScripts:plugin-model-tool
    ```
+
+   The generator also runs the community pass, which reads the untracked `community/build/bazel-targets.json`.
+   Run the community converter first, because that file can be stale.
 
    **Verification — must produce no changes:**
    - Do NOT just trust the generator's printed stats

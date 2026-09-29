@@ -134,102 +134,20 @@ depend on it, which is how Spectre stays out of the IDE and out of published Jew
 ## Add Devkit to IDE Build
 
 On JPS we had a handy run configuration that built the IDE with the devkit bundled. On Bazel, the `idea_community`
-configuration does not do that by default.
+launcher does not bundle it.
 
 This means that you won't find anything if you try to find the Jewel Components Showcase or Jewel Tool Window via
 the actions search.
 
-No biggie, we can circumvent this easily enough by just applying **one** of
-the git patches below. Choose the one that you think best suits your tastes:
+Run the launcher that adds the devkit instead:
 
-### Add a new build target
-
-```git
-Subject: [PATCH] add ijc build with devkit
----
-Index: build/BUILD.bazel
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/build/BUILD.bazel b/build/BUILD.bazel
---- a/build/BUILD.bazel	(revision 65d9fd06454a6c1ff4925723fc5f944dbd7eda60)
-+++ b/build/BUILD.bazel	(date 1782307889085)
-@@ -73,6 +73,12 @@
-     runtime_deps = [":build"],
- )
-
-+intellij_dev_binary_community(
-+    name = "idea_community_devkit",
-+    platform_prefix = "community",
-+    additional_modules = "intellij.devkit",
-+)
-+
- # Dev-build targets for running IDEs locally via `bazel run //build:<target>`
- intellij_dev_binary_community(
-     name = "idea_community",
+```shell
+bazel run //build:idea_community_devkit
 ```
 
-And then run with: `bazel run //build:idea_community_devkit`
+`idea_community_devkit` is the launcher of the `IDEA With Compose (dev build)` run configuration. It adds the
+`intellij.devkit` plugin to IDEA Community.
 
-Once you run the command once, the configuration will be automatically "saved" in the configurations list.
-
-### Add the Devkit module to the existing IJC build
-
-Apply the git patch below:
-
-```git
-Subject: [PATCH] modify current idea_community build to bundle devkit
----
-Index: build/BUILD.bazel
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/build/BUILD.bazel b/build/BUILD.bazel
---- a/build/BUILD.bazel	(revision 65d9fd06454a6c1ff4925723fc5f944dbd7eda60)
-+++ b/build/BUILD.bazel	(date 1782308040029)
-@@ -77,6 +77,7 @@
- intellij_dev_binary_community(
-     name = "idea_community",
-     platform_prefix = "community",
-+    additional_modules = "intellij.devkit",
- )
-
- intellij_dev_binary_community(
-
-```
-
-Run with: `bazel run //build:idea_community` **or** just run the idea_community configuration in the configurations
-list.
-
-### Forcing IdeaCommunityProperties to bundle Devkit
-
-Apply the git patch below:
-
-```git
-Subject: [PATCH] add devkit as a bundled plugin in IdeaCommunityProperties
----
-Index: build/src/org/jetbrains/intellij/build/IdeaCommunityProperties.kt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/build/src/org/jetbrains/intellij/build/IdeaCommunityProperties.kt b/build/src/org/jetbrains/intellij/build/IdeaCommunityProperties.kt
---- a/build/src/org/jetbrains/intellij/build/IdeaCommunityProperties.kt	(revision 65d9fd06454a6c1ff4925723fc5f944dbd7eda60)
-+++ b/build/src/org/jetbrains/intellij/build/IdeaCommunityProperties.kt	(date 1782308311182)
-@@ -59,7 +59,7 @@
-     )
-
-     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf(
--      "intellij.javaFX.community"
-+      "intellij.javaFX.community", "intellij.devkit"
-     )
-
-     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
-```
-
-Run with: `bazel run //build:idea_community` **or** just run the idea_community configuration in the configurations
-list.
-
-Whatever you choose, just remember to not push these changes to your branch :)
+A new launcher is a `DevMainKt` run configuration in `community/.idea/runConfigurations` plus a generator run from the
+ultimate root. A change of `IdeaCommunityProperties` reaches a launcher only after a generator run, because the
+launchers read the generated distribution declarations under `build/`.
