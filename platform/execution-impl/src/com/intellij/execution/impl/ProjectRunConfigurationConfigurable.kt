@@ -3,6 +3,7 @@ package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
@@ -42,7 +43,7 @@ open class ProjectRunConfigurationConfigurable(project: Project) : RunConfigurab
       .setMinimumSize(JBDimension(200, 200))
       .setButtonComparator(ExecutionBundle.message("add.new.run.configuration.action2.name"),
                            ExecutionBundle.message("remove.run.configuration.action.name"),
-                           ExecutionBundle.message("copy.configuration.action.name"),
+                           LangBundle.message("copy.configuration.action.name"),
                            ExecutionBundle.message("action.name.save.configuration"),
                            ExecutionBundle.message("run.configuration.edit.default.configuration.settings.text"),
                            ExecutionBundle.message("move.up.action.name"),

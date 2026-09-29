@@ -24,6 +24,7 @@ import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollec
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.TransferableList
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -1126,8 +1127,8 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
     }
   }
 
-  protected inner class MyCopyAction : AnAction(ExecutionBundle.message("copy.configuration.action.name"),
-                                                ExecutionBundle.message("copy.configuration.action.name"),
+  protected inner class MyCopyAction : AnAction(LangBundle.message("copy.configuration.action.name"),
+                                                LangBundle.message("copy.configuration.action.name"),
                                                 IconManager.getInstance().getPlatformIcon(PlatformIcons.Copy)), PossiblyDumbAware {
     init {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE)

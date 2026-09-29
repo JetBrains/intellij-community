@@ -3,7 +3,6 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
@@ -41,6 +40,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -103,8 +103,8 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
     })));
     result.add(new MyCopyAction());
     result.add(new MySaveAsAction());
-    result.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), IconUtil.getMoveUpIcon(), -1));
-    result.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), IconUtil.getMoveDownIcon(), 1));
+    result.add(new MyMoveAction(UIBundle.message("move.up.action.name"), IconUtil.getMoveUpIcon(), -1));
+    result.add(new MyMoveAction(UIBundle.message("move.down.action.name"), IconUtil.getMoveDownIcon(), 1));
     return result;
   }
 
@@ -459,7 +459,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
 
   private final class MyCopyAction extends DumbAwareAction {
     MyCopyAction() {
-      super(ExecutionBundle.messagePointer("copy.configuration.action.name"), COPY_ICON);
+      super(LangBundle.messagePointer("copy.configuration.action.name"), COPY_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
     }
 
@@ -487,7 +487,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
 
   private final class MySaveAsAction extends DumbAwareAction {
     MySaveAsAction() {
-      super(ExecutionBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.MenuSaveall);
+      super(LangBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.MenuSaveall);
     }
 
     @Override
