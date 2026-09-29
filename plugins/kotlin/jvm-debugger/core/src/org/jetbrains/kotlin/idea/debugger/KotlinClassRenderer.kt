@@ -27,7 +27,6 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Type
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
 import org.jetbrains.kotlin.idea.debugger.base.util.isSimpleGetter
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
@@ -39,14 +38,13 @@ import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
-import kotlin.metadata.ExperimentalContextReceivers
 import kotlin.metadata.KmProperty
 import kotlin.metadata.isNotDefault
 import kotlin.metadata.jvm.JvmMethodSignature
 import kotlin.metadata.jvm.KotlinClassMetadata
 import kotlin.metadata.jvm.getterSignature
 
-class KotlinClassRenderer : ClassRenderer() {
+open class KotlinClassRenderer : ClassRenderer() {
     init {
         setIsApplicableChecker(Function { type: Type? ->
             if (type is ReferenceType && type !is ArrayType && !type.canBeRenderedBetterByPlatformRenderers()) {
