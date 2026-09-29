@@ -8,6 +8,7 @@ import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.execution.process.ProcessOutputType
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.concurrent.ConcurrentHashMap
 
 @Internal
 class ExternalSystemOutputMessageDispatcherImpl(
@@ -17,13 +18,16 @@ class ExternalSystemOutputMessageDispatcherImpl(
   consoleSettings: BuildViewSettingsProvider,
 ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
 
-  private val reader = BuildOutputInstantReaderImpl(buildId, buildId, ::notifyBuildEvent, parsers)
+  private val readers: MutableMap<ProcessOutputType, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
 
   override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
-    reader.append(text)
+    readers.getOrPut(outputType) { BuildOutputInstantReaderImpl(buildId, buildId, ::notifyBuildEvent, parsers) }
+      .append(text)
   }
 
   override fun doClose() {
-    reader.close()
+    for (taskOutputReader in readers.values) {
+      taskOutputReader.close()
+    }
   }
 }
