@@ -62,8 +62,6 @@ public constructor(
     )
     public constructor(lazyListState: LazyListState) : this(lazyListState, SelectionMode.Multiple, emptySet())
 
-    internal var lastKeyEventUsedMouse: Boolean = false
-
     /** Flag indicating whether the user is currently navigating via keyboard */
     public var isKeyboardNavigating: Boolean by mutableStateOf(false)
 

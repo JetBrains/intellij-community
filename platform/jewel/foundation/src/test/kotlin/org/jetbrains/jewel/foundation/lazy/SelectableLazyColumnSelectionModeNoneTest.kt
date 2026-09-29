@@ -7,9 +7,13 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.rightClick
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -98,5 +102,19 @@ internal class SelectableLazyColumnSelectionModeNoneTest {
         composeRule.awaitIdle()
 
         assertEquals(emptySet<Any>(), state.selectedKeys)
+    }
+
+    @Test
+    fun `right-click doesn't select in None mode`() = runTest {
+        composeRule.setContent {
+            NoSelectionSelectableLazyColumn(rememberSelectableLazyListState()) {
+                items(items.size, key = { items[it] }) { index ->
+                    val tag = "Item ${items[index]}"
+                    BasicText(tag, modifier = Modifier.testTag(tag))
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Item 0").performMouseInput { rightClick() }.assertIsNotSelected()
     }
 }
