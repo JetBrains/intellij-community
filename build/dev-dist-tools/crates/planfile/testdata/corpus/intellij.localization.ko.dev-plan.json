@@ -2,7 +2,7 @@
     "version": 1,
     "plugin": "intellij.localization.ko",
     "variant": "",
-    "layoutSignature": "enjdj43jsq5ygssbq8uptsnd6",
+    "layoutSignature": "46riv2ec1i8fc4m956mt17yrm",
     "assets": [
         {
             "destination": "lib/localization-ko.jar",
@@ -45,7 +45,7 @@
             "outputs": [
                 "layout-assets:custom-asset:0:output"
             ],
-            "modelSignature": "dbvp1q10xjn0rufu69uy9fjoh"
+            "modelSignature": "b6bp1bshav7evr73v94gsl78v"
         }
     ],
     "operations": [
@@ -69,44 +69,13 @@
                         "destination": "",
                         "sources": [
                             0
-                        ],
-                        "transform": {
-                            "kind": "tree-map",
-                            "mappings": [
-                                {
-                                    "pattern": "*.properties",
-                                    "destination": "messages"
-                                },
-                                {}
-                            ]
-                        }
+                        ]
                     },
                     {
                         "destination": "",
                         "sources": [
                             1
-                        ],
-                        "transform": {
-                            "kind": "tree-map",
-                            "mappings": [
-                                {
-                                    "pattern": "*/fileTemplates/**",
-                                    "stripComponents": 1
-                                },
-                                {
-                                    "pattern": "*/inspectionDescriptions/**",
-                                    "stripComponents": 1
-                                },
-                                {
-                                    "pattern": "*/intentionDescriptions/**",
-                                    "stripComponents": 1
-                                },
-                                {
-                                    "pattern": "*/postfixTemplates/**",
-                                    "stripComponents": 1
-                                }
-                            ]
-                        }
+                        ]
                     }
                 ]
             }
