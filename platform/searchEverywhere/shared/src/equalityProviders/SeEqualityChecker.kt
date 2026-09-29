@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.withSafeCatch
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.withUuidToReplace
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -32,7 +33,7 @@ class SeEqualityChecker {
   suspend fun checkAndUpdateIfNeeded(newItemData: SeItemData): SeItemData? {
     val item = newItemData.fetchItemIfExists() ?: return newItemData
     val itemObject = item.rawObject
-    val contributor = (item as? SeLegacyItem)?.contributor ?: dummyContributor
+    val contributor = (item as? SeLegacyItem)?.contributor ?: dummyContributor(newItemData.providerId.value)
 
     return readAction {
       lock.withLock {
@@ -86,17 +87,17 @@ class SeEqualityChecker {
   }
 
   companion object {
-    private val dummyContributor = DummySearchEverywhereContributor<Any>()
+    private fun dummyContributor(providerId: String) = DummySearchEverywhereContributor<Any>(providerId)
   }
 }
 
-private class DummySearchEverywhereContributor<Any>: SearchEverywhereContributor<Any> {
-  override fun getSearchProviderId(): String = "Dummy"
+private class DummySearchEverywhereContributor<Any>(private val providerId: String): SearchEverywhereContributor<Any> {
+  override fun getSearchProviderId(): String = providerId
   override fun getGroupName(): @Nls String =
     @Suppress("HardCodedStringLiteral")
     "Dummy"
 
-  override fun getSortWeight(): Int = 0
+  override fun getSortWeight(): Int = platformContributorWeights[providerId] ?: 10000
   override fun showInFindResults(): Boolean = false
 
   override fun fetchElements(
@@ -109,4 +110,19 @@ private class DummySearchEverywhereContributor<Any>: SearchEverywhereContributor
 
   @Suppress("HardCodedStringLiteral")
   override fun getElementsRenderer(): ListCellRenderer<in Any> = textListCellRenderer("Dummy") { "Dummy" }
+
+  companion object {
+    private val platformContributorWeights: Map<String, Int> = mapOf(
+      SeProviderIdUtils.FILES_ID to 200,
+      SeProviderIdUtils.CLASSES_ID to 100,
+      SeProviderIdUtils.SYMBOLS_ID to 300,
+      SeProviderIdUtils.TEXT_ID to 1500,
+      SeProviderIdUtils.ACTIONS_ID to 400,
+      SeProviderIdUtils.RECENT_FILES_ID to 70,
+      SeProviderIdUtils.NON_INDEXABLE_FILES_ID to 1000,
+      SeProviderIdUtils.RUN_CONFIGURATIONS_ID to 350,
+      SeProviderIdUtils.TOP_HIT_HOST_ID to 50,
+      SeProviderIdUtils.TOP_HIT_ID to 50,
+    )
+  }
 }
