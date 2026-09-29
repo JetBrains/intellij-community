@@ -28,6 +28,8 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
+import com.jetbrains.python.sdk.add.v2.errorOrNull
+import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField
@@ -53,7 +55,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
   init {
     propertyGraph.dependsOn(venvAlreadyExistsError, model.venvViewModel.backProperty, deleteWhenChildModified = false) {
       @Suppress("UNCHECKED_CAST") // TODO: Express it in the type-safe manner
-      model.venvViewModel.backProperty.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
+      model.venvViewModel.backProperty.get()?.errorOrNull as? VenvAlreadyExistsError<P>
     }
     propertyGraph.dependsOn(venvAlreadyExistsErrorMessage, venvAlreadyExistsError, deleteWhenChildModified = false) {
       venvAlreadyExistsError.get()?.message ?: ""
@@ -123,7 +125,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val venv = model.venvViewModel.backProperty.get()?.pathHolder
+    val venv = model.venvViewModel.backProperty.get()?.pathHolder?.getOr { return it }
                ?: return PyResult.localizedError(message("no.venv.path.specified"))
     return withProgressText(message("python.sdk.progress.virtualenv.creating")) {
       model.setupVirtualenv(venv, moduleOrProject)

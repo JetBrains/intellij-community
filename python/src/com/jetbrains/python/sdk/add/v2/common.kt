@@ -106,7 +106,7 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
    */
   protected suspend fun savePathToExecutableToProperties() {
     if (!persistToolExecutableOnSetup) return
-    val savingPath = toolExecutable?.get()?.pathHolder ?: return
+    val savingPath = toolExecutable?.get()?.pathHolder?.successOrNull ?: return
     toolExecutablePersister(savingPath)
   }
 

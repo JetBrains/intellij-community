@@ -77,18 +77,16 @@ internal interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
   }
 
   val isValidationSuccessful: ObservableProperty<Boolean>
-    get() = backProperty.transform { it?.validationResult?.successOrNull != null }
+    get() = backProperty.transform { it?.successOrNull != null }
 }
 
 private interface ValidationStatusExtension
 
-private class ValidationSuccessExtension<T>(val validationInfo: T) : ExtendableTextComponent.Extension, ValidationStatusExtension {
+
+private class ValidationSuccessExtension(private val validationInfo: @Nls String?) : ExtendableTextComponent.Extension, ValidationStatusExtension {
   override fun getIcon(hovered: Boolean): Icon = AllIcons.General.GreenCheckmark
   override fun getTooltip(): @NlsContexts.Tooltip String? {
-    val tooltip = when (validationInfo) {
-      is Unit -> null
-      else -> validationInfo.toString().takeIf { it.isNotEmpty() }
-    }
+    val tooltip = validationInfo.takeIf { it.isNullOrBlank() }
     return tooltip
   }
 }
@@ -177,7 +175,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         return@afterChange
       }
 
-      val pathHolder = validatedPath.pathHolder
+      val pathHolder = validatedPath.pathHolder.successOrNull
       if (pathHolder != null) {
         text = pathHolder.toStringForUI()
       }
@@ -202,11 +200,10 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
           editorMode.store(false)
           isEnabled = canBeEdited
 
-          pathValidator.backProperty.get()?.validationResult?.let { validationResult ->
-            validationResult
-              .onSuccess {
-                addExtension(ValidationSuccessExtension(it))
-              }
+          pathValidator.backProperty.get()?.let {
+            it.userReadableValidationResult.onSuccess {message->
+              addExtension(ValidationSuccessExtension(message))
+            }
           }
         }
       }
@@ -236,7 +233,7 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
         .map {
           if (it == null) return@map null
 
-          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.toStringForUI() ?: "") != it) {
+          if (!editorMode.load() && (pathValidator.backProperty.get()?.pathHolder?.successOrNull?.toStringForUI() ?: "") != it) {
             editorMode.store(true)
             pathValidator.markDirty()
           }
@@ -391,7 +388,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
 
         if (isVenvOverridden) return@validationOnInput null
 
-        val pyErrorMessage = pathValidator.backProperty.get()?.validationResult?.errorOrNull?.message
+        val pyErrorMessage = pathValidator.backProperty.get()?.errorOrNull?.message
 
         when {
           pyErrorMessage != null -> {

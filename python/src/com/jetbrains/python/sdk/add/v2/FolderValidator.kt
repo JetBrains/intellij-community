@@ -10,7 +10,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
 import com.jetbrains.python.TraceContext
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.Error
+import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.ErrorWithPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -59,10 +62,14 @@ class FolderValidator<P : PathHolder>(
 
   private suspend fun runValidation(pathResult: PyResult<P>): ValidatedPath.Folder<P> {
     return when (pathResult) {
-      is Failure -> ValidatedPath.Folder(null, pathResult)
+      is Failure -> ValidatedPath.Folder(Error(pathResult.error))
       is Success -> {
         val path = pathResult.result
-        ValidatedPath.Folder(path, pathValidator(path))
+        val result: PathHolderAndValidationResult<Unit, P> = when (val pathValidator = pathValidator(path)) {
+          is Failure -> ErrorWithPath(pathValidator.error, path)
+          is Success -> PathHolderAndValidationResult.Success(Unit, path)
+        }
+        ValidatedPath.Folder(result)
       }
     }
   }
@@ -82,15 +89,19 @@ class FolderValidator<P : PathHolder>(
         val validatedFolderPath = withContext(Dispatchers.IO) {
           for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_RESERVED_WORDS)) {
             validator.curry { input }.validate()?.let {
-              return@withContext ValidatedPath.Folder<P>(null, PyResult.localizedError(it.message))
+              return@withContext ValidatedPath.Folder<P>(Error(MessageError(it.message)))
             }
           }
 
           val path = fileSystem.parsePath(input).getOr { error ->
-            return@withContext ValidatedPath.Folder<P>(null, error)
+            return@withContext ValidatedPath.Folder<P>(Error(error.error))
           }
 
-          ValidatedPath.Folder(path, pathValidator.invoke(path))
+          val result: PathHolderAndValidationResult<Unit, P> = when (val r = pathValidator.invoke(path)) {
+            is Failure -> ErrorWithPath(r.error, path)
+            is Success -> PathHolderAndValidationResult.Success(Unit, path)
+          }
+          ValidatedPath.Folder(result)
         }
         withContext(Dispatchers.EDT) { backProperty.set(validatedFolderPath) }
       }

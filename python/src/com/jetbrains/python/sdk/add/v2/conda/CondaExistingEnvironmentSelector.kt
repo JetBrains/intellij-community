@@ -34,6 +34,7 @@ import com.intellij.python.pytools.backend.Version
 import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
+import com.jetbrains.python.sdk.add.v2.successOrNull
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.add.v2.withExtendableTextFieldEditor
@@ -50,7 +51,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
-
 
 internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>) : PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
@@ -122,7 +122,7 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
             .align(AlignX.RIGHT)
             .visibleIf(isReloadLinkVisible).component
         }
-      }.visibleIf(model.condaViewModel.condaExecutable.transform { it?.validationResult?.successOrNull != null })
+      }.visibleIf(model.condaViewModel.condaExecutable.transform { it?.successOrNull != null })
     }
   }
 

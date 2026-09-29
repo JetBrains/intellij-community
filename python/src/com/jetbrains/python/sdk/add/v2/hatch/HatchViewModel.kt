@@ -18,6 +18,8 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.pathHolder
+import com.jetbrains.python.sdk.add.v2.successOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,12 +57,12 @@ internal class HatchViewModel<P : PathHolder>(
     toolValidator.initialize(scope)
 
     hatchExecutable.afterChange { hatchExecutable ->
-      if (hatchExecutable?.validationResult?.successOrNull == null) {
+      if (hatchExecutable?.successOrNull == null) {
         availableEnvironments.value = PyResult.success(emptyList())
         return@afterChange
       }
 
-      val hatchExecutablePath = hatchExecutable.pathHolder ?: return@afterChange
+      val hatchExecutablePath = hatchExecutable.pathHolder.successOrNull ?: return@afterChange
       scope.launch(Dispatchers.EDT) {
         availableEnvironments.value = detectHatchEnvironments(hatchExecutablePath)
       }

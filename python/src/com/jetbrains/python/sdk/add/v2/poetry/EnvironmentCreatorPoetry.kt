@@ -36,6 +36,7 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Error
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Invisible
 import com.jetbrains.python.sdk.add.v2.getBasePath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
+import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
@@ -119,7 +120,7 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
   override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
     val basePythonBinaryPath = model.getOrInstallBasePython()
                                ?: return PyResult.localizedError(message("python.sdk.provided.path.is.invalid", null))
-    val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder
+    val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder?.getOr { return it }
                            ?: return PyResult.localizedError(message("sdk.create.custom.poetry.error.poetry.executable.path.is.not.valid"))
 
     service<PoetryConfigService>().updateExistingPoetryToml(moduleBasePath, model.fileSystem, poetryExecutable)

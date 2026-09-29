@@ -17,6 +17,7 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
@@ -57,7 +58,7 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
-    val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder
+    val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder?.successOrNull
     val existingEnvs = detectPoetryEnvs(modulePath, model.fileSystem, poetryExecutable).mapNotNull { pythonBinary ->
       val pythonInfo = model.fileSystem.getBinaryToExec(pythonBinary).validatePythonAndGetInfo().successOrNull
                        ?: return@mapNotNull null

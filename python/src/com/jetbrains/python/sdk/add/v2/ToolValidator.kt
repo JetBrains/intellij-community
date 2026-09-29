@@ -12,11 +12,14 @@ import com.intellij.python.pytools.backend.getToolVersion
 import com.intellij.python.pytools.backend.parseVersion
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.isSuccess
 import com.jetbrains.python.orLogException
-import kotlin.coroutines.EmptyCoroutineContext
+import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.Error
+import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.ErrorWithPath
+import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.Success
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 class ToolValidator<P : PathHolder>(
   val fileSystem: FileSystem<P>,
@@ -61,15 +65,18 @@ class ToolValidator<P : PathHolder>(
 
         val exec = withContext(Dispatchers.IO) {
           val path = fileSystem.parsePath(input).getOr { error ->
-            return@withContext ValidatedPath.Executable<P>(null, error)
+            return@withContext ValidatedPath.Executable<P>(Error(error.error))
           }
 
           fileSystem.validateExecutable(path).getOr {
-            return@withContext ValidatedPath.Executable(path, it)
+            return@withContext ValidatedPath.Executable(ErrorWithPath(it.error, path))
           }
 
-          val toolValidationResult = toolValidator(path)
-          ValidatedPath.Executable(path, toolValidationResult)
+          val result: PathHolderAndValidationResult<Version, P> = when (val toolValidationResult = toolValidator(path)) {
+            is Result.Failure -> ErrorWithPath(toolValidationResult.error, path)
+            is Result.Success -> Success(toolValidationResult.result, path)
+          }
+          ValidatedPath.Executable(result)
         }
 
         withContext(Dispatchers.EDT) { backProperty.set(exec) }
@@ -89,7 +96,8 @@ class ToolValidator<P : PathHolder>(
   private fun autodetectExecutableJob(): Deferred<Unit> {
     val coroutineContext = if (fileSystem.isLocal) {
       TraceContext(PyBundle.message("trace.context.detecting.executable", toolVersionPrefix), scope)
-    } else EmptyCoroutineContext
+    }
+    else EmptyCoroutineContext
     return scope.async(coroutineContext) {
       withContext(Dispatchers.EDT) { isDirtyValue.set(true) }
       val validatedPath = fileSystem.autodetectWithVersionProbe(toolVersionPrefix, toolCommandSpec, defaultPathSupplier)
@@ -119,17 +127,19 @@ class ToolValidator<P : PathHolder>(
 
         val versionOutput = probeToolResult?.versionOutput
         val validationResult = versionOutput?.parseVersion(toolVersionPrefix)
-        return@withContext if (probeToolResult != null && validationResult?.isSuccess == true) {
-          ValidatedPath.Executable(
-            pathHolder = probeToolResult.path,
-            validationResult = validationResult,
-          )
-        }
-        else {
+        if (validationResult == null) {
           notDetectedExecutable()
         }
+        else {
+          ValidatedPath.Executable(when (validationResult) {
+            is Result.Failure -> ErrorWithPath(validationResult.error, probeToolResult.path)
+            is Result.Success -> Success(validationResult.result, probeToolResult.path)
+          })
+        }
       }
-      detectExecutableWithDefaultSupplier(toolPathSupplier, toolVersionPrefix)
+      else {
+        detectExecutableWithDefaultSupplier(toolPathSupplier, toolVersionPrefix)
+      }
     }
 
     private suspend fun <P : PathHolder> FileSystem<P>.detectExecutableWithDefaultSupplier(
@@ -140,23 +150,19 @@ class ToolValidator<P : PathHolder>(
       return path?.validateToolExecutableByVersionProbe(this, toolVersionPrefix) ?: notDetectedExecutable()
     }
 
-    // TODO: Drop it, and implement it without LSP violation
-    @Deprecated("This is LSP violation. pathHolder must never be null")
     private fun <P : PathHolder> notDetectedExecutable(): ValidatedPath.Executable<P> = ValidatedPath.Executable(
-      pathHolder = null,
-      validationResult = PyResult.localizedError(PyBundle.message("python.sdk.executable.is.not.detected"))
-    )
+      Error(MessageError(PyBundle.message("python.sdk.executable.is.not.detected"))))
 
     private suspend fun <P : PathHolder> P.validateToolExecutableByVersionProbe(
       fileSystem: FileSystem<P>,
       toolVersionPrefix: String,
     ): ValidatedPath.Executable<P> {
       val binaryToExec = fileSystem.getBinaryToExec(this)
-      val validationResult = binaryToExec.getToolVersion(toolVersionPrefix)
-      return ValidatedPath.Executable(
-        pathHolder = this,
-        validationResult = validationResult
-      )
+      val result: PathHolderAndValidationResult<Version, P> = when (val validationResult = binaryToExec.getToolVersion(toolVersionPrefix)) {
+        is Result.Failure -> ErrorWithPath(validationResult.error, this)
+        is Result.Success -> Success(validationResult.result, this)
+      }
+      return ValidatedPath.Executable(result)
     }
   }
 }

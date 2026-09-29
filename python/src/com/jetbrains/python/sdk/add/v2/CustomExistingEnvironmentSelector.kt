@@ -19,10 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
-@Internal
 internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
   private val name: String,
   model: PythonMutableTargetAddInterpreterModel<P>,
@@ -79,25 +77,20 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
     }
 
     executablePath.initialize(scope)
-    comboBox.initialize(
-      scope = scope,
-      flow = combine(existingEnvironments, model.manuallyAddedInterpreters) { detected, manual ->
-        detected ?: return@combine null
-        detected + manual
-      }.mapDistinctSortedForExistingEnvironment(module)
-    )
+    comboBox.initialize(scope = scope, flow = combine(existingEnvironments, model.manuallyAddedInterpreters) { detected, manual ->
+      detected ?: return@combine null
+      detected + manual
+    }.mapDistinctSortedForExistingEnvironment(module))
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    return InterpreterStatisticsInfo(
-      type = interpreterType,
-      target = target.toStatisticsField(),
-      globalSitePackage = false,
-      makeAvailableToAllProjects = false,
-      previouslyConfigured = true,
-      isWSLContext = false,
-      creationMode = InterpreterCreationMode.CUSTOM
-    )
+    return InterpreterStatisticsInfo(type = interpreterType,
+                                     target = target.toStatisticsField(),
+                                     globalSitePackage = false,
+                                     makeAvailableToAllProjects = false,
+                                     previouslyConfigured = true,
+                                     isWSLContext = false,
+                                     creationMode = InterpreterCreationMode.CUSTOM)
   }
 
   internal abstract val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>>

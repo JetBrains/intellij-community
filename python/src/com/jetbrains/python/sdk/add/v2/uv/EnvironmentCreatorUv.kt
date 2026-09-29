@@ -42,7 +42,10 @@ import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
+import com.jetbrains.python.sdk.add.v2.errorOrNull
+import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
+import com.jetbrains.python.sdk.add.v2.successOrNull
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
@@ -125,7 +128,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
     propertyGraph.dependsOn(venvAlreadyExistsError, model.uvViewModel.uvVenvPath, deleteWhenChildModified = false) {
       @Suppress("UNCHECKED_CAST") // TODO: Express it in the type-safe manner
-      model.uvViewModel.uvVenvPath.get()?.validationResult?.errorOrNull as? VenvAlreadyExistsError<P>
+      model.uvViewModel.uvVenvPath.get()?.errorOrNull as? VenvAlreadyExistsError<P>
     }
   }
 
@@ -198,7 +201,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
         versionComboBox.removeAllItems()
         defaultLanguageLevel = null
 
-        if (executable?.validationResult?.successOrNull == null) {
+        if (executable?.successOrNull == null) {
           return@onEach
         }
 
@@ -210,7 +213,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = PyProjectToml.parseOrNull(pyProjectTomlPath)?.project?.requiresPython
 
-            val cli = validateAndCreateUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
+            val cli = validateAndCreateUvCli(executable.pathHolder.successOrNull, model.fileSystem).getOr { return@withContext emptyList() }
             // The supported Python versions of uv do not depend on a directory, so this runs with none.
             val uvLowLevel = createUvLowLevel(cwd = null, cli)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
@@ -218,7 +221,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           }
 
           // Resolved before the items are added so the renderer already knows which row to mark on its first paint.
-          defaultLanguageLevel = executable.pathHolder?.let { uvExecutable ->
+          defaultLanguageLevel = executable.pathHolder.successOrNull?.let { uvExecutable ->
             withContext(Dispatchers.IO) { resolveDefaultLanguageLevel(uvExecutable, projectPath) }
           }
 
@@ -277,11 +280,11 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   }
 
   override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
-    val uv = toolExecutable.get()?.pathHolder!!
+    val uv = toolExecutable.get()!!.pathHolder.getOr { return it }
     return setupNewUvSdkAndEnv(
       uvExecutable = uv,
       workingDir = moduleBasePath,
-      venvPath = model.uvViewModel.uvVenvPath.get()?.pathHolder,
+      venvPath = model.uvViewModel.uvVenvPath.get()?.pathHolder?.getOr { return it },
       fileSystem = model.fileSystem,
       version = pythonVersion.get(),
       errorSink = errorSink,
@@ -298,7 +301,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
    * the IDE's VCS mapping.
    */
   override suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> {
-    val uv = toolExecutable.get()?.pathHolder!!
+    val uv = toolExecutable.get()!!.pathHolder.getOr { return it }
     val baseDir = module.baseDir!!
     val runtime = PyToolRuntime(
       model.fileSystem.getBinaryToExec(uv),

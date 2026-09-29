@@ -7,17 +7,19 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.python.community.impl.conda.CondaPyTool
+import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
+import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
-import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
-import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
-import com.intellij.python.community.impl.conda.CondaPyTool
+import com.jetbrains.python.sdk.add.v2.successOrNull
+import com.jetbrains.python.sdk.add.v2.validationResult
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +59,7 @@ class CondaViewModel<P : PathHolder>(
       selectedCondaEnv.set(null)
       baseCondaEnv.set(null)
 
-      if (condaExecutable?.validationResult?.successOrNull != null) {
+      if (condaExecutable?.successOrNull != null) {
         detectCondaEnvironments(forceRefresh = false)
       }
     }
@@ -105,9 +107,10 @@ class CondaViewModel<P : PathHolder>(
   private suspend fun updateCondaEnvironments(forceRefresh: Boolean): PyResult<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
     val executable = condaExecutable.get()
     if (executable == null) return@withContext PyResult.localizedError(message("python.sdk.conda.no.exec"))
-    executable.validationResult.getOr { return@withContext it }
+    // We only take pathHolder if everything is valid
+    val pathHolder = executable.validationResult.getOr { return@withContext it }.pathHolder
 
-    val binaryToExec = executable.pathHolder?.let { fileSystem.getBinaryToExec(it) }!!
+    val binaryToExec = fileSystem.getBinaryToExec(pathHolder)
     val environments = PyCondaEnv.getEnvs(binaryToExec, forceRefresh).getOr { return@withContext it }
     val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 

@@ -39,6 +39,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
 import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
+import com.jetbrains.python.sdk.add.v2.successOrNull
 import com.jetbrains.python.sdk.add.v2.validatablePathField
 import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import kotlinx.coroutines.CoroutineScope
@@ -274,7 +275,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
         onPathSelected = model::addManuallyAddedSystemPython,
       )
     }
-  }.visibleIf(model.hatchViewModel.hatchExecutable.transform { it?.validationResult?.successOrNull != null })
+  }.visibleIf(model.hatchViewModel.hatchExecutable.transform { it?.successOrNull != null })
 
 
   return HatchFormFields(environmentComboBox, basePythonComboBox, executablePath)

@@ -16,6 +16,8 @@ import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.add.v2.existingSdks
+import com.jetbrains.python.sdk.add.v2.pathHolder
+import com.jetbrains.python.sdk.add.v2.validationResult
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
@@ -29,13 +31,17 @@ import kotlinx.coroutines.flow.takeWhile
 internal fun PythonAddInterpreterModel<*>.createCondaCommand(): PyResult<PyCondaCommand> {
   val targetEnvironmentConfiguration = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
+  val path = executable.pathHolder.getOr { return it }
   return PyCondaCommand(
-    fullCondaPathOnTarget = executable.pathHolder?.toStringForExecution() ?: error("Ask developer to fix it by dropping notDetectedExecutable"),
+    fullCondaPathOnTarget = path.toStringForExecution(),
     targetConfig = targetEnvironmentConfiguration
   ).let { PyResult.success(it) }
 }
 
-internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(moduleOrProject: ModuleOrProject, request: NewCondaEnvRequest): PyResult<Sdk> {
+internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(
+  moduleOrProject: ModuleOrProject,
+  request: NewCondaEnvRequest,
+): PyResult<Sdk> {
 
   val result = createCondaCommand().getOr { return it }.createCondaSdkAlongWithNewEnv(
     newCondaEnvInfo = request,
@@ -73,12 +79,14 @@ internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleO
   val existingSdk = ProjectJdkTable.getInstance().findJdk(pyCondaEnv.envIdentity.userReadableName)
   if (existingSdk != null && existingSdk.isCondaVirtualEnv) return PyResult.success(existingSdk)
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
-  executable.validationResult.getOr { return it }
+  // We only take pathHolder if everything is valid
+  val pathHolder = executable.validationResult.getOr { return it }.pathHolder
 
   val workingDirectory = moduleOrProject.workingDirectory
                          ?: return PyResult.localizedError(message("python.sdk.project.working.directory.not.found"))
   val sdk = PyCondaCommand(
-    fullCondaPathOnTarget = executable.pathHolder?.toStringForExecution() ?: error("Ask developer to fix it by dropping notDetectedExecutable"),
+    fullCondaPathOnTarget = pathHolder.toStringForExecution(),
+    // TODO: Use polymorphism
     targetConfig = (fileSystem as? TargetFileSystem)?.targetEnvironmentConfiguration
   ).createCondaSdkFromExistingEnvironment(
     condaIdentity = pyCondaEnv.envIdentity,

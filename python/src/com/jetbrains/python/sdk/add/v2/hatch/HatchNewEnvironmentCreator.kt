@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.getOrInstallBasePython
+import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.statistics.InterpreterType
@@ -65,7 +66,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
 
   // `hatch new` initializes no repository, so the wizard's own initializer is left to act on `createGitRepository`.
   override suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> {
-    val hatchExecutablePath = when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
+    val hatchExecutablePath = when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder?.successOrNull) {
       is PathHolder.Eel -> pathHolder.path
       is PathHolder.Target -> return PyResult.localizedError(message("target.is.not.supported", pathHolder.toStringForUI()))
       null -> return Result.failure(HatchUIError.HatchExecutablePathIsNotValid(null))
@@ -96,7 +97,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
 
     val hatchEnv = model.hatchViewModel.selectedEnvFromAvailable.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
-    val hatchExecutablePath = model.hatchViewModel.hatchExecutable.get()?.pathHolder
+    val hatchExecutablePath = model.hatchViewModel.hatchExecutable.get()?.pathHolder?.getOr { return it }
                               ?: return Result.failure(HatchUIError.HatchExecutablePathIsNotValid(null))
     val hatchService =
       moduleBasePath.getHatchService(fileSystem = model.fileSystem, hatchExecutablePath = hatchExecutablePath).getOr { return it }
