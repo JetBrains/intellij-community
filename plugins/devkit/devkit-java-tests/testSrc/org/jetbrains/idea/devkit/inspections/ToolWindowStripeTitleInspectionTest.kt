@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 
@@ -12,111 +11,149 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
     super.setUp()
     // DevKit recognizes a plugin project by this class, see PsiUtil.IDE_PROJECT_MARKER_CLASS.
     myFixture.addClass("package com.intellij.ui.components; public class JBList {}")
-    myFixture.addClass("package com.intellij.openapi.wm; public class ToolWindowEP { public String factoryClass; }")
+    // DOM takes the allowed attributes from the bean. Without the annotations, it reports its own problems.
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute { String value() default \"\"; }")
+    myFixture.addClass(
+      """
+      package com.intellij.openapi.wm;
+      import com.intellij.util.xmlb.annotations.Attribute;
+      public class ToolWindowEP {
+        @Attribute public String id;
+        @Attribute public String factoryClass;
+      }
+      """.trimIndent()
+    )
     // An id-less descriptor declares the extension point under the 'com.intellij' prefix.
-    addFile("META-INF/extensionPoints.xml", """
+    addFile(
+      "META-INF/extensionPoints.xml", """
       <idea-plugin>
         <extensionPoints>
           <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
         </extensionPoints>
       </idea-plugin>
-      """.trimIndent())
+      """.trimIndent()
+    )
     myFixture.enableInspections(ToolWindowStripeTitleInspection())
   }
 
   fun `test reports the extension and the key when the key is in another bundle`() {
-    addPluginDescriptor(resourceBundle = "messages.RightBundle", toolWindowId = "My Tool Window")
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
     addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
-    addFile("messages/WrongBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-
-    val descriptorProblem = singleWarningIn("META-INF/plugin.xml")
-    assertEquals(
-      "The module '${declaringModuleName()}' declares this tool window." +
-      " The platform reads its stripe title from 'messages.RightBundle'." +
-      " The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'." +
-      " Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '${declaringModuleName()}'.",
-      descriptorProblem
+    val wrongBundle = addFile(
+      "messages/WrongBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.RightBundle'. It does not read this bundle. Move this key to 'messages.RightBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
     )
 
-    val keyProblem = singleWarningIn("messages/WrongBundle.properties")
-    assertEquals(
-      "The module '${declaringModuleName()}' declares the tool window 'My Tool Window'." +
-      " The platform reads its stripe title from 'messages.RightBundle'." +
-      " It does not read this bundle. Move this key to 'messages.RightBundle'.",
-      keyProblem
-    )
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, wrongBundle)
   }
 
   fun `test reports the extension and the key when the descriptor declares no bundle`() {
-    addPluginDescriptor(resourceBundle = null, toolWindowId = "My Tool Window")
-    addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.MyBundle'. Declare 'messages.MyBundle' as the <resource-bundle> of '$moduleName'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val bundle = addFile(
+      "messages/MyBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. Declare this bundle as the <resource-bundle> of '$moduleName'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
 
-    val descriptorProblem = singleWarningIn("META-INF/plugin.xml")
-    assertTrue(descriptorProblem, descriptorProblem.contains("messages.MyBundle"))
-    assertTrue(descriptorProblem, descriptorProblem.contains("resource-bundle"))
-    assertTrue(descriptorProblem, descriptorProblem.contains(declaringModuleName()))
-
-    val keyProblem = singleWarningIn("messages/MyBundle.properties")
-    assertTrue(keyProblem, keyProblem.contains("resource-bundle"))
-    assertTrue(keyProblem, keyProblem.contains(declaringModuleName()))
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
   fun `test reports a core plugin tool window against IdeBundle`() {
     // The core plugin ignores the declared bundle, so the platform reads messages.IdeBundle.
-    addFile("META-INF/plugin.xml", """
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
       <idea-plugin>
         <id>com.intellij</id>
+        <resource-bundle>messages.MyBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The core plugin owns the module '$moduleName'. The platform therefore reads the stripe title from 'messages.IdeBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.MyBundle'. Move the key to 'messages.IdeBundle'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val bundle = addFile(
+      "messages/MyBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.IdeBundle'. It does not read this bundle. Move this key to 'messages.IdeBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
+  }
+
+  fun `test does not report a key in the declared bundle`() {
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
         <resource-bundle>messages.MyBundle</resource-bundle>
         <extensions defaultExtensionNs="com.intellij">
           <toolWindow id="My Tool Window"/>
         </extensions>
       </idea-plugin>
-      """.trimIndent())
-    addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-
-    val descriptorProblem = singleWarningIn("META-INF/plugin.xml")
-    assertEquals(
-      "The core plugin owns the module '${declaringModuleName()}'." +
-      " The platform therefore reads the stripe title from 'messages.IdeBundle'." +
-      " The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.MyBundle'." +
-      " Move the key to 'messages.IdeBundle'.",
-      descriptorProblem
+      """.trimIndent()
     )
+    val bundle = addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
 
-    val keyProblem = singleWarningIn("messages/MyBundle.properties")
-    assertEquals(
-      "The module '${declaringModuleName()}' declares the tool window 'My Tool Window'." +
-      " The platform reads its stripe title from 'messages.IdeBundle'." +
-      " It does not read this bundle. Move this key to 'messages.IdeBundle'.",
-      keyProblem
-    )
-  }
-
-  fun `test does not report a key in the declared bundle`() {
-    addPluginDescriptor(resourceBundle = "messages.MyBundle", toolWindowId = "My Tool Window")
-    addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-
-    assertNoWarningsIn("META-INF/plugin.xml")
-    assertNoWarningsIn("messages/MyBundle.properties")
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
   fun `test replaces a space in the id with an underscore`() {
-    addPluginDescriptor(resourceBundle = "messages.MyBundle", toolWindowId = "Version Control")
-    addFile("messages/MyBundle.properties", "toolwindow.stripe.Version_Control=Version Control\n")
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.MyBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="Version Control"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val bundle = addFile("messages/MyBundle.properties", "toolwindow.stripe.Version_Control=Version Control\n")
 
-    assertNoWarningsIn("META-INF/plugin.xml")
-    assertNoWarningsIn("messages/MyBundle.properties")
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
   fun `test does not report a tool window without any key`() {
-    addPluginDescriptor(resourceBundle = "messages.MyBundle", toolWindowId = "My Tool Window")
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.MyBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="My Tool Window"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
     addFile("messages/MyBundle.properties", "unrelated.key=Value\n")
 
-    assertNoWarningsIn("META-INF/plugin.xml")
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml)
   }
 
   fun `test does not report when the factory sets the stripe title itself`() {
-    addFile("MyToolWindowFactory.java", """
+    addFactory(
+      "MyToolWindowFactory.java", """
       public class MyToolWindowFactory {
         public void init(Object toolWindow) {
           setStripeTitle("My Tool Window");
@@ -124,21 +161,28 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
 
         void setStripeTitle(String title) {}
       }
-      """.trimIndent())
-    addPluginDescriptor(
-      resourceBundle = "messages.RightBundle",
-      toolWindowId = "My Tool Window",
-      factoryClass = "MyToolWindowFactory",
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="My Tool Window" factoryClass="MyToolWindowFactory"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
     )
     addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
-    addFile("messages/WrongBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+    val wrongBundle = addFile("messages/WrongBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
 
-    assertNoWarningsIn("META-INF/plugin.xml")
-    assertNoWarningsIn("messages/WrongBundle.properties")
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, wrongBundle)
   }
 
   fun `test does not report when the factory sets the title and the descriptor declares no bundle`() {
-    addFile("MyToolWindowFactory.java", """
+    addFactory(
+      "MyToolWindowFactory.java", """
       public class MyToolWindowFactory {
         public void init(Object toolWindow) {
           setStripeTitle("My Tool Window");
@@ -146,16 +190,26 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
 
         void setStripeTitle(String title) {}
       }
-      """.trimIndent())
-    addPluginDescriptor(resourceBundle = null, toolWindowId = "My Tool Window", factoryClass = "MyToolWindowFactory")
-    addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="My Tool Window" factoryClass="MyToolWindowFactory"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val bundle = addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
 
-    assertNoWarningsIn("META-INF/plugin.xml")
-    assertNoWarningsIn("messages/MyBundle.properties")
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
   fun `test reports when the factory sets only the short title`() {
-    addFile("ShortTitleToolWindowFactory.java", """
+    addFactory(
+      "ShortTitleToolWindowFactory.java", """
       public class ShortTitleToolWindowFactory {
         public void init(Object toolWindow) {
           setStripeShortTitleProvider("TW");
@@ -163,83 +217,77 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
 
         void setStripeShortTitleProvider(String title) {}
       }
-      """.trimIndent())
-    addPluginDescriptor(
-      resourceBundle = "messages.RightBundle",
-      toolWindowId = "My Tool Window",
-      factoryClass = "ShortTitleToolWindowFactory",
+      """.trimIndent()
+    )
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.RightBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window. The platform reads its stripe title from 'messages.RightBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.WrongBundle'. Move the key to 'messages.RightBundle', or declare 'messages.WrongBundle' in '$moduleName'.">My Tool Window</warning>" factoryClass="ShortTitleToolWindowFactory"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
     )
     addFile("messages/RightBundle.properties", "unrelated.key=Value\n")
-    addFile("messages/WrongBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
+    val wrongBundle = addFile(
+      "messages/WrongBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.RightBundle'. It does not read this bundle. Move this key to 'messages.RightBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
 
-    assertSize(1, warningsIn("META-INF/plugin.xml"))
-    assertSize(1, warningsIn("messages/WrongBundle.properties"))
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, wrongBundle)
   }
 
   fun `test does not report a key in a language pack`() {
-    addPluginDescriptor(resourceBundle = "messages.MyBundle", toolWindowId = "My Tool Window")
+    addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.MyBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="My Tool Window"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
     addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-    addFile("localization/zh/messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=Translated\n")
+    val localizationBundle = addFile("localization/zh/messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=Translated\n")
 
-    assertNoWarningsIn("localization/zh/messages/MyBundle.properties")
+    myFixture.testHighlightingAllFiles(true, false, false, localizationBundle)
   }
 
   fun `test fix declares the resource bundle of the descriptor`() {
     addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-    val descriptor = myFixture.configureByText("plugin.xml", """
+    val descriptor = myFixture.configureByText(
+      "plugin.xml", """
       <idea-plugin>
         <id>com.example.plugin</id>
         <extensions defaultExtensionNs="com.intellij">
           <toolWindow id="My Tool<caret> Window"/>
         </extensions>
       </idea-plugin>
-      """.trimIndent())
+      """.trimIndent()
+    )
 
     myFixture.launchAction(myFixture.findSingleIntention("Declare 'messages.MyBundle' as the resource bundle"))
 
     assertTrue(descriptor.text, descriptor.text.contains("<resource-bundle>messages.MyBundle</resource-bundle>"))
   }
 
-  private fun addPluginDescriptor(
-    resourceBundle: String?,
-    toolWindowId: String,
-    factoryClass: String? = null,
-  ): PsiFile {
-    val bundleTag = if (resourceBundle == null) "" else "\n  <resource-bundle>$resourceBundle</resource-bundle>"
-    val factoryAttribute = if (factoryClass == null) "" else " factoryClass=\"$factoryClass\""
-    return addFile("META-INF/plugin.xml", """
-      <idea-plugin>
-        <id>com.example.plugin</id>$bundleTag
-        <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="$toolWindowId"$factoryAttribute/>
-        </extensions>
-      </idea-plugin>
-      """.trimIndent())
-  }
+  /** The fixture creates the JPS module that holds the descriptor, so its name is not a literal. */
+  private val moduleName: String get() = myFixture.module.name
 
-  /** The JPS module that holds the descriptor. Every message names it, so a reader can find the extension. */
-  private fun declaringModuleName(): String {
-    val name = myFixture.module.name
-    // A blank name would make every `contains` assertion below pass for the wrong reason.
-    assertTrue("the fixture module must have a name", name.isNotBlank())
-    return name
-  }
-
-  private fun addFile(path: String, @Language("") text: String): PsiFile = myFixture.addFileToProject(path, text)
+  private fun addFile(path: String, @Language("") text: String): VirtualFile = myFixture.addFileToProject(path, text).virtualFile
 
   /**
-   * Keeps only the problems of the inspection under test. A stub bean class makes the XML DOM report its own problems.
+   * The inspection reads the body of the factory class. The fixture forbids the tree of any file except the checked one,
+   * and it cannot allow a single file, so this allows all files.
    */
-  private fun warningsIn(path: String): List<String> {
-    myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
-    return myFixture.doHighlighting(HighlightSeverity.WARNING)
-      .filter { it.inspectionToolId == INSPECTION_SHORT_NAME }
-      .mapNotNull { it.description }
+  private fun addFactory(path: String, @Language("JAVA") text: String) {
+    myFixture.allowTreeAccessForAllFiles()
+    addFile(path, text)
   }
 
-  private fun singleWarningIn(path: String): String = warningsIn(path).single()
-
-  private fun assertNoWarningsIn(path: String) = assertEmpty(warningsIn(path))
 }
-
-private const val INSPECTION_SHORT_NAME = "ToolWindowStripeTitle"
