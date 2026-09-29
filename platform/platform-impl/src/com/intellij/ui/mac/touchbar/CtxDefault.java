@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.Executor;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -135,10 +134,13 @@ final class CtxDefault {
       return;
     }
 
-    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-      if (executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG)) {
-        group.add(actionManager.getAction(executor.getId()), actionManager);
-      }
+    AnAction runAction = actionManager.getAction(ToolWindowId.RUN);
+    if (runAction != null) {
+      group.add(runAction, actionManager);
+    }
+    AnAction debugAction = actionManager.getAction(ToolWindowId.DEBUG);
+    if (debugAction != null) {
+      group.add(debugAction, actionManager);
     }
   }
 }
