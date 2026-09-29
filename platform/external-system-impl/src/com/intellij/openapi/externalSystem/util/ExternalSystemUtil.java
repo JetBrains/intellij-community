@@ -549,7 +549,7 @@ public final class ExternalSystemUtil {
         project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
         project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
         project.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, null);
-        eventDispatcher.onEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
+        eventDispatcher.notifyBuildEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
       }
     }
   }
@@ -1229,7 +1229,7 @@ public final class ExternalSystemUtil {
     public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       if (importSpec.isPreviewMode()) return;
       var eventMessage = BuildBundle.message("build.event.message.syncing");
-      eventDispatcher.onEvent(id, StartBuildEvent.builder(eventMessage, buildDescriptor)
+      eventDispatcher.notifyBuildEvent(id, StartBuildEvent.builder(eventMessage, buildDescriptor)
         .withBuildViewSettings(viewSettingsProvider)
         .build());
     }
@@ -1281,11 +1281,11 @@ public final class ExternalSystemUtil {
       if (importSpec.isPreviewMode()) return;
       if (event instanceof ExternalSystemBuildEvent) {
         var buildEvent = ((ExternalSystemBuildEvent)event).getBuildEvent();
-        eventDispatcher.onEvent(event.getId(), buildEvent);
+        eventDispatcher.notifyBuildEvent(event.getId(), buildEvent);
       }
       else if (event instanceof ExternalSystemTaskExecutionEvent) {
         var buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-        eventDispatcher.onEvent(event.getId(), buildEvent);
+        eventDispatcher.notifyBuildEvent(event.getId(), buildEvent);
       }
     }
   }

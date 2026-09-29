@@ -39,7 +39,7 @@ class KotlinGradleDslErrorReporter(
             }
             val position = it.position
             if (position == null) {
-                buildEventDispatcher.onEvent(
+                buildEventDispatcher.notifyBuildEvent(
                     task,
                     MessageEventImpl(
                         task,
@@ -50,7 +50,7 @@ class KotlinGradleDslErrorReporter(
                     )
                 )
             } else {
-                buildEventDispatcher.onEvent(
+                buildEventDispatcher.notifyBuildEvent(
                     task,
                     FileMessageEventImpl(
                         task,

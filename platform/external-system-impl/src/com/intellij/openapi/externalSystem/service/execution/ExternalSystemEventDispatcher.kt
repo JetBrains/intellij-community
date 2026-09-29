@@ -49,7 +49,7 @@ class ExternalSystemEventDispatcher(
     }
   }
 
-  override fun onEvent(buildId: Any, event: BuildEvent) {
+  override fun notifyBuildEvent(buildId: Any, event: BuildEvent) {
     outputMessageDispatcher.onEvent(buildId, event)
   }
 

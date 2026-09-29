@@ -337,7 +337,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     }
     var eventMessage = BuildBundle.message("build.status.failed");
     var eventResult = new FailureResultImpl(taskError);
-    eventDispatcher.onEvent(taskId, FinishBuildEvent.builder(taskId, eventMessage, eventResult).build());
+    eventDispatcher.notifyBuildEvent(taskId, FinishBuildEvent.builder(taskId, eventMessage, eventResult).build());
   }
 
   private void addDebugUserDataTo(UserDataHolderBase holder) {
@@ -473,8 +473,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       myProcessHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
 
       var eventMessage = BuildBundle.message("build.status.running");
-      myEventDispatcher.onEvent(id,
-        StartBuildEvent.builder(eventMessage, myBuildDescriptor)
+      myEventDispatcher.notifyBuildEvent(id,
+                                         StartBuildEvent.builder(eventMessage, myBuildDescriptor)
           .withBuildViewSettings(myConsoleSettings)
           .build()
       );
@@ -498,7 +498,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       var externalSystemId = id.getProjectSystemId();
       var externalProjectPath = mySettings.getExternalProjectPath();
       var eventResult = createFailureResult(title, exception, externalSystemId, myProject, externalProjectPath, myDataContext);
-      myEventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
+      myEventDispatcher.notifyBuildEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
       myProcessHandler.notifyProcessTerminated(1);
     }
 
@@ -506,7 +506,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       var eventMessage = BuildBundle.message("build.status.cancelled");
       var eventResult = new FailureResultImpl();
-      myEventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
+      myEventDispatcher.notifyBuildEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
       myProcessHandler.notifyProcessTerminated(1);
     }
 
@@ -514,7 +514,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       var eventMessage = BuildBundle.message("build.event.message.successful");
       var eventResult = new SuccessResultImpl();
-      myEventDispatcher.onEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
+      myEventDispatcher.notifyBuildEvent(id, FinishBuildEvent.builder(id, eventMessage, eventResult).build());
     }
 
     @Override
@@ -523,10 +523,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         myConsoleManager.onStatusChange(myConsoleView, event);
       }
       if (event instanceof ExternalSystemBuildEvent buildEvent) {
-        myEventDispatcher.onEvent(event.getId(), buildEvent.getBuildEvent());
+        myEventDispatcher.notifyBuildEvent(event.getId(), buildEvent.getBuildEvent());
       }
       else if (event instanceof ExternalSystemTaskExecutionEvent taskExecutionEvent) {
-        myEventDispatcher.onEvent(event.getId(), convert(taskExecutionEvent));
+        myEventDispatcher.notifyBuildEvent(event.getId(), convert(taskExecutionEvent));
       }
     }
 
