@@ -38,5 +38,6 @@
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.scope.ScopePaneProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>
     <uiDataRule implementation="com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneUiDataRule"/>
+    <projectViewSelectInTargetProvider implementation="com.intellij.platform.projectView.backend.actions.BackendProjectViewSelectInTargetProvider"/>
   </extensions>
 </idea-plugin>

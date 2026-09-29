@@ -6,7 +6,6 @@ package com.intellij.platform.projectView.frontend.actions
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.SelectInTarget
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -20,8 +19,8 @@ import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.SelectInSplitProjectView
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.SelectInContextDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
+import com.intellij.platform.projectView.pane.serialize
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.CoroutineName
@@ -217,7 +216,7 @@ private data class SelectInTask(
       LOG.debug { "Looking for the node to select for $context" }
       aggregator.findNodeForSelectIn(SelectInRequestDTO(
         targetId = target.minorViewId,
-        contextDTO = serialize(context),
+        contextDTO = context.serialize(),
         context = context,
       ))
     }
@@ -225,11 +224,6 @@ private data class SelectInTask(
     if (nodePath != null) {
       selectNodePath(nodePath, requestFocus = requestFocus, invokedManually = true)
     }
-  }
-
-  private fun serialize(context: SelectInContext): SelectInContextDTO {
-    val fileId = context.virtualFile.rpcId()
-    return SelectInContextDTO(fileId)
   }
 }
 
