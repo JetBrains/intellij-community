@@ -23,7 +23,8 @@ private val RESERVED_PATH_COMPONENT = Regex("(?i)(con|prn|aux|nul|com[1-9]|lpt[1
  * The community pass homes a complex plugin in its generated plugin package under `community/`. The plugin's own
  * package holds the plan files of the ultimate pass, and a second writer there would make the two passes alternate.
  * When the own package holds the same plan files, the community pass reads them there and writes no copy, see
- * [DevDistOwnPackagePlans].
+ * [DevDistOwnPackagePlans]. Under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], the two roles swap, see
+ * [devDistPluginPlanHome].
  */
 internal class DevDistPluginPlanHome(
   /** The project-relative directory: `community/plugins/kotlin/plugin`, `plugins/tailwindcss`, or `build/dev-dist-descriptors/intellij.java.plugin`. */
@@ -60,10 +61,24 @@ internal class DevDistPluginPlanHome(
  *
  * A module the [index] does not place fails the run: a plan file needs a package to sit in. The census prints one line
  * for a community plugin whose plan goes cross-half, with the first label that sent it there.
+ *
+ * [writesCommunityModulePackages] says whether the run writes the package of a community module, see
+ * [DevDistGenerationRoot.writesCommunityModulePackages]. The community half that writes them homes a complex plugin in
+ * its own package with the call in its `dev` section, and the directory is relative to `community/`. The ultimate half
+ * that does not write them homes a community plugin in the cross-half plugin package.
  */
-internal fun devDistPluginPlanHome(mainModule: String, planTexts: Collection<String>, index: DevDistBazelIndex): DevDistPluginPlanHome {
+internal fun devDistPluginPlanHome(
+  mainModule: String,
+  planTexts: Collection<String>,
+  index: DevDistBazelIndex,
+  writesCommunityModulePackages: Boolean = !index.planPackageIsCommunity,
+): DevDistPluginPlanHome {
   val location = requireNotNull(index.location(mainModule)) { "Plugin '$mainModule' has no Bazel package, so its plan files have no home" }
-  if (index.planPackageIsCommunity) {
+  if (index.planPackageIsCommunity && writesCommunityModulePackages) {
+    val directory = index.communityRoot.relativize(requireNotNull(index.packageDir(mainModule))).invariantSeparatorsPathString
+    return DevDistPluginPlanHome(directory = directory, packageLabel = location.absolutePackage, callIsCrossHalf = false, exportsPlanFiles = false)
+  }
+  if (index.planPackageIsCommunity || location.half == RepositoryHalf.COMMUNITY && !writesCommunityModulePackages) {
     val directory = crossHalfPackageDirectory(mainModule, product = null)
     return DevDistPluginPlanHome(directory = directory, packageLabel = "//$directory", callIsCrossHalf = true, exportsPlanFiles = false)
   }

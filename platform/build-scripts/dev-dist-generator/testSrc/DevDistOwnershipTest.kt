@@ -1,0 +1,211 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.buildScripts.devDistGenerator
+
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.devDist.JarSourceRecipe
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+
+/**
+ * The two values of [DevDistOwnership]: which half writes the generated files of a community package, and what the
+ * ultimate half reuses of the community half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES].
+ */
+class DevDistOwnershipTest {
+  @TempDir
+  lateinit var dir: Path
+
+  /** The community plugin of the synthetic index, in `@community//plugins/c`. */
+  private val communityPlugin = "intellij.c"
+
+  /** A half below the monorepo root that owns every package outside `community/`, as the ultimate half does. */
+  private val monorepoHalf = object : DevDistHalf by CommunityDevDistHalf {
+    override val name: String
+      get() = "monorepo"
+
+    override val rootDirectory: String
+      get() = ""
+
+    override fun ownsPackage(directory: String): Boolean = !CommunityDevDistHalf.ownsPackage(directory)
+  }
+
+  @Test
+  fun `the default keeps the ultimate half as the writer of the community sections`() {
+    assertThat(DevDistOwnership.DEFAULT).isEqualTo(DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS)
+    assertThat(withOwnershipProperty(null) { DevDistOwnership.configured() }).isEqualTo(DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS)
+    assertThat(withOwnershipProperty("EACH_HALF_OWNS_ITS_PACKAGES") { DevDistOwnership.configured() })
+      .isEqualTo(DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
+    assertThatThrownBy { withOwnershipProperty("BOTH") { DevDistOwnership.configured() } }.hasMessageContaining("'BOTH'")
+  }
+
+  @Test
+  fun `exactly one half writes the packages of the community modules under each value`() {
+    val ultimateToday = DevDistGenerationRoot.of(dir, monorepoHalf)
+    val communityToday = DevDistGenerationRoot.community(dir)
+    assertThat(ultimateToday.writesDevSections).isTrue()
+    assertThat(ultimateToday.writesCommunityModulePackages).isTrue()
+    assertThat(communityToday.writesDevSections).isFalse()
+    assertThat(communityToday.writesCommunityModulePackages).isFalse()
+
+    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
+    val community = DevDistGenerationRoot.community(dir, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
+    assertThat(ultimate.writesDevSections).isTrue()
+    assertThat(ultimate.writesCommunityModulePackages).isFalse()
+    assertThat(community.writesDevSections).isTrue()
+    assertThat(community.writesCommunityModulePackages).isTrue()
+    assertThat(ultimate.writesPackage("community/plugins/c")).isFalse()
+    assertThat(ultimate.writesPackage("plugins/x")).isTrue()
+    assertThat(community.writesPackage("community/plugins/c")).isTrue()
+  }
+
+  @Test
+  fun `a write outside the packages of the half fails and names the path`() {
+    val ultimate = DevDistGenerationRoot.of(dir, monorepoHalf, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)
+    ultimate.requireWritable("build/dev-dist-descriptors/$communityPlugin/BUILD.bazel")
+    assertThatThrownBy { ultimate.requireWritable("community/plugins/c/intellij.c.dev-plan.json") }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("community/plugins/c/intellij.c.dev-plan.json")
+      .hasMessageContaining("monorepo pass")
+
+    // The community half writes relative to `community/`.
+    DevDistGenerationRoot.community(dir, DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES).requireWritable("plugins/c/BUILD.bazel")
+    // The default lets the ultimate half write a community package.
+    DevDistGenerationRoot.of(dir, monorepoHalf).requireWritable("community/plugins/c/BUILD.bazel")
+  }
+
+  @Test
+  fun `the ultimate half reuses an equal community section and moves a differing one into a product package`() {
+    val own = mapOf("intellij.equal" to "dev_dist_plugin(a)", "intellij.other" to "dev_dist_plugin(b)", "intellij.unplanned" to "dev_dist_plugin(c)")
+    val upstream = mapOf("intellij.equal" to "dev_dist_plugin(a)", "intellij.other" to "dev_dist_plugin(x)")
+
+    assertThat(divergentDevSections(plugins = own.keys, sections = own, otherSections = upstream))
+      .containsExactly("intellij.other", "intellij.unplanned")
+  }
+
+  @Test
+  fun `the ultimate half reuses an equal content_module_jar call and relocates a differing one`() {
+    val index = syntheticIndex(dir, communityPlugin to "@community//plugins/c:c.jar", "intellij.x" to "//plugins/x:x.jar")
+    val call = "content_module_jar(module = \":c\")\n"
+
+    assertThat(isRelocatedContentModuleJarCall(communityPlugin, call, upstreamCalls = mapOf(communityPlugin to call), index = index)).isFalse()
+    assertThat(isRelocatedContentModuleJarCall(communityPlugin, call, upstreamCalls = mapOf(communityPlugin to "other\n"), index = index)).isTrue()
+    assertThat(isRelocatedContentModuleJarCall(communityPlugin, call, upstreamCalls = emptyMap(), index = index)).isTrue()
+    // An ultimate module and a run without a community result relocate nothing.
+    assertThat(isRelocatedContentModuleJarCall("intellij.x", call, upstreamCalls = emptyMap(), index = index)).isFalse()
+    assertThat(isRelocatedContentModuleJarCall(communityPlugin, call, upstreamCalls = null, index = index)).isFalse()
+  }
+
+  @Test
+  fun `a relocated call names the community module and its libraries in the ultimate spelling`() {
+    val index = syntheticIndex(dir, communityPlugin to "@community//plugins/c:c.jar")
+    val jar = ContentModuleJarTarget(
+      libraryTargetLabels = listOf("//libraries/x", "@lib//:y"),
+      modulesBefore = listOf("//platform/core"),
+      modulesAfter = emptyList(),
+      moduleName = communityPlugin,
+      sources = listOf(JarSourceRecipe(input = communityPlugin, kind = "module", filter = "module-v1")),
+    )
+
+    val call = relocatedContentModuleJarCall(communityPlugin, jar, index)
+
+    assertThat(call).startsWith("content_module_jar(\n    name = \"intellij.c_content_module_jar\",\n")
+    assertThat(call).contains("module = \"@community//plugins/c:c\"")
+    assertThat(call).contains("\"@community//libraries/x\"").contains("\"@lib//:y\"")
+    assertThat(call).contains("modules_before = [\"@community//platform/core\"]")
+    assertThat(relocatedContentModuleJarLabel(communityPlugin)).isEqualTo("//build/dev-dist-content-module-jars:intellij.c_content_module_jar")
+    assertThat(renderRelocatedContentModuleJarPackage(emptyMap())).isNull()
+    assertThat(renderRelocatedContentModuleJarPackage(mapOf(communityPlugin to call)))
+      .contains("load(\"@community//platform/build-scripts/bazel-rules:content_module_jar.bzl\", \"content_module_jar\")")
+      .endsWith(call)
+  }
+
+  @Test
+  fun `the ultimate half reuses the plan files and the calls of an equal complex community plugin`() {
+    val plans = communityPlans(planText = "{\"library\": \"//libraries/x\"}\n", call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:intellij.c_dev_descriptor\")\n")
+    val ultimateText = mapOf("intellij.c.dev-plan.json" to "{\"library\": \"@community//libraries/x\"}\n")
+    val ultimateCall = "dev_dist_complex_plugin(descriptor = \"@community//plugins/c:intellij.c_dev_descriptor\")\n"
+
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, ultimateText, ultimateCall)).isTrue()
+    val home = plans.upstreamHome(communityPlugin)
+    assertThat(home.directory).isEqualTo("community/plugins/c")
+    assertThat(home.packageLabel).isEqualTo("@community//plugins/c")
+    assertThat(home.callIsCrossHalf).isFalse()
+
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, mapOf("intellij.c.dev-plan.json" to "{}\n"), ultimateCall)).isFalse()
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, ultimateText, ultimateCall.replace("_dev_descriptor", "_other"))).isFalse()
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, ultimateText, crossHalfCalls = null)).isFalse()
+    assertThat(plans.acceptsUpstreamPlans("intellij.unknown", ultimateText, ultimateCall)).isFalse()
+  }
+
+  @Test
+  fun `the ultimate half keeps a complex plugin whose equal texts name a label outside the community call labels`() {
+    val call = "dev_dist_complex_plugin(libraries = {\"@dev_launch_{platform}_jcef//:files\": \"x\"})\n"
+    val plans = communityPlans(planText = "{}\n", call = call)
+
+    assertThat(plans.acceptsUpstreamPlans(communityPlugin, mapOf("intellij.c.dev-plan.json" to "{}\n"), call)).isFalse()
+  }
+
+  @Test
+  fun `the launch models of one key and one class must be equal`() {
+    val root = DevDistGenerationRoot.community(dir)
+    val community = mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n"), "AndroidStudio" to DevDistLaunchModel("A", "{}\n"))
+
+    checkSharedLaunchModels(community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n")), root)
+    // A key with two classes states two products.
+    checkSharedLaunchModels(community, mapOf("AndroidStudio" to DevDistLaunchModel("B", "{\"b\": 2}\n")), root)
+    assertThatThrownBy { checkSharedLaunchModels(community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 2}\n")), root) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("'Idea'")
+      .hasMessageContaining("IdeaCommunityProperties")
+  }
+
+  @Test
+  fun `each half states the refusals of every stated mode under the new value`() {
+    val community = listOf("Idea" to "monolith", "AndroidStudio" to "monolith")
+
+    assertThat(devDistRefusingModeIds(community, everyStatedMode = false)).isEmpty()
+    assertThat(devDistRefusingModeIds(community, everyStatedMode = true)).containsExactly("frontend")
+    assertThat(devDistRefusingModeIds(community + ("Client" to "frontend"), everyStatedMode = false)).containsExactly("frontend")
+    assertThatThrownBy { devDistRefusingModeIds(listOf("Server" to "backend"), everyStatedMode = true) }
+      .hasMessageContaining("[Server]")
+      .hasMessageContaining("backend")
+  }
+
+  @Test
+  fun `a resource statement that the community half does not declare is reported with its layout`() {
+    val ultimate = DevDistResourceStatements()
+    ultimate.addDirectory("@community//python", "helpers/pydev", requester = "intellij.python")
+    ultimate.addDirectory("@community//python", "helpers/common", requester = "intellij.python")
+    val community = DevDistResourceStatements()
+    community.addDirectory("//python", "helpers/common")
+
+    assertThat(ultimate.missingIn(community, "@community//python")).containsExactly("directory helpers/pydev")
+    assertThat(ultimate.requesters("@community//python")).containsExactly("intellij.python")
+    community.addDirectory("//python", "helpers/pydev")
+    assertThat(ultimate.missingIn(community, "@community//python")).isEmpty()
+  }
+
+  /** The plans of a community half whose own package of [communityPlugin] holds one plan file and one call. */
+  private fun communityPlans(planText: String, call: String): DevDistOwnPackagePlans {
+    return DevDistOwnPackagePlans(
+      homes = mapOf(communityPlugin to DevDistPluginPlanHome("plugins/c", "@community//plugins/c", callIsCrossHalf = false, exportsPlanFiles = false)),
+      planFiles = mapOf(communityPlugin to mapOf("intellij.c.dev-plan.json" to planText)),
+      sectionCalls = mapOf(communityPlugin to call),
+      exportedFiles = emptyMap(),
+      rootDirectory = "community",
+    )
+  }
+
+  private fun <T> withOwnershipProperty(value: String?, action: () -> T): T {
+    val name = "intellij.build.dev.dist.ownership"
+    val previous = System.getProperty(name)
+    if (value == null) System.clearProperty(name) else System.setProperty(name, value)
+    try {
+      return action()
+    }
+    finally {
+      if (previous == null) System.clearProperty(name) else System.setProperty(name, previous)
+    }
+  }
+}

@@ -106,6 +106,11 @@ private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
  *
  * [refusedContentModules] are content modules the baseline descriptor refuses. They stay in the section list, and the
  * packer does not ship them. They are not part of the reuse set the section must cover.
+ *
+ * [relocatedModules] are the modules whose `content_module_jar` call sits in the product package of the ultimate half,
+ * see [DevDistBuildSections.relocatedContentModuleJarCalls]. A section infers the jar of a content module from the
+ * package of the module, so a plugin that reuses such a jar is declared cross-half. [contentModuleJarLabel] gives the
+ * label of the jar of a reused module.
  */
 internal fun classifySimplePluginPackaging(
   entry: DevDistPluginPlanEntry,
@@ -116,6 +121,8 @@ internal fun classifySimplePluginPackaging(
   index: DevDistBazelIndex,
   baseline: Boolean,
   refusedContentModules: Set<String> = emptySet(),
+  relocatedModules: Set<String> = emptySet(),
+  contentModuleJarLabel: (String) -> String? = { index.contentModuleJarLabel(it, dependentIsCommunity = index.planPackageIsCommunity) },
 ): DevDistSimplePackaging? {
   if (!entry.isNeutral) return null
   val record = entry.records.getValue("")
@@ -202,6 +209,7 @@ internal fun classifySimplePluginPackaging(
   val labelTokens = jars.values.flatten().filter(::isLabelToken)
   val crossHalf = !ownDescriptorDeclared ||
                   reusedSet != sectionReuse ||
+                  reused.any { it in relocatedModules } ||
                   sectionIsCommunity && (
                     moduleTokens.any { index.isCommunity(it) != true } ||
                     labelTokens.any { !index.canName(it, dependentIsCommunity = true) } ||
@@ -210,10 +218,7 @@ internal fun classifySimplePluginPackaging(
   val pluginDirectory = entry.layout("").directoryName
   // The cross-half package lists the reused jars by label, sorted. The own section lists them in content order.
   val declaredReuse = if (crossHalf) {
-    reused.sortedBy {
-      index.contentModuleJarLabel(it, dependentIsCommunity = index.planPackageIsCommunity)
-      ?: error("Module '$it' has no content_module_jar label")
-    }
+    reused.sortedBy { contentModuleJarLabel(it) ?: error("Module '$it' has no content_module_jar label") }
   }
   else {
     contentModuleNames.filter { it in reusedSet }

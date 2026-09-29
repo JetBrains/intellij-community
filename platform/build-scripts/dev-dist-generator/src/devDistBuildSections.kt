@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
@@ -100,6 +101,18 @@ internal class DevDistBuildSections private constructor(
   private val frontendRootDescriptorJars: List<Target>,
   /** Whether each request is planned on its own too, and checked against the shortcut that planned it, see [computePluginPlan]. */
   @JvmField internal val verifyPlanUnits: Boolean,
+  /**
+   * The `content_module_jar` call of every community module that the ultimate half packs differently from the community
+   * half, keyed by module and sorted. The product package [DEV_DIST_CONTENT_MODULE_JARS_PACKAGE] holds these calls. Only
+   * the ultimate half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES] has any.
+   */
+  @JvmField val relocatedContentModuleJarCalls: Map<String, String> = emptyMap(),
+  /**
+   * The `withResource*` inputs of every layout of the community registry that no product of the run plans, keyed by main
+   * module. Only the community half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES] has any, because it writes the
+   * resource statements of every community package, see [collectRegistryLayoutResourceInputs].
+   */
+  private val registryResourceInputs: Map<String, List<DevDistPluginRawInput>> = emptyMap(),
 ) {
   private val canonicalOwnerIndex = DevDistCanonicalOwners(verdicts.contentModuleJarLabels.mapValues { it.value.canonicalArtifact }, index)
   private val completedPluginPlans = LinkedHashMap<DevDistPluginPlanKey, DevDistPluginPlanRecord>()
@@ -108,6 +121,7 @@ internal class DevDistBuildSections private constructor(
   private val divergentPackagings = TreeMap<String, DevDistSimplePackaging>()
   private val renderedDevSections = TreeMap<String, String>()
   private val renderedResourceFilegroups = TreeMap<String, String>()
+  private var resourceStatements: DevDistResourceStatements? = null
   private val pluginExecutionCalls = TreeMap<String, String>()
   private val planFileExports = TreeMap<String, String>()
   private var pluginExecutionsBound = false
@@ -266,6 +280,8 @@ internal class DevDistBuildSections private constructor(
         baseline = baseline,
         refusedContentModules = draft?.refusedContentModules.orEmpty(),
         index = index,
+        relocatedModules = relocatedContentModuleJarCalls.keys,
+        contentModuleJarLabel = ::contentModuleJarLabel,
       )
       ClassifiedPluginPlanEntry(entry = entry, baseline = baseline, packaging = packaging)
     }
@@ -308,16 +324,52 @@ internal class DevDistBuildSections private constructor(
   private fun renderResourceFilegroups(): Map<String, String> {
     val statements = DevDistResourceStatements()
     for ((absolutePackage, packageRelativePath) in halfStatements.resourceDirectories) {
-      statements.addDirectory(absolutePackage = absolutePackage, packageRelativePath = packageRelativePath)
+      statements.addDirectory(absolutePackage = absolutePackage, packageRelativePath = packageRelativePath, requester = "the ${half.name} asset binder")
     }
     for ((key, record) in completedPluginPlans) {
       statements.addPlanInputs(plugin = key.plugin, inputs = record.plan.requiredRawInputs)
     }
+    for ((plugin, inputs) in registryResourceInputs) {
+      statements.addPlanInputs(plugin = plugin, inputs = inputs)
+    }
+    resourceStatements = statements
     return statements.render(index)
   }
 
   /** Whether a plan names a resource filegroup or an exported resource file that the section of [module] declares. */
   fun ownsResourceFilegroup(module: String): Boolean = renderedResourceFilegroups.containsKey(module)
+
+  /**
+   * Fails when a plan of this run names a resource filegroup or an exported file of a community package that the section
+   * of [upstream] does not declare. The ultimate half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES] writes no
+   * community section, so the community half must declare every such statement. The message names the package, the
+   * missing statements and the layouts that need them.
+   */
+  fun requireResourcesDeclaredBy(upstream: DevDistBuildSections) {
+    val own = checkNotNull(resourceStatements) { "The resource statements render after the plugin plan entries are bound" }
+    val declared = checkNotNull(upstream.resourceStatements) { "The upstream resource statements are not rendered" }
+    val missing = TreeMap<String, List<String>>()
+    for (absolutePackage in own.packages) {
+      val owner = index.modulesInPackage(absolutePackage).firstOrNull() ?: continue
+      if (index.isCommunity(owner) != true) continue
+      val gaps = own.missingIn(declared, absolutePackage)
+      if (gaps.isNotEmpty()) missing.put(absolutePackage, gaps)
+    }
+    check(missing.isEmpty()) {
+      missing.entries.joinToString(
+        prefix = "The ${half.name} half needs resource statements of community packages that the ${upstream.half.name} half does not declare:\n",
+        separator = "\n",
+      ) { (absolutePackage, gaps) -> "$absolutePackage: $gaps, for the layouts ${own.requesters(absolutePackage)}" }
+    }
+  }
+
+  /**
+   * The label of the `content_module_jar` target of [module] as the plans of this run name it: a label of the product
+   * package for a relocated call, see [relocatedContentModuleJarCalls], and the label of the own package otherwise.
+   */
+  fun contentModuleJarLabel(module: String): String? {
+    return verdicts.contentModuleJarLabels.get(module)?.label ?: index.contentModuleJarLabel(module, dependentIsCommunity = index.planPackageIsCommunity)
+  }
 
   /**
    * Binds the rendered plugin executions to the sections, once, before the first [sectionBody] read.
@@ -352,6 +404,15 @@ internal class DevDistBuildSections private constructor(
       planFileExports.put(mainModule, renderResourceFileExports(fileNames))
     }
     pluginExecutionsBound = true
+  }
+
+  /**
+   * Whether the section of [module] holds a statement that only this half states: a target of the binder of [half] or a
+   * frontend root descriptor jar.
+   */
+  fun ownsHalfStatements(module: String): Boolean {
+    return halfStatements.statements.get(module).orEmpty().isNotEmpty() ||
+           module == half.embeddedFrontend?.descriptorModule && frontendRootDescriptorJars.isNotEmpty()
   }
 
   /** Whether the section of [module] holds a `dev_dist_complex_plugin` call or exports a plan file. */
@@ -557,6 +618,8 @@ internal class DevDistBuildSections private constructor(
       verifyPlanUnits: Boolean = false,
       foreignSections: Set<String> = emptySet(),
       writtenContentModuleJarModules: Set<String>? = null,
+      ownership: DevDistOwnership = DevDistOwnership.DEFAULT,
+      upstream: DevDistBuildSections? = null,
     ): DevDistBuildSections {
       val index = snapshotDevDistBazelIndex(sourceIndex)
 
@@ -609,6 +672,16 @@ internal class DevDistBuildSections private constructor(
           .also { span.setAttribute("count", it.size.toLong()) }
       }
       val halfStatements = half.assetBinder.sectionStatements(pluginRequests, index)
+      // A half that writes the community packages declares the resources of every layout of its registry, so that a plan
+      // of the other half can name them.
+      val registryResourceInputs = if (ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES && index.planPackageIsCommunity) {
+        buildSpan("dev sections: registry layout resources") {
+          collectRegistryLayoutResourceInputs(products = products, requests = pluginRequests, index = index, outputProvider = outputProvider, half = half)
+        }
+      }
+      else {
+        emptyMap()
+      }
       val plans = buildSpan("dev sections: descriptor plans") {
         collectPluginDescriptorPlans(
           walk = walk,
@@ -623,6 +696,7 @@ internal class DevDistBuildSections private constructor(
           testPluginsByProduct = testPluginsByProduct(pluginRequests),
           half = half,
           embeddedClasses = embeddedClasses,
+          everyStatedMode = ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES,
         )
       }
 
@@ -641,6 +715,7 @@ internal class DevDistBuildSections private constructor(
         isBuildSectionSkipped = files::isBuildSectionSkipped,
       )
       val contentModuleJarCalls = TreeMap<String, String>()
+      val relocatedCalls = TreeMap<String, String>()
       val contentModuleJarLabels = TreeMap<String, DevDistModuleJarArtifact>()
       val loadStatements = TreeMap<String, MutableList<LoadStatement>>()
       for ((module, loads) in halfStatements.loadStatements) {
@@ -652,11 +727,25 @@ internal class DevDistBuildSections private constructor(
           if (writtenContentModuleJarModules != null && module !in writtenContentModuleJarModules) {
             continue
           }
-          contentModuleJarCalls.put(module, statements.renderFor(module) ?: continue)
+          val call = statements.renderFor(module) ?: continue
+          contentModuleJarCalls.put(module, call)
           loadStatements.computeIfAbsent(module) { ArrayList() }.add(statements.loadStatement(module))
+          // The ultimate half reuses the call of the community half when the texts are equal. It writes any other call of
+          // a community module into its product package, see `relocatedContentModuleJarCall`.
+          val relocated = isRelocatedContentModuleJarCall(module, call, upstream?.contentModuleJarCalls, index)
+          if (upstream != null && relocated) {
+            val reason = if (upstream.contentModuleJarCalls.containsKey(module)) "the community half states another call" else "the community half states no call"
+            println("relocated the content_module_jar call of $module: $reason")
+            relocatedCalls.put(module, relocatedContentModuleJarCall(module, checkNotNull(statements.computeJar(module)), index))
+          }
           // As a plan package of this pass writes it, which is the spelling the plan files of the pass need.
-          val label = index.contentModuleJarLabel(module = module, dependentIsCommunity = index.planPackageIsCommunity)
-                      ?: error("Module '$module' gets a content_module_jar call and has no label")
+          val label = if (relocated) {
+            relocatedContentModuleJarLabel(module)
+          }
+          else {
+            index.contentModuleJarLabel(module = module, dependentIsCommunity = index.planPackageIsCommunity)
+            ?: error("Module '$module' gets a content_module_jar call and has no label")
+          }
           val jar = checkNotNull(statements.computeJar(module))
           contentModuleJarLabels.put(module, DevDistModuleJarArtifact(
             label = label,
@@ -723,6 +812,8 @@ internal class DevDistBuildSections private constructor(
         halfStatements = halfStatements,
         frontendRootDescriptorJars = embeddedClasses.renderFrontendRootDescriptorJars(),
         verifyPlanUnits = verifyPlanUnits,
+        relocatedContentModuleJarCalls = Collections.unmodifiableMap(relocatedCalls),
+        registryResourceInputs = registryResourceInputs,
       )
       buildSpan("dev sections: register plugin plans") { span ->
         registerGeneratedDevDistPluginPlans(
@@ -804,6 +895,12 @@ internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors
  * community pass names any, see [foreignDevSections]. Such a plugin declares no own leaf, so the run writes its leaf and
  * its `dev_plugin` into the generated plugin package. [writtenContentModuleJarModules] names the modules with a
  * `content_module_jar` call on disk, or `null` for the ultimate pass, which writes every call.
+ *
+ * [ownership] decides which half writes a community package, see [DevDistOwnership]. Under
+ * [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], every descriptor entry states the refusals of every stated mode, and
+ * the community half states the resources of every layout of its registry. [upstream] is the result of the community
+ * half, which the ultimate half reads. A `content_module_jar` call of a community module that differs from the one of
+ * [upstream] goes to the product package, see [DevDistBuildSections.relocatedContentModuleJarCalls].
  */
 internal fun computeDevDistBuildSections(
   projectRoot: Path,
@@ -818,11 +915,141 @@ internal fun computeDevDistBuildSections(
   verifyPlanUnits: Boolean = false,
   foreignSections: Set<String> = emptySet(),
   writtenContentModuleJarModules: Set<String>? = null,
+  ownership: DevDistOwnership = DevDistOwnership.DEFAULT,
+  upstream: DevDistBuildSections? = null,
 ): DevDistBuildSections {
   return DevDistBuildSections.compute(
     projectRoot, outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections,
-    writtenContentModuleJarModules,
+    writtenContentModuleJarModules, ownership, upstream,
   )
+}
+
+/**
+ * The community plugins that [ultimate] plans and whose `dev` section differs from the one of [upstream], sorted.
+ *
+ * Under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], the community half writes every community section. The
+ * ultimate half reuses the leaf and the `dev_plugin` of such a section when it renders the same body. Both halves
+ * state the refusals of every stated mode, so the whole bodies compare. A plugin that no community product plans has
+ * no community section, so it is in the result.
+ */
+internal fun foreignCommunitySections(upstream: DevDistBuildSections, ultimate: DevDistBuildSections): Set<String> {
+  val planned = ultimate.pluginPlanEntries.mapTo(TreeSet()) { it.mainModule }.filter { ultimate.index.isCommunity(it) == true }
+  return divergentDevSections(plugins = planned, sections = ultimate.devSections, otherSections = upstream.devSections)
+}
+
+/** The plugins of [plugins] whose section body in [sections] differs from the one in [otherSections], sorted. A missing body is `null`. */
+internal fun divergentDevSections(plugins: Collection<String>, sections: Map<String, String>, otherSections: Map<String, String>): Set<String> {
+  return plugins.filterTo(TreeSet()) { sections.get(it) != otherSections.get(it) }
+}
+
+/**
+ * Whether the ultimate half writes the `content_module_jar` call [call] of [module] into its product package. That is
+ * the case for a community module when [upstreamCalls], the calls of the community half, state no call or another text
+ * for it. `null` [upstreamCalls] says that no community result is read, and then no call moves.
+ */
+internal fun isRelocatedContentModuleJarCall(module: String, call: String, upstreamCalls: Map<String, String>?, index: DevDistBazelIndex): Boolean {
+  return upstreamCalls != null && index.isCommunity(module) == true && upstreamCalls.get(module) != call
+}
+
+/** The package of the `content_module_jar` calls that the ultimate half relocates, relative to the monorepo root. */
+internal const val DEV_DIST_CONTENT_MODULE_JARS_PACKAGE: String = "build/dev-dist-content-module-jars"
+
+/** The name of the relocated `content_module_jar` target of [module]. The JPS name keeps two modules of one target name apart. */
+private fun relocatedContentModuleJarTargetName(module: String): String = module + "_content_module_jar"
+
+/** The label of the relocated `content_module_jar` target of [module], see [DEV_DIST_CONTENT_MODULE_JARS_PACKAGE]. */
+internal fun relocatedContentModuleJarLabel(module: String): String {
+  return "//$DEV_DIST_CONTENT_MODULE_JARS_PACKAGE:${relocatedContentModuleJarTargetName(module)}"
+}
+
+/**
+ * The `content_module_jar` call of the community module [module] in the product package of the ultimate half.
+ *
+ * [jar] spells its labels for the package of the module, so this call spells each `//` label as `@community//`. The
+ * call names the module by its full label and states the name, because the macro derives the name from the target of
+ * the module, and two modules of one target name share the package.
+ */
+internal fun relocatedContentModuleJarCall(module: String, jar: ContentModuleJarTarget, index: DevDistBazelIndex): String {
+  val location = checkNotNull(index.location(module)) { "Module '$module' has no Bazel package, so it gets no call" }
+  check(location.half == RepositoryHalf.COMMUNITY) { "Only the call of a community module moves to $DEV_DIST_CONTENT_MODULE_JARS_PACKAGE: '$module'" }
+  fun respell(label: String): String = if (label.startsWith("//")) "@community$label" else label
+  val target = Target("content_module_jar")
+  target.option("name", relocatedContentModuleJarTargetName(module))
+  if (jar.libraryTargetLabels.isNotEmpty()) {
+    target.option("libraries", jar.libraryTargetLabels.map(::respell).unsorted())
+  }
+  target.option("module", "${location.absolutePackage}:${location.targetName}")
+  if (jar.modulesAfter.isNotEmpty()) {
+    target.option("modules_after", jar.modulesAfter.map(::respell).unsorted())
+  }
+  if (jar.modulesBefore.isNotEmpty()) {
+    target.option("modules_before", jar.modulesBefore.map(::respell).unsorted())
+  }
+  jar.nativeLib?.let { target.option("native_lib", it) }
+  jar.nativeLibDir?.let { target.option("native_lib_dir", it) }
+  return target.render()
+}
+
+/**
+ * The `BUILD.bazel` of [DEV_DIST_CONTENT_MODULE_JARS_PACKAGE] over [calls], keyed by module, or `null` when no call is
+ * relocated.
+ */
+internal fun renderRelocatedContentModuleJarPackage(calls: Map<String, String>): String? {
+  if (calls.isEmpty()) {
+    return null
+  }
+  return buildString {
+    append(GENERATED_BY_HEADER)
+    append("#\n")
+    append("# The `content_module_jar` calls of the community modules that the ultimate products pack differently from the\n")
+    append("# community products. The community half writes the call of the community products in the package of the module.\n")
+    append("\n")
+    append("load(\"@community").append(CONTENT_MODULE_JAR_BZL).append("\", \"content_module_jar\")\n")
+    for (module in calls.keys.sorted()) {
+      append("\n")
+      append(calls.getValue(module))
+    }
+  }
+}
+
+/**
+ * The `withResource*` inputs of every layout of the registry of [half] that no request of [requests] plans, keyed by
+ * main module and sorted.
+ *
+ * The registry is the plugin layouts of the split products of [half]. Each layout binds for the first platform variant
+ * of its product. A layout that the half cannot bind prints one census line and states no input, because the half
+ * cannot plan it either.
+ */
+internal fun collectRegistryLayoutResourceInputs(
+  products: List<DiscoveredProduct>,
+  requests: List<DevDistPluginRequest>,
+  index: DevDistBazelIndex,
+  outputProvider: ModuleOutputProvider,
+  half: DevDistHalf,
+): Map<String, List<DevDistPluginRawInput>> {
+  val requested = requests.mapTo(HashSet()) { it.layout.mainModule }
+  val resources = DevDistResourceSources(index, outputProvider)
+  val result = TreeMap<String, List<DevDistPluginRawInput>>()
+  for ((product, _, productProperties) in products) {
+    if (product !in half.splitDistributions) continue
+    val properties = productProperties as? ProductProperties ?: continue
+    val variant = requests.firstOrNull { it.product == product }?.variant ?: continue
+    for (layout in properties.productLayout.pluginLayouts.value) {
+      val mainModule = layout.mainModule
+      if (mainModule in requested || mainModule in result || index.location(mainModule) == null) continue
+      val request = DevDistPluginRequest(product = product, properties = properties, tier = DevDistPluginTier.ADDITIONAL, variant = variant, layout = layout)
+      val bindings = try {
+        bindDevDistPluginLayout(request, variant, index, outputProvider, resources, half)
+      }
+      catch (e: DevDistUnplannableLayoutException) {
+        println("registry layout $mainModule states no resources: ${e.message}")
+        continue
+      }
+      val inputs = bindings.libraryLayout?.catalogueFacts?.additionalInputs.orEmpty() + bindings.assets.catalogueFacts.additionalInputs
+      result.put(mainModule, inputs.filter { isModuleResourceInputId(it.id) })
+    }
+  }
+  return result
 }
 
 /**
@@ -892,15 +1119,26 @@ private fun hasSameBuildPlan(a: DevDistPluginBuildPlan, b: DevDistPluginBuildPla
  *
  * The result holds every visited file, the unchanged ones included, so the generation summary can state how many
  * files it covers. [finish][DevDistPlanCompute.finish] writes or reports the changed files.
+ *
+ * [writesPackage] answers whether the run writes the package of a directory relative to [projectRoot], see
+ * [DevDistGenerationRoot.writesPackage]. The run leaves the file of another package alone.
  */
 internal fun writeDevDistBuildSectionFiles(
   projectRoot: Path,
   sections: DevDistBuildSections,
   index: DevDistBazelIndex,
   files: DevDistBuildFiles,
+  writesPackage: (String) -> Boolean = { true },
 ): DevDistPlanCompute {
   val updater = DeferredFileUpdater(projectRoot)
-  val results = writeDevDistBuildSections(projectRoot = projectRoot, sections = sections, index = index, files = files, updater = updater)
+  val results = writeDevDistBuildSections(
+    projectRoot = projectRoot,
+    sections = sections,
+    index = index,
+    files = files,
+    updater = updater,
+    writesPackage = writesPackage,
+  )
   return DevDistPlanCompute(updater = updater, files = results)
 }
 
@@ -918,11 +1156,22 @@ private fun writeDevDistBuildSections(
   index: DevDistBazelIndex,
   files: DevDistBuildFiles,
   updater: DeferredFileUpdater,
+  writesPackage: (String) -> Boolean,
 ): List<DevDistPlanFileResult> {
   val modulesByFile = TreeMap<Path, MutableList<String>>()
   for (module in index.targets.modules.keys) {
     val file = files.buildFile(module) ?: continue
     modulesByFile.computeIfAbsent(file) { ArrayList() }.add(module)
+  }
+  // The other half writes the sections of its packages. A statement that only this half states cannot sit there.
+  for ((file, modules) in modulesByFile.entries.toList()) {
+    val relativePath = projectRoot.relativize(file).invariantSeparatorsPathString
+    if (writesPackage(relativePath.substringBeforeLast('/', missingDelimiterValue = ""))) {
+      continue
+    }
+    val owners = modules.filter(sections::ownsHalfStatements).sorted()
+    check(owners.isEmpty()) { "The ${sections.half.name} half cannot write $relativePath, and the sections of $owners need its statements there" }
+    modulesByFile.remove(file)
   }
 
   files.preload(modulesByFile.keys)
@@ -1013,10 +1262,45 @@ internal class DevDistResourceStatements {
   private val directoriesByPackage = TreeMap<String, TreeSet<String>>()
   private val filteredDirectoriesByPackage = TreeMap<String, TreeMap<String, DevPluginResourceExclusions>>()
   private val filesByPackage = TreeMap<String, TreeSet<String>>()
+  private val requestersByPackage = TreeMap<String, TreeSet<String>>()
 
-  /** Adds the directory [packageRelativePath] of [absolutePackage] to the package filegroup. */
-  fun addDirectory(absolutePackage: String, packageRelativePath: String) {
+  /** Every package that a statement of this collection names, `@community//pkg` or `//pkg`, sorted. */
+  val packages: Set<String>
+    get() = TreeSet<String>().also {
+      it.addAll(directoriesByPackage.keys)
+      it.addAll(filteredDirectoriesByPackage.keys)
+      it.addAll(filesByPackage.keys)
+    }
+
+  /** The layouts and the binders that added a statement of [absolutePackage], sorted. */
+  fun requesters(absolutePackage: String): Set<String> = requestersByPackage.get(absolutePackage).orEmpty()
+
+  /**
+   * The statements of [absolutePackage] that this collection holds and [declared] does not, as text, in the order
+   * directories, filtered directories, files. [declared] may spell the package of a community module as `//pkg`.
+   */
+  fun missingIn(declared: DevDistResourceStatements, absolutePackage: String): List<String> {
+    val declaredPackage = when {
+      declared.packages.contains(absolutePackage) -> absolutePackage
+      absolutePackage.startsWith(COMMUNITY_REPOSITORY_PREFIX) -> "//" + absolutePackage.removePrefix(COMMUNITY_REPOSITORY_PREFIX)
+      else -> absolutePackage
+    }
+    val result = ArrayList<String>()
+    val directories = declared.directoriesByPackage.get(declaredPackage).orEmpty()
+    directoriesByPackage.get(absolutePackage).orEmpty().filterNot { it in directories }.mapTo(result) { "directory $it" }
+    val filtered = declared.filteredDirectoriesByPackage.get(declaredPackage).orEmpty()
+    for ((directory, exclusions) in filteredDirectoriesByPackage.get(absolutePackage).orEmpty()) {
+      if (filtered.get(directory) != exclusions) result.add("filtered directory $directory")
+    }
+    val files = declared.filesByPackage.get(declaredPackage).orEmpty()
+    filesByPackage.get(absolutePackage).orEmpty().filterNot { it in files }.mapTo(result) { "file $it" }
+    return result
+  }
+
+  /** Adds the directory [packageRelativePath] of [absolutePackage] to the package filegroup. [requester] names who needs it. */
+  fun addDirectory(absolutePackage: String, packageRelativePath: String, requester: String? = null) {
     directoriesByPackage.computeIfAbsent(absolutePackage) { TreeSet() }.add(packageRelativePath)
+    requester?.let { requestersByPackage.computeIfAbsent(absolutePackage) { TreeSet() }.add(it) }
   }
 
   /** Adds every `withResource*` input of the plan of [plugin]. An input of another kind is not a package resource. */
@@ -1026,6 +1310,7 @@ internal class DevDistResourceStatements {
         continue
       }
       val absolutePackage = input.label.substringBeforeLast(':')
+      requestersByPackage.computeIfAbsent(absolutePackage) { TreeSet() }.add(plugin)
       val prefix = input.sourceTreePrefix
       if (prefix == null) {
         filesByPackage.computeIfAbsent(absolutePackage) { TreeSet() }.add(input.label.substringAfterLast(':'))

@@ -264,9 +264,13 @@ internal fun isCommunityCallLabel(label: String, communityPass: Boolean = false)
   return label.startsWith(COMMUNITY_REPOSITORY_PREFIX) || label.startsWith("@lib//") || communityPass && label.startsWith("//")
 }
 
-/** [label] as a community package spells it: `@community//x:y` is `//x:y`, and `@lib//` and `//` keep their spelling. */
+/**
+ * [label] as a community package spells it: `@community//x:y` is `//x:y`, and every other label keeps its spelling. In
+ * the [communityPass], every label comes from the community model, so a call can name it. Another pass can name only a
+ * community call label, see [isCommunityCallLabel].
+ */
 private fun communityCallLabel(label: String, communityPass: Boolean): String {
-  require(isCommunityCallLabel(label, communityPass)) { "A community call cannot name '$label'" }
+  require(communityPass || isCommunityCallLabel(label)) { "A community call cannot name '$label'" }
   return if (label.startsWith(COMMUNITY_REPOSITORY_PREFIX)) "//" + label.removePrefix(COMMUNITY_REPOSITORY_PREFIX) else label
 }
 

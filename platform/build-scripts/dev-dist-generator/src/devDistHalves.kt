@@ -34,6 +34,8 @@ import java.nio.file.Path
  *
  * [testPlugins] are the Product DSL test plugins that a run-configuration module can be. Both halves read the same
  * specifications.
+ *
+ * [ownership] decides the order of the two halves and which half writes a community package, see [DevDistOwnership].
  */
 @ApiStatus.Internal
 fun TaskScope.forkDevDistHalves(
@@ -43,8 +45,9 @@ fun TaskScope.forkDevDistHalves(
   productDerivation: ProductDerivation,
   testPlugins: List<TestPluginSpec>,
   verifyPlanUnits: Boolean,
+  ownership: DevDistOwnership = DevDistOwnership.DEFAULT,
 ): DevDistHalvesRun {
-  val root = DevDistGenerationRoot.of(projectRoot, half)
+  val root = DevDistGenerationRoot.of(projectRoot, half, ownership)
   val products = productDerivation.products
   // The derivation carries no Bazel label, so it runs on every checkout. The dev sections and the plan need
   // `bazel-targets.json`. Both read one plugin packing derivation, so they state one packing per plugin. The plan
@@ -54,35 +57,54 @@ fun TaskScope.forkDevDistHalves(
       derivePluginPackings(root = root, outputProvider = outputProvider, derivation = productDerivation)
     }
   }
-  val bazelTask = if (!devDistPlanInputExists(projectRoot)) {
-    null
+  fun computeHalf(upstream: DevDistBazelComputes?): DevDistBazelComputes {
+    return computeDevDistBazelFiles(
+      root = root,
+      outputProvider = outputProvider,
+      products = products,
+      derivation = derivationTask.await(),
+      verifyPlanUnits = verifyPlanUnits,
+      targets = BazelTargetsInfo.loadBazelTargetsJson(projectRoot),
+      testPlugins = testPlugins,
+      upstream = upstream,
+    )
   }
-  else {
-    fork("generate dev-distribution build sections and plan") {
-      computeDevDistBazelFiles(
-        root = root,
-        outputProvider = outputProvider,
-        products = products,
-        derivation = derivationTask.await(),
-        verifyPlanUnits = verifyPlanUnits,
-        targets = BazelTargetsInfo.loadBazelTargetsJson(projectRoot),
-        testPlugins = testPlugins,
-      )
-    }
-  }
-  // The community pass reads its own model and the sections of the first pass, so it renders beside the pipeline
-  // after that pass. A run without the community JSON has no community pass, see `computeCommunityDevDistFiles`.
-  val communityTask = if (bazelTask == null) {
-    null
-  }
-  else {
-    fork("generate community dev-distribution plan") {
-      computeCommunityDevDistFiles(
-        projectRoot = projectRoot,
-        ultimate = bazelTask.await(),
-        verifyPlanUnits = verifyPlanUnits,
-        testPlugins = testPlugins,
-      )
+  var bazelTask: Subtask<DevDistBazelComputes>? = null
+  var communityTask: Subtask<DevDistBazelComputes?>? = null
+  if (devDistPlanInputExists(projectRoot)) {
+    when (ownership) {
+      DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS -> {
+        val ultimateTask = fork("generate dev-distribution build sections and plan") { computeHalf(upstream = null) }
+        bazelTask = ultimateTask
+        // The community pass reads its own model and the sections of the first pass, so it renders beside the pipeline
+        // after that pass. A run without the community JSON has no community pass, see `computeCommunityDevDistFiles`.
+        communityTask = fork("generate community dev-distribution plan") {
+          computeCommunityDevDistFiles(
+            projectRoot = projectRoot,
+            ultimate = ultimateTask.await(),
+            ownership = ownership,
+            verifyPlanUnits = verifyPlanUnits,
+            testPlugins = testPlugins,
+          )
+        }
+      }
+      // The community half renders first, and the half of this run reads its result as the upstream result. A run
+      // without the community JSON renders neither half. A committing run then fails in `finish`.
+      DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES -> if (Files.exists(communityTargetsJson(projectRoot))) {
+        val upstreamTask = fork("generate community dev-distribution plan") {
+          computeCommunityDevDistFiles(
+            projectRoot = projectRoot,
+            ultimate = null,
+            ownership = ownership,
+            verifyPlanUnits = verifyPlanUnits,
+            testPlugins = testPlugins,
+          )
+        }
+        communityTask = upstreamTask
+        bazelTask = fork("generate dev-distribution build sections and plan") {
+          computeHalf(upstream = requireUpstream(upstreamTask.await(), projectRoot))
+        }
+      }
     }
   }
   return DevDistHalvesRun(
@@ -95,6 +117,57 @@ fun TaskScope.forkDevDistHalves(
     bazelTask = bazelTask,
     communityTask = communityTask,
   )
+}
+
+/**
+ * Which half writes the generated files in the package of a community module, and so the order of the two halves.
+ *
+ * The default is [ULTIMATE_WRITES_COMMUNITY_SECTIONS]. The JVM property [DEV_DIST_OWNERSHIP_PROPERTY] selects the other
+ * value, see [configured].
+ */
+@ApiStatus.Internal
+enum class DevDistOwnership {
+  /**
+   * The ultimate half renders first. It writes every `dev` section, `content_module_jar` call and plan file, also under
+   * `community/`. The community half renders second over the ultimate result, and it writes only below
+   * `community/build/`.
+   */
+  ULTIMATE_WRITES_COMMUNITY_SECTIONS,
+
+  /**
+   * The community half renders first, and it writes every generated file under `community/` from the community model.
+   * The ultimate half renders second with the community result as the upstream result, and it writes only outside
+   * `community/`. It reuses a community target when its own text is equal, and else it writes a product package.
+   */
+  EACH_HALF_OWNS_ITS_PACKAGES;
+
+  @ApiStatus.Internal
+  companion object {
+    /** The value of a run that states no [DEV_DIST_OWNERSHIP_PROPERTY]. It keeps the output of the earlier commits. */
+    @JvmField
+    val DEFAULT: DevDistOwnership = ULTIMATE_WRITES_COMMUNITY_SECTIONS
+
+    /** The value that [DEV_DIST_OWNERSHIP_PROPERTY] names, or [DEFAULT]. An unknown name stops the run. */
+    fun configured(): DevDistOwnership {
+      val name = System.getProperty(DEV_DIST_OWNERSHIP_PROPERTY) ?: return DEFAULT
+      return entries.firstOrNull { it.name == name }
+             ?: error("The property $DEV_DIST_OWNERSHIP_PROPERTY names '$name', and the values are ${entries.map { it.name }}")
+    }
+  }
+}
+
+/** The JVM property that selects a [DevDistOwnership] value by its name. */
+private const val DEV_DIST_OWNERSHIP_PROPERTY: String = "intellij.build.dev.dist.ownership"
+
+/** The message of a run whose community half is missing. */
+private fun communityHalfMissing(projectRoot: Path): String {
+  return "The community pass needs ${projectRoot.relativize(communityTargetsJson(projectRoot))}." +
+         " Run ./community/build/jpsModelToBazelCommunityOnly.cmd first."
+}
+
+/** [upstream], the result of the community half. The half that reads it fails when it is missing. */
+private fun requireUpstream(upstream: DevDistBazelComputes?, projectRoot: Path): DevDistBazelComputes {
+  return checkNotNull(upstream) { communityHalfMissing(projectRoot) }
 }
 
 /** The dev-distribution renders that [forkDevDistHalves] started. */
@@ -118,13 +191,12 @@ class DevDistHalvesRun internal constructor(
   fun finish(commitPlan: Boolean): DevDistHalvesFiles {
     val projectRoot = root.projectRoot
     val derivation = derivationTask.await()
-    val bazelFiles = when {
-      bazelTask != null -> bazelTask.await()
-      // This run has no `bazel-targets.json`. A validating run reports nothing rather than failing on the missing file:
-      // the same validation also runs under Bazel, where the file is a declared input, and that run is what catches a
-      // stale plan. A committing run is the converter's own, so there a missing file is a setup error, and the render
-      // below fails and says so. That render is sequential, and it costs nothing: it is the run that fails.
-      commitPlan -> computeDevDistBazelFiles(
+    // This run has no `bazel-targets.json` when no task was forked. A validating run reports nothing rather than failing
+    // on the missing file: the same validation also runs under Bazel, where the file is a declared input, and that run is
+    // what catches a stale plan. A committing run is the converter's own, so there a missing file is a setup error, and
+    // the render below fails and says so. That render is sequential, and it costs nothing: it is the run that fails.
+    fun computeHalf(upstream: DevDistBazelComputes?): DevDistBazelComputes {
+      return computeDevDistBazelFiles(
         root = root,
         outputProvider = outputProvider,
         products = products,
@@ -132,37 +204,36 @@ class DevDistHalvesRun internal constructor(
         verifyPlanUnits = verifyPlanUnits,
         targets = BazelTargetsInfo.loadBazelTargetsJson(projectRoot),
         testPlugins = testPlugins,
+        upstream = upstream,
       )
-      else -> null
     }
-    val communityPlanCompute = when {
-      communityTask != null -> communityTask.await()
-      // Only a committing run renders the first plan above, so this render is sequential for the same reason.
-      bazelFiles != null -> computeCommunityDevDistFiles(projectRoot, bazelFiles, verifyPlanUnits, testPlugins)
-      else -> null
+    fun computeCommunityHalf(ultimate: DevDistBazelComputes?): DevDistBazelComputes? {
+      return computeCommunityDevDistFiles(projectRoot, ultimate, root.ownership, verifyPlanUnits, testPlugins)
+    }
+    val bazelFiles: DevDistBazelComputes?
+    val communityPlanCompute: DevDistBazelComputes?
+    when (root.ownership) {
+      DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS -> {
+        bazelFiles = bazelTask?.await() ?: if (commitPlan) computeHalf(upstream = null) else null
+        // Only a committing run renders the first plan above, so this render is sequential for the same reason.
+        communityPlanCompute = communityTask?.await() ?: bazelFiles?.let { computeCommunityHalf(it) }
+      }
+      DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES -> {
+        communityPlanCompute = communityTask?.await() ?: if (commitPlan) computeCommunityHalf(ultimate = null) else null
+        check(!commitPlan || communityPlanCompute != null) { communityHalfMissing(projectRoot) }
+        bazelFiles = bazelTask?.await() ?: communityPlanCompute?.takeIf { commitPlan }?.let { computeHalf(upstream = it) }
+      }
     }
     // A committing run needs the community targets JSON, as it needs the monorepo one. Under Bazel the property names it,
     // and a missing file already stopped the run. An IDE run without the workspace file validates no community pass.
-    check(!commitPlan || communityPlanCompute != null) {
-      "The community pass needs ${projectRoot.relativize(communityTargetsJson(projectRoot))}." +
-      " Run ./community/build/jpsModelToBazelCommunityOnly.cmd first."
-    }
+    check(!commitPlan || communityPlanCompute != null) { communityHalfMissing(projectRoot) }
     val sections = bazelFiles?.sections?.finish(commitChanges = commitPlan)
     val plan = bazelFiles?.plan?.finish(commitChanges = commitPlan)
+    val communitySections = communityPlanCompute?.sections?.finish(commitChanges = commitPlan)
     val communityPlan = communityPlanCompute?.plan?.finish(commitChanges = commitPlan)
     // A run without `bazel-targets.json` reports an empty section.
-    return DevDistHalvesFiles(
-      files = buildList {
-        addAll(sections?.files.orEmpty())
-        addAll(plan?.files.orEmpty())
-        addAll(communityPlan?.files.orEmpty())
-      },
-      diffs = buildList {
-        addAll(sections?.diffs.orEmpty())
-        addAll(plan?.diffs.orEmpty())
-        addAll(communityPlan?.diffs.orEmpty())
-      },
-    )
+    val results = listOfNotNull(sections, plan, communitySections, communityPlan)
+    return DevDistHalvesFiles(files = results.flatMap { it.files }, diffs = results.flatMap { it.diffs })
   }
 }
 
@@ -176,10 +247,10 @@ class DevDistHalvesFiles(
 /**
  * The two dev-distribution outputs that need `bazel-targets.json`: the `BUILD.bazel` dev sections and the plan.
  *
- * [sections] is `null` for the community pass, which writes no `dev` section. [buildSections] is the computation both
- * outputs read. The community pass compares its own sections with the ones of the ultimate pass. [ownPackagePlans] are
- * the plan files and the calls that this pass writes into the own package of a community plugin, and the community pass
- * reuses them.
+ * [sections] is `null` for a pass that writes no `dev` section, see [DevDistGenerationRoot.writesDevSections].
+ * [buildSections] is the computation both outputs read. The half that renders second compares its own sections with the
+ * ones of the first half. [ownPackagePlans] are the plan files and the calls that this pass writes into the own package
+ * of a community plugin, and the half that renders second reuses them.
  */
 internal class DevDistBazelComputes(
   @JvmField val sections: DevDistPlanCompute?,
@@ -198,8 +269,10 @@ internal class DevDistBazelComputes(
  * render get a span of their own. The JSON is read once, and the index gives it to every render. The descriptor walk
  * runs once, and every render reads it.
  *
- * [ultimate] is the result of the ultimate pass, which the community pass reads. It is `null` for the ultimate pass.
- * [testPlugins] are the Product DSL test plugins that a run-configuration module can be.
+ * [ultimate] is the result of the ultimate pass, which the community pass reads under
+ * [DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS]. [upstream] is the result of the community half, which the
+ * ultimate half reads under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES]. Both are `null` for the half that renders
+ * first. [testPlugins] are the Product DSL test plugins that a run-configuration module can be.
  */
 internal fun computeDevDistBazelFiles(
   root: DevDistGenerationRoot,
@@ -210,8 +283,16 @@ internal fun computeDevDistBazelFiles(
   targets: BazelTargetsInfo.TargetsFile,
   testPlugins: List<TestPluginSpec>,
   ultimate: DevDistBazelComputes? = null,
+  upstream: DevDistBazelComputes? = null,
 ): DevDistBazelComputes {
+  check(ultimate == null || root.ownership == DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS) {
+    "The ${root.passName} reads the ultimate result only when the ultimate half writes the community sections"
+  }
+  check(upstream == null || root.ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES) {
+    "The ${root.passName} reads the upstream result only when each half owns its packages"
+  }
   val ultimateSections = ultimate?.buildSections
+  val upstreamSections = upstream?.buildSections
   val projectRoot = root.projectRoot
   val index = DevDistBazelIndex(
     targets = targets,
@@ -243,19 +324,28 @@ internal fun computeDevDistBazelFiles(
         verifyPlanUnits = verifyPlanUnits,
         foreignSections = foreignSections,
         writtenContentModuleJarModules = ultimateSections?.contentModuleJarCalls?.keys,
+        ownership = root.ownership,
+        upstream = upstreamSections,
       )
     }
   }
-  val sections = when (ultimateSections) {
-    null -> computeSections(emptySet())
-    else -> computeForeignAwareSections(ultimateSections, ::computeSections)
+  val sections = when {
+    ultimateSections != null -> computeForeignAwareSections(ultimateSections, ::computeSections)
+    upstreamSections != null -> computeUpstreamAwareSections(upstreamSections, ::computeSections)
+    else -> computeSections(emptySet())
   }
+  upstreamSections?.let(sections::requireResourcesDeclaredBy)
   val executions = buildSpan("generate dev-distribution plugin executions") {
-    computeDevDistPluginExecutions(root = root, sections = sections, ownPackagePlans = ultimate?.ownPackagePlans)
+    computeDevDistPluginExecutions(
+      root = root,
+      sections = sections,
+      ownPackagePlans = ultimate?.ownPackagePlans,
+      upstreamPackagePlans = upstream?.ownPackagePlans,
+    )
   }
   val sectionFiles = if (root.writesDevSections) {
     buildSpan("write dev-distribution build sections") {
-      writeDevDistBuildSectionFiles(projectRoot = projectRoot, sections = sections, index = index, files = files)
+      writeDevDistBuildSectionFiles(projectRoot = projectRoot, sections = sections, index = index, files = files, writesPackage = root::writesPackage)
     }
   }
   else {
@@ -273,12 +363,57 @@ internal fun computeDevDistBazelFiles(
       runConfigurationRows = derivation.runConfigurations.rows,
     )
   }
+  // One key of both registries with one product class states one product, so the two halves render one launch model.
+  (ultimate ?: upstream)?.let { other -> checkSharedLaunchModels(half = plan.launchModels, otherHalf = other.plan.launchModels, root = root) }
   return DevDistBazelComputes(
     sections = sectionFiles,
     plan = plan,
     buildSections = sections,
-    ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering),
+    ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, root),
   )
+}
+
+/**
+ * The sections of the ultimate half under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES]. The first computation finds
+ * the community plugins whose `dev` section the community half states with another text, see [foreignCommunitySections].
+ * The second computation moves their leaf and their `dev_plugin` into the product package of the plugin under `build/`.
+ * Every other community plugin reuses the targets of its community section. The census prints one line per plugin.
+ */
+private fun computeUpstreamAwareSections(
+  upstreamSections: DevDistBuildSections,
+  computeSections: (Set<String>) -> DevDistBuildSections,
+): DevDistBuildSections {
+  val first = computeSections(emptySet())
+  val foreign = foreignCommunitySections(upstream = upstreamSections, ultimate = first)
+  for (mainModule in foreign) {
+    println("product package of $mainModule: the ultimate half states another leaf or packaging than its community section")
+  }
+  println("ultimate half: ${foreign.size} product packages of community plugins")
+  return if (foreign.isEmpty()) first else computeSections(foreign)
+}
+
+/**
+ * The launch model of one product of one half: the class of its product properties and the encoded text. Two halves
+ * render one text for a key that both registries name with one class.
+ */
+internal data class DevDistLaunchModel(@JvmField val productClass: String, @JvmField val text: String)
+
+/**
+ * Fails when a key of both registries has one product class and two launch models. [half] and [otherHalf] are keyed
+ * by the `dev-build.json` key. A key with two classes, such as `AndroidStudio`, states two products, so its models
+ * may differ. The message names the key and the class.
+ */
+internal fun checkSharedLaunchModels(half: Map<String, DevDistLaunchModel>, otherHalf: Map<String, DevDistLaunchModel>, root: DevDistGenerationRoot) {
+  for ((product, model) in half) {
+    val other = otherHalf.get(product) ?: continue
+    if (other.productClass != model.productClass) {
+      continue
+    }
+    check(other.text == model.text) {
+      "The two halves render two launch models for '$product' of ${model.productClass}. The ${root.passName} renders:\n" +
+      model.text + "\nand the other half renders:\n" + other.text
+    }
+  }
 }
 
 /**
@@ -340,14 +475,21 @@ fun communityTargetsJson(projectRoot: Path): Path {
  * alike, so under Bazel a module jar resolves through the runfiles of the tool. Out of Bazel, a jar path of the community
  * targets JSON is below the community output directory of the monorepo, and the provider resolves it there. `null` when
  * the property is not set and the workspace file does not exist. The caller decides what that means.
+ *
+ * [ultimate] is the result of the ultimate pass under [DevDistOwnership.ULTIMATE_WRITES_COMMUNITY_SECTIONS], and
+ * `null` under [DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES], where the community half renders first.
  */
 internal fun computeCommunityDevDistFiles(
   projectRoot: Path,
-  ultimate: DevDistBazelComputes,
+  ultimate: DevDistBazelComputes?,
+  ownership: DevDistOwnership,
   verifyPlanUnits: Boolean,
   testPlugins: List<TestPluginSpec>,
 ): DevDistBazelComputes? {
-  val root = DevDistGenerationRoot.community(projectRoot)
+  check((ultimate == null) == (ownership == DevDistOwnership.EACH_HALF_OWNS_ITS_PACKAGES)) {
+    "The community pass reads the ultimate result exactly when the ultimate half writes the community sections"
+  }
+  val root = DevDistGenerationRoot.community(projectRoot, ownership)
   val targetsFile = communityTargetsJson(projectRoot)
   if (!Files.exists(targetsFile)) {
     return null

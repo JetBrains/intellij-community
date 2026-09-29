@@ -339,12 +339,14 @@ private fun renderCrossHalfPackage(
 /**
  * The `dev_plugin` target of a cross-half simple plugin. Every label is explicit, because the ultimate package has no
  * JPS bridge map for community modules. The copies keep the ultimate spelling of their labels. The component index
- * names this target.
+ * names this target. [contentModuleJarLabel] gives the label of the jar of a reused module, which is a label of the
+ * product package of the ultimate half for a relocated call, see [DevDistBuildSections.relocatedContentModuleJarCalls].
  */
 internal fun renderCrossHalfDevPluginTarget(
   packaging: DevDistSimplePackaging,
   descriptorLabel: String,
   index: DevDistBazelIndex,
+  contentModuleJarLabel: (String) -> String? = { index.contentModuleJarLabel(it, dependentIsCommunity = index.planPackageIsCommunity) },
 ): String = buildString {
   val mainModule = packaging.mainModule
   fun moduleLabel(module: String): String {
@@ -356,10 +358,7 @@ internal fun renderCrossHalfDevPluginTarget(
   appendStarlarkStringList(name = "classpath_jars", values = packaging.classpathJars)
   appendStarlarkStringList(
     name = "content_module_jars",
-    values = packaging.reusedModules.map {
-      index.contentModuleJarLabel(it, dependentIsCommunity = index.planPackageIsCommunity)
-      ?: error("Module '$it' has no content_module_jar label")
-    }.sorted(),
+    values = packaging.reusedModules.map { contentModuleJarLabel(it) ?: error("Module '$it' has no content_module_jar label") }.sorted(),
   )
   appendStarlarkString(name = "descriptor", value = descriptorLabel)
   appendStarlarkStringList(name = "executable_files", values = packaging.executableFiles.sorted())
