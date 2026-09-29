@@ -250,7 +250,6 @@
                  description="Enable rendering of overlapping execution filters with hyperlinks."
                  defaultValue="true"
                  restartRequired="false"/>
-    <projectSettings service="com.intellij.execution.RunConfigurationProducerService"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
     <localInspection shortName="InconsistentLineSeparators" bundle="messages.LangBundle" key="inconsistent.line.separators"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"

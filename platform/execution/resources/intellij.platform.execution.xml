@@ -49,6 +49,7 @@
     <extensionPoint qualifiedName="com.intellij.execution.inlineResumeCreator" interface="com.intellij.execution.InlineResumeCreator" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <projectSettings service="com.intellij.execution.RunConfigurationProducerService"/>
     <projectSettings service="com.intellij.diagnostic.logging.LogConsolePreferences"/>
     <projectSettings service="com.intellij.execution.target.TargetEnvironmentsManager"/>
     <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
