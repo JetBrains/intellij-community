@@ -17,7 +17,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcherImpl
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemOutputMessageDispatcher
 import com.intellij.util.containers.addIfNotNull
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
@@ -50,12 +50,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
   @VisibleForTesting
   class GradleOutputMessageDispatcher(
-    private val buildId: BuildId,
+    buildId: BuildId,
     listener: BuildProgressListener,
     private val appendOutputToMainConsole: Boolean,
-    private val parsers: List<BuildOutputParser>,
-    consoleSettings: BuildViewSettingsProvider
-  ) : ExternalSystemOutputMessageDispatcherImpl(buildId, listener, parsers, consoleSettings) {
+    parsers: List<BuildOutputParser>,
+    consoleSettings: BuildViewSettingsProvider,
+  ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
+
+    private val reader = BuildOutputInstantReaderImpl(buildId, buildId, ::notifyBuildEvent, parsers)
 
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
@@ -145,7 +147,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     override fun doClose() {
       lineProcessor.close()
 
-      super.doClose()
+      reader.close()
 
       for (taskOutputReader in tasksOutputReaders.values) {
         taskOutputReader.close()
