@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -173,7 +173,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     boolean disabled = myDisabledShortNames.contains(shortName);
     Element element = new Element("extension")
       .setAttribute("name", shortName)
-      .setAttribute("enabled", disabled ? "false" : "true");
+      .setAttribute("enabled", Boolean.toString(!disabled));
     NamingConventionBean conventionBean = myNamingConventionBeans.get(shortName);
     if (!convention.createDefaultBean().equals(conventionBean)) {
       XmlSerializer.serializeInto(conventionBean, element);
@@ -189,7 +189,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   protected void checkName(@NotNull T member, @NotNull String name, @NotNull ProblemsHolder holder) {
-    if (member instanceof SyntheticElement) return;
+    if (member instanceof SyntheticElement || member.getContext() instanceof SyntheticElement) return;
     checkName(member, shortName -> {
       LocalQuickFix[] fixes;
       if (holder.isOnTheFly()) {
@@ -215,7 +215,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
           break;
         }
         NamingConventionBean activeBean = myNamingConventionBeans.get(shortName);
-        if (activeBean instanceof NamingConventionWithFallbackBean && ((NamingConventionWithFallbackBean)activeBean).isInheritDefaultSettings()) {
+        if (activeBean instanceof NamingConventionWithFallbackBean bean && bean.isInheritDefaultSettings()) {
           LOG.assertTrue(myDefaultConventionShortName != null, activeBean + " expects that default conversion is configured");
           shortName = myDefaultConventionShortName;
           //disabled when fallback is disabled

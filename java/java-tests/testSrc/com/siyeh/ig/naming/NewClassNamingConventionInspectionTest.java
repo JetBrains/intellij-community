@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -9,7 +9,7 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
-public class AbstractClassNamingConventionInspectionTest extends LightJavaInspectionTestCase {
+public class NewClassNamingConventionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() { doTest(); }
 
@@ -24,7 +24,7 @@ public class AbstractClassNamingConventionInspectionTest extends LightJavaInspec
                         "public @interface Test{}");
     doTest();
   }
-  
+
   public void testNested() {
     addEnvironmentClass("package org.junit.platform.commons.annotation; @interface Testable{}");
     addEnvironmentClass("package org.junit.jupiter.api; public @interface Nested{}");
@@ -35,6 +35,7 @@ public class AbstractClassNamingConventionInspectionTest extends LightJavaInspec
   @Override
   protected InspectionProfileEntry getInspection() {
     NewClassNamingConventionInspection conventionInspection = new NewClassNamingConventionInspection();
+    conventionInspection.setEnabled(true, ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
     conventionInspection.setEnabled(true, AbstractClassNamingConvention.ABSTRACT_CLASS_NAMING_CONVENTION_SHORT_NAME);
     conventionInspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME);
     conventionInspection.setEnabled(true, TestSuiteNamingConvention.TEST_SUITE_NAMING_CONVENTION_SHORT_NAME);
