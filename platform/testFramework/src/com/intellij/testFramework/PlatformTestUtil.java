@@ -304,6 +304,7 @@ public final class PlatformTestUtil {
 
     var expanded = tree.isExpanded(path);
     var childCount = tree.getModel().getChildCount(pathComponent);
+    var isLeaf = tree.getModel().isLeaf(pathComponent);
 
     PrintChildrenResult printChildrenResult = null;
     PrintChildrenResult.ChildrenAction childrenAction = PrintChildrenResult.ChildrenAction.VISIT;
@@ -312,7 +313,7 @@ public final class PlatformTestUtil {
       childrenAction = requireNonNull(printChildrenResult).Action;
     }
 
-    if (childCount > 0 && childrenAction != PrintChildrenResult.ChildrenAction.REMOVE) {
+    if (!isLeaf && childrenAction != PrintChildrenResult.ChildrenAction.REMOVE) {
       buff.append(expanded ? '-' : '+');
     }
 

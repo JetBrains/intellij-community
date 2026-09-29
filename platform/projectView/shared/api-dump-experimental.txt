@@ -132,6 +132,7 @@
 - a:getAction():com.intellij.ide.dnd.DnDAction
 *:com.intellij.platform.projectView.pane.ProjectViewNodeModel
 - com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
+- com.intellij.openapi.ui.Queryable
 - com.intellij.ui.treeStructure.TreeNodeWithPresentation
 - a:canNavigate():Z
 - a:canNavigateToSource():Z

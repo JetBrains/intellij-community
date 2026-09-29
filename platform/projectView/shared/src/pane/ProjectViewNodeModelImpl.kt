@@ -155,6 +155,10 @@ data class ProjectViewNodeModelImpl<T : Any>(
   override fun shouldBeInitiallyExpanded(): Boolean = (flags and FLAG_SHOULD_BE_INITIALLY_EXPANDED) != 0
 
   override fun expandOnDoubleClick(): Boolean = (flags and FLAG_EXPAND_ON_DOUBLE_CLICK) != 0
+
+  override fun putInfo(info: MutableMap<in String, in String>) {
+    info["id"] = presentation.mainText
+  }
 }
 
 private const val FLAG_CAN_NAVIGATE = (1 shl 0)

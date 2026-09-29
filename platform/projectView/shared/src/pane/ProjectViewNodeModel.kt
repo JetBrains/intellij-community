@@ -3,6 +3,7 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
+import com.intellij.openapi.ui.Queryable
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +30,7 @@ sealed interface ProjectViewNodeModelBuilder {
 }
 
 @ApiStatus.Experimental
-sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport, TreeNodeWithPresentation {
+sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport, TreeNodeWithPresentation, Queryable {
   val id: Long
   fun canNavigate(): Boolean
   fun canNavigateToSource(): Boolean
