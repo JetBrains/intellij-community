@@ -24,11 +24,6 @@ class ExternalSystemEventDispatcher(
     : this(taskId, progressListener, true, consoleSettings)
 
   private lateinit var outputMessageDispatcher: ExternalSystemOutputMessageDispatcher
-  private var outputType: ProcessOutputType = ProcessOutputType.STDOUT
-
-  override fun setStdOut(stdOut: Boolean) {
-    outputType = if (stdOut) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
-  }
 
   init {
     val buildOutputParsers = SmartList<BuildOutputParser>()
@@ -58,7 +53,7 @@ class ExternalSystemEventDispatcher(
     outputMessageDispatcher.onEvent(buildId, event)
   }
 
-  override fun onTextAvailable(text: String) {
+  override fun onTextAvailable(text: String, outputType: ProcessOutputType) {
     outputMessageDispatcher.onTextAvailable(text, outputType)
   }
 

@@ -9,6 +9,7 @@ import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.progress.BuildProgressDescriptorImpl
 import com.intellij.build.progress.BuildRootProgressImpl
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -65,16 +66,16 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
       buildRootProgress.start("Build started", BuildProgressDescriptorImpl(buildDescriptor))
       dispatcher.invokeOnCompletion { eventMessages += "completion message 1" }
       val task1Progress = buildRootProgress.startChildProgress("sub task1 started")
-      dispatcher.onTextAvailable("Task output line 1\n")
+      dispatcher.onTextAvailable("Task output line 1\n", ProcessOutputType.STDOUT)
       val task2Progress = buildRootProgress.startChildProgress("sub task2 started")
-      dispatcher.onTextAvailable("Task output line 2\n")
+      dispatcher.onTextAvailable("Task output line 2\n", ProcessOutputType.STDOUT)
       task2Progress.finish("sub task2 finished", SuccessResultImpl())
       task1Progress.finish("sub task1 finished", SuccessResultImpl())
       buildRootProgress.finish("Build finished", SuccessResultImpl())
       dispatcher.invokeOnCompletion { throw RuntimeException("Bad happens") }
       dispatcher.invokeOnCompletion { eventMessages += "completion message 2" }
       dispatcher.invokeOnCompletion { semaphore.up() }
-      dispatcher.onTextAvailable("Task output line 3\n")
+      dispatcher.onTextAvailable("Task output line 3\n", ProcessOutputType.STDOUT)
     }
     dispatcher.invokeOnCompletion { eventMessages += "Late completion message" }
 
