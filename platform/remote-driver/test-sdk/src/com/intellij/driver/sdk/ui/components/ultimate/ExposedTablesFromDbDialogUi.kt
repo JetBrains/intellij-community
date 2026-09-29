@@ -1,7 +1,6 @@
 package com.intellij.driver.sdk.ui.components.ultimate
 
-import com.intellij.driver.client.Remote
-import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -11,30 +10,44 @@ import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JCheckboxTreeFixture
 import com.intellij.driver.sdk.ui.components.elements.JTableUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleTable
+import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitForIndicators
 import java.awt.Point
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Duration.Companion.minutes
+
+private const val EX_ENTITY_RELATION_TREE_CLASS = "com.intellij.re.ui.bulk.MasterDetailsRelationPanel\$ExEntityRelationTree"
+private const val DB_COLUMNS_TABLE_CLASS = "com.intellij.re.ui.DbColumnsTable"
+private const val COMBOBOX_EDITOR_TEXT_FIELD_CLASS = "com.intellij.ui.ComboboxEditorTextField"
 
 fun Finder.exposedTablesFromDbDialog(action: ExposedTablesFromDbDialogUi.() -> Unit = {}): ExposedTablesFromDbDialogUi =
   x(ExposedTablesFromDbDialogUi::class.java) { byTitle("Exposed Tables from DB") }.apply(action)
 
 class ExposedTablesFromDbDialogUi(data: ComponentData) : DialogUiComponent(data) {
 
-  val entityTree: JCheckboxTreeFixture get() = x("//div[@class='ExEntityRelationTree']", JCheckboxTreeFixture::class.java)
-  val refreshDataSourceButton: UiComponent = x("//div[@accessiblename='Refresh IDEA Data Source']")
-  val columnsTable: JTableUiComponent get() = x("//div[@class='DbColumnsTable']", JTableUiComponent::class.java)
-  val packageField: JEditorUiComponent get() = x("//div[@class='ComboboxEditorTextField']").editor()
+  val entityTree: JCheckboxTreeFixture get() = x(xQuery { byType(EX_ENTITY_RELATION_TREE_CLASS) }, JCheckboxTreeFixture::class.java)
+  val refreshDataSourceButton: UiComponent = x(xQuery { byAccessibleName("Refresh IDEA Data Source") })
+  val columnsTable: JTableUiComponent get() = x(xQuery { byType(DB_COLUMNS_TABLE_CLASS) }, JTableUiComponent::class.java)
+  val packageField: JEditorUiComponent get() = x(xQuery { byType(COMBOBOX_EDITOR_TEXT_FIELD_CLASS) }).editor()
   fun setPackage(packageName: String) {
     packageField.text = packageName
   }
 
-  fun refreshDataSource() = refreshDataSourceButton.click()
+  fun refreshDataSource() {
+    refreshDataSourceButton.click()
+    waitForIntrospectionToFinish()
+  }
+
+  @OptIn(ManualWaitForIndicators::class)
+  private fun waitForIntrospectionToFinish(timeout: Duration = 5.minutes) {
+    driver.waitForIndicators(timeout)
+  }
 
   fun waitForTable(tableName: String, timeout: Duration = 2.minutes) {
     waitFor("Table '$tableName' to appear in entity tree", timeout) {
-      x("//div[@class='ExEntityRelationTree'][contains(@visible_text, '$tableName')]").present()
+      x(xQuery { byType(EX_ENTITY_RELATION_TREE_CLASS) and contains(byVisibleText(tableName)) }).present()
     }
   }
 
@@ -53,25 +66,5 @@ class ExposedTablesFromDbDialogUi(data: ComponentData) : DialogUiComponent(data)
   }
 
   private fun isRowChecked(row: Int): Boolean =
-    driver.withContext(OnDispatcher.EDT) {
-      driver.cast(entityTree.component, JTreeCheckedRowsRef::class)
-        .getPathForRow(row)
-        .getLastPathComponent()
-        .isChecked()
-    }
-}
-
-@Remote("javax.swing.JTree")
-private interface JTreeCheckedRowsRef {
-  fun getPathForRow(row: Int): TreePathRef
-}
-
-@Remote("javax.swing.tree.TreePath")
-private interface TreePathRef {
-  fun getLastPathComponent(): CheckedTreeNodeRef
-}
-
-@Remote("com.intellij.ui.CheckedTreeNode")
-private interface CheckedTreeNodeRef {
-  fun isChecked(): Boolean
+    entityTree.collectCheckboxes().first { it.row == row }.checkboxState
 }

@@ -1,11 +1,17 @@
 package com.intellij.driver.sdk.ui.components.ultimate
 
+import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
+import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitForIndicators
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+
+private const val DATABASE_VIEW_TREE_COMPONENT_CLASS = "com.intellij.database.view.DatabaseViewTreeComponent"
 
 class DatabaseViewTreeUiComponent(data: ComponentData) : JTreeUiComponent(data) {
 
@@ -18,6 +24,11 @@ class DatabaseViewTreeUiComponent(data: ComponentData) : JTreeUiComponent(data) 
     }
   }
 
+  @OptIn(ManualWaitForIndicators::class)
+  fun waitForIntrospectionToFinish(timeout: Duration = 5.minutes) {
+    driver.waitForIndicators(timeout)
+  }
+
   fun isSelectedPathContaining(text: String): Boolean =
     collectSelectedPaths().any { path -> path.path.any { it.contains(text, ignoreCase = true) } }
 
@@ -27,4 +38,4 @@ class DatabaseViewTreeUiComponent(data: ComponentData) : JTreeUiComponent(data) 
 }
 
 fun Finder.databaseViewTree(): DatabaseViewTreeUiComponent =
-  x("//div[@class='DatabaseViewTreeComponent']", DatabaseViewTreeUiComponent::class.java)
+  x(xQuery { byType(DATABASE_VIEW_TREE_COMPONENT_CLASS) }, DatabaseViewTreeUiComponent::class.java)
