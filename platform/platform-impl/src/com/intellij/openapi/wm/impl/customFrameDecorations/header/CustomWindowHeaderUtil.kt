@@ -116,7 +116,8 @@ object CustomWindowHeaderUtil {
   }
 
   private val NON_REMOVABLE_ACTIONS = setOf(
-    "TrialStateWidget"
+    "TrialStateWidget",
+    "IdeUpdateToolbarWidget",
   )
 
   internal fun isToolbarInHeader(uiSettings: UISettings, isFullscreen: Boolean): Boolean {
