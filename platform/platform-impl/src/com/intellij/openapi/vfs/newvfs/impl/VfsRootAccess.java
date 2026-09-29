@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -168,7 +167,7 @@ public final class VfsRootAccess {
     }
 
     try {
-      allowed.add(PathsKt.getInvariantSeparatorsPathString(getJavaHome()));
+      allowed.add(PathsKt.getInvariantSeparatorsPathString(Path.of(SystemProperties.getJavaHome())));
       allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
       //noinspection IO_FILE_USAGE,UnnecessaryFullyQualifiedName
@@ -262,17 +261,6 @@ public final class VfsRootAccess {
     assert !allowed.contains("/") : "Allowed roots should not contain '/'. You can disable the root access check explicitly if you don't need it.";
 
     return allowed;
-  }
-
-  private static Path getJavaHome() {
-    var javaHome = Path.of(SystemProperties.getJavaHome());
-    if (JdkUtil.checkForJre(javaHome) && !JdkUtil.checkForJdk(javaHome)) {
-      var javaHomeParent = javaHome.getParent();
-      if (JdkUtil.checkForJre(javaHomeParent) && JdkUtil.checkForJdk(javaHomeParent)) {
-        javaHome = javaHomeParent;
-      }
-    }
-    return javaHome;
   }
 
   private static String resolvedPath(String path) {
