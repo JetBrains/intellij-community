@@ -27,12 +27,12 @@ class PluginId private constructor(val idString: String) : Comparable<PluginId> 
     @JvmStatic
     fun getId(idString: String): PluginId = interner.intern(PluginId(idString))
 
-    @Deprecated("Use getId", ReplaceWith("getId(idString)"))
+    @Deprecated("Use getId", ReplaceWith("getId(idString)"), level = DeprecationLevel.ERROR)
     @ApiStatus.ScheduledForRemoval
     @JvmStatic
     fun findId(idString: String?): PluginId? = idString?.let(::getId)
 
-    @Deprecated("Use getId", ReplaceWith("getId(idStrings[0])"))
+    @Deprecated("Use getId", ReplaceWith("getId(idStrings[0])"), level = DeprecationLevel.ERROR)
     @ApiStatus.ScheduledForRemoval
     @JvmStatic
     fun findId(vararg idStrings: String): PluginId? = idStrings.firstOrNull()?.let(::getId)
