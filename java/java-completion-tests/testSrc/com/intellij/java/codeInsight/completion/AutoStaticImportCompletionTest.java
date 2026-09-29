@@ -44,8 +44,8 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
   }
 
   @Override
-  public final String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/autoStaticImport/";
+  public final String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/autoStaticImport/";
   }
 
   public void testSimpleStaticAutoImport() {

@@ -25,8 +25,8 @@ public class Normal8CompletionTest extends NormalCompletionTestCase {
   }
 
   @Override
-  public final String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/";
+  public final String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/";
   }
 
   public void testSelfStaticsOnly() {

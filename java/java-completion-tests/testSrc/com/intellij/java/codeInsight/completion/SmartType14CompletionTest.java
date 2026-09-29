@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class SmartType14CompletionTest extends LightFixtureCompletionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/";
   }
 
   @Override

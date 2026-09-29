@@ -16,8 +16,8 @@ import java.util.List;
 
 public class SignatureCompletionTest extends LightFixtureCompletionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/signature/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/signature/";
   }
 
   @Override

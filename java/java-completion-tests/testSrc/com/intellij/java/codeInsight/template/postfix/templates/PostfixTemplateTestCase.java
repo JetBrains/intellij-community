@@ -25,8 +25,8 @@ import static com.intellij.codeInsight.template.impl.LiveTemplateCompletionContr
 
 abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/templates/" + getSuffix();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/template/postfix/templates/" + getSuffix();
   }
 
   @NotNull

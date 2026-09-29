@@ -22,7 +22,7 @@ import com.intellij.testFramework.NeedsIndex
 @NeedsIndex.ForStandardLibrary
 class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"
+  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"
 
   fun testOverloadMethods() = doTest(2,
                                      "method()", "method(C)", "method(A, B)",

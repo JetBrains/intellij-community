@@ -42,6 +42,7 @@ intellij.idea.community.build.tasks.tests
 intellij.idea.community.main.tests
 intellij.java.compiler.heavy.tests
 intellij.java.compiler.tests
+intellij.java.completion.tests
 intellij.idea.tools.launch.tests
 intellij.java.byteCodeViewer.tests
 intellij.java.coverage.tests

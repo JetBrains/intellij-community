@@ -32,8 +32,8 @@ import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/smartType/";
   }
 
   public void testParenAfterCast1() {

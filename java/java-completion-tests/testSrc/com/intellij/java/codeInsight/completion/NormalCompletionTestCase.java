@@ -11,8 +11,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 
 public abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/";
   }
 
   public void configure() {

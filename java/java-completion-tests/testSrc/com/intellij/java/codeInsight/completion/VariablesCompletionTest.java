@@ -13,8 +13,8 @@ import java.util.Set;
 
 public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath();
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
   }
 
   public void testObjectVariable() {

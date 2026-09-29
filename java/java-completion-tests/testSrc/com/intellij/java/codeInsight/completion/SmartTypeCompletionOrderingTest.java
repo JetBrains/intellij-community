@@ -446,8 +446,8 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
   }
 
   private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting";

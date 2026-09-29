@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.testFramework.fixtures
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.JavaTestUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -93,7 +93,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       val m_test = makeModule(project, ModuleDescriptor.M_TEST)
       ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
 
-      val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
+      val libDir = "jar://${JavaTestUtil.getJavaTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
