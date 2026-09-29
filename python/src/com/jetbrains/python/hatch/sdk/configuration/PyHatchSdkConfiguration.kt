@@ -8,7 +8,6 @@ import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.PythonInfo
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.module.Module
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.hatch.HATCH_TOML
@@ -28,9 +27,11 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
-import com.jetbrains.python.module.getEel
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.orLogException
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.getEel
+import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.configuration.CheckToml
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
@@ -50,24 +51,24 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML, HATCH_TOML)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
-      { checkManageableEnv(module, true) },
-    ) { envExists -> { createSdk(module, envExists) } }
+      { checkManageableEnv(pyProject, true) },
+    ) { envExists -> { createSdk(pyProject, envExists) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
+  override suspend fun createSdkWithoutPyProjectTomlChecks(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
-      { checkManageableEnv(module, false) },
-    ) { envExists -> { createSdk(module, envExists) } }
+      { checkManageableEnv(pyProject, false) },
+    ) { envExists -> { createSdk(pyProject, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
   private suspend fun checkManageableEnv(
-    module: Module, checkToml: CheckToml,
+    pyProject: PyProject, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
-    val eel = module.getEel()
-    val hatchService = module.getHatchService(eel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
+    val eel = pyProject.getEel()
+    val hatchService = pyProject.baseDir.getHatchService(eel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
     val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
     val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
@@ -91,17 +92,17 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
   /**
    * Creates SDK for Hatch, it will also create a new Hatch environment and use an existing one.
    *
-   * @param module module used to create SDK
+   * @param pyProject project used to create SDK
    * @param envExists shows whether the environment already exists or a new one should be created
    */
-  private fun createSdk(module: Module, envExists: EnvExists): PyResult<PythonInterpreter> = runWithModalBlockingOrInBackground(
-    project = module.project,
+  private fun createSdk(pyProject: PyProject, envExists: EnvExists): PyResult<PythonInterpreter> = runWithModalBlockingOrInBackground(
+    project = pyProject.project,
     msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
-    val fileSystem = module.getEel().toFileSystem()
+    val fileSystem = pyProject.getEel().toFileSystem()
     val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
                               ?: return@runWithModalBlockingOrInBackground Result.failure(HatchExecutableNotFoundHatchError(null))
-    val hatchService = module.getHatchService(fileSystem, hatchExecutablePath.path).getOr { return@runWithModalBlockingOrInBackground it }
+    val hatchService = pyProject.baseDir.getHatchService(fileSystem, hatchExecutablePath).getOr { return@runWithModalBlockingOrInBackground it }
 
     val environment = if (envExists) {
       val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()
@@ -123,7 +124,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
       workingDirectoryPath = hatchService.getWorkingDirectoryPath(),
       fileSystem = fileSystem,
     ).onSuccess { sdk ->
-      sdk.getSdkAPI().setAssociationToModule(module)
+      sdk.getSdkAPI().setAssociationToModule(pyProject.residesOnModule)
     }
     sdk
   }

@@ -2,10 +2,10 @@
 package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -18,14 +18,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.VisibleForTesting
 
-suspend fun Module.findPythonVirtualEnvironments(): List<PythonBinary> {
-  val venvsInModule = this.baseDir?.let {
-    withContext(Dispatchers.IO) {
-      VirtualEnvReader().findVenvsInDir(it.toNioPath())
-    }
-  } ?: emptyList()
-
-  return venvsInModule
+/**
+ * The virtual environments that stand in [PyProject.baseDir].
+ */
+@ApiStatus.Internal
+suspend fun PyProject.findPythonVirtualEnvironments(): List<PythonBinary> = withContext(Dispatchers.IO) {
+  VirtualEnvReader().findVenvsInDir(baseDir)
 }
 
 
@@ -65,47 +63,47 @@ interface PyProjectSdkConfigurationExtension {
     fun createMap(): Map<ToolId, PyProjectSdkConfigurationExtension> = EP_NAME.extensionList.associateBy { it.toolId }
 
     /**
-     * The configurators for [module] as [PySdkConfiguratorsCache] last found them, probing only when it has no recent
+     * The configurators for [pyProject] as [PySdkConfiguratorsCache] last found them, probing only when it has no recent
      * answer — **this is the entry point to use.** Every configurator may run its own tool to answer (see
      * [checkEnvironmentAndPrepareSdkCreator]), and the same question is asked from several unrelated features, so a
      * fresh probe per caller means running poetry, uv and the rest several times over for one project.
      *
      * Comes with the venvs the probe scanned, since a caller acting on an option usually needs those too.
      *
-     * Use [findAllSortedForModule] instead only where the answer must be true *right now*: under the SDK-configuration
+     * Use [findAllSorted] instead only where the answer must be true *right now*: under the SDK-configuration
      * lock, or straight after installing a tool — and in a test that changes the project on disk and asks again.
      */
-    suspend fun findAllSortedForModuleCached(module: Module): ModuleConfigurators =
-      PySdkConfiguratorsCache.getInstance(module.project).get(module)
+    suspend fun findAllSortedCached(pyProject: PyProject): PyProjectConfigurators =
+      PySdkConfiguratorsCache.getInstance(pyProject.project).get(pyProject)
 
     /**
-     * Drops what [findAllSortedForModuleCached] remembers about [module], for a caller that has just changed what a
+     * Drops what [findAllSortedCached] remembers about [pyProject], for a caller that has just changed what a
      * probe would find — installing one of the tools, which turns a "will install" option into a creatable one.
      */
-    fun invalidateCachedForModule(module: Module) {
-      PySdkConfiguratorsCache.getInstance(module.project).invalidate(module)
+    fun invalidateCached(pyProject: PyProject) {
+      PySdkConfiguratorsCache.getInstance(pyProject.project).invalidate(pyProject.residesOnModule)
     }
 
     /**
      * We return all configurators in a sorted order. The order is determined by extensions order, but existing environments have a
      * higher priority. That means we first have all existing envs, and only after SDK creators that extensions can manage.
      *
-     * Probes every configurator on every call — see [findAllSortedForModuleCached] for the cached entry point, which is
+     * Probes every configurator on every call — see [findAllSortedCached] for the cached entry point, which is
      * what most callers want.
      */
-    suspend fun findAllSortedForModule(module: Module, venvsInModule: List<PythonBinary>): List<CreateSdkInfoWithTool> {
+    suspend fun findAllSorted(pyProject: PyProject, venvs: List<PythonBinary>): List<CreateSdkInfoWithTool> {
       val offered = EP_NAME.extensionsIfPointIsRegistered
         .concurrentMapNotNull { e ->
-          e.checkEnvironmentAndPrepareSdkCreator(module, venvsInModule)?.let { e to CreateSdkInfoWithTool(it, e.toolId) }
+          e.checkEnvironmentAndPrepareSdkCreator(pyProject, venvs)?.let { e to CreateSdkInfoWithTool(it, e.toolId) }
         }
-      // A configurator that owns this module's setup leaves no room for the others — see [isExclusiveFor]. Only one
+      // A configurator that owns this project's setup leaves no room for the others — see [isExclusiveFor]. Only one
       // that actually offered something can claim it, so a tool that is missing from the machine blanks no list.
-      val claimed = offered.filter { (extension, _) -> extension.isExclusiveFor(module) }
+      val claimed = offered.filter { (extension, _) -> extension.isExclusiveFor(pyProject) }
       return claimed.ifEmpty { offered }.map { it.second }.sortedBy { it.createSdkInfo }
     }
 
-    suspend fun findAllSortedForModule(module: Module): List<CreateSdkInfoWithTool> {
-      return findAllSortedForModule(module, module.findPythonVirtualEnvironments())
+    suspend fun findAllSorted(pyProject: PyProject): List<CreateSdkInfoWithTool> {
+      return findAllSorted(pyProject, pyProject.findPythonVirtualEnvironments())
     }
 
     private suspend fun <A, B> Iterable<A>.concurrentMapNotNull(f: suspend (A) -> B?): List<B> = coroutineScope {
@@ -121,7 +119,22 @@ interface PyProjectSdkConfigurationExtension {
   val potentialDependencyFiles: Set<String>
 
   /**
-   * Discovers whether this extension can provide a Python SDK for the given module and prepares a creator for it.
+   * Whether this configurator owns the setup of [pyProject] outright, so that no other configurator's option applies.
+   *
+   * `false` for almost everything: a project can usually be set up with whichever tool the machine has, and the
+   * choice is the user's. `true` only where the project has already made that choice and another tool would build an
+   * environment beside the one the project declares.
+   *
+   * A uv workspace is the case today. It declares one environment, at its root, and a poetry or plain-venv
+   * environment made for a member is one uv ignores, along with every run configuration that uses it.
+   *
+   * [findAllSorted] keeps only the claimants when any configurator claims a project. Answer without running
+   * the tool: this is asked for every configurator on the busiest path into them.
+   */
+  suspend fun isExclusiveFor(pyProject: PyProject): Boolean = false
+
+  /**
+   * Discovers whether this extension can provide a Python SDK for [pyProject] and prepares a creator for it.
    *
    * This function is executed on a background thread and may perform I/O-intensive checks such as
    * reading project files (for example, pyproject.toml, Pipfile, requirements.txt, environment.yml), probing the
@@ -140,26 +153,12 @@ interface PyProjectSdkConfigurationExtension {
    *
    * The default ordering prefers existing environments over newly created ones; see CreateSdkInfo.compareTo.
    *
-   * @param module module to inspect and derive configuration from
+   * @param pyProject project to inspect and derive configuration from
+   * @param venvs the virtual environments that stand in [PyProject.baseDir], as [findPythonVirtualEnvironments] found them
    * @return descriptor to create/register a suitable SDK, or null if this extension cannot configure the project
    */
-  /**
-   * Whether this configurator owns the setup of [module] outright, so that no other configurator's option applies.
-   *
-   * `false` for almost everything: a project can usually be set up with whichever tool the machine has, and the
-   * choice is the user's. `true` only where the project has already made that choice and another tool would build an
-   * environment beside the one the project declares.
-   *
-   * A uv workspace is the case today. It declares one environment, at its root, and a poetry or plain-venv
-   * environment made for a member is one uv ignores, along with every run configuration that uses it.
-   *
-   * [findAllSortedForModule] keeps only the claimants when any configurator claims a module. Answer without running
-   * the tool: this is asked for every configurator on the busiest path into them.
-   */
-  suspend fun isExclusiveFor(module: Module): Boolean = false
-
   @CheckReturnValue
-  suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo?
+  suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo?
 
   /**
    * Returns this extension as a [PyProjectTomlConfigurationExtension] when a tool supports configuring with

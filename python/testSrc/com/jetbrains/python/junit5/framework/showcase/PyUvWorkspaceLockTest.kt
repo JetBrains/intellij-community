@@ -10,6 +10,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplication
 import com.jetbrains.python.junit5.framework.pyExternalSystemProjectFixture
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.testDataPath
 import com.jetbrains.python.uv.findUvLock
 import org.assertj.core.api.Assertions.assertThat
@@ -43,11 +44,14 @@ internal class PyUvWorkspaceLockTest(val project: Project) {
   fun `a member reads the lock of its workspace root`(): Unit = timeoutRunBlocking(2.minutes) {
     val modules = project.modules.associateBy { it.name }
     assertThat(modules.keys).contains("workspace-root", "core")
-    val rootLock = findUvLock(modules.getValue("workspace-root"))
+    val pyProjects = modules.mapValues { (name, module) ->
+      requireNotNull(module.asPyProject()) { "$name is not a Python project" }
+    }
+    val rootLock = findUvLock(pyProjects.getValue("workspace-root"))
     assertThat(rootLock)
       .describedAs("the workspace root holds the lock")
       .isNotNull()
-    assertThat(findUvLock(modules.getValue("core")))
+    assertThat(findUvLock(pyProjects.getValue("core")))
       .describedAs("the member is answered by the same lock, not by its own directory")
       .isEqualTo(rootLock)
   }

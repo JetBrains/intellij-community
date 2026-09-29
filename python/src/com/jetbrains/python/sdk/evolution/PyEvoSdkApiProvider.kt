@@ -603,7 +603,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // (PyInterpreterRef.Autoconfigure(toolId) → autoconfigureInterpreter).
     // The cached probe: the widget re-reads this whenever the project model ticks, and each configurator answers by
     // running its tool — one project open used to mean several `poetry check --lock` runs.
-    return PyProjectSdkConfigurationExtension.findAllSortedForModuleCached(module).options
+    return PyProjectSdkConfigurationExtension.findAllSortedCached(workspace.pyProject).options
       .distinctBy { it.createSdkInfo.intentionName }
       .mapIndexed { index, option ->
         EvoLeafDto(
@@ -993,7 +993,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         LOG.info("Evo: '$toolId' for '${module.name}' did nothing, because '${it.name}' was configured meanwhile")
         return@withSdkConfigurationLock EvoSelectResultDto.Ok
       }
-      val option = PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull { it.toolId.id == toolId }
+      val option = PyProjectSdkConfigurationExtension.findAllSorted(workspace.pyProject).firstOrNull { it.toolId.id == toolId }
                    ?: return@withSdkConfigurationLock optionGoneError(toolId, module)
       when (val info = option.createSdkInfo) {
         is CreateInterpreterInfo.ExistingEnv, is CreateInterpreterInfo.WillCreateEnv -> {
@@ -1009,10 +1009,10 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           val installed = tool.performToolInstallation(fileSystem.eelDescriptor.toEelApi())
             .getOr { return@withSdkConfigurationLock it.error.toSelectError(workspace.project) }
           info.pathPersister(installed)
-          // The tool exists now, so every cached answer that was computed without it is wrong — drop this module's,
+          // The tool exists now, so every cached answer that was computed without it is wrong — drop this project's,
           // the way `pathPersister` just dropped the executable-detection one.
-          PyProjectSdkConfigurationExtension.invalidateCachedForModule(module)
-          PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull { it.toolId.id == toolId }
+          PyProjectSdkConfigurationExtension.invalidateCached(workspace.pyProject)
+          PyProjectSdkConfigurationExtension.findAllSorted(workspace.pyProject).firstOrNull { it.toolId.id == toolId }
             ?.let {
               workspace.applyAutoconfigOption(it)
                 .getOr { failure -> return@withSdkConfigurationLock failure.error.toSelectError(workspace.project) }

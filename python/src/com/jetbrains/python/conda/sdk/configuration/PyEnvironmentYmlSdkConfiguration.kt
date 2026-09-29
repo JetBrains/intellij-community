@@ -3,7 +3,6 @@ package com.jetbrains.python.conda.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,7 +31,6 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatform
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.project.getEel
 import com.jetbrains.python.project.project
 import com.jetbrains.python.project.resolveFile
@@ -75,23 +73,21 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   override val potentialDependencyFiles: Set<String> = CondaEnvironmentYmlSdkUtils.envFileNames
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? {
-    val pyProject = module.asPyProject() ?: return null
-    return prepareSdkCreator(
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
+    prepareSdkCreator(
       { checkManageableEnv(pyProject) }
     ) { envExists -> { createAndAddSdk(pyProject, envExists) } }
-  }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
-  private suspend fun checkManageableEnv(module: PyProject): EnvCheckerResult =
-    withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
-      val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel()))
+  private suspend fun checkManageableEnv(pyProject: PyProject): EnvCheckerResult =
+    withBackgroundProgress(pyProject.project, PyBundle.message("python.sdk.validating.environment")) {
+      val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(pyProject.getEel()))
                       ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
       val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
 
-      findExistingEnv(module, condaPath, intentionName)
-      ?: if (getEnvironmentYml(module) != null) EnvCheckerResult.EnvNotFound(intentionName)
+      findExistingEnv(pyProject, condaPath, intentionName)
+      ?: if (getEnvironmentYml(pyProject) != null) EnvCheckerResult.EnvNotFound(intentionName)
       else EnvCheckerResult.CannotConfigure
     }
 

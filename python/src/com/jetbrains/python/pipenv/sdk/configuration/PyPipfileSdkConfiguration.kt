@@ -2,7 +2,6 @@
 package com.jetbrains.python.pipenv.sdk.configuration
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
@@ -10,10 +9,11 @@ import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.getEel
+import com.jetbrains.python.project.project
 import com.jetbrains.python.project.resolveFile
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
@@ -31,7 +31,6 @@ import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.module.getEel
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
 import com.jetbrains.python.sdk.pipenv.runPipEnv
@@ -52,28 +51,26 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val potentialDependencyFiles: Set<String> = setOf(PIP_FILE)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
-      { checkManageableEnv(module) }
-    ) { { createAndAddSdk(module) } }
+      { checkManageableEnv(pyProject) }
+    ) { { createAndAddSdk(pyProject) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
   private suspend fun checkManageableEnv(
-    module: Module,
-  ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
-    val pipfile =
-      module.asPyProject()?.resolveFile(PIP_FILE)?.fileName ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
-    val pipEnvExecutable = PipEnvPyTool.getInstance().resolveExecutable(EelFileSystem(module.getEel()))?.path
+    pyProject: PyProject,
+  ): EnvCheckerResult = withBackgroundProgress(pyProject.project, PyBundle.message("python.sdk.validating.environment")) {
+    val pipfile = pyProject.resolveFile(PIP_FILE)?.fileName ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val pipEnvExecutable = PipEnvPyTool.getInstance().resolveExecutable(EelFileSystem(pyProject.getEel()))?.path
                            ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
     val canManage = pipEnvExecutable.isExecutable()
     val intentionName = PyBundle.message("sdk.create.pipenv.suggestion", pipfile)
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
-     val pyProject =  module.asPyProject() ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
       val envPath = runPipEnv(
-        module.asEelOrJustPath(),
+        pyProject.baseDir.asEelOrJustPath(),
         "--venv",
         transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
       ).successOrNull
@@ -89,14 +86,13 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     else EnvCheckerResult.CannotConfigure
   }
 
-  private suspend fun createAndAddSdk(module: Module): PyResult<PythonInterpreter> {
+  private suspend fun createAndAddSdk(pyProject: PyProject): PyResult<PythonInterpreter> {
     LOGGER.debug("Creating pipenv environment")
-    return withBackgroundProgress(module.project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
-      val basePath = module.baseDir?.path
-                     ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",
-                                                                                               module.baseDir?.path))
-      val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
-        PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
+    val project = pyProject.project
+    return withBackgroundProgress(project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
+      val basePath = pyProject.baseDir
+      val pipEnv = setupPipEnv(basePath, null, true).getOr {
+        PySdkConfigurationCollector.logPipEnv(project, PipEnvResult.CREATION_FAILURE)
         return@withBackgroundProgress it
       }
 
@@ -110,13 +106,13 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
         return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
       }
 
-      PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
+      PySdkConfigurationCollector.logPipEnv(project, PipEnvResult.CREATED)
       LOGGER.debug("Setting up associated pipenv environment: $path, $basePath")
 
       val sdk = createSdk(
         PathHolder.Eel(file.toNioPath()),
-        PyPipEnvSdkAdditionalData(Path.of(basePath)),
-        suggestedSdkName(basePath)
+        PyPipEnvSdkAdditionalData(basePath),
+        suggestedSdkName(basePath.pathString)
       ).getOr { return@withBackgroundProgress it }
 
       PyResult.success(sdk)

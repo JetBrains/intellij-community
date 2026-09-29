@@ -6,13 +6,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
-import com.jetbrains.python.module.getEel
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.jetbrains.python.project.impl.PyProjectService
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Python project which is currently sits on top of [Module], but that might be changed soon.
+ * Python project which currently sits on top of [Module], but that might be changed soon.
  * Create it from a module or a project with [Module.asPyProject] or [Project.getPyProjects].
  * `null` means a module is either non-python or already disposed.
  *
@@ -23,7 +25,7 @@ interface PyProject {
   val baseDir: Directory
 
   /**
-   * Do not use this field unless absolutelly necessary.
+   * Do not use this field unless absolutely necessary.
    */
   val residesOnModule: Module
 
@@ -40,5 +42,11 @@ interface PyProject {
   }
 }
 
+/**
+ * The machine this project lives on.
+ */
+@get:ApiStatus.Internal
+val PyProject.eelDescriptor: EelDescriptor get() = project.getEelDescriptor()
+
 @ApiStatus.Internal
-suspend fun PyProject.getEel(): EelApi = residesOnModule.getEel()
+suspend fun PyProject.getEel(): EelApi = eelDescriptor.toEelApi()

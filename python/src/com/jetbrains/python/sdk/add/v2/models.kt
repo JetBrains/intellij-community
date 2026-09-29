@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.add.v2.hatch.HatchViewModel
 import com.jetbrains.python.sdk.add.v2.pipenv.PipenvViewModel
 import com.jetbrains.python.sdk.add.v2.poetry.PoetryViewModel
 import com.jetbrains.python.sdk.add.v2.uv.UvViewModel
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.add.v2.venv.VenvViewModel
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -209,7 +210,7 @@ internal val <P : PathHolder> PythonAddInterpreterModel<P>.existingSdks: List<Sd
   get() = allInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter<P>>()?.map { it.pythonInterpreterWrapper.pythonInterpreter.getSdkAPI() } ?: emptyList()
 
 internal suspend fun PythonAddInterpreterModel<*>.getBasePath(module: Module?): Path = withContext(Dispatchers.IO) {
-  val pyProjectTomlBased = module?.let { PyProjectToml.findPyProjectTomlFile(it)?.virtualFile?.toNioPathOrNull()?.parent }
+  val pyProjectTomlBased = module?.asPyProject()?.let { PyProjectToml.findPyProjectTomlFile(it)?.virtualFile?.toNioPathOrNull()?.parent }
 
   pyProjectTomlBased ?: module?.baseDir?.path?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
 }

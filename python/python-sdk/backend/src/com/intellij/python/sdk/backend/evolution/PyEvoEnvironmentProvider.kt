@@ -81,6 +81,9 @@ class EvoWorkspace(
   /** Every project of the workspace, the [root] included. A selected interpreter is written to all of them. */
   val members: List<EvoPyProject>,
 ) {
+  /** The project every tool is driven from. */
+  val pyProject: PyProject get() = root.pyProject
+
   /** The module every tool is driven from. */
   val module: Module get() = root.pyProject.residesOnModule
 

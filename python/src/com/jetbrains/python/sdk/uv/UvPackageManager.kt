@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.platform.eel.EelApi
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyProjectToml
@@ -273,7 +274,8 @@ internal class UvPackageManager internal constructor(
   override fun updateLockedAction(): suspend () -> PyResult<Unit> = suspend { syncLocked().mapSuccess { } }
 
   private suspend fun resolvePackageName(module: Module): String {
-    val pyProjectFile = PyProjectToml.findPyProjectTomlFile(module) ?: return module.name
+    val pyProject = module.asPyProject() ?: return module.name
+    val pyProjectFile = PyProjectToml.findPyProjectTomlFile(pyProject) ?: return module.name
     return PyProjectToml.parseCached(module.project, pyProjectFile.virtualFile)?.project?.name ?: module.name
   }
 
@@ -288,7 +290,9 @@ internal class UvPackageManager internal constructor(
       } ?: return@readAction emptyList()
       rootModule.getToolWorkspaceLayout(UV_TOOL_ID)?.memberModules.orEmpty()
     }
-    val memberFiles = memberModules.mapNotNull { member -> PyProjectToml.findPyProjectTomlFile(member) }
+    val memberFiles = memberModules.mapNotNull { member ->
+      member.asPyProject()?.let { PyProjectToml.findPyProjectTomlFile(it) }
+    }
     return listOf(rootPyProjectToml) + memberFiles
   }
 

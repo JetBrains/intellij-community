@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venv.sdk.configuration
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
@@ -13,6 +12,8 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.project
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -37,40 +38,40 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override val toolId: ToolId = VENV_TOOL_ID
   override val potentialDependencyFiles: Set<String> = setOf(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT.fileName.toString(), SETUP_PY)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
-      { checkManageableEnv(module, venvsInModule) }
-    ) { envExists -> { setupVenv(module, venvsInModule, envExists) } }
+      { checkManageableEnv(pyProject, venvs) }
+    ) { envExists -> { setupVenv(pyProject, venvs, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
   private suspend fun checkManageableEnv(
-    module: Module,
-    venvsInModule: List<PythonBinary>,
-  ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
+    pyProject: PyProject,
+    venvs: List<PythonBinary>,
+  ): EnvCheckerResult = withBackgroundProgress(pyProject.project, PyBundle.message("python.sdk.validating.environment")) {
     withContext(Dispatchers.IO) {
-      getVirtualEnv(venvsInModule)?.let {
+      getVirtualEnv(venvs)?.let {
         it.findEnvOrNull(PyBundle.message("sdk.use.existing.venv", VirtualEnvReader().resolvePythonHomeFromPythonBinary(it).name))
       } ?: EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.create.venv.suggestion.no.arg"))
     }
   }
 
-  private fun getVirtualEnv(venvsInModule: List<PythonBinary>): PythonBinary? = venvsInModule.firstOrNull { !it.isUvEnv() }
+  private fun getVirtualEnv(venvs: List<PythonBinary>): PythonBinary? = venvs.firstOrNull { !it.isUvEnv() }
 
-  private suspend fun setupVenv(module: Module, venvsInModule: List<PythonBinary>, envExists: EnvExists): PyResult<PythonInterpreter> =
+  private suspend fun setupVenv(pyProject: PyProject, venvs: List<PythonBinary>, envExists: EnvExists): PyResult<PythonInterpreter> =
     if (envExists) {
-      setupExistingVenv(module, venvsInModule)
+      setupExistingVenv(pyProject, venvs)
     }
     else {
-      createVenvAndSdk(ModuleOrProject.ModuleAndProject(module))
+      createVenvAndSdk(ModuleOrProject.ModuleAndProject(pyProject.residesOnModule))
     }
 
-  private suspend fun setupExistingVenv(module: Module, venvsInModule: List<PythonBinary>): PyResult<PythonInterpreter> {
+  private suspend fun setupExistingVenv(pyProject: PyProject, venvs: List<PythonBinary>): PyResult<PythonInterpreter> {
     val pythonBinary = withContext(Dispatchers.IO) {
-      getVirtualEnv(venvsInModule)?.refreshAndFindVirtualFile()
+      getVirtualEnv(venvs)?.refreshAndFindVirtualFile()
     } ?: return PyResult.failure(MessageError(PyBundle.message("sdk.cannot.find.venv.for.module")))
 
-    val additionalData = createVenvAdditionalData(module).getOr { return it }
+    val additionalData = createVenvAdditionalData(pyProject.baseDir)
     val pythonInterpreter = withContext(Dispatchers.IO) {
       createSdk(
         PathHolder.Eel(pythonBinary.toNioPath()),
@@ -79,7 +80,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
       )
     }.getOr { return it }
 
-    pythonInterpreter.getSdkAPI().setAssociationToModule(module)
+    pythonInterpreter.getSdkAPI().setAssociationToModule(pyProject.residesOnModule)
 
     return PyResult.success(pythonInterpreter)
   }

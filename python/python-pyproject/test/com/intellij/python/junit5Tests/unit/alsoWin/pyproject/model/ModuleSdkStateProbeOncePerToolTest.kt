@@ -3,7 +3,6 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.community.common.tools.ToolId
@@ -17,6 +16,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -62,13 +62,13 @@ internal class ModuleSdkStateProbeOncePerToolTest {
 
     override val potentialDependencyFiles: Set<String> = emptySet()
 
-    override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? {
-      probed.add(module.name)
+    override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? {
+      probed.add(pyProject.residesOnModule.name)
       return envNotFound(FROM_THE_PROBE)
     }
 
-    override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? {
-      askedAgain.add(module.name)
+    override suspend fun createSdkWithoutPyProjectTomlChecks(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? {
+      askedAgain.add(pyProject.residesOnModule.name)
       return envNotFound(FROM_THE_SECOND_ASK)
     }
 

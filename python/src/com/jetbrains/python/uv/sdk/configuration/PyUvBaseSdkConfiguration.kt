@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.uv.sdk.configuration
 
-import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.uv.common.UV_BASE_TOOL_ID
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
@@ -17,12 +17,12 @@ internal class PyUvBaseSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val potentialDependencyFiles: Set<String> = setOf(PY_PROJECT_TOML)
 
-  override suspend fun isExclusiveFor(module: Module): Boolean = uvOwnsSetupOf(module)
+  override suspend fun isExclusiveFor(pyProject: PyProject): Boolean = uvOwnsSetupOf(pyProject)
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? =
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
-      { checkManageableUvEnvBase(module, venvsInModule) }
-    ) { envExists -> { createUvSdk(module, venvsInModule, envExists) } }
+      { checkManageableUvEnvBase(pyProject, venvs) }
+    ) { envExists -> { createUvSdk(pyProject, venvs, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 }

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.inspections
 
-import com.intellij.openapi.module.Module
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
@@ -34,7 +34,7 @@ internal class PyRelevantNonPythonFilesTest {
     val lateConfigurator = object : PyProjectSdkConfigurationExtension by PyProjectSdkConfigurationExtension.EP_NAME.extensionList.first() {
       override val potentialDependencyFiles: Set<String> = setOf(LATE_DEPENDENCY_FILE)
 
-      override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateInterpreterInfo? = null
+      override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? = null
 
       override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
     }
