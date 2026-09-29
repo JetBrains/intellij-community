@@ -1158,6 +1158,12 @@ f:com.intellij.execution.ui.RunToolbarPopupKt
 - sf:runCounterToString(com.intellij.openapi.actionSystem.AnActionEvent,I):java.lang.String
 f:com.intellij.execution.ui.TargetPathFragment
 - sf:ID:java.lang.String
+c:com.intellij.execution.ui.actions.CloseAction
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
+- getExecutor():com.intellij.execution.Executor
+- perform():V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
 - sf:KEY:com.intellij.openapi.util.Key
 - a:getActions(com.intellij.execution.ui.layout.impl.RunnerContentUi):java.util.List

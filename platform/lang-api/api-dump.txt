@@ -808,10 +808,6 @@ com.intellij.execution.services.ServiceViewProvidingContributor
 c:com.intellij.execution.services.SimpleServiceViewDescriptor
 - com.intellij.execution.services.ServiceViewDescriptor
 com.intellij.execution.target.CustomToolLanguageRuntimeType
-c:com.intellij.execution.ui.actions.CloseAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.execution.util.EnvVariables
 - sf:Companion:com.intellij.execution.util.EnvVariables$Companion
 - <init>():V

@@ -35,6 +35,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/execution",
+        "//platform/execution-impl",
         "//platform/core-api:core",
         "//platform/platform-util-io:ide-util-io",
         "//platform/lang-impl",
@@ -73,6 +74,7 @@ jvm_library(
         # do not sort,
         ":console",
         "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",

@@ -49,6 +49,7 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/execution",
+        "//platform/execution-impl",
     ],
 )
 
@@ -89,6 +90,7 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.remoteServers.impl` end

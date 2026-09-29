@@ -1036,13 +1036,6 @@ c:com.intellij.execution.services.SimpleServiceViewDescriptor
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String):V
 - getId():java.lang.String
 - getPresentation():com.intellij.navigation.ItemPresentation
-c:com.intellij.execution.ui.actions.CloseAction
-- <init>(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor,com.intellij.openapi.project.Project):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
-- getExecutor():com.intellij.execution.Executor
-- perform():V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.execution.util.EnvironmentVariable
 - IS_PREDEFINED:Z
 - NAME:java.lang.String

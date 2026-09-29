@@ -575,6 +575,11 @@ com.intellij.execution.ui.TargetAwareRunConfigurationEditor
 f:com.intellij.execution.ui.TargetPathFragment
 - com.intellij.execution.ui.SettingsEditorFragment
 - <init>():V
+c:com.intellij.execution.ui.actions.CloseAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor,com.intellij.openapi.project.Project):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.execution.ui.layout.actions.RestoreLayoutAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
