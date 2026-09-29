@@ -41,11 +41,11 @@ internal class GrazieRulesTreeFilter(
   private fun filterTree(filterString: String?) {
     val lang = language.toAvailableLang()
     if (filterString.isNullOrBlank()) {
-      tree.resetTreeModel(allRules(lang, tree))
+      tree.resetTreeModel(allRules(lang))
       return
     }
 
-    val rules = allRules(lang, tree)
+    val rules = allRules(lang)
       .filter {
         lang.nativeName.contains(filterString, true) ||
         it.categories.any { cat -> cat.contains(filterString, true) } ||

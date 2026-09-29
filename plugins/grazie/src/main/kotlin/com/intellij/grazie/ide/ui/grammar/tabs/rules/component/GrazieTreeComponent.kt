@@ -155,7 +155,7 @@ class GrazieTreeComponent(
 fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang, List<Rule>> {
   val result = hashMapOf<Lang, List<Rule>>()
   state.enabledLanguages.forEach { lang ->
-    val rules = allRules(lang, state)
+    val rules = collectRules(lang, state)
     if (rules.isNotEmpty()) {
       result[lang] = rules
     }
@@ -165,16 +165,16 @@ fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang, List<Rul
 
 @ApiStatus.Internal
 @JvmOverloads
-fun allRules(lang: Lang, component: GrazieTreeComponent, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
+fun allRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
   return runWithModalProgressBlocking(
-    ModalTaskOwner.component(component),
+    ModalTaskOwner.guess(),
     GrazieBundle.message("grazie.settings.grammar.tabs.rules.loading.message"),
   ) {
-    allRules(lang, state)
+    collectRules(lang, state)
   }
 }
 
-private fun allRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<Rule> {
+private fun collectRules(lang: Lang, state: GrazieConfig.State): List<Rule> {
   if (lang !in state.enabledLanguages) return emptyList()
   val jLanguage = lang.jLanguage
   if (jLanguage != null) {
