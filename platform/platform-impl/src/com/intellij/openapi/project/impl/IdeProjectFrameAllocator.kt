@@ -487,16 +487,26 @@ private fun applyProjectFrameUiPolicy(
 ) {
   val exclusiveShowing = projectFrameUiPolicy.toolWindowIdsToExclusiveShowing
   if (exclusiveShowing.isNotEmpty()) {
-    val toHide = toolWindowManager.toolWindowIds.filter { !exclusiveShowing.contains(it) }
-
-    if (toHide.isNotEmpty()) {
-      toolWindowManager.invokeLater {
-        val impl = toolWindowManager as ToolWindowManagerImpl
-        for (id in toHide) {
-          impl.hideToolWindow(id, removeFromStripe = true)
+    @Suppress("UnsafeOpenServiceCast")
+    fun hideNotExclusive(toHide: List<String>) {
+      if (toHide.isNotEmpty()) {
+        toolWindowManager.invokeLater {
+          val impl = toolWindowManager as ToolWindowManagerImpl
+          for (id in toHide) {
+            impl.hideToolWindow(id, removeFromStripe = true)
+          }
         }
       }
     }
+
+    hideNotExclusive(toolWindowManager.toolWindowIds.filter { !exclusiveShowing.contains(it) })
+
+    val messageBusConnection = project.messageBus.connect(project)
+    messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
+        hideNotExclusive(ids.filter { !exclusiveShowing.contains(it) })
+      }
+    })
   }
 
   val startupToolWindowId = projectFrameUiPolicy.startupToolWindowIdToActivate
