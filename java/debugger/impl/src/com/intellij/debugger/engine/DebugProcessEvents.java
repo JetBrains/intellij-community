@@ -126,7 +126,20 @@ public class DebugProcessEvents extends DebugProcessImpl {
   protected @NotNull VirtualMachineProxyImpl commitVM(final VirtualMachine vm) {
     VirtualMachineProxyImpl proxy = super.commitVM(vm);
     if (vm != null) {
-      vmAttached(proxy);
+      if (!vmAttached(proxy)) {
+        // A stop that overlapped this attach has detached already, maybe before the proxy was set, so nobody else
+        // disposes this VM, and an event thread would wait on its event queue forever.
+        LOG.debug("VM attached after the process was stopped, disposing it");
+        try {
+          proxy.dispose();
+        }
+        catch (VMDisconnectedException ignored) {
+        }
+        finally {
+          DebuggerManagerThreadImpl.getCurrentThread().setVmProxy(null);
+        }
+        return proxy;
+      }
       if (vm.canBeModified()) {
         DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
         DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, _ -> new DebuggerEventThread(managerThread));
@@ -413,7 +426,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
     getSuspendManager().voteResume(suspendContext);
   }
 
-  private void vmAttached(VirtualMachineProxyImpl machineProxy) {
+  /** Returns false if the process left its initial state before the attach, which happens when a stop overlaps it. */
+  private boolean vmAttached(VirtualMachineProxyImpl machineProxy) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(!isAttached());
     if (myState.compareAndSet(State.INITIAL, State.ATTACHED)) {
@@ -509,7 +523,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
           ShowSessionTabUtils.showFrames(getProject(), session.getId());
         }
       }
+      return true;
     }
+    return false;
   }
 
   private void trackClassRedefinitions() {
