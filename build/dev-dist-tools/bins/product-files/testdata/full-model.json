@@ -1,13 +1,7 @@
 {
   "productCode": "IIS",
-  "buildNumber": "263.1234",
-  "productName": "Server \"Q\"\\\t\u0001\u007f ü",
-  "version": "2026.3",
   "envVarBaseName": "IDEA_SERVER",
   "dataDirectoryName": "IntelliJServer2026.3",
-  "svgIcon": true,
-  "productVendor": "JetBrains",
-  "majorVersionReleaseDate": "20261231",
   "minRequiredJavaVersion": 21,
   "customProperties": [
     {
@@ -47,8 +41,7 @@
       "splash": true,
       "nativeAccess": true
     },
-    "stdioRedirectArg": "--stdio",
-    "linuxStartupWmClass": "jetbrains-server"
+    "stdioRedirectArg": "--stdio"
   },
   "customCommands": [
     {

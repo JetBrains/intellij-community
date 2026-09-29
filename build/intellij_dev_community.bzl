@@ -11,7 +11,7 @@ load(":dev_dist_core_classpath.bzl", "DEV_DIST_CORE_CLASSPATH")
 load(":dev_dist_fragment_inputs.bzl", "DEV_DIST_FRAGMENT_INPUTS")
 load(":dev_dist_module_sets.bzl", "DEV_DIST_MODULE_SETS")
 load(":dev_dist_packed_labels.bzl", "dev_dist_packed_labels")
-load(":dev_dist_plan.bzl", "DEV_DIST_LAUNCH_MODELS", "DEV_DIST_PLANS", "DEV_DIST_PLATFORM_JAR_ORDERS")
+load(":dev_dist_plan.bzl", "DEV_DIST_APPLICATION_INFOS", "DEV_DIST_LAUNCH_MODELS", "DEV_DIST_PLANS", "DEV_DIST_PLATFORM_JAR_ORDERS")
 load(":dev_dist_products.bzl", "DEV_DIST_PRODUCTS", "dev_dist_product")
 load(":intellij_dev_dist_declarations.bzl", "intellij_dev_dist_declarations")
 
@@ -47,6 +47,7 @@ def _product_info_label(product):
 _DECLARATIONS = intellij_dev_dist_declarations(struct(
     plans = DEV_DIST_PLANS,
     launch_models = DEV_DIST_LAUNCH_MODELS,
+    application_infos = DEV_DIST_APPLICATION_INFOS,
     platform_jar_orders = DEV_DIST_PLATFORM_JAR_ORDERS,
     fragment_inputs = DEV_DIST_FRAGMENT_INPUTS,
     core_classpath = DEV_DIST_CORE_CLASSPATH,

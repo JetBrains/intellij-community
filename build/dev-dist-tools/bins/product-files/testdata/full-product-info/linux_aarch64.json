@@ -16,7 +16,7 @@
       "launcherPath": "bin/server",
       "javaExecutablePath": "jbr/bin/java",
       "vmOptionsFilePath": "bin/server.vmoptions",
-      "startupWmClass": "jetbrains-server",
+      "startupWmClass": "jetbrains-server-\"q\"\\\t\u0001-ü",
       "additionalJvmArguments": [
         "-Xbootclasspath/a:$IDE_HOME/lib/nio-fs.jar",
         "-Djava.system.class.loader=com.example.ServerClassLoader",

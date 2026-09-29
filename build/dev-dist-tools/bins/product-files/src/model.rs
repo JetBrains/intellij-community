@@ -6,6 +6,9 @@
 //!
 //! The model has no `jbr17`, `xBootClassPathJarNames` or `cdsArchiveFileName`, because no dev-dist model sets them.
 //! Thus the parser refuses a model that sets one as an unknown field.
+//!
+//! The model states no fact of the application info and no build number. The tool reads them from the declared
+//! sources, so the parser also refuses a model that states `version`, `versionSuffix` or `linuxStartupWmClass`.
 
 use std::collections::HashMap;
 
@@ -15,16 +18,8 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LaunchModel {
     pub product_code: String,
-    pub build_number: String,
-    pub product_name: String,
-    pub version: String,
-    pub version_suffix: Option<String>,
     pub env_var_base_name: String,
     pub data_directory_name: String,
-    #[serde(default)]
-    pub svg_icon: bool,
-    pub product_vendor: String,
-    pub major_version_release_date: String,
     pub min_required_java_version: i32,
     #[serde(default)]
     pub custom_properties: Vec<LaunchProperty>,
@@ -56,7 +51,6 @@ pub(crate) struct LaunchCommand {
     pub boot_class_path_jar_names: Vec<String>,
     pub jvm_arguments: JvmArguments,
     pub stdio_redirect_arg: Option<String>,
-    pub linux_startup_wm_class: String,
 }
 
 #[derive(Debug, Deserialize)]

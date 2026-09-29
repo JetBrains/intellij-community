@@ -24,6 +24,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
+name = "appinfo"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "quick-xml",
+]
+
+[[package]]
 name = "arraydeque"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -505,11 +513,11 @@ name = "plugin-descriptor-writer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "appinfo",
  "flate2",
  "fscopy",
  "lexopt",
  "memmap2",
- "quick-xml",
  "tempfile",
  "zip",
 ]
@@ -566,6 +574,7 @@ name = "product-files"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "appinfo",
  "lexopt",
  "serde",
  "serde_json",

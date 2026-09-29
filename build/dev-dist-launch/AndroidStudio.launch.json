@@ -1,14 +1,7 @@
 {
   "productCode": "AI",
-  "buildNumber": "263.SNAPSHOT",
-  "productName": "Android Studio",
-  "version": "2026.3",
-  "versionSuffix": "EAP",
   "envVarBaseName": "IDEA",
   "dataDirectoryName": "IdeaIC2026.3",
-  "svgIcon": true,
-  "productVendor": "Google",
-  "majorVersionReleaseDate": "20260101",
   "minRequiredJavaVersion": 25,
   "baseFileName": "idea",
   "launch": {
@@ -27,8 +20,7 @@
       "platformPrefix": "AndroidStudio",
       "splash": true,
       "nativeAccess": true
-    },
-    "linuxStartupWmClass": "jetbrains-studio"
+    }
   },
   "customCommands": [
     {

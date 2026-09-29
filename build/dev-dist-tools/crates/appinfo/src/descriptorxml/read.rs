@@ -37,7 +37,7 @@ use super::{Attribute, Element, Namespace, Node};
 /// - an attribute of the `xml` prefix, such as `xml:space` or `xml:base`.
 /// - a duplicate attribute, a document without a root element, and a comment between two parts of one text run. Aalto
 ///   ends the text node at such a comment, and the reader would join the two parts.
-pub(crate) fn read(text: &str) -> Result<Element> {
+pub fn read(text: &str) -> Result<Element> {
     // `quick-xml` removes a UTF-8 byte order mark without an event, so the check is here.
     if text.starts_with('\u{feff}') {
         bail!("line 1, offset 0: a byte order mark is not supported");

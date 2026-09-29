@@ -20,7 +20,7 @@
 //! The port covers what the four descriptor rules state and what the declared descriptors hold. It refuses the rest
 //! with an error that names the input. The request is one `--flagfile=<file>` argument, because every rule passes
 //! its options that way. An option that no rule states is unknown here, and so is an option that the rules have but
-//! no target sets. The reader of [`descriptorxml`] lists the XML constructs that it refuses. A refusal turns a new
+//! no target sets. The reader of [`descriptorxml`], in the `appinfo` crate, lists the XML constructs that it refuses. A refusal turns a new
 //! input into a build failure. So no code that the tests do not cover writes the bytes of that input.
 //!
 //! ### The stages
@@ -51,7 +51,6 @@
 //! contains none of the four words, and a new name must also avoid them.
 
 mod application_info;
-mod descriptorxml;
 mod embedded_product;
 mod markers;
 mod product_descriptor;
@@ -80,6 +79,7 @@ use std::io::{Cursor, Read};
 use std::path::Path;
 
 use anyhow::{Context, Result, anyhow, bail};
+use appinfo::descriptorxml;
 use lexopt::{Arg, ValueExt};
 use memmap2::Mmap;
 use zip::ZipArchive;

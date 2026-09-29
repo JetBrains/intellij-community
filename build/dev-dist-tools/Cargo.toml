@@ -153,6 +153,7 @@ zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_Threading"] }
 
 # Local crates
+appinfo = { path = "crates/appinfo" }
 component = { path = "crates/component" }
 filemeta = { path = "crates/filemeta" }
 fscopy = { path = "crates/fscopy" }

@@ -91,6 +91,13 @@ DEV_DIST_LAUNCH_MODELS = {
     "Idea": "//build/dev-dist-launch:idea_community.launch.json",
 }
 
+# The application info sources of every product. The product files action reads these files and `build.txt`, so an
+# edit of a version, a suffix or a release date changes no generated file.
+DEV_DIST_APPLICATION_INFOS = {
+    "AndroidStudio": struct(source = "//android-customization:resources/idea/AndroidStudioApplicationInfo.xml"),
+    "Idea": struct(source = "//community-resources:resources/idea/IdeaApplicationInfo.xml"),
+}
+
 # The `lib/` jars of the platform in the order in which `JarPackager` creates them, for every product with the runtime
 # module repository fragment. The runtime module repository states the entries of the core plugin in this order.
 DEV_DIST_PLATFORM_JAR_ORDERS = {

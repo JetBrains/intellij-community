@@ -10,7 +10,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-quick-xml.workspace = true
+appinfo.workspace = true
 zip.workspace = true
 # `zip` reads a deflated entry through `flate2` with no default features. This dependency selects the default backend.
 flate2.workspace = true

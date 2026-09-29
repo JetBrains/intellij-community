@@ -1,0 +1,7 @@
+<!-- The host of the frontend. It states no micro part, so the frontend keeps its own. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="4" full="{0}.{1}.{2}" eap="true" suffix="EAP 6 D"/>
+  <company name="JetBrains s.r.o."/>
+  <build number="RD-__BUILD__" majorReleaseDate="20261001"/>
+  <names product="Rider" fullname="JetBrains Rider" script="rider"/>
+</component>

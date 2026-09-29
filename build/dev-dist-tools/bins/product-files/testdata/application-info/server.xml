@@ -1,0 +1,9 @@
+<!-- A language server. The markers state the EAP flag and the product name, and the release date has a time. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="3" eap="__BUNDLE_EAP__"/>
+  <company name="JetBrains Inc."/>
+  <build number="IIS-__BUILD__" majorReleaseDate="202612311200"/>
+  <icon svg="/server.svg"/>
+  <icon-eap svg=""/>
+  <names product="__BUNDLE_NAME__" fullname="Server &quot;Q&quot;\&#9;&#1;&#127; ü" script="server"/>
+</component>

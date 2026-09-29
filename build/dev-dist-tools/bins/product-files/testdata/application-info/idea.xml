@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A plain EAP product. It states no release date, its company name has a legal suffix, and it has an EAP icon. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="3" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/"/>
+  <build number="IU-__BUILD__" date="__BUILD_DATE__"/>
+  <icon svg="/idea.svg" svg-small="/idea_16.svg"/>
+  <icon-eap svg="/idea_EAP.svg" svg-small="/idea_16_EAP.svg"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
+</component>

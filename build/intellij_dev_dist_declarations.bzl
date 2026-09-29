@@ -361,13 +361,18 @@ def _platform_set(tables, product, name, target_platform):
     def product_files_component():
         # `build.txt`, `bin/idea.properties`, the vmoptions file and `bin/product-info.json`. The product files action
         # renders them from the launch model the plan generator writes for the product, so the component reads no project
-        # model and starts no JVM. The rendered files have fixed names, and the component maps each one to its path in the
-        # distribution. The component also declares the main class of the launch model.
+        # model and starts no JVM. The action reads the application info sources and `build.txt` for the version, the
+        # names and the build number. The rendered files have fixed names, and the component maps each one to its path in
+        # the distribution. The component also declares the main class of the launch model.
         files = name + "_product_files"
+        application_info = tables.application_infos[product]
         dev_dist_product_files(
             name = files,
             tags = ["manual"],
             model = tables.launch_models[product],
+            application_info = application_info.source,
+            host_application_info = getattr(application_info, "host", None),
+            replacements = getattr(application_info, "replacements", []),
             idea_properties = plan.launch.idea_properties,
             platform = per_platform(lambda platform: platform),
             build_txt = files + "/build.txt",
@@ -723,6 +728,8 @@ def intellij_dev_dist_declarations(tables):
     `tables` is a struct with these fields:
 
     - `plans`, `launch_models`, `platform_jar_orders`: the generated plan tables, keyed by product.
+    - `application_infos`: the generated application info sources, keyed by product. Each entry is
+      `struct(source, host, replacements)`, where `host` and `replacements` are present only when set.
     - `fragment_inputs`, `core_classpath`: the generated input tables, keyed by product.
     - `plugin_components`: the generated component catalogue, keyed by product.
     - `product(key)`: the product entry, with its `platform_set`. It fails for an unknown product.

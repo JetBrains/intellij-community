@@ -1,0 +1,8 @@
+<!-- A frontend. Its host states the names, the version and the release date. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="3" micro="9" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/"/>
+  <build number="JBC-__BUILD__" date="__BUILD_DATE__"/>
+  <icon svg="/JetBrainsClient_64.svg"/>
+  <names product="JetBrainsClient" fullname="JetBrains Client" script="jetbrains_client"/>
+</component>

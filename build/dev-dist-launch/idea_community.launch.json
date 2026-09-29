@@ -1,14 +1,7 @@
 {
   "productCode": "IC",
-  "buildNumber": "263.SNAPSHOT",
-  "productName": "IntelliJ IDEA",
-  "version": "2026.3",
-  "versionSuffix": "EAP",
   "envVarBaseName": "IDEA",
   "dataDirectoryName": "IdeaIC2026.3",
-  "svgIcon": true,
-  "productVendor": "JetBrains",
-  "majorVersionReleaseDate": "20260101",
   "minRequiredJavaVersion": 25,
   "baseFileName": "idea",
   "launch": {
@@ -27,8 +20,7 @@
       "platformPrefix": "Idea",
       "splash": true,
       "nativeAccess": true
-    },
-    "linuxStartupWmClass": "jetbrains-idea"
+    }
   },
   "customCommands": [
     {

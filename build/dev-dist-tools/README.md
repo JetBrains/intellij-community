@@ -19,6 +19,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 | Crate | Content | Bazel test target |
 |---|---|---|
+| `crates/appinfo` | The application info: the descriptor XML round trip, the markers, the frontend merge, and the reader of the facts that `product-info.json` states. | `@community//build/dev-dist-tools/crates/appinfo:appinfo_test` |
 | `crates/component` | The component contract of the collector, the composer and the launcher: manifests, the composition spec, the fingerprint, the local layout and the local home. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
 | `crates/filemeta` | Inventory JSON version 1, the xxh3 content hashes, and the path and link checks. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |

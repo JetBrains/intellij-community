@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use anyhow::bail;
+use appinfo::{ApplicationInfo, linux_frame_class};
 use serde::Serialize;
 
 use crate::model::{CustomCommand, IdeaProperties, JvmArguments, LaunchModel, LaunchProperty};
@@ -45,12 +46,21 @@ pub(crate) struct LaunchFiles {
     pub product_info: String,
 }
 
+/// What the launch files of one product derive from: the launch model, the application info and the build number.
+#[derive(Clone, Copy)]
+pub(crate) struct Product<'a> {
+    pub model: &'a LaunchModel,
+    pub application_info: &'a ApplicationInfo,
+    pub build_number: &'a str,
+}
+
 pub(crate) fn render_launch_files(
-    model: &LaunchModel,
+    product: &Product<'_>,
     target: Platform,
     opened_packages_file: &str,
     idea_properties_base: &str,
 ) -> anyhow::Result<LaunchFiles> {
+    let model = product.model;
     let Some(vm_options) = model.vm_options.get(target.os) else {
         bail!("the model states no vmoptions for {}", target.os);
     };
@@ -63,9 +73,9 @@ pub(crate) fn render_launch_files(
         vm_options_text.push_str(line);
         vm_options_text.push_str(separator);
     }
-    let product_info = render_product_info(model, target, &opened_packages(opened_packages_file, target.os)?)?;
+    let product_info = render_product_info(product, target, &opened_packages(opened_packages_file, target.os)?)?;
     Ok(LaunchFiles {
-        build_txt: format!("{}-{}", model.product_code, model.build_number),
+        build_txt: format!("{}-{}", model.product_code, product.build_number),
         idea_properties: render_idea_properties(&model.idea_properties, idea_properties_base),
         vm_options: vm_options_text,
         product_info,
@@ -204,7 +214,7 @@ struct Launch<'a> {
     java_executable_path: String,
     vm_options_file_path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    startup_wm_class: Option<&'a str>,
+    startup_wm_class: Option<String>,
     #[serde(skip_serializing_if = "<[_]>::is_empty")]
     boot_class_path_jar_names: &'a [String],
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -241,13 +251,14 @@ struct Flavor<'a> {
 
 /// Renders `product-info.json` in the `prettyPrint` form of kotlinx.serialization, with no final newline.
 ///
+/// The names, the version, the build number, the icon, the vendor, the release date and the window class come from
+/// the application info and `build.txt`, as `ProductInfoGenerator.kt` takes them from `appInfo` and the build context.
+///
 /// `serde_json::to_string_pretty` indents by two spaces and escapes as kotlinx does: the quote, the backslash and the
 /// control characters, with lowercase hex digits.
-fn render_product_info(model: &LaunchModel, target: Platform, opened_packages: &[String]) -> anyhow::Result<String> {
-    let date = &model.major_version_release_date;
-    if date.len() != 8 || !date.bytes().all(|byte| byte.is_ascii_digit()) {
-        bail!("the major release date {date:?} is not yyyyMMdd");
-    }
+fn render_product_info(product: &Product<'_>, target: Platform, opened_packages: &[String]) -> anyhow::Result<String> {
+    let model = product.model;
+    let application_info = product.application_info;
     let to_root = if target.os == OS_MAC && !model.language_server { "../" } else { "" };
     let (launcher_path, java_executable_path) = match target.os {
         OS_MAC => {
@@ -269,7 +280,7 @@ fn render_product_info(model: &LaunchModel, target: Platform, opened_packages: &
         launcher_path,
         java_executable_path,
         vm_options_file_path: vm_options_file_path(target.os, &model.base_file_name, model.language_server),
-        startup_wm_class: (target.os == OS_LINUX).then_some(model.launch.linux_startup_wm_class.as_str()),
+        startup_wm_class: (target.os == OS_LINUX).then(|| linux_frame_class(&application_info.product_name_with_edition())),
         boot_class_path_jar_names: &model.launch.boot_class_path_jar_names,
         additional_jvm_arguments: additional_jvm_arguments(&model.launch.jvm_arguments, target, opened_packages, false),
         main_class: &model.launch.main_class,
@@ -281,16 +292,19 @@ fn render_product_info(model: &LaunchModel, target: Platform, opened_packages: &
             .collect(),
     };
     let info = ProductInfo {
-        name: &model.product_name,
-        version: &model.version,
-        version_suffix: model.version_suffix.as_deref(),
-        build_number: &model.build_number,
+        name: &application_info.full_product_name,
+        version: &application_info.version,
+        version_suffix: application_info.version_suffix.as_deref(),
+        build_number: product.build_number,
         product_code: &model.product_code,
         env_var_base_name: &model.env_var_base_name,
         data_directory_name: &model.data_directory_name,
-        svg_icon_path: model.svg_icon.then(|| format!("{to_root}bin/{}.svg", model.base_file_name)),
-        product_vendor: &model.product_vendor,
-        major_version_release_date: date,
+        svg_icon_path: application_info
+            .svg_icon
+            .as_ref()
+            .map(|_| format!("{to_root}bin/{}.svg", model.base_file_name)),
+        product_vendor: &application_info.short_company_name,
+        major_version_release_date: &application_info.major_release_date,
         min_required_java_version: model.min_required_java_version,
         launch: [launch],
         custom_properties: &model.custom_properties,

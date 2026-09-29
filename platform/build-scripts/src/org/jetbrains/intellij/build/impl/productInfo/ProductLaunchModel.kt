@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.hasIcnsForFrontendMacApp
 import org.jetbrains.intellij.build.impl.ideaPropertiesFatalErrorNotification
 import org.jetbrains.intellij.build.impl.ideaPropertiesSettingsDir
-import org.jetbrains.intellij.build.impl.linuxFrameClass
 import org.jetbrains.intellij.build.impl.osVmOptions
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_BOOT_CLASS_PATH_JAR_NAMES
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_COMMAND
@@ -39,22 +38,17 @@ import java.nio.file.Files
  * It needs no build context. [computeProductLaunchModel] derives it. The dev distribution plan generator writes the
  * model of each split product as JSON, and the tool `product-files` renders the four files of one OS and
  * architecture from it. They must be the files that the production writers write, byte for byte.
+ *
+ * The model states the facts of the product code. It states no fact of the application info and no build number. The
+ * tool reads the application info sources and `build.txt` for the names, the version, the suffix, the icon, the vendor,
+ * the release date and the Linux window class.
  */
 @ApiStatus.Internal
 @Serializable
 data class ProductLaunchModel(
   @JvmField val productCode: String,
-  @JvmField val buildNumber: String,
-  @JvmField val productName: String,
-  @JvmField val version: String,
-  @JvmField val versionSuffix: String? = null,
   @JvmField val envVarBaseName: String,
   @JvmField val dataDirectoryName: String,
-  /** Whether the product states an SVG icon, which `product-info.json` names as `bin/<baseFileName>.svg`. */
-  @JvmField val svgIcon: Boolean = false,
-  @JvmField val productVendor: String,
-  /** The major release date as `yyyyMMdd`. */
-  @JvmField val majorVersionReleaseDate: String,
   @JvmField val minRequiredJavaVersion: Int,
   @JvmField val customProperties: List<ProductLaunchProperty> = emptyList(),
   /** The flavors of the product. A launch that bundles a runtime lists `jbr17` before them when [jbr17] is set. */
@@ -82,7 +76,6 @@ data class ProductLaunchCommand(
   @JvmField val bootClassPathJarNames: List<String>,
   @JvmField val jvmArguments: ProductJvmArguments,
   @JvmField val stdioRedirectArg: String? = null,
-  @JvmField val linuxStartupWmClass: String,
 )
 
 /**
@@ -249,15 +242,8 @@ fun computeProductLaunchModel(
 
   return ProductLaunchModel(
     productCode = applicationInfo.productCode,
-    buildNumber = product.buildNumber,
-    productName = applicationInfo.fullProductName,
-    version = applicationInfo.fullVersion,
-    versionSuffix = applicationInfo.versionSuffix,
     envVarBaseName = properties.getEnvironmentVariableBaseName(applicationInfo),
     dataDirectoryName = product.systemSelector,
-    svgIcon = applicationInfo.svgRelativePath != null,
-    productVendor = applicationInfo.shortCompanyName,
-    majorVersionReleaseDate = applicationInfo.majorReleaseDate,
     minRequiredJavaVersion = minRequiredJavaVersion,
     customProperties = properties.generateCustomPropertiesForProductInfo().map { ProductLaunchProperty(it.key, it.value) },
     flavors = properties.getProductFlavors(),
@@ -269,7 +255,6 @@ fun computeProductLaunchModel(
       bootClassPathJarNames = product.bootClassPathJarNames,
       jvmArguments = jvmArguments,
       stdioRedirectArg = properties.stdioRedirectArg,
-      linuxStartupWmClass = linuxFrameClass(applicationInfo.productNameWithEdition),
     ),
     customCommands = customCommands,
     vmOptions = OsFamily.ALL.associate { os ->

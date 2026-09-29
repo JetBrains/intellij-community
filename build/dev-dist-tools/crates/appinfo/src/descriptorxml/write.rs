@@ -37,7 +37,7 @@ use super::read::{is_all_xml_whitespace, is_xml_whitespace_byte};
 use super::{Element, Namespace, Node};
 
 /// Serializes an element the way `JDOMUtil.write` does.
-pub(crate) fn write(element: &Element) -> String {
+pub fn write(element: &Element) -> String {
     let mut writer = Writer::new_with_indent(Vec::new(), b' ', 2);
     writer.config_mut().add_space_before_slash_in_empty_elements = true;
     write_element(&mut writer, element, &mut Vec::new()).expect("a writer to memory does not fail");
