@@ -163,8 +163,8 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 http_archive(
     name = "remote_java_tools_windows_with_vc_redist",
-    sha256 = "82203dfae9f75a268e5e0e643ce5696a7c035ce9626938601fb410ee11849b1b",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist.zip",
+    sha256 = "a9df22ddf20fcd0407ae0782845b58787e4a126eb81aa8d16dfa5be542c443d0",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist-v2.zip",
 )
 
 override_repo(
