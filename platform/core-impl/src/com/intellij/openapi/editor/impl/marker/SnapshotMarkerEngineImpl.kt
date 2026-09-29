@@ -97,7 +97,8 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
       it.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags, markerReference)
     }
     val rootStorage = fileRoot ?: documentImpl.rangeMarkers.rootStore()
-    rootStorage.updateRoot(rootReference, update)
+    val insertedRoot = checkNotNull(rootStorage.updateRootAtomically(rootReference, update))
+    marker.cacheResolution(insertedRoot, PMarkerResolution.Valid(startOffset, endOffset))
     return marker
   }
 
@@ -131,9 +132,10 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     }
     val marker = SnapshotLazyRangeMarker(fileRoot, markerId, spec, TextRange(startOffset, startOffset), initialLineColumns)
     val markerReference = QueuedMarkerReference(marker, cachedDocument, markerQueue)
-    fileRoot.updateCurrentRoot {
+    val insertedRoot = checkNotNull(fileRoot.updateRootAtomically(null) { it: PMarkerRoot ->
       it.insert(markerId, startOffset, startOffset, spec, marker.flavorFlags, markerReference)
-    }
+    })
+    marker.cacheResolution(insertedRoot, PMarkerResolution.Valid(startOffset, startOffset))
     return marker
   }
 

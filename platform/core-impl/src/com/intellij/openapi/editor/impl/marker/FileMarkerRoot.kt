@@ -26,7 +26,7 @@ class FileMarkerRoot private constructor(
   @Volatile
   private var documentReference: WeakReference<DocumentImpl>? = null
 
-  override fun selectCurrentRootReference(): AtomicReference<PMarkerRoot> {
+  override fun currentRootReference(): AtomicReference<PMarkerRoot> {
     val observedDocumentReference = documentReference ?: return rootReference
     val document = observedDocumentReference.get() ?: return rootReference
     val currentRootReference = markerRoot(document)
@@ -36,53 +36,56 @@ class FileMarkerRoot private constructor(
     return currentRootReference
   }
 
-  override fun <T> withRootUpdateLock(action: () -> T): T = synchronized(this, action)
+  @Synchronized
+  override fun updateRootAtomically(
+    rootReference: AtomicReference<PMarkerRoot>?, // null means currentRootReference()
+    update: (PMarkerRoot) -> PMarkerRoot,
+  ): PMarkerRoot? {
+    return super.updateRootAtomically(rootReference, update)
+  }
 
+  @Synchronized
   private fun attach(document: DocumentImpl) {
-    synchronized(this) {
-      rootReference = markerRoot(document)
-      if (documentReference?.get() !== document) {
-        document.addDocumentListener(this)
-        documentReference = WeakReference(document)
-      }
+    rootReference = markerRoot(document)
+    if (documentReference?.get() !== document) {
+      document.addDocumentListener(this)
+      documentReference = WeakReference(document)
     }
   }
 
+  @Synchronized
   private fun restoreAndAttach(document: DocumentImpl, tabSize: Int) {
-    synchronized(this) {
-      val sourceRoot = rootReference.get()
-      var restoredRoot = sourceRoot
-      val resolvedMarkers = ArrayList<SnapshotLazyRangeMarker>()
-      sourceRoot.processRangeMarkersOverlappingWith(0, Int.MAX_VALUE, 0) { entry ->
-        val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processRangeMarkersOverlappingWith true
-        val range = marker.initialRange(document, tabSize) ?: return@processRangeMarkersOverlappingWith true
-        val resolution = sourceRoot.resolve(entry.markerId, marker.initialRange)
-        resolvedMarkers.add(marker)
-        if (range.startOffset != resolution.startOffset || range.endOffset != resolution.endOffset) {
-          restoredRoot = restoredRoot.remove(entry.markerId).insert(
-            entry.markerId,
-            range.startOffset,
-            range.endOffset,
-            entry.spec,
-            entry.flavorFlags,
-            entry.markerReference,
-            entry.measure,
-          )
-        }
-        true
+    val sourceRoot = rootReference.get()
+    var restoredRoot = sourceRoot
+    val resolvedMarkers = ArrayList<SnapshotLazyRangeMarker>()
+    sourceRoot.processRangeMarkersOverlappingWith(0, Int.MAX_VALUE, 0) { entry ->
+      val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processRangeMarkersOverlappingWith true
+      val range = marker.initialRange(document, tabSize) ?: return@processRangeMarkersOverlappingWith true
+      val resolution = sourceRoot.resolve(entry.markerId, marker.initialRange)
+      resolvedMarkers.add(marker)
+      if (range.startOffset != resolution.startOffset || range.endOffset != resolution.endOffset) {
+        restoredRoot = restoredRoot.remove(entry.markerId).insert(
+          entry.markerId,
+          range.startOffset,
+          range.endOffset,
+          entry.spec,
+          entry.flavorFlags,
+          entry.markerReference,
+          entry.measure,
+        )
       }
-
-      markerRoot(document).set(restoredRoot)
-      attach(document)
-      resolvedMarkers.forEach(SnapshotLazyRangeMarker::markInitialRangeResolved)
+      true
     }
+
+    markerRoot(document).set(restoredRoot)
+    attach(document)
+    resolvedMarkers.forEach(SnapshotLazyRangeMarker::markInitialRangeResolved)
   }
 
+  @Synchronized
   override fun documentChanged(event: DocumentEvent) {
     val document = event.document as? DocumentImpl ?: return
-    synchronized(this) {
-      rootReference = markerRoot(document)
-    }
+    rootReference = markerRoot(document)
   }
 
   companion object {

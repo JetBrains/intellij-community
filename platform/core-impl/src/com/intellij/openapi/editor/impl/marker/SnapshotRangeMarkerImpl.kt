@@ -138,28 +138,32 @@ open class SnapshotRangeMarkerImpl private constructor(
     }
   }
 
-  private data class CachedResolution(val root: PMarkerRoot, val resolution: PMarkerResolution)
+  private data class CachedResolution(val cacheIdentity: Any, val resolution: PMarkerResolution)
 
   private var cachedResolution: CachedResolution? = null
 
+  internal fun cacheResolution(root: PMarkerRoot, resolution: PMarkerResolution) {
+    cachedResolution = CachedResolution(cacheIdentity(root), resolution)
+  }
+
   private fun currentResolution(): PMarkerResolution {
-    val root = currentRoot()
+    val root = currentRootReference().get()
+    val cacheIdentity = cacheIdentity(root)
     val cached = cachedResolution
-    if (cached != null && cached.root === root) {
+    if (cached != null && cached.cacheIdentity === cacheIdentity) {
       return cached.resolution
     }
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(this, root)
-    this.cachedResolution = CachedResolution(root, resolution)
+    cachedResolution = CachedResolution(cacheIdentity, resolution)
     return resolution
   }
 
-  private fun currentRoot(): PMarkerRoot = rootStorage.currentRootReference().get()
+  private fun cacheIdentity(root: PMarkerRoot): Any = (root as? PMarkerRootImpl)?.resolutionCacheIdentity ?: root
 
   internal fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean {
     return rootStorage.updateCurrentRoot(update)
   }
 
-  @ApiStatus.Internal
   fun currentRootReference(): AtomicReference<PMarkerRoot> = rootStorage.currentRootReference()
 
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +

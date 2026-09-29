@@ -4,13 +4,13 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
-import com.intellij.util.containers.ConcurrentLongObjectMap
+import com.intellij.util.containers.ConcurrentLongIntMap
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
-import java.util.NoSuchElementException
 import java.util.function.LongConsumer
 
 /**
@@ -28,8 +28,10 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
+  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(Int.MIN_VALUE),
 ) : PMarkerRoot {
-  private val cachedDelta: ConcurrentLongObjectMap<Int> = Java11Shim.createConcurrentLongObjectMap()
+  internal val resolutionCacheIdentity: Any
+    get() = cachedDelta
 
   override fun emptyRoot(): PMarkerRootImpl = empty()
 
@@ -81,7 +83,9 @@ open class PMarkerRootImpl private constructor(
 
     val newRoot = insertAvl(editor, rootId, markerId)
     editor.setParent(newRoot, NULL_NODE)
-    return PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
+    val result = PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
+    result.cachedDelta.putIfAbsent(markerId, 0)
+    return result
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
@@ -111,6 +115,7 @@ open class PMarkerRootImpl private constructor(
         decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
         spec.policy,
       ),
+      cachedDelta,
     )
   }
 
@@ -427,18 +432,40 @@ open class PMarkerRootImpl private constructor(
   }
 
   private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
-    return cachedDelta.computeIfAbsent(markerId) {
-      var result = 0
-      var parentId = state.parentId
-
-      while (parentId != NULL_NODE) {
-        val parent = states.getUnchecked(parentId) as? ValidNode
-                     ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
-        result += parent.lazyOffsetDelta
-        parentId = parent.parentId
-      }
-      result
+    val cached = cachedDelta.getOrDefault(markerId, -1)
+    if (cached != -1) {
+      return cached
     }
+
+    val path = ArrayDeque<ValidNode>()
+    var node = state
+    var nodeId = markerId
+    var result: Int
+    while (true) {
+      val parentId = node.parentId
+      if (parentId == NULL_NODE) {
+        result = 0
+        cachedDelta.putIfAbsent(nodeId, result)
+        break
+      }
+
+      path.addLast(node)
+      node = states.getUnchecked(parentId) as? ValidNode
+             ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
+      nodeId = parentId
+      val cached = cachedDelta.getOrDefault(nodeId, -1)
+      if (cached != -1) {
+        result = cached
+        break
+      }
+    }
+
+    while (path.isNotEmpty()) {
+      result += node.lazyOffsetDelta
+      node = path.removeLast()
+      cachedDelta.putIfAbsent(node.entry.markerId, result)
+    }
+    return result
   }
 
   private fun subtreeAggregate(markerId: Long): Int =

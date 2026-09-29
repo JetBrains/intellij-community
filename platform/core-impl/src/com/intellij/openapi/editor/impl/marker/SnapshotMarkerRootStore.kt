@@ -87,19 +87,19 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     return rootState(snapshot, initialRoot).rootReference
   }
 
-  override fun selectCurrentRootReference(): AtomicReference<PMarkerRoot> {
+  override fun currentRootReference(): AtomicReference<PMarkerRoot> {
     val document = checkNotNull(documentReference.get()) { "The document is unavailable" }
     return rootReference(document.core.snapshot())
   }
 
-  fun updateRoot(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = PMarkerRootImpl.empty(), update: (PMarkerRoot) -> PMarkerRoot): Boolean {
-    return updateRoot(rootReference(snapshot, initialRoot), update)
+  fun updateRoot(snapshot: DocumentSnapshot, initialRoot: PMarkerRoot = PMarkerRootImpl.empty(), update: (PMarkerRoot) -> PMarkerRoot) {
+    updateRootAtomically(rootReference(snapshot, initialRoot), update)
   }
 
   private fun updateRootIfPresent(snapshot: DocumentSnapshot, update: (PMarkerRoot) -> PMarkerRoot): Boolean {
     processQueue()
     val rootReference = roots[snapshot]?.rootReference ?: return false
-    return updateRoot(rootReference, update)
+    return updateRootAtomically(rootReference, update) != null
   }
 
   fun purge(snapshot: DocumentSnapshot, markerId: Long): Boolean {
