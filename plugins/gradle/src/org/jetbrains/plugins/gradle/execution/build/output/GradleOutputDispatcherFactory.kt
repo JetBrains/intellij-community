@@ -15,19 +15,26 @@ import com.intellij.build.output.LineProcessor
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemOutputMessageDispatcher
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
-import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemOutputMessageDispatcher
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.lang.AutoCloseable
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.Any
+import kotlin.Array
+import kotlin.String
+import kotlin.Throwable
+import kotlin.arrayOfNulls
 import kotlin.enums.enumEntries
+import kotlin.run
 
 @Internal
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
@@ -38,7 +45,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     buildId: BuildId,
     buildProgressListener: BuildProgressListener,
     parsers: List<BuildOutputParser>,
-    consoleSettings: BuildViewSettingsProvider
+    consoleSettings: BuildViewSettingsProvider,
   ): ExternalSystemOutputMessageDispatcher {
     return GradleOutputMessageDispatcher(buildId, buildProgressListener, parsers, consoleSettings)
   }
@@ -56,13 +63,15 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
-    private val tasksOutputReaders: MutableMap<StartId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
 
     private var currentTaskId: StartId = buildId
 
     private val lineProcessor = GradleOutputLineProcessor()
 
     private inner class GradleOutputLineProcessor : LineProcessor() {
+
+      private val tasksOutputReaders: MutableMap<StartId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+
       override fun process(line: String) {
         val cleanLine = removeLoggerPrefix(line)
         // skip Gradle test runner output
@@ -88,6 +97,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
         tasksOutputReaders.getOrPut(taskId) { BuildOutputInstantReaderImpl(buildId, taskId, ::notifyBuildEvent, parsers) }
           .appendLine(cleanLine)
+      }
+
+      override fun close() {
+        super.close()
+
+        for (taskOutputReader in tasksOutputReaders.values) {
+          taskOutputReader.close()
+        }
       }
     }
 
@@ -134,10 +151,6 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun doClose() {
       lineProcessor.close()
-
-      for (taskOutputReader in tasksOutputReaders.values) {
-        taskOutputReader.close()
-      }
     }
 
     override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
@@ -174,7 +187,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     private class BuildEventInvocationHandler(
       private val buildEvent: BuildEvent,
-      private val parentEventId: Any
+      private val parentEventId: Any,
     ) : InvocationHandler {
       override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
         if (method?.name.equals("getParentId")) return parentEventId
