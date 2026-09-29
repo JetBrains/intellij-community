@@ -24,6 +24,13 @@ object CommunityDevDistHalf : DevDistHalf {
     get() = "jps_dynamic_deps_community"
 
   /**
+   * The community binary, see `CommunityDevDistGenerator`. The label is valid in both roots, because the community module
+   * is `community`. The ultimate tool writes the same bytes, because it runs this half in the same way.
+   */
+  override val generatorCommand: String
+    get() = "bazel run @community//build:dev_dist_generator"
+
+  /**
    * IDEA Community is the key `Idea`, whose name folds to the name of another key on a case-insensitive file system, so
    * it carries a case-safe name. The order is the order of the same keys in every half that extends this one.
    */

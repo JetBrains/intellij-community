@@ -1275,8 +1275,8 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelI
  * Products that state equal stamps share one private struct, named after the first of them in [plans] order, the way
  * `dev_dist_plan.bzl` shares `_PLAN_<first product>`.
  */
-internal fun renderProductInfo(plans: List<PluginDescriptorPlan>): String = buildString {
-  append(GENERATED_BY_HEADER)
+internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistHalf): String = buildString {
+  append(half.generatedByHeader)
   append("#\n")
   append("# The descriptor stamps of every product. `build/dev-dist-descriptors/BUILD.bazel` declares one\n")
   append("# `<product>_product_info` target per key. A consumer sets `@community//build:dev_dist_product_info` to it, and\n")

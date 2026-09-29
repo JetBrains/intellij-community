@@ -356,7 +356,8 @@ internal fun devDistRuntimeModuleRepositoryProducts(rows: List<DevRunConfigurati
  * Fails for a row of a product outside [splitProducts], which has no plan to launch from, and for a row that sets a
  * property of [refusedProperties], see [DevDistHalf.refusedRowProperties].
  *
- * [macrosBzl] is the `.bzl` file of the half that exports `intellij_dev_run_configurations`.
+ * [macrosBzl] is the `.bzl` file of the half that exports `intellij_dev_run_configurations`. [header] is the first line of
+ * the file, see [generatedByHeader].
  */
 @ApiStatus.Internal
 fun renderDevServerRunConfigurations(
@@ -364,6 +365,7 @@ fun renderDevServerRunConfigurations(
   splitProducts: Set<String>,
   macrosBzl: String,
   refusedProperties: Map<String, String> = emptyMap(),
+  header: String,
 ): String {
   val sortedRows = rows.sortedBy { it.name }
   for (row in sortedRows) {
@@ -381,7 +383,7 @@ fun renderDevServerRunConfigurations(
   val sharedArgumentLists = shareLists(sortedRows, DevRunConfigurationRow::programArgs, prefix = "_PROGRAM_ARGS_")
 
   return buildString {
-    append(GENERATED_BY_HEADER)
+    append(header)
     append("#\n")
     append("# The `DevMainKt` run configurations of `.idea/runConfigurations`, one launcher `//build:<name>` each. Only the\n")
     append("# product, `additional_modules` and `runtime_module_repository` choose a distribution, so rows that state the same\n")

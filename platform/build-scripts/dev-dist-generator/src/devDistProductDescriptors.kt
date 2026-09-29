@@ -14,17 +14,17 @@ import java.nio.file.Path
  * keeps its labels in the recorded form, and the `BUILD.bazel` spells them for a package of the half of [index], see
  * [DevDistBazelIndex.planLabel].
  */
-internal fun renderProductDescriptorPackage(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex): Map<String, String> {
+internal fun renderProductDescriptorPackage(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex, half: DevDistHalf): Map<String, String> {
   val result = LinkedHashMap<String, String>()
-  result.put("$PRODUCT_DESCRIPTOR_PACKAGE/BUILD.bazel", renderProductDescriptorBuildFile(plans, index))
+  result.put("$PRODUCT_DESCRIPTOR_PACKAGE/BUILD.bazel", renderProductDescriptorBuildFile(plans, index, half))
   for (plan in plans) {
     check(result.put(plan.sourceRelativePath, plan.content) == null) { "Two products write '${plan.sourceRelativePath}'" }
   }
   return result
 }
 
-private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex): String = buildString {
-  append(GENERATED_BY_HEADER)
+private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex, half: DevDistHalf): String = buildString {
+  append(half.generatedByHeader)
   append("#\n")
   append("# The two generated entries of the application-info module jar of each product: the product descriptor and the\n")
   append("# stamped application info. `dev_dist_platform_jar` patches both outputs into the jar, see the `patches` of the\n")

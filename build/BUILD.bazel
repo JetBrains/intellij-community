@@ -169,6 +169,21 @@ java_binary(
     runtime_deps = [":build"],
 )
 
+# The community binary of the dev-dist generator. It regenerates the dev-distribution files of the community half:
+# `bazel run //build:dev_dist_generator` in `community/`, or `bazel run @community//build:dev_dist_generator` in the
+# monorepo root. `--check` writes nothing and fails when a file is out of sync.
+java_binary(
+    name = "dev_dist_generator",
+    add_opens = INTELLIJ_ADD_OPENS,
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+        "-Dintellij.build.dev.dist.community.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
+    main_class = "com.intellij.platform.buildScripts.devDistGenerator.CommunityDevDistGenerator",
+    runtime_deps = ["//platform/build-scripts/dev-dist-generator"],
+)
+
 java_binary(
     name = "report_junit_xml_test_metadata_build_target",
     main_class = "com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter",

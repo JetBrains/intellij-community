@@ -37,8 +37,8 @@ import java.nio.file.Path
  * span that a render starts nests under the span of the run.
  *
  * [projectRoot] is the monorepo root, and [half] has it as its root. The community half renders against its own root,
- * see [DevDistHalf.root]. [testPlugins] are the Product DSL test plugins that a run-configuration module can be. Both
- * halves read the same specifications, whose paths are relative to the monorepo root.
+ * see [DevDistHalf.root]. [testPlugins] are the Product DSL test plugins that a run-configuration module of [half] can
+ * be. The community half reads none, see [computeCommunityHalf].
  */
 @ApiStatus.Internal
 fun TaskScope.forkDevDistHalves(
@@ -63,9 +63,9 @@ fun TaskScope.forkDevDistHalves(
   var communityTask: Subtask<DevDistBazelComputes?>? = null
   // The community half renders first, and the half of this run reads its result as the upstream result. A run without
   // the community JSON renders neither half. A committing run then fails in `finish`.
-  if (devDistPlanInputExists(projectRoot) && Files.exists(communityTargetsJson(projectRoot))) {
+  if (devDistPlanInputExists(projectRoot) && Files.exists(communityTargetsJson(CommunityDevDistHalf.root(projectRoot)))) {
     val upstreamTask = fork("generate community dev-distribution plan") {
-      computeCommunityDevDistFiles(projectRoot = projectRoot, verifyPlanUnits = verifyPlanUnits, testPlugins = testPlugins)
+      computeCommunityDevDistFiles(projectRoot = projectRoot, verifyPlanUnits = verifyPlanUnits)
     }
     communityTask = upstreamTask
     bazelTask = fork("generate dev-distribution build sections and plan") {
@@ -97,7 +97,7 @@ fun TaskScope.forkDevDistHalves(
 
 /** The message of a run whose community half is missing. */
 private fun communityHalfMissing(projectRoot: Path): String {
-  return "The community half needs ${projectRoot.relativize(communityTargetsJson(projectRoot))}." +
+  return "The community half needs ${projectRoot.relativize(communityTargetsJson(CommunityDevDistHalf.root(projectRoot)))}." +
          " Run ./community/build/jpsModelToBazelCommunityOnly.cmd first."
 }
 
@@ -133,7 +133,7 @@ class DevDistHalvesRun internal constructor(
     // what catches a stale plan. A committing run is the converter's own, so there a missing file is a setup error, and
     // the render below fails and says so. That render is sequential, and it costs nothing: it is the run that fails.
     val communityFiles = communityTask?.await()
-                         ?: if (commitPlan) computeCommunityDevDistFiles(projectRoot, verifyPlanUnits, testPlugins) else null
+                         ?: if (commitPlan) computeCommunityDevDistFiles(projectRoot, verifyPlanUnits) else null
     // A committing run needs the community targets JSON, as it needs the monorepo one. Under Bazel the property names it,
     // and a missing file already stopped the run. An IDE run without the workspace file validates no community half.
     check(!commitPlan || communityFiles != null) { communityHalfMissing(projectRoot) }
@@ -325,12 +325,11 @@ private const val COMMUNITY_TARGETS_JSON_FILE_PROPERTY: String = "intellij.build
 /**
  * The community targets JSON. When [COMMUNITY_TARGETS_JSON_FILE_PROPERTY] is set, the file is the Bazel output it names,
  * and a missing file stops the run. Otherwise, the file is the `bazel-targets.json` of the community converter under the
- * monorepo root [projectRoot]. That file is not checked in.
+ * community root [communityRoot]. That file is not checked in.
  */
-@ApiStatus.Internal
-fun communityTargetsJson(projectRoot: Path): Path {
+internal fun communityTargetsJson(communityRoot: Path): Path {
   val configured = System.getProperty(COMMUNITY_TARGETS_JSON_FILE_PROPERTY)
-    ?: return CommunityDevDistHalf.root(projectRoot).resolve("build/bazel-targets.json")
+    ?: return communityRoot.resolve("build/bazel-targets.json")
   val path = Path.of(configured)
   val file = if (path.isAbsolute) path else BazelRunfiles.resolveRunfilePath(configured)
   check(Files.exists(file)) {
@@ -341,11 +340,8 @@ fun communityTargetsJson(projectRoot: Path): Path {
 }
 
 /**
- * The community half: the `dev` sections and the plan of the community products over the community JPS model, written
- * under `community/`.
- *
- * The half renders against its own root: its JPS model, its registry, its run configurations and every path of its
- * outputs are relative to `community/` of the monorepo root [projectRoot], see [DevDistHalf.root].
+ * The community half of a monorepo run: the `dev` sections and the plan of the community products over the community
+ * JPS model, written under `community/` of the monorepo root [projectRoot].
  *
  * The half reads the community targets JSON, see [communityTargetsJson]. Both targets JSON files spell a community label
  * alike, so under Bazel a module jar resolves through the runfiles of the tool. Out of Bazel, a jar path of the community
@@ -353,47 +349,62 @@ fun communityTargetsJson(projectRoot: Path): Path {
  * provider keeps the monorepo root as its project home. `null` when the property is not set and the workspace file does
  * not exist. The caller decides what that means.
  */
-internal fun computeCommunityDevDistFiles(
-  projectRoot: Path,
-  verifyPlanUnits: Boolean,
-  testPlugins: List<TestPluginSpec>,
-): DevDistBazelComputes? {
-  val half = CommunityDevDistHalf
-  val root = half.root(projectRoot)
-  val targetsFile = communityTargetsJson(projectRoot)
+internal fun computeCommunityDevDistFiles(projectRoot: Path, verifyPlanUnits: Boolean): DevDistBazelComputes? {
+  val communityRoot = CommunityDevDistHalf.root(projectRoot)
+  val targetsFile = communityTargetsJson(communityRoot)
   if (!Files.exists(targetsFile)) {
     return null
   }
   val targets = buildSpan("load community bazel-targets.json") { communityTargetsSeenFromMonorepo(readBazelTargetsJson(targetsFile)) }
-  val project = loadGeneratorJpsProject(root)
+  return computeCommunityHalf(communityRoot = communityRoot, projectHome = projectRoot, targets = targets, verifyPlanUnits = verifyPlanUnits)
+}
+
+/**
+ * The community half over the community checkout [communityRoot]. The monorepo run and the community binary both call
+ * it, so both write the same bytes.
+ *
+ * The half renders against [communityRoot]: its JPS model, its registry, its run configurations and every path of its
+ * outputs are relative to it, see [DevDistHalf.root]. [targets] is the community targets JSON, and its jar paths are
+ * relative to [projectHome]. A generated file holds no jar path, so [projectHome] changes no byte of the output.
+ *
+ * The community model states no Product DSL test product, so the half reads no test plugin.
+ */
+internal fun computeCommunityHalf(
+  communityRoot: Path,
+  projectHome: Path,
+  targets: BazelTargetsInfo.TargetsFile,
+  verifyPlanUnits: Boolean,
+): DevDistBazelComputes {
+  val half = CommunityDevDistHalf
+  val project = loadGeneratorJpsProject(communityRoot)
   val outputProvider = BazelModuleOutputProvider(
     state = BazelModuleOutputProviderState(
       modules = project.modules,
-      projectHome = projectRoot,
+      projectHome = projectHome,
       bazelTargetsLoader = { targets },
     ),
     lifetime = null,
     useTestCompilationOutput = true,
   )
-  val derivation = productDerivation(root, outputProvider)
+  val derivation = productDerivation(communityRoot, outputProvider)
   val packings = buildSpan("derive community plugin packings") {
-    derivePluginPackings(half = half, root = root, outputProvider = outputProvider, derivation = derivation)
+    derivePluginPackings(half = half, root = communityRoot, outputProvider = outputProvider, derivation = derivation)
   }
   return computeDevDistBazelFiles(
     half = half,
-    root = root,
+    root = communityRoot,
     outputProvider = outputProvider,
     products = derivation.products,
     derivation = packings,
     verifyPlanUnits = verifyPlanUnits,
     targets = targets,
-    testPlugins = testPlugins,
+    testPlugins = emptyList(),
   )
 }
 
 private val BAZEL_TARGETS_JSON = Json { ignoreUnknownKeys = true }
 
-private fun readBazelTargetsJson(file: Path): BazelTargetsInfo.TargetsFile {
+internal fun readBazelTargetsJson(file: Path): BazelTargetsInfo.TargetsFile {
   return BAZEL_TARGETS_JSON.decodeFromString<BazelTargetsInfo.TargetsFile>(Files.readString(file))
 }
 

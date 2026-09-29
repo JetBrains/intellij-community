@@ -91,8 +91,8 @@ class DevDistOwnershipTest {
     assertThat(call).contains("\"@community//libraries/x\"").contains("\"@lib//:y\"")
     assertThat(call).contains("modules_before = [\"@community//platform/core\"]")
     assertThat(relocatedContentModuleJarLabel(communityPlugin)).isEqualTo("//build/dev-dist-content-module-jars:intellij.c_content_module_jar")
-    assertThat(renderRelocatedContentModuleJarPackage(emptyMap())).isNull()
-    assertThat(renderRelocatedContentModuleJarPackage(mapOf(communityPlugin to call)))
+    assertThat(renderRelocatedContentModuleJarPackage(emptyMap(), monorepoHalf)).isNull()
+    assertThat(renderRelocatedContentModuleJarPackage(mapOf(communityPlugin to call), monorepoHalf))
       .contains("load(\"@community//platform/build-scripts/bazel-rules:content_module_jar.bzl\", \"content_module_jar\")")
       .endsWith(call)
   }

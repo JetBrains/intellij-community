@@ -789,7 +789,7 @@ internal class DevDistBuildSections private constructor(
         frontendRootDescriptorJars = embeddedClasses.frontendRootDescriptorJars(),
       )
       val crossHalfDescriptorPackages = buildSpan("dev sections: cross-half descriptor packages") {
-        collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = residueClasses, planLabel = index::planLabel)
+        collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = residueClasses, planLabel = index::planLabel, half = half)
       }
       val result = DevDistBuildSections(
         contentModuleJarCalls = contentModuleJarCalls,
@@ -988,12 +988,12 @@ internal fun relocatedContentModuleJarCall(module: String, jar: ContentModuleJar
  * The `BUILD.bazel` of [DEV_DIST_CONTENT_MODULE_JARS_PACKAGE] over [calls], keyed by module, or `null` when no call is
  * relocated.
  */
-internal fun renderRelocatedContentModuleJarPackage(calls: Map<String, String>): String? {
+internal fun renderRelocatedContentModuleJarPackage(calls: Map<String, String>, half: DevDistHalf): String? {
   if (calls.isEmpty()) {
     return null
   }
   return buildString {
-    append(GENERATED_BY_HEADER)
+    append(half.generatedByHeader)
     append("#\n")
     append("# The `content_module_jar` calls of the community modules that the ultimate products pack differently from the\n")
     append("# community products. The community half writes the call of the community products in the package of the module.\n")

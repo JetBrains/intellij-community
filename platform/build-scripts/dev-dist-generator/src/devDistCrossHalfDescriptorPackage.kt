@@ -84,6 +84,8 @@ private fun descriptorTargetName(entry: PluginDescriptorEntry): String = when {
  */
 internal class CrossHalfDescriptorPackages(
   private val planLabel: (String) -> String,
+  /** The half of the run. Its header opens each package file. */
+  private val half: DevDistHalf,
   /** The rendered descriptor targets of each package, keyed by project-relative path. */
   private val descriptorTargets: Map<String, List<String>>,
   /** The declaration of every baseline entry a plugin package holds, keyed by [planEntryKey]. */
@@ -116,6 +118,7 @@ internal class CrossHalfDescriptorPackages(
       check(calls == null || !pluginTargets.containsKey(path)) { "The package '$path' holds a dev_plugin target and a complex plugin call" }
       result.put(path, renderCrossHalfPackage(
         planLabel = planLabel,
+        half = half,
         product = productOfPackagePath(path),
         descriptorTargets = descriptorTargets.get(path).orEmpty(),
         pluginTarget = pluginTargets.get(path),
@@ -194,12 +197,13 @@ private fun listDirectories(directory: Path): List<Path> {
  * ([DescriptorResidueClasses.home]).
  *
  * A declaration keeps the labels of its entry in the recorded form. [planLabel] spells them for a package of the half
- * of the run when a leaf renders, see [DevDistBazelIndex.planLabel].
+ * of the run when a leaf renders, see [DevDistBazelIndex.planLabel]. The header of [half] opens each package file.
  */
 internal fun collectCrossHalfDescriptorPackages(
   verdicts: DevDistToolVerdicts,
   classes: Map<String, DescriptorResidueClasses>,
   planLabel: (String) -> String,
+  half: DevDistHalf,
 ): CrossHalfDescriptorPackages {
   val targetsByPackage = TreeMap<String, MutableList<CrossHalfDescriptorTarget>>()
   val shared = LinkedHashMap<String, DevDistDescriptorDeclaration>()
@@ -233,6 +237,7 @@ internal fun collectCrossHalfDescriptorPackages(
   }
   return CrossHalfDescriptorPackages(
     planLabel = planLabel,
+    half = half,
     descriptorTargets = Collections.unmodifiableMap(files),
     shared = Collections.unmodifiableMap(shared),
     perProduct = Collections.unmodifiableMap(perProduct.mapValues { Collections.unmodifiableMap(it.value) }),
@@ -271,12 +276,13 @@ private fun productOfPackagePath(path: String): String? {
  */
 private fun renderCrossHalfPackage(
   planLabel: (String) -> String,
+  half: DevDistHalf,
   product: String?,
   descriptorTargets: List<String>,
   pluginTarget: String?,
   complexPluginCalls: String?,
 ): String = buildString {
-  append(GENERATED_BY_HEADER)
+  append(half.generatedByHeader)
   append("#\n")
   when {
     product == null -> {
