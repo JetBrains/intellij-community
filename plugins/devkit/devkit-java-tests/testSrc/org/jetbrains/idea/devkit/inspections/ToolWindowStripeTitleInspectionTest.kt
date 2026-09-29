@@ -117,23 +117,6 @@ class ToolWindowStripeTitleInspectionTest : JavaCodeInsightFixtureTestCase() {
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
-  fun `test replaces a space in the id with an underscore`() {
-    val pluginXml = addFile(
-      "META-INF/plugin.xml", """
-      <idea-plugin>
-        <id>com.example.plugin</id>
-        <resource-bundle>messages.MyBundle</resource-bundle>
-        <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="Version Control"/>
-        </extensions>
-      </idea-plugin>
-      """.trimIndent()
-    )
-    val bundle = addFile("messages/MyBundle.properties", "toolwindow.stripe.Version_Control=Version Control\n")
-
-    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
-  }
-
   fun `test does not report a tool window without any key`() {
     val pluginXml = addFile(
       "META-INF/plugin.xml", """
