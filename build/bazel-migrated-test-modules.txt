@@ -85,6 +85,7 @@ intellij.platform.backend.observation.tests
 intellij.platform.buildScripts.productDsl.tests
 intellij.platform.buildScripts.runtimeModuleRepository.tests
 intellij.platform.buildScripts.usages.tests
+intellij.platform.buildView.tests
 intellij.platform.builtInServer.tests
 intellij.platform.collaborationTools.tests
 intellij.platform.completion.common.tests
