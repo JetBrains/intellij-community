@@ -43,7 +43,11 @@ public final class EditScopesAction extends AnAction implements DumbAware {
     else {
       event.getPresentation().setEnabledAndVisible(view != null && view.getProjectViewPaneById(ScopeViewPane.ID) != null);
     }
-    if (ActionPlaces.TOOLWINDOW_POPUP.equals(event.getPlace())) {
+    String place = event.getPlace();
+    if (ActionPlaces.TOOLWINDOW_POPUP.equals(place) ||
+        ActionPlaces.TOOLWINDOW_OPTIONS_POPUP.equals(place) ||
+        ActionPlaces.TOOLWINDOW_TAB_POPUP.equals(place) ||
+        ActionPlaces.TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP.equals(place)) {
       event.getPresentation().setIcon(null);
     }
   }
