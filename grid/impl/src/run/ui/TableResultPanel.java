@@ -743,6 +743,11 @@ public class TableResultPanel extends UserDataHolderBase
     Set<ModelIndex<GridColumn>> result = new HashSet<>(myColumnPinModel.pinnedColumns());
     if (!(myResultView instanceof TableResultView view)) return result;
     for (int modelIndex : view.columnsThatCanBePinned(myColumnPinModel.pinnedColumns())) result.add(ModelIndex.forColumn(this, modelIndex));
+    if (view.canFitPinnedColumns(myColumnPinModel.pinnedColumns())) {
+      for (var column : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
+        if (!isColumnEnabled(column)) result.add(column);
+      }
+    }
     return result;
   }
 
@@ -1259,15 +1264,9 @@ public class TableResultPanel extends UserDataHolderBase
     updateFrozenColumns();
   }
 
-  /** Whether any shown column sits somewhere other than where the data puts it. */
+  /** Whether any column, including a hidden column, differs from the data order. */
   public boolean isColumnsOrderModified() {
-    IntUnaryOperator column2View = getRawIndexConverter().column2View();
-    int expectedPos = 0;
-    for (ModelIndex<GridColumn> columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
-      if (!isColumnEnabled(columnIdx)) continue;
-      if (column2View.applyAsInt(columnIdx.value) != expectedPos++) return true;
-    }
-    return false;
+    return !getColumnsDisplayOrder().equals(getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList());
   }
 
   @Override

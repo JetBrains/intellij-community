@@ -36,6 +36,9 @@ class ColumnPinCommands(private val grid: DataGrid) {
   /** Whether an unpin all item belongs in a menu. */
   fun offersUnpinAll(): Boolean = panel?.hasPinnedColumns() == true
 
+  /** Returns the columns whose inline pin control can act in the current view. */
+  fun columnsThatCanTogglePin(): Set<ModelIndex<GridColumn>> = actable?.columnsThatCanTogglePin() ?: emptySet()
+
   /** Why a pin of [columns] cannot act, or null when it can. */
   fun reasonPinRefuses(columns: ModelIndexSet<GridColumn>): @ActionDescription String? = when {
     grid.resultView.isTransposed -> DataGridBundle.message(TRANSPOSED)

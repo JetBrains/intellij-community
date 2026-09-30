@@ -91,7 +91,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -121,10 +120,11 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingTextTrimmer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UpdateScaleHelper;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -274,6 +274,7 @@ public class TableResultView extends JBTableWithResizableCells
    * be hidden too, which puts two hidden columns in a chain and keeps them apart.
    */
   private final Map<Integer, Integer> myLeftNeighbourWhenHidden = new HashMap<>();
+  private @Nullable Int2IntMap myColumnNeighboursBeforeBatch;
   /** Says that a hidden column belongs at the start, rather than after some other column. */
   public static final int NO_LEFT_NEIGHBOUR = -1;
 
@@ -838,7 +839,7 @@ public class TableResultView extends JBTableWithResizableCells
     while (neighbour != null && neighbour != NO_LEFT_NEIGHBOUR && seen.add((int)neighbour)) {
       int viewIdx = viewIndexOfModelColumn(neighbour);
       if (viewIdx >= 0) return viewIdx + 1;
-      neighbour = myLeftNeighbourWhenHidden.get((int)neighbour);
+      neighbour = myLeftNeighbourWhenHidden.get(neighbour);
     }
     return neighbour != null && neighbour == NO_LEFT_NEIGHBOUR ? 0 : -1;
   }
@@ -862,9 +863,10 @@ public class TableResultView extends JBTableWithResizableCells
     for (int viewIdx = 0; viewIdx < getColumnCount(); viewIdx++) {
       order.add(getColumnModel().getColumn(viewIdx).getModelIndex());
     }
+    var shown = new IntOpenHashSet(order);
     IntList waiting = new IntArrayList();
     for (ModelIndex<GridColumn> columnIdx : myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
-      if (!order.contains(columnIdx.asInteger())) waiting.add(columnIdx.asInteger());
+      if (!shown.contains(columnIdx.asInteger())) waiting.add(columnIdx.asInteger());
     }
     placeHiddenColumns(order, waiting);
     List<ModelIndex<GridColumn>> result = new ArrayList<>(order.size());
@@ -874,29 +876,63 @@ public class TableResultView extends JBTableWithResizableCells
 
   /** Puts each column of {@code waiting} after its neighbour, and the rest where the data puts them. */
   private void placeHiddenColumns(@NotNull IntList order, @NotNull IntList waiting) {
-    boolean placedOne = true;
-    while (placedOne && !waiting.isEmpty()) {
-      placedOne = false;
-      for (IntIterator it = waiting.iterator(); it.hasNext(); ) {
-        int column = it.nextInt();
-        Integer neighbour = myLeftNeighbourWhenHidden.get(column);
-        if (neighbour == null) continue;
-        int at = neighbour == NO_LEFT_NEIGHBOUR ? 0 : order.indexOf((int)neighbour) + 1;
-        if (at == 0 && neighbour != NO_LEFT_NEIGHBOUR) continue;
-        order.add(at, column);
-        it.remove();
-        placedOne = true;
-      }
-    }
+    var hidden = new IntOpenHashSet(waiting);
+    Int2ObjectMap<IntList> dependents = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<IntList> deferred = new Int2ObjectOpenHashMap<>();
     for (int column : waiting) {
-      int at = order.size();
-      for (int i = 0; i < order.size(); i++) {
-        if (order.getInt(i) > column) {
-          at = i;
-          break;
-        }
-      }
-      order.add(at, column);
+      Integer neighbour = myLeftNeighbourWhenHidden.get(column);
+      if (neighbour == null) continue;
+      // Children below their hidden predecessor's model index come first.
+      var target = hidden.contains((int)neighbour) && column < neighbour ? deferred : dependents;
+      target.computeIfAbsent((int)neighbour, _ -> new IntArrayList()).add(column);
+    }
+    IntList stack = new IntArrayList();
+    for (int i = order.size() - 1; i >= 0; i--) stack.add(order.getInt(i));
+    stack.add(NO_LEFT_NEIGHBOUR);
+    var placed = new IntOpenHashSet();
+    IntList resolved = new IntArrayList();
+    while (!stack.isEmpty()) {
+      int column = stack.removeInt(stack.size() - 1);
+      if (!placed.add(column)) continue;
+      if (column != NO_LEFT_NEIGHBOUR) resolved.add(column);
+      var children = dependents.get(column);
+      if (children != null) stack.addAll(children);
+      var laterChildren = deferred.get(column);
+      if (laterChildren != null) stack.addAll(laterChildren);
+    }
+
+    IntList remaining = new IntArrayList();
+    for (int column : waiting) {
+      if (!placed.contains(column)) remaining.add(column);
+    }
+    order.clear();
+    int next = 0;
+    for (int column : resolved) {
+      while (next < remaining.size() && remaining.getInt(next) < column) order.add(remaining.getInt(next++));
+      order.add(column);
+    }
+    while (next < remaining.size()) order.add(remaining.getInt(next++));
+  }
+
+  /** Captures the column order once for a group of visibility changes. */
+  public void runWithColumnVisibilityBatch(@NotNull Runnable operation) {
+    if (myColumnNeighboursBeforeBatch != null) {
+      operation.run();
+      return;
+    }
+    Int2IntMap neighbours = new Int2IntOpenHashMap();
+    neighbours.defaultReturnValue(NO_LEFT_NEIGHBOUR);
+    int previous = NO_LEFT_NEIGHBOUR;
+    for (var column : columnsInDisplayOrder()) {
+      neighbours.put(column.asInteger(), previous);
+      previous = column.asInteger();
+    }
+    myColumnNeighboursBeforeBatch = neighbours;
+    try {
+      operation.run();
+    }
+    finally {
+      myColumnNeighboursBeforeBatch = null;
     }
   }
 
@@ -926,6 +962,10 @@ public class TableResultView extends JBTableWithResizableCells
    */
   private void rememberPositionBeforeHiding(@NotNull ViewIndex<?> viewColumnIdx) {
     int modelIndex = getColumnModel().getColumn(viewColumnIdx.asInteger()).getModelIndex();
+    if (myColumnNeighboursBeforeBatch != null) {
+      myLeftNeighbourWhenHidden.put(modelIndex, myColumnNeighboursBeforeBatch.get(modelIndex));
+      return;
+    }
     List<ModelIndex<GridColumn>> order = columnsInDisplayOrder();
     int at = -1;
     for (int i = 0; i < order.size(); i++) {
@@ -1610,6 +1650,7 @@ public class TableResultView extends JBTableWithResizableCells
     return result;
   }
 
+  /** Checks whether the visible pinned columns leave enough width for the unpinned columns. */
   public boolean canFitPinnedColumns(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
     int availableWidth = getAvailableColumnsWidth();
     if (availableWidth <= 0) return true;

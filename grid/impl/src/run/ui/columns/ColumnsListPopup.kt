@@ -6,89 +6,84 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.DataGridListener
 import com.intellij.database.datagrid.DataGridPomTarget
 import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridHelper
 import com.intellij.database.datagrid.GridRequestSource
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.actions.ColumnPinCommands
 import com.intellij.database.run.actions.showReason
+import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.run.ui.GridColumnPinning
+import com.intellij.database.run.ui.TableResultPanel
+import com.intellij.database.run.ui.grid.GridScrollPositionManager
+import com.intellij.database.run.ui.table.ColumnPinning
+import com.intellij.database.run.ui.table.TableResultView
 import com.intellij.icons.AllIcons
-import com.intellij.ide.dnd.DnDDragStartBean
-import com.intellij.ide.dnd.DnDEvent
-import com.intellij.ide.dnd.DnDImage
-import com.intellij.ide.dnd.DnDSupport
-import com.intellij.ide.dnd.SmoothAutoScroller
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.database.run.ui.GridColumnPinning
-import com.intellij.database.run.ui.TableResultPanel
-import com.intellij.database.run.ui.table.ColumnPinning
-import com.intellij.database.run.ui.table.TableResultView
-import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.PopupHandler
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.SearchFieldWithExtension
+import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Component
-import java.awt.AlphaComposite
+import org.jetbrains.concurrency.CancellablePromise
 import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.Point
+import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
-import java.awt.Point
-import java.util.function.Supplier
-import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseEvent
-import java.awt.image.BufferedImage
+import java.util.function.Supplier
 import javax.swing.AbstractAction
 import javax.swing.Icon
-import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.KeyStroke
-import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
-import javax.swing.SwingConstants
-import javax.swing.TransferHandler
-import javax.swing.ToolTipManager
 import javax.swing.ScrollPaneConstants
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
+import javax.swing.ToolTipManager
 import javax.swing.event.DocumentEvent
 
 /**
@@ -102,12 +97,6 @@ class ColumnsListPopup(private val grid: DataGrid) {
   private val commands = ColumnPinCommands(grid)
 
   private var model = ColumnsListModel(emptyList())
-
-  /**
-   * What the rows are built from, so that a content change which leaves the columns alone costs nothing.
-   * This sits above the init block, because a property initializer runs after it and would clear the stamp.
-   */
-  private var columnsStamp: List<String> = emptyList()
 
   /** True while this popup changes the grid, so the grid events it causes do not rebuild the rows one by one. */
   private var applying = false
@@ -123,8 +112,6 @@ class ColumnsListPopup(private val grid: DataGrid) {
 
   private val renderer = ItemRenderer(ColumnPinning.isEnabled(), reorderable)
 
-  /** Where the dragged row lands, or null while no drag is over the list. */
-  private var dropLine: DropLine? = null
 
   /** The spacer row that holds the line between the pinned columns and the rest, or -1 when there is none. */
   private var separatorRow = -1
@@ -132,9 +119,9 @@ class ColumnsListPopup(private val grid: DataGrid) {
   private val list = object : JBList<Row>(listModel) {
     override fun paintComponent(g: Graphics) {
       super.paintComponent(g)
-      paintDropBand(g)
+      drag?.paintBand(g)
       paintPinnedGroupLine(g)
-      paintDropLine(g)
+      drag?.paintLine(g)
     }
 
     /** Explains a pin that cannot be taken. A disabled control has no other way to say why. */
@@ -143,11 +130,15 @@ class ColumnsListPopup(private val grid: DataGrid) {
       if (row < 0 || getCellBounds(row, row)?.contains(event.point) != true) return null
       val item = itemAt(row) ?: return null
       if (item.canTogglePin || controlAt(event.x, row) != RowControl.PIN) return null
-      return DataGridBundle.message("action.Console.TableResult.PinColumns.insufficient.space.description")
+      val column = item.modelIndex ?: return null
+      return if (item.pinned) commands.reasonUnpinRefuses()
+      else commands.reasonPinRefuses(ModelIndexSet.forColumns(grid, column.asInteger()))
     }
   }.apply {
     selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+    setExpandableItemsEnabled(false)
     cellRenderer = renderer
+    accessibleContext.accessibleName = DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.AccessibleName")
     // The list UI fills a selected row with a square rectangle before the renderer draws. The row paints
     // its own fill in the shape the theme asks for, so that one is made invisible rather than fought.
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { UIUtil.TRANSPARENT_COLOR })
@@ -159,53 +150,75 @@ class ColumnsListPopup(private val grid: DataGrid) {
   }
 
   private val searchField = SearchTextField(false).apply {
-    textEditor.emptyText.text = DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.SearchPlaceholder")
+    val placeholder = DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.SearchPlaceholder")
+    textEditor.emptyText.text = placeholder
+    textEditor.accessibleContext.accessibleName = placeholder
+  }
+
+  /**
+   * How many columns the filter keeps, hidden ones included, because that is what a bulk action acts on.
+   * It is not the number a bulk action would change, which is smaller when some columns already agree.
+   */
+  private val matchCount = JLabel().apply { foreground = UIUtil.getContextHelpForeground() }
+
+  /** The filter with its count. SearchTextField holds a plain text field, which takes no extension itself. */
+  private val searchRow = SearchFieldWithExtension(matchCount, searchField).apply {
+    // The inset goes on after the wrapper is built, because its constructor clears the border of the
+    // component it takes. The count keeps the clear button of the field on its left, as the find toolbar
+    // keeps its own count after that button.
+    matchCount.border = JBUI.Borders.emptyRight(MATCH_COUNT_RIGHT_PAD)
   }
 
   private val counter = JLabel().apply { foreground = UIUtil.getContextHelpForeground() }
 
   private val showAllLink = ActionLink("") { applyVisibility(model.matched, true) }
+    .apply { horizontalAlignment = SwingConstants.RIGHT }
 
   private val hideAllLink = ActionLink("") { applyVisibility(model.matched, false) }
+    .apply { horizontalAlignment = SwingConstants.RIGHT }
 
   private val content: JComponent = object : BorderLayoutPanel(), UiDataProvider {
     /**
-     * Hands the platform the grid and the columns under the selection.
+     * Hands the platform the grid and the selected columns.
      *
-     * This sits on the whole popup and not on the list, because the filter field holds the focus and a
-     * data context is built from the component that has it. A popup of its own window also inherits
-     * nothing from the grid, so without this an action finds neither a grid nor an element.
+     * It sits on the whole popup and not on the list, because the context is built from the focused
+     * component and that is the filter field. A popup window inherits nothing from the grid either.
      */
     override fun uiDataSnapshot(sink: DataSink) {
+      val columns = selectedColumns().asIterable().toList()
+      val file = GridUtil.getVirtualFile(grid)
       sink[CommonDataKeys.PROJECT] = grid.project
       // GridUtil.getDataGrid reads this key, so an action that asks for the grid finds one.
       sink[DatabaseDataKeys.DATA_GRID_KEY] = grid
       // The popup shows a list and not text. An action that needs an editor must stay disabled.
       sink.setNull(CommonDataKeys.EDITOR)
       sink.lazy(CommonDataKeys.PSI_FILE) {
-        GridUtil.getVirtualFile(grid)?.let { PsiManager.getInstance(grid.project).findFile(it) }
+        file?.let { PsiManager.getInstance(grid.project).findFile(it) }
       }
-      sink.lazy(CommonDataKeys.PSI_ELEMENT) { selectedColumnElements().firstOrNull() }
-      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY) { selectedColumnElements().toTypedArray() }
+      sink.lazy(CommonDataKeys.PSI_ELEMENT) { columnElements(columns).firstOrNull() }
+      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY) { columnElements(columns).toTypedArray() }
       // A wrapped column is navigable, and Jump to Source reads this rather than the element.
-      sink.lazy(CommonDataKeys.NAVIGATABLE) { selectedColumnNavigatables().firstOrNull() }
-      sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) { selectedColumnNavigatables().toTypedArray() }
+      sink.lazy(CommonDataKeys.NAVIGATABLE) { columnElements(columns).filterIsInstance<Navigatable>().firstOrNull() }
+      sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) { columnElements(columns).filterIsInstance<Navigatable>().toTypedArray() }
     }
   }.apply {
     border = JBUI.Borders.empty(POPUP_PAD)
     preferredSize = Dimension(JBUIScale.scale(DEFAULT_WIDTH), JBUIScale.scale(DEFAULT_HEIGHT))
-    addToTop(searchField)
+    addToTop(searchRow)
     addToCenter(ScrollPaneFactory.createScrollPane(
       list,
       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER,
+      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED,
     ).apply { border = JBUI.Borders.empty(6, 0) })
     addToBottom(BorderLayoutPanel().apply {
       addToCenter(counter)
-      addToRight(JPanel(BorderLayout(JBUIScale.scale(12), 0)).apply {
+      // HorizontalLayout puts the gap between the links and none beside them. A BorderLayout keeps its
+      // gap next to the west child, so the link that stays alone there sits off the right edge.
+      addToRight(JPanel(HorizontalLayout(LINK_GAP)).apply {
         isOpaque = false
-        add(showAllLink, BorderLayout.WEST)
-        add(hideAllLink, BorderLayout.EAST)
+        border = JBUI.Borders.emptyRight(LINKS_RIGHT_PAD)
+        add(showAllLink)
+        add(hideAllLink)
       })
     })
   }
@@ -216,6 +229,9 @@ class ColumnsListPopup(private val grid: DataGrid) {
   val popup: JBPopup = JBPopupFactory.getInstance()
     .createComponentPopupBuilder(content, searchField.textEditor)
     .setProject(grid.project)
+    // The title is also the handle that moves the popup. Without one AbstractPopup builds a caption of
+    // zero height, and the move listener it installs there has nothing for the user to grab.
+    .setTitle(DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.Title"))
     // A popup is a modal context by default, and then the key dispatcher runs only an action that says
     // it works in one. Go to DDL and the other platform actions do not, so the popup must not be modal.
     .setModalContext(false)
@@ -226,7 +242,18 @@ class ColumnsListPopup(private val grid: DataGrid) {
     .setMinSize(Dimension(JBUIScale.scale(260), JBUIScale.scale(200)))
     .createPopup()
 
+  /** The column objects at each model index when the rows were built. */
+  /** The drag, or null in a document grid, where a reorder would have to write the file. */
+  private var drag: ColumnsListDrag? = null
+
+  private var columnSnapshot: Map<ModelIndex<GridColumn>, GridColumn?>? = null
+  private var presentationTask: CancellablePromise<*>? = null
+  private var previousLead = -1
+  private var restoringSelection = false
+  private var pointerInsideList = false
+
   init {
+    Disposer.register(grid, popup)
     searchField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) = search()
     })
@@ -234,56 +261,61 @@ class ColumnsListPopup(private val grid: DataGrid) {
     installMouse()
     installHover()
     installContextMenu()
-    ToolTipManager.sharedInstance().registerComponent(list)
-    list.addListSelectionListener {
-      skipSeparatorSelection()
-      if (!restoringSelection) selectColumnsInGrid()
+    val toolTipManager = ToolTipManager.sharedInstance()
+    toolTipManager.registerComponent(list)
+    Disposer.register(popup) {
+      if (pointerInsideList && toolTipManager in list.mouseMotionListeners) {
+        toolTipManager.mousePressed(MouseEvent(list, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false))
+      }
+      list.removeMouseMotionListener(toolTipManager)
+      toolTipManager.unregisterComponent(list)
     }
-    if (reorderable) installDrag()
+    list.addListSelectionListener { event ->
+      if (restoringSelection || event.valueIsAdjusting) return@addListSelectionListener
+      skipSeparatorSelection()
+      previousLead = list.leadSelectionIndex
+      selectColumnsInGrid()
+    }
+    drag = if (reorderable) ColumnsListDrag(this, list, listModel, renderer).also { it.install() } else null
     grid.addDataGridListener(object : DataGridListener {
       override fun onContentChanged(dataGrid: DataGrid, place: GridRequestSource.RequestPlace?) {
-        if (!applying && columnsChanged()) refresh()
+        // Every change is read again, because a hide, a pin or a reorder made outside this popup keeps
+        // the same column objects. Rebuilding is cheap while they last, and updateItems drops the result
+        // when no row differs, so a page of rows still costs nothing.
+        if (!applying) refresh()
       }
     }, popup)
     refresh()
-  }
-
-  /**
-   * Whether the columns differ from the ones the list shows.
-   *
-   * The grid reports a content change for a new page of rows and for an edited cell as well, and neither
-   * of those changes a row. The stamp holds the order, the visibility, the pin state and the name. It
-   * leaves out the type and the icon, which follow the name.
-   */
-  private fun columnsChanged(): Boolean {
-    val stamp = columnsStamp()
-    if (stamp == columnsStamp) return false
-    columnsStamp = stamp
-    return true
-  }
-
-  private fun columnsStamp(): List<String> {
-    val pinning = grid as? GridColumnPinning
-    return columnsInOrder(grid).map { column ->
-      val pinned = pinning?.isColumnPinned(column) == true
-      "${column.asInteger()}:${grid.isColumnEnabled(column)}:$pinned:${grid.getUnambiguousColumnName(column)}"
+    restoringSelection = true
+    val selected = grid.selectionModel.selectedColumns.asIterable().toSet()
+    listModel.items.forEachIndexed { index, row ->
+      if (row is Row.Item && row.value.modelIndex in selected) list.addSelectionInterval(index, index)
     }
+    restoringSelection = false
+    previousLead = list.leadSelectionIndex
   }
 
   /**
-   * Tracks the row under the pointer.
-   *
-   * The popup does this rather than install [com.intellij.ui.hover.ListHoverListener], because
-   * `WideSelectionListUI` paints a hover background for whichever row that listener reports, before it
-   * consults the row itself. The separator row must react to nothing, and it cannot opt out of that paint.
+   * Tracks the row under the pointer, rather than install [com.intellij.ui.hover.ListHoverListener].
+   * `WideSelectionListUI` paints a hover behind whichever row that listener reports, before the row has
+   * any say, and the separator must react to nothing.
    */
   private fun installHover() {
     val listener = object : MouseAdapter() {
-      override fun mouseMoved(e: MouseEvent) = setHoveredRow(hoverableRowAt(e.point))
+      override fun mouseMoved(e: MouseEvent) {
+        pointerInsideList = true
+        setHoveredRow(hoverableRowAt(e.point))
+      }
 
-      override fun mouseEntered(e: MouseEvent) = setHoveredRow(hoverableRowAt(e.point))
+      override fun mouseEntered(e: MouseEvent) {
+        pointerInsideList = true
+        setHoveredRow(hoverableRowAt(e.point))
+      }
 
-      override fun mouseExited(e: MouseEvent) = setHoveredRow(-1)
+      override fun mouseExited(e: MouseEvent) {
+        pointerInsideList = false
+        setHoveredRow(-1)
+      }
     }
     list.addMouseListener(listener)
     list.addMouseMotionListener(listener)
@@ -309,15 +341,24 @@ class ColumnsListPopup(private val grid: DataGrid) {
     if (bounds != null) list.repaint(0, bounds.y, list.width, bounds.height)
   }
 
-  /** True while the list rebuilds its selection, so the table hears the result once and not each step. */
-  private var restoringSelection = false
-
   /** The separator is a row of its own, so the selection steps over it instead of landing on it. */
   private fun skipSeparatorSelection() {
-    val index = list.selectedIndex
-    if (index < 0 || listModel.items.getOrNull(index) !is Row.Separator) return
-    val next = if (index + 1 < listModel.size) index + 1 else index - 1
-    if (next >= 0) list.selectedIndex = next else list.clearSelection()
+    if (separatorRow < 0 || !list.isSelectedIndex(separatorRow)) return
+    restoringSelection = true
+    try {
+      val lead = list.leadSelectionIndex
+      val single = list.selectedIndices.size == 1
+      list.removeSelectionInterval(separatorRow, separatorRow)
+      if (lead == separatorRow) {
+        val next = separatorRow + if (previousLead > separatorRow) -1 else 1
+        if (next in 0 until listModel.size) {
+          if (single) list.selectedIndex = next else list.addSelectionInterval(next, next)
+        }
+      }
+    }
+    finally {
+      restoringSelection = false
+    }
   }
 
   private fun search() {
@@ -325,16 +366,75 @@ class ColumnsListPopup(private val grid: DataGrid) {
     updateRows()
   }
 
-  /** Reads the grid again, because the grid is the one source of truth for the visibility and the order. */
+  /** Updates row state and resolves presentation when the column objects change. */
   private fun refresh() {
-    columnsStamp = columnsStamp()
-    model = ColumnsListModel(buildColumnsListItems(grid), model.filter)
-    updateRows()
+    if (popup.isDisposed) return
+    val columnsChanged = !hasCurrentColumns()
+    if (columnsChanged) {
+      presentationTask?.cancel()
+      val dataModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
+      columnSnapshot = dataModel.columnIndices.asIterable().associateWith { dataModel.getColumn(it) }
+    }
+    val previous = if (columnsChanged) emptyMap() else model.items.associateBy { it.modelIndex }
+    val items = buildColumnsListItems(grid) { column ->
+      val item = previous[ModelIndex.forColumn(grid, column.columnNumber)]
+      if (item == null) column.typeName to null else item.typeText to item.icon
+    }
+    updateItems(items, preserveSelection = !columnsChanged)
+    if (columnsChanged) loadPresentations(columnSnapshot!!)
   }
 
-  private fun updateRows() {
+  private fun hasCurrentColumns(): Boolean {
+    val snapshot = columnSnapshot ?: return false
+    val dataModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
+    val indices = dataModel.columnIndices
+    return indices.size() == snapshot.size && indices.asIterable().all { index ->
+      snapshot.containsKey(index) && snapshot[index] === dataModel.getColumn(index)
+    }
+  }
+
+  /** Rebuilds after column replacement and rejects the command that targeted the previous columns. */
+  private fun ensureCurrentColumns(): Boolean {
+    if (popup.isDisposed) return false
+    if (hasCurrentColumns()) return true
+    refresh()
+    return false
+  }
+
+  /** Resolves types and icons once for this set of column objects. */
+  private fun loadPresentations(snapshot: Map<ModelIndex<GridColumn>, GridColumn?>) {
+    if (snapshot.isEmpty()) return
+    val helper = GridHelper.get(grid)
+    presentationTask = ReadAction.nonBlocking<Map<ModelIndex<GridColumn>, Pair<String?, Icon?>?>> {
+      snapshot.mapValues { (_, column) ->
+        ProgressManager.checkCanceled()
+        column?.let { helper.getColumnTypeText(grid, it) to helper.getColumnIcon(grid, it, true) }
+      }
+    }
+      .expireWith(popup)
+      .expireWith(grid)
+      .finishOnUiThread(ModalityState.defaultModalityState()) { presentations ->
+        if (columnSnapshot !== snapshot || !ensureCurrentColumns()) return@finishOnUiThread
+        updateItems(model.items.map { item ->
+          val presentation = presentations[item.modelIndex]
+          if (presentation == null) item else item.copy(typeText = presentation.first, icon = presentation.second)
+        })
+      }
+      .submit(AppExecutorUtil.getAppExecutorService())
+  }
+
+  private fun updateItems(items: List<ColumnsListItem>, preserveSelection: Boolean = true) {
+    if (preserveSelection && items == model.items) return
+    model = ColumnsListModel(items, model.filter)
+    updateRows(preserveSelection)
+  }
+
+  private fun updateRows(preserveSelection: Boolean = true) {
     restoringSelection = true
-    val selected = list.selectedValuesList.filterIsInstance<Row.Item>().mapTo(HashSet()) { it.value.name }
+    val selected = if (preserveSelection) {
+      list.selectedValuesList.filterIsInstance<Row.Item>().mapTo(HashSet()) { it.value.modelIndex }
+    }
+    else emptySet()
     val separatorAt = firstRowAfterPinned()
     val rows = buildList {
       model.rows.forEachIndexed { index, item ->
@@ -345,13 +445,22 @@ class ColumnsListPopup(private val grid: DataGrid) {
     separatorRow = rows.indexOfFirst { it is Row.Separator }
     listModel.replaceAll(rows)
     rows.forEachIndexed { index, row ->
-      if (row is Row.Item && row.value.name in selected) list.addSelectionInterval(index, index)
+      if (row is Row.Item && row.value.modelIndex != null && row.value.modelIndex in selected) list.addSelectionInterval(index, index)
     }
     restoringSelection = false
+    previousLead = list.leadSelectionIndex
     counter.text = DataGridBundle.message(
       "action.Console.TableResult.ColumnsList.Popup.Counter", model.shownCount, model.totalCount
     )
+    // The footer counts the grid and the label beside the filter counts the filter. The words alone no
+    // longer say which is which, so the whole sentence goes on the tooltip and on the description too.
+    val explanation = DataGridBundle.message(
+      "action.Console.TableResult.ColumnsList.Popup.CounterTooltip", model.shownCount, model.totalCount
+    )
+    counter.setToolTipText(HtmlChunk.text(explanation))
+    counter.accessibleContext.accessibleDescription = explanation
     val searching = !model.filter.isEmpty
+    updateMatchCount(searching)
     showAllLink.text = DataGridBundle.message(
       if (searching) "action.Console.TableResult.ColumnsList.Popup.ShowMatching"
       else "action.Console.TableResult.ColumnsList.Popup.ShowAll"
@@ -360,8 +469,39 @@ class ColumnsListPopup(private val grid: DataGrid) {
       if (searching) "action.Console.TableResult.ColumnsList.Popup.HideMatching"
       else "action.Console.TableResult.ColumnsList.Popup.HideAll"
     )
-    showAllLink.isEnabled = model.matched.any { !it.visible }
-    hideAllLink.isEnabled = model.matched.any { it.visible }
+    // A link that cannot act leaves the row rather than greying out. The one that can act then always
+    // sits at the same distance from the right edge, instead of moving by the width of its neighbour.
+    showAllLink.isVisible = model.matched.any { !it.visible }
+    hideAllLink.isVisible = model.matched.any { it.visible }
+    showAllLink.isEnabled = showAllLink.isVisible
+    hideAllLink.isEnabled = hideAllLink.isVisible
+    alignBulkLinks()
+  }
+
+  /**
+   * Gives both bulk links one width and right aligned text, so the last letter of the live one lands in
+   * the same place each time the pair swaps roles.
+   */
+  private fun alignBulkLinks() {
+    showAllLink.preferredSize = null
+    hideAllLink.preferredSize = null
+    val width = maxOf(showAllLink.preferredSize.width, hideAllLink.preferredSize.width)
+    showAllLink.preferredSize = Dimension(width, showAllLink.preferredSize.height)
+    hideAllLink.preferredSize = Dimension(width, hideAllLink.preferredSize.height)
+  }
+
+  /**
+   * Shows the count of the filter. It also goes on the description of the field, because a label that
+   * changes while the user types is announced to nobody.
+   */
+  private fun updateMatchCount(searching: Boolean) {
+    val matches = model.matched.size
+    matchCount.text =
+      if (searching) DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.MatchCount", matches) else ""
+    matchCount.isVisible = searching
+    searchField.textEditor.accessibleContext.accessibleDescription =
+      if (searching) DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.SearchAccessibleDescription", matches)
+      else null
   }
 
   /** The row that carries the separator above it, which is the first row after the pinned group. */
@@ -372,14 +512,19 @@ class ColumnsListPopup(private val grid: DataGrid) {
 
   /** Hides or shows every column of [items]. A hide may leave the grid with no column at all. */
   private fun applyVisibility(items: List<ColumnsListItem>, visible: Boolean) {
+    if (!ensureCurrentColumns()) return
     val targets = items.filter { it.visible != visible }
     if (targets.isEmpty()) return
     applying = true
     try {
-      for (item in targets) {
-        val columnIdx = item.modelIndex ?: continue
-        grid.setColumnEnabled(columnIdx, visible)
+      val operation = Runnable {
+        for ((modelIndex) in targets) {
+          val columnIdx = modelIndex ?: continue
+          grid.setColumnEnabled(columnIdx, visible)
+        }
       }
+      val view = grid.resultView as? TableResultView
+      if (view != null) view.runWithColumnVisibilityBatch(operation) else operation.run()
     }
     finally {
       applying = false
@@ -388,7 +533,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
   }
 
   /** The column of the list row at [index], or null for the separator row. */
-  private fun itemAt(index: Int): ColumnsListItem? =
+  internal fun itemAt(index: Int): ColumnsListItem? =
     (listModel.items.getOrNull(index) as? Row.Item)?.value
 
   private fun toggleSelected() {
@@ -403,31 +548,27 @@ class ColumnsListPopup(private val grid: DataGrid) {
    * A row moves inside its own group. A pinned column reorders among the pinned columns and an unpinned
    * one among the rest, because the two groups render in two different tables.
    *
-   * A hidden row is a place to drop on, because the list keeps a place for it and that place decides where
-   * the column comes back. A hidden row does not travel itself, which spares the user a drag that moves
-   * nothing they can see.
+   * A hidden column keeps its new place when it becomes visible again.
    */
   fun canMoveRow(from: Int, to: Int): Boolean {
-    if (!reorderable) return false
+    if (!reorderable || grid.resultView.isTransposed) return false
     val source = itemAt(from) ?: return false
     val target = itemAt(to) ?: return false
-    if (!source.isColumn || !source.visible) return false
+    if (!source.isColumn || source.parentIndex != null || target.parentIndex != null) return false
     if (from == to) return true
     return target.isColumn && source.pinned == target.pinned
   }
 
   /**
-   * Moves the list row at [from] to [to].
-   *
-   * The list owns the whole order, hidden columns included. The grid takes the part of it that it can
-   * show, and the hidden columns keep their new places for when they come back. A move that only steps
-   * over a hidden row therefore leaves the table looking the same, and still means something.
+   * Moves the list row at [from] to [to] in the complete grid order.
+   * Hidden columns retain their positions when they become visible again.
    */
   fun moveRow(from: Int, to: Int) {
+    if (!ensureCurrentColumns()) return
     if (!canMoveRow(from, to)) return
     val source = itemAt(from) ?: return
     val target = itemAt(to) ?: return
-    val rows = model.rows.toMutableList()
+    val rows = model.items.toMutableList()
     val sourcePos = rows.indexOf(source)
     val targetPos = rows.indexOf(target)
     if (sourcePos < 0 || targetPos < 0 || sourcePos == targetPos) return
@@ -449,53 +590,48 @@ class ColumnsListPopup(private val grid: DataGrid) {
   private fun rememberHiddenPlaces(rows: List<ColumnsListItem>) {
     val view = grid.resultView as? TableResultView ?: return
     var previous = TableResultView.NO_LEFT_NEIGHBOUR
-    for (item in rows) {
-      val column = item.modelIndex ?: continue
-      if (!item.visible) view.rememberHiddenColumnPlace(column.asInteger(), previous)
+    for ((modelIndex, _, _, _, visible) in rows) {
+      val column = modelIndex ?: continue
+      if (!visible) view.rememberHiddenColumnPlace(column.asInteger(), previous)
       previous = column.asInteger()
     }
   }
 
   /** Pins the column of [item], or unpins it when it is pinned already. */
   private fun togglePin(item: ColumnsListItem) {
+    if (!ensureCurrentColumns()) return
     if (!item.canTogglePin) return
     val columnIdx = item.modelIndex ?: return
     commands.togglePin(columnIdx)
     refresh()
   }
 
-  /**
-   * Selects the columns of the selected rows in the table.
-   *
-   * The table keeps its scroll position. A column may sit far to the side, and jumping there would move
-   * the ground under a user who is working in the list.
-   *
-   * Only the checkbox hides and shows a column, so a hidden row leaves its column hidden and selects
-   * nothing. A hidden column has nothing to select in the table either.
-   */
   /** The columns under the selection, as the platform sees a column. */
-  private fun selectedColumnElements(): List<PsiElement> =
-    list.selectedValuesList
-      .filterIsInstance<Row.Item>()
-      .mapNotNull { it.value.modelIndex }
+  private fun columnElements(columns: List<ModelIndex<GridColumn>>): List<PsiElement> =
+    columns.filter { it.isValid(grid) }
       .map { DataGridPomTarget.wrapColumn(grid.project, grid, it) }
-
-  /** The same columns, for an action that navigates rather than one that reads an element. */
-  private fun selectedColumnNavigatables(): List<Navigatable> = selectedColumnElements().filterIsInstance<Navigatable>()
 
   /** Selects the columns of the selected rows in the table, then closes. A double click and Enter do this. */
   fun selectColumnsInGridAndClose() {
+    if (!ensureCurrentColumns()) return
+    if (list.isSelectionEmpty) {
+      val first = listModel.items.indexOfFirst { it is Row.Item && it.value.isColumn }
+      if (first >= 0) list.selectedIndex = first
+    }
+    val selected = list.selectedValuesList.filterIsInstance<Row.Item>().map { it.value }
+    applyVisibility(selected, true)
     selectColumnsInGrid()
+    GridScrollPositionManager.get(grid.resultView, grid).scrollSelectionToVisible()
     popup.cancel()
   }
 
   fun selectColumnsInGrid() {
+    if (!ensureCurrentColumns()) return
     val columns = list.selectedValuesList
       .filterIsInstance<Row.Item>()
       .map { it.value }
       .filter { it.visible }
       .mapNotNull { it.modelIndex?.asInteger() }
-    if (columns.isEmpty()) return
     grid.selectionModel.setColumnSelection(ModelIndexSet.forColumns(grid, *columns.toIntArray()), true)
   }
 
@@ -527,12 +663,12 @@ class ColumnsListPopup(private val grid: DataGrid) {
   }
 
   /** Whether the grid shows its columns in the order the data has. */
-  fun isOriginalOrder(): Boolean = (grid as? TableResultPanel)?.isColumnsOrderModified() != true
+  fun isOriginalOrder(): Boolean = (grid as? TableResultPanel)?.isColumnsOrderModified != true
 
-  /** Puts the shown columns back in the order the data has, and keeps the pins and the hidden columns. */
+  /** Restores the data order while preserving visibility and pins. */
   fun restoreOriginalOrder() {
+    if (!ensureCurrentColumns()) return
     val panel = grid as? TableResultPanel ?: return
-    // This drops the place of every hidden column too, so the complete order is the data order again.
     panel.restoreNaturalColumnsOrder()
     refresh()
   }
@@ -541,8 +677,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
     ColumnPinning.isEnabled() && (grid as? GridColumnPinning)?.hasPinnedColumns() == true
 
   fun unpinAllColumns() {
-    val pinning = grid as? GridColumnPinning ?: return
-    pinning.unpinAllColumns()
+    if (!ensureCurrentColumns()) return
+    commands.unpinAll()
     refresh()
   }
 
@@ -562,7 +698,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
       private fun selectRowForPopup(e: MouseEvent) {
         if (!e.isPopupTrigger) return
         val row = list.locationToIndex(e.point)
-        if (row < 0 || itemAt(row) == null || list.isSelectedIndex(row)) return
+        if (row < 0 || list.getCellBounds(row, row)?.contains(e.point) != true ||
+            itemAt(row) == null || list.isSelectedIndex(row)) return
         list.selectedIndex = row
       }
     })
@@ -682,6 +819,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      if (!ensureCurrentColumns()) return
       commands.pin(selectedColumns())
       refresh()
     }
@@ -702,6 +840,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      if (!ensureCurrentColumns()) return
       commands.unpin(selectedColumns())
       refresh()
     }
@@ -723,6 +862,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      if (!ensureCurrentColumns()) return
       val column = selectedColumns().asIterable().singleOrNull() ?: return
       commands.pinUpToHere(column)
       refresh()
@@ -732,7 +872,11 @@ class ColumnsListPopup(private val grid: DataGrid) {
   private inner class UnpinAllAction : ListAction() {
     override fun update(e: AnActionEvent) {
       e.presentation.text = DataGridBundle.message("action.Console.TableResult.UnpinAllColumns.text")
-      e.presentation.isEnabledAndVisible = hasPinnedColumns()
+      if (!commands.offersUnpinAll()) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+      showReason(e, commands.reasonUnpinRefuses())
     }
 
     override fun actionPerformed(e: AnActionEvent) = unpinAllColumns()
@@ -744,6 +888,9 @@ class ColumnsListPopup(private val grid: DataGrid) {
       override fun actionPerformed(e: ActionEvent) = toggleSelected()
     })
     CopyAction(false).registerCustomShortcutSet(CommonShortcuts.getCopy(), list, popup)
+    list.actionMap.put("copy", object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent) = copyNames()
+    })
     if (reorderable) {
       MoveRowAction(-1).registerCustomShortcutSet(CommonShortcuts.MOVE_UP, list, popup)
       MoveRowAction(1).registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, list, popup)
@@ -754,6 +901,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
         selectColumnsInGridAndClose()
       }
     })
+    searchField.textEditor.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NAVIGATE_ACTION)
+    searchField.textEditor.actionMap.put(NAVIGATE_ACTION, list.actionMap.get(NAVIGATE_ACTION))
     searchField.textEditor.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), FOCUS_LIST_ACTION)
     searchField.textEditor.actionMap.put(FOCUS_LIST_ACTION, object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent) {
@@ -767,12 +916,13 @@ class ColumnsListPopup(private val grid: DataGrid) {
   private fun installMouse() {
     list.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
+        if (!SwingUtilities.isLeftMouseButton(e) || e.isPopupTrigger) return
         val row = list.locationToIndex(e.point)
         if (row < 0 || list.getCellBounds(row, row)?.contains(e.point) != true) return
         val item = itemAt(row) ?: return
         when {
-          onCheckBox(e, row, item) -> applyVisibility(listOf(item), !item.visible)
-          controlAt(e.x, row) == RowControl.PIN && item.isColumn -> togglePin(item)
+          onCheckBox(e, row, item) -> if (item.isColumn && e.clickCount == 1) applyVisibility(listOf(item), !item.visible)
+          controlAt(e.x, row) == RowControl.PIN -> if (item.isColumn && e.clickCount == 1) togglePin(item)
           // The grip reads as a control, so a plain click on it moves nothing.
           controlAt(e.x, row) == RowControl.GRIP -> Unit
           // A single click has already reached the table through the selection listener.
@@ -787,8 +937,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
   private fun controlAt(x: Int, row: Int): RowControl? {
     val bounds = list.getCellBounds(row, row) ?: return null
     val gripEnd = bounds.x + bounds.width - JBUIScale.scale(CONTROLS_RIGHT_PAD)
-    val gripStart = gripEnd - GRIP_WIDTH
-    val pinStart = gripStart - PIN_WIDTH - JBUIScale.scale(CONTROL_GAP)
+    val gripStart = gripEnd - gripWidth
+    val pinStart = gripStart - pinWidth - JBUIScale.scale(CONTROL_GAP)
     return when (x) {
       in gripStart until gripEnd -> RowControl.GRIP
       in pinStart until gripStart -> RowControl.PIN
@@ -802,334 +952,11 @@ class ColumnsListPopup(private val grid: DataGrid) {
     return e.x >= left && e.x <= left + checkBoxWidth
   }
 
-  private class ItemRenderer(
-    private val pinningEnabled: Boolean,
-    private val reorderable: Boolean,
-  ) : ListCellRenderer<Row> {
-    /** The row under the pointer, or -1. The popup keeps this, because the list paints no hover of its own. */
-    var hoveredRow: Int = -1
-
-    private val checkBox = JCheckBox().apply {
-      isOpaque = false
-      // The row reads as one thing, so a screen reader must not stop on an unnamed check box of its own.
-      isFocusable = false
-      accessibleContext.accessibleName = ""
-    }
-    private val text = SimpleColoredComponent().apply { isOpaque = false }
-    private val pin = iconLabel(AllIcons.General.Pin, CONTROL_GAP)
-    /** Tells the user that the hovered row can be dragged. The drag itself starts anywhere on the row. */
-    private val grip = iconLabel(AllIcons.General.Drag, 0)
-
-    /**
-     * The two controls keep their room whether they show an icon or not.
-     * The row therefore holds still when the pointer enters it, instead of reflowing the name.
-     */
-    private val controls = BorderLayoutPanel().apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(0, CONTROLS_LEFT_PAD, 0, CONTROLS_RIGHT_PAD)
-      addToCenter(pin)
-      addToRight(grip)
-    }
-
-    /** The fill behind the row, or null while the row is neither selected nor under the pointer. */
-    private var rowBackground: Color? = null
-
-    /**
-     * Paints the row. The separator is a row of its own, so no fill ever reaches the line.
-     *
-     * The corner radius comes from the theme, through `Popup.Selection.arc`. A theme that asks for a
-     * rounded selection, such as an island one, therefore gets it here without a second definition.
-     */
-    private val content = object : BorderLayoutPanel() {
-      override fun paintComponent(g: Graphics) {
-        val background = rowBackground ?: return
-        g.color = background
-        RectanglePainter.FILL.paint(g as Graphics2D, 0, 0, width, height, JBUI.CurrentTheme.Popup.Selection.ARC.get())
-      }
-    }.apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(1, 0)
-      addToLeft(checkBox)
-      addToCenter(text)
-      addToRight(controls)
-    }
-
-    /**
-     * The spacer that holds the line between the pinned columns and the rest.
-     * It draws nothing. The list paints the line, so the row can carry no hover and no selection.
-     */
-    private val separator = JPanel().apply {
-      isOpaque = false
-      accessibleContext.accessibleName = DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.PinnedGroupEnd")
-      preferredSize = Dimension(0, JBUIScale.scale(SEPARATOR_HEIGHT))
-      // WideSelectionListUI raises every row to the platform row height unless a row opts out here.
-      putClientProperty(JBList.IGNORE_LIST_ROW_HEIGHT, true)
-    }
-
-    override fun getListCellRendererComponent(
-      list: JList<out Row>,
-      value: Row,
-      index: Int,
-      selected: Boolean,
-      focused: Boolean,
-    ): Component {
-      if (value is Row.Separator) return separator
-      val item = (value as Row.Item).value
-      return renderItem(list, item, index, selected)
-    }
-
-    private fun renderItem(list: JList<out Row>, value: ColumnsListItem, index: Int, selected: Boolean): Component {
-      checkBox.isSelected = value.visible
-      checkBox.border = JBUI.Borders.emptyLeft(indent(value))
-      text.clear()
-      text.icon = value.icon
-      text.append(value.name, if (value.visible) SimpleTextAttributes.REGULAR_ATTRIBUTES else SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      value.typeText?.let { text.append("  $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
-      val hovered = index == hoveredRow
-      pin.icon = when {
-        !pinningEnabled || !value.isColumn -> null
-        !value.pinned && !hovered -> null
-        value.canTogglePin -> AllIcons.General.Pin
-        else -> DISABLED_PIN
-      }
-      grip.icon = if (reorderable && value.isColumn && hovered) AllIcons.General.Drag else null
-      rowBackground = when {
-        // Read from the theme, because the list now reports a transparent selection to its own UI.
-        selected -> JBUI.CurrentTheme.List.Selection.background(list.hasFocus())
-        index == hoveredRow -> RenderingUtil.getHoverBackground(list)
-        else -> null
-      }
-      text.foreground = if (selected) RenderingUtil.getSelectionForeground(list) else RenderingUtil.getForeground(list)
-      content.accessibleContext.accessibleName = accessibleName(value)
-      return content
-    }
-
-    /**
-     * What a screen reader says for a row.
-     *
-     * The list reads the component the renderer returns, and that component holds a check box and two
-     * icons that mean nothing on their own. The row therefore says the name, the type, whether the grid
-     * shows the column, and whether the column is pinned.
-     */
-    private fun accessibleName(value: ColumnsListItem): @Nls String {
-      val name = if (value.typeText == null) value.name else "${value.name}, ${value.typeText}"
-      val shown = DataGridBundle.message(
-        if (value.visible) "action.Console.TableResult.ColumnsList.Popup.RowShown"
-        else "action.Console.TableResult.ColumnsList.Popup.RowHidden",
-        name
-      )
-      return if (value.pinned) {
-        DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.RowPinned", shown)
-      }
-      else shown
-    }
-  }
-
   /** A row of the list. The separator is a row of its own, so it joins no hover and no selection. */
   sealed interface Row {
     class Item(val value: ColumnsListItem) : Row
 
     object Separator : Row
-  }
-
-  /**
-   * Installs the drag.
-   *
-   * The list keeps its own support rather than [com.intellij.ui.RowsDnDSupport], because that helper sets
-   * no image provider, so nothing follows the cursor. Everything inside the builder is the shape the
-   * platform uses.
-   *
-   * The whole row is the drag source. The grip only tells the user that the hovered row can be dragged.
-   */
-  private fun installDrag() {
-    // RowsDnDSupport installs these two before it builds. Without them the drop target never draws.
-    list.transferHandler = TransferHandler(null)
-    SmoothAutoScroller.installDropTargetAsNecessary(list)
-    DnDSupport.createBuilder(list)
-      .setBeanProvider { info -> dragSource(info.point)?.let { DnDDragStartBean(dragPayload(it)!!, info.point) } }
-      .setImageProvider { info -> dragSource(info.point)?.let { dragImage(it, info.point) } }
-      .setTargetChecker { event -> checkDrop(event) }
-      .setDropHandler { event -> dropRow(event) }
-      .setCleanUpOnLeaveCallback { showDropLine(null) }
-      .setDropEndedCallback { endDrag() }
-      .setDisposableParent(popup)
-      .install()
-  }
-
-  /** The row the drag carries, or -1 while no drag is over the list. It lights the band it may land in. */
-  private var draggedRow = -1
-
-  /** The row a drag may start from, which is any draggable row under [point]. */
-  private fun dragSource(point: Point): Int? {
-    val row = list.locationToIndex(point)
-    if (row < 0 || list.getCellBounds(row, row)?.contains(point) != true) return null
-    return if (canMoveRow(row, row)) row else null
-  }
-
-  /**
-   * What a drag carries.
-   *
-   * The column and not the row, because the list can rebuild between the grab and the drop, and then the
-   * row would name another column. The list too, so that a drag from somewhere else cannot land here.
-   * `RowsDnDSupport` compares its own component in the same way.
-   */
-  private class DraggedColumn(val list: JList<*>, val column: ModelIndex<GridColumn>)
-
-  /** What a drag from [row] carries, or null when that row cannot travel. */
-  fun dragPayload(row: Int): Any? {
-    val column = (listModel.items.getOrNull(row) as? Row.Item)?.value?.modelIndex ?: return null
-    return DraggedColumn(list, column)
-  }
-
-  /** The row [payload] names now, or null when the drag came from elsewhere or its column has gone. */
-  fun rowOfPayload(payload: Any?): Int? {
-    val dragged = payload as? DraggedColumn ?: return null
-    if (dragged.list !== list) return null
-    val row = listModel.items.indexOfFirst { it is Row.Item && it.value.modelIndex == dragged.column }
-    return if (row >= 0) row else null
-  }
-
-  /**
-   * The dragged row, built the way `DnDAwareTree.createDragImage` builds one.
-   *
-   * The image covers the whole cell rather than the preferred size of the renderer, because a list cell
-   * is as wide as the list.
-   *
-   * The offset keeps the grabbed pixel under the cursor. `DnDManagerImpl` hands the pair to
-   * `DragGestureEvent.startDrag`, whose offset is measured from the cursor to the image origin, so the
-   * offset is the negated grab point.
-   */
-  private fun dragImage(row: Int, origin: Point): DnDImage? {
-    val bounds = list.getCellBounds(row, row) ?: return null
-    val component = renderer.getListCellRendererComponent(list, listModel.getElementAt(row), row, false, false)
-    (component as? JComponent)?.isOpaque = true
-    component.foreground = RenderingUtil.getForeground(list)
-    component.background = RenderingUtil.getBackground(list)
-    component.font = list.font
-    component.setSize(bounds.width, bounds.height)
-    val image = UIUtil.createImage(component, bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB)
-    val g = image.createGraphics()
-    try {
-      g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DRAG_IMAGE_ALPHA)
-      component.paint(g)
-    }
-    finally {
-      g.dispose()
-    }
-    return DnDImage(image, Point(bounds.x - origin.x, bounds.y - origin.y))
-  }
-
-  /**
-   * Reports whether the drop can land, the way `ServiceViewDragHelper` does: refuse by default, accept
-   * with a highlight, and say nothing more when the answer is no.
-   *
-   * The cursor is not ours. `DnDEvent.setCursor` has no caller anywhere in the monorepo, and the manager
-   * derives the cursor from [DnDEvent.setDropPossible] alone. That is why the refusal shows through the
-   * highlight: the landing line, and the band of rows the drag may land in.
-   */
-  @Suppress("SameReturnValue")
-  private fun checkDrop(event: DnDEvent): Boolean {
-    val from = rowOfPayload(event.attachedObject)
-    if (from == null) {
-      refuseDrop(event)
-      return true
-    }
-    startDrag(from)
-    val to = list.locationToIndex(event.point)
-    if (to < 0) {
-      event.isDropPossible = false
-      showDropLine(null)
-      return true
-    }
-    val line = dropLineAt(from, to)
-    if (to != from && line == null) {
-      event.isDropPossible = false
-      showDropLine(null)
-      return true
-    }
-    event.isDropPossible = true
-    showDropLine(line)
-    return true
-  }
-
-  private fun refuseDrop(event: DnDEvent) {
-    event.isDropPossible = false
-    showDropLine(null)
-  }
-
-  private fun dropRow(event: DnDEvent) {
-    val from = rowOfPayload(event.attachedObject)
-    val to = list.locationToIndex(event.point)
-    showDropLine(null)
-    if (from == null || to < 0) return
-    // The list may have rebuilt since the grab, so the move is checked again against the rows it has now.
-    moveRow(from, to)
-  }
-
-  private fun startDrag(row: Int) {
-    if (draggedRow == row) return
-    draggedRow = row
-    list.repaint()
-  }
-
-  private fun endDrag() {
-    showDropLine(null)
-    if (draggedRow < 0) return
-    draggedRow = -1
-    list.repaint()
-  }
-
-  /**
-   * The rows a drag from [row] may land in, which are the rows of the group that [row] belongs to.
-   * Empty for no row, for the separator, and for a row that cannot move.
-   */
-  fun dropBandRows(row: Int): List<Int> {
-    if (row < 0) return emptyList()
-    val pinned = itemAt(row)?.pinned ?: return emptyList()
-    return (0 until listModel.size).filter { row ->
-      val item = itemAt(row)
-      item != null && item.isColumn && item.pinned == pinned
-    }
-  }
-
-  /**
-   * Tints the rows a drag may land in.
-   *
-   * The platform tints no area to say that it refuses a drop. It tints the area that accepts one, the way
-   * `DockableEditorTabbedContainer` and `RunnerContentUi` fill a docking area, and leaves the refusal to
-   * the no-drop cursor. This follows that, so the band says where the row may go rather than where it may
-   * not.
-   *
-   * The color is the row background of a drag, which `DefaultTreeUI` and the filled-rectangle highlighter
-   * both use over content. The area background of the docking targets is opaque and would cover the text.
-   *
-   * The alpha is scaled down by [BAND_ALPHA_SCALE]. The token is tuned for a single row, and a band covers
-   * a whole group, so the same alpha reads far heavier over that many rows.
-   */
-  private fun paintDropBand(g: Graphics) {
-    val rows = dropBandRows(draggedRow)
-    if (rows.isEmpty()) return
-    val first = list.getCellBounds(rows.first(), rows.first()) ?: return
-    val last = list.getCellBounds(rows.last(), rows.last()) ?: return
-    val band = first.union(last)
-    val visible = list.visibleRect
-    // Resolved here rather than in a constant, so a theme change reaches the band.
-    val rowBackground = JBUI.CurrentTheme.DragAndDrop.ROW_BACKGROUND
-    g.color = ColorUtil.toAlpha(rowBackground, (rowBackground.alpha * BAND_ALPHA_SCALE).toInt())
-    g.fillRect(visible.x, band.y, visible.width, band.height)
-  }
-
-  /** Where a drag from [from] to [to] lands, or null when the list refuses the drop. */
-  fun dropLineAt(from: Int, to: Int): DropLine? {
-    if (from == to || !canMoveRow(from, to)) return null
-    // A row travelling down lands after the target, and one travelling up lands before it.
-    return DropLine(to, below = from < to)
-  }
-
-  private fun showDropLine(line: DropLine?) {
-    if (dropLine == line) return
-    dropLine = line
-    list.repaint()
   }
 
   /**
@@ -1148,26 +975,40 @@ class ColumnsListPopup(private val grid: DataGrid) {
     g.fillRect(visible.x, bounds.y + (bounds.height - height) / 2, visible.width, height)
   }
 
-  /**
-   * Paints the line where the dragged row lands.
-   *
-   * The platform draws this through `DnDEvent.setHighlighting`, which cannot reach a popup.
-   * `DnDManagerImpl.getLayeredPane` resolves a `JFrame` or a `JDialog` only, and a popup of its own
-   * window is a `JWindow`, so the highlighter has no layered pane and never appears. The color is the
-   * platform drag border, so the line looks the same as the one every other list draws.
-   */
-  private fun paintDropLine(g: Graphics) {
-    val line = dropLine ?: return
-    val bounds = list.getCellBounds(line.row, line.row) ?: return
-    val height = JBUIScale.scale(DROP_LINE_HEIGHT)
-    val y = if (line.below) bounds.y + bounds.height - height else bounds.y
-    val visible = list.visibleRect
-    g.color = JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR
-    g.fillRect(visible.x, y, visible.width, height)
-  }
-
   /** Where a dragged row lands: at the bottom edge of [row] when [below], and at its top edge otherwise. */
   data class DropLine(val row: Int, val below: Boolean)
+
+  /**
+   * What a drag carries.
+   *
+   * The column and not the row, because the list can rebuild between the grab and the drop, and then the
+   * row would name another column. The list too, so that a drag from somewhere else cannot land here.
+   * `RowsDnDSupport` compares its own component in the same way.
+   */
+  private class DraggedColumn(val list: JList<*>, val index: ModelIndex<GridColumn>, val column: GridColumn)
+
+  /** What a drag from [row] carries, or null when that row cannot travel. */
+  fun dragPayload(row: Int): Any? {
+    if (!hasCurrentColumns()) return null
+    val column = (listModel.items.getOrNull(row) as? Row.Item)?.value?.modelIndex ?: return null
+    val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(column) ?: return null
+    return DraggedColumn(list, column, value)
+  }
+
+  /** The row [payload] names now, or null when the drag came from elsewhere or its column has gone. */
+  fun rowOfPayload(payload: Any?): Int? {
+    val dragged = payload as? DraggedColumn ?: return null
+    if (dragged.list !== list) return null
+    if (grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(dragged.index) !== dragged.column) return null
+    val row = listModel.items.indexOfFirst { it is Row.Item && it.value.modelIndex == dragged.index }
+    return if (row >= 0) row else null
+  }
+
+  /** The rows a drag from [row] may land in, which are the rows of its own group. */
+  fun dropBandRows(row: Int): List<Int> = drag?.bandRows(row) ?: emptyList()
+
+  /** Where a drag from [from] to [to] lands, or null when the list refuses the drop. */
+  fun dropLineAt(from: Int, to: Int): DropLine? = drag?.lineAt(from, to)
 
   /** A control at the right end of a row. */
   private enum class RowControl { PIN, GRIP }
@@ -1176,40 +1017,23 @@ class ColumnsListPopup(private val grid: DataGrid) {
     private const val TOGGLE_ACTION = "columnsListToggle"
     private const val NAVIGATE_ACTION = "columnsListNavigate"
     private const val ACTION_PLACE = "ColumnsListPopup"
-
-    /** Command on macOS and Control elsewhere, so the copy key matches the platform. */
     private const val FOCUS_LIST_ACTION = "columnsListFocusList"
     private const val DIMENSION_KEY = "ColumnsListPopup"
-    private const val INDENT = 14
-    private const val CONTROLS_LEFT_PAD = 28
-    private const val CONTROLS_RIGHT_PAD = 10
-    private const val CONTROL_GAP = 10
     private const val POPUP_PAD = 10
+
+    /** The trailing inset that lines the match count up with the links below it. */
+    private const val LINKS_RIGHT_PAD = 2
+
+    /** The count sits inside the search field, which holds its own border, so it needs the wider inset. */
+    private const val MATCH_COUNT_RIGHT_PAD = 4
+
+    /** The gap between the two bulk links, which the layout scales itself. */
+    private const val LINK_GAP = 12
     private const val DEFAULT_WIDTH = 420
     private const val DEFAULT_HEIGHT = 480
-    private const val DROP_LINE_HEIGHT = 2
-    private val DISABLED_PIN: Icon get() = IconLoader.getDisabledIcon(AllIcons.General.Pin)
 
-    /** The spacer row of the pinned group line. The line takes its middle, and the rest is the padding. */
-    private const val SEPARATOR_HEIGHT = 7
-    private const val SEPARATOR_LINE_HEIGHT = 1
 
-    private const val DRAG_IMAGE_ALPHA = 0.7f
 
-    /** How much of the single-row drag alpha the band keeps. */
-    private const val BAND_ALPHA_SCALE = 0.5
-
-    private val checkBoxWidth: Int get() = JCheckBox().preferredSize.width
-    private val PIN_WIDTH: Int get() = AllIcons.General.Pin.iconWidth
-    private val GRIP_WIDTH: Int get() = AllIcons.General.Drag.iconWidth
-
-  /** A label that keeps the room of [icon] even while it shows none, plus [trailingGap] of space after it. */
-    private fun iconLabel(icon: Icon, trailingGap: Int): JLabel = JLabel().apply {
-      horizontalAlignment = SwingConstants.LEFT
-      preferredSize = Dimension(icon.iconWidth + JBUIScale.scale(trailingGap), icon.iconHeight)
-    }
-
-    private fun indent(item: ColumnsListItem): Int = JBUIScale.scale(INDENT) * item.depth
 
     @JvmStatic
     fun show(grid: DataGrid, e: AnActionEvent) {

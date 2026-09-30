@@ -8,70 +8,72 @@ import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn
 import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.run.actions.ColumnPinCommands
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.GridColumnPinning
 import com.intellij.database.run.ui.TableResultPanel
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
- * The rows of the column list, read from [grid].
- *
- * A pinned column comes first, then the rest in the sequence the grid shows them.
- * A nested column result keeps its tree, and a node comes before its children.
- *
- * The grid owns the complete order, the hidden columns included, so the list is a projection of it and
- * keeps nothing of its own. A row therefore holds its place when the user clears its checkbox, and it
- * holds it again after the popup closes and opens.
+ * Builds rows from [grid], with pinned columns first.
+ * The grid owns the order, including the positions of hidden columns.
+ * A nested column result keeps its hierarchy, with each parent before its children.
  */
 @ApiStatus.Internal
-fun buildColumnsListItems(grid: DataGrid): List<ColumnsListItem> {
+fun buildColumnsListItems(
+  grid: DataGrid,
+  presentation: (GridColumn) -> Pair<String?, Icon?> = {
+    val helper = GridHelper.get(grid)
+    helper.getColumnTypeText(grid, it) to helper.getColumnIcon(grid, it, true)
+  },
+): List<ColumnsListItem> {
   val model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
   val hierarchy = model as? HierarchicalColumnsDataGridModel
   val roots = hierarchy?.topLevelColumns
-  val canTogglePin = (grid as? GridColumnPinning)?.columnsThatCanTogglePin() ?: emptySet()
+  val canTogglePin = ColumnPinCommands(grid).columnsThatCanTogglePin()
   if (roots != null) {
     val items = ArrayList<ColumnsListItem>()
-    for (root in roots) addTree(grid, root, null, items, canTogglePin)
+    val pending = ArrayDeque<Pair<HierarchicalGridColumn, Int?>>()
+    for (root in roots.asReversed()) pending.addLast(root to null)
+    while (pending.isNotEmpty()) {
+      val (column, parentIndex) = pending.removeLast()
+      val depth = parentIndex?.let { items[it].depth + 1 } ?: 0
+      if (column.children.isEmpty()) {
+        items.add(item(grid, ModelIndex.forColumn(grid, column.columnNumber), parentIndex, depth, canTogglePin, presentation))
+      }
+      else {
+        val index = items.size
+        items.add(ColumnsListItem(modelIndex = null, name = column.name, parentIndex = parentIndex, depth = depth))
+        for (child in column.children.asReversed()) pending.addLast(child to index)
+      }
+    }
     return items
   }
-  return columnsInOrder(grid).map { item(grid, it, null, canTogglePin) }
-}
-
-private fun addTree(
-  grid: DataGrid,
-  column: HierarchicalGridColumn,
-  parent: ColumnsListItem?,
-  items: MutableList<ColumnsListItem>,
-  canTogglePin: Set<ModelIndex<GridColumn>>,
-) {
-  val children = column.children
-  if (children.isEmpty()) {
-    items.add(item(grid, ModelIndex.forColumn(grid, column.columnNumber), parent, canTogglePin))
-    return
-  }
-  val node = ColumnsListItem(modelIndex = null, name = column.name, parent = parent)
-  items.add(node)
-  for (child in children) addTree(grid, child, node, items, canTogglePin)
+  return columnsInOrder(grid).map { item(grid, it, null, 0, canTogglePin, presentation) }
 }
 
 private fun item(
   grid: DataGrid,
   columnIdx: ModelIndex<GridColumn>,
-  parent: ColumnsListItem?,
+  parentIndex: Int?,
+  depth: Int,
   canTogglePin: Set<ModelIndex<GridColumn>>,
+  presentation: (GridColumn) -> Pair<String?, Icon?>,
 ): ColumnsListItem {
   val model: GridModel<GridRow, GridColumn> = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
   val column = model.getColumn(columnIdx)
-  val helper = GridHelper.get(grid)
+  val resolved = column?.let(presentation)
   return ColumnsListItem(
     modelIndex = columnIdx,
     name = grid.getUnambiguousColumnName(columnIdx),
-    typeText = column?.let { helper.getColumnTypeText(grid, it) },
-    parent = parent,
+    typeText = resolved?.first,
+    parentIndex = parentIndex,
     visible = grid.isColumnEnabled(columnIdx),
     pinned = grid.isPinned(columnIdx),
-    icon = column?.let { helper.getColumnIcon(grid, it, true) },
+    icon = resolved?.second,
     canTogglePin = columnIdx in canTogglePin,
+    depth = depth,
   )
 }
 
