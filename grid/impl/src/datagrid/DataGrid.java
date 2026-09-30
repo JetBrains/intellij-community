@@ -42,6 +42,11 @@ public interface DataGrid extends CoreGrid<GridRow, GridColumn> {
 
   void runWithIgnoreSelectionChanges(Runnable runnable);
 
+  /** Changes the visibility of the columns. A grid can combine the view updates. */
+  default void setColumnsEnabled(@NotNull List<ModelIndex<GridColumn>> columns, boolean state) {
+    for (var column : columns) setColumnEnabled(column, state);
+  }
+
   boolean isSafeToReload();
 
   ActionCallback submit();

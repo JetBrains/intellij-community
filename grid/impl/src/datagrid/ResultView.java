@@ -16,6 +16,7 @@ import javax.swing.KeyStroke;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -31,6 +32,10 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
   void resetLayout();
 
   void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean state);
+
+  default void setColumnsEnabled(@NotNull List<ModelIndex<GridColumn>> columns, boolean state) {
+    for (var column : columns) setColumnEnabled(column, state);
+  }
 
   void setRowEnabled(@NotNull ModelIndex<GridRow> rowIdx, boolean state);
 

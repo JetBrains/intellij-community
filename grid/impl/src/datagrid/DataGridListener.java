@@ -19,6 +19,15 @@ public interface DataGridListener extends EventListener {
 
   default void onContentChanged(DataGrid dataGrid, @Nullable GridRequestSource.RequestPlace place) { }
 
+  /**
+   * The columns of {@code dataGrid} changed places, and nothing else changed.
+   * <p>
+   * No value, no column and no visibility differs, so a listener that reads cells has nothing to redo.
+   * A listener that shows the columns themselves, or that holds a position rather than a column, wants
+   * this. It is a separate event for that reason: a header drag used to reach every content listener.
+   */
+  default void onColumnOrderChanged(DataGrid dataGrid) { }
+
   default void onCellLanguageChanged(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Language language) { }
 
   default void onValueEdited(DataGrid dataGrid, @Nullable Object object) { }

@@ -36,6 +36,7 @@ import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.EditMaximizedView;
 import com.intellij.database.run.ui.GridTableCellEditor;
+import com.intellij.database.run.ui.ColumnMove;
 import com.intellij.database.run.ui.ColumnOrderRestorer;
 import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.ResultViewWithColumns;
@@ -127,7 +128,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -199,7 +199,6 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
@@ -264,8 +263,8 @@ public class TableResultView extends JBTableWithResizableCells
   private final AtomicInteger editingBlocked = new AtomicInteger(0); // TODO: currently only locks column reordering
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
   private TableFloatingToolbar myFloatingToolbar;
-  private @Nullable BooleanSupplier myColumnsDisplayOrderRestorer;
-  private @Nullable Consumer<ColumnMove> myColumnMoveListener;
+  /** False once this view is disposed, after which it stops driving the column order of the grid. */
+  private boolean myDrivesColumnOrder = true;
 
   private StatisticsTableHeader myStatisticsHeader;
 
@@ -277,23 +276,14 @@ public class TableResultView extends JBTableWithResizableCells
   private record ColumnWidthState(int width, boolean setByUser) {
   }
 
-  /** A column move before or after another column. */
-  @ApiStatus.Internal
-  public record ColumnMove(@NotNull ModelIndex<GridColumn> column, @NotNull ModelIndex<GridColumn> target, boolean before) {
-  }
-
-  /**
-   * Sets the callbacks for the grid order and column moves.
-   * The order callback returns true when it handles the request.
-   */
-  @ApiStatus.Internal
-  public void setColumnOrderCallbacks(@NotNull BooleanSupplier restoreOrder, @NotNull Consumer<ColumnMove> columnMoved) {
-    myColumnsDisplayOrderRestorer = restoreOrder;
-    myColumnMoveListener = columnMoved;
+  /** The grid that owns the column order, or null while this view must arrange its columns itself. */
+  private @Nullable ColumnOrderRestorer columnOrderOwner() {
+    return myDrivesColumnOrder && myResultPanel instanceof ColumnOrderRestorer owner ? owner : null;
   }
 
   private boolean applyColumnsDisplayOrder() {
-    return myColumnsDisplayOrderRestorer != null && myColumnsDisplayOrderRestorer.getAsBoolean();
+    ColumnOrderRestorer owner = columnOrderOwner();
+    return owner != null && owner.applyColumnsDisplayOrder(this);
   }
 
   /**
@@ -701,7 +691,7 @@ public class TableResultView extends JBTableWithResizableCells
       doTranspose();
       createDefaultColumnsFromModel();
       if (!transposed) {
-        if (myResultPanel instanceof ColumnOrderRestorer grid) grid.restoreColumnsOrder();
+        if (myResultPanel instanceof ColumnOrderRestorer grid) grid.refreshColumnLayout();
         restoreUntransposedColumnWidths();
       }
     });
@@ -811,11 +801,12 @@ public class TableResultView extends JBTableWithResizableCells
   @Override
   public void columnMoved(TableColumnModelEvent event) {
     super.columnMoved(event);
-    if (myColumnMoveListener != null && event.getFromIndex() != event.getToIndex()) {
+    ColumnOrderRestorer owner = columnOrderOwner();
+    if (owner != null && event.getFromIndex() != event.getToIndex()) {
       int target = event.getToIndex() + (event.getFromIndex() < event.getToIndex() ? -1 : 1);
       var column = ModelIndex.forColumn(myResultPanel, getColumnModel().getColumn(event.getToIndex()).getModelIndex());
       var neighbour = ModelIndex.forColumn(myResultPanel, getColumnModel().getColumn(target).getModelIndex());
-      myColumnMoveListener.accept(new ColumnMove(column, neighbour, event.getFromIndex() > event.getToIndex()));
+      owner.columnMovedInView(this, new ColumnMove(column, neighbour, event.getFromIndex() > event.getToIndex()));
     }
   }
 
@@ -825,10 +816,10 @@ public class TableResultView extends JBTableWithResizableCells
       () -> getColumnModel().removeColumn(getColumnModel().getColumn(viewColumnIdx.asInteger())));
   }
 
-  private void addColumnAndMoveToTheCorrectPosition(ModelIndex<?> modelColumnIdx) {
+  private void addColumnAndMoveToTheCorrectPosition(ModelIndex<?> modelColumnIdx, boolean restoreOrder) {
     addColumn(getColumnCache().getOrCreateColumn(modelColumnIdx.asInteger()));
 
-    if (applyColumnsDisplayOrder()) return;
+    if (!restoreOrder || applyColumnsDisplayOrder()) return;
     int lastColumnIndex = getColumnCount() - 1;
     myResultPanel.runWithIgnoreSelectionChanges(() -> {
       for (int viewTargetColumnIdx = 0; viewTargetColumnIdx < lastColumnIndex; viewTargetColumnIdx++) {
@@ -841,10 +832,14 @@ public class TableResultView extends JBTableWithResizableCells
   }
 
   public void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible) {
+    setViewColumnVisible(modelColumnIdx, visible, true);
+  }
+
+  private void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible, boolean restoreOrder) {
     ViewIndex<?> viewColumnIdx = modelColumnIdx.toView(myResultPanel);
     if (visible && viewColumnIdx.asInteger() < 0) {
       boolean firstTimeShown = !getColumnCache().hasCachedColumn(modelColumnIdx.asInteger());
-      addColumnAndMoveToTheCorrectPosition(modelColumnIdx);
+      addColumnAndMoveToTheCorrectPosition(modelColumnIdx, restoreOrder);
       if (firstTimeShown) {
         myColumnLayout.columnsShown(
           isTransposed() ?
@@ -909,6 +904,18 @@ public class TableResultView extends JBTableWithResizableCells
     else {
       setViewColumnVisible(columnIdx, state);
     }
+  }
+
+  @Override
+  public void setColumnsEnabled(@NotNull List<ModelIndex<GridColumn>> columns, boolean state) {
+    if (columns.isEmpty()) return;
+    if (isTransposed()) {
+      getModel().fireTableDataChanged();
+      return;
+    }
+    boolean deferOrder = state && myResultPanel.getResultView() == this && columnOrderOwner() != null;
+    for (var column : columns) setViewColumnVisible(column, state, !deferOrder);
+    if (deferOrder) applyColumnsDisplayOrder();
   }
 
   @Override
@@ -1425,8 +1432,7 @@ public class TableResultView extends JBTableWithResizableCells
 
   @Override
   public void dispose() {
-    myColumnsDisplayOrderRestorer = null;
-    myColumnMoveListener = null;
+    myDrivesColumnOrder = false;
     removeEditor();
   }
 

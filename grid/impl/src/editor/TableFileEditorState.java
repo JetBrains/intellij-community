@@ -22,6 +22,17 @@ import static com.intellij.database.datagrid.GridPagingModel.UNSET_PAGE_SIZE;
 public class TableFileEditorState implements FileEditorState, Serializable {
   public static final int UNKNOWN_COLUMN_POSITION = 0;
   public static final int DEFAULT_OR_HIDDEN_COLUMN_POSITION = -1;
+
+  /** Saved positions include hidden columns. */
+  public static final int COMPLETE_COLUMN_ORDER = 1;
+
+  /**
+   * The format of {@link Column#position}.
+   * Zero marks older layouts that store positions only for visible columns.
+   * {@link #COMPLETE_COLUMN_ORDER} includes hidden columns.
+   */
+  @Attribute("columnOrderVersion")
+  public int columnOrderVersion = 0;
   @Attribute("lastOpenedTimestamp")
   public long lastOpenedTimestamp = 0;
 

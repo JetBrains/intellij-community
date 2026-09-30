@@ -110,6 +110,11 @@ public class DataGridSearchSession implements GridSearchSession<GridRow, GridCol
       }
 
       @Override
+      public void onColumnOrderChanged(DataGrid dataGrid) {
+        worker.submitStartSearchWithoutSelection();
+      }
+
+      @Override
       public void onCellDisplayTypeChanged(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull DisplayType type) {
         worker.submitStartSearchWithoutSelection();
       }

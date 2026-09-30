@@ -66,6 +66,15 @@ public final class TableEditorStructureViewModel implements StructureViewModel, 
 
       @Override
       public void onContentChanged(DataGrid dataGrid, @Nullable GridRequestSource.RequestPlace place) {
+        notifyModelChanged();
+      }
+
+      @Override
+      public void onColumnOrderChanged(DataGrid dataGrid) {
+        notifyModelChanged();
+      }
+
+      private void notifyModelChanged() {
         for (Object listener : myListeners) {
           if (listener instanceof ModelListener modelListener) {
             modelListener.onModelChanged();

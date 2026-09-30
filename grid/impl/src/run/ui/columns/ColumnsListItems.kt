@@ -9,9 +9,9 @@ import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.run.actions.ColumnPinCommands
+import com.intellij.database.run.ui.ColumnOrderRestorer
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.GridColumnPinning
-import com.intellij.database.run.ui.TableResultPanel
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -28,29 +28,40 @@ fun buildColumnsListItems(
     helper.getColumnTypeText(grid, it) to helper.getColumnIcon(grid, it, true)
   },
 ): List<ColumnsListItem> {
-  val model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
-  val hierarchy = model as? HierarchicalColumnsDataGridModel
-  val roots = hierarchy?.topLevelColumns
+  // The tree comes from the data model, because DATA_WITH_MUTATIONS wraps it in a GridMutationModel,
+  // which is no HierarchicalColumnsDataGridModel and would leave every nested column flat.
+  val hierarchy = grid.getDataModel(DataAccessType.DATABASE_DATA) as? HierarchicalColumnsDataGridModel
+  val order = columnsInOrder(grid)
   val canTogglePin = ColumnPinCommands(grid).columnsThatCanTogglePin()
-  if (roots != null) {
+  if (hierarchy != null) {
     val items = ArrayList<ColumnsListItem>()
-    val pending = ArrayDeque<Pair<HierarchicalGridColumn, Int?>>()
-    for (root in roots.asReversed()) pending.addLast(root to null)
-    while (pending.isNotEmpty()) {
-      val (column, parentIndex) = pending.removeLast()
-      val depth = parentIndex?.let { items[it].depth + 1 } ?: 0
-      if (column.children.isEmpty()) {
-        items.add(item(grid, ModelIndex.forColumn(grid, column.columnNumber), parentIndex, depth, canTogglePin, presentation))
+    val parents = HashMap<HierarchicalGridColumn, Int>()
+    var pinnedGroup = true
+    for (columnIdx in order) {
+      if (pinnedGroup && !grid.isPinned(columnIdx)) {
+        parents.clear()
+        pinnedGroup = false
       }
-      else {
+      val column = hierarchy.getColumn(columnIdx) as? HierarchicalGridColumn
+      var parentIndex: Int? = null
+      for (parent in generateSequence(column?.parent) { it.parent }.toList().asReversed()) {
+        val existing = parents[parent]
+        if (existing != null) {
+          parentIndex = existing
+          continue
+        }
+        val depth = parentIndex?.let { items[it].depth + 1 } ?: 0
         val index = items.size
-        items.add(ColumnsListItem(modelIndex = null, name = column.name, parentIndex = parentIndex, depth = depth))
-        for (child in column.children.asReversed()) pending.addLast(child to index)
+        items.add(ColumnsListItem(modelIndex = null, name = parent.name, parentIndex = parentIndex, depth = depth))
+        parents[parent] = index
+        parentIndex = index
       }
+      val depth = parentIndex?.let { items[it].depth + 1 } ?: 0
+      items.add(item(grid, columnIdx, parentIndex, depth, canTogglePin, presentation))
     }
     return items
   }
-  return columnsInOrder(grid).map { item(grid, it, null, 0, canTogglePin, presentation) }
+  return order.map { item(grid, it, null, 0, canTogglePin, presentation) }
 }
 
 private fun item(
@@ -84,7 +95,7 @@ private fun item(
  */
 @ApiStatus.Internal
 fun columnsInOrder(grid: DataGrid): List<ModelIndex<GridColumn>> {
-  val order = (grid as? TableResultPanel)?.columnsDisplayOrder
+  val order = (grid as? ColumnOrderRestorer)?.columnsDisplayOrder
               ?: grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).columnIndices.asList()
   val (pinned, rest) = order.partition { grid.isPinned(it) }
   return pinned + rest

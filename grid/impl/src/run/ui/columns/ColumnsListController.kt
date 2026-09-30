@@ -8,8 +8,8 @@ import com.intellij.database.datagrid.GridRequestSource
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.actions.ColumnPinCommands
+import com.intellij.database.run.ui.ColumnOrderRestorer
 import com.intellij.database.run.ui.DataAccessType
-import com.intellij.database.run.ui.TableResultPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -30,6 +30,7 @@ internal class ColumnsListController(
   var model = ColumnsListModel(emptyList())
     private set
 
+  private val columnOrder = grid as? ColumnOrderRestorer
   private var applying = false
   private var disposed = false
   private var columnSnapshot: Map<ModelIndex<GridColumn>, GridColumn?>? = null
@@ -42,6 +43,10 @@ internal class ColumnsListController(
   fun start() {
     grid.addDataGridListener(object : DataGridListener {
       override fun onContentChanged(dataGrid: DataGrid, place: GridRequestSource.RequestPlace?) {
+        if (!applying) refresh()
+      }
+
+      override fun onColumnOrderChanged(dataGrid: DataGrid) {
         if (!applying) refresh()
       }
     }, disposable)
@@ -74,15 +79,17 @@ internal class ColumnsListController(
     if (!ensureCurrentColumns()) return
     val targets = columns.filter { grid.isColumnEnabled(it) != visible }
     if (targets.isEmpty()) return
-    apply { targets.forEach { grid.setColumnEnabled(it, visible) } }
+    apply { grid.setColumnsEnabled(targets, visible) }
   }
 
   fun canMove(column: ModelIndex<GridColumn>, target: ModelIndex<GridColumn>): Boolean =
-    (grid as? TableResultPanel)?.canMoveColumnInDisplayOrder(column, target) == true
+    columnOrder?.canMoveColumnInDisplayOrder(column, target) == true
 
   fun move(column: ModelIndex<GridColumn>, target: ModelIndex<GridColumn>, before: Boolean) {
-    if (!ensureCurrentColumns() || !canMove(column, target)) return
-    apply { (grid as TableResultPanel).moveColumnInDisplayOrder(column, target, before) }
+    if (!ensureCurrentColumns()) return
+    val order = columnOrder ?: return
+    if (!order.canMoveColumnInDisplayOrder(column, target)) return
+    apply { order.moveColumnInDisplayOrder(column, target, before) }
   }
 
   fun togglePin(column: ModelIndex<GridColumn>) {
@@ -107,12 +114,12 @@ internal class ColumnsListController(
     if (ensureCurrentColumns()) apply { commands.unpinAll() }
   }
 
-  fun isOriginalOrder(): Boolean = (grid as? TableResultPanel)?.isColumnsOrderModified != true
+  fun isOriginalOrder(): Boolean = columnOrder?.isColumnsOrderModified != true
 
   fun restoreOriginalOrder() {
     if (!ensureCurrentColumns()) return
-    val panel = grid as? TableResultPanel ?: return
-    apply { panel.restoreNaturalColumnsOrder() }
+    val order = columnOrder ?: return
+    apply { order.restoreNaturalColumnsOrder() }
   }
 
   fun selectColumns(columns: List<ModelIndex<GridColumn>>) {
