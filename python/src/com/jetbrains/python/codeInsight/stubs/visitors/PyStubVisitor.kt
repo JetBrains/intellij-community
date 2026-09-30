@@ -1,27 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stubs.visitors
 
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.module.ModuleUtilCore
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.isReadOnly
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 internal abstract class PyStubVisitor(
   holder: ProblemsHolder,
   session: LocalInspectionToolSession,
 ) : PyInspectionVisitor(holder, getContext(session)) {
   override fun visitPyFile(file: PyFile) {
-    val module = ModuleUtilCore.findModuleForFile(file) ?: return
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
-    if (sdk.isReadOnly)
+    val interpreter = file.findEvoPyProjectIfReady()?.interpreter ?: return
+    if (interpreter.isReadOnly)
       return
     val importedPackages = loadImportedPackages(file).ifEmpty { null } ?: return
-    val packageManager = PythonPackageManager.forSdk(module.project, sdk)
+    val packageManager = PythonPackageManager.forPythonInterpreter(file.project, interpreter)
 
     checkImports(file, importedPackages, packageManager)
   }

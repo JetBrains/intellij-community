@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.dependencies
 
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
@@ -17,7 +18,6 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.injectionParent
-import com.jetbrains.python.requirements.getPythonSdk
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallAllRequirementsQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.InstallRequirementQuickFix
 import com.jetbrains.python.requirements.inspections.quickfixes.UpdateAllRequirementQuickFix
@@ -51,8 +51,8 @@ class DependenciesInspection : LocalInspectionTool() {
       return false
     }
 
-    val sdk = getPythonSdk(file) ?: return false
-    val packageManager = PythonPackageManager.forSdk(file.project, sdk)
+    val interpreter = file.findEvoPyProjectIfReady()?.interpreter ?: return false
+    val packageManager = PythonPackageManager.forPythonInterpreter(file.project, interpreter)
 
     return file.injectionParent() == null && packageManager.tracksDependencyFile(file)
   }
@@ -62,8 +62,8 @@ class DependenciesInspection : LocalInspectionTool() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    val sdk = getPythonSdk(session.file) ?: return PsiElementVisitor.EMPTY_VISITOR
-    val packageManager = PythonPackageManager.forSdk(session.file.project, sdk)
+    val interpreter = session.file.findEvoPyProjectIfReady()?.interpreter ?: return PsiElementVisitor.EMPTY_VISITOR
+    val packageManager = PythonPackageManager.forPythonInterpreter(session.file.project, interpreter)
     return Visitor(holder, packageManager)
   }
 

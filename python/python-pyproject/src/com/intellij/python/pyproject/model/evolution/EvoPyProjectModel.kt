@@ -12,6 +12,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MAN
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.isFor
@@ -150,19 +152,20 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * [EvoPyProjectDto] and across the RPC boundary, so that copy cannot be shared. The two must stay the same: a
      * surface that answers on its own rule names an interpreter another surface does not (PY-90174).
      *
-     * Suspends, unlike [forKey] and [forPyProject], because it alone leaves the snapshot: the module lookup reads the
-     * project model under a read action.
-     *
-     * [ProjectFileIndex.getModuleForFile] and not [com.intellij.openapi.module.ModuleUtilCore.findModuleForFile],
-     * which is the same call under [com.intellij.openapi.application.ReadAction.computeBlocking]. That blocks the
-     * thread while a write action runs, and it is the wrong lock for a suspend caller.
+     * Needs read access, unlike [forKey] and [forPyProject], because it alone leaves the snapshot: the module lookup
+     * reads the project model. An inspection already holds it. A suspend caller wraps the call in
+     * [com.intellij.openapi.application.readAction], as [findEvoPyProject] does.
      */
-    suspend fun forFile(file: VirtualFile?): EvoPyProject? {
+    @RequiresReadLock
+    fun forFile(file: VirtualFile?): EvoPyProject? {
       if (file == null) return main
-      val module = readAction { ProjectFileIndex.getInstance(project).getModuleForFile(file) } ?: return main
-      // The module is the identity a generation is built from, so at most one project answers here.
-      return evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.takeUnless { module.isDisposed }
+      val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: return main
+      return forModule(module)
     }
+
+    /** The module is the identity a generation is built from, so at most one project answers here. */
+    private fun forModule(module: Module): EvoPyProject? =
+      evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.takeUnless { module.isDisposed }
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
     val baseDirs: Set<Path> = evoPyProjects.mapTo(mutableSetOf()) { it.pyProject.baseDir }
@@ -357,7 +360,10 @@ suspend fun Project.pythonInterpreters(): Set<PythonInterpreter> = EvoPyProjectM
  * The Python project every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].
  */
 @ApiStatus.Internal
-suspend fun Project.findEvoPyProject(file: VirtualFile?): EvoPyProject? = EvoPyProjectModel.getInstance(this).snapshot().forFile(file)
+suspend fun Project.findEvoPyProject(file: VirtualFile?): EvoPyProject? {
+  val snapshot = EvoPyProjectModel.getInstance(this).snapshot()
+  return readAction { snapshot.forFile(file) }
+}
 
 /**
  * The interpreter the widget and the packages tool window show: the one of the file being edited.
@@ -373,6 +379,19 @@ fun Project.currentPythonInterpreter(): PythonInterpreter? = EvoPyProjectModel.g
  */
 @ApiStatus.Internal
 suspend fun Project.pythonProjectBaseDirs(): Set<Path> = EvoPyProjectModel.getInstance(this).snapshot().baseDirs
+
+/**
+ * The Python project [this] element belongs to, with its interpreter, by the rule of [EvoPyProjectModel.Snapshot.forFile].
+ * `null` also while the first snapshot is not ready.
+ *
+ * For a caller that cannot suspend and holds read access, such as an inspection. It does not wait for the snapshot, unlike
+ * the suspend [findEvoPyProject]. A `null` before the first snapshot is safe for the analysis: the model restarts it on
+ * each snapshot.
+ */
+@ApiStatus.Internal
+@RequiresReadLock
+fun PsiElement.findEvoPyProjectIfReady(): EvoPyProject? =
+  EvoPyProjectModel.getInstance(project).snapshotOrNull()?.forFile(containingFile?.originalFile?.virtualFile)
 
 /**
  * The interpreter every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].

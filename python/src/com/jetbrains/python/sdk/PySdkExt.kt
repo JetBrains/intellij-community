@@ -111,6 +111,16 @@ val Sdk.isReadOnly: Boolean
 val Sdk.readOnlyErrorMessage: String
   get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
 
+/** Whether packages cannot be installed into this interpreter, for example one inside a Docker image. */
+@get:Internal
+val PythonInterpreter.isReadOnly: Boolean
+  get() = getSdkAPI().isReadOnly
+
+/** Why packages cannot be installed into this interpreter. See [isReadOnly]. */
+@get:Internal
+val PythonInterpreter.readOnlyErrorMessage: String
+  get() = getSdkAPI().readOnlyErrorMessage
+
 internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
 
 private fun Sdk.isLocatedInsideModule(module: Module): Boolean {

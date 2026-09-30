@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.requirement
 
+import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiBundle
@@ -26,8 +26,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 
 internal class PyRequirementVisitor(
@@ -52,19 +50,20 @@ internal class PyRequirementVisitor(
 
     val packageReferenceExpression = PyPsiUtils.getFirstQualifier(importedExpression)
     val importedPyModule = packageReferenceExpression.name ?: return
-    val module: Module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression) ?: return
+    val evoPyProject = packageReferenceExpression.findEvoPyProjectIfReady() ?: return
+    val project = packageReferenceExpression.project
 
-    if (PyPackageManagerModuleHelpers.isLocalModule(packageReferenceExpression, module)) {
+    if (PyPackageManagerModuleHelpers.isLocalModule(packageReferenceExpression, evoPyProject.pyProject.residesOnModule)) {
       return
     }
 
     // An interpreter is still being configured, so what it holds is not decided yet.
-    if (module.project.isSdkConfigurationInProgress.value) {
+    if (project.isSdkConfigurationInProgress.value) {
       return
     }
 
-    val sdk = module.pythonSdk ?: return
-    val manager = PythonPackageManager.forSdk(module.project, sdk)
+    val interpreter = evoPyProject.interpreter ?: return
+    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
     val declared = manager.listDeclaredPackagesAsync() ?: return
 
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
@@ -84,19 +83,19 @@ internal class PyRequirementVisitor(
   }
 
   override fun visitPyFile(node: PyFile) {
-    val module = ModuleUtilCore.findModuleForPsiElement(node) ?: return
-    checkPackagesHaveBeenInstalled(node, module)
+    val evoPyProject = node.findEvoPyProjectIfReady() ?: return
+    checkPackagesHaveBeenInstalled(node, evoPyProject)
   }
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  private fun checkPackagesHaveBeenInstalled(file: PsiElement, module: Module) {
-    if (module.project.isSdkConfigurationInProgress.value)
+  private fun checkPackagesHaveBeenInstalled(file: PsiElement, evoPyProject: EvoPyProject) {
+    if (file.project.isSdkConfigurationInProgress.value)
       return
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
-    val manager = PythonPackageManager.forSdk(module.project, sdk)
+    val interpreter = evoPyProject.interpreter ?: return
+    val manager = PythonPackageManager.forPythonInterpreter(file.project, interpreter)
 
     val declaredNotInstalledChecker = DeclaredButNotInstalledPackagesChecker(ignoredPackages)
-    val unsatisfied = declaredNotInstalledChecker.findUnsatisfiedRequirements(module, manager)
+    val unsatisfied = declaredNotInstalledChecker.findUnsatisfiedRequirements(evoPyProject.pyProject.residesOnModule, manager)
     if (unsatisfied.isEmpty())
       return
 
@@ -105,7 +104,7 @@ internal class PyRequirementVisitor(
 
     val ignoreFix = IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.presentableTextWithoutVersion })
     val quickFixes = buildList {
-      if (!sdk.isReadOnly) add(SyncProjectQuickFix())
+      if (!interpreter.isReadOnly) add(SyncProjectQuickFix())
       add(ignoreFix)
     }
 

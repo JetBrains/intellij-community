@@ -51,8 +51,6 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.asInterpreterRef
-import com.intellij.python.sdk.backend.flavor
-import com.intellij.python.sdk.backend.name
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.performToolInstallation
 import com.intellij.python.sdk.backend.PySdkBundle
@@ -886,7 +884,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val updated = withContext(Dispatchers.IO) {
       PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(pythonInterpreter.getSdkAPI(), project)
     }
-    if (!updated) LOG.warn("Evo: rebuilt '${pythonInterpreter.name}', but could not re-read its version and paths")
+    if (!updated) LOG.warn("Evo: rebuilt ${pythonInterpreter.pythonBinaryPath ?: pythonInterpreter}, but could not re-read its version and paths")
   }
 
   /**
@@ -1184,9 +1182,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // Each "no" below is logged, because the user is shown one line saying the environment cannot be rebuilt and the
     // reasons are not alike: an interpreter no node owns, a remote one, and a tool that declined all read the same.
     val binary = interpreter.pythonBinaryPath
-                 ?: return null.also { LOG.info("Evo: no rebuild for '${interpreter.name}', which has no interpreter path") }
+                 ?: return null.also { LOG.info("Evo: no rebuild for $interpreter, which has no interpreter path") }
     val nodeId = providers.nodeIdFor(interpreter)
-                 ?: return null.also { LOG.info("Evo: no rebuild for '${interpreter.name}', whose flavor no node claims") }
+                 ?: return null.also { LOG.info("Evo: no rebuild for $binary, whose flavor no node claims") }
     val toolId = providers.firstOrNull { it.toolId.id == nodeId }?.toolId ?: return null
     val (provider, context) = toolContextFor(toolId, target, eelFileSystem(target.workspace)) ?: return null
     val title = interpreter.asItem().shortName
