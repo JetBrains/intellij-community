@@ -48,7 +48,7 @@ class DevDistHalfTest {
 
   @Test
   fun `the community half plans only the split products of the community registry`() {
-    assertThat(CommunityDevDistHalf.registrySplitProducts(listOf("community", "Idea", "AndroidStudio"))).containsExactly("AndroidStudio", "Idea")
+    assertThat(CommunityDevDistHalf.registrySplitProducts(listOf("community", "Idea", "AndroidStudio", "MPS"))).containsExactly("AndroidStudio", "Idea")
   }
 
   @Test
@@ -232,7 +232,7 @@ class DevDistHalfTest {
     requireHalfCapabilities(
       half = CommunityDevDistHalf,
       projectRoot = CommunityDevDistHalf.root(dir),
-      registryProducts = listOf("community", "Idea", "AndroidStudio"),
+      registryProducts = listOf("community", "Idea", "AndroidStudio", "MPS"),
       plannedProducts = listOf("AndroidStudio", "Idea", "Idea"),
       generatedPluginFiles = emptyList(),
       hasPlatformPatches = false,
@@ -246,7 +246,7 @@ class DevDistHalfTest {
       requireHalfCapabilities(
         half = CommunityDevDistHalf,
       projectRoot = CommunityDevDistHalf.root(dir),
-        registryProducts = listOf("community", "Idea", "AndroidStudio"),
+        registryProducts = listOf("community", "Idea", "AndroidStudio", "MPS"),
         plannedProducts = listOf("Idea", "Other"),
         generatedPluginFiles = emptyList(),
         hasPlatformPatches = false,

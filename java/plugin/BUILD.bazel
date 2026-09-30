@@ -94,7 +94,6 @@ dev_dist_complex_plugin(
         "//java/debugger/impl:impl.jar": "intellij.java.debugger.impl",
         "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi.jar": "intellij.java.debugger.libraries.jb.jdi",
         "//java/debugger/memory-agent:java-debugger-memory-agent.jar": "intellij.java.debugger.memory.agent",
-        "//libraries/jps-javac-extension:jps-javac-extension.jar": "intellij.libraries.jps.javac.extension",
         "//libraries/completion-ranking-java:completion-ranking-java.jar": "intellij.libraries.completion.ranking.java",
         "//libraries/test-discovery:test-discovery.jar": "intellij.libraries.test.discovery",
         "//jps/jps-launcher:build-launcher.jar": "intellij.platform.jps.build.launcher",
@@ -149,6 +148,7 @@ dev_dist_complex_plugin(
         "//uast/uast-java-ide:java-uast-ide_content_module_jar",
         "//jps/jps-builders:build_content_module_jar",
         "//build:dependency-graph_content_module_jar",
+        "//libraries/jps-javac-extension:jps-javac-extension_content_module_jar",
         "//build:build-javac-rt_content_module_jar",
         "//java/compiler/forms-compiler:java-guiForms-compiler_content_module_jar",
         "//java/compiler/javac2:java-compiler-antTasks_content_module_jar",
@@ -179,7 +179,6 @@ dev_dist_complex_plugin(
     ],
     libraries = {
         "@lib//:java-debugger-libraries-jb-jdi-jb-jdi": "@lib//:java-debugger-libraries-jb-jdi-jb-jdi",
-        "@lib//:libraries-jps-javac-extension-jps-javac-extension": "@lib//:libraries-jps-javac-extension-jps-javac-extension",
         "@lib//:libraries-completion-ranking-java-completion-ranking-java": "@lib//:libraries-completion-ranking-java-completion-ranking-java",
         "@lib//:libraries-test-discovery-intellij-test-discovery": "@lib//:libraries-test-discovery-intellij-test-discovery",
         "@lib//:java-debugger-memory-agent-debugger-memory-agent": "@lib//:java-debugger-memory-agent-debugger-memory-agent",

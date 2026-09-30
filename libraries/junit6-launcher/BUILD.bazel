@@ -1,4 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.junit6.launcher` start
+content_module_jar(
+    libraries = ["@lib//:libraries-junit6-launcher-_j_unit6_launcher"],
+    module = ":junit6-launcher",
+)
+### auto-generated section `dev intellij.libraries.junit6.launcher` end
 
 ### auto-generated section `build intellij.libraries.junit6.launcher` start
 jvm_library(

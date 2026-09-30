@@ -23,14 +23,6 @@ dev_dist_plugin(
         "intellij.libraries.junit4",
     ],
     jars = {
-        "lib/intellij.libraries.hamcrest.jar": [
-            "intellij.libraries.hamcrest",
-            "@lib//:libraries-hamcrest-hamcrest",
-        ],
-        "lib/intellij.libraries.junit4.jar": [
-            "intellij.libraries.junit4",
-            "@lib//:libraries-junit4-_j_unit4",
-        ],
         "lib/junit.jar": ["intellij.junit"],
         "lib/junit-rt.jar": ["intellij.junit.rt"],
         "lib/junit5-rt.jar": ["intellij.junit.v5.rt"],
@@ -43,6 +35,10 @@ dev_dist_plugin(
             "intellij.junit.vcs",
             "intellij.junit.dashboard",
         ],
+    },
+    module_jar_paths = {
+        "intellij.libraries.hamcrest": "lib/intellij.libraries.hamcrest.jar",
+        "intellij.libraries.junit4": "lib/intellij.libraries.junit4.jar",
     },
 )
 ### auto-generated section `dev intellij.junit` end

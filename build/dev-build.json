@@ -23,6 +23,16 @@
         "intellij.platform.buildScripts"
       ],
       "class": "org.jetbrains.intellij.build.AndroidStudioProperties"
+    },
+    "MPS": {
+      "modules": [
+        "intellij.mps.build",
+        "intellij.idea.community.build",
+        "intellij.idea.community.build.dependencies",
+        "intellij.platform.buildScripts",
+        "intellij.platform.buildScripts.licenses"
+      ],
+      "class": "org.jetbrains.intellij.build.mps.MPSProperties"
     }
   }
 }

@@ -1,4 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.libraries.junit6.vintage` start
+content_module_jar(
+    libraries = ["@lib//:libraries-junit6-vintage-_j_unit6_vintage"],
+    module = ":junit6-vintage",
+)
+### auto-generated section `dev intellij.libraries.junit6.vintage` end
 
 ### auto-generated section `build intellij.libraries.junit6.vintage` start
 jvm_library(
