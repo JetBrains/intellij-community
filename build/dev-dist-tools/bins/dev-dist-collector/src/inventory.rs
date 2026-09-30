@@ -4,38 +4,35 @@
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 
+use component::manifest::{self, ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
+use component::paths::{self, compare_utf16};
+use component::{Error, Result, fail, json};
 use filemeta::{Entry, EntryType};
 use serde::Deserialize;
-
-use crate::error::{Error, Result};
-use crate::fail;
-use crate::json;
-use crate::manifest::{self, ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
-use crate::paths::{self, compare_utf16};
 
 /// One file that the collector places in a component.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[expect(clippy::struct_excessive_bools, reason = "each field is a boolean column of the inventory record")]
-pub struct SourcedFile {
+pub(crate) struct SourcedFile {
     /// Where the bytes are, relative to the working directory of the action.
-    pub source: String,
+    pub(crate) source: String,
     /// The destination in the distribution, in slash form.
-    pub relative_path: String,
-    pub executable: bool,
+    pub(crate) relative_path: String,
+    pub(crate) executable: bool,
     /// The inventory entry of the source. With an entry, the collector reads nothing from the source.
-    pub metadata: Option<Entry>,
+    pub(crate) metadata: Option<Entry>,
     /// The mode of the source in its inventory.
-    pub mode: Option<u32>,
+    pub(crate) mode: Option<u32>,
     /// Marks a file of the plugin classpath record.
-    pub class_path: bool,
+    pub(crate) class_path: bool,
     /// Marks a packed jar of the core classpath. The manifest lists it under `coreClassPath`.
-    pub core_class_path: bool,
+    pub(crate) core_class_path: bool,
     /// Marks a directory record, which [`attach_metadata`] replaces with one file per inventory entry below it.
-    pub tree: bool,
+    pub(crate) tree: bool,
 }
 
 impl SourcedFile {
-    pub fn new(source: impl Into<String>, relative_path: impl Into<String>) -> Self {
+    pub(crate) fn new(source: impl Into<String>, relative_path: impl Into<String>) -> Self {
         Self {
             source: source.into(),
             relative_path: relative_path.into(),
@@ -47,30 +44,30 @@ impl SourcedFile {
 /// The counters of the inventory span. `file_count` counts placements. `hashed_file_count` and `byte_count` count the
 /// distinct sources that the inventory hashed and their bytes.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct InventoryStats {
-    pub file_count: usize,
-    pub hashed_file_count: usize,
-    pub byte_count: u64,
+pub(crate) struct InventoryStats {
+    pub(crate) file_count: usize,
+    pub(crate) hashed_file_count: usize,
+    pub(crate) byte_count: u64,
 }
 
 /// The manifest fields that the collector options give.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ManifestHeader {
-    pub kind: String,
-    pub platform_prefix: String,
-    pub os: String,
-    pub arch: String,
+pub(crate) struct ManifestHeader {
+    pub(crate) kind: String,
+    pub(crate) platform_prefix: String,
+    pub(crate) os: String,
+    pub(crate) arch: String,
     /// The IDE main class, or `None` for a component that declares none.
-    pub main_class: Option<String>,
+    pub(crate) main_class: Option<String>,
     /// A plugin component states the version and one plugin.
-    pub plugin_component: bool,
+    pub(crate) plugin_component: bool,
 }
 
 /// The entries of the files, sorted in Java string order.
 ///
 /// A file with an inventory entry takes the hash, the type and the mode of that entry. The collector reads nothing
 /// from its source. Any other file must be a regular file, and the inventory hashes it once per absolute source path.
-pub fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, InventoryStats)> {
+pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, InventoryStats)> {
     let mut hashes: HashMap<String, i64> = HashMap::new();
     let mut links: BTreeMap<String, String> = BTreeMap::new();
     let mut entries = Vec::with_capacity(files.len());
@@ -150,7 +147,7 @@ pub fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, Inventor
 
 /// The manifest of a component. The composer orders the core classpath of every component, so the manifest keeps the
 /// record order of the core classpath jars.
-pub fn build_manifest(header: &ManifestHeader, files: &[SourcedFile]) -> Result<(ComponentManifest, InventoryStats)> {
+pub(crate) fn build_manifest(header: &ManifestHeader, files: &[SourcedFile]) -> Result<(ComponentManifest, InventoryStats)> {
     let (entries, stats) = inventory(files)?;
     let manifest = ComponentManifest {
         version: header.plugin_component.then_some(MANIFEST_VERSION),
@@ -172,7 +169,7 @@ pub fn build_manifest(header: &ManifestHeader, files: &[SourcedFile]) -> Result<
 }
 
 /// Builds the manifest and writes it to `path`.
-pub fn write_manifest(path: &Path, header: &ManifestHeader, files: &[SourcedFile]) -> Result<InventoryStats> {
+pub(crate) fn write_manifest(path: &Path, header: &ManifestHeader, files: &[SourcedFile]) -> Result<InventoryStats> {
     let (manifest, stats) = build_manifest(header, files)?;
     manifest::write_component_manifest(path, &manifest)?;
     Ok(stats)
@@ -185,12 +182,12 @@ pub fn write_manifest(path: &Path, header: &ManifestHeader, files: &[SourcedFile
 /// `intellij_dev_dist.bzl` writes every key, except `tree` for a file record.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct MetadataRecord {
-    pub source: String,
-    pub metadata: String,
-    pub relative_path: String,
+pub(crate) struct MetadataRecord {
+    pub(crate) source: String,
+    pub(crate) metadata: String,
+    pub(crate) relative_path: String,
     #[serde(default)]
-    pub tree: bool,
+    pub(crate) tree: bool,
 }
 
 /// The inventory of one native tree. Each entry has a path below the root of the tree. `metadata` names the inventory
@@ -226,7 +223,7 @@ impl TreeMetadata {
 
 /// Pairs every file with its inventory entry, and replaces every tree record with the files that its inventory names.
 /// The result is what the manifest lists, so a tree without a file contributes nothing.
-pub fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result<Vec<SourcedFile>> {
+pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result<Vec<SourcedFile>> {
     let records: Vec<MetadataRecord> = json::read(catalogue)?;
     let mut by_source: HashMap<String, Entry> = HashMap::new();
     let mut trees: HashMap<String, TreeMetadata> = HashMap::new();

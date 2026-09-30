@@ -3,8 +3,13 @@
 //!
 //! Three modes exist. `intellij_dev_packed_jars_component` (`intellij_dev_dist.bzl`) uses `--jars-file` with
 //! `--metadata-catalogue` and `--files-file`. `_dev_plugin` and `dev_plugin_component` use `--plugin-component`.
+//!
+//! [`inventory`] builds the manifest of each mode. [`plugin_classpath`] gives and checks the classpath record of a plugin
+//! component.
 
 mod collect;
+mod inventory;
+mod plugin_classpath;
 mod plugin_component;
 
 use std::ffi::{OsStr, OsString};
@@ -12,9 +17,9 @@ use std::io::Write;
 use std::path::Path;
 
 use anyhow::{Context, bail};
-use component::inventory::{self, ManifestHeader, SourcedFile};
 use tracing::field::Empty;
 
+use crate::inventory::{ManifestHeader, SourcedFile};
 use crate::plugin_component::{Outputs, PluginComponentSpec};
 
 /// The mode of a run. `Spec` is the path of the plugin component spec after the option parse, and the checked spec

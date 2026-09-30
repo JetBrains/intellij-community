@@ -31,7 +31,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/pluginpack` | The plan and the execution of a plugin remainder, for the remainder packer. | `@community//build/dev-dist-tools/crates/pluginpack:pluginpack_test` |
 | `crates/trace` | The Jaeger span file of `--trace-file`. | `@community//build/dev-dist-tools/crates/trace:trace_test` |
 | `bins/content-module-packer` | The packer. | `@community//build/dev-dist-tools/bins/content-module-packer:content-module-packer_test` |
-| `bins/dev-dist-collector` | The collector. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
+| `bins/dev-dist-collector` | The collector: the inventory of a component and the plugin classpath record. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
 | `bins/dev-dist-composer` | The composer. | `@community//build/dev-dist-tools/bins/dev-dist-composer:dev-dist-composer_test` |
 | `bins/dev-launcher` | The launcher of `intellij_dev_launcher`, the local home, and the `local-home` command of `PreBuiltDevMain`. | `@community//build/dev-dist-tools/bins/dev-launcher:dev-launcher_test` |
 | `bins/plugin-descriptor-writer` | The descriptor writer. | `@community//build/dev-dist-tools/bins/plugin-descriptor-writer:plugin-descriptor-writer_test` and `:descriptor_rule_tests` |

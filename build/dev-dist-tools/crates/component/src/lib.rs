@@ -5,13 +5,12 @@
 //! self-contained distribution or launch metadata only. The launcher links a home from that metadata.
 
 mod error;
-mod json;
 
 pub mod classpath;
 pub mod compose;
 pub mod fingerprint;
 pub mod ide_config;
-pub mod inventory;
+pub mod json;
 pub mod layout;
 pub mod manifest;
 pub mod paths;

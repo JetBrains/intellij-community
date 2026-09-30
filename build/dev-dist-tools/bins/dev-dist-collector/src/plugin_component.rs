@@ -13,12 +13,13 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
 use anyhow::{Context, bail};
-use component::inventory::SourcedFile;
 use filemeta::{Entry, EntryType};
 use planfile::contract::{self, Asset, TREE_VERSION};
 use planfile::validate::asset_kind;
 use serde::Deserialize;
 use tracing::field::Empty;
+
+use crate::inventory::SourcedFile;
 
 /// The spec as the file states it. [`PluginComponentSpec::read`] checks that the keys form one of the two shapes.
 #[derive(Debug, Deserialize)]
@@ -217,7 +218,7 @@ impl PluginComponentSpec {
                     || collect_prepared(spec),
                 )?;
                 let classpath = std::fs::read(&spec.classpath).with_context(|| format!("read {}", spec.classpath))?;
-                component::plugin_classpath::validate_component_record(&classpath, &spec.plugin_directory, &files)?;
+                crate::plugin_classpath::validate_component_record(&classpath, &spec.plugin_directory, &files)?;
                 Ok((files, classpath))
             }
             Self::Packed(spec) => {
@@ -226,7 +227,7 @@ impl PluginComponentSpec {
                     || collect_packed(spec),
                 )?;
                 let descriptor = std::fs::read(&spec.descriptor).with_context(|| format!("read {}", spec.descriptor))?;
-                let classpath = component::plugin_classpath::component_record(&spec.plugin_directory, &descriptor, &files)?;
+                let classpath = crate::plugin_classpath::component_record(&spec.plugin_directory, &descriptor, &files)?;
                 Ok((files, classpath))
             }
         }

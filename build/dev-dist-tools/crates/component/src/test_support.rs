@@ -121,12 +121,6 @@ pub(crate) fn require_error<T: std::fmt::Debug, E: std::fmt::Display>(result: Re
 }
 
 #[cfg(unix)]
-pub(crate) fn set_mode(path: impl AsRef<Path>, mode: u32) {
-    use std::os::unix::fs::PermissionsExt;
-    fs::set_permissions(path.as_ref(), fs::Permissions::from_mode(mode)).expect("the mode");
-}
-
-#[cfg(unix)]
 pub(crate) fn symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
     fscopy::symlink(target.as_ref(), link.as_ref(), false).expect("the link");
 }
@@ -149,15 +143,4 @@ pub(crate) fn skip_merge(_: &[crate::compose::DevBuildComponent], _: &Path) -> c
 
 pub(crate) fn runfiles(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
     pairs.iter().map(|(key, value)| ((*key).to_owned(), (*value).to_owned())).collect()
-}
-
-/// The bytes of a file in `testdata/`. Bazel names the directory in `DDT_TESTDATA_DIR`, and Cargo gives the run-time
-/// `CARGO_MANIFEST_DIR`.
-pub(crate) fn testdata(name: &str) -> Vec<u8> {
-    let directory = std::env::var_os("DDT_TESTDATA_DIR").map_or_else(
-        || PathBuf::from(std::env::var_os("CARGO_MANIFEST_DIR").expect("Cargo or Bazel names the test data")).join("testdata"),
-        PathBuf::from,
-    );
-    let file = directory.join(name);
-    fs::read(&file).unwrap_or_else(|error| panic!("{}: {error}", file.display()))
 }

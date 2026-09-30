@@ -2,9 +2,8 @@
 
 use std::path::Path;
 
-use component::inventory::SourcedFile;
-
 use crate::collect::{explicit_files, platform_jars, validate_destinations};
+use crate::inventory::SourcedFile;
 use crate::test_support::*;
 
 #[track_caller]

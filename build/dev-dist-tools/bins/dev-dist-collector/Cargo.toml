@@ -14,6 +14,7 @@ component.workspace = true
 distpath.workspace = true
 planfile.workspace = true
 filemeta.workspace = true
+fscopy.workspace = true
 trace.workspace = true
 tracing.workspace = true
 lexopt.workspace = true

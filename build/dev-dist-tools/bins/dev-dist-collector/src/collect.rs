@@ -4,8 +4,9 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use anyhow::{Context, bail};
-use component::inventory::SourcedFile;
 use serde::Deserialize;
+
+use crate::inventory::SourcedFile;
 
 /// One record of `--jars-file` or `--files-file`. A jar record states no `executable`, and a file record states it.
 /// Only a jar record can state `tree`, which names a native tree directory in place of a jar.

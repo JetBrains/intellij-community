@@ -8,7 +8,7 @@ use super::*;
 fn decode_component_manifest(data: &[u8]) -> serde_json::Result<ComponentManifest> {
     serde_json::from_slice(data)
 }
-use crate::test_support::{TempDir, reference_bytes, require_error, testdata, write_file};
+use crate::test_support::{TempDir, WorkDir, reference_bytes, require_error, write_file};
 
 const REFERENCE_SIZES: [usize; 10] = [0, 1, 3, 240, 241, 262143, 262144, 262145, 524288, 524301];
 
@@ -54,10 +54,12 @@ fn tree_file(source: &str, relative_path: &str) -> SourcedFile {
 }
 
 /// The manifest of the Go collector for ten packed jars matches the Kotlin v9 manifest byte for byte. The sources
-/// stay relative and never exist: the collector takes every hash from the inventory.
+/// stay relative and never exist: the collector takes every hash from the inventory. The [`WorkDir`] keeps the
+/// working directory of the relative sources fixed.
 #[test]
 fn platform_manifest_kotlin_parity() {
-    let golden = testdata("platform.json");
+    let working_directory = WorkDir::new();
+    let golden = working_directory.read_testdata("platform.json");
     let directory = TempDir::new();
     let mut records = Vec::new();
     let mut files = Vec::new();
@@ -390,6 +392,8 @@ fn packed_collector_does_not_read_or_stat_payload() {
 
 #[test]
 fn metadata_catalogue_rejects_conflicts_and_stale_ownership() {
+    // The source is relative, so the working directory must not change during the test.
+    let _working_directory = WorkDir::new();
     let directory = TempDir::new();
     let entry = Entry {
         relative_path: "shared.jar".into(),

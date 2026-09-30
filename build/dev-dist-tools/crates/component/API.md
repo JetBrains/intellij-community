@@ -14,7 +14,6 @@ A host path is a `&str` or a `String`, as in the Go tools. A function that opens
 
 These items of other crates are part of the contract:
 
-- `planfile::classpath::record` writes one plugin classpath record. It refuses a name that is not ASCII.
 - `distpath::validate_path` checks a path inside a distribution: relative, in slash form, ASCII without `<`, `>` and
   `&`. `filemeta::merge` checks a set of entries together.
 - `fscopy::conventional_mode(executable)` is the mode of a file without a mode. `fscopy::set_distribution_file_mode`
@@ -29,7 +28,10 @@ These items of other crates are part of the contract:
   `Result`.
 - `Result<T>`: `std::result::Result<T, Error>`.
 
-## JSON rules
+## JSON rules (`json`)
+
+- `json::read(path: &Path) -> Result<T>`: reads and decodes a JSON file. The error names the file. The collector reads
+  the metadata catalogue with it.
 
 Every reader is plain serde. A type refuses an unknown key, and a repeated key of a struct fails. A key without
 `Option` or a default is required, and `null` fails for it. An `Option` key takes `null`, and an absent `Option` key
@@ -86,34 +88,11 @@ the field order, where Go refuses it. No producer writes such an array.
 - `manifest::logical_component_mode(mode: u32) -> u32`: maps `0o444` to `0o644` and `0o555` to `0o755`. It keeps
   every other mode.
 
-## Collector inventory (`inventory`)
-
-- `SourcedFile { source, relative_path, executable, metadata, mode, class_path, core_class_path, tree }`: one file
-  that the collector places. `metadata: Option<filemeta::Entry>` is its inventory entry, and `mode: Option<u32>` is
-  the mode of the source. `class_path`, `core_class_path` and `tree` mark a plugin classpath file, a packed core
-  classpath jar and a tree record. The collector sets `class_path`.
-- `SourcedFile::new(source, relative_path) -> SourcedFile`: a file without an inventory entry and without a mark.
-- `InventoryStats { file_count, hashed_file_count, byte_count }`: the counters of the inventory span.
-- `ManifestHeader { kind, platform_prefix, os, arch, main_class, plugin_component }`: the manifest fields that the
-  collector options give. `main_class` is an `Option<String>`. A plugin component states the version and one plugin.
-- `inventory::inventory(files) -> Result<(Vec<ComponentEntry>, InventoryStats)>`: takes the inventory entry of each
-  file or hashes its source, and sorts the entries in Java string order.
-- `inventory::build_manifest(header, files) -> Result<(ComponentManifest, InventoryStats)>`: the manifest of a
-  component.
-- `inventory::write_manifest(path, header, files) -> Result<InventoryStats>`: builds the manifest and writes it.
-- `MetadataRecord { source, metadata, relative_path, tree }`: one record of the metadata catalogue. `tree: bool` can
-  be absent.
-- `inventory::attach_metadata(files, catalogue) -> Result<Vec<SourcedFile>>`: pairs each file with its inventory
-  entry, and replaces each tree record with the files that its inventory names.
-
 ## Plugin classpath (`plugin_classpath`)
 
+The collector writes and checks the record of each plugin component. The composer joins the records.
+
 - `plugin_classpath::PLUGIN_CLASSPATH: &str`: `plugins/plugin-classpath.txt`.
-- `plugin_classpath::component_record(plugin_directory, descriptor: &[u8], files) -> Result<Vec<u8>>`: the record of
-  the `class_path` files of a component, from `planfile::classpath::record`.
-- `plugin_classpath::validate_component_record(data: &[u8], plugin_directory, files) -> Result<()>`: the Go
-  `validatePluginClassPath`. It checks that a record names the plugin directory and each `class_path` file once, and
-  nothing else. It refuses a name that is not ASCII or that holds NUL.
 - `plugin_classpath::compose(prefix: &[u8], plugin_count: u16, parts) -> Vec<u8>`: the prefix, the big-endian count,
   then the parts in order.
 
