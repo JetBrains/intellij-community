@@ -6,15 +6,8 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.model.Symbol
 import com.intellij.model.psi.ImplicitReferenceProvider
 import com.intellij.model.psi.PsiSymbolReference
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.AnActionResult
-import com.intellij.openapi.actionSystem.OverridingAction
-import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
@@ -53,18 +46,18 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     // There are several places in the IntelliJ codebase that call `getImplicitReference()` function.
     // For example, `IdentifierHighlighterPass.highlightReferencesAndDeclarations`, it calls this function on caret movement.
     // No need to send requests to the LSP server for features that won't work anyway.
-    // We care only about the "Go To Declaration" and "Go To Type Declaration" actions.
+    // We care only about the "Go To Declaration" and "Go To Type Declaration" actions, and the action being performed
+    // is named by the thread context, both on the thread that started it and in the coroutines it launches.
 
     // TODO Unfortunately, Ctrl+hover in LSP-backed files doesn't work because of returning null from this function.
     // TODO It would be great to enable the Ctrl+hover feature somehow.
     // TODO Note that with Ctrl button pressed, mouse movement generates hundreds of getImplicitReference() calls,
     // TODO so caching of the getElementDefinitions() results will be needed.
 
-    val actionClass = service<CurrentActionHolder>().currentActionClass ?: return null
-    return when {
-      actionClass.isAssignableFrom(GotoDeclarationAction::class.java) ->
+    return when (ActionUtil.getActionThreadContext()?.actionId) {
+      IdeActions.ACTION_GOTO_DECLARATION ->
         createResolvedReference(psiFile, offsetInElement, ::requestElementDefinitions, fallbackToShowUsagesOnSelfDefinition = true)
-      actionClass.isAssignableFrom(GotoTypeDeclarationAction::class.java) ->
+      IdeActions.ACTION_GOTO_TYPE_DECLARATION ->
         createResolvedReference(psiFile, offsetInElement, ::requestTypeDefinitions, fallbackToShowUsagesOnSelfDefinition = false)
       else -> null
     }
@@ -223,25 +216,4 @@ private class LspResolvedSymbolReference(
   override fun getRangeInElement(): TextRange = rangeInFile
   override fun resolveReference(): List<Symbol> = resolveResults
   override fun resolvesTo(target: Symbol) = false
-}
-
-
-private class CurrentActionListener : AnActionListener {
-  private val AnAction.baseAction: AnAction
-    get() = (this as? OverridingAction)?.let { (ActionManager.getInstance() as ActionManagerImpl).getBaseAction(this) }
-            ?: this
-
-  override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    service<CurrentActionHolder>().currentActionClass = action.baseAction.javaClass
-  }
-
-  override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    service<CurrentActionHolder>().currentActionClass = null
-  }
-}
-
-
-@Service(Service.Level.APP)
-internal class CurrentActionHolder {
-  var currentActionClass: Class<out AnAction>? = null
 }

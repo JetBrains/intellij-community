@@ -167,8 +167,6 @@
   <applicationListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"
               class="com.intellij.platform.lsp.impl.platformListeners.LspFileDocumentManagerListener"/>
-    <listener topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
-              class="com.intellij.platform.lsp.impl.features.navigation.CurrentActionListener"/>
   </applicationListeners>
 
   <extensionPoints>
