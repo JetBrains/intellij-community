@@ -4,6 +4,7 @@ use std::cell::OnceCell;
 use std::collections::HashSet;
 use std::fmt;
 use std::fs::{self, File};
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -164,6 +165,9 @@ pub struct MergeReport {
     pub duplicates: Vec<String>,
     /// The size of the written jar.
     pub bytes_written: u64,
+    /// The [`xxh3::hash_file`] value of the written jar. The merge hashes each byte as it goes to the file, so a caller
+    /// gets the hash without a read of the jar.
+    pub content_hash: i64,
 }
 
 impl MergeSpec {
@@ -180,8 +184,8 @@ impl MergeSpec {
         self.merge()
     }
 
-    /// Writes [`MergeSpec::output`] from the entries of the sources, and returns the names that more than one source
-    /// gave.
+    /// Writes [`MergeSpec::output`] from the entries of the sources. It returns the names that more than one source
+    /// gave, and the size and the content hash of the jar.
     ///
     /// **The first source wins**, so the source order is the precedence. To write what the in-process `JarPackager`
     /// writes, every library jar must come before every module output. Duplicates are expected, because two libraries
@@ -207,7 +211,7 @@ impl MergeSpec {
         if let Some(parent) = output.parent().filter(|parent| !parent.as_os_str().is_empty()) {
             filemeta::create_dir_all_0755(parent).map_err(Error::Bare)?;
         }
-        let file = File::create(output).at(output)?;
+        let file = HashingWrite::new(File::create(output).at(output)?);
 
         let mut writer = Writer::with_directory_mode(file, self.directory_mode);
         let mut seen: HashSet<&str> = HashSet::new();
@@ -336,8 +340,9 @@ impl MergeSpec {
                 .add(ENTITIES_ENTRY_NAME, data.as_bytes(), crc32fast::hash(data.as_bytes()), false)
                 .at(output)?;
         }
-        let bytes_written = writer.close().at(output)?;
-        drop(writer.into_inner().at(output)?);
+        let closed_size = writer.close().at(output)?;
+        let (content_hash, bytes_written) = writer.into_inner().at(output)?.finish();
+        debug_assert_eq!(bytes_written, closed_size, "the file got another byte count than the writer wrote");
         // After the jar, so a tree never exists without its jar.
         if let (Some(natives), Some(native)) = (&natives, &self.native)
             && native.writes_tree()
@@ -345,7 +350,11 @@ impl MergeSpec {
             let jar = jars[natives.index].get().expect("the native source was opened by the merge");
             self.write_native_tree(natives, jar, verify_crc)?;
         }
-        Ok(MergeReport { duplicates, bytes_written })
+        Ok(MergeReport {
+            duplicates,
+            bytes_written,
+            content_hash,
+        })
     }
 
     fn validate_sources(&self) -> Result<()> {
@@ -387,7 +396,7 @@ impl MergeSpec {
 /// The manifest rules of the merge apply unchanged, so a file source cannot add a manifest that `keep_manifest` drops.
 /// No source states a CRC for a file, so its CRC is always calculated, and no CRC check applies.
 fn add_file_source<'a>(
-    writer: &mut Writer<File>,
+    writer: &mut Writer<impl Write>,
     source: &'a Source,
     seen: &mut HashSet<&'a str>,
     output: &Path,
@@ -410,6 +419,44 @@ fn add_file_source<'a>(
     let data = fs::read(&source.path).at(&source.path)?;
     writer.add(&source.name, &data, crc32fast::hash(&data), true).at(output)?;
     Ok(false)
+}
+
+/// The output of a merge: it passes each write on to the file, and hashes and counts the bytes that the file takes.
+///
+/// It sits between the write buffer of the [`Writer`] and the file, so it gets the buffer in chunks of up to 1 MiB, and
+/// a larger entry in one chunk. [`xxh3::Hasher`] frames the stream in blocks of 256 KiB whatever the chunks are.
+struct HashingWrite<W> {
+    inner: W,
+    hasher: xxh3::Hasher,
+    bytes: u64,
+}
+
+impl<W: Write> HashingWrite<W> {
+    const fn new(inner: W) -> Self {
+        Self {
+            inner,
+            hasher: xxh3::Hasher::new(),
+            bytes: 0,
+        }
+    }
+
+    /// Returns the content hash and the byte count of what the file took, and closes the file.
+    fn finish(self) -> (i64, u64) {
+        (self.hasher.finish(), self.bytes)
+    }
+}
+
+impl<W: Write> Write for HashingWrite<W> {
+    fn write(&mut self, data: &[u8]) -> io::Result<usize> {
+        let count = self.inner.write(data)?;
+        self.hasher.update(&data[..count]);
+        self.bytes += count as u64;
+        Ok(count)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
 }
 
 /// The native entries that `reject-native-entries` refuses. It is the Go `isNativeEntry` of the merge, and it has no

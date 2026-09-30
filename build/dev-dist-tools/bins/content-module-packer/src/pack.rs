@@ -7,7 +7,7 @@ use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
 
-use jarpack::MergeSpec;
+use jarpack::{MergeReport, MergeSpec};
 use trace::Span;
 
 use crate::inventory;
@@ -93,7 +93,7 @@ fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> jarpack::Re
         }
     };
     let result = match spec.metadata_file {
-        Some(_) => write_inventory(spec, &span),
+        Some(_) => write_inventory(spec, &merged, &span),
         None => Ok(()),
     };
     match &result {
@@ -109,9 +109,9 @@ fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> jarpack::Re
 }
 
 /// Writes the inventory of the group under an `inventory packing output` span with the counters of the inventory.
-fn write_inventory(spec: &MergeSpec, parent: &Span) -> jarpack::Result<()> {
+fn write_inventory(spec: &MergeSpec, merged: &MergeReport, parent: &Span) -> jarpack::Result<()> {
     let span = parent.child("inventory packing output");
-    match inventory::write_inventory(spec) {
+    match inventory::write_inventory(spec, merged) {
         Ok(report) => {
             span.tag("fileCount", report.file_count);
             span.tag("hashedFileCount", report.hashed_file_count);

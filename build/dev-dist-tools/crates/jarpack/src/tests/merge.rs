@@ -628,6 +628,7 @@ fn pack_reports_the_size_and_the_duplicates() {
     let report = recipe.pack().unwrap();
     assert_eq!(recipe.jar_name(), "intellij.example.jar");
     assert_eq!(report.bytes_written, std::fs::metadata(&output).unwrap().len());
+    assert_eq!(report.content_hash, xxh3::hash_file(&output).unwrap());
     assert_eq!(report.duplicates.len(), 12);
     let line = duplicate_line(&recipe.jar_name(), &report.duplicates).unwrap();
     let shown: Vec<&str> = entries[..10].iter().map(|(name, _)| name.as_str()).collect();
@@ -643,6 +644,31 @@ fn pack_reports_the_size_and_the_duplicates() {
         "a.jar: 1 duplicate entry, first source wins: x"
     );
     assert_eq!(duplicate_line("a.jar", &[]), None);
+}
+
+/// The merge hashes the jar while it writes it. An entry of more than 1 MiB goes past the write buffer in one write, and
+/// the small entries go through the buffer. The two paths together must give the hash of the file.
+#[test]
+fn pack_reports_the_content_hash_of_a_jar_past_the_write_buffer() {
+    let scratch = Scratch::new();
+    let large: Vec<u8> = (0..3 * 1024 * 1024 + 17u32)
+        .map(|index| index.wrapping_mul(2_654_435_761).to_be_bytes()[0])
+        .collect();
+    let file = scratch.file("large.bin", &large);
+    let module = write_zip_jar(
+        &scratch,
+        "module.jar",
+        &[entry("com/example/A.class", "a"), entry("resources/b.txt", "b")],
+    );
+    let output = scratch.dir().join("intellij.large.jar");
+    let recipe = spec(
+        output.to_str().unwrap(),
+        vec![Source::file("resources/large.bin", &file), Source::module(&module)],
+    );
+    let report = recipe.pack().unwrap();
+    assert_eq!(report.bytes_written, std::fs::metadata(&output).unwrap().len());
+    assert!(report.bytes_written > large.len() as u64);
+    assert_eq!(report.content_hash, xxh3::hash_file(&output).unwrap());
 }
 
 #[test]

@@ -41,6 +41,10 @@ pub fn duplicate_line(jar_name: &str, duplicates: &[String]) -> Option<String>;
   The line is `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end.
   The Go binary printed it before an inventory error, so the caller prints it between the two steps.
 - `MergeSpec` and `MergeReport` are `Send + Sync`, so a caller can pack many specs on parallel threads.
+- The merge hashes the bytes of the jar as they go to the file. So `MergeReport::content_hash` is the
+  `xxh3::hash_file` value of the jar, and the packer does not read the jar again for its inventory. The hasher sits
+  between the write buffer and the file, so the buffer stays in front of the file. The merge does not hash the files of
+  a native tree.
 - `MergeSpec::verify_crc` is the one switch of the CRC check.
 
 ## Recipes
@@ -69,7 +73,11 @@ impl MergeSpec {
     pub fn pack(&self) -> Result<MergeReport>;  // refuses a spec with no source, then merges
 }
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct MergeReport { pub duplicates: Vec<String>, pub bytes_written: u64 }
+pub struct MergeReport {
+    pub duplicates: Vec<String>,
+    pub bytes_written: u64, // the size of the jar
+    pub content_hash: i64,  // xxh3::hash_file of the jar
+}
 
 pub type Filter = Arc<dyn Fn(&str) -> bool + Send + Sync>;
 

@@ -2,10 +2,11 @@
 
 //! The inventory of one packed group: the jar, and in natives mode also the tree.
 
+use std::fs;
 use std::path::Path;
 
-use filemeta::EntryType;
-use jarpack::MergeSpec;
+use filemeta::{Entry, EntryType};
+use jarpack::{MergeReport, MergeSpec};
 
 /// The counters of one inventory, the tags of the `inventory packing output` span.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -23,19 +24,22 @@ pub(crate) struct InventoryReport {
 /// Writes the metadata of what the spec packed to [`MergeSpec::metadata_file`]. That is the jar, and in natives mode
 /// also the tree. The tree has its root directory by the name of the directory, and every file and directory under it.
 ///
+/// `merged` is the report of the merge that wrote the jar. It holds the size and the content hash of the jar, so the
+/// jar is not read again. The files of the tree are read again and hashed.
+///
 /// The collector places the files of the tree from this inventory alone, so it holds the hash, the size and the mode of
 /// each. The mode of a tree file is [`jarpack::NativeSpec::file_mode`], not the mode a stat returns: POSIX reads the
 /// same bits back, and NTFS stores none.
-pub(crate) fn write_inventory(spec: &MergeSpec) -> jarpack::Result<InventoryReport> {
+pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> jarpack::Result<InventoryReport> {
     let Some(metadata_file) = &spec.metadata_file else {
         return Err(jarpack::Error::Invalid(format!(
             "{}: the spec names no metadata file",
             spec.output.display()
         )));
     };
-    let jar = filemeta::inspect(&spec.output, &file_name(&spec.output))?;
+    let jar = jar_entry(&spec.output, merged)?;
     let mut hashed_file_count = 1;
-    let mut byte_count = jar.size.unsigned_abs();
+    let mut byte_count = merged.bytes_written;
     let mut native_file_count = None;
     let mut entries = vec![jar];
     if let Some(native) = spec.native.as_ref()
@@ -66,6 +70,31 @@ pub(crate) fn write_inventory(spec: &MergeSpec) -> jarpack::Result<InventoryRepo
         hashed_file_count,
         byte_count,
         native_file_count,
+    })
+}
+
+/// Returns the entry of the jar at `output` from the report of its merge. Only the mode comes from the file, through one
+/// stat that does not follow a link. The result equals `filemeta::inspect` of the jar.
+fn jar_entry(output: &Path, merged: &MergeReport) -> jarpack::Result<Entry> {
+    let metadata = fs::symlink_metadata(output).map_err(|error| jarpack::Error::Io {
+        path: output.to_path_buf(),
+        error,
+    })?;
+    if !metadata.is_file() {
+        return Err(jarpack::Error::Invalid(format!(
+            "the packed jar is not a regular file: {}",
+            output.display()
+        )));
+    }
+    let mode = filemeta::permissions(&metadata);
+    Ok(Entry {
+        relative_path: file_name(output),
+        entry_type: EntryType::File,
+        hash: merged.content_hash,
+        size: i64::try_from(merged.bytes_written).expect("the writer refuses a jar of 4 GiB or more"),
+        mode,
+        executable: mode & 0o111 != 0,
+        symlink_target: String::new(),
     })
 }
 

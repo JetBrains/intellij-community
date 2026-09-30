@@ -16,17 +16,17 @@ use std::path::{Path, PathBuf};
 
 use filemeta::EntryType;
 use jarpack::nativelib::{Arch, Family};
-use jarpack::{MergeSpec, NativeSpec, Source};
+use jarpack::{MergeReport, MergeSpec, NativeSpec, Source};
 use tempfile::TempDir;
 use zip::{CompressionMethod, ZipArchive};
 
 use super::{InventoryReport, write_inventory};
 use crate::tests::write_jar;
 
-/// The two steps of the binary: the jar, then the inventory.
+/// The two steps of the binary: the jar, then the inventory from the report of the merge.
 fn pack(spec: &MergeSpec) -> jarpack::Result<InventoryReport> {
-    spec.pack()?;
-    write_inventory(spec)
+    let merged = spec.pack()?;
+    write_inventory(spec, &merged)
 }
 
 fn scratch() -> TempDir {
@@ -123,6 +123,28 @@ fn packing_produces_metadata_outside_the_payload() {
     assert_eq!(report, want);
 }
 
+/// The merge writes through a link at the output path, so the file that it hashed is not the entry at that path. The
+/// inventory refuses the link.
+#[cfg(unix)]
+#[test]
+fn the_inventory_refuses_a_jar_output_that_is_a_link() {
+    let scratch = scratch();
+    let base = scratch.path();
+    let module = write_module_jar(base, "module.jar", &[("com/example/Packed.class", b"not really a class")]);
+    fs::create_dir(base.join("out")).unwrap();
+    fs::write(base.join("elsewhere.jar"), b"").unwrap();
+    std::os::unix::fs::symlink(base.join("elsewhere.jar"), base.join("out/example.jar")).unwrap();
+    let spec = MergeSpec {
+        output: base.join("out/example.jar"),
+        metadata_file: Some(base.join("example.metadata.json")),
+        sources: vec![Source::module(&module)],
+        ..MergeSpec::default()
+    };
+    let error = pack(&spec).unwrap_err().to_string();
+    assert!(error.contains("the packed jar is not a regular file: "), "{error}");
+    assert!(!base.join("example.metadata.json").exists());
+}
+
 #[test]
 fn natives_mode_inventories_the_jar_and_the_tree() {
     let scratch = scratch();
@@ -215,9 +237,12 @@ fn metadata_failure_fails_packing() {
         ..MergeSpec::default()
     };
     pack(&spec).expect_err("packing succeeded without its declared metadata");
-    write_inventory(&MergeSpec {
-        metadata_file: None,
-        ..spec
-    })
+    write_inventory(
+        &MergeSpec {
+            metadata_file: None,
+            ..spec
+        },
+        &MergeReport::default(),
+    )
     .unwrap_err();
 }

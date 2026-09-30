@@ -12,6 +12,11 @@
 //! it. A tree file gets `NativeSpec::file_mode`, not the mode that a stat returns. A tree directory gets the mode that a
 //! stat returns. The Kotlin build and the collector read the file, so its bytes are the inventory JSON version 1.
 //!
+//! The merge hashes the jar while it writes it, and its report holds the size and the content hash. So the inventory
+//! does not read the jar again, and takes only the mode of the jar from a stat. It refuses a jar output that is not a
+//! regular file. At a link, the merge wrote the bytes into another file. The inventory reads and hashes each file of a
+//! tree.
+//!
 //! A Bazel action runs one process for one jar, so the command line of a failed action reproduces the failure. A parity
 //! run or a profile run packs a whole tranche in one process, from one flag file with thousands of `output=` groups.
 

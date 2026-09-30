@@ -157,13 +157,18 @@ pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'
 }
 
 /// Runs a recipe and returns the bytes of the packed jar. Every case checks the CRCs: a carried CRC is sound only while
-/// it describes its data, and in a test that check costs nothing.
+/// it describes its data, and in a test that check costs nothing. Every case also checks the size and the content hash
+/// of the report against the file.
 pub(crate) fn pack(scratch: &Scratch, mut spec: MergeSpec) -> (Vec<u8>, Vec<String>) {
     let file_name = spec.output.file_name().expect("an output file name").to_owned();
     spec.output = scratch.dir().join(file_name);
     spec.verify_crc = true;
     let report = spec.pack().unwrap_or_else(|error| panic!("{error}"));
-    (fs::read(&spec.output).expect("the packed jar"), report.duplicates)
+    let data = fs::read(&spec.output).expect("the packed jar");
+    assert_eq!(report.bytes_written, data.len() as u64, "the size of {}", spec.output.display());
+    let content_hash = xxh3::hash_file(&spec.output).expect("the hash of the packed jar");
+    assert_eq!(report.content_hash, content_hash, "the content hash of {}", spec.output.display());
+    (data, report.duplicates)
 }
 
 pub(crate) fn digest(data: &[u8]) -> String {
