@@ -94,6 +94,16 @@ public abstract class ArchiveHandler {
   }
 
   public String @NotNull [] list(@NotNull String relativePath) {
+    //TODO: consider scenario:
+    //      - `entry` is gotten from the 1st generation of `myEntries`
+    //      - GC clears the myEntries/myChildrenEntries
+    //      - getParentChildrenMap() triggers myEntries/myChildrenEntries reloading, but with different EntryInfo keys
+    //        _instances_ (EntryInfo has no equals/hashCode!)
+    //      - `getParentChildrenMap().get(entry)` returns null, even though _there is_ a (logical) record for the `relativePath`,
+    //        just under different-instance EntryInfo
+    //      - method returns an empty array, even though there are children for the `relativePath` in the archive
+    //      The issue(s?) like this caused by combination of a) soft-ref cache that could be cleared any moment, even in the middle
+    //      of any method, and b) EntryInfo without hashCode/identity. IJPL-256842 is an another example
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null || !entry.isDirectory) return ArrayUtil.EMPTY_STRING_ARRAY;
 

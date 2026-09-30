@@ -32,7 +32,7 @@ final class CoreJarHandler extends ZipHandler {
       }
     }
 
-    EntryInfo rootInfo = getEntryInfo("");
+    EntryInfo rootInfo = entriesMap.get("");
     myRoot = rootInfo != null ? getOrCreateFile(rootInfo, entries) : null;
     for (Map.Entry<CoreJarVirtualFile, List<VirtualFile>> entry : childrenMap.entrySet()) {
       List<VirtualFile> childList = entry.getValue();
