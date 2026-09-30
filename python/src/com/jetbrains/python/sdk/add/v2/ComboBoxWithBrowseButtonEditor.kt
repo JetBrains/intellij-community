@@ -37,8 +37,7 @@ import javax.swing.ComboBoxEditor
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-@VisibleForTesting
-class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
+internal class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
   val comboBox: ComboBox<PythonSelectableInterpreter<P>?>,
   val fileSystem: FileSystem<P>,
   val browseTitle: @NlsContexts.DialogTitle String,
@@ -48,19 +47,20 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
   private val component = SimpleColoredComponent()
   private val panel: JComponent
   private lateinit var iconLabel: JLabel
-  private var _item: Any? = null
+  private var _item: PythonSelectableInterpreter<*>? = null
   var isBusy: Boolean = false
     private set
 
   @VisibleForTesting
-  val fieldAccessor: TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> = object : TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> {
-    override fun getText(component: ComboBox<PythonSelectableInterpreter<P>?>): @NlsSafe String? =
-      component.getItemAt(component.selectedIndex)?.homePath?.toStringForUI()
+  val fieldAccessor: TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> =
+    object : TextComponentAccessor<ComboBox<PythonSelectableInterpreter<P>?>> {
+      override fun getText(component: ComboBox<PythonSelectableInterpreter<P>?>): @NlsSafe String? =
+        component.getItemAt(component.selectedIndex)?.homePath?.toStringForUI()
 
-    override fun setText(component: ComboBox<PythonSelectableInterpreter<P>?>, text: @NlsSafe String) {
-      onPathSelected(text)
+      override fun setText(component: ComboBox<PythonSelectableInterpreter<P>?>, text: @NlsSafe String) {
+        onPathSelected(text)
+      }
     }
-  }
 
   init {
     panel = panel {
@@ -122,10 +122,10 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
 
 
   override fun setItem(anObject: Any?) {
-    if (_item == anObject) return
-    _item = anObject
+    val interpreter = anObject as PythonSelectableInterpreter<*>?
+    if (_item == interpreter) return
+    _item = interpreter
     component.clear()
-    val interpreter = anObject as? PythonSelectableInterpreter<*>
     val validation = if (interpreter != null) interpreterValidator?.invoke(interpreter) else null
     component.customizeForPythonInterpreter(isBusy, interpreter, validation)
   }
@@ -136,7 +136,7 @@ class ComboBoxWithBrowseButtonEditor<P : PathHolder>(
     component.isEnabled = !isBusy
     comboBox.isEnabled = !isBusy
     component.clear()
-    (item as? PythonSelectableInterpreter<*>).takeIf { !busy }.let { interpreter ->
+    _item?.takeIf { !busy }.let { interpreter ->
       val validation = if (interpreter != null) interpreterValidator?.invoke(interpreter) else null
       component.customizeForPythonInterpreter(busy, interpreter, validation)
     }
