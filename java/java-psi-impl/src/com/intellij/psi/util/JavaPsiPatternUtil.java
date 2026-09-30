@@ -121,7 +121,7 @@ public final class JavaPsiPatternUtil {
 
   /**
    * @param variable pattern variable
-   * @return effective initializer expression for the variable; null if cannot be determined.
+   * @return effective initializer expression for the variable; null if it cannot be determined.
    * Returns null for inner record patterns because an instanceof operand may not be safely recomputable expression
    * @see com.siyeh.ig.psiutils.ExpressionUtils#isSafelyRecomputableExpression(PsiExpression)
    * For inner record patterns consider using
@@ -688,7 +688,7 @@ public final class JavaPsiPatternUtil {
    * Computes the type of the pattern with the nullability that the context type implies.
    * <p>
    * The JSpecify spec calls "any component in a pattern" an unrecognized type-use location, so
-   * {@link com.intellij.util.JavaTypeNullabilityUtil#isWrittenInPatternType} already removed every nullability written on
+   * {@link JavaTypeNullabilityUtil#isWrittenInPatternType} already removed every nullability written on
    * the pattern type. This method puts the nullability back from the context type, which is the type of the expression
    * that the pattern is matched against.
    *
@@ -696,10 +696,13 @@ public final class JavaPsiPatternUtil {
    * @return the declared pattern type with the nullability of the context type; null if the pattern has no type element
    */
   public static @Nullable PsiType getEffectivePatternType(@NotNull PsiPattern pattern) {
-    PsiType type = getPatternType(pattern);
-    if (type == null) return null;
-    PsiType effective = RecursionManager.doPreventingRecursion(pattern, true, () -> computeEffectivePatternType(pattern, type));
-    return effective == null ? type : effective;
+    return CachedValuesManager.getCachedValue(pattern, () -> {
+      PsiType declared = getPatternType(pattern);
+      PsiType effective = declared == null
+                          ? null
+                          : RecursionManager.doPreventingRecursion(pattern, true, () -> computeEffectivePatternType(pattern, declared));
+      return CachedValueProvider.Result.create(effective == null ? declared : effective, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   private static @NotNull PsiType computeEffectivePatternType(@NotNull PsiPattern pattern, @NotNull PsiType declared) {

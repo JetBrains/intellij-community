@@ -51,14 +51,15 @@ public final class PatternInference {
   }
 
   /**
-   * Infers the type arguments of a pattern class from the type of the expression that the pattern is matched against.
+   * Infers the type arguments of a pattern class (a record) from the type of the expression that the pattern is matched against.
    * Unlike {@link #inferPatternGenerics}, this method needs no resolve result, so a caller that only wants the type
    * arguments can use it. The inference keeps the nullability of the context type.
    *
    * @param pattern      pattern to infer the type arguments for
    * @param patternClass class of the pattern type
    * @param type         context type; type of the expression, which is matched against the pattern
-   * @return the inferred substitutor, or {@link PsiSubstitutor#EMPTY} if the inference is not possible
+   * @return the inferred substitutor. If the inference is not possible or there are no type arguments to infer,
+   * {@link PsiSubstitutor#EMPTY} is returned.
    */
   public static @NotNull PsiSubstitutor inferPatternSubstitutor(@NotNull PsiPattern pattern,
                                                                 @NotNull PsiClass patternClass,

@@ -1,3 +1,4 @@
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -17,10 +18,48 @@ abstract class JSpecifyDeconstructionTypeArgument {
 
   abstract Foo<Bar> makeFooBar();
 
+  abstract Foo<Object> makeFooObject();
+
   // The pattern instantiates T with the non-null Bar, so bar is not null.
   void unnamedPattern() {
     Foo<Bar> foo = makeFooBar();
     if (foo instanceof Foo.FooInner<Bar>(Bar bar)) {
+      switch (bar) {
+        case Bar.BarInner ignored -> {}
+      }
+    }
+  }
+
+  void unnamedPatternNoArg() {
+    Foo<Bar> foo = makeFooBar();
+    if (foo instanceof Foo.FooInner(Bar bar)) {
+      switch (bar) {
+        case Bar.BarInner ignored -> {}
+      }
+    }
+  }
+
+  void unnamedPatternObject() {
+    Foo<? extends Object> foo = makeFooBar();
+    if (foo instanceof Foo.FooInner(Bar bar)) {
+      switch (bar) {
+        case Bar.BarInner ignored -> {}
+      }
+    }
+  }
+
+  void unnamedPatternObject2() {
+    Foo<? extends Object> foo = makeFooObject();
+    if (foo instanceof Foo.FooInner(Bar bar)) {
+      switch (bar) {
+        case Bar.BarInner ignored -> {}
+      }
+    }
+  }
+
+  void unnamedPatternObject3() {
+    Foo<? extends Object> foo = makeFooObject();
+    if (foo instanceof Foo.FooInner(Bar bar)) {
       switch (bar) {
         case Bar.BarInner ignored -> {}
       }
@@ -112,6 +151,30 @@ abstract class JSpecifyDeconstructionTypeArgument {
     if (foo.value() == null) {
       if (<warning descr="Condition 'foo instanceof Foo.FooInner<Bar>(Bar bar)' is always 'true'">foo instanceof Foo.FooInner<Bar>(Bar bar)</warning>) {
         System.out.println(bar.<warning descr="Method invocation 'hashCode' will produce 'NullPointerException'">hashCode</warning>());
+      }
+    }
+  }
+}
+
+abstract class NoNullMarked {
+  public interface Foo<T extends @Nullable Object> {
+    record FooInner<T extends @Nullable  Bar>(T value) implements Foo<T> {}
+  }
+
+  public sealed interface Bar {
+    record BarInner() implements Bar {}
+  }
+
+  public abstract @NonNull Foo<@NonNull Bar> makeFooBar();
+
+  // The not-null wildcard bound makes the inferred T not null, though the declared bound of T is nullable.
+  public void bar() {
+    Foo<? extends @NonNull Object> foo = makeFooBar();
+
+    if (foo instanceof Foo.FooInner(Bar bar)) {
+      switch (bar) {
+
+        case Bar.BarInner ignored -> {}
       }
     }
   }
