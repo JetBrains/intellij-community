@@ -13,6 +13,9 @@
 # product's `platform_lib` payload in `dev_dist_fragment_inputs.bzl` names only the labels no set carries.
 # Every product that references a set hands over the labels of its members.
 #
+# `module_system_loaded` names the `packed` members whose jar the module system loads in every product that
+# references the set. The payload puts every other packed direct child of `lib/` on the core classpath.
+#
 # A set name a payload references and this table no longer has is dropped with a warning, like any other
 # stale plan name: this is read during module-extension evaluation, so failing would make the very tool that
 # regenerates it unbuildable.
@@ -30,6 +33,11 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.compose.swing": "//libraries/compose-swing-ui:compose-swing_content_module_jar",
             "intellij.platform.compose.swing": "//platform/compose/swing-ui:swing_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.compose.runtime.desktop",
+            "intellij.libraries.compose.swing",
+            "intellij.platform.compose.swing",
+        ],
     ),
     "intellij.moduleSets.core.ide": struct(
         modules = [
@@ -70,6 +78,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.util.http": "//platform/util/http:http_content_module_jar",
             "intellij.platform.welcomeScreen": "//platform/welcome-screen:welcome-screen_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.remoteServers",
+            "intellij.platform.remoteServers.agent.rt",
+        ],
     ),
     "intellij.moduleSets.core.lang": struct(
         modules = [
@@ -194,6 +206,14 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.welcomeScreen.impl": "//platform/welcome-screen-impl:welcomeScreen-impl_content_module_jar",
             "intellij.platform.wsl.impl": "//platform/wsl-impl:wsl-impl_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.zip.signer",
+            "intellij.platform.backend.workspace.impl",
+            "intellij.platform.ide.osCertificates",
+            "intellij.platform.ide.pluginSignatureVerifier",
+            "intellij.platform.ide.util.io.native",
+            "intellij.platform.wsl.impl",
+        ],
     ),
     "intellij.moduleSets.core.platform": struct(
         modules = [
@@ -304,6 +324,9 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.workspace.jps": "//platform/workspace/jps:jps_content_module_jar",
             "intellij.platform.workspace.storage": "//platform/workspace/storage:storage_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.buildScripts.concurrency",
+        ],
     ),
     "intellij.moduleSets.debugger": struct(
         modules = [
@@ -328,6 +351,16 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.debugger.impl.shared": "//platform/xdebugger-impl/shared:shared_content_module_jar",
             "intellij.platform.debugger.impl.ui": "//platform/xdebugger-impl/ui:ui_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.debugger",
+            "intellij.platform.debugger.impl",
+            "intellij.platform.debugger.impl.backend",
+            "intellij.platform.debugger.impl.dashboard",
+            "intellij.platform.debugger.impl.frontend",
+            "intellij.platform.debugger.impl.rpc",
+            "intellij.platform.debugger.impl.shared",
+            "intellij.platform.debugger.impl.ui",
+        ],
     ),
     "intellij.moduleSets.duplicates": struct(
         modules = [
@@ -405,6 +438,33 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.scopes.backend": "//platform/scopes/backend:backend_content_module_jar",
             "intellij.platform.util.commonsLangV2Shim": "//platform/util/commons-lang-v2-shim:commons-lang-v2-shim_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.completion.backend",
+            "intellij.platform.completion.common",
+            "intellij.platform.completion.frontend",
+            "intellij.platform.editor.frontend",
+            "intellij.platform.eel.tcp",
+            "intellij.platform.execution.impl.backend",
+            "intellij.platform.execution.impl.frontend",
+            "intellij.platform.externalProcessAuthHelper",
+            "intellij.platform.externalSystem",
+            "intellij.platform.externalSystem.dependencyUpdater",
+            "intellij.platform.externalSystem.impl",
+            "intellij.platform.find",
+            "intellij.platform.find.backend",
+            "intellij.platform.ide.internal",
+            "intellij.platform.ide.internal.backend",
+            "intellij.platform.managed.cache",
+            "intellij.platform.managed.cache.backend",
+            "intellij.platform.pluginManager.backend",
+            "intellij.platform.pluginManager.frontend",
+            "intellij.platform.pluginManager.shared",
+            "intellij.platform.pluginManager.shared.base",
+            "intellij.platform.polySymbols.web",
+            "intellij.platform.scopes",
+            "intellij.platform.scopes.backend",
+            "intellij.platform.util.commonsLangV2Shim",
+        ],
     ),
     "intellij.moduleSets.essential.minimal": struct(
         modules = [
@@ -459,6 +519,24 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.settings.local": "//platform/settings-local:settings-local_content_module_jar",
             "intellij.remoteDev.util": "//platform/remoteDev-util:remoteDev-util_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.backend",
+            "intellij.platform.buildScripts.downloader",
+            "intellij.platform.editor",
+            "intellij.platform.editor.backend",
+            "intellij.platform.frontend",
+            "intellij.platform.indexing.impl.backend",
+            "intellij.platform.inline.completion",
+            "intellij.platform.lang.impl.backend",
+            "intellij.platform.ml",
+            "intellij.platform.monolith",
+            "intellij.platform.progress.backend",
+            "intellij.platform.project.backend",
+            "intellij.platform.searchEverywhere",
+            "intellij.platform.searchEverywhere.backend",
+            "intellij.platform.searchEverywhere.frontend",
+            "intellij.platform.settings.local",
+        ],
     ),
     "intellij.moduleSets.fleet": struct(
         modules = [
@@ -573,6 +651,34 @@ DEV_DIST_MODULE_SETS = {
             "intellij.spellchecker.vcs": "//spellchecker/vcs:vcs_content_module_jar",
             "intellij.spellchecker.xml": "//spellchecker/xml:xml_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.emojipicker",
+            "intellij.platform.buildView",
+            "intellij.platform.buildView.backend",
+            "intellij.platform.buildView.frontend",
+            "intellij.platform.collaborationTools",
+            "intellij.platform.collaborationTools.auth",
+            "intellij.platform.collaborationTools.auth.base",
+            "intellij.platform.collaborationTools.shared",
+            "intellij.platform.diagnostic.freezeAnalyzer",
+            "intellij.platform.diagnostic.telemetry.agent.extension",
+            "intellij.platform.ide.impl.wsl",
+            "intellij.platform.inspect",
+            "intellij.platform.langInjection",
+            "intellij.platform.langInjection.backend",
+            "intellij.platform.lvcs.impl",
+            "intellij.platform.polySymbols.backend",
+            "intellij.platform.projectView",
+            "intellij.platform.projectView.backend",
+            "intellij.platform.projectView.frontend",
+            "intellij.platform.scriptDebugger.backend",
+            "intellij.platform.scriptDebugger.protocolReaderRuntime",
+            "intellij.platform.scriptDebugger.ui",
+            "intellij.platform.warmup",
+            "intellij.regexp",
+            "intellij.spellchecker.vcs",
+            "intellij.spellchecker.xml",
+        ],
     ),
     "intellij.moduleSets.libraries.dap": struct(
         modules = [
@@ -585,6 +691,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.eclipse.lsp4j.debug": "//libraries/lsp4j/debug:debug_content_module_jar",
             "intellij.libraries.eclipse.lsp4j.jsonrpc.debug": "//libraries/lsp4j/jsonrpc-debug:libraries-eclipse-lsp4j-jsonrpc-debug_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.eclipse.lsp4j.debug",
+            "intellij.libraries.eclipse.lsp4j.jsonrpc.debug",
+        ],
     ),
     "intellij.moduleSets.libraries.grpc": struct(
         modules = [
@@ -597,6 +707,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.grpc": "//libraries/grpc:grpc_content_module_jar",
             "intellij.libraries.grpc.netty.shaded": "//libraries/grpc-netty-shaded:grpc-netty-shaded_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.grpc",
+            "intellij.libraries.grpc.netty.shaded",
+        ],
     ),
     "intellij.moduleSets.libraries.ide": struct(
         modules = [
@@ -629,6 +743,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.sshj": "//libraries/sshj:sshj_content_module_jar",
             "intellij.libraries.winp": "//libraries/winp:winp_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.jsch.agent.proxy",
+            "intellij.libraries.sshj",
+        ],
     ),
     "intellij.moduleSets.libraries.ide.common": struct(
         modules = [
@@ -651,6 +769,15 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.squareup.okio.jvm": "//libraries/okio:squareup-okio-jvm_content_module_jar",
             "intellij.libraries.xstream": "//libraries/xstream:xstream_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.commons.text",
+            "intellij.libraries.javax.activation",
+            "intellij.libraries.jettison",
+            "intellij.libraries.jspecify",
+            "intellij.libraries.opencsv",
+            "intellij.libraries.squareup.okio.jvm",
+            "intellij.libraries.xstream",
+        ],
     ),
     "intellij.moduleSets.libraries.jackson2": struct(
         modules = [
@@ -677,6 +804,17 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.jackson.jr.objects": "//libraries/jackson/jr-objects:libraries-jackson-jr-objects_content_module_jar",
             "intellij.libraries.jackson.module.kotlin": "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.jackson",
+            "intellij.libraries.jackson.databind",
+            "intellij.libraries.jackson.dataformat.toml",
+            "intellij.libraries.jackson.dataformat.xml",
+            "intellij.libraries.jackson.dataformat.yaml",
+            "intellij.libraries.jackson.datatype.jdk8",
+            "intellij.libraries.jackson.datatype.jsr310",
+            "intellij.libraries.jackson.jr.objects",
+            "intellij.libraries.jackson.module.kotlin",
+        ],
     ),
     "intellij.moduleSets.libraries.jackson3": struct(
         modules = [
@@ -699,6 +837,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.jackson3.jr.objects": "//libraries/jackson3/jr-objects:libraries-jackson3-jr-objects_content_module_jar",
             "intellij.libraries.jackson3.module.kotlin": "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.jackson3.dataformat.toml",
+            "intellij.libraries.jackson3.dataformat.yaml",
+        ],
     ),
     "intellij.moduleSets.libraries.ktor": struct(
         modules = [
@@ -721,6 +863,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.ktor.server.cio": "//libraries/ktor/server-cio:libraries-ktor-server-cio_content_module_jar",
             "intellij.libraries.ktor.utils": "//libraries/ktor/utils:utils_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.ktor.client.cio",
+            "intellij.libraries.ktor.server.cio",
+        ],
     ),
     "intellij.moduleSets.libraries.lsp4j": struct(
         modules = [
@@ -926,6 +1072,25 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.xtext.xbase": "//libraries/xtext-xbase:xtext-xbase_content_module_jar",
             "intellij.libraries.xz": "//libraries/xz:xz_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.asm.tools",
+            "intellij.libraries.commons.cli",
+            "intellij.libraries.java.websocket",
+            "intellij.libraries.jsonpath",
+            "intellij.libraries.jvm.native.trusted.roots",
+            "intellij.libraries.jzlib",
+            "intellij.libraries.kotlin.metadata",
+            "intellij.libraries.kotlinx.coroutines.guava",
+            "intellij.libraries.kotlinx.serialization.cbor",
+            "intellij.libraries.netty.handler.proxy",
+            "intellij.libraries.protobuf.java.util",
+            "intellij.libraries.protobuf.kotlin",
+            "intellij.libraries.proxy.vole",
+            "intellij.libraries.rhino",
+            "intellij.libraries.semver",
+            "intellij.libraries.stream",
+            "intellij.libraries.teamcity.service.messages",
+        ],
     ),
     "intellij.moduleSets.lsp": struct(
         modules = [
@@ -941,6 +1106,9 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.lsp.impl": "//platform/lsp-impl:lsp-impl_content_module_jar",
             "intellij.platform.lsp.impl.structureView": "//platform/lsp-impl/structureView:structureView_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.lsp.impl.structureView",
+        ],
     ),
     "intellij.moduleSets.ml": struct(
         modules = [
@@ -951,6 +1119,9 @@ DEV_DIST_MODULE_SETS = {
         packed = {
             "intellij.platform.ml.impl": "//platform/ml-impl:ml-impl_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.ml.impl",
+        ],
     ),
     "intellij.moduleSets.platform.resources.defaults": struct(
         modules = [
@@ -985,6 +1156,13 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.rpc.topics.backend": "//platform/remote-topics/backend:backend_content_module_jar",
             "intellij.platform.rpc.topics.frontend": "//platform/remote-topics/frontend:frontend_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.kernel.backend",
+            "intellij.platform.kernel.impl",
+            "intellij.platform.rpc.backend",
+            "intellij.platform.rpc.topics.backend",
+            "intellij.platform.rpc.topics.frontend",
+        ],
     ),
     "intellij.moduleSets.rpc.minimal": struct(
         modules = [
@@ -1002,6 +1180,9 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.rpc": "//platform/kernel/rpc:rpc_content_module_jar",
             "intellij.platform.rpc.lite": "//platform/kernel/rpc.lite:rpc.lite_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.rpc",
+        ],
     ),
     "intellij.moduleSets.settings.sync": struct(
         modules = [
@@ -1014,6 +1195,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.jgit": "//libraries/jgit:jgit_content_module_jar",
             "intellij.settingsSync.core": "//platform/settings-sync-core:settingsSync-core_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.jgit",
+            "intellij.settingsSync.core",
+        ],
     ),
     "intellij.moduleSets.spellchecker": struct(
         modules = [
@@ -1026,6 +1211,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.lucene.common": "//libraries/lucene.common:lucene.common_content_module_jar",
             "intellij.spellchecker": "//spellchecker:spellchecker_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.lucene.common",
+            "intellij.spellchecker",
+        ],
     ),
     "intellij.moduleSets.telemetry": struct(
         modules = [
@@ -1061,6 +1250,9 @@ DEV_DIST_MODULE_SETS = {
         packed = {
             "intellij.libraries.microba": "//libraries/microba:microba_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.libraries.microba",
+        ],
     ),
     "intellij.moduleSets.vcs.shared": struct(
         modules = [
@@ -1077,5 +1269,9 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.vcs.impl.shared": "//platform/vcs-impl/shared:shared_content_module_jar",
             "intellij.platform.vcs.shared": "//platform/vcs-api/shared:shared_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.vcs.dvcs.impl.shared",
+            "intellij.platform.vcs.impl.shared",
+        ],
     ),
 }

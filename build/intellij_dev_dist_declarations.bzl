@@ -343,6 +343,9 @@ def _platform_set(tables, product, name, target_platform):
         dev_dist_platform_payload(
             name = name + "_platform_payload",
             packed = platform_lib_payload.packed + residual_jars,
+            # The packed jars the module system loads. The payload puts every other direct child of `lib/` on the core
+            # classpath.
+            module_system_loaded = platform_lib_payload.module_system_loaded,
             native_platform = per_platform(lambda platform: platform),
         )
 
@@ -354,8 +357,6 @@ def _platform_set(tables, product, name, target_platform):
             target_platform = target_platform,
             platform_payload = ":" + name + "_platform_payload",
             plugin_classpath_prefix = plugin_classpath_prefix,
-            # The packed jars of the core classpath.
-            core_classpath = tables.core_classpath.get(product, []),
         )
 
     def product_files_component():
@@ -730,11 +731,12 @@ def intellij_dev_dist_declarations(tables):
     - `plans`, `launch_models`, `platform_jar_orders`: the generated plan tables, keyed by product.
     - `application_infos`: the generated application info sources, keyed by product. Each entry is
       `struct(source, host, replacements)`, where `host` and `replacements` are present only when set.
-    - `fragment_inputs`, `core_classpath`: the generated input tables, keyed by product.
+    - `fragment_inputs`: the generated input table, keyed by product.
     - `plugin_components`: the generated component catalogue, keyed by product.
     - `product(key)`: the product entry, with its `platform_set`. It fails for an unknown product.
     - `platform_lib_fragment`, `runtime_module_repository_fragment`: the payload names of the input tables.
-    - `platform_lib_payload(product)`: the `struct(packed)` of the packing targets of the `lib/` jars.
+    - `platform_lib_payload(product)`: the `struct(packed, module_system_loaded)` of the packing targets of the `lib/`
+      jars, as `dev_dist_packed_labels` returns it.
     - `bazel_targets_json`, `project_model_tree`, `collector`, `composer`: the labels of the shared inputs and tools.
     - `build_package`: the package that declares the platform sets, for example `//build`.
     - `product_info_label(product)`: the label of the product info of `product`.

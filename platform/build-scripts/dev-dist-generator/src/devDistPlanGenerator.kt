@@ -159,7 +159,6 @@ private fun listLaunchModels(projectRoot: Path): List<String> {
 }
 private const val DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH: String = "build/dev_dist_fragment_inputs.bzl"
 private const val DEV_DIST_MODULE_SETS_RELATIVE_PATH: String = "build/dev_dist_module_sets.bzl"
-private const val DEV_DIST_CORE_CLASSPATH_RELATIVE_PATH: String = "build/dev_dist_core_classpath.bzl"
 private const val DEV_DIST_CONTENT_SETS_RELATIVE_PATH: String = "build/dev-dist-content/dev_dist_content_sets.bzl"
 private const val DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH: String = "build/dev_server_run_configurations.bzl"
 
@@ -406,7 +405,6 @@ internal fun computeDevDistPlan(
     }
     add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
     add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
-    add(DEV_DIST_CORE_CLASSPATH_RELATIVE_PATH to renderCoreClassPath(sortedProducts, half))
     add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
     add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties, half.generatedByHeader))
     addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
@@ -619,10 +617,14 @@ private data class FragmentPayload(
    */
   @JvmField val pluginClasspathPrefix: String? = null,
   /**
-   * The `lib/`-relative jars of the core classpath that another producer packs, sorted. The packed-jars component lists
-   * them in its manifest, and the fragment lists only the jars it packs itself.
+   * The `content_module_jar` labels of the packed jars that the module system loads, sorted. Only the `lib/`-owning
+   * payload states them.
+   *
+   * `dev_dist_platform_payload` puts every other packed jar that is a direct child of `lib/` on the core classpath.
+   * [collectFragmentPlan] fills the whole list. [collectDescriptorFiles] then keeps only the labels that no referenced
+   * module set carries, see [shareModuleSystemLoadedLabels].
    */
-  @JvmField val coreClassPath: List<String> = emptyList(),
+  @JvmField val moduleSystemLoaded: List<String> = emptyList(),
 )
 
 /**
@@ -652,12 +654,17 @@ class ResidualPlatformJar(
  *
  * [packed] is keyed by member name. The label is a fact about the module, not about the product that reaches it, so
  * every product that references the set hands it over, see [sharePackedLabels].
+ *
+ * [moduleSystemLoaded] names the [packed] members whose jar the module system loads in every product that reaches the
+ * set, sorted. A product can override the loading of a member, so the list comes from the product verdicts, see
+ * [moduleSetModuleSystemLoaded].
  */
 internal data class ModuleSetData(
   @JvmField val name: String,
   @JvmField val modules: List<String>,
   @JvmField val nested: List<String>,
   @JvmField val packed: Map<String, String> = emptyMap(),
+  @JvmField val moduleSystemLoaded: List<String> = emptyList(),
 )
 
 private class MutableModuleSet {
@@ -1073,7 +1080,7 @@ private fun collectDescriptorFiles(
   }
   // After every product ran, because a set gains members while the products run. The label of a set member is written
   // once here, and a product body keeps only the labels no set carries, see `sharePackedLabels`.
-  val moduleSetTable = moduleSets.map { (name, set) ->
+  val packedTable = moduleSets.map { (name, set) ->
     ModuleSetData(
       name = name,
       modules = set.modules.toList(),
@@ -1081,6 +1088,11 @@ private fun collectDescriptorFiles(
       packed = set.modules.mapNotNull { module -> verdicts.contentModuleJarLabels.get(module)?.let { module to it.label } }.toMap(TreeMap()),
     )
   }
+  // The module system loading of a member is a product verdict, so the set list waits for every product too.
+  val platformLibPayloads = fragmentPlans.associate { plan -> plan.platformPrefix to plan.payloads.single { it.name == PLATFORM_LIB_FRAGMENT } }
+  val moduleSetTable = moduleSetModuleSystemLoaded(table = packedTable, payloads = platformLibPayloads.map { (product, payload) ->
+    ProductModuleSystemLoading(product = product, moduleSets = payload.moduleSets, moduleSystemLoaded = payload.moduleSystemLoaded)
+  })
   val moduleSetsByName = moduleSetTable.associateBy(ModuleSetData::name)
   return CollectedPlan(
     files = walk.collector.result.toList(),
@@ -1092,17 +1104,111 @@ private fun collectDescriptorFiles(
           payload
         }
         else {
-          payload.copy(packedContentModuleJars = sharePackedLabels(
-            product = plan.platformPrefix,
-            handedOver = payload.packedContentModuleJars,
-            moduleSets = payload.moduleSets,
-            table = moduleSetsByName,
-          ))
+          payload.copy(
+            packedContentModuleJars = sharePackedLabels(
+              product = plan.platformPrefix,
+              handedOver = payload.packedContentModuleJars,
+              moduleSets = payload.moduleSets,
+              table = moduleSetsByName,
+            ),
+            moduleSystemLoaded = shareModuleSystemLoadedLabels(
+              product = plan.platformPrefix,
+              moduleSystemLoaded = payload.moduleSystemLoaded,
+              moduleSets = payload.moduleSets,
+              table = moduleSetsByName,
+            ),
+          )
         }
       })
     },
     moduleSets = moduleSetTable,
   )
+}
+
+/** The module sets that [moduleSets] reference, directly or through [ModuleSetData.nested], in walk order. */
+private fun walkModuleSets(moduleSets: Collection<String>, table: Map<String, ModuleSetData>): List<ModuleSetData> {
+  val result = ArrayList<ModuleSetData>()
+  val pending = ArrayDeque(moduleSets)
+  val visited = HashSet<String>()
+  while (pending.isNotEmpty()) {
+    val setName = pending.removeFirst()
+    if (!visited.add(setName)) {
+      continue
+    }
+    val moduleSet = table.get(setName) ?: continue
+    result.add(moduleSet)
+    pending.addAll(moduleSet.nested)
+  }
+  return result
+}
+
+/**
+ * The top-level module sets of one `platform_lib` payload, and the labels of its packed jars that the module system
+ * loads.
+ */
+internal class ProductModuleSystemLoading(
+  @JvmField val product: String,
+  @JvmField val moduleSets: List<String>,
+  @JvmField val moduleSystemLoaded: Collection<String>,
+)
+
+/**
+ * [table] with [ModuleSetData.moduleSystemLoaded] filled from the verdicts of [payloads].
+ *
+ * A packed member goes into the list of a set when its label is in [ProductModuleSystemLoading.moduleSystemLoaded] of
+ * every payload that reaches the set. A member with a mixed verdict gets no set entry, and the product payloads keep
+ * its label. A set that no payload reaches gets an empty list.
+ */
+internal fun moduleSetModuleSystemLoaded(table: List<ModuleSetData>, payloads: List<ProductModuleSystemLoading>): List<ModuleSetData> {
+  val byName = table.associateBy(ModuleSetData::name)
+  val reachingPayloads = HashMap<String, MutableList<Set<String>>>()
+  for (payload in payloads) {
+    val loaded = payload.moduleSystemLoaded.toHashSet()
+    for (moduleSet in walkModuleSets(payload.moduleSets, byName)) {
+      reachingPayloads.computeIfAbsent(moduleSet.name) { ArrayList() }.add(loaded)
+    }
+  }
+  return table.map { moduleSet ->
+    val reaching = reachingPayloads.get(moduleSet.name).orEmpty()
+    if (reaching.isEmpty()) {
+      moduleSet
+    }
+    else {
+      moduleSet.copy(moduleSystemLoaded = moduleSet.packed.filter { (_, label) -> reaching.all { label in it } }.keys.sorted())
+    }
+  }
+}
+
+/**
+ * The labels of [moduleSystemLoaded] that no module set of one `platform_lib` payload carries, sorted.
+ *
+ * The Bazel side rebuilds [moduleSystemLoaded] as the union of the result and the labels of the walked sets, see
+ * `dev_dist_packed_labels`. The union is exact only when every set label is in [moduleSystemLoaded], so this function
+ * fails for a set member that the module system of [product] does not load.
+ */
+internal fun shareModuleSystemLoadedLabels(
+  product: String,
+  moduleSystemLoaded: Collection<String>,
+  moduleSets: Collection<String>,
+  table: Map<String, ModuleSetData>,
+): List<String> {
+  val full = moduleSystemLoaded.toHashSet()
+  val setLabels = TreeMap<String, String>()
+  for (moduleSet in walkModuleSets(moduleSets, table)) {
+    for (module in moduleSet.moduleSystemLoaded) {
+      setLabels.put(module, requireNotNull(moduleSet.packed.get(module)) {
+        "Module set '${moduleSet.name}' names '$module' as loaded by the module system, but has no packing label for it"
+      })
+    }
+  }
+  val notLoaded = setLabels.filterValues { it !in full }
+  check(notLoaded.isEmpty()) {
+    "The module system of '$product' does not load these module set members. A module set names a member as loaded " +
+    "only when every product that references the set loads it:\n" +
+    notLoaded.entries.joinToString(separator = "\n") { (module, label) -> "  $module ($label)" }
+  }
+  val carried = setLabels.values.toHashSet()
+  return full.filterTo(TreeSet()) { it !in carried }.toList()
 }
 
 /**
@@ -1121,16 +1227,8 @@ internal fun sharePackedLabels(
 ): List<String> {
   val full = handedOver.toHashSet()
   val setLabels = TreeMap<String, String>()
-  val pending = ArrayDeque(moduleSets)
-  val visited = HashSet<String>()
-  while (pending.isNotEmpty()) {
-    val setName = pending.removeFirst()
-    if (!visited.add(setName)) {
-      continue
-    }
-    val moduleSet = table.get(setName) ?: continue
+  for (moduleSet in walkModuleSets(moduleSets, table)) {
     setLabels.putAll(moduleSet.packed)
-    pending.addAll(moduleSet.nested)
   }
   val notHandedOver = setLabels.filterValues { it !in full }
   check(notHandedOver.isEmpty()) {
@@ -1154,6 +1252,46 @@ internal fun collectContentVetoModules(products: List<DiscoveredProduct>): List<
     .distinct()
     .sorted()
     .toList()
+}
+
+/**
+ * The `content_module_jar` labels of the handed-over jars that the module system loads, sorted.
+ *
+ * `dev_dist_platform_payload` puts a packed jar on the core classpath when it is a direct child of `lib/` and the
+ * result does not name it. [coreClassPath] is what `contentModuleJarCoreClasspathEntries` returns over [handedOver].
+ * This function fails when the two answers can differ:
+ *
+ * - an entry of [coreClassPath] names a subdirectory of `lib/`;
+ * - a direct child of `lib/` is off the core classpath, but no `content_module_jar` packs it, so no label names it.
+ *
+ * A library-only jar is not in [handedOver]. Both answers put it on the core classpath when it is a direct child of `lib/`.
+ * [contentModuleJarDestinations] maps a handed-over destination to the `content_module_jar` label that packs it.
+ *
+ * [unplacedLabels] are the content module jars of the payload that the layout does not place. For example, a frontend
+ * packs backend content modules of its module sets. The layout gives such a jar no reason to be on the core classpath,
+ * so the result names it too.
+ */
+private fun moduleSystemLoadedLabels(
+  product: String,
+  coreClassPath: Set<String>,
+  handedOver: Set<String>,
+  contentModuleJarDestinations: Map<String, String>,
+  unplacedLabels: Collection<String>,
+): List<String> {
+  val nested = coreClassPath.filter { '/' in it }.sorted()
+  check(nested.isEmpty()) {
+    "$product: these core classpath jars are in a subdirectory of lib/, but the payload puts only a direct child of lib/ on it: " +
+    nested.joinToString()
+  }
+  val off = handedOver.filter { '/' !in it && it !in coreClassPath }.sorted()
+  val unlabeled = off.filter { it !in contentModuleJarDestinations }
+  check(unlabeled.isEmpty()) {
+    "$product: these lib/ jars are off the core classpath, but no content_module_jar packs them, so no label can name them: " +
+    unlabeled.joinToString()
+  }
+  val result = off.mapTo(TreeSet()) { contentModuleJarDestinations.getValue(it) }
+  result.addAll(unplacedLabels)
+  return result.toList()
 }
 
 /**
@@ -1385,15 +1523,23 @@ private fun collectFragmentPlan(
       val residual = LinkedHashMap<String, ResidualPlatformJar>()
       // The destinations another producer than the fragment packs, for the core classpath below.
       val handedOver = HashSet<String>()
+      // The `content_module_jar` label of each handed-over destination that such a target packs.
+      val contentModuleJarDestinations = HashMap<String, String>()
+      // The labels of `packed` that the layout places, for the core classpath check below.
+      val placedLabels = HashSet<String>()
       for ((destination, items) in layout.includedModules.groupBy { it.relativeOutputFile }) {
         val memberNames = items.map { it.moduleName }
-        if (verdicts.contentModuleJarLabels.get(destination.removeSuffix(".jar"))?.label in packed) {
+        val contentModuleJarLabel = verdicts.contentModuleJarLabels.get(destination.removeSuffix(".jar"))?.label
+        if (contentModuleJarLabel != null && contentModuleJarLabel in packed) {
           handedOver.add(destination)
+          contentModuleJarDestinations.put(destination, contentModuleJarLabel)
+          placedLabels.add(contentModuleJarLabel)
           continue
         }
         // The frontend root descriptor jar packs the application-info module of a frontend, see the handover above.
         if (properties.productMode == com.intellij.platform.runtime.product.ProductMode.FRONTEND && properties.applicationInfoModule in memberNames) {
           handedOver.add(destination)
+          verdicts.frontendRootDescriptorJars.get(product.name)?.let(placedLabels::add)
           continue
         }
         // Any other jar the packer cannot pack fails the generator, because a holdout brings `platform_lib` back.
@@ -1464,15 +1610,22 @@ private fun collectFragmentPlan(
         layout.includedModules.map { it.relativeOutputFile }.distinct().filter { it !in handedOver }.joinToString()
       }
       // The rule of `generateClassPathByLayoutReport` over the jars the fragment does not pack. A split fragment
-      // starts with `isBootClassPathCorrect = false`, so `nio-fs.jar` stays on the core classpath. A library-only jar
-      // holds no module, and `generateClassPathByLayoutReport` lists it when it is a direct child of `lib/`.
+      // starts with `isBootClassPathCorrect = false`, so `nio-fs.jar` stays on the core classpath. The payload rule
+      // derives the core classpath again, and `moduleSystemLoadedLabels` proves that both answers are equal.
       val libDir = Path.of("lib")
-      val coreClassPath = (contentModuleJarCoreClasspathEntries(
+      val coreClassPath = contentModuleJarCoreClasspathEntries(
         libDir = libDir,
         includedModules = layout.includedModules,
         externallyPackedJars = handedOver,
         skipNioFs = false,
-      ).map { libDir.relativize(it).invariantSeparatorsPathString } + libraryJars.keys.filterNot { '/' in it }).sorted()
+      ).mapTo(HashSet()) { libDir.relativize(it).invariantSeparatorsPathString }
+      val moduleSystemLoaded = moduleSystemLoadedLabels(
+        product = product.name,
+        coreClassPath = coreClassPath,
+        handedOver = handedOver,
+        contentModuleJarDestinations = contentModuleJarDestinations,
+        unplacedLabels = packed.filterNot { it in placedLabels },
+      )
       // A project library the layout places in a residual jar with a module member is inside that jar and nowhere
       // else, so the fragment that no longer packs the jar has no use for the raw library either. The libraries of a
       // library-only jar stay in the payload: the runtime module repository fragment reads the platform declaration
@@ -1486,7 +1639,7 @@ private fun collectFragmentPlan(
         pluginClasspathPrefix = requireNotNull(productDescriptor?.pluginClasspathPrefixLabel.takeIf { usesProductDescriptor(residual.values) }) {
           "${product.name}: no product descriptor action writes the plugin-classpath prefix"
         },
-        coreClassPath = coreClassPath,
+        moduleSystemLoaded = moduleSystemLoaded,
       )
     }
   }
@@ -3055,6 +3208,10 @@ private fun renderFragmentInputs(products: List<ProductFragmentPlan>, half: DevD
   append("# `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set\n")
   append("# labels into the payload at load time with `dev_dist_packed_labels`.\n")
   append("#\n")
+  append("# `module_system_loaded` names the packed jars that the module system loads, as labels, and only the ones no\n")
+  append("# set carries in its own `module_system_loaded`. The payload puts every other packed direct child of `lib/` on\n")
+  append("# the core classpath.\n")
+  append("#\n")
   append("# The plugins are absent. A plugin's own `dev_plugin` target and the `content_module_jar` targets of its\n")
   append("# members pack its jars and state their inputs as labels. What is left is the platform, whose flat core\n")
   append("# answers to no plugin target.\n")
@@ -3149,6 +3306,7 @@ private fun StringBuilder.appendPayload(key: String, payload: FragmentPayload, i
     appendNonEmptyNameList("module_sets", payload.moduleSets, indent = fieldIndent)
     appendNonEmptyNameList("runtime_classpath_modules", payload.runtimeClasspathModules, indent = fieldIndent)
     appendNonEmptyNameList("packed_content_module_jars", payload.packedContentModuleJars, indent = fieldIndent)
+    appendNonEmptyNameList("module_system_loaded", payload.moduleSystemLoaded, indent = fieldIndent)
     appendResidualJars(payload.residualJars, indent = fieldIndent, shared = sharedResidualJars)
     payload.pluginClasspathPrefix?.let { label ->
       append(fieldIndent).append("plugin_classpath_prefix = \"").append(label).append("\",\n")
@@ -3159,54 +3317,6 @@ private fun StringBuilder.appendPayload(key: String, payload: FragmentPayload, i
     append('\n').append(fields).append(indent)
   }
   append("),\n")
-}
-
-/**
- * `DEV_DIST_CORE_CLASSPATH`: the `lib/` jars of the core classpath that the packed-jars component of each product
- * places. Products with equal lists share one private list, named after the first of them.
- */
-private fun renderCoreClassPath(products: List<ProductFragmentPlan>, half: DevDistHalf): String = buildString {
-  append(half.generatedByHeader)
-  append("#\n")
-  append("# The `lib/` jars of the core classpath that another producer than `platform_lib` packs, by product key. The\n")
-  append("# packed-jars component of the product lists them in its manifest, and the composer orders the core classpath\n")
-  append("# of every component. `contentModuleJarCoreClasspathEntries` decides them from the source layout of the product.\n")
-  val lists = products.associate { product ->
-    product.platformPrefix to product.payloads.single { it.name == PLATFORM_LIB_FRAGMENT }.coreClassPath
-  }
-  val owners = LinkedHashMap<List<String>, MutableList<String>>()
-  for ((product, jars) in lists) {
-    owners.computeIfAbsent(jars) { ArrayList() }.add(product)
-  }
-  val sharedNames = HashMap<List<String>, String>()
-  for ((jars, productsWithList) in owners) {
-    if (productsWithList.size < 2 || jars.isEmpty()) continue
-    val name = "_CORE_CLASSPATH_" + productsWithList.first()
-    sharedNames.put(jars, name)
-    append("\n").append(name).append(" = [\n")
-    for (jar in jars) {
-      append("    \"").append(jar).append("\",\n")
-    }
-    append("]\n")
-  }
-  append("\nDEV_DIST_CORE_CLASSPATH = {\n")
-  for ((product, jars) in lists) {
-    append("    \"").append(product).append("\": ")
-    val sharedName = sharedNames.get(jars)
-    when {
-      sharedName != null -> append(sharedName)
-      jars.isEmpty() -> append("[]")
-      else -> {
-        append("[\n")
-        for (jar in jars) {
-          append("        \"").append(jar).append("\",\n")
-        }
-        append("    ]")
-      }
-    }
-    append(",\n")
-  }
-  append("}\n")
 }
 
 private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf): String = buildString {
@@ -3225,6 +3335,9 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
   append("# product's `platform_lib` payload in `dev_dist_fragment_inputs.bzl` names only the labels no set carries.\n")
   append("# Every product that references a set hands over the labels of its members.\n")
   append("#\n")
+  append("# `module_system_loaded` names the `packed` members whose jar the module system loads in every product that\n")
+  append("# references the set. The payload puts every other packed direct child of `lib/` on the core classpath.\n")
+  append("#\n")
   append("# A set name a payload references and this table no longer has is dropped with a warning, like any other\n")
   append("# stale plan name: this is read during module-extension evaluation, so failing would make the very tool that\n")
   append("# regenerates it unbuildable.\n")
@@ -3240,6 +3353,7 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
       }
       append("        },\n")
     }
+    appendNonEmptyNameList("module_system_loaded", moduleSet.moduleSystemLoaded)
     append("    ),\n")
   }
   append("}\n")

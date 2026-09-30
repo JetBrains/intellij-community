@@ -32,6 +32,9 @@ private val TABLE: Map<String, ModuleSetData> = listOf(
  * A `platform_lib` payload writes only the packing labels no referenced module set carries. Two products that share a
  * set write the set's labels once, in `dev_dist_module_sets.bzl`. A product that does not hand over the label of a set
  * member fails the generator, because the set carries the label for every product.
+ *
+ * The labels that the module system loads are shared the same way. A set names a member as loaded only when every
+ * product that reaches the set loads it. A member with a mixed verdict stays with the products.
  */
 class DevDistPackedLabelSharingTest {
   @Test
@@ -85,5 +88,75 @@ class DevDistPackedLabelSharingTest {
     )
 
     assertThat(direct).containsExactly(VCS_IMPL_LABEL)
+  }
+
+  @Test
+  fun `a member that every product loads goes to the set, and a mixed member stays with the products`() {
+    val table = moduleSetModuleSystemLoaded(
+      table = TABLE.values.toList(),
+      payloads = listOf(
+        ProductModuleSystemLoading(
+          product = "idea",
+          moduleSets = listOf(VCS_SET),
+          moduleSystemLoaded = listOf(VCS_IMPL_LABEL, VCS_DVCS_LABEL, VCS_LOG_LABEL),
+        ),
+        ProductModuleSystemLoading(
+          product = "Other",
+          moduleSets = listOf(VCS_SET),
+          moduleSystemLoaded = listOf(VCS_IMPL_LABEL, VCS_LOG_LABEL, DIRECT_LABEL),
+        ),
+      ),
+    ).associateBy { it.name }
+
+    assertThat(table.getValue(VCS_SET).moduleSystemLoaded).containsExactly(VCS_IMPL)
+    // The nested set is reached through the top-level set.
+    assertThat(table.getValue(VCS_LOG_SET).moduleSystemLoaded).containsExactly(VCS_LOG)
+
+    assertThat(shareModuleSystemLoadedLabels(
+      product = "idea",
+      moduleSystemLoaded = listOf(VCS_IMPL_LABEL, VCS_DVCS_LABEL, VCS_LOG_LABEL),
+      moduleSets = listOf(VCS_SET),
+      table = table,
+    )).containsExactly(VCS_DVCS_LABEL)
+    assertThat(shareModuleSystemLoadedLabels(
+      product = "Other",
+      moduleSystemLoaded = listOf(VCS_IMPL_LABEL, VCS_LOG_LABEL, DIRECT_LABEL),
+      moduleSets = listOf(VCS_SET),
+      table = table,
+    )).containsExactly(DIRECT_LABEL)
+  }
+
+  @Test
+  fun `a set that only one product reaches takes the loaded members of that product`() {
+    val table = moduleSetModuleSystemLoaded(
+      table = TABLE.values.toList(),
+      payloads = listOf(
+        ProductModuleSystemLoading(product = "idea", moduleSets = listOf(VCS_SET), moduleSystemLoaded = listOf(VCS_DVCS_LABEL)),
+        ProductModuleSystemLoading(product = "Other", moduleSets = listOf(VCS_LOG_SET), moduleSystemLoaded = listOf(VCS_LOG_LABEL)),
+      ),
+    ).associateBy { it.name }
+
+    assertThat(table.getValue(VCS_SET).moduleSystemLoaded).containsExactly(VCS_DVCS)
+    // `idea` reaches the nested set too, and its module system does not load the member.
+    assertThat(table.getValue(VCS_LOG_SET).moduleSystemLoaded).isEmpty()
+  }
+
+  @Test
+  fun `a product whose module system does not load a loaded set member fails`() {
+    val table = TABLE.mapValues { (name, moduleSet) ->
+      if (name == VCS_LOG_SET) moduleSet.copy(moduleSystemLoaded = listOf(VCS_LOG)) else moduleSet
+    }
+
+    assertThatThrownBy {
+      shareModuleSystemLoadedLabels(
+        product = "Other",
+        moduleSystemLoaded = listOf(VCS_IMPL_LABEL),
+        moduleSets = listOf(VCS_SET),
+        table = table,
+      )
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("'Other'")
+      .hasMessageContaining(VCS_LOG)
   }
 }

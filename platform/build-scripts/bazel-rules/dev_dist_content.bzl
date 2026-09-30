@@ -28,12 +28,16 @@ DevDistPlatformPayloadInfo = provider(
         # Jars only in `packed_jars`, because the byte gate reads it as the set of jars to compare. The native tree of a
         # content module jar travels in the record, and the packed-jars component places it from there.
         "packed_metadata": """depset of struct(jar, metadata, relative_path, native_tree, native_metadata,
-        native_lib_dir): the metadata and the destination of each packed jar, and the native tree of the payload's
-        platform with its own metadata and the `lib/` subdirectory the tree goes to. `None` and empty for a jar without
-        one.""",
+        native_lib_dir, core_classpath): the metadata and the destination of each packed jar, and the native tree of the
+        payload's platform with its own metadata and the `lib/` subdirectory the tree goes to. `None` and empty for a jar
+        without one. `core_classpath` is true for a jar on the core classpath, see `core_classpath_jar_names`.""",
         "packed_jar_names": """list of string: their destinations within `lib/`, sorted. The reference target packs them.
 
         A destination, not a file name: a platform jar can name a subdirectory of `lib/`.""",
+        "core_classpath_jar_names": """list of string: the destinations of the packed jars on the core classpath, sorted.
+
+        A packed jar is on the core classpath when it is a direct child of `lib/` and `module_system_loaded` does not
+        name it. The plan generator checks this rule against the rule of the production build.""",
         "layout": """list of struct(destination, member_modules, library_jars), sorted by destination: what each packed
         jar merges, in merge order, as `ContentModuleJarInfo` and `DevDistPlatformJarInfo` state it. The runtime module
         repository reads it as the layout of the core plugin.""",
@@ -41,12 +45,18 @@ DevDistPlatformPayloadInfo = provider(
 )
 
 def _dev_dist_platform_payload_impl(ctx):
+    packed_labels = {target.label: True for target in ctx.attr.packed}
+    unpacked = [str(target.label) for target in ctx.attr.module_system_loaded if target.label not in packed_labels]
+    if unpacked:
+        fail("%s: module_system_loaded names jars that packed does not name: %s" % (ctx.label, ", ".join(unpacked)), attr = "module_system_loaded")
+    module_system_loaded = {target.label: True for target in ctx.attr.module_system_loaded}
     packed_jars = []
     packed_metadata = []
     packed_member_jars = []
     packed_library_jars = []
     packed_destinations = []
     layout = []
+    core_classpath_jar_names = []
     native_dir_owners = {}
     for target in ctx.attr.packed:
         info = target[ContentModuleJarInfo] if ContentModuleJarInfo in target else target[DevDistPlatformJarInfo]
@@ -71,6 +81,11 @@ def _dev_dist_platform_payload_impl(ctx):
             if previous != None:
                 fail("%s: lib/%s/ receives the native tree of both %s and %s" % (ctx.label, native_lib_dir, previous.owner, info.jar.owner))
             native_dir_owners[native_lib_dir] = info.jar
+
+        # Only a direct child of `lib/` can be on the core classpath, and a jar the module system loads is not on it.
+        core_classpath = "/" not in info.relative_path and target.label not in module_system_loaded
+        if core_classpath:
+            core_classpath_jar_names.append(info.relative_path)
         packed_metadata.append(struct(
             jar = info.jar,
             metadata = info.metadata,
@@ -78,6 +93,7 @@ def _dev_dist_platform_payload_impl(ctx):
             native_tree = native.tree if native else None,
             native_metadata = native.metadata if native else None,
             native_lib_dir = native_lib_dir,
+            core_classpath = core_classpath,
         ))
         packed_member_jars.extend(info.member_jars)
         packed_library_jars.extend(info.library_jars)
@@ -105,6 +121,7 @@ def _dev_dist_platform_payload_impl(ctx):
             packed_jars = packed,
             packed_metadata = depset(packed_metadata),
             packed_jar_names = sorted(owner_by_name.keys()),
+            core_classpath_jar_names = sorted({name: True for name in core_classpath_jar_names}.keys()),
             layout = sorted(layout, key = lambda entry: entry.destination),
         ),
         # The reference target's whole declaration: it packs the handed-over jars the `JarPackager` way, so what it reads
@@ -121,7 +138,8 @@ dev_dist_platform_payload = rule(
 
     `packed` names one packing target per jar. One provider answers every consumer, so the answers cannot disagree:
 
-    * `packed_jars` and `packed_metadata` go to `intellij_dev_packed_jars_component`, which composes them in;
+    * `packed_jars` and `packed_metadata` go to `intellij_dev_packed_jars_component`, which composes them in and marks
+      the jars of the core classpath;
     * `packed_jar_names` go to the reference target as the jars it packs and nothing else;
     * `layout` goes to `dev_dist_runtime_module_repository` as the layout of the core plugin;
     * `DevDistContentInfo` is what those jars merge, and is the reference target's whole declaration.
@@ -133,6 +151,11 @@ dev_dist_platform_payload = rule(
                   "This list is the handover set.",
             providers = [[ContentModuleJarInfo], [DevDistPlatformJarInfo]],
             mandatory = True,
+        ),
+        "module_system_loaded": attr.label_list(
+            doc = "The `content_module_jar` targets of `packed` whose jars the module system loads. Every other " +
+                  "packed jar that is a direct child of `lib/` is on the core classpath.",
+            providers = [ContentModuleJarInfo],
         ),
         "native_platform": attr.string(
             doc = "The `HOST_PLATFORMS` token of the payload's native trees. Configurable: the macro passes a " +

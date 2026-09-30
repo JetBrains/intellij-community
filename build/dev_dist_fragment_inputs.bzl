@@ -16,6 +16,10 @@
 # `packed_content_module_jars` names only the labels of the modules no set covers. The binder unions the set
 # labels into the payload at load time with `dev_dist_packed_labels`.
 #
+# `module_system_loaded` names the packed jars that the module system loads, as labels, and only the ones no
+# set carries in its own `module_system_loaded`. The payload puts every other packed direct child of `lib/` on
+# the core classpath.
+#
 # The plugins are absent. A plugin's own `dev_plugin` target and the `content_module_jar` targets of its
 # members pack its jars and state their inputs as labels. What is left is the platform, whose flat core
 # answers to no plugin target.
@@ -215,6 +219,27 @@ DEV_DIST_FRAGMENT_INPUTS = {
                 "//plugins/ide-startup/importSettings:importSettings_content_module_jar",
                 "//xml/xmlbeans:xmlbeans_content_module_jar",
             ],
+            module_system_loaded = [
+                "//idea/customization/backend:backend_content_module_jar",
+                "//idea/customization/base:base_content_module_jar",
+                "//idea/customization/min:min_content_module_jar",
+                "//java/ide-resources/newUiOnboarding:newUiOnboarding_content_module_jar",
+                "//java/ide-resources:ide-resources_content_module_jar",
+                "//libraries/log4j-to-slf4j:log4j-to-slf4j_content_module_jar",
+                "//libraries/sqlite:sqlite_content_module_jar",
+                "//libraries/xmlbeans:xmlbeans_content_module_jar",
+                "//platform/new-ui-onboarding:new-ui-onboarding_content_module_jar",
+                "//platform/new-users-onboarding:new-users-onboarding_content_module_jar",
+                "//platform/non-modal-welcome-screen/backend:backend_content_module_jar",
+                "//platform/non-modal-welcome-screen/frontend:frontend_content_module_jar",
+                "//platform/non-modal-welcome-screen/terminal:terminal_content_module_jar",
+                "//platform/non-modal-welcome-screen:non-modal-welcome-screen_content_module_jar",
+                "//platform/remote-servers/impl:impl_content_module_jar",
+                "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent_content_module_jar",
+                "//plugins/coverage-common:coverage_content_module_jar",
+                "//plugins/ide-startup/importSettings:importSettings_content_module_jar",
+                "//xml/xmlbeans:xmlbeans_content_module_jar",
+            ],
             residual_jars = {
                 "external-system-rt.jar": _RESIDUAL_JAR_external_system_rt,
                 "externalProcess-rt.jar": _RESIDUAL_JAR_externalProcess_rt,
@@ -313,6 +338,26 @@ DEV_DIST_FRAGMENT_INPUTS = {
             ],
             packed_content_module_jars = [
                 "//community-resources/ide-customization:ide-customization_content_module_jar",
+                "//idea/customization/base:base_content_module_jar",
+                "//idea/customization/min:min_content_module_jar",
+                "//java/ide-resources/newUiOnboarding:newUiOnboarding_content_module_jar",
+                "//java/ide-resources:ide-resources_content_module_jar",
+                "//libraries/log4j-to-slf4j:log4j-to-slf4j_content_module_jar",
+                "//libraries/sqlite:sqlite_content_module_jar",
+                "//libraries/xmlbeans:xmlbeans_content_module_jar",
+                "//platform/new-ui-onboarding:new-ui-onboarding_content_module_jar",
+                "//platform/new-users-onboarding:new-users-onboarding_content_module_jar",
+                "//platform/non-modal-welcome-screen/backend:backend_content_module_jar",
+                "//platform/non-modal-welcome-screen/frontend:frontend_content_module_jar",
+                "//platform/non-modal-welcome-screen/terminal:terminal_content_module_jar",
+                "//platform/non-modal-welcome-screen:non-modal-welcome-screen_content_module_jar",
+                "//platform/remote-servers/impl:impl_content_module_jar",
+                "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent_content_module_jar",
+                "//plugins/coverage-common:coverage_content_module_jar",
+                "//plugins/ide-startup/importSettings:importSettings_content_module_jar",
+                "//xml/xmlbeans:xmlbeans_content_module_jar",
+            ],
+            module_system_loaded = [
                 "//idea/customization/base:base_content_module_jar",
                 "//idea/customization/min:min_content_module_jar",
                 "//java/ide-resources/newUiOnboarding:newUiOnboarding_content_module_jar",

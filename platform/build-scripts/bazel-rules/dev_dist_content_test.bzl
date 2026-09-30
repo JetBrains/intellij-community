@@ -225,22 +225,26 @@ def _platform_payload_test_impl(ctx):
     # Jars only, because the byte gate reads this set. The native tree of the payload's platform travels in the jar's
     # record, with its own metadata. A jar without one says so with `None` and an empty directory.
     asserts.equals(env, [packed.jar, nested.jar, natives.jar], payload.packed_jars.to_list())
+
+    # The core classpath: a direct child of `lib/` that the module system does not load. The module system loads the
+    # jar with natives, and the nested jar is never on it.
     records = {record.jar: record for record in payload.packed_metadata.to_list()}
     asserts.equals(
         env,
-        struct(jar = packed.jar, metadata = packed.metadata, relative_path = packed.relative_path, native_tree = None, native_metadata = None, native_lib_dir = ""),
+        struct(jar = packed.jar, metadata = packed.metadata, relative_path = packed.relative_path, native_tree = None, native_metadata = None, native_lib_dir = "", core_classpath = True),
         records[packed.jar],
     )
     asserts.equals(
         env,
-        struct(jar = nested.jar, metadata = nested.metadata, relative_path = nested.relative_path, native_tree = None, native_metadata = None, native_lib_dir = ""),
+        struct(jar = nested.jar, metadata = nested.metadata, relative_path = nested.relative_path, native_tree = None, native_metadata = None, native_lib_dir = "", core_classpath = False),
         records[nested.jar],
     )
     asserts.equals(
         env,
-        struct(jar = natives.jar, metadata = natives.metadata, relative_path = natives.relative_path, native_tree = native.tree, native_metadata = native.metadata, native_lib_dir = natives.native_lib_dir),
+        struct(jar = natives.jar, metadata = natives.metadata, relative_path = natives.relative_path, native_tree = native.tree, native_metadata = native.metadata, native_lib_dir = natives.native_lib_dir, core_classpath = False),
         records[natives.jar],
     )
+    asserts.equals(env, [packed.relative_path], payload.core_classpath_jar_names)
 
     # What each packed jar merges, sorted by destination. The runtime module repository orders it by the platform jar order.
     asserts.equals(
@@ -456,6 +460,12 @@ def _packed_component_test_impl(ctx):
     }
     destinations = written[target.label.name + ".jars.json"]
     catalogue = written[target.label.name + ".metadata-catalogue.json"]
+
+    # The manifest marks the jars that the payload puts on the core classpath, and no other jar.
+    packed = ctx.attr.packed[ContentModuleJarInfo]
+    nested = ctx.attr.nested[DevDistPlatformJarInfo]
+    asserts.true(env, {"source": packed.jar.path, "relativePath": packed.relative_path, "coreClassPath": True} in destinations)
+    asserts.true(env, {"source": nested.jar.path, "relativePath": nested.relative_path} in destinations)
     asserts.true(env, {"source": natives.jar.path, "relativePath": natives.relative_path} in destinations)
     asserts.true(env, {"source": native.tree.path, "relativePath": natives.native_lib_dir, "tree": True} in destinations)
     asserts.true(env, {"source": natives.jar.path, "metadata": natives.metadata.path, "relativePath": natives.jar.basename} in catalogue)
@@ -468,7 +478,11 @@ def _packed_component_test_impl(ctx):
 
 _packed_component_test = analysistest.make(
     _packed_component_test_impl,
-    attrs = {"natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo])},
+    attrs = {
+        "packed": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+        "nested": attr.label(mandatory = True, providers = [DevDistPlatformJarInfo]),
+        "natives": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
+    },
     config_settings = {_TRACE_SPANS: False},
 )
 
@@ -668,6 +682,7 @@ def dev_dist_content_test_suite(name):
     dev_dist_platform_payload(
         name = payload,
         packed = [":" + packed, ":" + nested, ":" + natives],
+        module_system_loaded = [":" + natives],
         native_platform = _PAYLOAD_PLATFORM,
     )
     tests.append(name + "_platform_payload_test")
@@ -684,16 +699,19 @@ def dev_dist_content_test_suite(name):
     for duplicate in duplicate_natives:
         _fake_packed(name = duplicate, member = ":" + natives_owner, native_lib_dir = "shared")
 
-    # A payload with natives needs its platform, and a jar needs a tree of that platform.
-    for case, packed_jars, native_platform, expected_message in [
-        ("duplicate_natives", duplicate_natives, _PAYLOAD_PLATFORM, "lib/shared/ receives the native tree of both"),
-        ("no_platform", [natives], "", "so the payload needs native_platform"),
-        ("unknown_platform", [natives], "windows_x64", "has no native tree for 'windows_x64'"),
+    # A payload with natives needs its platform, and a jar needs a tree of that platform. The module system can load
+    # only a jar that the payload packs.
+    for case, packed_jars, module_system_loaded, native_platform, expected_message in [
+        ("duplicate_natives", duplicate_natives, [], _PAYLOAD_PLATFORM, "lib/shared/ receives the native tree of both"),
+        ("no_platform", [natives], [], "", "so the payload needs native_platform"),
+        ("unknown_platform", [natives], [], "windows_x64", "has no native tree for 'windows_x64'"),
+        ("unpacked_module_system_loaded", [packed], [natives], _PAYLOAD_PLATFORM, "module_system_loaded names jars that packed does not name"),
     ]:
         failing_payload = name + "_" + case + "_payload"
         dev_dist_platform_payload(
             name = failing_payload,
             packed = [":" + jar for jar in packed_jars],
+            module_system_loaded = [":" + jar for jar in module_system_loaded],
             native_platform = native_platform,
             tags = ["manual"],
         )
@@ -833,7 +851,13 @@ def dev_dist_content_test_suite(name):
         tags = ["manual"],
     )
     tests.append(packed_component + "_test")
-    _packed_component_test(name = tests[-1], target_under_test = ":" + packed_component, natives = ":" + natives)
+    _packed_component_test(
+        name = tests[-1],
+        target_under_test = ":" + packed_component,
+        packed = ":" + packed,
+        nested = ":" + nested,
+        natives = ":" + natives,
+    )
 
     build_txt = name + "_build_txt"
     native.genrule(name = build_txt, outs = [build_txt + ".txt"], cmd = "echo IU > $@", tags = ["manual"])

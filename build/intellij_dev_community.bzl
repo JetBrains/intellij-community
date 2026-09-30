@@ -7,7 +7,6 @@ macros. `build/intellij_dev_ultimate.bzl` of the ultimate checkout is the twin o
 load("@jps_dynamic_deps_community//:targets.bzl", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("//build/dev-dist-content:dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_project_model_tree")
-load(":dev_dist_core_classpath.bzl", "DEV_DIST_CORE_CLASSPATH")
 load(":dev_dist_fragment_inputs.bzl", "DEV_DIST_FRAGMENT_INPUTS")
 load(":dev_dist_module_sets.bzl", "DEV_DIST_MODULE_SETS")
 load(":dev_dist_packed_labels.bzl", "dev_dist_packed_labels")
@@ -37,7 +36,7 @@ _PLATFORM_LIB_FRAGMENT = "platform_lib"
 _PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_repository"
 
 def _platform_lib_payload(product):
-    return struct(packed = dev_dist_packed_labels(DEV_DIST_FRAGMENT_INPUTS, DEV_DIST_MODULE_SETS, product))
+    return dev_dist_packed_labels(DEV_DIST_FRAGMENT_INPUTS, DEV_DIST_MODULE_SETS, product)
 
 def _product_info_label(product):
     return "//build/dev-dist-descriptors:%s_product_info" % product
@@ -50,7 +49,6 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
     application_infos = DEV_DIST_APPLICATION_INFOS,
     platform_jar_orders = DEV_DIST_PLATFORM_JAR_ORDERS,
     fragment_inputs = DEV_DIST_FRAGMENT_INPUTS,
-    core_classpath = DEV_DIST_CORE_CLASSPATH,
     plugin_components = DEV_DIST_PLUGIN_COMPONENTS,
     product = dev_dist_product,
     platform_lib_fragment = _PLATFORM_LIB_FRAGMENT,

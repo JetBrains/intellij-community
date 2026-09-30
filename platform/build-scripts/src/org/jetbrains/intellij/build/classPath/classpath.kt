@@ -102,9 +102,9 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
  * Which of [externallyPackedJars] belong on the core classpath, decided from the layout instead of from packed entries.
  *
  * A split dev-distribution fragment hands these jars to another producer, so it neither packs them nor resolves the
- * modules in them. The dev-distribution plan generator calls this over the source layout of each product, and the
- * packed-jars component lists the result in its manifest. The core classpath has to stay complete: it is what
- * `PreBuiltDevMain` starts the IDE with.
+ * modules in them. `dev_dist_platform_payload` derives the core classpath of these jars in Bazel. The dev-distribution
+ * plan generator calls this function over the source layout of each product and fails when the two answers differ.
+ * The core classpath has to stay complete: it is what `PreBuiltDevMain` starts the IDE with.
  *
  * The rule is [generateClassPathByLayoutReport]'s, read off the layout rather than off the entries it never produced.
  * Every entry such a jar can hold - the module output, and the libraries merged into it - is a `ModuleOwnedFileEntry`
