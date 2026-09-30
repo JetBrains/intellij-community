@@ -594,7 +594,7 @@ class TerminalViewImpl(
       sessionDeferred = sessionDeferred,
       coroutineScope = coroutineScope.childScope("TerminalKeyEvents"),
     )
-    val mouseEventsHandler = TerminalMouseEventsHandlerImpl(editor, terminalInput, sessionDeferred)
+    val mouseEventsHandler = TerminalMouseEventsHandlerImpl(editor, terminalInput, sessionDeferred, sessionModel)
 
     // Should be created before the mouse reporting is configured in "setupMouseEventsHandling".
     // To make mouse events first handled by hyperlinks logic and only then reported to the process.

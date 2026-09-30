@@ -1061,6 +1061,11 @@ internal class TerminalMouseEventsHandlingTest {
 
     init {
       terminalView.connectToSession(session)
+      if (isMouseReportingEnabled) {
+        // The view reports mouse moves only in the all-motion mode. The fake session does not update the state itself.
+        val sessionModel = terminalView.sessionModel
+        sessionModel.updateTerminalState(sessionModel.terminalState.value.copy(mouseMode = MouseMode.MOUSE_REPORTING_ALL_MOTION))
+      }
       setEditorSize()
     }
 

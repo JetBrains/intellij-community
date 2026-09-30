@@ -1,7 +1,9 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.editor.Editor
+import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.Deferred
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.util.getNow
 import java.awt.event.MouseEvent
@@ -11,11 +13,17 @@ internal class TerminalMouseEventsHandlerImpl(
   private val editor: Editor,
   private val terminalInput: TerminalInput,
   private val session: Deferred<TerminalSession>,
+  private val sessionModel: TerminalSessionModel,
 ) : TerminalMouseEventsHandler {
   override fun onMouseEvent(x: Int, y: Int, event: MouseEvent) {
     if (event.isConsumed) {
       // Some other handler already consumed this event, for example, hyperlinks logic.
       // Do not send a mouse report to the process in this case.
+      return
+    }
+
+    if (event.id == MouseEvent.MOUSE_MOVED && sessionModel.terminalState.value.mouseMode != MouseMode.MOUSE_REPORTING_ALL_MOTION) {
+      // Only the all-motion mode reports mouse moves. Skip the session call, which may take a lock, on every move.
       return
     }
 
