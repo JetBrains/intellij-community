@@ -9,7 +9,7 @@ The crate depends on `serde`, `serde_json` and `thiserror` only.
 
 ## The subset rule
 
-The crate ports only the shapes that the 92 checked-in `*.dev-plan.json` files use. It refuses every other shape with
+The crate ports only the shapes that the checked-in `*.dev-plan.json` files use. It refuses every other shape with
 an error that names it. The table lists what the Go code supports and the port refuses.
 
 `testdata/corpus/` holds a copy of each of these files, without the Starlark test fixture. The corpus test reads and
