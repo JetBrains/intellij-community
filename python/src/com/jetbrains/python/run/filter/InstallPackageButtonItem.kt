@@ -9,18 +9,15 @@ import com.intellij.execution.impl.InlayProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.launchInstallPackageWithBalloonBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import java.awt.Cursor
 
 class InstallPackageButtonItem(
   val project: Project,
-  val pythonSdk: Sdk,
+  private val sourceEditor: Editor?,
   offset: Int,
   private val packageName: String,
 ) : Filter.ResultItem(offset, offset, null), InlayProvider {
@@ -38,7 +35,7 @@ class InstallPackageButtonItem(
           val relativePoint = RelativePoint(component, event.point)
 
           PyPackageCoroutine.launch(project) {
-            PythonPackageManagerUI.forSdk(project, pythonSdk).launchInstallPackageWithBalloonBackground(packageName, relativePoint)
+            PythonInstallPackageFilter.launchInstall(project, sourceEditor, packageName, relativePoint)
           }
         }
         .build(8)

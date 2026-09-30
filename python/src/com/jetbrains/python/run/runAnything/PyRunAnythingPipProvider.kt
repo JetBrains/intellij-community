@@ -31,8 +31,8 @@ class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   }
 
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
-    val pythonSdk = getSdk(dataContext) ?: return null
-    return PythonPackageManager.forSdk(dataContext.project, pythonSdk)
+    val interpreter = getInterpreter(dataContext) ?: return null
+    return PythonPackageManager.forPythonInterpreter(dataContext.project, interpreter)
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {

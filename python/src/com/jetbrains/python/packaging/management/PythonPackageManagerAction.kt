@@ -4,23 +4,21 @@ package com.jetbrains.python.packaging.management
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import kotlin.text.Regex.Companion.escape
@@ -119,11 +117,9 @@ private fun refreshAfterToolRun(dir: VirtualFile) {
 }
 
 internal inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {
-  val virtualFile = getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
-  val project = project ?: return null
-  val module = ModuleUtil.findModuleForFile(virtualFile, project) ?: return null
-  val sdk = module.pythonSdk ?: return null
-  return PythonPackageManager.forSdk(project, sdk) as? T
+  val psiFile = getData(PSI_FILE) ?: return null
+  val interpreter = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
+  return PythonPackageManager.forPythonInterpreter(psiFile.project, interpreter) as? T
 }
 
 

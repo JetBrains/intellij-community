@@ -2,12 +2,11 @@
 package com.jetbrains.python.packaging.repository
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.util.text.UniqueNameGenerator
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
  * Receives the rebuild instructions emitted by [PyRepositoriesPresenter.rebuildTree]. The view
@@ -36,12 +35,12 @@ internal class PyRepositoriesPresenter(
   fun loadCustomRepositories(): List<PyPackageRepository> = repositoriesService.repositories.toList()
 
   /**
-   * Built-in repositories for the project's first module SDK, or the static default set
-   * when no Python SDK can be resolved (e.g. a freshly opened project).
+   * Built-in repositories for the interpreter of the main Python project, or the static default set
+   * when there is none yet (e.g. a freshly opened project).
    */
   fun loadBuiltInRepositories(project: Project): List<PyPackageRepository> {
-    val sdk = project.modules.firstOrNull()?.let { PythonSdkUtil.findPythonSdk(it) }
-    return sdk?.let { PythonPackageManager.forSdk(project, it).repositoryManager.builtInRepositories }
+    val interpreter = project.findMainEvoPyProjectIfReady()?.interpreter
+    return interpreter?.let { PythonPackageManager.forPythonInterpreter(project, it).repositoryManager.builtInRepositories }
            ?: PythonRepositoryManager.DEFAULT_BUILT_IN_REPOSITORIES
   }
 

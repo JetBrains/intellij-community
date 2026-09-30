@@ -33,8 +33,8 @@ class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
   }
 
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
-    val pythonSdk = getSdk(dataContext) ?: return null
-    return (PythonPackageManager.forSdk(dataContext.project, pythonSdk) as? CondaPackageManager)
+    val interpreter = getInterpreter(dataContext) ?: return null
+    return (PythonPackageManager.forPythonInterpreter(dataContext.project, interpreter) as? CondaPackageManager)
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {

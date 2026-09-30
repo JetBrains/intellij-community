@@ -358,6 +358,14 @@ suspend fun Project.findMainPythonInterpreter(): PythonInterpreter? = findMainEv
 suspend fun Project.findMainEvoPyProject(): EvoPyProject? = EvoPyProjectModel.getInstance(this).snapshot().main
 
 /**
+ * The Python project rooted at the project's own base dir, or `null` while the first snapshot is not ready.
+ *
+ * For a caller that cannot suspend. It does not wait for the snapshot, unlike the suspend [findMainEvoPyProject].
+ */
+@ApiStatus.Internal
+fun Project.findMainEvoPyProjectIfReady(): EvoPyProject? = EvoPyProjectModel.getInstance(this).snapshotOrNull()?.main
+
+/**
  * Every Python project of the current snapshot, with its interpreter. See [EvoPyProjectModel.Snapshot.evoPyProjects].
  *
  * [PyProject.Companion.getPyProjects] lists the same projects without their interpreters.
