@@ -134,6 +134,24 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
+  fun `a persistent file belongs to the editor history of its own project only`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val ownFile = ToolWindowEditorTabFile(
+        toolWindowId = "TestToolWindow",
+        persistentPath = PersistentToolWindowEditorTabPath(project.locationHash, "TestToolWindow", "own-tab", "Own"),
+      )
+      val foreignFile = ToolWindowEditorTabFile(
+        toolWindowId = "TestToolWindow",
+        persistentPath = PersistentToolWindowEditorTabPath("other-project-hash", "TestToolWindow", "foreign-tab", "Foreign"),
+      )
+
+      assertThat(ownFile.isIncludedInEditorHistory(project)).isTrue()
+      assertThat(ownFile.isPersistedInEditorHistory()).isTrue()
+      // The application-level file system can resolve the tab of another project. Recent Files must not show it here.
+      assertThat(foreignFile.isIncludedInEditorHistory(project)).isFalse()
+    }
+
+  @Test
   fun `onEditorClosed invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
     assertThat(file.isValid).isTrue()
