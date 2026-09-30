@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.evolution
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -194,7 +195,13 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
         .map { }
         .onStart { emit(Unit) }
         .conflate()
-        .collect { state.value = computeSnapshot() }
+        .collect {
+          state.value = computeSnapshot()
+          // A reader that cannot suspend reads `snapshotOrNull()`, and it can run before this generation lands. An
+          // inspection that read the previous one would keep that answer until the next edit, so every generation
+          // re-runs the analysis.
+          DaemonCodeAnalyzer.getInstance(project).restart("Python project structure changed")
+        }
     }
 
     project.messageBus.connect(scope).subscribe(FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
