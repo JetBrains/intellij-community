@@ -20,7 +20,7 @@ import kotlin.io.path.name
 
 @OptIn(LowLevelLocalMachineAccess::class)
 internal class OsDataCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.os", 24)
+  private val GROUP = EventLogGroup("system.os", 25)
 
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "HarmonyOS", "Other")
 
@@ -44,8 +44,8 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexpReference("time_zone", "time_zone")
-  private val OS_SHELL = String("shell", SHELLS)
-  private val DISTRO = String("distro", DISTROS)
+  private val OS_SHELL = String("shell", SHELLS, defaultValue = "other")
+  private val DISTRO = String("distro", DISTROS, defaultValue = "other")
   private val RELEASE = StringValidatedByRegexpReference("release", "version")
   private val UNDER_WSL = EventFields.Boolean("wsl")
   private val HAS_GDBUS = EventFields.Boolean("gdbus")
@@ -61,11 +61,17 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val tz = getTimeZone()
     val metrics = mutableSetOf(
-      OS_EVENT.metric(OS_NAME.with(getOSName()), Version.with(OS.CURRENT.version()), OS_LANG.with(getLanguage()), OS_TZ.with(tz), OS_SHELL.with(getShell()))
+      OS_EVENT.metric(
+        OS_NAME.with(getOSName()),
+        Version.with(OS.CURRENT.version()),
+        OS_LANG.with(getLanguage()),
+        OS_TZ.with(tz),
+        OS_SHELL.with(getShell())
+      )
     )
     if (OS.CURRENT == OS.Linux) {
       val osInfo = OS.CURRENT.osInfo as OS.LinuxInfo
-      val distro = if (isOmarchy()) "omarchy" else DISTROS.coerce(osInfo.distro)
+      val distro = if (isOmarchy()) "omarchy" else osInfo.distro ?: "unknown"
       val linuxMetrics = mutableListOf(
         DISTRO.with(distro),
         RELEASE.with(osInfo.release),
@@ -99,13 +105,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
 
   private fun getShell(): String? =
     if (OS.CURRENT == OS.Windows) null
-    else SHELLS.coerce(runCatching { System.getenv("SHELL")?.let { Path.of(it).name } }.getOrNull())
-
-  private fun List<String>.coerce(value: String?): String = when (value) {
-    null -> "unknown"
-    in this -> value
-    else -> "other"
-  }
+    else runCatching { System.getenv("SHELL")?.let { Path.of(it).name } }.getOrNull() ?: "unknown"
 
   /**
    * Omarchy is built on top of Arch, so `/etc/os-release` does not identify it.
