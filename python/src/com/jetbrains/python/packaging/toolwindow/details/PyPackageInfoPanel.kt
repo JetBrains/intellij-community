@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.details
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -54,7 +54,7 @@ internal class PyPackageInfoPanel(
     project.messageBus.connect(this).subscribe(
       PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC,
       object : PythonPackageManagementListener {
-        override fun packagesChanged(sdk: Sdk) {
+        override fun packagesChanged(interpreter: PythonInterpreter) {
           val service = project.service<PyPackagingToolWindowService>()
           service.serviceScope.launch(Dispatchers.EDT) { clear() }
         }

@@ -13,8 +13,10 @@ import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 
+@ApiStatus.Internal
 class InstallPackageButtonItem(
   val project: Project,
   private val sourceEditor: Editor?,

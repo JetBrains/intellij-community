@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
@@ -24,7 +25,7 @@ internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
 
     val messageBusConnection = project.messageBus.connect()
     messageBusConnection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
-      override fun packagesChanged(sdk: Sdk) {
+      override fun packagesChanged(interpreter: PythonInterpreter) {
         // Restarts the daemon when the installed-packages snapshot is (re)populated. Without
         // this, inspections that consult `listInstalledPackagesSnapshot()` (notably
         // [com.jetbrains.python.requirements.inspections.tools.RequirementInspection])
@@ -37,7 +38,7 @@ internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
         DaemonCodeAnalyzer.getInstance(project).restart("PythonSdkUpdateProjectActivity.packagesChanged")
       }
 
-      override fun outdatedPackagesChanged(sdk: Sdk) {
+      override fun outdatedPackagesChanged(interpreter: PythonInterpreter) {
         DaemonCodeAnalyzer.getInstance(project).restart("PythonSdkUpdateProjectActivity.outdatedPackagesChanged")
       }
     })

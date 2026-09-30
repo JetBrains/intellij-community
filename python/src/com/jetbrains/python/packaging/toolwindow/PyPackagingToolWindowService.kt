@@ -14,7 +14,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -35,7 +34,6 @@ import com.intellij.python.sdk.backend.asItem
 import com.intellij.openapi.module.Module
 import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.isFor
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.intellij.python.pyproject.PyDependencyGroup
@@ -600,18 +598,18 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   private fun subscribeToPackageManagementChanges() {
     ApplicationManager.getApplication().messageBus.connect(serviceScope)
       .subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
-        override fun packagesChanged(sdk: Sdk) {
+        override fun packagesChanged(interpreter: PythonInterpreter) {
           val context = interpreterContext ?: return
-          if (context.interpreter.isFor(sdk)) {
+          if (context.interpreter == interpreter) {
             serviceScope.launch(Dispatchers.IO + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
               refreshInstalledPackages()
             }
           }
         }
 
-        override fun outdatedPackagesChanged(sdk: Sdk) {
+        override fun outdatedPackagesChanged(interpreter: PythonInterpreter) {
           val context = interpreterContext ?: return
-          if (context.interpreter.isFor(sdk)) {
+          if (context.interpreter == interpreter) {
             serviceScope.launch(Dispatchers.IO + NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
               refreshInstalledPackages(showIndicator = false)
             }

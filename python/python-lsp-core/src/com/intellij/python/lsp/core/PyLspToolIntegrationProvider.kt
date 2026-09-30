@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
-import com.intellij.python.pyproject.model.evolution.evoPyProjects
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
@@ -78,6 +77,8 @@ import com.intellij.python.community.execService.asGeneralCommandLine
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.isFor
 import com.intellij.python.sdk.backend.toolExecutableWithBaseArgs
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -330,13 +331,19 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
      */
     private val versionBySdk: ConcurrentMap<String, String> = ConcurrentHashMap()
 
-    /** Whether a client of this provider serves a module whose interpreter is [sdk]. */
-    private suspend fun runsFor(sdk: Sdk): Boolean = readAction {
+    /** Whether a client of this provider serves a module whose interpreter is [interpreter]. */
+    private suspend fun runsFor(interpreter: PythonInterpreter): Boolean = readAction {
       LspClientManager.getInstance(project).getClients(this@PyLspToolIntegrationProvider::class.java)
-        .any { client -> client.pyServedModules.any { !it.isDisposed && it.pythonSdk == sdk } }
+        .any { client -> client.pyServedModules.any { !it.isDisposed && it.usesInterpreter(interpreter) } }
     }
 
-    override fun packagesChanged(sdk: Sdk) {
+    /**
+     * Whether [this] module runs [interpreter]. It reads the module SDK, not the model snapshot. The first event of an
+     * interpreter starts its server, and that event can arrive before the first snapshot.
+     */
+    private fun Module.usesInterpreter(interpreter: PythonInterpreter): Boolean = pythonSdk?.let(interpreter::isFor) == true
+
+    override fun packagesChanged(interpreter: PythonInterpreter) {
       // The topic is application level, so this fires for the interpreter of every open project.
       // Acting on another project's interpreter would restart the servers of this one for nothing
       // (PY-91655).
@@ -344,10 +351,10 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       // The read action guards the project model. This runs on a pool thread with no lock of its
       // own, and `pyLspServedModules` reads the root manager of each module, which throws once a
       // write action disposes one.
-      if (runReadActionBlocking { pyLspServedModules(project).none { it.pythonSdk == sdk } }) return
+      if (runReadActionBlocking { pyLspServedModules(project).none { it.usesInterpreter(interpreter) } }) return
 
-      val version = pyLspToolVersionOf(sdk, project, pyTool)
-      val sdkKey = sdk.homePath ?: sdk.name
+      val version = pyLspToolVersionOf(interpreter, project, pyTool)
+      val sdkKey = interpreter.pythonBinaryPath?.toString() ?: interpreter.toString()
       // `put` answers `null` for an interpreter this listener never saw, which is not the same as an
       // interpreter that holds no copy of the tool. [NO_VERSION] keeps the two apart.
       val previous = versionBySdk.put(sdkKey, version ?: NO_VERSION)
@@ -362,18 +369,18 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       // A version change re-groups the modules, so a running server can hold the wrong folder set.
       PyLspToolVersionTracker.getInstance(project).bump(pyTool.packageName.name)
 
-      project.service<PyLspService>().cs.launch { handle(action, sdk, seenBefore) }
+      project.service<PyLspService>().cs.launch { handle(action, interpreter, seenBefore) }
     }
 
     /**
-     * Brings the servers of this tool in line with [action] on [sdk].
+     * Brings the servers of this tool in line with [action] on [interpreter].
      *
-     * A server that runs for [sdk] took its binary when it started. An install, an upgrade in place and
+     * A server that runs for [interpreter] took its binary when it started. An install, an upgrade in place and
      * an uninstall each change the binary that the server should run, so the server restarts. The same
      * holds for a tool with one server for each module. The first event of an interpreter reports what
      * it already held, so it only starts what is missing.
      */
-    private suspend fun handle(action: LspPackageAction, sdk: Sdk, seenBefore: Boolean) {
+    private suspend fun handle(action: LspPackageAction, interpreter: PythonInterpreter, seenBefore: Boolean) {
       val providerClass = this@PyLspToolIntegrationProvider::class.java
       val lspServerManager = LspClientManager.getInstance(project)
       if (action == LspPackageAction.STOP && noServedModuleHolds(pyTool)) {
@@ -382,9 +389,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       }
       // The keys are refreshed first, so the new server gets the fresh group and the right binary.
       if (servesEveryModule) pyLspRefreshServeKeys(project, pyTool)
-      if (seenBefore && runsFor(sdk)) {
+      if (seenBefore && runsFor(interpreter)) {
         project.service<PyLspService>().restartMutex.withLock {
-          thisLogger().info("${pyTool.packageName.name} changed in '${sdk.name}' ($action). Restarting its clients.")
+          thisLogger().info("${pyTool.packageName.name} changed in '${interpreter.pythonBinaryPath ?: interpreter}' ($action). Restarting its clients.")
           lspServerManager.stopAndRestartClientsIfNeeded(providerClass)
         }
         return
@@ -397,17 +404,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
 
 }
 
-/**
- * Whether no served module of [project] holds the package of [pyTool].
- *
- * The interpreters are read outside the read action, because [PythonPackageManager.forSdk] creates a
- * manager on the first call and does first-touch I/O.
- */
-private suspend fun PyLspToolIntegrationProvider.LspPackageListener.noServedModuleHolds(pyTool: PyTool): Boolean {
-  val modules = readAction { pyLspServedModules(project) }.toSet()
-  val interpreters = project.evoPyProjects().filter { it.pyProject.residesOnModule in modules }.mapNotNull { it.interpreter }
-  return interpreters.none { pyLspToolVersionOf(it, project, pyTool) != null }
-}
+/** Whether no served module of [project] holds the package of [pyTool]. */
+private suspend fun PyLspToolIntegrationProvider.LspPackageListener.noServedModuleHolds(pyTool: PyTool): Boolean =
+  pyLspServedInterpreters(project).none { pyLspToolVersionOf(it, project, pyTool) != null }
 
 /** Stands for an interpreter that holds no copy of the tool, so a map tells it from "never seen". */
 private const val NO_VERSION: String = ""

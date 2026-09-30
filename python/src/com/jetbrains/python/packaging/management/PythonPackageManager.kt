@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
@@ -233,8 +234,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     withContext(NonCancellable) {
       this@PythonPackageManager.installedPackages = packages
 
+      val interpreter = sdk.pythonInterpreterAsync()
       ApplicationManager.getApplication().messageBus.apply {
-        syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+        syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(interpreter)
         syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
       }
 
@@ -325,8 +327,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     if (outdatedPackages == packageMap) return
 
     outdatedPackages = packageMap
+    val interpreter = sdk.pythonInterpreterAsync()
     ApplicationManager.getApplication().messageBus.apply {
-      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).outdatedPackagesChanged(sdk)
+      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).outdatedPackagesChanged(interpreter)
     }
   }
 

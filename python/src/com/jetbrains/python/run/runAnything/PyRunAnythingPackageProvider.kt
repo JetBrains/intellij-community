@@ -19,11 +19,13 @@ import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
 import com.jetbrains.python.sdk.isTargetBased
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Install packages on Python interpreter using Run Anything.
  */
+@ApiStatus.Internal
 abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   private var cacheInitialized = AtomicBoolean(false)
 
