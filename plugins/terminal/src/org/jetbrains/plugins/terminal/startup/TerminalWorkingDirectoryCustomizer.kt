@@ -25,10 +25,23 @@ interface TerminalWorkingDirectoryCustomizer {
    * and use value provided by the default implementation.
    * **Note that in RemDev case, NIO Path should point to the remote (host) machine, not the local (frontend) one**
    */
-  suspend fun getDefaultStartWorkingDirectory(project: Project): Path?
+  suspend fun getDefaultStartWorkingDirectory(project: Project): Path? = null
+
+  /**
+   * Customizes the working directory of a new terminal session.
+   * The method is called only when a new session starts, and the caller has not requested a working directory.
+   * The result takes priority over the "Start directory" setting.
+   * This value is not shown anywhere in the UI.
+   *
+   * @return the NIO Path of starting directory, or `null` to not provide any customization
+   * and use value provided by the default implementation.
+   * **Note that in RemDev case, NIO Path should point to the remote (host) machine, not the local (frontend) one**
+   */
+  suspend fun getContextualStartWorkingDirectory(project: Project): Path? = null
 
   companion object {
-    internal val EP_NAME: ExtensionPointName<TerminalWorkingDirectoryCustomizer> =
+    @ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<TerminalWorkingDirectoryCustomizer> =
       ExtensionPointName("org.jetbrains.plugins.terminal.workingDirectoryCustomizer")
   }
 }

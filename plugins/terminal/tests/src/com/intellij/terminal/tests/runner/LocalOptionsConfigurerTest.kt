@@ -6,9 +6,11 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.common.withEnvVars
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -22,6 +24,7 @@ import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.startup.TerminalWorkingDirectoryCustomizer
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERMINAL_EMULATOR
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERM_SESSION_ID
@@ -353,6 +356,85 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
       root.pathString,
       customShellCommand,
       root.pathString
+    )
+  }
+
+  fun testContextualWorkingDirectoryOverridesConfiguredDirectory() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    val contextualDirectory = createTmpDirectory("contextual-dir")
+    maskWorkingDirectoryCustomizers(contextualDirectory)
+
+    val actual = configureWorkingDirectory(requestedWorkingDirectory = null)
+
+    assertEquals(contextualDirectory.pathString, actual)
+  }
+
+  fun testContextualWorkingDirectoryIsSkippedWhenNull() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    maskWorkingDirectoryCustomizers(null)
+
+    val actual = configureWorkingDirectory(requestedWorkingDirectory = null)
+
+    assertEquals(tempDirectory.pathString, actual)
+  }
+
+  fun testNonExistentContextualWorkingDirectoryFallsBackToConfiguredDirectory() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    maskWorkingDirectoryCustomizers(tempDirectory.resolve("does-not-exist"))
+
+    val actual = configureWorkingDirectory(requestedWorkingDirectory = null)
+
+    assertEquals(tempDirectory.pathString, actual)
+  }
+
+  fun testRequestedWorkingDirectoryOverridesContextualDirectory() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    val requestedDirectory = createTmpDirectory("requested-dir")
+    maskWorkingDirectoryCustomizers(createTmpDirectory("contextual-dir"))
+
+    val actual = configureWorkingDirectory(requestedWorkingDirectory = requestedDirectory.pathString)
+
+    assertEquals(requestedDirectory.pathString, actual)
+  }
+
+  fun testFirstNonNullContextualWorkingDirectoryWins() {
+    setDefaultStartingDirectory(tempDirectory.pathString)
+    val firstDirectory = createTmpDirectory("first-dir")
+    maskWorkingDirectoryCustomizers(null, firstDirectory, createTmpDirectory("second-dir"))
+
+    val actual = configureWorkingDirectory(requestedWorkingDirectory = null)
+
+    assertEquals(firstDirectory.pathString, actual)
+  }
+
+  fun testContextualWorkingDirectoryIsNotShownInDefaultStartingDirectory() {
+    val contextualDirectory = createTmpDirectory("contextual-dir")
+    maskWorkingDirectoryCustomizers(contextualDirectory)
+
+    assertThat(TerminalProjectOptionsProvider.getInstance(project).defaultStartingDirectory)
+      .isNotEqualTo(contextualDirectory.pathString)
+  }
+
+  private fun configureWorkingDirectory(requestedWorkingDirectory: String?): String? {
+    return LocalOptionsConfigurer.configureStartupOptions(
+      ShellStartupOptions.Builder()
+        .shellCommand(listOf("some-shell"))
+        .workingDirectory(requestedWorkingDirectory)
+        .build(),
+      project
+    ).workingDirectory
+  }
+
+  private fun maskWorkingDirectoryCustomizers(vararg contextualDirectories: Path?) {
+    ExtensionTestUtil.maskExtensions(
+      TerminalWorkingDirectoryCustomizer.EP_NAME,
+      contextualDirectories.map { directory ->
+        object : TerminalWorkingDirectoryCustomizer {
+          override suspend fun getDefaultStartWorkingDirectory(project: Project): Path? = null
+          override suspend fun getContextualStartWorkingDirectory(project: Project): Path? = directory
+        }
+      },
+      testRootDisposable
     )
   }
 

@@ -6,7 +6,7 @@ import org.jetbrains.plugins.terminal.startup.TerminalWorkingDirectoryCustomizer
 import java.nio.file.Path
 
 internal class PyTerminalWorkingDirectoryCustomizer : TerminalWorkingDirectoryCustomizer {
-  override suspend fun getDefaultStartWorkingDirectory(project: Project): Path? {
+  override suspend fun getContextualStartWorkingDirectory(project: Project): Path? {
     return getCurrentVenvPath(project)
   }
 }

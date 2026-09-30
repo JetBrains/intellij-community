@@ -73,6 +73,14 @@ public final class LocalOptionsConfigurer {
   }
 
   private static @NotNull Path getDefaultStartingDirectory(@NotNull Project project) {
+    Path contextualStartingDirectory = toExistentNioDirectory(
+      TerminalStartupKt.getContextualStartWorkingDirectoryBlocking(project),
+      "Contextual directory"
+    );
+    if (contextualStartingDirectory != null) {
+      return contextualStartingDirectory;
+    }
+
     Path configuredStartingDirectory = toExistentNioDirectory(
       TerminalProjectOptionsProvider.getInstance(project).getStartingDirectory(),
       "Starting directory"

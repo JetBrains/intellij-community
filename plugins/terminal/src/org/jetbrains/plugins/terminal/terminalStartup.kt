@@ -1,9 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
@@ -33,6 +36,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.startup.ShellExecCommand
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
+import org.jetbrains.plugins.terminal.startup.TerminalWorkingDirectoryCustomizer
 import org.jetbrains.plugins.terminal.startup.WslShellExecCommand
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import java.nio.file.Path
@@ -242,6 +246,28 @@ internal fun getUserHomePathBlocking(eelDescriptor: EelDescriptor): Path {
   return runBlockingMaybeCancellable {
     val eelApi = eelDescriptor.toEelApi()
     eelApi.userInfo.home.asNioPath()
+  }
+}
+
+internal fun getContextualStartWorkingDirectoryBlocking(project: Project): String? {
+  return runBlockingMaybeCancellable {
+    for (customizer in TerminalWorkingDirectoryCustomizer.EP_NAME.extensionList) {
+      try {
+        val dir = customizer.getContextualStartWorkingDirectory(project)
+        if (dir != null) {
+          return@runBlockingMaybeCancellable dir.toString()
+        }
+      }
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        log.error(PluginException.createByClass(
+          "Exception during getting contextual start directory by ${customizer::class.java}",
+          e,
+          customizer::class.java
+        ))
+      }
+    }
+    null
   }
 }
 
