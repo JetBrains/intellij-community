@@ -84,7 +84,10 @@ data class ValidationException(
  *
  * **Updates:** `--update-suppressions` captures the current XML state into suppressions.json
  * (suppresses missing JPS deps and preserves XML-only deps) and performs no XML writes.
- * When running packaging tests (commitChanges=false), stale entries cause "file out of sync" errors.
+ *
+ * **Stale entries:** a normal run counts an entry that no usage of the run needs, and the summary prints the count.
+ * `--log=stale` names each stale module or plugin entry. Only `--update-suppressions` writes the file, so a stale entry
+ * fails no test and stays until that run removes it.
  */
 @Serializable
 data class SuppressionConfig(
@@ -134,11 +137,8 @@ data class SuppressionConfig(
    * Most keys come from [org.jetbrains.intellij.build.productLayout.model.error.UnsuppressedPipelineError.errorKey].
    * Example key: `"nonStandardRoot:intellij.fullLine.yaml"`
    *
-   * **Note:** Stale suppressions (entries in this config that no longer apply) are NOT reported
-   * as errors. They're handled via the file sync pattern: when suppressions become stale,
-   * the generator auto-removes them (`commitChanges=true`) or reports as
-   * [org.jetbrains.intellij.build.productLayout.model.error.FileDiff]
-   * (`commitChanges=false` in packaging tests).
+   * **Note:** A stale key, one that no error of the run produces, is not an error. The summary counts it with the
+   * stale module and plugin entries, and `--log=stale` does not name it. Only `--update-suppressions` removes it.
    */
   @JvmField val suppressedErrors: Set<String> = emptySet(),
 ) {
