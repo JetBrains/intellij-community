@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JavaCompileTestUtil")
 
-package com.intellij.openapi.externalSystem.test
+package com.intellij.gradle.testFramework.importing
 
 import com.intellij.compiler.impl.ModuleCompileScope
 import com.intellij.openapi.application.runReadActionBlocking

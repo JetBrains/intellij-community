@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.gradle.testFramework.GradleExecutionTestCase
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.importing.compileModules
 import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.gradle.testFramework.util.withSettingsFile
-import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.gradle.util.GradleVersion

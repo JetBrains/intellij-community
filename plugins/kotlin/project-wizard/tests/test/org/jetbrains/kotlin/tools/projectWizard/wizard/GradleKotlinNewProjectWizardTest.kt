@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.gradle.testFramework.annotations.CsvCrossProductSource
+import com.intellij.gradle.testFramework.importing.compileModules
 import com.intellij.gradle.testFramework.projectInfo.buildFile
 import com.intellij.gradle.testFramework.projectInfo.file
 import com.intellij.gradle.testFramework.projectInfo.settingsFile
@@ -11,7 +12,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
-import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion

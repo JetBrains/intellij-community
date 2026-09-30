@@ -756,7 +756,7 @@ For actual compilation, the confirmed test utility is `CompilerTester`.
 Confirmed references:
 
 - implementation: `community/java/testFramework/src/com/intellij/testFramework/CompilerTester.java`
-- compile helper around a project scope: `community/platform/external-system-impl/testSrc/com/intellij/openapi/externalSystem/test/JavaCompileTestUtil.kt`
+- compile helper around a project scope: `../../../../../plugins/gradle/testFramework/testSources/importing/JavaCompileTestUtil.kt`
 - project-level compile preserving existing model/output: `community/plugins/devkit/devkit-java-tests/testSrc/org/jetbrains/idea/devkit/build/RuntimeModuleRepositoryCompilationTest.kt`
 
 Important behavior from `CompilerTester` implementation:
@@ -814,7 +814,7 @@ This exact combination is derived from confirmed pieces:
 
 If you want a ready-made helper for asserting compilation errors over a compile scope, use the pattern from:
 
-- `community/platform/external-system-impl/testSrc/com/intellij/openapi/externalSystem/test/JavaCompileTestUtil.kt`
+- `../../../../../plugins/gradle/testFramework/testSources/importing/JavaCompileTestUtil.kt`
 
 ### Pattern C: Python Venv And SDK Fixtures
 

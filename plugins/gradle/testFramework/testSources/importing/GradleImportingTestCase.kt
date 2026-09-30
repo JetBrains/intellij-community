@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener
-import com.intellij.openapi.externalSystem.test.JavaExternalSystemImportingTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.environment.Environment.Companion.getVariable
 import com.intellij.openapi.projectRoots.JavaSdk
