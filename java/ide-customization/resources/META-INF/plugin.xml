@@ -42,6 +42,7 @@
                         overrides="true"/>
 
     <platform.ide.welcomeScreenContentProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeRightTabContentProvider"/>
+    <platform.ide.welcomeScreenFeatureFrontend implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaTerminalFeatureFrontend"/>
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
