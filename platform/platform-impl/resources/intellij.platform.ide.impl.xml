@@ -501,7 +501,7 @@
     />
     <registryKey
       key="ide.sound.signals.enabled"
-      defaultValue="false"
+      defaultValue="true"
       description="Enables the sound signals feature. The feature and its settings page are hidden when this is off."
       restartRequired="false"
     />
