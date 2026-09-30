@@ -58,7 +58,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 
   override fun readLine(): @NlsSafe String? =
     runBlocking {
-      dispatcher.reader.readLine()
+      dispatcher.reader.readLine()?.text
     }
 
   override fun pushBack(): Unit =

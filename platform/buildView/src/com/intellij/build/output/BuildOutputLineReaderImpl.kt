@@ -9,17 +9,17 @@ class BuildOutputLineReaderImpl(
   linesBufferSize: Int = 64,
 ) : BuildOutputLineReader {
 
-  private val channel = Channel<String>(linesBufferSize)
+  private val channel = Channel<BuildOutputText>(linesBufferSize)
 
   private val lineProcessor = BuildOutputLineProcessor {
-    channel.send(it.text.removeSuffix("\n"))
+    channel.send(BuildOutputText.createOutputText(it.ids, it.text.removeSuffix("\n")))
   }
 
-  override suspend fun notifyTextAvailable(text: CharSequence) {
+  override suspend fun notifyTextAvailable(text: BuildOutputText) {
     lineProcessor.notifyTextAvailable(BuildOutputText.createOutputText(text.toString()))
   }
 
-  override suspend fun readLine(): String? {
+  override suspend fun readLine(): BuildOutputText? {
     return channel.receiveCatching().getOrNull()
   }
 

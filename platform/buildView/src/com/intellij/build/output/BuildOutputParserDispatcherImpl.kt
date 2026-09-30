@@ -44,7 +44,7 @@ class BuildOutputParserDispatcherImpl(
       }
 
       while (true) {
-        val line = reader.readLine() ?: break
+        val line = reader.readLine()?.text ?: break
         if (line.isBlank()) continue
         for (parser in parsers) {
           val readerWrapper = BuildOutputInstantReaderWrapper(reader, parentEventId)
@@ -68,7 +68,7 @@ class BuildOutputParserDispatcherImpl(
   }
 
   override suspend fun notifyTextAvailable(text: BuildOutputText) {
-    reader.notifyTextAvailable(text.text)
+    reader.notifyTextAvailable(text)
   }
 
   override suspend fun close() {
@@ -88,7 +88,7 @@ class BuildOutputParserDispatcherImpl(
     override fun readLine(): String? {
       val line = runBlockingCancellable { bufferedReader.readLine() }
       if (line != null) linesRead++
-      return line
+      return line?.text
     }
 
     override fun pushBack(): Unit = pushBack(1)

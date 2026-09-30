@@ -16,13 +16,13 @@ class BuildOutputReplayableLineReaderTest {
     reader.notifyTextAvailable("b\n")
     reader.notifyTextAvailable("c\n")
 
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.close()
 
-    assertNull(reader.readLine())
+    assertNull(reader.readLine()?.text)
   }
 
   @Test
@@ -32,12 +32,12 @@ class BuildOutputReplayableLineReaderTest {
     reader.notifyTextAvailable("a\n")
     reader.notifyTextAvailable("b\n")
 
-    assertEquals("a", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
 
     reader.pushBack(1)
 
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
 
     reader.close()
   }
@@ -50,14 +50,14 @@ class BuildOutputReplayableLineReaderTest {
     reader.notifyTextAvailable("b\n")
     reader.notifyTextAvailable("c\n")
 
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.pushBack(2)
 
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.close()
   }
@@ -69,11 +69,11 @@ class BuildOutputReplayableLineReaderTest {
     reader.notifyTextAvailable("a\n")
     reader.notifyTextAvailable("b\n")
 
-    assertEquals("a", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
 
     reader.pushBack(0)
 
-    assertEquals("b", reader.readLine())
+    assertEquals("b", reader.readLine()?.text)
 
     reader.close()
   }
@@ -87,14 +87,14 @@ class BuildOutputReplayableLineReaderTest {
     reader.notifyTextAvailable("c\n")
 
     // Only last `bufferSize` are in the push-back history
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.pushBack(100)
 
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.close()
   }
@@ -107,14 +107,18 @@ class BuildOutputReplayableLineReaderTest {
 
     reader.close()
 
-    assertEquals("a", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
 
-    assertNull(reader.readLine()) // EOF
+    assertNull(reader.readLine()?.text) // EOF
 
     reader.pushBack(1)
 
-    assertEquals("a", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
 
-    assertNull(reader.readLine()) // EOF again after replay
+    assertNull(reader.readLine()?.text) // EOF again after replay
+  }
+
+  private suspend fun BuildOutputReplayableLineReader.notifyTextAvailable(text: String) {
+    notifyTextAvailable(BuildOutputText.createOutputText(text))
   }
 }

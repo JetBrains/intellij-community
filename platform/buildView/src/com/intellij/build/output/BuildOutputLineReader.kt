@@ -14,14 +14,14 @@ interface BuildOutputLineReader {
    * Appends [text] to the internal buffer, emitting a line to [readLine] for every `\n` found.
    * Suspends if the internal channel is full (back-pressure).
    */
-  suspend fun notifyTextAvailable(text: CharSequence)
+  suspend fun notifyTextAvailable(text: BuildOutputText)
 
   /**
    * Suspends until a line is available.
    *
    * @return the next line, or `null` when the reader is closed.
    */
-  suspend fun readLine(): String?
+  suspend fun readLine(): BuildOutputText?
 
   /**
    * Flushes any buffered partial line, signals EOF to [readLine], and releases resources.

@@ -18,11 +18,11 @@ class BuildOutputLineReaderTest {
 
     reader.notifyTextAvailable("hello\n")
 
-    assertEquals("hello", reader.readLine())
+    assertEquals("hello", reader.readLine()?.text)
 
     reader.close()
 
-    assertNull(reader.readLine())
+    assertNull(reader.readLine()?.text)
   }
 
   @Test
@@ -32,11 +32,11 @@ class BuildOutputLineReaderTest {
     reader.notifyTextAvailable("he")
     reader.notifyTextAvailable("llo\n")
 
-    assertEquals("hello", reader.readLine())
+    assertEquals("hello", reader.readLine()?.text)
 
     reader.close()
 
-    assertNull(reader.readLine())
+    assertNull(reader.readLine()?.text)
   }
 
   @Test
@@ -46,13 +46,13 @@ class BuildOutputLineReaderTest {
 
     reader.notifyTextAvailable("a\nb\nc\n")
 
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.close()
 
-    assertNull(reader.readLine())
+    assertNull(reader.readLine()?.text)
   }
 
   @Test
@@ -64,13 +64,13 @@ class BuildOutputLineReaderTest {
     reader.notifyTextAvailable("b\n")
     reader.notifyTextAvailable("c\n")
 
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.close()
 
-    assertNull(reader.readLine())
+    assertNull(reader.readLine()?.text)
   }
 
   @Test
@@ -81,9 +81,9 @@ class BuildOutputLineReaderTest {
 
     reader.close()
 
-    assertEquals("partial", reader.readLine())
+    assertEquals("partial", reader.readLine()?.text)
 
-    assertNull(reader.readLine())
+    assertNull(reader.readLine()?.text)
   }
 
   @Test
@@ -91,7 +91,7 @@ class BuildOutputLineReaderTest {
     val reader = BuildOutputLineReaderImpl()
 
     launch {
-      assertEquals("delayed", reader.readLine())
+      assertEquals("delayed", reader.readLine()?.text)
     }
 
     delay(50.milliseconds)
@@ -107,7 +107,7 @@ class BuildOutputLineReaderTest {
 
     reader.notifyTextAvailable("hello\r\n")
 
-    assertEquals("hello", reader.readLine())
+    assertEquals("hello", reader.readLine()?.text)
 
     reader.close()
   }
@@ -123,9 +123,9 @@ class BuildOutputLineReaderTest {
       reader.notifyTextAvailable("c\n")
     }
 
-    assertEquals("a", reader.readLine())
-    assertEquals("b", reader.readLine())
-    assertEquals("c", reader.readLine())
+    assertEquals("a", reader.readLine()?.text)
+    assertEquals("b", reader.readLine()?.text)
+    assertEquals("c", reader.readLine()?.text)
 
     reader.close()
   }
@@ -150,5 +150,9 @@ class BuildOutputLineReaderTest {
     assertThrows<IllegalStateException> {
       reader.notifyTextAvailable("text")
     }
+  }
+
+  private suspend fun BuildOutputLineReader.notifyTextAvailable(text: String) {
+    notifyTextAvailable(BuildOutputText.createOutputText(text))
   }
 }
