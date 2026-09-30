@@ -5,10 +5,11 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.OutputBuildEvent
-import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.build.output.BuildOutputParserDispatcher
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,20 +21,26 @@ class ExternalSystemOutputMessageDispatcherImpl(
   consoleSettings: BuildViewSettingsProvider,
 ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
 
-  private val readers: MutableMap<ProcessOutputType, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+  private val parserDispatchers: MutableMap<ProcessOutputType, BuildOutputParserDispatcher> = ConcurrentHashMap()
 
   override fun notifyTextAvailable(text: @NlsSafe String, outputType: ProcessOutputType) {
     notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
       .withOutputType(outputType)
       .build())
 
-    readers.getOrPut(outputType) { BuildOutputInstantReaderImpl(buildId, buildId, ::notifyBuildEvent, parsers) }
-      .append(text)
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking {
+      parserDispatchers.getOrPut(outputType) { createParserDispatcher(buildId) }
+        .notifyTextAvailable(text)
+    }
   }
 
   override fun doClose() {
-    for (taskOutputReader in readers.values) {
-      taskOutputReader.close()
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking {
+      for (parserDispatcher in parserDispatchers.values) {
+        parserDispatcher.close()
+      }
     }
   }
 }

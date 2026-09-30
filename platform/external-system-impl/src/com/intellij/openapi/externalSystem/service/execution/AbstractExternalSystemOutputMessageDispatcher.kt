@@ -6,7 +6,11 @@ import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.StartId
+import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.build.output.BuildOutputParserDispatcher
+import com.intellij.build.output.BuildOutputParserDispatcherImpl
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ContainerUtil
@@ -19,7 +23,7 @@ import java.util.function.Consumer
 abstract class AbstractExternalSystemOutputMessageDispatcher(
   protected val buildId: BuildId,
   private val listener: BuildProgressListener,
-  protected val parsers: List<BuildOutputParser>,
+  private val parsers: List<BuildOutputParser>,
   protected val consoleSettings: BuildViewSettingsProvider,
 ) : ExternalSystemOutputMessageDispatcher {
 
@@ -27,6 +31,16 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
   private var isClosed: Boolean = false
 
   private val onCompletionHandlers = ContainerUtil.createConcurrentList<Consumer<in Throwable?>>()
+
+  private val multicaster = object : BuildOutputMulticaster {
+    override fun notifyBuildEvent(event: BuildEvent) {
+      notifyBuildEvent(buildId, event)
+    }
+  }
+
+  protected fun createParserDispatcher(parentEventId: StartId): BuildOutputParserDispatcher {
+    return BuildOutputParserDispatcherImpl(parentEventId, parsers, multicaster)
+  }
 
   override fun notifyBuildEvent(buildId: BuildId, event: BuildEvent) {
     when (event) {

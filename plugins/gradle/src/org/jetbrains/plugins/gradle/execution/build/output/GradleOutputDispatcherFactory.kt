@@ -9,8 +9,8 @@ import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.OutputBuildEventImpl
-import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.build.output.BuildOutputParserDispatcher
 import com.intellij.build.output.LineProcessor
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemOutputMessageDispatcher
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -70,7 +71,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       private val outputType: ProcessOutputType,
     ) : LineProcessor() {
 
-      private val tasksOutputReaders: MutableMap<StartId, BuildOutputInstantReaderImpl> = ConcurrentHashMap()
+      private val parserDispatchers: MutableMap<StartId, BuildOutputParserDispatcher> = ConcurrentHashMap()
 
       override fun process(line: String) {
         val cleanLine = removeLoggerPrefix(line)
@@ -95,15 +96,21 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line + '\n', outputType)) //NON-NLS todo!!
         }
 
-        tasksOutputReaders.getOrPut(taskId) { BuildOutputInstantReaderImpl(buildId, taskId, ::notifyBuildEvent, parsers) }
-          .appendLine(cleanLine)
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking {
+          parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
+            .notifyTextAvailable(cleanLine + '\n')
+        }
       }
 
       override fun close() {
         super.close()
 
-        for (taskOutputReader in tasksOutputReaders.values) {
-          taskOutputReader.close()
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking {
+          for (parserDispatcher in parserDispatchers.values) {
+            parserDispatcher.close()
+          }
         }
       }
     }
