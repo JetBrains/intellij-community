@@ -3,19 +3,14 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.properties.BundleNameEvaluator
 import com.intellij.lang.properties.PropertiesImplUtil
 import com.intellij.lang.properties.PropertiesReferenceManager
 import com.intellij.lang.properties.psi.PropertyKeyIndex
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiCompiledElement
@@ -23,8 +18,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
@@ -119,14 +112,9 @@ private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElement
         target, idRange,
         DevKitBundle.message("inspection.tool.window.stripe.title.core.bundle", moduleName, key, actualBundle)
       )
-      is ReadBundle.NotDeclared if actualBundle == IDE_BUNDLE_NAME -> holder.registerProblem(
-        target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle.ide.bundle", moduleName, key)
-      )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         target, idRange,
-        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", moduleName, key, actualBundle),
-        DeclareResourceBundleFix(actualBundle, source.descriptor)
+        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", moduleName, key, actualBundle)
       )
     }
   }
@@ -162,39 +150,11 @@ private class BundleVisitor(private val holder: ProblemsHolder) : PsiElementVisi
         element,
         DevKitBundle.message("inspection.tool.window.stripe.title.property.wrong.bundle", moduleName, toolWindowId, readBundle.name)
       )
-      is ReadBundle.NotDeclared if thisBundleName == IDE_BUNDLE_NAME -> holder.registerProblem(
-        element,
-        DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle.ide.bundle", moduleName, toolWindowId)
-      )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         element,
-        DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle", moduleName, toolWindowId),
-        DeclareResourceBundleFix(thisBundleName, source.descriptor)
+        DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle", moduleName, toolWindowId)
       )
     }
-  }
-}
-
-/**
- * Declares the bundle that holds the key. Only a descriptor without a declaration gets this fix:
- * a change of an existing declaration also moves every other key that the descriptor reads through it.
- *
- * On the key side, the problem is in the bundle, but the fix changes the descriptor.
- */
-private class DeclareResourceBundleFix(private val bundleName: String, descriptor: XmlFile) : PsiUpdateModCommandQuickFix() {
-
-  private val descriptor: SmartPsiElementPointer<XmlFile> = SmartPointerManager.createPointer(descriptor)
-
-  override fun getName(): @IntentionName String =
-    DevKitBundle.message("inspection.tool.window.stripe.title.declare.bundle.fix", bundleName)
-
-  override fun getFamilyName(): @IntentionFamilyName String =
-    DevKitBundle.message("inspection.tool.window.stripe.title.declare.bundle.fix.family")
-
-  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
-    val writableDescriptor = updater.getWritable(descriptor.element ?: return)
-    val ideaPlugin = DescriptorUtil.getIdeaPlugin(writableDescriptor) ?: return
-    ideaPlugin.resourceBundle.stringValue = bundleName
   }
 }
 
@@ -308,7 +268,7 @@ private fun resolveToolWindowExtension(propertyKey: PsiElement): XmlTag? {
 /**
  * What the platform reads for one `<toolWindow>` extension.
  */
-private class StripeTitleSource(val descriptor: XmlFile, val module: Module, val readBundle: ReadBundle)
+private class StripeTitleSource(val module: Module, val readBundle: ReadBundle)
 
 /**
  * Answers `null` when the inspection must stay silent. Both report sides share this decision, so they cannot drift.
@@ -321,7 +281,7 @@ private fun stripeTitleSource(extension: XmlTag): StripeTitleSource? {
   // This resolves a class and walks its body, so it runs after the cheap index lookups above.
   if (setsStripeTitleInCode(extension, module)) return null
 
-  return StripeTitleSource(descriptor, module, readBundle)
+  return StripeTitleSource(module, readBundle)
 }
 
 /**

@@ -37,44 +37,18 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
       <idea-plugin>
         <id>com.example.plugin</id>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.MyBundle'. Declare 'messages.MyBundle' as the <resource-bundle> of '$moduleName'.">My Tool Window</warning>"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.MyBundle'. Declare a <resource-bundle> in '$moduleName', and move the key to it.">My Tool Window</warning>"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
     )
     val bundle = addFile(
       "messages/MyBundle.properties", """
-      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. Declare this bundle as the <resource-bundle> of '$moduleName'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. Declare a <resource-bundle> in '$moduleName', and move this key to it.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
       """.trimIndent()
     )
 
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
-  }
-
-  fun `test does not offer to declare IdeBundle`() {
-    val pluginXml = addFile(
-      "META-INF/plugin.xml", """
-      <idea-plugin>
-        <id>com.example.plugin</id>
-        <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.IdeBundle', which belongs to the core plugin. Declare a <resource-bundle> in '$moduleName', and move the key to it.">My Tool Window</warning>"/>
-        </extensions>
-      </idea-plugin>
-      """.trimIndent()
-    )
-    val ideBundle = addFile(
-      "messages/IdeBundle.properties", """
-      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. This bundle belongs to the core plugin. Declare a <resource-bundle> in '$moduleName', and move this key to it.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
-      """.trimIndent()
-    )
-
-    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, ideBundle)
-
-    myFixture.configureFromExistingVirtualFile(pluginXml)
-    myFixture.editor.caretModel.moveToOffset(myFixture.file.text.indexOf("My Tool Window"))
-    assertEmpty(myFixture.filterAvailableIntentions("Declare"))
-    myFixture.configureFromExistingVirtualFile(ideBundle)
-    assertEmpty(myFixture.filterAvailableIntentions("Declare"))
   }
 
   fun `test reports a core plugin tool window against IdeBundle`() {
@@ -115,14 +89,14 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
       "my.module.xml", """
       <idea-plugin>
         <extensions defaultExtensionNs="com.intellij">
-          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.PluginBundle'. Declare 'messages.PluginBundle' as the <resource-bundle> of '$moduleName'.">My Tool Window</warning>"/>
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.PluginBundle'. Declare a <resource-bundle> in '$moduleName', and move the key to it.">My Tool Window</warning>"/>
         </extensions>
       </idea-plugin>
       """.trimIndent()
     )
     val pluginBundle = addFile(
       "messages/PluginBundle.properties", """
-      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. Declare this bundle as the <resource-bundle> of '$moduleName'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. Declare a <resource-bundle> in '$moduleName', and move this key to it.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
       """.trimIndent()
     )
 
@@ -516,64 +490,5 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
     addFile("messages/MyBundle.properties", "unrelated.key=Value\n")
 
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml)
-  }
-
-  fun `test fix declares the resource bundle of the descriptor`() {
-    addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-    // The fix formats the new tag with the default XML indent of 4 spaces, so the descriptor uses it too.
-    myFixture.configureByText(
-      "plugin.xml", """
-      <idea-plugin>
-          <id>com.example.plugin</id>
-          <extensions defaultExtensionNs="com.intellij">
-              <toolWindow id="My Tool<caret> Window"/>
-          </extensions>
-      </idea-plugin>
-      """.trimIndent()
-    )
-
-    myFixture.launchAction(myFixture.findSingleIntention("Declare 'messages.MyBundle' as the resource bundle"))
-
-    myFixture.checkResult("""
-      <idea-plugin>
-          <id>com.example.plugin</id>
-          <extensions defaultExtensionNs="com.intellij">
-              <toolWindow id="My Tool Window"/>
-          </extensions>
-          <resource-bundle>messages.MyBundle</resource-bundle>
-      </idea-plugin>
-      """.trimIndent())
-  }
-
-  fun `test fix on the key declares the resource bundle of the descriptor`() {
-    // The fix formats the new tag with the default XML indent of 4 spaces, so the descriptor uses it too.
-    addFile(
-      "META-INF/plugin.xml", """
-      <idea-plugin>
-          <id>com.example.plugin</id>
-          <extensions defaultExtensionNs="com.intellij">
-              <toolWindow id="My Tool Window"/>
-          </extensions>
-      </idea-plugin>
-      """.trimIndent()
-    )
-    val bundle = addFile("messages/MyBundle.properties", "toolwindow.stripe.My_Tool_Window=My Tool Window\n")
-    myFixture.configureFromExistingVirtualFile(bundle)
-    // The key starts the file, so this puts the caret on the key.
-    myFixture.editor.caretModel.moveToOffset(1)
-
-    myFixture.launchAction(myFixture.findSingleIntention("Declare 'messages.MyBundle' as the resource bundle"))
-
-    myFixture.checkResult(
-      "META-INF/plugin.xml", """
-      <idea-plugin>
-          <id>com.example.plugin</id>
-          <extensions defaultExtensionNs="com.intellij">
-              <toolWindow id="My Tool Window"/>
-          </extensions>
-          <resource-bundle>messages.MyBundle</resource-bundle>
-      </idea-plugin>
-      """.trimIndent(), true
-    )
   }
 }
