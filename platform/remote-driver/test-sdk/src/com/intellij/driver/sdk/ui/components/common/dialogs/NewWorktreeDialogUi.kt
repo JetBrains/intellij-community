@@ -17,7 +17,7 @@ fun Finder.newWorktreeDialog(action: NewWorktreeDialogUi.() -> Unit) {
 }
 
 class NewWorktreeDialogUi(data: ComponentData) : DialogUiComponent(data) {
-  override val primaryButtonText: String = "Create & Open Worktree"
+  override val primaryButtonText: String = "Create and Open Worktree"
 
   val createButton: UiComponent
     get() = x("//div[@class='JButton' and @visible_text='$primaryButtonText']")
