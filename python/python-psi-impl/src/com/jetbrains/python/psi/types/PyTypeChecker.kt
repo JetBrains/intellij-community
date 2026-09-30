@@ -1152,14 +1152,85 @@ object PyTypeChecker {
     return false
   }
 
+  /**
+   * The provided value is the intersection, so the quantifier is `any`: a value that is both `A` and `B` is
+   * accepted wherever either member is. Mirrors the expected-side union case.
+   */
   private fun match(expected: PyType, actual: PyIntersectionType, context: MatchContext): Boolean {
-    // When more than one member can match, the choice is arbitrary, so the substitutions do not keep their bound sides.
-    val memberContext = if (actual.members.size > 1) context.withoutBoundSides() else context
-    return actual.members.any { type: PyType? -> match(expected, type, memberContext).getOrDefault(false) }
+    return recordFrameBool(context, {
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.intersection.member.not.assignable",
+                                 codifiedType(context, actual), codifiedType(context, expected))
+    }, {
+      PyMismatchStep.NoIntersectionMember(codifiedType(context, expected), codifiedType(context, actual))
+    }) {
+      val matchesAnyMember = {
+        // When more than one member can match, the choice is arbitrary, so the substitutions do not keep their bound sides.
+        val memberContext = if (actual.members.size > 1) context.withoutBoundSides() else context
+        actual.members.any { type: PyType? -> match(expected, type, memberContext).getOrDefault(false) }
+      }
+      if (exceedsBreakdownBound(actual)) {
+        withoutDiagnostics(context) { matchesAnyMember() }
+      }
+      else {
+        matchesAnyMember()
+      }
+    }
   }
 
+  /**
+   * The required side is the intersection, so the quantifier is `all`: every member is an independent
+   * requirement, and each failing one earns its own frame.
+   */
   private fun match(expected: PyIntersectionType, actual: PyType, context: MatchContext): Boolean {
-    return expected.members.all { type: PyType? -> match(type, actual, context).getOrDefault(true) }
+    val collector = context.diagnostics
+    if (collector == null || exceedsBreakdownBound(expected)) {
+      val shortCircuited = withoutDiagnostics(context) {
+        expected.members.all { type: PyType? -> match(type, actual, context).getOrDefault(true) }
+      }
+      if (!shortCircuited) {
+        recordLeaf(context, {
+          PyMismatchStep.NoIntersectionMember(codifiedType(context, actual), codifiedType(context, expected),
+                                              expectedIsIntersection = true)
+        }) {
+          PyPsiBundle.problemMessage("INSP.type.checker.breakdown.not.assignable.to.intersection",
+                                     codifiedType(context, actual), codifiedType(context, expected))
+        }
+      }
+      return shortCircuited
+    }
+
+    // One walk, one buffer per failing member, as the actual-side union does.
+    val failing = mutableListOf<Pair<PyType?, List<PyTypeMismatchExplanation>>>()
+    for (member in expected.members) {
+      val (memberMatched, reasons) = collectInto(collector) { match(member, actual, context).getOrDefault(true) }
+      if (!memberMatched) {
+        failing.add(member to reasons)
+      }
+    }
+    if (failing.isEmpty()) return true
+
+    if (failing.size == 1) {
+      // One unmet requirement: its own reason already names the member, so an umbrella would only add a level.
+      collector.current.addAll(failing.single().second)
+    }
+    else {
+      recordFrameBool(context, {
+        PyPsiBundle.problemMessage("INSP.type.checker.breakdown.not.assignable.to.intersection",
+                                   codifiedType(context, actual), codifiedType(context, expected))
+      }, {
+        PyMismatchStep.NoIntersectionMember(codifiedType(context, actual), codifiedType(context, expected),
+                                            expectedIsIntersection = true)
+      }) {
+        for ((member, reasons) in failing) {
+          val message = PyPsiBundle.problemMessage("INSP.type.checker.breakdown.intersection.member.incompatible",
+                                                   codifiedType(context, actual), codifiedType(context, member))
+          collector.current.add(PyTypeMismatchExplanation(message, reasons,
+                                                          PyMismatchStep.IntersectionMember(codifiedType(context, member))))
+        }
+        false
+      }
+    }
+    return false
   }
 
   private fun match(expected: PyType, actual: PyUnsafeUnionType, context: MatchContext): Boolean {

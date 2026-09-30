@@ -1213,7 +1213,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         // Calling a value of a union type is valid only if *every* member is callable and accepts the arguments
         // (a member that is not callable at all is reported by PyCallingNonCallableInspection). This differs from an
         // overloaded callable (a `PyOverloadType`, not a `PyUnionType`), for which matching *any* overload is enough.
-        // TODO: intersection type
+        // An intersection callee needs the overload-set rule, not this one, which PY-90282 tracks.
         for (mappings in argumentMappingsPerCallee) {
           if (reportArgumentTypeMismatch(callSite, mappings)) {
             return

@@ -160,6 +160,22 @@ sealed interface PyMismatchStep {
    * self-names (a missing/wrong-typed protocol attribute), and keeps the wrapper line above the reason otherwise.
    */
   data class UnionMember(val member: CodifiedParam) : PyMismatchStep
+
+  /**
+   * An intersection branch. Its quantifier is the opposite of a union's, so the two cannot share a step.
+   *
+   * [expectedIsIntersection] tells the directions apart. When `true`, the required side is the intersection:
+   * [other] failed against one or more members of [intersection], each an independent requirement. When
+   * `false`, the provided value is the intersection: no member of it is assignable to the required [other].
+   */
+  data class NoIntersectionMember(
+    val other: CodifiedParam,
+    val intersection: CodifiedParam,
+    val expectedIsIntersection: Boolean = false,
+  ) : PyMismatchStep
+
+  /** [UnionMember] for an intersection branch: names the failing [member] to tell parallel reasons apart. */
+  data class IntersectionMember(val member: CodifiedParam) : PyMismatchStep
 }
 
 /** How a TypedDict key failed to match (see [PyMismatchStep.TypedDictKey]). */
