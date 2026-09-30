@@ -9,6 +9,7 @@ import com.intellij.platform.util.io.storages.database.DurableDatabase
 import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory
 import com.intellij.platform.util.io.storages.database.impl.DropRetiredChunksHousekeeper
 import com.intellij.platform.util.io.storages.database.impl.SparseChunksEvacuationHousekeeper
+import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
@@ -140,6 +141,22 @@ class DurableDatabaseIndexLayoutProvider(
     }
     if (lazyExecutorHolder.isInitialized()) {
       lazyExecutorHolder.value.shutdown()
+    }
+  }
+
+
+  /**
+   * For monitoring/testing purposes
+   * @return database metrics, or {@link DatabaseMetrics#DUMMY} if database is not yet opened
+   */
+  @ApiStatus.Internal
+  @Synchronized
+  fun databaseMetrics(): DatabaseMetrics {
+    if (lazyDatabaseHolder.isInitialized()) {
+      return lazyDatabaseHolder.value.metrics(/*snapshot: */true)
+    }
+    else {
+      return DatabaseMetrics.DUMMY
     }
   }
 }
