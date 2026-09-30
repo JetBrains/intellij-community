@@ -51,8 +51,8 @@ class SeItemDataFactory {
 
     // The language holds for every item, because it comes out of the raw object.
     computeCatchingOrNull(true, { e -> "Couldn't add language info (${providerId.value}): $e" }) {
-      PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
-        readAction {
+      readAction {
+        PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
           additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
         }
       }
