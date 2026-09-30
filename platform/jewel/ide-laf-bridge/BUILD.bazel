@@ -2,6 +2,7 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+load("//platform/jewel:bridge-e2e.bzl", "bridge_e2e_test")
 
 jps_test(
     name = "ideLafBridge-tests_test",
@@ -15,6 +16,34 @@ jps_test(
 ### auto-generated section `dev intellij.platform.jewel.ideLafBridge` start
 content_module_jar(module = ":ide-laf-bridge")
 ### auto-generated section `dev intellij.platform.jewel.ideLafBridge` end
+
+# Headful in-IDE tests for JBPopupRenderer (JEWEL-1397). Hand-written and outside the JPS model, like the
+# Spectre lane: the target needs the whole community build graph as runfiles, which the generated sections
+# cannot express. See platform/jewel/docs/e2e-tests.md.
+create_kotlinc_options(
+    name = "custom_jewel-bridge-e2e-tests",
+    opt_in = [
+        "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+        "org.jetbrains.jewel.foundation.InternalJewelApi",
+    ],
+    x_context_parameters = True,
+)
+
+bridge_e2e_test(
+    name = "jewel-bridge-e2e-tests",
+    srcs = glob(
+        ["src/e2eTest/kotlin/**/*.kt"],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_jewel-bridge-e2e-tests",
+    module_name = "intellij.platform.jewel.ideLafBridge.e2eTests",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@lib//:libraries-kotlin_test-kotlin-test",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/jewel/showcase-e2e:showcase-e2e-scenarios",
+    ],
+)
 
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
 create_kotlinc_options(
