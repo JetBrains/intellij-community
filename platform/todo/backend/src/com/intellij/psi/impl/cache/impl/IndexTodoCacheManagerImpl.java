@@ -6,6 +6,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -111,6 +112,12 @@ public final class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   private int getTodoCountImpl(@NotNull VirtualFile file, IndexPattern @NotNull ... indexPatterns) {
     if (file instanceof VirtualFileWindow) return -1;
+
+    if (file.isInLocalFileSystem() &&
+        !TodoIndexers.belongsToProject(myProject, file) &&
+        !ProjectFileIndex.getInstance(myProject).isInProjectOrExcluded(file)) {
+      return -1;
+    }
 
     Map<TodoIndexEntry, Integer> data = getTodoMap(myProject, file);
     if (data == null || data.isEmpty()) return 0;

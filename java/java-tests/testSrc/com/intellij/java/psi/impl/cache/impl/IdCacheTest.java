@@ -9,9 +9,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 
 public class IdCacheTest extends JavaCodeInsightTestCase {
   private VirtualFile myRootDir;
@@ -200,6 +203,46 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     final CacheManager cache = CacheManager.getInstance(myProject);
     cache.getFilesWithWord("xxx", UsageSearchContext.ANY, GlobalSearchScope.projectScope(myProject), false);
     System.gc();
+  }
+
+  public void testTodoCountUnknownForFileOutsideProject() {
+    VirtualFile file = createFileWithTwoTodos(getTempDir().createVirtualDir());
+    TodoCacheManager todocache = TodoCacheManager.getInstance(myProject);
+
+    assertEquals(-1, todocache.getTodoCount(file, TodoIndexPatternProvider.getInstance()));
+    TodoPattern pattern = TodoConfiguration.getInstance().getTodoPatterns()[0];
+    assertEquals(-1, todocache.getTodoCount(file, pattern.getIndexPattern()));
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    assertNotNull(psiFile);
+    PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(myProject);
+    assertEquals(2, helper.findTodoItems(psiFile).length);
+    assertEquals(2, helper.getTodoItemsCount(psiFile));
+
+    checkResult(new String[]{"1.java", "3.java"}, convert(getFilesWithTodoItems(todocache)));
+  }
+
+  public void testTodoCountZeroForLibrarySourceFile() {
+    VirtualFile libDir = getTempDir().createVirtualDir();
+    PsiTestUtil.addProjectLibrary(myModule, "lib", List.of(), List.of(libDir));
+    VirtualFile file = createFileWithTwoTodos(libDir);
+
+    assertEquals(0, TodoCacheManager.getInstance(myProject).getTodoCount(file, TodoIndexPatternProvider.getInstance()));
+  }
+
+  public void testTodoCountZeroForExcludedFile() {
+    VirtualFile excludedDir = createChildDirectory(myRootDir, "excluded");
+    PsiTestUtil.addExcludedRoot(myModule, excludedDir);
+    VirtualFile file = createFileWithTwoTodos(excludedDir);
+
+    assertEquals(0, TodoCacheManager.getInstance(myProject).getTodoCount(file, TodoIndexPatternProvider.getInstance()));
+  }
+
+  private @NotNull VirtualFile createFileWithTwoTodos(@NotNull VirtualFile dir) {
+    VirtualFile file = createChildData(dir, "A.java");
+    setFileText(file, "class A {\n  // TODO first\n  // TODO second\n}\n");
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    return file;
   }
 
   private void checkCache(CacheManager cache, TodoCacheManager todocache) {
