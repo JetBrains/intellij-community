@@ -119,6 +119,10 @@ private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElement
         target, idRange,
         DevKitBundle.message("inspection.tool.window.stripe.title.core.bundle", moduleName, key, actualBundle)
       )
+      is ReadBundle.NotDeclared if actualBundle == IDE_BUNDLE_NAME -> holder.registerProblem(
+        target, idRange,
+        DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle.ide.bundle", moduleName, key)
+      )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         target, idRange,
         DevKitBundle.message("inspection.tool.window.stripe.title.no.bundle", moduleName, key, actualBundle),
@@ -157,6 +161,10 @@ private class BundleVisitor(private val holder: ProblemsHolder) : PsiElementVisi
       is ReadBundle.Declared, is ReadBundle.CoreIdeBundle -> holder.registerProblem(
         element,
         DevKitBundle.message("inspection.tool.window.stripe.title.property.wrong.bundle", moduleName, toolWindowId, readBundle.name)
+      )
+      is ReadBundle.NotDeclared if thisBundleName == IDE_BUNDLE_NAME -> holder.registerProblem(
+        element,
+        DevKitBundle.message("inspection.tool.window.stripe.title.property.no.bundle.ide.bundle", moduleName, toolWindowId)
       )
       is ReadBundle.NotDeclared -> holder.registerProblem(
         element,

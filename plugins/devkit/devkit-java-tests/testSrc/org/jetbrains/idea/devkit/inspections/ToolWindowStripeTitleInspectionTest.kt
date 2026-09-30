@@ -51,6 +51,32 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
+  fun `test does not offer to declare IdeBundle`() {
+    val pluginXml = addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.IdeBundle', which belongs to the core plugin. Declare a <resource-bundle> in '$moduleName', and move the key to it.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val ideBundle = addFile(
+      "messages/IdeBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. This bundle belongs to the core plugin. Declare a <resource-bundle> in '$moduleName', and move this key to it.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, pluginXml, ideBundle)
+
+    myFixture.configureFromExistingVirtualFile(pluginXml)
+    myFixture.editor.caretModel.moveToOffset(myFixture.file.text.indexOf("My Tool Window"))
+    assertEmpty(myFixture.filterAvailableIntentions("Declare"))
+    myFixture.configureFromExistingVirtualFile(ideBundle)
+    assertEmpty(myFixture.filterAvailableIntentions("Declare"))
+  }
+
   fun `test reports a core plugin tool window against IdeBundle`() {
     // The core plugin ignores the declared bundle, so the platform reads messages.IdeBundle.
     val pluginXml = addFile(
