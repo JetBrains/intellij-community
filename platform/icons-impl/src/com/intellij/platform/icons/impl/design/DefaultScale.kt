@@ -27,8 +27,13 @@ class DefaultFactorScale(override val factor: Double) : FactorScale {
 }
 
 @Serializable
-class DefaultFitAreaScale(override val width: IconUnit, override val height: IconUnit, override val relative: Boolean) :
-    FitAreaScale {
+class DefaultFitAreaScale(
+    override val width: IconUnit,
+    override val height: IconUnit,
+    override val relative: Boolean,
+    override val upscale: Boolean = true,
+    override val downscale: Boolean = true,
+) : FitAreaScale {
     override fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float): Float {
         if (originalWidth <= 0 || originalHeight <= 0) return 0f
         val scaling = DefaultScalingContext(density, if (relative) contextScale else 1f)
@@ -36,7 +41,10 @@ class DefaultFitAreaScale(override val width: IconUnit, override val height: Ico
         val realHeight = height.asFractionalPixels(scaling)
         val widthFactor = realWidth / originalWidth
         val heightFactor = realHeight / originalHeight
-        return widthFactor.coerceAtMost(heightFactor)
+        var factor = widthFactor.coerceAtMost(heightFactor)
+        if (!upscale) factor = factor.coerceAtMost(1f)
+        if (!downscale) factor = factor.coerceAtLeast(1f)
+        return factor
     }
 
     override fun equals(other: Any?): Boolean {
@@ -46,6 +54,8 @@ class DefaultFitAreaScale(override val width: IconUnit, override val height: Ico
         other as DefaultFitAreaScale
 
         if (relative != other.relative) return false
+        if (upscale != other.upscale) return false
+        if (downscale != other.downscale) return false
         if (width != other.width) return false
         if (height != other.height) return false
 
@@ -54,12 +64,15 @@ class DefaultFitAreaScale(override val width: IconUnit, override val height: Ico
 
     override fun hashCode(): Int {
         var result = relative.hashCode()
+        result = 31 * result + upscale.hashCode()
+        result = 31 * result + downscale.hashCode()
         result = 31 * result + width.hashCode()
         result = 31 * result + height.hashCode()
         return result
     }
 
-    override fun toString(): String = "DefaultFitAreaScale(width=$width, height=$height, relative=$relative)"
+    override fun toString(): String =
+        "DefaultFitAreaScale(width=$width, height=$height, relative=$relative, upscale=$upscale, downscale=$downscale)"
 }
 
 @Serializable

@@ -64,7 +64,7 @@ f:com.intellij.platform.icons.impl.intellij.design.IntelliJIconDesigner
 - <init>():V
 - f:addSwingLayer(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
 - createNestedDesigner():com.intellij.platform.icons.impl.design.DefaultIconDesigner
-- image(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):V
+- imageRes(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):V
 f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererManager
 - com.intellij.platform.icons.impl.rendering.DefaultIconRendererManager
 - <init>():V
@@ -78,15 +78,21 @@ f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
 - b:<init>(com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher,Z,com.intellij.platform.icons.design.Color,com.intellij.util.SVGLoader$SvgElementColorPatcherProvider,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getLegacyPatcherProvider():com.intellij.util.SVGLoader$SvgElementColorPatcherProvider
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
+- com.intellij.openapi.util.ScalableIcon
 - com.intellij.platform.icons.swing.ScalableSwingIcon
 - javax.swing.Icon
 - <init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale):V
 - b:<init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- createStrokeIcon(java.awt.Color):javax.swing.Icon
+- equals(java.lang.Object):Z
 - f:getIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - getIconHeight():I
 - getIconWidth():I
+- getScale():F
 - f:getScale():com.intellij.platform.icons.scale.IconScale
+- hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- scale(F):javax.swing.Icon
 - scaled(com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIconLayerRenderer
 - com.intellij.platform.icons.impl.rendering.layers.BaseImageIconLayerRenderer
@@ -135,6 +141,10 @@ f:com.intellij.platform.icons.impl.intellij.rendering.images.ModuleImageResource
 - com.intellij.platform.icons.rendering.ImageResourceLoader
 - <init>():V
 - loadImage(com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+f:com.intellij.platform.icons.impl.intellij.rendering.images.UrlImageResourceLoader
+- com.intellij.platform.icons.rendering.ImageResourceLoader
+- <init>():V
+- loadImage(com.intellij.platform.icons.impl.UrlImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
 f:com.intellij.platform.icons.impl.intellij.serializers.CachedImageIconSerializer
 - kotlinx.serialization.KSerializer
 - sf:INSTANCE:com.intellij.platform.icons.impl.intellij.serializers.CachedImageIconSerializer

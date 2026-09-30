@@ -10,12 +10,12 @@ import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.actionSystem.isGray
 import com.intellij.openapi.actionSystem.paintToImage
-import com.intellij.openapi.actionSystem.unknownMarkerPixels
 import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
+import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.RegistryKey
@@ -30,6 +30,7 @@ import kotlin.test.assertIsNot
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @TestApplication
@@ -62,15 +63,15 @@ class ActionPopupIconDescriptorTest {
   }
 
   @Test
-  fun `legacy-only action gives the unknown marker`() {
+  fun `legacy-only action gives the icon bridged from the legacy icon`() {
     val presentation = Presentation()
     presentation.icon = AllIcons.General.Add
 
     val icons = calcRawIcons(presentation)
 
-    val icon = assertIs<ScalableSwingIcon>(icons.first)
+    val icon = assertIs<SwingIcon>(icons.first)
     assertNull(icons.second)
-    assertEquals(unknownMarkerPixels(), icon.paintToImage().visiblePixels(), "the popup row did not paint the unknown marker")
+    assertSame(presentation.iconDescriptor, icon.iconDescriptor, "the popup row did not use the bridged descriptor")
   }
 
   @Test
@@ -283,9 +284,9 @@ class ActionPopupIconDescriptorTest {
       item
     }
 
-  private fun executeDescriptor(): IconDescriptor = imageIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
+  private fun executeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
 
-  private fun closeDescriptor(): IconDescriptor = imageIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
+  private fun closeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
 
   private fun calcRawIcons(
     presentation: Presentation,

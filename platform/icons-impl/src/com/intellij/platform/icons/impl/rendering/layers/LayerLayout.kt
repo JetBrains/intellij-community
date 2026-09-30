@@ -136,6 +136,8 @@ class Placement(val bounds: Bounds, val scale: Float = 1f)
 
 private fun IconScale?.applyTo(dimensions: CompoundDimensions): CompoundDimensions {
     return when (this) {
+        // a limited fit only resizes content beyond the limit, which needs pixels to tell: assume it keeps its size
+        is FitAreaScale if !upscale || !downscale -> dimensions
         is FitAreaScale -> {
             CompoundDimensions(width.compoundSize(), height.compoundSize())
         }
@@ -152,6 +154,12 @@ private fun IconScale?.applyTo(dimensions: CompoundDimensions): CompoundDimensio
 private fun IconScale?.applyTo(dimensions: CompoundDimensions, density: Float, contextScale: Float = 1f): Dimensions {
     val scaling = DefaultScalingContext(density, if (isRelative()) contextScale else 1f)
     if (this == null) return dimensions.asPixels(scaling)
+    if (this is FitAreaScale && (!upscale || !downscale)) {
+        // the area is a limit: the content keeps its own size unless the limit resizes it
+        val content = dimensions.asPixels(DefaultScalingContext(density, contextScale))
+        val factor = toFactor(density, content.width, content.height, contextScale)
+        return Dimensions((content.width * factor).roundToInt(), (content.height * factor).roundToInt())
+    }
     return applyTo(dimensions).asPixels(scaling)
 }
 

@@ -2,7 +2,7 @@
 package com.intellij.openapi.actionSystem
 
 import com.intellij.icons.AllIcons
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.ui.JBColor
 import java.awt.Component
@@ -56,7 +56,7 @@ internal fun <T> withDarkTheme(action: () -> T): T {
 
 /** The pixels of the Unknown marker. An action with only a legacy icon must paint exactly these. */
 internal fun unknownMarkerPixels(): List<Int> {
-  val marker = imageIconDescriptor("expui/toolbar/unknown.svg", AllIcons::class.java.classLoader)
+  val marker = imageResIconDescriptor("expui/toolbar/unknown.svg", AllIcons::class.java.classLoader)
   val pixels = marker.createSwingIcon().paintToImage().visiblePixels()
   check(pixels.isNotEmpty()) { "the unknown marker painted nothing" }
   return pixels

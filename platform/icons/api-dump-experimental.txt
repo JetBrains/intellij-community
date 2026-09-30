@@ -1,6 +1,7 @@
 *f:com.intellij.platform.icons.AllIconDescriptors
 - sf:INSTANCE:com.intellij.platform.icons.AllIconDescriptors
 - sf:getEmpty():com.intellij.platform.icons.IconDescriptor
+- sf:getIcon():com.intellij.platform.icons.IconDescriptor
 - sf:getIdea_logo_welcome():com.intellij.platform.icons.IconDescriptor
 - sf:getStub():com.intellij.platform.icons.IconDescriptor
 *f:com.intellij.platform.icons.AllIconDescriptors$Actions
@@ -45,6 +46,7 @@
 - sf:getEdit():com.intellij.platform.icons.IconDescriptor
 - sf:getEditScheme():com.intellij.platform.icons.IconDescriptor
 - sf:getEditSource():com.intellij.platform.icons.IconDescriptor
+- sf:getEnableNewUi():com.intellij.platform.icons.IconDescriptor
 - sf:getExecute():com.intellij.platform.icons.IconDescriptor
 - sf:getExit():com.intellij.platform.icons.IconDescriptor
 - sf:getExpandall():com.intellij.platform.icons.IconDescriptor
@@ -507,6 +509,7 @@
 - sf:getBalloonInformation():com.intellij.platform.icons.IconDescriptor
 - sf:getBalloonWarning():com.intellij.platform.icons.IconDescriptor
 - sf:getBalloonWarning12():com.intellij.platform.icons.IconDescriptor
+- sf:getBeta():com.intellij.platform.icons.IconDescriptor
 - sf:getButtonDropTriangle():com.intellij.platform.icons.IconDescriptor
 - sf:getChevronDown():com.intellij.platform.icons.IconDescriptor
 - sf:getChevronDownLargeWhite():com.intellij.platform.icons.IconDescriptor
@@ -593,6 +596,7 @@
 - sf:getModifiedSelected():com.intellij.platform.icons.IconDescriptor
 - sf:getMoreTabs():com.intellij.platform.icons.IconDescriptor
 - sf:getMouse():com.intellij.platform.icons.IconDescriptor
+- sf:getNew_badge():com.intellij.platform.icons.IconDescriptor
 - sf:getNote():com.intellij.platform.icons.IconDescriptor
 - sf:getNotificationError():com.intellij.platform.icons.IconDescriptor
 - sf:getNotificationInfo():com.intellij.platform.icons.IconDescriptor

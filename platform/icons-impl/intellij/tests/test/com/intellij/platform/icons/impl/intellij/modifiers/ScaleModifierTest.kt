@@ -46,4 +46,42 @@ class ScaleModifierTest {
       result.assertImage(0, 0, 40, 40, imgA)
     }
   }
+
+  @Test
+  fun `a fitArea that may not upscale keeps smaller content at its size and shrinks larger content`() {
+    testIcons {
+      val small = testImage(16, 16)
+      val large = testImage(36, 36)
+
+      val smallResult = pretendToRender(
+        iconDescriptor { image(small, modifier = IconModifier.scale(fitArea(18.dp, 18.dp, upscale = false))) }
+      )
+      smallResult.assertSize(16, 16)
+      smallResult.assertImage(0, 0, 16, 16, small)
+
+      val largeResult = pretendToRender(
+        iconDescriptor { image(large, modifier = IconModifier.scale(fitArea(18.dp, 18.dp, upscale = false))) }
+      )
+      largeResult.assertSize(18, 18)
+      largeResult.assertImage(0, 0, 18, 18, large)
+    }
+  }
+
+  @Test
+  fun `a fitArea that may not downscale enlarges smaller content and keeps larger content at its size`() {
+    testIcons {
+      val small = testImage(9, 9)
+      val large = testImage(36, 36)
+
+      val smallResult = pretendToRender(
+        iconDescriptor { image(small, modifier = IconModifier.scale(fitArea(18.dp, 18.dp, downscale = false))) }
+      )
+      smallResult.assertSize(18, 18)
+
+      val largeResult = pretendToRender(
+        iconDescriptor { image(large, modifier = IconModifier.scale(fitArea(18.dp, 18.dp, downscale = false))) }
+      )
+      largeResult.assertSize(36, 36)
+    }
+  }
 }

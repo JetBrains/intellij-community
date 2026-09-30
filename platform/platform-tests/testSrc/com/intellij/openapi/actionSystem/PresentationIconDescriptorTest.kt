@@ -1,18 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem
 
+import com.intellij.icons.AllIcons
 import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
+import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 @TestApplication
 class PresentationIconDescriptorTest {
+  companion object {
+    @JvmStatic
+    @BeforeAll
+    fun activateNewIconManager() {
+      // bridging a legacy icon needs the icons API; only IDE bootstrap activates it, and only when not headless
+      IntelliJIconManager.activate()
+    }
+  }
+
   private class TestDescriptor : IconDescriptor
 
   private data class KeyDescriptor(val key: String) : IconDescriptor
@@ -23,7 +38,7 @@ class PresentationIconDescriptorTest {
     val presentation = Presentation()
     presentation.iconDescriptor = descriptor
 
-    assertSame(Presentation.NO_ICON_DESCRIPTOR, presentation.iconDescriptor)
+    assertNull(presentation.iconDescriptor)
     assertSame(descriptor, presentation.iconDescriptorSupplier?.get())
     assertNull(presentation.icon)
   }
@@ -213,5 +228,80 @@ class PresentationIconDescriptorTest {
 
     assertSame(hovered, clone.hoveredIconDescriptor)
     assertSame(selected, clone.selectedIconDescriptor)
+  }
+
+  @Test
+  fun `flag off setting an icon creates no descriptor`() {
+    val presentation = Presentation()
+    presentation.icon = AllIcons.General.Add
+    presentation.setIconSupplier { AllIcons.General.Remove }
+
+    assertNull(presentation.iconDescriptorSupplier)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIconRendering.REGISTRY_KEY, "true")
+  fun `flag on a presentation without an icon has neither icon nor descriptor`() {
+    val presentation = Presentation()
+    presentation.icon = null
+
+    assertNull(presentation.iconDescriptor)
+    assertNull(presentation.icon)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIconRendering.REGISTRY_KEY, "true")
+  fun `flag on an explicit descriptor survives a later icon`() {
+    val descriptor = TestDescriptor()
+    val action = object : AnAction({ "test" }, null, descriptor, AllIcons.General.Add) {
+      override fun actionPerformed(e: AnActionEvent) = Unit
+    }
+
+    assertSame(descriptor, action.templatePresentation.iconDescriptor)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIconRendering.REGISTRY_KEY, "true")
+  fun `flag on the bridged descriptor is converted lazily and once`() {
+    var evaluations = 0
+    val presentation = Presentation()
+    presentation.setIconSupplier {
+      evaluations++
+      AllIcons.General.Add
+    }
+    assertEquals(0, evaluations, "setting the supplier must not evaluate it")
+
+    val first = presentation.iconDescriptor
+    assertNotNull(first)
+    assertSame(first, presentation.iconDescriptor)
+    assertEquals(1, evaluations)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIconRendering.REGISTRY_KEY, "true")
+  fun `flag on copyFrom keeps the bridge and fires no descriptor event for the same icon`() {
+    val template = Presentation.newTemplatePresentation()
+    template.setIconSupplier { AllIcons.General.Add }
+    val presentation = Presentation()
+    presentation.copyFrom(template)
+    val bridged = presentation.iconDescriptor
+
+    val events = mutableListOf<String>()
+    presentation.addPropertyChangeListener { events += it.propertyName }
+    presentation.copyFrom(template)
+
+    // (the legacy icon supplier itself is evaluated by setIconSupplier's own PROP_ICON change check, with listeners)
+    assertSame(bridged, presentation.iconDescriptor)
+    assertFalse(Presentation.PROP_ICON_DESCRIPTOR in events)
+  }
+
+  @Test
+  @RegistryKey(ExperimentalIconRendering.REGISTRY_KEY, "true")
+  fun `flag on the icon of a descriptor is equal across calls`() {
+    val presentation = Presentation()
+    presentation.iconDescriptor = imageResIconDescriptor("expui/general/add.svg", AllIcons::class.java.classLoader)
+
+    // a new Swing icon per call, equal so that callers can compare them (e.g. CustomActionsSchema's original icon)
+    assertEquals(presentation.icon, presentation.icon)
   }
 }

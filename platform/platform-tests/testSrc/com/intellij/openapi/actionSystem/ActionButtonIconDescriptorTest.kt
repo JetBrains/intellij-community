@@ -9,16 +9,21 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -87,6 +92,17 @@ class ActionButtonIconDescriptorTest {
     assertNotSame(AllIcons.General.Remove, disabledIcon)
     assertNotSame(enabledIcon, disabledIcon)
     assertTrue(disabledIcon.paintToImage().hasVisiblePixels(), "the disabled descriptor icon painted nothing")
+  }
+
+  @Test
+  fun `icons keep their own size, like declared action icons in the legacy pipeline`(@TempDir dir: Path) {
+    val file = dir.resolve("icon36.svg")
+    Files.writeString(file, """<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="36" height="36" fill="#FF0000"/></svg>""")
+
+    // only a customized icon is fitted into 18x18, see CustomActionsSchemaIconDescriptorTest
+    val icon = button(imageIconDescriptor(file.toString())).icon
+    assertEquals(JBUIScale.scale(36), icon.iconWidth)
+    assertEquals(JBUIScale.scale(36), icon.iconHeight)
   }
 
   @Test
@@ -545,13 +561,13 @@ class ActionButtonIconDescriptorTest {
     return method.invoke(this) as PresentationFactory
   }
 
-  private fun executeDescriptor(): IconDescriptor = imageIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
+  private fun executeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
 
-  private fun closeDescriptor(): IconDescriptor = imageIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
+  private fun closeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
 
-  private fun addDescriptor(): IconDescriptor = imageIconDescriptor("general/add.svg", AllIcons::class.java.classLoader)
+  private fun addDescriptor(): IconDescriptor = imageResIconDescriptor("general/add.svg", AllIcons::class.java.classLoader)
 
-  private fun unknownDescriptor(): IconDescriptor = imageIconDescriptor("expui/toolbar/unknown.svg", AllIcons::class.java.classLoader)
+  private fun unknownDescriptor(): IconDescriptor = imageResIconDescriptor("expui/toolbar/unknown.svg", AllIcons::class.java.classLoader)
 }
 
 private fun Icon.pixels(): List<Int> = paintToImage().visiblePixels()

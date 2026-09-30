@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -65,11 +65,11 @@ class MenuItemPresentationFactoryIconDescriptorTest {
     assertNotNull(presentation.hoveredIconDescriptor)
   }
 
-  private fun executeDescriptor(): IconDescriptor = imageIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
+  private fun executeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
 
-  private fun closeDescriptor(): IconDescriptor = imageIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
+  private fun closeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
 
-  private fun addDescriptor(): IconDescriptor = imageIconDescriptor("general/add.svg", AllIcons::class.java.classLoader)
+  private fun addDescriptor(): IconDescriptor = imageResIconDescriptor("general/add.svg", AllIcons::class.java.classLoader)
 
   private fun actionWithAllDescriptors(): AnAction {
     val action = action(executeDescriptor())

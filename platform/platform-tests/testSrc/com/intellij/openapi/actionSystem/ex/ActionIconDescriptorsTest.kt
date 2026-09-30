@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.actionSystem.withDarkTheme
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.RegistryKey
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.awt.image.BufferedImage
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -61,13 +62,12 @@ class ActionIconDescriptorsTest {
   }
 
   @Test
-  fun `effective returns the unknown marker when only a legacy icon is set`() {
-    val first = Presentation().apply { icon = AllIcons.General.Add }
-    val second = Presentation().apply { icon = AllIcons.General.Remove }
+  fun `effective returns the bridged descriptor when only a legacy icon is set`() {
+    val presentation = Presentation().apply { icon = AllIcons.General.Add }
 
-    val marker = assertNotNull(ActionIconDescriptors.effective(first))
-    assertSame(marker, ActionIconDescriptors.effective(second))
-    assertEquals(unknownMarkerPixels(), marker.paint().visiblePixels(), "effective did not return the unknown marker")
+    val bridged = assertNotNull(ActionIconDescriptors.effective(presentation))
+    assertSame(presentation.iconDescriptor, bridged)
+    assertNotEquals(unknownMarkerPixels(), bridged.paint().visiblePixels(), "effective returned the unknown marker")
   }
 
   @Test
@@ -91,7 +91,7 @@ class ActionIconDescriptorsTest {
     assertTrue(darkAlpha < brightAlpha, "dark theme: disabled alpha $darkAlpha is not below $brightAlpha")
   }
 
-  private fun executeDescriptor(): IconDescriptor = imageIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
+  private fun executeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
 
   private fun IconDescriptor.paint(): BufferedImage = createSwingIcon().paintToImage()
 }

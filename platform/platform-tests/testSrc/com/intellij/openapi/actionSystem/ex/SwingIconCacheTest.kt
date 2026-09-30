@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.actionSystem.withDarkTheme
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
-import com.intellij.platform.icons.imageIconDescriptor
+import com.intellij.platform.icons.imageResIconDescriptor
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.AfterAll
@@ -129,7 +129,7 @@ class SwingIconCacheTest {
 
   private fun Icon?.pixels(): List<Int> = assertNotNull(this, "there is no icon").paintToImage().visiblePixels()
 
-  private fun executeDescriptor(): IconDescriptor = imageIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
+  private fun executeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
 
-  private fun closeDescriptor(): IconDescriptor = imageIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
+  private fun closeDescriptor(): IconDescriptor = imageResIconDescriptor("actions/close.svg", AllIcons::class.java.classLoader)
 }
