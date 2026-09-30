@@ -1,0 +1,32 @@
+Subject: [PATCH] fix: a build script gets its dependencies on every exec triple
+---
+--- a/rs/extensions.bzl
++++ b/rs/extensions.bzl
+@@ -97,6 +97,18 @@
+     if package_path:
+         return "@%s//%s:%s" % (repo_name, package_path, target)
+     return "@%s//:%s" % (repo_name, target)
++
++def _exec_build_deps(build_deps):
++    """The build dependencies of a crate, for each triple an exec platform can have.
++
++    A build script runs on the exec platform, so its dependency `select` is keyed by the exec triple. The resolution
++    is by target triple, so a triple that the crate is not built for has none. A Unix-only crate that a Windows host
++    cross-compiles then gets no build dependencies at all. Such a triple gets the union of the other triples.
++    """
++    union = set()
++    for deps in build_deps.values():
++        union.update(deps)
++    return {triple: deps if deps else set(union) for triple, deps in build_deps.items()}
+ 
+ def _additive_build_file_content(mctx, annotation):
+     content = ""
+@@ -342,7 +354,7 @@
+             hub_name = hub_name,
+             gen_build_script = annotation.gen_build_script,
+             build_script_deps = [],
+-            build_script_deps_select = _select(feature_resolutions.build_deps),
++            build_script_deps_select = _select(_exec_build_deps(feature_resolutions.build_deps)),
+             build_script_data = annotation.build_script_data,
+             build_script_data_select = annotation.build_script_data_select,
+             build_script_env = annotation.build_script_env,
