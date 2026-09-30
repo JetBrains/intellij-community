@@ -2960,7 +2960,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         false,
         listOf(elementType, sendType, returnType)
       )
-      else null
+      else PyAnyType.unknown
     }
 
     @JvmStatic

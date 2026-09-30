@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypeParameterList
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListType
@@ -780,7 +781,11 @@ internal object PyTypeDiff {
     val expectedAgainst: PyType?,
     val actualMissing: Boolean = false,
     val expectedMissing: Boolean = false,
-  )
+  ) {
+    init {
+      PyAnyType.validate(expectedAgainst)
+    }
+  }
 
   /**
    * Aligns two parameter lists into [Slot]s, mirroring the spec's callable-compatibility mapping but tolerant of
@@ -825,8 +830,8 @@ internal object PyTypeDiff {
         }
         else -> {
           val mismatch = isTypeMismatch(actualParam, expectedParam, variance, context)
-          slots.add(Slot(actualParam, expectedParam, mismatch, mismatch, actualParam?.matchType,
-                         actualMissing = actualParam == null, expectedMissing = expectedParam == null))
+          slots.add(Slot(actualParam, expectedParam, mismatch, mismatch, actualParam?.matchType ?: PyAnyType.unknown,
+                    actualMissing = actualParam == null, expectedMissing = expectedParam == null))
           if (actualParam != null) i++
           if (expectedParam != null) j++
         }
@@ -972,6 +977,9 @@ internal object PyTypeDiff {
      *  are never compared (`Self@A` vs `Self@B` differs by design). */
     val selfImplicit: Boolean,
   ) {
+    init {
+      PyAnyType.validate(matchType)
+    }
     /** A keyword-only parameter (after a bare `*` or `*args`) can't be supplied positionally. */
     val acceptsPositional: Boolean get() = !keywordOnly
     /** A positional-only (`/` or anonymous) parameter has no name a caller can pass it by. */

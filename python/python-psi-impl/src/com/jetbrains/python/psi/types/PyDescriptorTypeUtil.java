@@ -107,6 +107,6 @@ public final class PyDescriptorTypeUtil {
     // Parameter names may differ, but 'value' parameter should always be the second one of a bound `__set__`
     List<PyCallableParameter> parameters = setMethod.getParameters(context);
     PyCallableParameter valueParameter = parameters != null && parameters.size() == 2 ? parameters.get(1) : null;
-    return Ref.create(valueParameter != null ? valueParameter.getArgumentType(context) : null);
+    return Ref.create(valueParameter != null ? valueParameter.getArgumentType(context) : PyAnyType.getUnknown());
   }
 }

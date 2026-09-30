@@ -45,6 +45,6 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
                                                              PyBuiltinCache.getInstance(this).getNoneType(),
                                                              this);
     }
-    return null;
+    return PyAnyType.getUnknown();
   }
 }
