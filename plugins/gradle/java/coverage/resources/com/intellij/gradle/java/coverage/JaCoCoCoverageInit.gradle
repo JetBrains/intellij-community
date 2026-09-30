@@ -1,0 +1,23 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+interface Properties {
+  //noinspection GrUnresolvedAccess
+  public static final List<String> tasks = TASKS
+}
+
+//noinspection GrUnresolvedAccess
+gradle.taskGraph.whenReady { taskGraph ->
+  taskGraph.allTasks.each { Task task ->
+    if (!(task instanceof JavaForkOptions)) return
+    if (!Properties.tasks.contains(task.name) && !Properties.tasks.contains(task.path)) return
+
+    def jacoco = task.extensions.findByName('jacoco')
+    //noinspection GrUnresolvedAccess
+    if (jacoco == null || !jacoco.enabled) return
+
+    // The IDE agent collects the data. Two JaCoCo agents in one JVM abort it, so turn off the agent of the plugin.
+    //noinspection GrUnresolvedAccess
+    jacoco.enabled = false
+  }
+}

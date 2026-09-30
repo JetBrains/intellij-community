@@ -1,0 +1,99 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.gradle.java.coverage.tests` start
+jvm_library(
+    name = "tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.java.coverage.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/gradle/java/plugin"],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/gradle/java/coverage",
+        "//plugins/gradle/java/coverage:coverage_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//plugins/gradle/java/plugin:plugin_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//plugins/gradle/java",
+        "//plugins/gradle/java:java_test_lib",
+        "//plugins/gradle/java:java-tests",
+        "//plugins/gradle/java:java-tests_test_lib",
+        "//plugins/gradle:gradle-tests",
+        "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+        "//plugins/coverage",
+        "//plugins/coverage:coverage_test_lib",
+        "//plugins/coverage-common:coverage",
+        "//plugins/coverage-common:coverage_test_lib",
+        "//platform/execution",
+        "//platform/execution:execution_test_lib",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//platform/external-system-impl:externalSystem-impl_test_lib",
+        "//platform/lang-core",
+        "//platform/lang-core:lang-core_test_lib",
+        "//platform/ide-core",
+        "//platform/smRunner",
+        "//platform/smRunner:smRunner_test_lib",
+        "//platform/testRunner",
+        "//platform/testRunner:testRunner_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/external-system-impl:externalSystem-tests",
+        "//platform/external-system-impl:externalSystem-tests_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
+        "//libraries/junit6-params",
+        "//libraries/junit6-params:junit6-params_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.java.coverage.tests` end
+
+### auto-generated section `iml intellij.gradle.java.coverage.tests` start
+exports_files(
+    [
+        "intellij.gradle.java.coverage.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.java.coverage.tests` end
+
+### auto-generated section `test intellij.gradle.java.coverage.tests` start
+jps_test(
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
+)
+### auto-generated section `test intellij.gradle.java.coverage.tests` end

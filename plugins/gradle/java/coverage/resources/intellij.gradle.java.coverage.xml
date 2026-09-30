@@ -16,4 +16,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <javaCoverageEngineExtension implementation="com.intellij.gradle.java.coverage.GradleCoverageExtension"/>
   </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <taskManager implementation="com.intellij.gradle.java.coverage.GradleJaCoCoCoverageTaskManagerExtension"/>
+  </extensions>
 </idea-plugin>
