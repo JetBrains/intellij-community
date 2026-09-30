@@ -9,9 +9,9 @@ import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.OutputBuildEventImpl
+import com.intellij.build.output.BuildOutputLineProcessor
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.BuildOutputParserDispatcher
-import com.intellij.build.output.LineProcessor
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -63,20 +63,20 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
-    private val lineProcessors: MutableMap<ProcessOutputType, LineProcessor> = ConcurrentHashMap()
+    private val lineProcessors: MutableMap<ProcessOutputType, GradleOutputLineProcessor> = ConcurrentHashMap()
 
     private var currentTaskId: StartId = buildId
 
     private inner class GradleOutputLineProcessor(
       private val outputType: ProcessOutputType,
-    ) : LineProcessor() {
+    ) {
 
       private val parserDispatchers: MutableMap<StartId, BuildOutputParserDispatcher> = ConcurrentHashMap()
 
-      override fun process(line: String) {
+      private val delegate = BuildOutputLineProcessor { line ->
         val cleanLine = removeLoggerPrefix(line)
         // skip Gradle test runner output
-        if (cleanLine.startsWith("<ijLog>")) return
+        if (cleanLine.startsWith("<ijLog>")) return@BuildOutputLineProcessor
 
         if (cleanLine.startsWith("> Task :")) {
           currentTaskId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
@@ -96,21 +96,19 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line + '\n', outputType)) //NON-NLS todo!!
         }
 
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking {
-          parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
-            .notifyTextAvailable(cleanLine + '\n')
-        }
+        parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
+          .notifyTextAvailable(cleanLine + '\n')
       }
 
-      override fun close() {
-        super.close()
+      suspend fun notifyTextAvailable(text: String) {
+        delegate.notifyTextAvailable(text)
+      }
 
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking {
-          for (parserDispatcher in parserDispatchers.values) {
-            parserDispatcher.close()
-          }
+      suspend fun close() {
+        delegate.close()
+
+        for (parserDispatcher in parserDispatchers.values) {
+          parserDispatcher.close()
         }
       }
     }
@@ -157,8 +155,11 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     }
 
     override fun doClose() {
-      for (lineProcessor in lineProcessors.values) {
-        lineProcessor.close()
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking {
+        for (lineProcessor in lineProcessors.values) {
+          lineProcessor.close()
+        }
       }
     }
 
@@ -169,8 +170,12 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           .withOutputType(outputType)
           .build()
       )
-      lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
-        .notifyTextAvailable(text)
+
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking {
+        lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
+          .notifyTextAvailable(text)
+      }
     }
 
     private fun removeLoggerPrefix(line: String): String {
