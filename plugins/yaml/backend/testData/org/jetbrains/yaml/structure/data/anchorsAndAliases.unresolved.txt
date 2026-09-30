@@ -2,12 +2,12 @@
  -YAML document
   -First occurrence
    -list
-    item1
-    item2
-  Second occurrence
+    -item1
+    -item2
+  -Second occurrence
   -Override anchor
-   key
-  Reuse anchor
-  *an
+   -key
+  -Reuse anchor
+  -*an
 
 LeadPath: [anchorsAndAliases.yml, YAML document, Override anchor, key]
