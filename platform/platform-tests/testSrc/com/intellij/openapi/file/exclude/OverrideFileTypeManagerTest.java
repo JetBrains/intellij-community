@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -47,6 +48,21 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     manager.removeFile(xml);
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
     assertEquals(originalType, xml.getFileType());
+  }
+
+  public void testLightFileHasNoOverride() {
+    var manager = OverrideFileTypeManager.getInstance();
+    var xml = myFixture.getTempDirFixture().createFile("test.xml");
+    manager.addFile(xml, ArchiveFileType.INSTANCE);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+    try {
+      var lightFile = new LightVirtualFile("test.xml", PlainTextFileType.INSTANCE, "");
+      assertEquals(PlainTextFileType.INSTANCE, lightFile.getFileType());
+    }
+    finally {
+      manager.removeFile(xml);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+    }
   }
 
   public void testMustNotBeAbleToOverrideNotOverridableFileType() throws IOException {
