@@ -18,11 +18,11 @@ fn application_info_request(output: &Path, client: &str, product: &str) -> Vec<S
             "--product-application-info={}",
             testdata(&format!("application_info/{product}.xml"))
         ),
-        format!("--build-number={}", testdata("application_info/build.txt")),
     ]
 }
 
-/// The expected files hold the bytes that the Kotlin tool wrote before its removal, without a final newline.
+/// The expected files hold the bytes that the Kotlin tool wrote before its removal, without a final newline. The build
+/// markers stay in them, because a dev distribution stamps no build number.
 ///
 /// The prefixed case finds the elements of the application-info namespace by URI, whatever prefix a file binds to it.
 /// Its expected file is the Kotlin output without `branchName`, because only a refused override adds that attribute.
@@ -54,7 +54,6 @@ fn application_info_request_is_parsed() {
         "--application-info",
         "--client-application-info=a file=1.xml",
         "--product-application-info=product.xml",
-        "--build-number=build.txt",
     ]))
     .unwrap();
     assert_eq!(
@@ -63,14 +62,13 @@ fn application_info_request_is_parsed() {
             output: "out/client.xml".into(),
             client_application_info: "a file=1.xml".into(),
             product_application_info: "product.xml".into(),
-            build_number: "build.txt".into(),
         }
     );
 }
 
 #[test]
 fn application_info_requires_files() {
-    let required = ["--out", "--client-application-info", "--product-application-info", "--build-number"];
+    let required = ["--out", "--client-application-info", "--product-application-info"];
     for option in required {
         for value in ["missing", "empty", "valueless"] {
             let mut request = vec!["--application-info".to_owned()];
@@ -120,6 +118,10 @@ fn application_info_rejects_invalid_requests() {
             &["--application-info", "--build-number-file=build.txt"][..],
             "unknown frontend application info option",
         ),
+        (
+            &["--application-info", "--build-number=build.txt"][..],
+            "unknown frontend application info option '--build-number'",
+        ),
     ] {
         match parse_application_info_request(&option_lines(request)) {
             Ok(parsed) => panic!("{request:?}: accepted {parsed:?}"),
@@ -161,21 +163,6 @@ fn application_info_rejects_invalid_inputs() {
     let mut cases: Vec<(String, &str, String, bool, String)> = vec![
         ("missing client".into(), "client", String::new(), true, "client.xml".into()),
         ("missing product".into(), "product", String::new(), true, "product.xml".into()),
-        ("missing build number".into(), "build", String::new(), true, "build.txt".into()),
-        (
-            "empty build number".into(),
-            "build",
-            String::new(),
-            false,
-            "build number is empty".into(),
-        ),
-        (
-            "blank build number".into(),
-            "build",
-            " \t\r\n".into(),
-            false,
-            "build number is empty".into(),
-        ),
         (
             "no product name".into(),
             "product",
@@ -233,14 +220,8 @@ fn application_info_rejects_invalid_inputs() {
     for (name, changed, content, missing, want) in cases {
         let dir = temp_dir();
         let dir = dir.path();
-        let file = |input: &str| {
-            dir.join(match input {
-                "client" => "client.xml",
-                "product" => "product.xml",
-                _ => "build.txt",
-            })
-        };
-        for (input, default) in [("client", valid.as_str()), ("product", valid.as_str()), ("build", "263.123.4")] {
+        let file = |input: &str| dir.join(format!("{input}.xml"));
+        for (input, default) in [("client", valid.as_str()), ("product", valid.as_str())] {
             if input != changed {
                 write(&file(input), default);
             } else if !missing {
@@ -253,7 +234,6 @@ fn application_info_rejects_invalid_inputs() {
             format!("--out={}", path_string(&output)),
             format!("--client-application-info={}", path_string(&file("client"))),
             format!("--product-application-info={}", path_string(&file("product"))),
-            format!("--build-number={}", path_string(&file("build"))),
         ];
         let values: Vec<&str> = request.iter().map(String::as_str).collect();
         let parsed = parse_application_info_request(&option_lines(&values)).unwrap();

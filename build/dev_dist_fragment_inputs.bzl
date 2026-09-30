@@ -249,7 +249,7 @@ DEV_DIST_FRAGMENT_INPUTS = {
                         "//android-customization:idea-android-customization",
                     ],
                     patches = {
-                        "//build/dev-dist-product-descriptors:AndroidStudio_application_info": "idea/AndroidStudioApplicationInfo.xml",
+                        "//android-customization:resources/idea/AndroidStudioApplicationInfo.xml": "idea/AndroidStudioApplicationInfo.xml",
                         "//build/dev-dist-product-descriptors:AndroidStudio_product_descriptor": "META-INF/AndroidStudioPlugin.xml",
                     },
                     patched_module = "intellij.idea.android.customization",
@@ -386,7 +386,7 @@ DEV_DIST_FRAGMENT_INPUTS = {
                         "//community-resources:customization",
                     ],
                     patches = {
-                        "//build/dev-dist-product-descriptors:idea_community_application_info": "idea/IdeaApplicationInfo.xml",
+                        "//community-resources:resources/idea/IdeaApplicationInfo.xml": "idea/IdeaApplicationInfo.xml",
                         "//build/dev-dist-product-descriptors:idea_community_product_descriptor": "META-INF/IdeaPlugin.xml",
                     },
                     patched_module = "intellij.idea.community.customization",

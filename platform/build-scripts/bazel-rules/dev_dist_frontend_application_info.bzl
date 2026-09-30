@@ -18,10 +18,9 @@ def _dev_dist_frontend_application_info_impl(ctx):
     args.add(output, format = "--out=%s")
     args.add(ctx.file.client_application_info, format = "--client-application-info=%s")
     args.add(ctx.file.product_application_info, format = "--product-application-info=%s")
-    args.add(ctx.file.build_number, format = "--build-number=%s")
     ctx.actions.run(
         mnemonic = "DevDistFrontendApplicationInfo",
-        inputs = [ctx.file.client_application_info, ctx.file.product_application_info, ctx.file.build_number],
+        inputs = [ctx.file.client_application_info, ctx.file.product_application_info],
         outputs = [output],
         executable = ctx.executable._resolver,
         arguments = [args],
@@ -35,17 +34,12 @@ _dev_dist_frontend_application_info = rule(
         "client_application_info": attr.label(
             mandatory = True,
             allow_single_file = [".xml"],
-            doc = "The application info template of the embedded frontend, with its `__BUILD__` markers.",
+            doc = "The application info template of the embedded frontend. Its build markers stay, and the run time reads `build.txt`.",
         ),
         "product_application_info": attr.label(
             mandatory = True,
             allow_single_file = [".xml"],
             doc = "The application info of the product whose names, version and release date the frontend takes.",
-        ),
-        "build_number": attr.label(
-            mandatory = True,
-            allow_single_file = [".txt"],
-            doc = "The file that holds the build number.",
         ),
         "_resolver": attr.label(
             default = "//platform/build-scripts/bazel-rules:plugin_descriptor_writer",
@@ -59,7 +53,6 @@ def dev_dist_frontend_application_info(
         main_module,
         client_application_info,
         product_application_info,
-        build_number,
         product = None,
         tags = [],
         visibility = ["//visibility:public"],
@@ -73,7 +66,6 @@ def dev_dist_frontend_application_info(
         name = dev_dist_frontend_application_info_target_name(main_module, product),
         client_application_info = client_application_info,
         product_application_info = product_application_info,
-        build_number = build_number,
         tags = tags + ["manual"],
         visibility = visibility,
         **kwargs

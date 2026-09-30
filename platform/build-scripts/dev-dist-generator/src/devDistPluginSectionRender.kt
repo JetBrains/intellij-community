@@ -427,7 +427,7 @@ private fun PluginDescriptorLeaf.deviatesFrom(other: PluginDescriptorLeaf): List
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Emission, as `devDistPluginSection.kt` of the converter writes it.
+// Emission. This file is the one writer of the section.
 
 /**
  * The section body, or `null` when the plugin states no content and no descriptor.
@@ -474,7 +474,6 @@ private fun renderBody(
   declaredPackaging?.let { filesOption(context, it) }?.let { call.option("files", it) }
   descriptor?.embeddedProductDescriptor?.frontendApplicationInfo?.let { frontend ->
     call.option("frontend_application_info", frontend.clientApplicationInfo)
-    call.option("frontend_build_number", frontend.buildNumber)
     call.option("frontend_product_application_info", frontend.productApplicationInfo)
   }
   declaredPackaging?.let { jarsOption(context, it) }?.let { call.option("jars", it) }

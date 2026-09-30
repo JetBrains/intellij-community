@@ -26,9 +26,11 @@ internal fun renderProductDescriptorPackage(plans: List<ProductDescriptorPlan>, 
 private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>, index: DevDistBazelIndex, half: DevDistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The two generated entries of the application-info module jar of each product: the product descriptor and the\n")
-  append("# stamped application info. `dev_dist_platform_jar` patches both outputs into the jar, see the `patches` of the\n")
-  append("# residual jar in `build/dev_dist_fragment_inputs.bzl`.\n")
+  append("# The generated entries of the application-info module jar of each product: the product descriptor, and the\n")
+  append("# application info of a product with `appInfoXmlReplacements`. The application info action replaces only these\n")
+  append("# markers, and the run time reads the build number from `build.txt`. `dev_dist_platform_jar` patches the outputs\n")
+  append("# into the jar, see the `patches` of the residual jar in `build/dev_dist_fragment_inputs.bzl`. A product without\n")
+  append("# replacements patches its application info source as it is.\n")
   append("#\n")
   append("# `<product>.xml` is the Product DSL content of the product with the module sets and the deprecated includes\n")
   append("# inlined. `processAndGetProductPluginContentModules` loads the same text, and the descriptor writer resolves it\n")
@@ -39,7 +41,12 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
   append("\n")
   append(LoadStatement(
     bzlFile = index.planLabel("@community//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl"),
-    symbols = listOf("dev_dist_product_application_info", "dev_dist_product_descriptor"),
+    symbols = if (plans.any(ProductDescriptorPlan::hasApplicationInfo)) {
+      listOf("dev_dist_product_application_info", "dev_dist_product_descriptor")
+    }
+    else {
+      listOf("dev_dist_product_descriptor")
+    },
   ).render())
   append("\n")
   for (plan in plans.sortedBy(ProductDescriptorPlan::name)) {
@@ -62,16 +69,15 @@ private fun renderProductDescriptorBuildFile(plans: List<ProductDescriptorPlan>,
     }
     descriptor.option("source", plan.source)
     append(descriptor.render())
-    append("\n")
 
-    val applicationInfo = Target("dev_dist_product_application_info")
-    applicationInfo.option("name", "${plan.name}_application_info")
-    applicationInfo.option("product_code", plan.productCode)
-    if (plan.replacements.isNotEmpty()) {
+    if (plan.hasApplicationInfo) {
+      append("\n")
+      val applicationInfo = Target("dev_dist_product_application_info")
+      applicationInfo.option("name", "${plan.name}_application_info")
       applicationInfo.option("replacements", plan.replacements.unsorted())
+      applicationInfo.option("source", index.planLabel(plan.applicationInfo))
+      append(applicationInfo.render())
     }
-    applicationInfo.option("source", index.planLabel(plan.applicationInfo))
-    append(applicationInfo.render())
   }
 }
 

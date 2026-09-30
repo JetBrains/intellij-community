@@ -338,14 +338,11 @@ interface DevDistEmbeddedFrontendSupport {
   /** The entry of the embedded descriptor in the jar of [descriptorModule]. */
   val descriptorLoadPath: String
 
-  /** The label of the client application-info template that every embedded frontend stamps. */
+  /** The label of the client application-info template of every embedded frontend. */
   val clientApplicationInfo: String
 
-  /** The entry of the stamped client application info in the jar of [descriptorModule]. */
+  /** The entry of the client application info in the jar of [descriptorModule]. */
   val clientApplicationInfoPath: String
-
-  /** The label of the build-number file that every embedded frontend stamps. */
-  val frontendBuildNumber: String
 
   /** The module whose jar packs the frontend product icons. */
   val iconsModule: String

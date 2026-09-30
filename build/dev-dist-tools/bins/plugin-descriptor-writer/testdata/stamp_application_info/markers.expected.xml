@@ -1,6 +1,9 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
   <version major="2026" minor="3" eap="true"/>
-  <build number="ILS-263.SNAPSHOT" date="__BUILD_DATE__" majorReleaseDate="__BUILD_DATE__"/>
-  <names product="kotlin-server" fullname="kotlin-server" edition="ILSKS"/>
-  <plugins url=""/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2000"/>
+  <build number="ILS-__BUILD__" date="__BUILD_DATE__"/>
+  <logo url=""/>
+  <logo-eap url=""/>
+  <icon svg="" svg-small=""/>
+  <names product="kotlin-server" fullname="kotlin-server" edition="ILSKS" script="" motto=""/>
 </component>

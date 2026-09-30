@@ -1095,7 +1095,6 @@ private fun renderEmbeddedFrontendHelpers(
   }
   val product = entry.product
   val frontendCall = Target("dev_dist_frontend_application_info")
-  frontendCall.option("build_number", frontend.buildNumber)
   frontendCall.option("client_application_info", frontend.clientApplicationInfo)
   frontendCall.option("main_module", support.pluginMainModule)
   frontendCall.option("product", product)

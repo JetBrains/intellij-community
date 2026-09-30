@@ -1,6 +1,9 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
   <version major="2026" minor="3"__BUNDLE_EAP__/>
-  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__" majorReleaseDate="__BUILD_DATE__"__RELEASE_DATE__/>
-  <names product="__BUNDLE_NAME__" fullname="__BUNDLE_NAME__" edition="__BUNDLE_EDITION__"/>
-  <plugins url="__BUILTIN_PLUGINS_URL__"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2000"/>
+  <build number="ILS-__BUILD__" date="__BUILD_DATE__"__RELEASE_DATE__/>
+  <logo url=""/>
+  <logo-eap url=""/>
+  <icon svg="" svg-small=""/>
+  <names product="__BUNDLE_NAME__" fullname="__BUNDLE_NAME__" edition="__BUNDLE_EDITION__" script="" motto=""/>
 </component>

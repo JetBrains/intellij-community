@@ -56,7 +56,6 @@ def dev_dist_plugin(
         embedded_separate_jar = [],
         frontend_application_info = "",
         frontend_product_application_info = "",
-        frontend_build_number = "",
         jars = {},
         module_jar_paths = {},
         content_module_jar_labels = {},
@@ -101,10 +100,9 @@ def dev_dist_plugin(
         embedded_library_descriptors: Ordered Java containers mapped to space-separated resolver load paths.
         embedded_modules: The embedded descriptor search scope by JPS module name.
         embedded_separate_jar: Embedded content modules packed into separate jars.
-        frontend_application_info: The application info template of the embedded frontend. Stated together with the two
-            other `frontend_` labels by the plugin that packs the JetBrains Client, and empty for every other plugin.
+        frontend_application_info: The application info template of the embedded frontend. Stated together with the other
+            `frontend_` label by the plugin that packs the JetBrains Client, and empty for every other plugin.
         frontend_product_application_info: The application info of the product the frontend takes its names and version from.
-        frontend_build_number: The build number file the frontend build number is stamped from.
         directory_name: The plugin directory, when the layout does not take the derived one. Only the packed component
             reads it.
         **descriptor_attrs: Other descriptor attributes. Shared leaf attributes are refused.
@@ -116,9 +114,9 @@ def dev_dist_plugin(
         fail("dev_dist_plugin: %s states shared leaf attributes: %s" % (main_module, shared))
     if not embedded_descriptor_source and (embedded_descriptors or embedded_library_descriptors or embedded_modules or embedded_separate_jar):
         fail("dev_dist_plugin: %s states embedded descriptor inputs without an embedded descriptor" % main_module)
-    frontend_labels = [frontend_application_info, frontend_product_application_info, frontend_build_number]
+    frontend_labels = [frontend_application_info, frontend_product_application_info]
     if any(frontend_labels) and not all(frontend_labels):
-        fail("dev_dist_plugin: %s states some of the three frontend application info labels, and a frontend states all of them" % main_module)
+        fail("dev_dist_plugin: %s states one of the two frontend application info labels, and a frontend states both" % main_module)
     if frontend_application_info and not embedded_descriptor_source:
         fail("dev_dist_plugin: %s states a frontend application info without an embedded descriptor" % main_module)
     if jars and variants:
@@ -233,5 +231,4 @@ def dev_dist_plugin(
             main_module = main_module,
             client_application_info = frontend_application_info,
             product_application_info = frontend_product_application_info,
-            build_number = frontend_build_number,
         )

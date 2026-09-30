@@ -98,7 +98,6 @@ descriptor_action_test(
 
 dev_dist_frontend_application_info(
     testonly = True,
-    build_number = "testdata/application_info/build.txt",
     client_application_info = "testdata/application_info/client.xml",
     main_module = "client_default",
     product_application_info = "testdata/application_info/product.xml",
@@ -162,15 +161,19 @@ descriptor_action_test(
 dev_dist_product_application_info(
     name = "product_application_info",
     testonly = True,
-    build_number = "testdata/stamp_application_info/build.txt",
-    product_code = "IC",
-    source = "testdata/stamp_application_info/idea-community.xml",
+    replacements = [
+        "BUNDLE_NAME=kotlin-server",
+        "BUNDLE_EDITION=ILSKS",
+        "BUNDLE_EAP= eap=\"true\"",
+        "RELEASE_DATE=",
+    ],
+    source = "testdata/stamp_application_info/markers.xml",
 )
 
 diff_test(
     name = "product_application_info_rule_test",
     file1 = ":product_application_info",
-    file2 = "testdata/stamp_application_info/idea-community.expected.xml",
+    file2 = "testdata/stamp_application_info/markers.expected.xml",
 )
 
 descriptor_action_test(

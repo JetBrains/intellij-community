@@ -1,9 +1,10 @@
-"""Produces the two generated entries of the application-info module jar of a product from declared files.
+"""Produces the generated entries of the application-info module jar of a product from declared files.
 
 `dev_dist_product_descriptor` resolves the product descriptor, `META-INF/plugin.xml` or `META-INF/<prefix>Plugin.xml`, and
 the prefix of `plugins/plugin-classpath.txt`.
-`dev_dist_product_application_info` stamps `idea/<prefix>ApplicationInfo.xml`. The generator writes both targets into
-`//build/dev-dist-product-descriptors`, and `dev_dist_platform_jar` patches their outputs into the jar.
+`dev_dist_product_application_info` replaces the product markers of `idea/<prefix>ApplicationInfo.xml`. Only a product
+with `appInfoXmlReplacements` has this target. The generator writes the targets into `//build/dev-dist-product-descriptors`,
+and `dev_dist_platform_jar` patches their outputs into the jar.
 """
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
@@ -86,20 +87,21 @@ def _dev_dist_product_application_info_impl(ctx):
     args.add("--stamp-application-info")
     args.add(output, format = "--out=%s")
     args.add(ctx.file.source, format = "--source=%s")
-    args.add(ctx.file.build_number, format = "--build-number=%s")
-    args.add(ctx.attr.product_code, format = "--product-code=%s")
     args.add_all(ctx.attr.replacements, format_each = "--replacement=%s")
     ctx.actions.run(
         mnemonic = "DevDistProductApplicationInfo",
-        inputs = [ctx.file.source, ctx.file.build_number],
+        inputs = [ctx.file.source],
         outputs = [output],
         executable = ctx.executable._resolver,
         arguments = [args],
-        progress_message = "Stamping the application info of %{label}",
+        progress_message = "Replacing the product markers of the application info of %{label}",
     )
     return [DefaultInfo(files = depset([output]))]
 
 _dev_dist_product_application_info = rule(
+    doc = """Replaces the markers of `ProductProperties.appInfoXmlReplacements` in the application info, and no other marker.
+
+The action stamps no build number and no build date. The run time reads the build number from `build.txt`.""",
     implementation = _dev_dist_product_application_info_impl,
     attrs = {
         "source": attr.label(
@@ -107,16 +109,9 @@ _dev_dist_product_application_info = rule(
             allow_single_file = [".xml"],
             doc = "The `idea/<prefix>ApplicationInfo.xml` of the application-info module, with its markers.",
         ),
-        "build_number": attr.label(
-            default = Label("@community//:build.txt"),
-            allow_single_file = [".txt"],
-            doc = "The file that holds the build number.",
-        ),
-        "product_code": attr.string(
-            mandatory = True,
-            doc = "`ApplicationInfoProperties.productCode`, the prefix of the stamped build number.",
-        ),
         "replacements": attr.string_list(
+            mandatory = True,
+            allow_empty = False,
             doc = "`ProductProperties.appInfoXmlReplacements` as `<key>=<value>`, in their order.",
         ),
         "_resolver": attr.label(
@@ -132,5 +127,5 @@ def dev_dist_product_descriptor(name, tags = [], visibility = ["//visibility:pub
     _dev_dist_product_descriptor(name = name, tags = tags + ["manual"], visibility = visibility, **kwargs)
 
 def dev_dist_product_application_info(name, tags = [], visibility = ["//visibility:public"], **kwargs):
-    """Declares one application info stamp action. The target is `manual`, like every packing target."""
+    """Declares one application info marker action. The target is `manual`, like every packing target."""
     _dev_dist_product_application_info(name = name, tags = tags + ["manual"], visibility = visibility, **kwargs)

@@ -27,7 +27,6 @@ import org.jetbrains.intellij.build.impl.emptyFrontendModuleFilter
 import org.jetbrains.intellij.build.impl.isProductContentModuleScrambled
 import org.jetbrains.intellij.build.impl.osArchDescriptorMarker
 import org.jetbrains.intellij.build.isPluginModulePackedIntoSeparateJar
-import org.jetbrains.intellij.build.loadDevDistributionApplicationInfo
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
@@ -249,15 +248,16 @@ internal data class EmbeddedProductDescriptorPlan(
 )
 
 /**
- * The two actions that write the generated entries of the application-info module jar of one product.
+ * The actions that write the generated entries of the application-info module jar of one product.
  *
  * `dev_dist_product_descriptor` resolves the product descriptor, the text `processAndGetProductPluginContentModules`
- * writes. `dev_dist_product_application_info` stamps the application info, the text `computeAppInfoXml` writes. The
- * generator writes both targets and [source] into [PRODUCT_DESCRIPTOR_PACKAGE], and `dev_dist_platform_jar` patches
- * both outputs into the jar, see [patches].
+ * writes. `dev_dist_product_application_info` replaces the markers of [replacements] in the application info, the text
+ * `computeAppInfoXml` writes. Only a product with [replacements] has this action, see [hasApplicationInfo]. The
+ * generator writes the targets and [source] into [PRODUCT_DESCRIPTOR_PACKAGE], and `dev_dist_platform_jar` patches the
+ * outputs into the jar, see [applicationInfoPatchLabel].
  */
 internal data class ProductDescriptorPlan(
-  /** The case-safe name of the product. It names the two targets and [source]. */
+  /** The case-safe name of the product. It names the targets and [source]. */
   @JvmField val name: String,
   /** The application-info module. */
   @JvmField val mainModule: String,
@@ -279,10 +279,8 @@ internal data class ProductDescriptorPlan(
   @JvmField val scrambledContentModules: List<String>,
   /** The label of the `idea/<prefix>ApplicationInfo.xml` source, with its markers. */
   @JvmField val applicationInfo: String,
-  /** The entry of the stamped application info in the jar, `idea/<prefix>ApplicationInfo.xml`. */
+  /** The entry of the application info in the jar, `idea/<prefix>ApplicationInfo.xml`. */
   @JvmField val applicationInfoPath: String,
-  /** `ApplicationInfoProperties.productCode`. */
-  @JvmField val productCode: String,
   /** `ProductProperties.appInfoXmlReplacements` as `<key>=<value>`, in their order. */
   @JvmField val replacements: List<String>,
 ) {
@@ -295,7 +293,14 @@ internal data class ProductDescriptorPlan(
   val descriptorLabel: String
     get() = "//$PRODUCT_DESCRIPTOR_PACKAGE:${name}_product_descriptor"
 
-  /** The label of the application info action. */
+  /**
+   * Whether the product has the application info action. A product without [replacements] patches its application info
+   * source as it is, because a dev distribution stamps no build number.
+   */
+  val hasApplicationInfo: Boolean
+    get() = replacements.isNotEmpty()
+
+  /** The label of the application info action. Only a plan with [hasApplicationInfo] declares it. */
   val applicationInfoLabel: String
     get() = "//$PRODUCT_DESCRIPTOR_PACKAGE:${name}_application_info"
 
@@ -304,13 +309,16 @@ internal data class ProductDescriptorPlan(
     get() = "$descriptorLabel.plugin-classpath-prefix"
 
   /**
-   * What `dev_dist_platform_jar` replaces in the application-info module output: action label to entry path.
+   * The label that `dev_dist_platform_jar` patches as [applicationInfoPath], spelled for a plan package of [index]: the
+   * application info action, or the [applicationInfo] source of a plan without [hasApplicationInfo].
    *
-   * The packer writes the patches first, in this order. `layoutPlatformDistribution` patches the application info
-   * before `layoutDistribution` applies the patch of the product descriptor, so `JarPackager` writes them in this order too.
+   * The packer writes the patches first, in their order. `layoutPlatformDistribution` patches the application info
+   * before `layoutDistribution` applies the patch of the product descriptor, so `JarPackager` writes the application info
+   * first and the product descriptor last. A source file as a patch keeps that order and runs no action.
    */
-  val patches: Map<String, String>
-    get() = linkedMapOf(applicationInfoLabel to applicationInfoPath, descriptorLabel to descriptorPath)
+  fun applicationInfoPatchLabel(index: DevDistBazelIndex): String {
+    return if (hasApplicationInfo) applicationInfoLabel else index.planLabel(applicationInfo)
+  }
 }
 
 /** The end of the header of a generated product descriptor source. The content starts after it. */
@@ -323,7 +331,6 @@ internal const val PRODUCT_DESCRIPTOR_PACKAGE: String = "build/dev-dist-product-
 internal data class FrontendApplicationInfoPlan(
   @JvmField val clientApplicationInfo: String,
   @JvmField val productApplicationInfo: String,
-  @JvmField val buildNumber: String,
 )
 
 /** One descriptor the action declares: the load path its request is keyed by, and the label that names the file. */
@@ -403,11 +410,6 @@ internal fun collectPluginDescriptorPlan(
 ): PluginDescriptorPlan {
   val bundledPluginModules = layouts.map(PluginLayout::mainModule).distinct().sorted()
   val project = outputProvider.findRequiredModule(properties.applicationInfoModule).project
-  val applicationInfo = loadDevDistributionApplicationInfo(
-    project = project,
-    productProperties = properties,
-    buildDateInSeconds = PINNED_BUILD_DATE_IN_SECONDS,
-  )
   val contentModuleFilter = createContentModuleFilter(
     project = project,
     productProperties = properties,
@@ -515,7 +517,6 @@ internal fun collectPluginDescriptorPlan(
       properties = properties,
       platformPrefix = platformPrefix,
       outputProvider = outputProvider,
-      productCode = applicationInfo.productCode,
       contentModuleFilter = contentModuleFilter,
       generatedClosureOf = generatedClosureOf,
       name = half.caseSafeProductName(platformPrefix),
@@ -525,7 +526,7 @@ internal fun collectPluginDescriptorPlan(
 }
 
 /**
- * Plans the two actions that write the generated entries of the application-info module jar, see [ProductDescriptorPlan].
+ * Plans the actions that write the generated entries of the application-info module jar, see [ProductDescriptorPlan].
  *
  * The source is the text `processAndGetProductPluginContentModules` loads: the Product DSL content with the module sets
  * and the deprecated includes inlined. A split product with no Product DSL content fails the generator, because
@@ -537,7 +538,6 @@ private fun collectProductDescriptor(
   properties: ProductProperties,
   platformPrefix: String,
   outputProvider: ModuleOutputProvider,
-  productCode: String,
   contentModuleFilter: ContentModuleFilter,
   generatedClosureOf: (
     mainModule: String,
@@ -597,7 +597,6 @@ private fun collectProductDescriptor(
     scrambledContentModules = scrambled.map { it.name },
     applicationInfo = applicationInfoLabel(index = index, project = project, properties = properties, platformPrefix = platformPrefix),
     applicationInfoPath = "idea/${properties.platformPrefix ?: ""}ApplicationInfo.xml",
-    productCode = productCode,
     replacements = properties.appInfoXmlReplacements.orEmpty().map { (key, value) -> "$key=$value" },
   )
 }
@@ -1044,7 +1043,6 @@ private fun embeddedFrontendApplicationInfo(
   return FrontendApplicationInfoPlan(
     clientApplicationInfo = support.clientApplicationInfo,
     productApplicationInfo = applicationInfoLabel(index = index, project = project, properties = properties, platformPrefix = platformPrefix),
-    buildNumber = support.frontendBuildNumber,
   )
 }
 

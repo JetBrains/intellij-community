@@ -1421,15 +1421,15 @@ private fun collectFragmentPlan(
       "${product.name}: two platform patches write '${entry.path}' of '${entry.moduleName}'"
     }
   }
-  // The patches of the platform jars, keyed by the patched module: the two generated entries of the application-info
-  // module jar, the entries of the layout patchers, and the frontend icons of the base IDE. No content module jar packs
-  // a patched module. The application info comes first and the product descriptor last, as `JarPackager` writes them.
+  // The patches of the platform jars, keyed by the patched module: the generated entries of the application-info module
+  // jar, the entries of the layout patchers, and the frontend icons of the base IDE. No content module jar packs a
+  // patched module. The application info comes first and the product descriptor last, as `JarPackager` writes them.
   val modulePatches = buildMap {
     // A frontend packs its application-info module in the frontend root descriptor jar, see the handover below.
     if (!isFrontend) {
       productDescriptor?.let { descriptor ->
         put(properties.applicationInfoModule, buildMap {
-          put(descriptor.applicationInfoLabel, descriptor.applicationInfoPath)
+          put(descriptor.applicationInfoPatchLabel(index), descriptor.applicationInfoPath)
           entryPatches.remove(properties.applicationInfoModule)?.let(::putAll)
           put(descriptor.descriptorLabel, descriptor.descriptorPath)
         })

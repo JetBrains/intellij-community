@@ -158,17 +158,19 @@ internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: Buil
   var patchedAppInfo = BuildUtils.replaceAll(
     text = Files.readString(appInfoXmlPath),
     replacements = buildMap {
-      put("BUILD_NUMBER", "${appInfo.productCode}-${context.buildNumber}")
       // A dev distribution deliberately stamps no build date. It is launched rather than shipped, and it is reused for as
       // long as its inputs are unchanged - so any date written here is a countdown to the day the IDE refuses to start:
       // an EAP build is expired both when it is older than `EAPProfile.getExpirationPeriodDays()` and when its date is
       // more than a day in the future (see `com.intellij.ide.license.impl.UnifiedLicenseManager.initLicenses`).
       // Leaving the placeholder is the platform's own "this build has no build date": `ApplicationInfoImpl.readBuildInfo`
       // skips it and `getBuildTime()` answers the startup time, so a dev IDE is always inside its budget.
+      // A dev distribution stamps no build number either. `BuildNumber.fromString` treats `__BUILD__` and
+      // `__BUILD_NUMBER__` as placeholders and reads the number from `build.txt` of the IDE home.
       if (!context.options.isDevDistribution) {
+        put("BUILD_NUMBER", "${appInfo.productCode}-${context.buildNumber}")
         put("BUILD_DATE", buildDate.format(BUILD_DATE_PATTERN))
+        put("BUILD", context.buildNumber)
       }
-      put("BUILD", context.buildNumber)
       put("BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl)
     }
       .let { base ->

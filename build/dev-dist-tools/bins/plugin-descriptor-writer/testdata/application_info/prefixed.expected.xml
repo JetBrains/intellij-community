@@ -3,7 +3,7 @@
   <other:names fullname="Foreign" />
   <app:names product="Client" fullname="Prefixed product" motto="__BUILD__" />
   <app:version eap="true" major="264" minor="1" />
-  <app:build number="JBC-263.123.4" majorReleaseDate="20260918" />
+  <app:build number="__BUILD_NUMBER__" majorReleaseDate="20260918" />
   <build branchName="Unqualified" />
   <other:build branchName="Foreign" />
 </component>

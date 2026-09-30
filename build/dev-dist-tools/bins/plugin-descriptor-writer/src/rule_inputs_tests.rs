@@ -110,7 +110,6 @@ fn application_info_rule_tests() {
             format!("--out={}", path_string(&output)),
             format!("--client-application-info={}", testdata("application_info/client.xml")),
             format!("--product-application-info={}", testdata("application_info/product.xml")),
-            format!("--build-number={}", testdata("application_info/build.txt")),
         ];
         lines.extend(options.iter().map(|option| (*option).to_owned()));
         assert_eq!(run_request(dir, &lines), code, "{variant}");
@@ -160,7 +159,7 @@ fn product_descriptor_rule_tests() {
     assert_same_bytes(&classpath, "product_descriptor/prefix.expected.xml");
 }
 
-/// `product_application_info_rule_test`: `:product_application_info` against `idea-community.expected.xml`.
+/// `product_application_info_rule_test`: `:product_application_info` against `markers.expected.xml`.
 #[test]
 fn product_application_info_rule_test() {
     let dir = temp_dir();
@@ -169,10 +168,12 @@ fn product_application_info_rule_test() {
     let lines = vec![
         "--stamp-application-info".to_owned(),
         format!("--out={}", path_string(&output)),
-        format!("--source={}", testdata("stamp_application_info/idea-community.xml")),
-        format!("--build-number={}", testdata("stamp_application_info/build.txt")),
-        "--product-code=IC".to_owned(),
+        format!("--source={}", testdata("stamp_application_info/markers.xml")),
+        "--replacement=BUNDLE_NAME=kotlin-server".to_owned(),
+        "--replacement=BUNDLE_EDITION=ILSKS".to_owned(),
+        "--replacement=BUNDLE_EAP= eap=\"true\"".to_owned(),
+        "--replacement=RELEASE_DATE=".to_owned(),
     ];
     run_rule(dir, &lines);
-    assert_same_bytes(&output, "stamp_application_info/idea-community.expected.xml");
+    assert_same_bytes(&output, "stamp_application_info/markers.expected.xml");
 }

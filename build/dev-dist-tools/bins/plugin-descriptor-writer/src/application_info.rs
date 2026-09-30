@@ -17,13 +17,12 @@ use crate::{
 ///
 /// The rule states none of the overrides that `applyApplicationInfoOverrides` in `ApplicationInfoPropertiesImpl.kt`
 /// applies. So this mode refuses `--eap-override`, `--version-suffix-override`, `--nightly` and `--branch-name` as unknown
-/// options.
+/// options. The rule states no build number either, so this mode refuses `--build-number` too.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub(crate) struct ApplicationInfoRequest {
     pub output: String,
     pub client_application_info: String,
     pub product_application_info: String,
-    pub build_number: String,
 }
 
 pub(crate) fn run(lines: &[OptionLine]) -> i32 {
@@ -41,11 +40,10 @@ pub(crate) fn run(lines: &[OptionLine]) -> i32 {
     }
 }
 
-/// Applies the client build markers, then copies the names, the version and the release date of the product.
+/// Applies the client markers, then copies the names, the version and the release date of the product.
 pub(crate) fn resolve_application_info(parsed: &ApplicationInfoRequest) -> Result<String> {
-    let build_number = read_build_number(&parsed.build_number, "frontend")?;
     let client_content = read_text(&parsed.client_application_info)?;
-    let replaced = replace_markers(&client_content, &application_info_replacements(&[], "JBC", &build_number));
+    let replaced = replace_markers(&client_content, &application_info_replacements());
     let product_content = read_text(&parsed.product_application_info)?;
     let product = ApplicationInfoElements::parse(&product_content, &parsed.product_application_info)?;
     let mut client = ApplicationInfoElements::parse(&replaced, &parsed.client_application_info)?;
@@ -53,37 +51,12 @@ pub(crate) fn resolve_application_info(parsed: &ApplicationInfoRequest) -> Resul
     Ok(descriptorxml::write(&client.root))
 }
 
-/// Reads the build number of the file, without surrounding whitespace. An empty build number fails.
-pub(crate) fn read_build_number(file: &str, owner: &str) -> Result<String> {
-    let build_number = read_text(file)?.trim().to_owned();
-    if build_number.is_empty() {
-        bail!("the {owner} build number is empty: {file}");
-    }
-    Ok(build_number)
-}
-
-/// The replacement map of `computeAppInfoXml` for a dev distribution.
+/// The replacement map of `computeAppInfoXml` for the client template of a dev distribution.
 ///
-/// The product replacements come first. A base key that a product replacement also states keeps that position and
-/// takes the base value, as Kotlin's `Map.plus` does. A dev distribution stamps no `BUILD_DATE`, and it has no artifact
-/// server, so `BUILTIN_PLUGINS_URL` is empty.
-pub(crate) fn application_info_replacements(product: &[Replacement], product_code: &str, build_number: &str) -> Vec<Replacement> {
-    let mut result = product.to_vec();
-    for base in [
-        Replacement::new("BUILD_NUMBER", &format!("{product_code}-{build_number}")),
-        Replacement::new("BUILD", build_number),
-        Replacement::new("BUILTIN_PLUGINS_URL", ""),
-    ] {
-        let mut stated = false;
-        for replacement in result.iter_mut().filter(|replacement| replacement.key == base.key) {
-            replacement.value.clone_from(&base.value);
-            stated = true;
-        }
-        if !stated {
-            result.push(base);
-        }
-    }
-    result
+/// A dev distribution stamps no build number and no build date. The run time reads the build number from `build.txt`.
+/// A dev distribution has no artifact server, so `BUILTIN_PLUGINS_URL` is empty.
+pub(crate) fn application_info_replacements() -> [Replacement; 1] {
+    [Replacement::new("BUILTIN_PLUGINS_URL", "")]
 }
 
 pub(crate) fn parse_application_info_request(lines: &[OptionLine]) -> Result<ApplicationInfoRequest> {
@@ -98,7 +71,6 @@ pub(crate) fn parse_application_info_request(lines: &[OptionLine]) -> Result<App
             "--out" => &mut parsed.output,
             "--client-application-info" => &mut parsed.client_application_info,
             "--product-application-info" => &mut parsed.product_application_info,
-            "--build-number" => &mut parsed.build_number,
             option => bail!("unknown frontend application info option '{option}'"),
         };
         assign(slot, line)?;
@@ -107,7 +79,6 @@ pub(crate) fn parse_application_info_request(lines: &[OptionLine]) -> Result<App
         ("--out", &parsed.output),
         ("--client-application-info", &parsed.client_application_info),
         ("--product-application-info", &parsed.product_application_info),
-        ("--build-number", &parsed.build_number),
     ])?;
     Ok(parsed)
 }
