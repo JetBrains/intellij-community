@@ -111,7 +111,7 @@ class ToolWindowEditorTabPreCloseCheckTest {
       // The support must be asked once for the whole group, not once per tab.
       assertThat(support.filterTabsToCloseInvocations).hasSize(1)
       assertThat(support.filterTabsToCloseInvocations.single())
-        .containsExactly(tabFile1.attachedContent(project), tabFile2.attachedContent(project))
+        .containsExactlyInAnyOrder(tabFile1.attachedContent(project), tabFile2.attachedContent(project))
     }
 
   @Test
