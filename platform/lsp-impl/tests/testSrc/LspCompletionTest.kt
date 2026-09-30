@@ -2,6 +2,7 @@ package com.intellij.platform.lsp
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.icons.AllIcons
@@ -17,6 +18,7 @@ import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.completion.LspCompletionObject
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.testFramework.junit5.TestApplication
@@ -75,6 +77,24 @@ internal class LspCompletionTest {
       }
     },
   )
+
+  /**
+   * Waits until the lookup resolves [element] in the background, then renders [element] with its expensive renderer.
+   * The render uses the resolved item and does not send a second `completionItem/resolve` request.
+   *
+   * Call this function only when the test expects a `completionItem/resolve` request that returns a non-null item.
+   * Otherwise, the item never becomes resolved, and the function fails on timeout.
+   */
+  private suspend fun awaitResolveAndRender(element: LookupElement): LookupElementPresentation {
+    val initialCompletionItem = (element as LookupElementDecorator<*>).delegate.`object`
+    val completionObject = element.`object` as LspCompletionObject
+    waitUntil("the lookup must resolve the completion item") { completionObject.completionItem !== initialCompletionItem }
+
+    val presentation = LookupElementPresentation()
+    @Suppress("UNCHECKED_CAST")
+    (element.expensiveRenderer as LookupElementRenderer<LookupElement>).renderElement(element, presentation)
+    return presentation
+  }
 
   @Nested
   inner class BasicCompletion {
@@ -251,10 +271,8 @@ internal class LspCompletionTest {
       assertNotNull(lookupElements)
       val element = lookupElements!!.single()
 
-      val presentation = LookupElementPresentation()
-      @Suppress("UNCHECKED_CAST")
-      (element.expensiveRenderer as LookupElementRenderer<LookupElement>).renderElement(element, presentation)
       serverSession.awaitExpected()
+      val presentation = awaitResolveAndRender(element)
 
       assertEquals("myItem", presentation.itemText)
       assertEquals("fun myItem(): String", presentation.typeText)
@@ -288,10 +306,8 @@ internal class LspCompletionTest {
       assertNotNull(lookupElements)
       val element = lookupElements!!.single()
 
-      val presentation = LookupElementPresentation()
-      @Suppress("UNCHECKED_CAST")
-      (element.expensiveRenderer as LookupElementRenderer<LookupElement>).renderElement(element, presentation)
       serverSession.awaitExpected()
+      val presentation = awaitResolveAndRender(element)
 
       assertEquals("resolveMe", presentation.itemText)
       assertEquals("(param: Int)", presentation.tailText)
@@ -758,10 +774,8 @@ internal class LspCompletionTest {
       }
 
       val element = codeInsightFixture.completeBasic()!!.single()
-      val presentation = LookupElementPresentation()
-      @Suppress("UNCHECKED_CAST")
-      (element.expensiveRenderer as LookupElementRenderer<LookupElement>).renderElement(element, presentation)
       serverSession.awaitExpected()
+      val presentation = awaitResolveAndRender(element)
 
       assertEquals("Resolved detail", presentation.typeText)
     }
