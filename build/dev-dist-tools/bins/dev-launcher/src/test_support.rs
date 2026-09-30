@@ -24,6 +24,7 @@ impl TempDir {
     }
 
     /// The absolute path of this directory, as text.
+    #[cfg(unix)]
     pub(crate) fn root(&self) -> String {
         self.path.to_str().expect("a UTF-8 path").to_owned()
     }
