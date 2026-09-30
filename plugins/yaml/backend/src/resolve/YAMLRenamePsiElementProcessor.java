@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
@@ -19,7 +20,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Predicate;
 
-public class YAMLRenamePsiElementProcessor extends RenamePsiElementProcessor {
+public class YAMLRenamePsiElementProcessor extends RenamePsiElementProcessor implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public void findExistingNameConflicts(final @NotNull PsiElement element, final @NotNull String newName, final @NotNull MultiMap<PsiElement, String> conflicts) {
     assert element instanceof YAMLAnchor;
