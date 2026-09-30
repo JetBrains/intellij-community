@@ -179,14 +179,13 @@ java_binary(
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
-        "-Dintellij.build.dev.dist.community.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
     main_class = "com.intellij.platform.buildScripts.devDistGenerator.CommunityDevDistGenerator",
     runtime_deps = ["//platform/build-scripts/dev-dist-generator"],
 )
 
-# The two renders of the community half, the community binary and the monorepo run, write one text per file. The test
-# reads the community targets JSON that the binary reads, so it needs no converter run.
+# The tests of the community binary. The identity of the two renders of the community half is a test of the monorepo,
+# `DevDistCommunityHalfIdentityTest` in `//build:ultimate-build-tests_test`, because only the monorepo has both JSON files.
 jps_test(
     name = "dev_dist_generator_identity_test",
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
@@ -195,7 +194,6 @@ jps_test(
     },
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
-        "-Dintellij.build.dev.dist.community.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
     ],
     runtime_deps = ["//platform/build-scripts/dev-dist-generator:buildScripts-devDistGenerator-tests_test_lib"],
 )

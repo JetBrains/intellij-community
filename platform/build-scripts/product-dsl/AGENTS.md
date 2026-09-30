@@ -15,7 +15,6 @@ defined there, not in a community-only checkout.
 
 1. **Run Generator** (performs compilation via Bazel — no extra compilation step needed):
    ```bash
-   ./community/build/jpsModelToBazelCommunityOnly.cmd
    ./build/jpsModelToBazel.cmd
    bazel run //platform/buildScripts:plugin-model-tool
    bazel run //platform/buildScripts:plugin-model-tool -- --check
@@ -24,8 +23,8 @@ defined there, not in a community-only checkout.
    ```
 
    One generator run writes the Product DSL output and both dev-dist halves. The community half renders first.
-   An IDE run of the generator reads the untracked `community/build/bazel-targets.json`, which the community converter
-   refreshes. After a rebase, run the whole recipe before a push.
+   Both halves read `build/bazel-targets.json`, and the community half takes the rows of the community modules.
+   After a rebase, run the whole recipe before a push.
 
    A community-only checkout regenerates only its dev-dist half with `bazel run //build:dev_dist_generator`
    from `community/`. Add `-- --check` to report a stale file. From the ultimate root, the check is

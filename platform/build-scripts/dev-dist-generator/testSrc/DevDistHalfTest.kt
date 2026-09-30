@@ -3,8 +3,11 @@ package com.intellij.platform.buildScripts.devDistGenerator
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -160,41 +163,68 @@ class DevDistHalfTest {
   }
 
   @Test
-  fun `a jar path of the community converter resolves below the community output of the monorepo`() {
-    val module = BazelTargetsInfo.TargetsFileModuleDescription(
-      productionTargets = listOf("@community//platform/core-api:core.jar"),
-      productionJars = listOf("out/bazel-out/jvm-fastbuild/bin/platform/core-api/core.jar"),
-      testTargets = emptyList(),
-      testJars = listOf("out/bazel-out/jvm-fastbuild/bin/platform/core-api/core_test_lib.jar"),
-      exports = emptyList(),
-      moduleLibraries = emptyMap(),
-    )
-    val library = BazelTargetsInfo.LibraryDescription(
+  fun `the community rows of the monorepo targets JSON drop every row that the community model does not name`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    project.addModule("intellij.platform.core", JpsJavaModuleType.INSTANCE)
+    project.addModule("intellij.x", JpsJavaModuleType.INSTANCE)
+    project.addLibrary("Ant", JpsJavaLibraryType.INSTANCE)
+    val core = targetsModule("@community//platform/core-api:core", "out/bazel-out/jvm-fastbuild/bin/external/community+/platform/core-api/core.jar")
+    val ant = BazelTargetsInfo.LibraryDescription(
       target = "@lib//ant/lib:ant",
       jars = listOf("external/lib+/ant/lib/ant.jar"),
       jarTargets = listOf("@lib//ant/lib:ant.jar"),
       sourceJars = emptyList(),
     )
+    val x = BazelTargetsInfo.PluginDistributionTargetDescription(
+      target = "@community//plugins/x:x_plugin",
+      distributionDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/plugins/x/x",
+    )
     val targets = BazelTargetsInfo.TargetsFile(
-      modules = mapOf("intellij.platform.core" to module),
-      projectLibraries = mapOf("Ant" to library),
+      modules = mapOf(
+        "intellij.platform.core" to core,
+        "intellij.u" to targetsModule("//plugins/u:u", "out/bazel-out/jvm-fastbuild/bin/plugins/u/u.jar"),
+      ),
+      imlTargets = listOf(
+        "@community//platform/core-api:intellij.platform.core.iml",
+        "@jps_to_bazel//:intellij.x.iml",
+        "//plugins/u:intellij.u.iml",
+      ),
+      projectLibraries = mapOf("Ant" to ant, "jet-sign" to ant.copy(target = "@ultimate_lib//:jet-sign")),
       pluginDistributionTargets = mapOf(
-        "intellij.x" to BazelTargetsInfo.PluginDistributionTargetDescription(
-          target = "@community//plugins/x:x",
-          distributionDirectory = "out/bazel-out/jvm-fastbuild/bin/plugins/x/x",
-        ),
+        "intellij.x" to x,
+        "intellij.u" to BazelTargetsInfo.PluginDistributionTargetDescription(target = "//plugins/u:u_plugin", distributionDirectory = "u"),
       ),
     )
 
-    val remapped = communityTargetsSeenFromMonorepo(targets)
+    val community = communityTargetsOf(targets = targets, project = project)
 
-    val core = remapped.modules.getValue("intellij.platform.core")
-    assertThat(core.productionTargets).isEqualTo(module.productionTargets)
-    assertThat(core.productionJars).containsExactly("out/bazel-out/jvm-fastbuild/bin/external/community+/platform/core-api/core.jar")
-    assertThat(core.testJars).containsExactly("out/bazel-out/jvm-fastbuild/bin/external/community+/platform/core-api/core_test_lib.jar")
-    assertThat(remapped.projectLibraries.getValue("Ant")).isEqualTo(library)
-    assertThat(remapped.pluginDistributionTargets.getValue("intellij.x").distributionDirectory)
-      .isEqualTo("out/bazel-out/jvm-fastbuild/bin/external/community+/plugins/x/x")
+    assertThat(community.modules).containsExactly(entry("intellij.platform.core", core))
+    assertThat(community.imlTargets).containsExactly("@community//platform/core-api:intellij.platform.core.iml", "@jps_to_bazel//:intellij.x.iml")
+    assertThat(community.projectLibraries).containsExactly(entry("Ant", ant))
+    assertThat(community.pluginDistributionTargets).containsExactly(entry("intellij.x", x))
+  }
+
+  @Test
+  fun `a community module library of the monorepo targets JSON gets the label of the community converter`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    project.addModule("intellij.webp", JpsJavaModuleType.INSTANCE)
+    val library = BazelTargetsInfo.LibraryDescription(
+      target = "@community//plugins/webp/lib:webp-libwebp",
+      jars = listOf("external/community+/plugins/webp/lib/libwebp.jar"),
+      jarTargets = listOf("@community//plugins/webp/lib:libwebp.jar"),
+      sourceJars = emptyList(),
+    )
+    val module = targetsModule("@community//plugins/webp:webp", "out/bazel-out/jvm-fastbuild/bin/external/community+/plugins/webp/webp.jar")
+      .copy(moduleLibraries = mapOf("#" to library))
+    val targets = BazelTargetsInfo.TargetsFile(modules = mapOf("intellij.webp" to module), projectLibraries = emptyMap(), pluginDistributionTargets = emptyMap())
+
+    val webp = communityTargetsOf(targets = targets, project = project).modules.getValue("intellij.webp")
+
+    assertThat(webp.productionTargets).isEqualTo(module.productionTargets)
+    assertThat(webp.productionJars).isEqualTo(module.productionJars)
+    assertThat(webp.moduleLibraries.getValue("#")).isEqualTo(
+      library.copy(target = "//plugins/webp/lib:webp-libwebp", jarTargets = listOf("//plugins/webp/lib:libwebp.jar")),
+    )
   }
 
   @Test
@@ -250,4 +280,16 @@ class DevDistHalfTest {
     assertThatThrownBy { check(hasPlatformPatches = true) }.hasMessageContaining("platform patch")
     assertThatThrownBy { check(runtimeModuleRepositoryProducts = listOf("Idea")) }.hasMessageContaining("runtime module repository")
   }
+}
+
+/** A module row of a targets JSON with one production target and its jar. */
+private fun targetsModule(target: String, jar: String): BazelTargetsInfo.TargetsFileModuleDescription {
+  return BazelTargetsInfo.TargetsFileModuleDescription(
+    productionTargets = listOf(target),
+    productionJars = listOf(jar),
+    testTargets = emptyList(),
+    testJars = emptyList(),
+    exports = emptyList(),
+    moduleLibraries = emptyMap(),
+  )
 }

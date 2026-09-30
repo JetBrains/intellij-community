@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.devDistGenerator
 
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
+import com.intellij.platform.buildScripts.pluginModelTool.loadGeneratorJpsProject
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.buildSpan
+import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.telemetry.withoutTracer
 import java.nio.file.Files
@@ -21,7 +23,8 @@ import kotlin.system.exitProcess
  *
  * The binary writes only below the community root. It writes no Product DSL XML, because the ultimate tool
  * `bazel run //platform/buildScripts:plugin-model-tool` is the one writer of that XML. The ultimate tool also runs this
- * community half, through the same [computeCommunityHalf].
+ * community half, through the same [computeCommunityHalf]. The ultimate tool reads the community rows of the monorepo
+ * `bazel-targets.json`, and this binary reads the targets JSON of the community converter.
  */
 @ApiStatus.Internal
 object CommunityDevDistGenerator {
@@ -88,16 +91,22 @@ fun findCommunityRoot(start: Path): Path {
  * Renders the community half over the community checkout [communityRoot], and writes it when [commit]. Otherwise, the
  * result reports each changed file as a diff.
  *
- * The run reads the community targets JSON, see [communityTargetsJson]. Its jar paths are relative to [communityRoot].
+ * The run reads the community targets JSON through [BazelTargetsInfo.loadBazelTargetsJson]. Under Bazel, the property
+ * `intellij.build.bazel.targets.json.file` of the binary names the output of `//build:community_bazel_targets_json`.
+ * Otherwise, the file is `build/bazel-targets.json` below [communityRoot]. Its jar paths are relative to [communityRoot].
  * The run fails when the file does not exist, and the message names the converter that writes it.
  */
 internal fun generateCommunityDevDist(communityRoot: Path, commit: Boolean, verifyPlanUnits: Boolean): DevDistHalvesFiles {
-  val targetsFile = communityTargetsJson(communityRoot)
-  check(Files.exists(targetsFile)) {
-    "The community half needs $targetsFile. Run ./build/jpsModelToBazelCommunityOnly.cmd in the community root first."
+  check(devDistPlanInputExists(communityRoot)) {
+    "The community half needs ${ArchivedCompilationContextUtil.getBazelTargetsJsonPath(communityRoot)}." +
+    " Run ./build/jpsModelToBazelCommunityOnly.cmd in the community root first."
   }
-  val targets = buildSpan("load community bazel-targets.json") { readBazelTargetsJson(targetsFile) }
-  val half = computeCommunityHalf(communityRoot = communityRoot, projectHome = communityRoot, targets = targets, verifyPlanUnits = verifyPlanUnits)
-  val results = listOf(half.sections.finish(commitChanges = commit), half.plan.finish(commitChanges = commit))
-  return DevDistHalvesFiles(files = results.flatMap { it.files }, diffs = results.flatMap { it.diffs })
+  return renderCommunityHalf(
+    communityRoot = communityRoot,
+    projectHome = communityRoot,
+    project = loadGeneratorJpsProject(communityRoot),
+    targets = BazelTargetsInfo.loadBazelTargetsJson(communityRoot),
+    commit = commit,
+    verifyPlanUnits = verifyPlanUnits,
+  )
 }

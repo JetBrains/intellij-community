@@ -34,7 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts.pluginModelTool" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.concurrency" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
