@@ -18,11 +18,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.progress.withProgressText
@@ -34,8 +31,8 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.VisibleForTesting
 import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder
-import git4idea.GitReference
 import git4idea.GitOperationsCollector
+import git4idea.GitReference
 import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.branch.GitBranchUiHandler
@@ -43,6 +40,7 @@ import git4idea.branch.GitCheckoutInOtherWorktreeDialogs
 import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.util.EelUtils.getEel
 import git4idea.workingTrees.dialog.GitWorkingTreeDialog
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.GitWorktreeDialogContext
@@ -165,11 +163,9 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(project, place, refFromContext)
     coroutineScope.launch(Dispatchers.Default) {
       val (eel, systemTempDir) = withContext(Dispatchers.IO) {
-        val eel = try {
-          project.getEelDescriptor().toEelApiBlocking()
-        }
-        catch (e: EelUnavailableException) {
-          LOG.warn("Could not connect to the project's Eel environment; not opening the New Worktree dialog", e)
+        val eel = getEel(project)
+        if (eel == null) {
+          LOG.warn("Not opening the New Worktree dialog")
           return@withContext null
         }
         eel to getSystemTempDir(eel)

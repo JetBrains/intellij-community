@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.notification.CollaborationToolsNotification
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.eel.provider.utils.EelSystemFolderUtils
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -20,7 +21,6 @@ import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
-import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
@@ -34,6 +34,9 @@ import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchCheckoutOperation
 import git4idea.ui.branch.hasTrackingConflicts
+import git4idea.util.EelUtils.getEel
+import git4idea.workingTrees.GitCreateWorkingTreeService
+import git4idea.workingTrees.GitCreateWorkingTreeService.Companion.getSystemTempDir
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -202,8 +205,15 @@ object GitRemoteBranchesUtil {
    * It is in the same Eel environment (WSL/Docker/local) as the project.
    */
   @RequiresBackgroundThread(generateAssertion = false)
-  fun getReviewWorktreesParentDir(project: Project): Path =
-    GitCreateWorkingTreeService.getSystemTempDir(project).resolve(REVIEW_WORKTREES_DIR_NAME)
+  fun getReviewWorktreesParentDir(project: Project): Path {
+    val eelApi = getEel(project)
+    return if (eelApi != null) {
+      getSystemTempDir(eelApi).resolve(REVIEW_WORKTREES_DIR_NAME)
+    }
+    else {
+      EelSystemFolderUtils.getSystemFolder(project).resolve("tmp").resolve(REVIEW_WORKTREES_DIR_NAME)
+    }
+  }
 
   private const val REVIEW_WORKTREES_DIR_NAME = "reviewWorktrees"
 
