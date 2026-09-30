@@ -363,7 +363,10 @@ class TerminalToolWindowTabsManagerImpl(
       toolWindow.setTabsSplittingAllowed(true)
       ToolWindowContentUi.setToolWindowInEditorSupport(toolWindow, TerminalInEditorSupport())
 
-      TerminalFocusFusService.ensureInitialized()
+      // Creating the service loads classes. The service reads the focus on the UI thread itself.
+      manager.coroutineScope.launch(Dispatchers.Default) {
+        TerminalFocusFusService.ensureInitialized()
+      }
 
       if (toolWindow is ToolWindowEx) {
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
