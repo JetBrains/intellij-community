@@ -14,7 +14,10 @@ JAVA_TEST_FLAGS = [
     "-Dintellij.build.use.compiled.classes=false",
     "-Djava.util.zip.use.nio.for.zip.file.access=true",
     "-ea",
-]
+] + select({
+    "@platforms//os:windows": ["-XX:+ErrorFileToStderr"],
+    "//conditions:default": ['-XX:ErrorFile="$${TEST_UNDECLARED_OUTPUTS_DIR}/hs_err_pid%p.log"'],
+})
 
 JAVA_TEST_ARGS = [
 ]
