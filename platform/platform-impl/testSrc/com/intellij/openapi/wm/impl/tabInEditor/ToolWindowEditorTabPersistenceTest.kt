@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -19,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
@@ -180,6 +182,24 @@ class ToolWindowEditorTabPersistenceTest {
         assertThat(file.persistentPath).isNull()
         assertThat(file.isPersistedInEditorHistory()).isFalse()
       }
+    }
+
+  @Test
+  fun `closing a persistent tab removes it from the registry and the editor history`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val (_, tabFile) = moveToEditor()
+      val path = requireNotNull(tabFile.persistentPath)
+      val history = EditorHistoryManager.getInstance(project)
+      waitUntil("the open tab should enter the editor history") { history.hasBeenOpen(tabFile) }
+
+      manager.closeFile(tabFile)
+
+      assertThat(manager.isFileOpen(tabFile)).isFalse()
+      assertThat(tabFile.isValid).isFalse()
+      assertThat(tabFile.session(project)).isNull()
+      // A closed tab must not come back through its path, and Recent Files must not list it.
+      assertThat(registry.findFile(path)).isNull()
+      assertThat(history.hasBeenOpen(tabFile)).isFalse()
     }
 
   // Editor state

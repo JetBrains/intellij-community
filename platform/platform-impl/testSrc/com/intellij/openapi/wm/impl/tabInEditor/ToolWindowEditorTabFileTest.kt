@@ -3,13 +3,17 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentFileHistoryOrderListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +33,9 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class ToolWindowEditorTabFileTest {
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
   private val projectFixture = projectFixture(
     openProjectTask = OpenProjectTask {
       beforeInitTasks += { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
@@ -58,6 +65,19 @@ class ToolWindowEditorTabFileTest {
    */
   private fun presentationChannel(initial: ToolWindowEditorTabPresentation): Channel<ToolWindowEditorTabPresentation> {
     return Channel<ToolWindowEditorTabPresentation>(capacity = Channel.UNLIMITED).also { it.trySend(initial) }
+  }
+
+  /**
+   * Records the files that the sessions of this project report to Recent Files.
+   */
+  private fun recordRecentFileUpdates(): List<VirtualFile> {
+    val updatedFiles = mutableListOf<VirtualFile>()
+    project.messageBus.connect(disposable).subscribe(RecentFileHistoryOrderListener.TOPIC, object : RecentFileHistoryOrderListener {
+      override fun recentFileUpdated(file: VirtualFile) {
+        updatedFiles += file
+      }
+    })
+    return updatedFiles
   }
 
   private suspend fun awaitPresentation(
@@ -175,6 +195,44 @@ class ToolWindowEditorTabFileTest {
       assertThat(file.tabTitle(project)).isEqualTo("Renamed title")
       // The icon is unchanged across the rename.
       assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
+    }
+
+  @Test
+  fun `the session publishes a recent file update only for a changed presentation`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val updatedFiles = recordRecentFileUpdates()
+      val presentations = presentationChannel(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+      val file = createFile(presentations.receiveAsFlow())
+      awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
+
+      presentations.trySend(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+      presentations.trySend(ToolWindowEditorTabPresentation("Renamed", AllIcons.General.Gear))
+      awaitPresentation(file, title = "Renamed", icon = AllIcons.General.Gear)
+
+      // The flow is ordered, so the equal presentation was handled before the rename. Only the initial
+      // presentation and the rename may reorder Recent Files.
+      assertThat(updatedFiles).containsExactly(file, file)
+    }
+
+  @Test
+  fun `a closed session ignores later presentations`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val updatedFiles = recordRecentFileUpdates()
+      val presentations = presentationChannel(ToolWindowEditorTabPresentation("Title", AllIcons.General.Gear))
+      val file = createFile(presentations.receiveAsFlow())
+      awaitPresentation(file, title = "Title", icon = AllIcons.General.Gear)
+      val updatesBeforeClose = updatedFiles.size
+
+      ToolWindowEditorTabManager.getInstance(project).closeEditorTabFile(file, releaseContent = true)
+      presentations.trySend(ToolWindowEditorTabPresentation("Renamed", AllIcons.General.Add))
+      repeat(5) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        delay(20.milliseconds)
+      }
+
+      assertThat(file.name).isEqualTo("Title")
+      assertThat(file.lastKnownIcon).isEqualTo(AllIcons.General.Gear)
+      assertThat(updatedFiles).hasSize(updatesBeforeClose)
     }
 
   @Test

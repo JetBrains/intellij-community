@@ -6,9 +6,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import com.intellij.testFramework.ExtensionTestUtil
@@ -147,5 +149,27 @@ class ToolWindowEditorTabManagerTest {
 
       assertThat(Disposer.isDisposed(content)).isTrue()
       assertThat(openTabFiles()).isEmpty()
+    }
+
+  @Test
+  fun `moving the content back publishes fileClosed once the file is invalid`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createToolWindow()
+      val content = addContent(toolWindow)
+      controller.moveContentToEditor(toolWindow, content)
+      val tabFile = openTabFile()
+      val validityOnClose = mutableListOf<Boolean>()
+      project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+          if (file == tabFile) validityOnClose += file.isValid
+        }
+      })
+
+      controller.moveContentToToolWindow(toolWindow, tabFile)
+
+      // The move closes the file while it is still valid, because it reopens the content in the tool window.
+      // Recent Files drops the tab only on a fileClosed that arrives after the file is invalid.
+      assertThat(validityOnClose).isNotEmpty()
+      assertThat(validityOnClose.last()).isFalse()
     }
 }
