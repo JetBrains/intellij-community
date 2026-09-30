@@ -70,8 +70,6 @@
                  description="Load run configurations from *.run.xml files in the project content."
                  key="run.configurations.from.arbitrary.files"
                  restartRequired="true"/>
-    <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
-    <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
     <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
     <statistics.validation.customValidationRule
@@ -123,7 +121,6 @@
                          bundle="messages.ExecutionBundle"
                          key="configurable.ProjectStartupConfigurable.display.name"
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
-    <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
                        key="notification.group.startup.task"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
