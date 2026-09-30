@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
@@ -71,6 +72,7 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
     if (cachedContext != null) {
       return cachedContext;
     }
+    PyCodeInsightCounters.inc(PyCodeInsightCounters.Counter.CONTEXT_LOOKUP_MISSES);
     TypeEvalContext oldValue =
       map.putIfAbsent(key, standard);// ConcurrentMap guarantees happens-before so from this moment get() should work in other threads
     return oldValue == null ? standard : oldValue;

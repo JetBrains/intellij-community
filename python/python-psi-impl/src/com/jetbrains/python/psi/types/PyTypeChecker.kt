@@ -16,6 +16,8 @@ import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.ProtocolAndSubclassElements
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.getProtocolMembers
@@ -334,6 +336,7 @@ object PyTypeChecker {
   }
 
   private fun match(expected: PyType?, actual: PyType?, context: MatchContext): Optional<Boolean> {
+    PyCodeInsightCounters.inc(Counter.MATCH_STEPS)
     PyAnyType.validate(expected)
     PyAnyType.validate(actual)
     val result = RecursionManager.doPreventingRecursion(expected to actual, false) {

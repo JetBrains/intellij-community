@@ -16,6 +16,8 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyExpression
@@ -82,6 +84,10 @@ open class TypeEvalContextImpl internal constructor(
   protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
   protected val myVarianceCache: MutableMap<PyTypeParameterType, PyVariance> = getConcurrentMapForCaching()
   protected val mySubstitutionsCache: MutableMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> = getConcurrentMapForCaching()
+
+  init {
+    PyCodeInsightCounters.inc(Counter.CONTEXTS_CONSTRUCTED)
+  }
 
   internal constructor(
     allowDataFlow: Boolean,
@@ -193,6 +199,7 @@ open class TypeEvalContextImpl internal constructor(
     if (currentDepth >= Registry.intValue("python.control.flow.assumption.max.depth", 8)) {
       return func(this)
     }
+    PyCodeInsightCounters.inc(Counter.ASSUME_TYPE_CALLS)
     val context = AssumptionContext(this, element, type)
     return try {
       func(context)
@@ -256,6 +263,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   override fun getType(element: PyTypedElement): PyType? {
+    PyCodeInsightCounters.inc(Counter.GET_TYPE_CALLS)
     if (canDelegateToLibraryContext(element)) {
       val context = getLibraryContext(element.project)
       return context.getType(element)
@@ -263,10 +271,12 @@ open class TypeEvalContextImpl internal constructor(
 
     val knownType = getKnownType(element)
     if (knownType != null) {
+      PyCodeInsightCounters.inc(Counter.GET_TYPE_CACHE_HITS)
       return if (knownType === PyNullType) null else knownType
     }
 
     return RecursionManager.doPreventingRecursion(element to this, false) {
+      PyCodeInsightCounters.inc(Counter.GET_TYPE_EVALUATIONS)
       val engine = getTypeEngine(element)?.takeIf { it.isSupportedForResolve(element) }
       val type = if (engine == null) {
         evaluateWithBuiltInEngine(element)

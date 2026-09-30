@@ -28,6 +28,8 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyAsPattern
@@ -115,6 +117,8 @@ open class PyControlFlowBuilder(private val myLanguageLevel: LanguageLevel?) : P
   fun buildControlFlow(owner: ScopeOwner): PyControlFlow {
     val flow = builder.build(this, owner)
     val instructions = flow.instructions
+    PyCodeInsightCounters.inc(Counter.CFG_BUILDS)
+    PyCodeInsightCounters.add(Counter.CFG_INSTRUCTIONS, instructions.size.toLong())
     for (i in instructions.indices) {
       check(i == instructions[i]!!.num())
     }
