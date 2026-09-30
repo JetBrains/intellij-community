@@ -280,6 +280,47 @@ class ToolWindowEditorTabPendingContentTest {
   }
 
   @Test
+  fun `an editor tab action gets the live content of a tab moved from the tool window`(): Unit = uiTest {
+    ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = toolWindowId))
+    val content = createTabContent(displayName = "moved")
+    val editor = ToolWindowEditorTabFileEditor(project, createTabFile(project = project, toolWindowId = toolWindowId, content = content))
+    Disposer.register(disposable, editor)
+    val action = RecordingEditorTabAction()
+    val event = createEvent(action, editor)
+
+    action.update(event)
+    action.actionPerformed(event)
+
+    assertThat(event.presentation.isEnabledAndVisible).isTrue()
+    assertThat(action.updatedContents).containsExactly(content)
+    assertThat(action.performedContents).containsExactly(content)
+    assertThat(provider.deserializeInvocations).isEmpty()
+  }
+
+  @Test
+  fun `an editor tab action is hidden without a tab context`(): Unit = uiTest {
+    ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = toolWindowId))
+    // This action shows itself for content and for a stored state, so only the base class can hide it.
+    val action = PendingContentEditorTabAction()
+    // A tab with neither content nor a stored state, for example after a failed restore.
+    val emptyTabEditor = ToolWindowEditorTabFileEditor(project, ToolWindowEditorTabFile(toolWindowId = toolWindowId, persistentPath = null))
+    Disposer.register(disposable, emptyTabEditor)
+    // A tab of a tool window that this project does not have.
+    val orphanTabEditor = ToolWindowEditorTabFileEditor(project, createTabFile(project = project, toolWindowId = "UnregisteredToolWindow"))
+    Disposer.register(disposable, orphanTabEditor)
+
+    for (editor in listOf(emptyTabEditor, orphanTabEditor, null)) {
+      val event = createEvent(action, editor)
+
+      action.update(event)
+      action.actionPerformed(event)
+
+      assertThat(event.presentation.isEnabledAndVisible).describedAs("editor: $editor").isFalse()
+    }
+    assertThat(action.performedContents).isEmpty()
+  }
+
+  @Test
   fun `a restored tab shows its stored icon before its content is restored`(@TempDir tempDir: Path): Unit = uiTest {
     val storedIcon = requireNotNull(createSerializableIcon(tempDir).serialized())
     val editor = createRestoredTabEditor(icon = storedIcon)
@@ -341,7 +382,10 @@ class ToolWindowEditorTabPendingContentTest {
     }
   }
 
-  private fun createEvent(action: AnAction, editor: FileEditor): AnActionEvent {
+  /**
+   * Creates an event for [action] in the context of [editor]. A `null` [editor] emulates a place without a file editor.
+   */
+  private fun createEvent(action: AnAction, editor: FileEditor?): AnActionEvent {
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(PlatformDataKeys.FILE_EDITOR, editor)
@@ -350,6 +394,7 @@ class ToolWindowEditorTabPendingContentTest {
   }
 
   private open class RecordingEditorTabAction : ToolWindowEditorTabActionBase() {
+    val updatedContents: MutableList<Content> = mutableListOf()
     val performedContents: MutableList<Content> = mutableListOf()
 
     override fun actionPerformed(e: AnActionEvent, content: Content) {
@@ -357,6 +402,7 @@ class ToolWindowEditorTabPendingContentTest {
     }
 
     override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content) {
+      updatedContents += content
       e.presentation.isEnabledAndVisible = true
     }
   }
