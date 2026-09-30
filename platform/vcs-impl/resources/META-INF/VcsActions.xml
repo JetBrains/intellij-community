@@ -630,6 +630,9 @@
     <action id="CommitView.CloseWindowedFloatingTwOnCommit"
             class="com.intellij.openapi.vcs.changes.ui.CloseWindowedFloatingTwOnCommitAction">
       <override-text place="ToolwindowPopup"/>
+      <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
+      <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
+      <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
       <add-to-group group-id="CommitView.GearActions" anchor="last"/>
     </action>
 

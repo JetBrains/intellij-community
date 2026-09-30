@@ -353,7 +353,7 @@ abstract class ToolWindowHeader internal constructor(
 
     override fun actionPerformed(e: AnActionEvent) {
       if (myPopupState.isRecentlyHidden) return // do not show new popup
-      val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, gearProducer.get())
+      val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_OPTIONS_POPUP, gearProducer.get())
       popupMenu.setTargetComponent(e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JComponent ?: this@ToolWindowHeader)
       var x = 0
       var y = 0

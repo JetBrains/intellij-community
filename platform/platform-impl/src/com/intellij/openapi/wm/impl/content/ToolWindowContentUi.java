@@ -695,7 +695,8 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       group.add(toolWindowGroup);
     }
 
-    JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group).getComponent();
+    String place = selectedContent != null ? ActionPlaces.TOOLWINDOW_TAB_POPUP : ActionPlaces.TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP;
+    JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu(place, group).getComponent();
     popup.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {

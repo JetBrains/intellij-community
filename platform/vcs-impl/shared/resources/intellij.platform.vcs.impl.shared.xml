@@ -114,10 +114,16 @@
         <action id="CommitView.ShowOnDoubleClick.EditorPreview"
                 class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$EditorPreview">
           <override-text place="ToolwindowPopup"/>
+          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
+          <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
+          <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
         <action id="CommitView.ShowOnDoubleClick.Source"
                 class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$Source">
           <override-text place="ToolwindowPopup"/>
+          <override-text place="ToolwindowOptionsPopup" use-text-of-place="ToolwindowPopup"/>
+          <override-text place="ToolwindowTabPopup" use-text-of-place="ToolwindowPopup"/>
+          <override-text place="ToolwindowHeaderEmptySpacePopup" use-text-of-place="ToolwindowPopup"/>
         </action>
       </group>
 
