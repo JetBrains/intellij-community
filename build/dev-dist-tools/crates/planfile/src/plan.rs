@@ -66,7 +66,6 @@ pub struct JarSource {
 pub struct JarWriter {
     pub manifest: ManifestPolicy,
     pub merge_entities: bool,
-    pub directory_entries: bool,
     /// The presigned native library whose native entries the jar leaves out, or empty. Only a reused
     /// `content_module_jar` packs such a jar.
     pub native_lib: String,
@@ -170,6 +169,7 @@ struct RawJarSource {
 struct RawJarWriter {
     manifest: Option<ManifestPolicy>,
     merge_entities: Option<bool>,
+    /// The reader keeps the key to refuse `true`. No plan file states it.
     directory_entries: Option<bool>,
     native_lib: Option<String>,
 }
@@ -311,6 +311,9 @@ impl RawJarRecipe {
             fail!("a jar recipe requires ordered sources");
         }
         let writer = self.writer.unwrap_or_default();
+        if writer.directory_entries == Some(true) {
+            fail!("a jar writer states directoryEntries; the packer writes no directory entries into a plan jar");
+        }
         let native_lib = match writer.native_lib {
             Some(native_lib) if native_lib.is_empty() => fail!("a jar writer states an empty native library"),
             native_lib => native_lib.unwrap_or_default(),
@@ -320,7 +323,6 @@ impl RawJarRecipe {
             writer: JarWriter {
                 manifest: writer.manifest.unwrap_or_default(),
                 merge_entities: writer.merge_entities == Some(true),
-                directory_entries: writer.directory_entries == Some(true),
                 native_lib,
             },
         })

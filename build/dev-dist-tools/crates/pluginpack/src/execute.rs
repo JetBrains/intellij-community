@@ -218,15 +218,11 @@ impl Execution {
                     mode,
                     sources,
                     merge_entities,
-                    directory_entries,
                 } => {
                     let mut spec = MergeSpec {
                         merge_entities: *merge_entities,
-                        directory_mode: if *directory_entries {
-                            DirectoryMode::All
-                        } else {
-                            DirectoryMode::None
-                        },
+                        // The simple tier writes the directory entries of a test jar through the flag file.
+                        directory_mode: DirectoryMode::None,
                         validate_entry_names: true,
                         ..MergeSpec::default()
                     };

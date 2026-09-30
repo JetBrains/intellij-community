@@ -93,7 +93,6 @@ pub enum Operation {
         mode: u32,
         sources: Vec<Source>,
         merge_entities: bool,
-        directory_entries: bool,
     },
     /// Copies one declared file.
     Copy { destination: String, mode: u32, input: Reference },

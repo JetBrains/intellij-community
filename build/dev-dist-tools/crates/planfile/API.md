@@ -27,6 +27,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | a jar source of the kind `zip`, or a kind with another filter than its one filter | the kind, or the filter |
 | a source option other than `patch`, and a `file` source without `patch` and an entry | the entry and the options |
 | `preparedManifest`, and the writer keys `rewriteBootClassPath` and `outputName` | unknown field |
+| the writer key `directoryEntries` with `true`; `false`, `null` and an absent key pass | the destination and `directoryEntries` |
 | a writer manifest other than `single-meaningful-source`, `keep` and `drop` | unknown variant |
 | `preparationRoots`, `alwaysRun`, and every field of a Kotlin-executed operation | unknown field |
 | an operation kind other than `layout-assets`, for example the retired `module-filter` | the kind |
@@ -46,7 +47,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 - `Asset { destination, inputs: Vec<String>, recipe: Option<JarRecipe>, mode: u32, kind, class_path: bool }`: one plan asset below the plugin directory. `kind` is `file` or `tree`. The native tree of a reused natives jar is a tree next to its jar. The inputs of a jar asset are the inputs of its recipe sources.
 - `JarRecipe { sources: Vec<JarSource>, writer: JarWriter }`: the canonical recipe of one jar.
 - `JarSource { input, kind, entry }`: one ordered jar source. `kind` is `module`, `library`, `archive`, `file` or `prepared`. Only a `file` source has an entry, and the jar writer patches that file into the jar.
-- `JarWriter { manifest: ManifestPolicy, merge_entities: bool, directory_entries: bool, native_lib }`: the writer options. An empty `native_lib` means none.
+- `JarWriter { manifest: ManifestPolicy, merge_entities: bool, native_lib }`: the writer options. An empty `native_lib` means none. A plan jar has no directory entries.
 - `ManifestPolicy::{SingleMeaningfulSource, Keep, Drop}`: the manifest policy of a jar writer. The default is `SingleMeaningfulSource`.
 - `Preparation { id, inputs, outputs, model_signature }`: one preparation definition.
 - `Operation { id, kind, inputs: Vec<contract::Reference>, output, layout_assets: LayoutAssetPreparation }`: one preparation operation. `kind` is `layout-assets`, the one kind. The packer keeps the manifest of every operation output.
@@ -80,7 +81,7 @@ catalogue.
 - `Reference { artifact, path }`: `path` is empty for a whole artifact. It is `Hash` and `Eq`.
   `Reference::artifact(id: impl Into<String>) -> Reference` makes the reference of a whole artifact.
 - `enum Operation`: one remainder operation at its destination in the plugin directory. `Operation::destination(&self) -> &str`.
-  - `Jar { destination, mode: u32, sources: Vec<Source>, merge_entities: bool, directory_entries: bool }`.
+  - `Jar { destination, mode: u32, sources: Vec<Source>, merge_entities: bool }`: the packer writes no directory entries into the jar.
   - `Copy { destination, mode: u32, input: Reference }`: one declared file.
   - `CopyTree { destination, input: Reference }`: one declared directory with its source modes.
   - `LayoutTree { destination, layout: LayoutAssets }`: the layout assets under the destination, with their source modes.

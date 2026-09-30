@@ -679,7 +679,6 @@ fn batch_writes_only_its_assets_in_layout_order() {
                 manifest: Manifest::Keep,
             }],
             merge_entities: false,
-            directory_entries: true,
         },
     ]);
     let written = write_execution(&recipe, &catalogue);
@@ -716,11 +715,7 @@ fn batch_writes_only_its_assets_in_layout_order() {
     assert_eq!(text(&entries["shared.txt"]), "first wins");
     assert_eq!(text(&entries["META-INF/listOfEntities.txt"]), "First\nSecond\nModule\nModule");
     let (custom, _) = read_archive(&written.output.join("lib/nested/custom.jar"));
-    assert_eq!(
-        custom,
-        ["custom/Value.class", "custom/", "__index__"],
-        "the directory entries of a test plugin"
-    );
+    assert_eq!(custom, ["custom/Value.class", "__index__"], "a plan jar has no directory entries");
     let reference = root.path().join("reference/library.jar");
     jarpack::MergeSpec {
         output: reference.clone(),

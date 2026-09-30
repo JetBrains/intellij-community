@@ -673,7 +673,6 @@ impl<'a> Compiler<'a> {
                     mode: asset.mode,
                     sources: self.compile_sources(recipe).map_err(|error| error.context(&asset.destination))?,
                     merge_entities: recipe.writer.merge_entities,
-                    directory_entries: recipe.writer.directory_entries,
                 }
             } else {
                 let [input] = asset.inputs.as_slice() else {

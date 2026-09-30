@@ -128,13 +128,12 @@ fn tree_row(destination: &str, producer: &str, artifact: &str) -> contract::Asse
     }
 }
 
-fn jar(destination: &str, directory_entries: bool, sources: Vec<Source>) -> contract::Operation {
+fn jar(destination: &str, sources: Vec<Source>) -> contract::Operation {
     contract::Operation::Jar {
         destination: destination.to_owned(),
         mode: DEFAULT_MODE,
         sources,
         merge_entities: false,
-        directory_entries,
     }
 }
 
@@ -378,6 +377,11 @@ fn read_refuses_malformed_forms() {
             "unknown variant `coverage-agent`",
         ),
         ("an empty native library", writer(r#"{"nativeLib": ""}"#), "empty native library"),
+        (
+            "directory entries",
+            writer(r#"{"directoryEntries": true}"#),
+            "lib/x.jar: a jar writer states directoryEntries; the packer writes no directory entries into a plan jar",
+        ),
         (
             "a Kotlin operation kind",
             operation(r#"{"id": "n", "kind": "native-archive", "output": "o", "manifest": "keep"}"#),
@@ -762,7 +766,6 @@ fn derive_counts_meaningful_sources_for_the_manifest() {
         derivation.recipe.operations[1],
         jar(
             "lib/library.jar",
-            false,
             vec![
                 archive("@lib//:two/a.jar", Filter::Library, Manifest::Drop),
                 archive("@lib//:two/b.jar", Filter::Library, Manifest::Drop),
@@ -829,7 +832,6 @@ fn derive_resolves_a_library_input_to_its_members() {
         let derivation = must_derive(&plan(1, jar_asset, &[entries]), &catalogue, 1, &[]);
         let want = vec![jar(
             "lib/x.jar",
-            false,
             vec![layout_source(
                 inputs,
                 sources
@@ -860,7 +862,7 @@ fn derive_compiles_every_operation_kind() {
         &plan(
             2,
             r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
-        {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop", "directoryEntries": true}}},
+        {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop"}}},
       {"destination": "lib/l10n.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}},
       {"destination": "payload", "inputs": ["tree:output"], "kind": "tree", "classPath": false},
       {"destination": "lib/standardDsls", "inputs": ["dsls"], "kind": "tree", "classPath": false},
@@ -885,7 +887,6 @@ fn derive_compiles_every_operation_kind() {
     let want = vec![
         jar(
             "lib/main.jar",
-            true,
             vec![
                 layout_source(&["raw"], vec![raw_entry()]),
                 Source::Patch {
@@ -895,7 +896,7 @@ fn derive_compiles_every_operation_kind() {
                 },
             ],
         ),
-        jar("lib/l10n.jar", false, vec![layout_source(&["properties"], vec![plain_copy])]),
+        jar("lib/l10n.jar", vec![layout_source(&["properties"], vec![plain_copy])]),
         contract::Operation::LayoutTree {
             destination: "payload".to_owned(),
             layout: LayoutAssets {

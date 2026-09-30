@@ -127,7 +127,6 @@ fn operation_names_its_destination() {
                 mode: 0o644,
                 sources: Vec::new(),
                 merge_entities: true,
-                directory_entries: false,
             },
             "lib/a.jar",
         ),

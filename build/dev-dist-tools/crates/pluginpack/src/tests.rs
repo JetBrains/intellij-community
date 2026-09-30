@@ -148,7 +148,6 @@ pub(crate) fn jar(destination: &str, sources: Vec<Source>) -> Operation {
         mode: 0o644,
         sources,
         merge_entities: false,
-        directory_entries: false,
     }
 }
 

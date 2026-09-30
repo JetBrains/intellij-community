@@ -841,7 +841,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
                     mode: 0o644,
                     sources: vec![Source::Layout(fixture.layout.clone())],
                     merge_entities: true,
-                    directory_entries: false,
                 }],
             }
         };

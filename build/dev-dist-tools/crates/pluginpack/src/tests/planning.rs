@@ -36,7 +36,6 @@ pub(crate) fn sample_plan(root: &Path) -> (Recipe, Catalogue) {
             mode: 0o644,
             sources: vec![archive_source(Reference::artifact("module"), Filter::Module, Manifest::Drop)],
             merge_entities: true,
-            directory_entries: false,
         }],
     };
     (recipe, catalogue(vec![file_artifact("module", root.join("module.jar"))]))
