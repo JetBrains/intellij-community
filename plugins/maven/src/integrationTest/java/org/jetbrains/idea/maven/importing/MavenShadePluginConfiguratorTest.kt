@@ -98,6 +98,6 @@ class MavenShadePluginConfiguratorTest(mavenVersion: String, modelVersion: Strin
     // incremental sync doesn't support uber jar generation
     maven.updateAllProjectsFullSync()
     maven.awaitConfiguration()
-    assertTrue(Files.exists(Path.of(uberJarPath)));
+    assertTrue(Files.exists(Path.of(uberJarPath)), "The uber JAR $uberJarPath was not generated. See the idea.log for the package goal problems.")
   }
 }

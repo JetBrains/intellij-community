@@ -13,16 +13,31 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
+import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -34,7 +49,8 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Properties
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
@@ -274,9 +290,19 @@ internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportCon
           val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
           mavenEmbedderWrappers.use {
             val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-            embedder.executeGoal(listOf(request), "package", reporter, syncConsole)
+            val results = embedder.executeGoal(listOf(request), "package", reporter, syncConsole)
+            reportProblems(results, syncConsole)
           }
         }
+      }
+    }
+  }
+
+  private fun reportProblems(results: List<MavenGoalExecutionResult>, syncConsole: MavenSyncConsole) {
+    for (result in results) {
+      for (problem in result.problems) {
+        MavenLog.LOG.warn("Uber JAR generation for ${result.file} reported a problem: ${problem.description}")
+        syncConsole.showProblem(problem)
       }
     }
   }
