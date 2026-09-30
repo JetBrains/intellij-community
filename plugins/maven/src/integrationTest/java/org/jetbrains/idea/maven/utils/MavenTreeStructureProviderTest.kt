@@ -74,7 +74,7 @@ class MavenTreeStructureProviderTest(mavenVersion: String, modelVersion: String)
          -MavenPomFileNode:pom.xml
         -MavenPomFileNode:pom.xml
         settings.xml
-       External Libraries""".trimIndent(), actual)
+       -External Libraries""".trimIndent(), actual)
   }
 
   @Test
@@ -113,7 +113,7 @@ class MavenTreeStructureProviderTest(mavenVersion: String, modelVersion: String)
          -MavenPomFileNode:pom.xml (ignored)
         -MavenPomFileNode:pom.xml
         settings.xml
-       External Libraries""".trimIndent(), actual)
+       -External Libraries""".trimIndent(), actual)
   }
 
 
