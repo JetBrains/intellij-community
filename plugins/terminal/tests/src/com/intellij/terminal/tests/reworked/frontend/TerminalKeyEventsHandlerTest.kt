@@ -422,7 +422,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
         sessionModel = sessionModel,
         startupFusInfo = null,
         coroutineScope = scope,
-        encodingManager = TerminalKeyEncodingManager(sessionModel, scope),
+        encodingManager = TerminalKeyEncodingManager(sessionModel),
       ),
       scrollingModel = scrollingModel,
       outputModel = outputModel,

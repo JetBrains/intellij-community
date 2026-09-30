@@ -224,7 +224,7 @@ class TerminalViewImpl(
       convertNativePathToNioPath(directoryString, eelDescriptor)
     }
 
-    encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
+    encodingManager = TerminalKeyEncodingManager(sessionModel)
 
     terminalInput = TerminalInput(
       sessionDeferred,
