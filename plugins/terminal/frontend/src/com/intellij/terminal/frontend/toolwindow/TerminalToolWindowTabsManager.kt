@@ -20,7 +20,8 @@ interface TerminalToolWindowTabsManager {
   /**
    * List of the opened Reworked Terminal tabs in the Terminal Tool Window.
    * Order can be different from the UI.
-   * A tab restored on project open is in the list only after the user selects it for the first time.
+   * The stored tabs are restored when the tool window is shown for the first time.
+   * A restored tab is in the list only after the user selects it for the first time.
    */
   @get:RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   val tabs: List<TerminalToolWindowTab>

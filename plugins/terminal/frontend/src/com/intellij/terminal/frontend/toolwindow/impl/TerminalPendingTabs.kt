@@ -19,7 +19,7 @@ private val PENDING_TAB_KEY: Key<TerminalSessionPersistedTab> = Key.create("Term
  * Returns the stored tab if this content is a pending tab.
  *
  * A pending tab is a content of the Terminal tool window that has a stored tab and no terminal view yet.
- * The tabs restore adds each stored tab, except the first one, as a pending tab.
+ * The tabs restore adds each stored tab as a pending tab when the tool window is shown for the first time.
  * The pending tab is built into a usual terminal tab when the user selects it for the first time.
  * Until then, [com.intellij.terminal.frontend.toolwindow.getTerminalTab] returns `null` for it.
  */

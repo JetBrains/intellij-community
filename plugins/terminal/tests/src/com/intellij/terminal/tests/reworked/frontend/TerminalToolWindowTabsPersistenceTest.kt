@@ -8,13 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.terminal.frontend.TerminalToolWindowEditorTabPersistenceProvider
 import com.intellij.terminal.frontend.TerminalToolWindowEditorTabSupport
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalInEditorSupport
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl
 import com.intellij.terminal.frontend.toolwindow.impl.getPendingTerminalTab
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
@@ -83,7 +86,78 @@ internal class TerminalToolWindowTabsPersistenceTest {
   )
 
   @Test
-  fun `only the first stored tab is built on tool window initialization`(): Unit = runBlocking(Dispatchers.EDT) {
+  fun `stored tabs are not restored until the tool window is shown`(): Unit = runBlocking(Dispatchers.EDT) {
+    val viewsCreated = mutableListOf<TerminalView>()
+    project.messageBus.connect(disposable).subscribe(TerminalTabsManagerListener.TOPIC, object : TerminalTabsManagerListener {
+      override fun terminalViewCreated(view: TerminalView) {
+        viewsCreated.add(view)
+      }
+    })
+    val toolWindow = initializeToolWindow(storedTab1, storedTab2)
+
+    // Let a wrongly scheduled restore run before the check.
+    delay(1.seconds)
+
+    assertThat(toolWindow.contentManager.contents).isEmpty()
+    assertThat(viewsCreated).isEmpty()
+    assertThat(TerminalTabsStorage.getInstance(project).getStoredTabs()).containsExactly(storedTab1, storedTab2)
+  }
+
+  @Test
+  fun `a new tab is created when the tool window is shown and there are no stored tabs`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = initializeToolWindow()
+    assertThat(toolWindow.contentManager.contents).isEmpty()
+
+    withTerminalToolWindowManager(project) {
+      showToolWindow(toolWindow)
+
+      val content = toolWindow.contentManager.contents.single()
+      assertThat(content.getTerminalTab()).isNotNull()
+      assertThat(content.getPendingTerminalTab()).isNull()
+    }
+  }
+
+  @Test
+  fun `no new tab is created when the stored tabs are restored`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1)
+
+    withTerminalToolWindowManager(project) {
+      assertThat(toolWindow.contentManager.contents.map { it.displayName }).containsExactly("Restored 1")
+    }
+  }
+
+  @Test
+  fun `stored tabs are restored only on the first show`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = restoreStoredTabs(storedTab1, storedTab2)
+    val contentManager = toolWindow.contentManager
+
+    withTerminalToolWindowManager(project) {
+      contentManager.removeContent(contentManager.contents[1], true)
+      showToolWindow(toolWindow)
+
+      assertThat(contentManager.contents.map { it.displayName }).containsExactly("Restored 1")
+    }
+  }
+
+  @Test
+  fun `restored tabs go before a tab that exists before the first show and keep its selection`(): Unit = runBlocking(Dispatchers.EDT) {
+    val toolWindow = initializeToolWindow(storedTab1, storedTab2)
+
+    withTerminalToolWindowManager(project) { manager ->
+      val existing = manager.createTabBuilder().tabName("Existing").requestFocus(false).createTab()
+      assertThat(toolWindow.contentManager.contents.toList()).containsExactly(existing.content)
+
+      showToolWindow(toolWindow)
+
+      val contents = toolWindow.contentManager.contents
+      assertThat(contents.map { it.displayName }).containsExactly("Restored 1", "Restored 2", "Existing")
+      assertThat(toolWindow.contentManager.selectedContent).isSameAs(existing.content)
+      assertThat(contents.map { it.getPendingTerminalTab() }).containsExactly(storedTab1, storedTab2, null)
+    }
+  }
+
+  @Test
+  fun `only the selected stored tab is built on the first show`(): Unit = runBlocking(Dispatchers.EDT) {
     val toolWindow = restoreStoredTabs(storedTab1, storedTab2, storedTab3)
 
     withTerminalToolWindowManager(project) { manager ->
@@ -91,6 +165,7 @@ internal class TerminalToolWindowTabsPersistenceTest {
       assertThat(contents.map { it.displayName }).containsExactly("Restored 1", "Restored 2", "Restored 3")
       assertThat(contents.map { it.getPendingTerminalTab() }).containsExactly(null, storedTab2, storedTab3)
       assertThat(contents.map { it.getTerminalTab() != null }).containsExactly(true, false, false)
+      assertThat(toolWindow.contentManager.selectedContent).isSameAs(contents[0])
 
       val first = manager.tabs.single()
       assertThat(first.content).isSameAs(contents[0])
@@ -244,11 +319,14 @@ internal class TerminalToolWindowTabsPersistenceTest {
     val storage = TerminalTabsStorage.getInstance(project)
     storage.updateStoredTabs(emptyList())
 
-    val toolWindow = registerTerminalToolWindow()
-    // Installs the persistence that watches the tool window content manager.
-    TerminalToolWindowInitializer.performInitialization(toolWindow)
+    val toolWindow = initializeToolWindow()
 
     withTerminalToolWindowManager(project) { manager ->
+      // The first show installs the persistence that watches the tool window content manager.
+      // It also creates the default tab, because there are no stored tabs.
+      showToolWindow(toolWindow)
+      awaitCondition("the default tab should be persisted") { storage.getStoredTabs().size == 1 }
+
       val tab = manager.createTabBuilder()
         .tabName("Persisted")
         .workingDirectory("/tmp/persist")
@@ -256,8 +334,8 @@ internal class TerminalToolWindowTabsPersistenceTest {
         .requestFocus(false)
         .createTab()
 
-      awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 1 }
-      val persisted = storage.getStoredTabs().single()
+      awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 2 }
+      val persisted = storage.getStoredTabs().last()
       assertThat(persisted.name).isEqualTo("Persisted")
       assertThat(persisted.isUserDefinedName).isFalse()
       assertThat(persisted.shellCommand).containsExactly("/bin/bash")
@@ -266,7 +344,7 @@ internal class TerminalToolWindowTabsPersistenceTest {
 
       manager.closeTab(tab)
 
-      awaitCondition("the closed tab should be removed from storage") { storage.getStoredTabs().isEmpty() }
+      awaitCondition("the closed tab should be removed from storage") { storage.getStoredTabs().size == 1 }
     }
   }
 
@@ -275,10 +353,12 @@ internal class TerminalToolWindowTabsPersistenceTest {
     val storage = TerminalTabsStorage.getInstance(project)
     storage.updateStoredTabs(emptyList())
 
-    val toolWindow = registerTerminalToolWindow()
-    TerminalToolWindowInitializer.performInitialization(toolWindow)
+    val toolWindow = initializeToolWindow()
 
     withTerminalToolWindowManager(project) { manager ->
+      // The first show creates the default tab, because there are no stored tabs.
+      showToolWindow(toolWindow)
+
       manager.createTabBuilder()
         .tabName("One-shot")
         .shellCommand(listOf("/bin/bash"))
@@ -294,10 +374,10 @@ internal class TerminalToolWindowTabsPersistenceTest {
         .requestFocus(false)
         .createTab()
 
-      awaitCondition("only the restorable tab should be persisted") {
-        storage.getStoredTabs().map { it.name } == listOf("Persisted")
+      awaitCondition("only the restorable tabs should be persisted") {
+        storage.getStoredTabs().drop(1).map { it.name } == listOf("Persisted")
       }
-      assertThat(manager.tabs).hasSize(2)
+      assertThat(manager.tabs).hasSize(3)
     }
   }
 
@@ -306,23 +386,25 @@ internal class TerminalToolWindowTabsPersistenceTest {
     val storage = TerminalTabsStorage.getInstance(project)
     storage.updateStoredTabs(emptyList())
 
-    val toolWindow = registerTerminalToolWindow()
-    TerminalToolWindowInitializer.performInitialization(toolWindow)
+    val toolWindow = initializeToolWindow()
 
     withTerminalToolWindowManager(project) { manager ->
+      // The first show creates the default tab, because there are no stored tabs.
+      showToolWindow(toolWindow)
+
       val tab = manager.createTabBuilder()
         .tabName("Before")
         .requestFocus(false)
         .createTab()
 
-      awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 1 }
+      awaitCondition("the created tab should be persisted") { storage.getStoredTabs().size == 2 }
 
       tab.view.title.change {
         userDefinedTitle = "After"
       }
 
       awaitCondition("the renamed tab should be persisted with the user-defined name") {
-        val stored = storage.getStoredTabs().singleOrNull()
+        val stored = storage.getStoredTabs().getOrNull(1)
         stored?.name == "After" && stored.isUserDefinedName
       }
     }
@@ -354,9 +436,30 @@ internal class TerminalToolWindowTabsPersistenceTest {
   }
 
   /**
-   * Stores [tabs], initializes the tool window, and waits until the tool window has a content for each stored tab.
+   * Stores [tabs], initializes the tool window, and shows it, so the tool window has a content for each stored tab.
    */
-  private suspend fun restoreStoredTabs(vararg tabs: TerminalSessionPersistedTab): ToolWindow {
+  private fun restoreStoredTabs(vararg tabs: TerminalSessionPersistedTab): ToolWindow {
+    val toolWindow = initializeToolWindow(*tabs)
+    showToolWindow(toolWindow)
+    return toolWindow
+  }
+
+  /**
+   * The headless tool window manager neither shows a tool window nor sends the event,
+   * and its tool window is never visible. So the test sends the event to the manager with a visible tool window.
+   */
+  @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
+  private fun showToolWindow(toolWindow: ToolWindow) {
+    val visibleToolWindow = object : ToolWindowEx by (toolWindow as ToolWindowEx) {
+      override fun isVisible(): Boolean = true
+    }
+    (TerminalToolWindowTabsManager.getInstance(project) as TerminalToolWindowTabsManagerImpl).onToolWindowShown(visibleToolWindow)
+  }
+
+  /**
+   * Stores [tabs] and initializes the tool window without showing it.
+   */
+  private fun initializeToolWindow(vararg tabs: TerminalSessionPersistedTab): ToolWindow {
     // Restoring only happens for a trusted project with the reworked terminal enabled (new UI is on by default in tests).
     TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, disposable)
     TrustedProjects.setProjectTrusted(project, true)
@@ -364,7 +467,6 @@ internal class TerminalToolWindowTabsPersistenceTest {
 
     val toolWindow = registerTerminalToolWindow()
     TerminalToolWindowInitializer.performInitialization(toolWindow)
-    awaitCondition("${tabs.size} tabs should be restored") { toolWindow.contentManager.contentCount == tabs.size }
     return toolWindow
   }
 }

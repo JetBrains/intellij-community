@@ -40,15 +40,10 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
@@ -67,7 +62,6 @@ import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareFullTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.buildSettingsAwareTitle
 import org.jetbrains.plugins.terminal.util.TerminalTitleUtils.createDefaultTabName
-import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 class TerminalToolWindowTabsManagerImpl(
@@ -78,15 +72,17 @@ class TerminalToolWindowTabsManagerImpl(
   override val tabs: List<TerminalToolWindowTab>
     get() = getToolWindow().contentManager.getTerminalTabs()
 
-  private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
+  /**
+   * Whether the stored tabs are still to be restored. They are restored when the tool window is shown for the first time.
+   * Accessed only on EDT.
+   */
+  private var isTabsRestorePending: Boolean = false
 
   init {
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowShown(toolWindow: ToolWindow) {
         if (toolWindow.id == TerminalToolWindowFactory.TOOL_WINDOW_ID) {
-          coroutineScope.launch(Dispatchers.EDT) {
-            createNewTabIfEmpty(toolWindow)
-          }
+          onToolWindowShown(toolWindow)
         }
       }
     })
@@ -137,19 +133,42 @@ class TerminalToolWindowTabsManagerImpl(
     project.messageBus.connect(parentDisposable).subscribe(TerminalTabsManagerListener.TOPIC, listener)
   }
 
-  private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
-    val fusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW)
+  @VisibleForTesting
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  internal fun onToolWindowShown(toolWindow: ToolWindow) {
+    if (isTabsRestorePending) {
+      isTabsRestorePending = false
+      restoreTabs(toolWindow)
+      // Install tabs persistence after restoring already stored tabs to not override them accidentally with empty content.
+      installTabsPersistence()
+    }
 
     if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
-      if (tabsRestoredDeferred.isCompleted) {
-        createTerminalTab(project, startupFusInfo = fusInfo)
-      }
-      else {
-        // Wait for some time for backend tabs to be restored.
-        withTimeoutOrNull(2.seconds) { tabsRestoredDeferred.await() }
-        if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
-          createTerminalTab(project, startupFusInfo = fusInfo)
-        }
+      createTerminalTab(project, startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.OPEN_TOOLWINDOW))
+    }
+  }
+
+  /**
+   * Adds the stored tabs as pending tabs (see [getPendingTerminalTab]) before the tabs that are already in the tool window.
+   * The tab that becomes selected is built right away by [installPendingTabsBuilding].
+   */
+  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  private fun restoreTabs(toolWindow: ToolWindow) {
+    val contentManager = toolWindow.contentManager
+    installPendingTabsBuilding(project, contentManager, coroutineScope.childScope("TerminalPendingTabsBuilding"))
+
+    // Keep the selection if a tab was added to the tool window before the restore.
+    val wasEmpty = contentManager.isEmpty
+    val tabs = TerminalTabsStorage.getInstance(project).getStoredTabs()
+    for ((index, tab) in tabs.withIndex()) {
+      addPendingTab(tab, index)
+    }
+
+    ReworkedTerminalUsageCollector.logSessionRestored(project, tabs.size)
+
+    if (wasEmpty) {
+      contentManager.contents.firstOrNull()?.let {
+        contentManager.setSelectedContent(it)
       }
     }
   }
@@ -288,11 +307,11 @@ class TerminalToolWindowTabsManagerImpl(
   }
 
   /**
-   * Adds [storedTab] to the tool window as a pending tab (see [getPendingTerminalTab]) without selecting it.
+   * Adds [storedTab] to the tool window at [index] as a pending tab (see [getPendingTerminalTab]) without selecting it.
    * The tab label and tooltip are the same as the built tab will have.
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  private fun addPendingTab(storedTab: TerminalSessionPersistedTab) {
+  private fun addPendingTab(storedTab: TerminalSessionPersistedTab, index: Int) {
     val title = TerminalTitle()
     title.applyTabName(storedTab.name, storedTab.isUserDefinedName)
 
@@ -303,7 +322,7 @@ class TerminalToolWindowTabsManagerImpl(
     content.setPendingTerminalTab(storedTab.copy(name = title.userDefinedTitle ?: title.defaultTitle))
 
     val contentManager = getToolWindow().contentManager
-    contentManager.addContent(content)
+    contentManager.addContent(content, index)
     ReworkedTerminalUsageCollector.logTabOpened(
       project = project,
       openingWay = TerminalTabOpeningWay.TABS_RESTORE,
@@ -333,7 +352,8 @@ class TerminalToolWindowTabsManagerImpl(
       val manager = TerminalToolWindowTabsManager.getInstance(toolWindow.project) as TerminalToolWindowTabsManagerImpl
 
       if (shouldUseReworkedTerminal() && TrustedProjects.isProjectTrusted(manager.project)) {
-        scheduleTabsRestoring(manager)
+        // Any plugin can initialize the tool window without showing it, so the tabs are restored on the first show.
+        manager.isTabsRestorePending = true
       }
       else manager.installTabsPersistence()
 
@@ -355,38 +375,6 @@ class TerminalToolWindowTabsManagerImpl(
           TerminalToolWindowDropHandler.install(toolWindow, manager.coroutineScope.childScope("Terminal DnD handler"))
           TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
         }
-      }
-    }
-
-    private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
-      manager.tabsRestoredDeferred = manager.coroutineScope.async {
-        val tabs: List<TerminalSessionPersistedTab> = TerminalTabsStorage.getInstance(manager.project).getStoredTabs()
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          restoreTabs(tabs, manager)
-          // Install tabs persistence after restoring already stored tabs to not override them accidentally with empty content.
-          manager.installTabsPersistence()
-        }
-      }
-    }
-
-    private fun restoreTabs(tabs: List<TerminalSessionPersistedTab>, manager: TerminalToolWindowTabsManagerImpl) {
-      val contentManager = manager.getToolWindow().contentManager
-      installPendingTabsBuilding(manager.project, contentManager, manager.coroutineScope.childScope("TerminalPendingTabsBuilding"))
-
-      // Build only the first tab, because it becomes selected. The other tabs are built when the user selects them.
-      val firstTab = tabs.firstOrNull()
-      if (firstTab != null) {
-        manager.createTabBuilder().applyPersistedTab(firstTab).createTab()
-      }
-      for (tab in tabs.drop(1)) {
-        manager.addPendingTab(tab)
-      }
-
-      ReworkedTerminalUsageCollector.logSessionRestored(manager.project, tabs.size)
-
-      val firstContent = contentManager.getContent(0)
-      if (firstContent != null) {
-        contentManager.setSelectedContent(firstContent)
       }
     }
   }
