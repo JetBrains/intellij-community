@@ -5,12 +5,14 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JComboBoxUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
 import com.intellij.driver.sdk.ui.components.elements.comboBox
 import com.intellij.driver.sdk.ui.components.elements.list
-import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration.Companion.seconds
+
+private const val OPTIONS_POPUP_LIST = $$"com.intellij.ui.popup.list.ListPopupImpl$MyList"
 
 fun Finder.gitMergeDialog(action: GitMergeDialogUi.() -> Unit = {}): GitMergeDialogUi {
   return x(GitMergeDialogUi::class.java) { byClass("MyDialog") and contains(byTitle("Merge")) }.apply(action)
@@ -58,9 +60,25 @@ class GitMergeDialogUi(data: ComponentData) : DialogUiComponent(data) {
 
   fun selectOption(optionFlag: String) {
     modifyOptionsLink.click()
-    driver.ui.popup().list().clickItem(optionFlag, fullMatch = false)
-    driver.ui.keyboard { escape() }
+    optionsPopupList().clickItem(optionFlag, fullMatch = false)
+    waitFor("Option '$optionFlag' is active") { getActiveOptionTexts().any { it.contains(optionFlag) } }
+    closeOptionsPopup()
   }
+
+  /**
+   * Closes the options popup if it is open.
+   * In the Split mode, the popup closes after the click on an item, and an Escape key would close the dialog.
+   */
+  fun closeOptionsPopup() {
+    if (optionsPopupList().notPresent()) return
+    driver.ui.keyboard { escape() }
+    waitFor("Options popup is closed") { optionsPopupList().notPresent() }
+  }
+
+  /**
+   * The list of the options popup. The popup is a separate window, so the search starts from the IDE root, not from this dialog.
+   */
+  private fun optionsPopupList(): JListUiComponent = driver.ui.list { byType(OPTIONS_POPUP_LIST) }
 
   fun cancel() {
     cancelButton.click()
