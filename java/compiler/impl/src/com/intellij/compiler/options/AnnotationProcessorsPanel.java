@@ -36,7 +36,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,8 +51,8 @@ import java.util.Vector;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})
-public class AnnotationProcessorsPanel extends JPanel {
+@SuppressWarnings("UseOfObsoleteCollectionType")
+public class AnnotationProcessorsPanel {
   private final ProcessorConfigProfile myDefaultProfile = new ProcessorConfigProfileImpl("");
   private final List<ProcessorConfigProfile> myModuleProfiles = new ArrayList<>();
   private final Map<String, Module> myAllModulesMap = new HashMap<>();
@@ -62,10 +61,9 @@ public class AnnotationProcessorsPanel extends JPanel {
   private final ProcessorProfilePanel myProfilePanel;
   private ProcessorConfigProfile mySelectedProfile = null;
 
+  public final Splitter content = new Splitter(false, 0.3f);
+
   public AnnotationProcessorsPanel(Project project) {
-    super(new BorderLayout());
-    Splitter splitter = new Splitter(false, 0.3f);
-    add(splitter, BorderLayout.CENTER);
     myProject = project;
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       myAllModulesMap.put(module.getName(), module);
@@ -75,7 +73,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     JPanel treePanel = ToolbarDecorator.createDecorator(myTree)
       .addExtraAction(new MoveProfileAction())
       .createPanel();
-    splitter.setFirstComponent(treePanel);
+    content.setFirstComponent(treePanel);
     myTree.setCellRenderer(new MyCellRenderer());
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -83,11 +81,11 @@ public class AnnotationProcessorsPanel extends JPanel {
         final TreePath path = myTree.getSelectionPath();
         if (path != null) {
           Object node = path.getLastPathComponent();
-          if (node instanceof MyModuleNode) {
-            node = ((MyModuleNode)node).getParent();
+          if (node instanceof MyModuleNode moduleNode) {
+            node = moduleNode.getParent();
           }
-          if (node instanceof ProfileNode) {
-            final ProcessorConfigProfile nodeProfile = ((ProfileNode)node).myProfile;
+          if (node instanceof ProfileNode profileNode) {
+            final ProcessorConfigProfile nodeProfile = profileNode.myProfile;
             final ProcessorConfigProfile selectedProfile = mySelectedProfile;
             if (nodeProfile != selectedProfile) {
               if (selectedProfile != null) {
@@ -114,7 +112,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     }, false);
     myProfilePanel = new ProcessorProfilePanel(project);
     myProfilePanel.setBorder(JBUI.Borders.emptyLeft(6));
-    splitter.setSecondComponent(myProfilePanel);
+    content.setSecondComponent(myProfilePanel);
   }
 
   public void initProfiles(ProcessorConfigProfile defaultProfile, Collection<? extends ProcessorConfigProfile> moduleProfiles) {
@@ -210,8 +208,8 @@ public class AnnotationProcessorsPanel extends JPanel {
       final List<ProcessorConfigProfile> toRemove = new SmartList<>();
       for (TreePath path : paths) {
         Object node = path.getLastPathComponent();
-        if (node instanceof ProfileNode) {
-          final ProcessorConfigProfile nodeProfile = ((ProfileNode)node).myProfile;
+        if (node instanceof ProfileNode profileNode) {
+          final ProcessorConfigProfile nodeProfile = profileNode.myProfile;
           if (nodeProfile != myDefaultProfile) {
             toRemove.add(nodeProfile);
           }
@@ -320,11 +318,11 @@ public class AnnotationProcessorsPanel extends JPanel {
   private static class MyCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof ProfileNode) {
-        append(((ProfileNode)value).myProfile.getName());
+      if (value instanceof ProfileNode profileNode) {
+        append(profileNode.myProfile.getName());
       }
-      else if (value instanceof MyModuleNode) {
-        final Module module = ((MyModuleNode)value).getModule();
+      else if (value instanceof MyModuleNode moduleNode) {
+        final Module module = moduleNode.getModule();
         setIcon(AllIcons.Nodes.Module);
         append(module.getName());
       }
@@ -363,8 +361,8 @@ public class AnnotationProcessorsPanel extends JPanel {
           if (selectedNodes != null) {
             for (TreePath selectedNode : selectedNodes) {
               final Object node1 = selectedNode.getLastPathComponent();
-              if (node1 instanceof MyModuleNode) {
-                final Module module = ((MyModuleNode)node1).getModule();
+              if (node1 instanceof MyModuleNode moduleNode) {
+                final Module module = moduleNode.getModule();
                 if (nodeProfile != myDefaultProfile) {
                   nodeProfile.removeModuleName(module.getName());
                 }

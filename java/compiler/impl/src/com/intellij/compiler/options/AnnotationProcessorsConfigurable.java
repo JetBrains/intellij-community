@@ -47,7 +47,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
   @Override
   public JComponent createComponent() {
     myMainPanel = new AnnotationProcessorsPanel(myProject);
-    return myMainPanel;
+    return myMainPanel.content;
   }
 
   @Override
