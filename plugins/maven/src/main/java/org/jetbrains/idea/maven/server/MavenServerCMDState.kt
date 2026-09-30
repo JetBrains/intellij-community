@@ -77,9 +77,13 @@ open class MavenServerCMDState(
 
     defs.put("java.awt.headless", "true")
 
-    // The server has no terminal, so the jline exec provider must not probe the system streams.
     if (myDistribution.isMaven4()) {
+      // The server has no terminal, so the jline exec provider must not probe the system streams.
       defs.putIfAbsent("org.jline.terminal.exec", "false")
+      // Resolver 2.0.23 downloads a present artifact again when another repository id tracks it, and renames the
+      // download over the jar. The rename fails while the IDE holds the jar open. Keep the existence check of older
+      // versions, which only re-labels the present artifact.
+      defs.putIfAbsent("aether.artifactResolver.existenceCheckRelabel", "true")
     }
 
     for (each in defs.entries) {
