@@ -202,7 +202,8 @@ internal class TerminalTypeAheadOutputModelControllerV1(
   }
 
   private fun updateOutputModel(update: Runnable) {
-    val lookup = LookupManager.getInstance(project).activeLookup
+    // No lookup service means no lookup: do not create the service on the first output.
+    val lookup = project.getServiceIfCreated(LookupManager::class.java)?.activeLookup
     if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
       lookup.performGuardedChange(update)
     }
