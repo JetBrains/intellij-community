@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.SettingsImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
@@ -140,7 +141,8 @@ object TerminalEditorFactory {
   }
 
   private fun configureSoftWraps(editor: EditorImpl) {
-    editor.settings.isUseSoftWraps = true
+    // The plain setter reinitializes all editor settings.
+    (editor.settings as SettingsImpl).setUseSoftWrapsQuiet()
     editor.settings.isUseCustomSoftWrapIndent = false
     val softWrapModel = editor.softWrapModel
     softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
