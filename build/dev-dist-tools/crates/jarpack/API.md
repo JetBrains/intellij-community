@@ -15,7 +15,7 @@ plan files through pluginpack. Each other input fails with an error that names i
 
 | Input | Accepted | Refused |
 | --- | --- | --- |
-| `keep-manifest=`, `merge-entities=`, `reject-native-entries=` | `true` | `false` and every other value |
+| `keep-manifest=`, `merge-entities=`, `reject-native-entries=`, `directory-entries=` | `true` | `false` and every other value |
 | `source-manifest=` | `coverage-agent`, after a `module=` or a `library=` line | `keep`, `drop`, `rewrite-boot-class-path` |
 | A flag-file path | a path without a `.` or `..` component | a path with one. The Go parser cleaned it. |
 | `file=<entry name>=<path>` | a nonempty name and path. The recipe replay writes it for a single-file source. | no `=` after the name, or an empty part |

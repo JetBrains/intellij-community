@@ -131,7 +131,7 @@ fn every_checked_in_plan_file_plans() {
         .collect();
     paths.sort();
     // The floor stays at or under the count in `planfile/API.md`. A plugin that becomes simple lowers both.
-    assert!(paths.len() >= 88, "the corpus holds only {} plan files", paths.len());
+    assert!(paths.len() >= 86, "the corpus holds only {} plan files", paths.len());
     for path in &paths {
         let text = expand_platform(&std::fs::read_to_string(path).unwrap());
         let file = planfile::from_slice(text.as_bytes()).unwrap_or_else(|error| panic!("{}: {error}", path.display()));

@@ -8,6 +8,7 @@ use crate::error::{IoContext, Result, bail, invalid};
 use crate::merge::{ManifestMode, MergeSpec, Source};
 use crate::nativelib;
 use crate::natives::NativeSpec;
+use crate::writer::DirectoryMode;
 
 /// Reads the argument grammar of the packer: one `output=` line per jar, then the `module=`, `library=` and `file=`
 /// lines it is built from.
@@ -25,7 +26,10 @@ use crate::natives::NativeSpec;
 ///
 /// The parser takes only the forms that the Starlark rules and the recipe replay write:
 ///
-/// - `keep-manifest=`, `merge-entities=` and `reject-native-entries=` take only `true`. A producer omits a false flag.
+/// - `keep-manifest=`, `merge-entities=`, `reject-native-entries=` and `directory-entries=` take only `true`. A
+///   producer omits a false flag.
+/// - `directory-entries=true` writes a directory entry for every directory, as [`DirectoryMode::All`] does. `dev_plugin`
+///   states it for a jar that merges a test-only module.
 /// - `source-manifest=` takes only `coverage-agent`.
 /// - A path has no `.` and no `..` component, so the parser compares the paths as they are written. See
 ///   [`resolve_path`].
@@ -62,6 +66,10 @@ pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<Vec<MergeSpec>> {
         match option {
             "keep-manifest" => spec.keep_manifest = parse_true(option, value)?,
             "merge-entities" => spec.merge_entities = parse_true(option, value)?,
+            "directory-entries" => {
+                parse_true(option, value)?;
+                spec.directory_mode = DirectoryMode::All;
+            }
             "trace-file" => spec.trace_file = Some(resolve(value)?),
             "metadata-file" => {
                 if value.is_empty() || spec.metadata_file.is_some() {

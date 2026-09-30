@@ -79,7 +79,7 @@ def dev_dist_plugin(
         jars: The packed jars of a simple plugin, keyed by destination relative to the plugin directory and valued by
             source tokens in merge order. A token is a JPS module name or a library container label. A content module
             no jar merges ships its own `content_module_jar` jar as `lib/modules/<module>.jar`. Empty for a
-            plugin the plan driven chain packs.
+            plugin the plan driven chain packs. A test-only module is declared in a cross-half `dev_plugin`.
         module_jar_paths: The destination of a reused content module jar when it is not `lib/modules/<module>.jar`,
             keyed by module name.
         content_module_jar_labels: The `content_module_jar` label of a reused content module whose call is not in the

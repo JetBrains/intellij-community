@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use super::testjar::{Scratch, entry, entry_names, pack, read_entry, write_zip_jar};
-use crate::{MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Result, Source, library_filter, parse_flag_file, resolve_path};
+use crate::{DirectoryMode, MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Result, Source, library_filter, parse_flag_file, resolve_path};
 
 pub(crate) fn parse_recipe(scratch: &Scratch, lines: &str) -> Result<Vec<MergeSpec>> {
     let path = scratch.file("recipe.params", lines.as_bytes());
@@ -205,6 +205,10 @@ fn parse_flag_file_rejects_what_would_change_bytes_silently() {
             "a false reject-native-entries, which no producer writes",
             "output=out/a.jar\nreject-native-entries=false\nmodule=mod/a.jar\n",
         ),
+        (
+            "a false directory-entries, which no producer writes",
+            "output=out/a.jar\ndirectory-entries=false\nmodule=mod/a.jar\n",
+        ),
         ("a group with no source", "output=out/a.jar\n"),
         (
             "the same output twice",
@@ -217,6 +221,26 @@ fn parse_flag_file_rejects_what_would_change_bytes_silently() {
     ] {
         assert!(parse_recipe(&scratch, lines).is_err(), "{name} was accepted");
     }
+}
+
+#[test]
+fn parse_flag_file_reads_directory_entries_per_group() {
+    let scratch = Scratch::new();
+    let specs = parse_recipe(
+        &scratch,
+        "output=out/a.jar\ndirectory-entries=true\nmodule=mod/a.jar\noutput=out/b.jar\nmodule=mod/b.jar\n",
+    )
+    .unwrap();
+    assert_eq!(
+        specs[0].directory_mode,
+        DirectoryMode::All,
+        "directory-entries did not reach its group"
+    );
+    assert_eq!(
+        specs[1].directory_mode,
+        DirectoryMode::None,
+        "directory-entries applied to the next group"
+    );
 }
 
 #[test]

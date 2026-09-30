@@ -41,6 +41,15 @@ class DevDistSimplePackagingTest {
   /** A community content module of the synthetic index, in `@community//plugins/c/content`. */
   private val communityContentModule = "intellij.c.content"
 
+  /** A test-only module of the synthetic index, in `//plugins/x/tests`, with a test jar. */
+  private val testModule = "intellij.x.tests"
+
+  /** A test-only module of the synthetic index, in `//plugins/x/stub`, without a test jar. */
+  private val testModuleWithoutJar = "intellij.x.stub"
+
+  /** The writer of a jar that merges a test-only module. */
+  private val testOutputWriter = JarWriterRecipe(mergeEntities = true, directoryEntries = true)
+
   private lateinit var index: DevDistBazelIndex
 
   @BeforeEach
@@ -50,20 +59,29 @@ class DevDistSimplePackagingTest {
       plugin to "//plugins/x:x.jar",
       communityPlugin to "@community//plugins/c:c.jar",
       communityContentModule to "@community//plugins/c/content:content.jar",
+      testModule to "//plugins/x/tests:tests.jar",
+      testModuleWithoutJar to "//plugins/x/stub:stub.jar",
+      testTargets = mapOf(testModule to "//plugins/x/tests:tests_test_lib.jar"),
     )
   }
 
   /** The main jar of [plugin] with the descriptor patch, the one jar every simple plugin has. */
-  private fun mainJar(plugin: String = this.plugin): PluginPackingAsset {
+  private fun mainJar(plugin: String = this.plugin, writer: JarWriterRecipe = JarWriterRecipe(mergeEntities = true)): PluginPackingAsset {
     val descriptor = devDistDescriptorInputId(plugin)
     val recipe = CanonicalJarRecipe(
       sources = listOf(
         JarSourceRecipe(descriptor, "file", "none", PLUGIN_XML_RELATIVE_PATH, options = listOf("patch")),
         JarSourceRecipe(plugin, "module", "module-v1"),
       ),
-      writer = JarWriterRecipe(mergeEntities = true),
+      writer = writer,
     )
     return PluginPackingAsset(destination = "lib/${plugin.removePrefix("intellij.")}.jar", inputs = listOf(descriptor, plugin), recipe = recipe)
+  }
+
+  /** A jar at [destination] that merges the output of [module] alone. */
+  private fun moduleJar(destination: String, module: String, writer: JarWriterRecipe): PluginPackingAsset {
+    val recipe = CanonicalJarRecipe(sources = listOf(JarSourceRecipe(module, "module", "module-v1")), writer = writer)
+    return PluginPackingAsset(destination = destination, inputs = listOf(module), recipe = recipe)
   }
 
   /** A `withResource*` file at [destination], the mode the layout gives a copied file. */
@@ -98,6 +116,7 @@ class DevDistSimplePackagingTest {
     plugin: String = this.plugin,
     preparations: List<PluginPackingPreparation> = emptyList(),
     reusable: List<ReusableJarArtifact> = emptyList(),
+    testModules: Set<String> = emptySet(),
   ): DevDistPluginPlanEntry {
     val signature = pluginPackingLayoutSignature(plugin, "", assets, preparations, emptyList())
     val moduleLabel = if (plugin == communityPlugin) "@community//plugins/c:c" else "//plugins/x:x"
@@ -114,6 +133,7 @@ class DevDistSimplePackagingTest {
         artifacts = listOf(PluginSymbolicArtifact(id = plugin, kind = "directory", fileName = plugin)),
         moduleRoots = mapOf(plugin to listOf(plugin)),
         libraries = emptyList(),
+        testModules = testModules,
       )
       override val requiredRawInputs = listOf(DevDistPluginRawInput(id = plugin, label = moduleLabel, kind = "directory", fileName = plugin)) + inputs
       override val requiredLibraries = emptyList<String>()
@@ -389,6 +409,68 @@ class DevDistSimplePackagingTest {
               "@community//plugins/c": "intellij.c",
           },
           plugin_directory = "plugins/c",
+      )
+      """.trimIndent() + "\n",
+    )
+  }
+
+  @Test
+  fun `a jar of a test-only module with directory entries is simple and cross-half`() {
+    val assets = listOf(mainJar(), moduleJar("lib/tests.jar", testModule, testOutputWriter))
+    val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = emptyList(), testModules = setOf(testModule)))
+
+    assertThat(packaging.jars).containsExactly(entry("lib/x.jar", listOf(plugin)), entry("lib/tests.jar", listOf(testModule)))
+    assertThat(packaging.testModules).containsExactly(testModule)
+    assertThat(packaging.crossHalf).isTrue()
+  }
+
+  @Test
+  fun `a jar of a test-only module with the default writer keeps the plan tier`() {
+    val assets = listOf(mainJar(), moduleJar("lib/tests.jar", testModule, JarWriterRecipe(mergeEntities = true)))
+
+    assertKeepsPlanTier(planEntry(assets = assets, inputs = emptyList(), testModules = setOf(testModule)))
+  }
+
+  @Test
+  fun `a production jar with directory entries keeps the plan tier`() {
+    assertKeepsPlanTier(planEntry(assets = listOf(mainJar(writer = testOutputWriter)), inputs = emptyList(), testModules = setOf(testModule)))
+  }
+
+  @Test
+  fun `a test-only module without a test jar keeps the plan tier`() {
+    val assets = listOf(mainJar(), moduleJar("lib/stub.jar", testModuleWithoutJar, testOutputWriter))
+
+    assertKeepsPlanTier(planEntry(assets = assets, inputs = emptyList(), testModules = setOf(testModuleWithoutJar)))
+  }
+
+  @Test
+  fun `the cross-half dev_plugin target names a test-only module by its test jar`() {
+    val assets = listOf(mainJar(), moduleJar("lib/tests.jar", testModule, testOutputWriter))
+    val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = assets, inputs = emptyList(), testModules = setOf(testModule)))
+
+    val target = renderCrossHalfDevPluginTarget(packaging, descriptorLabel = "//build/dev-dist-descriptors/intellij.x:intellij.x_dev_descriptor", index = index)
+
+    assertThat(target).isEqualTo(
+      """
+      dev_plugin(
+          name = "intellij.x_dev_plugin",
+          descriptor = "//build/dev-dist-descriptors/intellij.x:intellij.x_dev_descriptor",
+          jars = {
+              "lib/x.jar": [
+                  "intellij.x",
+              ],
+              "lib/tests.jar": [
+                  "intellij.x.tests",
+              ],
+          },
+          main_module = "intellij.x",
+          modules = {
+              "//plugins/x": "intellij.x",
+          },
+          plugin_directory = "plugins/x",
+          test_module_jars = {
+              "//plugins/x/tests:tests_test_lib.jar": "intellij.x.tests",
+          },
       )
       """.trimIndent() + "\n",
     )

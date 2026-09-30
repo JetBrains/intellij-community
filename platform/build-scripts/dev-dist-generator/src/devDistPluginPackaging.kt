@@ -72,6 +72,11 @@ internal class DevDistSimplePackaging(
   @JvmField val files: Map<String, String>,
   @JvmField val filePrefixes: Map<String, String>,
   @JvmField val executableFiles: List<String>,
+  /**
+   * The module tokens that name a test-only module, in token order. The jar of such a module is its `_test_lib.jar`
+   * output, and a jar that merges one has directory entries.
+   */
+  @JvmField val testModules: List<String>,
 ) {
   /** Every module a token names, the main module included. */
   val moduleTokens: List<String>
@@ -95,6 +100,12 @@ internal fun derivedPluginDirectoryName(mainModule: String): String = mainModule
 private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
 
 /**
+ * The writer of a jar that merges a test-only module: the default writer with directory entries. `JarPackager` adds
+ * directory entries to such a jar, and the dev distribution keeps its bytes.
+ */
+private val TEST_OUTPUT_WRITER = JarWriterRecipe(mergeEntities = true, directoryEntries = true)
+
+/**
  * Classifies one folded plan as simple, or returns `null` for a plugin that keeps its plan file.
  *
  * Simple means: one neutral record, no preparation, every asset a jar of mode 420 on the classpath or a plain copy, the
@@ -103,6 +114,9 @@ private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
  * macro infer reuse from `content_modules` without a second list. A plugin that reuses more is declared cross-half.
  * A plain copy is a `withResource*` file or directory, or a one-file layout callback, see [plainCopy].
  * No destination sits below another, because the rule refuses a copy that overlaps a jar or another copy.
+ *
+ * A jar that merges a test-only module of the catalogue takes [TEST_OUTPUT_WRITER] instead of the default writer. The
+ * index must name the test jar of that module. A plugin with such a module is cross-half.
  *
  * [baseline] says whether the product is in the baseline residue class of the plugin. A divergent product states its
  * packaging in its product package, which lists every reused jar, so its reuse set may cover fewer content modules than
@@ -132,7 +146,8 @@ internal fun classifySimplePluginPackaging(
   val record = entry.records.getValue("")
   val plan = record.plan
   val projection = plan.projection
-  if (projection.preparations.isNotEmpty() || projection.preparationRoots.isNotEmpty() || plan.catalogue.testModules.isNotEmpty()) return null
+  if (projection.preparations.isNotEmpty() || projection.preparationRoots.isNotEmpty()) return null
+  val testModules = plan.catalogue.testModules
   val mainModule = entry.mainModule
   val jars = LinkedHashMap<String, List<String>>()
   val moduleJarPaths = LinkedHashMap<String, String>()
@@ -160,7 +175,6 @@ internal fun classifySimplePluginPackaging(
       reused.add(owner)
       continue
     }
-    if (recipe.writer != DEFAULT_WRITER) return null
     val tokens = ArrayList<String>()
     var sawLibrary = false
     var hasDescriptor = false
@@ -171,6 +185,8 @@ internal fun classifySimplePluginPackaging(
         "module" -> {
           if (source.filter != "module-v1" || source.entry.isNotEmpty() || ':' in source.input) return null
           if (index.location(source.input) == null) return null
+          // The rule packs a test-only module from its test jar, so the index must name one.
+          if (source.input in testModules && testModuleJarTarget(source.input, index.targets) == null) return null
           // The writer puts every module output before the libraries, so a module after a library is not a token order.
           if (sawLibrary) return null
           tokens.add(source.input)
@@ -191,8 +207,10 @@ internal fun classifySimplePluginPackaging(
         else -> return null
       }
     }
-    if (hasDescriptor) descriptorJars++
     if (tokens.isEmpty()) return null
+    val writer = if (tokens.any { it in testModules }) TEST_OUTPUT_WRITER else DEFAULT_WRITER
+    if (recipe.writer != writer) return null
+    if (hasDescriptor) descriptorJars++
     jars.put(asset.destination, tokens)
   }
   if (descriptorJars != 1) return null
@@ -212,7 +230,10 @@ internal fun classifySimplePluginPackaging(
   val sectionIsCommunity = index.isCommunity(mainModule) ?: return null
   val labelTokens = jars.values.flatten().filter(::isLabelToken)
   val relocatedReuse = reused.filter { it in relocatedModules }.sorted()
-  val crossHalf = !ownDescriptorDeclared ||
+  val declaredTestModules = moduleTokens.filter { it in testModules }
+  // The own section derives module labels from the production bridge map, and that map holds no test jar.
+  val crossHalf = declaredTestModules.isNotEmpty() ||
+                  !ownDescriptorDeclared ||
                   reusedSet != sectionReuse ||
                   sectionIsCommunity && (
                     relocatedReuse.isNotEmpty() ||
@@ -251,6 +272,7 @@ internal fun classifySimplePluginPackaging(
     files = Collections.unmodifiableMap(files),
     filePrefixes = Collections.unmodifiableMap(filePrefixes),
     executableFiles = java.util.List.copyOf(executableFiles),
+    testModules = java.util.List.copyOf(declaredTestModules),
   )
 }
 

@@ -339,6 +339,9 @@ private fun renderCrossHalfPackage(
  * [DevDistBazelIndex.planLabel]. The component index names this target. [contentModuleJarLabel] gives the label of the
  * jar of a reused module, which is a label of the product package of the ultimate half for a relocated call, see
  * [DevDistBuildSections.relocatedContentModuleJarCalls].
+ *
+ * `modules` names the production target of each module token. `test_module_jars` names the test jar of each module of
+ * [DevDistSimplePackaging.testModules] instead.
  */
 internal fun renderCrossHalfDevPluginTarget(
   packaging: DevDistSimplePackaging,
@@ -374,8 +377,17 @@ internal fun renderCrossHalfDevPluginTarget(
   appendStarlarkStringList(name = "libraries", values = packaging.labelTokens.sorted().map(index::planLabel))
   appendStarlarkString(name = "main_module", value = mainModule)
   appendStarlarkStringDict(name = "module_jar_paths", rows = packaging.moduleJarPaths)
-  appendStarlarkStringDict(name = "modules", rows = packaging.moduleTokens.associateBy(::moduleLabel))
+  val testModules = packaging.testModules.toSet()
+  appendStarlarkStringDict(name = "modules", rows = packaging.moduleTokens.filter { it !in testModules }.associateBy(::moduleLabel))
   appendStarlarkString(name = "plugin_directory", value = "plugins/${packaging.pluginDirectory}")
+  appendStarlarkStringDict(
+    name = "test_module_jars",
+    rows = packaging.testModules.associateBy { module ->
+      val jar = testModuleJarTarget(module = module, targets = index.targets)
+                ?: error("Module '$module' of '$mainModule' has no single test jar")
+      index.planLabel(jar)
+    },
+  )
   append(")\n")
 }
 

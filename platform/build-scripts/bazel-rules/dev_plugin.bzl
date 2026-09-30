@@ -41,7 +41,8 @@ DevDistRuntimeLayoutInfo = provider(
 DevPluginInputsInfo = provider(
     doc = "The compiled inputs of one simple plugin, resolved in the neutral product configuration.",
     fields = {
-        "module_jars": "dict of JPS module name to its output jar `File`.",
+        "module_jars": "dict of JPS module name to its output jar `File`. A test-only module maps to its test jar.",
+        "test_modules": "tuple of the JPS module names `test_module_jars` names. A jar that merges one has directory entries.",
         "libraries": "dict of library token to `struct(label, jars)`. The token is the label string the plugin's `BUILD.bazel` writes.",
         "content_jars": """dict of JPS module name to `struct(jar, metadata, member_modules, library_jars)`: the jar a
         `content_module_jar` target packed, and what it merges, see `ContentModuleJarInfo`.""",
@@ -59,6 +60,18 @@ def _dev_plugin_inputs_impl(ctx):
         if name in module_jars:
             fail("module '%s' is named twice" % name, attr = "modules")
         module_jars[name] = jar
+
+    # A test jar label is a `.jar` output, as the complex chain names it in `artifact_inputs`. `module_output_jar` looks
+    # for `<label name>.jar` and misses it, so the rule reads the one file of the label, as `libraries` does for a jar file.
+    test_modules = []
+    for target, name in ctx.attr.test_module_jars.items():
+        files = target[DefaultInfo].files.to_list()
+        if len(files) != 1 or not files[0].basename.endswith(".jar"):
+            fail("%s is not one jar file for test-only module '%s'" % (target.label, name), attr = "test_module_jars")
+        if name in module_jars:
+            fail("module '%s' is named twice" % name, attr = "test_module_jars")
+        module_jars[name] = files[0]
+        test_modules.append(name)
 
     libraries = {}
     for target, token in ctx.attr.libraries.items():
@@ -105,6 +118,7 @@ def _dev_plugin_inputs_impl(ctx):
         DefaultInfo(files = depset()),
         DevPluginInputsInfo(
             module_jars = module_jars,
+            test_modules = tuple(test_modules),
             libraries = libraries,
             content_jars = content_jars,
             files = files,
@@ -120,6 +134,13 @@ _dev_plugin_inputs = rule(
         "modules": attr.label_keyed_string_dict(
             doc = "Every module a jar merges, valued by its JPS module name.",
             providers = [_KtJvmInfo],
+        ),
+        "test_module_jars": attr.label_keyed_string_dict(
+            doc = """The test jar of every test-only module a jar merges, valued by its JPS module name.
+
+A `.jar` output, as the complex chain names it in `artifact_inputs`, so the `testonly` of the library does not spread to
+the component.""",
+            allow_files = [".jar"],
         ),
         "libraries": attr.label_keyed_string_dict(
             doc = "Every library container or jar file a jar merges, valued by the token `jars` names it with.",
@@ -312,6 +333,11 @@ def _dev_plugin_impl(ctx):
 
         library_jars = merge_order_jars(library_entries)
         has_main = main_module in module_names
+
+        # `JarPackager` adds directory entries to a jar that merges a test-only module, and the legacy bytes stay.
+        extra_flags = ["merge-entities=true"]
+        if any([name in inputs.test_modules for name in module_names]):
+            extra_flags.append("directory-entries=true")
         output = ctx.actions.declare_file(ctx.label.name + "/" + destination)
         metadata = ctx.actions.declare_file(ctx.label.name + ".metadata/" + destination + ".json")
         jar_spans = declare_spans(ctx, ctx.label.name + "/" + destination[:-len(".jar")])
@@ -324,7 +350,7 @@ def _dev_plugin_impl(ctx):
             merged_module_names = module_names,
             mnemonic = "PackDevPluginJar",
             progress_message = "Packing %s of %%{label}" % destination,
-            extra_flags = ["merge-entities=true"],
+            extra_flags = extra_flags,
             descriptor = descriptor_info.descriptor if has_main else None,
             descriptor_module = main_module if has_main else None,
             metadata = metadata,
@@ -502,7 +528,8 @@ def dev_plugin(
         main_module,
         descriptor,
         plugin_directory,
-        modules,
+        modules = {},
+        test_module_jars = {},
         libraries = [],
         content_module_jars = [],
         jars = {},
@@ -521,7 +548,10 @@ def dev_plugin(
         main_module: the main JPS module.
         descriptor: the plugin's `dev_dist_plugin_descriptor` target.
         plugin_directory: `plugins/<directory>`.
-        modules: dict of module target to JPS module name, every module a jar merges.
+        modules: dict of module target to JPS module name, every module a jar merges except a test-only one.
+        test_module_jars: dict of test jar label to JPS module name, every test-only module a jar merges. The label is
+            the `_test_lib.jar` output, so the component does not become `testonly`. A jar that merges such a module
+            has directory entries.
         libraries: the library container and jar file labels `jars` names, as the same strings.
         content_module_jars: the `content_module_jar` targets of the content modules no jar merges.
         jars: destination to source tokens, see `_dev_plugin`.
@@ -542,6 +572,7 @@ def dev_plugin(
     _dev_plugin_inputs(
         name = inputs,
         modules = modules,
+        test_module_jars = test_module_jars,
         libraries = {library: library for library in libraries},
         content_module_jars = content_module_jars,
         file_targets = {label: label for label in files.values()},

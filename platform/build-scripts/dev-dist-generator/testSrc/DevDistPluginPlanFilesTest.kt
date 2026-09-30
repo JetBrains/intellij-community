@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.platform.buildScripts.devDistGenerator
 
@@ -483,16 +483,20 @@ class DevDistPluginPlanFilesTest {
 
 /**
  * An index that places each module of [modules] at its production jar label, over [checkout]. The label tells the half
- * and the package, as `build/bazel-targets.json` does.
+ * and the package, as `build/bazel-targets.json` does. [testTargets] gives the test jar label of a module, keyed by module.
  */
-internal fun syntheticIndex(checkout: Path, vararg modules: Pair<String, String>): DevDistBazelIndex {
+internal fun syntheticIndex(
+  checkout: Path,
+  vararg modules: Pair<String, String>,
+  testTargets: Map<String, String> = emptyMap(),
+): DevDistBazelIndex {
   return DevDistBazelIndex(
     targets = BazelTargetsInfo.TargetsFile(
       modules = modules.associate { (module, label) ->
         module to BazelTargetsInfo.TargetsFileModuleDescription(
           productionTargets = listOf(label),
           productionJars = emptyList(),
-          testTargets = emptyList(),
+          testTargets = listOfNotNull(testTargets.get(module)),
           testJars = emptyList(),
           exports = emptyList(),
           moduleLibraries = emptyMap(),
