@@ -3,10 +3,11 @@
 //! The packing of the groups of one recipe, and the spans of each jar.
 
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::num::NonZeroUsize;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::thread;
 
 use jarpack::MergeSpec;
-use rayon::prelude::*;
 use tracing::field::Empty;
 use tracing::{Dispatch, Span, info_span};
 
@@ -15,8 +16,8 @@ use crate::inventory;
 /// Packs each group of the recipe under `root`.
 ///
 /// A Bazel action names one group, and the group runs on the calling thread. A parity run or a profile run names many
-/// groups. They run in parallel on the rayon pool, which has one thread per CPU. After a failure, no new group starts,
-/// and the result is the first error in group order.
+/// groups. They run in parallel on one scoped thread per CPU, and each thread takes the next group from a shared
+/// cursor. After a failure, no new group starts, and the result is the first error in group order.
 ///
 /// A group in parallel writes its report to a buffer. The buffers go to `stderr` in group order after all groups end.
 /// So the lines of two jars do not mix, and the order of the lines does not depend on the timing.
@@ -24,24 +25,55 @@ pub(crate) fn pack_all(specs: &[MergeSpec], root: &Span, dispatch: &Dispatch, st
     if let [spec] = specs {
         return pack_one(spec, root, stderr);
     }
+    let workers = thread::available_parallelism().map_or(1, NonZeroUsize::get);
+    pack_in_parallel(specs, workers, root, dispatch, stderr)
+}
+
+/// The report and the result of one group that ran.
+type Outcome = (Vec<u8>, jarpack::Result<()>);
+
+/// Packs the groups on `workers` scoped threads, with the output rules of [`pack_all`].
+///
+/// The pool is written by hand, because a crate dependency in the packer re-keys every packing action when the crate
+/// changes. A panic of a group ends the run with the same panic, after the other threads end.
+pub(crate) fn pack_in_parallel(
+    specs: &[MergeSpec],
+    workers: usize,
+    root: &Span,
+    dispatch: &Dispatch,
+    stderr: &mut dyn Write,
+) -> jarpack::Result<()> {
+    let cursor = AtomicUsize::new(0);
     let failed = AtomicBool::new(false);
-    let outcomes: Vec<_> = specs
-        .par_iter()
-        .map(|spec| {
-            if failed.load(Ordering::Relaxed) {
-                return None;
-            }
-            // The dispatcher of the run is the default of the calling thread only, so each group sets it again.
-            tracing::dispatcher::with_default(dispatch, || {
+    let worker = || {
+        // The dispatcher of the run is the default of the calling thread only, so each thread sets it again.
+        tracing::dispatcher::with_default(dispatch, || {
+            let mut outcomes = Vec::new();
+            while !failed.load(Ordering::Relaxed) {
+                let index = cursor.fetch_add(1, Ordering::Relaxed);
+                let Some(spec) = specs.get(index) else {
+                    break;
+                };
                 let mut report = Vec::new();
                 let result = pack_one(spec, root, &mut report);
                 if result.is_err() {
                     failed.store(true, Ordering::Relaxed);
                 }
-                Some((report, result))
-            })
+                outcomes.push((index, (report, result)));
+            }
+            outcomes
         })
-        .collect();
+    };
+    let mut outcomes: Vec<Option<Outcome>> = specs.iter().map(|_| None).collect();
+    thread::scope(|scope| {
+        let threads: Vec<_> = (0..workers.clamp(1, specs.len().max(1))).map(|_| scope.spawn(worker)).collect();
+        for thread in threads {
+            let packed = thread.join().unwrap_or_else(|panic| std::panic::resume_unwind(panic));
+            for (index, outcome) in packed {
+                outcomes[index] = Some(outcome);
+            }
+        }
+    });
     let mut first_error = None;
     for (report, result) in outcomes.into_iter().flatten() {
         let _ = stderr.write_all(&report);

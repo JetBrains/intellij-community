@@ -16,6 +16,7 @@ use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipWriter};
 
 use super::options::{self, Options};
+use super::pack::pack_in_parallel;
 use super::{FAILURE, run};
 
 /// The content of the class in each fixture jar.
@@ -537,7 +538,7 @@ fn a_one_shot_run_packs_each_group_and_reports_in_group_order() {
     assert_eq!(outcome.stderr, want);
     assert_eq!(file_names(&base.join("out")), names);
 
-    // The rayon workers record into the tracer of the run, and each jar span is a child of the root.
+    // The workers record into the tracer of the run, and each jar span is a child of the root.
     let trace = read_trace(&base.join("one-shot.spans.json"));
     let all = spans(&trace);
     assert_eq!(all.len(), names.len() + 1);
@@ -571,6 +572,75 @@ fn a_one_shot_run_fails_with_the_error_of_the_failed_group() {
         "{}",
         outcome.stderr
     );
+}
+
+/// Parses the recipe of `base` and packs it on `workers` threads. It returns the result, the stderr text, and the names
+/// of the packed jars.
+fn pack_on_workers(base: &Path, workers: usize) -> (jarpack::Result<()>, String, Vec<String>) {
+    let specs = jarpack::parse_flag_file(&base.join("recipe.txt"), base).expect("a recipe that parses");
+    let mut stderr = Vec::new();
+    let result = pack_in_parallel(&specs, workers, &tracing::Span::none(), &tracing::Dispatch::none(), &mut stderr);
+    let out = base.join("out");
+    let packed = if out.is_dir() { file_names(&out) } else { Vec::new() };
+    (result, String::from_utf8(stderr).expect("a UTF-8 report"), packed)
+}
+
+#[test]
+fn a_one_shot_run_with_more_groups_than_workers_packs_every_group_in_order() {
+    let dir = pack_one_jar("");
+    let base = dir.path();
+    fs::copy(base.join("module.jar"), base.join("copy.jar")).expect("a second module jar");
+    let names: Vec<String> = (0..11).map(|index| format!("jar{index:02}.jar")).collect();
+    let recipe: String = names
+        .iter()
+        .map(|name| format!("output=out/{name}\nmodule=module.jar\nmodule=copy.jar\n"))
+        .collect();
+    write_recipe(base, &recipe);
+    let (result, stderr, packed) = pack_on_workers(base, 3);
+    result.expect("every group packs");
+    let want: String = names
+        .iter()
+        .map(|name| format!("{name}: 1 duplicate entry, first source wins: com/example/Packed.class\n"))
+        .collect();
+    assert_eq!(stderr, want);
+    assert_eq!(packed, names);
+}
+
+#[test]
+fn a_one_shot_run_stops_after_an_early_failure_and_reports_the_first_error() {
+    let dir = pack_one_jar("");
+    let base = dir.path();
+    let recipe = |failing: &[usize]| -> String {
+        (0..8)
+            .map(|index| {
+                let source = if failing.contains(&index) {
+                    format!("missing{index}.jar")
+                } else {
+                    "module.jar".to_owned()
+                };
+                format!("output=out/jar{index}.jar\nmodule={source}\n")
+            })
+            .collect()
+    };
+
+    // One worker takes the groups in order, so no group after the failed first one starts. The failed group can leave
+    // its own output, because the merge creates the jar before it opens the missing source.
+    write_recipe(base, &recipe(&[0]));
+    let (result, stderr, packed) = pack_on_workers(base, 1);
+    let error = result.expect_err("the first group fails").to_string();
+    assert!(error.contains("missing0.jar"), "{error}");
+    assert_eq!(stderr, "");
+    assert!(
+        packed.iter().all(|name| name == "jar0.jar"),
+        "groups after the failure packed: {packed:?}"
+    );
+
+    // With several workers, a later failure can also run. The result is the error of the first group in group order.
+    fs::remove_dir_all(base.join("out")).expect("the output of the first run");
+    write_recipe(base, &recipe(&[0, 6]));
+    let (result, _, _) = pack_on_workers(base, 4);
+    let error = result.expect_err("two groups fail").to_string();
+    assert!(error.contains("missing0.jar"), "{error}");
 }
 
 #[test]

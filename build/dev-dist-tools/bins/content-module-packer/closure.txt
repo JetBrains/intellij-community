@@ -2,11 +2,7 @@ adler2
 anyhow
 cfg_if
 crc32fast
-crossbeam_deque
-crossbeam_epoch
-crossbeam_utils
 distpath
-either
 equivalent
 filemeta
 flate2
@@ -24,8 +20,6 @@ memmap2
 miniz_oxide
 once_cell
 pin_project_lite
-rayon
-rayon_core
 same_file
 serde
 serde_core

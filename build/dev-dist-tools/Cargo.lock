@@ -90,7 +90,6 @@ dependencies = [
  "filemeta",
  "jarpack",
  "lexopt",
- "rayon",
  "serde_json",
  "tempfile",
  "trace",

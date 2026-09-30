@@ -40,7 +40,7 @@ pub fn duplicate_line(jar_name: &str, duplicates: &[String]) -> Option<String>;
 - `MergeSpec::pack` prints nothing. The caller prints `duplicate_line(&spec.jar_name(), &report.duplicates)` to stderr.
   The line is `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end.
   The Go binary printed it before an inventory error, so the caller prints it between the two steps.
-- `MergeSpec` and `MergeReport` are `Send + Sync`, so a caller can pack many specs in parallel with rayon.
+- `MergeSpec` and `MergeReport` are `Send + Sync`, so a caller can pack many specs on parallel threads.
 - `MergeSpec::verify_crc` is the one switch of the CRC check.
 
 ## Recipes
