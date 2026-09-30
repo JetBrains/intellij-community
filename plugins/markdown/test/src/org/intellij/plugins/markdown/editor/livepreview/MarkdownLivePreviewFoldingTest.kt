@@ -42,6 +42,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import java.awt.Rectangle
 import java.awt.Color
+import java.awt.Font
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -1050,6 +1051,28 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     moveCaretTo(content.length)
     assertEquals(rules, blockQuoteRules().map { it.startOffset to it.endOffset })
+  }
+
+  fun testBlockquoteRuleFillsThePlaceholdersOfItsQuoteWithTheQuoteBackground() {
+    configure("- > - item\n\ntail<caret>")
+    val editor = myFixture.editor
+    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.BLOCK_QUOTE, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
+    val rule = blockQuoteRules().single()
+    val bitmap = BufferedImage(1000, editor.lineHeight, BufferedImage.TYPE_INT_ARGB)
+    val graphics = bitmap.createGraphics()
+    try {
+      rule.customRenderer!!.paint(editor, rule, graphics)
+    }
+    finally {
+      graphics.dispose()
+    }
+
+    val (listBullet, marker, quotedBullet) = concealedLivePreviewRegions(editor).map {
+      bitmap.getRGB(editor.offsetToXY(it.endOffset).x - 1, editor.lineHeight / 2)
+    }
+    assertEquals("A bullet before the quote must keep the editor background", 0, listBullet ushr 24)
+    assertEquals(Color.RED.rgb, marker)
+    assertEquals(Color.RED.rgb, quotedBullet)
   }
 
   fun testRevealedMarkersMoveOnlyTheRulesOfTheirLine() {

@@ -360,6 +360,11 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("-", ">", ">", ">"), revealRanges(content))
   }
 
+  fun testBlockquoteMarkersAfterTaskCheckboxesAreConcealed() {
+    val content = "- [ ] > first\n  > second"
+    assertEquals(listOf("- [ ]", ">", ">"), concealed(content))
+  }
+
   fun testBlockquoteMarkersInsidePlusListItemsAreConcealed() {
     val content = "+ > first\n  > second\n  > third"
     assertEquals(listOf("+", ">", ">", ">"), concealed(content))

@@ -42,7 +42,20 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "===", MarkdownHighlighterColors.HEADER_MARKER)
     assertElementHighlightedWithKey(highlights, "===", MarkdownHighlighterColors.HEADER_LEVEL_1, HighlightingState.NOT_HIGHLIGHTED)
     assertElementHighlightedWithKey(highlights, ">", MarkdownHighlighterColors.BLOCK_QUOTE_MARKER)
-    assertElementHighlightedWithKey(highlights, ">", MarkdownHighlighterColors.BLOCK_QUOTE, HighlightingState.NOT_HIGHLIGHTED)
+  }
+
+  fun testBlockQuoteLinesAreHighlightedUpToTheirLineBreaks() {
+    val text = "- > a [link](x) `code`\n  > > b\n\ntail"
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    val lines = highlights
+      .filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.BLOCK_QUOTE }
+      .sortedBy { it.startOffset }
+      .map { text.substring(it.startOffset, it.endOffset) }
+    assertEquals(listOf("> a [link](x) `code`\n", "> > b", "\n"), lines)
+    assertElementHighlightedWithKey(highlights, "link", MarkdownHighlighterColors.LINK_TEXT)
+    assertElementHighlightedWithKey(highlights, "code", MarkdownHighlighterColors.CODE_SPAN)
   }
 
   fun testInlineFormattingAndLinksKeepInheritedHighlighting() {
@@ -236,7 +249,6 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
       "#### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_4,
       "##### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_5,
       "###### Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_6,
-      "> Quote `Code`" to MarkdownHighlighterColors.BLOCK_QUOTE,
       "- Item `Code`" to MarkdownHighlighterColors.LIST_ITEM,
       "**Bold `Code`**" to MarkdownHighlighterColors.BOLD,
       "*Italic `Code`*" to MarkdownHighlighterColors.ITALIC,

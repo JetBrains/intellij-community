@@ -683,6 +683,16 @@
         <option name="FOREGROUND" value="5ec9ff" />
       </value>
     </option>
+    <option name="MARKDOWN_BLOCK_QUOTE">
+      <value>
+        <option name="BACKGROUND" value="151617" />
+      </value>
+    </option>
+    <option name="MARKDOWN_BLOCK_QUOTE_MARKER">
+      <value>
+        <option name="FOREGROUND" value="999999" />
+      </value>
+    </option>
     <option name="MARKDOWN_CODE_BLOCK">
       <value>
         <option name="FOREGROUND" value="EBEBEB" />

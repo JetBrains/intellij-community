@@ -183,11 +183,18 @@ private fun CharSequence.blockQuoteMarkerOffsets(lineStart: Int, lineEnd: Int): 
         else -> {
           val markerEnd = this@blockQuoteMarkerOffsets.listMarkerEnd(offset, lineEnd)
           if (markerEnd == offset) break
-          offset = markerEnd
+          offset = this@blockQuoteMarkerOffsets.taskCheckboxEnd(markerEnd, lineEnd)
         }
       }
     }
   }
+
+/** Skips the task checkbox after a list marker, so that a blockquote after `- [ ]` keeps its marker. */
+private fun CharSequence.taskCheckboxEnd(offset: Int, lineEnd: Int): Int {
+  var cursor = offset
+  while (cursor < lineEnd && this[cursor] in " \t") cursor++
+  return if (cursor + 3 < lineEnd && MarkdownLivePreviewUtils.isCheckbox(this, cursor) && this[cursor + 3] in " \t") cursor + 3 else offset
+}
 
 private fun CharSequence.listMarkerEnd(offset: Int, lineEnd: Int): Int {
   var cursor = offset
