@@ -1,0 +1,32 @@
+{
+    "version": 1,
+    "plugin": "intellij.laf.win10",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/laf-win10.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.laf.win10",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.laf.win10",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

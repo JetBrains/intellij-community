@@ -40,9 +40,11 @@ import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import java.util.Collections
 import java.util.TreeMap
+import java.util.TreeSet
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -159,7 +161,9 @@ private fun computePluginPlanGroup(
   val first = requests.first()
   val mainModule = first.layout.mainModule
   try {
-    check(requests.all { it.tier == first.tier }) { "Plugin '$mainModule' is bundled on one platform and additional on another" }
+    check(requests.all { it.tier == first.tier }) {
+      "Plugin '$mainModule' of '${first.product}' has more than one tier across the platforms: ${requests.mapTo(LinkedHashSet()) { it.tier.key }}"
+    }
     val inputs = requests.map { request ->
       val bindings = requireNotNull(layoutBindings.get(request.key)) { "No layout bindings for ${request.key}" }
       pluginRequestInputs(owner, outputProvider, plans, request, request.variant, bindings, facts)
@@ -324,11 +328,23 @@ internal fun bindDevDistPluginLayout(
 }
 
 /**
+ * The layout bindings of the kept requests, keyed by request key, and the main modules that the bindings drop, sorted.
+ * The value of [dropped] is the reason of the first rejected request of the main module.
+ */
+internal class DevDistPluginLayoutBindingOutcome(
+  @JvmField val bindings: Map<DevDistPluginPlanKey, DevDistPluginLayoutBindings>,
+  @JvmField val dropped: Map<String, String>,
+)
+
+/**
  * Binds the layout of every request before the descriptor plan reads a plugin. A layout fact the plan cannot state
  * stops the run, for a bundled and an additional plugin alike. [registerGeneratedDevDistPluginPlans] reads the
  * bindings back by request key. [resources] resolves the `withResource*` declarations once for every request.
  * [half] binds the closed asset sources and the embedded frontend. [embeddedHomeOf] answers the home of the embedded
  * descriptor class of a product, see [DevDistEmbeddedFrontendClasses.home].
+ *
+ * A rejected request that [tolerated] accepts does not stop the run. The outcome drops every request of its main
+ * module then, because a plan group needs the bindings of each of its requests.
  */
 internal fun bindGeneratedDevDistPluginLayouts(
   requests: List<DevDistPluginRequest>,
@@ -337,7 +353,8 @@ internal fun bindGeneratedDevDistPluginLayouts(
   half: DevDistHalf,
   resources: DevDistResourceSources = DevDistResourceSources(index, outputProvider),
   embeddedHomeOf: (String) -> String = { it },
-): Map<DevDistPluginPlanKey, DevDistPluginLayoutBindings> {
+  tolerated: (DevDistPluginRequest) -> Boolean = { false },
+): DevDistPluginLayoutBindingOutcome {
   // The bindings of a request read no state of another request, so they are computed beside each other. The outcomes
   // are then read in request order, so the run stops on the first rejected request, as a sequential loop did.
   val outcomes = requests.mapConcurrent { request ->
@@ -348,11 +365,21 @@ internal fun bindGeneratedDevDistPluginLayouts(
       Result.failure(e)
     }
   }
+  val dropped = TreeMap<String, String>()
+  for ((request, outcome) in requests.zip(outcomes)) {
+    val failure = outcome.exceptionOrNull() ?: continue
+    if (!tolerated(request)) {
+      throw failure
+    }
+    dropped.putIfAbsent(request.layout.mainModule, failure.message.orEmpty())
+  }
   val result = LinkedHashMap<DevDistPluginPlanKey, DevDistPluginLayoutBindings>()
   for ((request, outcome) in requests.zip(outcomes)) {
-    result.put(request.key, outcome.getOrThrow())
+    if (request.layout.mainModule !in dropped) {
+      result.put(request.key, outcome.getOrThrow())
+    }
   }
-  return result
+  return DevDistPluginLayoutBindingOutcome(bindings = result, dropped = Collections.unmodifiableMap(dropped))
 }
 
 /**
@@ -780,6 +807,8 @@ private fun requireNoModuleExcludes(layout: PluginLayout) {
  * Enumerates every supported target for each split product of [half]. [additionalModulesByProduct] holds the modules the
  * dev-server run configurations of a product name, see [devDistRunConfigurationModules]. A module of it without a
  * request stops the run. [testPlugins] are the Product DSL test plugins that such a module can be.
+ * [registryLayoutsByProduct] holds the registry plugins that each product plans in the registry tier, see
+ * [assignRegistryLayoutsToProducts].
  */
 internal fun enumerateGeneratedDevDistPluginRequests(
   products: List<DiscoveredProduct>,
@@ -787,6 +816,7 @@ internal fun enumerateGeneratedDevDistPluginRequests(
   additionalModulesByProduct: Map<String, List<String>>,
   half: DevDistHalf,
   testPlugins: List<TestPluginSpec>,
+  registryLayoutsByProduct: Map<String, List<String>>,
 ): List<DevDistPluginRequest> {
   val variants = SUPPORTED_DISTRIBUTIONS.map { distribution ->
     PluginSymbolicVariant(id = devDistHostPlatform(distribution), distribution = distribution)
@@ -799,8 +829,64 @@ internal fun enumerateGeneratedDevDistPluginRequests(
       extraPluginModules = half.extraPluginModules(product.name) ?: return@flatMap emptyList(),
       testPlugins = testPlugins,
       additionalModules = additionalModulesByProduct.get(product.name).orEmpty(),
+      registryModules = registryLayoutsByProduct.get(product.name).orEmpty(),
     )
   }
+}
+
+/**
+ * The registry plugins of the community half, sorted: the plugins of [population] and the layouts of [registryLayouts]
+ * that no request of [composed] plans.
+ *
+ * A registry plugin needs a JPS module, see [findModule], and a Bazel package, see [isPlaced]. The descriptor plan cannot
+ * place a plugin without a package. A test plugin is planned only when a run configuration names it. A test plugin is a
+ * module that [isTestOnlyPluginModuleName] matches, or a module of [testPluginModules], which match a Product DSL test
+ * plugin, see [resolveDevDistTestPlugins].
+ */
+internal fun devDistRegistryPlugins(
+  population: Collection<String>,
+  registryLayouts: Collection<String>,
+  composed: Set<String>,
+  isPlaced: (String) -> Boolean,
+  findModule: (String) -> JpsModule?,
+  testPluginModules: Set<String> = emptySet(),
+): List<String> {
+  val candidates = TreeSet(population)
+  candidates.addAll(registryLayouts)
+  return candidates.filter { mainModule ->
+    if (mainModule in composed || mainModule in testPluginModules || !isPlaced(mainModule)) {
+      return@filter false
+    }
+    val module = findModule(mainModule) ?: return@filter false
+    !isTestOnlyPluginModuleName(moduleName = mainModule, module = module)
+  }
+}
+
+/**
+ * The registry plugins that each product plans in the registry tier, keyed by product in [productOrder].
+ *
+ * A plugin of [registryPlugins] goes to the first product of [productOrder] whose explicit layouts in [layoutsByProduct]
+ * hold its main module. A plugin that no product holds goes to the first product of [productOrder] in
+ * [layoutsByProduct], which gives it an automatic layout. A product outside [layoutsByProduct] gets no plugin. A product
+ * without a plugin has no key. [productOrder] is the split product order of the half, see [DevDistHalf.splitDistributions].
+ */
+internal fun assignRegistryLayoutsToProducts(
+  registryPlugins: Collection<String>,
+  productOrder: Collection<String>,
+  layoutsByProduct: Map<String, Set<String>>,
+): Map<String, List<String>> {
+  val fallback = productOrder.firstOrNull { it in layoutsByProduct }
+  val result = LinkedHashMap<String, MutableList<String>>()
+  for (mainModule in registryPlugins) {
+    val product = productOrder.firstOrNull { layoutsByProduct.get(it)?.contains(mainModule) == true } ?: fallback ?: continue
+    result.computeIfAbsent(product) { ArrayList() }.add(mainModule)
+  }
+  // The map order follows the product order, and not the order of the layouts.
+  val ordered = LinkedHashMap<String, List<String>>()
+  for (product in productOrder) {
+    result.get(product)?.let { ordered.put(product, java.util.List.copyOf(it)) }
+  }
+  return ordered
 }
 
 /**
@@ -904,17 +990,10 @@ internal fun renderGeneratedDevDistPluginExecutions(
       exportsPlanFiles = exportsPlanFiles,
     ))
   }
-  // The tiers keep the entry order, because the bundled tier is the composition order.
-  val components = LinkedHashMap<String, Map<DevDistPluginTier, MutableList<GeneratedPluginComponent>>>()
-  for (entry in owner.pluginPlanEntries) {
-    val tierComponents = components
-      .computeIfAbsent(entry.product) { DevDistPluginTier.entries.associateWithTo(LinkedHashMap()) { ArrayList() } }
-      .getValue(entry.tier)
+  val components = groupPluginComponents(owner.pluginPlanEntries, product = { it.product }, tier = { it.tier }) { entry ->
     val packaging = owner.simplePackaging(entry.mainModule, entry.product)
-    tierComponents.add(
-      if (packaging != null) GeneratedPluginComponent(entry.mainModule, label = owner.devPluginLabel(packaging, entry.product))
-      else complexComponents.getValue(entry.product to entry.mainModule)
-    )
+    if (packaging != null) GeneratedPluginComponent(entry.mainModule, label = owner.devPluginLabel(packaging, entry.product))
+    else complexComponents.getValue(entry.product to entry.mainModule)
   }
   checkComponentMembership(components)
   return DevDistPluginExecutionRendering(
@@ -1053,10 +1132,32 @@ internal class GeneratedPluginComponent(
   @JvmField val label: String? = null,
   @JvmField val labels: Map<String, String> = emptyMap(),
 )
+/**
+ * The components of [entries], keyed by product and then by tier of [DEV_DIST_COMPONENT_TIERS]. Every product of
+ * [entries] has every component tier.
+ *
+ * An entry of another tier, such as [DevDistPluginTier.REGISTRY], gets no component, and [component] does not read it.
+ * The tiers keep the entry order, because the bundled tier is the composition order.
+ */
+internal fun <E> groupPluginComponents(
+  entries: Iterable<E>,
+  product: (E) -> String,
+  tier: (E) -> DevDistPluginTier,
+  component: (E) -> GeneratedPluginComponent,
+): Map<String, Map<DevDistPluginTier, List<GeneratedPluginComponent>>> {
+  val result = LinkedHashMap<String, Map<DevDistPluginTier, MutableList<GeneratedPluginComponent>>>()
+  for (entry in entries) {
+    val tiers = result.computeIfAbsent(product(entry)) { DEV_DIST_COMPONENT_TIERS.associateWithTo(LinkedHashMap()) { ArrayList() } }
+    val tierComponents = tiers.get(tier(entry)) ?: continue
+    tierComponents.add(component(entry))
+  }
+  return result
+}
+
 
 private fun checkComponentMembership(products: Map<String, Map<DevDistPluginTier, List<GeneratedPluginComponent>>>) {
   for ((product, tiers) in products) {
-    check(tiers.keys == DevDistPluginTier.entries.toSet()) { "Dev-plugin tiers differ for '$product': ${tiers.keys}" }
+    check(tiers.keys == DEV_DIST_COMPONENT_TIERS.toSet()) { "Dev-plugin tiers differ for '$product': ${tiers.keys}" }
     check(tiers.getValue(DevDistPluginTier.BUNDLED).isNotEmpty()) { "No bundled dev-plugin component for '$product'" }
     val modules = HashSet<String>()
     val labels = HashSet<String>()
@@ -1074,8 +1175,9 @@ private fun checkComponentMembership(products: Map<String, Map<DevDistPluginTier
 
 /**
  * `DEV_DIST_PLUGIN_COMPONENTS[product]` holds two tiers, `bundled` and `additional`, under the `dev-build.json`
- * product key. A tier maps a plugin's main module to its component label. A platform-specific plugin maps to a dict
- * from host platform to label instead. A plugin is in one tier only.
+ * product key, see [DEV_DIST_COMPONENT_TIERS]. A tier maps a plugin's main module to its component label. A
+ * platform-specific plugin maps to a dict from host platform to label instead. A plugin is in one tier only. A
+ * registry plugin is in no tier.
  *
  * The bundled tier is in composition order: [compositionOrder] first, then the rest in request order. A
  * distribution composes the neutral bundled entries in list order, then the platform-specific entries in list order.
@@ -1091,7 +1193,7 @@ private fun renderPluginComponents(
   append("DEV_DIST_PLUGIN_COMPONENTS = {\n")
   for ((product, tiers) in products) {
     append("    \"").append(product).append("\": {\n")
-    for (tier in DevDistPluginTier.entries) {
+    for (tier in DEV_DIST_COMPONENT_TIERS) {
       val components = tiers.getValue(tier)
       val ordered = if (tier == DevDistPluginTier.BUNDLED) composedBundledComponents(product, compositionOrder(product), components) else components
       append("        \"").append(tier.key).append("\": {\n")

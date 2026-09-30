@@ -1,5 +1,16 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.smart.update` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/smart-update.jar": ["intellij.smart.update"],
+    },
+    main_module = "intellij.smart.update",
+)
+### auto-generated section `dev intellij.smart.update` end
 
 ### auto-generated section `build intellij.smart.update` start
 jvm_library(

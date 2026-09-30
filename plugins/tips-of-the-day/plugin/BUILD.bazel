@@ -4,6 +4,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `dev intellij.tipsOfTheDay.plugin` start
 dev_dist_plugin(
     content_modules = ["intellij.tips"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.tips"],
+    jars = {
+        "lib/tipsOfTheDay-plugin.jar": ["intellij.tipsOfTheDay.plugin"],
+    },
     main_module = "intellij.tipsOfTheDay.plugin",
 )
 ### auto-generated section `dev intellij.tipsOfTheDay.plugin` end

@@ -9,7 +9,23 @@ dev_dist_plugin(
         "intellij.java.jshell.execution",
         "intellij.java.jshell.protocol",
     ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.java.jshell.console",
+        "intellij.java.jshell.execution",
+    ],
+    jars = {
+        "lib/intellij.java.jshell.execution.jar": [
+            "intellij.java.jshell.execution",
+            "//plugins/jshell/execution:java-jshell-execution-jshell-frontend",
+        ],
+        "lib/java-jshell.jar": ["intellij.java.jshell"],
+        "lib/jshell-protocol.jar": ["intellij.java.jshell.protocol"],
+    },
     main_module = "intellij.java.jshell",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.java.jshell.console"],
+    },
 )
 ### auto-generated section `dev intellij.java.jshell` end
 

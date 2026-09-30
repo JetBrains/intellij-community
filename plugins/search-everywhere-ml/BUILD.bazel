@@ -25,7 +25,37 @@ dev_dist_plugin(
         "intellij.libraries.search.everywhere.find.all.model",
         "intellij.libraries.search.everywhere.find.ec.model",
     ],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.libraries.mlapi.core",
+        "intellij.libraries.search.everywhere.find.all.model",
+        "intellij.libraries.search.everywhere.find.ec.model",
+        "intellij.platform.ml.logs",
+        "intellij.searchEverywhereMl.ranking.core",
+        "intellij.searchEverywhereMl.ranking.ext",
+        "intellij.searchEverywhereMl.ranking.java",
+        "intellij.searchEverywhereMl.ranking.vcs",
+        "intellij.searchEverywhereMl.ranking.yaml",
+        "intellij.searchEverywhereMl.typos",
+    ],
+    jars = {
+        "lib/searchEverywhereMl.jar": [
+            "intellij.searchEverywhereMl",
+            "intellij.platform.ml.logs",
+        ],
+        "lib/ai.grazie.emb.jar": ["@lib//:search_everywhere_ml-ai-grazie-emb"],
+        "lib/ai.grazie.model.swagger.annotations.jvm.jar": ["@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm"],
+    },
     main_module = "intellij.searchEverywhereMl",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.searchEverywhereMl.typos",
+            "intellij.searchEverywhereMl.ranking.core",
+            "intellij.searchEverywhereMl.ranking.java",
+            "intellij.searchEverywhereMl.ranking.yaml",
+            "intellij.searchEverywhereMl.ranking.vcs",
+        ],
+    },
 )
 ### auto-generated section `dev intellij.searchEverywhereMl` end
 

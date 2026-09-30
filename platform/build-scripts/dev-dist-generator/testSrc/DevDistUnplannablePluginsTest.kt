@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SuffixedPluginVersion
 import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
@@ -32,8 +33,8 @@ import java.nio.file.Path
 
 /**
  * The rejection sites of the dev-distribution plan over synthetic layouts: each stops the run, for a bundled and an
- * additional plugin alike. Also the divergence rule: two products that plan one plugin share one home or give the later
- * product a product home.
+ * additional plugin alike. The layout bindings drop a rejected registry layout and keep the run. Also the divergence
+ * rule: two products that plan one plugin share one home or give the later product a product home.
  */
 class DevDistUnplannablePluginsTest {
   @TempDir
@@ -44,6 +45,7 @@ class DevDistUnplannablePluginsTest {
   }
 
   private val linuxX64 = PluginSymbolicVariant(id = "linux_x64", distribution = SUPPORTED_DISTRIBUTIONS.single { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 })
+  private val macAarch64 = PluginSymbolicVariant(id = "mac_aarch64", distribution = SUPPORTED_DISTRIBUTIONS.single { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 })
 
   private fun layoutWithVersionAsCode(): PluginLayout = PluginLayout.pluginAutoWithCustomDirName("intellij.x") { it.withCustomVersion(versionAsCode) }
 
@@ -59,8 +61,8 @@ class DevDistUnplannablePluginsTest {
     return PluginLayout.pluginAutoWithCustomDirName(mainModule) { it.excludeFromModule(mainModule, "server/**") }
   }
 
-  private fun request(layout: PluginLayout, tier: DevDistPluginTier): DevDistPluginRequest {
-    return DevDistPluginRequest(product = "idea", properties = SyntheticProductProperties(), tier = tier, variant = linuxX64, layout = layout)
+  private fun request(layout: PluginLayout, tier: DevDistPluginTier, variant: PluginSymbolicVariant = linuxX64): DevDistPluginRequest {
+    return DevDistPluginRequest(product = "idea", properties = SyntheticProductProperties(), tier = tier, variant = variant, layout = layout)
   }
 
   private fun emptyIndex(): DevDistBazelIndex {
@@ -106,7 +108,7 @@ class DevDistUnplannablePluginsTest {
 
   @Test
   fun `the layout bindings fail for a plugin with an unplaced resource in either tier`() {
-    for (tier in DevDistPluginTier.entries) {
+    for (tier in DEV_DIST_COMPONENT_TIERS) {
       val requests = listOf(request(plainLayout("intellij.plain"), tier), request(layoutWithUnplacedResource(), tier))
 
       assertThatThrownBy { bindGeneratedDevDistPluginLayouts(requests, emptyIndex(), emptyOutputProvider(), CommunityDevDistHalf) }
@@ -118,7 +120,7 @@ class DevDistUnplannablePluginsTest {
 
   @Test
   fun `the layout bindings fail for a plugin that excludes a directory from a module jar`() {
-    for (tier in DevDistPluginTier.entries) {
+    for (tier in DEV_DIST_COMPONENT_TIERS) {
       val requests = listOf(request(plainLayout("intellij.plain"), tier), request(layoutWithModuleExcludes(), tier))
 
       assertThatThrownBy { bindGeneratedDevDistPluginLayouts(requests, emptyIndex(), emptyOutputProvider(), CommunityDevDistHalf) }
@@ -171,6 +173,198 @@ class DevDistUnplannablePluginsTest {
     assertThatThrownBy { requests(additionalModules = listOf("intellij.mac", "intellij.plain")) }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessage("No platform variant selects the additional plugin modules of 'idea': [intellij.mac]")
+  }
+
+  private fun registryRequests(
+    properties: ProductProperties,
+    registryModules: List<String>,
+    variants: List<PluginSymbolicVariant> = listOf(linuxX64),
+    bundledPluginModules: List<String> = emptyList(),
+    additionalModules: List<String> = emptyList(),
+  ): List<DevDistPluginRequest> {
+    return enumerateDevDistPluginRequests(
+      product = "idea",
+      properties = properties,
+      bundledPluginModules = bundledPluginModules,
+      variants = variants,
+      additionalModules = additionalModules,
+      extraPluginModules = emptyList(),
+      registryModules = registryModules,
+    )
+  }
+
+  @Test
+  fun `a registry layout yields requests of the registry tier`() {
+    val properties = SyntheticProductProperties(persistentListOf(plainLayout("intellij.bundled"), plainLayout("intellij.registry")))
+
+    val requests = registryRequests(properties, registryModules = listOf("intellij.registry"), variants = listOf(linuxX64, macAarch64), bundledPluginModules = listOf("intellij.bundled"))
+
+    assertThat(requests.map { Triple(it.layout.mainModule, it.variant.id, it.tier) }).containsExactly(
+      Triple("intellij.bundled", "linux_x64", DevDistPluginTier.BUNDLED),
+      Triple("intellij.registry", "linux_x64", DevDistPluginTier.REGISTRY),
+      Triple("intellij.bundled", "mac_aarch64", DevDistPluginTier.BUNDLED),
+      Triple("intellij.registry", "mac_aarch64", DevDistPluginTier.REGISTRY),
+    )
+  }
+
+  @Test
+  fun `a platform-restricted registry layout yields no request on another platform and does not fail`() {
+    val macOnly = PluginLayout.pluginAuto("intellij.mac") {
+      it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
+    }
+    val properties = SyntheticProductProperties(persistentListOf(macOnly))
+
+    // An additional module of this layout stops the run, see the run-configuration test.
+    assertThat(registryRequests(properties, registryModules = listOf("intellij.mac"))).isEmpty()
+    assertThat(registryRequests(properties, registryModules = listOf("intellij.mac"), variants = listOf(linuxX64, macAarch64)).map { it.variant.id to it.tier })
+      .containsExactly("mac_aarch64" to DevDistPluginTier.REGISTRY)
+  }
+
+  @Test
+  fun `a marketplace-only registry layout yields no request`() {
+    val marketplaceOnly = PluginLayout.pluginAuto("intellij.marketplace") {
+      it.bundlingRestrictions.marketplace = true
+    }
+    val properties = SyntheticProductProperties(persistentListOf(marketplaceOnly))
+
+    assertThat(registryRequests(properties, registryModules = listOf("intellij.marketplace"), variants = listOf(linuxX64, macAarch64))).isEmpty()
+  }
+
+  @Test
+  fun `a registry module that is bundled or additional is refused`() {
+    val properties = SyntheticProductProperties(persistentListOf(plainLayout("intellij.x")))
+
+    assertThatThrownBy { registryRequests(properties, registryModules = listOf("intellij.x"), bundledPluginModules = listOf("intellij.x")) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessage("Plugin 'intellij.x' of 'idea' is in the tiers [bundled, registry]")
+    assertThatThrownBy { registryRequests(properties, registryModules = listOf("intellij.x"), additionalModules = listOf("intellij.x")) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessage("Plugin 'intellij.x' of 'idea' is in the tiers [additional, registry]")
+  }
+
+  @Test
+  fun `the layout bindings drop every variant of an unbindable registry layout and keep the run`() {
+    val bundled = request(plainLayout("intellij.plain"), DevDistPluginTier.BUNDLED)
+    // The mac variant of the registry layout binds, and the linux variant does not. The outcome drops both.
+    val requests = listOf(
+      bundled,
+      request(layoutWithUnplacedResource(), DevDistPluginTier.REGISTRY),
+      request(plainLayout("intellij.unplaced"), DevDistPluginTier.REGISTRY, variant = macAarch64),
+    )
+
+    val outcome = bindGeneratedDevDistPluginLayouts(
+      requests = requests,
+      index = emptyIndex(),
+      outputProvider = emptyOutputProvider(),
+      half = CommunityDevDistHalf,
+      tolerated = { it.tier == DevDistPluginTier.REGISTRY },
+    )
+
+    assertThat(outcome.bindings.keys).containsExactly(bundled.key)
+    assertThat(outcome.dropped).isEqualTo(mapOf(
+      "intellij.unplaced" to "Plugin 'intellij.unplaced' declares the resource 'missing' of module 'intellij.unplaced', and the Bazel target index does not place that module",
+    ))
+  }
+
+  @Test
+  fun `the layout bindings still fail for an unbindable bundled or additional request`() {
+    for (tier in DEV_DIST_COMPONENT_TIERS) {
+      val requests = listOf(request(plainLayout("intellij.plain"), DevDistPluginTier.REGISTRY), request(layoutWithUnplacedResource(), tier))
+
+      assertThatThrownBy {
+        bindGeneratedDevDistPluginLayouts(requests, emptyIndex(), emptyOutputProvider(), CommunityDevDistHalf, tolerated = { it.tier == DevDistPluginTier.REGISTRY })
+      }
+        .describedAs(tier.name)
+        .isInstanceOf(DevDistUnplannableLayoutException::class.java)
+        .hasMessageStartingWith("Plugin 'intellij.unplaced' declares")
+    }
+  }
+
+  @Test
+  fun `a registry entry gets no component`() {
+    val entries = listOf(
+      Triple("idea", DevDistPluginTier.BUNDLED, "intellij.b"),
+      Triple("idea", DevDistPluginTier.REGISTRY, "intellij.r"),
+      Triple("idea", DevDistPluginTier.ADDITIONAL, "intellij.a"),
+      Triple("server", DevDistPluginTier.REGISTRY, "intellij.r"),
+    )
+    val read = ArrayList<String>()
+
+    val components = groupPluginComponents(entries, product = { it.first }, tier = { it.second }) { (product, _, mainModule) ->
+      read.add("$product/$mainModule")
+      GeneratedPluginComponent(mainModule, label = "//plugins:${mainModule}_dev_plugin")
+    }
+
+    assertThat(DEV_DIST_COMPONENT_TIERS).containsExactly(DevDistPluginTier.BUNDLED, DevDistPluginTier.ADDITIONAL)
+    assertThat(read).containsExactly("idea/intellij.b", "idea/intellij.a")
+    assertThat(components.mapValues { (_, tiers) -> tiers.mapValues { (_, ofTier) -> ofTier.map { it.mainModule } } }).isEqualTo(mapOf(
+      "idea" to mapOf(DevDistPluginTier.BUNDLED to listOf("intellij.b"), DevDistPluginTier.ADDITIONAL to listOf("intellij.a")),
+      "server" to mapOf(DevDistPluginTier.BUNDLED to emptyList(), DevDistPluginTier.ADDITIONAL to emptyList()),
+    ))
+  }
+
+  @Test
+  fun `a registry layout of two community products goes to the first split product`() {
+    val assigned = assignRegistryLayoutsToProducts(
+      registryPlugins = listOf("intellij.idea.only", "intellij.shared", "intellij.auto"),
+      productOrder = CommunityDevDistHalf.splitProducts,
+      layoutsByProduct = mapOf(
+        "Idea" to setOf("intellij.idea.only", "intellij.shared"),
+        "AndroidStudio" to setOf("intellij.shared"),
+      ),
+    )
+
+    assertThat(CommunityDevDistHalf.splitProducts).containsExactly("AndroidStudio", "Idea")
+    // A plugin without an explicit layout goes to the first split product, which gives it an automatic layout.
+    assertThat(assigned).isEqualTo(mapOf("AndroidStudio" to listOf("intellij.shared", "intellij.auto"), "Idea" to listOf("intellij.idea.only")))
+    assertThat(assigned.keys).containsExactly("AndroidStudio", "Idea")
+  }
+
+  @Test
+  fun `the registry plugins leave out a test plugin, a requested plugin, and one without a package or a module`() {
+    val project = JpsElementFactory.getInstance().createModel().project
+    for (name in listOf("intellij.auto", "intellij.explicit", "intellij.bundled", "intellij.unplaced", "intellij.x.tests", "intellij.spec")) {
+      project.addModule(name, JpsJavaModuleType.INSTANCE)
+    }
+    val modules = project.modules.associateBy { it.name }
+
+    val registryPlugins = devDistRegistryPlugins(
+      population = listOf("intellij.x.tests", "intellij.bundled", "intellij.auto", "intellij.unplaced", "intellij.noModule", "intellij.spec"),
+      registryLayouts = listOf("intellij.explicit", "intellij.auto"),
+      composed = setOf("intellij.bundled"),
+      isPlaced = { it != "intellij.unplaced" },
+      findModule = modules::get,
+      // A module that matches a Product DSL test plugin, see resolveDevDistTestPlugins.
+      testPluginModules = setOf("intellij.spec"),
+    )
+
+    assertThat(registryPlugins).containsExactly("intellij.auto", "intellij.explicit")
+  }
+
+  @Test
+  fun `a registry plugin goes to the first split product of the run`() {
+    val assigned = assignRegistryLayoutsToProducts(
+      registryPlugins = listOf("intellij.auto"),
+      productOrder = CommunityDevDistHalf.splitProducts,
+      layoutsByProduct = mapOf("Idea" to emptySet()),
+    )
+
+    assertThat(assigned).isEqualTo(mapOf("Idea" to listOf("intellij.auto")))
+    assertThat(assignRegistryLayoutsToProducts(listOf("intellij.auto"), CommunityDevDistHalf.splitProducts, layoutsByProduct = emptyMap())).isEmpty()
+  }
+
+  @Test
+  fun `a population plugin without an explicit layout becomes a registry request with an automatic layout`() {
+    val properties = SyntheticProductProperties(persistentListOf(plainLayout("intellij.bundled")))
+
+    val requests = registryRequests(properties, registryModules = listOf("intellij.auto"), bundledPluginModules = listOf("intellij.bundled"))
+
+    assertThat(requests.map { it.layout.mainModule to it.tier }).containsExactly(
+      "intellij.bundled" to DevDistPluginTier.BUNDLED,
+      "intellij.auto" to DevDistPluginTier.REGISTRY,
+    )
+    val auto = requests.single { it.tier == DevDistPluginTier.REGISTRY }.layout
+    assertThat(properties.productLayout.pluginLayouts.value).doesNotContain(auto)
   }
 
   /** The plan entry of [layout] with the facts the layout states and no descriptor row. */

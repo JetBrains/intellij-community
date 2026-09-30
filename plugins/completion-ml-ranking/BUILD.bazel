@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -8,6 +9,16 @@ jps_test(
     runtime_deps = [":completionMlRanking-tests_test_lib"],
 )
 ### skip generation section `test intellij.completionMlRanking.tests`
+
+### auto-generated section `dev intellij.completionMlRanking` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/completionMlRanking.jar": ["intellij.completionMlRanking"],
+    },
+    main_module = "intellij.completionMlRanking",
+)
+### auto-generated section `dev intellij.completionMlRanking` end
 
 ### auto-generated section `build intellij.completionMlRanking` start
 jvm_library(

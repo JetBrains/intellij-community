@@ -5,6 +5,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `dev intellij.peek.definition.plugin` start
 dev_dist_plugin(
     content_modules = ["intellij.peek.definition.frontend"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.peek.definition.frontend"],
+    jars = {
+        "lib/peek-definition-plugin.jar": ["intellij.peek.definition.plugin"],
+    },
     main_module = "intellij.peek.definition.plugin",
 )
 ### auto-generated section `dev intellij.peek.definition.plugin` end

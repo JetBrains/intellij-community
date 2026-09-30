@@ -13,6 +13,11 @@ jps_test(
 ### auto-generated section `dev intellij.ant` start
 dev_dist_plugin(
     content_modules = ["intellij.ant.jps"],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/ant-jps.jar": ["intellij.ant.jps"],
+        "lib/antIntegration.jar": ["intellij.ant"],
+    },
     main_module = "intellij.ant",
 )
 ### auto-generated section `dev intellij.ant` end

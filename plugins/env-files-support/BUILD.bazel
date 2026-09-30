@@ -9,7 +9,24 @@ dev_dist_plugin(
         "intellij.dotenv.java",
         "intellij.dotenv.python",
     ],
+    descriptor = "src/main/resources/META-INF/plugin.xml",
+    descriptor_modules = [
+        "intellij.dotenv.java",
+        "intellij.dotenv.kotlin",
+        "intellij.dotenv.python",
+    ],
+    jars = {
+        "lib/dotenv.jar": [
+            "intellij.dotenv",
+            "intellij.dotenv.kotlin",
+            "intellij.dotenv.java",
+            "intellij.dotenv.python",
+        ],
+    },
     main_module = "intellij.dotenv",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.dotenv.python"],
+    },
 )
 ### auto-generated section `dev intellij.dotenv` end
 

@@ -1,6 +1,17 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.vcs.hg` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/vcs-hg.jar": ["intellij.vcs.hg"],
+    },
+    main_module = "intellij.vcs.hg",
+)
+### auto-generated section `dev intellij.vcs.hg` end
 
 ### auto-generated section `build intellij.vcs.hg` start
 jvm_library(

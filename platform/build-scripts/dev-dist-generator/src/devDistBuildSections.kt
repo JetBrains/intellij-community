@@ -40,7 +40,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  * default output, `<label>.production.jar`.
  * Labels use the spelling of a package outside `community/`. A module absent from the index packs no independent `lib/` jar.
  * [pluginRecords] is the [DevSectionRecord] of every plugin of the population that has a Bazel package, whether or not
- * the plugin renders a section.
+ * the plugin renders a section. A registry layout outside the population that no request plans has no record.
  * [population] is [PluginPackingDerivation.population]. All maps and the population are sorted.
  * [frontendRootDescriptorJars] maps each frontend product to the jar of the embedded descriptor module that packs its
  * root descriptor, see [DevDistEmbeddedFrontendClasses].
@@ -107,12 +107,6 @@ internal class DevDistBuildSections private constructor(
    * the ultimate half has any.
    */
   @JvmField val relocatedContentModuleJarCalls: Map<String, String> = emptyMap(),
-  /**
-   * The `withResource*` inputs of every layout of the community registry that no product of the run plans, keyed by main
-   * module. Only the community half has any, because it writes the
-   * resource statements of every community package, see [collectRegistryLayoutResourceInputs].
-   */
-  private val registryResourceInputs: Map<String, List<DevDistPluginRawInput>> = emptyMap(),
   /**
    * The source trees that the layouts of the community registry declare for a target of another layout, keyed by main
    * module and sorted. Only the community half has any, see [collectRegistrySourceTrees].
@@ -317,9 +311,6 @@ internal class DevDistBuildSections private constructor(
     }
     for ((key, record) in completedPluginPlans) {
       statements.addPlanInputs(plugin = key.plugin, inputs = record.plan.requiredRawInputs)
-    }
-    for ((plugin, inputs) in registryResourceInputs) {
-      statements.addPlanInputs(plugin = plugin, inputs = inputs)
     }
     for ((plugin, sources) in registrySourceTrees) {
       for ((_, absolutePackage, _, packageRelativePath) in sources) {
@@ -664,7 +655,6 @@ internal class DevDistBuildSections private constructor(
           frontendRootDescriptorJars = inputs.renderedFrontendRootDescriptorJars,
           verifyPlanUnits = inputs.verifyPlanUnits,
           relocatedContentModuleJarCalls = inputs.relocatedContentModuleJarCalls,
-          registryResourceInputs = inputs.registryResourceInputs,
           registrySourceTrees = inputs.registrySourceTrees,
         )
         buildSpan("dev sections: register plugin plans") { span ->
@@ -692,9 +682,9 @@ internal class DevDistBuildSections private constructor(
  *
  * The ultimate half folds them twice. Both folds read the same [descriptorPlans] and the same entries, so the descriptor
  * declarations of both owners key the same objects. [sectionOutcomes] holds the draft and the record of every plugin
- * with a Bazel package, keyed by main module, in the order of [PluginPackingDerivation.plugins]. [pendingSections]
- * holds the drafts, sorted. [loadStatements] holds the load lines of every stated module, the draft loads included,
- * before a fold binds its plugin executions. [layoutBindings] holds the bindings of every request, keyed by request.
+ * with a Bazel package, keyed by main module, in the order of [PluginPackingDerivation.plugins]. A registry layout
+ * outside the population that no request plans has no outcome. [pendingSections] holds the drafts, sorted. [loadStatements] holds the load lines of
+ * every stated module, the draft loads included, before a fold binds its plugin executions. [layoutBindings] holds the bindings of every request, keyed by request.
  */
 internal class DevDistSectionInputs private constructor(
   @JvmField val outputProvider: ModuleOutputProvider,
@@ -705,7 +695,6 @@ internal class DevDistSectionInputs private constructor(
   @JvmField val layoutBindings: Map<DevDistPluginPlanKey, DevDistPluginLayoutBindings>,
   @JvmField val hasPackageAttribute: (Path) -> Boolean,
   @JvmField val halfStatements: DevDistHalfSectionStatements,
-  @JvmField val registryResourceInputs: Map<String, List<DevDistPluginRawInput>>,
   @JvmField val registrySourceTrees: Map<String, List<DeclaredResourceSource>>,
   @JvmField val descriptorPlans: List<PluginDescriptorPlan>,
   @JvmField val residueClasses: Map<String, DescriptorResidueClasses>,
@@ -744,10 +733,13 @@ internal class DevDistSectionInputs private constructor(
      * A module the JSON does not place writes no `BUILD.bazel` section, so it is not in any map. The plan reads the
      * same computation through [DevDistBuildSections.verdicts], so the plan and the sections state one label per target.
      *
-     * Every descriptor entry states the refusals of every stated mode, and the community half states the resources of
-     * every layout of its registry. [upstream] is the upstream summary of the community half, which the ultimate half
-     * reads. A `content_module_jar` call of a community module that differs from the one of [upstream] goes to the
-     * product package, see [DevDistBuildSections.relocatedContentModuleJarCalls].
+     * Every descriptor entry states the refusals of every stated mode. The community half plans every plugin of its
+     * population and every layout of its registry that no split product composes, in the registry tier, see
+     * [assignRegistryLayoutsToProducts]. A plugin without an explicit layout gets an automatic layout. A registry
+     * layout that the layout bindings reject prints one census line and renders no section. [upstream] is the upstream
+     * summary of the community half, which the ultimate half reads. A `content_module_jar` call of a community module
+     * that differs from the one of [upstream] goes to the product package, see
+     * [DevDistBuildSections.relocatedContentModuleJarCalls].
      */
     fun compute(
       outputProvider: ModuleOutputProvider,
@@ -766,16 +758,51 @@ internal class DevDistSectionInputs private constructor(
       // Every rejection site stops the run, for a bundled and an additional plugin alike. The run-configuration reader
       // rejects a module the project does not have or that has no plugin descriptor. The request enumeration rejects a
       // module without a layout or a platform variant. The layout bindings reject an undeclared callback or resource.
-      // The descriptor plan rejects a layout fact that is code.
+      // The descriptor plan rejects a layout fact that is code. Only a registry request that the layout bindings reject
+      // does not stop the run.
       val additionalModulesByProduct = derivation.runConfigurations.modulesByProduct
-      val pluginRequests = buildSpan("dev sections: plugin requests") { span ->
-        enumerateGeneratedDevDistPluginRequests(
-          products = products,
-          outputProvider = outputProvider,
-          additionalModulesByProduct = additionalModulesByProduct,
-          half = half,
-          testPlugins = testPlugins,
-        ).also { span.setAttribute("count", it.size.toLong()) }
+      val allPluginRequests = buildSpan("dev sections: plugin requests") { span ->
+        fun enumerate(registryLayoutsByProduct: Map<String, List<String>>): List<DevDistPluginRequest> {
+          return enumerateGeneratedDevDistPluginRequests(
+            products = products,
+            outputProvider = outputProvider,
+            additionalModulesByProduct = additionalModulesByProduct,
+            half = half,
+            testPlugins = testPlugins,
+            registryLayoutsByProduct = registryLayoutsByProduct,
+          )
+        }
+        // Only the community half has registry plugins. A plugin that a split product bundles or names keeps that tier.
+        val composedRequests = enumerate(emptyMap())
+        val registryPlugins = if (half.writesCommunityPackages) {
+          val testPluginModules = if (testPlugins.isEmpty()) {
+            emptySet()
+          }
+          else {
+            resolveDevDistTestPlugins(derivation.population + derivation.registryLayouts, testPlugins, outputProvider).keys
+          }
+          devDistRegistryPlugins(
+            population = derivation.population,
+            registryLayouts = derivation.registryLayouts,
+            composed = composedRequests.mapTo(HashSet()) { it.layout.mainModule },
+            isPlaced = { index.location(it) != null },
+            findModule = outputProvider::findModule,
+            testPluginModules = testPluginModules,
+          )
+        }
+        else {
+          emptyList()
+        }
+        val registryLayoutsByProduct = assignRegistryLayoutsToProducts(
+          registryPlugins = registryPlugins,
+          productOrder = half.splitProducts,
+          layoutsByProduct = products.associate { product ->
+            val layouts = (product.properties as? ProductProperties)?.productLayout?.pluginLayouts?.value.orEmpty()
+            product.name to layouts.mapTo(HashSet()) { it.mainModule }
+          },
+        )
+        (if (registryLayoutsByProduct.isEmpty()) composedRequests else enumerate(registryLayoutsByProduct))
+          .also { span.setAttribute("count", it.size.toLong()) }
       }
       fun testPluginsByProduct(requests: List<DevDistPluginRequest>): Map<String, Map<String, TestPluginSpec>> {
         return requests.groupBy(DevDistPluginRequest::product).mapValues { (_, ofProduct) ->
@@ -800,7 +827,7 @@ internal class DevDistSectionInputs private constructor(
         buildSpan("dev sections: embedded descriptor classes") {
           embeddedFrontend.collectClasses(
             products = products,
-            embeddingProducts = pluginRequests.filter { embeddedFrontend.packsEmbeddedFrontend(it.layout) }.mapTo(HashSet()) { it.product },
+            embeddingProducts = allPluginRequests.filter { embeddedFrontend.packsEmbeddedFrontend(it.layout) }.mapTo(HashSet()) { it.product },
             productOrder = half.splitProducts,
             outputProvider = outputProvider,
           )
@@ -808,20 +835,34 @@ internal class DevDistSectionInputs private constructor(
       }
 
       val layoutBindings = buildSpan("dev sections: layout bindings") { span ->
-        bindGeneratedDevDistPluginLayouts(pluginRequests, index, outputProvider, half, embeddedHomeOf = embeddedClasses::home)
-          .also { span.setAttribute("count", it.size.toLong()) }
+        bindGeneratedDevDistPluginLayouts(
+          requests = allPluginRequests,
+          index = index,
+          outputProvider = outputProvider,
+          half = half,
+          embeddedHomeOf = embeddedClasses::home,
+          tolerated = { it.tier == DevDistPluginTier.REGISTRY },
+        ).also { span.setAttribute("count", it.bindings.size.toLong()) }
       }
-      val halfStatements = half.assetBinder.sectionStatements(pluginRequests, index)
-      // The community half writes the community packages, so it declares the resources of every layout of its registry.
-      // A plan of the other half can name them then.
-      val registryResourceInputs = if (index.planPackageIsCommunity) {
-        buildSpan("dev sections: registry layout resources") {
-          collectRegistryLayoutResourceInputs(products = products, requests = pluginRequests, index = index, outputProvider = outputProvider, half = half)
+      for ((mainModule, reason) in layoutBindings.dropped) {
+        println("registry layout $mainModule is not planned: $reason")
+      }
+      val pluginRequests = allPluginRequests.filter { it.layout.mainModule !in layoutBindings.dropped }
+      if (half.writesCommunityPackages) {
+        // A registry request without an explicit layout of its product has the automatic layout.
+        val registryRequests = pluginRequests.filter { it.tier == DevDistPluginTier.REGISTRY }
+        val automatic = registryRequests.filter { request ->
+          request.properties.productLayout.pluginLayouts.value.none { it === request.layout }
         }
+        println(
+          "${half.name} half: ${registryRequests.mapTo(HashSet()) { it.layout.mainModule }.size} registry plugins get a request, " +
+          "${automatic.mapTo(HashSet()) { it.layout.mainModule }.size} of them with an automatic layout"
+        )
       }
-      else {
-        emptyMap()
-      }
+      // A registry layout outside the population that no kept request plans renders no section and has no record.
+      val planned = pluginRequests.mapTo(HashSet()) { it.layout.mainModule }
+      val unplannedRegistryLayouts = derivation.registryLayouts.filterTo(HashSet()) { it !in derivation.population && it !in planned }
+      val halfStatements = half.assetBinder.sectionStatements(pluginRequests, index)
       val registrySourceTrees = if (index.planPackageIsCommunity) {
         collectRegistrySourceTrees(products = products, index = index, outputProvider = outputProvider, half = half)
       }
@@ -846,7 +887,7 @@ internal class DevDistSectionInputs private constructor(
 
       val candidacy = buildSpan("dev sections: content module jar candidacy") {
         deriveContentModuleJarCandidacy(
-          pluginCandidacies = derivation.plugins.map { it.packing.candidacy } + derivation.registryCandidacies,
+          pluginCandidacies = derivation.plugins.map { it.packing.candidacy },
           contentVetoes = collectContentVetoModules(products),
           platform = derivation.platformJars,
         )
@@ -909,7 +950,7 @@ internal class DevDistSectionInputs private constructor(
       buildSpan("dev sections: plugin sections") {
         for (plugin in derivation.plugins) {
           val mainModule = plugin.mainModule
-          if (index.location(mainModule) == null) {
+          if (index.location(mainModule) == null || mainModule in unplannedRegistryLayouts) {
             continue
           }
           val outcome = computeDevSection(
@@ -931,10 +972,9 @@ internal class DevDistSectionInputs private constructor(
         index = index,
         verifyPlanUnits = verifyPlanUnits,
         pluginRequests = java.util.List.copyOf(pluginRequests),
-        layoutBindings = layoutBindings,
+        layoutBindings = layoutBindings.bindings,
         hasPackageAttribute = walk.collector::hasPackageAttribute,
         halfStatements = halfStatements,
-        registryResourceInputs = registryResourceInputs,
         registrySourceTrees = registrySourceTrees,
         descriptorPlans = plans,
         residueClasses = residueClasses,
@@ -1012,8 +1052,8 @@ internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors
  * The community plugins that [ultimate] plans and whose `dev` section differs from the one of [upstream], sorted.
  *
  * The community half writes every community section. The ultimate half reuses the leaf and the `dev_plugin` of such a section when it renders the same body. Both halves
- * state the refusals of every stated mode, so the whole bodies compare. A plugin that no community product plans has
- * no community section, so it is in the result.
+ * state the refusals of every stated mode, so the whole bodies compare. The community half plans every layout of its
+ * registry that it can bind. A registry layout that it cannot bind has no community section, so it is in the result.
  */
 internal fun foreignCommunitySections(upstream: DevDistUpstreamHalf, ultimate: DevDistBuildSections): Set<String> {
   val planned = ultimate.pluginPlanEntries.mapTo(TreeSet()) { it.mainModule }.filter { ultimate.index.isCommunity(it) == true }
@@ -1093,46 +1133,6 @@ internal fun renderRelocatedContentModuleJarPackage(calls: Map<String, String>, 
       append(calls.getValue(module))
     }
   }
-}
-
-/**
- * The `withResource*` inputs of every layout of the registry of [half] that no request of [requests] plans, keyed by
- * main module and sorted.
- *
- * The registry is the plugin layouts of the split products of [half]. Each layout binds for the first platform variant
- * of its product. A layout that the half cannot bind prints one census line and states no input, because the half
- * cannot plan it either.
- */
-internal fun collectRegistryLayoutResourceInputs(
-  products: List<DiscoveredProduct>,
-  requests: List<DevDistPluginRequest>,
-  index: DevDistBazelIndex,
-  outputProvider: ModuleOutputProvider,
-  half: DevDistHalf,
-): Map<String, List<DevDistPluginRawInput>> {
-  val requested = requests.mapTo(HashSet()) { it.layout.mainModule }
-  val resources = DevDistResourceSources(index, outputProvider)
-  val result = TreeMap<String, List<DevDistPluginRawInput>>()
-  for ((product, _, productProperties) in products) {
-    if (product !in half.splitDistributions) continue
-    val properties = productProperties as? ProductProperties ?: continue
-    val variant = requests.firstOrNull { it.product == product }?.variant ?: continue
-    for (layout in properties.productLayout.pluginLayouts.value) {
-      val mainModule = layout.mainModule
-      if (mainModule in requested || mainModule in result || index.location(mainModule) == null) continue
-      val request = DevDistPluginRequest(product = product, properties = properties, tier = DevDistPluginTier.ADDITIONAL, variant = variant, layout = layout)
-      val bindings = try {
-        bindDevDistPluginLayout(request, variant, index, outputProvider, resources, half)
-      }
-      catch (e: DevDistUnplannableLayoutException) {
-        println("registry layout $mainModule states no resources: ${e.message}")
-        continue
-      }
-      val inputs = bindings.libraryLayout?.catalogueFacts?.additionalInputs.orEmpty() + bindings.assets.catalogueFacts.additionalInputs
-      result.put(mainModule, inputs.filter { isModuleResourceInputId(it.id) })
-    }
-  }
-  return result
 }
 
 /**

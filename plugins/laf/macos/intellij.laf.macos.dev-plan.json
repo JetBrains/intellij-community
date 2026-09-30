@@ -1,0 +1,32 @@
+{
+    "version": 1,
+    "plugin": "intellij.laf.macos",
+    "variant": "{platform}",
+    "layoutSignature": "{platform:layoutSignature}",
+    "assets": [
+        {
+            "destination": "lib/laf-macos.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "descriptor:intellij.laf.macos",
+                        "kind": "file",
+                        "filter": "none",
+                        "entry": "META-INF/plugin.xml",
+                        "options": [
+                            "patch"
+                        ]
+                    },
+                    {
+                        "input": "intellij.laf.macos",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        }
+    ]
+}

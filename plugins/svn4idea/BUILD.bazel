@@ -5,7 +5,15 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `dev intellij.vcs.svn` start
 dev_dist_plugin(
     content_modules = ["intellij.libraries.sqlite"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.libraries.sqlite"],
+    jars = {
+        "lib/vcs-svn.jar": ["intellij.vcs.svn"],
+    },
     main_module = "intellij.vcs.svn",
+    module_jar_paths = {
+        "intellij.libraries.sqlite": "lib/intellij.libraries.sqlite.jar",
+    },
 )
 ### auto-generated section `dev intellij.vcs.svn` end
 

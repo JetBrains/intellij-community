@@ -1,4 +1,35 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+
+### auto-generated section `dev intellij.laf.macos` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    main_module = "intellij.laf.macos",
+    variants = ["darwin"],
+)
+
+dev_dist_complex_plugin(
+    artifact_inputs = {
+        "//plugins/laf/macos:macos.jar": "intellij.laf.macos",
+    },
+    descriptor = "//plugins/laf/macos:intellij.laf.macos_darwin_dev_descriptor",
+    execution_version = 1,
+    main_module = "intellij.laf.macos",
+    platform_values = {
+        "darwin_aarch64": {
+            "layoutSignature": "6zm1fq0fgqc1qp8tzn81ehrb2",
+        },
+        "darwin_x64": {
+            "layoutSignature": "7vd02lvgfh0xl0av96n3pyf6b",
+        },
+    },
+    platforms = [
+        "darwin_x64",
+        "darwin_aarch64",
+    ],
+)
+### auto-generated section `dev intellij.laf.macos` end
 
 ### auto-generated section `build intellij.laf.macos` start
 jvm_library(

@@ -17,7 +17,16 @@ dev_dist_plugin(
         "intellij.xml.langInjection.xpath",
         "intellij.xpath.rt",
     ],
+    descriptor = "xpath-lang/resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.xml.langInjection.xpath"],
+    jars = {
+        "lib/xpath.jar": ["intellij.xpath"],
+        "lib/rt/xslt-rt.jar": ["intellij.xpath.rt"],
+    },
     main_module = "intellij.xpath",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.xml.langInjection.xpath"],
+    },
 )
 ### auto-generated section `dev intellij.xpath` end
 

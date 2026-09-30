@@ -5,6 +5,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` start
 dev_dist_plugin(
     content_modules = ["intellij.execution.multilaunch.core"],
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_modules = ["intellij.execution.multilaunch.core"],
+    jars = {
+        "lib/execution-multilaunch-plugin.jar": ["intellij.execution.multilaunch.plugin"],
+    },
     main_module = "intellij.execution.multilaunch.plugin",
 )
 ### auto-generated section `dev intellij.execution.multilaunch.plugin` end

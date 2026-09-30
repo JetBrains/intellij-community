@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -10,6 +11,16 @@ jps_test(
 )
 
 ### skip generation section `test intellij.performanceTesting.ui.tests`
+
+### auto-generated section `dev intellij.performanceTesting.ui` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/performanceTesting-ui.jar": ["intellij.performanceTesting.ui"],
+    },
+    main_module = "intellij.performanceTesting.ui",
+)
+### auto-generated section `dev intellij.performanceTesting.ui` end
 
 ### auto-generated section `build intellij.performanceTesting.ui` start
 jvm_library(

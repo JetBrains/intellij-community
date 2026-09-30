@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -9,6 +10,16 @@ jps_test(
     runtime_deps = [":turboComplete-tests_test_lib"],
 )
 ### skip generation section `test intellij.turboComplete.tests`
+
+### auto-generated section `dev intellij.turboComplete` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/turboComplete.jar": ["intellij.turboComplete"],
+    },
+    main_module = "intellij.turboComplete",
+)
+### auto-generated section `dev intellij.turboComplete` end
 
 ### auto-generated section `build intellij.turboComplete` start
 jvm_library(
