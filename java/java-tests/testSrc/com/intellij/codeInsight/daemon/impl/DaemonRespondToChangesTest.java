@@ -28,7 +28,6 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionB
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.diagnostic.ThreadDumper;
@@ -528,14 +527,11 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     AtomicBoolean ran = new AtomicBoolean();
     Disposable disposable = Disposer.newDisposable();
     AtomicReference<RuntimeException> stopDaemonReason = new AtomicReference<>();
-    StorageUtilKt.setDEBUG_LOG("");
     getProject().getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
         new DaemonCodeAnalyzer.DaemonListener() {
           @Override
           public void daemonCancelEventOccurred(@NotNull String reason) {
-            RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
-                                                      "\nStorage write log: ----------\n" +
-                                                      StorageUtilKt.getDEBUG_LOG() + "\n--------------");
+            RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason);
             stopDaemonReason.compareAndSet(null, e);
           }
 
@@ -564,7 +560,6 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
       }
     }
     finally {
-      StorageUtilKt.setDEBUG_LOG(null);
       Disposer.dispose(disposable);
     }
   }

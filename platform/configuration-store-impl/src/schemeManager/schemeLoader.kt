@@ -7,29 +7,20 @@ import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.configurationStore.LOG
 import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.configurationStore.StorageManagerFileWriteRequestor
 import com.intellij.configurationStore.hashElement
-import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.io.IOException
 import java.io.InputStream
-import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
-import kotlin.io.path.invariantSeparatorsPathString
 
 internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(
   private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
@@ -291,19 +282,4 @@ internal class ExternalInfo(@JvmField var fileNameWithoutExtension: String, @Jvm
   }
 
   override fun toString(): String = fileName
-}
-
-internal fun VirtualFile.getOrCreateChild(requestor: StorageManagerFileWriteRequestor, fileName: String, directory: Boolean): VirtualFile {
-  return findChild(fileName) ?: runAsWriteActionIfNeeded {
-    if (directory) createChildDirectory(requestor, fileName) else createChildData(requestor, fileName)
-  }
-}
-
-internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  NioFiles.createDirectories(ioDir)
-  val parentFile = ioDir.parent
-  val parentVirtualFile =
-    (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.invariantSeparatorsPathString))
-    ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
-  return parentVirtualFile.getOrCreateChild(requestor, ioDir.fileName.toString(), directory = true)
 }

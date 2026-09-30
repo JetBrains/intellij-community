@@ -52,10 +52,6 @@ internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveRes
     try {
       saveSession.save(events)
     }
-    catch (e: ReadOnlyModificationException) {
-      LOG.warn(e)
-      saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
-    }
     catch (e: CancellationException) {
       throw e
     }

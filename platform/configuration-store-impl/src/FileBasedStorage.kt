@@ -10,19 +10,15 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -230,91 +226,6 @@ abstract class FileBasedStorage internal constructor(
 }
 
 internal fun writeFile(
-  cachedFile: Path?,
-  requestor: StorageManagerFileWriteRequestor,
-  virtualFile: VirtualFile?,
-  dataWriter: DataWriter,
-  lineSeparator: LineSeparator,
-  prependXmlProlog: Boolean
-): VirtualFile {
-  val file = if (cachedFile == null || virtualFile?.isValid == true) virtualFile!! else getOrCreateVirtualFile(cachedFile, requestor)
-
-  if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !file.isTooLarge()) {
-    fun isEqualContent(file: VirtualFile,
-                       lineSeparator: LineSeparator,
-                       content: BufferExposingByteArrayOutputStream,
-                       prependXmlProlog: Boolean): Boolean {
-      val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
-      if (file.length.toInt() == headerLength + content.size()) {
-        val oldContent = file.contentsToByteArray()
-        if (!prependXmlProlog || (ArrayUtil.startsWith(oldContent, XML_PROLOG) &&
-                                  ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes))) {
-          return (headerLength until oldContent.size).all { oldContent[it] == content.internalBuffer[it - headerLength] }
-        }
-      }
-      return false
-    }
-
-    val content = dataWriter.toBufferExposingByteArray(lineSeparator)
-    if (isEqualContent(file = file, lineSeparator = lineSeparator, content = content, prependXmlProlog = prependXmlProlog)) {
-      val contentString = content.toByteArray().toString(Charsets.UTF_8)
-      val message = "Content equals, but it must be handled not at this level: file ${file.name}, content:\n${contentString}"
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.debug(message)
-      }
-      else {
-        LOG.warn(message)
-      }
-    }
-    else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
-      DEBUG_LOG = "${file.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(file)}"
-    }
-  }
-
-  fun doWrite(
-    requestor: StorageManagerFileWriteRequestor,
-    file: VirtualFile,
-    dataWriterOrByteArray: Any,
-    lineSeparator: LineSeparator,
-    prependXmlProlog: Boolean,
-  ) {
-    LOG.debug { "Save ${file.presentableUrl}" }
-
-    if (!file.isWritable) {
-      // maybe the element is not long-lived, so we must write it to a byte array
-      val byteArray = when (dataWriterOrByteArray) {
-        is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
-        else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
-      }
-      throw ReadOnlyModificationException(file, object : SaveSession {
-        override suspend fun save(events: MutableList<VFileEvent>?) {
-          doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
-        }
-      })
-    }
-
-    runAsWriteActionIfNeeded {
-      file.getOutputStream(requestor).use { output ->
-        if (prependXmlProlog) {
-          output.write(XML_PROLOG)
-          output.write(lineSeparator.separatorBytes)
-        }
-        if (dataWriterOrByteArray is DataWriter) {
-          dataWriterOrByteArray.writeTo(output, lineSeparator)
-        }
-        else {
-          (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)
-        }
-      }
-    }
-  }
-
-  doWrite(requestor = requestor, file = file, dataWriterOrByteArray = dataWriter, lineSeparator = lineSeparator, prependXmlProlog = prependXmlProlog)
-
-  return file
-}
-
-internal fun writeFile(
   file: Path,
   requestor: StorageManagerFileWriteRequestor,
   dataWriter: DataWriter,
@@ -324,9 +235,6 @@ internal fun writeFile(
   LOG.debug { "Save $file" }
   try {
     dataWriter.writeTo(file = file, requestor = requestor, lineSeparator = lineSeparator, useXmlProlog = prependXmlProlog)
-  }
-  catch (e: ReadOnlyModificationException) {
-    throw e
   }
   catch (e: Throwable) {
     throw RuntimeException("Cannot write $file", e)
@@ -344,11 +252,6 @@ internal fun updatingEvent(file: Path, vFile: VirtualFile): VFileContentChangeEv
     RELOADING_STORAGE_WRITE_REQUESTOR, vFile, vFile.modificationStamp, /*newModificationStamp =*/ -1,
     vFile.timeStamp, attributes.lastModified, vFile.length, attributes.length)
 }
-
-internal class ReadOnlyModificationException(
-  @JvmField val file: VirtualFile,
-  @JvmField val session: SaveSession?,
-) : RuntimeException("File is read-only: $file")
 
 internal fun loadDataAndDetectLineSeparator(file: Path): Pair<Element, LineSeparator?> {
   val text = ComponentStorageUtil.loadTextContent(file)
