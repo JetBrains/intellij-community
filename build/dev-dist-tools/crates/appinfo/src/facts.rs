@@ -20,6 +20,10 @@ pub struct ApplicationInfo {
     pub edition: Option<String>,
     /// `fullVersion` (line 58): the `full` pattern over the four version parts.
     pub version: String,
+    /// `majorVersion` (line 72).
+    pub major_version: String,
+    /// `minorVersionMainPart` (line 83): the minor version up to its first dot.
+    pub minor_version_main_part: String,
     /// `versionSuffix` (lines 80-82): the suffix, or `EAP` for an EAP product that states none.
     pub version_suffix: Option<String>,
     /// `isEAP` (lines 77-79).
@@ -91,6 +95,11 @@ impl ApplicationInfo {
         read_facts(content, file, Some(&host), pinned_build_date_seconds)
     }
 
+    /// `releaseVersionForLicensing` (lines 54-55): the major version, the main part of the minor version, then `00`.
+    pub fn release_version_for_licensing(&self) -> String {
+        format!("{}{}00", self.major_version, self.minor_version_main_part)
+    }
+
     /// `productNameWithEdition` (line 61): the full name, then a space and the edition when there is one.
     pub fn product_name_with_edition(&self) -> String {
         match &self.edition {
@@ -121,6 +130,8 @@ fn read_facts(content: &str, file: &str, host: Option<&HostOverride>, pinned_bui
     let patch = version_value("patch", host.map(|host| &host.patch))?.unwrap_or_else(|| "0".to_owned());
     let full = version_value("full", host.map(|host| &host.full))?.unwrap_or_else(|| "{0}.{1}".to_owned());
     let version_text = format_version(&full, [&major, &minor, &micro, &patch]).with_context(|| file.to_owned())?;
+    // Line 83.
+    let minor_version_main_part = minor.split('.').next().unwrap_or_default().to_owned();
     // Lines 77-79: Kotlin's `String?.toBoolean()` is a case-insensitive comparison with `true`.
     let is_eap = version_value("eap", host.map(|host| &host.eap))?.is_some_and(|eap| eap.eq_ignore_ascii_case("true"));
     // Lines 80-82.
@@ -177,6 +188,8 @@ fn read_facts(content: &str, file: &str, host: Option<&HostOverride>, pinned_bui
         full_product_name,
         edition,
         version: version_text,
+        major_version: major,
+        minor_version_main_part,
         version_suffix,
         is_eap,
         svg_icon,

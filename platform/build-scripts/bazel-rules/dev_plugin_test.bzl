@@ -10,6 +10,9 @@ load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_plugin")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
+# The application info of the fixture product, an EAP product without a release date.
+_FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
+
 # The suite's package and name are fixed: a test rule's configuration names the product info target by label.
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-tests"
 _SUITE = "dev_plugin_tests"
@@ -389,19 +392,16 @@ def dev_plugin_test_suite(name):
         fail("dev_plugin_test_suite must be declared as '%s' in package '%s'" % (_SUITE, _PACKAGE))
     dev_dist_product_info(
         name = name + "_product_info",
-        release_date = "20260101",
-        release_version = "2026300",
+        application_info = _FIXTURE_APPLICATION_INFO,
         platform_prefix = "idea",
     )
     dev_dist_product_info(
         name = name + "_no_prefix_product_info",
-        release_date = "20260101",
-        release_version = "2026300",
+        application_info = _FIXTURE_APPLICATION_INFO,
     )
     dev_dist_product_info(
         name = name + "_frontend_product_info",
-        release_date = "20260101",
-        release_version = "2026300",
+        application_info = _FIXTURE_APPLICATION_INFO,
         platform_prefix = "client",
         mode = "frontend",
     )

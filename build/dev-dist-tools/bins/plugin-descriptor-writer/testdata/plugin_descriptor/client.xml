@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A frontend. Its host states the version, the EAP flag and the release date. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="3" eap="true"/>
+  <company name="JetBrains s.r.o."/>
+  <build number="JBC-__BUILD__" date="__BUILD_DATE__"/>
+  <names product="JetBrainsClient" fullname="JetBrains Client"/>
+</component>

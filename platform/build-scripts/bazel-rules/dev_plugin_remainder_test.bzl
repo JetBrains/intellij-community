@@ -10,6 +10,9 @@ load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "platform_values_error")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
+# The application info of the fixture product, an EAP product without a release date.
+_FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
+
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests"
@@ -68,17 +71,17 @@ _file = rule(
 
 def _product_scoped_file_impl(ctx):
     product = ctx.attr._product_info[DevDistProductInfo]
-    if product.release_date != ctx.attr.release_date or product.release_version != ctx.attr.release_version:
-        fail("expected product info, got %s/%s" % (product.release_date, product.release_version))
+    application_info = str(product.application_info.owner) if product.application_info != None else None
+    if application_info != ctx.attr.application_info:
+        fail("expected product info, got the application info %s" % application_info)
     output = ctx.actions.declare_file(ctx.label.name + ".xml")
-    ctx.actions.write(output, product.release_date + "/" + product.release_version + "\n")
+    ctx.actions.write(output, application_info + "\n")
     return [DefaultInfo(files = depset([output]))]
 
 _product_scoped_file = rule(
     implementation = _product_scoped_file_impl,
     attrs = {
-        "release_date": attr.string(mandatory = True),
-        "release_version": attr.string(mandatory = True),
+        "application_info": attr.string(mandatory = True, doc = "The label of the application info that the product states."),
         "_product_info": attr.label(
             default = Label("//build:dev_dist_product_info"),
             providers = [DevDistProductInfo],
@@ -673,18 +676,14 @@ def dev_plugin_remainder_test_suite(name):
     for target in [projection, raw]:
         _file(name = target)
     product_info = name + "_product_info"
-    release_date = "20260101"
-    release_version = "2026300"
     dev_dist_product_info(
         name = product_info,
-        release_date = release_date,
-        release_version = release_version,
+        application_info = _FIXTURE_APPLICATION_INFO,
         platform_prefix = "idea",
     )
     _product_scoped_file(
         name = descriptor_source,
-        release_date = release_date,
-        release_version = release_version,
+        application_info = str(_FIXTURE_APPLICATION_INFO),
         tags = ["manual"],
     )
     normal_main_module = "test.%s.normal" % name

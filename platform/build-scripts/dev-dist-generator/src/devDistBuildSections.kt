@@ -203,12 +203,9 @@ internal class DevDistBuildSections private constructor(
     val entries: List<OwnedDescriptorDeclaration>,
   ) {
     private val platformPrefix = plan.platformPrefix
-    private val releaseDate = plan.releaseDate
-    private val releaseVersion = plan.releaseVersion
-    private val eap = plan.eap
 
     fun requireUnchanged(plan: PluginDescriptorPlan) {
-      check(plan.platformPrefix == platformPrefix && plan.releaseDate == releaseDate && plan.releaseVersion == releaseVersion && plan.eap == eap &&
+      check(plan.platformPrefix == platformPrefix &&
             plan.plugins.size == entries.size && plan.plugins.indices.all { plan.plugins[it] === entries[it].entry }) {
         "The descriptor plan '$platformPrefix' changed after its declarations"
       }

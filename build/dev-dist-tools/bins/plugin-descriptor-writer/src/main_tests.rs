@@ -10,12 +10,20 @@
 use std::path::Path;
 
 use crate::test_support::{
-    assert_absent, build_number_file, descriptor_jar, lines, option_lines, path_string, read, run_request, temp_dir, write,
+    assert_absent, build_number_file, descriptor_jar, lines, option_lines, path_string, read, run_request, temp_dir, testdata, write,
 };
 use crate::{Mode, run, select_operation};
 
 fn path(dir: &Path, name: &str) -> String {
     path_string(&dir.join(name))
+}
+
+/// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
+const PINNED_BUILD_DATE: &str = "--build-date-seconds=1767225600";
+
+/// The option that names an application info of `testdata/plugin_descriptor`.
+fn application_info(name: &str) -> String {
+    format!("--application-info-source={}", testdata(&format!("plugin_descriptor/{name}.xml")))
 }
 
 #[test]
@@ -39,9 +47,8 @@ fn the_whole_request_is_patched() {
         "--main-module=intellij.example".to_owned(),
         format!("--source={}", path_string(&source)),
         format!("--build-number-file={}", build_number_file(dir, "263.SNAPSHOT")),
-        "--release-date=20260101".to_owned(),
-        "--release-version=2026300".to_owned(),
-        "--eap=true".to_owned(),
+        application_info("eap"),
+        PINNED_BUILD_DATE.to_owned(),
         "--exact-version=false".to_owned(),
         "--retain-product-descriptor=false".to_owned(),
         "--embed-content-modules=true".to_owned(),
@@ -150,19 +157,25 @@ fn a_reserialized_output_is_written_next_to_the_descriptor() {
     );
 }
 
+/// The request of a release product. The range of a release product is `NEWER_WITH_SAME_BASELINE`.
 fn minimal_request(dir: &Path, source: &Path, output: &Path, build_number: &str) -> Vec<String> {
+    minimal_request_of(dir, source, output, build_number, "release")
+}
+
+/// The request with the application info `testdata/plugin_descriptor/<application_info>.xml`.
+fn minimal_request_of(dir: &Path, source: &Path, output: &Path, build_number: &str, application_info_name: &str) -> Vec<String> {
     vec![
         format!("--out={}", path_string(output)),
         "--main-module=intellij.example".to_owned(),
         format!("--source={}", path_string(source)),
         format!("--build-number-file={}", build_number_file(dir, build_number)),
-        "--release-date=20260101".to_owned(),
-        "--release-version=2026300".to_owned(),
+        application_info(application_info_name),
+        PINNED_BUILD_DATE.to_owned(),
     ]
 }
 
 /// Without `--reserialized-output`, no second file is written. No `.SNAPSHOT`, so the version is the build number.
-/// `--eap` is absent, so the range is `NEWER_WITH_SAME_BASELINE`: the number without its last segment, and the
+/// The product is a release, so the range is `NEWER_WITH_SAME_BASELINE`: the number without its last segment, and the
 /// baseline with a star.
 #[test]
 fn a_minimal_request_writes_one_descriptor() {
@@ -222,15 +235,15 @@ fn an_exact_version_pins_both_ends() {
     let output = dir.join("plugin.out.xml");
     write(&source, "<idea-plugin><id>a</id></idea-plugin>");
 
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
-    request.extend(lines(&["--exact-version=true", "--eap=true"]));
+    let mut request = minimal_request_of(dir, &source, &output, "263.100.5", "eap");
+    request.extend(lines(&["--exact-version=true"]));
     assert_eq!(run_request(dir, &request), 0);
     let got = read(&output);
     assert!(got.contains("since-build=\"263.100.5\" until-build=\"263.100.5\""), "{got}");
 }
 
 /// `--compatible-build-range` is the range that the layout states (`DataPluginVersionEvaluator.compatibleBuildRange`).
-/// It replaces the `--eap` fallback, so an EAP build keeps `NEWER_WITH_SAME_BASELINE` when the layout states it.
+/// It replaces the EAP fallback, so an EAP build keeps `NEWER_WITH_SAME_BASELINE` when the layout states it.
 #[test]
 fn a_stated_compatible_build_range_replaces_the_eap_fallback() {
     let dir = temp_dir();
@@ -239,9 +252,8 @@ fn a_stated_compatible_build_range_replaces_the_eap_fallback() {
     let output = dir.join("plugin.out.xml");
     write(&source, "<idea-plugin><id>a</id></idea-plugin>");
 
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
+    let mut request = minimal_request_of(dir, &source, &output, "263.100.5", "eap");
     request.extend(lines(&[
-        "--eap=true",
         "--version-suffix=-IJ",
         "--compatible-build-range=NEWER_WITH_SAME_BASELINE",
     ]));
@@ -251,7 +263,7 @@ fn a_stated_compatible_build_range_replaces_the_eap_fallback() {
     assert!(got.contains("since-build=\"263.100\" until-build=\"263.*\""), "{got}");
 }
 
-/// `--eap` without a stated range restricts the range to the same release.
+/// An EAP application info without a stated range restricts the range to the same release.
 #[test]
 fn an_eap_build_restricts_the_range_to_the_same_release() {
     let dir = temp_dir();
@@ -260,8 +272,7 @@ fn an_eap_build_restricts_the_range_to_the_same_release() {
     let output = dir.join("plugin.out.xml");
     write(&source, "<idea-plugin><id>a</id></idea-plugin>");
 
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
-    request.push("--eap=true".to_owned());
+    let request = minimal_request_of(dir, &source, &output, "263.100.5", "eap");
     assert_eq!(run_request(dir, &request), 0);
     let got = read(&output);
     assert!(got.contains("since-build=\"263.100\" until-build=\"263.100.*\""), "{got}");
@@ -316,10 +327,12 @@ fn a_valueless_or_repeated_option_is_refused() {
     let dir = dir.path();
     for request in [
         &["--out"][..],
-        &["--eap"][..],
+        &["--exact-version"][..],
+        &["--application-info-source"][..],
         &["--refused-content-module"][..],
         &["--out=a", "--out=b"][..],
-        &["--eap=true", "--eap=false"][..],
+        &["--exact-version=true", "--exact-version=false"][..],
+        &["--build-date-seconds=1", "--build-date-seconds=2"][..],
         &["--source=a.xml", "--source=b.xml"][..],
     ] {
         assert_eq!(run_request(dir, &lines(request)), 2, "{request:?}");
@@ -330,7 +343,7 @@ fn a_valueless_or_repeated_option_is_refused() {
 #[test]
 fn a_loose_boolean_is_refused() {
     let dir = temp_dir();
-    assert_eq!(run_request(dir.path(), &lines(&["--eap=yes"])), 2);
+    assert_eq!(run_request(dir.path(), &lines(&["--exact-version=yes"])), 2);
 }
 
 #[test]
@@ -340,13 +353,23 @@ fn a_missing_required_option_is_refused() {
     let source = path_string(&dir.join("plugin.xml"));
     write(&dir.join("plugin.xml"), "<idea-plugin/>");
     let source_option = format!("--source={source}");
-    for (name, request) in [
-        ("no --out", vec!["--main-module=m", &source_option, "--build-number-file=b"]),
-        ("no --main-module", vec!["--out=o", &source_option, "--build-number-file=b"]),
-        ("no --source", vec!["--out=o", "--main-module=m", "--build-number-file=b"]),
-        ("no --build-number-file", vec!["--out=o", "--main-module=m", &source_option]),
-    ] {
-        assert_eq!(run_request(dir, &lines(&request)), 2, "{name}");
+    let info = application_info("release");
+    let complete = [
+        "--out=o",
+        "--main-module=m",
+        &source_option,
+        "--build-number-file=b",
+        &info,
+        PINNED_BUILD_DATE,
+    ];
+    for (index, name) in complete.iter().enumerate() {
+        let request: Vec<&str> = complete
+            .iter()
+            .enumerate()
+            .filter(|(other, _)| *other != index)
+            .map(|(_, line)| *line)
+            .collect();
+        assert_eq!(run_request(dir, &lines(&request)), 2, "no {name}");
     }
 }
 
@@ -393,6 +416,8 @@ fn a_source_in_a_jar_is_read() {
         "--main-module=intellij.example".to_owned(),
         format!("--source-in-jar=META-INF/plugin.xml={jar}"),
         format!("--build-number-file={}", build_number_file(dir, "263.100.5")),
+        application_info("release"),
+        PINNED_BUILD_DATE.to_owned(),
     ];
     assert_eq!(run_request(dir, &request), 0);
     assert!(read(&output).contains("<id>from.jar</id>"));
@@ -543,4 +568,119 @@ fn invalid_modes_are_refused() {
         assert_eq!(run_request(dir, &request), 2, "{modes:?}");
         assert_absent(&output);
     }
+}
+
+/// The stamps of a retained `product-descriptor` come from the application info: the EAP flag, the release date and the
+/// release version. A frontend takes them from its host, and a language server applies its markers first.
+#[test]
+fn the_stamps_come_from_the_application_info() {
+    let host = format!("--host-application-info-source={}", testdata("plugin_descriptor/release.xml"));
+    let cases: [(&str, &[&str], &str, &str); 4] = [
+        (
+            "eap",
+            &[],
+            r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" eap="true" />"#,
+            r#"since-build="263.100" until-build="263.100.*""#,
+        ),
+        (
+            "release",
+            &[],
+            r#"<product-descriptor code="X" release-date="20261201" release-version="2026200" />"#,
+            r#"since-build="263.100" until-build="263.*""#,
+        ),
+        (
+            "client",
+            &[&host],
+            r#"<product-descriptor code="X" release-date="20261201" release-version="2026200" />"#,
+            r#"since-build="263.100" until-build="263.*""#,
+        ),
+        (
+            "server",
+            &[
+                "--replacement=BUNDLE_EAP= eap=\"true\"",
+                "--replacement=RELEASE_DATE=",
+                "--replacement=BUNDLE_NAME=server",
+            ],
+            r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" eap="true" />"#,
+            r#"since-build="263.100" until-build="263.100.*""#,
+        ),
+    ];
+    for (name, options, descriptor, range) in cases {
+        let dir = temp_dir();
+        let dir = dir.path();
+        let source = dir.join("plugin.xml");
+        let output = dir.join("plugin.out.xml");
+        write(
+            &source,
+            r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
+        );
+        let mut request = minimal_request_of(dir, &source, &output, "263.100.5", name);
+        request.push("--retain-product-descriptor=true".to_owned());
+        request.extend(lines(options));
+        assert_eq!(run_request(dir, &request), 0, "{name}");
+        let got = read(&output);
+        assert!(got.contains(descriptor), "{name}:\n{got}");
+        assert!(got.contains(range), "{name}:\n{got}");
+    }
+}
+
+/// The rule states the application info and no stamp value, so the three old options are unknown.
+#[test]
+fn the_old_stamp_options_are_refused() {
+    for option in ["--eap=true", "--release-date=20260101", "--release-version=2026300"] {
+        let dir = temp_dir();
+        let dir = dir.path();
+        let source = dir.join("plugin.xml");
+        let output = dir.join("plugin.out.xml");
+        write(&source, "<idea-plugin><id>a</id></idea-plugin>");
+        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        request.push(option.to_owned());
+        assert_eq!(run_request(dir, &request), 2, "{option}");
+        assert_absent(&output);
+    }
+}
+
+/// A malformed application info option is a request that the rule cannot state. An application info that the reader
+/// refuses is a request that the inputs cannot satisfy.
+#[test]
+fn a_bad_application_info_is_refused() {
+    for (options, code) in [
+        (&["--build-date-seconds=soon"][..], 2),
+        (&["--replacement=VALUE"][..], 2),
+        (&["--replacement==value"][..], 2),
+        (&["--replacement=A=1", "--replacement=A=2"][..], 2),
+        (&["--host-application-info-source="][..], 2),
+        (&["--application-info-source=absent.xml"][..], 1),
+    ] {
+        let dir = temp_dir();
+        let dir = dir.path();
+        let source = dir.join("plugin.xml");
+        let output = dir.join("plugin.out.xml");
+        write(&source, "<idea-plugin><id>a</id></idea-plugin>");
+        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        let replaced: Vec<&str> = options.iter().map(|option| option.split('=').next().unwrap()).collect();
+        request.retain(|line| {
+            !replaced
+                .iter()
+                .any(|name| *name != "--replacement" && line.starts_with(&format!("{name}=")))
+        });
+        request.extend(lines(options));
+        assert_eq!(run_request(dir, &request), code, "{options:?}");
+        assert_absent(&output);
+    }
+
+    // A release product without a release date fails at the reader, and the error names the file.
+    let dir = temp_dir();
+    let dir = dir.path();
+    let source = dir.join("plugin.xml");
+    let output = dir.join("plugin.out.xml");
+    write(&source, "<idea-plugin><id>a</id></idea-plugin>");
+    let info = dir.join("dateless.xml");
+    let release = read(Path::new(&testdata("plugin_descriptor/release.xml")));
+    write(&info, &release.replace(r#" majorReleaseDate="20261201""#, ""));
+    let mut request = minimal_request(dir, &source, &output, "263.100.5");
+    request.retain(|line| !line.starts_with("--application-info-source="));
+    request.push(format!("--application-info-source={}", path_string(&info)));
+    assert_eq!(run_request(dir, &request), 1);
+    assert_absent(&output);
 }

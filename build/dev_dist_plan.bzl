@@ -91,8 +91,8 @@ DEV_DIST_LAUNCH_MODELS = {
     "Idea": "//build/dev-dist-launch:idea_community.launch.json",
 }
 
-# The application info sources of every product. The product files action reads these files and `build.txt`, so an
-# edit of a version, a suffix or a release date changes no generated file.
+# The application info sources of every product. The product files action and the plugin descriptor actions read
+# these files. So an edit of a version, a suffix, a release date or the EAP flag changes no generated file.
 DEV_DIST_APPLICATION_INFOS = {
     "AndroidStudio": struct(source = "//android-customization:resources/idea/AndroidStudioApplicationInfo.xml"),
     "Idea": struct(source = "//community-resources:resources/idea/IdeaApplicationInfo.xml"),

@@ -200,7 +200,7 @@ class DevDistUnplannablePluginsTest {
   }
 
   private fun descriptorPlan(product: String, layout: PluginLayout): PluginDescriptorPlan {
-    return PluginDescriptorPlan(platformPrefix = product, releaseDate = "", releaseVersion = "", eap = false, plugins = listOf(descriptorEntry(layout)))
+    return PluginDescriptorPlan(platformPrefix = product, plugins = listOf(descriptorEntry(layout)))
   }
 
   /** The verdicts of a run in which the own package of `intellij.x` declares [ownLeaf], or no leaf for `null`. */
@@ -310,7 +310,7 @@ class DevDistUnplannablePluginsTest {
       contentModules = all.map { DeclaredContentModule(it, true, null) },
       modeRefusedContentModules = mapOf("frontend" to listOf("intellij.x.backend")),
     )
-    return PluginDescriptorPlan(platformPrefix = product, releaseDate = "", releaseVersion = "", eap = false, mode = mode, plugins = listOf(entry))
+    return PluginDescriptorPlan(platformPrefix = product, mode = mode, plugins = listOf(entry))
   }
 
   @Test

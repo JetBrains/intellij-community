@@ -1,3 +1,4 @@
+load("//build:dev_dist_plan.bzl", "DEV_DIST_APPLICATION_INFOS")
 load("//build:dev_dist_product_info.bzl", "DEV_DIST_PRODUCT_INFO")
 load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
 
@@ -5,7 +6,9 @@ load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev
 # plugin packages of the community half sit under this package.
 #
 # One `<product>_product_info` per product: the descriptor stamps a consumer sets `dev_dist_product_info` to. The
-# generated map is the one owner of the product list, so no product name is hand-written here.
+# generated map is the one owner of the product list, so no product name is hand-written here. The stamps name the
+# application info sources of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer reads the EAP flag, the release
+# date and the release version from them. So an edit of an application info changes no generated file.
 #
 # `platform_prefix` is the `community/build/dev-build.json` key of the product, not its `idea.platform.prefix`. The
 # components carry that key in their manifests, so the composer compares like with like.
@@ -14,12 +17,20 @@ load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev
 [
     dev_dist_product_info(
         name = product + "_product_info",
-        eap = stamps.eap,
+        application_info = DEV_DIST_APPLICATION_INFOS[product].source,
+        host_application_info = getattr(
+            DEV_DIST_APPLICATION_INFOS[product],
+            "host",
+            None,
+        ),
         marketplace_names = stamps.marketplace_names,
         mode = stamps.mode,
         platform_prefix = product,
-        release_date = stamps.release_date,
-        release_version = stamps.release_version,
+        replacements = getattr(
+            DEV_DIST_APPLICATION_INFOS[product],
+            "replacements",
+            [],
+        ),
         tags = ["manual"],
         visibility = ["//visibility:public"],
     )

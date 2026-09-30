@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A release product. Its minor version has a dot, and the release version takes the part before it. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="2.1" eap="false" suffix="Preview"/>
+  <company name="JetBrains s.r.o."/>
+  <build number="RD-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20261201"/>
+  <names product="Rider" fullname="JetBrains Rider"/>
+</component>

@@ -1,6 +1,6 @@
 """The launch files of a product, rendered by the tool `product-files` from the launch model of the product."""
 
-load(":intellij_dev_dist.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
+load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 
 def _dev_dist_product_files_impl(ctx):
     outputs = [ctx.outputs.build_txt, ctx.outputs.idea_properties_out, ctx.outputs.vmoptions, ctx.outputs.product_info]

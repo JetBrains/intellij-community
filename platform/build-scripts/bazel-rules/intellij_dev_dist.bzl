@@ -11,20 +11,9 @@ scrambling require both component layouts in one process.
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
+load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistProductInfo", "dev_dist_product_info_transition")
-
-# Pinned so the fragments of one distribution agree and an assembly does not carry the wall clock into its outputs. It
-# dates archive entries and the `.SNAPSHOT` plugin version suffix, and both would otherwise differ between fragments
-# assembled minutes apart.
-#
-# Deliberately *not* the product build date. A dev distribution stamps none, so the IDE resolves its build time at
-# startup and no EAP expiration period can run out on a cached distribution. See `computeAppInfoXml`. A far-future date
-# chosen to outrun that period makes every dev IDE start expired, because a build date over a day ahead of the wall
-# clock is expired too.
-#
-# `dev_dist_plugin_descriptor` stamps the same date. It reads the product's own value out of `dev_dist_product_info.bzl`.
-DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS = "1767225600"  # 2026-01-01T00:00:00Z
 
 IntellijDevBuildInputsInfo = provider(
     doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",

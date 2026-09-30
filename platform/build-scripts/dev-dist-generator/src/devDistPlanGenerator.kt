@@ -2870,8 +2870,8 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHa
   }
   append("}\n")
   append("\n")
-  append("# The application info sources of every product. The product files action reads these files and `build.txt`, so an\n")
-  append("# edit of a version, a suffix or a release date changes no generated file.\n")
+  append("# The application info sources of every product. The product files action and the plugin descriptor actions read\n")
+  append("# these files. So an edit of a version, a suffix, a release date or the EAP flag changes no generated file.\n")
   append("DEV_DIST_APPLICATION_INFOS = {\n")
   for (product in products) {
     val sources = product.applicationInfoSources

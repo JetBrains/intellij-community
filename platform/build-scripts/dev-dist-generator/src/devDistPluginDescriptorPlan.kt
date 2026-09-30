@@ -48,12 +48,6 @@ import kotlin.io.path.invariantSeparatorsPathString
  */
 internal class PluginDescriptorPlan(
   @JvmField val platformPrefix: String,
-  /** `ApplicationInfoProperties.majorReleaseDate`. */
-  @JvmField val releaseDate: String,
-  /** `ApplicationInfoProperties.releaseVersionForLicensing`. */
-  @JvmField val releaseVersion: String,
-  /** The `eap` attribute of the product's `ApplicationInfo.xml`. */
-  @JvmField val eap: Boolean,
   /** The [com.intellij.platform.runtime.product.ProductMode] id, such as `monolith` or `frontend`, or empty when a test states none. */
   @JvmField val mode: String = "",
   /** The generator sorts entries by main module. Explicit source configuration retains captured request order. */
@@ -366,9 +360,8 @@ internal class DeclaredLibraryDescriptor(@JvmField val loadPath: String, @JvmFie
 /**
  * The build date `.SNAPSHOT` becomes, and therefore the date an EAP product's `majorReleaseDate` is formatted from.
  *
- * `dev_dist_product_info.bzl` states the formatted date per product, and `DevDistProductInfo` carries it to every
- * leaf of that product. `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS` of `intellij_dev_dist.bzl` pins the same date for a
- * fragment. Keep the two equal.
+ * `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS` of `dev_dist_build_date.bzl` pins the same date for the actions. The
+ * descriptor writer formats the release date of an EAP product from it. Keep the two equal.
  */
 internal const val PINNED_BUILD_DATE_IN_SECONDS: Long = 1767225600 // 2026-01-01T00:00:00Z
 
@@ -511,9 +504,6 @@ internal fun collectPluginDescriptorPlan(
   }
   return PluginDescriptorPlan(
     platformPrefix = platformPrefix,
-    releaseDate = applicationInfo.majorReleaseDate,
-    releaseVersion = applicationInfo.releaseVersionForLicensing,
-    eap = applicationInfo.isEAP,
     mode = properties.productMode.id,
     plugins = plugins,
     generatedFiles = buildMap {
@@ -1273,9 +1263,14 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelI
 }
 
 /**
- * Renders `dev_dist_product_info.bzl`: the descriptor stamps of every product, and nothing about a plugin.
+ * Renders `dev_dist_product_info.bzl`: the product mode and the marketplace names of every product, and nothing about a
+ * plugin.
  *
- * Products that state equal stamps share one private struct, named after the first of them in [plans] order, the way
+ * It states no value of the application info. The descriptor writer reads the EAP flag, the release date and the
+ * release version from the sources of `DEV_DIST_APPLICATION_INFOS`, so an edit of an application info changes no
+ * generated file.
+ *
+ * Products with equal values share one private struct, named after the first of them in [plans] order, the way
  * `dev_dist_plan.bzl` shares `_PLAN_<first product>`.
  */
 internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistHalf): String = buildString {
@@ -1285,7 +1280,11 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistH
   append("# `<product>_product_info` target per key. A consumer sets `@community//build:dev_dist_product_info` to it, and\n")
   append("# every plugin descriptor below that consumer reads its stamps there.\n")
   append("#\n")
-  append("# Products that state equal stamps share one private struct, named after the first of them.\n")
+  append("# A struct states the product mode and the marketplace names. The target also names the application info sources\n")
+  append("# of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer reads the EAP flag, the release date and the release\n")
+  append("# version from them. So an edit of an application info changes no generated file.\n")
+  append("#\n")
+  append("# Products with equal values share one private struct, named after the first of them.\n")
   append("\n")
   append("# `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells. A leaf builds\n")
   append("# the marker row and the version suffix of a one-platform variant from these, and no rule can read an enum.\n")
@@ -1301,12 +1300,6 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistH
   for ((stamps, structName) in structNames) {
     append("\n")
     append(structName).append(" = struct(\n")
-    append("    # `ApplicationInfoProperties.majorReleaseDate` of the product, at the pinned build date.\n")
-    append("    release_date = \"").append(stamps.releaseDate).append("\",\n")
-    append("    # `majorVersion`, then `minorVersionMainPart`, then `00`, from the product's `ApplicationInfo.xml`.\n")
-    append("    release_version = \"").append(stamps.releaseVersion).append("\",\n")
-    append("    # The `eap` attribute of the same file.\n")
-    append("    eap = ").append(if (stamps.eap) "True" else "False").append(",\n")
     append("    marketplace_names = _MARKETPLACE_NAMES,\n")
     append("    # The product mode. A rule places no jar of a module the leaf refuses for this mode.\n")
     append("    mode = \"").append(stamps.mode).append("\",\n")
@@ -1321,9 +1314,9 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistH
   append("}\n")
 }
 
-/** The values of one `dev_dist_product_info`, so two products with equal values share one struct. */
-private data class ProductInfoValues(val releaseDate: String, val releaseVersion: String, val eap: Boolean, val mode: String) {
-  constructor(plan: PluginDescriptorPlan) : this(plan.releaseDate, plan.releaseVersion, plan.eap, plan.mode)
+/** The generated values of one `dev_dist_product_info`, so two products with equal values share one struct. */
+private data class ProductInfoValues(val mode: String) {
+  constructor(plan: PluginDescriptorPlan) : this(plan.mode)
 }
 
 /**

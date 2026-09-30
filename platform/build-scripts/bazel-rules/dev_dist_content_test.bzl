@@ -21,6 +21,9 @@ load(
     "intellij_dev_packed_jars_component",
 )
 
+# The application info of the fixture product, an EAP product without a release date.
+_FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
+
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
 _ZIPPER = attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec")
@@ -706,8 +709,7 @@ def dev_dist_content_test_suite(name):
     product_info = name + "_product_info"
     dev_dist_product_info(
         name = product_info,
-        release_date = "20260101",
-        release_version = "2026300",
+        application_info = _FIXTURE_APPLICATION_INFO,
         platform_prefix = "idea",
     )
     second_library = name + "_second_library"

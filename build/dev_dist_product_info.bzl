@@ -4,7 +4,11 @@
 # `<product>_product_info` target per key. A consumer sets `@community//build:dev_dist_product_info` to it, and
 # every plugin descriptor below that consumer reads its stamps there.
 #
-# Products that state equal stamps share one private struct, named after the first of them.
+# A struct states the product mode and the marketplace names. The target also names the application info sources
+# of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer reads the EAP flag, the release date and the release
+# version from them. So an edit of an application info changes no generated file.
+#
+# Products with equal values share one private struct, named after the first of them.
 
 # `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells. A leaf builds
 # the marker row and the version suffix of a one-platform variant from these, and no rule can read an enum.
@@ -17,12 +21,6 @@ _MARKETPLACE_NAMES = {
 }
 
 _STAMPS_AndroidStudio = struct(
-    # `ApplicationInfoProperties.majorReleaseDate` of the product, at the pinned build date.
-    release_date = "20260101",
-    # `majorVersion`, then `minorVersionMainPart`, then `00`, from the product's `ApplicationInfo.xml`.
-    release_version = "2026300",
-    # The `eap` attribute of the same file.
-    eap = True,
     marketplace_names = _MARKETPLACE_NAMES,
     # The product mode. A rule places no jar of a module the leaf refuses for this mode.
     mode = "monolith",

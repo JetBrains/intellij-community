@@ -1,6 +1,7 @@
 # appinfo
 
 Reads, merges and writes the application info of a product. The descriptor writer and the product files tool use it.
+The descriptor writer reads the facts for the stamps of a plugin descriptor too.
 
 ## Dependency
 
@@ -32,6 +33,8 @@ pub struct ApplicationInfo { // Clone + Debug + PartialEq + Eq
     pub full_product_name: String,
     pub edition: Option<String>,
     pub version: String,
+    pub major_version: String,
+    pub minor_version_main_part: String,
     pub version_suffix: Option<String>,
     pub is_eap: bool,
     pub svg_icon: Option<String>,
@@ -41,6 +44,7 @@ pub struct ApplicationInfo { // Clone + Debug + PartialEq + Eq
 impl ApplicationInfo {
     pub fn read(content: &str, file: &str, pinned_build_date_seconds: i64) -> anyhow::Result<ApplicationInfo>;
     pub fn read_frontend(content: &str, file: &str, host_content: &str, host_file: &str, pinned_build_date_seconds: i64) -> anyhow::Result<ApplicationInfo>;
+    pub fn release_version_for_licensing(&self) -> String;
     pub fn product_name_with_edition(&self) -> String;
 }
 pub fn format_version(pattern: &str, parts: [&str; 4]) -> anyhow::Result<String>;
@@ -70,6 +74,7 @@ pub fn shorten_company_name(name: &str) -> &str;
 | Kotlin | Rust |
 |---|---|
 | `ApplicationInfoPropertiesImpl` of `ApplicationInfoPropertiesImpl.kt` | `ApplicationInfo::read` |
+| `ApplicationInfoProperties.releaseVersionForLicensing` | `ApplicationInfo::release_version_for_licensing` |
 | `JetBrainsClientPropertiesForLaunchers.applicationInfoOverride` | `ApplicationInfo::read_frontend`, `merge_host_application_info` |
 | `BuildUtils.replaceAll(text, map, "__")` | `replace_markers` |
 | `formatMajorReleaseDate` | `format_major_release_date` |

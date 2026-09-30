@@ -74,6 +74,12 @@ dev_dist_tool(
     visibility = ["//visibility:public"],
 )
 
+# The application info of the fixture product that the rule tests of this package and its subpackages declare.
+exports_files(
+    ["testdata/ApplicationInfo.xml"],
+    visibility = [":__subpackages__"],
+)
+
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 
 test_suite(

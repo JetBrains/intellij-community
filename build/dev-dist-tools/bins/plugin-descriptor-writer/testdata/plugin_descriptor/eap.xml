@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- An EAP product without a release date. The stamps take the pinned build date. -->
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <version major="2026" minor="3" eap="true"/>
+  <company name="JetBrains s.r.o."/>
+  <build number="IU-__BUILD__" date="__BUILD_DATE__"/>
+  <names product="IDEA" fullname="IntelliJ IDEA"/>
+</component>

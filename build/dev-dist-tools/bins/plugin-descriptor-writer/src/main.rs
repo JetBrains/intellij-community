@@ -79,7 +79,7 @@ use std::io::{Cursor, Read};
 use std::path::Path;
 
 use anyhow::{Context, Result, anyhow, bail};
-use appinfo::descriptorxml;
+use appinfo::{ApplicationInfo, Replacement, descriptorxml};
 use lexopt::{Arg, ValueExt};
 use memmap2::Mmap;
 use zip::ZipArchive;
@@ -286,9 +286,15 @@ struct PluginRequest {
     source: String,
     source_entry: String,
     build_number_file: String,
-    release_date: String,
-    release_version: String,
-    is_eap: bool,
+    /// The application info of the product. The stamps take the EAP flag, the release date and the release version
+    /// from it.
+    application_info: String,
+    /// The application info of the host product, for a frontend. Empty for every other product.
+    host_application_info: String,
+    /// The markers of the application info, in the order that the writer replaces them.
+    replacements: Vec<Replacement>,
+    /// The pinned build date. An EAP product without a release date takes its date.
+    build_date_seconds: i64,
     exact_version: bool,
     retain_product: bool,
     embeds_content: bool,
@@ -356,10 +362,11 @@ fn reserialize(content: &str) -> Result<String> {
 /// instead of the product layout.
 fn patch(parsed: &PluginRequest) -> Result<String> {
     let build_number = read_text(&parsed.build_number_file)?.trim().to_owned();
+    let application_info = read_application_info(parsed)?;
     let plugin_version = stamps::plugin_build_number(&build_number)? + &parsed.version_suffix;
     let compatible_build_range = parsed.compatible_build_range.unwrap_or(if parsed.exact_version {
         CompatibleBuildRange::Exact
-    } else if parsed.is_eap {
+    } else if application_info.is_eap {
         CompatibleBuildRange::RestrictedToSameRelease
     } else {
         CompatibleBuildRange::NewerWithSameBaseline
@@ -382,10 +389,10 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
             version: plugin_version,
             since_build,
             until_build,
-            release_date: parsed.release_date.clone(),
-            release_version: parsed.release_version.clone(),
+            release_date: application_info.major_release_date.clone(),
+            release_version: application_info.release_version_for_licensing(),
             retain_product_descriptor_for_bundled_plugin: parsed.retain_product,
-            is_eap: parsed.is_eap,
+            is_eap: application_info.is_eap,
         },
     );
     structural::resolve_includes(&mut element, &cache)?;
@@ -408,6 +415,34 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
     Ok(descriptorxml::write(&element))
 }
 
+/// Reads the facts of the application info: the markers first, then the XML. A frontend reads its host too, as the
+/// product files tool does.
+fn read_application_info(parsed: &PluginRequest) -> Result<ApplicationInfo> {
+    let content = appinfo::replace_markers(&read_text(&parsed.application_info)?, &parsed.replacements);
+    if parsed.host_application_info.is_empty() {
+        return ApplicationInfo::read(&content, &parsed.application_info, parsed.build_date_seconds);
+    }
+    let host_content = read_text(&parsed.host_application_info)?;
+    ApplicationInfo::read_frontend(
+        &content,
+        &parsed.application_info,
+        &host_content,
+        &parsed.host_application_info,
+        parsed.build_date_seconds,
+    )
+}
+
+/// Reads one `--replacement=KEY=VALUE`. The key must be new and not empty. The value can be empty.
+fn parse_replacement(value: &str, stated: &[Replacement]) -> Result<Replacement> {
+    let Some((key, replacement)) = value.split_once('=').filter(|(key, _)| !key.is_empty()) else {
+        bail!("a replacement is '<key>=<value>', and '{value}' is not");
+    };
+    if stated.iter().any(|stated| stated.key == key) {
+        bail!("the replacement '{key}' is stated more than once");
+    }
+    Ok(Replacement::new(key, replacement))
+}
+
 /// Reads the parameter file that `dev_dist_plugin_descriptor` writes, one option per line.
 ///
 /// An option that the parser does not know fails the run. That is the rule of the platform too. It keeps the rule and
@@ -422,12 +457,14 @@ fn parse_plugin_request(lines: &[OptionLine]) -> Result<PluginRequest> {
             "--separate-jar",
             "--plugin-descriptor",
             "--plugin-descriptor-in-jar",
+            "--replacement",
         ],
     )?;
     let mut parsed = PluginRequest {
         embeds_content: true,
         ..PluginRequest::default()
     };
+    let mut build_date_seconds = None;
     for line in lines {
         match line.name.as_str() {
             "--out" => assign(&mut parsed.output, line)?,
@@ -439,9 +476,19 @@ fn parse_plugin_request(lines: &[OptionLine]) -> Result<PluginRequest> {
                 jar.clone_into(&mut parsed.source);
             }
             "--build-number-file" => assign(&mut parsed.build_number_file, line)?,
-            "--release-date" => assign(&mut parsed.release_date, line)?,
-            "--release-version" => assign(&mut parsed.release_version, line)?,
-            "--eap" => parsed.is_eap = parse_boolean_strict(line.value()?)?,
+            "--application-info-source" => assign(&mut parsed.application_info, line)?,
+            "--host-application-info-source" => assign(&mut parsed.host_application_info, line)?,
+            "--replacement" => {
+                let replacement = parse_replacement(line.value()?, &parsed.replacements)?;
+                parsed.replacements.push(replacement);
+            }
+            "--build-date-seconds" => {
+                let value = line.value()?;
+                let Ok(seconds) = value.parse::<i64>() else {
+                    bail!("--build-date-seconds is not a number of seconds: '{value}'");
+                };
+                build_date_seconds = Some(seconds);
+            }
             "--exact-version" => parsed.exact_version = parse_boolean_strict(line.value()?)?,
             "--retain-product-descriptor" => parsed.retain_product = parse_boolean_strict(line.value()?)?,
             "--embed-content-modules" => parsed.embeds_content = parse_boolean_strict(line.value()?)?,
@@ -477,14 +524,18 @@ fn parse_plugin_request(lines: &[OptionLine]) -> Result<PluginRequest> {
     if lines.iter().any(|line| line.name == "--source") && lines.iter().any(|line| line.name == "--source-in-jar") {
         bail!("the descriptor source is declared more than once");
     }
-    // `--release-date` and `--release-version` are mandatory on the rule, so an empty one is a request that the rule
-    // cannot state. They reach `<product-descriptor>` alone, and 1 of the 163 plugins states one.
+    // The rule states the application info of every product, so a request without it is one that the rule cannot state.
     require_options(&[
         ("--out", &parsed.output),
         ("--main-module", &parsed.main_module),
         ("--source", &parsed.source),
         ("--build-number-file", &parsed.build_number_file),
+        ("--application-info-source", &parsed.application_info),
     ])?;
+    parsed.build_date_seconds = build_date_seconds.context("--build-date-seconds is required")?;
+    if lines.iter().any(|line| line.name == "--host-application-info-source") && parsed.host_application_info.is_empty() {
+        bail!("--host-application-info-source must not be empty");
+    }
     Ok(parsed)
 }
 

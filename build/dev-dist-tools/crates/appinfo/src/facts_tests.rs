@@ -45,6 +45,8 @@ fn a_plain_eap_product() {
             full_product_name: "IntelliJ IDEA".to_owned(),
             edition: None,
             version: "2026.3".to_owned(),
+            major_version: "2026".to_owned(),
+            minor_version_main_part: "3".to_owned(),
             version_suffix: Some("EAP".to_owned()),
             is_eap: true,
             svg_icon: Some("/idea_eap.svg".to_owned()),
@@ -87,6 +89,23 @@ fn the_version_follows_the_pattern() {
     );
     let error = read_error(&xml(r#"minor="3""#, NAMES, RELEASE));
     assert_eq!(error, "the version element has no major attribute: test.xml");
+}
+
+/// Lines 54-55 and 83: the licensing version joins the major version, the minor version up to its first dot, and `00`.
+#[test]
+fn the_release_version_for_licensing() {
+    for (version, expected) in [
+        (r#"major="2026" minor="3""#, "2026300"),
+        (r#"major="2026" minor="2.1""#, "2026200"),
+        (r#"major="2026""#, "2026000"),
+        (r#"major="2026" minor="""#, "202600"),
+    ] {
+        assert_eq!(
+            read(&xml(version, NAMES, RELEASE)).release_version_for_licensing(),
+            expected,
+            "{version}"
+        );
+    }
 }
 
 /// Line 58: the port of `MessageFormat` refuses what it does not port.
@@ -257,6 +276,8 @@ fn a_frontend_takes_the_facts_of_its_host() {
             full_product_name: "JetBrains Rider".to_owned(),
             edition: Some("Client".to_owned()),
             version: "2026.4.9".to_owned(),
+            major_version: "2026".to_owned(),
+            minor_version_main_part: "4".to_owned(),
             version_suffix: Some("EAP 6 D".to_owned()),
             is_eap: true,
             svg_icon: Some("/idea_eap.svg".to_owned()),
