@@ -35,10 +35,10 @@ import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
-import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
@@ -52,15 +52,6 @@ import javax.swing.text.AttributeSet
 import javax.swing.text.Element
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
-
-private val HeadingKeys = listOf(
-  MarkdownHighlighterColors.HEADER_LEVEL_1,
-  MarkdownHighlighterColors.HEADER_LEVEL_2,
-  MarkdownHighlighterColors.HEADER_LEVEL_3,
-  MarkdownHighlighterColors.HEADER_LEVEL_4,
-  MarkdownHighlighterColors.HEADER_LEVEL_5,
-  MarkdownHighlighterColors.HEADER_LEVEL_6,
-)
 
 /** [JBHtmlPane] represents a `<wbr>` with this character. */
 private const val ZERO_WIDTH_SPACE = '\u200B'
@@ -182,14 +173,13 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       return painter?.takeIf { it.look == look } ?: HeadingPainter(editor, look).also { painter = it }
     }
 
+    /** The look of the JCEF preview: bold, the default foreground, and the info foreground for h6. */
     private fun look(): HeadingLook {
       val scheme = editor.colorsScheme
-      val font = scheme.getFont(EditorFontType.PLAIN)
-      val attributes = scheme.getAttributes(HeadingKeys[heading.level - 1])
       return HeadingLook(
         html = "<h${heading.level}>${heading.html}</h${heading.level}>",
-        font = font.deriveFont(attributes?.fontType ?: Font.BOLD),
-        foreground = attributes?.foregroundColor ?: scheme.defaultForeground,
+        font = scheme.getFont(EditorFontType.BOLD),
+        foreground = if (heading.level == 6) NamedColorUtil.getInactiveTextColor() else scheme.defaultForeground,
         linkColor = scheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES)?.foregroundColor ?: scheme.defaultForeground,
       )
     }
