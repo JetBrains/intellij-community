@@ -29,7 +29,8 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.BASE_CONDA
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.PROJECT_UV
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.PROJECT_VENV
-import com.jetbrains.python.sdk.add.v2.conda.selectCondaEnvironment
+import com.jetbrains.python.sdk.add.v2.conda.createSdkFromCondaEnv
+import com.jetbrains.python.sdk.add.v2.conda.getCondaEnvOrError
 import com.jetbrains.python.sdk.add.v2.uv.UvInterpreterSection
 import com.jetbrains.python.sdk.add.v2.venv.setupVirtualenv
 import com.jetbrains.python.sdk.add.v2.venv.venvBaseVersionError
@@ -212,7 +213,10 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
         val venvFolder = PathHolder.Eel(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
         model.setupVirtualenv(venvFolder, moduleOrProject)
       }
-      BASE_CONDA -> model.selectCondaEnvironment(moduleOrProject, base = true)
+      BASE_CONDA -> {
+        val baseEnv = model.getCondaEnvOrError(base = true).getOr { return it }
+        model.createSdkFromCondaEnv(moduleOrProject, baseEnv)
+      }
       PROJECT_UV -> uvSection.getUvCreator().setupSdk(moduleOrProject)
       CUSTOM -> custom.currentSdkManager.setupSdk(moduleOrProject)
     }.getOr { return it }

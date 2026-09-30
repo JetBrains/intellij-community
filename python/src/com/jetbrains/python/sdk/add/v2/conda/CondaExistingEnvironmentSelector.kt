@@ -57,6 +57,10 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
   private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
   private lateinit var reloadLink: ActionLink
   private val isReloadLinkVisible = AtomicBooleanProperty(false)
+
+  // The environment that the last successful getOrCreateSdk used. The selection can change after that.
+  private var usedEnvIdentity: PyCondaEnvIdentity? = null
+
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.condaViewModel.condaExecutable
   override val toolExecutablePersister: suspend (P) -> Unit = { model.saveCondaPathIfLocal(it) }
 
@@ -154,13 +158,20 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     return withProgressText(message("python.sdk.progress.conda.configuring")) {
-      model.selectCondaEnvironment(moduleOrProject, base = false)
+      val env = model.getCondaEnvOrError(base = false).getOr { return@withProgressText it }
+      val sdk = model.createSdkFromCondaEnv(moduleOrProject, env).getOr { return@withProgressText it }
+      usedEnvIdentity = env.envIdentity
+      PyResult.success(sdk)
     }
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    val identity = model.condaViewModel.selectedCondaEnv.get()?.envIdentity as? PyCondaEnvIdentity.UnnamedEnv
-    val selectedConda = if (identity?.isBase == true) InterpreterType.BASE_CONDA else InterpreterType.CONDAVENV
+    val identity = checkNotNull(usedEnvIdentity) { "createStatisticsInfo() is called before a successful getOrCreateSdk()" }
+    val isBase = when (identity) {
+      is PyCondaEnvIdentity.NamedEnv -> false
+      is PyCondaEnvIdentity.UnnamedEnv -> identity.isBase
+    }
+    val selectedConda = if (isBase) InterpreterType.BASE_CONDA else InterpreterType.CONDAVENV
     return InterpreterStatisticsInfo(
       type = selectedConda,
       target = target.toStatisticsField(),

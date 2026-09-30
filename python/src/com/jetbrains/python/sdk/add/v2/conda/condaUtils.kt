@@ -77,17 +77,24 @@ internal fun PythonAddInterpreterModel<*>.getBaseCondaOrError(): PyResult<PyCond
 }
 
 /**
- * [base] or selected
+ * Waits until the environments are loaded. Then returns the base environment if [base] is `true`,
+ * or the selected environment if [base] is `false`.
  */
-internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleOrProject: ModuleOrProject, base: Boolean): PyResult<Sdk> {
+internal suspend fun PythonAddInterpreterModel<*>.getCondaEnvOrError(base: Boolean): PyResult<PyCondaEnv> {
   condaViewModel.condaEnvironmentsLoading.takeWhile { it }.collect { }
-  val pyCondaEnv = if (base) {
+  return if (base) {
     getBaseCondaOrError()
   }
   else {
     condaViewModel.selectedCondaEnv.get()?.let { PyResult.success(it) }
     ?: PyResult.localizedError(message("python.sdk.conda.no.env.selected.error"))
-  }.getOr { return it }
+  }
+}
+
+/**
+ * Returns the SDK for [pyCondaEnv]. Uses an existing SDK if there is one, else creates a new SDK.
+ */
+internal suspend fun PythonAddInterpreterModel<*>.createSdkFromCondaEnv(moduleOrProject: ModuleOrProject, pyCondaEnv: PyCondaEnv): PyResult<Sdk> {
   val existingSdk = ProjectJdkTable.getInstance().findJdk(pyCondaEnv.envIdentity.userReadableName)
   if (existingSdk != null && existingSdk.isCondaVirtualEnv) return PyResult.success(existingSdk)
   val executable = condaViewModel.condaExecutable.get() ?: return PyResult.localizedError(message("python.sdk.select.conda.path.title"))
@@ -99,7 +106,7 @@ internal suspend fun PythonAddInterpreterModel<*>.selectCondaEnvironment(moduleO
   val sdk = PyCondaCommand(fullCondaPathOnTarget = pathHolder.toStringForExecution(),
                            targetConfig = fileSystem.targetEnvironmentConfiguration).createCondaSdkFromExistingEnvironment(
     condaIdentity = pyCondaEnv.envIdentity,
-    existingSdks = this@selectCondaEnvironment.existingSdks,
+    existingSdks = this@createSdkFromCondaEnv.existingSdks,
     workingDirectory = workingDirectory,
   ).getOr { return it }
 
