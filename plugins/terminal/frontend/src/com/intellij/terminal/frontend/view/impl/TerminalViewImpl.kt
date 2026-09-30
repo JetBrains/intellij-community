@@ -335,10 +335,12 @@ class TerminalViewImpl(
     listenAlternateBufferSwitch()
     listenApplicationTitleChanges()
 
-    refreshVfsOnFocusChange(
-      component = terminalPanel,
-      coroutineScope.childScope("Terminal VFS refresh on focus change"),
-    )
+    coroutineScope.launch(Dispatchers.Default) {
+      refreshVfsOnFocusChange(
+        component = terminalPanel,
+        coroutineScope.childScope("Terminal VFS refresh on focus change"),
+      )
+    }
     // No command can finish before the session starts, so do not install this in the constructor event.
     coroutineScope.launch(Dispatchers.Default) {
       sessionDeferred.await()

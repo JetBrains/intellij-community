@@ -9,10 +9,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.observable.util.addFocusListener
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.asDisposable
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +43,7 @@ fun refreshVfsOnFocusChange(component: Component, coroutineScope: CoroutineScope
     }
   }
 
-  component.addFocusListener(coroutineScope.asDisposable(), object : FocusListener {
+  val focusListener = object : FocusListener {
     override fun focusGained(e: FocusEvent) {
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
         check(saveAllDocumentsRequests.tryEmit(Unit))
@@ -61,7 +59,11 @@ fun refreshVfsOnFocusChange(component: Component, coroutineScope: CoroutineScope
         SaveAndSyncHandler.getInstance().scheduleRefresh()
       }
     }
-  })
+  }
+  component.addFocusListener(focusListener)
+  coroutineScope.coroutineContext.job.invokeOnCompletion {
+    component.removeFocusListener(focusListener)
+  }
 }
 
 @ApiStatus.Internal
