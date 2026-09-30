@@ -107,4 +107,43 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
                }
              }""");
   }
+
+  public void testNullabilityChangeAtMaxDepth() {
+    doTest(nestedListTest(10, false));
+  }
+
+  public void testNullabilityChangeBeyondMaxDepth() {
+    // the walk stops at MAX_NULLABILITY_CHECK_DEPTH, so the nullability change is not found
+    doTest(nestedListTest(11, true));
+  }
+
+  private static String nestedListTest(int depth, boolean reported) {
+    String open = "List<".repeat(depth);
+    String close = ">".repeat(depth);
+    String typeArgument = "<" + open + "Object" + close + ">";
+    if (reported) {
+      typeArgument = "<warning descr=\"Explicit type arguments can be inferred\">" + typeArgument + "</warning>";
+    }
+    return """
+      import org.jspecify.annotations.NullMarked;
+      import org.jspecify.annotations.Nullable;
+
+      import java.util.List;
+
+      @NullMarked
+      class Test {
+        static <T> T id(T value) {
+          return value;
+        }
+
+        static %1$s@Nullable Object%2$s nested() {
+          throw new UnsupportedOperationException();
+        }
+
+        void test() {
+          Object o = Test.%3$sid(nested());
+          System.out.println(o);
+        }
+      }""".formatted(open, close, typeArgument);
+  }
 }
