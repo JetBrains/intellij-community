@@ -6,11 +6,16 @@ import com.intellij.ide.setToolTipText
 import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripe
 import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripeSegment
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
@@ -39,11 +44,11 @@ internal class GitWorkingTreeRowComponent {
     field = ListItemPanel()
 
   private val leadingIconLabel = JBLabel().apply { verticalAlignment = SwingConstants.TOP }
-  private val nameLabel = JBLabel()
+  private val nameLabel = createTextComponent()
   private val statusIconLabel = JBLabel()
   private val submoduleHintLabel = JBLabel(GitBundle.message("toolwindow.working.trees.worktree.kind.submodule.hint"))
   private val branchIconLabel = JBLabel(AllIcons.Vcs.Branch)
-  private val branchLabel = JBLabel().apply { minimumSize = Dimension(0, minimumSize.height) }
+  private val branchLabel = createTextComponent().apply { minimumSize = Dimension(0, minimumSize.height) }
   private val prIconLabel = JBLabel()
   private val prTitleLabel = JBLabel().apply { minimumSize = Dimension(0, minimumSize.height) }
 
@@ -82,6 +87,7 @@ internal class GitWorkingTreeRowComponent {
     color: Color?,
     part: RepositoryColorStripeSegment,
     review: GitBranchReviewPresenter.Review?,
+    speedSearch: SpeedSearchSupply?,
   ) {
     val worktree = (row as? GitWorktreeRow)?.gitWorkingTree
     applySelectionColors(selected, hovered, focused, font, dimmed = row is GitWorktreeCreatingRow || worktree?.isPrunable == true)
@@ -90,21 +96,30 @@ internal class GitWorkingTreeRowComponent {
       worktree?.isCurrent == true -> AllIcons.Actions.Checked
       else -> AllIcons.Empty
     }
-    nameLabel.font = font.deriveFont(if (worktree?.isMain == true) Font.BOLD else Font.PLAIN)
-    nameLabel.text = when (row) {
-      is GitWorktreeRow -> row.gitWorkingTree.path.name
-      is GitWorktreeCreatingRow -> row.targetPath.name
-    }
+    val nameStyle = if (worktree?.isMain == true) SimpleTextAttributes.STYLE_BOLD else SimpleTextAttributes.STYLE_PLAIN
+    nameLabel.clear()
+    nameLabel.append(row.presentableName, SimpleTextAttributes(nameStyle, null))
     statusIconLabel.icon = worktree?.let { statusIcon(it.isLocked) }
     submoduleHintLabel.isVisible = row is GitWorktreeRow && row.repositoryKind == GitRepositoryKind.SUBMODULE
-    branchLabel.text = row.presentableBranchName
+    branchLabel.clear()
+    branchLabel.append(row.presentableBranchName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     prIconLabel.icon = if (review != null) IconUtil.colorize(CollaborationToolsIcons.PullRequestOpen, prTitleLabel.foreground) else null
     prIconLabel.isVisible = review != null
     prTitleLabel.text = review?.title
     prTitleLabel.isVisible = review != null
+    if (speedSearch != null) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(speedSearch, nameLabel, false, selected)
+      SpeedSearchUtil.applySpeedSearchHighlighting(speedSearch, branchLabel, false, selected)
+    }
     setStripe(color, part)
     component.setToolTipText(row.tooltipText())
     component.accessibleContext.accessibleName = AccessibleContextUtil.getCombinedName(", ", nameLabel, branchLabel, prTitleLabel)
+  }
+
+  private fun createTextComponent(): SimpleColoredComponent = SimpleColoredComponent().apply {
+    isOpaque = false
+    ipad = JBInsets.emptyInsets()
+    myBorder = null
   }
 
   private fun setStripe(color: Color?, part: RepositoryColorStripeSegment) {
@@ -170,6 +185,7 @@ internal class GitWorkingTreeRowComponent {
     submoduleHintLabel.foreground = if (selected) primaryForeground else NamedColorUtil.getInactiveTextColor()
 
     component.font = font
+    nameLabel.font = font
     submoduleHintLabel.font = font
     branchLabel.font = font
     prTitleLabel.font = font

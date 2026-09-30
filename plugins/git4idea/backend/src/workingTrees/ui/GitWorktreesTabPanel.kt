@@ -15,6 +15,7 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
@@ -26,9 +27,9 @@ import com.intellij.util.ui.launchOnShow
 import git4idea.i18n.GitBundle
 import git4idea.ui.branch.GitBranchReviewPresenter
 import git4idea.workingTrees.GitCreateWorkingTreeService
-import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.TOOLWINDOW_CONTENT_HELP_ID
+import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -53,6 +54,7 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
     addMouseListener(createPopupHandler())
     ActionUtil.wrap("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, this)
     ListHoverListener.DEFAULT.addTo(this)
+    ListSpeedSearch.installOn(this) { entry -> "${entry.presentableName} ${entry.presentableBranchName}" }
   }
 
   val component: JComponent

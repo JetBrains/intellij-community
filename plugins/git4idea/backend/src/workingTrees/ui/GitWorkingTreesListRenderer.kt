@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripe
 import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripeSegment
 import com.intellij.ui.hover.ListHoverListener
+import com.intellij.ui.speedSearch.SpeedSearchSupply
 import git4idea.ui.branch.GitBranchReviewPresenter
 import java.awt.Color
 import java.awt.Component
@@ -30,7 +31,8 @@ internal class GitWorkingTreesListRenderer(
     val part = stripePart(list, index, color)
     val hovered = !isSelected && ListHoverListener.getHoveredIndex(list) == index
     val review = reviewFor(value)
-    return rowComponent.apply { configure(value, isSelected, hovered, cellHasFocus, list.font, color, part, review) }.component
+    rowComponent.configure(value, isSelected, hovered, cellHasFocus, list.font, color, part, review, SpeedSearchSupply.getSupply(list))
+    return rowComponent.component
   }
 
   private fun reviewFor(entry: GitWorkingTreesListEntry): GitBranchReviewPresenter.Review? {

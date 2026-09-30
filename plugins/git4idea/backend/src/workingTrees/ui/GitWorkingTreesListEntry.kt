@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees.ui
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.Nls
 internal sealed interface GitWorkingTreesListEntry {
   val repository: GitRepositoryModel
   val multiRoot: Boolean
+  /** The name of the worktree directory. */
+  val presentableName: @NlsSafe String
   val presentableBranchName: @Nls String
 }
 
@@ -27,7 +30,10 @@ internal data class GitWorktreeRow(
   override val presentableBranchName: @Nls String,
   val location: @Nls String,
   val repositoryKind: GitRepositoryKind,
-) : GitWorkingTreesListEntry
+) : GitWorkingTreesListEntry {
+  override val presentableName: @NlsSafe String
+    get() = gitWorkingTree.path.name
+}
 
 // A worktree whose target directory doesn't exist as a real GitWorkingTree yet: `git worktree add` is still running.
 internal data class GitWorktreeCreatingRow(
@@ -36,7 +42,10 @@ internal data class GitWorktreeCreatingRow(
   val targetPath: FilePath,
   override val presentableBranchName: @Nls String,
   val location: @Nls String,
-) : GitWorkingTreesListEntry
+) : GitWorkingTreesListEntry {
+  override val presentableName: @NlsSafe String
+    get() = targetPath.name
+}
 
 internal fun buildWorkingTreesEntries(
   repositories: List<GitRepositoryModel>,

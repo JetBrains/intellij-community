@@ -3,15 +3,17 @@ package git4idea.workingTrees.ui
 
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import git4idea.config.GitSaveChangesPolicy
 import com.intellij.vcs.test.vcsTestProjectPathFixture
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.repo.getAndInit
 import git4idea.test.gitPlatformContextFixture
 import git4idea.update.GitSubmoduleProjectContext
 import git4idea.update.gitSubmoduleProjectFixture
-import com.intellij.util.ui.JBUI
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.Container
@@ -39,10 +41,9 @@ internal class GitWorkingTreesListRendererSubmoduleHintTest {
     rendered.size = rendered.preferredSize
     forceLayout(rendered)
 
-    val labels = mutableListOf<JLabel>()
-    collectLabels(rendered, labels)
-    val hintLabel = labels.singleOrNull { it.text == "Submodule" }
-    val nameLabelInTree = labels.single { it.text == row.gitWorkingTree.path.name }
+    val hintLabel = UIUtil.uiTraverser(rendered).filter(JLabel::class.java).singleOrNull { it.text == "Submodule" }
+    val nameLabelInTree = UIUtil.uiTraverser(rendered).filter(SimpleColoredComponent::class.java)
+      .single { it.getCharSequence(false).toString() == row.gitWorkingTree.path.name }
 
     assertThat(hintLabel).describedAs("A label with the submodule hint text must exist in the rendered row").isNotNull()
     assertThat(hintLabel!!.isVisible).describedAs("The submodule hint label must be visible for a submodule row").isTrue()
@@ -59,13 +60,6 @@ internal class GitWorkingTreesListRendererSubmoduleHintTest {
     container.doLayout()
     for (component in container.components) {
       if (component is Container) forceLayout(component)
-    }
-  }
-
-  private fun collectLabels(container: Container, out: MutableList<JLabel>) {
-    for (component in container.components) {
-      if (component is JLabel) out.add(component)
-      if (component is Container) collectLabels(component, out)
     }
   }
 }
