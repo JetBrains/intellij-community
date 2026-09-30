@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend.view.hyperlinks
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
@@ -33,6 +34,9 @@ class TerminalOutputModelChangesTracker(
    */
   private var lastEvictedStamp: Long = Long.MIN_VALUE
 
+  /** Holds a signal if the content changed since the last [awaitContentChange]. Set at the start, like [contentChanged]. */
+  private val contentChangedSignal = Channel<Unit>(Channel.CONFLATED).apply { trySend(Unit) }
+
   init {
     outputModel.addListener(parentDisposable, object : TerminalOutputModelListener {
       override fun afterContentChanged(event: TerminalContentChangeEvent) {
@@ -41,8 +45,14 @@ class TerminalOutputModelChangesTracker(
           firstChangedLine = minOf(firstChangedLine, line)
         }
         contentChanged = true
+        contentChangedSignal.trySend(Unit)
       }
     })
+  }
+
+  /** Suspends until the content changes. Returns at once if it changed since the previous call. */
+  suspend fun awaitContentChange() {
+    contentChangedSignal.receive()
   }
 
   /**

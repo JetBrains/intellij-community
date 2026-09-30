@@ -197,8 +197,10 @@ private suspend fun trackOutputModelChanges(
     }
   }
 
-  // Send content updates to the backend periodically.
+  // Send content updates to the backend, at most once per flush delay.
   while (true) {
+    tracker.awaitContentChange()
+
     val update = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       try {
         getContentUpdate(outputModel, tracker)
