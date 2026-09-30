@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -35,6 +37,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import javax.swing.JPanel
+import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
 @TestApplication
@@ -111,6 +114,19 @@ class ToolWindowEditorTabTransferControllerTest {
   private fun openTabFile(): ToolWindowEditorTabFile =
     manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>().single()
 
+  /**
+   * Two editor windows that both show [plainFile], as a user gets them from the "Split Right" action.
+   */
+  private class SplitEditor(val plainFile: LightVirtualFile, val firstWindow: EditorWindow, val secondWindow: EditorWindow)
+
+  private fun splitEditor(): SplitEditor {
+    val plainFile = LightVirtualFile("plain.txt")
+    manager.openFile(plainFile, true)
+    val firstWindow = requireNotNull(manager.currentWindow)
+    val secondWindow = requireNotNull(firstWindow.split(JSplitPane.HORIZONTAL_SPLIT, true, plainFile, true))
+    return SplitEditor(plainFile, firstWindow, secondWindow)
+  }
+
   @Test
   fun `move content to editor opens a tool window editor tab`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
@@ -142,6 +158,22 @@ class ToolWindowEditorTabTransferControllerTest {
 
       assertThat(openTabFile().attachedContent(project)).isSameAs(movingContent)
       assertThat(rootDecorator.mode).isEqualTo(InternalDecoratorImpl.Mode.SINGLE)
+    }
+
+  @Test
+  fun `move content to editor opens the tab in the given editor window`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createToolWindow(toolWindowId)
+      val content = addContent(toolWindow)
+      val editor = splitEditor()
+      manager.currentWindow = editor.secondWindow
+
+      // Drag-and-drop passes the window under the cursor, which is not necessarily the current one.
+      controller.moveContentToEditor(toolWindow, content, window = editor.firstWindow)
+
+      val tabFile = openTabFile()
+      assertThat(editor.firstWindow.getComposite(tabFile)).isNotNull()
+      assertThat(editor.secondWindow.getComposite(tabFile)).isNull()
     }
 
   @Test
@@ -207,6 +239,42 @@ class ToolWindowEditorTabTransferControllerTest {
       assertThat(manager.isFileOpen(tabFile)).isFalse()
       assertThat(targetDecorator.contentManager.contents.toList()).contains(movingContent)
       assertThat(movingContent.manager).isSameAs(targetDecorator.contentManager)
+    }
+
+  @Test
+  fun `move content back closes the tab in the window that holds it when another window is current`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createToolWindow(toolWindowId)
+      val content = addContent(toolWindow)
+      val editor = splitEditor()
+      controller.moveContentToEditor(toolWindow, content, window = editor.firstWindow)
+      val tabFile = openTabFile()
+      manager.currentWindow = editor.secondWindow
+
+      controller.moveContentToToolWindow(toolWindow, tabFile)
+
+      assertThat(manager.isFileOpen(tabFile)).isFalse()
+      assertThat(tabFile.isValid).isFalse()
+      assertThat(toolWindow.contentManager.contents.toList()).contains(content)
+      // The current window and its file stay as they are.
+      assertThat(editor.secondWindow.isDisposed).isFalse()
+      assertThat(editor.secondWindow.getComposite(editor.plainFile)).isNotNull()
+    }
+
+  @Test
+  fun `move content back closes a tab that has no content`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      // A tab whose restore failed: the file exists, but it has neither a session nor a stored state.
+      val tabFile = ToolWindowEditorTabFile(toolWindowId = toolWindowId, persistentPath = null)
+      val recordingManager = RecordingFileEditorManager(project)
+      project.replaceService(FileEditorManager::class.java, recordingManager, disposable)
+      val toolWindow = createToolWindow(toolWindowId)
+
+      controller.moveContentToToolWindow(toolWindow, tabFile)
+
+      assertThat(recordingManager.closeRequests).containsExactly(tabFile)
+      assertThat(toolWindow.contentManager.contents).isEmpty()
+      assertThat(tabFile.isValid).isFalse()
     }
 
   @Test
