@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.ide.IdeBundle
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.HighlightSeverity
@@ -20,9 +19,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkDisabled
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
@@ -226,17 +223,17 @@ internal class LspHighlightingApplier(private val project: Project) {
     if (customizer is LspDocumentLinkDisabled) return
     val documentLinks = client.getDocumentLinkInfos(file)
     for (link in documentLinks) {
-      val tooltip = getDocumentLinkTooltip(link.highlightingInfo)
-      val shortcutsText = HyperlinkAnnotator.getGoToDeclarationShortcutsText()
-      val tooltipWithShortcuts = if (shortcutsText.isNotEmpty()) "$tooltip ($shortcutsText)" else tooltip
-
       val info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
         .range(link.textRange)
-        .descriptionAndTooltip(tooltipWithShortcuts)
         .textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
         .severity(HighlightSeverity.TEXT_ATTRIBUTES)
-        .createUnconditionally()
-      result.add(info)
+
+      val tooltip = link.highlightingInfo.tooltip
+      if (tooltip != null) {
+        val shortcutsText = HyperlinkAnnotator.getGoToDeclarationShortcutsText()
+        info.descriptionAndTooltip(if (shortcutsText.isNotEmpty()) "$tooltip ($shortcutsText)" else tooltip)
+      }
+      result.add(info.createUnconditionally())
     }
   }
 
@@ -332,18 +329,6 @@ internal class LspHighlightingApplier(private val project: Project) {
       if (problemHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL
       if (problemHighlightType == ProblemHighlightType.POSSIBLE_PROBLEM) return HighlightInfoType.POSSIBLE_PROBLEM
       return HighlightInfo.convertSeverity(severity)
-    }
-
-    private fun getDocumentLinkTooltip(documentLink: LspDocumentLink): @NlsSafe String {
-      if (documentLink.tooltip != null) return documentLink.tooltip
-
-      val uri = documentLink.targetUri
-      @Suppress("HttpUrlsUsage")
-      if (uri != null && (uri.startsWith("http://") || uri.startsWith("https://"))) {
-        return IdeBundle.message("open.url.in.browser.tooltip")
-      }
-
-      return LspBundle.message("follow.link.tooltip")
     }
   }
 }

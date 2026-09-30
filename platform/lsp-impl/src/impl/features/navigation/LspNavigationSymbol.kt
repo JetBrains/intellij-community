@@ -11,14 +11,17 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
  *
  * | | reported by | navigates to | underlined without a modifier | Ctrl+hover label |
  * |---|---|---|---|---|
- * | [LspOpenBrowserNavigatableSymbol] | `textDocument/documentLink` | outside the IDE | yes | the URL |
- * | [LspPathDocumentLinkSymbol] | `textDocument/documentLink` | a directory, or a file at its start | yes | the target path |
+ * | [LspOpenBrowserNavigatableSymbol] | `textDocument/documentLink` | outside the IDE | yes | the link tooltip |
+ * | [LspPathDocumentLinkSymbol] | `textDocument/documentLink` | a directory, or a file at its start | yes | none |
  * | [LspDefinitionSymbol] | `textDocument/definition`, `textDocument/typeDefinition` | a file at `targetSelectionRange` | no | the target path |
  *
  * What the table can't hold:
  * - A link's eager underline and its plain-hover tooltip are not features of these symbols at all.
  *   [LspHighlightingApplier][com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier] renders both from
  *   `LspDocumentLink`, before the reference is resolved and therefore before any symbol exists.
+ * - A link into the project is not labelled on Ctrl+hover. The label worth showing is what the server says the target is,
+ *   which needs `textDocument/hover` and a hint that may arrive after the underline -- IJPL-252179. A path is a poor
+ *   stand-in: outside the server roots it is a full SDK path, and inside them it largely repeats the text under the pointer.
  * - [LspDefinitionSymbol] has no hover of its own either:
  *   [LspDocumentationTargetProvider][com.intellij.platform.lsp.impl.features.documentation.LspDocumentationTargetProvider]
  *   answers by offset, so any position in an LSP-backed file gets `textDocument/hover`, including one over a reference.

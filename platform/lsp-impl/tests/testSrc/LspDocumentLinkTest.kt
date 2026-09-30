@@ -167,6 +167,31 @@ internal class LspDocumentLinkTest {
       assertTrue(label!!.startsWith(IdeBundle.message("open.url.in.browser.tooltip")), "Unexpected label: $label")
     }
 
+    @Test
+    fun `given no tooltip and a file target when the file is highlighted then it carries no label`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val targetFile = addTargetFile()
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
+
+      val label = awaitLinkLabel()
+
+      serverSession.awaitExpected()
+      assertNull(label, "Expected the underline to speak for itself")
+    }
+
+    @Test
+    fun `given an unresolved link when the file is highlighted then it carries no label`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink())
+
+      val label = awaitLinkLabel()
+
+      serverSession.awaitExpected()
+      // The applier labels the link before `documentLink/resolve` runs, so a link that resolves to a URL isn't labelled either.
+      assertNull(label, "Expected no label before the target is known")
+    }
   }
 
   @Nested
@@ -251,6 +276,68 @@ internal class LspDocumentLinkTest {
 
   @Nested
   inner class Labels {
+    private suspend fun ctrlHoverHint(): String? = readAction {
+      getCtrlMouseData(ACTION_GOTO_DECLARATION, codeInsightFixture.editor, codeInsightFixture.file, OFFSET_IN_LINK)?.hintText
+    }
+
+    @Test
+    fun `given a file target when hovering over the link then there is no hint`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val targetFile = addTargetFile()
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
+
+      awaitLinkHighlighting()
+      val hint = ctrlHoverHint()
+
+      serverSession.awaitExpected()
+      assertNull(hint, "Expected no hint until the server's hover content can be shown")
+    }
+
+    @Test
+    fun `given a URL target when hovering over the link then the hint says what the editor says`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL))
+
+      val editorLabel = awaitLinkLabel()
+      val hint = ctrlHoverHint()
+
+      serverSession.awaitExpected()
+      assertEquals(IdeBundle.message("open.url.in.browser.tooltip"), hint)
+      // the editor adds the Go To Declaration shortcuts, and nothing else may differ
+      assertTrue(editorLabel!!.startsWith(hint!!), "Expected '$editorLabel' to start with the Ctrl+hover hint '$hint'")
+    }
+
+    @Test
+    fun `given a file target when the link resolves then it is located by its path within the server roots`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val targetFile = addTargetFile()
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
+
+      awaitLinkHighlighting()
+      val presentation = presentation(resolveLinkSymbol())
+
+      serverSession.awaitExpected()
+      assertEquals(targetFile.name, presentation.presentableText)
+      assertEquals(TARGET_FILE_NAME, presentation.locationText, "Expected the path relative to the server root")
+    }
+
+    @Test
+    fun `given a target outside the server roots when the link resolves then it is located by its full path`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val outsideRoots = virtualFile.parent.parent
+      val serverSession = configureServerSession(project, virtualFile)
+      serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(outsideRoots)))
+
+      awaitLinkHighlighting()
+      val presentation = presentation(resolveLinkSymbol())
+
+      serverSession.awaitExpected()
+      assertEquals(outsideRoots.presentableUrl, presentation.locationText)
+    }
+
     @Test
     fun `given no link under the pointer then there is no hint`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile

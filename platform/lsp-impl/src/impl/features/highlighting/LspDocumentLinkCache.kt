@@ -1,5 +1,7 @@
 package com.intellij.platform.lsp.impl.features.highlighting
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
@@ -46,7 +48,26 @@ internal class LspDocumentLink(private val initialDocumentLink: DocumentLink) {
     }
   }
 
-  val tooltip: String? = initialDocumentLink.tooltip
+  private val serverTooltip: String? = initialDocumentLink.tooltip
+
+  /**
+   * What this link tells the user it does, or `null` when the underline alone says it.
+   *
+   * A URL is labelled the way [WebReferenceDocumentationProvider][com.intellij.openapi.paths.WebReferenceDocumentationProvider]
+   * labels a plain URL reference, rather than by repeating the URL already on screen. A file or directory gets nothing:
+   * naming the gesture ("Follow link") only repeats the underline, and the target's path is long and mostly noise.
+   */
+  val tooltip: @NlsSafe String?
+    get() {
+      serverTooltip?.let { return it }
+
+      val uri = targetUri
+      @Suppress("HttpUrlsUsage")
+      if (uri != null && (uri.startsWith("http://") || uri.startsWith("https://"))) {
+        return IdeBundle.message("open.url.in.browser.tooltip")
+      }
+      return null
+    }
 
   val targetUri: String?
     get() = resolvedDocumentLink?.target ?: initialDocumentLink.target
