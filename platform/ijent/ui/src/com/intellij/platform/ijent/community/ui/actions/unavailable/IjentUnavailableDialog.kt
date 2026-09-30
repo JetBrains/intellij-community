@@ -55,7 +55,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -66,6 +65,7 @@ import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 
@@ -356,8 +356,13 @@ private fun DialogBuilder.showWithPump(coroutineContext: CoroutineContext): Int 
         {
           application.invokeLater(
             {
-              @Suppress("RAW_RUN_BLOCKING")
-              runBlocking(loop) { }
+              var markerReached = false
+              loop.dispatch(EmptyCoroutineContext) {
+                markerReached = true
+              }
+              while (!markerReached) {
+                if (loop.processNextEvent() > 0L) break
+              }
             },
             ModalityState.any(),
           )
