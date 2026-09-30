@@ -12,7 +12,6 @@ use planfile::contract::{
 };
 
 use crate::error::{Error, Result, fail};
-use crate::paths;
 
 /// A validated plan. [`plan`] makes it without file system access, and [`Execution::write`] executes it.
 #[derive(Clone, Debug)]
@@ -34,10 +33,10 @@ pub(crate) fn asset_kind(asset: &Asset) -> &str {
     if asset.kind.is_empty() { "file" } else { &asset.kind }
 }
 
-/// The identity of a destination: `filemeta::path_identity`. It refuses a path that the inventory cannot hold, so a
+/// The identity of a destination: `distpath::path_identity`. It refuses a path that the inventory cannot hold, so a
 /// refused name fails before any write.
 pub(crate) fn identity(path: &str) -> Result<String> {
-    Ok(filemeta::path_identity(path)?)
+    distpath::path_identity(path).map_err(Error::refused)
 }
 
 /// Applies the shared asset rules to one asset table. The rules cover the version, the plugin root target, and the
@@ -65,7 +64,7 @@ fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: b
             fail!("only a declared tree can target the plugin root");
         }
         if !asset.destination.is_empty() {
-            validate_relative_path(&asset.destination)?;
+            distpath::validate_relative_path(&asset.destination).map_err(Error::refused)?;
         }
         if validated.insert(identity(&asset.destination)?, asset).is_some() {
             fail!("destination collision at {:?}", asset.destination);
@@ -90,7 +89,7 @@ fn validated_assets(version: u32, assets: &[Asset], check_directory_spellings: b
                 {
                     fail!("conflicting directory spellings {previous:?} and {prefix:?}");
                 }
-                let parent = paths::dir(&prefix);
+                let parent = distpath::dir(&prefix);
                 spellings.insert(spelling, prefix);
                 prefix = parent;
             }
@@ -128,14 +127,14 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
         }
     }
     for name in assets.keys() {
-        let mut parent = paths::dir(name);
+        let mut parent = distpath::dir(name);
         while parent != "." {
             if let Some(ancestor) = assets.get(&parent)
                 && asset_kind(ancestor) == "file"
             {
                 fail!("destination collision between {parent:?} and {name:?}");
             }
-            parent = paths::dir(&parent);
+            parent = distpath::dir(&parent);
         }
     }
     if !catalogue.libraries.is_empty() {
@@ -198,7 +197,7 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
 /// Reports whether a catalogue root is a clean, nonempty path without a NUL or a line end, as Go `path.Clean` states it.
 fn clean_root(root: &str) -> bool {
     let slashed = if cfg!(windows) { root.replace('\\', "/") } else { root.to_owned() };
-    !root.is_empty() && root != "." && paths::clean(&slashed) == slashed && !root.contains(['\0', '\r', '\n'])
+    !root.is_empty() && root != "." && distpath::clean(&slashed) == slashed && !root.contains(['\0', '\r', '\n'])
 }
 
 impl Execution {
@@ -241,7 +240,7 @@ impl Execution {
             Source::Layout(layout) => self.validate_layout(layout, LayoutFormat::Entries, used),
             Source::Archive { input, .. } => self.validate_reference(input, used),
             Source::Patch { entry, input, .. } => {
-                jarpack::validate_entry_name(entry)?;
+                distpath::validate_entry_name(entry).map_err(Error::refused)?;
                 self.validate_reference(input, used)
             }
         }
@@ -256,7 +255,7 @@ impl Execution {
                 fail!("file input {:?} cannot have a relative path", artifact.id);
             }
         } else {
-            validate_relative_path(&reference.path)?;
+            distpath::validate_relative_path(&reference.path).map_err(Error::refused)?;
         }
         used.insert(artifact.id.clone());
         Ok(())
@@ -317,7 +316,7 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
             fail!("only a tree, an extracted archive, or a copied directory can use its output root");
         }
     } else {
-        validate_relative_path(&asset.destination)?;
+        distpath::validate_relative_path(&asset.destination).map_err(Error::refused)?;
     }
     let Some(transform) = &asset.transform else {
         if asset.sources.len() != 1 {
@@ -329,7 +328,7 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
     compile_globs(&transform.executables, "invalid executable pattern")?;
     for mapping in &transform.mappings {
         if !mapping.destination.is_empty() {
-            validate_relative_path(&mapping.destination)?;
+            distpath::validate_relative_path(&mapping.destination).map_err(Error::refused)?;
         }
         JavaGlob::compile(mapping_pattern(mapping)).map_err(|error| Error::new(format!("invalid mapping pattern: {error}")))?;
     }
@@ -400,34 +399,12 @@ pub(crate) fn valid_id(value: &str) -> bool {
     !value.is_empty() && value.trim() == value && !value.contains(['\0', '\r', '\n'])
 }
 
-/// Accepts a relative slash path that is a safe jar entry name and a portable file name on every host.
-pub(crate) fn validate_relative_path(value: &str) -> Result<()> {
-    if jarpack::validate_entry_name(value).is_err() {
-        fail!("unsafe relative path {value:?}");
-    }
-    for component in value.split('/') {
-        if component.trim_end_matches(['.', ' ']) != component
-            || component.contains(['<', '>', '"', '|', '?', '*'])
-            || component.chars().any(|character| (character as u32) < 0x20)
-        {
-            fail!("unsafe path component {component:?}");
-        }
-        let upper = component.to_uppercase();
-        let base = upper.split('.').next().unwrap_or_default();
-        let numbered = base.len() == 4 && (base.starts_with("COM") || base.starts_with("LPT")) && matches!(base.as_bytes()[3], b'1'..=b'9');
-        if matches!(base, "CON" | "PRN" | "AUX" | "NUL") || numbered {
-            fail!("reserved path component {component:?}");
-        }
-    }
-    Ok(())
-}
-
 /// Checks the link graph of one directory tree. `directories` names every node and marks each directory true, and
 /// `links` names each link with its target. It refuses a link through a non-directory, a link that escapes the root,
 /// and a target absent from the tree. It also refuses two names that differ only in case, a parent that is not a
 /// directory, and a directory cycle through links.
 ///
-/// The caller must run `filemeta::validate_links` first, because that function refuses a target that resolves through
+/// The caller must run `distpath::validate_links` first, because that function refuses a target that resolves through
 /// another link. The packer calls this function on the links of each tree. The collector calls it again on the
 /// produced inventory in a second process, because the collector does not trust the producer.
 pub fn validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMap<String, String>) -> Result<()> {
@@ -445,7 +422,7 @@ pub fn validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMa
         if name == "." {
             continue;
         }
-        let parent = paths::dir(name);
+        let parent = distpath::dir(name);
         if !is_directory(&parent) {
             fail!("missing directory {parent:?} in link graph");
         }
@@ -454,7 +431,7 @@ pub fn validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMa
         }
     }
     for (link, target_text) in links {
-        let mut current = paths::dir(link);
+        let mut current = distpath::dir(link);
         for component in target_text.split('/') {
             if !is_directory(&current) {
                 fail!("symlink {link:?} traverses a non-directory {current:?}");
@@ -465,18 +442,18 @@ pub fn validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMa
                     if current == "." {
                         fail!("symlink {link:?} escapes the plugin through {target_text:?}");
                     }
-                    current = paths::dir(&current);
+                    current = distpath::dir(&current);
                     continue;
                 }
                 _ => {}
             }
-            current = paths::join(&current, component);
+            current = distpath::join(&current, component);
             if !directories.contains_key(&current) {
                 fail!("unresolved symlink target {target_text:?} at {current:?}");
             }
         }
         if is_directory(&current) {
-            edges.entry(paths::dir(link)).or_default().push(current);
+            edges.entry(distpath::dir(link)).or_default().push(current);
         }
     }
     let mut states: HashMap<&str, u8> = HashMap::new();
@@ -502,14 +479,14 @@ pub(crate) fn validate_plugin_links(nodes: &[(String, bool)], links: &BTreeMap<S
     if links.is_empty() {
         return Ok(());
     }
-    filemeta::validate_links(links)?;
+    distpath::validate_links(links).map_err(Error::refused)?;
     let mut directories = BTreeMap::from([(".".to_owned(), true)]);
     for (destination, directory) in nodes {
         directories.insert(destination.clone(), *directory);
-        let mut parent = paths::dir(destination);
+        let mut parent = distpath::dir(destination);
         while parent != "." {
             directories.insert(parent.clone(), true);
-            parent = paths::dir(&parent);
+            parent = distpath::dir(&parent);
         }
     }
     validate_link_graph(&directories, links)

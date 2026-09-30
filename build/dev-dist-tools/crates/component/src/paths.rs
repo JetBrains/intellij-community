@@ -3,7 +3,7 @@
 //! A host path is a `String`: a Bazel `File.path` relative to the working directory, or an absolute path. Bazel
 //! writes each path without an empty, `.` or `..` element, so [`host_path`] refuses those spellings, and the other
 //! functions need no lexical normalization. A path inside a distribution is a relative path in slash form, and
-//! [`filemeta::validate_path`] checks it.
+//! [`distpath::validate_path`] checks it.
 
 use std::borrow::Cow;
 use std::cmp::Ordering;

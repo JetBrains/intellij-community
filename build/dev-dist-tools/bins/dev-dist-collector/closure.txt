@@ -4,6 +4,7 @@ anyhow
 cfg_if
 component
 crc32fast
+distpath
 equivalent
 fastrand
 filemeta

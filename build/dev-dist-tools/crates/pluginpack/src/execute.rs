@@ -12,7 +12,7 @@ use planfile::contract::{Asset, Manifest, Operation, Reference, Source};
 use crate::error::{Error, IoContext, Result, fail};
 use crate::layout::LayoutScratch;
 use crate::paths::{self, FileId};
-use crate::plan::{Execution, asset_kind, identity, source_filter, validate_plugin_links, validate_relative_path};
+use crate::plan::{Execution, asset_kind, identity, source_filter, validate_plugin_links};
 
 /// What one resolved operation writes at its destination.
 pub(crate) enum Action {
@@ -319,22 +319,22 @@ fn check_independent_namespace(independent: &[&str], operations: &[Resolved]) ->
             files.insert(key.clone(), entry);
         }
         names.insert(key, entry);
-        let mut parent = paths::dir(entry);
+        let mut parent = distpath::dir(entry);
         while parent != "." {
             names.entry(identity(&parent)?).or_insert(entry);
-            parent = paths::dir(&parent);
+            parent = distpath::dir(&parent);
         }
     }
     for destination in independent {
         if let Some(entry) = names.get(&identity(destination)?) {
             fail!("conflicting output destination {destination:?}: the remainder writes {entry:?}");
         }
-        let mut parent = paths::dir(destination);
+        let mut parent = distpath::dir(destination);
         while parent != "." {
             if let Some(file) = files.get(&identity(&parent)?) {
                 fail!("conflicting output directory {parent:?} of {destination:?}: the remainder writes the file {file:?}");
             }
-            parent = paths::dir(&parent);
+            parent = distpath::dir(&parent);
         }
     }
     Ok(())
@@ -396,10 +396,14 @@ impl Resolver<'_> {
 fn reserve_outputs(root: &Path, destinations: &[(String, bool)]) -> Result<()> {
     let mut directories: HashSet<String> = HashSet::from([".".to_owned()]);
     for (destination, directory) in destinations {
-        let parent_path = if *directory { destination.clone() } else { paths::dir(destination) };
+        let parent_path = if *directory {
+            destination.clone()
+        } else {
+            distpath::dir(destination)
+        };
         let mut parent = ".".to_owned();
         for component in parent_path.split('/') {
-            parent = paths::join(&parent, component);
+            parent = distpath::join(&parent, component);
             if directories.contains(&parent) {
                 continue;
             }
@@ -437,7 +441,7 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
         let mut metadata = item.metadata().map_err(|error| Error::new(error.to_string()))?;
         let name = relative_name(&root, &source)?;
         if name != "." {
-            validate_relative_path(&name)?;
+            distpath::validate_relative_path(&name).map_err(Error::refused)?;
         }
         let action;
         let file_type = metadata.file_type();
@@ -477,7 +481,7 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
             {
                 fail!("conflicting tree entries {previous:?} and {prefix:?}");
             }
-            let parent = paths::dir(&prefix);
+            let parent = distpath::dir(&prefix);
             spellings.insert(identity, prefix);
             prefix = parent;
         }
@@ -492,7 +496,7 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
             _ => filemeta::permissions(&metadata),
         };
         operations.push(Resolved {
-            destination: paths::join(destination, &name),
+            destination: distpath::join(destination, &name),
             mode,
             action,
         });

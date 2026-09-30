@@ -1,7 +1,9 @@
 adler2
 aho_corasick
+anyhow
 cfg_if
 crc32fast
+distpath
 equivalent
 fastrand
 filemeta

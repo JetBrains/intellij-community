@@ -27,7 +27,7 @@ pub use filters::{
 };
 pub use flagfile::{parse_flag_file, resolve_path};
 pub use inventory::{InventoryReport, write_inventory};
-pub use merge::{Filter, ManifestMode, MergeReport, MergeSpec, Source, validate_entry_name};
+pub use merge::{Filter, ManifestMode, MergeReport, MergeSpec, Source};
 pub use natives::NativeSpec;
 pub use pack::duplicate_line;
 pub use reader::{Entry, Jar};

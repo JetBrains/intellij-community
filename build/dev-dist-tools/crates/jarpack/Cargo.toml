@@ -13,6 +13,7 @@ workspace = true
 memmap2.workspace = true
 flate2.workspace = true
 crc32fast.workspace = true
+distpath.workspace = true
 filemeta.workspace = true
 fscopy.workspace = true
 regex.workspace = true

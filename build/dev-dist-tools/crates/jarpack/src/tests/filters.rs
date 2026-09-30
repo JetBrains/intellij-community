@@ -4,7 +4,7 @@
 //! that differs by the packer that wrote it. The names below are the ones a pattern decides, and not a literal, which is
 //! where a port drifts.
 
-use crate::{library_name_filter, module_output_name_filter};
+use crate::{INDEX_FILE_NAME, library_name_filter, module_output_name_filter};
 
 #[test]
 fn module_output_name_filter_cases() {
@@ -53,4 +53,12 @@ fn library_name_filter_cases() {
     ] {
         assert_eq!(library_name_filter(name), want, "library_name_filter({name:?})");
     }
+}
+
+/// `distpath` refuses the name of the generated index as a source entry. It keeps its own copy of the name, and this
+/// test pins that the two agree.
+#[test]
+fn a_source_entry_cannot_have_the_name_of_the_index() {
+    let error = distpath::validate_entry_name(INDEX_FILE_NAME).unwrap_err();
+    assert_eq!(format!("{error:#}"), format!("unsafe entry name {INDEX_FILE_NAME:?}"));
 }

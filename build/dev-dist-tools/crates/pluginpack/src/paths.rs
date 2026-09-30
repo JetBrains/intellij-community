@@ -1,56 +1,8 @@
-//! Lexical slash paths with the Go `path` rules, and the host path checks of the executor.
+//! The host path checks of the executor. The slash-path rules are in `distpath`.
 
 use std::fs;
 use std::io;
 use std::path::{Component, Path, PathBuf};
-
-/// Go `path.Clean`: removes repeated slashes, `.` elements, and each inner `..` with the element before it.
-pub(crate) fn clean(path: &str) -> String {
-    if path.is_empty() {
-        return ".".to_owned();
-    }
-    let rooted = path.starts_with('/');
-    let mut parts: Vec<&str> = Vec::new();
-    for part in path.split('/') {
-        match part {
-            "" | "." => {}
-            ".." => {
-                if parts.last().is_some_and(|last| *last != "..") {
-                    parts.pop();
-                } else if !rooted {
-                    parts.push("..");
-                }
-            }
-            _ => parts.push(part),
-        }
-    }
-    let joined = parts.join("/");
-    if rooted {
-        format!("/{joined}")
-    } else if joined.is_empty() {
-        ".".to_owned()
-    } else {
-        joined
-    }
-}
-
-/// Go `path.Dir`: all but the last element, cleaned. A path with one element gives `.`.
-pub(crate) fn dir(path: &str) -> String {
-    match path.rfind('/') {
-        Some(index) => clean(&path[..=index]),
-        None => ".".to_owned(),
-    }
-}
-
-/// Go `path.Join` of two elements: the non-empty ones joined by a slash and cleaned. Two empty elements give "".
-pub(crate) fn join(first: &str, second: &str) -> String {
-    match (first.is_empty(), second.is_empty()) {
-        (true, true) => String::new(),
-        (true, false) => clean(second),
-        (false, true) => clean(first),
-        (false, false) => clean(&format!("{first}/{second}")),
-    }
-}
 
 /// Converts a relative slash path into a host path below `root`.
 pub(crate) fn host(root: &Path, relative: &str) -> PathBuf {
@@ -186,29 +138,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn slash_paths_follow_the_go_rules() {
-        for (path, want) in [
-            ("", "."),
-            (".", "."),
-            ("a//b/./c/", "a/b/c"),
-            ("a/../../b", "../b"),
-            ("/../a", "/a"),
-            ("./A///", "A"),
-        ] {
-            assert_eq!(clean(path), want, "clean({path:?})");
-        }
-        for (path, want) in [("a/b", "a"), ("a", "."), ("", "."), ("a/b/", "a/b"), ("/a", "/")] {
-            assert_eq!(dir(path), want, "dir({path:?})");
-        }
-        for (first, second, want) in [
-            ("", "", ""),
-            ("", "x", "x"),
-            ("kotlinc", ".", "kotlinc"),
-            ("lib", "../x", "x"),
-            ("a", "b/c", "a/b/c"),
-        ] {
-            assert_eq!(join(first, second), want, "join({first:?}, {second:?})");
-        }
+    fn host_paths_follow_the_go_rules() {
         assert_eq!(clean_host(Path::new("out/link/")), PathBuf::from("out/link"));
         assert_eq!(clean_host(Path::new("out/link/.")), PathBuf::from("out/link"));
         assert_eq!(clean_host(Path::new("/a/b/../c")), PathBuf::from("/a/c"));

@@ -155,6 +155,7 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage
 # Local crates
 appinfo = { path = "crates/appinfo" }
 component = { path = "crates/component" }
+distpath = { path = "crates/distpath" }
 filemeta = { path = "crates/filemeta" }
 fscopy = { path = "crates/fscopy" }
 jarpack = { path = "crates/jarpack" }

@@ -150,7 +150,7 @@ impl PluginComponentSpec {
             if artifact.artifact.trim().is_empty() || !identifiers.insert(artifact.artifact.as_str()) {
                 bail!("empty or duplicate independent artifact ID: {:?}", artifact.artifact);
             }
-            filemeta::validate_path(&artifact.relative_path)?;
+            distpath::validate_path(&artifact.relative_path)?;
             metadata.push(&artifact.metadata);
             payload.push(&artifact.source);
             if let Some(tree) = &artifact.native_tree {
@@ -260,7 +260,7 @@ fn refused_modules(modules: Vec<String>) -> anyhow::Result<HashSet<String>> {
 }
 
 fn validate_plugin_directory(plugin_directory: &str) -> anyhow::Result<()> {
-    let valid = filemeta::validate_path(plugin_directory).is_ok()
+    let valid = distpath::validate_path(plugin_directory).is_ok()
         && plugin_directory.starts_with("plugins/")
         && plugin_directory.matches('/').count() == 1;
     if !valid {
@@ -311,11 +311,11 @@ fn validate_declared_artifact_path(path: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Tells if one declared path is the other or holds it, by [`filemeta::path_identity`]. Two relative paths start at
+/// Tells if one declared path is the other or holds it, by [`distpath::path_identity`]. Two relative paths start at
 /// the same working directory, so the check makes a path absolute only when the other one is.
 fn overlap(first: &str, second: &str) -> anyhow::Result<bool> {
     let (first, second) = (source_identity_path(first, second)?, source_identity_path(second, first)?);
-    let (first, second) = (filemeta::path_identity(&first)?, filemeta::path_identity(&second)?);
+    let (first, second) = (distpath::path_identity(&first)?, distpath::path_identity(&second)?);
     Ok(first == second || first.starts_with(&format!("{second}/")) || second.starts_with(&format!("{first}/")))
 }
 
@@ -333,14 +333,14 @@ fn validate_packed_destinations(destinations: &[&str]) -> anyhow::Result<()> {
     let mut owned = HashSet::with_capacity(destinations.len());
     let mut spellings: HashMap<String, &str> = HashMap::with_capacity(destinations.len());
     for destination in destinations {
-        filemeta::validate_path(destination)?;
-        let identity = filemeta::path_identity(destination)?;
+        distpath::validate_path(destination)?;
+        let identity = distpath::path_identity(destination)?;
         if !owned.insert(identity.clone()) {
             bail!("conflicting plugin destinations: {} and {destination}", spellings[&identity]);
         }
         let mut prefix = *destination;
         loop {
-            let identity = filemeta::path_identity(prefix)?;
+            let identity = distpath::path_identity(prefix)?;
             if let Some(previous) = spellings.insert(identity, prefix)
                 && previous != prefix
             {
@@ -355,7 +355,7 @@ fn validate_packed_destinations(destinations: &[&str]) -> anyhow::Result<()> {
     for destination in destinations {
         let mut current = *destination;
         while let Some((parent, _)) = current.rsplit_once('/') {
-            if owned.contains(&filemeta::path_identity(parent)?) {
+            if owned.contains(&distpath::path_identity(parent)?) {
                 bail!("conflicting plugin destinations: {parent} contains {destination}");
             }
             current = parent;
@@ -436,7 +436,7 @@ fn tree_inventory(root: &str, inventory: &[Entry]) -> anyhow::Result<Vec<Entry>>
         }
         bail!("tree {root} requires root directory metadata");
     }
-    filemeta::validate_links(&links)?;
+    distpath::validate_links(&links)?;
     pluginpack::validate_link_graph(&directories, &links)?;
     Ok(owned)
 }
@@ -454,12 +454,12 @@ pub(crate) fn validate_assets(version: u32, assets: &[Asset]) -> anyhow::Result<
         if kind(tree) != "tree" {
             continue;
         }
-        let tree_identity = filemeta::path_identity(&tree.destination)?;
+        let tree_identity = distpath::path_identity(&tree.destination)?;
         for (asset_index, asset) in assets.iter().enumerate() {
             if asset_index == tree_index || kind(asset) != "file" {
                 continue;
             }
-            let asset_identity = filemeta::path_identity(&asset.destination)?;
+            let asset_identity = distpath::path_identity(&asset.destination)?;
             if tree_identity == asset_identity || tree_identity.starts_with(&format!("{asset_identity}/")) {
                 bail!("asset {} overlaps tree {}", asset.destination, tree.destination);
             }
@@ -508,7 +508,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
                 artifact.relative_path
             );
         }
-        let identity = filemeta::path_identity(&source_identity_path(&artifact.source, "")?)?;
+        let identity = distpath::path_identity(&source_identity_path(&artifact.source, "")?)?;
         if by_source.get(&identity).is_some_and(|previous| previous != entry) {
             bail!("conflicting metadata for independent source {}", artifact.source);
         }
@@ -639,7 +639,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
     }
     let mut destinations: HashMap<String, &str> = HashMap::with_capacity(entries.len());
     for entry in &entries {
-        if let Some(previous) = destinations.insert(filemeta::path_identity(&entry.relative_path)?, &entry.relative_path) {
+        if let Some(previous) = destinations.insert(distpath::path_identity(&entry.relative_path)?, &entry.relative_path) {
             bail!("conflicting plugin destinations: {previous} and {}", entry.relative_path);
         }
     }

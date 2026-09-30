@@ -1,10 +1,12 @@
 adler2
 aho_corasick
+anyhow
 cfg_if
 crc32fast
 crossbeam_deque
 crossbeam_epoch
 crossbeam_utils
+distpath
 either
 equivalent
 filemeta

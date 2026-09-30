@@ -10,6 +10,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+distpath.workspace = true
 filemeta.workspace = true
 flate2.workspace = true
 fscopy.workspace = true

@@ -94,7 +94,6 @@ impl Source {
 pub enum ManifestMode { Drop, Keep, CoverageAgent }
 impl ManifestMode { pub fn parse(value: &str) -> Result<Self>; pub fn as_str(self) -> &'static str }
 
-pub fn validate_entry_name(name: &str) -> Result<()>;
 pub fn module_output_name_filter(name: &str) -> bool;
 pub fn library_name_filter(name: &str) -> bool;
 pub fn module_output_filter() -> Filter;
@@ -102,6 +101,9 @@ pub fn library_filter() -> Filter;
 pub const INDEX_FILE_NAME: &str = "__index__";
 pub const MANIFEST_ENTRY_NAME: &str = "META-INF/MANIFEST.MF";
 ```
+
+With `validate_entry_names`, the merge checks the name of each entry with `distpath::validate_entry_name` and keeps
+its text. The natives mode checks the name of each tree file the same way.
 
 `resolve_path` joins a relative value to `base_dir` and keeps an absolute one. It refuses a value with a `.` or `..`
 component, because the recipe checks compare the paths as they are written. The packer applies it to `--trace-file=`.

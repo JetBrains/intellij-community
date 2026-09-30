@@ -46,7 +46,7 @@ pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
         }
         // The destination of the jar, not the name of its file: a platform jar can name a subdirectory of `lib/`. A
         // tree record names the directory of the library below `lib/`, as the Kotlin packer places `lib/jna/`.
-        filemeta::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
+        distpath::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
         files.push(SourcedFile {
             source: record.source,
             relative_path: format!("lib/{}", record.relative_path),
@@ -76,7 +76,7 @@ pub(crate) fn explicit_files(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
         if record.tree || record.core_class_path {
             bail!("{file}: record {number} states tree or coreClassPath, which only a packed jar record can");
         }
-        filemeta::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
+        distpath::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
         files.push(SourcedFile {
             source: record.source,
             relative_path: record.relative_path,
@@ -92,7 +92,7 @@ pub(crate) fn explicit_files(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
 pub(crate) fn validate_destinations(files: &[SourcedFile]) -> anyhow::Result<()> {
     let mut destinations = BTreeSet::new();
     for file in files {
-        filemeta::validate_path(&file.relative_path)?;
+        distpath::validate_path(&file.relative_path)?;
         if !destinations.insert(file.relative_path.as_str()) {
             bail!("conflicting destination: {}", file.relative_path);
         }

@@ -5,7 +5,7 @@ use std::path::Path;
 use walkdir::WalkDir;
 use xxhash_rust::xxh3::Xxh3Default;
 
-use crate::entry::{Entry, EntryType, Error, invalid, merge, validate_entry, validate_path};
+use crate::entry::{Entry, EntryType, Error, invalid, merge, refused, validate_entry};
 use crate::xxh3;
 
 /// The block size of [`hash_file`]: 256 KiB.
@@ -77,7 +77,7 @@ pub fn read_link_target(source: &Path) -> io::Result<String> {
 ///
 /// The function does not follow a link. It hashes a file with [`hash_file`] and rejects all other file types.
 pub fn inspect(source: &Path, relative_path: &str) -> Result<Entry, Error> {
-    validate_path(relative_path)?;
+    distpath::validate_path(relative_path).map_err(refused)?;
     let metadata = fs::symlink_metadata(source).map_err(|error| Error::io(source, error))?;
     let file_type = metadata.file_type();
     let mut entry = Entry {

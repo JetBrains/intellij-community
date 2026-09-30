@@ -9,12 +9,12 @@ use std::sync::{Arc, LazyLock};
 
 use regex::bytes::{NoExpand, Regex};
 
-use crate::error::{Error, IoContext, Result, bail};
+use crate::error::{Error, IoContext, Result, bail, invalid};
 use crate::nativelib::{self, extension};
 use crate::natives::{NativeMerge, NativeSpec, file_name};
 use crate::reader::Jar;
 use crate::writer::{DirectoryMode, Writer};
-use crate::{INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, library_filter, module_output_filter};
+use crate::{MANIFEST_ENTRY_NAME, library_filter, module_output_filter};
 
 const ENTITIES_ENTRY_NAME: &str = "META-INF/listOfEntities.txt";
 
@@ -168,27 +168,6 @@ pub struct MergeReport {
     pub bytes_written: u64,
 }
 
-/// Accepts a portable, relative file name. A directory and the generated index are not source entries.
-pub fn validate_entry_name(name: &str) -> Result<()> {
-    // `name.split('/')` finds each component that the Go `path.Clean(name) != name` test finds: an empty one, `.`, or
-    // `..`. The other tests are the ones of the Go function.
-    let unsafe_name = name.is_empty()
-        || name == "."
-        || name
-            .split('/')
-            .any(|component| component.is_empty() || component == "." || component == "..")
-        || name.starts_with('/')
-        || name == ".."
-        || name.starts_with("../")
-        || name.contains(['\\', ':', '\0', '\r', '\n'])
-        || name.len() > 65535
-        || name == INDEX_FILE_NAME;
-    if unsafe_name {
-        bail!("unsafe entry name {name:?}");
-    }
-    Ok(())
-}
-
 impl MergeSpec {
     /// The file name of [`MergeSpec::output`], the `jar` tag of the `pack jar` span and the start of the duplicate line.
     pub fn jar_name(&self) -> String {
@@ -281,7 +260,7 @@ impl MergeSpec {
             let coverage_agent = source.manifest == Some(ManifestMode::CoverageAgent);
             for entry in jar.entries() {
                 if self.validate_entry_names {
-                    validate_entry_name(entry.name).map_err(|error| error.context(source.path.display()))?;
+                    distpath::validate_entry_name(entry.name).map_err(|error| invalid!("{error}").context(source.path.display()))?;
                 }
                 if self.reject_native_entries && is_residual_native_entry(entry.name) {
                     bail!(
@@ -384,7 +363,7 @@ impl MergeSpec {
         for source in &self.sources {
             if !source.name.is_empty() {
                 if self.validate_entry_names {
-                    validate_entry_name(&source.name)?;
+                    distpath::validate_entry_name(&source.name).map_err(|error| invalid!("{error}"))?;
                 }
                 if source.filter.is_some() || source.path.as_os_str().is_empty() {
                     bail!("invalid file source {:?}", source.name);

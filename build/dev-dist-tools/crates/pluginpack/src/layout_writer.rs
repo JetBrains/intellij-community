@@ -5,9 +5,8 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-use crate::error::{IoContext, Result, fail};
+use crate::error::{Error, IoContext, Result, fail};
 use crate::paths;
-use crate::plan::validate_relative_path;
 
 /// The bytes of one layout file: bytes that an archive entry holds, or a regular file on disk, which the tree writer
 /// clones.
@@ -63,7 +62,7 @@ impl TreeWriter {
 
     /// Records the kind of a path. It reports whether this is the first claim.
     fn claim(&mut self, name: &str, kind: Claim) -> Result<bool> {
-        validate_relative_path(name)?;
+        distpath::validate_relative_path(name).map_err(Error::refused)?;
         match self.claimed.get(name) {
             None => {
                 self.claimed.insert(name.to_owned(), kind);
@@ -89,7 +88,7 @@ impl TreeWriter {
     /// Creates the missing ancestors of `name`. The first existing ancestor must be a directory, not a link.
     fn create_parents(&self, name: &str) -> Result<()> {
         let mut missing = Vec::new();
-        let mut parent = paths::dir(name);
+        let mut parent = distpath::dir(name);
         while parent != "." {
             if self.claimed.get(&parent) == Some(&Claim::Symlink) {
                 fail!("layout asset parent {parent:?} is not a directory");
@@ -104,7 +103,7 @@ impl TreeWriter {
                 Err(error) if error.kind() == io::ErrorKind::NotFound => {}
                 Err(error) => return Err(error).at(&self.path(&parent)),
             }
-            let next = paths::dir(&parent);
+            let next = distpath::dir(&parent);
             missing.push(parent);
             parent = next;
         }
@@ -199,7 +198,7 @@ fn validate_layout_link(name: &str, target: &str) -> Result<()> {
     if target.is_empty() || target.starts_with('/') || target.contains(['\\', ':', '\0', '\r', '\n']) {
         fail!("layout asset link {name:?} escapes its tree: {target}");
     }
-    let resolved = paths::join(&paths::dir(name), target);
+    let resolved = distpath::join(&distpath::dir(name), target);
     if resolved == ".." || resolved.starts_with("../") {
         fail!("layout asset link {name:?} escapes its tree: {target}");
     }
@@ -235,7 +234,7 @@ impl LayoutWriter for EntriesWriter {
     }
 
     fn file(&mut self, name: &str, content: Content, _mode: u32) -> Result<()> {
-        validate_relative_path(name)?;
+        distpath::validate_relative_path(name).map_err(Error::refused)?;
         if !self.names.insert(name.to_owned()) {
             return Ok(());
         }

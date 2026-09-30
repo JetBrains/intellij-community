@@ -477,7 +477,7 @@ fn copy_tree_rejects_unsafe_bazel_transport_files_before_writing() {
         }),
         ("conflicting roots", |root, transport| {
             for name in ["adoc/LICENSE", "css/LICENSE"] {
-                let target = root.join(crate::paths::dir(name)).join(name);
+                let target = root.join(distpath::dir(name)).join(name);
                 write_test_file(&target, name.as_bytes());
                 symlink(&target, &transport.join(name));
             }

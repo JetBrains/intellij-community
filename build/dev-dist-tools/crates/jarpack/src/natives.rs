@@ -5,8 +5,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::error::{Error, IoContext, Result, bail};
-use crate::merge::{MergeSpec, Source, validate_entry_name};
+use crate::error::{Error, IoContext, Result, bail, invalid};
+use crate::merge::{MergeSpec, Source};
 use crate::nativelib::{self, Arch, Family};
 use crate::reader::{Entry, Jar};
 
@@ -177,7 +177,8 @@ impl MergeSpec {
                 .map_err(|error| error.context(&source_path))?;
             // The path comes from an archive entry name and becomes a file path. So it is checked here, also when the
             // merge itself does not validate names.
-            validate_entry_name(&relative_path).map_err(|error| error.context(format!("{source_path}: {}", found.path_with_prefix)))?;
+            distpath::validate_entry_name(&relative_path)
+                .map_err(|error| invalid!("{error}").context(format!("{source_path}: {}", found.path_with_prefix)))?;
             if let Some(previous) = claimed.get(&relative_path) {
                 bail!(
                     "{source_path}: two native entries select {relative_path:?}: {previous} and {}",

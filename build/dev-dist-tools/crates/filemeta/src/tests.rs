@@ -4,14 +4,9 @@
     reason = "the byte pattern is the index modulo 256, and the hash values are copied from the Kotlin output"
 )]
 
-use std::collections::BTreeMap;
 use std::fs;
 
 use super::*;
-
-fn links(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
-    pairs.iter().map(|(name, target)| (name.to_string(), target.to_string())).collect()
-}
 
 fn directory(relative_path: &str, mode: u32) -> Entry {
     Entry {
@@ -159,19 +154,16 @@ fn metadata_rejects_conflicts_and_unsafe_paths() {
         let message = error_text(merge([&entry, &other]));
         assert!(message.contains("conflicting"), "conflict accepted for {other:?}: {message}");
     }
-    for name in [
-        "",
-        "/lib/a.jar",
-        "../a.jar",
-        "lib/../a.jar",
-        "lib/./a.jar",
-        "lib//a.jar",
-        "C:/a.jar",
-        "lib\\a.jar",
-        "lib/a.jar/",
-        "lib/\0",
-    ] {
-        assert!(validate_path(name).is_err(), "unsafe path accepted: {name:?}");
+    for name in ["/lib/a.jar", "lib/../a.jar", "lib\\a.jar"] {
+        let unsafe_entry = Entry {
+            relative_path: name.to_owned(),
+            ..entry.clone()
+        };
+        let message = error_text(merge([&unsafe_entry]));
+        assert!(
+            message.contains("invalid relative path"),
+            "unsafe path accepted: {name:?}: {message}"
+        );
     }
 }
 
@@ -241,90 +233,9 @@ fn inventory_rejects_escaping_links_and_special_roots() {
     assert!(inventory(&link).is_err(), "accepted a symbolic link as the declared directory");
 }
 
-#[test]
-fn validate_links_refuses_chains_and_unsafe_links() {
-    for (name, pairs, message) in [
-        (
-            "root alias chain",
-            &[("current", "."), ("escape", "current/../outside")][..],
-            "unsupported symbolic link chain",
-        ),
-        (
-            "case alias chain",
-            &[("current", "."), ("escape", "CURRENT/../outside")],
-            "unsupported symbolic link chain",
-        ),
-        (
-            "nested alias chain",
-            &[("nested/current", ".."), ("nested/escape", "current/../outside")],
-            "unsupported symbolic link chain",
-        ),
-        (
-            "safe chain",
-            &[("first", "second"), ("second", "third"), ("third", "missing-file")],
-            "unsupported symbolic link chain",
-        ),
-        ("cycle", &[("a", "b/../file"), ("b", "a")], "unsupported symbolic link chain"),
-        ("self cycle", &[("a", "a/../file")], "unsupported symbolic link chain"),
-        (
-            "nested cycle",
-            &[("a", "nested/b/../file"), ("nested/b", "../a")],
-            "unsupported symbolic link chain",
-        ),
-        (
-            "case alias cycle",
-            &[("a", "B/../file"), ("b", "A")],
-            "unsupported symbolic link chain",
-        ),
-        ("escaping target", &[("nested/a", "../../outside")], "escapes"),
-        ("absolute target", &[("a", "/outside")], "invalid"),
-        ("escaping destination", &[("../a", "inside")], "invalid"),
-        ("link parent collision", &[("a", "inside"), ("a/b", "file")], "conflicting"),
-        ("case alias collision", &[("a", "inside"), ("A", "inside")], "conflicting"),
-        ("case alias parent collision", &[("a", "inside"), ("A/b", "file")], "conflicting"),
-        ("non-ASCII destination", &[("caf\u{e9}", ".")], "unsupported character"),
-        ("non-ASCII target", &[("a", "cafe\u{301}")], "unsupported character"),
-        ("ampersand destination", &[("a&b", "inside")], "unsupported character"),
-        ("angle bracket target", &[("a", "<inside>")], "unsupported character"),
-    ] {
-        let result = validate_links(&links(pairs));
-        let text = format!("{result:?}");
-        assert!(
-            result.is_err() && text.contains(message),
-            "{name}: {pairs:?} gave {text}, want {message}"
-        );
-    }
-}
-
-/// The test uses the shapes of the links in the payloads of the repository. An npm `.bin` directory has relative file
-/// links with `..` segments. The macOS JCEF archive has a directory link with a `./` prefix.
-#[test]
-fn validate_links_accepts_the_real_link_shapes_without_file_system_access() {
-    for pairs in [
-        &[][..],
-        &[("current", ".")],
-        &[
-            ("node_modules/.bin/acorn", "../acorn/bin/acorn"),
-            ("node_modules/.bin/rimraf", "../rimraf/bin.js"),
-        ],
-        &[(
-            "Frameworks/Chromium Embedded Framework.framework",
-            "./cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework",
-        )],
-        &[("current", "directory/nested"), ("safe", "current-other/../inside")],
-        &[("alias", "./modules/../modules/separate.jar")],
-        &[("first", "missing-file"), ("second", "missing-file")],
-    ] {
-        if let Err(error) = validate_links(&links(pairs)) {
-            panic!("safe links {pairs:?}: {error}");
-        }
-    }
-}
-
-/// Checks that each entry point refuses the link target. The Go composer also refused a target with an empty segment.
+/// Checks that each entry point of the crate refuses the link target. The Go composer also refused a target with an
+/// empty segment. The `distpath` tests check `validate_links`.
 fn assert_empty_segment_is_refused(target: &str) {
-    let message = error_text(validate_links(&links(&[("lib/alias", target)])));
-    assert!(message.contains("has an empty segment"), "validate_links {target:?}: {message}");
     let entry = Entry {
         relative_path: "lib/alias".to_owned(),
         entry_type: EntryType::Symlink,
@@ -412,46 +323,12 @@ fn link_graphs_are_validated_across_metadata_boundaries() {
     }
 }
 
-#[test]
-fn path_identity_lowercases_ascii_and_refuses_other_text() {
-    assert_eq!(path_identity("Lib/A.JAR").unwrap(), "lib/a.jar");
-    assert_eq!(path_identity("lib/a.jar").unwrap(), "lib/a.jar");
-    for name in ["CAFE\u{301}", "\u{212a}", "Stra\u{df}e", "a&b", "a<b", "a>b"] {
-        let message = error_text(path_identity(name));
-        assert!(message.contains("unsupported character"), "{name:?}: {message}");
-    }
-}
-
-#[test]
-fn clean_link_target_keeps_a_relative_target_relative() {
-    for (target, expected) in [
-        ("./tool", "tool"),
-        (
-            "./cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework",
-            "cef_server.app/Contents/Frameworks/Chromium Embedded Framework.framework",
-        ),
-        ("lib//payload/", "lib/payload"),
-        ("lib/../lib/./native.jar", "lib/../lib/native.jar"),
-        ("../alias/../tool", "../alias/../tool"),
-        ("../sibling", "../sibling"),
-        (".", "."),
-        ("./", "."),
-        ("", ""),
-        ("/absolute//./target/", "/absolute//./target/"),
-    ] {
-        assert_eq!(clean_link_target(target), expected, "clean_link_target({target:?})");
-    }
-}
-
 /// No payload name in the repository is outside ASCII or holds `<`, `>` or `&`. Each operation names such a path in
 /// its error.
 #[cfg(unix)]
 #[test]
 fn metadata_refuses_names_outside_the_supported_text() {
     for name in ["caf\u{e9}", "cafe\u{301}", "\u{65e5}\u{672c}\u{8a9e}", "a&b", "a<b", "a>b"] {
-        let message = error_text(validate_path(name));
-        assert!(message.contains("unsupported character"), "{name:?}: {message}");
-
         let payload = tempfile::tempdir().unwrap();
         fs::write(payload.path().join(name), "bytes").unwrap();
         let message = error_text(inventory(payload.path()));

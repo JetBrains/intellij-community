@@ -237,7 +237,7 @@ fn validate_layout(layout: &LocalLayout) -> Result<()> {
             fail!("{} requires exactly one runfile or symbolic link target", file.path);
         }
         if let Some(runfile) = &file.runfile {
-            filemeta::validate_path(runfile)?;
+            distpath::validate_path(runfile).map_err(Error::msg)?;
         }
         match &file.symlink_target {
             Some(target) => {
@@ -259,17 +259,17 @@ fn validate_layout(layout: &LocalLayout) -> Result<()> {
     Ok(())
 }
 
-/// Returns the [`filemeta::path_identity`] of each directory in the home. A directory entry, a parent of a layout path
+/// Returns the [`distpath::path_identity`] of each directory in the home. A directory entry, a parent of a layout path
 /// and the home itself are directories. The home is the empty path.
 fn layout_directories(layout: &LocalLayout) -> Result<HashSet<String>> {
     let mut directories = HashSet::from([String::new()]);
     for file in &layout.files {
         if file.is_directory() {
-            directories.insert(filemeta::path_identity(&file.path)?);
+            directories.insert(distpath::path_identity(&file.path).map_err(Error::msg)?);
         }
         let mut current = file.path.as_str();
         while let Some((parent, _)) = current.rsplit_once('/') {
-            directories.insert(filemeta::path_identity(parent)?);
+            directories.insert(distpath::path_identity(parent).map_err(Error::msg)?);
             current = parent;
         }
     }
@@ -290,7 +290,7 @@ fn targets_directory(directories: &HashSet<String>, name: &str, target: &str) ->
             _ => resolved.push(part),
         }
     }
-    Ok(directories.contains(&filemeta::path_identity(&resolved.join("/"))?))
+    Ok(directories.contains(&distpath::path_identity(&resolved.join("/")).map_err(Error::msg)?))
 }
 
 /// The inventory entry of a file. A file without a mode has the conventional mode.

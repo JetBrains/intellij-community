@@ -15,7 +15,7 @@ A host path is a `&str` or a `String`, as in the Go tools. A function that opens
 These items of other crates are part of the contract:
 
 - `planfile::classpath::record` writes one plugin classpath record. It refuses a name that is not ASCII.
-- `filemeta::validate_path` checks a path inside a distribution: relative, in slash form, ASCII without `<`, `>` and
+- `distpath::validate_path` checks a path inside a distribution: relative, in slash form, ASCII without `<`, `>` and
   `&`. `filemeta::merge` checks a set of entries together.
 - `fscopy::conventional_mode(executable)` is the mode of a file without a mode. `fscopy::set_distribution_file_mode`
   applies a mode. `fscopy::symlink` creates each link of the local home.

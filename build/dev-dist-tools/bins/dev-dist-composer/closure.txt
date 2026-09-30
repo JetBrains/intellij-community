@@ -1,8 +1,10 @@
+anyhow
 cfg_if
 component
 crossbeam_deque
 crossbeam_epoch
 crossbeam_utils
+distpath
 either
 equivalent
 filemeta

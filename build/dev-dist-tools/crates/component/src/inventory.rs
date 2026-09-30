@@ -96,7 +96,7 @@ pub fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, Inventor
                     if file.executable {
                         fail!("symbolic link has an executable override: {}", file.relative_path);
                     }
-                    let target = filemeta::clean_link_target(&metadata.symlink_target);
+                    let target = distpath::clean_link_target(&metadata.symlink_target);
                     entry.entry_type = ComponentEntryType::Symlink;
                     entry.hash = Some(filemeta::hash_symlink_target(&target));
                     links.insert(entry.relative_path.clone(), target.clone());
@@ -138,7 +138,7 @@ pub fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, Inventor
             ..ComponentEntry::default()
         });
     }
-    filemeta::validate_links(&links)?;
+    distpath::validate_links(&links).map_err(Error::msg)?;
     entries.sort_by(|first, second| compare_utf16(&first.relative_path, &second.relative_path));
     let stats = InventoryStats {
         file_count: entries.len(),
@@ -232,7 +232,7 @@ pub fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result<Vec<So
     let mut trees: HashMap<String, TreeMetadata> = HashMap::new();
     let mut cache: HashMap<String, HashMap<String, Entry>> = HashMap::new();
     for record in &records {
-        if record.source.is_empty() || record.metadata.is_empty() || filemeta::validate_path(&record.relative_path).is_err() {
+        if record.source.is_empty() || record.metadata.is_empty() || distpath::validate_path(&record.relative_path).is_err() {
             fail!(
                 "{}: metadata records require source, metadata and a safe relativePath",
                 catalogue.display()

@@ -419,7 +419,7 @@ fn plan_rejects_unsafe_directory_references() {
 }
 
 /// The Go test planned symlink operations. The typed recipe has none, so the port checks the same graphs through the
-/// link check of a tree: `filemeta::validate_links`, then [`validate_link_graph`]. `filemeta` refuses a link chain,
+/// link check of a tree: `distpath::validate_links`, then [`validate_link_graph`]. `distpath` refuses a link chain,
 /// so a graph where one link resolves through another is refused, and a cycle is a chain. It also refuses an empty
 /// segment in a target, so the Go case of the exact spelling `./dir///` is a refusal.
 #[test]
@@ -505,7 +505,7 @@ fn link_graph_uses_raw_components_and_known_directories() {
     }
 }
 
-/// The two link checks of the collector. `filemeta::validate_links` refuses a target that resolves through another
+/// The two link checks of the collector. `distpath::validate_links` refuses a target that resolves through another
 /// link, and [`validate_link_graph`] refuses a directory that is missing from the graph.
 #[test]
 fn link_graph_refuses_a_link_chain_and_a_missing_parent() {
@@ -516,7 +516,7 @@ fn link_graph_refuses_a_link_chain_and_a_missing_parent() {
         ("file".to_owned(), false),
     ]);
     let links = BTreeMap::from([("a".to_owned(), "b".to_owned()), ("b".to_owned(), "file".to_owned())]);
-    let error = filemeta::validate_links(&links).unwrap_err();
+    let error = distpath::validate_links(&links).unwrap_err();
     assert!(error.to_string().contains("the target of a resolves through the link b"), "{error}");
     validate_link_graph(&directories, &links).unwrap();
     let orphan = BTreeMap::from([(".".to_owned(), true), ("dir/file".to_owned(), false)]);

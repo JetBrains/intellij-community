@@ -11,7 +11,6 @@ use zip::{CompressionMethod, System, ZipArchive};
 
 use crate::error::{Error, IoContext, Result, fail};
 use crate::layout::LayoutScratch;
-use crate::plan::validate_relative_path;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum EntryKind {
@@ -451,6 +450,6 @@ fn normalize_archive_name(name: &str) -> Result<Option<String>> {
     if name.is_empty() || name == "." {
         return Ok(None);
     }
-    validate_relative_path(name).map_err(|error| error.context("unsafe archive path"))?;
+    distpath::validate_relative_path(name).map_err(|error| Error::refused(error).context("unsafe archive path"))?;
     Ok(Some(name.to_owned()))
 }

@@ -22,7 +22,8 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/appinfo` | The application info: the descriptor XML round trip, the markers, the frontend merge, and the reader of the facts that `product-info.json` states. | `@community//build/dev-dist-tools/crates/appinfo:appinfo_test` |
 | `crates/component` | The component contract of the collector, the composer and the launcher: manifests, the composition spec, the fingerprint, the local layout and the local home. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
-| `crates/filemeta` | Inventory JSON version 1, the xxh3 content hashes, and the path and link checks. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
+| `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
+| `crates/filemeta` | Inventory JSON version 1 and the xxh3 content hashes. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
 | `crates/jarpack` | The packer core: the jar merge, the `__index__`, and the native tree of a presigned library. | `@community//build/dev-dist-tools/crates/jarpack:jarpack_test` |
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dev-dist-tools/crates/javaglob:javaglob_test` |

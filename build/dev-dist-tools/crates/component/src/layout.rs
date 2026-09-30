@@ -139,7 +139,7 @@ pub fn resolve_source_runfile(
         fail!("Dev-build component entry '{name}' has an unsafe source: {source}");
     };
     if let Some(exact) = files.get(&absolute) {
-        filemeta::validate_path(exact)?;
+        distpath::validate_path(exact).map_err(Error::msg)?;
         return Ok(exact.clone());
     }
     let directory = directories
@@ -149,9 +149,9 @@ pub fn resolve_source_runfile(
     let Some((directory, runfile)) = directory.max_by_key(|(candidate, _)| candidate.len()) else {
         fail!("Dev-build component entry '{name}' names an undeclared source: {source}");
     };
-    filemeta::validate_path(runfile)?;
+    distpath::validate_path(runfile).map_err(Error::msg)?;
     let child = paths::to_slash(absolute[directory.len()..].trim_start_matches(paths::SEPARATOR));
-    filemeta::validate_path(&child)?;
+    distpath::validate_path(&child).map_err(Error::msg)?;
     Ok(format!("{runfile}/{child}"))
 }
 

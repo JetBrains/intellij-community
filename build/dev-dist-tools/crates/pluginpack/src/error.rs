@@ -23,6 +23,11 @@ impl Error {
         }
     }
 
+    /// Keeps the text of a refusal of `distpath`.
+    pub(crate) fn refused(error: impl Display) -> Self {
+        Self::new(error.to_string())
+    }
+
     pub fn message(&self) -> &str {
         &self.message
     }
