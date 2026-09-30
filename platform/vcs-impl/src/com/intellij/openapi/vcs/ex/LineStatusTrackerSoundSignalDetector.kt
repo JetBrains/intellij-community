@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.ex
 
 import com.intellij.ide.soundSignals.EditorSoundSignal
 import com.intellij.ide.soundSignals.EditorSoundSignalDetector
+import com.intellij.ide.soundSignals.SoundSignal
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -14,6 +15,9 @@ class LineStatusTrackerSoundSignalDetector : EditorSoundSignalDetector {
   private val gutterInserted = EditorSoundSignal(VcsSoundSignals.GUTTER_INSERTED)
   private val gutterDeleted = EditorSoundSignal(VcsSoundSignals.GUTTER_DELETED)
   private val gutterModified = EditorSoundSignal(VcsSoundSignals.GUTTER_MODIFIED)
+
+  override val signals: Collection<SoundSignal> =
+    listOf(VcsSoundSignals.GUTTER_INSERTED, VcsSoundSignals.GUTTER_DELETED, VcsSoundSignals.GUTTER_MODIFIED)
 
   override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
     if (editor.editorKind != EditorKind.MAIN_EDITOR || !editor.settings.isLineMarkerAreaShown) return emptySet()

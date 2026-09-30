@@ -13,6 +13,9 @@ internal class ErrorWarningSoundSignalDetector : EditorSoundSignalDetector {
   private val warningLine = EditorSoundSignal(IdeSoundSignals.WARNING_LINE)
   private val warningCaret = EditorSoundSignal(IdeSoundSignals.WARNING_CARET, lineCounterpart = IdeSoundSignals.WARNING_LINE)
 
+  override val signals: Collection<SoundSignal> =
+    listOf(IdeSoundSignals.ERROR_LINE, IdeSoundSignals.ERROR_CARET, IdeSoundSignals.WARNING_LINE, IdeSoundSignals.WARNING_CARET)
+
   override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
     val editorEx = editor as? EditorEx ?: return emptySet()
     val project = editor.project?.takeUnless { it.isDisposed } ?: return emptySet()

@@ -5,6 +5,7 @@ import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.TextDiffType
 import com.intellij.ide.soundSignals.EditorSoundSignal
 import com.intellij.ide.soundSignals.EditorSoundSignalDetector
+import com.intellij.ide.soundSignals.SoundSignal
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
@@ -23,6 +24,9 @@ class DiffChangeSoundSignalDetector : EditorSoundSignalDetector {
   private val lineDeleted = EditorSoundSignal(DiffSoundSignals.LINE_DELETED)
   private val lineModified = EditorSoundSignal(DiffSoundSignals.LINE_MODIFIED)
   private val lineConflict = EditorSoundSignal(DiffSoundSignals.LINE_CONFLICT)
+
+  override val signals: Collection<SoundSignal> =
+    listOf(DiffSoundSignals.LINE_INSERTED, DiffSoundSignals.LINE_DELETED, DiffSoundSignals.LINE_MODIFIED, DiffSoundSignals.LINE_CONFLICT)
 
   override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
     if (editor.editorKind != EditorKind.DIFF) return emptySet()

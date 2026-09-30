@@ -10,6 +10,8 @@ internal class FoldedCodeSoundSignalDetector : EditorSoundSignalDetector {
   private val foldedLine = EditorSoundSignal(IdeSoundSignals.FOLDED_LINE)
   private val foldedCaret = EditorSoundSignal(IdeSoundSignals.FOLDED_CARET, lineCounterpart = IdeSoundSignals.FOLDED_LINE)
 
+  override val signals: Collection<SoundSignal> = listOf(IdeSoundSignals.FOLDED_LINE, IdeSoundSignals.FOLDED_CARET)
+
   override fun detect(editor: Editor, line: Int, caretOffset: Int): Set<EditorSoundSignal> {
     val foldingModel = editor.foldingModel as? FoldingModelEx ?: return emptySet()
     val document = editor.document

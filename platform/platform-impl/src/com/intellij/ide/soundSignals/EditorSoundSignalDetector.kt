@@ -8,11 +8,14 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun interface EditorSoundSignalDetector {
+interface EditorSoundSignalDetector {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<EditorSoundSignalDetector> = ExtensionPointName("com.intellij.editorSoundSignalDetector")
   }
+
+  /** Every signal [detect] can return. The detector is not called while none of them is enabled. */
+  val signals: Collection<SoundSignal>
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
