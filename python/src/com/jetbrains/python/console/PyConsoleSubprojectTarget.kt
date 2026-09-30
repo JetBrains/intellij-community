@@ -2,6 +2,7 @@
 package com.jetbrains.python.console
 
 import com.intellij.python.pyproject.model.evolution.findEvoPyProject
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProject
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -21,7 +22,7 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
  * working directory on `sys.path`.
  */
 internal suspend fun resolveConsoleTarget(project: Project, file: VirtualFile?): EvoPyProject? =
-  project.findEvoPyProject(file)
+  if (file == null) project.findMainEvoPyProject() else project.findEvoPyProject(file)
 
 /**
  * The main subproject — the one rooted at the project's own base dir — or `null` when the project has none, or when

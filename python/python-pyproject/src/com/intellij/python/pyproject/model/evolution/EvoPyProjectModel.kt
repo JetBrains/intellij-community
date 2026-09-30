@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.python.externalIndex.PyExternalFilesIndexService
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -143,8 +144,10 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * The `PyProject` [file] belongs to:
      *
      * * a file in a Python module answers with that module's `PyProject`;
-     * * a file in no module at all — a scratch, a file dragged in from outside — and no file at all, both fall back
-     *   to [main], the `PyProject` rooted at the project's own base dir;
+     * * a file in no module at all — a scratch, a file dragged in from outside — is an orphan. It falls back to
+     *   [main], the `PyProject` rooted at the project's own base dir, when [mainForOrphans] is set. Otherwise only an
+     *   orphan in the external files index falls back to [main]. A caller that acts on the file, such as an inspection
+     *   or a quick fix, clears [mainForOrphans]. A caller that only shows an interpreter keeps it;
      * * a file in a module that is not Python has no target, so that a mixed project never lends an unrelated
      *   interpreter.
      *
@@ -157,10 +160,11 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * [com.intellij.openapi.application.readAction], as [findEvoPyProject] does.
      */
     @RequiresReadLock
-    fun forFile(file: VirtualFile?): EvoPyProject? {
-      if (file == null) return main
-      val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: return main
-      return forModule(module)
+    fun forFile(file: VirtualFile, mainForOrphans: Boolean = true): EvoPyProject? {
+      val module = ProjectFileIndex.getInstance(project).getModuleForFile(file)
+      if (module != null) return forModule(module)
+      val fallsBackToMain = mainForOrphans || project.service<PyExternalFilesIndexService>().isFileAddedToNonProjectIndex(file)
+      return main.takeIf { fallsBackToMain }
     }
 
     /** The module is the identity a generation is built from, so at most one project answers here. */
@@ -218,7 +222,10 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
       // is resolved against was recomputed.
       combine(state.filterNotNull(), selectionChanges) { _, _ -> }
         .conflate()
-        .collect { interpreterState.value = project.findPythonInterpreter(selectedFile()) }
+        .collect {
+          val file = selectedFile()
+          interpreterState.value = if (file == null) project.findMainPythonInterpreter() else project.findPythonInterpreter(file)
+        }
     }
 
   }
@@ -340,7 +347,15 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
  * information and it repeats no lookup.
  */
 @ApiStatus.Internal
-suspend fun Project.findMainPythonInterpreter(): PythonInterpreter? = EvoPyProjectModel.getInstance(this).snapshot().main?.interpreter
+suspend fun Project.findMainPythonInterpreter(): PythonInterpreter? = findMainEvoPyProject()?.interpreter
+
+/**
+ * The Python project rooted at the project's own base dir. See [EvoPyProjectModel.Snapshot.main].
+ *
+ * The answer for a caller that has no file, such as one that follows the selected editor when no editor is open.
+ */
+@ApiStatus.Internal
+suspend fun Project.findMainEvoPyProject(): EvoPyProject? = EvoPyProjectModel.getInstance(this).snapshot().main
 
 /**
  * Every Python project of the current snapshot, with its interpreter. See [EvoPyProjectModel.Snapshot.evoPyProjects].
@@ -358,11 +373,12 @@ suspend fun Project.pythonInterpreters(): Set<PythonInterpreter> = EvoPyProjectM
 
 /**
  * The Python project every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].
+ * See there for [mainForOrphans].
  */
 @ApiStatus.Internal
-suspend fun Project.findEvoPyProject(file: VirtualFile?): EvoPyProject? {
+suspend fun Project.findEvoPyProject(file: VirtualFile, mainForOrphans: Boolean = true): EvoPyProject? {
   val snapshot = EvoPyProjectModel.getInstance(this).snapshot()
-  return readAction { snapshot.forFile(file) }
+  return readAction { snapshot.forFile(file, mainForOrphans) }
 }
 
 /**
@@ -382,6 +398,7 @@ suspend fun Project.pythonProjectBaseDirs(): Set<Path> = EvoPyProjectModel.getIn
 
 /**
  * The Python project [this] element belongs to, with its interpreter, by the rule of [EvoPyProjectModel.Snapshot.forFile].
+ * See there for [mainForOrphans]. An element outside any file on disk is an orphan too.
  * `null` also while the first snapshot is not ready.
  *
  * For a caller that cannot suspend and holds read access, such as an inspection. It does not wait for the snapshot, unlike
@@ -390,16 +407,21 @@ suspend fun Project.pythonProjectBaseDirs(): Set<Path> = EvoPyProjectModel.getIn
  */
 @ApiStatus.Internal
 @RequiresReadLock
-fun PsiElement.findEvoPyProjectIfReady(): EvoPyProject? =
-  EvoPyProjectModel.getInstance(project).snapshotOrNull()?.forFile(containingFile?.originalFile?.virtualFile)
+fun PsiElement.findEvoPyProjectIfReady(mainForOrphans: Boolean = true): EvoPyProject? {
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull() ?: return null
+  val file = containingFile?.originalFile?.virtualFile ?: return snapshot.main.takeIf { mainForOrphans }
+  return snapshot.forFile(file, mainForOrphans)
+}
 
 /**
  * The interpreter every Python surface shows for [file], by the rule of [EvoPyProjectModel.Snapshot.forFile].
+ * See there for [mainForOrphans].
  *
  * A caller that wants the interpreter of the file being edited follows [EvoPyProjectModel.interpreter] instead.
  */
 @ApiStatus.Internal
-suspend fun Project.findPythonInterpreter(file: VirtualFile?): PythonInterpreter? = findEvoPyProject(file)?.interpreter
+suspend fun Project.findPythonInterpreter(file: VirtualFile, mainForOrphans: Boolean = true): PythonInterpreter? =
+  findEvoPyProject(file, mainForOrphans)?.interpreter
 
 /**
  * The interpreter this project uses, as the current [EvoPyProjectModel.Snapshot] states it.

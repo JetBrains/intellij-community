@@ -4,15 +4,13 @@ package com.jetbrains.python.inspections.quickfix
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -21,14 +19,11 @@ internal class SyncProjectQuickFix : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
-    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
-
-    val sdk = module.pythonSdk ?: return
-
-    val packageManager = PythonPackageManager.Companion.forSdk(project, sdk)
-
-    val managerUI = PythonPackageManagerUI.Companion.forSdk(project, sdk)
-    PyPackageCoroutine.Companion.launch(project) {
+    val file = element.containingFile.virtualFile
+    PyPackageCoroutine.launch(project) {
+      val interpreter = project.findPythonInterpreter(file, mainForOrphans = false) ?: return@launch
+      val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
+      val managerUI = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
       managerUI.executeCommand(PyBundle.message("python.sdk.sync.project.text")) {
         withContext(Dispatchers.Default) {
           FileDocumentManager.getInstance().saveAllDocuments()

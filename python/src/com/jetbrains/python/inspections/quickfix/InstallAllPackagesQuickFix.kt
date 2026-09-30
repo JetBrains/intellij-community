@@ -4,30 +4,26 @@ package com.jetbrains.python.inspections.quickfix
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.openapi.components.service
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.python.externalIndex.PyExternalFilesIndexService
+import com.intellij.python.pyproject.model.evolution.findEvoPyProject
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.Nls
 
 class InstallAllPackagesQuickFix(private val packageNames: List<String>) : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
-    val sdk = PythonSdkUtil.findPythonSdk(element)
-              ?: project.service<PyExternalFilesIndexService>().findSdkForExternallyIndexedFile(descriptor.psiElement.containingFile.virtualFile)
-              ?: return
-
+    val file = element.containingFile.virtualFile
     val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
-    val module = ModuleUtilCore.findModuleForPsiElement(element)
 
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(normalizedPackageNames, module)
+      val evoPyProject = project.findEvoPyProject(file, mainForOrphans = false) ?: return@launch
+      val interpreter = evoPyProject.interpreter ?: return@launch
+      PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+        .installWithConfirmation(normalizedPackageNames, evoPyProject.pyProject.residesOnModule)
     }
   }
 

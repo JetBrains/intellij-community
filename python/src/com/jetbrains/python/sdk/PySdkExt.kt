@@ -17,6 +17,7 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
+import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
@@ -115,6 +116,14 @@ val Sdk.readOnlyErrorMessage: String
 @get:Internal
 val PythonInterpreter.isReadOnly: Boolean
   get() = getSdkAPI().isReadOnly
+
+/**
+ * Whether an inspection can offer to install packages into this interpreter. It is `false` for a remote interpreter
+ * that has no package management. See [com.jetbrains.python.packaging.PyPackageUtil.packageManagementEnabled].
+ */
+@get:Internal
+val PythonInterpreter.isPackageManagementEnabled: Boolean
+  get() = PyPackageUtil.packageManagementEnabled(getSdkAPI(), false, true)
 
 /** Why packages cannot be installed into this interpreter. See [isReadOnly]. */
 @get:Internal

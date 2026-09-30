@@ -24,7 +24,7 @@ internal class PyIncompatibleStubVisitor(
       val message = PyPsiBundle.message("INSP.stub.packages.compatibility.incompatible.packages.message", stub.stubRequirement.name)
       registerProblem(file,
                       message,
-                      InstallStubQuickFix(stub.stubRequirement, packageManager.sdk),
+                      InstallStubQuickFix(stub.stubRequirement, packageManager),
                       IgnoreStubCompatibilityQuickFix(stub.stubRequirement, ignoredStubPackages))
     }
   }

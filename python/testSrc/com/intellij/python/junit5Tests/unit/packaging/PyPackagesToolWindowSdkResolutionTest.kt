@@ -15,6 +15,7 @@ import com.jetbrains.python.PythonTestUtil
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
 import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.psi.LanguageLevel
@@ -88,7 +89,8 @@ internal class PyPackagesToolWindowSdkResolutionTest {
   private suspend fun resolvedInterpreter(): Sdk? {
     val project = projectFixture.get()
     val selected = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
-    return project.findPythonInterpreter(selected)?.getSdkAPI()
+    val interpreter = if (selected == null) project.findMainPythonInterpreter() else project.findPythonInterpreter(selected)
+    return interpreter?.getSdkAPI()
   }
 
   /**

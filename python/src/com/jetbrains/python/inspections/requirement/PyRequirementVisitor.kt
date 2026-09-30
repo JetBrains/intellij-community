@@ -50,7 +50,7 @@ internal class PyRequirementVisitor(
 
     val packageReferenceExpression = PyPsiUtils.getFirstQualifier(importedExpression)
     val importedPyModule = packageReferenceExpression.name ?: return
-    val evoPyProject = packageReferenceExpression.findEvoPyProjectIfReady() ?: return
+    val evoPyProject = packageReferenceExpression.findEvoPyProjectIfReady(mainForOrphans = false) ?: return
     val project = packageReferenceExpression.project
 
     if (PyPackageManagerModuleHelpers.isLocalModule(packageReferenceExpression, evoPyProject.pyProject.residesOnModule)) {
@@ -83,7 +83,7 @@ internal class PyRequirementVisitor(
   }
 
   override fun visitPyFile(node: PyFile) {
-    val evoPyProject = node.findEvoPyProjectIfReady() ?: return
+    val evoPyProject = node.findEvoPyProjectIfReady(mainForOrphans = false) ?: return
     checkPackagesHaveBeenInstalled(node, evoPyProject)
   }
 

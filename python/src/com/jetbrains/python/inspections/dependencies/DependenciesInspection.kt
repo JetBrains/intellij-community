@@ -51,7 +51,7 @@ class DependenciesInspection : LocalInspectionTool() {
       return false
     }
 
-    val interpreter = file.findEvoPyProjectIfReady()?.interpreter ?: return false
+    val interpreter = file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return false
     val packageManager = PythonPackageManager.forPythonInterpreter(file.project, interpreter)
 
     return file.injectionParent() == null && packageManager.tracksDependencyFile(file)
@@ -62,7 +62,7 @@ class DependenciesInspection : LocalInspectionTool() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    val interpreter = session.file.findEvoPyProjectIfReady()?.interpreter ?: return PsiElementVisitor.EMPTY_VISITOR
+    val interpreter = session.file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return PsiElementVisitor.EMPTY_VISITOR
     val packageManager = PythonPackageManager.forPythonInterpreter(session.file.project, interpreter)
     return Visitor(holder, packageManager)
   }

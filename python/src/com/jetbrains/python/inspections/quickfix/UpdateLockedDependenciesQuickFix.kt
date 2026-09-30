@@ -6,12 +6,10 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.requirements.getPythonSdk
 
 /**
  * Quick-fix for `[project].dependencies` problems in `pyproject.toml` reported by managers
@@ -45,7 +43,7 @@ internal class UpdateLockedDependenciesQuickFix(
       // Route through PythonPackageManagerUI so the run gets the standard serialized background-progress
       // wrapper plus error-sink reporting; otherwise a sync failure (e.g. `poetry lock` is
       // out of sync) would surface only via logger.warn and the user would see no feedback.
-      val pmUI = PythonPackageManagerUI.forSdk(project, packageManager.sdk)
+      val pmUI = PythonPackageManagerUI.forPackageManager(packageManager)
       pmUI.executeCommand(PyBundle.message("python.packaging.installing.packages")) {
         updateLockedAction().mapSuccess { }
       }

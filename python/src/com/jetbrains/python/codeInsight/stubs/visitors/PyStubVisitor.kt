@@ -15,7 +15,7 @@ internal abstract class PyStubVisitor(
   session: LocalInspectionToolSession,
 ) : PyInspectionVisitor(holder, getContext(session)) {
   override fun visitPyFile(file: PyFile) {
-    val interpreter = file.findEvoPyProjectIfReady()?.interpreter ?: return
+    val interpreter = file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return
     if (interpreter.isReadOnly)
       return
     val importedPackages = loadImportedPackages(file).ifEmpty { null } ?: return

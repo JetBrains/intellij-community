@@ -25,7 +25,7 @@ internal class PyStubAdvertiserVisitor(
       val message = PyBundle.message("code.insight.type.hints.are.not.installed", stub.stubRequirement.name)
       registerProblem(file,
                       message,
-                      InstallStubQuickFix(stub.stubRequirement, packageManager.sdk),
+                      InstallStubQuickFix(stub.stubRequirement, packageManager),
                       IgnoreStubAdvertiseQuickFix(stub.packageName, ignoredPackages))
     }
   }

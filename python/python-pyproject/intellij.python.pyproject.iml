@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.python.requirements.backend" />
     <orderEntry type="module" module-name="intellij.python.sdk.common" />
+    <orderEntry type="module" module-name="intellij.python.externalIndex" />
   </component>
 </module>
