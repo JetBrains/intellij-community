@@ -7,6 +7,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.StartId
+import com.intellij.build.output.BuildOutputInstantReaderImpl.Companion.asLineParser
 import com.intellij.build.output.BuildOutputMulticaster
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.BuildOutputParserDispatcher
@@ -23,7 +24,7 @@ import java.util.function.Consumer
 abstract class AbstractExternalSystemOutputMessageDispatcher(
   protected val buildId: BuildId,
   private val listener: BuildProgressListener,
-  private val parsers: List<BuildOutputParser>,
+  parsers: List<BuildOutputParser>,
   protected val consoleSettings: BuildViewSettingsProvider,
 ) : ExternalSystemOutputMessageDispatcher {
 
@@ -38,8 +39,10 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
     }
   }
 
+  private val lineParsers = parsers.map { it.asLineParser(consoleSettings) }
+
   protected fun createParserDispatcher(parentEventId: StartId): BuildOutputParserDispatcher {
-    return BuildOutputParserDispatcherImpl(parentEventId, parsers, multicaster)
+    return BuildOutputParserDispatcherImpl(parentEventId, lineParsers, multicaster)
   }
 
   override fun notifyBuildEvent(buildId: BuildId, event: BuildEvent) {

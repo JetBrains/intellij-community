@@ -70,17 +70,24 @@ class BuildOutputParserDispatcherTest {
   fun `test pushBack inside parser works correctly`(): Unit = timeoutRunBlocking {
     val lines = mutableListOf<Pair<String, List<String>>>()
 
-    val parser = BuildOutputParser { line, reader, _ ->
-      val parserLines = mutableListOf<String>()
-      repeat(2) {
-        val nextLine = reader.readLine()
-        if (nextLine != null) {
-          parserLines += nextLine
-          reader.pushBack()
+    val parser = object : BuildOutputLineParser {
+      override suspend fun parse(
+        line: BuildOutputText,
+        reader: BuildOutputReplayableLineReader,
+        taskId: StartId,
+        multicaster: BuildOutputMulticaster,
+      ): Boolean {
+        val parserLines = mutableListOf<String>()
+        repeat(2) {
+          val nextLine = reader.readLine()
+          if (nextLine != null) {
+            parserLines += nextLine.text
+            reader.pushBack(1)
+          }
         }
+        lines.add(line.text to parserLines)
+        return false
       }
-      lines.add(line to parserLines)
-      false
     }
 
     val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), NoopBuildOutputMulticaster)
@@ -117,13 +124,20 @@ class BuildOutputParserDispatcherTest {
       override fun getDescription(): String? = null
     }
 
-    val parser = BuildOutputParser { _, _, messageConsumer ->
-      messageConsumer.accept(event)
-      messageConsumer.accept(event)
-      messageConsumer.accept(event)
-      messageConsumer.accept(event)
-      messageConsumer.accept(event)
-      true
+    val parser = object : BuildOutputLineParser {
+      override suspend fun parse(
+        line: BuildOutputText,
+        reader: BuildOutputReplayableLineReader,
+        taskId: StartId,
+        multicaster: BuildOutputMulticaster,
+      ): Boolean {
+        multicaster.notifyBuildEvent(event)
+        multicaster.notifyBuildEvent(event)
+        multicaster.notifyBuildEvent(event)
+        multicaster.notifyBuildEvent(event)
+        multicaster.notifyBuildEvent(event)
+        return true
+      }
     }
 
     val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), multicaster)
@@ -183,7 +197,7 @@ class BuildOutputParserDispatcherTest {
 
   private class RecordingBuildOutputParser(
     private val parse: () -> Boolean,
-  ) : BuildOutputParser {
+  ) : BuildOutputLineParser {
 
     constructor(result: Boolean = true) : this({ result })
 
@@ -193,8 +207,13 @@ class BuildOutputParserDispatcherTest {
       assertEquals(expected.asList(), lines)
     }
 
-    override fun parse(line: String, reader: BuildOutputInstantReader, messageConsumer: Consumer<in BuildEvent>): Boolean {
-      lines.add(line)
+    override suspend fun parse(
+      line: BuildOutputText,
+      reader: BuildOutputReplayableLineReader,
+      taskId: StartId,
+      multicaster: BuildOutputMulticaster,
+    ): Boolean {
+      lines.add(line.text)
       return parse()
     }
   }
