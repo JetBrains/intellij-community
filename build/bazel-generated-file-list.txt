@@ -1314,6 +1314,7 @@ plugins/git4idea/hosting
 plugins/git4idea/intellij.vcs.git.coverage
 plugins/git4idea/localHistory
 plugins/git4idea/performanceTesting
+plugins/git4idea/rpc.backend
 plugins/git4idea/rt
 plugins/git4idea/shared
 plugins/git4idea/terminal

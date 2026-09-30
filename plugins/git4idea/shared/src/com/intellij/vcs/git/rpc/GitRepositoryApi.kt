@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.rpc
 
+import com.intellij.ide.rpc.awaitWithOptionalLocalFallback
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.vcs.git.ref.GitCurrentRef
@@ -43,7 +45,7 @@ interface GitRepositoryApi : RemoteApi<Unit> {
   suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean)
 
   companion object {
-    suspend fun getInstance(): GitRepositoryApi = RemoteApiProviderService.resolve(remoteApiDescriptor<GitRepositoryApi>())
+    suspend fun getInstance(): GitRepositoryApi = LiteRemoteApiProviderService.awaitWithOptionalLocalFallback(remoteApiDescriptor<GitRepositoryApi>()) { serviceOrNull<GitRepositoryApi>() }
 
     fun launchRequest(project: Project, request: suspend GitRepositoryApi.() -> Unit) {
       GitDisposable.getInstance(project).coroutineScope.launch {

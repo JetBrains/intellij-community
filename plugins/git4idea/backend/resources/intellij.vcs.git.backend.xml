@@ -22,7 +22,6 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.xz"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.codeStyle"/>
@@ -59,7 +58,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
-    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.searchEverywhere"/>
     <module name="intellij.platform.statistics"/>
@@ -1055,13 +1054,17 @@
     <vcs.diffRevisionMetadataProvider implementation="git4idea.diff.GitDiffRevisionMetadataProvider"/>
 
     <troubleInfoCollector implementation="git4idea.troubleshooting.GitTroubleInfoCollector"/>
-
-    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"
-                                            apiInterfaces="com.intellij.vcs.git.rpc.GitWidgetApi,
-                                                           com.intellij.vcs.git.rpc.GitRepositoryApi,
-                                                           com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi,
-                                                           com.intellij.vcs.git.rpc.GitUiSettingsApi,
-                                                           com.intellij.vcs.git.rpc.GitOperationsApi"/>
+    <!-- The remote API implementations are application services, so a light IDE reaches them without the rpc backend. -->
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitWidgetApi"
+                        serviceImplementation="git4idea.remoteApi.GitWidgetApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitRepositoryApi"
+                        serviceImplementation="git4idea.remoteApi.GitRepositoryApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi"
+                        serviceImplementation="git4idea.remoteApi.GitIncomingOutgoingStateApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitUiSettingsApi"
+                        serviceImplementation="git4idea.remoteApi.GitUiSettingsApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitOperationsApi"
+                        serviceImplementation="git4idea.remoteApi.GitOperationsApiImpl"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
 

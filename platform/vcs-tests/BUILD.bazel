@@ -180,6 +180,8 @@ jvm_library(
         "//platform/vcs-tests:vcs-testFramework_test_lib",
         "//platform/vcs-impl",
         "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/vcs-impl/backend",
+        "//platform/vcs-impl/backend:backend_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/vcs-impl/lang",

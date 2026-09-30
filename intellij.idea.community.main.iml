@@ -72,6 +72,8 @@
     <orderEntry type="module" module-name="intellij.devkit.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git.rpc.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="RUNTIME" />
