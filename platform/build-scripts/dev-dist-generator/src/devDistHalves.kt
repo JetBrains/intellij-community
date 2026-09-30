@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.JpsProject
 import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.TreeSet
 
 /**
  * Starts the dev-distribution renders of one generator run beside the product-model pipeline: the plan of the
@@ -66,7 +67,9 @@ fun TaskScope.forkDevDistHalves(
   // The community half renders first, and the half of this run reads its upstream summary.
   if (devDistPlanInputExists(projectRoot)) {
     val upstreamTask = fork("generate community dev-distribution plan") {
-      computeCommunityDevDistFiles(projectRoot = projectRoot, verifyPlanUnits = verifyPlanUnits)
+      buildSpan("generate community dev-distribution plan") {
+        computeCommunityDevDistFiles(projectRoot = projectRoot, verifyPlanUnits = verifyPlanUnits)
+      }
     }
     communityTask = upstreamTask
     bazelTask = fork("generate dev-distribution build sections and plan") {
@@ -225,24 +228,21 @@ internal fun computeDevDistBazelFiles(
       generatedModuleSetDescriptors = half.generatedModuleSetDescriptors,
     )
   }
-  fun computeSections(foreignSections: Set<String>): DevDistBuildSections {
-    return buildSpan("generate dev-distribution build sections") {
-      computeDevDistBuildSections(
-        outputProvider = outputProvider,
-        products = products,
-        walk = walk,
-        derivation = derivation,
-        index = index,
-        files = files,
-        half = half,
-        testPlugins = testPlugins,
-        verifyPlanUnits = verifyPlanUnits,
-        foreignSections = foreignSections,
-        upstream = upstream,
-      )
-    }
+  val sections = buildSpan("generate dev-distribution build sections") {
+    val inputs = DevDistSectionInputs.compute(
+      outputProvider = outputProvider,
+      products = products,
+      walk = walk,
+      derivation = derivation,
+      sourceIndex = index,
+      files = files,
+      half = half,
+      testPlugins = testPlugins,
+      verifyPlanUnits = verifyPlanUnits,
+      upstream = upstream,
+    )
+    if (upstream == null) DevDistBuildSections.fold(inputs, foreignSections = emptySet(), reuse = null) else computeUpstreamAwareSections(upstream, inputs)
   }
-  val sections = if (upstream == null) computeSections(emptySet()) else computeUpstreamAwareSections(upstream, ::computeSections)
   upstream?.let(sections::requireResourcesDeclaredBy)
   val executions = buildSpan("generate dev-distribution plugin executions") {
     computeDevDistPluginExecutions(
@@ -277,22 +277,40 @@ internal fun computeDevDistBazelFiles(
 }
 
 /**
- * The sections of the ultimate half. The first computation finds
- * the community plugins whose `dev` section the community half states with another text, see [foreignCommunitySections].
- * The second computation moves their leaf and their `dev_plugin` into the product package of the plugin under `build/`.
- * Every other community plugin reuses the targets of its community section. The census prints one line per plugin.
+ * The sections of the ultimate half, folded from [inputs] once or twice, see [DevDistBuildSections.fold].
+ *
+ * The first computation finds the community plugins whose `dev` section the community half states with another text,
+ * see [foreignCommunitySections]. The second computation moves their leaf and their `dev_plugin` into the product
+ * package of the plugin under `build/`. It takes the plans of every other plugin from the first computation. Every other
+ * community plugin reuses the targets of its community section. The second computation must find the same foreign
+ * plugins, see [requireForeignFixpoint]. The census prints one line per foreign plugin and one line for the fixpoint.
  */
-private fun computeUpstreamAwareSections(
-  upstream: DevDistUpstreamHalf,
-  computeSections: (Set<String>) -> DevDistBuildSections,
-): DevDistBuildSections {
-  val first = computeSections(emptySet())
+private fun computeUpstreamAwareSections(upstream: DevDistUpstreamHalf, inputs: DevDistSectionInputs): DevDistBuildSections {
+  val first = DevDistBuildSections.fold(inputs, foreignSections = emptySet(), reuse = null)
   val foreign = foreignCommunitySections(upstream = upstream, ultimate = first)
   for (mainModule in foreign) {
     println("product package of $mainModule: the ultimate half states another leaf or packaging than its community section")
   }
   println("ultimate half: ${foreign.size} product packages of community plugins")
-  return if (foreign.isEmpty()) first else computeSections(foreign)
+  if (foreign.isEmpty()) {
+    return first
+  }
+  val second = DevDistBuildSections.fold(inputs, foreignSections = foreign, reuse = first)
+  requireForeignFixpoint(foreign = foreign, second = foreignCommunitySections(upstream = upstream, ultimate = second))
+  println("ultimate half: the second computation finds the same ${foreign.size} foreign community plugins")
+  return second
+}
+
+/**
+ * Fails when the second computation of the ultimate half changes the set of foreign community plugins. [foreign] is the
+ * set of the first computation, and [second] is the set of the second one. The message names the plugins that join the
+ * set and the plugins that leave it.
+ */
+internal fun requireForeignFixpoint(foreign: Set<String>, second: Set<String>) {
+  check(second == foreign) {
+    "The second computation of the ultimate half changes the foreign community plugins. " +
+    "It adds ${second.filterTo(TreeSet()) { it !in foreign }} and removes ${foreign.filterTo(TreeSet()) { it !in second }}."
+  }
 }
 
 /**

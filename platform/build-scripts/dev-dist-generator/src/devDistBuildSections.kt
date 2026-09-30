@@ -620,6 +620,138 @@ internal class DevDistBuildSections private constructor(
   }
 
   companion object {
+    /**
+     * The sections of [inputs]. A plugin of [foreignSections] declares no own leaf.
+     *
+     * [foreignSections] names the community plugins whose community `dev` section states another leaf or packaging
+     * than this run. Only the ultimate half names any, see [foreignCommunitySections]. The run writes the leaf and the
+     * `dev_plugin` of such a plugin into the product package of the plugin.
+     *
+     * [reuse] is a fold of the same [inputs]. A plugin outside [foreignSections] reads its plans from [reuse], see
+     * [registerGeneratedDevDistPluginPlans]. The records of the other plugins are equal in both folds, so their plan
+     * inputs are equal too.
+     */
+    fun fold(inputs: DevDistSectionInputs, foreignSections: Set<String>, reuse: DevDistBuildSections?): DevDistBuildSections {
+      require(reuse == null || reuse.descriptorPlans === inputs.descriptorPlans) { "A fold reuses only a fold of the same inputs" }
+      return buildSpan("dev sections: fold") { foldSpan ->
+        foldSpan.setAttribute("foreignSections", foreignSections.size.toLong())
+        val pluginRecords = TreeMap<String, DevSectionRecord>()
+        for ((mainModule, outcome) in inputs.sectionOutcomes) {
+          // The ultimate half cannot reuse the community section of a foreign plugin, so the plugin declares no leaf of
+          // its own here. Its leaf and its `dev_plugin` go to the product package, see `collectCrossHalfDescriptorPackages`.
+          pluginRecords.put(mainModule, if (mainModule in foreignSections) DevSectionRecord(descriptorTargets = emptyMap()) else outcome.record)
+        }
+        val verdicts = DevDistToolVerdicts(
+          contentModuleJarLabels = inputs.contentModuleJarLabels,
+          pluginRecords = pluginRecords,
+          population = inputs.population,
+          frontendRootDescriptorJars = inputs.frontendRootDescriptorJars,
+        )
+        val index = inputs.index
+        val crossHalfDescriptorPackages = buildSpan("dev sections: cross-half descriptor packages") {
+          collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = inputs.residueClasses, planLabel = index::planLabel, half = inputs.half)
+        }
+        val result = DevDistBuildSections(
+          contentModuleJarCalls = inputs.contentModuleJarCalls,
+          pendingSections = inputs.pendingSections,
+          sectionLoadStatements = inputs.copyLoadStatements(),
+          verdicts = verdicts,
+          descriptorPlans = inputs.descriptorPlans,
+          residueClasses = inputs.residueClasses,
+          crossHalfDescriptorPackages = crossHalfDescriptorPackages,
+          platformJars = inputs.platformJars,
+          pluginRequests = inputs.pluginRequests,
+          index = index,
+          half = inputs.half,
+          halfStatements = inputs.halfStatements,
+          frontendRootDescriptorJars = inputs.renderedFrontendRootDescriptorJars,
+          verifyPlanUnits = inputs.verifyPlanUnits,
+          relocatedContentModuleJarCalls = inputs.relocatedContentModuleJarCalls,
+          registryResourceInputs = inputs.registryResourceInputs,
+          registrySourceTrees = inputs.registrySourceTrees,
+        )
+        buildSpan("dev sections: register plugin plans") { span ->
+          val reusedGroups = registerGeneratedDevDistPluginPlans(
+            owner = result,
+            outputProvider = inputs.outputProvider,
+            layoutBindings = inputs.layoutBindings,
+            hasPackageAttribute = inputs.hasPackageAttribute,
+            reuse = reuse,
+            recomputed = foreignSections,
+          )
+          span.setAttribute("requests", inputs.pluginRequests.size.toLong())
+          span.setAttribute("planUnits", result.planUnitCount.toLong())
+          span.setAttribute("reusedGroups", reusedGroups.toLong())
+        }
+        result
+      }
+    }
+  }
+}
+
+/**
+ * The inputs of the `dev` sections of one half that no set of foreign plugins changes, computed once, see
+ * [DevDistBuildSections.fold].
+ *
+ * The ultimate half folds them twice. Both folds read the same [descriptorPlans] and the same entries, so the descriptor
+ * declarations of both owners key the same objects. [sectionOutcomes] holds the draft and the record of every plugin
+ * with a Bazel package, keyed by main module, in the order of [PluginPackingDerivation.plugins]. [pendingSections]
+ * holds the drafts, sorted. [loadStatements] holds the load lines of every stated module, the draft loads included,
+ * before a fold binds its plugin executions. [layoutBindings] holds the bindings of every request, keyed by request.
+ */
+internal class DevDistSectionInputs private constructor(
+  @JvmField val outputProvider: ModuleOutputProvider,
+  @JvmField val half: DevDistHalf,
+  @JvmField val index: DevDistBazelIndex,
+  @JvmField val verifyPlanUnits: Boolean,
+  @JvmField val pluginRequests: List<DevDistPluginRequest>,
+  @JvmField val layoutBindings: Map<DevDistPluginPlanKey, DevDistPluginLayoutBindings>,
+  @JvmField val hasPackageAttribute: (Path) -> Boolean,
+  @JvmField val halfStatements: DevDistHalfSectionStatements,
+  @JvmField val registryResourceInputs: Map<String, List<DevDistPluginRawInput>>,
+  @JvmField val registrySourceTrees: Map<String, List<DeclaredResourceSource>>,
+  @JvmField val descriptorPlans: List<PluginDescriptorPlan>,
+  @JvmField val residueClasses: Map<String, DescriptorResidueClasses>,
+  @JvmField val contentModuleJarCalls: Map<String, String>,
+  @JvmField val relocatedContentModuleJarCalls: Map<String, String>,
+  @JvmField val contentModuleJarLabels: Map<String, DevDistModuleJarArtifact>,
+  private val loadStatements: Map<String, List<LoadStatement>>,
+  @JvmField val sectionOutcomes: Map<String, DevSectionOutcome>,
+  @JvmField val pendingSections: Map<String, PendingDevSection>,
+  @JvmField val platformJars: DevDistPlatformJars,
+  @JvmField val population: Set<String>,
+  @JvmField val frontendRootDescriptorJars: Map<String, String>,
+  @JvmField val renderedFrontendRootDescriptorJars: List<Target>,
+) {
+  /** A copy of [loadStatements] that a fold owns. [DevDistBuildSections.bindPluginExecutions] adds the loads of its calls. */
+  fun copyLoadStatements(): TreeMap<String, MutableList<LoadStatement>> {
+    val result = TreeMap<String, MutableList<LoadStatement>>()
+    for ((module, loads) in loadStatements) {
+      result.put(module, ArrayList(loads))
+    }
+    return result
+  }
+
+  companion object {
+    /**
+     * Computes the inputs of the `content_module_jar` calls and the `dev` sections of every module the converter
+     * writes them for.
+     *
+     * [derivation] is the one [derivePluginPackings] result of the run, so a plugin has one
+     * [com.intellij.platform.buildScripts.pluginModelTool.DerivedPluginPacking] here and in the plugin table.
+     * The labels come from `build/bazel-targets.json` through [sourceIndex]. The descriptor half reads the plan
+     * entries [collectPluginDescriptorPlans] builds for the split products over [walk], which is the one descriptor
+     * walk of the run. [files] answers the `build` skip marker of a module. [half] is the half of the run, and
+     * [testPlugins] are the Product DSL test plugins that a run-configuration module can name.
+     *
+     * A module the JSON does not place writes no `BUILD.bazel` section, so it is not in any map. The plan reads the
+     * same computation through [DevDistBuildSections.verdicts], so the plan and the sections state one label per target.
+     *
+     * Every descriptor entry states the refusals of every stated mode, and the community half states the resources of
+     * every layout of its registry. [upstream] is the upstream summary of the community half, which the ultimate half
+     * reads. A `content_module_jar` call of a community module that differs from the one of [upstream] goes to the
+     * product package, see [DevDistBuildSections.relocatedContentModuleJarCalls].
+     */
     fun compute(
       outputProvider: ModuleOutputProvider,
       products: List<DiscoveredProduct>,
@@ -630,9 +762,8 @@ internal class DevDistBuildSections private constructor(
       half: DevDistHalf,
       testPlugins: List<TestPluginSpec>,
       verifyPlanUnits: Boolean = false,
-      foreignSections: Set<String> = emptySet(),
       upstream: DevDistUpstreamHalf? = null,
-    ): DevDistBuildSections {
+    ): DevDistSectionInputs {
       val index = snapshotDevDistBazelIndex(sourceIndex)
 
       // Every rejection site stops the run, for a bundled and an additional plugin alike. The run-configuration reader
@@ -777,7 +908,7 @@ internal class DevDistBuildSections private constructor(
         descriptorEntries.computeIfAbsent(leaf.mainModule) { ArrayList() }.add(leaf)
       }
       val pendingSections = TreeMap<String, PendingDevSection>()
-      val pluginRecords = TreeMap<String, DevSectionRecord>()
+      val sectionOutcomes = LinkedHashMap<String, DevSectionOutcome>()
       buildSpan("dev sections: plugin sections") {
         for (plugin in derivation.plugins) {
           val mainModule = plugin.mainModule
@@ -791,54 +922,36 @@ internal class DevDistBuildSections private constructor(
             index = index,
             outputProvider = outputProvider,
           )
-          // The ultimate half cannot reuse the community section of a foreign plugin, so the plugin declares no leaf of its
-          // own here. Its leaf and its `dev_plugin` go to the product package, see `collectCrossHalfDescriptorPackages`.
-          val record = if (mainModule in foreignSections) DevSectionRecord(descriptorTargets = emptyMap()) else outcome.record
-          check(pluginRecords.put(mainModule, record) == null) { "Duplicate plugin declaration '$mainModule'" }
+          check(sectionOutcomes.put(mainModule, outcome) == null) { "Duplicate plugin declaration '$mainModule'" }
           val draft = outcome.draft ?: continue
           pendingSections.put(mainModule, draft)
           loadStatements.computeIfAbsent(mainModule) { ArrayList() }.addAll(draft.loadStatements)
         }
       }
-      val verdicts = DevDistToolVerdicts(
-        contentModuleJarLabels = Collections.unmodifiableMap(contentModuleJarLabels),
-        pluginRecords = pluginRecords,
-        population = derivation.population,
-        frontendRootDescriptorJars = embeddedClasses.frontendRootDescriptorJars(),
-      )
-      val crossHalfDescriptorPackages = buildSpan("dev sections: cross-half descriptor packages") {
-        collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = residueClasses, planLabel = index::planLabel, half = half)
-      }
-      val result = DevDistBuildSections(
-        contentModuleJarCalls = contentModuleJarCalls,
-        pendingSections = pendingSections,
-        sectionLoadStatements = loadStatements,
-        verdicts = verdicts,
-        descriptorPlans = plans,
-        residueClasses = residueClasses,
-        crossHalfDescriptorPackages = crossHalfDescriptorPackages,
-        platformJars = derivation.platformJars,
-        pluginRequests = java.util.List.copyOf(pluginRequests),
-        index = index,
+      return DevDistSectionInputs(
+        outputProvider = outputProvider,
         half = half,
-        halfStatements = halfStatements,
-        frontendRootDescriptorJars = embeddedClasses.renderFrontendRootDescriptorJars(),
+        index = index,
         verifyPlanUnits = verifyPlanUnits,
-        relocatedContentModuleJarCalls = Collections.unmodifiableMap(relocatedCalls),
+        pluginRequests = java.util.List.copyOf(pluginRequests),
+        layoutBindings = layoutBindings,
+        hasPackageAttribute = walk.collector::hasPackageAttribute,
+        halfStatements = halfStatements,
         registryResourceInputs = registryResourceInputs,
         registrySourceTrees = registrySourceTrees,
+        descriptorPlans = plans,
+        residueClasses = residueClasses,
+        contentModuleJarCalls = Collections.unmodifiableMap(contentModuleJarCalls),
+        relocatedContentModuleJarCalls = Collections.unmodifiableMap(relocatedCalls),
+        contentModuleJarLabels = Collections.unmodifiableMap(contentModuleJarLabels),
+        loadStatements = loadStatements,
+        sectionOutcomes = Collections.unmodifiableMap(sectionOutcomes),
+        pendingSections = Collections.unmodifiableMap(pendingSections),
+        platformJars = derivation.platformJars,
+        population = derivation.population,
+        frontendRootDescriptorJars = embeddedClasses.frontendRootDescriptorJars(),
+        renderedFrontendRootDescriptorJars = embeddedClasses.renderFrontendRootDescriptorJars(),
       )
-      buildSpan("dev sections: register plugin plans") { span ->
-        registerGeneratedDevDistPluginPlans(
-          owner = result,
-          outputProvider = outputProvider,
-          layoutBindings = layoutBindings,
-          hasPackageAttribute = walk.collector::hasPackageAttribute,
-        )
-        span.setAttribute("requests", pluginRequests.size.toLong())
-        span.setAttribute("planUnits", result.planUnitCount.toLong())
-      }
-      return result
     }
   }
 }
@@ -897,46 +1010,6 @@ internal const val DEV_DIST_FRONTEND_APPLICATION_INFO_RULE: String =
  * `devDistCrossHalfDescriptorPackage.kt` writes them.
  */
 internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors"
-
-/**
- * Renders the `content_module_jar` call and the `dev` section of every module the converter writes them for.
- *
- * [derivation] is the one [derivePluginPackings] result of the run, so a plugin has one
- * [com.intellij.platform.buildScripts.pluginModelTool.DerivedPluginPacking] here and in the plugin table.
- * The labels come from `build/bazel-targets.json` through [index]. The descriptor half reads the plan entries
- * [collectPluginDescriptorPlans] builds for the split products over [walk], which is the one descriptor walk of the run.
- * [files] answers the `build` skip marker of a module. [half] is the half of the run, and [testPlugins] are the Product
- * DSL test plugins that a run-configuration module can name.
- *
- * A module the JSON does not place writes no `BUILD.bazel` section, so it is not in any map. The plan reads the same
- * computation through [DevDistBuildSections.verdicts], so the plan and the sections state one label per target.
- *
- * [foreignSections] names the community plugins whose community `dev` section states another leaf or packaging than
- * this run. Only the ultimate half names any, see [foreignCommunitySections]. Such a plugin declares no own leaf, so the
- * run writes its leaf and its `dev_plugin` into the product package of the plugin.
- *
- * Every descriptor entry states the refusals of every stated mode, and the community half states the resources of every
- * layout of its registry. [upstream] is the upstream summary of the community half, which the ultimate half reads. A
- * `content_module_jar` call of a community module that differs from the one of [upstream] goes to the product package,
- * see [DevDistBuildSections.relocatedContentModuleJarCalls].
- */
-internal fun computeDevDistBuildSections(
-  outputProvider: ModuleOutputProvider,
-  products: List<DiscoveredProduct>,
-  walk: DescriptorWalk,
-  derivation: PluginPackingDerivation,
-  index: DevDistBazelIndex,
-  files: DevDistBuildFiles,
-  half: DevDistHalf,
-  testPlugins: List<TestPluginSpec>,
-  verifyPlanUnits: Boolean = false,
-  foreignSections: Set<String> = emptySet(),
-  upstream: DevDistUpstreamHalf? = null,
-): DevDistBuildSections {
-  return DevDistBuildSections.compute(
-    outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections, upstream,
-  )
-}
 
 /**
  * The community plugins that [ultimate] plans and whose `dev` section differs from the one of [upstream], sorted.

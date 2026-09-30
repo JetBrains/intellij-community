@@ -246,7 +246,7 @@ internal class DevDistPluginExecutions(
  * [sections].
  *
  * The `dev` section of an ultimate complex plugin holds the calls, and the `dev` section of a community complex plugin
- * exports its plan files. So this runs after [computeDevDistBuildSections] and before [writeDevDistBuildSectionFiles],
+ * exports its plan files. So this runs after [DevDistBuildSections.fold] and before [writeDevDistBuildSectionFiles],
  * and [computeDevDistPlan] reads the result to write the cross-half calls and the two maps.
  *
  * [upstreamPackagePlans] are the plans of the community half, which the ultimate half passes. The first collection

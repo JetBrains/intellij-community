@@ -62,13 +62,20 @@ internal fun devDistDescriptorInputId(mainModule: String): String = "descriptor:
  *
  * [layoutBindings] holds the bindings of every request of the owner, see [bindGeneratedDevDistPluginLayouts].
  * [hasPackageAttribute] answers whether a content module descriptor declares a `package`, see [DescriptorCollector.hasPackageAttribute].
+ *
+ * [reuse] is an owner of the same section inputs with bound entries, see [DevDistBuildSections.fold]. A `(product,
+ * plugin)` group of a plugin outside [recomputed] takes its entry and its records from [reuse]. [recomputed] names the
+ * plugins whose own record differs in [owner], so only their plan inputs can differ. Returns the number of reused groups.
  */
 internal fun registerGeneratedDevDistPluginPlans(
   owner: DevDistBuildSections,
   outputProvider: ModuleOutputProvider,
   layoutBindings: Map<DevDistPluginPlanKey, DevDistPluginLayoutBindings>,
   hasPackageAttribute: (Path) -> Boolean,
-) {
+  reuse: DevDistBuildSections? = null,
+  recomputed: Set<String> = emptySet(),
+): Int {
+  val reusedEntries = reuse?.pluginPlanEntries?.associateBy { it.product to it.mainModule }
   val plans = owner.descriptorPlans.associateBy(PluginDescriptorPlan::platformPrefix)
   val allVariants = owner.pluginRequests.mapTo(LinkedHashSet()) { it.variant.id }
   val requestsByPlugin = LinkedHashMap<Pair<String, String>, MutableList<DevDistPluginRequest>>()
@@ -82,7 +89,16 @@ internal fun registerGeneratedDevDistPluginPlans(
 
   // Phase one computes the records of every plugin beside each other. It reads the owner and writes nothing to it.
   // Phase two registers the records in request order, so the owner holds them in the order a sequential run produced.
-  val outcomes = requestsByPlugin.values.toList().mapConcurrent { requests ->
+  val outcomes = requestsByPlugin.entries.toList().mapConcurrent { (group, requests) ->
+    val reused = if (reusedEntries == null || group.second in recomputed) {
+      null
+    }
+    else {
+      checkNotNull(reusedEntries.get(group)) { "The reused owner has no plan of '${group.second}' for '${group.first}'" }
+    }
+    if (reused != null) {
+      return@mapConcurrent reusedPluginPlanGroup(reused)
+    }
     computePluginPlanGroup(
       owner = owner,
       outputProvider = outputProvider,
@@ -111,6 +127,7 @@ internal fun registerGeneratedDevDistPluginPlans(
   }
   checkPluginNativeTrees(entries)
   owner.bindPluginPlanEntries(entries)
+  return if (reusedEntries == null) 0 else requestsByPlugin.keys.count { it.second !in recomputed }
 }
 
 /**
@@ -124,6 +141,11 @@ private class PluginPlanGroupOutcome(
   @JvmField val records: List<Pair<DevDistPluginPlanKey, DevDistPluginPlanRecord>>,
   @JvmField val failure: String?,
 )
+
+/** The outcome of a group that another owner of the same section inputs computed: its [entry] and the records of it. */
+private fun reusedPluginPlanGroup(entry: DevDistPluginPlanEntry): PluginPlanGroupOutcome {
+  return PluginPlanGroupOutcome(entry = entry, records = entry.records.map { (variant, record) -> entry.key(variant) to record }, failure = null)
+}
 
 private fun computePluginPlanGroup(
   owner: DevDistBuildSections,
