@@ -414,7 +414,7 @@ fun List<PyEvoEnvironmentProvider>.nodeIdForSdk(sdk: Sdk): String? {
 /** [nodeIdForSdk] for an interpreter. Null when its SDK records no flavor, or when no node owns the flavor. */
 @ApiStatus.Internal
 fun List<PyEvoEnvironmentProvider>.nodeIdFor(interpreter: PythonInterpreter): String? {
-  val flavor = interpreter.flavor ?: return null
+  val flavor = interpreter.flavor
   return firstOrNull { provider -> provider.sdkFlavor?.isInstance(flavor) == true }?.toolId?.id
 }
 

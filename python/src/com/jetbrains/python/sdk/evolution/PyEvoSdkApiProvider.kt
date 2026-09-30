@@ -548,13 +548,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // "buggy code" per its own message. Test the precondition instead of catching: an IllegalStateException cannot be
     // caught safely here, since ProcessCanceledException is one. Such an SDK has no dependency file to offer anyway.
     // A null flavor means no additional data.
-    val manager = if (interpreter.flavor != null) PythonPackageManager.forPythonInterpreter(project, interpreter) else null
+    val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
     return PyInterpreterDto(
       title = item.shortName,
       description = item.description,
       icon = item.icon,
       ref = item.ref,
-      dependencyFileUrl = manager?.getRootDependenciesFile()?.virtualFile?.url,
+      dependencyFileUrl = manager.getRootDependenciesFile()?.virtualFile?.url,
       // Which node's tool made this interpreter, so the popup can promote that one tool and fold the rest away. Null
       // when no node claims its flavor, and the popup then lists them all.
       activeNodeId = providers.nodeIdFor(interpreter),
@@ -1108,9 +1108,6 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   private suspend fun EvoTarget.dependencyFileContext(): DataContext? {
     val project = workspace.project
     val interpreter = pyProject.interpreter ?: return null
-    // `PythonPackageManager.forSdk` reads `sdk.pySdkAdditionalData`, which throws on an SDK created without any.
-    // Test the precondition instead of catching, as getCurrentInterpreter does for the same call.
-    if (interpreter.flavor == null) return null
     val file = PythonPackageManager.forPythonInterpreter(project, interpreter).getRootDependenciesFile()?.virtualFile ?: return null
     // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
     val psiFile = readAction { PsiManager.getInstance(project).findFile(file) }

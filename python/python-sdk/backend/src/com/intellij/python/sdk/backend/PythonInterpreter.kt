@@ -60,9 +60,6 @@ class PythonInterpreter internal constructor(
   override fun hashCode(): Int = sdk.hashCode()
 
   override fun toString(): String = "PythonInterpreter(${sdk.name})"
-  fun map() {
-    TODO("not implemented")
-  }
 }
 
 /**

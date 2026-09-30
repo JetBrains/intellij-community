@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -36,6 +35,7 @@ import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -145,12 +145,8 @@ fun PyInterpreterItem.findSdk(): Sdk? {
  *
  * An SDK built outside the creation path has no additional data, so it has no flavor either.
  */
-val PythonInterpreter.flavor: PythonSdkFlavor<*>?
-  get() = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor
-
-/** The name the user knows this interpreter by. */
-val PythonInterpreter.name: @NlsSafe String
-  get() = sdk.name
+val PythonInterpreter.flavor: PythonSdkFlavor<*>
+  get() = sdk.pySdkAdditionalData.flavor
 
 /** The ref an interpreter list row carries for this interpreter. See [Sdk.asInterpreterRef]. */
 fun PythonInterpreter.asInterpreterRef(): PyInterpreterRef = sdk.asInterpreterRef()
@@ -161,11 +157,11 @@ val PythonInterpreter.targetAdditionalData: PyTargetAwareAdditionalData?
 
 /** The requirements file path stored for this interpreter, or `null` when none is stored. */
 val PythonInterpreter.requirementsPath: Path?
-  get() = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.requirementsPath
+  get() = sdk.pySdkAdditionalData.requirementsPath
 
 /** The paths the user added to the `sys.path` of this interpreter in the interpreter settings. */
 val PythonInterpreter.addedPathFiles: Set<VirtualFile>
-  get() = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.addedPathFiles.orEmpty()
+  get() = sdk.pySdkAdditionalData.addedPathFiles.orEmpty()
 
 /** The directory of the module this interpreter was created for, or `null` when it records none. */
 val PythonInterpreter.associatedModuleDir: VirtualFile?
@@ -177,7 +173,6 @@ val PythonInterpreter.associatedModuleDir: VirtualFile?
  * Must be called under [com.jetbrains.python.sdk.withSdkConfigurationLock] to prevent concurrent Module/SDK changes.
  */
 @Internal
-@RequiresBackgroundThread(generateAssertion = false)
 fun PyProject.setInterpreter(interpreter: PythonInterpreter) {
   residesOnModule.pythonSdk = interpreter.sdk
 }

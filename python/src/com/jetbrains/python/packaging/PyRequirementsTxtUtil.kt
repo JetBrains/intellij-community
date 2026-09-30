@@ -230,22 +230,19 @@ private suspend fun prepareRequirementsText(
 private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings, interpreter: PythonInterpreter): Boolean {
   val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
   val panel = panel {
-    // A null flavor means the interpreter has no additional data, so it has nowhere to store the path.
-    if (interpreter.flavor != null) {
-      row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
-        textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
-          .bindText({
-                      interpreter.requirementsPath?.toString() ?: ""
-                    }, { stringPath ->
-                      // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
-                      // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
-                      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(
-                        project, interpreter.getSdkAPI(), stringPath.ifBlank { null }?.toNioPathOrNull()
-                      )
-                    })
-          .align(AlignX.FILL)
-          .focused()
-      }
+    row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
+      textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
+        .bindText({
+                    interpreter.requirementsPath?.toString() ?: ""
+                  }, { stringPath ->
+                    // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
+                    // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
+                    PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(
+                      project, interpreter.getSdkAPI(), stringPath.ifBlank { null }?.toNioPathOrNull()
+                    )
+                  })
+        .align(AlignX.FILL)
+        .focused()
     }
     row(PyBundle.message("python.requirements.version.label")) {
       comboBox(PyRequirementsVersionSpecifierType.entries)
