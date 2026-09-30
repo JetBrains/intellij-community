@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -49,10 +48,10 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
     val reference = when (this) {
         is KtSimpleNameExpression -> this
         is KtCallableReferenceExpression -> callableReference
-        is KtCallExpression -> calleeExpression
+        is KtCallExpression -> calleeExpression as? KtSimpleNameExpression
         else -> null
     } ?: return null
-    val declarationSymbol = reference.mainReference?.resolveToSymbol() ?: return null
+    val declarationSymbol = reference.tryResolveSymbolsCallFirst().singleOrNull() ?: return null
 
     // Get associated class symbol on declaration-site
     val declarationAssociatedClass = getAssociatedClass(declarationSymbol) ?: return null
