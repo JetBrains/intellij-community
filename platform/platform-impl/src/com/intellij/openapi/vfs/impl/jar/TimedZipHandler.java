@@ -51,8 +51,9 @@ public final class TimedZipHandler extends ZipHandlerBase {
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
-    List<Pair<TimedZipHandler, ScheduledFuture<?>>> entriesToClearAndCancel = new ArrayList<>();
+    List<Pair<TimedZipHandler, ScheduledFuture<?>>> entriesToClearAndCancel;
     synchronized (handlersLRUCache) {
+      entriesToClearAndCancel = new ArrayList<>(handlersLRUCache.size());
       for (Map.Entry<TimedZipHandler, ScheduledFuture<?>> entry : handlersLRUCache.entrySet()) {
         entriesToClearAndCancel.add(Pair.createNonNull(entry.getKey(), entry.getValue()));
       }
@@ -108,12 +109,12 @@ public final class TimedZipHandler extends ZipHandlerBase {
     /**
      * Postponed request to close zipFile after some period of not-use ({@linkplain #RETENTION_MS}).
      * Cleaning of zipFiles is doing 2-folds: by timeout, and by cache-size.
-     * Timeout is not 100% bullet-prove, because it could be the handler is still in use at the moment {@linkplain #RETENTION_MS}
+     * Timeout is not 100% bullet-proof, because it could be the handler is still in use at the moment {@linkplain #RETENTION_MS}
      * is elapsed -- those handlers will be closed by cache-size, in next .close() call.
      */
-    private ScheduledFuture<?> scheduledInvalidationRequest = null;
+    private ScheduledFuture<?> scheduledInvalidationRequest;
 
-    private int referenceCount = 0;
+    private int referenceCount;
 
     private void attach() throws IOException {
       synchronized (handlersLRUCache) {

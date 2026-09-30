@@ -60,7 +60,6 @@ import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -950,7 +949,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E {
     Thread thread = Thread.currentThread();
     boolean prioritize;
-    if (isCurrentThreadPrioritized()) {
+    if (myPrioritizedThreads.contains(thread)) {
       prioritize = false;
     }
     else {
@@ -1179,8 +1178,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public static void assertUnderProgress(@NotNull ProgressIndicator indicator) {
     synchronized (threadsUnderIndicator) {
       Set<Thread> threads = threadsUnderIndicator.get(indicator);
-      if (threads == null || !threads.contains(Thread.currentThread())) {
-        ProgressIndicator current = threadTopLevelIndicators.get(Thread.currentThread().getId());
+      Thread thread = Thread.currentThread();
+      if (threads == null || !threads.contains(thread)) {
+        ProgressIndicator current = threadTopLevelIndicators.get(thread.getId());
         LOG.error("Must be executed under progress indicator: " + indicator + " but the process is running under "+current+" indicator instead. Please see e.g. ProgressManager.runProcess()");
       }
     }
@@ -1225,15 +1225,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
       Map<Long, ThreadInfo> threadInfos = Arrays.stream(ThreadDumper.getThreadInfos()).collect(Collectors.toMap(info -> info.getThreadId(), info -> info));
       ThreadingSupport threadingSupport = ApplicationManager.getApplication().getThreadingSupport();
-      boolean writeActionPending = threadingSupport != null && threadingSupport.isWriteActionPending();
-      boolean writeActionInProgress = threadingSupport != null && threadingSupport.isWriteActionInProgress();
+      boolean writeActionPending = threadingSupport.isWriteActionPending();
+      boolean writeActionInProgress = threadingSupport.isWriteActionInProgress();
       for (Map.Entry<Thread, Collection<ProgressIndicator>> entry : threadIndicators.toHashMap().entrySet()) {
         Thread thread = entry.getKey();
         Collection<ProgressIndicator> indicators = entry.getValue();
         long threadId = thread.getId();
         ProgressIndicator current = currentIndicators.get(threadId);
         ProgressIndicator topLevel = threadTopLevelIndicators.get(threadId);
-        List<String> readActionStatus = threadingSupport == null ? Collections.emptyList() : threadingSupport.dumpSomeDiagnosticInfo(thread);
+        List<String> readActionStatus = threadingSupport.dumpSomeDiagnosticInfo(thread);
         // Membership in `threadsUnderCanceledIndicator` is what lets ProgressManager.checkCanceled() throw here.
         // A thread that owns a canceled indicator without that membership cannot observe its own cancellation.
         boolean canThrow = threadsUnderCanceledIndicator.contains(thread);

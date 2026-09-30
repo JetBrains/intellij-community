@@ -120,7 +120,7 @@ final class AnnotatorRunner {
 
   private void runAnnotator(@NotNull Document document,
                             @NotNull Annotator annotator,
-                            @NotNull List<? extends PsiElement> insideThenOutside,
+                            @NotNull @Unmodifiable List<? extends PsiElement> insideThenOutside,
                             @NotNull @Unmodifiable Map<Annotator, Set<Language>> supportedLanguages,
                             @NotNull ResultSink result) {
     Set<Language> supported = supportedLanguages.get(annotator);
