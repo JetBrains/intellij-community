@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
@@ -20,6 +21,7 @@ import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.impl.LibraryResourceGenerator
+import org.jetbrains.intellij.build.impl.ModuleResourceTree
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -182,15 +184,20 @@ fun generateDevPluginAssetBindings(
     preparedSourceManifests.put(output, PluginSymbolicPreparedSourceManifest(1, listOf("keep")))
     operations.add(operation)
   }
-  bindDirectResourceTrees(
-    trees = directResourceTrees,
-    effects = effects,
-    declaredAssets = declaredAssets,
-    operations = operations,
-  )
   for ((generatorIndex, candidate) in layout.resourceGenerators.withIndex()) {
+    val key = "resource-generator:$generatorIndex"
+    if (candidate is ModuleResourceTree) {
+      // A declared tree is a plain copy of its directory, or of the filtered filegroup when it states exclusions.
+      // It joins the `withResource*` directories, so a second tree over its destination is an overlay as theirs is.
+      val spec = candidate.devPluginLayoutAssetSpec
+      val source = spec.sources.single() as DevPluginLayoutAssetSource.ModuleDirectory
+      val inputId = "module-resource:$key:0:source"
+      additionalInputs.add(moduleDirectoryRawInput(id = inputId, key = key, mainModule = layout.mainModule, source = source, index = index, resources = resources))
+      directResourceTrees.add(DirectResourceTree(key, spec.assets.single().destination, inputId))
+      continue
+    }
     if (candidate is DevPluginLayoutAssetOwner) {
-      addCallback("resource-generator:$generatorIndex", candidate, "tree")
+      addCallback(key, candidate, "tree")
       continue
     }
     // The builder accepts a declared generator or a library resource only, so any other entry is a builder defect.
@@ -250,6 +257,12 @@ fun generateDevPluginAssetBindings(
     )
     operations.add(operation)
   }
+  bindDirectResourceTrees(
+    trees = directResourceTrees,
+    effects = effects,
+    declaredAssets = declaredAssets,
+    operations = operations,
+  )
   addSelectedPlatformCallbacks()
   return result()
 }

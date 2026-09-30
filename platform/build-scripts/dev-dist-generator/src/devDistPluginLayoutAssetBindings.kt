@@ -190,6 +190,37 @@ private fun selectHostPlatformAssets(key: String, assets: List<DevPluginLayoutAs
   }
 }
 
+/**
+ * The raw input of the checkout directory [source] of a module, for the layout slot [key]. A directory with exclusions
+ * reads the filtered filegroup of its package, so its package needs a module whose `dev` section declares the filegroup.
+ */
+internal fun moduleDirectoryRawInput(
+  id: String,
+  key: String,
+  mainModule: String,
+  source: DevPluginLayoutAssetSource.ModuleDirectory,
+  index: DevDistBazelIndex,
+  resources: DevDistResourceSources,
+): DevDistPluginRawInput {
+  val resource = resources.declaredResourceSource(mainModule = mainModule, moduleName = source.moduleName, resourcePath = source.path)
+  require(resource.isDirectory) { "Layout source '$key' requires a directory: ${source.moduleName}:${source.path}" }
+  val filtered = !source.exclusions.isEmpty()
+  if (filtered && index.modulesInPackage(resource.absolutePackage).isEmpty()) {
+    throw DevDistUnplannableLayoutException(
+      "Layout source '$key' filters '${source.path}' of module '${source.moduleName}', and its package '${resource.absolutePackage}' " +
+      "has no module, so no dev section declares the filtered filegroup"
+    )
+  }
+  return DevDistPluginRawInput(
+    id = id,
+    label = if (filtered) resource.filteredLabel else resource.label,
+    kind = "directory",
+    fileName = resource.fileName,
+    sourceTreePrefix = resource.sourceTreePrefix,
+    sourceTreeExclusions = source.exclusions,
+  )
+}
+
 private data class ConcreteLayoutAsset(
   @JvmField val asset: DevPluginLayoutAsset,
   @JvmField val directory: Boolean,
@@ -247,29 +278,16 @@ private class DevPluginLayoutAssetSourceResolver(
   }
 
   private fun resolveModuleDirectory(sourceIndex: Int, source: DevPluginLayoutAssetSource.ModuleDirectory): ResolvedLayoutAssetSource {
-    val resource = resources.declaredResourceSource(
+    val input = moduleDirectoryRawInput(
+      id = "module-resource:$key:$sourceIndex:source",
+      key = key,
       mainModule = source.moduleName,
-      moduleName = source.moduleName,
-      resourcePath = source.path,
+      source = source,
+      index = index,
+      resources = resources,
     )
-    require(resource.isDirectory) { "Layout source '$key' requires a directory: ${source.moduleName}:${source.path}" }
-    val filtered = !source.exclusions.isEmpty()
-    if (filtered && index.modulesInPackage(resource.absolutePackage).isEmpty()) {
-      throw DevDistUnplannableLayoutException(
-        "Layout source '$key' filters '${source.path}' of module '${source.moduleName}', and its package '${resource.absolutePackage}' " +
-        "has no module, so no dev section declares the filtered filegroup"
-      )
-    }
-    val id = "module-resource:$key:$sourceIndex:source"
-    registerRawInput(DevDistPluginRawInput(
-      id = id,
-      label = if (filtered) resource.filteredLabel else resource.label,
-      kind = "directory",
-      fileName = resource.fileName,
-      sourceTreePrefix = resource.sourceTreePrefix,
-      sourceTreeExclusions = source.exclusions,
-    ))
-    return ResolvedLayoutAssetSource(listOf(ResolvedLayoutAssetReference(DevPluginReference(id), resource.fileName, "directory")))
+    registerRawInput(input)
+    return ResolvedLayoutAssetSource(listOf(ResolvedLayoutAssetReference(DevPluginReference(input.id), input.fileName, "directory")))
   }
 
   /** A closed source: the binder of the half binds it to one raw input, see [DevDistAssetBinder]. */

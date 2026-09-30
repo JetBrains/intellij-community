@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.grid.loader.json",
     "variant": "",
-    "layoutSignature": "5f5avi3liwib27xz3lustimdv",
+    "layoutSignature": "dz2p58jds1uxosypwr66f87ya",
     "assets": [
         {
             "destination": "lib/grid-loader-json.jar",
@@ -29,33 +29,23 @@
             }
         },
         {
-            "destination": "external-extensions",
-            "inputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "kind": "tree",
-            "classPath": false
-        },
-        {
             "destination": "grape",
             "inputs": [
                 "layout-assets:resource-generator:1:output"
             ],
             "kind": "tree",
             "classPath": false
-        }
-    ],
-    "preparations": [
+        },
         {
-            "id": "layout-assets:resource-generator:0",
+            "destination": "external-extensions",
             "inputs": [
                 "module-resource:resource-generator:0:0:source"
             ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "8i3eyd7cedrjslsecni3f9axp"
-        },
+            "kind": "tree",
+            "classPath": false
+        }
+    ],
+    "preparations": [
         {
             "id": "layout-assets:resource-generator:1",
             "inputs": [
@@ -68,29 +58,6 @@
         }
     ],
     "operations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "kind": "layout-assets",
-            "inputs": [
-                {
-                    "artifact": "module-resource:resource-generator:0:0:source"
-                }
-            ],
-            "output": "layout-assets:resource-generator:0:output",
-            "manifest": "keep",
-            "layoutAssets": {
-                "format": "tree",
-                "root": "external-extensions",
-                "assets": [
-                    {
-                        "destination": "",
-                        "sources": [
-                            0
-                        ]
-                    }
-                ]
-            }
-        },
         {
             "id": "layout-assets:resource-generator:1",
             "kind": "layout-assets",
