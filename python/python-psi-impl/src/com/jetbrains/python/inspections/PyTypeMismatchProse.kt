@@ -224,7 +224,8 @@ object PyTypeMismatchProse {
         for (child in nonTrivialReasons(node)) emit(child, depth + 1, out)
       }
       // A union: the "not assignable to any member" header, then one member-named line per structural failure.
-      is PyMismatchStep.NoUnionMember -> {
+      // An intersection branch has the same shape, only a different quantifier in its header.
+      is PyMismatchStep.NoUnionMember, is PyMismatchStep.NoIntersectionMember -> {
         out.add(ProseLine(depth, node.message))
         emitUnionArms(node, depth + 1, out)
       }
@@ -274,12 +275,16 @@ object PyTypeMismatchProse {
 
   /**
    * Whether [node] only restates its parent union header: a bare nominal leaf (`None is not assignable to int`), or
-   * a per-member [PyMismatchStep.UnionMember] wrapper whose lone reason is itself such a leaf (`str is not
-   * assignable to int` over the same). Either adds nothing over the header, so the union arm is dropped.
+   * a per-member wrapper whose lone reason is itself such a leaf (`str is not assignable to int` over the same).
+   * Either adds nothing over the header, so the arm is dropped.
    */
   private fun isTrivialReason(node: PyTypeMismatchExplanation): Boolean =
     (node.step is PyMismatchStep.Nominal && node.children.isEmpty()) ||
-    (node.step is PyMismatchStep.UnionMember && node.children.size == 1 && isTrivialReason(node.children.single()))
+    (isMemberWrapper(node.step) && node.children.size == 1 && isTrivialReason(node.children.single()))
+
+  /** Whether [step] is a per-member wrapper under a union or an intersection branch. */
+  private fun isMemberWrapper(step: PyMismatchStep?): Boolean =
+    step is PyMismatchStep.UnionMember || step is PyMismatchStep.IntersectionMember
 
   /**
    * Emits the structural arms of a union under its header, each named by the member it failed against, so the
@@ -291,7 +296,7 @@ object PyTypeMismatchProse {
     for (child in nonTrivialReasons(node)) {
       // A per-member wrapper (an actual-side union names each failing member) folds through to its reason; an
       // expected-side arm is the reason directly. Either way [foldChain] lands on the member's terminal reason.
-      val reason = if (child.step is PyMismatchStep.UnionMember) child.children.singleOrNull() ?: child else child
+      val reason = if (isMemberWrapper(child.step)) child.children.singleOrNull() ?: child else child
       val fold = foldChain(reason)
       val arm = if (fold is Fold.Terminal && fold.member != null) composeUnionArm(fold) else null
       when {
@@ -304,7 +309,7 @@ object PyTypeMismatchProse {
         // "`B` is incompatible with protocol `P`"), the "`B` is not assignable to `P`" wrapper only restates it, so
         // drop the wrapper and emit the reason directly. Otherwise (e.g. a callable parameter mismatch that names
         // no member) keep the wrapper line to identify the member, with the reason beneath it.
-        child.step is PyMismatchStep.UnionMember ->
+        isMemberWrapper(child.step) ->
           if (reason.step is PyMismatchStep.Protocol) emit(reason, depth, out)
           else {
             out.add(ProseLine(depth, child.message))
@@ -413,7 +418,8 @@ object PyTypeMismatchProse {
         // Frames that carry their own line AND a nested reason (or are transparent groupings): not silently
         // foldable — [emit]/[emitUnionArms] handle them.
         is PyMismatchStep.ContravariantParameter, is PyMismatchStep.NoUnionMember,
-        is PyMismatchStep.UnionMember, PyMismatchStep.Combined ->
+        is PyMismatchStep.UnionMember, is PyMismatchStep.NoIntersectionMember,
+        is PyMismatchStep.IntersectionMember, PyMismatchStep.Combined ->
           return null
       }
       // Only descent steps reach here; continue folding iff there is exactly one child to descend into.
