@@ -6,9 +6,9 @@
 use std::path::{Path, PathBuf};
 
 use crate::test_support::{SAMPLE_PLAN, plan, sample_recipe, testdata_dir};
-use crate::{EntryKind, Error, Recipe, RecipeSource, parse_recipe, read_recipes, weigh_purity};
+use crate::{EntryKind, Recipe, RecipeSource, parse_recipe, read_recipes, weigh_purity};
 
-fn parse(source: &str) -> Result<Recipe, Error> {
+fn parse(source: &str) -> anyhow::Result<Recipe> {
     parse_recipe(Path::new("a.plan.yaml"), source)
 }
 
@@ -19,7 +19,7 @@ fn must_parse(source: &str) -> Recipe {
 fn refusal(source: &str) -> String {
     match parse(source) {
         Ok(recipe) => panic!("the plan parsed: {recipe:?}"),
-        Err(error) => error.message().to_owned(),
+        Err(error) => format!("{error:#}"),
     }
 }
 
@@ -42,7 +42,10 @@ fn reads_the_fragment_and_the_output_count_from_the_head_comment() {
 fn refuses_a_plan_that_holds_fewer_outputs_than_it_declares() {
     let truncated = SAMPLE_PLAN.split("- name: plugins/sample/lib/sample.jar").next().unwrap();
     let message = parse_recipe(Path::new("plugins_sample.plan.yaml"), truncated).unwrap_err();
-    assert_eq!(message.message(), "plugins_sample.plan.yaml: the plan says 3 outputs and holds 1");
+    assert_eq!(
+        format!("{message:#}"),
+        "plugins_sample.plan.yaml: the plan says 3 outputs and holds 1"
+    );
 }
 
 /// `DevDistRecipe` always writes the head comment, so the reader refuses a plan without it.
@@ -54,7 +57,7 @@ fn refuses_a_plan_without_the_head_comment() {
     )
     .unwrap_err();
     assert_eq!(
-        message.message(),
+        format!("{message:#}"),
         "idea_dev_plugins_plugins_java_reference.plan.yaml:1: the head comment names no fragment; DevDistRecipe \
          writes `# The packaging recipe the '<fragment>' ...`"
     );
@@ -345,7 +348,7 @@ fn refuses_a_shape_that_the_emitter_does_not_write() {
 fn read_recipes_refuses_a_directory_with_no_plans_rather_than_reporting_no_outputs() {
     let empty = tempfile::tempdir().unwrap();
     let message = read_recipes(&[empty.path().to_path_buf()]).unwrap_err();
-    assert!(message.message().contains("holds no *.plan.yaml"), "{message}");
+    assert!(format!("{message:#}").contains("holds no *.plan.yaml"), "{message:#}");
     std::fs::write(empty.path().join("one.plan.yaml"), SAMPLE_PLAN).unwrap();
     std::fs::write(empty.path().join("notes.txt"), "not a plan").unwrap();
     let recipes = read_recipes(&[empty.path().to_path_buf()]).unwrap();

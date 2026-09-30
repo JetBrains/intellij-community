@@ -338,7 +338,7 @@ impl Resolver<'_> {
         })?;
         let mut selected = None;
         for (index, mapping) in transform.mappings.iter().enumerate() {
-            let candidate = JavaGlob::compile(mapping_pattern(mapping)).map_err(|error| Error::new(error.to_string()))?;
+            let candidate = JavaGlob::compile(mapping_pattern(mapping)).map_err(Error::chain)?;
             if names.iter().any(|name| candidate.matches(name)) {
                 selected = Some((index, candidate));
                 break;

@@ -265,7 +265,7 @@ pub(crate) fn validate_layout_asset(asset: &LayoutAsset, format: LayoutFormat, k
         if !mapping.destination.is_empty() {
             distpath::validate_relative_path(&mapping.destination).map_err(Error::refused)?;
         }
-        JavaGlob::compile(mapping_pattern(mapping)).map_err(|error| Error::new(format!("invalid mapping pattern: {error}")))?;
+        JavaGlob::compile(mapping_pattern(mapping)).map_err(|error| Error::new(format!("invalid mapping pattern: {error:#}")))?;
     }
     match transform.kind {
         LayoutTransformKind::ArchiveTree => {
@@ -284,7 +284,7 @@ pub(crate) fn mapping_pattern(mapping: &LayoutMapping) -> &str {
 pub(crate) fn compile_globs(patterns: &[String], context: &str) -> Result<Vec<JavaGlob>> {
     patterns
         .iter()
-        .map(|pattern| JavaGlob::compile(pattern).map_err(|error| Error::new(format!("{context}: {error}"))))
+        .map(|pattern| JavaGlob::compile(pattern).map_err(|error| Error::new(format!("{context}: {error:#}"))))
         .collect()
 }
 
@@ -303,7 +303,7 @@ pub(crate) fn compile_includes(patterns: &[String]) -> Result<Vec<IncludeRule>> 
         if glob.is_empty() {
             fail!("invalid include: empty pattern {pattern:?}");
         }
-        let matcher = JavaGlob::compile(glob).map_err(|error| Error::new(format!("invalid include: {error}")))?;
+        let matcher = JavaGlob::compile(glob).map_err(|error| Error::new(format!("invalid include: {error:#}")))?;
         rules.push(IncludeRule { matcher, exclude });
     }
     Ok(rules)

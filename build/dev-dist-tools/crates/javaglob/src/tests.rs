@@ -121,7 +121,7 @@ fn match_agrees_with_the_recorded_path_matcher() {
     let mut failures = Vec::new();
     for recorded in record {
         match JavaGlob::compile(&recorded.pattern) {
-            Err(error) => failures.push(error.to_string()),
+            Err(error) => failures.push(format!("{error:#}")),
             Ok(glob) if glob.matches(&recorded.name) != recorded.matches => failures.push(format!(
                 "{:?} {:?}: the JDK answers {}",
                 recorded.pattern, recorded.name, recorded.matches
@@ -139,7 +139,7 @@ fn every_corpus_pattern_compiles_and_has_a_recorded_case() {
     let mut failures = Vec::new();
     for pattern in corpus_patterns() {
         if let Err(error) = JavaGlob::compile(&pattern) {
-            failures.push(error.to_string());
+            failures.push(format!("{error:#}"));
         } else if !recorded.contains(&pattern) {
             failures.push(format!("the record has no case for {pattern:?}"));
         }
@@ -165,7 +165,7 @@ fn translate_keeps_the_structure_of_each_construct() {
 #[test]
 fn compile_refuses_the_constructs_outside_the_subset() {
     assert_eq!(
-        JavaGlob::compile("a?c").unwrap_err().to_string(),
+        format!("{:#}", JavaGlob::compile("a?c").unwrap_err()),
         r#"glob "a?c": the dev-dist plan supports only *, ** and {a,b}, but the pattern has '?' at 1"#
     );
     for (pattern, problem) in [
@@ -176,8 +176,8 @@ fn compile_refuses_the_constructs_outside_the_subset() {
         ("{a,{b}}", "a nested '{' at 3"),
         ("a}b", "a '}' with no '{' at 1"),
     ] {
-        let error = JavaGlob::compile(pattern).unwrap_err();
-        assert_eq!(error.problem, problem, "{pattern}");
+        let error = format!("{:#}", JavaGlob::compile(pattern).unwrap_err());
+        assert!(error.ends_with(&format!("but the pattern has {problem}")), "{pattern}: {error}");
     }
 }
 

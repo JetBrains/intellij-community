@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use walkdir::WalkDir;
 
-use crate::Error;
+use anyhow::{Result, anyhow, bail};
 
 /// The file sizes of a built distribution, by the path that a recipe names them with.
 ///
@@ -48,23 +48,23 @@ impl Distribution {
 /// The walk follows a link at the root and no link below it. A link below the root is not a regular file, so a jar
 /// that the distribution holds only through a link stays unjoined. A directory that an output names is not sized
 /// either.
-pub fn read_distribution(root: &Path) -> Result<Distribution, Error> {
-    let metadata = fs::metadata(root).map_err(|error| Error::new(format!("{}: {error}", root.display())))?;
+pub fn read_distribution(root: &Path) -> Result<Distribution> {
+    let metadata = fs::metadata(root).map_err(|error| anyhow!("{}: {error}", root.display()))?;
     if !metadata.is_dir() {
-        return Err(Error::new(format!("{}: the distribution root is not a directory", root.display())));
+        bail!("{}: the distribution root is not a directory", root.display());
     }
     let mut dist = Distribution {
         root: root.to_path_buf(),
         ..Distribution::default()
     };
     for entry in WalkDir::new(root) {
-        let entry = entry.map_err(|error| Error::new(format!("{}: {error}", root.display())))?;
+        let entry = entry.map_err(|error| anyhow!("{}: {error}", root.display()))?;
         if !entry.file_type().is_file() {
             continue;
         }
         let size = entry
             .metadata()
-            .map_err(|error| Error::new(format!("{}: {error}", entry.path().display())))?
+            .map_err(|error| anyhow!("{}: {error}", entry.path().display()))?
             .len();
         let relative = slash_path(entry.path(), root)?;
         let (directory, below) = split_distribution_path(&relative);
@@ -75,13 +75,13 @@ pub fn read_distribution(root: &Path) -> Result<Distribution, Error> {
 }
 
 /// The path of `file` relative to `root`, with `/` between the segments.
-fn slash_path(file: &Path, root: &Path) -> Result<String, Error> {
+fn slash_path(file: &Path, root: &Path) -> Result<String> {
     let relative = file.strip_prefix(root).unwrap_or(file);
     let segments = relative
         .components()
         .map(|segment| segment.as_os_str().to_str())
         .collect::<Option<Vec<_>>>()
-        .ok_or_else(|| Error::new(format!("{}: a distribution file name is not UTF-8", file.display())))?;
+        .ok_or_else(|| anyhow!("{}: a distribution file name is not UTF-8", file.display()))?;
     Ok(segments.join("/"))
 }
 

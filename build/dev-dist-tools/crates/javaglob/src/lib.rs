@@ -14,6 +14,7 @@
 //! not use `globset`, because `globset` also matches `**/setup.py` against `setup.py`, and the JDK does not. The plan
 //! relies on that difference: it lists `**/{setup.py,conftest.py}` and `{setup.py,conftest.py}`.
 
+use anyhow::{Result, anyhow};
 use regex::Regex;
 
 /// One compiled `glob:` pattern.
@@ -22,20 +23,11 @@ pub struct JavaGlob {
     regex: Regex,
 }
 
-/// The error for a pattern outside the subset.
-#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
-#[error("glob {pattern:?}: the dev-dist plan supports only *, ** and {{a,b}}, but the pattern has {problem}")]
-pub struct GlobError {
-    pattern: String,
-    problem: String,
-}
-
 impl JavaGlob {
-    /// Parses a glob pattern of the subset.
-    pub fn compile(pattern: &str) -> Result<Self, GlobError> {
-        let expression = translate(pattern).map_err(|problem| GlobError {
-            pattern: pattern.to_owned(),
-            problem,
+    /// Parses a glob pattern of the subset. The error names the pattern and the problem with its character index.
+    pub fn compile(pattern: &str) -> Result<Self> {
+        let expression = translate(pattern).map_err(|problem| {
+            anyhow!("glob {pattern:?}: the dev-dist plan supports only *, ** and {{a,b}}, but the pattern has {problem}")
         })?;
         let regex = Regex::new(&expression).expect("a translated pattern is a valid regular expression");
         Ok(Self { regex })

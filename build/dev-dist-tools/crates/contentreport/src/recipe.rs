@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use saphyr::{LoadableYamlNode, MarkedYaml, Scalar, YamlData};
 
-use crate::Error;
+use anyhow::{Result, anyhow, bail};
 
 const HEAD_FRAGMENT: &str = "# The packaging recipe the '";
 const HEAD_COUNT: &str = "# Written by DevDistRecipe; ";
@@ -94,16 +94,16 @@ pub struct Recipe {
 /// The two head comment lines of `DevDistRecipe` must be present. The first names the fragment, and the second states
 /// the output count. The count must be equal to the number of entries, so a truncated plan cannot read as a smaller
 /// distribution.
-pub fn parse_recipe(file: &Path, source: &str) -> Result<Recipe, Error> {
+pub fn parse_recipe(file: &Path, source: &str) -> Result<Recipe> {
     let (fragment, declared) = parse_head(file, source)?;
     let reader = Reader { file };
-    let documents = MarkedYaml::load_from_str(source).map_err(|error| Error::new(format!("{}: {error}", file.display())))?;
+    let documents = MarkedYaml::load_from_str(source).map_err(|error| anyhow!("{}: {error}", file.display()))?;
     let [document] = documents.as_slice() else {
-        return Err(Error::new(format!(
+        bail!(
             "{}: the plan holds {} YAML documents; DevDistRecipe writes one",
             file.display(),
             documents.len()
-        )));
+        );
     };
     let entries = reader
         .sequence("the plan", document)?
@@ -111,11 +111,7 @@ pub fn parse_recipe(file: &Path, source: &str) -> Result<Recipe, Error> {
         .map(|entry| reader.entry(entry))
         .collect::<Result<Vec<_>, _>>()?;
     if declared != entries.len() {
-        return Err(Error::new(format!(
-            "{}: the plan says {declared} outputs and holds {}",
-            file.display(),
-            entries.len()
-        )));
+        bail!("{}: the plan says {declared} outputs and holds {}", file.display(), entries.len());
     }
     Ok(Recipe {
         file: file.to_path_buf(),
@@ -128,7 +124,7 @@ pub fn parse_recipe(file: &Path, source: &str) -> Result<Recipe, Error> {
 ///
 /// A directory with no plan file is an error. A flag-off build prunes the plan files, so an empty directory is the
 /// normal state and must not read as a distribution with no outputs.
-pub fn read_recipes(paths: &[PathBuf]) -> Result<Vec<Recipe>, Error> {
+pub fn read_recipes(paths: &[PathBuf]) -> Result<Vec<Recipe>> {
     let mut files = Vec::new();
     for path in paths {
         let metadata = fs::metadata(path).map_err(|error| io_error(path, &error))?;
@@ -144,11 +140,11 @@ pub fn read_recipes(paths: &[PathBuf]) -> Result<Vec<Recipe>, Error> {
             }
         }
         if found.is_empty() {
-            return Err(Error::new(format!(
+            bail!(
                 "{} holds no *.plan.yaml; a flag-off build prunes them, so re-run with \
                  --@community//platform/build-scripts/bazel-rules:dev_dist_plans --output_groups=+dev_dist_plans",
                 path.display()
-            )));
+            );
         }
         files.extend(found);
     }
@@ -163,12 +159,12 @@ pub fn read_recipes(paths: &[PathBuf]) -> Result<Vec<Recipe>, Error> {
         .collect()
 }
 
-fn io_error(path: &Path, error: &std::io::Error) -> Error {
-    Error::new(format!("{}: {error}", path.display()))
+fn io_error(path: &Path, error: &std::io::Error) -> anyhow::Error {
+    anyhow!("{}: {error}", path.display())
 }
 
 /// Reads the fragment name and the output count from the two head comment lines.
-fn parse_head(file: &Path, source: &str) -> Result<(String, usize), Error> {
+fn parse_head(file: &Path, source: &str) -> Result<(String, usize)> {
     let mut lines = source.split('\n');
     let fragment = lines
         .next()
@@ -177,10 +173,10 @@ fn parse_head(file: &Path, source: &str) -> Result<(String, usize), Error> {
         .map(|(fragment, _)| fragment)
         .filter(|fragment| !fragment.is_empty())
         .ok_or_else(|| {
-            Error::new(format!(
+            anyhow!(
                 "{}:1: the head comment names no fragment; DevDistRecipe writes `{HEAD_FRAGMENT}<fragment>' ...`",
                 file.display()
-            ))
+            )
         })?;
     let declared = lines
         .next()
@@ -188,10 +184,10 @@ fn parse_head(file: &Path, source: &str) -> Result<(String, usize), Error> {
         .and_then(|rest| rest.strip_suffix(HEAD_COUNT_END))
         .and_then(|count| count.parse::<usize>().ok())
         .ok_or_else(|| {
-            Error::new(format!(
+            anyhow!(
                 "{}:2: the head comment states no output count; DevDistRecipe writes `{HEAD_COUNT}<n>{HEAD_COUNT_END}`",
                 file.display()
-            ))
+            )
         })?;
     Ok((fragment.to_owned(), declared))
 }
@@ -204,12 +200,12 @@ struct Reader<'a> {
 type Fields<'n, 'i> = Vec<(&'n str, &'n MarkedYaml<'i>, &'n MarkedYaml<'i>)>;
 
 impl Reader<'_> {
-    fn error(&self, node: &MarkedYaml<'_>, message: impl Display) -> Error {
-        Error::new(format!("{}:{}: {message}", self.file.display(), node.span.start.line()))
+    fn error(&self, node: &MarkedYaml<'_>, message: impl Display) -> anyhow::Error {
+        anyhow!("{}:{}: {message}", self.file.display(), node.span.start.line())
     }
 
     /// The fields of a mapping in document order: the key text, the key node and the value node.
-    fn mapping<'n, 'i>(&self, what: &str, node: &'n MarkedYaml<'i>) -> Result<Fields<'n, 'i>, Error> {
+    fn mapping<'n, 'i>(&self, what: &str, node: &'n MarkedYaml<'i>) -> Result<Fields<'n, 'i>> {
         let YamlData::Mapping(mapping) = &node.data else {
             return Err(self.error(node, format!("{what} is {}, want a mapping", shape(node))));
         };
@@ -222,14 +218,14 @@ impl Reader<'_> {
             .collect()
     }
 
-    fn sequence<'n, 'i>(&self, what: &str, node: &'n MarkedYaml<'i>) -> Result<&'n [MarkedYaml<'i>], Error> {
+    fn sequence<'n, 'i>(&self, what: &str, node: &'n MarkedYaml<'i>) -> Result<&'n [MarkedYaml<'i>]> {
         match &node.data {
             YamlData::Sequence(items) => Ok(items),
             _ => Err(self.error(node, format!("{what} is {}, want a sequence", shape(node)))),
         }
     }
 
-    fn string(&self, key: &str, node: &MarkedYaml<'_>) -> Result<String, Error> {
+    fn string(&self, key: &str, node: &MarkedYaml<'_>) -> Result<String> {
         match &node.data {
             YamlData::Value(Scalar::String(text)) if text.is_empty() => {
                 Err(self.error(node, format!("`{key}` is an empty string; DevDistRecipe writes no empty value")))
@@ -240,35 +236,35 @@ impl Reader<'_> {
     }
 
     /// A string that can be empty. The empty string reads as `None`.
-    fn string_or_empty(&self, key: &str, node: &MarkedYaml<'_>) -> Result<Option<String>, Error> {
+    fn string_or_empty(&self, key: &str, node: &MarkedYaml<'_>) -> Result<Option<String>> {
         match &node.data {
             YamlData::Value(Scalar::String(text)) if text.is_empty() => Ok(None),
             _ => self.string(key, node).map(Some),
         }
     }
 
-    fn integer(&self, key: &str, node: &MarkedYaml<'_>) -> Result<i64, Error> {
+    fn integer(&self, key: &str, node: &MarkedYaml<'_>) -> Result<i64> {
         match &node.data {
             YamlData::Value(Scalar::Integer(value)) => Ok(*value),
             _ => Err(self.error(node, format!("`{key}` is {}, want an integer", shape(node)))),
         }
     }
 
-    fn boolean(&self, key: &str, node: &MarkedYaml<'_>) -> Result<bool, Error> {
+    fn boolean(&self, key: &str, node: &MarkedYaml<'_>) -> Result<bool> {
         match &node.data {
             YamlData::Value(Scalar::Boolean(value)) => Ok(*value),
             _ => Err(self.error(node, format!("`{key}` is {}, want a boolean", shape(node)))),
         }
     }
 
-    fn unknown_key(&self, what: &str, key: &str, node: &MarkedYaml<'_>, known: &str) -> Error {
+    fn unknown_key(&self, what: &str, key: &str, node: &MarkedYaml<'_>, known: &str) -> anyhow::Error {
         self.error(
             node,
             format!("{what} holds `{key}`, which DevDistRecipe does not write; it writes {known}"),
         )
     }
 
-    fn entry(&self, node: &MarkedYaml<'_>) -> Result<FileEntry, Error> {
+    fn entry(&self, node: &MarkedYaml<'_>) -> Result<FileEntry> {
         let mut path = None;
         let mut kind = None;
         let mut modules = Vec::new();
@@ -299,7 +295,7 @@ impl Reader<'_> {
         })
     }
 
-    fn entry_kind(&self, node: &MarkedYaml<'_>) -> Result<EntryKind, Error> {
+    fn entry_kind(&self, node: &MarkedYaml<'_>) -> Result<EntryKind> {
         match self.string("kind", node)?.as_str() {
             "jar" => Ok(EntryKind::Jar),
             "link" => Ok(EntryKind::Link),
@@ -312,7 +308,7 @@ impl Reader<'_> {
     }
 
     /// The names of a `modules` or `contentModules` list. `DevDistRecipe` writes a member with a name only.
-    fn members(&self, key: &str, node: &MarkedYaml<'_>) -> Result<Vec<String>, Error> {
+    fn members(&self, key: &str, node: &MarkedYaml<'_>) -> Result<Vec<String>> {
         let what = format!("a member of `{key}`");
         (self.sequence(&format!("`{key}`"), node)?.iter())
             .map(|member| {
@@ -333,7 +329,7 @@ impl Reader<'_> {
             .collect()
     }
 
-    fn source(&self, node: &MarkedYaml<'_>) -> Result<RecipeSource, Error> {
+    fn source(&self, node: &MarkedYaml<'_>) -> Result<RecipeSource> {
         let mut kind = None;
         let mut source = RecipeSource::default();
         for (key, key_node, value) in self.mapping("a source", node)? {

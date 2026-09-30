@@ -108,9 +108,9 @@ dependencies = [
 name = "contentreport"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "saphyr",
  "tempfile",
- "thiserror",
  "walkdir",
 ]
 
@@ -427,9 +427,9 @@ dependencies = [
 name = "javaglob"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "planfile",
  "regex",
- "thiserror",
 ]
 
 [[package]]

@@ -39,7 +39,7 @@ fn read_distribution_refuses_a_root_that_is_not_a_directory() {
     let file = root.path().join("build.txt");
     let message = read_distribution(&file).unwrap_err();
     assert_eq!(
-        message.message(),
+        format!("{message:#}"),
         format!("{}: the distribution root is not a directory", file.display())
     );
     read_distribution(&root.path().join("missing")).unwrap_err();

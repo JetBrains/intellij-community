@@ -2,7 +2,7 @@
 
 The Rust port of the Go package `build/internal/content`. The crate reads the executed packaging recipe of a
 dev-distribution fragment, reads a built distribution, and weighs the one against the other. The binary
-`content-report` of the ultimate workspace prints the result. The crate depends on `saphyr`, `thiserror` and `walkdir`.
+`content-report` of the ultimate workspace prints the result. The crate depends on `anyhow`, `saphyr` and `walkdir`.
 
 ## File format
 
@@ -77,9 +77,11 @@ The crate loads the text into `saphyr::MarkedYaml` and interprets the tree after
 
 ## Public items
 
+Every error is one `anyhow` message. It names the file, and the line and the field when the refusal is about the YAML
+text.
+
 | Item | Go original | Description |
 | --- | --- | --- |
-| `struct Error` | `error` | One refusal or I/O failure. `Display` and `message(&self) -> &str` give the text. |
 | `enum EntryKind { Jar, Link, Placed }` | `ReportEntry.Kind` | The entry kind. `as_str()` gives the YAML word. |
 | `struct FileEntry { path, kind, modules, content_modules, sources }` | `ReportEntry` | One output. The member names have no `/<descriptor>` suffix. |
 | `FileEntry::primary_member(&self) -> Option<&str>` | `PrimaryMember` | The module that the jar is named for: the path when a member confirms it, then the first `modules` member, then the first `contentModules` member. |
@@ -87,10 +89,10 @@ The crate loads the text into `saphyr::MarkedYaml` and interprets the tree after
 | `RecipeSource::blocker(&self) -> Option<Blocker>` | `Blocker` | Why the source is not data, from its `kind` and `filter`. `None` when it is data. |
 | `enum Blocker` | `Blocker` | The nine blockers. `as_str()` and `Display` give the Go names. |
 | `struct Recipe { file, fragment, entries }` | `Recipe` | One plan. The reader refuses a plan whose head comment states another output count. |
-| `parse_recipe(&Path, &str) -> Result<Recipe, Error>` | `ParseRecipe`, `ParseReport` | Interprets one plan text. |
-| `read_recipes(&[PathBuf]) -> Result<Vec<Recipe>, Error>` | `ReadRecipes` | Reads plan files and directories of `*.plan.yaml`, sorted by the bytes of the path. A directory with no plan is an error. |
+| `parse_recipe(&Path, &str) -> anyhow::Result<Recipe>` | `ParseRecipe`, `ParseReport` | Interprets one plan text. |
+| `read_recipes(&[PathBuf]) -> anyhow::Result<Vec<Recipe>>` | `ReadRecipes` | Reads plan files and directories of `*.plan.yaml`, sorted by the bytes of the path. A directory with no plan is an error. |
 | `struct Distribution` | `Distribution` | The file sizes of a built distribution. `root()`, `files()`, `directories()`, `lookup_from_root(&str) -> Option<u64>`. |
-| `read_distribution(&Path) -> Result<Distribution, Error>` | `ReadDistribution` | Indexes the regular files. It follows a link at the root and no link below it. |
+| `read_distribution(&Path) -> anyhow::Result<Distribution>` | `ReadDistribution` | Indexes the regular files. It follows a link at the root and no link below it. |
 | `struct Weight { entries, jars, bytes, unjoined, duplicate }` | `Weight` | One row. `balances()`, `+=`, and `-` for a subgroup. |
 | `struct OutputPurity { owner, causes }` | `OutputPurity` | One output. `cause_set()` and `needs_code()`. |
 | `struct Purity` | `Purity` | The run result. The groups are `BTreeMap`s. |

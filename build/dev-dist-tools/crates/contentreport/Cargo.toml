@@ -10,8 +10,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 saphyr.workspace = true
-thiserror.workspace = true
 walkdir.workspace = true
 
 [dev-dependencies]

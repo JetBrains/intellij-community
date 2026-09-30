@@ -10,8 +10,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 regex.workspace = true
-thiserror.workspace = true
 
 [dev-dependencies]
 planfile.workspace = true

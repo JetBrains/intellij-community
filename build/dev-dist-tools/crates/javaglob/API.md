@@ -14,16 +14,14 @@ javaglob.workspace = true
 pub struct JavaGlob; // Clone + Debug + Send + Sync
 
 impl JavaGlob {
-    pub fn compile(pattern: &str) -> Result<JavaGlob, GlobError>;
+    pub fn compile(pattern: &str) -> anyhow::Result<JavaGlob>;
     pub fn matches(&self, name: &str) -> bool;
 }
-
-pub struct GlobError; // Clone + Debug + PartialEq + Eq + Display + std::error::Error
 ```
 
 - The subset has literals, `*`, `**` and `{a,b}` groups. An alternative of a group can hold `*` and `**`.
 - `compile` refuses `?`, `[`, `]`, `\`, a nested `{` and an unbalanced brace.
-- `GlobError` displays as `glob "<pattern>": the dev-dist plan supports only *, ** and {a,b}, but the pattern has <problem>`. The problem names the character and its index, for example `'?' at 1`. Wrap it as the Go caller did, for example `invalid exclude: {error}`.
+- The error of `compile` reads `glob "<pattern>": the dev-dist plan supports only *, ** and {a,b}, but the pattern has <problem>`. The problem names the character and its index, for example `'?' at 1`. Wrap it as the Go caller did, for example `invalid exclude: {error:#}`.
 - `matches` covers the whole name and is case-sensitive. It first removes one trailing `/` of a clean name, which has no repeated `/`.
 - `*` matches zero or more characters other than `/`. `**` matches across `/` and does not match a line terminator, as the JDK does.
 
@@ -31,7 +29,7 @@ pub struct GlobError; // Clone + Debug + PartialEq + Eq + Display + std::error::
 
 | Go | Rust |
 |---|---|
-| `javaglob.Compile(pattern) (Matcher, error)` | `JavaGlob::compile(pattern) -> Result<JavaGlob, GlobError>` |
+| `javaglob.Compile(pattern) (Matcher, error)` | `JavaGlob::compile(pattern) -> anyhow::Result<JavaGlob>` |
 | `Matcher.Match(name) bool` | `JavaGlob::matches(&self, name) -> bool` |
 
 ## Tests
