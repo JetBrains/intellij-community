@@ -4,6 +4,9 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -357,8 +360,7 @@ class TerminalToolWindowTabsManagerImpl(
       }
       else manager.installTabsPersistence()
 
-      val toolWindowActions = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
-      toolWindow.setAdditionalGearActions(toolWindowActions)
+      toolWindow.setAdditionalGearActions(LazyToolWindowActions())
       toolWindow.setTitleActions(listOf(TerminalEmulatorBadgeAction()))
       toolWindow.setTabsSplittingAllowed(true)
       ToolWindowContentUi.setToolWindowInEditorSupport(toolWindow, TerminalInEditorSupport())
@@ -379,6 +381,16 @@ class TerminalToolWindowTabsManagerImpl(
           TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
         }
       }
+    }
+  }
+
+  /** Resolves the real group when the gear menu opens, because creating the group loads its actions. */
+  private class LazyToolWindowActions : ActionGroup() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+      val group = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
+      return group?.getChildren(e) ?: EMPTY_ARRAY
     }
   }
 
