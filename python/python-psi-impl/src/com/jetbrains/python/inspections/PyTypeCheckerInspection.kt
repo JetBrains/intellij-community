@@ -789,20 +789,23 @@ open class PyTypeCheckerInspection : PyInspection() {
       expected: PyType?, actual: PyType?, expExpr: PyExpression?,
       substitutions: GenericSubstitutions?,
     ): Boolean {
+      // Answer this before substituting the types: a non-creational expression can only end in `false`.
+      val isCreational = expExpr is PySequenceExpression
+                         || expExpr is PyCallExpression && expExpr.callee !is PySubscriptionExpression
+                         || expExpr is PyParenthesizedExpression && expExpr.containedExpression is PyTupleExpression
+      if (!isCreational) return false
+
       val expectedSubst = if (substitutions == null) expected else substitute(expected, substitutions, myTypeEvalContext)
       val actualSubst = if (substitutions == null) actual else substitute(actual, substitutions, myTypeEvalContext)
       if (expectedSubst is PyClassType && expectedSubst.isParameterized && actualSubst is PyClassType && actualSubst.isParameterized) {
         val expClassType = expectedSubst.pyClass.getType(myTypeEvalContext)
         val actClassType = actualSubst.pyClass.getType(myTypeEvalContext)
-        val isCreational = expExpr is PySequenceExpression
-                           || expExpr is PyCallExpression && expExpr.callee !is PySubscriptionExpression
-                           || expExpr is PyParenthesizedExpression && expExpr.containedExpression is PyTupleExpression
         val paramMapping = PyTypeParameterMapping.mapByShape(
           expectedSubst.typeArguments,
           actualSubst.typeArguments,
           PyTypeParameterMapping.Option.USE_DEFAULTS
         )
-        if (isCreational && paramMapping != null && match(expClassType, actClassType, myTypeEvalContext)) {
+        if (paramMapping != null && match(expClassType, actClassType, myTypeEvalContext)) {
           var allElementsMatch = true
           for (i in paramMapping.mappedTypes.indices) {
             val couple = paramMapping.mappedTypes[i]
