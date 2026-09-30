@@ -2,11 +2,12 @@
 package git4idea.workingTrees.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.git.actions.GitSingleRefActions
-import com.intellij.vcs.git.branch.popup.GitBranchesPopupActions
+import com.intellij.vcs.git.icons.GitIcons
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag
@@ -63,12 +64,10 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   }
 
   private fun computeIcon(e: AnActionEvent): Icon? {
-    return if (e.place == GitWorkingTreesContentProvider.GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR ||
-               e.place == GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE) {
-      AllIcons.General.Add
-    }
-    else {
-      null
+    return when (e.place) {
+      GitWorkingTreesContentProvider.GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR -> AllIcons.General.Add
+      "popup@GitBranchesPopup.TopLevel.Branch.Actions", ActionPlaces.ACTION_SEARCH -> GitIcons.Worktree
+      else -> null
     }
   }
 

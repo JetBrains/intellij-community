@@ -1,3 +1,5 @@
+f:com.intellij.vcs.git.icons.GitIcons
+- sf:Worktree:javax.swing.Icon
 c:git4idea.DialogManager
 - s:show(com.intellij.openapi.ui.DialogWrapper):V
 c:git4idea.GitFormatException

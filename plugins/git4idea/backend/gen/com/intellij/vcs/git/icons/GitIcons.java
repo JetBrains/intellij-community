@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.icons;
 
 import com.intellij.ui.IconManager;
@@ -16,4 +16,5 @@ public final class GitIcons {
   }
   /** 16x16 */ public static final @NotNull Icon Signed = load("icons/signed.svg", -1286071655, 7);
   /** 16x16 */ public static final @NotNull Icon Verified = load("icons/verified.svg", 953525889, 2);
+  /** 16x16 */ public static final @NotNull Icon Worktree = load("icons/worktree.svg", -103565061, 2);
 }
