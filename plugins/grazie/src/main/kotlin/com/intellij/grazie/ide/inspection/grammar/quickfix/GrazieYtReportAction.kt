@@ -48,7 +48,7 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
   private val isCloud = seemsCloudConnected()
   private val message = problem.shortMessage
   private val clazz: Class<*> = problem.javaClass
-  private val isSpellingProblem = problem.isSpellingProblem
+  private val isSpellingProblem = problem is TypoProblem
 
   private val title: String
   private val words: List<String>
