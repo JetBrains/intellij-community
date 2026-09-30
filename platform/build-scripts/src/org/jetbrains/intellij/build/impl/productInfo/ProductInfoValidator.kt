@@ -56,7 +56,7 @@ internal fun validateProductJson(jsonText: String, installationDirectories: List
     installation.checkFileExists(item.launcherPath, description = "${os} launcher")
     installation.checkFileExists(item.javaExecutablePath, description = "${os} java executable")
     installation.checkFileExists(item.vmOptionsFilePath, description = "${os} VM options file")
-    for (directory in nativeDirectoriesOfLaunch(item)) {
+    for (directory in nativeDirectoriesOfLaunch(item, context.isLanguageServer)) {
       installation.checkDirectoryExists(directory, description = "${os} native library directory")
     }
   }
@@ -70,11 +70,12 @@ private val NATIVE_DIRECTORY_ARGUMENTS = listOf("jna.boot.library.path", "pty4j.
 
 /**
  * Maps the home macro of a JVM argument to the installation directory relative to the directory of `product-info.json`.
- * On macOS, `product-info.json` is in `Contents/Resources/`, so `$APP_PACKAGE/Contents` is its parent directory.
- * A language server on macOS keeps `product-info.json` in the package root.
+ * On macOS, the launcher replaces `$APP_PACKAGE/Contents` with the IDE home.
+ * An IDE keeps `product-info.json` in `Contents/Resources/`, so the IDE home is its parent directory.
+ * A language server keeps `product-info.json` in the IDE home.
  */
-private val HOME_MACROS = listOf(
-  $$"$APP_PACKAGE/Contents/" to "../",
+private fun homeMacros(isLanguageServer: Boolean): List<Pair<String, String>> = listOf(
+  $$"$APP_PACKAGE/Contents/" to if (isLanguageServer) "" else "../",
   $$"$APP_PACKAGE/" to "",
   $$"$IDE_HOME/" to "",
   "%IDE_HOME%/" to "",
@@ -85,15 +86,16 @@ private val HOME_MACROS = listOf(
  * the directory of `product-info.json`. Fails on an argument without a known home macro.
  */
 @ApiStatus.Internal
-fun nativeDirectoriesOfLaunch(launch: ProductInfoLaunchData): List<String> {
+fun nativeDirectoriesOfLaunch(launch: ProductInfoLaunchData, isLanguageServer: Boolean = false): List<String> {
+  val homeMacros = homeMacros(isLanguageServer)
   val arguments = launch.additionalJvmArguments.asSequence() + launch.customCommands.asSequence().flatMap { it.additionalJvmArguments }
-  return arguments.mapNotNull(::nativeDirectoryOfArgument).distinct().toList()
+  return arguments.mapNotNull { nativeDirectoryOfArgument(it, homeMacros) }.distinct().toList()
 }
 
-private fun nativeDirectoryOfArgument(argument: String): String? {
+private fun nativeDirectoryOfArgument(argument: String, homeMacros: List<Pair<String, String>>): String? {
   val prefix = NATIVE_DIRECTORY_ARGUMENTS.map { "-D$it=" }.firstOrNull { argument.startsWith(it) } ?: return null
   val value = argument.substring(prefix.length)
-  val (macro, home) = HOME_MACROS.firstOrNull { value.startsWith(it.first) }
+  val (macro, home) = homeMacros.firstOrNull { value.startsWith(it.first) }
                       ?: throw RuntimeException("The JVM argument '$argument' in $PRODUCT_INFO_FILE_NAME has no home macro, so the directory cannot be checked")
   return home + value.substring(macro.length)
 }

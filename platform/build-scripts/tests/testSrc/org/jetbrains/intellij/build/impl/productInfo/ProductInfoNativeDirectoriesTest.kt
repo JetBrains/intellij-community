@@ -36,6 +36,13 @@ internal class ProductInfoNativeDirectoriesTest {
   }
 
   @Test
+  fun `a macOS language server resolves the app package to the directory of product-info`() {
+    val launch = launch(os = "macOS", arguments = listOf($$"-Djna.boot.library.path=$APP_PACKAGE/Contents/plugins/jna-plugin/lib/jna/amd64"))
+
+    assertThat(nativeDirectoriesOfLaunch(launch, isLanguageServer = true)).containsExactly("plugins/jna-plugin/lib/jna/amd64")
+  }
+
+  @Test
   fun `a Windows launch and a custom command share one directory once`() {
     val directory = "%IDE_HOME%/plugins/pty4j-plugin/lib/pty4j"
     val launch = launch(
