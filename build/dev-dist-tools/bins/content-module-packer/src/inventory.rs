@@ -46,8 +46,8 @@ pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> jarpack
         && let Some(tree) = &native.tree
     {
         let base = file_name(tree);
-        let root = filemeta::inspect(tree, &base)?;
-        let items = filemeta::inventory(tree)?;
+        let root = filemeta::inspect(tree, &base).map_err(metadata_error)?;
+        let items = filemeta::inventory(tree).map_err(metadata_error)?;
         entries.push(root);
         let mut native_files = 0;
         for mut item in items {
@@ -57,14 +57,14 @@ pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> jarpack
                 item.executable = item.mode & 0o111 != 0;
                 native_files += 1;
                 hashed_file_count += 1;
-                byte_count += item.size.unsigned_abs();
+                byte_count += item.size;
             }
             item.relative_path = format!("{base}/{}", item.relative_path);
             entries.push(item);
         }
         native_file_count = Some(native_files);
     }
-    filemeta::write(metadata_file, &entries)?;
+    filemeta::write(metadata_file, &entries).map_err(metadata_error)?;
     Ok(InventoryReport {
         file_count: entries.len() as u64,
         hashed_file_count,
@@ -91,11 +91,16 @@ fn jar_entry(output: &Path, merged: &MergeReport) -> jarpack::Result<Entry> {
         relative_path: file_name(output),
         entry_type: EntryType::File,
         hash: merged.content_hash,
-        size: i64::try_from(merged.bytes_written).expect("the writer refuses a jar of 4 GiB or more"),
+        size: merged.bytes_written,
         mode,
         executable: mode & 0o111 != 0,
         symlink_target: String::new(),
     })
+}
+
+/// Keeps the text of a `filemeta` error, with its context chain, in a packing error.
+fn metadata_error(error: impl std::fmt::Display) -> jarpack::Error {
+    jarpack::Error::Invalid(format!("{error:#}"))
 }
 
 fn file_name(path: &Path) -> String {

@@ -136,7 +136,7 @@ impl Execution {
                 Action::Copy(input) => fscopy::replace_with_copy(input, &destination)?,
             }
             // The inspection runs before the chmod, because a declared mode can deny the read.
-            let mut file = filemeta::inspect(&destination, &resolved.destination)?;
+            let mut file = filemeta::inspect(&destination, &resolved.destination).map_err(Error::chain)?;
             fscopy::set_mode(&destination, resolved.mode)?;
             // The inventory records the mode the packer set. POSIX reads the same bits back, and NTFS stores none.
             file.mode = resolved.mode;
@@ -149,14 +149,14 @@ impl Execution {
             let destination = paths::host(stage.path(), name);
             fs::remove_file(&destination).at(&destination)?;
             paths::create_symlink(target, &destination)?;
-            files.push(filemeta::inspect(&destination, name)?);
+            files.push(filemeta::inspect(&destination, name).map_err(Error::chain)?);
         }
         let mut directories: Vec<&Resolved> = operations.iter().filter(|resolved| resolved.is_directory()).collect();
         directories.sort_by(|first, second| second.destination.cmp(&first.destination));
         for resolved in directories {
             let destination = paths::host(stage.path(), &resolved.destination);
             fscopy::set_mode(&destination, resolved.mode)?;
-            let mut entry = filemeta::inspect(&destination, &resolved.destination)?;
+            let mut entry = filemeta::inspect(&destination, &resolved.destination).map_err(Error::chain)?;
             entry.mode = resolved.mode;
             files.push(entry);
         }
@@ -167,7 +167,7 @@ impl Execution {
             .tempfile_in(inventory_parent)
             .at(inventory_parent)?
             .into_temp_path();
-        filemeta::write(&metadata, &files)?;
+        filemeta::write(&metadata, &files).map_err(Error::chain)?;
         fscopy::set_mode(&metadata, 0o644)?;
         scratch.remove()?;
         check_empty_directory(&output)?;

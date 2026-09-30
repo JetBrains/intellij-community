@@ -196,7 +196,7 @@ fn bind_members(sources: &mut ComponentSources, root: &str, physical: &str, memb
             ..filemeta::Entry::default()
         })
         .collect();
-    filemeta::merge(&entries)?;
+    filemeta::merge(&entries).map_err(|error| Error::msg(format!("{error:#}")))?;
     let mut known = HashSet::with_capacity(members.len());
     let mut directories = BTreeSet::new();
     for member in members {

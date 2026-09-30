@@ -78,12 +78,3 @@ impl<T> IoContext<T> for Result<T> {
         })
     }
 }
-
-impl From<filemeta::Error> for Error {
-    fn from(error: filemeta::Error) -> Self {
-        match error {
-            filemeta::Error::Io { path, error } => Self::Io { path, error },
-            filemeta::Error::Invalid(message) => Self::Invalid(message),
-        }
-    }
-}

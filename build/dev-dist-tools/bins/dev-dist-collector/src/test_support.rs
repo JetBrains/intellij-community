@@ -109,7 +109,7 @@ fn entry_json(entry: &Entry) -> Value {
     value
 }
 
-pub(crate) fn file_entry(relative_path: &str, hash: i64, size: i64, mode: u32) -> Entry {
+pub(crate) fn file_entry(relative_path: &str, hash: i64, size: u64, mode: u32) -> Entry {
     Entry {
         relative_path: relative_path.into(),
         entry_type: EntryType::File,

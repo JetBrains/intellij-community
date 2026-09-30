@@ -197,7 +197,6 @@ pub enum Error {
     Bare(io::Error), // an I/O error whose text is the whole message
     Context { context: String, error: Box<Error> },
 }
-impl From<filemeta::Error> for Error;
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 ```
 

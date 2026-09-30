@@ -14,9 +14,6 @@ pub enum Error {
     /// A JSON error and the file it happened in.
     #[error("{path}: {source}")]
     Json { path: String, source: serde_json::Error },
-    /// An error of the file inventory.
-    #[error(transparent)]
-    Metadata(#[from] filemeta::Error),
     /// An error of the plugin classpath record.
     #[error(transparent)]
     Planfile(#[from] planfile::Error),

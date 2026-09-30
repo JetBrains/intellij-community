@@ -76,7 +76,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
         if let Some(metadata) = &file.metadata {
             let mut metadata = metadata.clone();
             metadata.relative_path.clone_from(&file.relative_path);
-            filemeta::merge(std::iter::once(&metadata))?;
+            filemeta::merge(std::iter::once(&metadata)).map_err(|error| Error::msg(format!("{error:#}")))?;
             let mut entry = ComponentEntry {
                 relative_path: file.relative_path.clone(),
                 entry_type: ComponentEntryType::ComponentFile,
@@ -237,7 +237,7 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
         }
         let metadata_path = paths::absolute_path(&record.metadata)?;
         if !cache.contains_key(&metadata_path) {
-            let inventory = filemeta::read(Path::new(&metadata_path))?;
+            let inventory = filemeta::read(Path::new(&metadata_path)).map_err(|error| Error::msg(format!("{error:#}")))?;
             let entries = inventory.into_iter().map(|entry| (entry.relative_path.clone(), entry)).collect();
             cache.insert(metadata_path.clone(), entries);
         }

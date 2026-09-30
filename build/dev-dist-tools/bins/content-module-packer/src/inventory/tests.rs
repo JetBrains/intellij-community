@@ -117,7 +117,7 @@ fn packing_produces_metadata_outside_the_payload() {
     let want = InventoryReport {
         file_count: 1,
         hashed_file_count: 1,
-        byte_count: expected.size as u64,
+        byte_count: expected.size,
         native_file_count: None,
     };
     assert_eq!(report, want);
@@ -171,7 +171,7 @@ fn natives_mode_inventories_the_jar_and_the_tree() {
     let library = by_path["native/aarch64/libjnidispatch.jnilib"];
     let expected = filemeta::inspect(&layout.tree.join("aarch64/libjnidispatch.jnilib"), &library.relative_path).unwrap();
     assert_eq!(*library, expected);
-    assert!(library.entry_type == EntryType::File && !library.executable && library.size == "arm dispatch".len() as i64);
+    assert!(library.entry_type == EntryType::File && !library.executable && library.size == "arm dispatch".len() as u64);
     assert_eq!(library.mode, 0o644);
     let helper = by_path["native/aarch64/pty4j-unix-spawn-helper"];
     assert!(helper.executable && helper.mode == 0o755, "{helper:?}");
@@ -183,7 +183,7 @@ fn natives_mode_inventories_the_jar_and_the_tree() {
     let want = InventoryReport {
         file_count: 5,
         hashed_file_count: 3,
-        byte_count: (jar.size + library.size + helper.size) as u64,
+        byte_count: jar.size + library.size + helper.size,
         native_file_count: Some(2),
     };
     assert_eq!(report, want);

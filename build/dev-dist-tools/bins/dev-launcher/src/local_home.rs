@@ -253,7 +253,7 @@ fn validate_layout(layout: &LocalLayout) -> Result<()> {
             None => entries.push(file_entry(&file.path, file.mode, file.executable)),
         }
     }
-    filemeta::merge(&entries)?;
+    filemeta::merge(&entries).map_err(|error| Error::msg(format!("{error:#}")))?;
     Ok(())
 }
 

@@ -11,8 +11,8 @@ fn directory(relative_path: &str, mode: u32) -> Entry {
     }
 }
 
-fn error_text<T: std::fmt::Debug>(result: Result<T, Error>) -> String {
-    result.unwrap_err().to_string()
+fn error_text<T: std::fmt::Debug>(result: anyhow::Result<T>) -> String {
+    format!("{:#}", result.unwrap_err())
 }
 
 #[cfg(unix)]
@@ -162,6 +162,9 @@ fn read_rejects_invalid_metadata() {
             String::from_utf8_lossy(text)
         );
     }
+    // The size is unsigned in memory. The reader names the entry with a negative size, as `merge` did before.
+    let message = error_text(read(&temporary.path().join("metadata-5.json")));
+    assert!(message.ends_with("metadata-5.json: invalid size or mode for a.jar"), "{message}");
 }
 
 #[test]
@@ -376,10 +379,12 @@ fn inspect_names_a_missing_file() {
     let temporary = tempfile::tempdir().unwrap();
     let error = inspect(&temporary.path().join("missing"), "missing").unwrap_err();
     assert!(
-        matches!(&error, Error::Io { error, .. } if error.kind() == std::io::ErrorKind::NotFound),
+        error
+            .downcast_ref::<std::io::Error>()
+            .is_some_and(|error| error.kind() == std::io::ErrorKind::NotFound),
         "{error:?}"
     );
-    assert!(error.to_string().contains("missing"), "{error}");
+    assert!(format!("{error:#}").contains("missing"), "{error:#}");
     inspect(temporary.path(), "../escape").unwrap_err();
 }
 

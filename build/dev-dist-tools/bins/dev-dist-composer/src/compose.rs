@@ -167,7 +167,7 @@ pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<
         }
         entries.push(entry.to_metadata());
     }
-    filemeta::merge(&entries)?;
+    filemeta::merge(&entries).map_err(|error| Error::msg(format!("{error:#}")))?;
     Ok(())
 }
 

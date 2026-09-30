@@ -2,10 +2,11 @@ use std::fs;
 use std::io::Write as _;
 use std::path::Path;
 
+use anyhow::{Context as _, Result};
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::create_dir_all_0755;
-use crate::entry::{Entry, EntryType, Error, invalid, merge};
+use crate::entry::{Entry, EntryType, merge};
 
 /// The version of the inventory format.
 const VERSION: i64 = 1;
@@ -29,6 +30,7 @@ struct WireEntry {
     #[serde(default, deserialize_with = "present", skip_serializing_if = "Option::is_none")]
     #[expect(clippy::option_option, reason = "a missing key and a null value are two states of the format")]
     hash: Option<Option<i64>>,
+    /// Signed, as the Kotlin reader stores it. [`from_wire`] refuses a negative size with the text of [`merge`].
     size: i64,
     mode: u32,
     executable: bool,
@@ -41,9 +43,9 @@ struct WireEntry {
 /// The function accepts only the shape that [`write`] writes. It rejects data after the document, an unknown, missing
 /// or `null` field, a field of the wrong type, and a version other than 1. A directory must not have the key `hash`,
 /// and every other entry must have a `hash` number. Then the entries must pass [`merge`].
-pub fn read(source: &Path) -> Result<Vec<Entry>, Error> {
-    let data = fs::read(source).map_err(|error| Error::io(source, error))?;
-    decode(&data).map_err(|message| invalid(format!("{}: {message}", source.display())))
+pub fn read(source: &Path) -> Result<Vec<Entry>> {
+    let data = fs::read(source).with_context(|| source.display().to_string())?;
+    decode(&data).with_context(|| source.display().to_string())
 }
 
 /// Merges `entries` and writes them to the inventory file `destination`.
@@ -51,13 +53,13 @@ pub fn read(source: &Path) -> Result<Vec<Entry>, Error> {
 /// The function creates the missing parent directories with [`create_dir_all_0755`]. So each new directory has the mode
 /// 0755, also under a strict umask. The Go writer applied the umask. The function merges before it writes, so an
 /// invalid set of entries leaves the file unchanged.
-pub fn write(destination: &Path, entries: &[Entry]) -> Result<(), Error> {
+pub fn write(destination: &Path, entries: &[Entry]) -> Result<()> {
     let entries = merge(entries)?;
     let data = encode(&entries);
     if let Some(parent) = destination.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        create_dir_all_0755(parent).map_err(|error| Error::io(parent, error))?;
+        create_dir_all_0755(parent).with_context(|| parent.display().to_string())?;
     }
-    write_file(destination, &data).map_err(|error| Error::io(destination, error))
+    write_file(destination, &data).with_context(|| destination.display().to_string())
 }
 
 /// Returns the document followed by a newline, as the Go writer wrote it.
@@ -71,13 +73,13 @@ pub(crate) fn encode(entries: &[Entry]) -> Vec<u8> {
     data
 }
 
-fn decode(data: &[u8]) -> Result<Vec<Entry>, String> {
-    let document: Document = serde_json::from_slice(data).map_err(|error| error.to_string())?;
+fn decode(data: &[u8]) -> Result<Vec<Entry>> {
+    let document: Document = serde_json::from_slice(data)?;
     if document.version != VERSION {
-        return Err(format!("unsupported metadata version {}", document.version));
+        anyhow::bail!("unsupported metadata version {}", document.version);
     }
-    let entries = document.entries.into_iter().map(from_wire).collect::<Result<Vec<_>, _>>()?;
-    merge(&entries).map_err(|error| error.to_string())
+    let entries = document.entries.into_iter().map(from_wire).collect::<Result<Vec<_>>>()?;
+    merge(&entries)
 }
 
 fn to_wire(entry: &Entry) -> WireEntry {
@@ -85,27 +87,30 @@ fn to_wire(entry: &Entry) -> WireEntry {
         relative_path: entry.relative_path.clone(),
         entry_type: entry.entry_type,
         hash: (entry.entry_type != EntryType::Directory).then_some(Some(entry.hash)),
-        size: entry.size,
+        size: i64::try_from(entry.size).expect("merge refuses a size above i64::MAX"),
         mode: entry.mode,
         executable: entry.executable,
         symlink_target: entry.symlink_target.clone(),
     }
 }
 
-fn from_wire(wire: WireEntry) -> Result<Entry, String> {
+fn from_wire(wire: WireEntry) -> Result<Entry> {
     let hash = match (wire.entry_type, wire.hash) {
         (EntryType::Directory, None) => 0,
         (EntryType::Directory, Some(_)) => {
-            return Err(format!("directory metadata must not have a hash: {}", wire.relative_path));
+            anyhow::bail!("directory metadata must not have a hash: {}", wire.relative_path);
         }
         (_, Some(Some(hash))) => hash,
-        (_, None | Some(None)) => return Err(format!("metadata entry requires hash: {}", wire.relative_path)),
+        (_, None | Some(None)) => anyhow::bail!("metadata entry requires hash: {}", wire.relative_path),
+    };
+    let Ok(size) = u64::try_from(wire.size) else {
+        anyhow::bail!("invalid size or mode for {}", wire.relative_path);
     };
     Ok(Entry {
         relative_path: wire.relative_path,
         entry_type: wire.entry_type,
         hash,
-        size: wire.size,
+        size,
         mode: wire.mode,
         executable: wire.executable,
         symlink_target: wire.symlink_target,
