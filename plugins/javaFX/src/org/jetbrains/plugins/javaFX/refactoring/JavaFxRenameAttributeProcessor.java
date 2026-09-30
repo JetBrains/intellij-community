@@ -9,6 +9,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameXmlAttributeProcessor;
 import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,8 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.util.Map;
 
-public final class JavaFxRenameAttributeProcessor extends RenameXmlAttributeProcessor {
+public final class JavaFxRenameAttributeProcessor extends RenameXmlAttributeProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     if (element instanceof XmlAttributeValue && JavaFxFileTypeFactory.isFxml(element.getContainingFile())) {
