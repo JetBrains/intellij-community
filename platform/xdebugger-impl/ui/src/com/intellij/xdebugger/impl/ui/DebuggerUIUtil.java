@@ -73,6 +73,7 @@ import com.intellij.xdebugger.SplitDebuggerMode;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -285,6 +286,7 @@ public final class DebuggerUIUtil {
       assert document != null;
       editor = editorFactory.createEditor(document, project, virtualFile, isViewer);
     }
+    XDebuggerUtil.getInstance().disableValueLookup(editor);
     editor.getSettings().setLineNumbersShown(false);
     editor.getSettings().setUseSoftWraps(!skipFormatting); // they might be very expensive in case of a huge text
 
