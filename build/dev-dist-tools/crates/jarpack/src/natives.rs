@@ -165,7 +165,7 @@ impl MergeSpec {
         let tree = spec.tree.as_ref().expect("a native tree requires a tree path");
         let (family, arch) = (spec.family.expect("validated family"), spec.arch.expect("validated arch"));
         let source_path = self.sources[natives.index].path.display();
-        fscopy::create_dirs_0755(tree).map_err(Error::Bare)?;
+        filemeta::create_dir_all_0755(tree).map_err(Error::Bare)?;
         let names: Vec<&str> = natives.entries.iter().map(|entry| entry.name).collect();
         let by_name: HashMap<&str, Entry<'_>> = natives.entries.iter().map(|entry| (entry.name, *entry)).collect();
         let matches = nativelib::select(&names, family, arch).map_err(|error| error.context(&source_path))?;
@@ -200,7 +200,7 @@ impl MergeSpec {
             let mut target = tree.clone();
             target.extend(file.relative_path.split('/'));
             if let Some(parent) = target.parent() {
-                fscopy::create_dirs_0755(parent).map_err(Error::Bare)?;
+                filemeta::create_dir_all_0755(parent).map_err(Error::Bare)?;
             }
             fs::write(&target, &data).at(&target)?;
             // The mode of a new file is subject to the umask, and the inventory of the tree records the mode.

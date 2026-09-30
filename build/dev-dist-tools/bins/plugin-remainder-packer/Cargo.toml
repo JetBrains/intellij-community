@@ -10,6 +10,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+filemeta.workspace = true
 fscopy.workspace = true
 lexopt.workspace = true
 planfile.workspace = true

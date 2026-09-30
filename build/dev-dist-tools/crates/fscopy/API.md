@@ -15,8 +15,6 @@ clones on ReFS and a Dev Drive.
   kept the case of the input.
 - On Windows, `resolve_links` removes a `..` lexically before it follows a link. The Go original went to the parent of
   the link target.
-- `create_dirs_0755` gives each new directory the mode 0755. Go `os.MkdirAll(path, 0o755)` applied the umask, so a
-  umask such as 027 or 077 gave a different mode.
 - On Windows, `symlink` takes the link kind from `target_is_directory`. Go `os.Symlink` read the kind from the target
   on the disk, so a missing target gave a file link.
 
@@ -30,7 +28,6 @@ clones on ReFS and a Dev Drive.
 | `replace_with_copy(&Path, &Path)` | pluginpack `copyFile` | Replaces an existing regular file (a reserved output) with a clone of the source. Fails with `NotFound` when the destination does not exist. The caller sets the mode after. |
 | `set_distribution_file_mode(&Path, executable: bool, mode: Option<u32>)` | composer `setDistributionFileMode` | Sets `mode & 0o777`, or 0755 or 0644 from `executable`. Does nothing on Windows. |
 | `conventional_mode(executable: bool) -> u32` | composer `conventionalMode` | 0o755 or 0o644. |
-| `create_dirs_0755(&Path)` | `os.MkdirAll(path, 0o755)` in filemetadata, jarpack and pluginpack | Creates the directory and its missing parents. Each new directory gets the mode 0755, also under the umask 002 or 077. A directory that exists keeps its mode. On Windows it only creates the directories. |
 | `symlink(target: &Path, link: &Path, target_is_directory: bool)` | `os.Symlink` in the collector, composer, dev-launcher and pluginpack | Creates the link with the target text. On Unix it ignores the flag. On Windows it creates a directory link or a file link by the flag, and it replaces each `/` in the target with `\`. The error text is the Go `os.LinkError` text: `symlink <target> <link>: <cause>`. |
 | `absolute_path(&Path) -> io::Result<PathBuf>` | `filepath.Abs` | Joins a relative path to the current directory and removes `.` and `..` lexically. |
 | `real_path(&Path) -> io::Result<PathBuf>` | composer `realPath`, pluginpack `evalSymlinks` on Windows | `absolute_path`, then follows every link and junction. On Windows the result has no `\\?\` prefix (Go `stripExtendedPathPrefix`). |

@@ -1,33 +1,37 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use filemeta::EntryType;
+//! The inventory of one packed group: the jar, and in natives mode also the tree.
 
-use crate::error::{Result, bail};
-use crate::merge::MergeSpec;
-use crate::natives::file_name;
+use std::path::Path;
+
+use filemeta::EntryType;
+use jarpack::MergeSpec;
 
 /// The counters of one inventory, the tags of the `inventory packing output` span.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct InventoryReport {
+pub(crate) struct InventoryReport {
     /// `fileCount`: all entries of the inventory.
-    pub file_count: u64,
+    pub(crate) file_count: u64,
     /// `hashedFileCount`: the jar and each file of the tree.
-    pub hashed_file_count: u64,
+    pub(crate) hashed_file_count: u64,
     /// `byteCount`: the size of the jar and of each file of the tree.
-    pub byte_count: u64,
+    pub(crate) byte_count: u64,
     /// `nativeFileCount`: the files of the tree. It is `Some` only when the spec writes a tree.
-    pub native_file_count: Option<u64>,
+    pub(crate) native_file_count: Option<u64>,
 }
 
 /// Writes the metadata of what the spec packed to [`MergeSpec::metadata_file`]. That is the jar, and in natives mode
 /// also the tree. The tree has its root directory by the name of the directory, and every file and directory under it.
 ///
 /// The collector places the files of the tree from this inventory alone, so it holds the hash, the size and the mode of
-/// each. The mode of a tree file is [`crate::NativeSpec::file_mode`], not the mode a stat returns: POSIX reads the same
-/// bits back, and NTFS stores none.
-pub fn write_inventory(spec: &MergeSpec) -> Result<InventoryReport> {
+/// each. The mode of a tree file is [`jarpack::NativeSpec::file_mode`], not the mode a stat returns: POSIX reads the
+/// same bits back, and NTFS stores none.
+pub(crate) fn write_inventory(spec: &MergeSpec) -> jarpack::Result<InventoryReport> {
     let Some(metadata_file) = &spec.metadata_file else {
-        bail!("{}: the spec names no metadata file", spec.output.display());
+        return Err(jarpack::Error::Invalid(format!(
+            "{}: the spec names no metadata file",
+            spec.output.display()
+        )));
     };
     let jar = filemeta::inspect(&spec.output, &file_name(&spec.output))?;
     let mut hashed_file_count = 1;
@@ -64,3 +68,10 @@ pub fn write_inventory(spec: &MergeSpec) -> Result<InventoryReport> {
         native_file_count,
     })
 }
+
+fn file_name(path: &Path) -> String {
+    path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests;

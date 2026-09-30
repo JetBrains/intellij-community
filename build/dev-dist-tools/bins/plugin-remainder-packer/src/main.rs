@@ -229,7 +229,7 @@ fn project(arguments: &Arguments, version: u32) -> Result<String, String> {
 fn write_output(file: &str, data: &[u8]) -> Result<(), String> {
     let path = Path::new(file);
     if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        fscopy::create_dirs_0755(parent).map_err(|error| error.to_string())?;
+        filemeta::create_dir_all_0755(parent).map_err(|error| error.to_string())?;
     }
     fs::write(path, data).map_err(|error| format!("{file}: {error}"))?;
     fscopy::set_distribution_file_mode(path, false, Some(0o644)).map_err(|error| error.to_string())

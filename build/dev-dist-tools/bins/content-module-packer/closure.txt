@@ -10,10 +10,8 @@ distpath
 either
 equivalent
 filemeta
-filetime
 flate2
 foldhash
-fscopy
 getrandom
 hashbrown
 httpdate

@@ -87,6 +87,7 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 name = "content-module-packer"
 version = "0.1.0"
 dependencies = [
+ "filemeta",
  "jarpack",
  "lexopt",
  "rayon",
@@ -286,7 +287,6 @@ name = "filemeta"
 version = "0.1.0"
 dependencies = [
  "distpath",
- "fscopy",
  "serde",
  "serde_json",
  "tempfile",
@@ -398,7 +398,6 @@ dependencies = [
  "distpath",
  "filemeta",
  "flate2",
- "fscopy",
  "memmap2",
  "regex",
  "sha2",
@@ -530,7 +529,6 @@ dependencies = [
  "anyhow",
  "appinfo",
  "flate2",
- "fscopy",
  "lexopt",
  "memmap2",
  "tempfile",

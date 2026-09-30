@@ -14,7 +14,7 @@ use crate::layout_writer::{Content, LayoutWriter, TreeWriter};
 /// link, fail with the archive name. The member keeps the deflate stream of the archive, so the legacy Kotlin build and
 /// this action write the same bytes.
 pub fn write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()> {
-    fscopy::create_dirs_0755(output)?;
+    filemeta::create_dir_all_0755(output)?;
     let mut writer = TreeWriter::new(output.to_path_buf());
     // A zip or a jar needs no scratch directory. Only a decoded `.zip.zst` does.
     let mut scratch = LayoutScratch::unavailable();

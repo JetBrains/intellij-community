@@ -4,10 +4,8 @@ appinfo
 cfg_if
 crc32fast
 equivalent
-filetime
 flate2
 foldhash
-fscopy
 hashbrown
 indexmap
 lexopt

@@ -105,7 +105,7 @@ impl Execution {
         }
         check_output_namespace(&output, &inventory)?;
         let parent = parent_of(&output);
-        fscopy::create_dirs_0755(parent)?;
+        filemeta::create_dir_all_0755(parent)?;
         let mut stage = Stage::create(parent)?;
         stage.directories = operations
             .iter()
@@ -161,7 +161,7 @@ impl Execution {
             files.push(entry);
         }
         let inventory_parent = parent_of(&inventory);
-        fscopy::create_dirs_0755(inventory_parent)?;
+        filemeta::create_dir_all_0755(inventory_parent)?;
         let mut metadata = tempfile::Builder::new()
             .prefix(".plugin-inventory-")
             .tempfile_in(inventory_parent)
@@ -659,8 +659,8 @@ fn check_output_namespace(output: &Path, inventory: &Path) -> Result<()> {
         .at(&ancestor)?;
     let output_path = probe.path().join(&output_suffix);
     let inventory_path = probe.path().join(&inventory_suffix);
-    fscopy::create_dirs_0755(&output_path)?;
-    fscopy::create_dirs_0755(parent_of(&inventory_path))?;
+    filemeta::create_dir_all_0755(&output_path)?;
+    filemeta::create_dir_all_0755(parent_of(&inventory_path))?;
     fs::File::create_new(&inventory_path)
         .map_err(|error| Error::new(format!("inventory must be outside the payload directory: {error}")))?;
     if overlapping_paths(&output_path, &inventory_path)? {

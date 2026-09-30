@@ -10,6 +10,8 @@ use rayon::prelude::*;
 use tracing::field::Empty;
 use tracing::{Dispatch, Span, info_span};
 
+use crate::inventory;
+
 /// Packs each group of the recipe under `root`.
 ///
 /// A Bazel action names one group, and the group runs on the calling thread. A parity run or a profile run names many
@@ -101,7 +103,7 @@ fn write_inventory(spec: &MergeSpec, parent: &Span) -> jarpack::Result<()> {
         byteCount = Empty,
         nativeFileCount = Empty
     );
-    match jarpack::write_inventory(spec) {
+    match inventory::write_inventory(spec) {
         Ok(report) => {
             span.record("fileCount", report.file_count);
             span.record("hashedFileCount", report.hashed_file_count);

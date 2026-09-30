@@ -15,7 +15,7 @@ pub enum Error {
     #[error("{}: {error}", path.display())]
     Io { path: PathBuf, error: io::Error },
     /// An I/O error whose text is the whole message. A [`Writer`](crate::Writer) gives one without a path, because it
-    /// does not know the path of its output. `fscopy` gives one with the path in the text.
+    /// does not know the path of its output. [`filemeta::create_dir_all_0755`] gives one with the path in the text.
     #[error("{0}")]
     Bare(io::Error),
     #[error("{context}: {error}")]

@@ -5,11 +5,17 @@
 //!
 //! The recipe arrives as a flag file. Nothing here reads a project model, a product property or a plugin descriptor, so
 //! the output is a function of the inputs alone. `jarpack` holds the recipe grammar and the bytes of the jar. This crate
-//! holds the command line, the spans and the parallel packing of a large recipe.
+//! holds the command line, the inventory of each jar, the spans and the parallel packing of a large recipe.
+//!
+//! The inventory is the port of `inventoryPackingOutput` of the Go `main.go`. It goes to the `metadata-file=` of the
+//! group through `filemeta`, after the jar. It lists the jar, and in natives mode also the tree root and every entry under
+//! it. A tree file gets `NativeSpec::file_mode`, not the mode that a stat returns. A tree directory gets the mode that a
+//! stat returns. The Kotlin build and the collector read the file, so its bytes are the inventory JSON version 1.
 //!
 //! A Bazel action runs one process for one jar, so the command line of a failed action reproduces the failure. A parity
 //! run or a profile run packs a whole tranche in one process, from one flag file with thousands of `output=` groups.
 
+mod inventory;
 mod options;
 mod pack;
 #[cfg(test)]

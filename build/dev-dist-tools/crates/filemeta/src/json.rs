@@ -4,6 +4,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Deserializer, Serialize};
 
+use crate::create_dir_all_0755;
 use crate::entry::{Entry, EntryType, Error, invalid, merge};
 
 /// The version of the inventory format.
@@ -47,14 +48,14 @@ pub fn read(source: &Path) -> Result<Vec<Entry>, Error> {
 
 /// Merges `entries` and writes them to the inventory file `destination`.
 ///
-/// The function creates the missing parent directories with [`fscopy::create_dirs_0755`]. So each new directory has the
-/// mode 0755, also under a strict umask. The Go writer applied the umask. The function merges before it writes, so an
+/// The function creates the missing parent directories with [`create_dir_all_0755`]. So each new directory has the mode
+/// 0755, also under a strict umask. The Go writer applied the umask. The function merges before it writes, so an
 /// invalid set of entries leaves the file unchanged.
 pub fn write(destination: &Path, entries: &[Entry]) -> Result<(), Error> {
     let entries = merge(entries)?;
     let data = encode(&entries);
     if let Some(parent) = destination.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        fscopy::create_dirs_0755(parent).map_err(|error| Error::io(parent, error))?;
+        create_dir_all_0755(parent).map_err(|error| Error::io(parent, error))?;
     }
     write_file(destination, &data).map_err(|error| Error::io(destination, error))
 }

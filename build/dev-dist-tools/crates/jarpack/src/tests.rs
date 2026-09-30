@@ -6,7 +6,6 @@ mod filters;
 mod flagfile;
 mod golden;
 mod index;
-mod inventory;
 mod merge;
 mod nativelib;
 mod natives;

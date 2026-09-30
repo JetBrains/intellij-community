@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 //! The tests of the command line, the trace destination, the spans and the parallel run. Each test calls [`run`] as the
-//! process does, with a scratch directory as the working directory. The bytes of the jars and the inventories have
-//! their tests in `jarpack`, where the bytes are.
+//! process does, with a scratch directory as the working directory. The bytes of the jars have their tests in
+//! `jarpack`, where the bytes are. The inventory has its tests in `inventory/tests.rs`.
 
 use std::collections::BTreeMap;
 use std::ffi::OsString;
@@ -44,8 +44,8 @@ fn write_recipe(base_dir: &Path, recipe: &str) {
     fs::write(base_dir.join("recipe.txt"), recipe).expect("a recipe");
 }
 
-/// Writes a jar with the `zip` crate, which shares no code with the reader of `jarpack`.
-fn write_jar(path: &Path, entries: &[(&str, &[u8])], method: CompressionMethod) {
+/// Writes a jar with the `zip` crate, which shares no code with the reader of `jarpack`. The inventory tests use it too.
+pub(crate) fn write_jar(path: &Path, entries: &[(&str, &[u8])], method: CompressionMethod) {
     let mut writer = ZipWriter::new(File::create(path).expect("a fixture jar"));
     let options = SimpleFileOptions::default().compression_method(method);
     for (name, data) in entries {
@@ -229,7 +229,7 @@ fn a_run_without_a_trace_file_writes_only_its_jar() {
 
 #[test]
 fn natives_mode_tags_the_inventory_span() {
-    // The jarpack tests check the inventory itself. This test checks that the span shows the counters.
+    // The inventory tests check the inventory itself. This test checks that the span shows the counters.
     let dir = pack_one_native_jar();
     let outcome = run_in(dir.path(), &[flag_file_argument(dir.path())]);
     assert_eq!(outcome.code, 0, "{}", outcome.stderr);

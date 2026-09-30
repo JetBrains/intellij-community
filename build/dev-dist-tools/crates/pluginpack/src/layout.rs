@@ -58,7 +58,7 @@ impl LayoutScratch {
             return Ok(Self { root: None, count: 0 });
         }
         let parent = output.parent().unwrap_or(output);
-        fscopy::create_dirs_0755(parent)?;
+        filemeta::create_dir_all_0755(parent)?;
         let root = tempfile::Builder::new()
             .prefix(".plugin-layout-")
             .tempdir_in(parent)

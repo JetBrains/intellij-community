@@ -16,7 +16,6 @@ zip.workspace = true
 flate2.workspace = true
 memmap2.workspace = true
 lexopt.workspace = true
-fscopy.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]

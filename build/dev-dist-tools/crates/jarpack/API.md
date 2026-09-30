@@ -4,8 +4,8 @@ The packer core behind `PackContentModuleJar`. It merges source jars and single 
 generated `__index__`. It can also write the native files of one library as a tree. The output bytes are frozen. The six
 golden digests in `src/tests/golden.rs` and the `./build/dev-dist.cmd jars` gate hold them.
 
-It is the port of the Go packages `internal/jarpack` and `internal/nativelib`, and of `inventoryPackingOutput` in
-`content-module-packer/main.go`. Every item below is `pub` at the crate root, except the items of `jarpack::nativelib`.
+It is the port of the Go packages `internal/jarpack` and `internal/nativelib`. Every item below is `pub` at the crate
+root, except the items of `jarpack::nativelib`. The packer binary writes the inventory of a spec.
 
 ## Supported subset
 
@@ -34,9 +34,9 @@ writes a `file=` line. The recipe replay of `build/dev-dist` writes one, so the 
 pub fn duplicate_line(jar_name: &str, duplicates: &[String]) -> Option<String>;
 ```
 
-- A caller packs one spec in two steps. It calls `spec.pack()` first, and `write_inventory(&spec)` second when the
-  spec names a metadata file. The `pack jar` span holds the first step, and its `inventory packing output` child span
-  holds the second.
+- The packer packs one spec in two steps. It calls `spec.pack()` first, and it writes the inventory of the spec second
+  when the spec names a metadata file. The `pack jar` span holds the first step, and its `inventory packing output`
+  child span holds the second.
 - `MergeSpec::pack` prints nothing. The caller prints `duplicate_line(&spec.jar_name(), &report.duplicates)` to stderr.
   The line is `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end.
   The Go binary printed it before an inventory error, so the caller prints it between the two steps.
@@ -144,24 +144,9 @@ pub fn valid_arch(arch: Arch) -> bool;
 
 The Go `ValidFamily` has no port, because every `Family` value is valid.
 
-## Inventory
-
-```rust
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct InventoryReport {
-    pub file_count: u64,                // "fileCount"
-    pub hashed_file_count: u64,         // "hashedFileCount"
-    pub byte_count: u64,                // "byteCount"
-    pub native_file_count: Option<u64>, // "nativeFileCount", Some in natives mode only
-}
-pub fn write_inventory(spec: &MergeSpec) -> Result<InventoryReport>;
-```
-
-It writes the jar entry to `spec.metadata_file` through `filemeta`. In natives mode it also writes the tree root and
-every entry under it. A tree file gets `NativeSpec::file_mode`, not the mode a stat returns. A tree directory gets the
-mode that a stat returns. The merge creates each directory with `fscopy::create_dirs_0755`, so a new directory gets
-the mode 0755 under any umask. The parent of the jar gets the same mode. The Go `os.MkdirAll(path, 0o755)` gave the
-same mode under the umask 022 or 002, but 0700 under the umask 077. A directory that exists keeps its mode.
+The merge creates each directory with `filemeta::create_dir_all_0755`, so a new directory of the tree gets the mode 0755
+under any umask. The parent of the jar gets the same mode. The Go `os.MkdirAll(path, 0o755)` gave the same mode under
+the umask 022 or 002, but 0700 under the umask 077. A directory that exists keeps its mode.
 
 ## Low level
 
@@ -216,4 +201,5 @@ has no Go counterpart, and its text names the refused input.
 A `Writer` does not know the path of its output, so its I/O error is a `Bare` error without a path. The merge turns
 it into an `Io` error with the jar path, for example `intellij.example.jar: No space left on device (os error 28)`.
 The Go text was `write intellij.example.jar: no space left on device`. Another caller of `Writer` adds the path itself.
-A directory that `fscopy` cannot create gives a `Bare` error, because the `fscopy` text names the directory already.
+A directory that `filemeta::create_dir_all_0755` cannot create gives a `Bare` error, because its text names the
+directory already.

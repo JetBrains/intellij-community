@@ -410,3 +410,80 @@ fn inspect_names_a_missing_file() {
     assert!(error.to_string().contains("missing"), "{error}");
     inspect(temporary.path(), "../escape").unwrap_err();
 }
+
+#[cfg(unix)]
+fn mode_of(path: &std::path::Path) -> u32 {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::symlink_metadata(path).unwrap().permissions().mode() & 0o7777
+}
+
+#[cfg(unix)]
+fn set_mode(path: &std::path::Path, mode: u32) {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
+}
+
+/// The mode must not depend on the umask. The test runs its body again in a child process under the umask 002 and
+/// under the umask 077. [`fs::create_dir_all`] gives 0775 under the first one. A mode that the umask changes gives 0700
+/// under the second one.
+#[cfg(unix)]
+#[test]
+fn create_dir_all_0755_ignores_the_umask_and_keeps_an_existing_mode() {
+    const CHILD: &str = "FILEMETA_TEST_UMASK_CHILD";
+    const NAME: &str = "tests::create_dir_all_0755_ignores_the_umask_and_keeps_an_existing_mode";
+    let Some(umask) = std::env::var_os(CHILD) else {
+        for umask in ["002", "077"] {
+            let output = std::process::Command::new("/bin/sh")
+                .args(["-c", r#"umask "$1" && exec "$0" --exact "$2" --nocapture"#])
+                .arg(std::env::current_exe().unwrap())
+                .args([umask, NAME])
+                .env(CHILD, umask)
+                .output()
+                .unwrap();
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            assert!(
+                output.status.success() && stdout.contains(" 1 passed;"),
+                "the run under the umask {umask} failed:\n{stdout}\n{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        return;
+    };
+    let umask = u32::from_str_radix(umask.to_str().unwrap(), 8).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let probe = directory.path().join("probe");
+    fs::create_dir(&probe).unwrap();
+    assert_eq!(mode_of(&probe), 0o777 & !umask, "the child does not run under the umask {umask:o}");
+
+    let existing = directory.path().join("existing");
+    fs::create_dir(&existing).unwrap();
+    set_mode(&existing, 0o700);
+    let nested = existing.join("a/b/c");
+    create_dir_all_0755(&nested).unwrap();
+    for created in ["a", "a/b", "a/b/c"] {
+        assert_eq!(mode_of(&existing.join(created)), 0o755, "{created} under the umask {umask:o}");
+    }
+    assert_eq!(mode_of(&existing), 0o700, "changed the mode of an existing directory");
+
+    // A second call changes nothing, also for a directory with another mode.
+    set_mode(&nested, 0o750);
+    create_dir_all_0755(&nested).unwrap();
+    assert_eq!(mode_of(&nested), 0o750);
+
+    let file = existing.join("file");
+    fs::write(&file, "").unwrap();
+    let error = create_dir_all_0755(&file.join("below")).unwrap_err();
+    assert!(error.to_string().contains("below"), "{error}");
+}
+
+#[test]
+fn create_dir_all_0755_creates_the_chain_and_accepts_an_existing_directory() {
+    let directory = tempfile::tempdir().unwrap();
+    let nested = directory.path().join("x/y");
+    create_dir_all_0755(&nested).unwrap();
+    assert!(nested.is_dir());
+    create_dir_all_0755(&nested).unwrap();
+    create_dir_all_0755(directory.path()).unwrap();
+}

@@ -10,7 +10,6 @@ mod error;
 mod filters;
 mod flagfile;
 mod index;
-mod inventory;
 mod merge;
 pub mod nativelib;
 mod natives;
@@ -26,7 +25,6 @@ pub use filters::{
     INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, library_filter, library_name_filter, module_output_filter, module_output_name_filter,
 };
 pub use flagfile::{parse_flag_file, resolve_path};
-pub use inventory::{InventoryReport, write_inventory};
 pub use merge::{Filter, ManifestMode, MergeReport, MergeSpec, Source};
 pub use natives::NativeSpec;
 pub use pack::duplicate_line;

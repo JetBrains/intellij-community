@@ -11,7 +11,6 @@ workspace = true
 
 [dependencies]
 distpath.workspace = true
-fscopy.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

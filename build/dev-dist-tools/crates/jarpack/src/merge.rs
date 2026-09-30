@@ -207,7 +207,7 @@ impl MergeSpec {
             None => None,
         };
         if let Some(parent) = output.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-            fscopy::create_dirs_0755(parent).map_err(Error::Bare)?;
+            filemeta::create_dir_all_0755(parent).map_err(Error::Bare)?;
         }
         let file = File::create(output).at(output)?;
 

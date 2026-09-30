@@ -11,6 +11,7 @@ workspace = true
 
 # The binary is an input of every packing action, so it depends on the packer core and on nothing it does not use.
 [dependencies]
+filemeta.workspace = true
 jarpack.workspace = true
 trace.workspace = true
 tracing.workspace = true
