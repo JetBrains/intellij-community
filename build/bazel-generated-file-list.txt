@@ -1330,6 +1330,7 @@ plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
 plugins/gradle/java
 plugins/gradle/java/coverage
+plugins/gradle/java/coverage/tests
 plugins/gradle/java/groovy
 plugins/gradle/java/groovy/ml
 plugins/gradle/java/groovy/toml
