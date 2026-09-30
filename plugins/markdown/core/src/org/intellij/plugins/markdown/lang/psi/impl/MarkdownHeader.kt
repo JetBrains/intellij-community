@@ -211,26 +211,41 @@ class MarkdownHeader: MarkdownHeaderImpl {
   companion object {
     internal val garbageRegex = Regex("[^\\p{IsAlphabetic}\\d\\-_ ]")
 
-    private fun buildUniqueAnchorText(header: MarkdownHeader): String? {
-      val anchorText = obtainRawAnchorText(header) ?: return null
-      val number = calculateUniqueNumber(header, anchorText)
-      return createUniqueAnchorText(anchorText, number)
-    }
+    private class HeaderAnchors(
+      val anchorsByHeader: Map<MarkdownHeader, String>,
+      val headersByAnchor: Map<String, List<MarkdownHeader>>,
+    )
 
-    private fun calculateUniqueNumber(header: MarkdownHeader, rawAnchorText: String): Int {
-      val file = header.containingFile
-      val headers = getCachedValueStubBuildOptimized(file, HEADERS_LIST_PROVIDER)
-      val sameHeaders = headers.filter { obtainRawAnchorText(it) == rawAnchorText }
-      return sameHeaders.takeWhile { it != header }.count()
-    }
-
-    private val HEADERS_LIST_PROVIDER = StubBuildCachedValueProvider<Iterable<MarkdownHeader>, PsiFile>(
-      "markdown.header.headersList"
+    private val HEADER_ANCHORS_PROVIDER = StubBuildCachedValueProvider<HeaderAnchors, PsiFile>(
+      "markdown.header.anchors"
     ) { file ->
-      CachedValueProvider.Result.create(
-        file.children.filterIsInstance<MarkdownHeader>(),
-        PsiModificationTracker.MODIFICATION_COUNT
-      )
+      CachedValueProvider.Result.create(buildHeaderAnchors(file), PsiModificationTracker.MODIFICATION_COUNT)
+    }
+
+    /** Computes unique anchors in document order, including nested headers. */
+    private fun buildHeaderAnchors(file: PsiFile): HeaderAnchors {
+      val headers = PsiTreeUtil.findChildrenOfType(file, MarkdownHeader::class.java)
+      val occurrences = HashMap<String, Int>()
+      val anchorsByHeader = HashMap<MarkdownHeader, String>()
+      val headersByAnchor = HashMap<String, MutableList<MarkdownHeader>>()
+      for (header in headers) {
+        val rawAnchor = obtainRawAnchorText(header) ?: continue
+        val number = occurrences[rawAnchor] ?: 0
+        occurrences[rawAnchor] = number + 1
+        val anchor = createUniqueAnchorText(rawAnchor, number)
+        anchorsByHeader[header] = anchor
+        headersByAnchor.getOrPut(anchor) { ArrayList() }.add(header)
+      }
+      return HeaderAnchors(anchorsByHeader, headersByAnchor)
+    }
+
+    /**
+     * Finds headers of [file] by their unique anchor without the stub index,
+     * e.g., for files outside project content, which are not indexed.
+     */
+    @ApiStatus.Internal
+    fun findByAnchor(file: PsiFile, anchorText: String): Collection<MarkdownHeader> {
+      return getCachedValueStubBuildOptimized(file, HEADER_ANCHORS_PROVIDER).headersByAnchor[anchorText].orEmpty()
     }
 
     @ApiStatus.Internal
@@ -243,13 +258,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
 
     fun obtainAnchorText(header: MarkdownHeader): String? {
-      return getCachedValueStubBuildOptimized(header, OBTAIN_ANCHOR_PROVIDER)
-    }
-
-    private val OBTAIN_ANCHOR_PROVIDER = StubBuildCachedValueProvider<String?, MarkdownHeader>(
-      "markdown.header.anchorText"
-    ) { header ->
-      CachedValueProvider.Result.create(buildUniqueAnchorText(header), PsiModificationTracker.MODIFICATION_COUNT)
+      return getCachedValueStubBuildOptimized(header.containingFile, HEADER_ANCHORS_PROVIDER).anchorsByHeader[header]
     }
 
     private fun obtainRawAnchorText(header: MarkdownHeader): String? {

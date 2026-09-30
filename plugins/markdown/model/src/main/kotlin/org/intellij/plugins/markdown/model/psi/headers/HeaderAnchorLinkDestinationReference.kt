@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -34,7 +33,7 @@ class HeaderAnchorLinkDestinationReference(
   private val file: PsiFile
 ): MarkdownPsiSymbolReferenceBase(element, anchorRangeInElement), PsiCompletableReference {
   override fun resolveReference(): Collection<Symbol> {
-    val headers = HeaderAnchorIndex.collectHeaders(element.project, GlobalSearchScope.fileScope(file), anchorText)
+    val headers = HeaderAnchorIndex.collectHeaders(file, anchorText)
     val headerSymbols = headers.mapNotNull { HeaderSymbol.createPointer(it)?.dereference() }
     val injectedSymbols = collectInjectedHtmlAnchors()
     val inlineSymbols = collectInlineHtmlAnchors()

@@ -1,6 +1,8 @@
 package com.intellij.markdown.backend.index
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
@@ -16,6 +18,8 @@ class HeaderAnchorIndex: StringStubIndexExtension<MarkdownHeader>() {
     return KEY
   }
 
+  override fun getVersion(): Int = super.getVersion() + 1
+
   companion object {
     @JvmField
     val KEY: StubIndexKey<String, MarkdownHeader> = StubIndexKey.createIndexKey("markdown.header.anchor")
@@ -25,6 +29,14 @@ class HeaderAnchorIndex: StringStubIndexExtension<MarkdownHeader>() {
      */
     fun collectHeaders(project: Project, scope: GlobalSearchScope, anchorText: String): Collection<MarkdownHeader> {
       return StubIndex.getElements(KEY, anchorText, project, scope, MarkdownHeader::class.java)
+    }
+
+    fun collectHeaders(file: PsiFile, anchorText: String): Collection<MarkdownHeader> {
+      val virtualFile = file.virtualFile
+      if (virtualFile != null && ProjectFileIndex.getInstance(file.project).isInContent(virtualFile)) {
+        return collectHeaders(file.project, GlobalSearchScope.fileScope(file), anchorText)
+      }
+      return MarkdownHeader.findByAnchor(file, anchorText)
     }
 
     fun collectAllAnchors(project: Project, scope: GlobalSearchScope): Collection<String> {

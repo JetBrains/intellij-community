@@ -14,7 +14,6 @@ import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Urls
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
@@ -81,11 +80,8 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
       if (DumbService.isDumb(project)) {
         return@runReadAction emptyList()
       }
-      val scope = when (val file = PsiManager.getInstance(project).findFile(targetFile)) {
-        null -> GlobalSearchScope.EMPTY_SCOPE
-        else -> GlobalSearchScope.fileScope(file)
-      }
-      return@runReadAction HeaderAnchorIndex.collectHeaders(project, scope, anchor).map(MarkdownHeaderMapper::map)
+      val file = PsiManager.getInstance(project).findFile(targetFile) ?: return@runReadAction emptyList()
+      return@runReadAction HeaderAnchorIndex.collectHeaders(file, anchor).map(MarkdownHeaderMapper::map)
     }
   }
 }
