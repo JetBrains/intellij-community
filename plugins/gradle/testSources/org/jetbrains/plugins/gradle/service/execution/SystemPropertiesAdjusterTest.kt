@@ -8,7 +8,6 @@ import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CompletableFuture
@@ -30,10 +29,16 @@ class SystemPropertiesAdjusterTest {
   private val originalValues = HashMap<String, String?>()
   private val executor: ExecutorService = Executors.newFixedThreadPool(2)
 
+  /** The boot path that each recorded JNA load of the adjuster saw. An unmasked path means the load ran before the mask. */
+  private val recordedJnaLoads = ArrayList<String?>()
+  private lateinit var originalJnaLoad: () -> Unit
+
   @BeforeEach
   fun setUp() {
-    // The adjuster loads JNA before a mask. Load it here, before the test sets a boot path that holds no library.
+    // The test sets a boot path that holds no library. Load JNA first, so a first JNA user of this JVM cannot fail on it.
     JnaLoader.load()
+    originalJnaLoad = SystemPropertiesAdjuster.jnaLoad
+    SystemPropertiesAdjuster.jnaLoad = { synchronized(recordedJnaLoads) { recordedJnaLoads.add(System.getProperty("jna.boot.library.path")) } }
     for ((key, value) in JNA_PROPERTIES + (JANSI_PROPERTY to "/ide/lib/jansi")) {
       originalValues[key] = SystemProperties.setProperty(key, value)
     }
@@ -41,6 +46,7 @@ class SystemPropertiesAdjusterTest {
 
   @AfterEach
   fun tearDown() {
+    SystemPropertiesAdjuster.jnaLoad = originalJnaLoad
     for ((key, value) in originalValues) {
       SystemProperties.setProperty(key, value)
     }
@@ -55,15 +61,16 @@ class SystemPropertiesAdjusterTest {
     }
     assertJnaPropertiesUnchanged()
     assertEquals("/ide/lib/jansi", System.getProperty(JANSI_PROPERTY))
+    assertEquals(emptyList<String?>(), recordedJnaLoads, "an operation that masks no jna.* property loads no JNA")
   }
 
   @Test
   fun `Gradle 7_5 masks the JNA properties`() {
     SystemPropertiesAdjuster.executeAdjusted("/project", GradleVersion.version("7.5")) {
       assertJnaPropertiesMasked()
-      assertTrue(JnaLoader.isLoaded(), "JNA is loaded before the mask")
     }
     assertJnaPropertiesUnchanged()
+    assertEquals(listOf(JNA_PROPERTIES.getValue("jna.boot.library.path")), recordedJnaLoads, "JNA loads once, and it sees the boot path before the mask")
   }
 
   @Test

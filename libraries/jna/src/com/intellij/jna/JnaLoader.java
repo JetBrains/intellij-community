@@ -6,6 +6,11 @@ import com.sun.jna.Native;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Loads JNA once. JNA reads {@code jna.boot.library.path}, {@code jna.nosys} and {@code jna.noclasspath} once, in the
+ * static initializer of {@link Native}, and the first JNA user runs it. Code that clears or changes a {@code jna.*}
+ * property calls {@link #load()} first, so the JNA of the process keeps the values of the launcher (IJPL-256293).
+ */
 public final class JnaLoader {
   private static Boolean ourJnaLoaded = null;
 

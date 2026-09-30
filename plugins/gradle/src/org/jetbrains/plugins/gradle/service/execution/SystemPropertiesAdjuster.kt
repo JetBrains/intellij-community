@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.function.Supplier
 
 /** The directory of the JNA dispatch library. `com.sun.jna.Native` reads it once, in its static initializer. */
@@ -55,6 +56,14 @@ open class SystemPropertiesAdjuster {
     // guarded by `lock`
     private val maskedProperties = HashMap<String, MaskedProperty>()
 
+    /**
+     * The JNA load that runs before a mask of `jna.boot.library.path`: [JnaLoader.load]. A test replaces it to record
+     * the call and the properties at call time, because JNA is loaded once per JVM and a test cannot observe the order.
+     */
+    @JvmStatic
+    @set:TestOnly
+    var jnaLoad: () -> Unit = JnaLoader::load
+
     @JvmStatic
     fun <T> executeAdjusted(projectDir: String, supplier: Supplier<T>): T {
       return executeAdjusted(projectDir = projectDir, gradleVersion = null, supplier = supplier)
@@ -67,7 +76,7 @@ open class SystemPropertiesAdjuster {
     fun <T> executeAdjusted(projectDir: String, gradleVersion: GradleVersion?, supplier: Supplier<T>): T {
       val keyToMask = service<SystemPropertiesAdjuster>().getKeyToMask(projectDir, gradleVersion)
       if (keyToMask.containsKey(JNA_BOOT_LIBRARY_PATH)) {
-        JnaLoader.load()
+        jnaLoad()
       }
       mask(keyToMask)
       try {
