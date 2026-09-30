@@ -46,7 +46,7 @@ class BuildOutputLineProcessor(
       if (!skipEmptyLine || outputText.isNotEmpty()) {
         multicaster.notifyLineAvailable(BuildOutputText.createOutputText(
           outputIds.toList(),
-          outputText.toString()
+          outputText.toString() + '\n'
         ))
         outputIds.clear()
         outputText.setLength(0)

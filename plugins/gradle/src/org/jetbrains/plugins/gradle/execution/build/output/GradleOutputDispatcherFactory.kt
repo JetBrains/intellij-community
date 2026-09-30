@@ -100,7 +100,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
               OutputReferenceEvent.builder(taskId, line.ids)
                 .build()
             else ->
-              OutputBuildEvent.builder(line.text + '\n')
+              OutputBuildEvent.builder(line.text)
                 .withParentId(taskId)
                 .withOutputType(outputType)
                 .build()
@@ -109,7 +109,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         }
 
         parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
-          .notifyTextAvailable(cleanLine.text + '\n')
+          .notifyTextAvailable(cleanLine.text)
       }
 
       suspend fun notifyTextAvailable(text: BuildOutputText) {

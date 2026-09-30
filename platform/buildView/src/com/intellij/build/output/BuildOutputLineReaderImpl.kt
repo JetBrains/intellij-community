@@ -12,7 +12,7 @@ class BuildOutputLineReaderImpl(
   private val channel = Channel<String>(linesBufferSize)
 
   private val lineProcessor = BuildOutputLineProcessor {
-    channel.send(it.text)
+    channel.send(it.text.removeSuffix("\n"))
   }
 
   override suspend fun notifyTextAvailable(text: CharSequence) {
