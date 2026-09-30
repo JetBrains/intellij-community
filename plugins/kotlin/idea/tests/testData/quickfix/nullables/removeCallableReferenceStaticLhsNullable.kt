@@ -1,0 +1,13 @@
+// "Remove '?'" "true"
+// K2_WARNING: INVALID_QUALIFIER_IN_LHS_OF_CALLABLE_REFERENCE_TO_STATIC_WARNING
+class C {
+    companion object
+}
+
+fun C.Companion.foo() {}
+
+fun test() {
+    C<caret>?::foo
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RemoveCallableReferenceStaticLhsFixFactories$RemoveCallableReferenceStaticLhsFix

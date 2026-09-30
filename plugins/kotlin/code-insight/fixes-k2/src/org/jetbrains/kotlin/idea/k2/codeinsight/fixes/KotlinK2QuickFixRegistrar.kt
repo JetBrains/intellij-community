@@ -477,6 +477,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             KaFirDiagnostic.TypeArgumentsRedundantInSuperQualifier::class,
             RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory
         )
+        registerFactory(RemoveCallableReferenceStaticLhsFixFactories.warning)
+        registerFactory(RemoveCallableReferenceStaticLhsFixFactories.error)
+        registerFactory(RemoveCallableReferenceStaticLhsFixFactories.wrongReceiver)
 
         registerFactory(ConvertToBlockBodyFixFactory.convertToBlockBodyFixFactory)
         registerFactory(SimplifyComparisonFixFactory.simplifyComparisonFixFactory)
