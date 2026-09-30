@@ -161,6 +161,24 @@ class ToolWindowEditorTabTransferControllerTest {
     }
 
   @Test
+  fun `move content to editor keeps the source decorator split while it holds other content`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createRegisteredToolWindow()
+      val rootDecorator = toolWindow.getOrCreateDecoratorComponent()
+      val movingContent = createTabContent(displayName = "moving")
+      rootDecorator.splitWithContent(movingContent, SwingConstants.RIGHT, -1)
+      val sourceDecorator = findDecorator(movingContent)
+      val stayingContent = createTabContent(displayName = "staying")
+      sourceDecorator.contentManager.addContent(stayingContent)
+
+      controller.moveContentToEditor(toolWindow, movingContent, sourceDecorator = sourceDecorator)
+
+      assertThat(openTabFile().attachedContent(project)).isSameAs(movingContent)
+      assertThat(rootDecorator.mode.isSplit).isTrue()
+      assertThat(sourceDecorator.contentManager.contents.toList()).containsExactly(stayingContent)
+    }
+
+  @Test
   fun `move content to editor opens the tab in the given editor window`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
@@ -363,6 +381,26 @@ class ToolWindowEditorTabTransferControllerTest {
       assertThat(openTabFile().attachedContent(project)).isSameAs(supported)
       assertThat(toolWindow.contentManager.contents.toList()).containsExactly(unsupported)
       assertThat(mixedSupport.presentationFlowRequests).containsExactly(supported)
+    }
+
+  @Test
+  fun `cannot move a tab back without the feature or without support`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createToolWindow(toolWindowId)
+      val tabFile = createDetachedTabFile()
+      val registryValue = Registry.get(ToolWindowEditorTabSupportUtil.REGISTRY_KEY)
+      registryValue.setValue(false)
+      try {
+        assertThat(controller.canMoveContentToToolWindow(toolWindow, tabFile)).isFalse()
+      }
+      finally {
+        registryValue.setValue(true)
+      }
+
+      val unsupportedId = "UnsupportedToolWindow"
+      val unsupportedToolWindow = createToolWindow(unsupportedId)
+      val unsupportedTabFile = ToolWindowEditorTabFile(toolWindowId = unsupportedId, persistentPath = null)
+      assertThat(controller.canMoveContentToToolWindow(unsupportedToolWindow, unsupportedTabFile)).isFalse()
     }
 
   @Test
