@@ -114,6 +114,10 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     waitFor("Project is opened", readinessTimeout) {
       driver.isProjectOpened(currentProject)
     }
+    if (isWelcomeScreenProject(currentProject)) {
+      logger<Driver>().info("The IDE frame shows the welcome-screen project, skipping the project frame checks")
+      return
+    }
 
     // The list holds only the frame chrome that every product shows. A tool-window stripe and a stripe button are
     // layout state, not frame readiness: `hideToolStripes` removes the stripe, and a stripe button needs a product
@@ -145,6 +149,16 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
       checker = { it.isEmpty() },
     )
   }
+
+  /**
+   * Returns true when [project] is the welcome-screen project.
+   */
+  internal fun isWelcomeScreenProject(project: Project): Boolean =
+    runCatching {
+      driver.utility(WelcomeUtils::class).isWelcomeProject(project)
+    }.onFailure {
+      logger<Driver>().info("The frame capabilities of the project are not available: ${it.message}")
+    }.getOrDefault(false)
 
   @ManualWaitForIndicators
   fun waitForIndicators(timeout: Duration = 5.minutes) {
@@ -216,6 +230,11 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
   fun unminimize() {
     ideaFrameComponent.setState(Frame.NORMAL)
   }
+}
+
+@Remote("com.intellij.ide.welcomeScreen.WelcomeUtils")
+interface WelcomeUtils {
+  fun isWelcomeProject(project: Project): Boolean
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")
