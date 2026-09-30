@@ -529,6 +529,7 @@ internal fun collectPluginDescriptorPlan(
       contentModuleFilter = contentModuleFilter,
       generatedClosureOf = generatedClosureOf,
       name = half.caseSafeProductName(platformPrefix),
+      generatorCommand = half.generatorCommand,
     ),
   )
 }
@@ -557,6 +558,8 @@ private fun collectProductDescriptor(
   ) -> PluginDescriptorClosure,
   /** The case-safe name of the product, which names the two targets and the source. */
   name: String,
+  /** The command that regenerates the files of the half, see [DevDistHalf.generatorCommand]. The header names it. */
+  generatorCommand: String,
 ): ProductDescriptorPlan {
   val spec = requireNotNull(properties.getProductContentDescriptor()) { "Split dev distribution '$platformPrefix' declares no Product DSL content" }
   val mainModule = properties.applicationInfoModule
@@ -587,7 +590,7 @@ private fun collectProductDescriptor(
   }
   val header = buildString {
     append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code by collectProductDescriptor -->\n")
-    append("<!-- To regenerate, run 'bazel run //platform/buildScripts:plugin-model-tool' -->\n")
+    append("<!-- To regenerate, run '").append(generatorCommand).append("' -->\n")
     append("<!-- Source: ${productContentSource(properties)}, with the module sets and the deprecated includes inlined -->\n")
     append("<!-- Product: $platformPrefix. ").append(PRODUCT_DESCRIPTOR_HEADER_END)
   }

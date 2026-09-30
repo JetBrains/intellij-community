@@ -2,7 +2,7 @@ load("//build:dev_dist_product_info.bzl", "DEV_DIST_PRODUCT_INFO")
 load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
 
 # The twin of `//build/dev-dist-descriptors` of the ultimate checkout, for the community products. The generated
-# plugin packages of the community pass sit under this package.
+# plugin packages of the community half sit under this package.
 #
 # One `<product>_product_info` per product: the descriptor stamps a consumer sets `dev_dist_product_info` to. The
 # generated map is the one owner of the product list, so no product name is hand-written here.

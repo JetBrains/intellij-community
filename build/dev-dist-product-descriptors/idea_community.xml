@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code by collectProductDescriptor -->
-<!-- To regenerate, run 'bazel run //platform/buildScripts:plugin-model-tool' -->
+<!-- To regenerate, run 'bazel run @community//build:dev_dist_generator' -->
 <!-- Source: org.jetbrains.intellij.build.IdeaCommunityProperties.getProductContentDescriptor(), with the module sets and the deprecated includes inlined -->
 <!-- Product: Idea. processAndGetProductPluginContentModules loads the same text -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">

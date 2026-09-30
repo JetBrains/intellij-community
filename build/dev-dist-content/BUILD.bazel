@@ -1,5 +1,5 @@
 # The package of `dev_dist_content_sets.bzl`, which holds `DEV_DIST_PLUGIN_COMPONENTS`, the component map of every
-# community product. The community pass of `plugin-model-tool` generates the map.
+# community product. The community half of the dev-dist generator writes the map.
 #
 # Its own package, and not `//build`, for the reason `//build/dev-dist-content` of the ultimate checkout gives: the
 # map stays readable without the module extension that `build/BUILD.bazel` loads.
