@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.platform.util.progress.withProgressText
+import com.intellij.python.pytools.backend.Version
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
@@ -19,7 +20,6 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
-import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -30,13 +30,12 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.ValidatedPathField
-import com.intellij.python.pytools.backend.Version
-import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
 import com.jetbrains.python.sdk.add.v2.successOrNull
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.add.v2.validatablePathField
+import com.jetbrains.python.sdk.add.v2.withAdjustedWidth
 import com.jetbrains.python.sdk.add.v2.withExtendableTextFieldEditor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -52,15 +51,14 @@ import kotlinx.coroutines.plus
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
-internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>) : PythonExistingEnvironmentConfigurator<P>(model) {
+internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpreterModel<P>) :
+  PythonExistingEnvironmentConfigurator<P>(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
   private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
   private lateinit var reloadLink: ActionLink
   private val isReloadLinkVisible = AtomicBooleanProperty(false)
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.condaViewModel.condaExecutable
-  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
-    (pathHolder as? PathHolder.Eel)?.let { if (model.fileSystem.isLocal) savePythonCondaPath(it.path) }
-  }
+  override val toolExecutablePersister: suspend (P) -> Unit = { model.saveCondaPathIfLocal(it) }
 
   // Conda's reader has no detection fallback, so it keeps persisting on setup (persister gated to local).
   override val persistToolExecutableOnSetup: Boolean get() = true

@@ -8,10 +8,12 @@ import com.intellij.python.pytools.backend.Version
 import com.intellij.python.pytools.backend.getToolVersion
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.existingSdks
@@ -53,6 +55,20 @@ internal suspend fun PythonAddInterpreterModel<*>.createCondaEnvironment(
     }
 
   return result
+}
+
+/**
+ * Saves [pathHolder] as the custom conda path. Does this only for an EEL path on a local file system.
+ */
+internal fun PythonAddInterpreterModel<*>.saveCondaPathIfLocal(pathHolder: PathHolder) {
+  when (pathHolder) {
+    is PathHolder.Eel -> {
+      if (fileSystem.isLocal) {
+        savePythonCondaPath(pathHolder.path)
+      }
+    }
+    is PathHolder.Target -> Unit
+  }
 }
 
 internal fun PythonAddInterpreterModel<*>.getBaseCondaOrError(): PyResult<PyCondaEnv> {
