@@ -18459,6 +18459,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("abstractValueClassConstructorParameter.kt")
+            public void testAbstractValueClassConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/variables/removeValVarFromParameter/abstractValueClassConstructorParameter.kt");
+            }
+
             @TestMetadata("catchParameter.kt")
             public void testCatchParameter() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/variables/removeValVarFromParameter/catchParameter.kt");
