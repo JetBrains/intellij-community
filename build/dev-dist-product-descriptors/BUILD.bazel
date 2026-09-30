@@ -52,7 +52,6 @@ dev_dist_product_descriptor(
         "intellij.platform.ide.nonModalWelcomeScreen",
         "intellij.platform.ide.nonModalWelcomeScreen.frontend",
         "intellij.platform.ide.nonModalWelcomeScreen.backend",
-        "intellij.platform.ide.nonModalWelcomeScreen.terminal",
     ],
     descriptors = {
         "//platform/analysis-api:resources/META-INF/Analysis.analyzer.xml": "META-INF/Analysis.analyzer.xml",
@@ -143,7 +142,6 @@ dev_dist_product_descriptor(
         "intellij.platform.ide.nonModalWelcomeScreen",
         "intellij.platform.ide.nonModalWelcomeScreen.frontend",
         "intellij.platform.ide.nonModalWelcomeScreen.backend",
-        "intellij.platform.ide.nonModalWelcomeScreen.terminal",
     ],
     descriptors = {
         "//platform/analysis-api:resources/META-INF/Analysis.analyzer.xml": "META-INF/Analysis.analyzer.xml",

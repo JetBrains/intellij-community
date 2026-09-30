@@ -32,7 +32,7 @@ fields of `RecipeSource`: `kind`, `label`, `path`, `file`, `module`, `prefix`, `
 The Go reader walks any YAML tree, and it reads a field of an unexpected shape as absent. The crate reads only what
 `DevDistRecipe` writes. It refuses every other input with an error that names the file, the line and the field.
 
-`testdata/corpus/` holds the three plan files of one flag-on build of `//build:idea_air_dist`: 505 outputs and 825
+`testdata/corpus/` holds the three plan files of one flag-on build of `//build:idea_air_dist`: 504 outputs and 824
 sources. The corpus has the entry keys `name`, `kind`, `modules` and `sources`, the entry kinds `jar` and `placed`, the
 source kinds `zip` and `inMemory`, and the filter `unkeyed`. The crate also accepts the rest of what the writer code
 can write, because the writer writes it for other fragments. The community schema test compares field names only and

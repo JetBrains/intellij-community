@@ -381,8 +381,8 @@ fn reads_every_plan_of_the_corpus() {
         ["platform_lib_reference", "platform_runtime_module_repository", "platform_resources"]
     );
     let purity = weigh_purity(&recipes, None);
-    assert_eq!((purity.outputs, purity.sources), (505, 825));
+    assert_eq!((purity.outputs, purity.sources), (504, 824));
     assert!(purity.total.balances());
-    assert_eq!(purity.total.unjoined, 505);
+    assert_eq!(purity.total.unjoined, 504);
     assert_eq!(purity.needs_code_disagreement, 0);
 }
