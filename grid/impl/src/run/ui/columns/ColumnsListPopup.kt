@@ -3,22 +3,16 @@ package com.intellij.database.run.ui.columns
 import com.intellij.database.DataGridBundle
 import com.intellij.database.DatabaseDataKeys
 import com.intellij.database.datagrid.DataGrid
-import com.intellij.database.datagrid.DataGridListener
 import com.intellij.database.datagrid.DataGridPomTarget
 import com.intellij.database.datagrid.GridColumn
-import com.intellij.database.datagrid.GridHelper
-import com.intellij.database.datagrid.GridRequestSource
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
-import com.intellij.database.run.actions.ColumnPinCommands
 import com.intellij.database.run.actions.showReason
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.GridColumnPinning
-import com.intellij.database.run.ui.TableResultPanel
 import com.intellij.database.run.ui.grid.GridScrollPositionManager
 import com.intellij.database.run.ui.table.ColumnPinning
-import com.intellij.database.run.ui.table.TableResultView
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -31,10 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -57,12 +48,10 @@ import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.CancellablePromise
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
@@ -73,7 +62,6 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
 import javax.swing.AbstractAction
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
@@ -93,13 +81,8 @@ import javax.swing.event.DocumentEvent
  */
 @ApiStatus.Internal
 class ColumnsListPopup(private val grid: DataGrid) {
-  /** What the grid can do to a pin, and how. The header menu asks the same object, so the rules match. */
-  private val commands = ColumnPinCommands(grid)
-
-  private var model = ColumnsListModel(emptyList())
-
-  /** True while this popup changes the grid, so the grid events it causes do not rebuild the rows one by one. */
-  private var applying = false
+  private val commands get() = controller.commands
+  private val model get() = controller.model
 
   private val listModel = CollectionListModel<Row>()
 
@@ -242,12 +225,9 @@ class ColumnsListPopup(private val grid: DataGrid) {
     .setMinSize(Dimension(JBUIScale.scale(260), JBUIScale.scale(200)))
     .createPopup()
 
-  /** The column objects at each model index when the rows were built. */
   /** The drag, or null in a document grid, where a reorder would have to write the file. */
   private var drag: ColumnsListDrag? = null
-
-  private var columnSnapshot: Map<ModelIndex<GridColumn>, GridColumn?>? = null
-  private var presentationTask: CancellablePromise<*>? = null
+  private val controller = ColumnsListController(grid, popup, ::updateRows)
   private var previousLead = -1
   private var restoringSelection = false
   private var pointerInsideList = false
@@ -277,15 +257,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
       selectColumnsInGrid()
     }
     drag = if (reorderable) ColumnsListDrag(this, list, listModel, renderer).also { it.install() } else null
-    grid.addDataGridListener(object : DataGridListener {
-      override fun onContentChanged(dataGrid: DataGrid, place: GridRequestSource.RequestPlace?) {
-        // Every change is read again, because a hide, a pin or a reorder made outside this popup keeps
-        // the same column objects. Rebuilding is cheap while they last, and updateItems drops the result
-        // when no row differs, so a page of rows still costs nothing.
-        if (!applying) refresh()
-      }
-    }, popup)
-    refresh()
+    controller.start()
     restoringSelection = true
     val selected = grid.selectionModel.selectedColumns.asIterable().toSet()
     listModel.items.forEachIndexed { index, row ->
@@ -361,73 +333,9 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
   }
 
-  private fun search() {
-    model = model.withFilter(ColumnsListFilter(text = searchField.text.trim()))
-    updateRows()
-  }
+  private fun search() = controller.search(searchField.text)
 
-  /** Updates row state and resolves presentation when the column objects change. */
-  private fun refresh() {
-    if (popup.isDisposed) return
-    val columnsChanged = !hasCurrentColumns()
-    if (columnsChanged) {
-      presentationTask?.cancel()
-      val dataModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
-      columnSnapshot = dataModel.columnIndices.asIterable().associateWith { dataModel.getColumn(it) }
-    }
-    val previous = if (columnsChanged) emptyMap() else model.items.associateBy { it.modelIndex }
-    val items = buildColumnsListItems(grid) { column ->
-      val item = previous[ModelIndex.forColumn(grid, column.columnNumber)]
-      if (item == null) column.typeName to null else item.typeText to item.icon
-    }
-    updateItems(items, preserveSelection = !columnsChanged)
-    if (columnsChanged) loadPresentations(columnSnapshot!!)
-  }
-
-  private fun hasCurrentColumns(): Boolean {
-    val snapshot = columnSnapshot ?: return false
-    val dataModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
-    val indices = dataModel.columnIndices
-    return indices.size() == snapshot.size && indices.asIterable().all { index ->
-      snapshot.containsKey(index) && snapshot[index] === dataModel.getColumn(index)
-    }
-  }
-
-  /** Rebuilds after column replacement and rejects the command that targeted the previous columns. */
-  private fun ensureCurrentColumns(): Boolean {
-    if (popup.isDisposed) return false
-    if (hasCurrentColumns()) return true
-    refresh()
-    return false
-  }
-
-  /** Resolves types and icons once for this set of column objects. */
-  private fun loadPresentations(snapshot: Map<ModelIndex<GridColumn>, GridColumn?>) {
-    if (snapshot.isEmpty()) return
-    val helper = GridHelper.get(grid)
-    presentationTask = ReadAction.nonBlocking<Map<ModelIndex<GridColumn>, Pair<String?, Icon?>?>> {
-      snapshot.mapValues { (_, column) ->
-        ProgressManager.checkCanceled()
-        column?.let { helper.getColumnTypeText(grid, it) to helper.getColumnIcon(grid, it, true) }
-      }
-    }
-      .expireWith(popup)
-      .expireWith(grid)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { presentations ->
-        if (columnSnapshot !== snapshot || !ensureCurrentColumns()) return@finishOnUiThread
-        updateItems(model.items.map { item ->
-          val presentation = presentations[item.modelIndex]
-          if (presentation == null) item else item.copy(typeText = presentation.first, icon = presentation.second)
-        })
-      }
-      .submit(AppExecutorUtil.getAppExecutorService())
-  }
-
-  private fun updateItems(items: List<ColumnsListItem>, preserveSelection: Boolean = true) {
-    if (preserveSelection && items == model.items) return
-    model = ColumnsListModel(items, model.filter)
-    updateRows(preserveSelection)
-  }
+  private fun ensureCurrentColumns(): Boolean = controller.ensureCurrentColumns()
 
   private fun updateRows(preserveSelection: Boolean = true) {
     restoringSelection = true
@@ -510,27 +418,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
     return if (last in 0 until model.rows.lastIndex) last + 1 else -1
   }
 
-  /** Hides or shows every column of [items]. A hide may leave the grid with no column at all. */
-  private fun applyVisibility(items: List<ColumnsListItem>, visible: Boolean) {
-    if (!ensureCurrentColumns()) return
-    val targets = items.filter { it.visible != visible }
-    if (targets.isEmpty()) return
-    applying = true
-    try {
-      val operation = Runnable {
-        for ((modelIndex) in targets) {
-          val columnIdx = modelIndex ?: continue
-          grid.setColumnEnabled(columnIdx, visible)
-        }
-      }
-      val view = grid.resultView as? TableResultView
-      if (view != null) view.runWithColumnVisibilityBatch(operation) else operation.run()
-    }
-    finally {
-      applying = false
-    }
-    refresh()
-  }
+  private fun applyVisibility(items: List<ColumnsListItem>, visible: Boolean) =
+    controller.applyVisibility(items.mapNotNull { it.modelIndex }, visible)
 
   /** The column of the list row at [index], or null for the separator row. */
   internal fun itemAt(index: Int): ColumnsListItem? =
@@ -542,68 +431,22 @@ class ColumnsListPopup(private val grid: DataGrid) {
     applyVisibility(selected, !selected.first().visible)
   }
 
-  /**
-   * Whether a drag may take the list row at [from] to [to].
-   *
-   * A row moves inside its own group. A pinned column reorders among the pinned columns and an unpinned
-   * one among the rest, because the two groups render in two different tables.
-   *
-   * A hidden column keeps its new place when it becomes visible again.
-   */
+  /** Whether the grid permits the move between the two list rows. */
   fun canMoveRow(from: Int, to: Int): Boolean {
-    if (!reorderable || grid.resultView.isTransposed) return false
-    val source = itemAt(from) ?: return false
-    val target = itemAt(to) ?: return false
-    if (!source.isColumn || source.parentIndex != null || target.parentIndex != null) return false
-    if (from == to) return true
-    return target.isColumn && source.pinned == target.pinned
+    val column = itemAt(from)?.modelIndex ?: return false
+    val target = itemAt(to)?.modelIndex ?: return false
+    return controller.canMove(column, target)
   }
 
-  /**
-   * Moves the list row at [from] to [to] in the complete grid order.
-   * Hidden columns retain their positions when they become visible again.
-   */
+  /** Translates a row gesture into a move of one column. */
   fun moveRow(from: Int, to: Int) {
-    if (!ensureCurrentColumns()) return
-    if (!canMoveRow(from, to)) return
-    val source = itemAt(from) ?: return
-    val target = itemAt(to) ?: return
-    val rows = model.items.toMutableList()
-    val sourcePos = rows.indexOf(source)
-    val targetPos = rows.indexOf(target)
-    if (sourcePos < 0 || targetPos < 0 || sourcePos == targetPos) return
-
-    rows.removeAt(sourcePos)
-    rows.add(targetPos, source)
-    val order = rows.mapNotNull { it.modelIndex }
-    rememberHiddenPlaces(rows)
-    (grid as? TableResultPanel)?.setColumnsDisplayOrder(order)
-    refresh()
+    val column = itemAt(from)?.modelIndex ?: return
+    val target = itemAt(to)?.modelIndex ?: return
+    controller.move(column, target, before = from > to)
   }
 
-  /**
-   * Writes the hidden part of the order back to the table.
-   *
-   * The table keeps the shown columns in its own order and every hidden one beside a neighbour. The
-   * neighbour is the row above, hidden or not, so two hidden columns in a row stay apart.
-   */
-  private fun rememberHiddenPlaces(rows: List<ColumnsListItem>) {
-    val view = grid.resultView as? TableResultView ?: return
-    var previous = TableResultView.NO_LEFT_NEIGHBOUR
-    for ((modelIndex, _, _, _, visible) in rows) {
-      val column = modelIndex ?: continue
-      if (!visible) view.rememberHiddenColumnPlace(column.asInteger(), previous)
-      previous = column.asInteger()
-    }
-  }
-
-  /** Pins the column of [item], or unpins it when it is pinned already. */
   private fun togglePin(item: ColumnsListItem) {
-    if (!ensureCurrentColumns()) return
-    if (!item.canTogglePin) return
-    val columnIdx = item.modelIndex ?: return
-    commands.togglePin(columnIdx)
-    refresh()
+    item.modelIndex?.let(controller::togglePin)
   }
 
   /** The columns under the selection, as the platform sees a column. */
@@ -626,13 +469,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
   }
 
   fun selectColumnsInGrid() {
-    if (!ensureCurrentColumns()) return
-    val columns = list.selectedValuesList
-      .filterIsInstance<Row.Item>()
-      .map { it.value }
-      .filter { it.visible }
-      .mapNotNull { it.modelIndex?.asInteger() }
-    grid.selectionModel.setColumnSelection(ModelIndexSet.forColumns(grid, *columns.toIntArray()), true)
+    val columns = list.selectedValuesList.filterIsInstance<Row.Item>().mapNotNull { it.value.modelIndex }
+    controller.selectColumns(columns)
   }
 
   /**
@@ -663,24 +501,15 @@ class ColumnsListPopup(private val grid: DataGrid) {
   }
 
   /** Whether the grid shows its columns in the order the data has. */
-  fun isOriginalOrder(): Boolean = (grid as? TableResultPanel)?.isColumnsOrderModified != true
+  fun isOriginalOrder(): Boolean = controller.isOriginalOrder()
 
   /** Restores the data order while preserving visibility and pins. */
-  fun restoreOriginalOrder() {
-    if (!ensureCurrentColumns()) return
-    val panel = grid as? TableResultPanel ?: return
-    panel.restoreNaturalColumnsOrder()
-    refresh()
-  }
+  fun restoreOriginalOrder(): Unit = controller.restoreOriginalOrder()
 
   fun hasPinnedColumns(): Boolean =
     ColumnPinning.isEnabled() && (grid as? GridColumnPinning)?.hasPinnedColumns() == true
 
-  fun unpinAllColumns() {
-    if (!ensureCurrentColumns()) return
-    commands.unpinAll()
-    refresh()
-  }
+  fun unpinAllColumns(): Unit = controller.unpinAll()
 
   /** The columns a pin action targets, which are the selected rows. */
   private fun selectedColumns(): ModelIndexSet<GridColumn> {
@@ -819,9 +648,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      if (!ensureCurrentColumns()) return
-      commands.pin(selectedColumns())
-      refresh()
+      controller.pin(selectedColumns())
     }
   }
 
@@ -840,9 +667,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      if (!ensureCurrentColumns()) return
-      commands.unpin(selectedColumns())
-      refresh()
+      controller.unpin(selectedColumns())
     }
   }
 
@@ -862,10 +687,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      if (!ensureCurrentColumns()) return
       val column = selectedColumns().asIterable().singleOrNull() ?: return
-      commands.pinUpToHere(column)
-      refresh()
+      controller.pinUpToHere(column)
     }
   }
 
@@ -989,7 +812,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
 
   /** What a drag from [row] carries, or null when that row cannot travel. */
   fun dragPayload(row: Int): Any? {
-    if (!hasCurrentColumns()) return null
+    if (!controller.hasCurrentColumns()) return null
     val column = (listModel.items.getOrNull(row) as? Row.Item)?.value?.modelIndex ?: return null
     val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(column) ?: return null
     return DraggedColumn(list, column, value)

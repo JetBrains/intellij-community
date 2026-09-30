@@ -22,7 +22,9 @@ import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridSelection;
 import com.intellij.database.datagrid.GridSortingModel;
+import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.GridUtilCore;
+import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
@@ -246,6 +248,9 @@ public class TableResultPanel extends UserDataHolderBase
     .childScope(GlobalScope.INSTANCE, getClass().getName(), Dispatchers.getIO(), true);
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private final SimpleModificationTracker myColumnModificationTracker = new SimpleModificationTracker();
+  private List<ModelIndex<GridColumn>> myColumnsDisplayOrder = List.of();
+  private @Nullable Map<ModelIndex<GridColumn>, String> myColumnsAtOrderRestore;
+  private boolean myApplyingColumnsDisplayOrder;
   private final CachedValue<Map<ModelIndex<GridColumn>, DatabaseDisplayObjectFormatterConfig>> myFormatterConfigCached;
 
   public TableResultPanel(@NotNull Project project,
@@ -455,6 +460,11 @@ public class TableResultPanel extends UserDataHolderBase
 
   protected void createResultView() {
     myResultView = myViewFactory.createResultView(this, myColumnHeaderActions, myRowHeaderActions);
+    if (myResultView instanceof TableResultView view) {
+      view.setColumnOrderCallbacks(
+        () -> applyColumnsDisplayOrder(view),
+        move -> columnMovedInView(view, move.column(), move.target(), move.before()));
+    }
 
     myColorModel = new GridColorModelImpl(this, getDatabaseMutator(this), myResultViewSettings.myTransparentRowHeaderBg, myResultViewSettings.myTransparentColumnHeaderBg);
     myMainResultViewComponent = myViewFactory.wrap(this, myResultView);
@@ -632,11 +642,13 @@ public class TableResultPanel extends UserDataHolderBase
   @Override
   public void restoreColumnsOrder() {
     Map<Integer, ModelIndex<GridColumn>> expectedToModel = new LinkedHashMap<>();
+    var columnNames = new LinkedHashMap<ModelIndex<GridColumn>, String>();
     GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
     JBIterable<ModelIndex<GridColumn>> modelIndices = model.getColumnIndices().asIterable();
     for (ModelIndex<GridColumn> modelIndex : modelIndices) {
       GridColumn column = model.getColumn(modelIndex);
       if (column == null) return;
+      columnNames.put(modelIndex, column.getName());
       int initialPosition = getInitialPosition(column);
       if (initialPosition == UNKNOWN_COLUMN_POSITION) return;
       if (initialPosition == DEFAULT_OR_HIDDEN_COLUMN_POSITION) {
@@ -648,7 +660,16 @@ public class TableResultPanel extends UserDataHolderBase
       expectedToModel.put(initialPosition, modelIndex);
     }
     restoreInitialPinnedColumns();
-    myResultView.restoreColumnsOrder(expectedToModel);
+    if (!columnNames.equals(myColumnsAtOrderRestore)) {
+      myColumnsAtOrderRestore = columnNames;
+      setColumnsDisplayOrder(expectedToModel.entrySet().stream()
+                               .sorted(Map.Entry.comparingByKey())
+                               .map(Map.Entry::getValue)
+                               .toList());
+    }
+    else {
+      applyColumnsDisplayOrder();
+    }
     restoreColumnWidths();
     updateFrozenColumns();
   }
@@ -1225,43 +1246,109 @@ public class TableResultPanel extends UserDataHolderBase
     return myResultView.isViewModified();
   }
 
-  /**
-   * Puts the shown columns back in the order the data has.
-   * <p>
-   * The pins, the widths and the hidden columns stay as they are. A pinned column keeps its pin and takes
-   * the data order inside the strip, because the strip reads its order from this table.
-   */
+  /** Restores the data order. The visibility, pins, and widths stay unchanged. */
   public void restoreNaturalColumnsOrder() {
-    // The remembered place of a hidden column describes the arrangement this call replaces.
-    if (myResultView instanceof TableResultView view) view.forgetHiddenColumnPositions();
     setColumnsDisplayOrder(getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList());
   }
 
-  /**
-   * Every column in the order the user arranged them, the hidden ones included.
-   * <p>
-   * This is the one complete order. A view that cannot arrange its columns reports the data order.
-   */
+  /** The complete column order. Hidden columns keep their positions when the view changes. */
   public @NotNull List<ModelIndex<GridColumn>> getColumnsDisplayOrder() {
-    return myResultView instanceof TableResultView view && !view.isTransposed()
-           ? view.columnsInDisplayOrder()
-           : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList();
+    var natural = getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList();
+    var current = new HashSet<>(natural);
+    if (current.size() == myColumnsDisplayOrder.size() && current.containsAll(myColumnsDisplayOrder)) return myColumnsDisplayOrder;
+
+    var retained = myColumnsDisplayOrder.stream().filter(current::contains).toList();
+    var known = new HashSet<>(retained);
+    var added = natural.stream().filter(column -> !known.contains(column)).toList();
+    var order = new ArrayList<ModelIndex<GridColumn>>(natural.size());
+    int next = 0;
+    for (var column : retained) {
+      while (next < added.size() && added.get(next).value < column.value) {
+        order.add(added.get(next++));
+      }
+      order.add(column);
+    }
+    order.addAll(added.subList(next, added.size()));
+    myColumnsDisplayOrder = List.copyOf(order);
+    return myColumnsDisplayOrder;
   }
 
-  /**
-   * Shows the columns in [order], as far as the view can.
-   * <p>
-   * Only a shown column has a place in the view, so a hidden one in [order] is passed over. The caller
-   * owns what happens to a hidden column.
-   */
+  /** Sets the complete column order and projects its visible columns into the view. */
   public void setColumnsDisplayOrder(@NotNull List<ModelIndex<GridColumn>> order) {
+    var natural = getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList();
+    var current = new HashSet<>(natural);
+    var complete = new LinkedHashSet<ModelIndex<GridColumn>>();
+    for (var column : order) {
+      if (current.contains(column)) complete.add(column);
+    }
+    complete.addAll(natural);
+    myColumnsDisplayOrder = List.copyOf(complete);
+    applyColumnsDisplayOrder();
+    updateFrozenColumns();
+    fireContentChanged(null);
+  }
+
+  private boolean applyColumnsDisplayOrder(@NotNull ResultView source) {
+    if (source != myResultView || source.isTransposed()) return false;
+    runWithIgnoreSelectionChanges(this::applyColumnsDisplayOrder);
+    return true;
+  }
+
+  private void applyColumnsDisplayOrder() {
+    if (myResultView == null || myResultView.isTransposed()) return;
     Map<Integer, ModelIndex<GridColumn>> expectedToModel = new LinkedHashMap<>();
     int expectedPos = 0;
-    for (ModelIndex<GridColumn> columnIdx : order) {
-      if (isColumnEnabled(columnIdx)) expectedToModel.put(expectedPos++, columnIdx);
+    for (var columnIdx : getColumnsDisplayOrder()) {
+      if (isColumnEnabled(columnIdx) && columnIdx.toView(this).asInteger() >= 0) expectedToModel.put(expectedPos++, columnIdx);
     }
-    myResultView.restoreColumnsOrder(expectedToModel);
-    updateFrozenColumns();
+    boolean previous = myApplyingColumnsDisplayOrder;
+    myApplyingColumnsDisplayOrder = true;
+    try {
+      myResultView.restoreColumnsOrder(expectedToModel);
+    }
+    finally {
+      myApplyingColumnsDisplayOrder = previous;
+    }
+  }
+
+  /** Whether a column can move beside another column in the current view. */
+  public boolean canMoveColumnInDisplayOrder(@NotNull ModelIndex<GridColumn> column, @NotNull ModelIndex<GridColumn> target) {
+    if (!(myResultView instanceof TableResultView) || myResultView.isTransposed() || GridUtil.getDocumentDataHookUp(this) != null) {
+      return false;
+    }
+    if (!column.isValid(this) || !target.isValid(this) || isColumnPinned(column) != isColumnPinned(target)) return false;
+    var model = getDataModel(DATA_WITH_MUTATIONS);
+    for (var index : List.of(column, target)) {
+      if (model.getColumn(index) instanceof HierarchicalGridColumn nested && !nested.isTopLevelColumn()) return false;
+    }
+    return true;
+  }
+
+  /** Moves one column before or after the target. All other columns keep their relative order. */
+  public void moveColumnInDisplayOrder(@NotNull ModelIndex<GridColumn> column, @NotNull ModelIndex<GridColumn> target, boolean before) {
+    if (!canMoveColumnInDisplayOrder(column, target) || column.equals(target)) return;
+    var order = movedColumnsOrder(column, target, before);
+    if (order != null) setColumnsDisplayOrder(order);
+  }
+
+  private void columnMovedInView(@NotNull ResultView source,
+                                 @NotNull ModelIndex<GridColumn> column,
+                                 @NotNull ModelIndex<GridColumn> target,
+                                 boolean before) {
+    if (source != myResultView || source.isTransposed() || myApplyingColumnsDisplayOrder) return;
+    var order = movedColumnsOrder(column, target, before);
+    if (order == null) return;
+    myColumnsDisplayOrder = List.copyOf(order);
+    fireContentChanged(null);
+  }
+
+  private @Nullable List<ModelIndex<GridColumn>> movedColumnsOrder(@NotNull ModelIndex<GridColumn> column,
+                                                                   @NotNull ModelIndex<GridColumn> target,
+                                                                   boolean before) {
+    var order = new ArrayList<>(getColumnsDisplayOrder());
+    if (!order.contains(target) || !order.remove(column)) return null;
+    order.add(order.indexOf(target) + (before ? 0 : 1), column);
+    return order;
   }
 
   /** Whether any column, including a hidden column, differs from the data order. */
