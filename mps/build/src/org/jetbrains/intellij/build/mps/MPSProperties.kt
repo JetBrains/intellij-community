@@ -203,6 +203,15 @@ class MPSProperties : JetBrainsProductProperties() {
         // The declaration keeps the plugin model the only truth for packaging, so `validateImplicitPlatformModule` passes.
         embeddedModule("intellij.libraries.jps.javac.extension")
 
+        // The platform layout holds `intellij.tools.testsBootstrap`, which depends on these wrappers. The same rule applies.
+        embeddedModule("intellij.libraries.hamcrest")
+        embeddedModule("intellij.libraries.junit4")
+        embeddedModule("intellij.libraries.junit6")
+        embeddedModule("intellij.libraries.junit6.jupiter")
+        embeddedModule("intellij.libraries.junit6.launcher")
+        embeddedModule("intellij.libraries.junit6.vintage")
+        embeddedModule("intellij.libraries.opentest4j")
+
         module("intellij.platform.customization.min")
         module("intellij.idea.customization.base")
 

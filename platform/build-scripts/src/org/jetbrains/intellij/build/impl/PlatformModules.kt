@@ -408,7 +408,7 @@ private fun validateImplicitPlatformModule(
   if (readModuleDescriptor(contentModuleNameToDescriptorFileName(name)) == null) {
     return
   }
-  else if (allowedMissingDependencies.contains(name) || chain.firstOrNull() == "intellij.tools.testsBootstrap") {
+  else if (allowedMissingDependencies.contains(name)) {
     Span.current().addEvent("Suppressing implicit content module validation for $name via allowMissingDependencies (chain: $chain)")
   }
   else if (isClientBuild) {
