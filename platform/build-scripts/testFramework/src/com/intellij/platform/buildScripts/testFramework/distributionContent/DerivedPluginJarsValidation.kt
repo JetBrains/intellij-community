@@ -3,11 +3,10 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 
 import com.intellij.platform.buildScripts.pluginModelTool.DEV_DIST_ON_DEMAND_PLUGIN_MODULES
 import com.intellij.platform.buildScripts.pluginModelTool.DerivedPluginJars
-import com.intellij.platform.buildScripts.pluginModelTool.productDerivation
+import com.intellij.platform.buildScripts.pluginModelTool.ProductDerivation
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.PluginContentReport
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.intellij.build.ModuleOutputProvider
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -20,8 +19,8 @@ import kotlin.io.path.readText
  * disagreement: the derivation is wrong for that plugin. A comparison of the derivation against itself could not
  * fail, and this one can.
  *
- * The suite derives once. The products come from `build/dev-build.json` through `productDerivation`, and every
- * target of the suite, and every other validation of the run, reads the one result.
+ * The suite derives once. The products come from `build/dev-build.json`. [PackagingSuiteContext.productDerivation]
+ * holds the one result, and every target validation and every suite validation reads it.
  *
  * A jar the derivation states and this product did not pack is held out when every member of it is packed in another
  * jar of the same plugin here. Two products can pack one member into two different jars, and the derivation states
@@ -51,7 +50,7 @@ fun createDerivedPluginJarsValidation(targetId: String): PackagingTargetValidati
       projectHome = context.projectHome,
       targetId = context.target.id,
       content = context.content(),
-      outputProvider = context.outputProvider,
+      derivation = context.productDerivation,
     )
   },
 )
@@ -60,9 +59,9 @@ private fun validateDerivedPluginJars(
   projectHome: Path,
   targetId: String,
   content: ParsedContentReport,
-  outputProvider: ModuleOutputProvider,
+  derivation: ProductDerivation,
 ): List<PackagingCheckFailure> {
-  val records = derivedJarsOf(productDerivation(projectRoot = projectHome, outputProvider = outputProvider).pluginJars(DEV_DIST_ON_DEMAND_PLUGIN_MODULES))
+  val records = derivedJarsOf(derivation.pluginJars(DEV_DIST_ON_DEMAND_PLUGIN_MODULES))
   val reports = content.bundled + content.nonBundled
   val failures = ArrayList<PackagingCheckFailure>()
 

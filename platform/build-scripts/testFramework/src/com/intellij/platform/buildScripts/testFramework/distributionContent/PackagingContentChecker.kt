@@ -7,6 +7,8 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.concurrency.Joiner
 import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.intellij.platform.buildScripts.concurrency.TaskSignal
+import com.intellij.platform.buildScripts.pluginModelTool.ProductDerivation
+import com.intellij.platform.buildScripts.pluginModelTool.deriveProducts
 import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
 import com.intellij.platform.buildScripts.testFramework.customizeBuildOptionsForPackagingContentTest
 import com.intellij.platform.buildScripts.testFramework.doRunTestBuild
@@ -36,6 +38,7 @@ import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import org.jetbrains.intellij.build.impl.sharedLazy
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.impl.toArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.toBazelIfNeeded
@@ -181,6 +184,17 @@ data class PackagingSuiteContext(
 ) {
   val project: JpsProject
     get() = compilationContext.project
+
+  private val productDerivationValue = sharedLazy(lifetime = lifetime, name = "product derivation") {
+    deriveProducts(projectRoot = projectHome, outputProvider = compilationContext.outputProvider)
+  }
+
+  /**
+   * The products of `build/dev-build.json` and their derivations. The suite derives once, on the first read.
+   * Every target validation and every suite validation reads this one instance, and [lifetime] owns it.
+   */
+  val productDerivation: ProductDerivation
+    get() = productDerivationValue.get()
 }
 
 @Internal
@@ -228,7 +242,12 @@ class PackagingTargetValidationContext internal constructor(
   @JvmField val outputProvider: ModuleOutputProvider,
   @JvmField val layout: PackagedLayout,
   private val packageResultProvider: () -> PackageResult,
+  private val productDerivationProvider: () -> ProductDerivation,
 ) {
+  /** The derivation of the suite; see [PackagingSuiteContext.productDerivation]. */
+  val productDerivation: ProductDerivation
+    get() = productDerivationProvider()
+
   /** The content report of the packaged distribution. A [PackagingTargetValidationStage.LAYOUT] validation must not read it. */
   fun content(): ParsedContentReport = packageResultProvider().content
 
@@ -854,6 +873,7 @@ private fun createTargetValidationTasks(
                       outputProvider = suiteContext.compilationContext.outputProvider,
                       layout = layout,
                       packageResultProvider = packageResultProvider,
+                      productDerivationProvider = { suiteContext.productDerivation },
                     )
                   )
                 }

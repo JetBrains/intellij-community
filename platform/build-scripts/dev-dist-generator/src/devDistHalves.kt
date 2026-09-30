@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.platform.buildScripts.concurrency.Subtask
 import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.intellij.platform.buildScripts.pluginModelTool.ProductDerivation
+import com.intellij.platform.buildScripts.pluginModelTool.deriveProducts
 import com.intellij.platform.buildScripts.pluginModelTool.loadGeneratorJpsProject
-import com.intellij.platform.buildScripts.pluginModelTool.productDerivation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.buildSpan
@@ -384,7 +384,7 @@ internal fun computeCommunityHalf(
     lifetime = null,
     useTestCompilationOutput = true,
   )
-  val derivation = productDerivation(communityRoot, outputProvider)
+  val derivation = deriveProducts(communityRoot, outputProvider)
   val packings = buildSpan("derive community plugin packings") {
     derivePluginPackings(half = half, root = communityRoot, outputProvider = outputProvider, derivation = derivation)
   }
