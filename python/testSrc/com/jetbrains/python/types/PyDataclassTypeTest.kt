@@ -5,6 +5,7 @@ import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
@@ -876,6 +877,71 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       C().attr = "foo" # WARNING Expected type 'int', got 'Literal["foo"]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyDataclassTypeProvider::class])
+    fun `kw_only subclass keeps the base fields positional`() = test("""
+      from dataclasses import dataclass
+
+      @dataclass
+      class Base:
+          x: int
+
+      @dataclass(kw_only=True)
+      class Child(Base):
+          y: int
+
+      Child(1, y=2)
+      #     │     └ WARNING Parameter 'x' unfilled FIXME
+      #     └ WARNING Unexpected argument FIXME
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyDataclassTypeProvider::class])
+    fun `field in a kw_only class is keyword only`() = test("""
+      from dataclasses import dataclass, field
+
+      @dataclass(kw_only=True)
+      class KW:
+          x: int = field(default=0)
+
+      KW(1) # WARNING FIXME Unexpected argument
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyDataclassTypeProvider::class])
+    fun `dataclass base with its own __init__ still contributes its fields`() = test("""
+      from dataclasses import dataclass
+
+      @dataclass
+      class Base:
+          x: int
+          def __init__(self, x: int) -> None:
+              self.x = x
+
+      @dataclass
+      class Child(Base):
+          y: int
+
+      Child(1, 2)
+      #        └ WARNING Unexpected argument FIXME
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyDataclassTypeProvider::class])
+    fun `copy replace returns the dataclass and accepts its fields`() = test("""
+      import copy
+      from dataclasses import dataclass
+
+      @dataclass
+      class Point:
+          x: int
+
+      res = copy.replace(Point(1), x=2)
+      # │                │         ^^^ WARNING Unexpected argument (from ParamSpec '_P') FIXME
+      # │                ^^^^^^^^ WARNING Expected type '_SupportsReplace[**_P, _RT_co]', got 'Point' instead FIXME
+      # └ TYPE Unknown FIXME Point
+      """.trimIndent())
   }
 
   @Nested
@@ -989,6 +1055,25 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       
       
       v5: Hashable = DC5(0)
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class FrozenAttributes {
+    @Test
+    @TestFor(classes = [PyDataclassInspection::class])
+    fun `plain subclass of a frozen dataclass can add an attribute`() = test("""
+      from dataclasses import dataclass
+
+      @dataclass(frozen=True)
+      class Frozen:
+          x: int
+
+      class PlainSub(Frozen):
+          def __init__(self) -> None:
+              super().__init__(1)
+              self.cache = {}
+      #       ^^^^^^^^^^ ERROR 'PlainSub' object attribute 'cache' is read-only FIXME
       """.trimIndent())
   }
 

@@ -5,8 +5,11 @@ import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -902,6 +905,36 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #            ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
       bar("s")
       #   ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyFunctionTypeImpl::class])
+    fun `bound method has __self__`() = test("""
+      class Cls:
+          def meth(self) -> int: return 1
+
+      res = Cls().meth.__self__
+      #                ^^^^^^^^ WARNING Cannot find reference '__self__' in '() -> int' FIXME
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyFunctionTypeImpl::class])
+    fun `bound method has __func__`() = test("""
+      class Cls:
+          def meth(self) -> int: return 1
+
+      res = Cls().meth.__func__
+      #                ^^^^^^^^ WARNING Cannot find reference '__func__' in '() -> int' FIXME
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyFunctionTypeImpl::class])
+    fun `bound method __name__ is str`() = test("""
+      class Cls:
+          def meth(self) -> int: return 1
+
+      res = Cls().meth.__name__
+      # └ TYPE str
       """.trimIndent())
   }
 
@@ -3461,6 +3494,70 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
             def route(self, s: str):
                 pass
         """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `partial keyword bound parameter can be overridden`() = test("""
+      from functools import partial
+
+      def func(a: int, b: str = "") -> bytes: ...
+
+      par = partial(func, b="x")
+      par(1, b="y")
+      #      ^^^^^ WARNING Unexpected argument FIXME
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `partial object has the func attribute`() = test("""
+      from functools import partial
+
+      def func(a: int, b: str = "") -> bytes: ...
+
+      par = partial(func, 1)
+      par.func
+      #   ^^^^ WARNING Cannot find reference 'func' in '(b: str) -> bytes' FIXME
+      res = par()
+      # └ TYPE bytes
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `unknown attribute of an lru_cache function is reported`() = test("""
+      from functools import lru_cache
+
+      @lru_cache
+      def func(x: int) -> str: ...
+
+      func.no_such_attribute # WARNING FIXME Cannot find reference 'no_such_attribute' in '_lru_cache_wrapper[str]'
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `unknown attribute of a cache function is reported`() = test("""
+      from functools import cache
+
+      @cache
+      def func(x: int) -> str: ...
+
+      func.no_such_attribute # WARNING Unresolved attribute reference 'no_such_attribute' for class '_lru_cache_wrapper'
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyFunctoolsWrapsDecoratedFunctionTypeProvider::class])
+    fun `wraps keeps the signature of a typed wrapper`() = test("""
+      from functools import wraps
+
+      def orig(x: int) -> int: ...
+
+      @wraps(orig)
+      def wrapper(x: str, y: str) -> str: ...
+
+      res = wrapper("a", "b")
+      # │           │    ^^^ WARNING Unexpected argument FIXME
+      # │           ^^^ WARNING Expected type 'int', got 'Literal["a"]' instead FIXME
+      # └ TYPE int FIXME str
+      """.trimIndent())
   }
 
   @Test

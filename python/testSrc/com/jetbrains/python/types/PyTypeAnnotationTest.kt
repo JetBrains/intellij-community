@@ -3471,6 +3471,35 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class ClassA: ...
     """.trimIndent())
 
+  /**
+   * The annotations future import defers the evaluation, so the definition runs, but reading the annotation raises a `TypeError`. The `|` is in a type
+   * expression, so `__or__` does not apply.
+   */
+  @Test
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON313)
+  fun `quoted name in a union with the annotations future import is an error without an operator warning`() = test("""
+    from __future__ import annotations
+
+    class Cls: ...
+
+    def func(val: "Cls" | None) -> None: ...
+    #             │     └ WARNING Class 'Literal["Cls"]' does not define '__or__', so the '|' operator cannot be used on its instances FIXME
+    #             ^^^^^ ERROR Union type annotations with forward references must be wrapped in quotes entirely
+    """.trimIndent())
+
+  /**
+   * Python 3.14 defers the evaluation of annotations, so the definition runs, but reading the annotation raises a `TypeError`. The `|` is in a type
+   * expression, so `__or__` does not apply.
+   */
+  @Test
+  fun `quoted name in a union with deferred evaluation of annotations is an error without an operator warning`() = test("""
+    class Cls: ...
+
+    def func(val: "Cls" | None) -> None: ...
+    #             │     └ WARNING Class 'Literal["Cls"]' does not define '__or__', so the '|' operator cannot be used on its instances FIXME
+    #             ^^^^^ ERROR Union type annotations with forward references must be wrapped in quotes entirely
+    """.trimIndent())
+
   @Test
   @TestFor(issues = ["PY-76870"])
   fun `TypeVar default can be subclass of bound`() = test("""

@@ -7,6 +7,8 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.PyEvaluator
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -177,6 +179,31 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           pass
 
       my_function(Union[int, str])
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyCallExpressionHelper::class])
+    fun `type of a union is a union of class objects`() = test("""
+      def func(val: int | str) -> None:
+          res = type(val)
+      #    └ TYPE Unknown FIXME type[int] | type[str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyCallExpressionHelper::class])
+    fun `type of self is the type of Self`() = test("""
+      class Cls:
+          def meth(self) -> None:
+              res = type(self)
+      #        └ TYPE type[Cls] FIXME type[Self@Cls]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyCallExpressionHelper::class])
+    fun `type of a generic instance keeps the type arguments`() = test("""
+      def func(val: list[int]) -> None:
+          res = type(val)
+      #    └ TYPE type[list] FIXME type[list[int]]
       """.trimIndent())
   }
 
@@ -938,6 +965,21 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
         else:
             v: str = 'ab'
         """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyEvaluator::class])
+    fun `TYPE_CHECKING through a typing alias selects the type checking branch`() = test("""
+      import typing as t
+
+      if t.TYPE_CHECKING:
+          from decimal import Decimal
+      else:
+          Decimal = None
+
+      def func(val: Decimal) -> None:
+          res = val
+      #    └ TYPE Decimal
+      """.trimIndent())
   }
 
   @Nested

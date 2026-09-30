@@ -11,6 +11,7 @@ import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyAssertTypeInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 
 @Subsystems.CodeInsight
 @Layers.Functional
@@ -279,6 +280,37 @@ class PyConstructorTypeTest : PyInspectionTestCase() {
 
       assert_type(B(), B)
       assert_type(B(<warning descr="Unexpected argument">1</warning>), B)
+      """.trimIndent())
+  }
+
+  @TestFor(classes = [PyCallExpressionHelper::class])
+  fun `test __new__ parameters are checked when __init__ accepts anything`() {
+    doTestByText("""
+      from typing import Any, Self
+
+      class Cls:
+          def __new__(cls, x: int) -> Self:
+              return super().__new__(cls)
+          def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+
+      Cls("a") # TODO: Missing error "Expected type 'int', got 'Literal["a"]' instead"
+      """.trimIndent())
+  }
+
+  @TestFor(classes = [PyCallExpressionHelper::class])
+  fun `test metaclass __call__ parameters are checked`() {
+    doTestByText("""
+      from typing import Any, Self
+
+      class Meta(type):
+          def __call__[T](cls: type[T], x: int, y: str) -> T:
+              return type.__call__(cls)
+
+      class Cls(metaclass=Meta):
+          def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+              return super().__new__(cls)
+
+      Cls() # TODO: Missing error "Parameter 'x' unfilled"
       """.trimIndent())
   }
 }

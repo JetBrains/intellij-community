@@ -5,7 +5,10 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.PyUnreachableCodeInspection
 
 import org.junit.jupiter.api.Nested
@@ -430,6 +433,56 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           if isinstance(var, int):
               return var
           method_b(var)  # pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypeAssertionEvaluator::class])
+    fun `user function named isinstance does not narrow`() = test("""
+      def isinstance(obj: object, cls: type) -> bool:
+          return True
+
+      def func(val: int | str) -> None:
+          if isinstance(val, int):
+              res = val
+      #        └ TYPE int FIXME int | str
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `in operator narrows a union of final TypedDict types`() = test("""
+      from typing import TypedDict, final
+
+      @final
+      class TdA(TypedDict):
+          a: int
+
+      @final
+      class TdB(TypedDict):
+          b: str
+
+      def func(val: TdA | TdB) -> None:
+          if "a" in val:
+              res = val
+      #        └ TYPE TdA | TdB FIXME TdA
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `literal key comparison narrows a discriminated union`() = test("""
+      from typing import Literal, TypedDict
+
+      class TdA(TypedDict):
+          kind: Literal["a"]
+          a: int
+
+      class TdB(TypedDict):
+          kind: Literal["b"]
+          b: str
+
+      def func(val: TdA | TdB) -> None:
+          if val["kind"] == "a":
+              res = val
+      #        └ TYPE TdA | TdB FIXME TdA
       """.trimIndent())
   }
 
@@ -1850,6 +1903,45 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       if a:
           print(1)
       #   ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class OverridableNoReturnReachability {
+    /** A subclass can override the method, so the call can return. mypy agrees. */
+    @Test
+    @TestFor(classes = [PyUnreachableCodeInspection::class])
+    @TestInspections(enableInspections = [PyUnreachableCodeInspection::class])
+    fun `code after a call of an overridable method that raises is reachable`() = test("""
+      class Base:
+          def handle(self):
+              raise RuntimeError("override me")
+
+      class Child(Base):
+          def handle(self):
+              return 1
+
+      def run(obj: Base) -> None:
+          obj.handle()
+          print("after handle")
+      #   ^^^^^^^^^^^^^^^^^^^^^ WARNING This code is unreachable FIXME
+      """.trimIndent())
+
+    /** A subclass can override the method, so the line runs and its error is reported. mypy agrees. */
+    @Test
+    @TestFor(classes = [PyTypeCheckerInspection::class])
+    fun `type error after a call of an overridable method that raises is reported`() = test("""
+      class Base:
+          def handle(self):
+              raise RuntimeError("override me")
+
+      class Child(Base):
+          def handle(self):
+              return 1
+
+      def run(obj: Base) -> None:
+          obj.handle()
+          val: int = "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead
       """.trimIndent())
   }
 }

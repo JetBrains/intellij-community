@@ -545,6 +545,68 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       b: str = E.SECOND_MEMBER.value
       #        ^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'Literal[43]' instead
       """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `_value_ annotation decides the type of value`() = test("""
+      from enum import Enum
+
+      class Planet(Enum):
+          _value_: int
+
+          def __init__(self, value: int, mass: float) -> None:
+              self._value_ = value
+
+          MERCURY = (1, 3.3)
+
+      res = Planet.MERCURY.value
+      # └ TYPE tuple[Literal[1], float | int] FIXME int
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `value is Any when a custom __new__ sets it`() = test("""
+      from enum import Enum
+
+      class Coin(Enum):
+          def __new__(cls, label: str):
+              obj = object.__new__(cls)
+              obj._value_ = len(label)
+              return obj
+
+          PENNY = "penny"
+
+      res = Coin.PENNY.value
+      # └ TYPE Literal["penny"] FIXME Any
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `Flag name is an optional str`() = test("""
+      from enum import Flag
+
+      class Perm(Flag):
+          R = 1
+          W = 2
+
+      def func(perm: Perm) -> None:
+          res = perm.name
+      #    └ TYPE str FIXME str | None
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `__members__ matches a Mapping with str keys`() = test("""
+      from enum import Enum
+      from typing import Mapping
+
+      class Color(Enum):
+          RED = 1
+
+      def take(members: Mapping[str, Color]) -> None: ...
+
+      take(Color.__members__)
+      """.trimIndent())
   }
 
   @Nested

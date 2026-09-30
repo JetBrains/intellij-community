@@ -754,6 +754,23 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  @TestFor(classes = PyFinalInspection.class)
+  public void testFinalMethodOfSecondBaseOverridden() {
+    doTestByText("""
+                   from typing import final
+
+                   class BaseA:
+                       def meth(self) -> int: ...
+
+                   class BaseB:
+                       @final
+                       def meth(self) -> int: ...
+
+                   class Child(BaseA, BaseB):
+                       def meth(self) -> int: ...  # FIXME: 'BaseB.meth' is marked as '@final' and should not be overridden
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

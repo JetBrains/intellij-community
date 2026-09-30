@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
@@ -58,6 +59,19 @@ from typing import cast
         
         a: int | str
         b = cast(str, a)  # ok
+      """.trimIndent()
+    )
+  }
+
+  // FIXME: a cast of Any narrows the type, so it is necessary and must not be reported
+  @TestFor(classes = [PyUnnecessaryCastInspection::class])
+  fun `test cast of Any`() {
+    doTestByText(
+      """
+        from typing import Any, cast
+
+        def func(val: Any) -> int:
+            return <weak_warning descr="Unnecessary cast; type is already 'int'">cast(int,</weak_warning> val)
       """.trimIndent()
     )
   }

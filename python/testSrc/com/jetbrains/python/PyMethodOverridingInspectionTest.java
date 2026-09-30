@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
@@ -345,6 +346,20 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
                    class Meta(type):
                        def __call__(cls: type[T], *args, **kwargs) -> T:
                            return type.__call__(cls, *args, **kwargs)
+                   """);
+  }
+
+  @TestFor(classes = PyMethodOverridingInspection.class)
+  public void testIncompatibleOverrideOfSecondBase() {
+    doTestByText("""
+                   class BaseA:
+                       def meth(self, x: int) -> int: ...
+
+                   class BaseB:
+                       def meth(self, x: int, y: int) -> int: ...
+
+                   class Child(BaseA, BaseB):
+                       def meth(self, x: int) -> int: ...  # FIXME: Signature of method 'Child.meth()' does not match signature of the base method in class 'BaseB'
                    """);
   }
 

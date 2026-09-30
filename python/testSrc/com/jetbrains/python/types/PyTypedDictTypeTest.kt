@@ -5,6 +5,7 @@ import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -187,6 +188,61 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       s2: str = movie2['year']
       #         ^^^^^^^^^^^^^^ WARNING Expected type 'str', got 'int' instead
 
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `keys gives dict_keys`() = test("""
+      from typing import TypedDict
+
+      class Movie(TypedDict):
+          name: str
+          year: int
+
+      def func(mov: Movie) -> None:
+          res = mov.keys()
+      #    └ TYPE list[str] FIXME dict_keys[str, object]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `copy keeps the TypedDict type`() = test("""
+      from typing import TypedDict
+
+      class Movie(TypedDict):
+          name: str
+          year: int
+
+      def func(mov: Movie) -> None:
+          res = mov.copy()
+      #    └ TYPE dict[Unknown, Unknown] FIXME Movie
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `pop of a required key is reported`() = test("""
+      from typing import TypedDict
+
+      class Movie(TypedDict):
+          name: str
+          year: int
+
+      def func(mov: Movie) -> None:
+          mov.pop("name") # WARNING Key 'name' of TypedDict 'Movie' cannot be deleted
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `pop of a not required key gives the value type`() = test("""
+      from typing import NotRequired, TypedDict
+
+      class Movie(TypedDict):
+          name: str
+          year: NotRequired[int]
+
+      def func(mov: Movie) -> None:
+          res = mov.pop("year")
+      #    └ TYPE Unknown FIXME int
       """.trimIndent())
   }
 
@@ -1171,6 +1227,22 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       Movie = TypedDict("Movie", {}, total=2)
       #                              │     └ WARNING Value of 'total' must be True or False
       #                              ^^^^^^^ WARNING Expected type 'bool', got 'Literal[2]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyTypedDictTypeProvider::class])
+    fun `total False with spaces around the equals sign in another file makes the keys optional`() = test("""
+      from tdmod import Movie
+
+      mov: Movie = {"name": "x"}
+      #            ^^^^^^^^^^^^^ WARNING TypedDict 'Movie' has missing key: 'year' FIXME
+      """.trimIndent(),
+      "tdmod.py" to """
+      from typing import TypedDict
+
+      class Movie(TypedDict, total = False):
+          name: str
+          year: int
       """.trimIndent())
   }
 

@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -320,6 +321,24 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       A[str]().foo()
       A[float]().foo()
       #^^^^^^^^^^^^^ WARNING Invalid self argument 'A[float | int]' to method 'A.foo' with type '(self: A[int]) -> None'
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyCallExpressionHelper::class])
+    fun `overload call with a union argument expands the union`() = test("""
+      from typing import overload
+
+      @overload
+      def conv(x: int) -> int: ...
+      @overload
+      def conv(x: str) -> str: ...
+      def conv(x: int | str) -> int | str:
+          return x
+
+      def use(val: int | str) -> None:
+          res = conv(val)
+      #    │         ^^^ WARNING No overload of 'conv' matches the arguments. Argument types: (int | str). Expected one of: (x: int), (x: str) FIXME
+      #    └ TYPE UnsafeUnion[int, str] FIXME int | str
       """.trimIndent())
   }
 

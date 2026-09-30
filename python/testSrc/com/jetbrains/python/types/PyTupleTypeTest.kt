@@ -5,8 +5,10 @@ import com.intellij.idea.TestFor
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.impl.PyParenthesizedExpressionImpl
+import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -146,6 +148,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       expr = xs[-10], xs[10]
       #└ TYPE tuple[str, str]
       """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PySubscriptionExpressionImpl::class])
+    fun `tuple index that is not a literal gives the union of the elements`() = test("""
+      def func(tup: tuple[int, str, float], idx: int) -> None:
+          res = tup[idx]
+      #    └ TYPE Unknown FIXME int | str | float
+      """.trimIndent())
   }
 
   @Nested
@@ -238,6 +248,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       x: Tuple[int, ...]
       expr = x[0:]
       #└ TYPE tuple[int, ...]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PySubscriptionExpressionImpl::class])
+    fun `tuple slice with literal bounds keeps the element types`() = test("""
+      def func(tup: tuple[int, str, float]) -> None:
+          res = tup[0:2]
+      #    └ TYPE tuple FIXME tuple[int, str]
       """.trimIndent())
   }
 
@@ -335,6 +353,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       #    ^^^^^^^ ERROR Unresolved reference 'unknown'
       expr = xs * 42
       #└ TYPE tuple[int, ...]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PyStdlibTypeProvider::class])
+    fun `int times tuple repeats the elements`() = test("""
+      def func(tup: tuple[int, str]) -> None:
+          res = 2 * tup
+      #    └ TYPE tuple[int | str, ...] FIXME tuple[int, str, int, str]
       """.trimIndent())
   }
 
@@ -969,6 +995,14 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def f(first: int, rest: tuple[str, ...]):
           expr = (first, *rest)
       #   └ TYPE tuple[int, *tuple[str, ...]]
+      """.trimIndent())
+
+    @Test
+    @TestFor(classes = [PySubscriptionExpressionImpl::class])
+    fun `index into the unbounded middle of a tuple gives the possible elements`() = test("""
+      def func(var: tuple[int, *tuple[str, ...], int]) -> None:
+          res = var[1]
+      #    └ TYPE *tuple[str, ...] FIXME str | int
       """.trimIndent())
   }
 
