@@ -3,8 +3,10 @@ package org.jetbrains.idea.maven.execution
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.EventResult
 import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.SuccessResult
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
@@ -214,13 +216,30 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
   private fun assertExecFailed() {
     val finishEvents = myEvents.filterIsInstance<FinishBuildEvent>()
     assertTrue(finishEvents.size == 1, "Expected 1 finish event, got ${finishEvents.size}")
-    assertTrue(finishEvents[0].result is FailureResult)
+    assertTrue(finishEvents[0].result is FailureResult, "Expected a failed Maven run.\n${describeRun(finishEvents[0].result)}")
   }
 
   private fun assertExecSucceed(executionInfo: ExecutionInfo) {
     val finishEvents = myEvents.filterIsInstance<FinishBuildEvent>()
     assertTrue(finishEvents.size == 1, "Expected 1 finish event, got ${finishEvents.size}")
-    assertTrue(finishEvents[0].result is SuccessResult, "")
+    assertTrue(finishEvents[0].result is SuccessResult, "Expected a successful Maven run.\n${describeRun(finishEvents[0].result, executionInfo)}")
+  }
+
+  /** Describes the run result and the Maven output, so a CI failure names the Maven error. */
+  private fun describeRun(result: EventResult, executionInfo: ExecutionInfo? = null): String {
+    val failures = (result as? FailureResult)?.failures.orEmpty().joinToString("; ") { failure ->
+      failure.message ?: failure.description ?: failure.error?.toString() ?: failure.toString()
+    }
+    val events = myEvents.filterIsInstance<OutputBuildEvent>().joinToString("") { it.message }
+    return """
+      Result: ${result.javaClass.simpleName}. Failures: $failures
+      Process stdout (tail):
+      ${executionInfo?.stdout?.takeLast(6000) ?: "<not captured>"}
+      Process stderr (tail):
+      ${executionInfo?.stderr?.takeLast(2000) ?: "<not captured>"}
+      Build output events (tail):
+      ${events.takeLast(2000)}
+    """.trimIndent()
   }
 
 
