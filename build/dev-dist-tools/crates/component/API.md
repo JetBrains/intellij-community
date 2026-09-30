@@ -18,7 +18,7 @@ These items of other crates are part of the contract:
 - `distpath::validate_path` checks a path inside a distribution: relative, in slash form, ASCII without `<`, `>` and
   `&`. `filemeta::merge` checks a set of entries together.
 - `fscopy::conventional_mode(executable)` is the mode of a file without a mode. `fscopy::set_distribution_file_mode`
-  applies a mode. `fscopy::symlink` creates each link of the local home.
+  applies a mode.
 
 ## Errors (`error`)
 
@@ -236,6 +236,8 @@ the IDE config with `ide_config::write_dev_ide_config`.
   only for a directory.
 - `LocalFileKind { Directory }`: the JSON `kind`, which is `directory`.
 - `LocalLayoutFile::is_directory() -> bool`: `kind` is `Directory`.
+- `layout::read_local_layout(path) -> Result<LocalLayout>`: decodes the layout by the JSON rules. The launcher checks
+  the version and the files before it links a local home.
 - `layout::encode_local_layout(components: &[&ComponentManifest], source_runfiles, has_plugin_classpath: bool,
   source_directory_runfiles: Option<&BTreeMap<String, String>>) -> Result<Vec<u8>>`: applies
   `validate_destinations`, then gives the bytes.
@@ -243,22 +245,6 @@ the IDE config with `ide_config::write_dev_ide_config`.
   source_directory_runfiles) -> Result<()>`: writes the layout into `target`, which must exist.
 - `layout::resolve_source_runfile(source, files, directories, name) -> Result<String>`: the runfile of one source,
   from an exact file declaration or from the deepest declared directory. `name` is the entry that the error names.
-
-## Local home (`local_home`)
-
-- `RunfilesEnv { java_runfiles, runfiles_dir, runfiles_manifest_file }`: the runfiles variables, each an
-  `Option<PathBuf>`. An empty variable is an absent one.
-- `RunfilesEnv::from_process() -> RunfilesEnv`: reads the variables of the process.
-- `RunfilesLookup`: finds a runfile in `JAVA_RUNFILES`, then in `RUNFILES_DIR`, then by the longest prefix in the
-  runfiles manifest. It decodes an escaped manifest line, where `\s`, `\n` and `\b` stand for a space, a newline
-  and a backslash.
-- `RunfilesLookup::new(env: &RunfilesEnv) -> Result<RunfilesLookup>` and
-  `RunfilesLookup::resolve(name: &str) -> Result<PathBuf>`.
-- `local_home::link_local_home(layout_path: &Path, output_dir: &Path, env: &RunfilesEnv) -> Result<()>`: links the
-  files of the layout into `output_dir`, which must be absent or empty. On Windows, a declared link is a directory
-  link when its target is a directory of the layout. A link to a runfile is always a file link.
-- `local_home::link_local_home_with(layout_path, output_dir, lookup: &dyn Fn(&str) -> Result<PathBuf>) -> Result<()>`:
-  the same with a lookup function. It checks the whole layout before it creates the home.
 
 ## Dev IDE config (`ide_config`)
 

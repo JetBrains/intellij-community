@@ -3,7 +3,6 @@
 //!
 //! Three modes exist. `intellij_dev_packed_jars_component` (`intellij_dev_dist.bzl`) uses `--jars-file` with
 //! `--metadata-catalogue` and `--files-file`. `_dev_plugin` and `dev_plugin_component` use `--plugin-component`.
-//! The subcommand `local-home` links a local home for `PreBuiltDevMain`.
 
 mod collect;
 mod plugin_component;
@@ -105,9 +104,6 @@ fn main() -> std::process::ExitCode {
 
 /// Runs the tool and returns the exit code: 2 for an option error, 1 for any other error.
 fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    if args.first().is_some_and(|arg| arg == "local-home") {
-        return run_local_home(&args[1..], output, errors);
-    }
     let options = match parse_options(args) {
         Ok(options) => options,
         Err(error) => {
@@ -375,38 +371,6 @@ fn target_arch(value: Option<&str>) -> anyhow::Result<String> {
         Some(other) => bail!("unknown --arch value {other:?}, expected one of x64, aarch64"),
     };
     Ok(arch.to_owned())
-}
-
-/// `local-home --layout=<file> --output-dir=<directory>`: links the local home of `PreBuiltDevMain`.
-fn run_local_home(args: &[OsString], output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    let mut layout = None;
-    let mut output_dir = None;
-    for arg in args {
-        let parsed = arg
-            .to_str()
-            .and_then(|arg| arg.split_once('='))
-            .filter(|(_, value)| !value.is_empty());
-        let destination = match parsed {
-            Some(("--layout", value)) if layout.is_none() => (&mut layout, value),
-            Some(("--output-dir", value)) if output_dir.is_none() => (&mut output_dir, value),
-            _ => {
-                let _ = writeln!(errors, "ERROR: invalid local-home option: {}", arg.display());
-                return 2;
-            }
-        };
-        *destination.0 = Some(destination.1.to_owned());
-    }
-    let (Some(layout), Some(output_dir)) = (layout, output_dir) else {
-        let _ = writeln!(errors, "ERROR: local-home requires --layout and --output-dir");
-        return 2;
-    };
-    let env = component::local_home::RunfilesEnv::from_process();
-    if let Err(error) = component::local_home::link_local_home(Path::new(&layout), Path::new(&output_dir), &env) {
-        let _ = writeln!(errors, "ERROR: {error}");
-        return 1;
-    }
-    let _ = writeln!(output, "Prepared the local dev home");
-    0
 }
 
 #[cfg(test)]

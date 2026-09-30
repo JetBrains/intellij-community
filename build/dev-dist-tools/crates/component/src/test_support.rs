@@ -127,12 +127,6 @@ pub(crate) fn set_mode(path: impl AsRef<Path>, mode: u32) {
 }
 
 #[cfg(unix)]
-pub(crate) fn mode_of(path: impl AsRef<Path>) -> u32 {
-    use std::os::unix::fs::PermissionsExt;
-    fs::metadata(path.as_ref()).expect("the metadata").permissions().mode() & 0o7777
-}
-
-#[cfg(unix)]
 pub(crate) fn symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
     fscopy::symlink(target.as_ref(), link.as_ref(), false).expect("the link");
 }

@@ -20,7 +20,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | Crate | Content | Bazel test target |
 |---|---|---|
 | `crates/appinfo` | The application info: the descriptor XML round trip, the markers, the frontend merge, and the reader of the facts that `product-info.json` states. | `@community//build/dev-dist-tools/crates/appinfo:appinfo_test` |
-| `crates/component` | The component contract of the collector, the composer and the launcher: manifests, the composition spec, the fingerprint, the local layout and the local home. | `@community//build/dev-dist-tools/crates/component:component_test` |
+| `crates/component` | The component contract of the collector, the composer and the launcher: manifests, the composition spec, the fingerprint and the local layout. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
 | `crates/filemeta` | Inventory JSON version 1 and the xxh3 content hashes. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
@@ -31,9 +31,9 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/pluginpack` | The plan and the execution of a plugin remainder, for the remainder packer. | `@community//build/dev-dist-tools/crates/pluginpack:pluginpack_test` |
 | `crates/trace` | The Jaeger span file of `--trace-file`. | `@community//build/dev-dist-tools/crates/trace:trace_test` |
 | `bins/content-module-packer` | The packer. | `@community//build/dev-dist-tools/bins/content-module-packer:content-module-packer_test` |
-| `bins/dev-dist-collector` | The collector and its `local-home` command. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
+| `bins/dev-dist-collector` | The collector. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
 | `bins/dev-dist-composer` | The composer. | `@community//build/dev-dist-tools/bins/dev-dist-composer:dev-dist-composer_test` |
-| `bins/dev-launcher` | The launcher of `intellij_dev_launcher`. | `@community//build/dev-dist-tools/bins/dev-launcher:dev-launcher_test` |
+| `bins/dev-launcher` | The launcher of `intellij_dev_launcher`, the local home, and the `local-home` command of `PreBuiltDevMain`. | `@community//build/dev-dist-tools/bins/dev-launcher:dev-launcher_test` |
 | `bins/plugin-descriptor-writer` | The descriptor writer. | `@community//build/dev-dist-tools/bins/plugin-descriptor-writer:plugin-descriptor-writer_test` and `:descriptor_rule_tests` |
 | `bins/plugin-remainder-packer` | The remainder packer. | `@community//build/dev-dist-tools/bins/plugin-remainder-packer:plugin-remainder-packer_test` and `:plugin-remainder-packer_packer_test` |
 | `bins/product-files` | The tool of `dev_dist_product_files`. | `@community//build/dev-dist-tools/bins/product-files:product-files_test` |

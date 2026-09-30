@@ -6,12 +6,17 @@
 //! It links the local home and derives the system properties of the distribution, as `PreBuiltDevMain` does. Then it
 //! changes to `BUILD_WORKSPACE_DIRECTORY` and replaces itself with the JVM of the IDE. Thus the IDE runs with the
 //! process ID of the launcher.
+//!
+//! The command `local-home --layout=<file> --output-dir=<directory>` links the local home of `PreBuiltDevMain`
+//! (`build/BUILD.bazel`, `local_home_tool`) by the same rules, and exits.
 
 mod devdata;
+mod local_home;
 mod process;
 mod properties;
 mod runfiles;
 
+use std::ffi::OsString;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -57,7 +62,15 @@ struct Launch {
 }
 
 fn main() {
-    let args: Vec<String> = match std::env::args_os().map(std::ffi::OsString::into_string).collect() {
+    let args: Vec<OsString> = std::env::args_os().collect();
+    if args.get(1).is_some_and(|arg| arg == "local-home") {
+        std::process::exit(i32::from(run_local_home(
+            &args[2..],
+            &mut std::io::stdout(),
+            &mut std::io::stderr(),
+        )));
+    }
+    let args: Vec<String> = match args.into_iter().map(OsString::into_string).collect() {
         Ok(args) => args,
         Err(arg) => {
             eprintln!("ERROR: an argument is not valid UTF-8: {}", arg.display());
@@ -72,6 +85,39 @@ fn main() {
             std::process::exit(1);
         }
     }
+}
+
+/// `local-home --layout=<file> --output-dir=<directory>`: links the local home of `PreBuiltDevMain`. It returns the exit
+/// code: 2 for an option error, 1 for any other error.
+fn run_local_home(args: &[OsString], output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+    let mut layout = None;
+    let mut output_dir = None;
+    for arg in args {
+        let parsed = arg
+            .to_str()
+            .and_then(|arg| arg.split_once('='))
+            .filter(|(_, value)| !value.is_empty());
+        let destination = match parsed {
+            Some(("--layout", value)) if layout.is_none() => (&mut layout, value),
+            Some(("--output-dir", value)) if output_dir.is_none() => (&mut output_dir, value),
+            _ => {
+                let _ = writeln!(errors, "ERROR: invalid local-home option: {}", arg.display());
+                return 2;
+            }
+        };
+        *destination.0 = Some(destination.1.to_owned());
+    }
+    let (Some(layout), Some(output_dir)) = (layout, output_dir) else {
+        let _ = writeln!(errors, "ERROR: local-home requires --layout and --output-dir");
+        return 2;
+    };
+    let env = local_home::RunfilesEnv::from_process();
+    if let Err(error) = local_home::link_local_home(Path::new(&layout), Path::new(&output_dir), &env) {
+        let _ = writeln!(errors, "ERROR: {error}");
+        return 1;
+    }
+    let _ = writeln!(output, "Prepared the local dev home");
+    0
 }
 
 /// Reads the launch manifest and the distribution, and returns the JVM command line. `getenv` returns an empty string
@@ -301,7 +347,7 @@ fn link_local_home(
         }
         _ => {}
     }
-    component::local_home::link_local_home_with(layout, Path::new(&home), &|name| files.lookup().resolve(name))
+    local_home::link_local_home_with(layout, Path::new(&home), &|name| files.lookup().resolve(name))
         .context("cannot prepare the local dev home")?;
     Ok(home)
 }
@@ -378,3 +424,6 @@ fn path_string(path: PathBuf) -> anyhow::Result<String> {
 
 #[cfg(test)]
 mod main_tests;
+
+#[cfg(test)]
+mod test_support;

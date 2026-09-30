@@ -205,6 +205,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "component",
+ "distpath",
+ "filemeta",
  "fscopy",
  "indexmap",
  "java-properties",

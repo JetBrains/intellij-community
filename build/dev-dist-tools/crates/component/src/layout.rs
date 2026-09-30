@@ -1,5 +1,5 @@
 //! `local-layout.json`: the file that names the runfile of each distribution file instead of a copy. The composer
-//! writes it for local launch metadata, and [`crate::local_home`] reads it.
+//! writes it for local launch metadata, and the launcher reads it with [`read_local_layout`].
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::compose::validate_destinations;
 use crate::error::{Error, Result};
 use crate::fail;
+use crate::json;
 use crate::manifest::{ComponentEntryType, ComponentManifest};
 use crate::paths;
 use crate::plugin_classpath::PLUGIN_CLASSPATH;
@@ -112,6 +113,11 @@ pub fn encode_local_layout(
         metadata,
     };
     Ok(serde_json::to_vec(&layout).expect("a layout always encodes"))
+}
+
+/// Reads a local layout. The error names the file. The caller checks the version.
+pub fn read_local_layout(path: &Path) -> Result<LocalLayout> {
+    json::read(path)
 }
 
 /// Writes `local-layout.json` into `target`, which must exist.

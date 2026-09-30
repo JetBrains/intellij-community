@@ -13,7 +13,6 @@ pub mod fingerprint;
 pub mod ide_config;
 pub mod inventory;
 pub mod layout;
-pub mod local_home;
 pub mod manifest;
 pub mod paths;
 pub mod plugin_classpath;

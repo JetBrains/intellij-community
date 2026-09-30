@@ -11,6 +11,8 @@ workspace = true
 
 [dependencies]
 component.workspace = true
+distpath.workspace = true
+filemeta.workspace = true
 fscopy.workspace = true
 indexmap.workspace = true
 java-properties.workspace = true

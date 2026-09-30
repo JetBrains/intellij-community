@@ -3,8 +3,8 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::bail;
-use component::local_home::{RunfilesEnv, RunfilesLookup};
 
+use crate::local_home::{RunfilesEnv, RunfilesLookup};
 use crate::path_string;
 
 pub(crate) struct Runfiles {

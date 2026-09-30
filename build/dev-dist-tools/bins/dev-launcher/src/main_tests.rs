@@ -424,3 +424,61 @@ fn prepare_runs_the_before_run_step_in_the_workspace() {
     let error = launcher.prepare(&[], &env).unwrap_err();
     assert!(error.to_string().contains("the before-run step"), "{error:#}");
 }
+
+/// Runs the `local-home` command with the arguments after the command name, and returns the exit code and stderr.
+fn run_local_home_command(args: &[&str]) -> (u8, String) {
+    let args: Vec<OsString> = args.iter().map(OsString::from).collect();
+    let (mut output, mut errors) = (Vec::new(), Vec::new());
+    let code = run_local_home(&args, &mut output, &mut errors);
+    (code, String::from_utf8(errors).unwrap())
+}
+
+#[test]
+fn local_home_refuses_bad_options() {
+    for args in [
+        &[][..],
+        &["--unknown=value"],
+        &["--layout="],
+        &["--layout"],
+        &["--layout=a", "--layout=b", "--output-dir=home"],
+        &["--layout=a"],
+    ] {
+        let (code, errors) = run_local_home_command(args);
+        assert!(code == 2 && errors.contains("ERROR:"), "{args:?}: exit {code}, errors {errors:?}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn local_home_links_the_layout() {
+    let directory = tempfile::tempdir().unwrap();
+    let runfiles = directory.path().join("runfiles");
+    write_file(&runfiles.join("_main/dist/bin/tool"), "tool");
+    let layout = directory.path().join("metadata/local-layout.json");
+    let layout_json = json!({
+        "version": 1,
+        "files": [{"path": "bin/tool", "runfile": "_main/dist/bin/tool", "executable": false}],
+        "metadata": ["core-classpath.txt"],
+    });
+    write_file(&layout, &layout_json.to_string());
+    write_file(&directory.path().join("metadata/core-classpath.txt"), "lib/a.jar");
+    let home = directory.path().join("home");
+    // The command reads the runfiles variables of the process, as `PreBuiltDevMain` starts it.
+    let env = local_home::RunfilesEnv {
+        runfiles_dir: Some(runfiles.clone()),
+        ..Default::default()
+    };
+    local_home::link_local_home(&layout, &home, &env).unwrap();
+    assert_eq!(
+        std::fs::read_link(home.join("bin/tool")).unwrap(),
+        runfiles.join("_main/dist/bin/tool")
+    );
+    let (code, errors) = run_local_home_command(&[
+        &format!("--layout={}", layout.display()),
+        &format!("--output-dir={}", home.display()),
+    ]);
+    assert!(
+        code == 1 && errors.contains("the local home must be empty"),
+        "exit {code}, errors {errors:?}"
+    );
+}

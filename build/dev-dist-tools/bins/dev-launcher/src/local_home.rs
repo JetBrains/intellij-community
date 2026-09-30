@@ -1,34 +1,32 @@
 //! The local home: a fresh directory that links each file of `local-layout.json` to its Bazel runfile.
 //!
-//! The collector subcommand `local-home` and the launcher call [`link_local_home`]. The home links ordinary files
-//! to the component artifacts and keeps the declared relative links. It copies the launch metadata and each file
-//! whose runfile lacks the mode that the file needs. It never changes the permissions of a runfile.
+//! The `local-home` command calls [`link_local_home`] for `PreBuiltDevMain`, and a launch calls
+//! [`link_local_home_with`] with the runfiles of the launcher. The home links ordinary files to the component artifacts
+//! and keeps the declared relative links. It copies the launch metadata and each file whose runfile lacks the mode that
+//! the file needs. It never changes the permissions of a runfile.
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use component::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, LOCAL_LAYOUT_VERSION, LocalLayout};
+use component::paths::from_slash;
+use component::plugin_classpath::PLUGIN_CLASSPATH;
+use component::{Error, Result, fail};
 use filemeta::{Entry, EntryType};
-
-use crate::error::{Error, Result};
-use crate::fail;
-use crate::json;
-use crate::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, LOCAL_LAYOUT_VERSION, LocalLayout};
-use crate::paths::from_slash;
-use crate::plugin_classpath::PLUGIN_CLASSPATH;
 
 /// The runfiles variables of the process. An empty variable is an absent one.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct RunfilesEnv {
-    pub java_runfiles: Option<PathBuf>,
-    pub runfiles_dir: Option<PathBuf>,
-    pub runfiles_manifest_file: Option<PathBuf>,
+pub(crate) struct RunfilesEnv {
+    pub(crate) java_runfiles: Option<PathBuf>,
+    pub(crate) runfiles_dir: Option<PathBuf>,
+    pub(crate) runfiles_manifest_file: Option<PathBuf>,
 }
 
 impl RunfilesEnv {
     /// Reads `JAVA_RUNFILES`, `RUNFILES_DIR` and `RUNFILES_MANIFEST_FILE`.
-    pub fn from_process() -> Self {
+    pub(crate) fn from_process() -> Self {
         let variable = |name: &str| std::env::var_os(name).filter(|value| !value.is_empty()).map(PathBuf::from);
         Self {
             java_runfiles: variable("JAVA_RUNFILES"),
@@ -43,13 +41,13 @@ impl RunfilesEnv {
 /// Bazel starts a manifest line with a space when the runfile path holds a space, a newline or a backslash. Then it
 /// writes these characters as `\s`, `\n` and `\b`. The lookup decodes such a line.
 #[derive(Debug, Clone, Default)]
-pub struct RunfilesLookup {
+pub(crate) struct RunfilesLookup {
     roots: Vec<PathBuf>,
     manifest: HashMap<String, PathBuf>,
 }
 
 impl RunfilesLookup {
-    pub fn new(env: &RunfilesEnv) -> Result<Self> {
+    pub(crate) fn new(env: &RunfilesEnv) -> Result<Self> {
         let roots = [&env.java_runfiles, &env.runfiles_dir].into_iter().flatten().cloned().collect();
         let mut lookup = Self { roots, ..Self::default() };
         if let Some(file) = &env.runfiles_manifest_file {
@@ -69,7 +67,7 @@ impl RunfilesLookup {
     }
 
     /// The file of the runfile `name`, a path in slash form.
-    pub fn resolve(&self, name: &str) -> Result<PathBuf> {
+    pub(crate) fn resolve(&self, name: &str) -> Result<PathBuf> {
         let native = from_slash(name);
         for root in &self.roots {
             let candidate = root.join(native.as_ref());
@@ -120,15 +118,15 @@ fn unescape_manifest_text(text: &str) -> String {
 }
 
 /// Links the files of the layout into `output_dir`, which must be absent or empty. The runfiles come from `env`.
-pub fn link_local_home(layout_path: &Path, output_dir: &Path, env: &RunfilesEnv) -> Result<()> {
+pub(crate) fn link_local_home(layout_path: &Path, output_dir: &Path, env: &RunfilesEnv) -> Result<()> {
     let lookup = RunfilesLookup::new(env)?;
     link_local_home_with(layout_path, output_dir, &|name| lookup.resolve(name))
 }
 
 /// Links the files of the layout into `output_dir` with a runfile lookup. It checks the whole layout before it
 /// creates the home, so an invalid layout resolves no runfile and creates nothing.
-pub fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup: &dyn Fn(&str) -> Result<PathBuf>) -> Result<()> {
-    let layout: LocalLayout = json::read(layout_path)?;
+pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup: &dyn Fn(&str) -> Result<PathBuf>) -> Result<()> {
+    let layout = component::layout::read_local_layout(layout_path)?;
     validate_layout(&layout)?;
     let directories = layout_directories(&layout)?;
 
