@@ -96,7 +96,9 @@ internal class NullableVFUEntityImpl(private val dataSource: NullableVFUEntityDa
         getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
-        if (_diff != null) index(this, "fileProperty", value)
+        if (_diff != null) {
+          index(this, "fileProperty", value)
+        }
       }
 
     override fun getEntityClass(): Class<NullableVFUEntity> = NullableVFUEntity::class.java

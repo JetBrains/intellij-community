@@ -121,7 +121,6 @@ internal class ChangedPropsOrderEntityImpl(private val dataSource: ChangedPropsO
         changedProperty.add("string")
       }
     private val listUpdater: (value: List<Set<Int>>) -> Unit = { value ->
-
       changedProperty.add("list")
     }
     override var list: MutableList<Set<Int>>

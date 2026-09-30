@@ -192,7 +192,9 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
         getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
-        if (_diff != null) index(this, "url", value)
+        if (_diff != null) {
+          index(this, "url", value)
+        }
       }
     override var linkedProjectId: String
       get() = getEntityData().linkedProjectId

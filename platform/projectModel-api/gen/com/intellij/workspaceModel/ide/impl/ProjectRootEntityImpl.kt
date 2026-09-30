@@ -85,7 +85,9 @@ internal class ProjectRootEntityImpl(private val dataSource: ProjectRootEntityDa
         getEntityData(true).root = value
         changedProperty.add("root")
         val _diff = diff
-        if (_diff != null) index(this, "root", value)
+        if (_diff != null) {
+          index(this, "root", value)
+        }
       }
 
     override fun getEntityClass(): Class<ProjectRootEntity> = ProjectRootEntity::class.java

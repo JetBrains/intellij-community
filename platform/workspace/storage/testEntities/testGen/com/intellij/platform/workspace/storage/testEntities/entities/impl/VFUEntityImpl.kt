@@ -98,7 +98,9 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
         getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
-        if (_diff != null) index(this, "fileProperty", value)
+        if (_diff != null) {
+          index(this, "fileProperty", value)
+        }
       }
 
     override fun getEntityClass(): Class<VFUEntity> = VFUEntity::class.java

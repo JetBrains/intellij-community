@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -17,7 +18,9 @@ interface SdkEntity : WorkspaceEntityWithSymbolicId {
   val name: String
   val type: String
   val version: String?
+  @IndexVfu
   val homePath: VirtualFileUrl?
+  @IndexVfu
   val roots: List<SdkRoot>
   val additionalData: String
 

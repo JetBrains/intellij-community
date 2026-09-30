@@ -3,6 +3,7 @@ package com.intellij.python.pyproject.model.internal.workspaceBridge
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.community.common.tools.ToolId
@@ -12,6 +13,7 @@ internal interface PyProjectTomlWorkspaceEntity : WorkspaceEntity {
   // [tool, probablyWorkspaceRoot?]. If root is null -> tool didn't implement workspace, just participated in this entry creation
   val participatedTools: Map<ToolId, ModuleId?>
 
+  @IndexVfu
   val dirWithToml: VirtualFileUrl
 
   @Parent

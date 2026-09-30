@@ -82,7 +82,9 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
         getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
-        if (_diff != null) index(this, "url", value)
+        if (_diff != null) {
+          index(this, "url", value)
+        }
       }
 
     override fun getEntityClass(): Class<ExcludeUrlEntity> = ExcludeUrlEntity::class.java

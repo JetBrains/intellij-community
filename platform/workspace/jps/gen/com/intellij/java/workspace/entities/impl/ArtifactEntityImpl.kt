@@ -158,7 +158,9 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         getEntityData(true).outputUrl = value
         changedProperty.add("outputUrl")
         val _diff = diff
-        if (_diff != null) index(this, "outputUrl", value)
+        if (_diff != null) {
+          index(this, "outputUrl", value)
+        }
       }
     override var rootElement: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       @Suppress("UNCHECKED_CAST")

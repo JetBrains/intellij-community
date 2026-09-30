@@ -113,7 +113,6 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
         changedProperty.add("module")
       }
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("additionalOptions")
     }
     override var additionalOptions: MutableList<String>

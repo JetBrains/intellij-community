@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.test.api.CustomEntity
 import com.intellij.workspaceModel.test.api.CustomEntityBuilder
 
@@ -37,10 +36,10 @@ get(){
 readField("hasSuperSuper")
 return dataSource.hasSuperSuper
 }
-override val url: VirtualFileUrl
+override val something: String
 get(){
-readField("url")
-return dataSource.url
+readField("something")
+return dataSource.something
 }
 override val entitySource: EntitySource
 get(){
@@ -60,8 +59,8 @@ error("Field WorkspaceEntity#entitySource should be initialized")
 if (!getEntityData().isNameInitialized()){
 error("Field CustomEntity#name should be initialized")
 }
-if (!getEntityData().isUrlInitialized()){
-error("Field CustomEntity#url should be initialized")
+if (!getEntityData().isSomethingInitialized()){
+error("Field CustomEntity#something should be initialized")
 }
 }
 override fun connectionIdList(): List<ConnectionId>{
@@ -74,11 +73,8 @@ if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource
 if (this.name != dataSource.name) this.name = dataSource.name
 if (this.hasSuper != dataSource.hasSuper) this.hasSuper = dataSource.hasSuper
 if (this.hasSuperSuper != dataSource.hasSuperSuper) this.hasSuperSuper = dataSource.hasSuperSuper
-if (this.url != dataSource.url) this.url = dataSource.url
+if (this.something != dataSource.something) this.something = dataSource.something
 updateChildToParentReferences(parents)
-}
-override fun index(){
-index(this, "url", this.url)
 }
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
@@ -108,14 +104,12 @@ checkModificationAllowed()
 getEntityData(true).hasSuperSuper = value
 changedProperty.add("hasSuperSuper")
 }
-override var url: VirtualFileUrl
-get() = getEntityData().url
+override var something: String
+get() = getEntityData().something
 set(value){
 checkModificationAllowed()
-getEntityData(true).url = value
-changedProperty.add("url")
-val _diff = diff
-if (_diff != null) index(this, "url", value)
+getEntityData(true).something = value
+changedProperty.add("something")
 }
 override fun getEntityClass(): Class<CustomEntity> = CustomEntity::class.java
 }
@@ -125,9 +119,9 @@ internal class CustomEntityData : WorkspaceEntityData<CustomEntity>(){
 lateinit var name: String
 var hasSuper: Boolean = false
 var hasSuperSuper: Boolean = false
-lateinit var url: VirtualFileUrl
+lateinit var something: String
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
-internal fun isUrlInitialized(): Boolean = ::url.isInitialized
+internal fun isSomethingInitialized(): Boolean = ::something.isInitialized
 override fun newInstance(): CustomEntity = CustomEntityImpl(this)
 override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<CustomEntity, *> = CustomEntityImpl.Builder(null)
 override fun getMetadata(): EntityMetadata{
@@ -137,7 +131,7 @@ override fun getEntityInterface(): Class<out WorkspaceEntity>{
 return CustomEntity::class.java
 }
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
-return CustomEntity(name, hasSuper, hasSuperSuper, url, entitySource)
+return CustomEntity(name, hasSuper, hasSuperSuper, something, entitySource)
 }
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
 val res = mutableListOf<Class<out WorkspaceEntity>>()
@@ -151,7 +145,7 @@ if (this.entitySource != other.entitySource) return false
 if (this.name != other.name) return false
 if (this.hasSuper != other.hasSuper) return false
 if (this.hasSuperSuper != other.hasSuperSuper) return false
-if (this.url != other.url) return false
+if (this.something != other.something) return false
 return true
 }
 override fun equalsIgnoringEntitySource(other: Any?): Boolean{
@@ -161,7 +155,7 @@ other as CustomEntityData
 if (this.name != other.name) return false
 if (this.hasSuper != other.hasSuper) return false
 if (this.hasSuperSuper != other.hasSuperSuper) return false
-if (this.url != other.url) return false
+if (this.something != other.something) return false
 return true
 }
 override fun hashCode(): Int{
@@ -169,7 +163,7 @@ var result = entitySource.hashCode()
 result = 31 * result + name.hashCode()
 result = 31 * result + hasSuper.hashCode()
 result = 31 * result + hasSuperSuper.hashCode()
-result = 31 * result + url.hashCode()
+result = 31 * result + something.hashCode()
 return result
 }
 override fun hashCodeIgnoringEntitySource(): Int{
@@ -177,7 +171,7 @@ var result = javaClass.hashCode()
 result = 31 * result + name.hashCode()
 result = 31 * result + hasSuper.hashCode()
 result = 31 * result + hasSuperSuper.hashCode()
-result = 31 * result + url.hashCode()
+result = 31 * result + something.hashCode()
 return result
 }
 }

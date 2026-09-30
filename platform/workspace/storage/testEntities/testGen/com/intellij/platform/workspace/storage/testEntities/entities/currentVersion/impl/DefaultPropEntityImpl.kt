@@ -103,7 +103,6 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
         changedProperty.add("someString")
       }
     private val someListUpdater: (value: List<Int>) -> Unit = { value ->
-
       changedProperty.add("someList")
     }
     override var someList: MutableList<Int>

@@ -150,7 +150,9 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
         getEntityData(true).compilerOutput = value
         changedProperty.add("compilerOutput")
         val _diff = diff
-        if (_diff != null) index(this, "compilerOutput", value)
+        if (_diff != null) {
+          index(this, "compilerOutput", value)
+        }
       }
     override var compilerOutputForTests: VirtualFileUrl?
       get() = getEntityData().compilerOutputForTests
@@ -159,7 +161,9 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
         getEntityData(true).compilerOutputForTests = value
         changedProperty.add("compilerOutputForTests")
         val _diff = diff
-        if (_diff != null) index(this, "compilerOutputForTests", value)
+        if (_diff != null) {
+          index(this, "compilerOutputForTests", value)
+        }
       }
     override var languageLevelId: String?
       get() = getEntityData().languageLevelId

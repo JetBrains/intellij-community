@@ -131,10 +131,6 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "fileProperty", this.fileProperty)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -157,7 +153,6 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
         changedProperty.add("stringProperty")
       }
     private val stringListPropertyUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("stringListProperty")
     }
     override var stringListProperty: MutableList<String>
@@ -190,8 +185,6 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
         checkModificationAllowed()
         getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
-        val _diff = diff
-        if (_diff != null) index(this, "fileProperty", value)
       }
     override var children: List<ChildWpidSampleEntityBuilder>
       @Suppress("UNCHECKED_CAST")

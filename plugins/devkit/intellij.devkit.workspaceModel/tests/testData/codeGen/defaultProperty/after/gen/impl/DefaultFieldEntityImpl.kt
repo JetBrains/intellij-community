@@ -123,7 +123,6 @@ getEntityData(true).description = value
 changedProperty.add("description")
 }
 private val defaultSetUpdater: (value: Set<String>) -> Unit = { value ->
-
 changedProperty.add("defaultSet")
 }
 override var defaultSet: MutableSet<String>
@@ -143,7 +142,6 @@ getEntityData(true).defaultSet = value
 defaultSetUpdater.invoke(value)
 }
 private val defaultListUpdater: (value: List<String>) -> Unit = { value ->
-
 changedProperty.add("defaultList")
 }
 override var defaultList: MutableList<String>

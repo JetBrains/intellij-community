@@ -116,12 +116,7 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
 
     override fun index() {
       index(this, "homePath", this.homePath)
-      indexSdkRoots(roots)
-    }
-
-    private fun indexSdkRoots(sdkRoots: List<SdkRoot>) {
-      val sdkRootList = sdkRoots.map { it.url }.toHashSet()
-      index(this, "roots", sdkRootList)
+      index(this, "roots.url", this.roots.map { it.url })
     }
 
     override var entitySource: EntitySource
@@ -159,12 +154,13 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
         getEntityData(true).homePath = value
         changedProperty.add("homePath")
         val _diff = diff
-        if (_diff != null) index(this, "homePath", value)
+        if (_diff != null) {
+          index(this, "homePath", value)
+        }
       }
     private val rootsUpdater: (value: List<SdkRoot>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) {
-        indexSdkRoots(value)
+      if (diff != null) {
+        index(this, "roots.url", value.map { it.url })
       }
       changedProperty.add("roots")
     }

@@ -102,8 +102,9 @@ internal class ListVFUEntityImpl(private val dataSource: ListVFUEntityData) : Li
         changedProperty.add("data")
       }
     private val filePropertyUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "fileProperty", value)
+      if (diff != null) {
+        index(this, "fileProperty", value)
+      }
       changedProperty.add("fileProperty")
     }
     override var fileProperty: MutableList<VirtualFileUrl>

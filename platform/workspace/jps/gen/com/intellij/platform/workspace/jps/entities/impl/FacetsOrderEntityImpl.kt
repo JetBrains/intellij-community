@@ -104,7 +104,6 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
         changedProperty.add("entitySource")
       }
     private val orderOfFacetsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("orderOfFacets")
     }
     override var orderOfFacets: MutableList<String>

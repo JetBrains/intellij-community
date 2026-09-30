@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.EqualsBy
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NonNls
  */
 interface ContentRootEntity : WorkspaceEntity {
   @EqualsBy
+  @IndexVfu
   val url: VirtualFileUrl
   val excludedPatterns: List<@NlsSafe String>
 
@@ -110,6 +112,7 @@ data class SourceRootTypeId(val name: @NonNls String)
  * [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] reference to this one.
  */
 interface SourceRootEntity : WorkspaceEntity {
+  @IndexVfu
   val url: VirtualFileUrl
   val rootTypeId: SourceRootTypeId
 

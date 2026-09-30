@@ -134,10 +134,11 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 getEntityData(true).virtualFileUrl = value
                 changedProperty.add("virtualFileUrl")
                 val _diff = diff
-                if (_diff != null) index(this, "virtualFileUrl", value)
+                if (_diff != null) {
+                    index(this, "virtualFileUrl", value)
+                }
             }
         private val dependenciesUpdater: (value: List<KotlinScriptLibraryEntityId>) -> Unit = { value ->
-
             changedProperty.add("dependencies")
         }
         override var dependencies: MutableList<KotlinScriptLibraryEntityId>
@@ -171,7 +172,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 changedProperty.add("configurationId")
             }
         private val relatedModuleIdsUpdater: (value: List<ModuleId>) -> Unit = { value ->
-
             changedProperty.add("relatedModuleIds")
         }
         override var relatedModuleIds: MutableList<ModuleId>
@@ -191,7 +191,6 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
                 relatedModuleIdsUpdater.invoke(value)
             }
         private val reportsUpdater: (value: List<ScriptDiagnosticData>) -> Unit = { value ->
-
             changedProperty.add("reports")
         }
         override var reports: MutableList<ScriptDiagnosticData>

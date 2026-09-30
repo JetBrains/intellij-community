@@ -102,8 +102,9 @@ internal class SetVFUEntityImpl(private val dataSource: SetVFUEntityData) : SetV
         changedProperty.add("data")
       }
     private val filePropertyUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "fileProperty", value)
+      if (diff != null) {
+        index(this, "fileProperty", value)
+      }
       changedProperty.add("fileProperty")
     }
     override var fileProperty: MutableSet<VirtualFileUrl>

@@ -127,7 +127,9 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
         getEntityData(true).parentEntityRoot = value
         changedProperty.add("parentEntityRoot")
         val _diff = diff
-        if (_diff != null) index(this, "parentEntityRoot", value)
+        if (_diff != null) {
+          index(this, "parentEntityRoot", value)
+        }
       }
 
     override fun getEntityClass(): Class<ParentTestEntity> = ParentTestEntity::class.java

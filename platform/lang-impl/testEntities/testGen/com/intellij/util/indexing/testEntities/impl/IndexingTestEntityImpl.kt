@@ -101,8 +101,9 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
         changedProperty.add("entitySource")
       }
     private val rootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "roots", value)
+      if (diff != null) {
+        index(this, "roots", value)
+      }
       changedProperty.add("roots")
     }
     override var roots: MutableList<VirtualFileUrl>
@@ -123,8 +124,9 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
         rootsUpdater.invoke(value)
       }
     private val excludedRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "excludedRoots", value)
+      if (diff != null) {
+        index(this, "excludedRoots", value)
+      }
       changedProperty.add("excludedRoots")
     }
     override var excludedRoots: MutableList<VirtualFileUrl>

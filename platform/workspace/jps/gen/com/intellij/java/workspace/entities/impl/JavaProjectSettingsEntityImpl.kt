@@ -123,7 +123,9 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
         getEntityData(true).compilerOutput = value
         changedProperty.add("compilerOutput")
         val _diff = diff
-        if (_diff != null) index(this, "compilerOutput", value)
+        if (_diff != null) {
+          index(this, "compilerOutput", value)
+        }
       }
     override var languageLevelId: String?
       get() = getEntityData().languageLevelId

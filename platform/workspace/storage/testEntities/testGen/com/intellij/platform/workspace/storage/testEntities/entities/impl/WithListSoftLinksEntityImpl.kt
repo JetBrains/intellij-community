@@ -104,7 +104,6 @@ internal class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftL
         changedProperty.add("myName")
       }
     private val linksUpdater: (value: List<NameId>) -> Unit = { value ->
-
       changedProperty.add("links")
     }
     override var links: MutableList<NameId>

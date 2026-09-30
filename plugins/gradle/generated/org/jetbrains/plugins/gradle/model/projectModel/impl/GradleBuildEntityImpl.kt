@@ -159,7 +159,9 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
-        if (_diff != null) index(this, "url", value)
+        if (_diff != null) {
+          index(this, "url", value)
+        }
       }
     override var projects: List<GradleProjectEntityBuilder>
       @Suppress("UNCHECKED_CAST")

@@ -124,7 +124,9 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
         getEntityData(true).dirWithToml = value
         changedProperty.add("dirWithToml")
         val _diff = diff
-        if (_diff != null) index(this, "dirWithToml", value)
+        if (_diff != null) {
+          index(this, "dirWithToml", value)
+        }
       }
     override var module: ModuleEntityBuilder
       get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for PyProjectTomlWorkspaceEntity")

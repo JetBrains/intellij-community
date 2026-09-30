@@ -88,6 +88,10 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "filePath", this.filePath)
+    }
+
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -110,7 +114,9 @@ internal class ExtractedDirectoryPackagingElementEntityImpl(private val dataSour
         getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        if (_diff != null) {
+          index(this, "filePath", value)
+        }
       }
     override var pathInArchive: String
       get() = getEntityData().pathInArchive

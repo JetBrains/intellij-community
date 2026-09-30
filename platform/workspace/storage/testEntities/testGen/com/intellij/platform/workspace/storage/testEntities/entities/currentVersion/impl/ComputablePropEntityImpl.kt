@@ -97,7 +97,6 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
         changedProperty.add("entitySource")
       }
     private val listUpdater: (value: List<Map<List<Int?>, String>>) -> Unit = { value ->
-
       changedProperty.add("list")
     }
     override var list: MutableList<Map<List<Int?>, String>>

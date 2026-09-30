@@ -1890,6 +1890,88 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                   extProperties = listOf(),
                                   isAbstract = false)
     addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithDataClassWithVfu",
+                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.EntityWithDataClassWithVfuData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "singleDataClass",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.DataClassWithVfus",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "vfu",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "vfus",
+                                                                                                                                    valueType = ValueTypeMetadata.ParameterizedType(
+                                                                                                                                      generics = listOf(
+                                                                                                                                        ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                          isNullable = false,
+                                                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                            fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                                      primitive = primitiveTypeListNotNullable),
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf())),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "listOfDataClass",
+                                                                          valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
+                                                                            ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                    typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                      fqName = "com.intellij.platform.workspace.storage.testEntities.entities.DataClassWithVfus",
+                                                                                                                      properties = listOf(
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "vfu",
+                                                                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                            isNullable = false,
+                                                                                                                            typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                              fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                                                          withDefault = false),
+                                                                                                                        OwnPropertyMetadata(
+                                                                                                                          isComputable = false,
+                                                                                                                          isKey = false,
+                                                                                                                          isOpen = false,
+                                                                                                                          name = "vfus",
+                                                                                                                          valueType = ValueTypeMetadata.ParameterizedType(
+                                                                                                                            generics = listOf(
+                                                                                                                              ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                isNullable = false,
+                                                                                                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                            primitive = primitiveTypeListNotNullable),
+                                                                                                                          withDefault = false)),
+                                                                                                                      supertypes = listOf()))),
+                                                                                                                          primitive = primitiveTypeListNotNullable),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks",
                                   entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.EntityWithSoftLinksData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -2517,6 +2599,102 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                         entityFqName = "com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkReferencedChild",
                                                                                                                         isChild = true,
                                                                                                                         isNullable = false),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithUnindexedVfu",
+                                  entityDataFqName = "com.intellij.platform.workspace.storage.testEntities.entities.impl.EntityWithUnindexedVfuData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "indexedVfu",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "unindexedVfu",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "indexedDataClass",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.DataClassWithVfus",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "vfu",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "vfus",
+                                                                                                                                    valueType = ValueTypeMetadata.ParameterizedType(
+                                                                                                                                      generics = listOf(
+                                                                                                                                        ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                          isNullable = false,
+                                                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                            fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                                      primitive = primitiveTypeListNotNullable),
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf())),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "unindexedDataClass",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.testEntities.entities.DataClassWithVfus",
+                                                                                                                                properties = listOf(
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "vfu",
+                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                      isNullable = false,
+                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                                                                    withDefault = false),
+                                                                                                                                  OwnPropertyMetadata(
+                                                                                                                                    isComputable = false,
+                                                                                                                                    isKey = false,
+                                                                                                                                    isOpen = false,
+                                                                                                                                    name = "vfus",
+                                                                                                                                    valueType = ValueTypeMetadata.ParameterizedType(
+                                                                                                                                      generics = listOf(
+                                                                                                                                        ValueTypeMetadata.SimpleType.CustomType(
+                                                                                                                                          isNullable = false,
+                                                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                            fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
+                                                                                                                                      primitive = primitiveTypeListNotNullable),
+                                                                                                                                    withDefault = false)),
+                                                                                                                                supertypes = listOf())),
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
@@ -8188,6 +8366,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity",
                     metadataHash = 124427640)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.DefaultValueEntity", metadataHash = -385405311)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithDataClassWithVfu",
+                    metadataHash = 1970837416)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.DataClassWithVfus", metadataHash = -868655126)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks",
                     metadataHash = 2040630175)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.OneSymbolicId", metadataHash = 1365168100)
@@ -8210,6 +8391,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = -80392179)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.DeepSealedOne\$DeepSealedTwo\$DeepSealedThree\$DeepSealedFour",
                     metadataHash = 984189067)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithUnindexedVfu",
+                    metadataHash = 810471657)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity", metadataHash = -41304966)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntitySymbolicId",
                     metadataHash = -877189206)

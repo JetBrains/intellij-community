@@ -132,10 +132,6 @@ internal class SampleEntityImpl(private val dataSource: SampleEntityData) : Samp
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "fileProperty", this.fileProperty)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -158,7 +154,6 @@ internal class SampleEntityImpl(private val dataSource: SampleEntityData) : Samp
         changedProperty.add("stringProperty")
       }
     private val stringListPropertyUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("stringListProperty")
     }
     override var stringListProperty: MutableList<String>
@@ -191,8 +186,6 @@ internal class SampleEntityImpl(private val dataSource: SampleEntityData) : Samp
         checkModificationAllowed()
         getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
-        val _diff = diff
-        if (_diff != null) index(this, "fileProperty", value)
       }
     override var children: List<ChildSampleEntityBuilder>
       @Suppress("UNCHECKED_CAST")

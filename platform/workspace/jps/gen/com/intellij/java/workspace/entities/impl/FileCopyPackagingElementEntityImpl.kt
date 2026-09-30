@@ -85,6 +85,10 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "filePath", this.filePath)
+    }
+
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -107,7 +111,9 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
         getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        if (_diff != null) {
+          index(this, "filePath", value)
+        }
       }
     override var renamedOutputFileName: String?
       get() = getEntityData().renamedOutputFileName

@@ -111,7 +111,6 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
         changedProperty.add("someKey")
       }
     private val textUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("text")
     }
     override var text: MutableList<String>

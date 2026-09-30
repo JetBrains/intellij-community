@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -22,6 +23,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val variablePaths: Map<String, String>
 
   // This should be a set
+  @IndexVfu
   val eclipseUrls: List<VirtualFileUrl>
 
   // This should be a set

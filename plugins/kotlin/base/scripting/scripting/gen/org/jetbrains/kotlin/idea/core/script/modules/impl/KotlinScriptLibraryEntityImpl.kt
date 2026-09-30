@@ -128,8 +128,9 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
                 changedProperty.add("scope")
             }
         private val classesUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-            val _diff = diff
-            if (_diff != null) index(this, "classes", value)
+            if (diff != null) {
+                index(this, "classes", value)
+            }
             changedProperty.add("classes")
         }
         override var classes: MutableList<VirtualFileUrl>
@@ -149,8 +150,9 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
                 classesUpdater.invoke(value)
             }
         private val usedInScriptsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
-            val _diff = diff
-            if (_diff != null) index(this, "usedInScripts", value)
+            if (diff != null) {
+                index(this, "usedInScripts", value)
+            }
             changedProperty.add("usedInScripts")
         }
         override var usedInScripts: MutableSet<VirtualFileUrl>
@@ -170,8 +172,9 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
                 usedInScriptsUpdater.invoke(value)
             }
         private val sourcesUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
-            val _diff = diff
-            if (_diff != null) index(this, "sources", value)
+            if (diff != null) {
+                index(this, "sources", value)
+            }
             changedProperty.add("sources")
         }
         override var sources: MutableSet<VirtualFileUrl>

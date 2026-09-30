@@ -85,7 +85,9 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
         getEntityData(true).file = value
         changedProperty.add("file")
         val _diff = diff
-        if (_diff != null) index(this, "file", value)
+        if (_diff != null) {
+          index(this, "file", value)
+        }
       }
 
     override fun getEntityClass(): Class<PyExternalIndexedFileEntity> = PyExternalIndexedFileEntity::class.java

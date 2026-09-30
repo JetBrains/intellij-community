@@ -97,7 +97,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
         changedProperty.add("entitySource")
       }
     private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
-
       changedProperty.add("versions")
     }
     override var versions: MutableSet<Int>
@@ -118,7 +117,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
         versionsUpdater.invoke(value)
       }
     private val namesUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("names")
     }
     override var names: MutableList<String>

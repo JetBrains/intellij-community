@@ -111,7 +111,6 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
         changedProperty.add("module")
       }
     private val pathUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("path")
     }
     override var path: MutableList<String>

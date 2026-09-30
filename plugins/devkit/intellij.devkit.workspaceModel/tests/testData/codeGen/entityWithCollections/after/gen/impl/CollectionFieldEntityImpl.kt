@@ -95,7 +95,6 @@ getEntityData(true).entitySource = value
 changedProperty.add("entitySource")
 }
 private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
-
 changedProperty.add("versions")
 }
 override var versions: MutableSet<Int>
@@ -115,7 +114,6 @@ getEntityData(true).versions = value
 versionsUpdater.invoke(value)
 }
 private val namesUpdater: (value: List<String>) -> Unit = { value ->
-
 changedProperty.add("names")
 }
 override var names: MutableList<String>

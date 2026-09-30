@@ -80,7 +80,6 @@ internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEnti
         changedProperty.add("entitySource")
       }
     private val dataUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("data")
     }
     override var data: MutableList<String>

@@ -110,7 +110,9 @@ internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwo
         getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
-        if (_diff != null) index(this, "fileProperty", value)
+        if (_diff != null) {
+          index(this, "fileProperty", value)
+        }
       }
     override var secondFileProperty: VirtualFileUrl
       get() = getEntityData().secondFileProperty
@@ -119,7 +121,9 @@ internal class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwo
         getEntityData(true).secondFileProperty = value
         changedProperty.add("secondFileProperty")
         val _diff = diff
-        if (_diff != null) index(this, "secondFileProperty", value)
+        if (_diff != null) {
+          index(this, "secondFileProperty", value)
+        }
       }
 
     override fun getEntityClass(): Class<VFUWithTwoPropertiesEntity> = VFUWithTwoPropertiesEntity::class.java

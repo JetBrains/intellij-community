@@ -155,6 +155,8 @@ com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Default
 - java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.IndexVfu
+- java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Open
 - java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Parent

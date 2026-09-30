@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.model.projectModel
 
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -18,6 +19,7 @@ interface GradleProjectEntity : WorkspaceEntityWithSymbolicId {
   // The path identifying the project relatively to the root build (with ':' separators)
   val identityPath: String
   // URL of the directory containing the build.gradle(.kts)
+  @IndexVfu
   val url: VirtualFileUrl
 
   // Mostly, is the same as `identityPath`, but is different in case of the root project of the root build.

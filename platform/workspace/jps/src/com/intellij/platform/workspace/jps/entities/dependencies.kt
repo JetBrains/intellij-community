@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -27,6 +28,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     val name: @NlsSafe String
     val tableId: LibraryTableId
     val typeId: LibraryTypeId?
+    @IndexVfu
     val roots: List<LibraryRoot>
 
     val excludedRoots: List<ExcludeUrlEntity>

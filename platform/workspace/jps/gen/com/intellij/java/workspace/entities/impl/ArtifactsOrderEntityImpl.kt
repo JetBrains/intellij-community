@@ -81,7 +81,6 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
         changedProperty.add("entitySource")
       }
     private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("orderOfArtifacts")
     }
     override var orderOfArtifacts: MutableList<String>

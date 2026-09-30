@@ -182,8 +182,9 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
         changedProperty.add("variablePaths")
       }
     private val eclipseUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "eclipseUrls", value)
+      if (diff != null) {
+        index(this, "eclipseUrls", value)
+      }
       changedProperty.add("eclipseUrls")
     }
     override var eclipseUrls: MutableList<VirtualFileUrl>
@@ -204,7 +205,6 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
         eclipseUrlsUpdater.invoke(value)
       }
     private val unknownConsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("unknownCons")
     }
     override var unknownCons: MutableList<String>
@@ -225,7 +225,6 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
         unknownConsUpdater.invoke(value)
       }
     private val knownConsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("knownCons")
     }
     override var knownCons: MutableList<String>

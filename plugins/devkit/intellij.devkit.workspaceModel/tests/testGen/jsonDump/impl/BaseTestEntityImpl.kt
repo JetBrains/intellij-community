@@ -160,7 +160,6 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
         changedProperty.add("singleChild")
       }
     private val listOfAbstractUpdater: (value: List<AbstractClass>) -> Unit = { value ->
-
       changedProperty.add("listOfAbstract")
     }
     override var listOfAbstract: MutableList<AbstractClass>
@@ -181,7 +180,6 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
         listOfAbstractUpdater.invoke(value)
       }
     private val stringListUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("stringList")
     }
     override var stringList: MutableList<String>
@@ -202,7 +200,6 @@ internal class BaseTestEntityImpl(private val dataSource: BaseTestEntityData) : 
         stringListUpdater.invoke(value)
       }
     private val stringSetUpdater: (value: Set<String>) -> Unit = { value ->
-
       changedProperty.add("stringSet")
     }
     override var stringSet: MutableSet<String>

@@ -250,7 +250,7 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : WorkspaceEnti
  * This is about LibraryEntity -> roots (LibraryRoot) -> url (VirtualFileUrl).
  */
 private class LibraryRootFileWatcher : LegacyFileWatcher {
-  private val propertyName = LibraryEntity::roots.name
+  private val propertyName = "${LibraryEntity::roots.name}.${LibraryRoot::url.name}"
 
   override fun onVfsChange(oldUrl: String,
                            newUrl: String,
@@ -280,7 +280,7 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
  * This is about SdkMainEntity -> roots (SdkRoot) -> url (VirtualFileUrl).
  */
 private class SdkRootFileWatcher : LegacyFileWatcher {
-  private val propertyName = SdkEntity::roots.name
+  private val propertyName = "${SdkEntity::roots.name}.${SdkRoot::url.name}"
 
   override fun onVfsChange(oldUrl: String,
                            newUrl: String,

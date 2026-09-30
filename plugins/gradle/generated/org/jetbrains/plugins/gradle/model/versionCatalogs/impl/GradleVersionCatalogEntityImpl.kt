@@ -124,7 +124,9 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
         getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
-        if (_diff != null) index(this, "url", value)
+        if (_diff != null) {
+          index(this, "url", value)
+        }
       }
     override var build: GradleBuildEntityBuilder
       get() = getParent(BUILD_CONNECTION_ID) as? GradleBuildEntityBuilder ?: error("build is null for GradleVersionCatalogEntity")

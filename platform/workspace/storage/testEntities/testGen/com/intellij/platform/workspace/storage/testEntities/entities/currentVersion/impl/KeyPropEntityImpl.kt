@@ -80,10 +80,6 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "url", this.url)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -111,8 +107,6 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
         checkModificationAllowed()
         getEntityData(true).url = value
         changedProperty.add("url")
-        val _diff = diff
-        if (_diff != null) index(this, "url", value)
       }
 
     override fun getEntityClass(): Class<KeyPropEntity> = KeyPropEntity::class.java

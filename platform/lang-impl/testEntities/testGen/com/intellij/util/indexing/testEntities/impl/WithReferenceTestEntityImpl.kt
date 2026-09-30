@@ -105,7 +105,6 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
         changedProperty.add("name")
       }
     private val referencesUpdater: (value: List<DependencyItem>) -> Unit = { value ->
-
       changedProperty.add("references")
     }
     override var references: MutableList<DependencyItem>

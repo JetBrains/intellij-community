@@ -147,7 +147,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         changedProperty.add("type")
       }
     private val dependenciesUpdater: (value: List<ModuleDependencyItem>) -> Unit = { value ->
-
       changedProperty.add("dependencies")
     }
     override var dependencies: MutableList<ModuleDependencyItem>

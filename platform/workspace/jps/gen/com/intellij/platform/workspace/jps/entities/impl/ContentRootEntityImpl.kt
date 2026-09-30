@@ -138,10 +138,11 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
         getEntityData(true).url = value
         changedProperty.add("url")
         val _diff = diff
-        if (_diff != null) index(this, "url", value)
+        if (_diff != null) {
+          index(this, "url", value)
+        }
       }
     private val excludedPatternsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("excludedPatterns")
     }
     override var excludedPatterns: MutableList<String>

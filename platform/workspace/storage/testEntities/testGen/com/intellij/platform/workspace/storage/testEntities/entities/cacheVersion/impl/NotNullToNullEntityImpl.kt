@@ -111,7 +111,6 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
         changedProperty.add("notNullString")
       }
     private val notNullListUpdater: (value: List<Int>) -> Unit = { value ->
-
       changedProperty.add("notNullList")
     }
     override var notNullList: MutableList<Int>

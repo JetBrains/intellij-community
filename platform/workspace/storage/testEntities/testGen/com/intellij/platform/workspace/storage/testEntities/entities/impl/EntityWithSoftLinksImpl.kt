@@ -227,7 +227,6 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
         changedProperty.add("link")
       }
     private val manyLinksUpdater: (value: List<OneSymbolicId>) -> Unit = { value ->
-
       changedProperty.add("manyLinks")
     }
     override var manyLinks: MutableList<OneSymbolicId>
@@ -269,7 +268,6 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
         changedProperty.add("inOptionalContainer")
       }
     private val inContainerListUpdater: (value: List<Container>) -> Unit = { value ->
-
       changedProperty.add("inContainerList")
     }
     override var inContainerList: MutableList<Container>
@@ -290,7 +288,6 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
         inContainerListUpdater.invoke(value)
       }
     private val deepContainerUpdater: (value: List<TooDeepContainer>) -> Unit = { value ->
-
       changedProperty.add("deepContainer")
     }
     override var deepContainer: MutableList<TooDeepContainer>
@@ -318,7 +315,6 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
         changedProperty.add("sealedContainer")
       }
     private val listSealedContainerUpdater: (value: List<SealedContainer>) -> Unit = { value ->
-
       changedProperty.add("listSealedContainer")
     }
     override var listSealedContainer: MutableList<SealedContainer>
@@ -353,7 +349,6 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
         changedProperty.add("justNullableProperty")
       }
     private val justListPropertyUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("justListProperty")
     }
     override var justListProperty: MutableList<String>

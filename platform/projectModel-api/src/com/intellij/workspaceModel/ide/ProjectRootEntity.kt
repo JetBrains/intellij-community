@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -81,5 +82,6 @@ object ProjectRootEntitySource : EntitySource
  */
 @Internal
 interface ProjectRootEntity : WorkspaceEntity {
+  @IndexVfu
   val root: VirtualFileUrl
 }

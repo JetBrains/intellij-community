@@ -96,7 +96,6 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
         changedProperty.add("entitySource")
       }
     private val classesUpdater: (value: List<MySealedClass>) -> Unit = { value ->
-
       changedProperty.add("classes")
     }
     override var classes: MutableList<MySealedClass>
@@ -117,7 +116,6 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
         classesUpdater.invoke(value)
       }
     private val interfacesUpdater: (value: List<MySealedInterface>) -> Unit = { value ->
-
       changedProperty.add("interfaces")
     }
     override var interfaces: MutableList<MySealedInterface>

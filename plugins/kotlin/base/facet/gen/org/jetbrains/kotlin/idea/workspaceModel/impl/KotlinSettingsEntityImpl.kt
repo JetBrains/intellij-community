@@ -319,7 +319,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 changedProperty.add("name")
             }
         private val sourceRootsUpdater: (value: List<String>) -> Unit = { value ->
-
             changedProperty.add("sourceRoots")
         }
         override var sourceRoots: MutableList<String>
@@ -339,7 +338,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 sourceRootsUpdater.invoke(value)
             }
         private val configFileItemsUpdater: (value: List<ConfigFileItem>) -> Unit = { value ->
-
             changedProperty.add("configFileItems")
         }
         override var configFileItems: MutableList<ConfigFileItem>
@@ -366,7 +364,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 changedProperty.add("useProjectSettings")
             }
         private val implementedModuleNamesUpdater: (value: List<String>) -> Unit = { value ->
-
             changedProperty.add("implementedModuleNames")
         }
         override var implementedModuleNames: MutableList<String>
@@ -386,7 +383,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 implementedModuleNamesUpdater.invoke(value)
             }
         private val dependsOnModuleNamesUpdater: (value: List<String>) -> Unit = { value ->
-
             changedProperty.add("dependsOnModuleNames")
         }
         override var dependsOnModuleNames: MutableList<String>
@@ -406,7 +402,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 dependsOnModuleNamesUpdater.invoke(value)
             }
         private val additionalVisibleModuleNamesUpdater: (value: Set<String>) -> Unit = { value ->
-
             changedProperty.add("additionalVisibleModuleNames")
         }
         override var additionalVisibleModuleNames: MutableSet<String>
@@ -440,7 +435,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 changedProperty.add("testOutputPath")
             }
         private val sourceSetNamesUpdater: (value: List<String>) -> Unit = { value ->
-
             changedProperty.add("sourceSetNames")
         }
         override var sourceSetNames: MutableList<String>
@@ -481,7 +475,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 changedProperty.add("isHmppEnabled")
             }
         private val pureKotlinSourceFoldersUpdater: (value: List<String>) -> Unit = { value ->
-
             changedProperty.add("pureKotlinSourceFolders")
         }
         override var pureKotlinSourceFolders: MutableList<String>
@@ -529,7 +522,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 changedProperty.add("targetPlatform")
             }
         private val externalSystemRunTasksUpdater: (value: List<String>) -> Unit = { value ->
-
             changedProperty.add("externalSystemRunTasks")
         }
         override var externalSystemRunTasks: MutableList<String>

@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.testEntities
 
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -10,6 +11,7 @@ interface ParentTestEntity : WorkspaceEntity {
   val child: ChildTestEntity?
   val secondChild: SiblingEntity?
   val customParentProperty: String
+  @IndexVfu
   val parentEntityRoot: VirtualFileUrl
 }
 

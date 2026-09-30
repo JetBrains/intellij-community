@@ -115,8 +115,9 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
                 changedProperty.add("entitySource")
             }
         private val forwardDeclarationRootsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
-            val _diff = diff
-            if (_diff != null) index(this, "forwardDeclarationRoots", value)
+            if (diff != null) {
+                index(this, "forwardDeclarationRoots", value)
+            }
             changedProperty.add("forwardDeclarationRoots")
         }
         override var forwardDeclarationRoots: MutableSet<VirtualFileUrl>

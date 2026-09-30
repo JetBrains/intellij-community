@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
@@ -17,11 +18,14 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
      */
     val scope: @NlsSafe String
 
+    @IndexVfu
     val classes: List<VirtualFileUrl>
 
+    @IndexVfu
     val usedInScripts: Set<VirtualFileUrl>
 
     @Suppress("RemoveExplicitTypeArguments")
+    @IndexVfu
     val sources: Set<VirtualFileUrl>
         @Default get() = setOf<VirtualFileUrl>()
 

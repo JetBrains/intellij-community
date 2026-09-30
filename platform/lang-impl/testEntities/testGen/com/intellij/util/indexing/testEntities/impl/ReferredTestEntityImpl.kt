@@ -102,7 +102,9 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
         getEntityData(true).file = value
         changedProperty.add("file")
         val _diff = diff
-        if (_diff != null) index(this, "file", value)
+        if (_diff != null) {
+          index(this, "file", value)
+        }
       }
 
     override fun getEntityClass(): Class<ReferredTestEntity> = ReferredTestEntity::class.java

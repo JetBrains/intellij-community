@@ -127,7 +127,6 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
         changedProperty.add("text")
       }
     private val listUpdater: (value: List<Int>) -> Unit = { value ->
-
       changedProperty.add("list")
     }
     override var list: MutableList<Int>
@@ -148,7 +147,6 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
         listUpdater.invoke(value)
       }
     private val setUpdater: (value: Set<List<String>>) -> Unit = { value ->
-
       changedProperty.add("set")
     }
     override var set: MutableSet<List<String>>

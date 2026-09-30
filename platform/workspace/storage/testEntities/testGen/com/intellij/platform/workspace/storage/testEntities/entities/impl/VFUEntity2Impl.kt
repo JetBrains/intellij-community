@@ -124,7 +124,9 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
         getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        if (_diff != null) {
+          index(this, "filePath", value)
+        }
       }
     override var directoryPath: VirtualFileUrl
       get() = getEntityData().directoryPath
@@ -133,11 +135,14 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
         getEntityData(true).directoryPath = value
         changedProperty.add("directoryPath")
         val _diff = diff
-        if (_diff != null) index(this, "directoryPath", value)
+        if (_diff != null) {
+          index(this, "directoryPath", value)
+        }
       }
     private val notNullRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "notNullRoots", value)
+      if (diff != null) {
+        index(this, "notNullRoots", value)
+      }
       changedProperty.add("notNullRoots")
     }
     override var notNullRoots: MutableList<VirtualFileUrl>

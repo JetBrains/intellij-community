@@ -106,10 +106,6 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "listOfUrls", this.listOfUrls)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -131,8 +127,6 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
         changedProperty.add("parent")
       }
     private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "listOfUrls", value)
       changedProperty.add("listOfUrls")
     }
     override var listOfUrls: MutableList<VirtualFileUrl>

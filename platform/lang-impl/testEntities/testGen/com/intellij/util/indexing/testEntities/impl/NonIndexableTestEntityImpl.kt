@@ -84,7 +84,9 @@ internal class NonIndexableTestEntityImpl(private val dataSource: NonIndexableTe
         getEntityData(true).root = value
         changedProperty.add("root")
         val _diff = diff
-        if (_diff != null) index(this, "root", value)
+        if (_diff != null) {
+          index(this, "root", value)
+        }
       }
 
     override fun getEntityClass(): Class<NonIndexableTestEntity> = NonIndexableTestEntity::class.java

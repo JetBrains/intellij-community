@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.test.api.impl.CustomEntityImpl
 
 @GeneratedCodeApiVersion(3)
@@ -16,7 +15,7 @@ override var entitySource: EntitySource
 var name: String
 var hasSuper: Boolean
 var hasSuperSuper: Boolean
-var url: VirtualFileUrl
+var something: String
 }
 internal object CustomEntityType : EntityType<CustomEntity, CustomEntityBuilder>(){
 override val entityImplClass: Class<*> get() = CustomEntityImpl::class.java
@@ -25,7 +24,7 @@ operator fun invoke(
 name: String,
 hasSuper: Boolean,
 hasSuperSuper: Boolean,
-url: VirtualFileUrl,
+something: String,
 entitySource: EntitySource,
 init: (CustomEntityBuilder.() -> Unit)? = null,
 ): CustomEntityBuilder{
@@ -33,7 +32,7 @@ val builder = builder()
 builder.name = name
 builder.hasSuper = hasSuper
 builder.hasSuperSuper = hasSuperSuper
-builder.url = url
+builder.something = something
 builder.entitySource = entitySource
 init?.invoke(builder)
 return builder
@@ -49,7 +48,7 @@ fun CustomEntity(
 name: String,
 hasSuper: Boolean,
 hasSuperSuper: Boolean,
-url: VirtualFileUrl,
+something: String,
 entitySource: EntitySource,
 init: (CustomEntityBuilder.() -> Unit)? = null,
-): CustomEntityBuilder = CustomEntityType(name, hasSuper, hasSuperSuper, url, entitySource, init)
+): CustomEntityBuilder = CustomEntityType(name, hasSuper, hasSuperSuper, something, entitySource, init)

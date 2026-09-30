@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +25,9 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
   val inheritedCompilerOutput: Boolean
   val excludeOutput: Boolean
+  @IndexVfu
   val compilerOutput: VirtualFileUrl?
+  @IndexVfu
   val compilerOutputForTests: VirtualFileUrl?
   val languageLevelId: @NonNls String?
   val manifestAttributes: Map<String, String> // todo: this property is lost on restart. It has to be moved to a separate entity IDEA-386090

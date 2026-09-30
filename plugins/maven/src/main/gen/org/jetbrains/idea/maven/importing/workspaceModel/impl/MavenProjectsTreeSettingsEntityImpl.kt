@@ -83,7 +83,6 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
         changedProperty.add("entitySource")
       }
     private val importedFilePathsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("importedFilePaths")
     }
     override var importedFilePaths: MutableList<String>

@@ -104,10 +104,11 @@ internal class AnalysisIgnoreEntityImpl(private val dataSource: AnalysisIgnoreEn
         getEntityData(true).baseDir = value
         changedProperty.add("baseDir")
         val _diff = diff
-        if (_diff != null) index(this, "baseDir", value)
+        if (_diff != null) {
+          index(this, "baseDir", value)
+        }
       }
     private val patternsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("patterns")
     }
     override var patterns: MutableList<String>

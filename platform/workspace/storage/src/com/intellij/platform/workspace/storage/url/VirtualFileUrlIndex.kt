@@ -5,9 +5,9 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 public interface VirtualFileUrlIndex {
   /**
-   * Search [WorkspaceEntity] which contain required [VirtualFileUrl] and return mapping of entity to the property with VFU
-   * @param fileUrl virtual file url which entity should contain
-   * @return the sequence of entity which contains required [VirtualFileUrl]
+   * Search for [WorkspaceEntity] which contain required [VirtualFileUrl] in any of its 
+   * [@IndexVfu][com.intellij.platform.workspace.storage.annotations.IndexVfu] properties.
+   * @return a sequence of entities which contain required [VirtualFileUrl]
    */
   public fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<WorkspaceEntity>
 }

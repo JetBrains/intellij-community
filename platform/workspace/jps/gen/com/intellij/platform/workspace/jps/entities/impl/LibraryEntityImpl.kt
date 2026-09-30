@@ -29,7 +29,6 @@ import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableInde
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -120,18 +119,8 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
     }
 
     override fun index() {
-      indexLibraryRoots(roots)
-    }
-
-    private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {
-      val jarDirectories = mutableSetOf<VirtualFileUrl>()
-      val libraryRootList = libraryRoots.map {
-        if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
-          jarDirectories.add(it.url)
-        }
-        it.url
-      }.toHashSet()
-      index(this, "roots", libraryRootList)
+      index(this, "roots.url", this.roots.map { it.url })
+      val jarDirectories = roots.filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }.toHashSet()
       indexJarDirectories(this, jarDirectories)
     }
 
@@ -164,9 +153,10 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
         changedProperty.add("typeId")
       }
     private val rootsUpdater: (value: List<LibraryRoot>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) {
-        indexLibraryRoots(value)
+      if (diff != null) {
+        index(this, "roots.url", value.map { it.url })
+        val jarDirectories = value.filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }.toHashSet()
+        indexJarDirectories(this, jarDirectories)
       }
       changedProperty.add("roots")
     }

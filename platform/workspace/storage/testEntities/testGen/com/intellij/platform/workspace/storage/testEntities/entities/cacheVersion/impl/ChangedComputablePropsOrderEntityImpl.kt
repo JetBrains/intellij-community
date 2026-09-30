@@ -104,7 +104,6 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
         changedProperty.add("someKey")
       }
     private val namesUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("names")
     }
     override var names: MutableList<String>

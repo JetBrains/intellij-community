@@ -88,7 +88,6 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
         changedProperty.add("entitySource")
       }
     private val referencesUpdater: (value: List<DependencyItem>) -> Unit = { value ->
-
       changedProperty.add("references")
     }
     override var references: MutableList<DependencyItem>

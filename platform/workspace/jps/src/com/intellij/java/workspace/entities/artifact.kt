@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -33,6 +34,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 
   val artifactType: @NonNls String
   val includeInProjectBuild: Boolean
+  @IndexVfu
   val outputUrl: VirtualFileUrl?
 
   val rootElement: CompositePackagingElementEntity?
@@ -454,6 +456,7 @@ fun MutableEntityStorage.modifyModuleTestOutputPackagingElementEntity(
 //endregion
 
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
+  @IndexVfu
   val filePath: VirtualFileUrl
 
   @Deprecated(message = "Use FileOrDirectoryPackagingElementEntityBuilder instead")

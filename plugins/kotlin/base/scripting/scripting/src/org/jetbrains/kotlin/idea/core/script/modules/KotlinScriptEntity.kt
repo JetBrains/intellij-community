@@ -5,10 +5,12 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 
 interface KotlinScriptEntity : WorkspaceEntity {
+    @IndexVfu
     val virtualFileUrl: VirtualFileUrl
     val dependencies: List<KotlinScriptLibraryEntityId>
     val sdkId: SdkId?

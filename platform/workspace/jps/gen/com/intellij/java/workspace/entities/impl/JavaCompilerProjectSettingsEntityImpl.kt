@@ -125,7 +125,6 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
         changedProperty.add("projectSettings")
       }
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->
-
       changedProperty.add("additionalOptions")
     }
     override var additionalOptions: MutableList<String>
