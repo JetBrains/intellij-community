@@ -1,5 +1,6 @@
 package com.intellij.platform.lsp.impl.features.navigation
 
+import com.intellij.codeInsight.navigation.CtrlMouseActionElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 import com.intellij.injected.editor.VirtualFileWindow
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
 import com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled
+import com.intellij.platform.lsp.api.customization.LspHoverSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
@@ -46,22 +48,43 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     // There are several places in the IntelliJ codebase that call `getImplicitReference()` function.
     // For example, `IdentifierHighlighterPass.highlightReferencesAndDeclarations`, it calls this function on caret movement.
     // No need to send requests to the LSP server for features that won't work anyway.
-    // We care only about the "Go To Declaration" and "Go To Type Declaration" actions, and the action being performed
-    // is named by the thread context, both on the thread that started it and in the coroutines it launches.
-
-    // TODO Unfortunately, Ctrl+hover in LSP-backed files doesn't work because of returning null from this function.
-    // TODO It would be great to enable the Ctrl+hover feature somehow.
-    // TODO Note that with Ctrl button pressed, mouse movement generates hundreds of getImplicitReference() calls,
-    // TODO so caching of the getElementDefinitions() results will be needed.
-
-    return when (ActionUtil.getActionThreadContext()?.actionId) {
+    // We care only about the "Go To Declaration" and "Go To Type Declaration" actions, and about Ctrl+hover, which asks
+    // for the same information without performing either of them.
+    val request = currentRequest() ?: return null
+    return when (request.actionId) {
       IdeActions.ACTION_GOTO_DECLARATION ->
-        createResolvedReference(psiFile, offsetInElement, ::requestElementDefinitions, fallbackToShowUsagesOnSelfDefinition = true)
+        createResolvedReference(psiFile, offsetInElement, request.isCtrlHover, ::requestElementDefinitions,
+                                fallbackToShowUsagesOnSelfDefinition = true)
       IdeActions.ACTION_GOTO_TYPE_DECLARATION ->
-        createResolvedReference(psiFile, offsetInElement, ::requestTypeDefinitions, fallbackToShowUsagesOnSelfDefinition = false)
+        createResolvedReference(psiFile, offsetInElement, request.isCtrlHover, ::requestTypeDefinitions,
+                                fallbackToShowUsagesOnSelfDefinition = false)
       else -> null
     }
   }
+
+  /**
+   * The action this reference is needed for: the one being performed, or the one Ctrl+hover is computing the underline for.
+   * Both are named by the thread context, on the thread that starts the work and in the coroutines it launches.
+   *
+   * With the Ctrl button pressed, mouse movement generates one [getImplicitReference] call per offset the pointer rests at,
+   * so the definitions requested here are cached by [LspDefinitionCache].
+   */
+  private fun currentRequest(): ReferenceRequest? {
+    ActionUtil.getActionThreadContext()?.actionId?.let { return ReferenceRequest(it, isCtrlHover = false) }
+    CtrlMouseActionElement.current()?.actionId?.let { return ReferenceRequest(it, isCtrlHover = true) }
+    return null
+  }
+
+  /**
+   * An integration that turns LSP hover off has language support of its own, and that support also answers Ctrl+hover,
+   * with a hint such as the TypeScript quick info for ts-go.
+   * An LSP reference would replace that answer: the platform skips its own target lookup once any reference is found,
+   * and prefers a reference to the declaration under the pointer.
+   * So Ctrl+hover only asks the clients that show LSP hover, which is also where the hint of [LspDefinitionSymbol]
+   * is going to come from (IJPL-252179). A performed action still asks every client.
+   */
+  private fun answersCtrlHover(lspClient: LspClientImpl): Boolean =
+    lspClient.descriptor.lspCustomization.hoverCustomizer is LspHoverSupport
 
   private fun requestElementDefinitions(lspClient: LspClientImpl, file: VirtualFile, offset: Int): List<LocationLink> {
     if (!lspClient.supportsGotoDefinition()) return emptyList()
@@ -89,6 +112,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
   private fun createResolvedReference(
     psiFile: PsiFile,
     offset: Int,
+    isCtrlHover: Boolean,
     sendRequest: (lspClient: LspClientImpl, file: VirtualFile, offset: Int) -> List<LocationLink>,
     fallbackToShowUsagesOnSelfDefinition: Boolean,
   ): LspResolvedSymbolReference? {
@@ -96,6 +120,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
 
     val lspClients = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsForFileRequests(file)
+      .filter { !isCtrlHover || answersCtrlHover(it) }
     val responses = lspClients.mapNotNull { lspClient ->
       val locationLinks = sendRequest(lspClient, file, offset)
       if (locationLinks.isNotEmpty()) LspClientAndLocationLinks(lspClient, locationLinks) else null
@@ -205,6 +230,9 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 
 
 private data class LspClientAndLocationLinks(val lspClient: LspClientImpl, val locationLinks: List<LocationLink>)
+
+
+private class ReferenceRequest(val actionId: String, val isCtrlHover: Boolean)
 
 
 private class LspResolvedSymbolReference(

@@ -1,8 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lsp
 
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.getCtrlMouseData
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_TYPE_DECLARATION
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.common.FakeLspServerSession
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
@@ -19,6 +23,9 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -91,6 +98,41 @@ internal class LspGotoTypeDefinitionTest {
 
       serverSession.awaitExpected()
       assertEquals(OFFSET_IN_REFERENCE, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
+  }
+
+  @Nested
+  inner class CtrlShiftHover {
+    private suspend fun ctrlShiftHover(offset: Int): CtrlMouseData? = readAction {
+      getCtrlMouseData(ACTION_GOTO_TYPE_DECLARATION, codeInsightFixture.editor, codeInsightFixture.file, offset)
+    }
+
+    @Test
+    fun `given type definition when hovering over the reference then its range is highlighted as a link`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.expectTypeDefinition(fileUri, typeDefinitionInThisFile(fileUri))
+
+      val data = ctrlShiftHover(OFFSET_IN_REFERENCE)
+
+      serverSession.awaitExpected()
+      assertNotNull(data, "Expected Ctrl+Shift+hover data for a reference with a type definition")
+      assertEquals(listOf(TextRange(4, 7)), data!!.ranges)
+      assertTrue(data.isNavigatable, "Expected the reference to be highlighted as a link")
+    }
+
+    @Test
+    fun `given no type definition when hovering over the reference then nothing is highlighted`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.expectTypeDefinition(fileUri, emptyList())
+
+      val data = ctrlShiftHover(OFFSET_IN_REFERENCE)
+
+      serverSession.awaitExpected()
+      assertNull(data, "Expected no Ctrl+Shift+hover data when the server reports no type definition")
     }
   }
 }

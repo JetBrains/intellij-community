@@ -3,7 +3,6 @@ package com.intellij.platform.lsp.impl.features.navigation
 import com.intellij.model.Pointer
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -30,8 +29,6 @@ internal class LspDefinitionSymbol(
   private val targetFile: VirtualFile,
   private val targetSelectionRange: Range?,
 ) : LspNavigationSymbol {
-  override fun computeDocumentationHint(): @NlsContexts.HintText String = targetFile.path
-
   override fun createPointer(): Pointer<LspDefinitionSymbol> = Pointer {
     if (targetFile.isValid) LspDefinitionSymbol(project, targetFile, targetSelectionRange) else null
   }
