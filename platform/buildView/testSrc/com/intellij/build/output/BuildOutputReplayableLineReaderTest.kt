@@ -118,7 +118,7 @@ class BuildOutputReplayableLineReaderTest {
     assertNull(reader.readLine()?.text) // EOF again after replay
   }
 
-  private suspend fun BuildOutputReplayableLineReader.notifyTextAvailable(text: String) {
+  private suspend fun BuildOutputReplayableLineReaderImpl.notifyTextAvailable(text: String) {
     notifyTextAvailable(BuildOutputText.createOutputText(text))
   }
 }

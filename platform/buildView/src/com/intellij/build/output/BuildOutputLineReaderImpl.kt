@@ -15,15 +15,15 @@ class BuildOutputLineReaderImpl(
     channel.send(BuildOutputText.createOutputText(it.ids, it.text.removeSuffix("\n")))
   }
 
-  override suspend fun notifyTextAvailable(text: BuildOutputText) {
-    lineProcessor.notifyTextAvailable(BuildOutputText.createOutputText(text.toString()))
+  suspend fun notifyTextAvailable(text: BuildOutputText) {
+    lineProcessor.notifyTextAvailable(text)
   }
 
   override suspend fun readLine(): BuildOutputText? {
     return channel.receiveCatching().getOrNull()
   }
 
-  override suspend fun close() {
+  suspend fun close() {
     lineProcessor.close()
     channel.close()
   }

@@ -18,7 +18,7 @@ class BuildOutputReplayableLineReaderImpl(
   // >= 0 means "we are replaying from the buffer at this index"; -1 means "read from reader".
   private var readLinesBufferPosition = -1
 
-  override suspend fun notifyTextAvailable(text: BuildOutputText) {
+  suspend fun notifyTextAvailable(text: BuildOutputText) {
     reader.notifyTextAvailable(text)
   }
 
@@ -43,7 +43,7 @@ class BuildOutputReplayableLineReaderImpl(
     }
   }
 
-  override suspend fun close() {
+  suspend fun close() {
     reader.close()
   }
 }

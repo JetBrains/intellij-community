@@ -152,7 +152,7 @@ class BuildOutputLineReaderTest {
     }
   }
 
-  private suspend fun BuildOutputLineReader.notifyTextAvailable(text: String) {
+  private suspend fun BuildOutputLineReaderImpl.notifyTextAvailable(text: String) {
     notifyTextAvailable(BuildOutputText.createOutputText(text))
   }
 }

@@ -4,17 +4,10 @@ package com.intellij.build.output
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Accepts a stream of raw text via [notifyTextAvailable], splits it into lines, and exposes them
- * one at a time through the suspending [readLine].
+ * Accepts a stream of raw text, splits it into lines, and exposes them one at a time through the [readLine].
  */
 @Internal
 interface BuildOutputLineReader {
-
-  /**
-   * Appends [text] to the internal buffer, emitting a line to [readLine] for every `\n` found.
-   * Suspends if the internal channel is full (back-pressure).
-   */
-  suspend fun notifyTextAvailable(text: BuildOutputText)
 
   /**
    * Suspends until a line is available.
@@ -22,10 +15,4 @@ interface BuildOutputLineReader {
    * @return the next line, or `null` when the reader is closed.
    */
   suspend fun readLine(): BuildOutputText?
-
-  /**
-   * Flushes any buffered partial line, signals EOF to [readLine], and releases resources.
-   * Must be called exactly once; calling it a second time throws [IllegalStateException].
-   */
-  suspend fun close()
 }
