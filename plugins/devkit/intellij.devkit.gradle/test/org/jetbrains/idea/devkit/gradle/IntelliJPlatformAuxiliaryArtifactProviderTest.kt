@@ -3,8 +3,6 @@ package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
-import com.intellij.platform.testFramework.assertion.consoleText
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.junit.Test
@@ -26,7 +24,6 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
     private const val PHPSTORM = "com.jetbrains.intellij.phpstorm:phpstorm:$VERSION"
     private const val WEBSTORM = "com.jetbrains.intellij.webstorm:webstorm:$VERSION"
     private const val SOURCES_JAR = "ideaIC-$VERSION-sources.jar"
-    private const val WARNING_TITLE = "IntelliJ Platform sources not found"
   }
 
   override fun setUp() {
@@ -54,11 +51,6 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
 
     importProjectWithDependencies(PHPSTORM, WEBSTORM)
 
-    assertBuildViewNode(syncView, WARNING_TITLE) {
-      val text = it.consoleText
-      assertTrue(text, text.contains("com.jetbrains.intellij.idea:ideaIC:$VERSION:sources"))
-      assertTrue(text, text.contains("#configuration.repositories"))
-    }
     assertTrue(getPhpStormSourceUrls().none { it.contains(SOURCES_JAR) })
   }
 

@@ -392,8 +392,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   }
 
   private companion object {
-    const val REPOSITORIES_DOCUMENTATION_URL: String =
-      "https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html#configuration.repositories"
+    const val REPOSITORIES_DOCUMENTATION_URL = "https://jb.gg/ijpgp-docs#configuration.repositories"
   }
 
   private fun resolveProductCoordinates(product: IntelliJPlatformProduct, majorVersion: Int) =

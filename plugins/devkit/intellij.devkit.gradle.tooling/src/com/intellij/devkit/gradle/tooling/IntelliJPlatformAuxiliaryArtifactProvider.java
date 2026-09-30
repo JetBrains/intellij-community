@@ -45,8 +45,7 @@ public final class IntelliJPlatformAuxiliaryArtifactProvider implements Auxiliar
 
   private static final String JETBRAINS_INTELLIJ_PREFIX = "com.jetbrains.intellij.";
   private static final String MESSAGE_GROUP = "gradle.import.intellijPlatform.sources";
-  private static final String DOCUMENTATION_URL =
-    "https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html#configuration.repositories";
+  private static final String DOCUMENTATION_URL = "https://jb.gg/ijpgp-docs#configuration.repositories";
 
   /**
    * Keeps the resolved sources per Gradle project and sources notation for the current sync.
