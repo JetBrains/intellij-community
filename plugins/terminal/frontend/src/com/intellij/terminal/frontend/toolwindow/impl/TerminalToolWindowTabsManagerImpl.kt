@@ -164,7 +164,7 @@ class TerminalToolWindowTabsManagerImpl(
       addPendingTab(tab, index)
     }
 
-    ReworkedTerminalUsageCollector.logSessionRestored(project, tabs.size)
+    logInBackground { ReworkedTerminalUsageCollector.logSessionRestored(project, tabs.size) }
 
     if (wasEmpty) {
       contentManager.contents.firstOrNull()?.let {
@@ -193,11 +193,9 @@ class TerminalToolWindowTabsManagerImpl(
     }
     else if (builder.shouldAddToToolWindow) {
       addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
-      ReworkedTerminalUsageCollector.logTabOpened(
-        project = project,
-        openingWay = builder.startupFusInfo?.way,
-        tabCount = getToolWindow().contentManager.contentsRecursively.size
-      )
+      val openingWay = builder.startupFusInfo?.way
+      val tabCount = getToolWindow().contentManager.contentsRecursively.size
+      logInBackground { ReworkedTerminalUsageCollector.logTabOpened(project, openingWay, tabCount) }
     }
     return tab
   }
@@ -323,11 +321,13 @@ class TerminalToolWindowTabsManagerImpl(
 
     val contentManager = getToolWindow().contentManager
     contentManager.addContent(content, index)
-    ReworkedTerminalUsageCollector.logTabOpened(
-      project = project,
-      openingWay = TerminalTabOpeningWay.TABS_RESTORE,
-      tabCount = contentManager.contentsRecursively.size
-    )
+    val tabCount = contentManager.contentsRecursively.size
+    logInBackground { ReworkedTerminalUsageCollector.logTabOpened(project, TerminalTabOpeningWay.TABS_RESTORE, tabCount) }
+  }
+
+  /** The first FUS call initializes the collector, which is slow. Read the values on the EDT and log in the background. */
+  private fun logInBackground(log: () -> Unit) {
+    coroutineScope.launch(Dispatchers.Default) { log() }
   }
 
   private fun getToolWindow(): ToolWindow {
