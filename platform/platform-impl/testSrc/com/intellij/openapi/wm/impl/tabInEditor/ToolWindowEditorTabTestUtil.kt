@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -163,6 +164,35 @@ internal fun ToolWindow.addTabContent(displayName: String = "tab"): Content {
 internal fun FileEditorManager.openTabFiles(): List<ToolWindowEditorTabFile> = openFiles.filterIsInstance<ToolWindowEditorTabFile>()
 
 internal fun FileEditorManager.openTabFile(): ToolWindowEditorTabFile = openTabFiles().single()
+
+/**
+ * A [ToolWindowEditorTabActionBase] that records what the base class hands to its subclass and shows itself for a tab
+ * with content. A restored tab without content keeps the default behavior of the base class, which hides the action.
+ */
+internal open class RecordingEditorTabAction : ToolWindowEditorTabActionBase() {
+  val updatedToolWindows: MutableList<ToolWindow> = mutableListOf()
+  val updatedContents: MutableList<Content> = mutableListOf()
+  val performedContents: MutableList<Content> = mutableListOf()
+
+  override fun actionPerformed(e: AnActionEvent, content: Content) {
+    performedContents += content
+  }
+
+  override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content) {
+    updatedToolWindows += toolWindow
+    updatedContents += content
+    e.presentation.isEnabledAndVisible = true
+  }
+}
+
+/**
+ * A [RecordingEditorTabAction] that also shows itself for a restored tab whose content is not created yet.
+ */
+internal class PendingContentEditorTabAction : RecordingEditorTabAction() {
+  override fun updateForPendingContent(e: AnActionEvent, toolWindow: ToolWindow) {
+    e.presentation.isEnabledAndVisible = true
+  }
+}
 
 /**
  * Creates an icon that can be serialized, as the platform icons in the IDE can.

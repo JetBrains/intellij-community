@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestActionEvent
@@ -46,11 +45,11 @@ import javax.swing.JPanel
 import javax.swing.JTextField
 
 /**
- * Tests the editor of a tool window tab and the actions that work on it.
+ * Tests the editor of a tool window tab, with a focus on a restored tab whose content is not created yet.
  *
- * Most tests start from a restored tab whose content is not created yet. They check that the content is created only
- * when it is necessary, when the editor is shown for the first time or when an operation needs the content, and what
- * the editor and the actions show before that.
+ * The tests check that the content is created only when it is necessary, when the editor is shown for the first time
+ * or when an operation needs the content, and what the editor and an action on the tab show before that.
+ * The general contract of the actions is covered in [ToolWindowEditorTabActionBaseTest].
  */
 @TestApplication
 class ToolWindowEditorTabPendingContentTest {
@@ -315,47 +314,6 @@ class ToolWindowEditorTabPendingContentTest {
   }
 
   @Test
-  fun `an editor tab action gets the live content of a tab moved from the tool window`(): Unit = uiTest {
-    ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = toolWindowId))
-    val content = createTabContent(displayName = "moved")
-    val editor = ToolWindowEditorTabFileEditor(project, createTabFile(project = project, toolWindowId = toolWindowId, content = content))
-    Disposer.register(disposable, editor)
-    val action = RecordingEditorTabAction()
-    val event = createEvent(action, editor)
-
-    action.update(event)
-    action.actionPerformed(event)
-
-    assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(action.updatedContents).containsExactly(content)
-    assertThat(action.performedContents).containsExactly(content)
-    assertThat(provider.deserializeInvocations).isEmpty()
-  }
-
-  @Test
-  fun `an editor tab action is hidden without a tab context`(): Unit = uiTest {
-    ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(id = toolWindowId))
-    // This action shows itself for content and for a stored state, so only the base class can hide it.
-    val action = PendingContentEditorTabAction()
-    // A tab with neither content nor a stored state, for example after a failed restore.
-    val emptyTabEditor = ToolWindowEditorTabFileEditor(project, ToolWindowEditorTabFile(toolWindowId = toolWindowId, persistentPath = null))
-    Disposer.register(disposable, emptyTabEditor)
-    // A tab of a tool window that this project does not have.
-    val orphanTabEditor = ToolWindowEditorTabFileEditor(project, createTabFile(project = project, toolWindowId = "UnregisteredToolWindow"))
-    Disposer.register(disposable, orphanTabEditor)
-
-    for (editor in listOf(emptyTabEditor, orphanTabEditor, null)) {
-      val event = createEvent(action, editor)
-
-      action.update(event)
-      action.actionPerformed(event)
-
-      assertThat(event.presentation.isEnabledAndVisible).describedAs("editor: $editor").isFalse()
-    }
-    assertThat(action.performedContents).isEmpty()
-  }
-
-  @Test
   fun `a restored tab shows its stored icon before its content is restored`(@TempDir tempDir: Path): Unit = uiTest {
     val storedIcon = requireNotNull(createSerializableIcon(tempDir).serialized())
     val editor = createRestoredTabEditor(icon = storedIcon)
@@ -404,34 +362,11 @@ class ToolWindowEditorTabPendingContentTest {
     }
   }
 
-  /**
-   * Creates an event for [action] in the context of [editor]. A `null` [editor] emulates a place without a file editor.
-   */
-  private fun createEvent(action: AnAction, editor: FileEditor?): AnActionEvent {
+  private fun createEvent(action: AnAction, editor: FileEditor): AnActionEvent {
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(PlatformDataKeys.FILE_EDITOR, editor)
       .build()
     return TestActionEvent.createTestEvent(action, dataContext)
-  }
-
-  private open class RecordingEditorTabAction : ToolWindowEditorTabActionBase() {
-    val updatedContents: MutableList<Content> = mutableListOf()
-    val performedContents: MutableList<Content> = mutableListOf()
-
-    override fun actionPerformed(e: AnActionEvent, content: Content) {
-      performedContents += content
-    }
-
-    override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content) {
-      updatedContents += content
-      e.presentation.isEnabledAndVisible = true
-    }
-  }
-
-  private class PendingContentEditorTabAction : RecordingEditorTabAction() {
-    override fun updateForPendingContent(e: AnActionEvent, toolWindow: ToolWindow) {
-      e.presentation.isEnabledAndVisible = true
-    }
   }
 }
