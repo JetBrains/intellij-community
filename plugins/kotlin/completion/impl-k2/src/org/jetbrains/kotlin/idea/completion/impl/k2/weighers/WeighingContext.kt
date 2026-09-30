@@ -7,13 +7,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarati
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
@@ -197,8 +197,9 @@ internal class WeighingContext private constructor(
 
             val symbolToSkip = when (positionContext) {
                 is KotlinWithSubjectEntryPositionContext -> (positionContext.subjectExpression as? KtSimpleNameExpression)
-                    ?.mainReference
-                    ?.resolveToSymbol()
+                    ?.tryResolveSymbols()
+                    ?.symbols
+                    ?.singleOrNull()
 
                 else -> null
             }
