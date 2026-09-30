@@ -2,6 +2,7 @@ adler2
 aho_corasick
 anyhow
 cfg_if
+cli
 crc32fast
 distpath
 equivalent
@@ -17,7 +18,6 @@ indexmap
 itoa
 jarpack
 javaglob
-lexopt
 memchr
 memmap2
 miniz_oxide

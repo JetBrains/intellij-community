@@ -75,7 +75,7 @@ fn invalid_options() {
         (&["file"], "--key=value"),
         (&["-k"], "--key=value"),
         (&["--main-class=a", "--main-class=b"], "at most once"),
-        (&["--main-class"], "requires a value"),
+        (&["--main-class"], "takes a value"),
     ] {
         require_error(parse_with(&base, extra), message);
     }

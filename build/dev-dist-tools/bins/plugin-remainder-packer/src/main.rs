@@ -11,6 +11,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use anyhow::bail;
 use planfile::contract::{Catalogue, TREE_VERSION, VERSION};
 
 /// The options of the packer, each in the form `--name=value`. Every one is required.
@@ -68,8 +69,8 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
     }
     let arguments = match parse(arguments) {
         Ok(arguments) => arguments,
-        Err(message) => {
-            let _ = writeln!(errors, "ERROR: {message}");
+        Err(error) => {
+            cli::report(errors, &error);
             return 2;
         }
     };
@@ -97,8 +98,8 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
 fn run_gzip_resources(arguments: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let (output, archives) = match parse_gzip_resources(arguments) {
         Ok(parsed) => parsed,
-        Err(message) => {
-            let _ = writeln!(errors, "ERROR: {message}");
+        Err(error) => {
+            cli::report(errors, &error);
             return 2;
         }
     };
@@ -111,87 +112,40 @@ fn run_gzip_resources(arguments: impl IntoIterator<Item = OsString>, errors: &mu
     }
 }
 
-/// Reads one `--output-dir=` option and at least one archive.
-fn parse_gzip_resources(arguments: impl IntoIterator<Item = OsString>) -> Result<(PathBuf, Vec<PathBuf>), String> {
-    let mut output = None;
-    let mut archives = Vec::new();
-    let mut parser = lexopt::Parser::from_args(arguments);
-    while let Some(argument) = parser.next().map_err(|error| error.to_string())? {
-        match argument {
-            lexopt::Arg::Long(name) if format!("--{name}") == GZIP_OUTPUT_OPTION && output.is_none() => {
-                let value = parser.value().map_err(|error| error.to_string())?;
-                if value.is_empty() {
-                    return Err(format!("expected a nonempty {GZIP_OUTPUT_OPTION}=value option"));
-                }
-                output = Some(PathBuf::from(value));
-            }
-            lexopt::Arg::Value(value) => archives.push(PathBuf::from(value)),
-            lexopt::Arg::Long(name) => return Err(format!("unknown or repeated option \"--{name}\"")),
-            lexopt::Arg::Short(name) => return Err(format!("unknown option \"-{name}\"")),
-        }
-    }
-    let Some(output) = output else {
-        return Err(format!("{GZIP_OUTPUT_OPTION} is required"));
-    };
+/// Reads one `--output-dir=` option and at least one archive. An archive is a positional argument.
+fn parse_gzip_resources(arguments: impl IntoIterator<Item = OsString>) -> anyhow::Result<(PathBuf, Vec<PathBuf>)> {
+    let mut options = cli::parse(arguments)?;
+    let output = PathBuf::from(options.require(GZIP_OUTPUT_OPTION)?);
+    let archives: Vec<PathBuf> = options.positionals().into_iter().map(PathBuf::from).collect();
+    options.finish()?;
     if archives.is_empty() {
-        return Err("expected at least one archive".to_owned());
+        bail!("expected at least one archive");
     }
     Ok((output, archives))
 }
 
 /// Reads the options. An option takes its value after `=`, and only `--independent-module` and `--refused-module`
 /// repeat.
-fn parse(arguments: impl IntoIterator<Item = OsString>) -> Result<Arguments, String> {
-    let mut values: Vec<Option<String>> = vec![None; OPTIONS.len()];
-    let mut independent_modules = Vec::new();
-    let mut refused_modules = Vec::new();
-    let mut parser = lexopt::Parser::from_args(arguments);
-    while let Some(argument) = parser.next().map_err(|error| error.to_string())? {
-        let name = match argument {
-            lexopt::Arg::Long(name) => format!("--{name}"),
-            lexopt::Arg::Short(name) => return Err(format!("unknown option \"-{name}\"")),
-            lexopt::Arg::Value(value) => return Err(format!("unknown option {:?}", value.to_string_lossy())),
-        };
-        let value = parser
-            .optional_value()
-            .map(|value| {
-                value
-                    .into_string()
-                    .map_err(|value| format!("{name} is not UTF-8: {}", value.display()))
-            })
-            .transpose()?;
-        if name == INDEPENDENT_MODULE_OPTION || name == REFUSED_MODULE_OPTION {
-            let modules = if name == INDEPENDENT_MODULE_OPTION {
-                &mut independent_modules
-            } else {
-                &mut refused_modules
-            };
-            match value {
-                Some(value) if !value.is_empty() => modules.push(value),
-                _ => return Err(format!("expected a nonempty {name}=value option")),
-            }
-            continue;
-        }
-        let Some(index) = OPTIONS.iter().position(|option| *option == name) else {
-            return Err(format!("unknown option {name:?}"));
-        };
-        match value {
-            Some(value) if !value.is_empty() && values[index].is_none() => values[index] = Some(value),
-            _ => return Err(format!("expected one nonempty {name}=value option")),
-        }
-    }
-    let mut required = Vec::with_capacity(OPTIONS.len());
-    for (name, value) in OPTIONS.iter().zip(values) {
-        match value {
-            Some(value) => required.push(value),
-            None => return Err(format!("{name} is required")),
-        }
-    }
+fn parse(arguments: impl IntoIterator<Item = OsString>) -> anyhow::Result<Arguments> {
+    let mut options = cli::parse(arguments)?;
+    let independent_modules = modules(&mut options, INDEPENDENT_MODULE_OPTION)?;
+    let refused_modules = modules(&mut options, REFUSED_MODULE_OPTION)?;
+    let values = OPTIONS.iter().map(|name| options.require(name)).collect::<anyhow::Result<_>>()?;
+    options.finish()?;
     Ok(Arguments {
-        values: required,
+        values,
         independent_modules,
         refused_modules,
     })
+}
+
+/// Takes the modules of a list option. A module name must not be empty.
+fn modules(options: &mut cli::Options, name: &str) -> anyhow::Result<Vec<String>> {
+    let modules = options.take_all(name)?;
+    if modules.iter().any(String::is_empty) {
+        bail!("{name} must not be empty");
+    }
+    Ok(modules)
 }
 
 /// Derives the recipe from the plan file, packs it against the Starlark input catalogue, then writes the asset rows and

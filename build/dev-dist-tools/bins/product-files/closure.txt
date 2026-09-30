@@ -1,11 +1,11 @@
 anyhow
 appinfo
+cli
 equivalent
 foldhash
 hashbrown
 indexmap
 itoa
-lexopt
 memchr
 quick_xml
 serde

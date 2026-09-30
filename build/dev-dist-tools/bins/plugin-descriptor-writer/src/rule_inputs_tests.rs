@@ -75,9 +75,6 @@ fn embedded_product_rule_test() {
             lines.push(format!("--descriptor-in-jar={load_path}={jar}"));
         }
     }
-    for module in ["intellij.embedded", "intellij.embedded.file"] {
-        lines.push(format!("--module={module}"));
-    }
     for module in [
         "intellij.embedded.existing",
         "intellij.embedded.noPackage",
@@ -122,9 +119,8 @@ fn application_info_rule_tests() {
 }
 
 /// `product_descriptor_rule_test` and `product_descriptor_prefix_rule_test`: `:product_descriptor` against
-/// `expected.xml` and its `.plugin-classpath-prefix` output against `plugin-classpath-prefix.expected`. The rule
-/// declares no search scope, so the request states no `--module`. The `.classpath.xml` output is the descriptor of the
-/// prefix alone, which is `prefix.expected.xml`.
+/// `expected.xml` and its `.plugin-classpath-prefix` output against `plugin-classpath-prefix.expected`. The
+/// `.classpath.xml` output is the descriptor of the prefix alone, which is `prefix.expected.xml`.
 #[test]
 fn product_descriptor_rule_tests() {
     let dir = temp_dir();

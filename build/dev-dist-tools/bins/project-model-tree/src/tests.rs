@@ -231,22 +231,26 @@ fn options() {
     for (args, expected) in [
         (vec!["--project-manifest=a"], "ERROR: --output-dir is required\n"),
         (vec!["--output-dir=a"], "ERROR: --project-manifest is required\n"),
-        (vec!["--unknown=a"], "ERROR: unknown option \"--unknown\"\n"),
         (
-            vec!["--output-dir=a", "--output-dir=b"],
+            vec!["--project-manifest=a", "--output-dir=b", "--unknown=a"],
+            "ERROR: unknown option: --unknown\n",
+        ),
+        (
+            vec!["--project-manifest=a", "--output-dir=a", "--output-dir=b"],
             "ERROR: --output-dir must be specified at most once\n",
         ),
         (
-            vec!["positional"],
-            "ERROR: expected an option in the '--key=value' form, but got \"positional\"\n",
+            vec!["--project-manifest=a", "--output-dir=b", "positional"],
+            "ERROR: expected an option in the form --key=value, but got \"positional\"\n",
+        ),
+        (vec!["--project-manifest=a", "--output-dir="], "ERROR: --output-dir is required\n"),
+        (
+            vec!["--project-manifest=a", "--output-dir"],
+            "ERROR: --output-dir takes a value, as in --output-dir=<value>\n",
         ),
         (
-            vec!["--output-dir="],
-            "ERROR: expected an option in the '--key=value' form, but got \"--output-dir=\"\n",
-        ),
-        (
-            vec!["--output-dir"],
-            "ERROR: expected an option in the '--key=value' form, but got \"--output-dir\"\n",
+            vec!["--project-manifest=a", "--output-dir=b", "--trace-file="],
+            "ERROR: --trace-file must not be empty\n",
         ),
     ] {
         let result = run_tool(&args.iter().map(|arg| (*arg).to_owned()).collect::<Vec<_>>());

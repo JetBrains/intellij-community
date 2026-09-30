@@ -129,7 +129,6 @@ getrandom = "0.4"
 httpdate = "1"
 indexmap = "2"
 java-properties = "2"
-lexopt = "0.3"
 libc = "0.2"
 memmap2 = "0.9"
 quick-xml = "0.42"
@@ -151,6 +150,7 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Storage
 
 # Local crates
 appinfo = { path = "crates/appinfo" }
+cli = { path = "crates/cli" }
 component = { path = "crates/component" }
 distpath = { path = "crates/distpath" }
 filemeta = { path = "crates/filemeta" }

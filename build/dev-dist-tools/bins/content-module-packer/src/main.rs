@@ -58,7 +58,8 @@ fn run(arguments: impl IntoIterator<Item = OsString>, base_dir: &Path, stderr: &
     let options = match options::parse(arguments) {
         Ok(options) => options,
         Err(error) => {
-            let _ = writeln!(stderr, "ERROR: {error}\n{}", options::USAGE);
+            cli::report(stderr, &error);
+            let _ = writeln!(stderr, "{}", options::USAGE);
             return FAILURE;
         }
     };

@@ -12,6 +12,7 @@
 //! records, [`fingerprint`] computes fingerprint v5, and [`ide_config`] writes the file of `DevIdeConfig`.
 
 use std::ffi::OsString;
+use std::fmt::Display;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
@@ -44,17 +45,17 @@ fn main() -> ExitCode {
 
 /// Runs the tool. It returns 0 when the composition succeeds and 1 for every failure.
 fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
-    let mut options = match CommandLineOptions::parse(args) {
+    let mut options = match cli::parse(args) {
         Ok(options) => options,
-        Err(error) => return report(errors, &error),
+        Err(error) => return report(errors, &option_error(&error)),
     };
-    let trace_file = match options.optional_path("--trace-file") {
+    let trace_file = match optional_path(&mut options, "--trace-file") {
         Ok(trace_file) => trace_file,
         Err(error) => return report(errors, &error),
     };
     trace::run_traced(JOB_NAME, trace_file.as_deref().map(Path::new), 1, errors, |tracer, errors| {
         let root = tracer.span(JOB_NAME);
-        let result = compose_dev_distribution(&mut options, &root);
+        let result = compose_dev_distribution(options, &root);
         if let Err(error) = &result {
             root.fail(error);
         }
@@ -71,95 +72,35 @@ fn report(errors: &mut dyn Write, error: &Error) -> u8 {
     1
 }
 
-/// The options of the command line. It keeps every value of an option in the order of the command line.
+/// The error of the command line as an error of the composer.
+fn option_error(error: &dyn Display) -> Error {
+    Error::msg(format!("{error:#}"))
+}
+
+/// The absolute path of an option, or `None` when the option is absent or empty.
 ///
 /// Every option has the `--key=value` form, because the Starlark caller writes no other form. An empty value is an
 /// absent option.
-#[derive(Debug, Default)]
-struct CommandLineOptions {
-    /// Each name with its values, in the order of the first occurrence.
-    values: Vec<(String, Vec<String>)>,
-    used: Vec<String>,
+fn optional_path(options: &mut cli::Options, name: &str) -> Result<Option<String>> {
+    match options.take(name).map_err(|error| option_error(&error))? {
+        Some(value) if !value.is_empty() => paths::absolute_path(&value).map(Some),
+        _ => Ok(None),
+    }
 }
 
-impl CommandLineOptions {
-    fn parse(args: impl IntoIterator<Item = OsString>) -> Result<Self> {
-        let form_error = |arg: &str| Error::msg(format!("Expected an option in the '--key=value' form, but got '{arg}'"));
-        let args: Vec<OsString> = args.into_iter().collect();
-        // `lexopt` reads a bare `--` as the end of the options, so the composer refuses it first.
-        if args.iter().any(|arg| arg == "--") {
-            return Err(Error::msg("Unknown options: --"));
-        }
-        let mut options = Self::default();
-        let mut parser = lexopt::Parser::from_args(args);
-        while let Some(arg) = parser.next().map_err(Error::msg)? {
-            let name = match arg {
-                lexopt::Arg::Long(name) => format!("--{name}"),
-                lexopt::Arg::Short(short) => return Err(form_error(&format!("-{short}"))),
-                lexopt::Arg::Value(value) => return Err(form_error(&value.to_string_lossy())),
-            };
-            let Some(value) = parser.optional_value() else {
-                return Err(form_error(&name));
-            };
-            let Ok(value) = value.into_string() else {
-                return Err(Error::msg(format!("{name} has a value that is not valid UTF-8")));
-            };
-            match options.values.iter_mut().find(|(known, _)| *known == name) {
-                Some((_, values)) => values.push(value),
-                None => options.values.push((name, vec![value])),
-            }
-        }
-        Ok(options)
-    }
-
-    /// The absolute path of an option, or `None` when the option is absent or empty.
-    fn optional_path(&mut self, name: &str) -> Result<Option<String>> {
-        self.used.push(name.to_owned());
-        let Some((_, values)) = self.values.iter().find(|(known, _)| known == name) else {
-            return Ok(None);
-        };
-        if values.len() != 1 {
-            return Err(Error::msg(format!(
-                "{name} must be specified at most once, but got {} values: [{}]",
-                values.len(),
-                values.join(", ")
-            )));
-        }
-        if values[0].is_empty() {
-            return Ok(None);
-        }
-        paths::absolute_path(&values[0]).map(Some)
-    }
-
-    fn required_path(&mut self, name: &str) -> Result<String> {
-        self.optional_path(name)?
-            .ok_or_else(|| Error::msg(format!("{name} is required (no value and no fallback available)")))
-    }
-
-    fn check_no_unknown_options(&self) -> Result<()> {
-        let mut unknown: Vec<&str> = self
-            .values
-            .iter()
-            .map(|(name, _)| name.as_str())
-            .filter(|name| !self.used.iter().any(|used| used == name))
-            .collect();
-        if unknown.is_empty() {
-            return Ok(());
-        }
-        unknown.sort_by(|first, second| paths::compare_utf16(first, second));
-        Err(Error::msg(format!("Unknown options: {}", unknown.join(", "))))
-    }
+fn required_path(options: &mut cli::Options, name: &str) -> Result<String> {
+    paths::absolute_path(&options.require(name).map_err(|error| option_error(&error))?)
 }
 
 /// Checks the composition spec first, then the output options, the unknown options, the source bindings and each
 /// component manifest. It removes the output directory only after all of these checks pass.
-fn compose_dev_distribution(options: &mut CommandLineOptions, root: &trace::Span) -> Result<()> {
-    let spec_file = options.required_path("--composition-spec")?;
+fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Result<()> {
+    let spec_file = required_path(&mut options, "--composition-spec")?;
     let spec = spec::read_composition_spec(Path::new(&spec_file))?;
-    let output_dir = options.required_path("--output-dir")?;
-    let ide_config = options.required_path("--ide-config")?;
-    let fingerprint_file = options.required_path("--fingerprint")?;
-    options.check_no_unknown_options()?;
+    let output_dir = required_path(&mut options, "--output-dir")?;
+    let ide_config = required_path(&mut options, "--ide-config")?;
+    let fingerprint_file = required_path(&mut options, "--fingerprint")?;
+    options.finish().map_err(|error| option_error(&error))?;
     root.tag("componentCount", spec.components.len());
 
     let mut bindings = match (&spec.source_runfiles, &spec.source_bindings) {

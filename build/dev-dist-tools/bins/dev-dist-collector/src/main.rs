@@ -12,7 +12,7 @@ mod inventory;
 mod plugin_classpath;
 mod plugin_component;
 
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsString;
 use std::io::Write;
 use std::path::Path;
 
@@ -111,14 +111,14 @@ fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u
     let options = match parse_options(args) {
         Ok(options) => options,
         Err(error) => {
-            let _ = writeln!(errors, "ERROR: {error:#}");
+            cli::report(errors, &error);
             return 2;
         }
     };
     let options = match options.read_spec() {
         Ok(options) => options,
         Err(error) => {
-            let _ = writeln!(errors, "ERROR: {error:#}");
+            cli::report(errors, &error);
             return 1;
         }
     };
@@ -144,7 +144,7 @@ fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u
                 0
             }
             Err(error) => {
-                let _ = writeln!(errors, "ERROR: {error:#}");
+                cli::report(errors, &error);
                 1
             }
         }
@@ -214,114 +214,67 @@ fn write_manifest(options: &Options<PluginComponentSpec>, files: &[SourcedFile],
     }
 }
 
-/// The values of the options, each given at most once.
-#[derive(Default)]
-struct Values {
-    manifest: Option<String>,
-    kind: Option<String>,
-    platform_prefix: Option<String>,
-    os: Option<String>,
-    arch: Option<String>,
-    jars_file: Option<String>,
-    files_file: Option<String>,
-    trace_file: Option<String>,
-    catalogue: Option<String>,
-    plugin_component: Option<String>,
-    plugin_classpath: Option<String>,
-    main_class: Option<String>,
-    platform_neutral: bool,
+/// The value of an option. An empty value is an absent option.
+fn value(options: &mut cli::Options, name: &str) -> anyhow::Result<Option<String>> {
+    Ok(options.take(name)?.filter(|value| !value.is_empty()))
 }
 
 fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
-    let form_error = |arg: &OsStr| anyhow::anyhow!("expected an option in the '--key=value' form, but got {:?}", arg.to_string_lossy());
-    let mut values = Values::default();
-    let mut seen = std::collections::HashSet::new();
-    let mut parser = lexopt::Parser::from_args(args);
-    while let Some(arg) = parser.next()? {
-        let name = match arg {
-            lexopt::Arg::Long(name) => format!("--{name}"),
-            lexopt::Arg::Short(short) => return Err(form_error(OsStr::new(&format!("-{short}")))),
-            lexopt::Arg::Value(value) => return Err(form_error(&value)),
-        };
-        let value = parser.optional_value();
-        if !seen.insert(name.clone()) {
-            bail!("{name} must be specified at most once");
-        }
-        if name == "--platform-neutral" {
-            if value.is_some() {
-                bail!("--platform-neutral takes no value");
-            }
-            values.platform_neutral = true;
-            continue;
-        }
-        let destination = match name.as_str() {
-            "--component-manifest" => &mut values.manifest,
-            "--kind" => &mut values.kind,
-            "--platform-prefix" => &mut values.platform_prefix,
-            "--os" => &mut values.os,
-            "--arch" => &mut values.arch,
-            "--jars-file" => &mut values.jars_file,
-            "--files-file" => &mut values.files_file,
-            "--trace-file" => &mut values.trace_file,
-            "--metadata-catalogue" => &mut values.catalogue,
-            "--plugin-component" => &mut values.plugin_component,
-            "--plugin-classpath-part" => &mut values.plugin_classpath,
-            "--main-class" => &mut values.main_class,
-            _ => bail!("unknown option: {name}"),
-        };
-        let Some(value) = value else {
-            bail!("{name} requires a value in the '--key=value' form");
-        };
-        let value = value
-            .into_string()
-            .map_err(|value| anyhow::anyhow!("{name} is not valid UTF-8: {}", value.display()))?;
-        // An empty value is an absent option.
-        *destination = Some(value).filter(|value| !value.is_empty());
-    }
-    let required = |value: Option<String>, name: &str| value.with_context(|| format!("{name} is required"));
-    let manifest = required(values.manifest, "--component-manifest")?;
-    let kind = required(values.kind, "--kind")?;
-    let platform_prefix = required(values.platform_prefix, "--platform-prefix")?;
-    let mode = match (values.jars_file, values.files_file, values.plugin_component) {
+    let mut options = cli::parse(args)?;
+    let manifest = options.require("--component-manifest")?;
+    let kind = options.require("--kind")?;
+    let platform_prefix = options.require("--platform-prefix")?;
+    let os = value(&mut options, "--os")?;
+    let arch = value(&mut options, "--arch")?;
+    let platform_neutral = options.flag("--platform-neutral")?;
+    let jars_file = value(&mut options, "--jars-file")?;
+    let files_file = value(&mut options, "--files-file")?;
+    let plugin_component = value(&mut options, "--plugin-component")?;
+    let catalogue = value(&mut options, "--metadata-catalogue")?;
+    let mut plugin_classpath = value(&mut options, "--plugin-classpath-part")?;
+    let trace_file = value(&mut options, "--trace-file")?;
+    let main_class = value(&mut options, "--main-class")?;
+    options.finish()?;
+    let mode = match (jars_file, files_file, plugin_component) {
         (Some(jars_file), None, None) => {
-            let Some(catalogue) = values.catalogue else {
+            let Some(catalogue) = catalogue else {
                 bail!("packed jars require --metadata-catalogue; payload inventories belong to the packing action");
             };
             Mode::Jars { jars_file, catalogue }
         }
         (None, Some(files_file), None) => {
-            if values.catalogue.is_some() {
+            if catalogue.is_some() {
                 bail!("--files-file cannot use --metadata-catalogue: no rule passes metadata for explicit files");
             }
             Mode::Files { files_file }
         }
         (None, None, Some(spec)) => {
-            if values.catalogue.is_some() {
+            if catalogue.is_some() {
                 bail!("--plugin-component cannot use --metadata-catalogue");
             }
-            if values.main_class.is_some() {
+            if main_class.is_some() {
                 bail!("--plugin-component cannot declare --main-class");
             }
-            let Some(classpath) = values.plugin_classpath.take() else {
+            let Some(classpath) = plugin_classpath.take() else {
                 bail!("--plugin-component and --plugin-classpath-part are required together");
             };
             Mode::PluginComponent { spec, classpath }
         }
         _ => bail!("exactly one of --jars-file, --files-file and --plugin-component is required"),
     };
-    if values.plugin_classpath.is_some() {
+    if plugin_classpath.is_some() {
         bail!("--plugin-component and --plugin-classpath-part are required together");
     }
-    let (os, arch) = if values.platform_neutral {
+    let (os, arch) = if platform_neutral {
         if !matches!(mode, Mode::PluginComponent { .. }) {
             bail!("--platform-neutral applies only to --plugin-component: no rule collects neutral jars or files");
         }
-        if values.os.is_some() || values.arch.is_some() {
+        if os.is_some() || arch.is_some() {
             bail!("--platform-neutral cannot be combined with --os or --arch");
         }
         (String::new(), String::new())
     } else {
-        (target_os(values.os.as_deref())?, target_arch(values.arch.as_deref())?)
+        (target_os(os.as_deref())?, target_arch(arch.as_deref())?)
     };
     Ok(Options {
         manifest,
@@ -330,8 +283,8 @@ fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
         os,
         arch,
         mode,
-        trace_file: values.trace_file,
-        main_class: values.main_class,
+        trace_file,
+        main_class,
     })
 }
 

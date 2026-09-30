@@ -10,9 +10,10 @@
 use std::path::Path;
 
 use crate::test_support::{
-    assert_absent, build_number_file, descriptor_jar, lines, option_lines, path_string, read, run_request, temp_dir, testdata, write,
+    assert_absent, build_number_file, descriptor_jar, lines, option_lines, path_string, read, run_arguments, run_request, temp_dir,
+    testdata, write,
 };
-use crate::{Mode, run, select_operation};
+use crate::{Mode, take_mode};
 
 fn path(dir: &Path, name: &str) -> String {
     path_string(&dir.join(name))
@@ -213,7 +214,7 @@ fn the_request_is_one_flag_file() {
         vec![flagfile.clone(), flagfile],
         lines(&["--flagfile"]),
     ] {
-        assert_eq!(run(&arguments), 2, "{arguments:?}");
+        assert_eq!(run_arguments(&arguments), 2, "{arguments:?}");
     }
     assert_absent(&output);
 }
@@ -223,7 +224,7 @@ fn the_request_is_one_flag_file() {
 fn a_missing_flag_file_is_refused() {
     let dir = temp_dir();
     let flagfile = format!("--flagfile={}", path(dir.path(), "absent.txt"));
-    assert_eq!(run(&[flagfile]), 2);
+    assert_eq!(run_arguments(&[flagfile]), 2);
 }
 
 /// `--exact-version` pins both ends to the build number (`CompatibleBuildRange.EXACT` of `PluginXmlPatcher.kt`).
@@ -315,8 +316,13 @@ fn an_unknown_option_is_refused() {
         "positional=1",
         "",
     ] {
-        let request = lines(&["--out=o", unknown, "--main-module=m"]);
+        let source = dir.join("plugin.xml");
+        let output = dir.join("plugin.out.xml");
+        write(&source, "<idea-plugin><id>a</id></idea-plugin>");
+        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        request.push(unknown.to_owned());
         assert_eq!(run_request(dir, &request), 2, "{unknown:?}");
+        assert_absent(&output);
     }
 }
 
@@ -335,7 +341,15 @@ fn a_valueless_or_repeated_option_is_refused() {
         &["--build-date-seconds=1", "--build-date-seconds=2"][..],
         &["--source=a.xml", "--source=b.xml"][..],
     ] {
-        assert_eq!(run_request(dir, &lines(request)), 2, "{request:?}");
+        let source = dir.join("plugin.xml");
+        let output = dir.join("plugin.out.xml");
+        write(&source, "<idea-plugin><id>a</id></idea-plugin>");
+        let mut lines = minimal_request(dir, &source, &output, "263.100.5");
+        let names: Vec<&str> = request.iter().map(|line| line.split('=').next().unwrap()).collect();
+        lines.retain(|line| !names.contains(&line.split('=').next().unwrap()));
+        lines.extend(request.iter().map(|line| (*line).to_owned()));
+        assert_eq!(run_request(dir, &lines), 2, "{request:?}");
+        assert_absent(&output);
     }
 }
 
@@ -523,7 +537,7 @@ fn an_unreadable_source_fails() {
 }
 
 #[test]
-fn operation_selection() {
+fn mode_selection() {
     for (values, want) in [
         (&[][..], None),
         (&["--out=o", "--source=s"][..], None),
@@ -537,7 +551,7 @@ fn operation_selection() {
             Some(Mode::ApplicationInfo),
         ),
     ] {
-        let got = select_operation(&option_lines(values)).unwrap_or_else(|error| panic!("{values:?}: {error:#}"));
+        let got = take_mode(&mut option_lines(values)).unwrap_or_else(|error| panic!("{values:?}: {error:#}"));
         assert_eq!(got, want, "{values:?}");
     }
 }
@@ -564,7 +578,7 @@ fn invalid_modes_are_refused() {
         let mut request = vec![format!("--out={}", path_string(&output)), "--source=unused.xml".to_owned()];
         request.extend(lines(modes));
         let values: Vec<&str> = request.iter().map(String::as_str).collect();
-        assert!(select_operation(&option_lines(&values)).is_err(), "{modes:?}");
+        assert!(take_mode(&mut option_lines(&values)).is_err(), "{modes:?}");
         assert_eq!(run_request(dir, &request), 2, "{modes:?}");
         assert_absent(&output);
     }

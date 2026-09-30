@@ -73,14 +73,14 @@ mod stamp_application_info_tests;
 #[cfg(test)]
 mod test_support;
 
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
+use std::ffi::OsString;
 use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::Path;
 
 use anyhow::{Context, Result, anyhow, bail};
 use appinfo::{ApplicationInfo, Replacement, descriptorxml};
-use lexopt::{Arg, ValueExt};
 use memmap2::Mmap;
 use zip::ZipArchive;
 
@@ -88,17 +88,7 @@ use crate::stamps::CompatibleBuildRange;
 use crate::structural::{Cache, ContentRequest};
 
 fn main() {
-    let mut arguments = Vec::new();
-    for argument in std::env::args_os().skip(1) {
-        match argument.into_string() {
-            Ok(argument) => arguments.push(argument),
-            Err(argument) => {
-                eprintln!("ERROR: the argument {} is not valid UTF-8", argument.display());
-                std::process::exit(2);
-            }
-        }
-    }
-    let code = run(&arguments);
+    let code = run(std::env::args_os().skip(1));
     if code != 0 {
         std::process::exit(code);
     }
@@ -106,101 +96,36 @@ fn main() {
 
 /// Runs one request and returns the exit code. The code is 0 for success and 2 for a request that the rule cannot
 /// state. The code is 1 for a request that the inputs cannot satisfy.
-fn run(arguments: &[String]) -> i32 {
-    let lines = match read_request(arguments) {
-        Ok(lines) => lines,
-        Err(error) => return report(2, &error),
-    };
-    let mode = match select_operation(&lines) {
-        Ok(mode) => mode,
+fn run(arguments: impl IntoIterator<Item = OsString>) -> i32 {
+    let (mode, options) = match read_request(arguments) {
+        Ok(request) => request,
         Err(error) => return report(2, &error),
     };
     match mode {
-        Some(Mode::EmbeddedProduct) => embedded_product::run(&lines),
-        Some(Mode::ProductDescriptor) => product_descriptor::run(&lines),
-        Some(Mode::ApplicationInfo) => application_info::run(&lines),
-        Some(Mode::StampApplicationInfo) => stamp_application_info::run(&lines),
-        None => run_plugin_descriptor(&lines),
+        Some(Mode::EmbeddedProduct) => embedded_product::run(options),
+        Some(Mode::ProductDescriptor) => product_descriptor::run(options),
+        Some(Mode::ApplicationInfo) => application_info::run(options),
+        Some(Mode::StampApplicationInfo) => stamp_application_info::run(options),
+        None => run_plugin_descriptor(options),
     }
 }
 
 fn report(code: i32, error: &anyhow::Error) -> i32 {
-    eprintln!("ERROR: {error:#}");
+    cli::report(&mut std::io::stderr(), error);
     code
 }
 
-/// One option of the request: the name up to the first `=`, and the value after it. `None` is an option with no `=`,
-/// which only a mode flag is.
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct OptionLine {
-    name: String,
-    value: Option<String>,
-}
-
-impl OptionLine {
-    /// Returns the value. Every option but a mode flag states one, because the rules write `--name=value`.
-    fn value(&self) -> Result<&str> {
-        self.value
-            .as_deref()
-            .ok_or_else(|| anyhow!("{} takes a value, as {}=<value>", self.name, self.name))
-    }
-}
-
-/// Reads the request from the one argument that every rule passes, `--flagfile=<file>`.
+/// Reads the request from the one argument that every rule passes, `--flagfile=<file>`, and takes its mode flag.
 ///
-/// `use_param_file("--flagfile=%s", use_always = True)` of the rules writes a multiline file, one option per line.
-fn read_request(arguments: &[String]) -> Result<Vec<OptionLine>> {
-    let [argument] = arguments else {
-        bail!(
-            "the request is one --flagfile=<file> argument, and {} arguments were passed",
-            arguments.len()
-        );
-    };
-    let Some(file) = argument.strip_prefix("--flagfile=") else {
-        bail!("the request is one --flagfile=<file> argument, and '{argument}' is not one");
-    };
-    let content = read_text(file)?;
-    parse_option_lines(content.lines().map(str::to_owned).collect())
-}
-
-/// Splits the lines of the flag file into [`OptionLine`]s.
-///
-/// A line is `--name=value` or `--name`. The value never comes from the next line. A short option, a bare value, an
-/// empty line and a bare `--` are refused, because no rule writes one.
-fn parse_option_lines(lines: Vec<String>) -> Result<Vec<OptionLine>> {
-    // lexopt reads a bare `--` as the end of the options and reports nothing for it, so the check comes first.
-    if lines.iter().any(|line| line == "--") {
-        bail!("the flag file states a bare '--', which is not an option");
-    }
-    let mut parser = lexopt::Parser::from_args(lines);
-    let mut result = Vec::new();
-    while let Some(argument) = parser.next()? {
-        let name = match argument {
-            Arg::Long(name) => format!("--{name}"),
-            Arg::Short(name) => bail!("the flag file states the short option '-{name}', which is not an option"),
-            Arg::Value(value) => bail!("the flag file states the line '{}', which is not an option", value.string()?),
-        };
-        let value = parser.optional_value().map(ValueExt::string).transpose()?;
-        result.push(OptionLine { name, value });
-    }
-    Ok(result)
-}
-
-fn assign(slot: &mut String, line: &OptionLine) -> Result<()> {
-    line.value()?.clone_into(slot);
-    Ok(())
-}
-
-/// Refuses an option that the request states twice, unless it is one of the list options. The rules state every other
-/// option once, so a second one has no meaning to keep.
-fn refuse_repeated_options(lines: &[OptionLine], list_options: &[&str]) -> Result<()> {
-    let mut stated = HashSet::new();
-    for line in lines {
-        if !list_options.contains(&line.name.as_str()) && !stated.insert(line.name.as_str()) {
-            bail!("{} is stated more than once", line.name);
-        }
-    }
-    Ok(())
+/// `use_param_file("--flagfile=%s", use_always = True)` of the rules writes a multiline file, one option per line. A
+/// line is `--name=value` or a mode flag. The value never comes from the next line, and no rule writes an empty line.
+fn read_request(arguments: impl IntoIterator<Item = OsString>) -> Result<(Option<Mode>, cli::Options)> {
+    let mut arguments = cli::parse(arguments)?;
+    let file = arguments.require("--flagfile")?;
+    arguments.finish()?;
+    let mut options = cli::parse(read_text(&file)?.lines().map(OsString::from))?;
+    let mode = take_mode(&mut options)?;
+    Ok((mode, options))
 }
 
 /// The four mode flags. A request with none of them patches a plugin descriptor.
@@ -230,45 +155,19 @@ impl Mode {
     }
 }
 
-/// Returns the mode of the request. A request without a mode flag stays on the plugin patching path.
-fn select_operation(lines: &[OptionLine]) -> Result<Option<Mode>> {
+/// Takes the mode flag of the request. A request without a mode flag stays on the plugin patching path.
+fn take_mode(options: &mut cli::Options) -> Result<Option<Mode>> {
     let mut mode: Option<Mode> = None;
-    for line in lines {
-        let Some(found) = Mode::ALL.into_iter().find(|mode| mode.flag() == line.name) else {
+    for candidate in Mode::ALL {
+        if !options.flag(candidate.flag())? {
             continue;
-        };
-        if line.value.is_some() {
-            bail!("{} is a flag and takes no value", line.name);
         }
         if let Some(selected) = mode {
-            bail!("only one mode flag is allowed, got {} and {}", selected.flag(), line.name);
+            bail!("only one mode flag is allowed, got {} and {}", selected.flag(), candidate.flag());
         }
-        mode = Some(found);
+        mode = Some(candidate);
     }
     Ok(mode)
-}
-
-/// Fails unless the request selects exactly this mode.
-fn require_mode(lines: &[OptionLine], want: Mode) -> Result<()> {
-    if select_operation(lines)? != Some(want) {
-        bail!("{} is required", want.flag());
-    }
-    Ok(())
-}
-
-/// Reports whether the line is the flag of this mode, which the parser of the mode skips.
-fn is_mode_line(line: &OptionLine, mode: Mode) -> bool {
-    line.name == mode.flag() && line.value.is_none()
-}
-
-/// Fails for the first option in the list whose value is empty.
-fn require_options(required: &[(&str, &str)]) -> Result<()> {
-    for (option, value) in required {
-        if value.is_empty() {
-            bail!("{option} is required");
-        }
-    }
-    Ok(())
 }
 
 /// The request of one plugin, as the rule states it.
@@ -323,8 +222,8 @@ struct PluginRequest {
     reserialized_output: String,
 }
 
-fn run_plugin_descriptor(lines: &[OptionLine]) -> i32 {
-    let parsed = match parse_plugin_request(lines) {
+fn run_plugin_descriptor(options: cli::Options) -> i32 {
+    let parsed = match parse_plugin_request(options) {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
@@ -447,96 +346,80 @@ fn parse_replacement(value: &str, stated: &[Replacement]) -> Result<Replacement>
 ///
 /// An option that the parser does not know fails the run. That is the rule of the platform too. It keeps the rule and
 /// this binary on one spelling: a rule that grows an option reaches this parser or fails here.
-fn parse_plugin_request(lines: &[OptionLine]) -> Result<PluginRequest> {
-    refuse_repeated_options(
-        lines,
-        &[
-            "--marker",
-            "--refused-content-module",
-            "--embed-content-module",
-            "--separate-jar",
-            "--plugin-descriptor",
-            "--plugin-descriptor-in-jar",
-            "--replacement",
-        ],
-    )?;
-    let mut parsed = PluginRequest {
-        embeds_content: true,
-        ..PluginRequest::default()
-    };
-    let mut build_date_seconds = None;
-    for line in lines {
-        match line.name.as_str() {
-            "--out" => assign(&mut parsed.output, line)?,
-            "--main-module" => assign(&mut parsed.main_module, line)?,
-            "--source" => assign(&mut parsed.source, line)?,
-            "--source-in-jar" => {
-                let (entry, jar) = parse_descriptor_jar(line.value()?)?;
-                entry.clone_into(&mut parsed.source_entry);
-                jar.clone_into(&mut parsed.source);
-            }
-            "--build-number-file" => assign(&mut parsed.build_number_file, line)?,
-            "--application-info-source" => assign(&mut parsed.application_info, line)?,
-            "--host-application-info-source" => assign(&mut parsed.host_application_info, line)?,
-            "--replacement" => {
-                let replacement = parse_replacement(line.value()?, &parsed.replacements)?;
-                parsed.replacements.push(replacement);
-            }
-            "--build-date-seconds" => {
-                let value = line.value()?;
-                let Ok(seconds) = value.parse::<i64>() else {
-                    bail!("--build-date-seconds is not a number of seconds: '{value}'");
-                };
-                build_date_seconds = Some(seconds);
-            }
-            "--exact-version" => parsed.exact_version = parse_boolean_strict(line.value()?)?,
-            "--retain-product-descriptor" => parsed.retain_product = parse_boolean_strict(line.value()?)?,
-            "--embed-content-modules" => parsed.embeds_content = parse_boolean_strict(line.value()?)?,
-            "--reserialize-before-content-embedding" => {
-                parsed.reserialize_before_content_embedding = parse_boolean_strict(line.value()?)?;
-            }
-            "--refused-content-module" => parsed.refused_content_modules.push(line.value()?.to_owned()),
-            "--embed-content-module" => {
-                parsed.embedded_content_modules.insert(line.value()?.to_owned());
-            }
-            "--separate-jar" => {
-                parsed.separate_jar.insert(line.value()?.to_owned());
-            }
-            "--plugin-descriptor" => put_descriptor(&mut parsed.plugin_descriptors, line.value()?)?,
-            "--plugin-descriptor-in-jar" => {
-                append_descriptor_jar(&mut parsed.plugin_descriptors_in_jar, line.value()?)?;
-            }
-            "--marker" => parsed.markers.push(line.value()?.to_owned()),
-            "--version-suffix" => assign(&mut parsed.version_suffix, line)?,
-            // The layouts state one range. `EXACT` and `RESTRICTED_TO_SAME_RELEASE` still come from the two flags.
-            "--compatible-build-range" => match line.value()? {
-                "NEWER_WITH_SAME_BASELINE" => {
-                    parsed.compatible_build_range = Some(CompatibleBuildRange::NewerWithSameBaseline);
-                }
-                other => {
-                    bail!("the compatible build range '{other}' is not supported, only NEWER_WITH_SAME_BASELINE is")
-                }
-            },
-            "--reserialized-output" => assign(&mut parsed.reserialized_output, line)?,
-            option => bail!("unknown option '{option}'"),
+fn parse_plugin_request(mut options: cli::Options) -> Result<PluginRequest> {
+    let output = options.require("--out")?;
+    let main_module = options.require("--main-module")?;
+    let (source, source_entry) = match (options.take("--source")?, options.take("--source-in-jar")?) {
+        (Some(_), Some(_)) => bail!("the descriptor source is declared more than once"),
+        (_, Some(value)) => {
+            let (entry, jar) = parse_descriptor_jar(&value)?;
+            (jar.to_owned(), entry.to_owned())
         }
-    }
-    if lines.iter().any(|line| line.name == "--source") && lines.iter().any(|line| line.name == "--source-in-jar") {
-        bail!("the descriptor source is declared more than once");
+        (source, None) => (source.unwrap_or_default(), String::new()),
+    };
+    if source.is_empty() {
+        bail!("--source is required");
     }
     // The rule states the application info of every product, so a request without it is one that the rule cannot state.
-    require_options(&[
-        ("--out", &parsed.output),
-        ("--main-module", &parsed.main_module),
-        ("--source", &parsed.source),
-        ("--build-number-file", &parsed.build_number_file),
-        ("--application-info-source", &parsed.application_info),
-    ])?;
-    parsed.build_date_seconds = build_date_seconds.context("--build-date-seconds is required")?;
-    if lines.iter().any(|line| line.name == "--host-application-info-source") && parsed.host_application_info.is_empty() {
+    let build_number_file = options.require("--build-number-file")?;
+    let application_info = options.require("--application-info-source")?;
+    let host_application_info = options.take("--host-application-info-source")?;
+    if host_application_info.as_deref() == Some("") {
         bail!("--host-application-info-source must not be empty");
     }
-    Ok(parsed)
+    let mut replacements = Vec::new();
+    for value in options.take_all("--replacement")? {
+        replacements.push(parse_replacement(&value, &replacements)?);
+    }
+    let build_date_seconds = options.require("--build-date-seconds")?;
+    let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
+        bail!("--build-date-seconds is not a number of seconds: '{build_date_seconds}'");
+    };
+    let mut plugin_descriptors = BTreeMap::new();
+    for value in options.take_all("--plugin-descriptor")? {
+        put_descriptor(&mut plugin_descriptors, &value)?;
+    }
+    let mut plugin_descriptors_in_jar = BTreeMap::new();
+    for value in options.take_all("--plugin-descriptor-in-jar")? {
+        append_descriptor_jar(&mut plugin_descriptors_in_jar, &value)?;
+    }
+    // The layouts state one range. `EXACT` and `RESTRICTED_TO_SAME_RELEASE` still come from the two flags.
+    let compatible_build_range = match options.take("--compatible-build-range")?.as_deref() {
+        None => None,
+        Some("NEWER_WITH_SAME_BASELINE") => Some(CompatibleBuildRange::NewerWithSameBaseline),
+        Some(other) => bail!("the compatible build range '{other}' is not supported, only NEWER_WITH_SAME_BASELINE is"),
+    };
+    let request = PluginRequest {
+        output,
+        main_module,
+        source,
+        source_entry,
+        build_number_file,
+        application_info,
+        host_application_info: host_application_info.unwrap_or_default(),
+        replacements,
+        build_date_seconds,
+        exact_version: boolean_option(&mut options, "--exact-version", false)?,
+        retain_product: boolean_option(&mut options, "--retain-product-descriptor", false)?,
+        embeds_content: boolean_option(&mut options, "--embed-content-modules", true)?,
+        reserialize_before_content_embedding: boolean_option(&mut options, "--reserialize-before-content-embedding", false)?,
+        refused_content_modules: options.take_all("--refused-content-module")?,
+        embedded_content_modules: options.take_all("--embed-content-module")?.into_iter().collect(),
+        separate_jar: options.take_all("--separate-jar")?.into_iter().collect(),
+        plugin_descriptors,
+        plugin_descriptors_in_jar,
+        markers: options.take_all("--marker")?,
+        version_suffix: options.take("--version-suffix")?.unwrap_or_default(),
+        compatible_build_range,
+        reserialized_output: options.take("--reserialized-output")?.unwrap_or_default(),
+    };
+    options.finish()?;
+    Ok(request)
+}
+
+/// Reads an optional boolean option with Kotlin's `String.toBooleanStrict`, which accepts exactly `true` and `false`.
+fn boolean_option(options: &mut cli::Options, name: &str, default: bool) -> Result<bool> {
+    options.take(name)?.map_or(Ok(default), |value| parse_boolean_strict(&value))
 }
 
 /// Reads `<entry>=<jar>`.

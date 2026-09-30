@@ -4,14 +4,12 @@
 
 use std::collections::BTreeSet;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 
 use crate::descriptorxml;
-use crate::embedded_product::{
-    EmbeddedProductRequest, ProductContent, check_product_content_request, parse_product_content_option, resolve_product_content,
-};
+use crate::embedded_product::{EmbeddedProductRequest, ProductContent, parse_product_content, resolve_product_content};
 use crate::structural::{self, ContentRequest};
-use crate::{Mode, OptionLine, assign, is_mode_line, refuse_repeated_options, report, require_mode, require_options, write_output};
+use crate::{report, write_output};
 
 /// `PLUGIN_CLASSPATH_FORMAT_VERSION` of `classpath.kt`, the first byte of `plugins/plugin-classpath.txt`.
 pub(crate) const PLUGIN_CLASS_PATH_FORMAT_VERSION: u8 = 3;
@@ -34,8 +32,8 @@ pub(crate) struct ProductDescriptorRequest {
     pub classpath_descriptor: String,
 }
 
-pub(crate) fn run(lines: &[OptionLine]) -> i32 {
-    let parsed = match parse_product_descriptor_request(lines) {
+pub(crate) fn run(options: cli::Options) -> i32 {
+    let parsed = match parse_product_descriptor_request(options) {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
@@ -115,38 +113,15 @@ pub(crate) fn resolve_product_descriptor(parsed: &ProductDescriptorRequest) -> R
     resolve_product_content(&parsed.content, &request)
 }
 
-pub(crate) fn parse_product_descriptor_request(lines: &[OptionLine]) -> Result<ProductDescriptorRequest> {
-    require_mode(lines, Mode::ProductDescriptor)?;
-    refuse_repeated_options(
-        lines,
-        &[
-            "--descriptor",
-            "--descriptor-in-jar",
-            "--refused-content-module",
-            "--scrambled-content-module",
-        ],
-    )?;
-    let mut parsed = ProductDescriptorRequest::default();
-    for line in lines {
-        if is_mode_line(line, Mode::ProductDescriptor) || parse_product_content_option(&mut parsed.content, line)? {
-            continue;
-        }
-        match line.name.as_str() {
-            "--main-module" => assign(&mut parsed.main_module, line)?,
-            "--refused-content-module" => parsed.refused.push(line.value()?.to_owned()),
-            "--scrambled-content-module" => {
-                parsed.scrambled.insert(line.value()?.to_owned());
-            }
-            "--plugin-classpath-prefix" => assign(&mut parsed.plugin_class_path_prefix, line)?,
-            "--classpath-descriptor" => assign(&mut parsed.classpath_descriptor, line)?,
-            option => bail!("unknown product descriptor option '{option}'"),
-        }
-    }
-    check_product_content_request(&parsed.content)?;
-    require_options(&[
-        ("--main-module", &parsed.main_module),
-        ("--plugin-classpath-prefix", &parsed.plugin_class_path_prefix),
-        ("--classpath-descriptor", &parsed.classpath_descriptor),
-    ])?;
-    Ok(parsed)
+pub(crate) fn parse_product_descriptor_request(mut options: cli::Options) -> Result<ProductDescriptorRequest> {
+    let request = ProductDescriptorRequest {
+        content: parse_product_content(&mut options)?,
+        refused: options.take_all("--refused-content-module")?,
+        scrambled: options.take_all("--scrambled-content-module")?.into_iter().collect(),
+        main_module: options.require("--main-module")?,
+        plugin_class_path_prefix: options.require("--plugin-classpath-prefix")?,
+        classpath_descriptor: options.require("--classpath-descriptor")?,
+    };
+    options.finish()?;
+    Ok(request)
 }

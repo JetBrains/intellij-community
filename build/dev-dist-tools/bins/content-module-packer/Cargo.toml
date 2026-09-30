@@ -14,7 +14,8 @@ workspace = true
 filemeta.workspace = true
 jarpack.workspace = true
 trace.workspace = true
-lexopt.workspace = true
+cli.workspace = true
+anyhow.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

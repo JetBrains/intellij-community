@@ -4,20 +4,16 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 
 use crate::descriptorxml;
 use crate::structural::{self, Cache, ContentRequest};
-use crate::{
-    Mode, OptionLine, append_descriptor_jar, assign, is_mode_line, put_descriptor, read_text, refuse_repeated_options, report,
-    require_mode, require_options, seed_cache, write_output,
-};
+use crate::{append_descriptor_jar, put_descriptor, read_text, report, seed_cache, write_output};
 
 /// The declared inputs of `dev_dist_embedded_product_descriptor`.
 ///
-/// The rule also states `--module`, the descriptor search scope of the platform. It decides nothing here, because
-/// every lookup reads the one cache that the declared files seed. So this mode accepts the option and reads nothing
-/// from it.
+/// The rule states no descriptor search scope. Every lookup reads the one cache that the declared files seed, so this
+/// mode refuses `--module` as an unknown option.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub(crate) struct EmbeddedProductRequest {
     pub output: String,
@@ -27,8 +23,8 @@ pub(crate) struct EmbeddedProductRequest {
     pub separate_jar: BTreeSet<String>,
 }
 
-pub(crate) fn run(lines: &[OptionLine]) -> i32 {
-    let parsed = match parse_embedded_product_request(lines) {
+pub(crate) fn run(options: cli::Options) -> i32 {
+    let parsed = match parse_embedded_product_request(options) {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
@@ -76,40 +72,28 @@ pub(crate) fn resolve_product_content(parsed: &EmbeddedProductRequest, request: 
     })
 }
 
-pub(crate) fn parse_embedded_product_request(lines: &[OptionLine]) -> Result<EmbeddedProductRequest> {
-    require_mode(lines, Mode::EmbeddedProduct)?;
-    refuse_repeated_options(lines, &["--descriptor", "--descriptor-in-jar", "--module", "--separate-jar"])?;
-    let mut parsed = EmbeddedProductRequest::default();
-    for line in lines {
-        if is_mode_line(line, Mode::EmbeddedProduct) || parse_product_content_option(&mut parsed, line)? {
-            continue;
-        }
-        match line.name.as_str() {
-            "--module" => {
-                line.value()?;
-            }
-            "--separate-jar" => {
-                parsed.separate_jar.insert(line.value()?.to_owned());
-            }
-            option => bail!("unknown embedded product descriptor option '{option}'"),
-        }
-    }
-    check_product_content_request(&parsed)?;
+pub(crate) fn parse_embedded_product_request(mut options: cli::Options) -> Result<EmbeddedProductRequest> {
+    let mut parsed = parse_product_content(&mut options)?;
+    parsed.separate_jar = options.take_all("--separate-jar")?.into_iter().collect();
+    options.finish()?;
     Ok(parsed)
 }
 
-/// Reads an option that both product descriptor modes accept. It returns false for another option.
-pub(crate) fn parse_product_content_option(parsed: &mut EmbeddedProductRequest, line: &OptionLine) -> Result<bool> {
-    match line.name.as_str() {
-        "--out" => assign(&mut parsed.output, line)?,
-        "--source" => assign(&mut parsed.source, line)?,
-        "--descriptor" => put_descriptor(&mut parsed.descriptors, line.value()?)?,
-        "--descriptor-in-jar" => append_descriptor_jar(&mut parsed.descriptors_in_jar, line.value()?)?,
-        _ => return Ok(false),
+/// Takes the options that both product descriptor modes accept.
+pub(crate) fn parse_product_content(options: &mut cli::Options) -> Result<EmbeddedProductRequest> {
+    let mut descriptors = BTreeMap::new();
+    for value in options.take_all("--descriptor")? {
+        put_descriptor(&mut descriptors, &value)?;
     }
-    Ok(true)
-}
-
-pub(crate) fn check_product_content_request(parsed: &EmbeddedProductRequest) -> Result<()> {
-    require_options(&[("--out", &parsed.output), ("--source", &parsed.source)])
+    let mut descriptors_in_jar = BTreeMap::new();
+    for value in options.take_all("--descriptor-in-jar")? {
+        append_descriptor_jar(&mut descriptors_in_jar, &value)?;
+    }
+    Ok(EmbeddedProductRequest {
+        output: options.require("--out")?,
+        source: options.require("--source")?,
+        descriptors,
+        descriptors_in_jar,
+        separate_jar: BTreeSet::new(),
+    })
 }

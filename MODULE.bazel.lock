@@ -2092,7 +2092,6 @@
       "lazy_static_1.5.0": "{\"dependencies\":[{\"kind\":\"dev\",\"name\":\"doc-comment\",\"req\":\"^0.3.1\"},{\"default_features\":false,\"features\":[\"once\"],\"name\":\"spin\",\"optional\":true,\"req\":\"^0.9.8\"},{\"kind\":\"dev\",\"name\":\"trybuild\",\"req\":\"^1\"}],\"features\":{\"spin_no_std\":[\"spin\"]}}",
       "leb128_0.2.6": "{\"dependencies\":[{\"kind\":\"dev\",\"name\":\"quickcheck\",\"req\":\"^1.1\"}],\"features\":{\"nightly\":[]}}",
       "leb128fmt_0.1.0": "{\"dependencies\":[],\"features\":{\"alloc\":[],\"default\":[\"std\"],\"std\":[]}}",
-      "lexopt_0.3.2": "{\"dependencies\":[],\"features\":{}}",
       "libc_0.2.183": "{\"dependencies\":[{\"name\":\"rustc-std-workspace-core\",\"optional\":true,\"req\":\"^1.0.1\"}],\"features\":{\"align\":[],\"const-extern-fn\":[],\"default\":[\"std\"],\"extra_traits\":[],\"rustc-dep-of-std\":[\"align\",\"rustc-std-workspace-core\"],\"std\":[],\"use_std\":[\"std\"]}}",
       "libc_0.2.186": "{\"dependencies\":[{\"name\":\"rustc-std-workspace-core\",\"optional\":true,\"req\":\"^1.0.1\"}],\"features\":{\"align\":[],\"const-extern-fn\":[],\"default\":[\"std\"],\"extra_traits\":[],\"rustc-dep-of-std\":[\"align\",\"rustc-std-workspace-core\"],\"std\":[],\"use_std\":[\"std\"]}}",
       "libc_0.2.189": "{\"dependencies\":[{\"name\":\"rustc-std-workspace-core\",\"optional\":true,\"req\":\"^1.0.1\"}],\"features\":{\"align\":[],\"const-extern-fn\":[],\"default\":[\"std\"],\"extra_traits\":[],\"rustc-dep-of-std\":[\"align\",\"rustc-std-workspace-core\"],\"std\":[],\"use_std\":[\"std\"]}}",

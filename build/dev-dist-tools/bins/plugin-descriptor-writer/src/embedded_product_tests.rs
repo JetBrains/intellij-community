@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use crate::embedded_product::{EmbeddedProductRequest, parse_embedded_product_request, resolve_embedded_product};
-use crate::test_support::{assert_absent, descriptor_jar, lines, option_lines, path_string, read, run_request, temp_dir, testdata, write};
+use crate::test_support::{assert_absent, descriptor_jar, lines, mode_request, path_string, read, run_request, temp_dir, testdata, write};
 
 /// The inputs of the `source.xml` case: three jars and the declared files. The first jar has neither entry, and the
 /// third one has wrong copies, so the second jar must answer.
@@ -28,8 +28,6 @@ fn embedded_product_inputs(dir: &Path) -> Vec<String> {
         ],
     );
     let mut result = lines(&[
-        "--module=intellij.embedded",
-        "--module=intellij.embedded.file",
         "--separate-jar=intellij.embedded.existing",
         "--separate-jar=intellij.embedded.noPackage",
         "--separate-jar=intellij.embedded/fragment",
@@ -124,18 +122,17 @@ fn a_load_path_that_a_file_and_a_jar_answer_is_refused() {
 
 #[test]
 fn embedded_product_request() {
-    let parsed = parse_embedded_product_request(&option_lines(&[
+    let parsed = mode_request(&[
         "--out=out/product.xml",
         "--source=source.xml",
         "--embedded-product",
         "--descriptor=META-INF/extra.xml=a file=1.xml",
         "--descriptor-in-jar=a.b.xml=first.jar",
         "--descriptor-in-jar=a.b.xml=second.jar",
-        "--module=second",
-        "--module=first",
         "--separate-jar=a.b",
         "--separate-jar=a.b",
-    ]))
+    ])
+    .and_then(parse_embedded_product_request)
     .unwrap();
     assert_eq!(
         parsed,
@@ -152,7 +149,6 @@ fn embedded_product_request() {
 #[test]
 fn embedded_product_rejects_invalid_requests() {
     for (name, request, want) in [
-        ("no mode", &["--out=o", "--source=s"][..], "--embedded-product is required"),
         ("no output", &["--embedded-product", "--source=s"][..], "--out is required"),
         ("no source", &["--embedded-product", "--out=o"][..], "--source is required"),
         (
@@ -167,13 +163,13 @@ fn embedded_product_rejects_invalid_requests() {
         ),
         (
             "unknown option",
-            &["--embedded-product", "--unknown=1"][..],
-            "unknown embedded product descriptor option",
+            &["--embedded-product", "--out=o", "--source=s", "--unknown=1"][..],
+            "unknown option: --unknown",
         ),
         (
             "plugin option",
-            &["--embedded-product", "--build-number-file=b"][..],
-            "unknown embedded product descriptor option",
+            &["--embedded-product", "--out=o", "--source=s", "--build-number-file=b"][..],
+            "unknown option: --build-number-file",
         ),
         (
             "file pair",
@@ -203,15 +199,20 @@ fn embedded_product_rejects_invalid_requests() {
         (
             "repeated output",
             &["--embedded-product", "--out=o", "--out=p", "--source=s"][..],
-            "--out is stated more than once",
+            "--out must be specified at most once",
         ),
         (
-            "valueless module",
-            &["--embedded-product", "--out=o", "--source=s", "--module"][..],
-            "--module takes a value",
+            "search scope",
+            &["--embedded-product", "--out=o", "--source=s", "--module=intellij.embedded"][..],
+            "unknown option: --module",
+        ),
+        (
+            "valueless output",
+            &["--embedded-product", "--out", "--source=s"][..],
+            "--out takes a value",
         ),
     ] {
-        match parse_embedded_product_request(&option_lines(request)) {
+        match mode_request(request).and_then(parse_embedded_product_request) {
             Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
             Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
         }
@@ -353,7 +354,7 @@ fn embedded_product_failures_write_no_output() {
             }
         }
         let lines: Vec<&str> = request.iter().map(String::as_str).collect();
-        let parsed = parse_embedded_product_request(&option_lines(&lines)).unwrap();
+        let parsed = mode_request(&lines).and_then(parse_embedded_product_request).unwrap();
         match resolve_embedded_product(&parsed) {
             Ok(text) => panic!("{name}: the resolution did not fail:\n{text}"),
             Err(error) => {

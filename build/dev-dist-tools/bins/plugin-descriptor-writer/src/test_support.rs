@@ -2,12 +2,11 @@
 
 //! The helpers that the tests of the modes share.
 
+use std::ffi::OsString;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use zip::write::SimpleFileOptions;
-
-use crate::OptionLine;
 
 /// Returns the `testdata/` directory of this crate.
 ///
@@ -35,14 +34,26 @@ pub(crate) fn lines(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
 }
 
-/// Splits the lines into option lines, as `run` does.
-pub(crate) fn option_lines(values: &[&str]) -> Vec<OptionLine> {
-    crate::parse_option_lines(lines(values)).expect("the lines split into option lines")
+/// Parses the lines of a flag file, as `run` does.
+pub(crate) fn option_lines(values: &[&str]) -> cli::Options {
+    cli::parse(values.iter().map(OsString::from)).expect("the lines parse")
+}
+
+/// Parses the lines of a flag file and takes the mode flag, as `run` does before it hands the request to a mode.
+pub(crate) fn mode_request(values: &[&str]) -> anyhow::Result<cli::Options> {
+    let mut options = cli::parse(values.iter().map(OsString::from))?;
+    crate::take_mode(&mut options)?;
+    Ok(options)
+}
+
+/// Runs the tool with these arguments.
+pub(crate) fn run_arguments(arguments: &[String]) -> i32 {
+    crate::run(arguments.iter().map(OsString::from))
 }
 
 /// Writes the lines into a flag file of the directory and runs the request, the way a rule passes it.
 pub(crate) fn run_request(dir: &Path, request: &[String]) -> i32 {
-    crate::run(&[format!("--flagfile={}", request_file(dir, request))])
+    run_arguments(&[format!("--flagfile={}", request_file(dir, request))])
 }
 
 pub(crate) fn write(path: &Path, content: &str) {

@@ -72,10 +72,6 @@ dev_dist_embedded_product_descriptor(
         ":embedded_descriptor_library": "META-INF/nested.xml intellij.embedded.jar.xml",
     },
     main_module = "embedded",
-    modules = [
-        "intellij.embedded",
-        "intellij.embedded.file",
-    ],
     separate_jar = [
         "intellij.embedded.existing",
         "intellij.embedded.noPackage",

@@ -1,5 +1,6 @@
 anyhow
 cfg_if
+cli
 component
 distpath
 equivalent
@@ -11,7 +12,6 @@ hashbrown
 httpdate
 indexmap
 itoa
-lexopt
 memchr
 planfile
 same_file

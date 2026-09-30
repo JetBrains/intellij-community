@@ -166,35 +166,35 @@ fn the_option_surface_is_exactly_what_the_action_passes() {
     // typo must fail the action. A run that skips the trace silently looks like a build that wrote no spans.
     let parse = |arguments: &[&str]| options::parse(arguments.iter().map(OsString::from));
     assert_eq!(
-        parse(&["--flagfile=recipe.txt"]),
-        Ok(Options {
+        parse(&["--flagfile=recipe.txt"]).unwrap(),
+        Options {
             flag_file: "recipe.txt".into(),
             ..Options::default()
-        })
+        }
     );
     assert_eq!(
-        parse(&["--verify-crc", "--flagfile=recipe.txt", "--trace-file=out/a.jar.spans.json"]),
-        Ok(Options {
+        parse(&["--verify-crc", "--flagfile=recipe.txt", "--trace-file=out/a.jar.spans.json"]).unwrap(),
+        Options {
             flag_file: "recipe.txt".into(),
             verify_crc: true,
             trace_file: Some("out/a.jar.spans.json".into()),
-        })
+        }
     );
     let refused: [(&[&str], &str); 10] = [
-        (&["--trace-file=out/a.jar.spans.json"], "--flagfile="),
-        (&["--flagfile=recipe.txt", "--tracefile=x"], "not defined"),
-        (&["--flagfile=recipe.txt", "x"], "unexpected argument"),
+        (&["--trace-file=out/a.jar.spans.json"], "--flagfile is required"),
+        (&["--flagfile=recipe.txt", "--tracefile=x"], "unknown option: --tracefile"),
+        (&["--flagfile=recipe.txt", "x"], "but got \"x\""),
         // The Go `flag` package took these forms. No caller passes them.
-        (&["--flagfile", "recipe.txt"], "value after `=`"),
-        (&["-flagfile=recipe.txt"], "unsupported option -flagfile:"),
-        (&["--flagfile=a.txt", "--flagfile=b.txt"], "twice"),
-        (&["--flagfile=recipe.txt", "--verify-crc", "--verify-crc"], "twice"),
+        (&["--flagfile", "recipe.txt"], "--flagfile takes a value"),
+        (&["-flagfile=recipe.txt"], "in the form --key=value"),
+        (&["--flagfile=a.txt", "--flagfile=b.txt"], "at most once"),
+        (&["--flagfile=recipe.txt", "--verify-crc", "--verify-crc"], "at most once"),
         (&["--flagfile=recipe.txt", "--verify-crc=true"], "takes no value"),
-        (&["--flagfile=recipe.txt", "--trace-file="], "nonempty"),
+        (&["--flagfile=recipe.txt", "--trace-file="], "must not be empty"),
         (&["--flagfile=recipe.txt", "--cpuprofile=cpu.pprof"], "--trace-file=<path>"),
     ];
     for (arguments, want) in refused {
-        let error = parse(arguments).expect_err("a refused command line");
+        let error = format!("{:#}", parse(arguments).expect_err("a refused command line"));
         assert!(error.contains(want), "{arguments:?}: the failure {error:?} must name {want:?}");
     }
     // A path of the recipe is UTF-8, and the trace destination goes through the same path rule.
@@ -205,7 +205,7 @@ fn the_option_surface_is_exactly_what_the_action_passes() {
             OsString::from("--flagfile=recipe.txt"),
             OsString::from_vec(b"--trace-file=out/\xff.spans.json".to_vec()),
         ];
-        let error = options::parse(arguments).expect_err("a refused command line");
+        let error = format!("{:#}", options::parse(arguments).expect_err("a refused command line"));
         assert!(error.contains("not valid UTF-8"), "the failure {error:?} must name the encoding");
     }
 
@@ -213,10 +213,7 @@ fn the_option_surface_is_exactly_what_the_action_passes() {
     let dir = tempfile::tempdir().expect("a scratch directory");
     let outcome = run_in(dir.path(), &["--flagfile=recipe.txt".into(), "--tracefile=x".into()]);
     assert_eq!(outcome.code, FAILURE);
-    assert_eq!(
-        outcome.stderr,
-        format!("ERROR: flag provided but not defined: -tracefile\n{}\n", options::USAGE)
-    );
+    assert_eq!(outcome.stderr, format!("ERROR: unknown option: --tracefile\n{}\n", options::USAGE));
 }
 
 #[test]

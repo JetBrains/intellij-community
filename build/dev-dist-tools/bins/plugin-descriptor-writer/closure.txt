@@ -2,13 +2,13 @@ adler2
 anyhow
 appinfo
 cfg_if
+cli
 crc32fast
 equivalent
 flate2
 foldhash
 hashbrown
 indexmap
-lexopt
 memchr
 memmap2
 miniz_oxide

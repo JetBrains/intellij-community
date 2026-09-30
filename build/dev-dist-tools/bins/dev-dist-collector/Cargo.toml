@@ -17,7 +17,7 @@ filemeta.workspace = true
 fscopy.workspace = true
 trace.workspace = true
 xxh3.workspace = true
-lexopt.workspace = true
+cli.workspace = true
 anyhow.workspace = true
 serde.workspace = true
 

@@ -651,19 +651,24 @@ fn invalid_input() {
             ],
             "ERROR: --bazel-targets must be specified at most once\n",
         ),
-        (vec!["--unknown=x".to_owned()], "ERROR: unknown option \"--unknown\"\n"),
         (
-            vec!["part.json".to_owned()],
-            "ERROR: expected an option in the '--key=value' form, but got \"part.json\"\n",
+            vec![
+                format!("--bazel-targets={targets}"),
+                "--output=out.json".to_owned(),
+                "--unknown=x".to_owned(),
+            ],
+            "ERROR: unknown option: --unknown\n",
         ),
         (
-            vec!["--part=".to_owned()],
-            "ERROR: expected an option in the '--key=value' form, but got \"--part=\"\n",
+            vec![
+                format!("--bazel-targets={targets}"),
+                "--output=out.json".to_owned(),
+                "part.json".to_owned(),
+            ],
+            "ERROR: expected an option in the form --key=value, but got \"part.json\"\n",
         ),
-        (
-            vec!["--part".to_owned()],
-            "ERROR: expected an option in the '--key=value' form, but got \"--part\"\n",
-        ),
+        (vec!["--part=".to_owned()], "ERROR: --part must not be empty\n"),
+        (vec!["--part".to_owned()], "ERROR: --part takes a value, as in --part=<value>\n"),
     ] {
         let result = run_tool(&args);
         assert_eq!((result.code, result.errors.as_str()), (1, message), "{args:?}");

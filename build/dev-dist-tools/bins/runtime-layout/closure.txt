@@ -1,11 +1,11 @@
 anyhow
+cli
 distpath
 equivalent
 foldhash
 hashbrown
 indexmap
 itoa
-lexopt
 memchr
 planfile
 quick_xml

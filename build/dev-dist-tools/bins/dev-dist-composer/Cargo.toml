@@ -18,7 +18,7 @@ serde.workspace = true
 serde_json.workspace = true
 trace.workspace = true
 xxh3.workspace = true
-lexopt.workspace = true
+cli.workspace = true
 rayon.workspace = true
 
 [dev-dependencies]

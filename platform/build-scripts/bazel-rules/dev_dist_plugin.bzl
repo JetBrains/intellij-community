@@ -97,7 +97,7 @@ def dev_dist_plugin(
         embedded_descriptor_source: The direct label of an embedded product descriptor.
         embedded_descriptors: Exact descriptor targets mapped to resolver load paths.
         embedded_library_descriptors: Ordered Java containers mapped to space-separated resolver load paths.
-        embedded_modules: The embedded descriptor search scope by JPS module name.
+        embedded_modules: Unused. The `modules` attribute of the embedded product descriptor, which the generator still sets.
         embedded_separate_jar: Embedded content modules packed into separate jars.
         frontend_application_info: The application info template of the embedded frontend. Stated together with the other
             `frontend_` label by the plugin that packs the JetBrains Client, and empty for every other plugin.

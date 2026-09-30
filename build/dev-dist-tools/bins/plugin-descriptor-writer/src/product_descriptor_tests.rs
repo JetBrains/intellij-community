@@ -9,7 +9,7 @@ use crate::embedded_product::EmbeddedProductRequest;
 use crate::product_descriptor::{
     PLUGIN_CLASS_PATH_FORMAT_VERSION, ProductDescriptorRequest, parse_product_descriptor_request, resolve_product_descriptor,
 };
-use crate::test_support::{assert_absent, lines, option_lines, path_string, read, read_bytes, run_request, temp_dir, testdata, write};
+use crate::test_support::{assert_absent, lines, mode_request, path_string, read, read_bytes, run_request, temp_dir, testdata, write};
 
 /// The declared descriptors of the fixture.
 fn product_descriptor_inputs() -> Vec<String> {
@@ -170,7 +170,7 @@ fn product_descriptor_keeps_a_scrambled_module_empty() {
 
 #[test]
 fn product_descriptor_request_is_parsed() {
-    let parsed = parse_product_descriptor_request(&option_lines(&[
+    let parsed = mode_request(&[
         "--out=out/plugin.xml",
         "--source=source.xml",
         "--product-descriptor",
@@ -183,7 +183,8 @@ fn product_descriptor_request_is_parsed() {
         "--refused-content-module=y",
         "--scrambled-content-module=a.b",
         "--scrambled-content-module=a.b",
-    ]))
+    ])
+    .and_then(parse_product_descriptor_request)
     .unwrap();
     assert_eq!(
         parsed,
@@ -217,16 +218,6 @@ fn product_descriptor_rejects_invalid_requests() {
     let with = |extra: &'static str| -> Vec<&'static str> { valid.iter().copied().chain([extra]).collect() };
     for (name, request, want) in [
         (
-            "no mode",
-            vec!["--out=o", "--source=s", "--main-module=m"],
-            "--product-descriptor is required",
-        ),
-        (
-            "other mode",
-            vec!["--embedded-product", "--out=o"],
-            "--product-descriptor is required",
-        ),
-        (
             "no output",
             vec!["--product-descriptor", "--source=s", "--main-module=m"],
             "--out is required",
@@ -246,27 +237,23 @@ fn product_descriptor_rejects_invalid_requests() {
             vec!["--product-descriptor", "--out=o", "--source=s", "--main-module=m"],
             "--plugin-classpath-prefix is required",
         ),
-        (
-            "search scope",
-            with("--module=intellij.product"),
-            "unknown product descriptor option",
-        ),
-        ("repeated source", with("--source=t"), "--source is stated more than once"),
-        ("unknown option", with("--unknown=1"), "unknown product descriptor option"),
+        ("search scope", with("--module=intellij.product"), "unknown option: --module"),
+        ("repeated source", with("--source=t"), "--source must be specified at most once"),
+        ("unknown option", with("--unknown=1"), "unknown option: --unknown"),
         (
             "embedded product option",
             with("--separate-jar=a.b"),
-            "unknown product descriptor option",
+            "unknown option: --separate-jar",
         ),
         (
             "plugin option",
             with("--plugin-descriptor=a.xml=a.xml"),
-            "unknown product descriptor option",
+            "unknown option: --plugin-descriptor",
         ),
         ("file pair", with("--descriptor=missing-separator"), "a descriptor is"),
         ("jar pair", with("--descriptor-in-jar==file.jar"), "a descriptor is"),
     ] {
-        match parse_product_descriptor_request(&option_lines(&request)) {
+        match mode_request(&request).and_then(parse_product_descriptor_request) {
             Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
             Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
         }
@@ -328,7 +315,7 @@ fn product_descriptor_failures_write_no_output() {
             }
         }
         let lines: Vec<&str> = request.iter().map(String::as_str).collect();
-        let parsed = parse_product_descriptor_request(&option_lines(&lines)).unwrap();
+        let parsed = mode_request(&lines).and_then(parse_product_descriptor_request).unwrap();
         match resolve_product_descriptor(&parsed) {
             Ok(content) => panic!("{name}: the resolution did not fail:\n{}", content.text),
             Err(error) => {

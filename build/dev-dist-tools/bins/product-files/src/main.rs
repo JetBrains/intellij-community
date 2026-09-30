@@ -13,7 +13,7 @@
 mod model;
 mod render;
 
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsString;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -24,27 +24,6 @@ use appinfo::{ApplicationInfo, Replacement};
 fn main() -> ExitCode {
     ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
 }
-
-/// The options in the order that the required check reports them. The first [`REQUIRED_OPTIONS`] are required.
-const OPTION_NAMES: [&str; 12] = [
-    "--model",
-    "--platform",
-    "--application-info",
-    "--build-number",
-    "--build-date-seconds",
-    "--opened-packages",
-    "--idea-properties",
-    "--build-txt-out",
-    "--idea-properties-out",
-    "--vmoptions-out",
-    "--product-info-out",
-    "--host-application-info",
-];
-
-const REQUIRED_OPTIONS: usize = 11;
-
-/// The one option that a request can state more than once, as `KEY=VALUE`. It is not in [`OPTION_NAMES`].
-const REPLACEMENT_OPTION: &str = "--replacement";
 
 struct Options {
     model: PathBuf,
@@ -72,12 +51,12 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
     let options = match parse_options(args) {
         Ok(options) => options,
         Err(error) => {
-            let _ = writeln!(errors, "ERROR: {error:#}");
+            cli::report(errors, &error);
             return 2;
         }
     };
     if let Err(error) = render_to_files(&options) {
-        let _ = writeln!(errors, "ERROR: {error:#}");
+        cli::report(errors, &error);
         return 1;
     }
     let _ = writeln!(
@@ -89,49 +68,35 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
     0
 }
 
+/// Reads the options. Every option but `--host-application-info` and `--replacement` is required, and the first
+/// missing one fails in this order. `--replacement` is the one option that a request can state more than once, as
+/// `KEY=VALUE`.
 fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
-    let form_error = |arg: &OsStr| {
-        anyhow::anyhow!(
-            "expected one of the options in the '--key=value' form, but got {:?}",
-            arg.to_string_lossy()
-        )
+    let mut options = cli::parse(args)?;
+    let model = options.require("--model")?.into();
+    let platform = options.require("--platform")?;
+    let application_info = options.require("--application-info")?.into();
+    let build_number = options.require("--build-number")?.into();
+    let build_date_seconds = options.require("--build-date-seconds")?;
+    let opened_packages = options.require("--opened-packages")?.into();
+    let idea_properties = options.require("--idea-properties")?.into();
+    let build_txt_out = options.require("--build-txt-out")?.into();
+    let idea_properties_out = options.require("--idea-properties-out")?.into();
+    let vm_options_out = options.require("--vmoptions-out")?.into();
+    let product_info_out = options.require("--product-info-out")?.into();
+    let host_application_info = match options.take("--host-application-info")? {
+        Some(value) if value.is_empty() => anyhow::bail!("--host-application-info must not be empty"),
+        value => value.map(PathBuf::from),
     };
-    let mut values: [Option<OsString>; OPTION_NAMES.len()] = Default::default();
     let mut replacements = Vec::new();
-    let mut parser = lexopt::Parser::from_args(args);
-    while let Some(arg) = parser.next()? {
-        let name = match arg {
-            lexopt::Arg::Long(name) => format!("--{name}"),
-            lexopt::Arg::Short(short) => return Err(form_error(OsStr::new(&format!("-{short}")))),
-            lexopt::Arg::Value(value) => return Err(form_error(&value)),
-        };
-        let Some(value) = parser.optional_value() else {
-            return Err(form_error(OsStr::new(&name)));
-        };
-        if name == REPLACEMENT_OPTION {
-            replacements.push(parse_replacement(&value, &replacements)?);
-            continue;
-        }
-        let Some(index) = OPTION_NAMES.iter().position(|known| *known == name) else {
-            let mut arg = OsString::from(format!("{name}="));
-            arg.push(&value);
-            return Err(form_error(&arg));
-        };
-        if values[index].is_some() {
-            anyhow::bail!("{name} must be specified at most once");
-        }
-        if value.is_empty() && index >= REQUIRED_OPTIONS {
-            anyhow::bail!("{name} must not be empty");
-        }
-        values[index] = Some(value);
+    for value in options.take_all("--replacement")? {
+        replacements.push(parse_replacement(&value, &replacements)?);
     }
-    if let Some(index) = values[..REQUIRED_OPTIONS]
-        .iter()
-        .position(|value| value.as_ref().is_none_or(|value| value.is_empty()))
-    {
-        anyhow::bail!("{} is required", OPTION_NAMES[index]);
-    }
-    let [
+    options.finish()?;
+    let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
+        anyhow::bail!("--build-date-seconds is not a number of seconds: {build_date_seconds:?}");
+    };
+    Ok(Options {
         model,
         platform,
         application_info,
@@ -144,35 +109,12 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         vm_options_out,
         product_info_out,
         host_application_info,
-    ] = values;
-    let required = |value: Option<OsString>| value.expect("the required check found every required option");
-    let build_date_seconds = required(build_date_seconds);
-    let Some(build_date_seconds) = build_date_seconds.to_str().and_then(|seconds| seconds.parse::<i64>().ok()) else {
-        anyhow::bail!(
-            "--build-date-seconds is not a number of seconds: {:?}",
-            build_date_seconds.to_string_lossy()
-        );
-    };
-    Ok(Options {
-        model: required(model).into(),
-        platform: required(platform).to_string_lossy().into_owned(),
-        application_info: required(application_info).into(),
-        build_number: required(build_number).into(),
-        build_date_seconds,
-        opened_packages: required(opened_packages).into(),
-        idea_properties: required(idea_properties).into(),
-        build_txt_out: required(build_txt_out).into(),
-        idea_properties_out: required(idea_properties_out).into(),
-        vm_options_out: required(vm_options_out).into(),
-        product_info_out: required(product_info_out).into(),
-        host_application_info: host_application_info.map(PathBuf::from),
         replacements,
     })
 }
 
 /// Parses one `--replacement=KEY=VALUE`. The key must be new and not empty. The value can be empty.
-fn parse_replacement(value: &OsStr, stated: &[Replacement]) -> anyhow::Result<Replacement> {
-    let text = value.to_string_lossy();
+fn parse_replacement(text: &str, stated: &[Replacement]) -> anyhow::Result<Replacement> {
     let Some((key, replacement)) = text.split_once('=').filter(|(key, _)| !key.is_empty()) else {
         anyhow::bail!("a replacement is '<key>=<value>', and {text:?} is not");
     };

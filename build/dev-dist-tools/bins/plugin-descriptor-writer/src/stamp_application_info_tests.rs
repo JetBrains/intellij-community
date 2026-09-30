@@ -6,7 +6,7 @@ use std::path::Path;
 
 use crate::application_info::Replacement;
 use crate::stamp_application_info::{StampApplicationInfoRequest, parse_stamp_application_info_request, stamp_application_info};
-use crate::test_support::{assert_absent, lines, option_lines, path_string, read, run_request, temp_dir, testdata, write};
+use crate::test_support::{assert_absent, lines, mode_request, path_string, read, run_request, temp_dir, testdata, write};
 
 fn stamp_request(output: &Path, source: &str) -> Vec<String> {
     vec![
@@ -57,13 +57,14 @@ fn stamp_application_info_reads_no_xml() {
 
 #[test]
 fn stamp_application_info_request() {
-    let parsed = parse_stamp_application_info_request(&option_lines(&[
+    let parsed = mode_request(&[
         "--out=out.xml",
         "--stamp-application-info",
         "--source=a file=1.xml",
         "--replacement=B=x = y",
         "--replacement=A=",
-    ]))
+    ])
+    .and_then(parse_stamp_application_info_request)
     .unwrap();
     assert_eq!(
         parsed,
@@ -87,31 +88,26 @@ fn stamp_application_info_rejects_invalid_requests() {
     };
     let with = |extra: &[&'static str]| -> Vec<&'static str> { valid.iter().chain(extra).copied().collect() };
     for (name, request, want) in [
-        ("no mode", valid[1..].to_vec(), "--stamp-application-info is required"),
         ("no output", without("--out"), "--out is required"),
         ("no source", without("--source"), "--source is required"),
         ("no replacement", without("--replacement"), "--replacement is required"),
-        ("unknown option", with(&["--unknown=1"]), "unknown application info stamp option"),
+        ("unknown option", with(&["--unknown=1"]), "unknown option: --unknown"),
         (
             "build number option",
             with(&["--build-number=build.txt"]),
-            "unknown application info stamp option '--build-number'",
+            "unknown option: --build-number",
         ),
         (
             "product code option",
             with(&["--product-code=IU"]),
-            "unknown application info stamp option '--product-code'",
+            "unknown option: --product-code",
         ),
         (
             "frontend option",
             with(&["--client-application-info=c.xml"]),
-            "unknown application info stamp option",
+            "unknown option: --client-application-info",
         ),
-        (
-            "override",
-            with(&["--eap-override=true"]),
-            "unknown application info stamp option '--eap-override'",
-        ),
+        ("override", with(&["--eap-override=true"]), "unknown option: --eap-override"),
         ("replacement pair", with(&["--replacement=missing-separator"]), "a replacement is"),
         ("replacement key", with(&["--replacement==value"]), "a replacement is"),
         (
@@ -119,9 +115,9 @@ fn stamp_application_info_rejects_invalid_requests() {
             with(&["--replacement=A=2"]),
             "the replacement 'A' is stated more than once",
         ),
-        ("repeated source", with(&["--source=t"]), "--source is stated more than once"),
+        ("repeated source", with(&["--source=t"]), "--source must be specified at most once"),
     ] {
-        match parse_stamp_application_info_request(&option_lines(&request)) {
+        match mode_request(&request).and_then(parse_stamp_application_info_request) {
             Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
             Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
         }
@@ -139,7 +135,7 @@ fn stamp_application_info_failures_write_no_output() {
     let mut request = stamp_request(&output, &path_string(&source));
     request.push("--replacement=A=1".to_owned());
     let values: Vec<&str> = request.iter().map(String::as_str).collect();
-    let parsed = parse_stamp_application_info_request(&option_lines(&values)).unwrap();
+    let parsed = mode_request(&values).and_then(parse_stamp_application_info_request).unwrap();
     match stamp_application_info(&parsed) {
         Ok(text) => panic!("the stamp did not fail:\n{text}"),
         Err(error) => assert!(format!("{error:#}").contains("ApplicationInfo.xml"), "{error:#}"),

@@ -65,6 +65,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "component"
 version = "0.1.0"
 dependencies = [
@@ -87,9 +94,10 @@ checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 name = "content-module-packer"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "cli",
  "filemeta",
  "jarpack",
- "lexopt",
  "serde_json",
  "tempfile",
  "trace",
@@ -169,11 +177,11 @@ name = "dev-dist-collector"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cli",
  "component",
  "distpath",
  "filemeta",
  "fscopy",
- "lexopt",
  "planfile",
  "serde",
  "serde_json",
@@ -186,11 +194,11 @@ dependencies = [
 name = "dev-dist-composer"
 version = "0.1.0"
 dependencies = [
+ "cli",
  "component",
  "distpath",
  "filemeta",
  "fscopy",
- "lexopt",
  "libc",
  "rayon",
  "serde",
@@ -205,6 +213,7 @@ name = "dev-launcher"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cli",
  "component",
  "distpath",
  "filemeta",
@@ -430,12 +439,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
-name = "lexopt"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "803ec87c9cfb29b9d2633f20cba1f488db3fd53f2158b1024cbefb47ba05d413"
-
-[[package]]
 name = "libc"
 version = "0.2.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -519,8 +522,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "appinfo",
+ "cli",
  "flate2",
- "lexopt",
  "memmap2",
  "tempfile",
  "zip",
@@ -530,9 +533,10 @@ dependencies = [
 name = "plugin-remainder-packer"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "cli",
  "filemeta",
  "fscopy",
- "lexopt",
  "planfile",
  "pluginpack",
  "serde_json",
@@ -580,7 +584,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "appinfo",
- "lexopt",
+ "cli",
  "serde",
  "serde_json",
  "tempfile",
@@ -591,8 +595,8 @@ name = "project-model-tree"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cli",
  "fscopy",
- "lexopt",
  "rayon",
  "tempfile",
  "trace",
@@ -676,7 +680,7 @@ name = "runtime-layout"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "lexopt",
+ "cli",
  "planfile",
  "quick-xml",
  "serde",

@@ -173,22 +173,23 @@ fn compose_cli_rejects_invalid_options() {
     let spec = |args: &[&str]| args.iter().map(|arg| (*arg).to_owned()).collect::<Vec<_>>();
     for (args, message) in [
         (
-            spec(&["composition.json"]),
-            "ERROR: Expected an option in the '--key=value' form, but got 'composition.json'",
+            cli_args(&["composition.json"]),
+            "ERROR: expected an option in the form --key=value, but got \"composition.json\"",
         ),
         // The Starlark caller writes every option with a value.
         (
-            cli_args(&["--alpha"]),
-            "ERROR: Expected an option in the '--key=value' form, but got '--alpha'",
+            spec(&["--composition-spec"]),
+            "ERROR: --composition-spec takes a value, as in --composition-spec=<value>",
         ),
+        (cli_args(&["--alpha"]), "ERROR: unknown option: --alpha"),
         (
             cli_args(&["--trace-file=a", "--trace-file=b"]),
-            "ERROR: --trace-file must be specified at most once, but got 2 values: [a, b]",
+            "ERROR: --trace-file must be specified at most once",
         ),
-        (cli_args(&["--zeta=1", "--alpha=2"]), "ERROR: Unknown options: --alpha, --zeta"),
+        (cli_args(&["--zeta=1", "--alpha=2"]), "ERROR: unknown options: --alpha, --zeta"),
         (
             spec(&["--composition-spec=composition.json", "--output-dir="]),
-            "ERROR: --output-dir is required (no value and no fallback available)",
+            "ERROR: --output-dir is required",
         ),
         (spec(&["--output-dir=out"]), "ERROR: --composition-spec is required"),
         (spec(&["--composition-spec=absent.json"]), "absent.json"),
@@ -199,7 +200,11 @@ fn compose_cli_rejects_invalid_options() {
     }
     // A bare `--` is not the end of the options, and the other options do not change the error.
     for args in [cli_args(&["--"]), cli_args(&["--", "--zeta=1"])] {
-        assert_eq!(run_cli(&args), (1, "ERROR: Unknown options: --\n".to_owned()), "{args:?}");
+        assert_eq!(
+            run_cli(&args),
+            (1, "ERROR: expected an option in the form --key=value, but got \"--\"\n".to_owned()),
+            "{args:?}"
+        );
     }
     require_absent(directory.path().join("out"));
 }

@@ -1,5 +1,6 @@
 anyhow
 cfg_if
+cli
 component
 crossbeam_deque
 crossbeam_epoch
@@ -15,7 +16,6 @@ hashbrown
 httpdate
 indexmap
 itoa
-lexopt
 memchr
 planfile
 rayon

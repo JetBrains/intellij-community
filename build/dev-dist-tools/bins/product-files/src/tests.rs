@@ -479,22 +479,8 @@ fn the_tool_writes_the_four_files() {
 #[test]
 fn options_refuse_every_other_form() {
     for (args, expected) in [
-        (
-            vec!["--unknown=x"],
-            r#"ERROR: expected one of the options in the '--key=value' form, but got "--unknown=x""#,
-        ),
-        (
-            vec!["--model"],
-            r#"ERROR: expected one of the options in the '--key=value' form, but got "--model""#,
-        ),
-        (
-            vec!["model.json"],
-            r#"ERROR: expected one of the options in the '--key=value' form, but got "model.json""#,
-        ),
-        (
-            vec!["-m"],
-            r#"ERROR: expected one of the options in the '--key=value' form, but got "-m""#,
-        ),
+        (vec!["--model"], "ERROR: --model takes a value, as in --model=<value>"),
+        (vec!["-m"], r#"ERROR: expected an option in the form --key=value, but got "-m""#),
         (vec!["--model=a", "--model=b"], "ERROR: --model must be specified at most once"),
         (vec!["--model="], "ERROR: --model is required"),
         (vec![], "ERROR: --model is required"),
@@ -504,6 +490,25 @@ fn options_refuse_every_other_form() {
             (result.code, result.errors.as_str()),
             (2, format!("{expected}\n").as_str()),
             "{args:?}"
+        );
+    }
+    // A request with every required option refuses what no option takes.
+    let tool = ToolRun::new();
+    for (extra, expected) in [
+        ("--unknown=x", "ERROR: unknown option: --unknown"),
+        (
+            "model.json",
+            r#"ERROR: expected an option in the form --key=value, but got "model.json""#,
+        ),
+    ] {
+        let mut args = tool.base_args();
+        args.extend(IDEA.inputs());
+        args.push(extra.to_owned());
+        let result = run_tool(&args);
+        assert_eq!(
+            (result.code, result.errors.as_str()),
+            (2, format!("{expected}\n").as_str()),
+            "{extra}"
         );
     }
 }

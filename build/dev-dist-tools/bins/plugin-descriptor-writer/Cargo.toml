@@ -15,7 +15,7 @@ zip.workspace = true
 # `zip` reads a deflated entry through `flate2` with no default features. This dependency selects the default backend.
 flate2.workspace = true
 memmap2.workspace = true
-lexopt.workspace = true
+cli.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]

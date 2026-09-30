@@ -1,6 +1,7 @@
 adler2
 anyhow
 cfg_if
+cli
 crc32fast
 distpath
 equivalent
@@ -13,7 +14,6 @@ httpdate
 indexmap
 itoa
 jarpack
-lexopt
 memchr
 memmap2
 miniz_oxide

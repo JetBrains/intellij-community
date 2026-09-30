@@ -90,26 +90,12 @@ fn main() {
 /// `local-home --layout=<file> --output-dir=<directory>`: links the local home of `PreBuiltDevMain`. It returns the exit
 /// code: 2 for an option error, 1 for any other error.
 fn run_local_home(args: &[OsString], output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    let mut layout = None;
-    let mut output_dir = None;
-    for arg in args {
-        let parsed = arg
-            .to_str()
-            .and_then(|arg| arg.split_once('='))
-            .filter(|(_, value)| !value.is_empty());
-        let destination = match parsed {
-            Some(("--layout", value)) if layout.is_none() => (&mut layout, value),
-            Some(("--output-dir", value)) if output_dir.is_none() => (&mut output_dir, value),
-            _ => {
-                let _ = writeln!(errors, "ERROR: invalid local-home option: {}", arg.display());
-                return 2;
-            }
-        };
-        *destination.0 = Some(destination.1.to_owned());
-    }
-    let (Some(layout), Some(output_dir)) = (layout, output_dir) else {
-        let _ = writeln!(errors, "ERROR: local-home requires --layout and --output-dir");
-        return 2;
+    let (layout, output_dir) = match parse_local_home(args) {
+        Ok(options) => options,
+        Err(error) => {
+            cli::report(errors, &error);
+            return 2;
+        }
     };
     let env = local_home::RunfilesEnv::from_process();
     if let Err(error) = local_home::link_local_home(Path::new(&layout), Path::new(&output_dir), &env) {
@@ -118,6 +104,15 @@ fn run_local_home(args: &[OsString], output: &mut dyn Write, errors: &mut dyn Wr
     }
     let _ = writeln!(output, "Prepared the local dev home");
     0
+}
+
+/// Reads `--layout=<file>` and `--output-dir=<directory>`, the two options of `local-home`.
+fn parse_local_home(args: &[OsString]) -> anyhow::Result<(String, String)> {
+    let mut options = cli::parse(args.iter().cloned())?;
+    let layout = options.require("--layout")?;
+    let output_dir = options.require("--output-dir")?;
+    options.finish()?;
+    Ok((layout, output_dir))
 }
 
 /// Reads the launch manifest and the distribution, and returns the JVM command line. `getenv` returns an empty string

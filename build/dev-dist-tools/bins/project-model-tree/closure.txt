@@ -1,5 +1,6 @@
 anyhow
 cfg_if
+cli
 crossbeam_deque
 crossbeam_epoch
 crossbeam_utils
@@ -12,7 +13,6 @@ hashbrown
 httpdate
 indexmap
 itoa
-lexopt
 memchr
 rayon
 rayon_core

@@ -2,16 +2,14 @@
 
 //! The `--application-info` mode: the executor of `dev_dist_frontend_application_info`.
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use appinfo::{ApplicationInfoElements, descriptorxml, merge_host_application_info};
 
 #[cfg(test)]
 pub(crate) use appinfo::APPLICATION_INFO_NAMESPACE;
 pub(crate) use appinfo::{Replacement, replace_markers};
 
-use crate::{
-    Mode, OptionLine, assign, is_mode_line, read_text, refuse_repeated_options, report, require_mode, require_options, write_output,
-};
+use crate::{read_text, report, write_output};
 
 /// The declared inputs of `dev_dist_frontend_application_info`.
 ///
@@ -25,8 +23,8 @@ pub(crate) struct ApplicationInfoRequest {
     pub product_application_info: String,
 }
 
-pub(crate) fn run(lines: &[OptionLine]) -> i32 {
-    let parsed = match parse_application_info_request(lines) {
+pub(crate) fn run(options: cli::Options) -> i32 {
+    let parsed = match parse_application_info_request(options) {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
@@ -59,26 +57,12 @@ pub(crate) fn application_info_replacements() -> [Replacement; 1] {
     [Replacement::new("BUILTIN_PLUGINS_URL", "")]
 }
 
-pub(crate) fn parse_application_info_request(lines: &[OptionLine]) -> Result<ApplicationInfoRequest> {
-    require_mode(lines, Mode::ApplicationInfo)?;
-    refuse_repeated_options(lines, &[])?;
-    let mut parsed = ApplicationInfoRequest::default();
-    for line in lines {
-        if is_mode_line(line, Mode::ApplicationInfo) {
-            continue;
-        }
-        let slot = match line.name.as_str() {
-            "--out" => &mut parsed.output,
-            "--client-application-info" => &mut parsed.client_application_info,
-            "--product-application-info" => &mut parsed.product_application_info,
-            option => bail!("unknown frontend application info option '{option}'"),
-        };
-        assign(slot, line)?;
-    }
-    require_options(&[
-        ("--out", &parsed.output),
-        ("--client-application-info", &parsed.client_application_info),
-        ("--product-application-info", &parsed.product_application_info),
-    ])?;
-    Ok(parsed)
+pub(crate) fn parse_application_info_request(mut options: cli::Options) -> Result<ApplicationInfoRequest> {
+    let request = ApplicationInfoRequest {
+        output: options.require("--out")?,
+        client_application_info: options.require("--client-application-info")?,
+        product_application_info: options.require("--product-application-info")?,
+    };
+    options.finish()?;
+    Ok(request)
 }

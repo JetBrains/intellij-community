@@ -61,7 +61,6 @@ def _dev_dist_embedded_product_descriptor_impl(ctx):
     args.add(source, format = "--source=%s")
     args.add_all(declared.descriptor_args, format_each = "--descriptor=%s")
     args.add_all(declared.descriptor_jar_args, format_each = "--descriptor-in-jar=%s")
-    args.add_all(ctx.attr.modules, format_each = "--module=%s")
     args.add_all(ctx.attr.separate_jar, format_each = "--separate-jar=%s")
     ctx.actions.run(
         mnemonic = "DevDistEmbeddedProductDescriptor",
@@ -90,7 +89,8 @@ _dev_dist_embedded_product_descriptor = rule(
             doc = "Ordered runtime jar containers valued by space-separated resolver load paths.",
         ),
         "modules": attr.string_list(
-            doc = "The descriptor search scope by JPS module name.",
+            doc = """Unused. The writer reads every descriptor from `descriptors` and `library_descriptors`, so the action
+            states no search scope. The dev-dist generator still sets the attribute.""",
         ),
         "separate_jar": attr.string_list(
             doc = "Content modules whose embedded descriptor takes separate-jar=true.",

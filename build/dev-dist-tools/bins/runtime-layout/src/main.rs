@@ -29,8 +29,7 @@ mod part;
 mod plan;
 mod targets;
 
-use std::collections::HashMap;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsString;
 use std::io::Write;
 use std::path::Path;
 use std::process::ExitCode;
@@ -60,21 +59,25 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
             0
         }
         Err(error) => {
-            let _ = writeln!(errors, "ERROR: {error:#}");
+            cli::report(errors, &error);
             1
         }
     }
 }
 
 fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
-    let values = parse_options(args, &["--part", "--frontend-only-part"], &["--bazel-targets", "--output"])?;
-    let Some(part_files) = values.get("--part") else {
+    let mut options = cli::parse(args)?;
+    let part_files = values(&mut options, "--part")?;
+    let frontend_only_files = values(&mut options, "--frontend-only-part")?;
+    let bazel_targets = options.require("--bazel-targets")?;
+    let output = options.require("--output")?;
+    options.finish()?;
+    if part_files.is_empty() {
         bail!("--part is required");
-    };
-    let libraries = targets::read_library_index(Path::new(&values["--bazel-targets"][0]))?;
-    let frontend_only_files = values.get("--frontend-only-part").map(Vec::as_slice).unwrap_or_default();
+    }
+    let libraries = targets::read_library_index(Path::new(&bazel_targets))?;
     let mut parts = Vec::with_capacity(part_files.len() + frontend_only_files.len());
-    for (files, frontend_only) in [(part_files.as_slice(), false), (frontend_only_files, true)] {
+    for (files, frontend_only) in [(part_files.as_slice(), false), (frontend_only_files.as_slice(), true)] {
         for file in files {
             let part = read_part(Path::new(file))?;
             let mut assembled = AssembledPart {
@@ -82,11 +85,11 @@ fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
                 ..AssembledPart::default()
             };
             if part.order == LAYOUT_ORDER {
-                let jar_order = std::fs::read_to_string(&part.jar_order)
-                    .with_context(|| format!("{}: cannot read {}", file.to_string_lossy(), part.jar_order))?;
+                let jar_order =
+                    std::fs::read_to_string(&part.jar_order).with_context(|| format!("{file}: cannot read {}", part.jar_order))?;
                 for (index, line) in jar_order.lines().enumerate() {
                     if line.is_empty() {
-                        bail!("{}: line {} of {} is empty", file.to_string_lossy(), index + 1, part.jar_order);
+                        bail!("{file}: line {} of {} is empty", index + 1, part.jar_order);
                     }
                     assembled.jar_order.push(line.to_owned());
                 }
@@ -98,12 +101,10 @@ fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
         }
     }
     let result = assemble(&parts, &libraries)?;
-    let output = &values["--output"][0];
-    write_json(Path::new(output), &result, true)?;
+    write_json(Path::new(&output), &result, true)?;
     Ok(format!(
-        "Wrote the runtime module repository layout of {} plugins to {}",
-        result.plugins.len(),
-        output.to_string_lossy()
+        "Wrote the runtime module repository layout of {} plugins to {output}",
+        result.plugins.len()
     ))
 }
 
@@ -116,90 +117,49 @@ struct IndependentLibraries {
 }
 
 fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<String> {
-    let values = parse_options(
-        args,
-        &["--independent-libraries", "--refused-module"],
-        &[
-            "--plan",
-            "--catalogue",
-            "--descriptor-module",
-            "--plugin-directory",
-            "--descriptor",
-            "--output",
-        ],
-    )?;
-    let single = |name: &str| values[name][0].to_string_lossy().into_owned();
+    let mut options = cli::parse(args)?;
+    let independent_library_files = values(&mut options, "--independent-libraries")?;
+    let refused_modules = values(&mut options, "--refused-module")?;
+    let plan_path = options.require("--plan")?;
+    let catalogue = options.require("--catalogue")?;
+    let descriptor_module = options.require("--descriptor-module")?;
+    let plugin_directory = options.require("--plugin-directory")?;
+    let descriptor = options.require("--descriptor")?;
+    let output = options.require("--output")?;
+    options.finish()?;
     let mut independent_libraries = Vec::new();
-    for file in values.get("--independent-libraries").into_iter().flatten() {
+    for file in &independent_library_files {
         let libraries: IndependentLibraries = planfile::json::read(Path::new(file))?;
         if libraries.version != PART_VERSION {
-            bail!(
-                "{} has version {}, but {PART_VERSION} is expected",
-                file.to_string_lossy(),
-                libraries.version
-            );
+            bail!("{file} has version {}, but {PART_VERSION} is expected", libraries.version);
         }
         independent_libraries.extend(libraries.libraries);
     }
-    let refused_modules: Vec<String> = values
-        .get("--refused-module")
-        .into_iter()
-        .flatten()
-        .map(|module| module.to_string_lossy().into_owned())
-        .collect();
-    let plan_path = &values["--plan"][0];
-    let plan = planfile::read(Path::new(plan_path))?;
-    let catalogue: planfile::contract::Catalogue = planfile::json::read(Path::new(&values["--catalogue"][0]))?;
+    let plan = planfile::read(Path::new(&plan_path))?;
+    let catalogue: planfile::contract::Catalogue = planfile::json::read(Path::new(&catalogue))?;
     let result = plan::part_from_plan(
         &plan,
         &catalogue,
         &independent_libraries,
         &refused_modules,
-        &single("--descriptor-module"),
-        &single("--plugin-directory"),
-        &single("--descriptor"),
+        &descriptor_module,
+        &plugin_directory,
+        &descriptor,
     )
-    .with_context(|| plan_path.to_string_lossy().into_owned())?;
-    let output = &values["--output"][0];
-    write_json(Path::new(output), &result, false)?;
+    .with_context(|| plan_path.clone())?;
+    write_json(Path::new(&output), &result, false)?;
     Ok(format!(
-        "Wrote the layout part of {} with {} jars to {}",
+        "Wrote the layout part of {} with {} jars to {output}",
         result.descriptor_module,
-        result.jars.len(),
-        output.to_string_lossy()
+        result.jars.len()
     ))
 }
 
-/// Reads `--key=value` options. A key of `repeated` may occur any number of times. Every key of `required` occurs
-/// exactly once. The values keep the order of the arguments.
-fn parse_options(args: Vec<OsString>, repeated: &[&str], required: &[&str]) -> anyhow::Result<HashMap<String, Vec<OsString>>> {
-    let form_error = |arg: &OsStr| anyhow::anyhow!("expected an option in the '--key=value' form, but got {:?}", arg.to_string_lossy());
-    let mut values: HashMap<String, Vec<OsString>> = HashMap::new();
-    let mut parser = lexopt::Parser::from_args(args);
-    while let Some(arg) = parser.next()? {
-        let name = match arg {
-            lexopt::Arg::Long(name) => format!("--{name}"),
-            lexopt::Arg::Short(short) => return Err(form_error(OsStr::new(&format!("-{short}")))),
-            lexopt::Arg::Value(value) => return Err(form_error(&value)),
-        };
-        let value = match parser.optional_value() {
-            Some(value) if !value.is_empty() => value,
-            Some(_) => return Err(form_error(OsStr::new(&format!("{name}=")))),
-            None => return Err(form_error(OsStr::new(&name))),
-        };
-        let is_required = required.contains(&name.as_str());
-        if !is_required && !repeated.contains(&name.as_str()) {
-            bail!("unknown option {name:?}");
-        }
-        if is_required && values.contains_key(&name) {
-            bail!("{name} must be specified at most once");
-        }
-        values.entry(name).or_default().push(value);
-    }
-    for name in required {
-        if !values.contains_key(*name) {
-            bail!("{name} is required");
-        }
+/// Takes every value of a list option. A value must not be empty, because each one names a file or a module.
+fn values(options: &mut cli::Options, name: &str) -> anyhow::Result<Vec<String>> {
+    let values = options.take_all(name)?;
+    if values.iter().any(String::is_empty) {
+        bail!("{name} must not be empty");
     }
     Ok(values)
 }

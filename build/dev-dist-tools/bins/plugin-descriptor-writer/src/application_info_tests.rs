@@ -7,7 +7,7 @@ use std::path::Path;
 use crate::application_info::{
     APPLICATION_INFO_NAMESPACE, ApplicationInfoRequest, parse_application_info_request, resolve_application_info,
 };
-use crate::test_support::{assert_absent, option_lines, path_string, read, run_request, temp_dir, testdata, write};
+use crate::test_support::{assert_absent, mode_request, path_string, read, run_request, temp_dir, testdata, write};
 
 fn application_info_request(output: &Path, client: &str, product: &str) -> Vec<String> {
     vec![
@@ -49,12 +49,13 @@ fn application_info_matches_kotlin() {
 
 #[test]
 fn application_info_request_is_parsed() {
-    let parsed = parse_application_info_request(&option_lines(&[
+    let parsed = mode_request(&[
         "--out=out/client.xml",
         "--application-info",
         "--client-application-info=a file=1.xml",
         "--product-application-info=product.xml",
-    ]))
+    ])
+    .and_then(parse_application_info_request)
     .unwrap();
     assert_eq!(
         parsed,
@@ -87,7 +88,7 @@ fn application_info_requires_files() {
             } else {
                 format!("{option} is required")
             };
-            match parse_application_info_request(&option_lines(&values)) {
+            match mode_request(&values).and_then(parse_application_info_request) {
                 Ok(parsed) => panic!("{option}/{value}: accepted {parsed:?}"),
                 Err(error) => assert!(format!("{error:#}").contains(&want), "{option}/{value}: {error:#}"),
             }
@@ -99,31 +100,30 @@ fn application_info_requires_files() {
 
 #[test]
 fn application_info_rejects_invalid_requests() {
+    let valid = [
+        "--application-info",
+        "--out=o",
+        "--client-application-info=c",
+        "--product-application-info=p",
+    ];
+    let with = |extra: &'static str| [valid.as_slice(), &[extra]].concat();
     for (request, want) in [
-        (&[][..], "--application-info is required"),
-        (&["--embedded-product"][..], "--application-info is required"),
-        (&["--application-info", "--application-info"][..], "only one mode flag"),
-        (&["--application-info", "--embedded-product"][..], "only one mode flag"),
-        (&["--application-info=true"][..], "takes no value"),
-        (&["--application-info", "--out=o", "--out=p"][..], "--out is stated more than once"),
         (
-            &["--application-info", "--unknown=1"][..],
-            "unknown frontend application info option",
+            vec!["--application-info", "--application-info"],
+            "--application-info must be specified at most once",
         ),
+        (vec!["--application-info", "--embedded-product"], "only one mode flag"),
+        (vec!["--application-info=true"], "takes no value"),
         (
-            &["--application-info", "--source=client.xml"][..],
-            "unknown frontend application info option",
+            vec!["--application-info", "--out=o", "--out=p"],
+            "--out must be specified at most once",
         ),
-        (
-            &["--application-info", "--build-number-file=build.txt"][..],
-            "unknown frontend application info option",
-        ),
-        (
-            &["--application-info", "--build-number=build.txt"][..],
-            "unknown frontend application info option '--build-number'",
-        ),
+        (with("--unknown=1"), "unknown option: --unknown"),
+        (with("--source=client.xml"), "unknown option: --source"),
+        (with("--build-number-file=build.txt"), "unknown option: --build-number-file"),
+        (with("--build-number=build.txt"), "unknown option: --build-number"),
     ] {
-        match parse_application_info_request(&option_lines(request)) {
+        match mode_request(&request).and_then(parse_application_info_request) {
             Ok(parsed) => panic!("{request:?}: accepted {parsed:?}"),
             Err(error) => assert!(format!("{error:#}").contains(want), "{request:?}: {error:#}"),
         }
@@ -145,10 +145,10 @@ fn application_info_refuses_the_overrides() {
         let mut request = application_info_request(&output, "client", "product");
         request.push(option.to_owned());
         let values: Vec<&str> = request.iter().map(String::as_str).collect();
-        let error = parse_application_info_request(&option_lines(&values)).unwrap_err();
+        let error = mode_request(&values).and_then(parse_application_info_request).unwrap_err();
         let name = option.split('=').next().unwrap_or(option);
         assert!(
-            format!("{error:#}").contains(&format!("unknown frontend application info option '{name}'")),
+            format!("{error:#}").contains(&format!("unknown option: {name}")),
             "{option}: {error:#}"
         );
         assert_eq!(run_request(dir, &request), 2, "{option}");
@@ -236,7 +236,7 @@ fn application_info_rejects_invalid_inputs() {
             format!("--product-application-info={}", path_string(&file("product"))),
         ];
         let values: Vec<&str> = request.iter().map(String::as_str).collect();
-        let parsed = parse_application_info_request(&option_lines(&values)).unwrap();
+        let parsed = mode_request(&values).and_then(parse_application_info_request).unwrap();
         match resolve_application_info(&parsed) {
             Ok(text) => panic!("{name}: the resolution did not fail:\n{text}"),
             Err(error) => assert!(format!("{error:#}").contains(&want), "{name}: {error:#} does not say {want:?}"),

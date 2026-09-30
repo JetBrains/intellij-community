@@ -20,6 +20,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | Crate | Content | Bazel test target |
 |---|---|---|
 | `crates/appinfo` | The application info: the descriptor XML round trip, the markers, the frontend merge, and the reader of the facts that `product-info.json` states. | `@community//build/dev-dist-tools/crates/appinfo:appinfo_test` |
+| `crates/cli` | The command line of every tool: the options `--key=value` and `--flag`, the positional arguments, the refusal of every other form, and the `ERROR:` line of a failure. | `@community//build/dev-dist-tools/crates/cli:cli_test` |
 | `crates/component` | The component contract of the collector, the composer and the launcher: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
