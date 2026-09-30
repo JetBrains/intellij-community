@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionStub
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ExperimentalIcons
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -33,6 +35,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.IconManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -121,6 +125,14 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
      */
     @JvmField
     val PROP_ORIGINAL_ICON: Key<Icon?> = Key.create("originalIcon")
+
+    /**
+     * Descriptor counterpart of [PROP_ORIGINAL_ICON]: the originally declared icon descriptor, saved in the template
+     * presentation when one customizes the action icon so that resetting the customization can restore it.
+     */
+    @ApiStatus.Experimental
+    @JvmField
+    val PROP_ORIGINAL_ICON_DESCRIPTOR: Key<IconDescriptor?> = Key.create("originalIconDescriptor")
 
     @JvmStatic
     fun addSettingsGroup(itemId: String, itemName: @Nls String) {
@@ -494,11 +506,39 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
 
-    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionSupplier = actionSupplier, iconPath = it) }
+    val customIconPath = iconCustomizations.get(actionId)
+    val icon = customIconPath?.let { getIconForPath(actionSupplier = actionSupplier, iconPath = it) }
                ?: presentation.getClientProperty(PROP_ORIGINAL_ICON)
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
+
+    // Keep the experimental icons pipeline in sync so a user customization is honored under the new API as well.
+    // Must run before isDefaultIcon is recomputed below, mirroring the original-icon bookkeeping above.
+    if (ExperimentalIcons.isEnabled) {
+      initActionIconDescriptor(presentation = presentation, anAction = anAction, customIconPath = customIconPath, resolvedIcon = icon)
+    }
+
     anAction.isDefaultIcon = icon == originalIcon
+  }
+
+  /**
+   * Descriptor counterpart of the icon handling in [initActionIcon]. A user customization is an arbitrary icon file, so
+   * there is no declarative descriptor for it; the already validated and size-clamped Swing icon is bridged into a
+   * descriptor via [IconManager.toIconDescriptor]. When there is no customization, the originally declared descriptor is
+   * restored from [PROP_ORIGINAL_ICON_DESCRIPTOR].
+   */
+  private fun initActionIconDescriptor(presentation: Presentation, anAction: AnAction, customIconPath: String?, resolvedIcon: Icon?) {
+    val originalIconDescriptor = presentation.iconDescriptor
+    if (presentation.getClientProperty(PROP_ORIGINAL_ICON_DESCRIPTOR) == null && anAction.isDefaultIcon && originalIconDescriptor != null) {
+      presentation.putClientProperty(PROP_ORIGINAL_ICON_DESCRIPTOR, originalIconDescriptor)
+    }
+
+    presentation.iconDescriptor = if (customIconPath != null) {
+      resolvedIcon?.let { IconManager.getInstance().toIconDescriptor(it) }
+    }
+    else {
+      presentation.getClientProperty(PROP_ORIGINAL_ICON_DESCRIPTOR) ?: originalIconDescriptor
+    }
   }
 }
 
