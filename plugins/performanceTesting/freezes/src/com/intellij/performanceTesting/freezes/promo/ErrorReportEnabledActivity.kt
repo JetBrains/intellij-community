@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.InitialConfigImportState
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
@@ -45,6 +46,8 @@ internal class ErrorReportEnabledActivity : ProjectActivity {
 }
 
 private fun showNotification(project: Project) {
+  if (ApplicationManagerEx.isInIntegrationTest()) return // do not show sporadically in integration tests
+
   val notification = Notification("PerformancePlugin",
                                   PerformanceTestingBundle.message("auto.report.enabled.title"),
                                   PerformanceTestingBundle.message("auto.report.enabled.description"),

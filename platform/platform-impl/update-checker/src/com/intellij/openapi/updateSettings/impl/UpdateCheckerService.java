@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.InitialConfigImportState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -111,7 +112,9 @@ public class UpdateCheckerService {
     if (appInfo.isMajorEAP() && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
-      if (!InitialConfigImportState.isFirstSession()) {
+
+      if (!InitialConfigImportState.isFirstSession()
+          && !ApplicationManagerEx.isInIntegrationTest()) { // do not show sporadically in integration tests
         var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         var message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup()

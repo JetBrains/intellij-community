@@ -8,10 +8,12 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -24,15 +26,17 @@ import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import java.util.concurrent.Callable
 
 @VisibleForTesting
-const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
+const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME: String = "kotlin.updates.whats.new.shown.for"
 
-class ExternalKotlinCompilerProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
+internal class ExternalKotlinCompilerProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
         showNewKotlinCompilerAvailableNotificationIfNeeded(project)
     }
 }
 
 fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
+    if (application.isHeadlessEnvironment && !application.isUnitTestMode) return
+
     val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
     if (!bundledCompilerVersion.isRelease) return
 
@@ -55,6 +59,11 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
 
             // Show the notification once for a project&version (checked in 'newExternalKotlinCompilerShouldBePromoted()')
             disableNewKotlinCompilerAvailableNotification(bundledKotlinVersion)
+
+            if (ApplicationManagerEx.isInIntegrationTest()) {
+                fileLogger().debug("Do not show notification in integration tests")
+                return@finishOnUiThread
+            }
 
             NotificationGroupManager.getInstance()
                 .getNotificationGroup("kotlin.external.compiler.updates")
@@ -95,9 +104,7 @@ fun newExternalKotlinCompilerShouldBePromoted(
 }
 
 private fun findLastBundledCompilerVersion(): KotlinVersion? {
-    val lastVersionValue = runReadAction {
-        PropertiesComponent.getInstance().getValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME)
-    } ?: return null
+    val lastVersionValue = PropertiesComponent.getInstance().getValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME) ?: return null
 
     return IdeKotlinVersion.opt(lastVersionValue)?.kotlinVersion
 }
