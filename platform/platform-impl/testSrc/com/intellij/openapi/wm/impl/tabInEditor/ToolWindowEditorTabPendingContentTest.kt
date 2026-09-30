@@ -172,6 +172,61 @@ class ToolWindowEditorTabPendingContentTest {
   }
 
   @Test
+  fun `a failed restore is not retried`(): Unit = uiTest {
+    val failingToolWindowId = "FailingToolWindow"
+    val failingProvider = FakeToolWindowEditorTabPersistenceProvider(deserializeAction = { _, _ -> null })
+    registerSupportAndProvider(failingToolWindowId, failingProvider)
+    val editor = createRestoredTabEditor(failingToolWindowId)
+
+    assertThat(tabManager.getOrRestoreSession(editor.file)).isNull()
+    assertThat(tabManager.getPendingState(editor.file)).isNull()
+    // The stored state is gone, so the next request asks the provider for nothing.
+    assertThat(tabManager.getOrRestoreSession(editor.file)).isNull()
+    assertThat(failingProvider.deserializeInvocations).containsExactly(storedState.contentState)
+  }
+
+  @Test
+  fun `a tab without content and without a stored state has nothing to restore`(): Unit = uiTest {
+    val file = requireNotNull(ToolWindowEditorTabFileRegistry.getInstance().getOrCreatePersistentFile(
+      PersistentToolWindowEditorTabPath(project.locationHash, toolWindowId, "never-stored", name = "Never stored")
+    ))
+
+    assertThat(tabManager.getOrRestoreSession(file)).isNull()
+    assertThat(provider.deserializeInvocations).isEmpty()
+  }
+
+  @Test
+  fun `a stored state is ignored for a tab that already has content`(): Unit = uiTest {
+    val content = createTabContent(displayName = "moved")
+    val file = createTabFile(project = project, toolWindowId = toolWindowId, content = content)
+    val editor = ToolWindowEditorTabFileEditor(project, file)
+    Disposer.register(disposable, editor)
+
+    editor.setState(storedState)
+
+    assertThat(tabManager.getPendingState(file)).isNull()
+    assertThat(file.attachedContent(project)).isSameAs(content)
+    assertThat(provider.deserializeInvocations).isEmpty()
+  }
+
+  @Test
+  fun `the first stored state of a restored tab wins`(): Unit = uiTest {
+    val editor = createRestoredTabEditor()
+    val laterState = ToolWindowEditorTabState(Element("later-state"))
+
+    // The splitters and the editor history can both hand the editor a state during the restore.
+    editor.setState(laterState)
+
+    assertThat(tabManager.getPendingState(editor.file)).isSameAs(storedState)
+    assertThat(editor.getState(FileEditorStateLevel.FULL)).isSameAs(storedState)
+
+    show(editor.component)
+    waitUntil("the content should be restored") { editor.file.session(project) != null }
+
+    assertThat(provider.deserializeInvocations).containsExactly(storedState.contentState)
+  }
+
+  @Test
   fun `a restored tab that is closed before it is shown creates no content`(): Unit = uiTest {
     val editor = createRestoredTabEditor()
     val file = editor.file
