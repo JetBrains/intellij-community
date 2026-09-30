@@ -22,7 +22,16 @@ class PSIPresentationBgRendererWrapperTest {
 
   @Test
   fun `broken item presentation does not abort the fetch`(@TestDisposable disposable: Disposable) {
-    val broken = brokenItem()
+    assertPresentationFailureDoesNotAbortFetch(disposable, IllegalStateException("presentation failure"))
+  }
+
+  @Test
+  fun `item presentation error does not abort the fetch`(@TestDisposable disposable: Disposable) {
+    assertPresentationFailureDoesNotAbortFetch(disposable, AssertionError("presentation failure"))
+  }
+
+  private fun assertPresentationFailureDoesNotAbortFetch(disposable: Disposable, failure: Throwable) {
+    val broken = brokenItem(failure)
     val wrapper = PSIPresentationBgRendererWrapper(contributorWith(disposable, item("before"), broken, item("after")))
 
     val collected = mutableListOf<FoundItemDescriptor<Any>>()
@@ -41,9 +50,9 @@ class PSIPresentationBgRendererWrapperTest {
     }
   }
 
-  private fun brokenItem(): NavigationItem = object : NavigationItem {
+  private fun brokenItem(failure: Throwable): NavigationItem = object : NavigationItem {
     override fun getName(): String = "broken"
-    override fun getPresentation(): ItemPresentation = throw IllegalStateException("presentation failure")
+    override fun getPresentation(): ItemPresentation = throw failure
     override fun toString(): String = "broken"
   }
 

@@ -212,7 +212,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     catch (CancellationException | IndexNotReadyException e) {
       throw e;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.warnWithDebug("Cannot compute the presentation for " + item.getClass().getName() + ": " + e.getMessage(), e);
       @NlsSafe String text = item instanceof PsiFileSystemItem fileSystemItem ? fileSystemItem.getName() : item.toString();
       return TargetPresentation.builder(text).icon(IconUtil.getEmptyIcon(false)).presentation();
