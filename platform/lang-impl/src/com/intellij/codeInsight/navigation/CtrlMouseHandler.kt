@@ -6,6 +6,8 @@ import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_E
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.CtrlMouseHintShown
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
@@ -14,6 +16,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -85,6 +88,8 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -256,7 +261,9 @@ class CtrlMouseHandler2(
     }
   }
 
-  private suspend fun compute(request: CtrlMouseRequest): CtrlMouseResult? = withContext(Dispatchers.Default) {
+  private suspend fun compute(request: CtrlMouseRequest): CtrlMouseResult? = withContext(
+    Dispatchers.Default + ctrlMouseActionContext(request.action)
+  ) {
     try {
       constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
         computeInReadAction(request)
@@ -509,5 +516,19 @@ private fun editorPoint(event: HyperlinkEvent, editor: Editor): Point {
 
 @ApiStatus.Internal
 fun getCtrlMouseData(actionId: String, editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
-  return getCtrlMouseAction(actionId)?.getCtrlMouseData(editor, file, offset)
+  val action = getCtrlMouseAction(actionId) ?: return null
+  // This entry point is blocking, so the element cannot be added with `withContext` the way the mouse handler does it.
+  return installThreadContext(currentThreadContext() + CtrlMouseActionElement(actionId), replace = true) {
+    action.getCtrlMouseData(editor, file, offset)
+  }
+}
+
+/**
+ * Tells providers which action is asking, for the duration of the computation.
+ * Empty for an action the [ActionManager] doesn't know, which cannot be one a keymap resolved a mouse shortcut to.
+ */
+private fun ctrlMouseActionContext(action: CtrlMouseAction): CoroutineContext {
+  val actionId = (action as? AnAction)?.let { ActionManager.getInstance().getId(it) }
+                 ?: return EmptyCoroutineContext
+  return CtrlMouseActionElement(actionId)
 }
