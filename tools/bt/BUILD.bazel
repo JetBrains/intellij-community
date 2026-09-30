@@ -29,7 +29,7 @@ optimized_binary(
     visibility = ["//visibility:public"],
 )
 
-# A compile check, built by hand (`manual`): `bt` must build for the Windows host, and a macOS or Linux host checks
+# Compile checks, built by hand (`manual`): `bt` must build for both Windows hosts, and a macOS or Linux host checks
 # that it does.
 optimized_binary(
     name = "bt-windows-x86_64",
@@ -38,12 +38,32 @@ optimized_binary(
     tags = ["manual"],
 )
 
-# Clippy over the `cfg(windows)` code a Unix host never compiles. It only checks, so it needs no linker for the
-# platform. Like every clippy test of this workspace it runs from the community root only; see `bt_rust_crate`.
+optimized_binary(
+    name = "bt-windows-arm64",
+    binary = "//tools/bt/bins/bt",
+    platform = "@rules_rs//rs/platforms:aarch64-pc-windows-msvc",
+    tags = ["manual"],
+)
+
+# Clippy over the `cfg(windows)` code a Unix host never compiles, one test per Windows host. It only checks, so it
+# needs no linker for the platform. Like every clippy test of this workspace it runs from the community root only; see
+# `bt_rust_crate`.
 rust_clippy_test(
     name = "clippy-windows-x86_64",
     size = "small",
     platform = "@rules_rs//rs/platforms:x86_64-pc-windows-msvc",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }) + (["@platforms//:incompatible"] if repo_name() else []),
+    targets = ["//tools/bt/bins/bt"],
+    transitive = True,
+)
+
+rust_clippy_test(
+    name = "clippy-windows-arm64",
+    size = "small",
+    platform = "@rules_rs//rs/platforms:aarch64-pc-windows-msvc",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],

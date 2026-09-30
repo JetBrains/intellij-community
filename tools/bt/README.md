@@ -20,8 +20,8 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 ## The binaries
 
 `BUILD.bazel` declares `:bt`, which `community/tools/bt.cmd` runs: `@community//tools/bt:bt` from an ultimate root and
-`//tools/bt:bt` from a community root. `:bt-windows-x86_64` is a compile check you build by hand (`manual`), and
-`:clippy-windows-x86_64` lints the `cfg(windows)` code from a Unix host.
+`//tools/bt:bt` from a community root. `:bt-windows-x86_64` and `:bt-windows-arm64` are compile checks you build by
+hand (`manual`), and `:clippy-windows-x86_64` and `:clippy-windows-arm64` lint the `cfg(windows)` code from a Unix host.
 
 ## Areas
 
