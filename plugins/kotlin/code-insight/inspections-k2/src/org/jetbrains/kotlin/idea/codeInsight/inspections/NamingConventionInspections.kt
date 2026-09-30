@@ -435,12 +435,23 @@ private class PackageNameInspectionLocal(
             holder.registerProblem(
                 packageNameExpression,
                 descriptionTemplate,
-                RenamePackageFix()
+                RenamePackageFix(checkResult.invalidPartIndex)
             )
         }
     }
 
-    private class RenamePackageFix : RenameIdentifierFix() {
+    /**
+     * The inspection highlights the full package name. [invalidPartIndex] selects the segment that failed validation.
+     * A null index selects the final segment for a whole-package pattern failure.
+     */
+    private class RenamePackageFix(private val invalidPartIndex: Int?) : RenameIdentifierFix() {
+        override fun getFallbackNameIdentifier(element: PsiElement): PsiElement? {
+            val packageNames = (element.parent as? KtPackageDirective)?.packageNames ?: return null
+            return packageNames
+                .getOrNull(invalidPartIndex ?: packageNames.lastIndex)
+                ?.getReferencedNameElement()
+        }
+
         override fun getElementToRename(element: PsiElement): PsiElement? {
             val packageDirective = element as? KtPackageDirective ?: return null
             return JavaPsiFacade.getInstance(element.project).findPackage(packageDirective.qualifiedName)
@@ -457,30 +468,40 @@ private fun checkPackageDirective(directive: KtPackageDirective, namingSettings:
 
 private val PART_RULES: Array<NamingRule> = arrayOf(NO_BAD_CHARACTERS_OR_UNDERSCORE, NO_START_UPPER)
 
+/**
+ * Validates [qualifiedName] against [namingSettings], returning `null` if it matches or a [CheckResult] describing the failure otherwise.
+ *
+ * [CheckResult.invalidPartIndex] pinpoints the offending `.`-separated segment, or is `null` when no specific segment can be blamed:
+ * either a custom [NamingConventionInspectionSettings.namePattern] is configured,
+ * or every segment individually passes [PART_RULES] while the full name still fails the regex (e.g. a segment starting with a digit).
+ */
 private fun checkQualifiedName(qualifiedName: String, namingSettings: NamingConventionInspectionSettings): CheckResult? {
     if (qualifiedName.isEmpty() || namingSettings.nameRegex?.matches(qualifiedName) != false) {
         return null
     }
 
-    val partErrorMessage = if (namingSettings.namePattern == namingSettings.defaultNamePattern) {
-        qualifiedName.split('.').asSequence()
-            .mapNotNull { part -> findRuleMessage(part, PART_RULES) }
-            .firstOrNull()
-    } else {
+    val partError = if (namingSettings.namePattern == namingSettings.defaultNamePattern) {
+        qualifiedName.split('.')
+            .withIndex()
+            .firstNotNullOfOrNull { (index, part) ->
+                findRuleMessage(part, PART_RULES)?.let { index to it }
+            }
+    }
+    else {
         null
     }
 
-    return if (partErrorMessage != null) {
-        CheckResult(partErrorMessage, true)
+    return if (partError != null) {
+        CheckResult(partError.second, partError.first)
     } else {
-        CheckResult(namingSettings.getDefaultErrorMessage(), false)
+        CheckResult(namingSettings.getDefaultErrorMessage(), null)
     }
 }
 
-private data class CheckResult(val errorMessage: String, val isForPart: Boolean) {
+private data class CheckResult(val errorMessage: String, val invalidPartIndex: Int?) {
     @NlsSafe
     fun toErrorMessage(qualifiedName: String): String {
-        return KotlinBundle.message("package.name") + if (isForPart) {
+        return KotlinBundle.message("package.name") + if (invalidPartIndex != null) {
             " <code>$qualifiedName</code> ${KotlinBundle.message("text.part")} $errorMessage"
         } else {
             " <code>$qualifiedName</code> $errorMessage"
@@ -489,7 +510,7 @@ private data class CheckResult(val errorMessage: String, val isForPart: Boolean)
 
     @NlsSafe
     fun toProblemTemplateString(): String {
-        return KotlinBundle.message("package.name") + if (isForPart) {
+        return KotlinBundle.message("package.name") + if (invalidPartIndex != null) {
             " <code>#ref</code> ${KotlinBundle.message("text.part")} $errorMessage"
         } else {
             " <code>#ref</code> $errorMessage"
