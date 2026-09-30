@@ -410,7 +410,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                  run(): void
                 -$1
                  -run(): void
-                  Inner2""");
+                  -Inner2""");
   }
 
   public void testCustomRegionsIdea179610() {
@@ -634,7 +634,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                                        """
                                          -Derived.java
                                           -Derived
-                                           Inner
+                                           -Inner
                                            f(): void
                                            g(): void
                                            getI(): int
