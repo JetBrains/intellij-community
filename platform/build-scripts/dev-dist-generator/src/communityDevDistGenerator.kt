@@ -49,7 +49,7 @@ object CommunityDevDistGenerator {
 private const val BUILD_WORKSPACE_DIRECTORY_ENV: String = "BUILD_WORKSPACE_DIRECTORY"
 
 /** The file at the root of the community checkout. */
-private const val COMMUNITY_ROOT_MARKER: String = ".community.root.marker"
+internal const val COMMUNITY_ROOT_MARKER: String = ".community.root.marker"
 
 /** The arguments of the community binary. */
 private class CommunityDevDistOptions(@JvmField val commit: Boolean, @JvmField val verifyPlanUnits: Boolean)

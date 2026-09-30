@@ -14,6 +14,7 @@ load(":dev_run_configuration_test.bzl", "dev_run_configuration_test_suite")
 load(":intellij_add_opens_test.bzl", "intellij_add_opens_test_suite")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
+load(":tests-options.bzl", "jps_test")
 
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
 
@@ -182,6 +183,21 @@ java_binary(
     ],
     main_class = "com.intellij.platform.buildScripts.devDistGenerator.CommunityDevDistGenerator",
     runtime_deps = ["//platform/build-scripts/dev-dist-generator"],
+)
+
+# The two renders of the community half, the community binary and the monorepo run, write one text per file. The test
+# reads the community targets JSON that the binary reads, so it needs no converter run.
+jps_test(
+    name = "dev_dist_generator_identity_test",
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
+    env = {
+        "JB_TEST_JUNIT5_FILTERS": "include-classname=com.intellij.platform.buildScripts.devDistGenerator.CommunityDevDistGeneratorTest",
+    },
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+        "-Dintellij.build.dev.dist.community.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
+    ],
+    runtime_deps = ["//platform/build-scripts/dev-dist-generator:buildScripts-devDistGenerator-tests_test_lib"],
 )
 
 java_binary(
