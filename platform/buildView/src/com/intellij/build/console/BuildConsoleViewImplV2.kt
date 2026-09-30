@@ -233,20 +233,23 @@ internal class BuildConsoleViewImplV2(
           // rem-dev environment with a remote editor
           targetEditor.scrollingModel.scrollTo(targetEditor.offsetToLogicalPosition(inlay.offset), ScrollType.CENTER)
         }
-        flashInlayComponent(editor, inlay.renderer.component)
-        return@access
+        editor.flashInlayComponent(inlay.renderer.component)
       }
-      val outputMarker = sortedOutputMarkers(nodeId).firstOrNull()
-      if (outputMarker != null) {
-        targetEditor.caretModel.moveToOffset(outputMarker.startOffset)
-        targetEditor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+      else {
+        val outputMarkers = sortedOutputMarkers(nodeId).toList()
+        val outputMarker = outputMarkers.firstOrNull()
+        if (outputMarker != null) {
+          targetEditor.caretModel.moveToOffset(outputMarker.startOffset)
+          targetEditor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+        }
+        targetEditor.selectOutputText(outputMarkers)
       }
     }
   }
 
   /** Flashes the inlay component background, so the user finds the clicked callout among similar ones. */
-  private fun flashInlayComponent(editor: Editor, component: JComponent) {
-    val flashColor = editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR) ?: return
+  private fun Editor.flashInlayComponent(component: JComponent) {
+    val flashColor = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR) ?: return
     flashAlarm.cancelAllRequests()
     flashRestore?.invoke()
     val originalOpaque = component.isOpaque
@@ -266,25 +269,21 @@ internal class BuildConsoleViewImplV2(
     }, 700)
   }
 
-  override fun selectProgressOutput(nodeId: Any) {
-    val clientId = ClientId.currentOrNull
-    state.access {
-      val targetEditor = getClientEditor(editor, clientId)
-      targetEditor.caretModel.removeSecondaryCarets()
-      targetEditor.caretModel.primaryCaret.removeSelection()
-      for ((index, outputMarker) in sortedOutputMarkers(nodeId).withIndex()) {
-        if (index == 0) {
-          targetEditor.caretModel.primaryCaret.moveToOffset(outputMarker.startOffset)
-          targetEditor.caretModel.primaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
+  private fun Editor.selectOutputText(outputMarkers: List<RangeMarker>) {
+    caretModel.removeSecondaryCarets()
+    caretModel.primaryCaret.removeSelection()
+    for ((index, outputMarker) in outputMarkers.withIndex()) {
+      if (index == 0) {
+        caretModel.primaryCaret.moveToOffset(outputMarker.startOffset)
+        caretModel.primaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
+      }
+      else {
+        val visualPosition = offsetToVisualPosition(outputMarker.startOffset)
+        val secondaryCaret = caretModel.addCaret(visualPosition, false) ?: run {
+          thisLogger().error("Failed to allocate console caret at $visualPosition")
+          continue
         }
-        else {
-          val visualPosition = targetEditor.offsetToVisualPosition(outputMarker.startOffset)
-          val secondaryCaret = targetEditor.caretModel.addCaret(visualPosition, false) ?: run {
-            thisLogger().error("Failed to allocate console caret at $visualPosition")
-            continue
-          }
-          secondaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
-        }
+        secondaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
       }
     }
   }

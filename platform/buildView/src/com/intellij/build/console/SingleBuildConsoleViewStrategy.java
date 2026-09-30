@@ -56,7 +56,6 @@ final class SingleBuildConsoleViewStrategy implements BuildConsoleViewStrategy {
     handler.showNodeView(viewNode);
     handler.withConsoleView(viewNode, consoleView -> {
       consoleView.scrollToNodeOutput(node.getId());
-      consoleView.selectProgressOutput(node.getId());
     });
   }
 

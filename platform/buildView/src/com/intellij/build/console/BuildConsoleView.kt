@@ -16,8 +16,6 @@ interface BuildConsoleView : ExecutionConsole {
 
   fun scrollToNodeOutput(nodeId: Any)
 
-  fun selectProgressOutput(nodeId: Any)
-
   @TestOnly
   fun getNodeOutputText(nodeId: Any): String
 }

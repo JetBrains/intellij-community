@@ -103,10 +103,6 @@ internal class BuildConsoleViewImpl(
     throw UnsupportedOperationException("Scroll by output reference events are not supported in multi console mode.")
   }
 
-  override fun selectProgressOutput(nodeId: Any) {
-    throw UnsupportedOperationException("Select by output reference events are not supported in multi console mode.")
-  }
-
   override fun onFailure(nodeId: Any, failure: Failure) {
     val text = (failure.description ?: failure.message ?: failure.error?.message).nullize() ?: return
     delegate.printHtml(text, ConsoleViewContentType.ERROR_OUTPUT) {
