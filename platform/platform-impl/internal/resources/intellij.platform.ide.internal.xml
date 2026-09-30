@@ -30,7 +30,6 @@
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.ide.ui"/>
-    <module name="intellij.platform.ide.updateChecker"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.jbr"/>
     <module name="intellij.platform.lang"/>
@@ -147,7 +146,6 @@
 
       <group id="Internal.Performance" popup="true"/>
 
-      <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.internal.ShowUpdateInfoDialogAction"/>
 
       <add-to-group group-id="Internal"/>
     </group>

@@ -1,5 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal
+@file:Suppress("HardCodedStringLiteral")
+
+package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.BundleBase
 import com.intellij.CommonBundle
@@ -18,10 +20,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.updateSettings.impl.PlatformUpdateDialog
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
-import com.intellij.openapi.updateSettings.impl.UpdateMode
-import com.intellij.openapi.updateSettings.impl.debugUpdateMode
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.IdeFocusManager

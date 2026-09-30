@@ -878,6 +878,7 @@
         DumpGroovyControlFlowAction
       DetectProjectLeaks
       TestJbProtocolCommand
+      ShowUpdateDialogAction
       FeatureUsage.Internal
         OpenStatisticsEventLogAction
         RecordStateCollectors
@@ -912,7 +913,6 @@
           LaggingMode
           TypingLatencyReport
           RetypeFile
-        ShowUpdateDialogAction
         ShortDumbMode
         DumbModeTremble
         IoFlooding

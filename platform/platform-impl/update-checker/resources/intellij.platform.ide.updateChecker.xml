@@ -25,6 +25,9 @@
   </dependencies>
   <!-- endregion -->
   <actions>
+    <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.openapi.updateSettings.impl.ShowUpdateInfoDialogAction">
+      <add-to-group group-id="Internal"/>
+    </action>
     <action id="IdeUpdateToolbarWidget" class="com.intellij.openapi.updateSettings.impl.IdeUpdateToolbarWidget">
       <add-to-group group-id="MainToolbarRight" anchor="last"/>
     </action>
