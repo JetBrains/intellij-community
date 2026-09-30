@@ -723,9 +723,8 @@ internal data class TargetFileSystem(
     if (toolSpecs.isEmpty()) return@withContext PyResult.success(emptyMap())
 
     val probes = toolProbeCache.getOrLoad(toolSpecs) loader@{ missingSpecs ->
-      val pythonPath = getPythonPathToProbe()
-      val snapshot = probeTargetTools(missingSpecs, pythonPath, targetProbeWorkingDirectory).getOr { return@loader it }
-      updateFromProbe(snapshot, pythonPath)
+      val snapshot = probeTargetTools(missingSpecs, getPythonPathToProbe(), targetProbeWorkingDirectory).getOr { return@loader it }
+      updateFromProbe(snapshot)
       PyResult.success(snapshot.tools)
     }.getOr { return@withContext it }
 
@@ -754,8 +753,9 @@ internal data class TargetFileSystem(
       systemPythonCache.getOrPut(path) { python }
     }
 
-  private suspend fun updateFromProbe(snapshot: TargetProbeSnapshot, pythonPath: PathHolder.Target?) {
-    val cachedPython = pythonPath?.let { path -> snapshot.python?.toCachedSystemPython(path) }
+  private suspend fun updateFromProbe(snapshot: TargetProbeSnapshot) {
+    val python = snapshot.python
+    val cachedPython = python?.let { it.probe.toCachedSystemPython(it.path) }
 
     targetUserInfoLock.withLock {
       snapshot.home.takeIf { it.isNotBlank() }?.let {
@@ -764,8 +764,8 @@ internal data class TargetFileSystem(
       snapshot.shell.takeIf { it.isNotBlank() }?.let {
         if (!this@TargetFileSystem::shellImpl.isInitialized) shellImpl = it
       }
-      if (pythonPath != null && cachedPython != null) {
-        systemPythonCache.putIfAbsent(pythonPath, cachedPython)
+      if (python != null && cachedPython != null) {
+        systemPythonCache.putIfAbsent(python.path, cachedPython)
       }
       if (detectedEnvironments == null) {
         detectedEnvironments = snapshot.environments
