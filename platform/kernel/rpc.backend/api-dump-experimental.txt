@@ -1,0 +1,2 @@
+*f:com.intellij.platform.rpc.backend.DocumentSyncKt
+- sf:awaitDocumentSync(kotlin.coroutines.Continuation):java.lang.Object

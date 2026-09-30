@@ -20,7 +20,8 @@ interface DocumentSync {
      *
      * This method is supposed to be called in the backend RPC handler.
      *
-     * @see awaitPatchEngine
+     * @see com.jetbrains.rdserver.requests.awaitPatchEngine
+     * @see com.intellij.platform.rpc.backend.awaitDocumentSync
      */
     suspend fun awaitDocumentSync() {
       EP_NAME.extensionList.forEach { it.awaitDocumentSync() }
