@@ -128,12 +128,12 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 text(KtTokens.SUSPEND_KEYWORD.value)
                 text(" ")
             }
-            val contextReceivers = type.contextReceivers
-            if (contextReceivers.isNotEmpty()) {
+            val contextParameterTypes = type.contextParameterTypes
+            if (contextParameterTypes.isNotEmpty()) {
                 text("context(")
-                contextReceivers.forEachIndexed { index, context ->
+                contextParameterTypes.forEachIndexed { index, contextType ->
                     if (index != 0) text(", ")
-                    printKtType(context.type)
+                    printKtType(contextType)
                 }
                 text(") ")
             }
@@ -305,13 +305,14 @@ private fun isSimilarTypes(
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
 private fun truncatedName(qualifiers: List<KaResolvedClassTypeQualifier>): String {
+    val size = qualifiers.size
     val names = qualifiers
-        .mapNotNull {
-            val symbol = it.symbol
-            symbol.takeUnless { classifierSymbol ->
+        .mapIndexedNotNull { index, qualifier ->
+            val symbol = qualifier.symbol.takeUnless { classifierSymbol ->
                 (classifierSymbol as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
-                        classifierSymbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
-            }?.name
+                        classifierSymbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT && index < size - 1
+            }
+            symbol?.name
         }
 
     names.joinToString(".", transform = Name::asString)

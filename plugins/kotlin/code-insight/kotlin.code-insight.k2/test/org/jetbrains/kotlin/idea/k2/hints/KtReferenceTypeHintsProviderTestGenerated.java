@@ -48,6 +48,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousObjectNoBaseType.kt");
     }
 
+    @TestMetadata("companionObject.kt")
+    public void testCompanionObject() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/companionObject.kt");
+    }
+
     @TestMetadata("ConstInitializerType.kt")
     public void testConstInitializerType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/ConstInitializerType.kt");
