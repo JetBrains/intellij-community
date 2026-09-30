@@ -504,7 +504,7 @@ class MacDistributionBuilder(
                   zipOutStream.entry("${zipRoot}/${relativePath}", content.file, if (content.isExecutable) executableFileUnixMode else -1)
                 }
                 is InMemoryDistFileContent -> {
-                  zipOutStream.entry("${zipRoot}/${relativePath}", content.data)
+                  zipOutStream.entry("${zipRoot}/${relativePath}", content.readAllBytes())
                 }
               }
             }

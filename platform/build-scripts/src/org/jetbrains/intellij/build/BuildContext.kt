@@ -18,6 +18,8 @@ import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -280,14 +282,87 @@ data class LocalDistFileContent(@JvmField val file: Path, @JvmField val isExecut
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"
 }
 
-data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
-  override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
+/**
+ * The content of a dist file in memory, as an ordered list of segments.
+ *
+ * The variants of one file share the segments that they have in common. A reader gets one array for the duration of its write only.
+ * Two contents are equal when their concatenated bytes are equal, whatever the segment boundaries are.
+ */
+class InMemoryDistFileContent private constructor(private val segments: List<ByteArray>) : DistFileContent {
+  constructor(data: ByteArray) : this(listOf(data))
 
-  override fun equals(other: Any?): Boolean = this === other || other is InMemoryDistFileContent && data.contentEquals(other.data)
+  companion object {
+    /**
+     * Creates the content from [segments] in their order. Empty segments are dropped. The arrays are not copied.
+     */
+    fun ofSegments(segments: List<ByteArray>): InMemoryDistFileContent = InMemoryDistFileContent(segments.filter { it.isNotEmpty() })
+  }
 
-  override fun hashCode(): Int = data.contentHashCode()
+  val size: Int = segments.sumOf { it.size }
 
-  override fun toString(): String = "InMemoryDistFileContent(size=${data.size})"
+  /**
+   * Returns the segment itself if there is only one segment, else a new array with the concatenated segments.
+   * The caller must not change the returned array.
+   */
+  fun readAllBytes(): ByteArray {
+    when (segments.size) {
+      0 -> return ByteArray(0)
+      1 -> return segments.first()
+    }
+
+    val result = ByteArray(size)
+    var offset = 0
+    for (segment in segments) {
+      System.arraycopy(segment, 0, result, offset, segment.size)
+      offset += segment.size
+    }
+    return result
+  }
+
+  fun writeTo(out: OutputStream) {
+    for (segment in segments) {
+      out.write(segment)
+    }
+  }
+
+  override fun readAsStringForDebug(): String {
+    val limit = size.coerceAtMost(1024)
+    val out = ByteArrayOutputStream(limit)
+    for (segment in segments) {
+      val remaining = limit - out.size()
+      if (remaining <= 0) {
+        break
+      }
+      out.write(segment, 0, segment.size.coerceAtMost(remaining))
+    }
+    return out.toString(Charsets.UTF_8)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other !is InMemoryDistFileContent || size != other.size) {
+      return false
+    }
+    if (segments.size == 1 && other.segments.size == 1) {
+      return segments.first().contentEquals(other.segments.first())
+    }
+    return readAllBytes().contentEquals(other.readAllBytes())
+  }
+
+  override fun hashCode(): Int {
+    // the same function as ByteArray.contentHashCode, applied over all segments in order
+    var result = 1
+    for (segment in segments) {
+      for (b in segment) {
+        result = 31 * result + b
+      }
+    }
+    return result
+  }
+
+  override fun toString(): String = "InMemoryDistFileContent(size=$size)"
 }
 
 data class DistFile(

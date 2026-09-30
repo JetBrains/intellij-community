@@ -759,7 +759,7 @@ assertThat(xmlContent).doesNotContain("com.intellij.ide.todo.TodoConfiguration")
 assertThat(xmlContent).doesNotContain("com.intellij.ide.bookmarks.Bookmark")
 
 // 2. Verify plugin descriptor doesn't contain unscrambled class names
-val pluginContent = (distFiles.first().content as InMemoryDistFileContent).data.decodeToString()
+val pluginContent = (distFiles.first().content as InMemoryDistFileContent).readAllBytes().decodeToString()
 assertThat(pluginContent).doesNotContain(
   "com.intellij.cwm.connection.backend.license.OpenLicenseSettingsAction"
 )

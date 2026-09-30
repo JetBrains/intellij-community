@@ -1151,7 +1151,7 @@ private fun crossPlatformZip(
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, content) == null) {
           when (content) {
             is LocalDistFileContent -> out.entry(distFile.relativePath, content.file)
-            is InMemoryDistFileContent -> out.entry(distFile.relativePath, content.data)
+            is InMemoryDistFileContent -> out.entry(distFile.relativePath, content.readAllBytes())
           }
         }
       }
@@ -1286,7 +1286,7 @@ internal fun copyDistFiles(
       }
     }
     else {
-      Files.write(targetFile, (item.content as InMemoryDistFileContent).data)
+      Files.newOutputStream(targetFile).use { (item.content as InMemoryDistFileContent).writeTo(it) }
     }
   }
 }

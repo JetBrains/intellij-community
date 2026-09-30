@@ -39,7 +39,7 @@ internal fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles
       }
     }
     is InMemoryDistFileContent -> {
-      if (Files.readAllBytes(file).contentEquals(oldContent.data)) {
+      if (Files.readAllBytes(file).contentEquals(oldContent.readAllBytes())) {
         return false
       }
     }

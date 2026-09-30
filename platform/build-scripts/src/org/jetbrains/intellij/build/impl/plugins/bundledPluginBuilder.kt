@@ -317,6 +317,18 @@ private fun writePluginInfo(
     context = context,
   )
   val additionalClassPath = additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
+  // The variants differ only in the plugin count and the specific classpath, so they share the other segments.
+  val prefix = ByteArrayOutputStream().use { byteOut ->
+    DataOutputStream(byteOut).use { out ->
+      writePluginClassPathPrefix(
+        out = out,
+        platformLayout = platformLayout,
+        descriptorCacheContainer = descriptorCacheContainer,
+        context = context,
+      )
+    }
+    byteOut.toByteArray()
+  }
 
   for ((supportedDist) in pluginDirs) {
     val specificList = specific.get(supportedDist)
@@ -330,24 +342,15 @@ private fun writePluginInfo(
       )
     }
 
-    val byteOut = ByteArrayOutputStream()
-    DataOutputStream(byteOut).use { out ->
-      val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
-      writePluginClassPathPrefix(
-        out = out,
-        platformLayout = platformLayout,
-        descriptorCacheContainer = descriptorCacheContainer,
-        context = context,
-      )
-      writePluginClassPathCount(out = out, pluginCount = pluginCount)
-      out.write(commonClassPath)
-      additionalClassPath?.let { out.write(it) }
-      specificClasspath?.let { out.write(it) }
+    val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
+    val count = ByteArrayOutputStream(2).use { byteOut ->
+      DataOutputStream(byteOut).use { writePluginClassPathCount(out = it, pluginCount = pluginCount) }
+      byteOut.toByteArray()
     }
 
     context.addDistFile(
       DistFile(
-        content = InMemoryDistFileContent(byteOut.toByteArray()),
+        content = InMemoryDistFileContent.ofSegments(listOfNotNull(prefix, count, commonClassPath, additionalClassPath, specificClasspath)),
         relativePath = PLUGIN_CLASSPATH,
         os = supportedDist.os,
         libcImpl = supportedDist.libcImpl,
