@@ -107,6 +107,46 @@ class ToolWindowEditorTabPendingContentTest {
   }
 
   @Test
+  fun `the editor state of a restored tab is serialized from its restored content`(): Unit = uiTest {
+    val editor = createRestoredTabEditor()
+    show(editor.component)
+    waitUntil("the content should be restored") { editor.file.session(project) != null }
+
+    val state = editor.getState(FileEditorStateLevel.FULL)
+
+    // The stored state is stale once the content exists: the next save must describe the live content.
+    assertThat(provider.serializeInvocations).containsExactly(restoredContent)
+    assertThat(state).isNotSameAs(storedState)
+    assertThat((state as ToolWindowEditorTabState).contentState.name).isEqualTo("fake-state")
+  }
+
+  @Test
+  fun `a restored tab shows its stored name before its content is restored`(): Unit = uiTest {
+    val editor = createRestoredTabEditor()
+
+    assertThat(editor.name).isEqualTo("Restored")
+    assertThat(ToolWindowEditorTabTitleProvider().getEditorTabTitle(project, editor.file)).isEqualTo("Restored")
+    assertThat(editor.file.name).isEqualTo("Restored")
+    // The presentable URL hides the serialized path from the UI.
+    assertThat(editor.file.presentableUrl).isEqualTo("Restored")
+    assertThat(provider.deserializeInvocations).isEmpty()
+  }
+
+  @Test
+  fun `the restored content renames the tab and stores the new name`(): Unit = uiTest {
+    val editor = createRestoredTabEditor()
+
+    show(editor.component)
+    waitUntil("the tab should take the title of the restored content") { editor.name == "Tab" }
+
+    assertThat(ToolWindowEditorTabTitleProvider().getEditorTabTitle(project, editor.file)).isEqualTo("Tab")
+    assertThat(editor.file.name).isEqualTo("Tab")
+    assertThat(editor.file.presentableUrl).isEqualTo("Tab")
+    // The new name goes into the persistent path, so the next restore shows it before the content is restored.
+    assertThat(requireNotNull(editor.file.persistentPath).name).isEqualTo("Tab")
+  }
+
+  @Test
   fun `the editor of a tab moved from the tool window shows its content at once`(): Unit = uiTest {
     val content = createTabContent(displayName = "moved")
     val file = createTabFile(project = project, toolWindowId = toolWindowId, content = content)

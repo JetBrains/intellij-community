@@ -73,13 +73,14 @@ internal class FakeToolWindowEditorTabSupport(
 /**
  * A configurable [ToolWindowEditorTabPersistenceProvider] used by the `tabInEditor` tests.
  *
- * [canSerializeResult] controls the default [canSerialize] behavior.
+ * [canSerializeResult] controls the [canSerialize] behavior. A test can change it after a tab is created
+ * to emulate content that can no longer be serialized.
  * [serializeAction] and [deserializeAction] can emulate specific conversion logic and return custom results.
  * [serializeInvocations] and [deserializeInvocations] record the arguments passed to the provider,
  * allowing tests to verify that the platform attempts to save/restore the correct contents.
  */
 internal class FakeToolWindowEditorTabPersistenceProvider(
-  private val canSerializeResult: Boolean = true,
+  var canSerializeResult: Boolean = true,
   private val serializeAction: ((Content) -> Element)? = null,
   private val deserializeAction: ((Project, Element) -> Content?)? = null,
 ) : ToolWindowEditorTabPersistenceProvider {
