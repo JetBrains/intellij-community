@@ -7,9 +7,9 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.OutputId
+import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.StartId
-import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputLineProcessor
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.BuildOutputParserDispatcher
@@ -95,7 +95,17 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         val taskId = currentTaskId
 
         if (taskId != buildId) {
-          notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line.text + '\n', outputType)) //NON-NLS todo!!
+          val outputEvent = when (consoleSettings.isSingleBuildConsoleView) {
+            true ->
+              OutputReferenceEvent.builder(taskId, line.ids)
+                .build()
+            else ->
+              OutputBuildEvent.builder(line.text + '\n')
+                .withParentId(taskId)
+                .withOutputType(outputType)
+                .build()
+          }
+          notifyBuildEvent(buildId, outputEvent)
         }
 
         parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
