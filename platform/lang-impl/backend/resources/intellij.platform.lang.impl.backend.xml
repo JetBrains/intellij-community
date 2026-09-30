@@ -13,6 +13,15 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.ProjectFileBasedIndexStartupActivity" order="first"
+                                         id="projectIndexStartup"/>
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.DumbModeWhileScanningSubscriber"/>
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
+    <postStartupActivity implementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheckStarter"/>
+    <postStartupActivity implementation="com.intellij.openapi.roots.impl.ScanningCancellationMonitorStarter"/>
+    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
+    <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
     <projectService serviceInterface="com.intellij.util.indexing.DumbModeReindexingScheduler"
                     serviceImplementation="com.intellij.platform.lang.impl.backend.BackendDumbModeReindexingScheduler"
                     overrides="true"/>
@@ -76,4 +85,11 @@
       <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.util.indexing.ProjectEntityIndexingService"
+              topic="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener"/>
+    <listener class="com.intellij.util.indexing.ProjectEntityIndexingService"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+  </projectListeners>
 </idea-plugin>

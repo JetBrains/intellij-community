@@ -16,6 +16,8 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
+    <postStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
     <executionTargetLanguageRuntimeType implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType"/>
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.platform.execution.impl.backend.BackendExecutionRemoteApiProvider"

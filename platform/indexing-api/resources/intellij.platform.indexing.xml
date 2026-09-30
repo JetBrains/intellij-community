@@ -82,6 +82,5 @@
                           providerClass="com.intellij.util.indexing.storage.fake.FakeStorageLayoutProvider"
                           version="0"/>
 
-    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
   </extensions>
 </idea-plugin>

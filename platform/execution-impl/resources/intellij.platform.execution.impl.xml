@@ -70,7 +70,6 @@
                  description="Load run configurations from *.run.xml files in the project content."
                  key="run.configurations.from.arbitrary.files"
                  restartRequired="true"/>
-    <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
     <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
@@ -83,7 +82,6 @@
       implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunTargetValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.execution.impl.statistics.MacroNameValidationRule"/>
-    <postStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
     <applicationService serviceInterface="com.intellij.execution.ui.FragmentStatisticsService"
                         serviceImplementation="com.intellij.execution.impl.statistics.FragmentedStatisticsServiceImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector"/>
