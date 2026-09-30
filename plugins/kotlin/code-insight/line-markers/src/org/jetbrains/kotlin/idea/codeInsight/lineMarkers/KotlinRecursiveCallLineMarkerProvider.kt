@@ -10,16 +10,23 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyGetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySetterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -27,7 +34,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.base.codeInsight.process
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
@@ -37,6 +44,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -109,8 +117,8 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             }
 
             return when (val expression = KtPsiUtil.deparenthesize(dispatchReceiver.expression)) {
-                is KtThisExpression -> expression.instanceReference.mainReference.resolveToSymbol() == containingClass
-                is KtExpression -> when (val receiverSymbol = expression.mainReference?.resolveToSymbol()) {
+                is KtThisExpression -> expression.resolveSuccessfulSymbol() == containingClass
+                is KtExpression -> when (val receiverSymbol = resolveReceiverSymbol(expression)) {
                     is KaNamedFunctionSymbol -> {
                         receiverSymbol.isOperator
                                 && receiverSymbol.name.asString() == "invoke"
@@ -132,6 +140,17 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
         }
 
         return false
+    }
+
+    /**
+     * Resolves the explicit dispatch [receiver] of a recursive call candidate.
+     * A call receiver gives a symbol only for an implicit `invoke` call, such as `MyObject()`.
+     */
+    context(_: KaSession)
+    private fun resolveReceiverSymbol(receiver: KtExpression): KaSymbol? = when (receiver) {
+        is KtCallExpression -> (receiver.tryResolveCall()?.single as? KaImplicitInvokeCall)?.symbol
+        is KtSimpleNameExpression -> receiver.tryResolveSymbols()?.symbols?.singleOrNull()
+        else -> null
     }
 
     private class RecursiveCallLineMarkerInfo(

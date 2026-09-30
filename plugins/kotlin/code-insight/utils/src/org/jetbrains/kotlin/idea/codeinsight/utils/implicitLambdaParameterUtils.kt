@@ -2,15 +2,15 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
@@ -37,7 +37,7 @@ fun KtNameReferenceExpression.getFunctionLiteralByImplicitLambdaParameter(): KtF
 
 context(_: KaSession)
 fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParameterSymbol? {
-    val parameterSymbol = mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
+    val parameterSymbol = tryResolveSymbols()?.symbols?.singleOrNull() as? KaValueParameterSymbol ?: return null
     if (!parameterSymbol.isImplicitLambdaParameter) return null
     return parameterSymbol
 }

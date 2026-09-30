@@ -11,13 +11,14 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -420,8 +421,9 @@ fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
-    val symbol =
-        tryResolveExpressionCall()?.single?.function?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+    val symbol = tryResolveExpressionCall()?.single?.function?.symbol
+        ?: (this as? KtSimpleNameExpression)?.tryResolveSymbols()?.symbols?.singleOrNull()
+        ?: return false
     return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 

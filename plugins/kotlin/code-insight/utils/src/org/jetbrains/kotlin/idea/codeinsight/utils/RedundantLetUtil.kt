@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -20,8 +19,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -212,7 +211,7 @@ private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExp
     val callee = callExpression.calleeExpression as? KtNameReferenceExpression ?: return emptyList()
 
     val arguments = variableSymbolByName[callee.getReferencedNameAsName()]?.takeIf {
-        it == callee.mainReference.resolveToSymbols().singleOrNull()
+        it == callee.tryResolveSymbolsCallFirst().singleOrNull()
     }?.let { listOf(callee) } ?: emptyList()
 
     return arguments + callExpression.valueArguments.flatMap { valueArgument ->

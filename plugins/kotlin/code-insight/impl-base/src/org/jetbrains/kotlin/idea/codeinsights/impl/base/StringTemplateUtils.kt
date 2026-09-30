@@ -8,9 +8,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
@@ -71,7 +71,7 @@ fun isStringPlusExpressionWithoutNewLineInOperands(expression: KtBinaryExpressio
     if (!expression.containNoNewLine()) return false
 
     if (expression.expressionType?.classId != KaStandardTypeClassIds.STRING) return false
-    val plusOperation = expression.operationReference.mainReference.resolveToSymbol() as? KaCallableSymbol
+    val plusOperation = expression.operationReference.tryResolveSymbols()?.symbols?.singleOrNull() as? KaCallableSymbol
     val classContainingPlus = plusOperation?.containingDeclaration as? KaNamedClassSymbol
     return if (classContainingPlus != null) {
         classContainingPlus.classId?.asSingleFqName() == StandardNames.FqNames.string.toSafe()
