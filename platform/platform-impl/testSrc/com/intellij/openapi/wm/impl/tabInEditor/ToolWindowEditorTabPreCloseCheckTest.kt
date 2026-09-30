@@ -122,6 +122,29 @@ class ToolWindowEditorTabPreCloseCheckTest {
     }
 
   @Test
+  fun `tab files of different tool windows are checked by their own support`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val otherToolWindowId = "OtherToolWindow"
+      val support = FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Title")), canClose = true)
+      val otherSupport = FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Title")), canClose = false)
+      registerFakeToolWindowEditorTabSupport(toolWindowId, support, disposable)
+      registerFakeToolWindowEditorTabSupport(otherToolWindowId, otherSupport, disposable)
+      val tabFile = createDetachedTabFile()
+      val otherTabFile = createTabFile(
+        project = project,
+        toolWindowId = otherToolWindowId,
+        content = createTabContent(displayName = "other"),
+        presentationFlow = flowOf(ToolWindowEditorTabPresentation("Title")),
+      )
+      val check = ToolWindowEditorTabPreCloseCheck()
+
+      assertThat(check.filterFilesToClose(listOf(tabFile, otherTabFile))).containsExactly(tabFile)
+      // Each support sees only the tabs of its own tool window.
+      assertThat(support.filterTabsToCloseInvocations).containsExactly(listOf(requireNotNull(tabFile.attachedContent(project))))
+      assertThat(otherSupport.filterTabsToCloseInvocations).containsExactly(listOf(requireNotNull(otherTabFile.attachedContent(project))))
+    }
+
+  @Test
   fun `bulk close preserves order while dropping only blocked tab files`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val blockedTab = createDetachedTabFile("blocked")
