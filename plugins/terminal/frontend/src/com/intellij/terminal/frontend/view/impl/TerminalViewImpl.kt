@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.psi.PsiDocumentManager
@@ -47,7 +48,6 @@ import com.intellij.terminal.frontend.view.hyperlinks.installOsc8HyperlinksProce
 import com.intellij.terminal.frontend.view.impl.dnd.TerminalViewDropHandler
 import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
-import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV1
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV2
 import com.intellij.terminal.refreshVfsOnFocusChange
@@ -252,7 +252,7 @@ class TerminalViewImpl(
     // The session controller writes to the alternate model before the view switches to it.
     // So the model is created here, and its editor is created on the first switch (see getOrCreateAlternateBufferEditor).
     alternateBufferOutputModel = MutableTerminalOutputModelImpl(DocumentImpl("", true), maxOutputLength = 0)
-    val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferOutputModel)
+    val alternateBufferModelController = TerminalOutputModelControllerImpl(project, alternateBufferOutputModel)
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
@@ -268,13 +268,16 @@ class TerminalViewImpl(
       shellIntegrationDeferred,
       coroutineScope.childScope("TerminalTypeAheadOutputModelController")
     )
-    outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
+    val typeAhead = outputModelController as? TerminalTypeAhead
+    if (typeAhead != null) {
+      outputEditor.putUserData(TerminalTypeAhead.KEY, typeAhead)
+    }
 
     val outputEditorFeatures = installBufferEditorFeatures(
       editor = outputEditor,
       model = outputModel,
       scrollingModel = scrollingModel,
-      typeAhead = outputModelController,
+      typeAhead = typeAhead,
       coroutineScope = coroutineScope.childScope("TerminalOutputBuffer"),
     )
     outputEditorKeyEventsHandler = outputEditorFeatures.keyEventsHandler
@@ -526,8 +529,12 @@ class TerminalViewImpl(
     outputModel: MutableTerminalOutputModel,
     shellIntegrationDeferred: Deferred<TerminalShellIntegration>,
     coroutineScope: CoroutineScope,
-  ): TerminalTypeAheadOutputModelController {
-    return if (Registry.`is`("terminal.type.ahead.v2", false)) {
+  ): TerminalOutputModelController {
+    // Type-ahead is disabled in the monolith, so the plain controller is enough there.
+    return if (IdeProductMode.isMonolith) {
+      TerminalOutputModelControllerImpl(project, outputModel)
+    }
+    else if (Registry.`is`("terminal.type.ahead.v2", false)) {
       TerminalTypeAheadOutputModelControllerV2(project, outputModel, shellIntegrationDeferred, coroutineScope)
     }
     else {

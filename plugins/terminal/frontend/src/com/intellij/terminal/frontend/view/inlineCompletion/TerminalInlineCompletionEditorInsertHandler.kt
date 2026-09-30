@@ -10,16 +10,14 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 
 internal class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEditorInsertHandler {
   override fun insert(editor: Editor, textToInsert: String, offset: Int, file: PsiFile) {
-    val terminalTypeAhead = editor.getUserData(TerminalTypeAhead.KEY) ?: return
     val terminalInput = editor.getUserData(TerminalInput.KEY) ?: return
 
-    terminalTypeAhead.type(textToInsert)
+    editor.getUserData(TerminalTypeAhead.KEY)?.type(textToInsert)
     terminalInput.sendString(textToInsert)
     TerminalUsageLocalStorage.getInstance().recordInlineCompletionAccepted()
     editor.getUserData(TerminalCommandCompletionStatistics.KEY)?.recordInlineInserted(textToInsert.length)
   }
 
   override fun isApplicable(editor: Editor): Boolean =
-    editor.getUserData(TerminalTypeAhead.KEY) != null &&
     editor.getUserData(TerminalInput.KEY) != null
 }
