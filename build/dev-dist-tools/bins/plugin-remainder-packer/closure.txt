@@ -39,6 +39,7 @@ thiserror
 twox_hash
 typed_path
 walkdir
+xxh3
 xxhash_rust
 zip
 zmij

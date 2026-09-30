@@ -160,6 +160,7 @@ javaglob = { path = "crates/javaglob" }
 planfile = { path = "crates/planfile" }
 pluginpack = { path = "crates/pluginpack" }
 trace = { path = "crates/trace" }
+xxh3 = { path = "crates/xxh3" }
 
 [profile.release]
 opt-level = 3

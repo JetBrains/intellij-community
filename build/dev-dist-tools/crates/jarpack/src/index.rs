@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use crate::MANIFEST_ENTRY_NAME;
 use crate::error::{Result, bail};
 use crate::writer::DirectoryMode;
-use filemeta::xxh3::{hash_bytes, hash_chars};
+use xxh3::{hash_bytes, hash_chars};
 
 /// Collects the `__index__` entry. It follows `PackageIndexBuilder` and `IkvIndexBuilder` in `zip/src`. The default
 /// mode puts the directories into the index and writes no zip entry for them.
@@ -77,7 +77,7 @@ impl IndexBuilder {
     }
 
     /// Records the package of an entry. The key is the hash of the *bytes*, and the package is the hash of the *chars*.
-    /// See `filemeta::xxh3` for why those are different inputs to one function.
+    /// See the `xxh3` crate for why those are different inputs to one function.
     pub(crate) fn add_file(&mut self, name: &str) {
         let package_hash = match name.rfind('/') {
             Some(slash) => hash_chars(&name[..slash]),

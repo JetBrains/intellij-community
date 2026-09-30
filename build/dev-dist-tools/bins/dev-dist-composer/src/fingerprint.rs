@@ -67,7 +67,7 @@ impl HashStream {
     /// The xxh3 value of the stream.
     #[expect(clippy::cast_sign_loss, reason = "the same 64 bits, unsigned for base36")]
     pub(crate) fn hash(&self) -> u64 {
-        filemeta::xxh3::hash_bytes(&self.data) as u64
+        xxh3::hash_bytes(&self.data) as u64
     }
 }
 
@@ -171,11 +171,11 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     entries.push(FingerprintEntry::new(
         "core-classpath.txt",
         "generated-core-classpath",
-        filemeta::xxh3::hash_bytes(core_classpath.as_bytes()),
+        xxh3::hash_bytes(core_classpath.as_bytes()),
         false,
     ));
     if let Some(file) = plugin_classpath_file {
-        let hash = filemeta::hash_file(file).map_err(|error| Error::io(file, error))?;
+        let hash = xxh3::hash_file(file).map_err(|error| Error::io(file, error))?;
         entries.push(FingerprintEntry::new(PLUGIN_CLASSPATH, "generated-plugin-classpath", hash, false));
     }
     Ok(compute_ide_fingerprint(&entries))

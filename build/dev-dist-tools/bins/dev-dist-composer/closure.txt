@@ -27,5 +27,6 @@ serde_json
 thiserror
 trace
 walkdir
+xxh3
 xxhash_rust
 zmij

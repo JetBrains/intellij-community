@@ -179,6 +179,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "trace",
+ "xxh3",
 ]
 
 [[package]]
@@ -196,6 +197,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "trace",
+ "xxh3",
 ]
 
 [[package]]
@@ -288,7 +290,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "walkdir",
- "xxhash-rust",
+ "xxh3",
 ]
 
 [[package]]
@@ -397,6 +399,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "thiserror",
+ "xxh3",
  "zip",
 ]
 
@@ -946,6 +949,14 @@ checksum = "32e45ad4206f6d2479085147f02bc2ef834ac85886624a23575ae137c8aa8156"
 dependencies = [
  "libc",
  "rustix",
+]
+
+[[package]]
+name = "xxh3"
+version = "0.1.0"
+dependencies = [
+ "tempfile",
+ "xxhash-rust",
 ]
 
 [[package]]

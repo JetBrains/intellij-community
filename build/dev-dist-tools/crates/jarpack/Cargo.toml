@@ -16,6 +16,7 @@ crc32fast.workspace = true
 distpath.workspace = true
 filemeta.workspace = true
 thiserror.workspace = true
+xxh3.workspace = true
 
 [dev-dependencies]
 # The tests write their source jars and read the packed jars back with the `zip` crate, which shares no code with the

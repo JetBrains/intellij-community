@@ -1,5 +1,5 @@
 [package]
-name = "filemeta"
+name = "xxh3"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,12 +10,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-distpath.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-walkdir.workspace = true
-xxh3.workspace = true
+xxhash-rust.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

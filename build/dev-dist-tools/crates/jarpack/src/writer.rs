@@ -7,7 +7,7 @@ use std::io::{BufWriter, Write};
 use crate::INDEX_FILE_NAME;
 use crate::error::{Error, Result, bail, invalid};
 use crate::index::{IkvEntry, IndexBuilder};
-use filemeta::xxh3::hash_bytes;
+use xxh3::hash_bytes;
 
 pub(crate) const LOCAL_HEADER_SIZE: usize = 30;
 pub(crate) const CENTRAL_HEADER_SIZE: usize = 46;

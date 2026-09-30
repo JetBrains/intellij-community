@@ -3,7 +3,7 @@
 use crate::MANIFEST_ENTRY_NAME;
 use crate::index::{IkvEntry, IndexBuilder};
 use crate::writer::DirectoryMode;
-use filemeta::xxh3::hash_bytes;
+use xxh3::hash_bytes;
 
 #[test]
 fn register_dirs_walks_ancestors_of_resources_only() {

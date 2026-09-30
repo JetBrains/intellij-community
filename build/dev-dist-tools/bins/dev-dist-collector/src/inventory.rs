@@ -121,7 +121,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
         let hash = if let Some(&hash) = hashes.get(&absolute) {
             hash
         } else {
-            let hash = filemeta::hash_file(Path::new(&absolute)).map_err(|error| Error::io(&absolute, error))?;
+            let hash = xxh3::hash_file(Path::new(&absolute)).map_err(|error| Error::io(&absolute, error))?;
             hashes.insert(absolute, hash);
             byte_count += source_metadata.len();
             hash

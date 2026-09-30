@@ -1,9 +1,3 @@
-#![allow(
-    clippy::cast_possible_truncation,
-    clippy::unreadable_literal,
-    reason = "the byte pattern is the index modulo 256, and the hash values are copied from the Kotlin output"
-)]
-
 use std::fs;
 
 use super::*;
@@ -76,28 +70,6 @@ fn directory_metadata_has_no_hash_and_allows_children() {
         fs::write(&metadata, changed).unwrap();
         let message = error_text(read(&metadata));
         assert!(message.contains("directory metadata must not have a hash"), "{hash}: {message}");
-    }
-}
-
-#[test]
-fn kotlin_hash_vectors() {
-    let temporary = tempfile::tempdir().unwrap();
-    for (size, expected) in [
-        (0usize, 3244421341483603138i64),
-        (1, -2399747073602280719),
-        (3, -737883702129266468),
-        (240, 2788469911834355041),
-        (241, -4155630063455057979),
-        (262143, 9078738661776034622),
-        (262144, -1692254647099917537),
-        (262145, -2541306581069977202),
-        (524288, 3157545227256347297),
-        (524301, 8144707773225287728),
-    ] {
-        let data: Vec<u8> = (0..size).map(|index| (index * 31 + 7) as u8).collect();
-        let source = temporary.path().join(format!("input-{size}.jar"));
-        fs::write(&source, data).unwrap();
-        assert_eq!(hash_file(&source).unwrap(), expected, "size {size}");
     }
 }
 

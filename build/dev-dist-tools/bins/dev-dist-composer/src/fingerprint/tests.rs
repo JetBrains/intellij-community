@@ -119,7 +119,7 @@ fn kotlin_core_classpath_order_golden() {
 }
 
 // The Kotlin test "Go manifests preserve version 9 hashes and tree fingerprints" pins these content hashes. The
-// fingerprint reuses `filemeta::hash_file` as `computeDevBuildContentHash`, and the vectors prove that the two agree.
+// fingerprint reuses `xxh3::hash_file` as `computeDevBuildContentHash`, and the vectors prove that the two agree.
 #[test]
 fn sourced_manifest_hashes_and_source_independence() {
     let vectors: [(usize, i64); 10] = [
@@ -139,7 +139,7 @@ fn sourced_manifest_hashes_and_source_independence() {
         let directory = TempDir::new();
         let content = directory.path().join("content.jar");
         write_file(&content, reference_bytes(size));
-        assert_eq!(filemeta::hash_file(&content).unwrap(), hash, "hash of {size} bytes");
+        assert_eq!(xxh3::hash_file(&content).unwrap(), hash, "hash of {size} bytes");
         let sourced = read_golden_manifest(&format!(
             r#"{{"kind": "files", "platformPrefix": "idea", "os": "linux", "arch": "x64",
             "additionalModules": [], "mainClass": null, "coreClassPath": [],

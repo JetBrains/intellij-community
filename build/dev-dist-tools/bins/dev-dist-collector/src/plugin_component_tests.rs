@@ -728,7 +728,7 @@ fn packed_component_writes_the_manifest_and_the_classpath() {
         [&manifest["version"], &manifest["pluginCount"], &manifest["os"], &manifest["arch"]],
         [&json!(9), &json!(1), &json!("linux"), &json!("x64")]
     );
-    let copied_hash = filemeta::hash_file(Path::new("resources/helper.sh")).unwrap();
+    let copied_hash = xxh3::hash_file(Path::new("resources/helper.sh")).unwrap();
     let entries = manifest_entries("component.json");
     assert_eq!(
         entries,

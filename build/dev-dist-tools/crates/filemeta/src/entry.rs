@@ -25,7 +25,7 @@ pub struct Entry {
     /// The path below the payload root, in slash form. See [`distpath::validate_path`].
     pub relative_path: String,
     pub entry_type: EntryType,
-    /// The [`hash_file`](crate::hash_file) of a file or the [`hash_symlink_target`] of a link. Zero for a directory.
+    /// The [`xxh3::hash_file`] of a file or the [`hash_symlink_target`] of a link. Zero for a directory.
     pub hash: i64,
     /// The size of a file in bytes. Zero for a directory and a link.
     pub size: i64,

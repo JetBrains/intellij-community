@@ -23,13 +23,14 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/component` | The component contract of the collector, the composer and the launcher: the manifest, the types and the reader of the local layout, the core classpath order, and the host paths. | `@community//build/dev-dist-tools/crates/component:component_test` |
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
-| `crates/filemeta` | Inventory JSON version 1, the xxh3 content hashes, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
+| `crates/filemeta` | Inventory JSON version 1, the hash of a link target, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
 | `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
 | `crates/jarpack` | The packer core: the jar merge, the `__index__`, and the native tree of a presigned library. | `@community//build/dev-dist-tools/crates/jarpack:jarpack_test` |
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dev-dist-tools/crates/javaglob:javaglob_test` |
 | `crates/planfile` | The plan file, the remainder contract, the plugin classpath record, and the asset and link-graph rules that the remainder packer and the collector share. | `@community//build/dev-dist-tools/crates/planfile:planfile_test` |
 | `crates/pluginpack` | The plan and the execution of a plugin remainder, for the remainder packer. | `@community//build/dev-dist-tools/crates/pluginpack:pluginpack_test` |
 | `crates/trace` | The span API of the traced tools and the Jaeger span file of `--trace-file`. | `@community//build/dev-dist-tools/crates/trace:trace_test` |
+| `crates/xxh3` | The hash4j xxh3 hashes: the two hashes of the `__index__` keys, and the content hash of a file or a stream in blocks of 256 KiB. | `@community//build/dev-dist-tools/crates/xxh3:xxh3_test` |
 | `bins/content-module-packer` | The packer and the inventory of each packed jar. | `@community//build/dev-dist-tools/bins/content-module-packer:content-module-packer_test` |
 | `bins/dev-dist-collector` | The collector: the inventory of a component and the plugin classpath record. | `@community//build/dev-dist-tools/bins/dev-dist-collector:dev-dist-collector_test` |
 | `bins/dev-dist-composer` | The composer: the composition spec, the composition and its copy step, the local layout writer, the plugin classpath file and the fingerprint. | `@community//build/dev-dist-tools/bins/dev-dist-composer:dev-dist-composer_test` |
