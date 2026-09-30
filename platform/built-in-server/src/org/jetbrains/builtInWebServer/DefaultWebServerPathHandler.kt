@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -88,7 +87,7 @@ internal class DefaultWebServerPathHandler : WebServerPathHandler {
       }
     }
 
-    if (!checkAccess(pathInfo, project)) {
+    if (!checkAccess(pathInfo)) {
       HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request, extraHeaders = authHeaders)
       return true
     }
@@ -106,17 +105,11 @@ internal class DefaultWebServerPathHandler : WebServerPathHandler {
     return false
   }
 
-  private fun checkAccess(pathInfo: PathInfo, project: Project): Boolean = when {
-    pathInfo.ioFile != null -> checkAccess(pathInfo.ioFile!!, project)
-    pathInfo.file!!.isInLocalFileSystem -> checkAccess(pathInfo.file!!.toNioPath(), project)
-    pathInfo.file!!.`is`(VFileProperty.HIDDEN) -> false
-    else -> true
+  private fun checkAccess(pathInfo: PathInfo): Boolean = when {
+    pathInfo.ioFile != null -> checkAccess(pathInfo.ioFile!!)
+    pathInfo.file!!.isInLocalFileSystem -> checkAccess(pathInfo.file!!.toNioPath())
+    else -> !pathInfo.file!!.`is`(VFileProperty.HIDDEN)
   }
-
-  private fun checkAccess(file: Path, project: Project): Boolean = (
-    (TrustedProjects.isProjectTrusted(project) || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)) &&
-    checkAccess(file)
-  )
 }
 
 /** Denies access to hidden/dot-prefixed paths. */
