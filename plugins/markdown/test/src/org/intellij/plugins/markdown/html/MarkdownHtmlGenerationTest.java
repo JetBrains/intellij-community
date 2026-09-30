@@ -220,6 +220,26 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
     doTestByHtmlFile();
   }
 
+  @TestFor(issues = "IJPL-94598")
+  public void testFrontMatterYaml() {
+    doTestByHtmlFile();
+  }
+
+  @TestFor(issues = "IJPL-94598")
+  public void testFrontMatterYamlNestedMapping() {
+    doTestByHtmlFile();
+  }
+
+  @TestFor(issues = "IJPL-94598")
+  public void testFrontMatterYamlInvalid() {
+    doTestByHtmlFile();
+  }
+
+  @TestFor(issues = "IJPL-94598")
+  public void testFrontMatterYamlAliasExpansion() {
+    doTestByHtmlFile();
+  }
+
   void doTestByHtmlFile() {
     doTest(myFixture.configureByFile(getTestName(true) + ".html").getText());
   }

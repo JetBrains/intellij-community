@@ -20,6 +20,7 @@
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.snakeyaml"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.builtInServer"/>
@@ -351,10 +352,6 @@
     <registryKey key="markdown.experimental.header.level.inference.enable"
                  defaultValue="false"
                  description="Enables experimental support for inferring header level"/>
-
-    <registryKey key="markdown.experimental.show.frontmatter.in.preview"
-                 defaultValue="false"
-                 description="Enables displaying of front matter headers in the preview."/>
 
     <registryKey key="markdown.experimental.allow.external.requests"
                  defaultValue="true"
