@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.pyproject.psi.isPyProjectToml
 import com.jetbrains.python.requirements.completeVersions
-import com.jetbrains.python.requirements.getPythonSdk
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlLiteral
 
@@ -24,7 +24,7 @@ class PoetryDependencyVersionCompletionContributor : CompletionContributor() {
       else -> return
     }
 
-    val sdk = getPythonSdk(parameters.originalFile) ?: return
-    completeVersions(packageName, parameters.position.project, sdk, result, addQuotes)
+    val interpreter = parameters.originalFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return
+    completeVersions(packageName, parameters.position.project, interpreter, result, addQuotes)
   }
 }

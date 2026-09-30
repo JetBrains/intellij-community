@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.python.pyproject.psi.isPyProjectToml
 import com.jetbrains.python.requirements.completePackageNames
-import com.jetbrains.python.requirements.getPythonSdk
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import org.toml.lang.psi.TomlKeySegment
 
 class PoetryDependencyPackageNameCompletionContributor : CompletionContributor() {
@@ -17,8 +17,8 @@ class PoetryDependencyPackageNameCompletionContributor : CompletionContributor()
     if (!poetryTomlTable.header.endsWith("dependencies")) return
 
     if (parameters.position.parent is TomlKeySegment) {
-      val sdk = getPythonSdk(parameters.originalFile) ?: return
-      completePackageNames(parameters.position.project, sdk, result)
+      val interpreter = parameters.originalFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return
+      completePackageNames(parameters.position.project, interpreter, result)
     }
   }
 }

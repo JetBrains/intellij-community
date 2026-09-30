@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -93,6 +94,10 @@ internal suspend fun <P : PathHolder> createPoetrySdk(
 
 internal val Sdk.isPoetry: Boolean
   get() = PythonSdkUtil.isPythonSdk(this) && pySdkAdditionalData.flavor == PyPoetrySdkFlavor
+
+/** Whether this interpreter is a Poetry environment. */
+internal val PythonInterpreter.isPoetry: Boolean
+  get() = getSdkAPI().isPoetry
 
 private suspend fun <P : PathHolder> setUpPoetry(
   moduleBasePath: Path,

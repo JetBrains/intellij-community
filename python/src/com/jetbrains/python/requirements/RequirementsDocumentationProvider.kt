@@ -13,7 +13,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -28,6 +27,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
@@ -75,7 +76,7 @@ internal class RequirementDocumentationTarget(
   private val requirementsFile: RequirementsFile?,
   private val pyRequirement: PyRequirement,
   anchor: PsiElement?,
-  private val sdkOverride: Sdk? = null,
+  private val packageManagerOverride: PythonPackageManager? = null,
 ) : DocumentationTarget {
 
   private val anchorPointer: SmartPsiElementPointer<PsiElement>? = anchor?.let { SmartPointerManager.createPointer(it) }
@@ -84,7 +85,7 @@ internal class RequirementDocumentationTarget(
     val anchorPointer = this.anchorPointer ?: return Pointer.hardPointer(this)
     return Pointer {
       val anchor = anchorPointer.element ?: return@Pointer null
-      RequirementDocumentationTarget(project, requirementsFile, pyRequirement, anchor, sdkOverride)
+      RequirementDocumentationTarget(project, requirementsFile, pyRequirement, anchor, packageManagerOverride)
     }
   }
 
@@ -99,8 +100,9 @@ internal class RequirementDocumentationTarget(
    * snapshots and formats the chosen variant through [PyBundle].
    */
   override fun computeDocumentationHint(): @NlsContexts.HintText String {
-    val sdk = sdkOverride ?: requirementsFile?.let { getPythonSdk(it) }
-    val packageManager = sdk?.let { PythonPackageManager.forSdk(project, it) }
+    val packageManager = packageManagerOverride
+                         ?: requirementsFile?.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
+                           ?.let { PythonPackageManager.forPythonInterpreter(project, it) }
     val packageName = pyRequirement.name
 
     val isLocal = ModuleManager.getInstance(project).modules.any { PyPackageName.from(it.name).name == packageName }
@@ -135,8 +137,10 @@ internal class RequirementDocumentationTarget(
    * Async because findPackageSpecification suspends (cached-index walk, not network).
    */
   override fun computeDocumentation(): DocumentationResult = DocumentationResult.asyncDocumentation {
-    val sdk = sdkOverride ?: readAction { requirementsFile?.let { getPythonSdk(it) } }
-    val packageManager = sdk?.let { PythonPackageManager.forSdk(project, it) }
+    val packageManager = packageManagerOverride
+                         ?: readAction { requirementsFile?.virtualFile }
+                           ?.let { project.findPythonInterpreter(it, mainForOrphans = false) }
+                           ?.let { PythonPackageManager.forPythonInterpreter(project, it) }
     val packageName = pyRequirement.name
     val installed = packageManager?.listInstalledPackages()?.firstOrNull { it.name == packageName }
     // Names matching a project module are local packages — mirrors NonModulePackageName.create.

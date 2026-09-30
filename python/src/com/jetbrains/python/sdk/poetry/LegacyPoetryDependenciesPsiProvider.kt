@@ -9,7 +9,7 @@ import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.psi.getStringOrNull
-import com.jetbrains.python.requirements.getPythonSdk
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import org.toml.lang.TomlLanguage
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlKeyValue
@@ -54,5 +54,5 @@ internal class LegacyPoetryDependenciesPsiProvider : DependenciesPsiProvider<Tom
   override val emptyFileInspectionMessage: @InspectionMessage String? = null
 
   private fun isPoetryProject(psiFile: PsiFile) =
-    getPythonSdk(psiFile)?.isPoetry == true
+    psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter?.isPoetry == true
 }

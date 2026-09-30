@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.PsiElement
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
@@ -24,7 +25,7 @@ class RequirementsVersionCompletionContributor : CompletionContributor() {
     val project = parameters.editor.project ?: return
 
     val packageName = getNameBySiblings(position) ?: getNameByParent(parent) ?: return
-    val sdk = getPythonSdk(parameters.originalFile) ?: return
+    val interpreter = parameters.originalFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return
     // `RequirementsReferenceContributor` attaches a reference to the surrounding `NameReq`
     // (covering `<name>==<version>`) so Quick Doc dispatch fires on extras / version / marker.
     // The platform's default completion-prefix derivation uses that reference's range and
@@ -32,7 +33,7 @@ class RequirementsVersionCompletionContributor : CompletionContributor() {
     // Force the prefix to just the typed-version portion (text inside the position leaf up
     // to the caret) so version items match.
     val versionResult = result.withPrefixMatcher(versionPrefix(position, parameters.offset))
-    completeVersions(packageName, project, sdk, versionResult, false)
+    completeVersions(packageName, project, interpreter, versionResult, false)
   }
 
   private fun getNameByParent(parent: PsiElement?): String? {

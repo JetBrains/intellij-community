@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.dependencies.DependenciesPsiProviderData
 import com.jetbrains.python.inspections.dependencies.ResolvedPsiFile
@@ -21,7 +22,6 @@ import com.jetbrains.python.inspections.dependencies.resolvePsiFile
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.requirements.getPythonSdk
 
 /**
  * Renders a small gray "✓ <version>" inlay after each requirement whose package is installed in
@@ -40,8 +40,8 @@ import com.jetbrains.python.requirements.getPythonSdk
 class DependenciesInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     val packageManager =
-      getPythonSdk(file)
-        ?.let { PythonPackageManager.forSdk(file.project, it) }
+      file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
+        ?.let { PythonPackageManager.forPythonInterpreter(file.project, it) }
 
     if (packageManager == null || !packageManager.tracksDependencyFile(file)) {
       return null

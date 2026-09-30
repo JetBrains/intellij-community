@@ -5,13 +5,12 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.python.pyproject.model.evolution.findEvoPyProject
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.requirements.getPythonSdk
 
 internal class InstallRequirementQuickFix(val requirement: PyRequirement) : LocalQuickFix, PriorityAction {
   override fun getFamilyName(): String {
@@ -21,11 +20,13 @@ internal class InstallRequirementQuickFix(val requirement: PyRequirement) : Loca
   override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.TOP
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
-    val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement)
+    val file = descriptor.psiElement.containingFile.virtualFile ?: return
 
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forSdk(project, pythonSdk).installPyRequirementsWithConfirmation(listOf(requirement), module)
+      val evoPyProject = project.findEvoPyProject(file, mainForOrphans = false) ?: return@launch
+      val interpreter = evoPyProject.interpreter ?: return@launch
+      PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
+        .installPyRequirementsWithConfirmation(listOf(requirement), evoPyProject.pyProject.residesOnModule)
     }
   }
 

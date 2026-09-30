@@ -24,6 +24,7 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiElement
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.PsiReferenceContributor
@@ -227,10 +228,12 @@ private class RemoteRequirementNavTarget(
   override fun navigate(requestFocus: Boolean) {
     val project = anchor.project
 
-    val sdk = getPythonSdk(anchor.containingFile)
-    val packageManager = sdk?.let { PythonPackageManager.forSdk(project, it) }
+    val file = anchor.containingFile.virtualFile
 
     val newJob = PyPackageCoroutine.launch(project) {
+      val packageManager = file
+        ?.let { project.findPythonInterpreter(it, mainForOrphans = false) }
+        ?.let { PythonPackageManager.forPythonInterpreter(project, it) }
       // Background progress so the user sees that the click did register; cancellable so a
       // long wait on init can be aborted from the status bar.
       withBackgroundProgress(project, PyBundle.message("python.requirements.resolve.package.page", packageName), cancellable = true) {

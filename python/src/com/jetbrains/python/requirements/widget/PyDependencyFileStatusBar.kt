@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements.widget
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -12,8 +11,9 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.WidgetPresentation
 import com.intellij.openapi.wm.WidgetPresentationDataContext
 import com.intellij.openapi.wm.WidgetPresentationFactory
+import com.intellij.python.pyproject.model.evolution.findEvoPyProject
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProject
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.widget.resolvePythonWidgetContext
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.requirements.PyRequirementsBundle
 import kotlinx.coroutines.CoroutineScope
@@ -81,10 +81,10 @@ private class PyDependenciesFileWidget(private val context: WidgetPresentationDa
 
   private suspend fun computeState(): State? {
     val virtualFile = context.currentFileEditor.value?.file
-    val (module, sdk) = readAction { resolvePythonWidgetContext(project, virtualFile) } ?: return null
-    if (sdk == null) return null
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    val evoPyProject = (if (virtualFile == null) project.findMainEvoPyProject() else project.findEvoPyProject(virtualFile)) ?: return null
+    val interpreter = evoPyProject.interpreter ?: return null
+    val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
     val depFile = packageManager.getRootDependenciesFile() ?: return null
-    return State(module, depFile)
+    return State(evoPyProject.pyProject.residesOnModule, depFile)
   }
 }

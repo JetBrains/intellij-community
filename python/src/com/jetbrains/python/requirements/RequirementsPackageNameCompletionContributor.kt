@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.requirements.parser.psi.RequirementsTypes
 
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
@@ -17,8 +18,8 @@ class RequirementsPackageNameCompletionContributor : CompletionContributor() {
     if ((nameElement as? LeafPsiElement)?.elementType != RequirementsTypes.PACKAGE_NAME_TOKEN)
       return
 
-    val sdk = getPythonSdk(parameters.originalFile) ?: return
+    val interpreter = parameters.originalFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return
 
-    completePackageNames(nameElement.project, sdk, result)
+    completePackageNames(nameElement.project, interpreter, result)
   }
 }

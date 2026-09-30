@@ -9,14 +9,14 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.firstPageOrEmpty
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.parser.icons.PythonParserIcons
 
-fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet) {
-  val repositoryManager = PythonPackageManager.forSdk(project, sdk).repositoryManager
+fun completePackageNames(project: Project, interpreter: PythonInterpreter, result: CompletionResultSet) {
+  val repositoryManager = PythonPackageManager.forPythonInterpreter(project, interpreter).repositoryManager
   val packages =
     repositoryManager
       .searchPackages(result.prefixMatcher.prefix)
@@ -31,8 +31,8 @@ fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet
   }.forEach { result.addElement(it) }
 }
 
-fun completeVersions(name: String, project: Project, sdk: Sdk, result: CompletionResultSet, addQuotes: Boolean) {
-  val packageManager = PythonPackageManager.forSdk(project, sdk)
+fun completeVersions(name: String, project: Project, interpreter: PythonInterpreter, result: CompletionResultSet, addQuotes: Boolean) {
+  val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)
   val repositoryManager = packageManager.repositoryManager
 
   val versions = ApplicationUtil.runWithCheckCanceled({

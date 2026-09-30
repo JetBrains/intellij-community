@@ -6,12 +6,12 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.updatePackagesBackground
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.requirements.getPythonSdk
 
 internal class UpdateRequirementQuickFix(private val outdatedPackage: PythonOutdatedPackage) : LocalQuickFix, PriorityAction {
   override fun getFamilyName() = PyBundle.message("QFIX.NAME.update.requirement", outdatedPackage.name)
@@ -20,10 +20,11 @@ internal class UpdateRequirementQuickFix(private val outdatedPackage: PythonOutd
   override fun startInWriteAction(): Boolean = false
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val pythonSdk = getPythonSdk(descriptor.psiElement.containingFile) ?: return
-    val manager = PythonPackageManagerUI.forSdk(project, pythonSdk)
+    val file = descriptor.psiElement.containingFile.virtualFile ?: return
 
     PyPackageCoroutine.launch(project) {
+      val interpreter = project.findPythonInterpreter(file, mainForOrphans = false) ?: return@launch
+      val manager = PythonPackageManagerUI.forPythonInterpreter(project, interpreter)
       manager.updatePackagesBackground(listOf(outdatedPackage))
     }
   }
