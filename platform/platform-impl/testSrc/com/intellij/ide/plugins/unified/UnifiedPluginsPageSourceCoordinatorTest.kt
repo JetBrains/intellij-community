@@ -801,7 +801,8 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
   }
 
   @Test
-  fun `bundled relevance sorts exact categories and names with Other last`() {
+  fun `bundled relevance sorts exact categories and names with Other and Libraries last`() {
+    val library = localItem(plugin("library.plugin", "Alpha Library"), enabled = true, category = "Libraries")
     val alphaTool = localItem(plugin("alpha.tool", "Alpha Tool"), enabled = true, category = "Tools")
     val zuluTool = localItem(plugin("zulu.tool", "Zulu Tool"), enabled = true, category = "Tools")
     val alphaLowerTool = localItem(plugin("alpha.lower.tool", "Alpha Lower Tool"), enabled = true, category = "tools")
@@ -814,7 +815,7 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
         PluginSectionState(PluginSectionId.Installed),
         PluginSectionState(
           PluginSectionId.Bundled,
-          items = listOf(alphaTool, zuluLowerTool, other, zuluLanguage, alphaLowerTool, alphaLanguage, zuluTool),
+          items = listOf(library, alphaTool, zuluLowerTool, other, zuluLanguage, alphaLowerTool, alphaLanguage, zuluTool),
         ),
       )
     )
@@ -832,9 +833,11 @@ internal class UnifiedPluginsPageSourceCoordinatorTest {
       "alpha.lower.tool",
       "zulu.lower.tool",
       "other.plugin",
+      "library.plugin",
     )
     assertThat(result("/sortBy:name")).containsExactly(
       "alpha.language",
+      "library.plugin",
       "alpha.lower.tool",
       "alpha.tool",
       "other.plugin",

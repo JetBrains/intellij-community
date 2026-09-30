@@ -2,7 +2,7 @@
   <id>com.jetbrains.performancePlugin</id>
   <name>Performance Diagnostics</name>
   <vendor>JetBrains</vendor>
-  <category>Platform Development</category>
+  <category>Other Tools</category>
   <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
 
   <description><![CDATA[

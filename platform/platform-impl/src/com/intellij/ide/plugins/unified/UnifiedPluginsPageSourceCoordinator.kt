@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.unified
 
+import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.InstalledPluginsTabSearchResultPanel
 import com.intellij.ide.plugins.MarketplaceTabSearchSortByOptions
 import com.intellij.ide.plugins.newui.MyPluginModel
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 
 internal data class UnifiedPluginMarketplaceSourceState(
   val queryRevision: Long,
@@ -731,12 +733,17 @@ private fun compareBundledItems(first: PluginItemState, second: PluginItemState)
 private fun compareBundledCategories(first: PluginItemState, second: PluginItemState): Int {
   val firstCategory = bundledPluginCategory(first.searchCategory)
   val secondCategory = bundledPluginCategory(second.searchCategory)
-  val otherCategory = bundledPluginCategory(null)
-  return when {
-    firstCategory == secondCategory -> 0
-    firstCategory == otherCategory -> 1
-    secondCategory == otherCategory -> -1
-    else -> StringUtil.compare(firstCategory, secondCategory, false)
+  if (firstCategory == secondCategory) return 0
+  val rankComparison = bundledCategoryRank(firstCategory).compareTo(bundledCategoryRank(secondCategory))
+  return if (rankComparison != 0) rankComparison else StringUtil.compare(firstCategory, secondCategory, false)
+}
+
+/** Named categories come first, then Other, then Libraries. */
+private fun bundledCategoryRank(category: @Nls String): Int {
+  return when (category) {
+    bundledPluginCategory(null) -> 1
+    CoreBundle.message("plugin.category.Libraries") -> 2
+    else -> 0
   }
 }
 

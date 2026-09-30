@@ -684,14 +684,14 @@ Untested: No focused test verifies Shift-selection across sections.
 Untested: No focused test verifies that Internal ignores the legacy Show All query.
 
 - Bundled must use Other for a missing category.
-- Default Relevance must sort category names with case sensitivity and put Other last.
+- Default Relevance must sort category names with case sensitivity, then put Other, then Libraries.
 - A disabled Bundled category must keep its position under Default Relevance.
 - Default Relevance must sort plugin names within each category.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalDataProviderTest.kt (
     `local snapshot assigns bundled categories and normalizes a missing category`
   )
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageSourceCoordinatorTest.kt (
-    `bundled relevance sorts exact categories and names with Other last`;
+    `bundled relevance sorts exact categories and names with Other and Libraries last`;
     `disabled Bundled categories keep category order and priority`
   )
 

@@ -3,8 +3,9 @@
   <id>com.intellij.modules.compose</id>
   <name>Compose UI</name>
   <vendor>JetBrains</vendor>
+  <category>Libraries</category>
   <description><![CDATA[
-    Holds the Compose, Jewel and Skiko modules that render Compose UI in the IDE, with the one Skiko copy and its native renderer.
+    Provides Compose, Jewel and Skiko modules that render Compose UI in the IDE and plugins.
   ]]></description>
 
   <dependencies>
