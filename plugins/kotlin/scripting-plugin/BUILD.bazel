@@ -12,7 +12,6 @@ dev_dist_plugin(
         "intellij.libraries.kotlinc.kotlin.scripting.jvm",
         "intellij.kotlin.buildToolsRuntime",
         "intellij.libraries.kotlin.tooling.core",
-        "intellij.libraries.kotlinc.kotlin.compiler.common",
         "intellij.libraries.kotlinc.kotlin.compiler.fe10",
     ],
     main_module = "intellij.kotlin.jsr223.plugin",

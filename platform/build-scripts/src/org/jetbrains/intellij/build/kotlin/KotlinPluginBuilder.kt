@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.DataPluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.DescriptorMarker
 import org.jetbrains.intellij.build.impl.DescriptorMarkerPatcher
-import org.jetbrains.intellij.build.impl.LibraryEntriesLayoutPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.createBuildContext
@@ -103,7 +102,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
     for (libraryName in LIBRARIES_UNPACKED) {
       spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
     }
-    withKotlincKotlinCompilerCommonLibrary(spec, spec.mainModule)
     for (library in LIBRARIES) {
       spec.withProjectLibrary(library)
     }
@@ -130,7 +128,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
       spec.withModule("intellij.kotlin.jsr223")
 
-      withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withModule("intellij.libraries.kotlinc.kotlin.compiler.fe10")
       withKotlincInPluginDirectory(spec = spec)
 
@@ -140,18 +137,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       addition?.invoke(spec)
     }
   }
-}
-
-private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
-  val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
-
-  spec.withPatch(LibraryEntriesLayoutPatcher(
-    libraryName = kotlincKotlinCompilerCommon,
-    libraryModuleName = KOTLINC_KOTLIN_COMPILER_COMMON_MODULE,
-    prefix = "META-INF/extensions/",
-    targetModuleName = mainPluginModule,
-  ))
 }
 
 private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"

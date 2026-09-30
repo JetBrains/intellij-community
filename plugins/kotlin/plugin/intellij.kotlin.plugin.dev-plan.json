@@ -2,7 +2,7 @@
     "version": 2,
     "plugin": "intellij.kotlin.plugin",
     "variant": "",
-    "layoutSignature": "9m7021djev92gxnutui56nglf",
+    "layoutSignature": "97kozxxw06uvjcbuqu9ceqy1r",
     "assets": [
         {
             "module": "intellij.kotlin.highlighting.minimal"
@@ -579,6 +579,26 @@
             }
         },
         {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.compiler.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "destination": "lib/intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin.jar",
             "recipe": {
                 "sources": [
@@ -1014,11 +1034,6 @@
                         ]
                     },
                     {
-                        "input": "layout-assets:layout-patcher:0:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
-                    },
-                    {
                         "input": "intellij.kotlin.plugin",
                         "kind": "module",
                         "filter": "module-v1"
@@ -1055,7 +1070,6 @@
                     }
                 ],
                 "writer": {
-                    "manifest": "drop",
                     "mergeEntities": true
                 }
             }
@@ -1179,26 +1193,6 @@
             }
         },
         {
-            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.kotlinc.kotlin.compiler.common",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
             "destination": "lib/javax-inject.jar",
             "recipe": {
                 "sources": [
@@ -1262,16 +1256,6 @@
     ],
     "preparations": [
         {
-            "id": "layout-assets:layout-patcher:0",
-            "inputs": [
-                "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"
-            ],
-            "outputs": [
-                "layout-assets:layout-patcher:0:output"
-            ],
-            "modelSignature": "5nwvwsnvbng4vmgyls2l3ts5k"
-        },
-        {
             "id": "layout-assets:resource-generator:0",
             "inputs": [
                 "@lib//:kotlinc-kotlin-dist"
@@ -1283,36 +1267,6 @@
         }
     ],
     "operations": [
-        {
-            "id": "layout-assets:layout-patcher:0",
-            "kind": "layout-assets",
-            "inputs": [
-                {
-                    "artifact": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"
-                }
-            ],
-            "output": "layout-assets:layout-patcher:0:output",
-            "manifest": "keep",
-            "layoutAssets": {
-                "format": "entries",
-                "assets": [
-                    {
-                        "destination": "",
-                        "sources": [
-                            0
-                        ],
-                        "transform": {
-                            "kind": "archive-tree",
-                            "mappings": [
-                                {
-                                    "pattern": "META-INF/extensions/**"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
         {
             "id": "layout-assets:resource-generator:0",
             "kind": "layout-assets",
