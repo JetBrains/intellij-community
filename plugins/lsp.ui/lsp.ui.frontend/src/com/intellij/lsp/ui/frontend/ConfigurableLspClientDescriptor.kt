@@ -8,6 +8,8 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.lsp.ui.frontend.settings.LspServerConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getRemoteProjectBaseNioPath
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
@@ -17,7 +19,6 @@ import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.psi.PsiFile
-import com.intellij.util.PlatformUtils
 
 internal class ConfigurableLspClientDescriptor(
   project: Project,
@@ -50,7 +51,7 @@ internal class ConfigurableLspClientDescriptor(
 
     commandLine.addParameters(configuration.getArgumentsList())
 
-    val workingDirectory = if (PlatformUtils.isJetBrainsClient()) {
+    val workingDirectory = if (project.getEelDescriptor() !is LocalEelDescriptor) {
       project.getRemoteProjectBaseNioPath()
     }
     else {

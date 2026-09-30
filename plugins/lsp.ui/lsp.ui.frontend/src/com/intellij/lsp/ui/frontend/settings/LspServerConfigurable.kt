@@ -54,6 +54,13 @@ internal class LspServerConfigurable(
   private lateinit var initializationOptionsEditor: Editor
 
   override fun createPanel(): DialogPanel {
+    val isSocketSupported = project.getEelDescriptor() is LocalEelDescriptor
+    if (!isSocketSupported && configuration.communicationMode == CommunicationMode.SOCKET) {
+      configuration.communicationMode = CommunicationMode.STDIO
+      configuration.arguments = replaceCommunicationModeArgument(configuration.arguments, STDIO_ARGUMENT)
+      configuration.socketPort = 0
+    }
+
     val jsonFile = PsiFileFactory.getInstance(project).createFileFromText(
       "dummy.json",
       JsonLanguage.INSTANCE,
@@ -92,12 +99,14 @@ internal class LspServerConfigurable(
             stdioRadioButton = radioButton(LspUiBundle.message("lsp.settings.server.mode.stdio"), CommunicationMode.STDIO)
             @Suppress("DialogTitleCapitalization")
             socketRadioButton = radioButton(LspUiBundle.message("lsp.settings.server.mode.socket"), CommunicationMode.SOCKET)
+              .comment(if (isSocketSupported) null else LspUiBundle.message("lsp.settings.server.mode.socket.remote.unsupported"))
           }
         }
           .bind<CommunicationMode>(
             getter = configuration::communicationMode,
             setter = { configuration.communicationMode = it }
           )
+          .enabled(isSocketSupported)
 
         row(LspUiBundle.message("lsp.settings.server.executable")) {
           cell(createExecutablePathField())
