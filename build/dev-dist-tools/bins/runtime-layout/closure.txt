@@ -1,4 +1,5 @@
 anyhow
+distpath
 equivalent
 foldhash
 hashbrown

@@ -2,10 +2,10 @@
 
 The Rust port of the Go packages `internal/planfile`, the contract part of `internal/pluginpack` (`contract.go`), and
 `internal/pluginclasspath`. The crate does no file system work except `read` and `json::read`.
-The crate depends on `serde`, `serde_json` and `thiserror` only.
+The crate depends on `distpath`, `serde`, `serde_json` and `thiserror` only.
 
-`Plan`, `Execution`, `ValidateAssets` and `ValidateLinkGraph` of `pluginpack/plan.go` are not here. They belong to the
-`pluginpack` crate.
+`Plan` and `Execution` of `pluginpack/plan.go` are not here. They belong to the `pluginpack` crate. `ValidateAssets` and
+`ValidateLinkGraph` are in `planfile::validate`, because the packer and the collector both apply them.
 
 ## The subset rule
 
@@ -95,6 +95,39 @@ catalogue.
 - `LayoutTransform { kind: LayoutTransformKind, strip_components: u32, mappings: Vec<LayoutMapping>, includes, executables: Vec<String> }` (`Deserialize`).
 - `LayoutTransformKind::{ArchiveTree}`. A tree needs no transform: a plain copy places it.
 - `LayoutMapping { pattern, strip_components: u32, destination }` (`Deserialize`). An empty pattern is `**`.
+
+## `planfile::validate` (Go `ValidateAssets` and `ValidateLinkGraph` of `pluginpack/plan.go`)
+
+The rules read no file. The remainder packer applies them in its plan step. The collector applies them again to the
+produced table and inventory in a second process, because it does not trust the producer. A refusal names the asset or
+the link.
+
+| Refused input | Error |
+| --- | --- |
+| an asset row of the kind `directory`, or of a kind other than `file` and `tree` | `unknown asset kind`, for example `unknown asset kind "directory"` |
+| a tree in a table of version 1 | `requires version 2` |
+| an independent tree without an independent jar of the same artifact | `remainder or native tree ownership` |
+| a tree with a `classPath` other than `false` | `and classPath false` |
+| a file asset at the plugin root | `only a declared tree can target the plugin root` |
+| two destinations with one `distpath::path_identity` | `destination collision` |
+| two spellings of one parent directory, when the caller asks for the check | `conflicting directory spellings` |
+| a destination that `distpath::validate_relative_path` refuses | the `distpath` error |
+| two link-graph names that differ only in case | `ambiguous path casing in link graph` |
+| a link-graph node below a name that is not a directory | `missing directory` |
+| a link that goes through a file, above the root, or to a missing name | `traverses a non-directory`, `escapes the plugin`, `unresolved symlink target` |
+| a directory cycle through links | `symlink directory cycle` |
+
+- `asset_kind(asset: &contract::Asset) -> &str`: the kind of a row. An empty kind is `file`.
+- `validate_assets(version: u32, assets: &[contract::Asset], check_directory_spellings: bool) -> Result<(), Error>`: the
+  shared asset rules. The identity is `distpath::path_identity`, so the Go `identity` parameter is gone. A tree is a
+  remainder tree or the independent native tree of a reused natives jar, and it requires version 2. A native tree
+  requires an independent jar of the same artifact, and it lands below the plugin directory.
+- `validated_assets(version, assets, check_directory_spellings) -> Result<BTreeMap<String, &contract::Asset>, Error>`:
+  the same, with each asset keyed by the identity of its destination. The plan step of `pluginpack` reads the map.
+- `validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMap<String, String>) -> Result<(), Error>`:
+  the link graph of one tree. `directories` names every node and marks each directory true, with `.` for the root.
+  Call `distpath::validate_links` first, as the Go collector did. That function refuses a target that resolves through
+  another link, so this function does not check it again.
 
 ## `planfile::json` (Go `pluginpack.ReadJSON`)
 

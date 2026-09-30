@@ -8,11 +8,12 @@ use std::path::{Path, PathBuf};
 
 use jarpack::{DirectoryMode, ManifestMode, MergeSpec};
 use planfile::contract::{Asset, Manifest, Operation, Reference, Source};
+use planfile::validate::asset_kind;
 
 use crate::error::{Error, IoContext, Result, fail};
 use crate::layout::LayoutScratch;
 use crate::paths::{self, FileId};
-use crate::plan::{Execution, asset_kind, identity, source_filter, validate_plugin_links};
+use crate::plan::{Execution, identity, source_filter, validate_plugin_links};
 
 /// What one resolved operation writes at its destination.
 pub(crate) enum Action {

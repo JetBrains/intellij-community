@@ -51,6 +51,12 @@ impl From<filemeta::Error> for Error {
     }
 }
 
+impl From<planfile::Error> for Error {
+    fn from(error: planfile::Error) -> Self {
+        Self::new(error.to_string())
+    }
+}
+
 /// Adds the path to an I/O error, as the Go `os.PathError` does.
 pub(crate) trait IoContext<T> {
     fn at(self, path: &Path) -> Result<T>;

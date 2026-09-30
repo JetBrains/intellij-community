@@ -16,6 +16,7 @@ use anyhow::{Context, bail};
 use component::inventory::SourcedFile;
 use filemeta::{Entry, EntryType};
 use planfile::contract::{self, Asset, TREE_VERSION};
+use planfile::validate::asset_kind;
 use serde::Deserialize;
 use tracing::field::Empty;
 
@@ -364,10 +365,6 @@ fn validate_packed_destinations(destinations: &[&str]) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn kind(asset: &Asset) -> &str {
-    if asset.kind.is_empty() { "file" } else { &asset.kind }
-}
-
 /// The destination in the distribution. Every asset is below the plugin directory, also the native tree of a reused
 /// jar.
 fn component_destination(plugin_directory: &str, destination: &str) -> String {
@@ -437,26 +434,26 @@ fn tree_inventory(root: &str, inventory: &[Entry]) -> anyhow::Result<Vec<Entry>>
         bail!("tree {root} requires root directory metadata");
     }
     distpath::validate_links(&links)?;
-    pluginpack::validate_link_graph(&directories, &links)?;
+    planfile::validate::validate_link_graph(&directories, &links)?;
     Ok(owned)
 }
 
 /// Applies the shared asset rules and two rules that only the collector holds. Only a tree of the producer
 /// `independent` names an artifact. No tree lies at or below a file asset.
 pub(crate) fn validate_assets(version: u32, assets: &[Asset]) -> anyhow::Result<()> {
-    pluginpack::validate_assets(version, assets, true)?;
+    planfile::validate::validate_assets(version, assets, true)?;
     for asset in assets {
-        if kind(asset) == "tree" && !asset.artifact.is_empty() && asset.producer != "independent" {
+        if asset_kind(asset) == "tree" && !asset.artifact.is_empty() && asset.producer != "independent" {
             bail!("tree {} must not name an independent artifact", asset.destination);
         }
     }
     for (tree_index, tree) in assets.iter().enumerate() {
-        if kind(tree) != "tree" {
+        if asset_kind(tree) != "tree" {
             continue;
         }
         let tree_identity = distpath::path_identity(&tree.destination)?;
         for (asset_index, asset) in assets.iter().enumerate() {
-            if asset_index == tree_index || kind(asset) != "file" {
+            if asset_index == tree_index || asset_kind(asset) != "file" {
                 continue;
             }
             let asset_identity = distpath::path_identity(&asset.destination)?;
@@ -529,7 +526,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
     // The remainder writes only plugin files, so a remainder asset is at its destination in the remainder directory.
     let mut claimed: HashMap<usize, Entry> = HashMap::new();
     for (index, asset) in assets.iter().enumerate() {
-        if kind(asset) == "tree" || asset.producer != "remainder" {
+        if asset_kind(asset) == "tree" || asset.producer != "remainder" {
             continue;
         }
         match remaining.remove(asset.destination.as_str()) {
@@ -542,7 +539,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
 
     // The most specific tree takes its entries first.
     let mut tree_indexes: Vec<usize> = (0..assets.len())
-        .filter(|&index| kind(&assets[index]) == "tree" && assets[index].producer == "remainder")
+        .filter(|&index| asset_kind(&assets[index]) == "tree" && assets[index].producer == "remainder")
         .collect();
     tree_indexes.sort_by_key(|&index| std::cmp::Reverse(assets[index].destination.len()));
     let mut tree_entries: HashMap<usize, Vec<Entry>> = HashMap::with_capacity(tree_indexes.len());
@@ -569,7 +566,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
         files.push(file);
     };
     for (index, asset) in assets.iter().enumerate() {
-        if kind(asset) == "tree" && asset.producer == "independent" {
+        if asset_kind(asset) == "tree" && asset.producer == "independent" {
             let tree = native_trees.get(asset.artifact.as_str());
             let Some(tree) = tree.filter(|_| used_trees.insert(asset.artifact.as_str())) else {
                 bail!("missing or repeated native tree of {} for {}", asset.artifact, asset.destination);
@@ -589,7 +586,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             }
             continue;
         }
-        if kind(asset) == "tree" {
+        if asset_kind(asset) == "tree" {
             for entry in tree_entries.get(&index).into_iter().flatten() {
                 let source = format!("{}/{}", spec.remainder.directory, entry.relative_path);
                 let destination = format!("{}/{}", spec.plugin_directory, entry.relative_path);

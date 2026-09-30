@@ -8,13 +8,15 @@
 //! refuses every other shape with an error that names it.
 //!
 //! [`contract`] holds the contract types, [`json`] the JSON reader, and [`classpath`] the record of
-//! `plugins/plugin-classpath.txt`.
+//! `plugins/plugin-classpath.txt`. [`validate`] holds the rules of an asset table and of a link graph that the packer
+//! and the collector share.
 
 pub mod classpath;
 mod compile;
 pub mod contract;
 pub mod json;
 mod plan;
+pub mod validate;
 
 pub use compile::{Derivation, derive, omitted_assets};
 pub use plan::{

@@ -1,8 +1,8 @@
 # pluginpack API
 
 The plugin remainder packer: the port of the Go package `internal/pluginpack` without its contract part, which is in
-`planfile::contract`. The binary `plugin-remainder-packer` is its only producer caller, and the collector calls the two
-validation functions again on the produced table.
+`planfile::contract`. The binary `plugin-remainder-packer` is its only caller. The asset rules and the link-graph rules
+of its plan step are in `planfile::validate`, because the collector applies them again to the produced table.
 
 ## The subset rule
 
@@ -12,9 +12,7 @@ them. The table lists what the Go packer supported and this crate refuses.
 
 | Refused input | Error |
 | --- | --- |
-| an asset of the kind `directory` | `unknown asset kind "directory"` |
 | a recipe of the retired version 3, or of a version other than 1 and 2 | `the recipe must use version 1 or 2` |
-| an independent tree without an independent jar of the same artifact | `remainder or native tree ownership` |
 | a jar or copy mode other than 0644 and 0755, also mode zero | `unsupported file mode` |
 | a layout archive named `.tgz`, or any name other than `.zip`, `.jar`, `.zip.zst` and `.tar.gz` | `unsupported layout archive` |
 | a `.zip.zst` with data after its one zstd frame | `the archive holds data after its zstd frame` |
@@ -38,18 +36,11 @@ and the remainder writes only plugin files.
 - `Execution::write(&self, output_directory: &Path, inventory_file: &Path) -> Result<()>`: writes the remainder into
   a stage beside the output, renames the stage over the output, and then writes the inventory (filemeta version 1).
   The output must be absent or an empty real directory, and the inventory must not exist. A failure publishes nothing.
-- `validate_assets(version: u32, assets: &[contract::Asset], check_directory_spellings: bool) -> Result<()>`: the
-  shared asset rules (Go `ValidateAssets`). The identity is `distpath::path_identity`, so the Go `identity` parameter
-  is gone. A tree is a remainder tree or the independent native tree of a reused natives jar, and it requires version
-  2. A native tree requires an independent jar of the same artifact, and it lands below the plugin directory.
-- `validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMap<String, String>) -> Result<()>`: the link
-  graph of one tree (Go `ValidateLinkGraph`). `directories` names every node and marks each directory true, with `.`
-  for the root. Call `distpath::validate_links` first, as the Go collector did. That function refuses a target that
-  resolves through another link, so this function does not check it again.
 - `write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()>`: writes `<output>/<entry>.gzip` for each
   `.xml` entry of each archive. The member holds the deflate stream of the zip entry. The first archive that holds a
   name wins, and a directory entry writes nothing.
 - `Error`: one refusal or failure. `Display` and `Error::message()` give the Go error text. `Result<T>` is its alias.
+  A refusal of `distpath` or `planfile::validate` keeps its text.
 
 ## Archive readers
 

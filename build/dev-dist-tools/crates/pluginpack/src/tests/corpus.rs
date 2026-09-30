@@ -4,10 +4,11 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use planfile::contract::{Artifact, Catalogue, Library, Reference, VERSION};
+use planfile::validate::validate_assets;
 use planfile::{PlanFile, derive};
 
 use super::testdata;
-use crate::{plan, validate_assets};
+use crate::plan;
 
 /// `testdata/corpus` of the `planfile` crate. Bazel puts the `planfile_testdata` filegroup beside the test data of this
 /// crate in the runfiles.

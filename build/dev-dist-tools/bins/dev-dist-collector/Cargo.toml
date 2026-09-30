@@ -13,7 +13,6 @@ workspace = true
 component.workspace = true
 distpath.workspace = true
 planfile.workspace = true
-pluginpack.workspace = true
 filemeta.workspace = true
 trace.workspace = true
 tracing.workspace = true
