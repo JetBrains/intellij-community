@@ -39,7 +39,6 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Point
 import java.util.function.Consumer
-import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -418,10 +417,10 @@ internal class PluginManagerConfigurableRoutingTest {
       return true
     }
 
-    override fun showSettingsDialog(
+    override fun <T : Configurable?> showSettingsDialog(
       project: Project?,
-      predicate: Predicate<in Configurable>,
-      additionalConfiguration: Consumer<in Configurable>?,
+      configurableClass: Class<T>,
+      additionalConfiguration: Consumer<in T>?,
     ) {
       settingsOpened = true
     }
