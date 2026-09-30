@@ -39,6 +39,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//libraries/compose-swing-ui:compose-swing"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -66,6 +67,11 @@ jvm_library(
     kotlinc_opts = ":custom_swing",
     module_name = "intellij.platform.compose.swing",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//libraries/compose-swing-ui:compose-swing",
+        "//libraries/compose-swing-ui:compose-swing_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":swing",

@@ -48,8 +48,6 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/platform-frontend:frontend",
         "//platform/indexing-api:indexing",
-        "//libraries/compose-runtime-desktop",
-        "//libraries/compose-swing-ui:compose-swing",
         "//platform/compose/swing-ui:swing",
     ],
 )
@@ -90,8 +88,6 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
         "//platform/indexing-api:indexing_test_lib",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-        "//libraries/compose-swing-ui:compose-swing_test_lib",
         "//platform/compose/swing-ui:swing_test_lib",
     ],
 )

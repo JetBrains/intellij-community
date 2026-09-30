@@ -32,6 +32,7 @@ jvm_library(
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-foundation",
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-animation",
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
+        "//libraries/compose-runtime-desktop",
     ],
     runtime_deps = [
         # do not sort,
@@ -58,6 +59,8 @@ jvm_library(
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-foundation",
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-animation",
         "@lib//:libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
+        "//libraries/compose-runtime-desktop",
+        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
     ],
     runtime_deps = [
         # do not sort,
