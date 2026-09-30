@@ -16,14 +16,4 @@
   <extensions defaultExtensionNs="com.intellij.database.datagrid">
     <structureViewModelFactory implementation="com.intellij.grid.structureview.TableEditorStructureViewModelFactory"/>
   </extensions>
-
-  <actions resource-bundle="messages.DataGridBundle">
-    <action id="Console.TableResult.ColumnsList" class="com.intellij.grid.structureview.ColumnsListAction"
-            use-shortcut-of="FileStructurePopup">
-      <add-to-group group-id="Console.TableResult.ColumnHeaderPopup" anchor="after"
-                    relative-to-action="Console.TableResult.ShowAllColumns"/>
-      <add-to-group group-id="Console.TableResult.Options" anchor="after"
-                    relative-to-action="Console.TableResult.HideEditMaximized"/>
-    </action>
-  </actions>
 </idea-plugin>

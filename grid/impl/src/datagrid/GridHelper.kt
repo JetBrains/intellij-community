@@ -27,6 +27,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.JBIterable
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import javax.swing.Icon
 
@@ -50,6 +51,14 @@ interface GridHelper : CoreGridHelper {
   fun findUniqueColumn(grid: CoreGrid<GridRow, GridColumn>, columns: MutableList<GridColumn>): GridColumn?
 
   fun getColumnIcon(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn, forDisplay: Boolean): Icon?
+
+  /** The traits that the column list can search on, or an empty set when the source has no such data. */
+  @ApiStatus.Experimental
+  fun getColumnTraits(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn): Set<GridColumnTrait> = emptySet()
+
+  /** The type text that the column list shows after the name, or null when the source reports no type. */
+  @ApiStatus.Experimental
+  fun getColumnTypeText(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn): @NlsSafe String? = column.typeName
 
   fun getVirtualFile(grid: CoreGrid<GridRow, GridColumn>): VirtualFile?
 

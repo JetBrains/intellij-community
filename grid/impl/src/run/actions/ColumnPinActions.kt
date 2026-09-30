@@ -13,17 +13,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.NlsActions.ActionDescription
 
-private const val TRANSPOSED = "action.Console.TableResult.PinColumns.transposed.description"
-private const val NO_SPACE = "action.Console.TableResult.PinColumns.insufficient.space.description"
+internal const val TRANSPOSED: String = "action.Console.TableResult.PinColumns.transposed.description"
+internal const val NO_SPACE: String = "action.Console.TableResult.PinColumns.insufficient.space.description"
 
 /** Returns the grid as a pinning one when column pinning is enabled. */
-private fun pinPanel(grid: DataGrid): GridColumnPinning? =
+internal fun pinPanel(grid: DataGrid): GridColumnPinning? =
   (grid as? GridColumnPinning)?.takeIf { ColumnPinning.isEnabled() }
 
 /** Rechecks availability at invocation because the presentation may be stale. */
-private fun actablePanel(grid: DataGrid): GridColumnPinning? = pinPanel(grid)?.takeIf { !grid.resultView.isTransposed }
+internal fun actablePanel(grid: DataGrid): GridColumnPinning? = pinPanel(grid)?.takeIf { !grid.resultView.isTransposed }
 
-private fun allPinned(panel: GridColumnPinning, columns: ModelIndexSet<GridColumn>, pinned: Boolean): Boolean =
+internal fun allPinned(panel: GridColumnPinning, columns: ModelIndexSet<GridColumn>, pinned: Boolean): Boolean =
   columns.asIterable().all { panel.isColumnPinned(it) == pinned }
 
 /** Targets the whole selection when the right-clicked header is part of one. */
@@ -39,7 +39,7 @@ private fun pinTargetColumns(grid: DataGrid, base: ModelIndexSet<GridColumn>): M
  *
  * Use a tooltip too: disabled popup items cannot show their description in the status bar.
  */
-private fun AnAction.showReason(e: AnActionEvent, reason: @ActionDescription String?) {
+internal fun AnAction.showReason(e: AnActionEvent, reason: @ActionDescription String?) {
   e.presentation.isVisible = true
   e.presentation.isEnabled = reason == null
   e.presentation.description = reason ?: templatePresentation.description

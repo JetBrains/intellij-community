@@ -1212,6 +1212,45 @@ public class TableResultPanel extends UserDataHolderBase
     return myResultView.isViewModified();
   }
 
+  /**
+   * Puts the shown columns back in the order the data has.
+   * <p>
+   * The pins, the widths and the hidden columns stay as they are. A pinned column keeps its pin and takes
+   * the data order inside the strip, because the strip reads its order from this table.
+   */
+  public void restoreNaturalColumnsOrder() {
+    // The remembered place of a hidden column describes the arrangement this call replaces.
+    if (myResultView instanceof TableResultView view) view.forgetHiddenColumnPositions();
+    setColumnsDisplayOrder(getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList());
+  }
+
+  /**
+   * Shows the columns in [order], as far as the view can.
+   * <p>
+   * Only a shown column has a place in the view, so a hidden one in [order] is passed over. The caller
+   * owns what happens to a hidden column.
+   */
+  public void setColumnsDisplayOrder(@NotNull List<ModelIndex<GridColumn>> order) {
+    Map<Integer, ModelIndex<GridColumn>> expectedToModel = new LinkedHashMap<>();
+    int expectedPos = 0;
+    for (ModelIndex<GridColumn> columnIdx : order) {
+      if (isColumnEnabled(columnIdx)) expectedToModel.put(expectedPos++, columnIdx);
+    }
+    myResultView.restoreColumnsOrder(expectedToModel);
+    updateFrozenColumns();
+  }
+
+  /** Whether any shown column sits somewhere other than where the data puts it. */
+  public boolean isColumnsOrderModified() {
+    IntUnaryOperator column2View = getRawIndexConverter().column2View();
+    int expectedPos = 0;
+    for (ModelIndex<GridColumn> columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
+      if (!isColumnEnabled(columnIdx)) continue;
+      if (column2View.applyAsInt(columnIdx.value) != expectedPos++) return true;
+    }
+    return false;
+  }
+
   @Override
   public int getVisibleColumnCount() {
     return myResultView.getViewColumnCount();

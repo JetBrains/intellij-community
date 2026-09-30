@@ -193,6 +193,7 @@ import java.util.Comparator;
 import java.util.EventObject;
 import java.util.Iterator;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
@@ -263,6 +264,11 @@ public class TableResultView extends JBTableWithResizableCells
   private final AtomicInteger editingBlocked = new AtomicInteger(0); // TODO: currently only locks column reordering
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
   private TableFloatingToolbar myFloatingToolbar;
+
+  /** Model index of the column that stood left of a hidden one, so that showing it puts it back. */
+  private final Map<Integer, Integer> myLeftNeighbourWhenHidden = new HashMap<>();
+  /** Says that a hidden column belongs at the start, rather than after some other column. */
+  public static final int NO_LEFT_NEIGHBOUR = -1;
 
   private StatisticsTableHeader myStatisticsHeader;
 
@@ -796,7 +802,12 @@ public class TableResultView extends JBTableWithResizableCells
     addColumn(getColumnCache().getOrCreateColumn(modelColumnIdx.asInteger()));
 
     int lastColumnIndex = getColumnCount() - 1;
+    int restored = viewIndexBesideRememberedNeighbour(modelColumnIdx);
     myResultPanel.runWithIgnoreSelectionChanges(() -> {
+      if (restored >= 0) {
+        moveColumn(lastColumnIndex, restored);
+        return;
+      }
       for (int viewTargetColumnIdx = 0; viewTargetColumnIdx < lastColumnIndex; viewTargetColumnIdx++) {
         if (getColumnModel().getColumn(viewTargetColumnIdx).getModelIndex() > modelColumnIdx.asInteger()) {
           moveColumn(lastColumnIndex, viewTargetColumnIdx);
@@ -804,6 +815,48 @@ public class TableResultView extends JBTableWithResizableCells
         }
       }
     });
+  }
+
+  /**
+   * The view position a hidden column had, or -1 when there is none to go back to.
+   * <p>
+   * A column that comes back belongs where the user last saw it, not where the data puts it. The place is
+   * remembered as the column that stood to its left, so that a move of any other column does not stale it.
+   */
+  private int viewIndexBesideRememberedNeighbour(@NotNull ModelIndex<?> modelColumnIdx) {
+    Integer neighbour = myLeftNeighbourWhenHidden.remove(modelColumnIdx.asInteger());
+    if (neighbour == null) return -1;
+    if (neighbour == NO_LEFT_NEIGHBOUR) return 0;
+    for (int viewIdx = 0; viewIdx < getColumnCount(); viewIdx++) {
+      if (getColumnModel().getColumn(viewIdx).getModelIndex() == neighbour) return viewIdx + 1;
+    }
+    return -1;
+  }
+
+  /**
+   * Forgets where the hidden columns sat.
+   * <p>
+   * A remembered place names the column that stood to the left, so it only means something while the
+   * arrangement it was taken from still stands. A caller that rearranges every column has to say so here.
+   */
+  public void forgetHiddenColumnPositions() {
+    myLeftNeighbourWhenHidden.clear();
+  }
+
+  /**
+   * Records that the hidden column [modelIndex] belongs after [leftNeighbour], or first when that is
+   * {@link #NO_LEFT_NEIGHBOUR}. A caller that reorders a hidden column says so here.
+   */
+  public void rememberHiddenColumnPlace(int modelIndex, int leftNeighbour) {
+    myLeftNeighbourWhenHidden.put(modelIndex, leftNeighbour);
+  }
+
+  /** Remembers where [viewColumnIdx] sits, so that showing it again puts it back. */
+  private void rememberPositionBeforeHiding(@NotNull ViewIndex<?> viewColumnIdx) {
+    int viewIdx = viewColumnIdx.asInteger();
+    TableColumn column = getColumnModel().getColumn(viewIdx);
+    int neighbour = viewIdx > 0 ? getColumnModel().getColumn(viewIdx - 1).getModelIndex() : NO_LEFT_NEIGHBOUR;
+    myLeftNeighbourWhenHidden.put(column.getModelIndex(), neighbour);
   }
 
   public void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible) {
@@ -819,6 +872,7 @@ public class TableResultView extends JBTableWithResizableCells
       }
     }
     else if (!visible && viewColumnIdx.asInteger() >= 0) {
+      rememberPositionBeforeHiding(viewColumnIdx);
       removeViewColumnFromColumnModel(viewColumnIdx);
     }
   }
@@ -1988,6 +2042,8 @@ public class TableResultView extends JBTableWithResizableCells
   public void createDefaultColumnsFromModel() {
     GridTableModel model = getModel();
     if (model == null) return;
+
+    forgetHiddenColumnPositions();
 
     getTableHeader().setDraggedColumn(null); // EA-59152
 

@@ -213,6 +213,8 @@
       <action id="Console.TableResult.HideColumn" class="com.intellij.database.run.actions.HideColumnAction"/>
       <action id="Console.TableResult.HideOtherColumns" class="com.intellij.database.run.actions.HideOtherColumnsAction"/>
       <action id="Console.TableResult.ShowAllColumns" class="com.intellij.database.run.actions.ShowAllColumnsAction"/>
+      <action id="Console.TableResult.ColumnsList" class="com.intellij.database.run.actions.ColumnsListAction"
+              icon="AllIcons.Nodes.DataColumn" use-shortcut-of="FileStructurePopup"/>
       <separator/>
       <reference ref="FitColumnWidthToViewport"/>
       <reference ref="ResetColumnsWidth"/>
@@ -352,6 +354,7 @@
       <action id="DataViews.Settings.Appearance" class="com.intellij.database.run.actions.ShowDataViewsAppearanceSettingsAction" icon="AllIcons.General.Settings"/>
     </group>
     <group id="Console.TableResult.Group.Secondary">
+      <reference ref="Console.TableResult.ColumnsList"/>
       <reference ref="Console.TableResult.ViewAs"/>
       <reference ref="Console.TableResult.Options"/>
     </group>
