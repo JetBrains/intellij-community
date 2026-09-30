@@ -57,6 +57,27 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     assertEquals(setOf(IdeActions.ACTION_GOTO_DECLARATION), actionIds.toSet())
   }
 
+  fun `test the reference under the pointer is resolved once while the pointer stays on it`() {
+    val actionIds = Collections.synchronizedList(mutableListOf<String?>())
+    ExtensionTestUtil.maskExtensions(
+      PsiDocumentationTargetProvider.EP_NAME,
+      listOf(ActionIdReadingDocumentationTargetProvider(actionIds)),
+      testRootDisposable,
+    )
+    init("class Abc {}", JavaFileType.INSTANCE)
+    val mouse = mouse()
+    val handler = project.service<CtrlMouseHandler2>()
+
+    mouse.ctrl().moveTo(0, 6)
+    handler.handlerJob().joinPumping()
+    val resolvedOnFirstEvent = actionIds.size
+    mouse.ctrl().moveTo(0, 6)
+    pump()
+
+    assertEquals("The second event was for the same offset, so it should have resolved nothing",
+                 resolvedOnFirstEvent, actionIds.size)
+  }
+
   private class ActionIdReadingDocumentationTargetProvider(private val actionIds: MutableList<String?>) : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget {
       // read it where a provider reads it: inside the read action that computes the ctrl-mouse data
@@ -90,6 +111,15 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
       }
       .sorted(RangeMarker.BY_START_OFFSET)
       .collect(Collectors.toList())
+  }
+
+  private fun pump() {
+    timeoutRunBlocking {
+      repeat(20) {
+        delay(10)
+        UIUtil.dispatchAllInvocationEvents()
+      }
+    }
   }
 
   private fun Job.joinPumping() {

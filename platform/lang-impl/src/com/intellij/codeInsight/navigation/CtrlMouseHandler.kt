@@ -163,8 +163,14 @@ class CtrlMouseHandler2(
       cancelAndClear()
       return
     }
+    val request = CtrlMouseRequest(editor, e.offset, action)
+    if (myState?.request == request) {
+      // Already highlighted for this very offset. Mouse movement produces an event per pixel, so without this the computation
+      // is cancelled and redone several times per character, which is felt by providers that resolve out of process.
+      return
+    }
     cancelHandlerJob()
-    handle(CtrlMouseRequest(editor, e.offset, action))
+    handle(request)
   }
 
   private fun ignoreMovement(screenPoint: Point): Boolean {
