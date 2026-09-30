@@ -646,38 +646,13 @@ fn read_text(path: &str) -> Result<String> {
 }
 
 /// Writes one output, and creates its directory first.
+///
+/// The directory gets the mode of [`std::fs::create_dir_all`] under the umask, because Bazel creates the directory of a
+/// declared output before the action runs, and no inventory records the mode of a directory of the writer.
 fn write_output(file: &str, content: &[u8]) -> Result<()> {
     let path = Path::new(file);
     if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        create_dir_all_0755(parent)?;
+        std::fs::create_dir_all(parent).with_context(|| parent.display().to_string())?;
     }
     std::fs::write(path, content).with_context(|| format!("open {file}"))
-}
-
-/// Creates the directory `path` and its missing parents, as `filemeta::create_dir_all_0755` does. Each directory that the
-/// function creates gets the mode 0755 under any umask, and a directory that exists keeps its mode.
-///
-/// It is written by hand, because the `filemeta` dependency would add eleven crates to the descriptor writer, and a
-/// change of any one of them re-keys every descriptor action.
-fn create_dir_all_0755(path: &Path) -> std::io::Result<()> {
-    let with_path = |error: &std::io::Error, path: &Path| std::io::Error::new(error.kind(), format!("{}: {error}", path.display()));
-    #[cfg(unix)]
-    let missing = {
-        let mut missing = Vec::new();
-        for directory in path.ancestors() {
-            if directory.as_os_str().is_empty() || std::fs::exists(directory).map_err(|error| with_path(&error, directory))? {
-                break;
-            }
-            missing.push(directory);
-        }
-        missing
-    };
-    std::fs::create_dir_all(path).map_err(|error| with_path(&error, path))?;
-    #[cfg(unix)]
-    for directory in missing {
-        use std::os::unix::fs::PermissionsExt;
-
-        std::fs::set_permissions(directory, std::fs::Permissions::from_mode(0o755)).map_err(|error| with_path(&error, directory))?;
-    }
-    Ok(())
 }
