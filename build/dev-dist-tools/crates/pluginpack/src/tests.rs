@@ -54,7 +54,7 @@ pub(crate) fn read_test_file(file: &Path) -> Vec<u8> {
 }
 
 pub(crate) fn chmod(path: &Path, mode: u32) {
-    crate::paths::set_mode(path, mode).unwrap();
+    fscopy::set_mode(path, mode).unwrap();
 }
 
 /// Sets every directory of a source tree to 0755 and every regular file to 0644. The modes that a golden records are

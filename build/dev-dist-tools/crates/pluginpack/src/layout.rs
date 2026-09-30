@@ -83,7 +83,7 @@ impl LayoutScratch {
         self.count += 1;
         let directory = root.join(format!("{prefix}-{}", self.count));
         paths::create_directory(&directory).at(&directory)?;
-        paths::set_mode(&directory, 0o755).at(&directory)?;
+        fscopy::set_mode(&directory, 0o755)?;
         Ok(directory)
     }
 
@@ -105,7 +105,7 @@ impl Drop for LayoutScratch {
 fn remove_writable_tree(root: &Path) -> Result<()> {
     for entry in walkdir::WalkDir::new(root).into_iter().flatten() {
         if entry.file_type().is_dir() {
-            let _ = paths::set_mode(entry.path(), 0o700);
+            let _ = fscopy::set_mode(entry.path(), 0o700);
         }
     }
     fs::remove_dir_all(root).at(root)

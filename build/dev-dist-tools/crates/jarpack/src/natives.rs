@@ -210,6 +210,8 @@ impl MergeSpec {
     }
 }
 
+/// Sets the mode of a tree file. It is a private copy of `fscopy::set_mode`, because the `fscopy` dependency in the
+/// packer re-keys every packing action when `fscopy` changes.
 #[cfg(unix)]
 fn set_mode(path: &Path, mode: u32) -> Result<()> {
     use std::os::unix::fs::PermissionsExt;

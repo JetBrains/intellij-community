@@ -24,7 +24,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/contentreport` | The reader of an executed packaging recipe and of a built distribution, for `dev-dist` and `content-report`. | `@community//build/dev-dist-tools/crates/contentreport:contentreport_test` |
 | `crates/distpath` | The slash-path rules: the path inside a distribution, the jar entry name, the link target, and the Go `path` functions. | `@community//build/dev-dist-tools/crates/distpath:distpath_test` |
 | `crates/filemeta` | Inventory JSON version 1, the xxh3 content hashes, and the directory creation with the mode 0755. | `@community//build/dev-dist-tools/crates/filemeta:filemeta_test` |
-| `crates/fscopy` | The copy that clones where the volume supports it, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
+| `crates/fscopy` | The copy that clones where the volume supports it, the mode helpers, and the path helpers. | `@community//build/dev-dist-tools/crates/fscopy:fscopy_test` |
 | `crates/jarpack` | The packer core: the jar merge, the `__index__`, and the native tree of a presigned library. | `@community//build/dev-dist-tools/crates/jarpack:jarpack_test` |
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dev-dist-tools/crates/javaglob:javaglob_test` |
 | `crates/planfile` | The plan file, the remainder contract, the plugin classpath record, and the asset and link-graph rules that the remainder packer and the collector share. | `@community//build/dev-dist-tools/crates/planfile:planfile_test` |

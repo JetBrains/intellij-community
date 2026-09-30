@@ -1,6 +1,8 @@
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
+use std::time::{Duration, SystemTime};
 
 use super::*;
 
@@ -13,6 +15,18 @@ fn mode_of(path: &Path) -> u32 {
     use std::os::unix::fs::PermissionsExt;
 
     fs::symlink_metadata(path).unwrap().permissions().mode() & 0o7777
+}
+
+/// A modification time with no fraction of a second, which every file system of a test host stores exactly.
+#[cfg(unix)]
+fn fixed_time() -> SystemTime {
+    SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000_000)
+}
+
+/// Sets the modification time through a read-only handle, so that it also works for a read-only file.
+#[cfg(unix)]
+fn set_test_modified(path: &Path, time: SystemTime) {
+    fs::File::open(path).unwrap().set_modified(time).unwrap();
 }
 
 #[cfg(unix)]
@@ -112,8 +126,8 @@ fn every_copy_gives_a_new_inode_and_keeps_the_read_only_source_unchanged() {
     let source = directory.path().join("cached.jar");
     write_file(&source, "cached bytes");
     set_test_mode(&source, 0o444);
-    let modified = FileTime::from_unix_time(1_000_000_000, 0);
-    filetime::set_file_mtime(&source, modified).unwrap();
+    let modified = fixed_time();
+    set_test_modified(&source, modified);
     let source_inode = fs::metadata(&source).unwrap().ino();
 
     type Copy = fn(&Path, &Path);
@@ -148,7 +162,7 @@ fn every_copy_gives_a_new_inode_and_keeps_the_read_only_source_unchanged() {
         let source_metadata = fs::metadata(&source).unwrap();
         assert_eq!(source_metadata.nlink(), 1, "{name}");
         assert_eq!(mode_of(&source), 0o444, "{name}");
-        assert_eq!(FileTime::from_last_modification_time(&source_metadata), modified, "{name}");
+        assert_eq!(source_metadata.modified().unwrap(), modified, "{name}");
         assert_eq!(fs::read_to_string(&source).unwrap(), "cached bytes", "{name}");
     }
 }
@@ -157,19 +171,19 @@ fn every_copy_gives_a_new_inode_and_keeps_the_read_only_source_unchanged() {
 #[test]
 fn copy_with_attributes_keeps_the_mode_and_the_modification_time() {
     let directory = tempfile::tempdir().unwrap();
-    let modified = FileTime::from_unix_time(1_000_000_000, 0);
+    let modified = fixed_time();
 
     for mode in [0o751, 0o444] {
         let file = directory.path().join(format!("file-{mode:o}"));
         write_file(&file, "content");
         set_test_mode(&file, mode);
-        filetime::set_file_mtime(&file, modified).unwrap();
+        set_test_modified(&file, modified);
         let file_copy = directory.path().join(format!("file-{mode:o}-copy"));
         copy_with_attributes(&file, &file_copy).unwrap();
         assert_eq!(fs::read_to_string(&file_copy).unwrap(), "content");
         assert_eq!(mode_of(&file_copy), mode);
         let metadata = fs::metadata(&file_copy).unwrap();
-        assert_eq!(FileTime::from_last_modification_time(&metadata), modified);
+        assert_eq!(metadata.modified().unwrap(), modified);
         assert_eq!(
             copy_with_attributes(&file, &file_copy).unwrap_err().kind(),
             io::ErrorKind::AlreadyExists
@@ -257,6 +271,22 @@ fn set_distribution_file_mode_uses_the_exact_mode_or_the_executable_flag() {
     }
     let error = set_distribution_file_mode(&directory.path().join("missing"), false, None).unwrap_err();
     assert_eq!(error.kind(), io::ErrorKind::NotFound);
+}
+
+#[cfg(unix)]
+#[test]
+fn set_mode_sets_the_bits_and_names_the_path_of_a_failure() {
+    let directory = tempfile::tempdir().unwrap();
+    let file = directory.path().join("file");
+    write_file(&file, "");
+    set_mode(&file, 0o640).unwrap();
+    assert_eq!(mode_of(&file), 0o640);
+    assert!(!has_special_bits(&fs::metadata(&file).unwrap()));
+
+    let missing = directory.path().join("missing");
+    let error = set_mode(&missing, 0o644).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::NotFound);
+    assert!(error.to_string().starts_with(&format!("{}: ", missing.display())), "{error}");
 }
 
 /// On Windows the test also checks the link kind and the separator. It then needs the right to create a link.

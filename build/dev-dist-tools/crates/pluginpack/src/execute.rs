@@ -79,7 +79,7 @@ impl Drop for Stage {
 
 fn remove_stage(root: &Path, directories: &[PathBuf]) {
     for directory in directories {
-        let _ = paths::set_mode(&root.join(directory), 0o755);
+        let _ = fscopy::set_mode(&root.join(directory), 0o755);
     }
     let _ = fs::remove_dir_all(root);
 }
@@ -112,7 +112,7 @@ impl Execution {
             .filter(|resolved| resolved.is_directory())
             .map(|resolved| paths::host(Path::new(""), &resolved.destination))
             .collect();
-        paths::set_mode(stage.path(), 0o755).at(stage.path())?;
+        fscopy::set_mode(stage.path(), 0o755)?;
         let destinations: Vec<(String, bool)> = operations
             .iter()
             .map(|resolved| (resolved.destination.clone(), resolved.is_directory()))
@@ -137,7 +137,7 @@ impl Execution {
             }
             // The inspection runs before the chmod, because a declared mode can deny the read.
             let mut file = filemeta::inspect(&destination, &resolved.destination)?;
-            paths::set_mode(&destination, resolved.mode).at(&destination)?;
+            fscopy::set_mode(&destination, resolved.mode)?;
             // The inventory records the mode the packer set. POSIX reads the same bits back, and NTFS stores none.
             file.mode = resolved.mode;
             file.executable = resolved.mode & 0o111 != 0;
@@ -155,7 +155,7 @@ impl Execution {
         directories.sort_by(|first, second| second.destination.cmp(&first.destination));
         for resolved in directories {
             let destination = paths::host(stage.path(), &resolved.destination);
-            paths::set_mode(&destination, resolved.mode).at(&destination)?;
+            fscopy::set_mode(&destination, resolved.mode)?;
             let mut entry = filemeta::inspect(&destination, &resolved.destination)?;
             entry.mode = resolved.mode;
             files.push(entry);
@@ -168,7 +168,7 @@ impl Execution {
             .at(inventory_parent)?
             .into_temp_path();
         filemeta::write(&metadata, &files)?;
-        paths::set_mode(&metadata, 0o644).at(&metadata)?;
+        fscopy::set_mode(&metadata, 0o644)?;
         scratch.remove()?;
         check_empty_directory(&output)?;
         match fs::remove_dir(&output) {
@@ -468,7 +468,7 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
         } else {
             fail!("unsupported tree entry: {}", source.display());
         }
-        if paths::has_special_bits(&metadata) {
+        if fscopy::has_special_bits(&metadata) {
             fail!("unsupported tree mode: {}", source.display());
         }
         if !matches!(action, Action::Symlink(_)) && !identities.insert(paths::entry_id(&source, &metadata).at(&source)?) {
@@ -571,7 +571,7 @@ pub(crate) fn resolve_transport_file(
     previous_root: Option<&Path>,
 ) -> Result<(PathBuf, fs::Metadata, PathBuf)> {
     let (source, metadata, root) = resolve_transport_entry(target, relative_path, previous_root)?;
-    if !metadata.is_file() || paths::has_special_bits(&metadata) {
+    if !metadata.is_file() || fscopy::has_special_bits(&metadata) {
         fail!("transport member is not a regular file: {}", source.display());
     }
     Ok((source, metadata, root))

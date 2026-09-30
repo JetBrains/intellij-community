@@ -9,8 +9,5 @@ license.workspace = true
 [lints]
 workspace = true
 
-[dependencies]
-filetime.workspace = true
-
 [dev-dependencies]
 tempfile.workspace = true

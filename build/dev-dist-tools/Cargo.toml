@@ -124,7 +124,6 @@ verbose_file_reads = "warn"
 [workspace.dependencies]
 anyhow = "1"
 crc32fast = "1"
-filetime = "0.2"
 flate2 = "1"
 getrandom = "0.4"
 httpdate = "1"

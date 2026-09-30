@@ -4,7 +4,6 @@ component
 distpath
 equivalent
 filemeta
-filetime
 foldhash
 fscopy
 getrandom

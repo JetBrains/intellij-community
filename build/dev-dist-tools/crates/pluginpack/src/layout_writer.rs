@@ -110,7 +110,7 @@ impl TreeWriter {
         for directory in missing.iter().rev() {
             let target = self.path(directory);
             paths::create_directory(&target).at(&target)?;
-            paths::set_mode(&target, 0o755).at(&target)?;
+            fscopy::set_mode(&target, 0o755)?;
         }
         Ok(())
     }
@@ -120,7 +120,7 @@ impl LayoutWriter for TreeWriter {
     fn directory(&mut self, name: &str, mode: u32) -> Result<()> {
         let mode = if mode == 0 { 0o755 } else { mode };
         if name.is_empty() {
-            return paths::set_mode(&self.root, mode).at(&self.root);
+            return Ok(fscopy::set_mode(&self.root, mode)?);
         }
         let first = self.claim(name, Claim::Directory)?;
         let target = self.path(name);
@@ -130,7 +130,7 @@ impl LayoutWriter for TreeWriter {
                     fail!("layout asset {name:?} conflicts with a file");
                 }
                 if first {
-                    paths::set_mode(&target, mode).at(&target)?;
+                    fscopy::set_mode(&target, mode)?;
                 }
                 return Ok(());
             }
@@ -139,7 +139,7 @@ impl LayoutWriter for TreeWriter {
         }
         self.create_parents(name)?;
         paths::create_directory(&target).at(&target)?;
-        paths::set_mode(&target, mode).at(&target)
+        Ok(fscopy::set_mode(&target, mode)?)
     }
 
     fn file(&mut self, name: &str, content: Content, mode: u32) -> Result<()> {
@@ -155,7 +155,7 @@ impl LayoutWriter for TreeWriter {
             }
             Content::File(source) => fscopy::clone_or_copy(&source, &target)?,
         }
-        paths::set_mode(&target, if mode == 0 { 0o644 } else { mode }).at(&target)
+        Ok(fscopy::set_mode(&target, if mode == 0 { 0o644 } else { mode })?)
     }
 
     fn symlink(&mut self, name: &str, target: &str) -> Result<()> {

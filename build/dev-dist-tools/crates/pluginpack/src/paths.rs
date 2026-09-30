@@ -75,37 +75,6 @@ pub(crate) fn entry_id(path: &Path, metadata: &fs::Metadata) -> io::Result<FileI
     }
 }
 
-/// Sets the permission bits. On Windows it sets only the read-only attribute from the owner write bit, as Go
-/// `os.Chmod` does. A copy on Windows keeps the read-only attribute of the source, and this call clears it again.
-pub(crate) fn set_mode(path: &Path, mode: u32) -> io::Result<()> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(path, fs::Permissions::from_mode(mode))
-    }
-    #[cfg(not(unix))]
-    {
-        let mut permissions = fs::symlink_metadata(path)?.permissions();
-        permissions.set_readonly(mode & 0o200 == 0);
-        fs::set_permissions(path, permissions)
-    }
-}
-
-/// Reports whether the mode of an entry has the setuid, setgid or sticky bit. NTFS stores none of them.
-#[cfg_attr(not(unix), expect(clippy::missing_const_for_fn, reason = "the Unix path reads the mode"))]
-pub(crate) fn has_special_bits(metadata: &fs::Metadata) -> bool {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        metadata.permissions().mode() & 0o7000 != 0
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = metadata;
-        false
-    }
-}
-
 /// Creates one directory with mode 0755 before the umask, as Go `os.Mkdir(name, 0o755)` does.
 pub(crate) fn create_directory(path: &Path) -> io::Result<()> {
     #[cfg(unix)]

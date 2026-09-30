@@ -8,7 +8,6 @@ distpath
 either
 equivalent
 filemeta
-filetime
 foldhash
 fscopy
 getrandom
