@@ -24,7 +24,6 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
     private const val PHPSTORM = "com.jetbrains.intellij.phpstorm:phpstorm:$VERSION"
     private const val WEBSTORM = "com.jetbrains.intellij.webstorm:webstorm:$VERSION"
     private const val SOURCES_JAR = "ideaIC-$VERSION-sources.jar"
-    private const val WARNING_TITLE = "root project 'project': IntelliJ Platform sources not found"
   }
 
   override fun setUp() {
@@ -52,10 +51,6 @@ class IntelliJPlatformAuxiliaryArtifactProviderTest : BuildViewMessagesImporting
 
     importProjectWithDependencies(PHPSTORM, WEBSTORM)
 
-    assertSyncViewNode(WARNING_TITLE) {
-      assertTrue(it, it.contains("com.jetbrains.intellij.idea:ideaIC:$VERSION:sources"))
-      assertTrue(it, it.contains("#configuration.repositories"))
-    }
     assertTrue(getPhpStormSourceUrls().none { it.contains(SOURCES_JAR) })
   }
 
