@@ -94,7 +94,9 @@ internal class JsonSchemaMappingsViewUi(
     schemaField.setButtonIcon(AllIcons.General.OpenDiskHover)
     SwingHelper.installFileCompletionAndBrowseDialog(
       project, schemaField, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-        .withTitle(JsonBundle.message("json.schema.add.schema.chooser.title")))
+        .withTitle(JsonBundle.message("json.schema.add.schema.chooser.title"))
+        .withEnvironmentRestricted(true)
+        .withLocalFileSystem())
     schemaField.textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         schemaPathChangedCallback.accept(schemaField.getText(), false)
