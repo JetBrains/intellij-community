@@ -7,6 +7,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.TypingEvent.NewLine
 import com.intellij.codeInsight.inline.completion.TypingEvent.OneSymbol
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.application.EDT
@@ -54,6 +55,8 @@ class TerminalInlineCompletionController(
 
   @OptIn(AwaitCancellationAndInvoke::class)
   fun install() {
+    // Install listeners read the editor type, and unit tests resolve it to MAIN_EDITOR unless it is forced.
+    InlineCompletionEditorType.force(editor, InlineCompletionEditorType.TERMINAL)
     InlineCompletion.install(editor, coroutineScope)
     InlineCompletion.getHandlerOrNull(editor)?.addEventListener(inlineCompletionShownCounter)
     typingTracker.addTypingListener(coroutineScope.asDisposable(), object : TerminalTypingListener {
