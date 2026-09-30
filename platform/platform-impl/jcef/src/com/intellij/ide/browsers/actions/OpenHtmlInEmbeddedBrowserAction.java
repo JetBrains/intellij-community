@@ -8,6 +8,7 @@ import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.ide.browsers.WebBrowserXmlService;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -75,10 +76,15 @@ public final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     Project project = e.getProject();
+    if (project == null || !TrustedProjects.isProjectTrusted(project)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
+    OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    boolean enabled = JBCefApp.isSupported() && project != null && psiFile != null && request != null && psiFile.getVirtualFile() != null;
+    boolean enabled = JBCefApp.isSupported() && psiFile != null && request != null && psiFile.getVirtualFile() != null;
     e.getPresentation().setEnabledAndVisible(enabled);
     if (!enabled) return;
 

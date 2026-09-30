@@ -36,6 +36,7 @@ import io.netty.handler.codec.http.QueryStringDecoder
 import org.apache.commons.imaging.ImageFormats
 import org.apache.commons.imaging.Imaging
 import org.jetbrains.ide.HttpRequestHandler
+import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addNoCache
 import org.jetbrains.io.response
@@ -62,6 +63,7 @@ interface WebServerPathHandler {
   /**
    * Processes the given path request for the specified project
    * (e.g., `http://localhost:63342/<project>/<path>` or `http://<project>.localhost:63342/<path>`).
+   * The server calls this method only for a trusted project.
    *
    * @param path the path of the request; does not include the project name
    * @param project the project associated with the request
@@ -195,13 +197,14 @@ internal class BuiltInWebServer : HttpRequestHandler() {
       return true
     }
 
-    val authHeaders = authService.validateToken(request) ?: return false
-
     if (project == null) return false
 
-    if (request.headers().get("Service-Worker") == "script" && !TrustedProjects.isProjectTrusted(project)) {
-      return false
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(context.channel(), request)
+      return true
     }
+
+    val authHeaders = authService.validateToken(request) ?: return false
 
     val path = decodedPath.substring(offset).takeIf { it.startsWith('/') }?.let { FileUtil.toCanonicalPath(it).substring(1) } ?: run {
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request, extraHeaders = authHeaders)

@@ -135,28 +135,40 @@ internal class HeavyBuiltInWebServerTest {
   }
 
   @Test
-  fun `service worker in safe mode`() {
+  fun `untrusted project is not served`() {
     val projectDir = tempDirManager.newPath()
     PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
+      projectDir.resolve("index.html").writeText("hello")
       projectDir.resolve("sw.js").writeText("")
       VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)
       createModule(projectDir, project)
 
       val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
-      val builder = HttpRequest.newBuilder(URI("$host/${project.name}/sw.js"))
-      builder.header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
-      builder.header("Service-Worker", "script")
-
+      val pageUrl = "$host/${project.name}/index.html"
+      val serviceWorkerRequest = HttpRequest.newBuilder(URI("$host/${project.name}/sw.js"))
+        .header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
+        .header("Service-Worker", "script")
+        .build()
       val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+      fun serviceWorkerStatus(): HttpResponseStatus =
+        HttpResponseStatus.valueOf(client.send(serviceWorkerRequest, HttpResponse.BodyHandlers.discarding()).statusCode())
+
       TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
         TrustedProjects.setProjectTrusted(project, true)
-        val responseTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
-        assertThat(HttpResponseStatus.valueOf(responseTrusted.statusCode())).isEqualTo(HttpResponseStatus.OK)
+        testUrl(pageUrl, HttpResponseStatus.OK, asSignedRequest = true).body().use {
+          assertThat(it.reader().readText()).isEqualTo("hello")
+        }
+        assertThat(serviceWorkerStatus()).isEqualTo(HttpResponseStatus.OK)
 
         TrustedProjects.setProjectTrusted(project, false)
-        val responseNotTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
-        assertThat(HttpResponseStatus.valueOf(responseNotTrusted.statusCode())).isEqualTo(HttpResponseStatus.NOT_FOUND)
+        val denied = testUrl(pageUrl, HttpResponseStatus.FORBIDDEN, asSignedRequest = true)
+        denied.body().close()
+        assertThat(denied.headers().firstValue(HttpHeaderNames.SET_COOKIE.toString())).isEmpty()
+        assertThat(serviceWorkerStatus()).isEqualTo(HttpResponseStatus.FORBIDDEN)
+
+        TrustedProjects.setProjectTrusted(project, true)
+        testUrl(pageUrl, HttpResponseStatus.OK, asSignedRequest = true).body().close()
       }
     }
   }
