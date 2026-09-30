@@ -6,13 +6,13 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtExpression
@@ -104,13 +104,8 @@ sealed interface MovePropertyToConstructorInfo {
             var isValid = true
             accept(referenceExpressionRecursiveVisitor { expression ->
                 if (!isValid) return@referenceExpressionRecursiveVisitor
-                for (reference in expression.references.filterIsInstance<KtReference>()) {
-                    for (classSymbol in reference.resolveToSymbols().filterIsInstance<KaClassSymbol>()) {
-                        if (classSymbol == parentClassSymbol) {
-                            isValid = false
-                            return@referenceExpressionRecursiveVisitor
-                        }
-                    }
+                if (parentClassSymbol in expression.tryResolveSymbolsCallFirst()) {
+                    isValid = false
                 }
             })
 
@@ -148,7 +143,7 @@ sealed interface MovePropertyToConstructorInfo {
 
         context(_: KaSession)
         private fun KtExpression.findConstructorParameter(): KtParameter? {
-            val constructorParam = mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
+            val constructorParam = tryResolveExpressionCall()?.single?.variable?.symbol as? KaValueParameterSymbol ?: return null
             return constructorParam.psi as? KtParameter
         }
     }

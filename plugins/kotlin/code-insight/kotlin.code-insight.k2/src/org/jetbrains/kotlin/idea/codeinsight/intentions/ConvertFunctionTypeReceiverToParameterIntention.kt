@@ -8,12 +8,12 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -286,7 +286,7 @@ internal class ReceiverToParameterConverter(
             }
 
             override fun visitThisExpression(expression: KtThisExpression) {
-                val symbol = expression.instanceReference.mainReference.resolveToSymbol()
+                val symbol = expression.resolveSuccessfulSymbol()
 
                 if (symbol == lambdaSymbol.receiverParameter) {
                     usages.add(ConvertWithReplacement(expression, newParameterName))

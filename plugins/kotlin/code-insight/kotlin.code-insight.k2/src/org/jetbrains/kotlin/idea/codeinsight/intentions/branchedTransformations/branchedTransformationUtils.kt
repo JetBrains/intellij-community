@@ -7,7 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -265,7 +268,8 @@ private fun KtExpression.mayInvokeGetterWithSideEffects(): Boolean =
                     (expr.selectorExpression?.mayInvokeGetterWithSideEffects() == true)
 
         is KtNameReferenceExpression ->
-            when (val symbol = expr.mainReference.resolveToSymbol()) {
+            // A candidate of red code counts too, so the check stays conservative.
+            when (val symbol = expr.tryResolveCall()?.single?.simple?.symbol) {
                 is KaSyntheticJavaPropertySymbol -> {
                     // A synthetic Java property is backed by a getter method that may have side effects.
                     // A trivial field accessor (`return field;`) has no observable side effects, so it is safe

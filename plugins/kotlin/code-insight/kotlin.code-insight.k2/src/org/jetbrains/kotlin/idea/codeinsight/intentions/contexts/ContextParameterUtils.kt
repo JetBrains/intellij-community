@@ -5,11 +5,14 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.contexts
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -18,7 +21,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -132,7 +134,7 @@ object ContextParameterUtils {
      */
     context(session: KaSession)
     fun isKotlinContextCall(call: KtCallExpression): Boolean {
-        val symbol = call.calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return false
+        val symbol = call.tryResolveCall()?.single?.simple?.symbol ?: return false
         return symbol.callableId?.asSingleFqName() == FqName("kotlin.context")
     }
 
@@ -157,9 +159,10 @@ object ContextParameterUtils {
         body.forEachDescendantOfType<KtSimpleNameExpression> { node ->
             if (consumed.size == allParameters.size) return@forEachDescendantOfType
 
-            // Only pay for resolveToSymbol() when the name can possibly match a parameter.
+            // Only pay for tryResolveSymbols() when the name can possibly match a parameter.
+            // A candidate of red code counts as a use, so red code does not give a false report.
             if (node.getReferencedName() in parameterNames) {
-                val direct = node.mainReference.resolveToSymbol()
+                val direct = node.tryResolveSymbols()?.symbols?.singleOrNull()
                 if (direct is KaContextParameterSymbol && direct in allParameters) {
                     consumed += direct
                     return@forEachDescendantOfType
