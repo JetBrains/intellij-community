@@ -42,8 +42,7 @@ internal suspend fun TargetFileSystem.probeTargetTools(
     return PyResult.localizedError(PyBundle.message("python.sdk.target.tool.probe.windows.unsupported"))
   }
 
-  val helper = PythonHelpersLocator.findPathInHelpersPossibleNull(TOOL_VERSION_PROBE_HELPER)
-               ?: return PyResult.localizedError(PyBundle.message("python.sdk.target.tool.probe.helper.missing", TOOL_VERSION_PROBE_HELPER))
+  val helper = PythonHelpersLocator.findPathInHelpers(TOOL_VERSION_PROBE_HELPER)
   val output = ExecService().execGetStdout(
     getBinaryToExec(PathHolder.Target("/bin/sh")),
     prepareArgs(helper, toolSpecs, pythonPath, workingDir),

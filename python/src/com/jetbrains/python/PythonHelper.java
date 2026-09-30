@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathInHelpers;
-import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathInHelpersPossibleNull;
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.findPathStringInHelpers;
 import static com.intellij.python.community.helpersLocator.PythonHelpersLocator.getCommunityHelpersRoot;
 import static com.intellij.python.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
@@ -97,11 +96,8 @@ public enum PythonHelper implements HelperPackage {
                                                        String[] thirdPartyDependencies) {
     List<HelperDependency> dependencies = HelperDependency.findThirdPartyDependencies(thirdPartyDependencies);
 
-    if (findPathInHelpersPossibleNull(path + ".zip") != null) {
-      return new ModuleHelperPackage(moduleEntryPoint, path + ".zip", dependencies);
-    }
-    Path pathInHelpers = findPathInHelpersPossibleNull(path);
-    if (!asModule && pathInHelpers != null && new File(pathInHelpers.toFile(), moduleEntryPoint + ".py").isFile()) {
+    Path pathInHelpers = findPathInHelpers(path);
+    if (!asModule && new File(pathInHelpers.toFile(), moduleEntryPoint + ".py").isFile()) {
       return new ScriptPythonHelper(moduleEntryPoint + ".py", pathInHelpers.toFile(), dependencies);
     }
 
@@ -186,9 +182,6 @@ public enum PythonHelper implements HelperPackage {
     }
   }
 
-  /**
-   * Module Python helper can be executed from zip-archive
-   */
   public static class ModuleHelperPackage extends PathHelperPackage {
     private final String myModuleName;
 

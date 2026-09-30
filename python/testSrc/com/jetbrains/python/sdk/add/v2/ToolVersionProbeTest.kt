@@ -91,7 +91,7 @@ internal class ToolVersionProbeTest {
     createBrokenPython(workingDirectory.resolve("broken"))
     workingDirectory.resolve("not-an-environment").createDirectories()
 
-    val helper = requireNotNull(PythonHelpersLocator.findPathInHelpersPossibleNull("tool_version_probe.sh"))
+    val helper = PythonHelpersLocator.findPathInHelpers("tool_version_probe.sh")
     val output = ExecService().execGetStdout(
       BinOnEel(Path.of("/bin/sh"), workingDirectory.asEelPath()),
       Args(helper.toString(), "--python", "", "--detect-environments", workingDirectory.toString()),
@@ -122,7 +122,7 @@ internal class ToolVersionProbeTest {
     createFakePython(requestedWorkingDirectory.resolve("requested-venv"), "Python 3.12.7", freeThreaded = false)
     createFakePython(processWorkingDirectory.resolve("actual-venv"), "Python 3.13.1", freeThreaded = true)
 
-    val helper = requireNotNull(PythonHelpersLocator.findPathInHelpersPossibleNull("tool_version_probe.sh"))
+    val helper = PythonHelpersLocator.findPathInHelpers("tool_version_probe.sh")
     val output = ExecService().execGetStdout(
       BinOnEel(Path.of("/bin/sh"), processWorkingDirectory.asEelPath()),
       Args(helper.toString(), "--python", "", "--detect-environments", requestedWorkingDirectory.toString()),
@@ -139,7 +139,7 @@ internal class ToolVersionProbeTest {
   }
 
   private suspend fun runHelper(processWorkingDirectory: Path, pythonPath: String, detectEnvironmentsDirectory: String): String {
-    val helper = requireNotNull(PythonHelpersLocator.findPathInHelpersPossibleNull("tool_version_probe.sh"))
+    val helper = PythonHelpersLocator.findPathInHelpers("tool_version_probe.sh")
     return ExecService().execGetStdout(
       BinOnEel(Path.of("/bin/sh"), processWorkingDirectory.asEelPath()),
       Args(helper.toString(), "--python", pythonPath, "--detect-environments", detectEnvironmentsDirectory),
