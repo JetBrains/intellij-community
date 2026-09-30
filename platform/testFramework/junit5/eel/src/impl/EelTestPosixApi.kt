@@ -12,6 +12,7 @@ import com.intellij.platform.eel.EelProcessManagementPosixApi
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsPosixApi
 import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.local.LocalEelArchiveApiImpl
 import com.intellij.platform.eel.impl.local.PosixNioBasedEelFileSystemApi
@@ -41,7 +42,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
       override suspend fun spawnProcess(generatedBuilder: EelExecApi.ExecuteProcessOptions) = TODO()
       override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = emptyMap()
       override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EelExecApi.EnvironmentVariablesDeferred =
-        EelExecApi.EnvironmentVariablesDeferred(CompletableDeferred(emptyMap()))
+        EelExecApi.EnvironmentVariablesDeferred(SafeDeferred(CompletableDeferred(emptyMap())))
       override suspend fun getUserLoginShell() = EelPath.parse("/bin/sh", descriptor)
       override suspend fun findExeFilesInPath(binaryName: String) = TODO()
       override val processManagement: EelProcessManagementPosixApi get() = TODO()

@@ -26,6 +26,7 @@ import com.intellij.platform.eel.EelProcessManagementPosixApi
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LoginShellSpawner
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
@@ -612,7 +613,7 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
   override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EelExecApi.EnvironmentVariablesDeferred =
-    EelExecApi.EnvironmentVariablesDeferred(CompletableDeferred(mapOf("SHELL" to TEST_SHELL)))
+    EelExecApi.EnvironmentVariablesDeferred(SafeDeferred(CompletableDeferred(mapOf("SHELL" to TEST_SHELL))))
   override suspend fun getUserLoginShell(): EelPath = EelPath.parse("/bin/sh", descriptor)
   override suspend fun spawnLoginShell(opts: LoginShellSpawner.LoginShellOptions): LoginShellSpawner.LoginShellHandle = throw UnsupportedOperationException()
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))

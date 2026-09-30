@@ -232,6 +232,11 @@ class SafeDeferred<T> private constructor(
     return SafeDeferred(result, mappedErrorState, deadSessionMapper)
   }
 
+  /** Calls [Deferred.start] */
+  fun start(): Boolean {
+    return deferred.start()
+  }
+
   private companion object {
     private inline fun convertException(
       initialErr: Throwable,

@@ -47,8 +47,9 @@
 - *a:getProcessManagement():com.intellij.platform.eel.EelProcessManagementApi
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- <init>(kotlinx.coroutines.Deferred):V
 - *f:await(kotlin.coroutines.Continuation):java.lang.Object
-- *f:getDeferred():kotlinx.coroutines.Deferred
+- *f:getDeferred():com.intellij.platform.eel.SafeDeferred
 *f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesException
 - java.io.IOException
 - com.intellij.platform.eel.EelError
@@ -538,6 +539,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - f:getState():com.intellij.platform.eel.SafeDeferred$State
 - f:invokeWhenCompleted(kotlin.jvm.functions.Function1):V
 - *f:map(kotlin.jvm.functions.Function1):com.intellij.platform.eel.SafeDeferred
+- f:start():Z
 *f:com.intellij.platform.eel.SafeDeferred$CancelledDeferred
 - com.intellij.platform.eel.SafeDeferred$DeferredException
 - <init>(java.util.concurrent.CancellationException):V

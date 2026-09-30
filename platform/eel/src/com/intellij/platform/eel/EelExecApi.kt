@@ -7,7 +7,6 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.util.annotations.VisibleToClasses
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -252,16 +251,18 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   class EnvironmentVariablesDeferred @ApiStatus.Internal constructor(
     @ApiStatus.Experimental
-    val deferred: Deferred<Map<String, String>>,
+    val deferred: SafeDeferred<Map<String, String>>,
   ) {
+    @Deprecated("Inline me")
+    constructor(deferred: Deferred<Map<String, String>>) : this(SafeDeferred(deferred))
+
     @ApiStatus.Experimental
     @ThrowsChecked(EnvironmentVariablesException::class)
     suspend fun await(): Map<String, String> = try {
       deferred.await()
     }
-    catch (e: CancellationException) {
-      currentCoroutineContext().ensureActive()
-      throw RuntimeException("Environment variables fetching was cancelled", e)
+    catch (e: SafeDeferred.FailedDeferred) {
+      throw e.cause as EnvironmentVariablesException
     }
   }
 

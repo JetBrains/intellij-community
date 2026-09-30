@@ -25,6 +25,7 @@ import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LocalEelExecApi
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.environmentVariablesAwaitReporter
 import com.intellij.platform.eel.impl.base.EelExecApiEnvironmentVariableCache
@@ -35,6 +36,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
+import com.intellij.platform.eel.toSafeDeferred
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.fastutil.skip
@@ -43,7 +45,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -102,11 +103,11 @@ class EelLocalExecPosixApi(
 
     return when (val mode = opts.mode) {
       EelExecApi.EnvironmentVariablesOptions.Mode.DEFAULT -> {
-        EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
+        EnvironmentVariablesDeferred(SafeDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap())))
       }
 
       EelExecApi.EnvironmentVariablesOptions.Mode.MINIMAL -> {
-        EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
+        EnvironmentVariablesDeferred(SafeDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv())))
       }
 
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE,
@@ -120,7 +121,7 @@ class EelLocalExecPosixApi(
     }
   }
 
-  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode): Deferred<Map<String, String>> {
+  private fun makeEnvironmentVariablesDeferred(mode: EelExecApi.EnvironmentVariablesOptions.Mode): SafeDeferred<Map<String, String>> {
     val interactive = when (mode) {
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> false
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> true
@@ -152,7 +153,7 @@ class EelLocalExecPosixApi(
         reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.failure(wrapped))
         throw wrapped
       }
-    }
+    }.toSafeDeferred { it }
   }
 
   private suspend fun getUserShell(): String {
@@ -273,7 +274,7 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
   override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred =
-    EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
+    EnvironmentVariablesDeferred(SafeDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap())))
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)

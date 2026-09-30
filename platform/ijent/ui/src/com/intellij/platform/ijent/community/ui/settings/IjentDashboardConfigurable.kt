@@ -16,6 +16,7 @@ import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LoginShellSpawner
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.environmentVariables
@@ -118,7 +119,10 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
               }
               if (newUpdatedVars != null) {
                 val prevUpdatedVars = updatedVars ?: run {
-                  if (variablesDeferred.deferred.isCompleted) variablesDeferred.await() else null
+                  when (variablesDeferred.deferred.state) {
+                    SafeDeferred.State.Active -> null
+                    is SafeDeferred.State.Finished -> variablesDeferred.await()
+                  }
                 }
                 if (prevUpdatedVars != newUpdatedVars) {
                   envVarsFlow.emit(FetchEnvVarsMode { newUpdatedVars })
