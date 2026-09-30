@@ -65,36 +65,25 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
             return 2;
         }
     };
-    let tracer = options.trace_file.as_ref().map(|_| trace::Tracer::new(JOB_NAME));
-    let dispatch = tracer.as_ref().map_or_else(tracing::Dispatch::none, trace::Tracer::dispatch);
-    let result = tracing::dispatcher::with_default(&dispatch, || {
-        let root = tracing::info_span!("materialize project model tree", files = tracing::field::Empty);
+    trace::run_traced(JOB_NAME, options.trace_file.as_deref(), 1, errors, |tracer, errors| {
+        let root = tracer.span(JOB_NAME);
         let result = materialize(&options.manifest, &options.output_dir);
         match &result {
-            Ok(count) => {
-                root.record("files", trace::count(*count));
+            Ok(count) => root.tag("files", *count),
+            Err(error) => root.fail(&format_args!("{error:#}")),
+        }
+        root.end();
+        match result {
+            Ok(_) => {
+                let _ = writeln!(output, "Project model tree materialized into {}", options.output_dir.display());
+                0
             }
-            Err(error) => trace::fail(&root, &format_args!("{error:#}")),
+            Err(error) => {
+                let _ = writeln!(errors, "ERROR: {error:#}");
+                1
+            }
         }
-        result
-    });
-    let code = match result {
-        Ok(_) => {
-            let _ = writeln!(output, "Project model tree materialized into {}", options.output_dir.display());
-            0
-        }
-        Err(error) => {
-            let _ = writeln!(errors, "ERROR: {error:#}");
-            1
-        }
-    };
-    if let (Some(tracer), Some(trace_file)) = (&tracer, &options.trace_file)
-        && let Err(error) = tracer.write_file(trace_file)
-    {
-        let _ = writeln!(errors, "ERROR: writing the span file: {error}");
-        return 1;
-    }
-    code
+    })
 }
 
 fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {

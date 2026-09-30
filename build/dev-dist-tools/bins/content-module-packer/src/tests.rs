@@ -579,7 +579,12 @@ fn a_one_shot_run_fails_with_the_error_of_the_failed_group() {
 fn pack_on_workers(base: &Path, workers: usize) -> (jarpack::Result<()>, String, Vec<String>) {
     let specs = jarpack::parse_flag_file(&base.join("recipe.txt"), base).expect("a recipe that parses");
     let mut stderr = Vec::new();
-    let result = pack_in_parallel(&specs, workers, &tracing::Span::none(), &tracing::Dispatch::none(), &mut stderr);
+    let result = pack_in_parallel(
+        &specs,
+        workers,
+        &trace::Tracer::disabled().span("pack content modules"),
+        &mut stderr,
+    );
     let out = base.join("out");
     let packed = if out.is_dir() { file_names(&out) } else { Vec::new() };
     (result, String::from_utf8(stderr).expect("a UTF-8 report"), packed)

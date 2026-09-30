@@ -12,7 +12,6 @@ workspace = true
 [dependencies]
 fscopy.workspace = true
 trace.workspace = true
-tracing.workspace = true
 lexopt.workspace = true
 anyhow.workspace = true
 rayon.workspace = true

@@ -17,7 +17,6 @@ use filemeta::{Entry, EntryType};
 use planfile::contract::{self, Asset, TREE_VERSION};
 use planfile::validate::asset_kind;
 use serde::Deserialize;
-use tracing::field::Empty;
 
 use crate::inventory::SourcedFile;
 
@@ -210,22 +209,16 @@ impl PluginComponentSpec {
 
     /// The files of the component and the classpath record of the plugin. The prepared shape ships the record, which
     /// the collector checks against the files. The packed shape has the collector write the record.
-    pub(crate) fn collect(&self, parent: &tracing::Span) -> anyhow::Result<(Vec<SourcedFile>, Vec<u8>)> {
+    pub(crate) fn collect(&self, parent: &trace::Span) -> anyhow::Result<(Vec<SourcedFile>, Vec<u8>)> {
         match self {
             Self::Prepared(spec) => {
-                let files = in_span(
-                    &tracing::info_span!(parent: parent, "merge plugin component metadata", byteCount = 0i64, fileCount = Empty),
-                    || collect_prepared(spec),
-                )?;
+                let files = in_span(&parent.child("merge plugin component metadata"), || collect_prepared(spec))?;
                 let classpath = std::fs::read(&spec.classpath).with_context(|| format!("read {}", spec.classpath))?;
                 crate::plugin_classpath::validate_component_record(&classpath, &spec.plugin_directory, &files)?;
                 Ok((files, classpath))
             }
             Self::Packed(spec) => {
-                let files = in_span(
-                    &tracing::info_span!(parent: parent, "collect packed plugin jars", byteCount = 0i64, fileCount = Empty),
-                    || collect_packed(spec),
-                )?;
+                let files = in_span(&parent.child("collect packed plugin jars"), || collect_packed(spec))?;
                 let descriptor = std::fs::read(&spec.descriptor).with_context(|| format!("read {}", spec.descriptor))?;
                 let classpath = crate::plugin_classpath::component_record(&spec.plugin_directory, &descriptor, &files)?;
                 Ok((files, classpath))
@@ -234,14 +227,13 @@ impl PluginComponentSpec {
     }
 }
 
-/// Runs `collect` in `span`, records the file count, and marks the span as failed on an error.
-fn in_span(span: &tracing::Span, collect: impl FnOnce() -> anyhow::Result<Vec<SourcedFile>>) -> anyhow::Result<Vec<SourcedFile>> {
+/// Runs `collect` in `span`, records the byte count 0 and the file count, and marks the span as failed on an error.
+fn in_span(span: &trace::Span, collect: impl FnOnce() -> anyhow::Result<Vec<SourcedFile>>) -> anyhow::Result<Vec<SourcedFile>> {
+    span.tag("byteCount", 0i64);
     let result = collect();
     match &result {
-        Ok(files) => {
-            span.record("fileCount", trace::count(files.len()));
-        }
-        Err(error) => trace::fail(span, &format_args!("{error:#}")),
+        Ok(files) => span.tag("fileCount", files.len()),
+        Err(error) => span.fail(&format_args!("{error:#}")),
     }
     result
 }

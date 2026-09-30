@@ -144,8 +144,6 @@ sha2 = "0.11"
 tar = "0.4"
 tempfile = "3"
 thiserror = "2"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
 walkdir = "2"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 zip = { version = "8", default-features = false, features = ["deflate-flate2"] }

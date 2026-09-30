@@ -8,8 +8,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
 
 use jarpack::MergeSpec;
-use tracing::field::Empty;
-use tracing::{Dispatch, Span, info_span};
+use trace::Span;
 
 use crate::inventory;
 
@@ -21,12 +20,12 @@ use crate::inventory;
 ///
 /// A group in parallel writes its report to a buffer. The buffers go to `stderr` in group order after all groups end.
 /// So the lines of two jars do not mix, and the order of the lines does not depend on the timing.
-pub(crate) fn pack_all(specs: &[MergeSpec], root: &Span, dispatch: &Dispatch, stderr: &mut dyn Write) -> jarpack::Result<()> {
+pub(crate) fn pack_all(specs: &[MergeSpec], root: &Span, stderr: &mut dyn Write) -> jarpack::Result<()> {
     if let [spec] = specs {
         return pack_one(spec, root, stderr);
     }
     let workers = thread::available_parallelism().map_or(1, NonZeroUsize::get);
-    pack_in_parallel(specs, workers, root, dispatch, stderr)
+    pack_in_parallel(specs, workers, root, stderr)
 }
 
 /// The report and the result of one group that ran.
@@ -36,33 +35,24 @@ type Outcome = (Vec<u8>, jarpack::Result<()>);
 ///
 /// The pool is written by hand, because a crate dependency in the packer re-keys every packing action when the crate
 /// changes. A panic of a group ends the run with the same panic, after the other threads end.
-pub(crate) fn pack_in_parallel(
-    specs: &[MergeSpec],
-    workers: usize,
-    root: &Span,
-    dispatch: &Dispatch,
-    stderr: &mut dyn Write,
-) -> jarpack::Result<()> {
+pub(crate) fn pack_in_parallel(specs: &[MergeSpec], workers: usize, root: &Span, stderr: &mut dyn Write) -> jarpack::Result<()> {
     let cursor = AtomicUsize::new(0);
     let failed = AtomicBool::new(false);
     let worker = || {
-        // The dispatcher of the run is the default of the calling thread only, so each thread sets it again.
-        tracing::dispatcher::with_default(dispatch, || {
-            let mut outcomes = Vec::new();
-            while !failed.load(Ordering::Relaxed) {
-                let index = cursor.fetch_add(1, Ordering::Relaxed);
-                let Some(spec) = specs.get(index) else {
-                    break;
-                };
-                let mut report = Vec::new();
-                let result = pack_one(spec, root, &mut report);
-                if result.is_err() {
-                    failed.store(true, Ordering::Relaxed);
-                }
-                outcomes.push((index, (report, result)));
+        let mut outcomes = Vec::new();
+        while !failed.load(Ordering::Relaxed) {
+            let index = cursor.fetch_add(1, Ordering::Relaxed);
+            let Some(spec) = specs.get(index) else {
+                break;
+            };
+            let mut report = Vec::new();
+            let result = pack_one(spec, root, &mut report);
+            if result.is_err() {
+                failed.store(true, Ordering::Relaxed);
             }
-            outcomes
-        })
+            outcomes.push((index, (report, result)));
+        }
+        outcomes
     };
     let mut outcomes: Vec<Option<Outcome>> = specs.iter().map(|_| None).collect();
     thread::scope(|scope| {
@@ -92,18 +82,13 @@ pub(crate) fn pack_in_parallel(
 /// same class.
 fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> jarpack::Result<()> {
     let jar_name = spec.jar_name();
-    let span = info_span!(
-        parent: parent,
-        "pack jar",
-        jar = jar_name.as_str(),
-        sources = spec.sources.len(),
-        bytes = Empty,
-        duplicates = Empty
-    );
+    let span = parent.child("pack jar");
+    span.tag("jar", jar_name.as_str());
+    span.tag("sources", spec.sources.len());
     let merged = match spec.pack() {
         Ok(merged) => merged,
         Err(error) => {
-            trace::fail(&span, &error);
+            span.fail(&error);
             return Err(error);
         }
     };
@@ -113,13 +98,11 @@ fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> jarpack::Re
     };
     match &result {
         // The size of a jar with a failed inventory tells nothing, so a failed span has no `bytes` tag.
-        Ok(()) => {
-            span.record("bytes", merged.bytes_written);
-        }
-        Err(error) => trace::fail(&span, error),
+        Ok(()) => span.tag("bytes", merged.bytes_written),
+        Err(error) => span.fail(error),
     }
     if let Some(line) = jarpack::duplicate_line(&jar_name, &merged.duplicates) {
-        span.record("duplicates", merged.duplicates.len());
+        span.tag("duplicates", merged.duplicates.len());
         let _ = writeln!(out, "{line}");
     }
     result
@@ -127,26 +110,19 @@ fn pack_one(spec: &MergeSpec, parent: &Span, out: &mut dyn Write) -> jarpack::Re
 
 /// Writes the inventory of the group under an `inventory packing output` span with the counters of the inventory.
 fn write_inventory(spec: &MergeSpec, parent: &Span) -> jarpack::Result<()> {
-    let span = info_span!(
-        parent: parent,
-        "inventory packing output",
-        fileCount = Empty,
-        hashedFileCount = Empty,
-        byteCount = Empty,
-        nativeFileCount = Empty
-    );
+    let span = parent.child("inventory packing output");
     match inventory::write_inventory(spec) {
         Ok(report) => {
-            span.record("fileCount", report.file_count);
-            span.record("hashedFileCount", report.hashed_file_count);
-            span.record("byteCount", report.byte_count);
+            span.tag("fileCount", report.file_count);
+            span.tag("hashedFileCount", report.hashed_file_count);
+            span.tag("byteCount", report.byte_count);
             if let Some(count) = report.native_file_count {
-                span.record("nativeFileCount", count);
+                span.tag("nativeFileCount", count);
             }
             Ok(())
         }
         Err(error) => {
-            trace::fail(&span, &error);
+            span.fail(&error);
             Err(error)
         }
     }

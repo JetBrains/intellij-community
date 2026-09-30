@@ -8,46 +8,66 @@
 //!   full precision.
 //! - A span with no tags has no `tags` key, and a root span has no `references` key.
 //!
-//! [`Tracer`] is a [`Layer`]. A tool instruments its code with the `tracing` macros. Without an installed [`Tracer`]
-//! the macros do nothing, so a run without `--trace-file` needs no tracing branch. See `API.md` for the mapping of the
-//! `tracing` data.
+//! A tool starts a root [`Span`] from a [`Tracer`] and each child from its parent span. A [`Tracer::disabled`] tracer
+//! gives inert spans, so a run without `--trace-file` runs the same statements and records nothing. [`run_traced`]
+//! holds the set-up that every traced tool shares.
+//!
+//! The span API is written by hand, because a crate dependency in the packer re-keys every packing action when the
+//! crate changes. See `API.md` for the mapping of the calls to the document.
 
-use std::fmt;
+use std::fmt::Display;
 use std::fs;
-use std::io;
+use std::io::{self, Write};
 use std::path::Path;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tracing::field::{Field, Visit};
-use tracing::span::{Attributes, Id, Record};
-use tracing::{Event, Level, Subscriber};
-use tracing_subscriber::layer::{Context, Layer, SubscriberExt};
-use tracing_subscriber::registry::LookupSpan;
 
 #[cfg(test)]
 mod tests;
 
-/// A span field with this name sets the operation name. Use it for a name that is not a `&'static str`.
-pub const OPERATION_NAME_FIELD: &str = "otel.name";
-
-/// The tag that [`fail`] adds.
-pub const ERROR_MESSAGE_FIELD: &str = "error.message";
+/// The tag that [`Span::fail`] adds.
+const ERROR_MESSAGE_TAG: &str = "error.message";
 
 /// The one process that a file describes. The Kotlin exporter uses the same id, and a merge of files renumbers it.
 const PROCESS_ID: &str = "p1";
 
+/// Runs `job` with a tracer for `trace_file`, then writes the span file. Every traced tool starts this way.
+///
+/// Without `trace_file` the tracer is disabled. `job` gets the tracer and `errors`, and it returns the exit code of the
+/// tool. The action declares the span file as an output, so a run that cannot write the file fails, and Bazel does not
+/// look for a file that is not there. Then the function writes `ERROR: writing the span file: …` to `errors` and
+/// returns `failure`.
+pub fn run_traced(
+    service_name: &str,
+    trace_file: Option<&Path>,
+    failure: u8,
+    errors: &mut dyn Write,
+    job: impl FnOnce(&Tracer, &mut dyn Write) -> u8,
+) -> u8 {
+    let tracer = match trace_file {
+        Some(_) => Tracer::new(service_name),
+        None => Tracer::disabled(),
+    };
+    let code = job(&tracer, errors);
+    if let Some(trace_file) = trace_file
+        && let Err(error) = tracer.write_file(trace_file)
+    {
+        let _ = writeln!(errors, "ERROR: writing the span file: {error}");
+        return failure;
+    }
+    code
+}
+
 /// Collects the spans of one run and writes them once, at the end.
 ///
-/// A clone shares the state, so a tool can install one clone and keep another to call [`Tracer::write_file`].
-///
-/// The tracer records only the inputs of the Go original. These are a span field of the type `&str`, `i64` or `u64`, a
-/// field that `%` or `?` formats, and the event of [`fail`]. For any other field type or event, [`Tracer::write_file`]
-/// fails with an error that names the first such input.
+/// A clone shares the state. A disabled tracer records nothing: each of its spans is inert, and
+/// [`Tracer::write_file`] writes no file.
 #[derive(Clone)]
 pub struct Tracer {
-    inner: Arc<Inner>,
+    /// `None` for a disabled tracer.
+    inner: Option<Arc<Inner>>,
 }
 
 struct Inner {
@@ -60,29 +80,14 @@ struct Inner {
     /// Returns a new span id. A test replaces it.
     new_span_id: Box<dyn Fn() -> String + Send + Sync>,
     trace_id: String,
-    /// One lock guards the spans and the first unsupported input.
-    state: Mutex<State>,
-}
-
-#[derive(Default)]
-struct State {
-    /// The spans in the order they started.
-    spans: Vec<SpanRecord>,
-    /// The first input that the tracer does not support. [`Tracer::write_file`] reports it.
-    unsupported: Option<String>,
-}
-
-impl State {
-    fn refuse(&mut self, input: Option<String>) {
-        if self.unsupported.is_none() {
-            self.unsupported = input;
-        }
-    }
+    /// The spans in the order they started. A [`Span`] holds the index of its record.
+    spans: Mutex<Vec<SpanRecord>>,
 }
 
 struct SpanRecord {
     id: String,
-    parent_id: Option<String>,
+    /// The index of the record of the parent span.
+    parent: Option<usize>,
     name: String,
     start: i64,
     end: Option<i64>,
@@ -91,13 +96,117 @@ struct SpanRecord {
 }
 
 struct Tag {
-    key: String,
+    key: &'static str,
     kind: &'static str,
     value: String,
 }
 
-/// The index of the record of a span in [`State::spans`]. The span extensions hold it.
-struct RecordIndex(usize);
+/// The value of a tag: a string, or an integer that the document writes with the type `long`.
+///
+/// The Go original recorded only these two kinds, so no other type converts into a tag value.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TagValue {
+    Str(String),
+    Long(i64),
+}
+
+impl From<&str> for TagValue {
+    fn from(value: &str) -> Self {
+        Self::Str(value.to_owned())
+    }
+}
+
+impl From<String> for TagValue {
+    fn from(value: String) -> Self {
+        Self::Str(value)
+    }
+}
+
+impl From<i64> for TagValue {
+    fn from(value: i64) -> Self {
+        Self::Long(value)
+    }
+}
+
+/// A count or a byte size. A value past `i64::MAX` saturates.
+impl From<u64> for TagValue {
+    fn from(value: u64) -> Self {
+        Self::Long(i64::try_from(value).unwrap_or(i64::MAX))
+    }
+}
+
+/// A count. A value past `i64::MAX` saturates.
+impl From<usize> for TagValue {
+    fn from(value: usize) -> Self {
+        Self::Long(i64::try_from(value).unwrap_or(i64::MAX))
+    }
+}
+
+impl Tag {
+    fn new(key: &'static str, value: TagValue) -> Self {
+        let (kind, value) = match value {
+            TagValue::Str(text) => ("string", text),
+            TagValue::Long(number) => ("long", number.to_string()),
+        };
+        Self { key, kind, value }
+    }
+}
+
+/// One span of a [`Tracer`]. It ends once: at [`Span::end`], or when it drops.
+///
+/// A span is `Send` and `Sync`, so a worker thread starts a child from a span of its caller. The API has no current
+/// span, so each child names its parent.
+#[must_use = "a span ends when it drops"]
+pub struct Span {
+    /// The tracer and the index of the record, or `None` for a span of a disabled tracer.
+    record: Option<(Arc<Inner>, usize)>,
+}
+
+impl Span {
+    /// Starts a child of this span.
+    pub fn child(&self, name: impl Into<String>) -> Self {
+        match &self.record {
+            Some((inner, index)) => inner.start(name.into(), Some(*index)),
+            None => Self { record: None },
+        }
+    }
+
+    /// Adds a tag. The document lists the tags in the order of these calls.
+    pub fn tag(&self, key: &'static str, value: impl Into<TagValue>) {
+        if let Some((inner, index)) = &self.record {
+            let tag = Tag::new(key, value.into());
+            inner.spans()[*index].tags.push(tag);
+        }
+    }
+
+    /// Marks the span as failed and adds `message` as the `error.message` tag.
+    ///
+    /// A failed span gets the tags `otel.status_code` and `error` before all other tags, as the Kotlin exporter writes
+    /// them. The Jaeger UI then shows the span in red.
+    pub fn fail(&self, message: &dyn Display) {
+        if let Some((inner, index)) = &self.record {
+            let tag = Tag::new(ERROR_MESSAGE_TAG, TagValue::Str(message.to_string()));
+            let mut spans = inner.spans();
+            let record = &mut spans[*index];
+            record.failed = true;
+            record.tags.push(tag);
+        }
+    }
+
+    /// Ends the span. A span that drops without this call ends at the drop.
+    pub fn end(self) {
+        drop(self);
+    }
+}
+
+impl Drop for Span {
+    fn drop(&mut self) {
+        if let Some((inner, index)) = &self.record {
+            let end = (inner.clock)();
+            inner.spans()[*index].end = Some(end);
+        }
+    }
+}
 
 /// The document, in the field order of the Kotlin exporter.
 #[derive(Serialize)]
@@ -183,6 +292,11 @@ impl Tracer {
         )
     }
 
+    /// Returns a tracer that records nothing, for a run without a span file.
+    pub const fn disabled() -> Self {
+        Self { inner: None }
+    }
+
     fn with_parts(
         service_name: String,
         started_at: i64,
@@ -191,61 +305,76 @@ impl Tracer {
         trace_id: String,
     ) -> Self {
         Self {
-            inner: Arc::new(Inner {
+            inner: Some(Arc::new(Inner {
                 service_name,
                 started_at,
                 clock,
                 new_span_id,
                 trace_id,
-                state: Mutex::new(State::default()),
-            }),
+                spans: Mutex::new(Vec::new()),
+            })),
         }
     }
 
-    /// Installs a `Registry` with this tracer as the global default subscriber.
-    ///
-    /// Every thread then records into this tracer, also a rayon worker. A span on a worker does not see the span of the
-    /// caller, so give it an explicit parent: `info_span!(parent: &root, "pack jar")`.
-    pub fn install_global(&self) -> Result<(), tracing::subscriber::SetGlobalDefaultError> {
-        tracing::subscriber::set_global_default(tracing_subscriber::registry().with(self.clone()))
+    /// Starts a root span.
+    pub fn span(&self, name: impl Into<String>) -> Span {
+        match &self.inner {
+            Some(inner) => inner.start(name.into(), None),
+            None => Span { record: None },
+        }
     }
 
-    /// Returns a `Registry` with this tracer, for `tracing::dispatcher::with_default` in a test or a scoped thread.
-    pub fn dispatch(&self) -> tracing::Dispatch {
-        tracing::Dispatch::new(tracing_subscriber::registry().with(self.clone()))
-    }
-
-    /// Writes the trace to `path` and creates the parent directory.
+    /// Writes the trace to `path` and creates the parent directory. A disabled tracer writes no file.
     ///
     /// The document is one line with no trailing newline, as the Kotlin writer leaves it. A span that is still open
-    /// ends at the time of the write. The error names the path. When the run recorded an unsupported input, the
-    /// function writes nothing and returns an error of the kind [`io::ErrorKind::InvalidInput`] that names the input.
+    /// ends at the time of the write. The error names the path.
     pub fn write_file(&self, path: &Path) -> io::Result<()> {
+        let Some(inner) = &self.inner else {
+            return Ok(());
+        };
         let named = |error: io::Error| io::Error::new(error.kind(), format!("{}: {error}", path.display()));
-        let data = self
-            .encode()
-            .map_err(|message| named(io::Error::new(io::ErrorKind::InvalidInput, message)))?;
+        let data = inner.encode();
         if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
             fs::create_dir_all(parent).map_err(named)?;
         }
         fs::write(path, data).map_err(named)
     }
+}
 
-    fn state(&self) -> MutexGuard<'_, State> {
-        self.inner.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+impl Inner {
+    fn spans(&self) -> MutexGuard<'_, Vec<SpanRecord>> {
+        self.spans.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    fn encode(&self) -> Result<Vec<u8>, String> {
-        let state = self.state();
-        if let Some(input) = &state.unsupported {
-            return Err(format!("unsupported trace input: {input}"));
+    /// Starts a span with the next id. The clock runs under the lock, so the file order is the start order.
+    fn start(self: &Arc<Self>, name: String, parent: Option<usize>) -> Span {
+        let id = (self.new_span_id)();
+        let index = {
+            let mut spans = self.spans();
+            let start = (self.clock)();
+            spans.push(SpanRecord {
+                id,
+                parent,
+                name,
+                start,
+                end: None,
+                failed: false,
+                tags: Vec::new(),
+            });
+            spans.len() - 1
+        };
+        Span {
+            record: Some((Arc::clone(self), index)),
         }
-        let now = (self.inner.clock)();
-        let trace_id = self.inner.trace_id.as_str();
-        let started_at = u64::try_from(self.inner.started_at).unwrap_or(0);
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        let spans = self.spans();
+        let now = (self.clock)();
+        let trace_id = self.trace_id.as_str();
+        let started_at = u64::try_from(self.started_at).unwrap_or(0);
         let time = httpdate::fmt_http_date(UNIX_EPOCH + Duration::from_nanos(started_at));
-        let spans = state
-            .spans
+        let span_documents = spans
             .iter()
             .map(|span| {
                 let elapsed = span.end.unwrap_or(now) - span.start;
@@ -264,7 +393,7 @@ impl Tracer {
                     });
                 }
                 tags.extend(span.tags.iter().map(|tag| TagDocument {
-                    key: &tag.key,
+                    key: tag.key,
                     kind: tag.kind,
                     value: &tag.value,
                 }));
@@ -279,11 +408,11 @@ impl Tracer {
                     duration_nano: elapsed,
                     tags,
                     // OpenTelemetry has no parent in another trace, so the reference holds the trace id of the span.
-                    references: span.parent_id.as_deref().map(|parent_id| {
+                    references: span.parent.map(|parent| {
                         [ReferenceDocument {
                             ref_type: "CHILD_OF",
                             trace_id,
-                            span_id: parent_id,
+                            span_id: &spans[parent].id,
                         }]
                     }),
                 }
@@ -294,7 +423,7 @@ impl Tracer {
                 trace_id,
                 processes: Processes {
                     p1: ProcessDocument {
-                        service_name: &self.inner.service_name,
+                        service_name: &self.service_name,
                         tags: [TagDocument {
                             key: "time",
                             kind: "string",
@@ -302,194 +431,13 @@ impl Tracer {
                         }],
                     },
                 },
-                spans,
+                spans: span_documents,
             }],
         };
         let text = serde_json::to_string(&document).expect("a trace document has no map with non-string keys");
         // Go `encoding/json` escaped U+2028 and U+2029, and `serde_json` does not. The two characters occur only in a
         // JSON string, so this replace gives the bytes of the Go writer.
-        Ok(text.replace('\u{2028}', "\\u2028").replace('\u{2029}', "\\u2029").into_bytes())
-    }
-
-    fn record_index<S>(id: &Id, context: &Context<'_, S>) -> Option<usize>
-    where
-        S: Subscriber + for<'a> LookupSpan<'a>,
-    {
-        context.span(id)?.extensions().get::<RecordIndex>().map(|index| index.0)
-    }
-}
-
-impl<S> Layer<S> for Tracer
-where
-    S: Subscriber + for<'a> LookupSpan<'a>,
-{
-    fn on_new_span(&self, attributes: &Attributes<'_>, id: &Id, context: Context<'_, S>) {
-        let Some(span) = context.span(id) else {
-            return;
-        };
-        let parent_index = span
-            .parent()
-            .and_then(|parent| parent.extensions().get::<RecordIndex>().map(|index| index.0));
-        let mut visitor = TagVisitor::default();
-        attributes.record(&mut visitor);
-        let name = visitor.name.unwrap_or_else(|| attributes.metadata().name().to_owned());
-        let unsupported = visitor.unsupported.map(|input| format!("{input}, in the span {name:?}"));
-        let span_id = (self.inner.new_span_id)();
-        let start = (self.inner.clock)();
-        let index = {
-            let mut state = self.state();
-            state.refuse(unsupported);
-            let parent_id = parent_index.map(|index| state.spans[index].id.clone());
-            state.spans.push(SpanRecord {
-                id: span_id,
-                parent_id,
-                name,
-                start,
-                end: None,
-                failed: false,
-                tags: visitor.tags,
-            });
-            state.spans.len() - 1
-        };
-        span.extensions_mut().insert(RecordIndex(index));
-    }
-
-    fn on_record(&self, id: &Id, values: &Record<'_>, context: Context<'_, S>) {
-        let Some(index) = Self::record_index(id, &context) else {
-            return;
-        };
-        let mut visitor = TagVisitor::default();
-        values.record(&mut visitor);
-        let mut state = self.state();
-        let unsupported = visitor
-            .unsupported
-            .map(|input| format!("{input}, in the span {:?}", state.spans[index].name));
-        state.refuse(unsupported);
-        let span = &mut state.spans[index];
-        if let Some(name) = visitor.name {
-            span.name = name;
-        }
-        span.tags.append(&mut visitor.tags);
-    }
-
-    fn on_event(&self, event: &Event<'_>, context: Context<'_, S>) {
-        let metadata = event.metadata();
-        if metadata.target() != module_path!() || *metadata.level() != Level::ERROR {
-            self.state().refuse(Some(format!(
-                "the {} of the target {}: the trace records only the event of `trace::fail`",
-                metadata.name(),
-                metadata.target()
-            )));
-            return;
-        }
-        let Some(index) = context
-            .event_span(event)
-            .and_then(|span| span.extensions().get::<RecordIndex>().map(|index| index.0))
-        else {
-            return;
-        };
-        let mut visitor = TagVisitor::default();
-        event.record(&mut visitor);
-        let mut state = self.state();
-        let span = &mut state.spans[index];
-        span.failed = true;
-        span.tags.append(&mut visitor.tags);
-    }
-
-    fn on_close(&self, id: Id, context: Context<'_, S>) {
-        let Some(index) = Self::record_index(&id, &context) else {
-            return;
-        };
-        let end = (self.inner.clock)();
-        self.state().spans[index].end.get_or_insert(end);
-    }
-}
-
-/// Marks `span` as failed and adds `message` as the `error.message` tag.
-///
-/// A failed span gets the tags `otel.status_code` and `error` before all other tags, as the Kotlin exporter writes
-/// them. The Jaeger UI then shows the span in red.
-/// A count or a byte size as the `i64` value of a span field. A value past `i64::MAX` saturates.
-pub fn count<T: TryInto<i64>>(value: T) -> i64 {
-    value.try_into().unwrap_or(i64::MAX)
-}
-
-pub fn fail(span: &tracing::Span, message: &dyn fmt::Display) {
-    tracing::error!(parent: span, error.message = %message);
-}
-
-/// Turns the fields of a span or an event into tags.
-#[derive(Default)]
-struct TagVisitor {
-    name: Option<String>,
-    tags: Vec<Tag>,
-    /// The first field with a type that the Go original did not record.
-    unsupported: Option<String>,
-}
-
-impl TagVisitor {
-    fn add(&mut self, field: &Field, kind: &'static str, value: String) {
-        if field.name() == OPERATION_NAME_FIELD {
-            self.name = Some(value);
-        } else {
-            self.tags.push(Tag {
-                key: field.name().to_owned(),
-                kind,
-                value,
-            });
-        }
-    }
-
-    fn refuse(&mut self, field: &Field, type_name: &str) {
-        self.unsupported.get_or_insert_with(|| {
-            format!(
-                "the field {} has the type {type_name}, and a field must be a string, an i64 or a u64",
-                field.name()
-            )
-        });
-    }
-}
-
-impl Visit for TagVisitor {
-    fn record_i64(&mut self, field: &Field, value: i64) {
-        self.add(field, "long", value.to_string());
-    }
-
-    fn record_u64(&mut self, field: &Field, value: u64) {
-        self.add(field, "long", value.to_string());
-    }
-
-    fn record_str(&mut self, field: &Field, value: &str) {
-        self.add(field, "string", value.to_owned());
-    }
-
-    /// Records a field that `%` or `?` formats. `tracing` gives both to this method.
-    fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
-        self.add(field, "string", format!("{value:?}"));
-    }
-
-    fn record_f64(&mut self, field: &Field, _value: f64) {
-        self.refuse(field, "f64");
-    }
-
-    fn record_i128(&mut self, field: &Field, _value: i128) {
-        self.refuse(field, "i128");
-    }
-
-    fn record_u128(&mut self, field: &Field, _value: u128) {
-        self.refuse(field, "u128");
-    }
-
-    fn record_bool(&mut self, field: &Field, _value: bool) {
-        self.refuse(field, "bool");
-    }
-
-    fn record_bytes(&mut self, field: &Field, _value: &[u8]) {
-        self.refuse(field, "&[u8]");
-    }
-
-    fn record_error(&mut self, field: &Field, _value: &(dyn std::error::Error + 'static)) {
-        self.refuse(field, "&dyn Error");
+        text.replace('\u{2028}', "\\u2028").replace('\u{2029}', "\\u2029").into_bytes()
     }
 }
 

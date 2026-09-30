@@ -15,11 +15,8 @@ hashbrown
 httpdate
 indexmap
 itoa
-lazy_static
 lexopt
 memchr
-once_cell
-pin_project_lite
 planfile
 rayon
 rayon_core
@@ -27,13 +24,8 @@ same_file
 serde
 serde_core
 serde_json
-sharded_slab
 thiserror
-thread_local
 trace
-tracing
-tracing_core
-tracing_subscriber
 walkdir
 xxhash_rust
 zmij

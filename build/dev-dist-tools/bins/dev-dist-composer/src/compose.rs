@@ -175,11 +175,18 @@ pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<
 ///
 /// The function runs [`validate_components`] and [`validate_destinations`] first. A failure there creates nothing.
 /// Then it requires that `target` is absent or an empty directory, and it creates it. For a full distribution, it
-/// calls [`merge::merge_components`] once with the components in spec order. Launch metadata never copies a component
-/// file. Then the function writes the plugin classpath, writes the local layout for launch metadata, and computes the
-/// fingerprint. The caller writes `core-classpath.txt`, `fingerprint.txt` and the IDE config.
-pub(crate) fn compose_components(components: &[DevBuildComponent], target: &Path, options: &ComposeOptions) -> Result<ComposedBuild> {
-    compose_with_merge(components, target, options, merge::merge_components)
+/// calls [`merge::merge_components`] once with the components in spec order, under `span`. Launch metadata never copies
+/// a component file. Then the function writes the plugin classpath, writes the local layout for launch metadata, and
+/// computes the fingerprint. The caller writes `core-classpath.txt`, `fingerprint.txt` and the IDE config.
+pub(crate) fn compose_components(
+    components: &[DevBuildComponent],
+    target: &Path,
+    options: &ComposeOptions,
+    span: &trace::Span,
+) -> Result<ComposedBuild> {
+    compose_with_merge(components, target, options, |components, target| {
+        merge::merge_components(components, target, span)
+    })
 }
 
 /// [`compose_components`] with another copy step. A test gives a step that copies nothing, so it checks the metadata

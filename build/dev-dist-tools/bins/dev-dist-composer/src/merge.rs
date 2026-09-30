@@ -17,7 +17,6 @@ use std::path::{Path, PathBuf};
 use component::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest};
 use component::{Error, Result, fail, paths};
 use rayon::prelude::*;
-use tracing::field::Empty;
 
 use crate::compose::DevBuildComponent;
 use crate::spec::ComponentSources;
@@ -27,8 +26,8 @@ use crate::spec::ComponentSources;
 const COPY_THREADS: usize = 4;
 
 /// Writes the files of every component at `target`, an empty directory. The source bindings give the bytes of each
-/// file.
-pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path) -> Result<()> {
+/// file. Each component gets a child span of `parent`.
+pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path, parent: &trace::Span) -> Result<()> {
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(COPY_THREADS)
         .build()
@@ -37,20 +36,15 @@ pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path) 
     for component in components {
         let manifest = &component.manifest;
         // One span per component, so that a slow composition names the component that made it slow.
-        let span = tracing::info_span!(
-            "merge dev build component",
-            kind = manifest.kind.as_str(),
-            fileCount = Empty,
-            byteCount = Empty
-        );
-        let copied = span.in_scope(|| copy_component(manifest, target, component.source_bindings.as_ref(), &pool, &mut links));
-        match copied {
+        let span = parent.child("merge dev build component");
+        span.tag("kind", manifest.kind.as_str());
+        match copy_component(manifest, target, component.source_bindings.as_ref(), &pool, &mut links) {
             Ok(byte_count) => {
-                span.record("fileCount", manifest.entries.len() as u64);
-                span.record("byteCount", byte_count);
+                span.tag("fileCount", manifest.entries.len());
+                span.tag("byteCount", byte_count);
             }
             Err(error) => {
-                trace::fail(&span, &error);
+                span.fail(&error);
                 return Err(error);
             }
         }
@@ -139,15 +133,8 @@ fn copy_component<'a>(
             }
         }
     }
-    // A worker thread has no dispatcher and no current span, so each copy runs under the ones of this thread.
-    let dispatch = tracing::dispatcher::get_default(tracing::Dispatch::clone);
-    let parent = tracing::Span::current();
     // Each copy is independent, and the first failed copy in manifest order names the error.
-    let copied: Vec<Result<()>> = pool.install(|| {
-        jobs.par_iter()
-            .map(|job| tracing::dispatcher::with_default(&dispatch, || parent.in_scope(|| copy_file(job))))
-            .collect()
-    });
+    let copied: Vec<Result<()>> = pool.install(|| jobs.par_iter().map(copy_file).collect());
     copied.into_iter().collect::<Result<()>>()?;
     Ok(byte_count)
 }

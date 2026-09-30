@@ -52,27 +52,18 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
         Ok(trace_file) => trace_file,
         Err(error) => return report(errors, &error),
     };
-    let tracer = trace_file.as_ref().map(|_| trace::Tracer::new(JOB_NAME));
-    let dispatch = tracer.as_ref().map_or_else(tracing::Dispatch::none, trace::Tracer::dispatch);
-    let result = tracing::dispatcher::with_default(&dispatch, || {
-        let root = tracing::info_span!("compose dev distribution", componentCount = tracing::field::Empty);
-        let result = root.in_scope(|| compose_dev_distribution(&mut options, &root));
+    trace::run_traced(JOB_NAME, trace_file.as_deref().map(Path::new), 1, errors, |tracer, errors| {
+        let root = tracer.span(JOB_NAME);
+        let result = compose_dev_distribution(&mut options, &root);
         if let Err(error) = &result {
-            trace::fail(&root, error);
+            root.fail(error);
         }
-        result
-    });
-    let code = match result {
-        Ok(()) => 0,
-        Err(error) => report(errors, &error),
-    };
-    if let (Some(tracer), Some(trace_file)) = (&tracer, &trace_file)
-        && let Err(error) = tracer.write_file(Path::new(trace_file))
-    {
-        let _ = writeln!(errors, "ERROR: writing the span file: {error}");
-        return 1;
-    }
-    code
+        root.end();
+        match result {
+            Ok(()) => 0,
+            Err(error) => report(errors, &error),
+        }
+    })
 }
 
 fn report(errors: &mut dyn Write, error: &Error) -> u8 {
@@ -162,14 +153,14 @@ impl CommandLineOptions {
 
 /// Checks the composition spec first, then the output options, the unknown options, the source bindings and each
 /// component manifest. It removes the output directory only after all of these checks pass.
-fn compose_dev_distribution(options: &mut CommandLineOptions, root: &tracing::Span) -> Result<()> {
+fn compose_dev_distribution(options: &mut CommandLineOptions, root: &trace::Span) -> Result<()> {
     let spec_file = options.required_path("--composition-spec")?;
     let spec = spec::read_composition_spec(Path::new(&spec_file))?;
     let output_dir = options.required_path("--output-dir")?;
     let ide_config = options.required_path("--ide-config")?;
     let fingerprint_file = options.required_path("--fingerprint")?;
     options.check_no_unknown_options()?;
-    root.record("componentCount", spec.components.len() as u64);
+    root.tag("componentCount", spec.components.len());
 
     let mut bindings = match (&spec.source_runfiles, &spec.source_bindings) {
         (Some(_), Some(_)) => return Err(Error::msg("Local launch metadata must not expand source bindings")),
@@ -215,7 +206,7 @@ fn compose_dev_distribution(options: &mut CommandLineOptions, root: &tracing::Sp
         source_directory_runfiles: Some(compose::absolute_keys(&spec.source_directory_runfiles)?),
     };
     let home = Path::new(&output_dir);
-    let result = compose::compose_components(&components, home, &compose_options)?;
+    let result = compose::compose_components(&components, home, &compose_options, root)?;
     for (file, content) in [
         (
             home.join("core-classpath.txt"),

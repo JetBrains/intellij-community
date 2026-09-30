@@ -3,44 +3,51 @@
 Records the spans of one run and writes them as Jaeger JSON, in the field order of the Kotlin
 `JaegerJsonSpanExporter`. Port of the Go package `internal/span`.
 
-`Tracer` is a `tracing_subscriber::Layer`. A tool instruments its code with the `tracing` macros. Without an installed
-`Tracer` the macros do nothing, so a run without `--trace-file` needs no tracing branch.
+A tool starts a root span from a `Tracer` and each child from its parent span. A disabled tracer gives inert spans, so
+a run without `--trace-file` runs the same statements and records nothing. The API is written by hand, because a crate
+dependency in the packer re-keys every packing action when the crate changes.
 
 ```rust
-let tracer = trace_file.as_ref().map(|_| trace::Tracer::new("content-module-packer"));
-if let Some(tracer) = &tracer {
-    tracer.install_global()?;
-}
-let root = tracing::info_span!("pack content modules", jars = specs.len());
-// On a rayon worker, pass the parent explicitly: info_span!(parent: &root, "pack jar", jar = %name, bytes = Empty)
-// Later: span.record("bytes", count); trace::fail(&span, &error);
-drop(root);
-if let (Some(tracer), Some(path)) = (&tracer, &trace_file) {
-    tracer.write_file(path)?;
-}
+trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer, stderr| {
+    let root = tracer.span("pack content modules");
+    root.tag("jars", specs.len());
+    // On a worker thread: let span = root.child("pack jar"); span.tag("jar", name); span.fail(&error);
+    root.end();
+    0
+})
 ```
 
 ## Public items
 
-| Item | Go original | Description |
-|---|---|---|
-| `struct Tracer` | `Tracer` | Collects the spans. `Clone` shares the state. Implements `Layer<S>` for every `S: Subscriber + for<'a> LookupSpan<'a>`. |
-| `Tracer::new(impl Into<String>) -> Tracer` | `NewTracer` | Starts a trace with a random trace id. The service name names the producer in the merged trace. |
-| `Tracer::install_global(&self) -> Result<(), SetGlobalDefaultError>` | none | Installs `Registry` with this layer as the global default. Every thread, rayon workers too, then records into this tracer. |
-| `Tracer::dispatch(&self) -> tracing::Dispatch` | none | A `Registry` with this layer, for `tracing::dispatcher::with_default` in a test or a scoped thread. |
-| `Tracer::write_file(&self, &Path) -> io::Result<()>` | `WriteFile` | Writes the document in one line, with no trailing newline. It creates the parent directory. A span that is still open ends at the write time. The error names the path. After an unsupported input it writes nothing and fails with `InvalidInput`. |
-| `fail(&tracing::Span, &dyn Display)` | `Span.Fail` | Marks the span as failed and adds the `error.message` tag. |
-| `OPERATION_NAME_FIELD = "otel.name"` | none | A span field with this name sets the operation name. Use it for a name that is not a `&'static str`. |
-| `ERROR_MESSAGE_FIELD = "error.message"` | none | The tag that `fail` adds. |
+| Item | Description |
+|---|---|
+| `run_traced(&str, Option<&Path>, failure: u8, &mut dyn Write, FnOnce(&Tracer, &mut dyn Write) -> u8) -> u8` | Runs the job with a tracer for the span file, or with a disabled tracer without one. Then it writes the file. When the write fails, it writes `ERROR: writing the span file: …` to the error stream and returns `failure`. Otherwise it returns the code of the job. |
+| `struct Tracer` | Collects the spans. `Clone` shares the state. |
+| `Tracer::new(impl Into<String>) -> Tracer` | Starts a trace with a random trace id. The service name names the producer in the merged trace. |
+| `Tracer::disabled() -> Tracer` | A tracer that records nothing. It allocates nothing, and each of its spans is inert. |
+| `Tracer::span(&self, impl Into<String>) -> Span` | Starts a root span. |
+| `Tracer::write_file(&self, &Path) -> io::Result<()>` | Writes the document in one line, with no trailing newline. It creates the parent directory. A span that is still open ends at the write time. The error names the path. A disabled tracer writes no file. |
+| `struct Span` | One span. It is `Send` and `Sync`, and it is not `Clone`. |
+| `Span::child(&self, impl Into<String>) -> Span` | Starts a child of this span. The child of an inert span is inert. |
+| `Span::tag(&self, &'static str, impl Into<TagValue>)` | Adds a tag. |
+| `Span::fail(&self, &dyn Display)` | Marks the span as failed and adds the `error.message` tag. |
+| `Span::end(self)` | Ends the span. A span that drops without this call ends at the drop. |
+| `enum TagValue { Str(String), Long(i64) }` | The value of a tag. `From` converts `&str`, `String`, `i64`, `u64` and `usize`. A `u64` or a `usize` past `i64::MAX` saturates. |
 
-## Mapping of the `tracing` data
+The Go names of `Tracer::new`, `Tracer::write_file` and `Span::fail` were `NewTracer`, `WriteFile` and `Span.Fail`.
 
-- The span name is the operation name. The field `otel.name` replaces it.
-- A span ends when its last handle drops (`on_close`). The first end is the only end.
-- A field becomes a tag in the order of recording: the fields of the span macro first, then each `span.record`.
-- A `&str`, `Display` (`%`) or `Debug` (`?`) value is type `string`. An `i64` or a `u64` is type `long`. Every tag value is a JSON string.
-- The event of `fail` marks the span as failed and adds `error.message` as a tag.
-- A failed span gets the tags `otel.status_code=ERROR` and `error=true` before all other tags.
+## Mapping to the document
+
+- The name of the span is the operation name.
+- A span ends once: at `end`, or when it drops.
+- The tags are in the order of the `tag` and `fail` calls.
+- A `TagValue::Str` is type `string`, and a `TagValue::Long` is type `long`. Every tag value is a JSON string.
+- `fail` marks the span as failed and adds `error.message` as a tag.
+- A failed span gets the tags `otel.status_code=ERROR` and `error=true` before all other tags. The type of `error` is
+  `boolean`.
+- A child has one `CHILD_OF` reference to its parent, with the trace id of the file. A root span has no `references`
+  key, and a span with no tags has no `tags` key.
+- `startTime` and `duration` are in microseconds, truncated. `startTimeNano` and `durationNano` follow them.
 - The file lists the spans in the order they started.
 - `serde_json` writes the document. The tracer then escapes U+2028 and U+2029 as the Go writer did. The other bytes
   are the bytes of `serde_json`, which match Go `encoding/json` with `SetEscapeHTML(false)`.
@@ -50,6 +57,6 @@ if let (Some(tracer), Some(path)) = (&tracer, &trace_file) {
 
 ## Supported subset
 
-The Go original recorded only string and integer tags and had no events. A field of the type `bool`, `f64`, `i128`,
-`u128`, `&[u8]` or `&dyn Error`, and every event other than the event of `fail`, are unsupported. The tracer keeps the
-first such input, and `write_file` fails with a message that names the field and the span, or the event.
+The Go original recorded only string and integer tags and had no events. `TagValue` has only these two kinds, so a
+boolean, a float or an event cannot reach the document. The API has no current span, so a span has no parent other
+than the span that started it.

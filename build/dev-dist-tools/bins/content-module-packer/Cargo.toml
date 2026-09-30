@@ -14,7 +14,6 @@ workspace = true
 filemeta.workspace = true
 jarpack.workspace = true
 trace.workspace = true
-tracing.workspace = true
 lexopt.workspace = true
 
 [dev-dependencies]

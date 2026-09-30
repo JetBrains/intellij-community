@@ -77,29 +77,19 @@ fn run(arguments: impl IntoIterator<Item = OsString>, base_dir: &Path, stderr: &
         spec.verify_crc |= options.verify_crc;
     }
 
-    let tracer = trace_file.as_ref().map(|_| trace::Tracer::new(SERVICE_NAME));
-    let dispatch = tracer.as_ref().map_or_else(tracing::Dispatch::none, trace::Tracer::dispatch);
-    let result = tracing::dispatcher::with_default(&dispatch, || {
-        let root = tracing::info_span!("pack content modules", jars = specs.len());
-        let result = pack::pack_all(&specs, &root, &dispatch, stderr);
+    trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer, stderr| {
+        let root = tracer.span("pack content modules");
+        root.tag("jars", specs.len());
+        let result = pack::pack_all(&specs, &root, stderr);
         if let Err(error) = &result {
-            trace::fail(&root, error);
+            root.fail(error);
         }
-        result
-    });
-    let code = match result {
-        Ok(()) => 0,
-        Err(error) => report_failure(stderr, &error),
-    };
-    if let (Some(tracer), Some(trace_file)) = (&tracer, &trace_file)
-        && let Err(error) = tracer.write_file(trace_file)
-    {
-        // The jars are correct, but the action declares the span file as an output. So a run that cannot write it fails,
-        // and Bazel does not look for a file that is not there.
-        let _ = writeln!(stderr, "ERROR: writing the span file: {error}");
-        return FAILURE;
-    }
-    code
+        root.end();
+        match result {
+            Ok(()) => 0,
+            Err(error) => report_failure(stderr, &error),
+        }
+    })
 }
 
 fn report_failure(stderr: &mut dyn Write, error: &dyn Display) -> u8 {

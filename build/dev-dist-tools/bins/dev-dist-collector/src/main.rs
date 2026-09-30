@@ -17,7 +17,6 @@ use std::io::Write;
 use std::path::Path;
 
 use anyhow::{Context, bail};
-use tracing::field::Empty;
 
 use crate::inventory::{ManifestHeader, SourcedFile};
 use crate::plugin_component::{Outputs, PluginComponentSpec};
@@ -124,55 +123,47 @@ fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u
         }
     };
     let (job, content) = options.mode.job();
-    let tracer = options.trace_file.as_ref().map(|_| trace::Tracer::new(job));
-    let dispatch = tracer.as_ref().map_or_else(tracing::Dispatch::none, trace::Tracer::dispatch);
-    let result = tracing::dispatcher::with_default(&dispatch, || {
-        let root = match &options.mode {
-            Mode::PluginComponent { .. } => tracing::info_span!("collect", otel.name = job, kind = %options.kind, byteCount = 0i64),
-            Mode::Jars { .. } | Mode::Files { .. } => tracing::info_span!("collect", otel.name = job, kind = %options.kind),
-        };
+    trace::run_traced(job, options.trace_file.as_deref().map(Path::new), 1, errors, |tracer, errors| {
+        let root = tracer.span(job);
+        root.tag("kind", options.kind.as_str());
+        if matches!(options.mode, Mode::PluginComponent { .. }) {
+            root.tag("byteCount", 0i64);
+        }
         let result = collect(&options, &root);
         if let Err(error) = &result {
-            trace::fail(&root, &format_args!("{error:#}"));
+            root.fail(&format_args!("{error:#}"));
         }
-        result
-    });
-    let code = match result {
-        Ok(count) => {
-            let _ = writeln!(
-                output,
-                "Dev distribution component '{}' named {count} {content} in {}",
-                options.kind, options.manifest
-            );
-            0
+        root.end();
+        match result {
+            Ok(count) => {
+                let _ = writeln!(
+                    output,
+                    "Dev distribution component '{}' named {count} {content} in {}",
+                    options.kind, options.manifest
+                );
+                0
+            }
+            Err(error) => {
+                let _ = writeln!(errors, "ERROR: {error:#}");
+                1
+            }
         }
-        Err(error) => {
-            let _ = writeln!(errors, "ERROR: {error:#}");
-            1
-        }
-    };
-    if let (Some(tracer), Some(trace_file)) = (&tracer, &options.trace_file)
-        && let Err(error) = tracer.write_file(Path::new(trace_file))
-    {
-        let _ = writeln!(errors, "ERROR: writing the span file: {error}");
-        return 1;
-    }
-    code
+    })
 }
 
 /// Collects the files of the mode and writes the manifest. The plugin component mode also writes the classpath record.
 /// It returns the number of files that the manifest names.
-fn collect(options: &Options<PluginComponentSpec>, root: &tracing::Span) -> anyhow::Result<usize> {
+fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow::Result<usize> {
     let (files, classpath) = match &options.mode {
         Mode::Jars { jars_file, catalogue } => {
-            let span = tracing::info_span!(parent: root, "collect platform jars", jarCount = Empty, byteCount = Empty);
+            let span = root.child("collect platform jars");
             let result = collect::platform_jars(jars_file)
                 .and_then(|files| Ok(inventory::attach_metadata(&files, Path::new(catalogue))?))
                 .and_then(|files| collect::validate_destinations(&files).map(|()| files));
             (record_collection(&span, "jarCount", result)?, None)
         }
         Mode::Files { files_file } => {
-            let span = tracing::info_span!(parent: root, "collect explicit files", fileCount = Empty, byteCount = Empty);
+            let span = root.child("collect explicit files");
             let result = collect::explicit_files(files_file).and_then(|files| collect::validate_destinations(&files).map(|()| files));
             (record_collection(&span, "fileCount", result)?, None)
         }
@@ -192,34 +183,32 @@ fn collect(options: &Options<PluginComponentSpec>, root: &tracing::Span) -> anyh
     Ok(files.len())
 }
 
-fn record_collection(span: &tracing::Span, count_name: &str, result: anyhow::Result<Vec<SourcedFile>>) -> anyhow::Result<Vec<SourcedFile>> {
+fn record_collection(
+    span: &trace::Span,
+    count_name: &'static str,
+    result: anyhow::Result<Vec<SourcedFile>>,
+) -> anyhow::Result<Vec<SourcedFile>> {
     match &result {
         Ok(files) => {
-            span.record(count_name, trace::count(files.len()));
-            span.record("byteCount", 0i64);
+            span.tag(count_name, files.len());
+            span.tag("byteCount", 0i64);
         }
-        Err(error) => trace::fail(span, &format_args!("{error:#}")),
+        Err(error) => span.fail(&format_args!("{error:#}")),
     }
     result
 }
 
-fn write_manifest(options: &Options<PluginComponentSpec>, files: &[SourcedFile], root: &tracing::Span) -> anyhow::Result<()> {
-    let span = tracing::info_span!(
-        parent: root,
-        "inventory dev build component",
-        fileCount = Empty,
-        hashedFileCount = Empty,
-        byteCount = Empty
-    );
+fn write_manifest(options: &Options<PluginComponentSpec>, files: &[SourcedFile], root: &trace::Span) -> anyhow::Result<()> {
+    let span = root.child("inventory dev build component");
     match inventory::write_manifest(Path::new(&options.manifest), &options.header(), files) {
         Ok(stats) => {
-            span.record("fileCount", trace::count(stats.file_count));
-            span.record("hashedFileCount", trace::count(stats.hashed_file_count));
-            span.record("byteCount", trace::count(stats.byte_count));
+            span.tag("fileCount", stats.file_count);
+            span.tag("hashedFileCount", stats.hashed_file_count);
+            span.tag("byteCount", stats.byte_count);
             Ok(())
         }
         Err(error) => {
-            trace::fail(&span, &error);
+            span.fail(&error);
             Err(error.into())
         }
     }

@@ -688,7 +688,11 @@ fn the_merge_step_refuses_a_link_at_a_directory_destination() {
     directory_symlink("elsewhere", target.join("resources"));
     let manifest = with_entries(test_manifest("plugin"), vec![directory_entry("resources", 0o755)]);
     require_error(
-        super::merge_components(&[DevBuildComponent::new(manifest)], &target),
+        super::merge_components(
+            &[DevBuildComponent::new(manifest)],
+            &target,
+            &trace::Tracer::disabled().span("merge"),
+        ),
         "a symbolic link is there",
     );
 }

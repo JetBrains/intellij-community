@@ -243,18 +243,15 @@ pub(crate) fn compose(components: &[DevBuildComponent], target: impl AsRef<Path>
     compose_with(components, target, ComposeOptions::default())
 }
 
-/// Composes under a live tracer, as `main` does.
-///
-/// `tracing` caches the interest of each span site for all threads. A thread without a dispatcher can cache the
-/// interest "never", and then a command line test loses its span. A dispatcher on each test thread prevents this.
+/// Composes under a tracer that records, as `main` does with `--trace-file`, so each test also runs the span calls.
 #[expect(clippy::needless_pass_by_value, reason = "the tests build the options inline")]
 pub(crate) fn compose_with(
     components: &[DevBuildComponent],
     target: impl AsRef<Path>,
     options: ComposeOptions,
 ) -> component::Result<ComposedBuild> {
-    let dispatch = trace::Tracer::new("dev-dist-composer test").dispatch();
-    tracing::dispatcher::with_default(&dispatch, || compose::compose_components(components, target.as_ref(), &options))
+    let root = trace::Tracer::new("dev-dist-composer test").span(crate::JOB_NAME);
+    compose::compose_components(components, target.as_ref(), &options, &root)
 }
 
 pub(crate) fn with_directory_runfiles(directory: impl AsRef<Path>, runfile: &str) -> ComposeOptions {
