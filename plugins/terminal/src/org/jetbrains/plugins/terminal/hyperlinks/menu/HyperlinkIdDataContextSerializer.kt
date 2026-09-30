@@ -4,11 +4,12 @@ package org.jetbrains.plugins.terminal.hyperlinks.menu
 import com.intellij.ide.CustomDataContextSerializer
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.serialization.KSerializer
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkDataKeys
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
 
 internal class HyperlinkIdDataContextSerializer : CustomDataContextSerializer<TerminalHyperlinkId> {
   override val key: DataKey<TerminalHyperlinkId>
-    get() = TerminalHyperlinkId.KEY
+    get() = TerminalHyperlinkDataKeys.HYPERLINK_ID
   override val serializer: KSerializer<TerminalHyperlinkId>
     get() = TerminalHyperlinkId.Companion.serializer()
 }

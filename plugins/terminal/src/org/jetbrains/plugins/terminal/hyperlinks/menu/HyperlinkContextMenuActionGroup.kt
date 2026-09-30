@@ -10,8 +10,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.hyperlinks.session.TerminalHyperlinksSessionId
+import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkDataKeys
 
 internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -24,10 +23,10 @@ internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBeha
     val project = e.project ?: return emptyArray()
     LOG.trace { "getChildren(): project=$project" }
 
-    val sessionId = e.dataContext.getData(TerminalHyperlinksSessionId.DATA_KEY) ?: return emptyArray()
+    val sessionId = e.dataContext.getData(TerminalHyperlinkDataKeys.SESSION_ID) ?: return emptyArray()
     LOG.trace { "getChildren(): hyperlinksSessionId=$sessionId" }
 
-    val hyperlinkId = e.dataContext.getData(TerminalHyperlinkId.KEY) ?: return emptyArray()
+    val hyperlinkId = e.dataContext.getData(TerminalHyperlinkDataKeys.HYPERLINK_ID) ?: return emptyArray()
     LOG.trace { "getChildren(): hyperlinkId=$hyperlinkId" }
 
     val hyperlinkInfoService = BackendHyperlinkInfoService.getInstance()

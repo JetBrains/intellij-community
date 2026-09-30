@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.hyperlinks
 
 import com.intellij.execution.impl.EditorTextDecorationId
 import com.intellij.execution.impl.createTextDecorationId
-import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -11,11 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 data class TerminalHyperlinkId(val value: Long) {
   override fun toString(): String = value.toString()
-
-  companion object {
-    @JvmStatic
-    val KEY: DataKey<TerminalHyperlinkId> = DataKey.create("TerminalHyperlinkId")
-  }
 }
 
 @ApiStatus.Internal
