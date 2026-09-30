@@ -309,6 +309,10 @@ fun <T : CommandChain> T.stopProfile(profilerParams: String = "jfr"): T = apply 
   addCommand("${CMD_PREFIX}stopProfile $profilerParams")
 }
 
+fun <T : CommandChain> T.mark(name: String): T = apply {
+  addCommand("${CMD_PREFIX}mark $name")
+}
+
 fun <T : CommandChain> T.memoryDump(): T = apply {
   addCommand("${CMD_PREFIX}memoryDump")
 }

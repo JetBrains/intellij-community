@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "traceID": "0000000000000000",
+      "processes": {
+        "p1": {
+          "serviceName": "IntelliJ IDEA"
+        }
+      },
+      "spans": [
+        {
+          "traceID": "0000000000000000",
+          "spanID": "aaaa000000000001",
+          "operationName": "phase.before",
+          "processID": "p1",
+          "startTime": 1000000,
+          "duration": 0,
+          "tags": [
+            { "key": "jvm.alloc.mb", "type": "string", "value": "100" },
+            { "key": "jvm.gc.count", "type": "string", "value": "5" },
+            { "key": "jvm.cpu.time.ms", "type": "string", "value": "1000" },
+            { "key": "jvm.bad", "type": "string", "value": "not-a-number" },
+            { "key": "finish", "type": "int64", "value": "1000" }
+          ]
+        },
+        {
+          "traceID": "0000000000000000",
+          "spanID": "aaaa000000000002",
+          "operationName": "phase.after",
+          "processID": "p1",
+          "startTime": 2000000,
+          "duration": 0,
+          "tags": [
+            { "key": "jvm.alloc.mb", "type": "string", "value": "350" },
+            { "key": "jvm.gc.count", "type": "string", "value": "9" },
+            { "key": "jvm.cpu.time.ms", "type": "string", "value": "1750" },
+            { "key": "jvm.bad", "type": "string", "value": "still-bad" },
+            { "key": "finish", "type": "int64", "value": "2000" }
+          ]
+        }
+      ]
+    }
+  ]
+}

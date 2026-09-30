@@ -3,6 +3,7 @@ package com.intellij.tools.ide.metrics.collector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
 import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
+import com.intellij.tools.ide.metrics.collector.telemetry.getDeltaMetricsBetweenMarks
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
 import com.intellij.util.io.URLUtil
@@ -400,5 +401,26 @@ class OpenTelemetrySpanExtractionTest {
     }
     assertThat(failure.message).contains("finalized=false")
     assertThat(failure.cause).isInstanceOf(SerializationException::class.java)
+  }
+
+  @Test
+  fun deltaMetricsBetweenMarksComputePerKeyDeltas() {
+    val file = (openTelemetryReports / "opentelemetry_marks.json")
+    val metrics = getDeltaMetricsBetweenMarks(file, phase = "phase")
+    // Every numeric jvm.* attribute is diffed and named `<phase>#<key>`; the non-numeric `jvm.bad`
+    // and the non-`jvm.` `finish` attribute are excluded.
+    metrics.shouldContainExactlyInAnyOrder(
+      Metric.newCounter("phase#jvm.alloc.mb", 250),
+      Metric.newCounter("phase#jvm.gc.count", 4),
+      Metric.newCounter("phase#jvm.cpu.time.ms", 750),
+    )
+  }
+
+  @Test
+  fun deltaMetricsBetweenMarksThrowWhenMarkMissing() {
+    val file = (openTelemetryReports / "opentelemetry_marks.json")
+    assertThrows<IllegalStateException> {
+      getDeltaMetricsBetweenMarks(file, phase = "ghost")
+    }
   }
 }

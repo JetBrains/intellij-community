@@ -56,6 +56,7 @@ import com.jetbrains.performancePlugin.commands.InspectionCommandEx;
 import com.jetbrains.performancePlugin.commands.InstallCustomJBR;
 import com.jetbrains.performancePlugin.commands.JBRFullGCCommand;
 import com.jetbrains.performancePlugin.commands.LogProjectLibrariesAndSdksCommand;
+import com.jetbrains.performancePlugin.commands.MarkCommand;
 import com.jetbrains.performancePlugin.commands.MeasureVFSUpdateCommand;
 import com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand;
 import com.jetbrains.performancePlugin.commands.MeasureSettingsDialogCommand;
@@ -204,6 +205,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(MoveCaretCommand.PREFIX, MoveCaretCommand::new),
       Map.entry(TakeThreadDumpCommand.PREFIX, TakeThreadDumpCommand::new),
       Map.entry(CaptureMemoryMetricsCommand.PREFIX, CaptureMemoryMetricsCommand::new),
+      Map.entry(MarkCommand.PREFIX, MarkCommand::new),
       Map.entry(SleepCommand.PREFIX, SleepCommand::new),
       Map.entry(AssertEncodingFileCommand.PREFIX, AssertEncodingFileCommand::new),
       Map.entry(SetModuleJdkCommand.PREFIX, SetModuleJdkCommand::new),

@@ -59,6 +59,48 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
   return CombinedMetricsPostProcessor().process(mapOf(name to metrics))
 }
 
+/**
+ * Delta metrics between the `<phase>.before` and `<phase>.after` marks, one counter per cumulative
+ * attribute.
+ *
+ * Reads the marks emitted by the `%mark` command (instant events in the `mark` scope) and, for every
+ * numeric attribute whose key starts with [keyPrefix] and is present on both marks, publishes
+ * `Metric.newCounter("<phase>#<key>", after - before)`. Following the platform's `#` attribute
+ * convention (for example `localInspections#Warnings`), each counter is exposed as an attribute of
+ * the `<phase>` metric and the raw attribute key is kept verbatim (no renaming).
+ *
+ * [keyPrefix] both selects the counters to diff and excludes bookkeeping attributes such as the
+ * `finish` timestamp that every mark carries. Values round-trip through `opentelemetry.json` as
+ * strings, so a value that does not parse as `Long` is skipped. The attributes are assumed to be
+ * cumulative counters captured before → after; each delta is narrowed to `Int`.
+ *
+ * @throws IllegalStateException when either mark is absent from [file].
+ */
+fun getDeltaMetricsBetweenMarks(
+  file: Path,
+  phase: String,
+  keyPrefix: String = "jvm.",
+): List<Metric> {
+  val fromSpanName = "$phase.before"
+  val toSpanName = "$phase.after"
+  val spans = OpentelemetrySpanJsonParser(SpanFilter.nameInList(fromSpanName, toSpanName))
+    .getSpanElements(file)
+    .sortedBy { it.startTimestamp }
+  val fromSpan = spans.firstOrNull { it.name == fromSpanName } ?: throw IllegalStateException("Mark $fromSpanName not found in $file")
+  val toSpan = spans.firstOrNull { it.name == toSpanName } ?: throw IllegalStateException("Mark $toSpanName not found in $file")
+
+  return toSpan.tags.mapNotNull { (key, rawValue) ->
+    if (!key.startsWith(keyPrefix)) return@mapNotNull null
+    val to = rawValue.toLongOrNull() ?: return@mapNotNull null
+    val from = longTag(fromSpan, key) ?: return@mapNotNull null
+    Metric.newCounter("$phase#$key", (to - from).toInt())
+  }
+}
+
+private fun longTag(span: SpanElement, key: String): Long? {
+  return span.tags.firstOrNull { it.first == key }?.second?.toLongOrNull()
+}
+
 fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter.any()): Map<String, List<MetricWithAttributes>> {
   val spanElements = OpentelemetrySpanJsonParser(spanFilter).getSpanElements(file)
   val metricSpanProcessor = MetricSpanProcessor()
