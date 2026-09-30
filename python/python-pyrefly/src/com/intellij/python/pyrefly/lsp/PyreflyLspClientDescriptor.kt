@@ -10,7 +10,6 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServerState
@@ -93,14 +92,14 @@ class PyreflyLspClientDescriptor(
   override val usesExcludedRoots: Boolean = true
 
   override fun hasExecutable(): Boolean {
-    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project)) {
+    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project) || !PyreflyPyTool.isBundledPyreflyEnabled()) {
       return super.hasExecutable()
     }
     return PyreflyExecutableProvider.executableExists()
   }
 
   override suspend fun resolveCommandLine(): GeneralCommandLine {
-    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project) || !Registry.`is`("use.bundled.pyrefly", false)) {
+    if (!PyreflyPyTool.getInstance().isSelectedAsTypeEngine(project) || !PyreflyPyTool.isBundledPyreflyEnabled()) {
       return super.resolveCommandLine()
     }
 

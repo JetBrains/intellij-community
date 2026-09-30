@@ -50,7 +50,9 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
       return null
     }
 
-    if (!PyreflyExecutableProvider.executableExists()) {
+    // Only the bundled binary is checked here, and it is a file in the plugin. Any other binary is
+    // resolved when the server starts, see `PyreflyLspClientDescriptor.hasExecutable`.
+    if (PyreflyPyTool.isBundledPyreflyEnabled() && !PyreflyExecutableProvider.executableExists()) {
       return null
     }
 

@@ -86,7 +86,7 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
 
       // We still auto-install Pyrefly when it becomes the selected engine; the per-module "already
       // installed?" check makes this a no-op when it is up to date.
-      if (typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY) {
+      if (typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY && !PyreflyPyTool.isBundledPyreflyEnabled()) {
         project.modules.forEach { module ->
           // Skip this module rather than the whole loop: in a multi-module project one interpreter
           // Pyrefly cannot drive must not stop the install for the other modules. The test is the

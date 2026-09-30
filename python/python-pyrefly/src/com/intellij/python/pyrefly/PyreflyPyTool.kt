@@ -43,6 +43,8 @@ class PyreflyPyTool : PyLspTool<PyreflyConfiguration>() {
     PyTypeEngineProjectSettings.getInstance(project).typeEngine == PyTypeEngineType.PYREFLY
 
   companion object {
+    fun isBundledPyreflyEnabled(): Boolean = Registry.`is`("use.bundled.pyrefly", false)
+
     fun getInstance(): PyreflyPyTool = PyTool.EP_NAME.findExtensionOrFail(PyreflyPyTool::class.java)
   }
 }
