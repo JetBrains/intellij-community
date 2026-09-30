@@ -152,8 +152,9 @@ fn modules(options: &mut cli::Options, name: &str) -> anyhow::Result<Vec<String>
 /// the plugin classpath record. A refusal happens before any write. Only an I/O failure after `Execution::write` can
 /// leave the plugin directory behind, and Bazel discards the outputs of a failed action.
 fn project(arguments: &Arguments, version: u32) -> Result<String, String> {
-    let file = planfile::read(Path::new(arguments.value("--projection"))).map_err(|error| error.to_string())?;
-    let catalogue: Catalogue = planfile::json::read(Path::new(arguments.value("--input-catalogue"))).map_err(|error| error.to_string())?;
+    let file = planfile::read(Path::new(arguments.value("--projection"))).map_err(|error| format!("{error:#}"))?;
+    let catalogue: Catalogue =
+        planfile::json::read(Path::new(arguments.value("--input-catalogue"))).map_err(|error| format!("{error:#}"))?;
     let descriptor_path = arguments.value("--classpath-descriptor");
     let descriptor = fs::read(descriptor_path).map_err(|error| format!("{descriptor_path}: {error}"))?;
     let derivation = planfile::derive(
@@ -165,7 +166,7 @@ fn project(arguments: &Arguments, version: u32) -> Result<String, String> {
         &arguments.independent_modules,
         &arguments.refused_modules,
     )
-    .map_err(|error| error.to_string())?;
+    .map_err(|error| format!("{error:#}"))?;
     let execution = pluginpack::plan(&derivation.recipe, &derivation.catalogue).map_err(|error| error.to_string())?;
     let assets = serde_json::to_vec(&derivation.assets).map_err(|error| error.to_string())?;
     execution

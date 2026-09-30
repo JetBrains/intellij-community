@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use crate::{Error, fail};
+use anyhow::{Result, bail};
 
 /// Writes the record of one plugin in `plugins/plugin-classpath.txt`.
 ///
@@ -18,13 +18,13 @@ use crate::{Error, fail};
 /// `writeUTF(relativePath)` per classpath jar. `writeUTF` is a big-endian `u16` length and the text. `jars` are the
 /// classpath jars relative to the plugin directory in their declared order. The record keeps the distinct jars in the
 /// order of `writeOrderedPluginClassPathEntry`.
-pub fn record<S: AsRef<str>>(plugin_dir_name: &str, descriptor: &[u8], jars: &[S]) -> Result<Vec<u8>, Error> {
+pub fn record<S: AsRef<str>>(plugin_dir_name: &str, descriptor: &[u8], jars: &[S]) -> Result<Vec<u8>> {
     let names = order(plugin_dir_name, jars);
     let Ok(count) = u16::try_from(names.len()) else {
-        fail!("plugin {plugin_dir_name} has too many classpath jars: {}", names.len());
+        bail!("plugin {plugin_dir_name} has too many classpath jars: {}", names.len());
     };
     let Ok(descriptor_length) = u32::try_from(descriptor.len()) else {
-        fail!("plugin {plugin_dir_name} has a descriptor of {} bytes", descriptor.len());
+        bail!("plugin {plugin_dir_name} has a descriptor of {} bytes", descriptor.len());
     };
     let mut data = Vec::with_capacity(2 + descriptor.len() + 64 * (names.len() + 1));
     data.extend_from_slice(&count.to_be_bytes());
@@ -38,12 +38,12 @@ pub fn record<S: AsRef<str>>(plugin_dir_name: &str, descriptor: &[u8], jars: &[S
 }
 
 /// Java `writeUTF` of an ASCII name. Modified UTF-8 writes NUL as two bytes, so the name must not hold NUL either.
-fn append_java_utf(data: &mut Vec<u8>, value: &str) -> Result<(), Error> {
+fn append_java_utf(data: &mut Vec<u8>, value: &str) -> Result<()> {
     if !value.bytes().all(|byte| (1..0x80).contains(&byte)) {
-        fail!("the plugin classpath name {value:?} is not ASCII text without NUL");
+        bail!("the plugin classpath name {value:?} is not ASCII text without NUL");
     }
     let Ok(length) = u16::try_from(value.len()) else {
-        fail!("plugin classpath value is too long: {value:?}");
+        bail!("plugin classpath value is too long: {value:?}");
     };
     data.extend_from_slice(&length.to_be_bytes());
     data.extend_from_slice(value.as_bytes());

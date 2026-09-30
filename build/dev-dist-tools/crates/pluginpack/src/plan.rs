@@ -6,10 +6,10 @@ use std::path::{Path, PathBuf};
 use javaglob::JavaGlob;
 use planfile::LayoutFormat;
 use planfile::contract::{
-    Artifact, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransformKind, Operation, Recipe, Reference, Source,
-    TREE_VERSION, VERSION,
+    Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransformKind, Operation,
+    Producer, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
-use planfile::validate::{asset_kind, validate_link_graph, validated_assets};
+use planfile::validate::{validate_link_graph, validated_assets};
 
 use crate::error::{Error, Result, fail};
 
@@ -43,31 +43,30 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
     if !valid_id(&recipe.plugin) || !valid_id(&recipe.layout_signature) {
         fail!("invalid plugin identity or layout signature");
     }
-    let has_trees = recipe.assets.iter().any(|asset| asset_kind(asset) == "tree");
-    let assets = validated_assets(recipe.version, &recipe.assets, has_trees)?;
+    let has_trees = recipe.assets.iter().any(|asset| asset.kind == AssetKind::Tree);
+    let assets = validated_assets(recipe.version, &recipe.assets, has_trees).map_err(Error::chain)?;
     // The artifact of an independent asset is the module name of its reused jar. The module output can be a catalogue
     // input of the same chain under that name, so the two namespaces are not compared.
     for asset in &recipe.assets {
-        match asset.producer.as_str() {
-            "independent" => {
+        match asset.producer {
+            Producer::Independent => {
                 // A file is a reused jar. A tree is the native tree of a reused natives jar, see `validated_assets`.
                 if !valid_id(&asset.artifact) {
                     fail!("independent asset {:?} requires an artifact ID", asset.destination);
                 }
             }
-            "remainder" => {
+            Producer::Remainder => {
                 if !asset.artifact.is_empty() {
                     fail!("remainder asset {:?} must not name an independent artifact", asset.destination);
                 }
             }
-            producer => fail!("unknown producer {producer:?}"),
         }
     }
     for name in assets.keys() {
         let mut parent = distpath::dir(name);
         while parent != "." {
             if let Some(ancestor) = assets.get(&parent)
-                && asset_kind(ancestor) == "file"
+                && ancestor.kind == AssetKind::File
             {
                 fail!("destination collision between {parent:?} and {name:?}");
             }
@@ -87,9 +86,6 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
         if execution.artifacts.contains_key(&artifact.id) || !valid_id(&artifact.id) {
             fail!("invalid or duplicate catalogue input {:?}", artifact.id);
         }
-        if artifact.kind != "file" && artifact.kind != "directory" {
-            fail!("unknown root kind {:?}", artifact.kind);
-        }
         if !clean_root(&artifact.root) {
             fail!("invalid root for {:?}", artifact.id);
         }
@@ -107,21 +103,23 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
         let destination = operation.destination();
         let key = identity(destination)?;
         let asset = match assets.get(&key) {
-            Some(asset) if !operations.contains(&key) && asset.destination == destination && asset.producer == "remainder" => *asset,
+            Some(asset) if !operations.contains(&key) && asset.destination == destination && asset.producer == Producer::Remainder => {
+                *asset
+            }
             _ => fail!("conflicting or unowned remainder destination {destination:?}"),
         };
         execution
             .validate_operation(operation, &mut used)
             .map_err(|error| error.context(destination))?;
         let writes_tree = matches!(operation, Operation::CopyTree { .. } | Operation::LayoutTree { .. });
-        if (asset_kind(asset) == "tree") != writes_tree {
+        if (asset.kind == AssetKind::Tree) != writes_tree {
             fail!("stale asset kind at {destination:?}");
         }
         operations.insert(key);
     }
     for asset in &recipe.assets {
         let key = identity(&asset.destination)?;
-        if asset.producer == "remainder" && !operations.contains(&key) {
+        if asset.producer == Producer::Remainder && !operations.contains(&key) {
             fail!("missing remainder operation for {:?}", asset.destination);
         }
     }
@@ -151,7 +149,7 @@ impl Execution {
                     fail!("copy-tree requires version 2 and one directory root");
                 }
                 match self.artifacts.get(&input.artifact) {
-                    Some(artifact) if artifact.kind == "directory" => {
+                    Some(artifact) if artifact.kind == ArtifactKind::Directory => {
                         used.insert(artifact.id.clone());
                         Ok(())
                     }
@@ -187,7 +185,7 @@ impl Execution {
         let Some(artifact) = self.artifacts.get(&reference.artifact) else {
             fail!("unresolved input {:?}", reference.artifact);
         };
-        if artifact.kind == "file" {
+        if artifact.kind == ArtifactKind::File {
             if !reference.path.is_empty() {
                 fail!("file input {:?} cannot have a relative path", artifact.id);
             }
@@ -219,7 +217,7 @@ impl Execution {
         let Some(artifact) = self.artifacts.get(&reference.artifact) else {
             fail!("unresolved layout input {:?}", reference.artifact);
         };
-        if artifact.kind == "directory" && reference.path.is_empty() {
+        if artifact.kind == ArtifactKind::Directory && reference.path.is_empty() {
             used.insert(artifact.id.clone());
             return Ok(InputKind::Directory);
         }
@@ -351,5 +349,5 @@ pub(crate) fn validate_plugin_links(nodes: &[(String, bool)], links: &BTreeMap<S
             parent = distpath::dir(&parent);
         }
     }
-    Ok(validate_link_graph(&directories, links)?)
+    validate_link_graph(&directories, links).map_err(Error::chain)
 }

@@ -135,7 +135,7 @@ fn record_keeps_the_descriptor_bytes_and_refuses_a_name_that_is_not_ascii() {
     assert_eq!(actual, expected, "the descriptor keeps its bytes");
     for (plugin_dir_name, jar) in [("démo", "lib/demo.jar"), ("demo", "lib/😀.jar"), ("demo", "lib/\0.jar")] {
         let error = record(plugin_dir_name, b"", &[jar]).unwrap_err();
-        assert!(error.message().contains("is not ASCII text without NUL"), "{error}");
+        assert!(format!("{error:#}").contains("is not ASCII text without NUL"), "{error}");
     }
 }
 

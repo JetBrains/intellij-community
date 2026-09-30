@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use planfile::contract::{Asset, Catalogue, Filter, Manifest, Operation, Recipe, Reference, Source, VERSION};
+use planfile::contract::{ArtifactKind, Asset, AssetKind, Catalogue, Filter, Manifest, Operation, Recipe, Reference, Source, VERSION};
 
 use super::planning::{jar_sources, sample_plan};
 use super::*;
@@ -108,7 +108,7 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
                 tree_asset("lib"),
                 independent("lib/modules/demo.natives.jar", "demo.natives"),
                 Asset {
-                    kind: "tree".to_owned(),
+                    kind: AssetKind::Tree,
                     class_path: Some(false),
                     ..independent("lib/native", "demo.natives")
                 },
@@ -244,7 +244,7 @@ fn boundary_execution(source: &Path, tree: bool) -> crate::Execution {
     let (mut recipe, catalogue) = tree_plan(source);
     if !tree {
         recipe.version = VERSION;
-        recipe.assets[0].kind = String::new();
+        recipe.assets[0].kind = AssetKind::File;
         recipe.assets[0].class_path = None;
         recipe.operations[0] = Operation::Copy {
             destination: "kotlinc".to_owned(),
@@ -780,7 +780,7 @@ fn directory_boundary_and_declared_root_symlinks() {
         let (mut recipe, mut catalogue) = sample_plan(root.path());
         let declared = root.path().join("declared");
         archive_file(&declared.join("module.jar"), &[("file", "content")]);
-        catalogue.artifacts[0].kind = "directory".to_owned();
+        catalogue.artifacts[0].kind = ArtifactKind::Directory;
         let link = root.path().join("bazel-root-link");
         catalogue.artifacts[0].root = link.display().to_string();
         symlink(&declared, &link);
@@ -823,7 +823,7 @@ fn output_boundaries_and_existing_outputs() {
         match scenario {
             "inventory inside output" => inventory = output.join("inventory.json"),
             "output inside input" => {
-                catalogue.artifacts[0].kind = "directory".to_owned();
+                catalogue.artifacts[0].kind = ArtifactKind::Directory;
                 catalogue.artifacts[0].root = root.path().display().to_string();
                 if let Source::Archive { input, .. } = &mut jar_sources(&mut recipe, 0)[0] {
                     input.path = "module.jar".to_owned();

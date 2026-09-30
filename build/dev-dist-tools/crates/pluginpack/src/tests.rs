@@ -22,8 +22,8 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use planfile::contract::{
-    Artifact, Asset, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransform, LayoutTransformKind, Manifest,
-    Operation, Recipe, Reference, Source, TREE_VERSION, VERSION,
+    Artifact, ArtifactKind, Asset, AssetKind, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransform,
+    LayoutTransformKind, Manifest, Operation, Producer, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 use sha2::Digest;
 
@@ -90,7 +90,7 @@ pub(crate) fn exists(path: &Path) -> bool {
 pub(crate) fn remainder(destination: &str) -> Asset {
     Asset {
         destination: destination.to_owned(),
-        producer: "remainder".to_owned(),
+        producer: Producer::Remainder,
         ..Asset::default()
     }
 }
@@ -98,7 +98,7 @@ pub(crate) fn remainder(destination: &str) -> Asset {
 pub(crate) fn independent(destination: &str, artifact: &str) -> Asset {
     Asset {
         destination: destination.to_owned(),
-        producer: "independent".to_owned(),
+        producer: Producer::Independent,
         artifact: artifact.to_owned(),
         ..Asset::default()
     }
@@ -106,7 +106,7 @@ pub(crate) fn independent(destination: &str, artifact: &str) -> Asset {
 
 pub(crate) fn tree_asset(destination: &str) -> Asset {
     Asset {
-        kind: "tree".to_owned(),
+        kind: AssetKind::Tree,
         class_path: Some(false),
         ..remainder(destination)
     }
@@ -115,14 +115,14 @@ pub(crate) fn tree_asset(destination: &str) -> Asset {
 pub(crate) fn file_artifact(id: &str, root: impl AsRef<Path>) -> Artifact {
     Artifact {
         id: id.to_owned(),
-        kind: "file".to_owned(),
+        kind: ArtifactKind::File,
         root: root.as_ref().to_string_lossy().into_owned(),
     }
 }
 
 pub(crate) fn directory_artifact(id: &str, root: impl AsRef<Path>) -> Artifact {
     Artifact {
-        kind: "directory".to_owned(),
+        kind: ArtifactKind::Directory,
         ..file_artifact(id, root)
     }
 }

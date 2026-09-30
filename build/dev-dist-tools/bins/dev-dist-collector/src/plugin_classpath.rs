@@ -7,14 +7,14 @@
 
 use std::collections::HashSet;
 
-use component::{Result, fail};
+use component::{Error, Result, fail};
 
 use crate::inventory::SourcedFile;
 
 /// The record of a component's classpath files. A file's name in the record is relative to the plugin directory.
 pub(crate) fn component_record(plugin_directory: &str, descriptor: &[u8], files: &[SourcedFile]) -> Result<Vec<u8>> {
     let names: Vec<&str> = class_path_names(plugin_directory, files).collect();
-    Ok(planfile::classpath::record(directory_name(plugin_directory), descriptor, &names)?)
+    planfile::classpath::record(directory_name(plugin_directory), descriptor, &names).map_err(|error| Error::msg(format!("{error:#}")))
 }
 
 /// The last name of the plugin directory, a relative path in slash form.

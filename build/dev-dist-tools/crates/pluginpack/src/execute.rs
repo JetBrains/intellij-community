@@ -7,8 +7,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use jarpack::{DirectoryMode, ManifestMode, MergeOptions, MergeSpec};
-use planfile::contract::{Asset, Manifest, Operation, Reference, Source};
-use planfile::validate::asset_kind;
+use planfile::contract::{ArtifactKind, Asset, AssetKind, Manifest, Operation, Producer, Reference, Source};
 
 use crate::error::{Error, IoContext, Result, fail};
 use crate::layout::LayoutScratch;
@@ -254,7 +253,7 @@ impl Execution {
             }
         }
         let independent: Vec<&Asset> = (self.recipe.assets.iter())
-            .filter(|asset| asset.producer == "independent")
+            .filter(|asset| asset.producer == Producer::Independent)
             .collect();
         let destinations: Vec<&str> = independent.iter().map(|asset| asset.destination.as_str()).collect();
         check_independent_namespace(&destinations, &operations)?;
@@ -263,7 +262,7 @@ impl Execution {
             .map(|resolved| (resolved.destination.clone(), resolved.is_directory()))
             .collect();
         // An independent jar is a file node. The native tree of a reused natives jar is a directory node.
-        nodes.extend((independent.iter()).map(|asset| (asset.destination.clone(), asset_kind(asset) == "tree")));
+        nodes.extend((independent.iter()).map(|asset| (asset.destination.clone(), asset.kind == AssetKind::Tree)));
         validate_plugin_links(&nodes, &links_of(&operations))?;
         Ok((operations, backing_roots))
     }
@@ -374,7 +373,7 @@ impl Resolver<'_> {
         let artifact = &self.execution.artifacts[&reference.artifact];
         let root = fscopy::real_path(Path::new(&artifact.root))?;
         let mut file = root.clone();
-        if artifact.kind == "directory" {
+        if artifact.kind == ArtifactKind::Directory {
             if !fs::metadata(&root).is_ok_and(|metadata| metadata.is_dir()) {
                 fail!("input {} is not a directory", artifact.id);
             }

@@ -26,7 +26,7 @@ struct Record {
 }
 
 fn read_records(file: &str) -> anyhow::Result<Vec<Record>> {
-    planfile::json::read(Path::new(file)).map_err(anyhow::Error::new)
+    planfile::json::read(Path::new(file))
 }
 
 /// The packed jars of `intellij_dev_packed_jars_component`, each at `lib/<relativePath>`.

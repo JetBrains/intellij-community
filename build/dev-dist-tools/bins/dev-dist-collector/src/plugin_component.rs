@@ -14,8 +14,7 @@ use std::path::Path;
 
 use anyhow::{Context, bail};
 use filemeta::{Entry, EntryType};
-use planfile::contract::{self, Asset, TREE_VERSION};
-use planfile::validate::asset_kind;
+use planfile::contract::{self, Asset, AssetKind, Producer, TREE_VERSION};
 use serde::Deserialize;
 
 use crate::inventory::SourcedFile;
@@ -436,17 +435,17 @@ fn tree_inventory(root: &str, inventory: &[Entry]) -> anyhow::Result<Vec<Entry>>
 pub(crate) fn validate_assets(version: u32, assets: &[Asset]) -> anyhow::Result<()> {
     planfile::validate::validate_assets(version, assets, true)?;
     for asset in assets {
-        if asset_kind(asset) == "tree" && !asset.artifact.is_empty() && asset.producer != "independent" {
+        if asset.kind == AssetKind::Tree && !asset.artifact.is_empty() && asset.producer != Producer::Independent {
             bail!("tree {} must not name an independent artifact", asset.destination);
         }
     }
     for (tree_index, tree) in assets.iter().enumerate() {
-        if asset_kind(tree) != "tree" {
+        if tree.kind != AssetKind::Tree {
             continue;
         }
         let tree_identity = distpath::path_identity(&tree.destination)?;
         for (asset_index, asset) in assets.iter().enumerate() {
-            if asset_index == tree_index || asset_kind(asset) != "file" {
+            if asset_index == tree_index || asset.kind != AssetKind::File {
                 continue;
             }
             let asset_identity = distpath::path_identity(&asset.destination)?;
@@ -519,7 +518,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
     // The remainder writes only plugin files, so a remainder asset is at its destination in the remainder directory.
     let mut claimed: HashMap<usize, Entry> = HashMap::new();
     for (index, asset) in assets.iter().enumerate() {
-        if asset_kind(asset) == "tree" || asset.producer != "remainder" {
+        if asset.kind == AssetKind::Tree || asset.producer != Producer::Remainder {
             continue;
         }
         match remaining.remove(asset.destination.as_str()) {
@@ -532,7 +531,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
 
     // The most specific tree takes its entries first.
     let mut tree_indexes: Vec<usize> = (0..assets.len())
-        .filter(|&index| asset_kind(&assets[index]) == "tree" && assets[index].producer == "remainder")
+        .filter(|&index| assets[index].kind == AssetKind::Tree && assets[index].producer == Producer::Remainder)
         .collect();
     tree_indexes.sort_by_key(|&index| std::cmp::Reverse(assets[index].destination.len()));
     let mut tree_entries: HashMap<usize, Vec<Entry>> = HashMap::with_capacity(tree_indexes.len());
@@ -559,7 +558,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
         files.push(file);
     };
     for (index, asset) in assets.iter().enumerate() {
-        if asset_kind(asset) == "tree" && asset.producer == "independent" {
+        if asset.kind == AssetKind::Tree && asset.producer == Producer::Independent {
             let tree = native_trees.get(asset.artifact.as_str());
             let Some(tree) = tree.filter(|_| used_trees.insert(asset.artifact.as_str())) else {
                 bail!("missing or repeated native tree of {} for {}", asset.artifact, asset.destination);
@@ -579,7 +578,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             }
             continue;
         }
-        if asset_kind(asset) == "tree" {
+        if asset.kind == AssetKind::Tree {
             for entry in tree_entries.get(&index).into_iter().flatten() {
                 let source = format!("{}/{}", spec.remainder.directory, entry.relative_path);
                 let destination = format!("{}/{}", spec.plugin_directory, entry.relative_path);
@@ -587,8 +586,8 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             }
             continue;
         }
-        let mut file = match asset.producer.as_str() {
-            "remainder" => {
+        let mut file = match asset.producer {
+            Producer::Remainder => {
                 let Some(entry) = claimed.get(&index) else {
                     bail!("stale remainder ownership for {}", asset.destination);
                 };
@@ -597,14 +596,13 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
                     ..SourcedFile::new(format!("{}/{}", spec.remainder.directory, asset.destination), "")
                 }
             }
-            "independent" => {
+            Producer::Independent => {
                 let Some(file) = independent.get(asset.artifact.as_str()) else {
                     bail!("missing independent artifact {} for {}", asset.artifact, asset.destination);
                 };
                 used.insert(asset.artifact.as_str());
                 file.clone()
             }
-            producer => bail!("unknown asset producer {producer:?}"),
         };
         file.relative_path = component_destination(&spec.plugin_directory, &asset.destination);
         file.class_path = asset.class_path.unwrap_or(true) && is_plugin_lib_jar(&asset.destination);

@@ -314,8 +314,8 @@ fn plan_derivation_refuses_every_kotlin_preparer_fixture() {
         });
         match result {
             Err(error) => assert!(
-                error.message().contains(shape),
-                "{name}: the refusal does not name {shape:?}: {error}"
+                format!("{error:#}").contains(shape),
+                "{name}: the refusal does not name {shape:?}: {error:#}"
             ),
             Ok(_) => panic!("{name}: planfile accepted a shape that no plan file uses"),
         }

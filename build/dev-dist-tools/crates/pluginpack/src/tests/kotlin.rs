@@ -892,5 +892,8 @@ fn kotlin_layout_materialization_matches_the_transforms() {
         &kotlin_layout_assets_operation("layout", OUTPUT, "tree", "jcef", &normalized_layout),
     );
     let error = planfile::from_slice(plan_json(&normalized).as_bytes()).map(|_| ()).unwrap_err();
-    assert!(error.message().contains("unknown field `normalizeTreeModes`"), "{dropped}: {error}");
+    assert!(
+        format!("{error:#}").contains("unknown field `normalizeTreeModes`"),
+        "{dropped}: {error:#}"
+    );
 }

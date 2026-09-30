@@ -6,7 +6,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use javaglob::JavaGlob;
-use planfile::contract::{LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Operation, Recipe, Reference, Source};
+use planfile::contract::{
+    ArtifactKind, LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Operation, Recipe, Reference, Source,
+};
 
 use crate::error::{Error, IoContext, Result, fail};
 use crate::execute::{Resolved, Resolver, resolve_directory_tree, resolve_transport_file};
@@ -241,7 +243,7 @@ impl Resolver<'_> {
     /// relative link when a raw directory member is one.
     fn layout_input(&mut self, reference: &Reference) -> Result<LayoutInput> {
         let artifact = &self.execution.artifacts[&reference.artifact];
-        if artifact.kind == "directory" {
+        if artifact.kind == ArtifactKind::Directory {
             let root = layout_directory(&artifact.root).map_err(|error| error.context(format_args!("input {}", artifact.id)))?;
             if reference.path.is_empty() {
                 return Ok(LayoutInput::Directory(root));

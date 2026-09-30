@@ -12,19 +12,18 @@
 
 use std::path::Path;
 
+use anyhow::{Context as _, Result};
 use serde::de::DeserializeOwned;
 
-use crate::Error;
-
-/// Reads one JSON document. The error starts with the path.
-pub fn read<T: DeserializeOwned>(path: &Path) -> Result<T, Error> {
-    let data = std::fs::read(path).map_err(|error| Error::new(error.to_string()).context(path.display()))?;
-    from_slice(&data).map_err(|error| error.context(path.display()))
+/// Reads one JSON document. The error has the path as its context.
+pub fn read<T: DeserializeOwned>(path: &Path) -> Result<T> {
+    let data = std::fs::read(path).with_context(|| path.display().to_string())?;
+    from_slice(&data).with_context(|| path.display().to_string())
 }
 
 /// Decodes one JSON document.
-pub fn from_slice<T: DeserializeOwned>(data: &[u8]) -> Result<T, Error> {
-    serde_json::from_slice(data).map_err(|error| Error::new(error.to_string()))
+pub fn from_slice<T: DeserializeOwned>(data: &[u8]) -> Result<T> {
+    Ok(serde_json::from_slice(data)?)
 }
 
 #[cfg(test)]

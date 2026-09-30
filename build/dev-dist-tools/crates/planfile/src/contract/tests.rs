@@ -55,7 +55,7 @@ fn layout_transform_encoding() {
         assert_eq!(from_slice::<LayoutTransform>(text.as_bytes()).unwrap(), want, "{text}");
     }
     let error = from_slice::<LayoutTransform>(br#"{"includes":[]}"#).unwrap_err();
-    assert!(error.message().contains("missing field `kind`"), "{error}");
+    assert!(format!("{error:#}").contains("missing field `kind`"), "{error}");
 }
 
 /// The gzip resources of a module are a Bazel action now, and the localization trees have the jar layout. So the
@@ -64,11 +64,11 @@ fn layout_transform_encoding() {
 fn layout_transform_refuses_the_removed_kinds() {
     for kind in ["gzip-xml-archive", "tree-map"] {
         let error = from_slice::<LayoutTransform>(format!(r#"{{"kind":"{kind}"}}"#).as_bytes()).unwrap_err();
-        assert!(error.message().contains(&format!("unknown variant `{kind}`")), "{error}");
+        assert!(format!("{error:#}").contains(&format!("unknown variant `{kind}`")), "{error}");
     }
     for field in ["excludes", "directoryExcludes"] {
         let error = from_slice::<LayoutTransform>(format!(r#"{{"kind":"archive-tree","{field}":[]}}"#).as_bytes()).unwrap_err();
-        assert!(error.message().contains(&format!("unknown field `{field}`")), "{error}");
+        assert!(format!("{error:#}").contains(&format!("unknown field `{field}`")), "{error}");
     }
 }
 
@@ -77,19 +77,19 @@ fn asset_rows_keep_the_go_field_order_and_omitempty_rules() {
     let rows = vec![
         Asset {
             destination: "lib/a.jar".to_owned(),
-            producer: "remainder".to_owned(),
+            producer: Producer::Remainder,
             ..Asset::default()
         },
         Asset {
             destination: "lib/native".to_owned(),
-            producer: "independent".to_owned(),
+            producer: Producer::Independent,
             artifact: "demo.natives".to_owned(),
-            kind: "tree".to_owned(),
+            kind: AssetKind::Tree,
             class_path: Some(false),
         },
         Asset {
             destination: "lib/b.jar".to_owned(),
-            producer: "remainder".to_owned(),
+            producer: Producer::Remainder,
             class_path: Some(true),
             ..Asset::default()
         },
@@ -110,11 +110,43 @@ fn asset_rows_keep_the_go_field_order_and_omitempty_rules() {
     );
 }
 
+/// The reader takes an absent or an empty kind as a file. The packer writes only file and tree assets, so the reader
+/// refuses a directory by name. Before the kinds were enums, the asset rules refused it.
+#[test]
+fn asset_row_reads_only_the_kinds_and_the_producers_that_the_packer_writes() {
+    for text in [
+        r#"{"destination":"a","producer":"remainder"}"#,
+        r#"{"destination":"a","producer":"remainder","kind":""}"#,
+        r#"{"destination":"a","producer":"remainder","kind":"file"}"#,
+    ] {
+        assert_eq!(from_slice::<Asset>(text.as_bytes()).unwrap().kind, AssetKind::File, "{text}");
+    }
+    for (text, message) in [
+        (
+            r#"{"destination":"dir","producer":"remainder","kind":"directory"}"#,
+            r#"unknown asset kind "directory"; the packer writes only file and tree assets"#,
+        ),
+        (r#"{"destination":"a","producer":"other"}"#, r#"unknown asset producer "other""#),
+        (r#"{"destination":"a","producer":""}"#, r#"unknown asset producer """#),
+        (r#"{"destination":"a"}"#, "missing field `producer`"),
+    ] {
+        let error = from_slice::<Asset>(text.as_bytes()).unwrap_err();
+        assert!(format!("{error:#}").contains(message), "{text}: {error:#}");
+    }
+    for (text, message) in [
+        (r#"{"id":"a","kind":"link","root":"r"}"#, r#"unknown artifact root kind "link""#),
+        (r#"{"id":"a","root":"r"}"#, "missing field `kind`"),
+    ] {
+        let error = from_slice::<Artifact>(text.as_bytes()).unwrap_err();
+        assert!(format!("{error:#}").contains(message), "{text}: {error:#}");
+    }
+}
+
 /// The distribution scope is retired, so a row that states a scope does not read.
 #[test]
 fn asset_row_refuses_a_scope() {
     let error = from_slice::<Vec<Asset>>(br#"[{"destination":"lib/native","producer":"independent","scope":"plugin"}]"#).unwrap_err();
-    assert!(error.message().contains("unknown field `scope`"), "{error}");
+    assert!(format!("{error:#}").contains("unknown field `scope`"), "{error}");
 }
 
 #[test]

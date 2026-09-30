@@ -17,8 +17,8 @@ entry. It is part of the contract.
 
 ## Errors (`error`)
 
-- `Error`: `Message(String)`, `Io { path: String, source }`, `Json { path: String, source }` or
-  `Planfile(planfile::Error)`. A caller keeps a `filemeta` error as a `Message` with the `{:#}` text.
+- `Error`: `Message(String)`, `Io { path: String, source }` or `Json { path: String, source }`. A caller keeps a
+  `filemeta` or a `planfile` error as a `Message` with the `{:#}` text.
 - `Error::msg(message: impl Display)`, `Error::io(path, source)`, `Error::json(path, source)`: make an error.
 - `component::fail!(format, arguments...)`: returns `Err(Error::Message(format!(...)))` from a function that returns
   `Result`.

@@ -23,19 +23,72 @@ pub struct Recipe {
     pub operations: Vec<Operation>,
 }
 
-/// One row of `assets.json`. The producer is `remainder` or `independent`. An independent asset names the module of
-/// its reused jar as the artifact. An empty kind is `file`. Every asset is below the plugin directory.
+/// One row of `assets.json`. An independent asset names the module of its reused jar as the artifact. Every asset is
+/// below the plugin directory. The reader requires the producer, which the writer always writes.
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
-#[serde(default, deny_unknown_fields, rename_all = "camelCase")]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Asset {
+    #[serde(default)]
     pub destination: String,
-    pub producer: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
+    pub producer: Producer,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub artifact: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub kind: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// A file is an absent key, as the Go writer omitted an empty kind.
+    #[serde(default, skip_serializing_if = "AssetKind::is_file")]
+    pub kind: AssetKind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub class_path: Option<bool>,
+}
+
+/// The producer of an asset. The reader refuses every other text with the text of the Go collector.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[serde(rename_all = "kebab-case", try_from = "String")]
+pub enum Producer {
+    /// The remainder packer writes the asset. It is the default of a test fixture.
+    #[default]
+    Remainder,
+    /// Another action writes the asset: a reused module jar or its native tree.
+    Independent,
+}
+
+impl TryFrom<String> for Producer {
+    type Error = String;
+
+    fn try_from(producer: String) -> Result<Self, String> {
+        match producer.as_str() {
+            "remainder" => Ok(Self::Remainder),
+            "independent" => Ok(Self::Independent),
+            _ => Err(format!("unknown asset producer {producer:?}")),
+        }
+    }
+}
+
+/// The kind of an asset. The reader takes an empty kind as `file`, and it refuses every other text by name.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[serde(rename_all = "kebab-case", try_from = "String")]
+pub enum AssetKind {
+    #[default]
+    File,
+    Tree,
+}
+
+impl AssetKind {
+    /// Reports whether the kind is `file`, the kind that the asset row omits.
+    pub fn is_file(&self) -> bool {
+        *self == Self::File
+    }
+}
+
+impl TryFrom<String> for AssetKind {
+    type Error = String;
+
+    fn try_from(kind: String) -> Result<Self, String> {
+        match kind.as_str() {
+            "" | "file" => Ok(Self::File),
+            "tree" => Ok(Self::Tree),
+            _ => Err(format!("unknown asset kind {kind:?}; the packer writes only file and tree assets")),
+        }
+    }
 }
 
 /// The input catalogue that the Starlark rule writes. Only this document holds file system roots. Its artifacts are the
@@ -49,13 +102,35 @@ pub struct Catalogue {
     pub libraries: Vec<Library>,
 }
 
-/// One declared input. The kind is `file` or `directory`.
-#[derive(Deserialize, Clone, Debug, Default, PartialEq, Eq)]
-#[serde(default, deny_unknown_fields)]
+/// One declared input. The reader requires the kind, which Starlark always writes.
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Artifact {
+    #[serde(default)]
     pub id: String,
-    pub kind: String,
+    pub kind: ArtifactKind,
+    #[serde(default)]
     pub root: String,
+}
+
+/// The kind of a declared input. The reader refuses every other text by name.
+#[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[serde(try_from = "String")]
+pub enum ArtifactKind {
+    File,
+    Directory,
+}
+
+impl TryFrom<String> for ArtifactKind {
+    type Error = String;
+
+    fn try_from(kind: String) -> Result<Self, String> {
+        match kind.as_str() {
+            "file" => Ok(Self::File),
+            "directory" => Ok(Self::Directory),
+            _ => Err(format!("unknown artifact root kind {kind:?}")),
+        }
+    }
 }
 
 /// One library and its member files in their expansion order.

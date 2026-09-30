@@ -3,7 +3,10 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use planfile::contract::{Asset, Catalogue, Filter, Library, Manifest, Operation, Recipe, Reference, Source, TREE_VERSION, VERSION};
+use planfile::contract::{
+    ArtifactKind, Asset, AssetKind, Catalogue, Filter, Library, Manifest, Operation, Producer, Recipe, Reference, Source, TREE_VERSION,
+    VERSION,
+};
 
 use super::*;
 use crate::plan::validate_plugin_links;
@@ -112,7 +115,7 @@ fn tree_plan_rejects_unsafe_ownership_and_operation_options() {
             recipe.assets[1].destination = "lib".to_owned();
         }),
         ("independent tree", |recipe, _| {
-            recipe.assets[0].producer = "independent".to_owned();
+            recipe.assets[0].producer = Producer::Independent;
             recipe.assets[0].artifact = "independent-tree".to_owned();
         }),
         ("classpath", |recipe, _| recipe.assets[0].class_path = None),
@@ -121,7 +124,7 @@ fn tree_plan_rejects_unsafe_ownership_and_operation_options() {
                 input.path = "child".to_owned();
             }
         }),
-        ("file input", |_, catalogue| catalogue.artifacts[0].kind = "file".to_owned()),
+        ("file input", |_, catalogue| catalogue.artifacts[0].kind = ArtifactKind::File),
         ("ordinary copy", |recipe, _| {
             recipe.operations[0] = Operation::Copy {
                 destination: "kotlinc".to_owned(),
@@ -148,7 +151,7 @@ fn tree_plan_rejects_unsafe_ownership_and_operation_options() {
 #[test]
 fn plan_accepts_a_reused_native_tree_next_to_its_jar() {
     let native_tree = Asset {
-        kind: "tree".to_owned(),
+        kind: AssetKind::Tree,
         class_path: Some(false),
         ..independent("lib/native", "demo.natives")
     };
@@ -199,20 +202,12 @@ fn plan_accepts_a_reused_native_tree_next_to_its_jar() {
     );
 }
 
-/// The Go test covered the directory operation. The typed recipe has none, so only the refusal of the kind remains.
+/// The Go test covered the directory operation. The typed recipe has none, and the asset kind has no directory, so the
+/// refusal is in the reader of the asset rows.
 #[test]
 fn directory_assets_are_refused() {
-    let recipe = Recipe {
-        version: VERSION,
-        plugin: "dirs".to_owned(),
-        layout_signature: "dirs-v1".to_owned(),
-        assets: vec![Asset {
-            kind: "directory".to_owned(),
-            ..remainder("dir")
-        }],
-        operations: Vec::new(),
-    };
-    expect_plan_error(&recipe, &catalogue(Vec::new()), r#"unknown asset kind "directory""#);
+    let error = planfile::json::from_slice::<Asset>(br#"{"destination":"dir","producer":"remainder","kind":"directory"}"#).unwrap_err();
+    assert!(format!("{error:#}").contains(r#"unknown asset kind "directory""#), "{error:#}");
 }
 
 #[test]
@@ -234,7 +229,9 @@ fn plan_does_not_read_payloads() {
 #[test]
 fn plan_rejects_invalid_contracts() {
     type Change = fn(&mut Recipe, &mut Catalogue);
-    let tests: [(&str, Change, &str); 19] = [
+    // The contract types cannot state an unknown producer or an unknown root kind, so the reader of `assets.json` and
+    // of the catalogue refuses them by name, see the `planfile` contract tests.
+    let tests: [(&str, Change, &str); 17] = [
         ("recipe version", |recipe, _| recipe.version = 0, "version"),
         ("catalogue version", |_, catalogue| catalogue.version = 2, "version"),
         ("missing operation", |recipe, _| recipe.operations.clear(), "missing remainder"),
@@ -278,11 +275,6 @@ fn plan_rejects_invalid_contracts() {
             "invalid catalogue input",
             |_, catalogue| catalogue.artifacts[0].id = " module ".to_owned(),
             "invalid",
-        ),
-        (
-            "unknown root kind",
-            |_, catalogue| catalogue.artifacts[0].kind = "tree-scan".to_owned(),
-            "root kind",
         ),
         (
             "unclean root",
@@ -332,11 +324,6 @@ fn plan_rejects_invalid_contracts() {
                 };
             },
             "unsafe entry name",
-        ),
-        (
-            "unknown producer",
-            |recipe, _| recipe.assets[0].producer = "kotlin".to_owned(),
-            "unknown producer",
         ),
         (
             "remainder artifact",
@@ -409,7 +396,7 @@ fn plan_rejects_unsafe_directory_references() {
     for relative in ["", "../escape", "/absolute", "nested/../../escape", r"nested\escape", "./file"] {
         let root = temp();
         let (mut recipe, mut catalogue) = sample_plan(root.path());
-        catalogue.artifacts[0].kind = "directory".to_owned();
+        catalogue.artifacts[0].kind = ArtifactKind::Directory;
         first_input(&mut recipe).path = relative.to_owned();
         assert!(
             plan(&recipe, &catalogue).is_err(),

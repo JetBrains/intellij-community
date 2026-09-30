@@ -509,11 +509,11 @@ dependencies = [
 name = "planfile"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "distpath",
  "serde",
  "serde_json",
  "tempfile",
- "thiserror",
 ]
 
 [[package]]

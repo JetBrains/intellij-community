@@ -47,13 +47,13 @@ fn read_json_rejects_ambiguous_documents() {
         std::fs::write(&file, content).unwrap();
         let error = read::<Document>(&file).expect_err(&format!("accepted an ambiguous document: {}", String::from_utf8_lossy(content)));
         assert!(
-            error.message().starts_with(&file.display().to_string()),
+            format!("{error:#}").starts_with(&file.display().to_string()),
             "the error names the file: {error}"
         );
     }
     let directory = tempfile::tempdir().unwrap();
     let error = read::<Document>(&directory.path().join("absent.json")).unwrap_err();
-    assert!(error.message().contains("absent.json: "), "{error}");
+    assert!(format!("{error:#}").contains("absent.json: "), "{error}");
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn from_slice_names_the_refusal() {
         (br#"{"plugin":"p"}"#, "missing field `version`"),
     ] {
         let error = from_slice::<Document>(content).expect_err(&String::from_utf8_lossy(content));
-        assert!(error.message().contains(message), "expected {message:?}, got {error}");
+        assert!(format!("{error:#}").contains(message), "expected {message:?}, got {error}");
     }
 }
 

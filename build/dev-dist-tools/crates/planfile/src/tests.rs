@@ -4,15 +4,15 @@
 mod corpus;
 
 use crate::contract::{
-    self, Artifact, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Library, Manifest, Reference,
-    Source,
+    self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Library,
+    Manifest, Producer, Reference, Source,
 };
-use crate::plan::LAYOUT_ASSETS_KIND;
 use crate::{
-    DEFAULT_MODE, Derivation, EXECUTABLE_MODE, Error, JarWriter, ManifestPolicy, PlanFile, classpath, derive, module_jar_asset, read,
+    DEFAULT_MODE, Derivation, EXECUTABLE_MODE, JarWriter, ManifestPolicy, OperationKind, PlanFile, classpath, derive, module_jar_asset,
+    read,
 };
 
-fn read_plan(text: &str) -> Result<PlanFile, Error> {
+fn read_plan(text: &str) -> anyhow::Result<PlanFile> {
     let directory = tempfile::tempdir().unwrap();
     let file = directory.path().join("plan.json");
     std::fs::write(&file, text).unwrap();
@@ -38,7 +38,7 @@ fn plan(version: u32, assets: &str, sections: &[&str]) -> String {
 fn file_artifact(id: &str) -> Artifact {
     Artifact {
         id: id.to_owned(),
-        kind: "file".to_owned(),
+        kind: ArtifactKind::File,
         root: format!("inputs/{}", id.replace('/', "_")),
     }
 }
@@ -46,7 +46,7 @@ fn file_artifact(id: &str) -> Artifact {
 fn directory_artifact(id: &str) -> Artifact {
     Artifact {
         id: id.to_owned(),
-        kind: "directory".to_owned(),
+        kind: ArtifactKind::Directory,
         root: format!("inputs/{id}"),
     }
 }
@@ -78,7 +78,7 @@ const RT_RECIPE: &str =
 const NATIVES: &str = r#"{"destination": "lib/modules/demo.natives.jar", "recipe": {"sources": [{"input": "demo.natives", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "native"}}},
   {"destination": "lib/native", "inputs": ["native-tree:demo.natives"], "kind": "tree", "classPath": false}"#;
 
-fn derive_plan(text: &str, inputs: &Catalogue, version: u32, independent_modules: &[&str]) -> Result<Derivation, Error> {
+fn derive_plan(text: &str, inputs: &Catalogue, version: u32, independent_modules: &[&str]) -> anyhow::Result<Derivation> {
     derive_refusing(text, inputs, version, independent_modules, &[])
 }
 
@@ -88,7 +88,7 @@ fn derive_refusing(
     version: u32,
     independent_modules: &[&str],
     refused_modules: &[&str],
-) -> Result<Derivation, Error> {
+) -> anyhow::Result<Derivation> {
     derive(
         &must_read_plan(text),
         inputs,
@@ -104,25 +104,25 @@ fn must_derive(text: &str, inputs: &Catalogue, version: u32, independent_modules
     derive_plan(text, inputs, version, independent_modules).unwrap_or_else(|error| panic!("{error}"))
 }
 
-fn expect_error(result: Result<Derivation, Error>, message: &str) {
+fn expect_error(result: anyhow::Result<Derivation>, message: &str) {
     match result {
         Ok(_) => panic!("expected {message:?}, got a derivation"),
-        Err(error) => assert!(error.message().contains(message), "expected {message:?}, got {error}"),
+        Err(error) => assert!(format!("{error:#}").contains(message), "expected {message:?}, got {error:#}"),
     }
 }
 
-fn row(destination: &str, producer: &str, artifact: &str) -> contract::Asset {
+fn row(destination: &str, producer: Producer, artifact: &str) -> contract::Asset {
     contract::Asset {
         destination: destination.to_owned(),
-        producer: producer.to_owned(),
+        producer,
         artifact: artifact.to_owned(),
         ..contract::Asset::default()
     }
 }
 
-fn tree_row(destination: &str, producer: &str, artifact: &str) -> contract::Asset {
+fn tree_row(destination: &str, producer: Producer, artifact: &str) -> contract::Asset {
     contract::Asset {
-        kind: "tree".to_owned(),
+        kind: AssetKind::Tree,
         class_path: Some(false),
         ..row(destination, producer, artifact)
     }
@@ -197,8 +197,8 @@ fn read_expands_the_compact_forms() {
     assert_eq!(content.destination, "lib/modules/demo.content.jar");
     assert_eq!(content.inputs, ["demo.content"]);
     assert_eq!(
-        (content.mode, content.kind.as_str(), content.class_path),
-        (DEFAULT_MODE, "file", true)
+        (content.mode, content.kind, content.class_path),
+        (DEFAULT_MODE, AssetKind::File, true)
     );
     assert_eq!(
         (writer.manifest, writer.merge_entities),
@@ -207,7 +207,7 @@ fn read_expands_the_compact_forms() {
 
     let demo = &file.assets[1];
     assert_eq!(demo.inputs, ["demo.main"], "the inputs of a recipe asset repeat its sources");
-    assert_eq!((demo.mode, demo.kind.as_str(), demo.class_path), (DEFAULT_MODE, "file", true));
+    assert_eq!((demo.mode, demo.kind, demo.class_path), (DEFAULT_MODE, AssetKind::File, true));
 
     let tool = &file.assets[2];
     assert_eq!(tool.inputs, ["native"]);
@@ -215,10 +215,10 @@ fn read_expands_the_compact_forms() {
     assert!(tool.recipe.is_none());
 
     let native = &file.assets[3];
-    assert_eq!((native.kind.as_str(), native.class_path), ("tree", false));
+    assert_eq!((native.kind, native.class_path), (AssetKind::Tree, false));
 
     let operation = &file.operations[0];
-    assert_eq!(operation.kind, LAYOUT_ASSETS_KIND);
+    assert_eq!(operation.kind, OperationKind::LayoutAssets);
     assert_eq!(operation.inputs, [Reference::artifact("raw")]);
     assert_eq!(operation.layout_assets.root, "", "an entries operation has no tree root");
     assert_eq!(operation.layout_assets.assets[0].destination, "raw.txt");
@@ -498,7 +498,10 @@ fn read_refuses_malformed_forms() {
     ] {
         match read_plan(&text) {
             Ok(_) => panic!("{name}: accepted {text}"),
-            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+            Err(error) => assert!(
+                format!("{error:#}").contains(message),
+                "{name}: expected {message:?}, got {error:#}"
+            ),
         }
     }
 }
@@ -512,7 +515,7 @@ fn read_names_the_file_and_the_operation() {
     ))
     .unwrap_err();
     assert!(
-        error.message().contains("plan.json: operation 0: "),
+        format!("{error:#}").contains("plan.json: operation 0: "),
         "the refusal names the file and the operation: {error}"
     );
 }
@@ -534,7 +537,7 @@ fn read_treats_null_as_absent_for_an_optional_field() {
     ));
     let tool = &file.assets[0];
     assert_eq!(tool.inputs, ["x"]);
-    assert_eq!((tool.mode, tool.kind.as_str(), tool.class_path), (DEFAULT_MODE, "file", true));
+    assert_eq!((tool.mode, tool.kind, tool.class_path), (DEFAULT_MODE, AssetKind::File, true));
     assert_eq!(tool.recipe.as_ref().unwrap().writer, JarWriter::default());
     assert_eq!(file.assets[1].recipe.as_ref().unwrap().writer, JarWriter::default());
     let layout = &file.operations[0].layout_assets;
@@ -557,9 +560,9 @@ fn derive_reuses_a_module_jar_that_merges_libraries() {
     assert_eq!(
         derivation.assets,
         [
-            row("lib/modules/demo.rt.jar", "independent", "demo.rt"),
-            row("lib/rt-first.jar", "remainder", ""),
-            row("lib/rt-kept.jar", "remainder", ""),
+            row("lib/modules/demo.rt.jar", Producer::Independent, "demo.rt"),
+            row("lib/rt-first.jar", Producer::Remainder, ""),
+            row("lib/rt-kept.jar", Producer::Remainder, ""),
         ]
     );
 }
@@ -591,10 +594,10 @@ fn derive_matches_ownership_by_recipe_and_mode() {
         &["demo.content", "demo.rt"],
     );
     let want = [
-        row("lib/modules/demo.content.jar", "independent", "demo.content"),
-        row("lib/rt.jar", "independent", "demo.rt"),
-        row("lib/rt-exec.jar", "remainder", ""),
-        row("lib/rt-kept.jar", "remainder", ""),
+        row("lib/modules/demo.content.jar", Producer::Independent, "demo.content"),
+        row("lib/rt.jar", Producer::Independent, "demo.rt"),
+        row("lib/rt-exec.jar", Producer::Remainder, ""),
+        row("lib/rt-kept.jar", Producer::Remainder, ""),
     ];
     assert_eq!(derivation.assets, want);
     assert_eq!(derivation.recipe.assets, want);
@@ -638,7 +641,10 @@ fn derive_matches_ownership_by_recipe_and_mode() {
         let result = derive_plan(&plan(1, assets, &[]), &catalogue(vec![file_artifact("demo.rt")]), 1, modules);
         match result {
             Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+            Err(error) => assert!(
+                format!("{error:#}").contains(message),
+                "{name}: expected {message:?}, got {error:#}"
+            ),
         }
     }
 }
@@ -693,8 +699,8 @@ fn derive_requires_the_execution_version_of_the_assets() {
     assert_eq!(
         derivation.assets,
         [
-            row("lib/modules/demo.natives.jar", "independent", "demo.natives"),
-            tree_row("lib/native", "independent", "demo.natives"),
+            row("lib/modules/demo.natives.jar", Producer::Independent, "demo.natives"),
+            tree_row("lib/native", Producer::Independent, "demo.natives"),
         ]
     );
     assert!(derivation.recipe.operations.is_empty(), "the remainder writes no native file");
@@ -923,11 +929,11 @@ fn derive_compiles_every_operation_kind() {
     assert_eq!(derivation.recipe.operations, want);
 
     let rows = vec![
-        row("lib/main.jar", "remainder", ""),
-        row("lib/l10n.jar", "remainder", ""),
-        tree_row("payload", "remainder", ""),
-        tree_row("lib/standardDsls", "remainder", ""),
-        row("bin/tool", "remainder", ""),
+        row("lib/main.jar", Producer::Remainder, ""),
+        row("lib/l10n.jar", Producer::Remainder, ""),
+        tree_row("payload", Producer::Remainder, ""),
+        tree_row("lib/standardDsls", Producer::Remainder, ""),
+        row("bin/tool", Producer::Remainder, ""),
     ];
     assert_eq!(derivation.assets, rows);
     // The asset rows are the `assets.json` of the packer: Go `json.Marshal` of the rows.
@@ -1117,7 +1123,10 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         let version = must_read_plan(&text).version;
         match derive_plan(&text, &inputs, version, &[]) {
             Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+            Err(error) => assert!(
+                format!("{error:#}").contains(message),
+                "{name}: expected {message:?}, got {error:#}"
+            ),
         }
     }
 }
@@ -1147,7 +1156,10 @@ fn derive_refuses_an_invalid_plugin_directory() {
             &[],
             &[],
         );
-        assert!(result.unwrap_err().message().contains("is not plugins/<name>"), "{directory:?}");
+        assert!(
+            format!("{:#}", result.unwrap_err()).contains("is not plugins/<name>"),
+            "{directory:?}"
+        );
     }
 }
 
@@ -1186,10 +1198,10 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
     assert_eq!(
         derivation.assets,
         [
-            row("lib/modules/demo.shared.jar", "independent", "demo.shared"),
-            row("lib/demo.jar", "remainder", ""),
-            row("lib/demo-lib.jar", "remainder", ""),
-            row("lib/main.jar", "remainder", ""),
+            row("lib/modules/demo.shared.jar", Producer::Independent, "demo.shared"),
+            row("lib/demo.jar", Producer::Remainder, ""),
+            row("lib/demo-lib.jar", Producer::Remainder, ""),
+            row("lib/main.jar", Producer::Remainder, ""),
         ]
     );
     assert_eq!(derivation.recipe.assets, derivation.assets);
@@ -1236,7 +1248,10 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
         let result = derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], refused);
         match result {
             Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+            Err(error) => assert!(
+                format!("{error:#}").contains(message),
+                "{name}: expected {message:?}, got {error:#}"
+            ),
         }
     }
 }

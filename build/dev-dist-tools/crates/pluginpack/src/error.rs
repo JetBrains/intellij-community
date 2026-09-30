@@ -28,7 +28,8 @@ impl Error {
         Self::new(error.to_string())
     }
 
-    /// Keeps the text of an `anyhow` error of `filemeta` or `jarpack` with its context chain, as `{:#}` prints it.
+    /// Keeps the text of an `anyhow` error of `filemeta`, `jarpack` or `planfile` with its context chain, as `{:#}` prints
+    /// it.
     pub(crate) fn chain(error: impl Display) -> Self {
         Self::new(format!("{error:#}"))
     }
@@ -40,12 +41,6 @@ impl Error {
 
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
-        Self::new(error.to_string())
-    }
-}
-
-impl From<planfile::Error> for Error {
-    fn from(error: planfile::Error) -> Self {
         Self::new(error.to_string())
     }
 }

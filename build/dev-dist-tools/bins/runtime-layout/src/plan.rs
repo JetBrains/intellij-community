@@ -3,8 +3,8 @@
 use std::collections::{HashMap, HashSet};
 
 use anyhow::bail;
-use planfile::PlanFile;
-use planfile::contract::Catalogue;
+use planfile::contract::{AssetKind, Catalogue};
+use planfile::{PlanFile, SourceKind};
 
 use crate::part::{Member, PART_VERSION, PLUGIN_ORDER, Part, PartJar};
 use crate::targets::apparent_label;
@@ -78,8 +78,8 @@ pub(crate) fn part_from_plan(
             continue;
         };
         let destination = &asset.destination;
-        if asset.kind != "file" {
-            bail!("{destination} has a jar recipe, but it is a {} asset, not a file", asset.kind);
+        if asset.kind == AssetKind::Tree {
+            bail!("{destination} has a jar recipe, but it is a tree asset, not a file");
         }
         if !destination.ends_with(".jar") {
             bail!("{destination} has a jar recipe, but its name does not end in .jar");
@@ -87,14 +87,14 @@ pub(crate) fn part_from_plan(
         let mut members = Vec::new();
         for source in &recipe.sources {
             let input = &source.input;
-            match source.kind.as_str() {
-                "module" => members.push(module_member(input)),
-                "prepared" => {
+            match source.kind {
+                SourceKind::Module => members.push(module_member(input)),
+                SourceKind::Prepared => {
                     if !prepared_outputs.contains(input.as_str()) {
                         bail!("{destination} merges the prepared source {input}, which no layout-assets operation writes");
                     }
                 }
-                "library" => {
+                SourceKind::Library => {
                     let files = match library_files.get(input.as_str()) {
                         Some(files) => Some(files),
                         None => independent_files.get(&apparent_label(input)?).copied(),
@@ -108,7 +108,7 @@ pub(crate) fn part_from_plan(
                         ..Member::default()
                     });
                 }
-                "archive" => {
+                SourceKind::Archive => {
                     let Some(root) = roots.get(input.as_str()) else {
                         bail!("{destination} merges the archive {input}, which the catalogue does not list");
                     };
@@ -118,8 +118,7 @@ pub(crate) fn part_from_plan(
                         ..Member::default()
                     });
                 }
-                "file" => {}
-                kind => unreachable!("the plan file reader refuses the jar source kind {kind}"),
+                SourceKind::File => {}
             }
         }
         if members.is_empty() {

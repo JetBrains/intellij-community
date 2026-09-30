@@ -9,7 +9,7 @@ use crate::contract::VERSION;
 fn remainder(destination: &str) -> Asset {
     Asset {
         destination: destination.to_owned(),
-        producer: "remainder".to_owned(),
+        producer: Producer::Remainder,
         ..Asset::default()
     }
 }
@@ -17,7 +17,7 @@ fn remainder(destination: &str) -> Asset {
 fn independent(destination: &str, artifact: &str) -> Asset {
     Asset {
         destination: destination.to_owned(),
-        producer: "independent".to_owned(),
+        producer: Producer::Independent,
         artifact: artifact.to_owned(),
         ..Asset::default()
     }
@@ -25,13 +25,13 @@ fn independent(destination: &str, artifact: &str) -> Asset {
 
 fn tree(asset: Asset) -> Asset {
     Asset {
-        kind: "tree".to_owned(),
+        kind: AssetKind::Tree,
         class_path: Some(false),
         ..asset
     }
 }
 
-fn graph(directories: &[(&str, bool)], links: &[(&str, &str)]) -> Result<(), Error> {
+fn graph(directories: &[(&str, bool)], links: &[(&str, &str)]) -> Result<()> {
     let directories = directories
         .iter()
         .map(|(name, directory)| ((*name).to_owned(), *directory))
@@ -41,12 +41,6 @@ fn graph(directories: &[(&str, bool)], links: &[(&str, &str)]) -> Result<(), Err
         .map(|(link, target)| ((*link).to_owned(), (*target).to_owned()))
         .collect();
     validate_link_graph(&directories, &links)
-}
-
-#[test]
-fn asset_kind_of_an_empty_kind_is_file() {
-    assert_eq!(asset_kind(&remainder("lib/a.jar")), "file");
-    assert_eq!(asset_kind(&tree(remainder("kotlinc"))), "tree");
 }
 
 #[test]
@@ -108,15 +102,6 @@ fn validate_assets_refuses_each_broken_rule() {
             r#"destination collision at "lib/A.jar""#,
         ),
         (
-            "a directory asset",
-            VERSION,
-            vec![Asset {
-                kind: "directory".to_owned(),
-                ..remainder("dir")
-            }],
-            r#"unknown asset kind "directory""#,
-        ),
-        (
             "a tree in version 1",
             VERSION,
             vec![jar.clone(), native_tree.clone()],
@@ -148,7 +133,7 @@ fn validate_assets_refuses_each_broken_rule() {
         ),
     ] {
         let error = validate_assets(version, &assets, true).unwrap_err();
-        assert!(error.message().contains(message), "{name}: {error}, want {message}");
+        assert!(format!("{error:#}").contains(message), "{name}: {error}, want {message}");
     }
 }
 
@@ -156,7 +141,7 @@ fn validate_assets_refuses_each_broken_rule() {
 fn directory_spellings_are_checked_on_request() {
     let assets = [remainder("Lib/a.jar"), remainder("lib/b.jar")];
     let error = validate_assets(VERSION, &assets, true).unwrap_err();
-    assert_eq!(error.message(), r#"conflicting directory spellings "Lib" and "lib""#);
+    assert_eq!(format!("{error:#}"), r#"conflicting directory spellings "Lib" and "lib""#);
     validate_assets(VERSION, &assets, false).unwrap();
 }
 
@@ -176,7 +161,7 @@ fn link_graph_refuses_a_link_chain_and_a_missing_parent() {
     validate_link_graph(&directories, &links).unwrap();
     let orphan = BTreeMap::from([(".".to_owned(), true), ("dir/file".to_owned(), false)]);
     let error = validate_link_graph(&orphan, &BTreeMap::new()).unwrap_err();
-    assert!(error.message().contains(r#"missing directory "dir""#), "{error}");
+    assert!(format!("{error:#}").contains(r#"missing directory "dir""#), "{error}");
 }
 
 #[test]
@@ -219,6 +204,6 @@ fn link_graph_refuses_each_broken_rule() {
         ),
     ] {
         let error = graph(directories, links).unwrap_err();
-        assert_eq!(error.message(), message, "{name}");
+        assert_eq!(format!("{error:#}"), message, "{name}");
     }
 }
