@@ -11,6 +11,7 @@ import com.intellij.codeInspection.GlobalSimpleInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
@@ -22,26 +23,33 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -168,6 +177,40 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
       }
     }
     fail("No disabled tools found: " + tools);
+  }
+
+  public void testToolThatCannotBeInstantiatedIsSkipped() {
+    LocalInspectionEP ep = new LocalInspectionEP();
+    ep.shortName = ep.displayName = ep.groupDisplayName = "BrokenTestInspection";
+    ep.level = "WARNING";
+    ep.enabledByDefault = true;
+    ep.implementationClass = "com.intellij.java.codeInspection.NonExistentInspection";
+    ep.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
+    LocalInspectionToolWrapper brokenWrapper = new LocalInspectionToolWrapper(ep);
+    LocalInspectionToolWrapper workingWrapper = new LocalInspectionToolWrapper(new WorkingTestInspection());
+
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(List.of(brokenWrapper, workingWrapper));
+    Disposer.register(getTestRootDisposable(), toolSupplier);
+    InspectionProfileImpl profile = new InspectionProfileImpl("Foo", toolSupplier, (InspectionProfileImpl)null);
+    profile.enableTool(brokenWrapper.getShortName(), getProject());
+    profile.enableTool(workingWrapper.getShortName(), getProject());
+
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
+    context.setExternalProfile(profile);
+    List<Tools> localTools = new ArrayList<>();
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(
+      () -> context.initializeTools(new ArrayList<>(), localTools, new ArrayList<>()));
+
+    assertInstanceOf(error, PluginException.class);
+    assertEquals(PluginManagerCore.CORE_ID, ((PluginException)error).getPluginId());
+    assertTrue(error.getMessage(), error.getMessage().contains(brokenWrapper.getShortName()));
+    Map<String, Tools> tools = context.getTools();
+    assertFalse(tools.containsKey(brokenWrapper.getShortName()));
+    assertTrue(tools.containsKey(workingWrapper.getShortName()));
+    assertEquals(List.of(workingWrapper.getShortName()), ContainerUtil.map(localTools, Tools::getShortName));
+  }
+
+  public static final class WorkingTestInspection extends LocalInspectionTool {
   }
 
   public void testJavaMethodExternalization() throws Exception {
