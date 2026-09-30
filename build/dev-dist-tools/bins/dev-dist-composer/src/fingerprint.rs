@@ -2,27 +2,26 @@
 
 use std::path::Path;
 
-use crate::classpath;
-use crate::error::{Error, Result};
-use crate::fail;
-use crate::manifest::{self, ComponentEntryType, ComponentManifest};
-use crate::paths::compare_utf16;
-use crate::plugin_classpath::PLUGIN_CLASSPATH;
+use component::classpath;
+use component::manifest::{self, ComponentEntryType, ComponentManifest};
+use component::paths::compare_utf16;
+use component::plugin_classpath::PLUGIN_CLASSPATH;
+use component::{Error, Result, fail};
 
 /// The version prefix of a fingerprint.
-pub const IDE_FINGERPRINT_VERSION: &str = "v5";
+pub(crate) const IDE_FINGERPRINT_VERSION: &str = "v5";
 
 /// The Kotlin `IdeFingerprintEntry`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FingerprintEntry {
-    pub relative_path: String,
-    pub entry_type: String,
-    pub hash: i64,
-    pub executable: bool,
+pub(crate) struct FingerprintEntry {
+    pub(crate) relative_path: String,
+    pub(crate) entry_type: String,
+    pub(crate) hash: i64,
+    pub(crate) executable: bool,
 }
 
 impl FingerprintEntry {
-    pub fn new(relative_path: impl Into<String>, entry_type: impl Into<String>, hash: i64, executable: bool) -> Self {
+    pub(crate) fn new(relative_path: impl Into<String>, entry_type: impl Into<String>, hash: i64, executable: bool) -> Self {
         Self {
             relative_path: relative_path.into(),
             entry_type: entry_type.into(),
@@ -73,7 +72,7 @@ impl HashStream {
 }
 
 /// Hashes the sorted entries and renders the unsigned hash in base 36 after the version.
-pub fn compute_ide_fingerprint(entries: &[FingerprintEntry]) -> String {
+pub(crate) fn compute_ide_fingerprint(entries: &[FingerprintEntry]) -> String {
     let mut sorted: Vec<&FingerprintEntry> = entries.iter().collect();
     sorted.sort_by(|first, second| {
         compare_utf16(&first.relative_path, &second.relative_path)
@@ -95,7 +94,13 @@ pub fn compute_ide_fingerprint(entries: &[FingerprintEntry]) -> String {
 
 /// The hash of the values that `DevIdeConfig` gets, so that a changed launch changes the fingerprint.
 #[expect(clippy::cast_possible_wrap, reason = "the same 64 bits, signed as Kotlin stores them")]
-pub fn launch_metadata_hash<S: AsRef<str>>(platform_prefix: &str, os: &str, arch: &str, main_class: &str, additional_modules: &[S]) -> i64 {
+pub(crate) fn launch_metadata_hash<S: AsRef<str>>(
+    platform_prefix: &str,
+    os: &str,
+    arch: &str,
+    main_class: &str,
+    additional_modules: &[S],
+) -> i64 {
     let mut stream = HashStream::new();
     stream.put_string("dev-launch-v1");
     stream.put_string(platform_prefix);
@@ -114,7 +119,7 @@ pub fn launch_metadata_hash<S: AsRef<str>>(platform_prefix: &str, os: &str, arch
 /// The main class comes from the first component that declares one, and the platform from the first component
 /// that names one. `modules` are the additional modules of the composition spec. The source of an entry does not
 /// enter the fingerprint.
-pub fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
+pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     components: &[&ComponentManifest],
     plugin_classpath_file: Option<&Path>,
     modules: &[S],

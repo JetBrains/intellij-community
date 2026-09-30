@@ -1,14 +1,14 @@
-// The tests of the copy step of a full distribution. The checks that need only manifests are in the `component` crate.
+// The tests of the copy step of a full distribution. The tests of `compose` hold the checks that need only manifests.
 
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
-use component::compose::{ComposeOptions, DevBuildComponent};
 use component::manifest::ComponentManifest;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
 
+use crate::compose::{ComposeOptions, DevBuildComponent};
 use crate::test_support::*;
 
 /// Writes one file whose content is `name` and adds it to `manifest` as the source of `relative_file`.

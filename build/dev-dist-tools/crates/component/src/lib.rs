@@ -7,15 +7,11 @@
 mod error;
 
 pub mod classpath;
-pub mod compose;
-pub mod fingerprint;
-pub mod ide_config;
 pub mod json;
 pub mod layout;
 pub mod manifest;
 pub mod paths;
 pub mod plugin_classpath;
-pub mod spec;
 
 pub use error::{Error, Result};
 pub use manifest::{ComponentEntry, ComponentEntryType, ComponentManifest};

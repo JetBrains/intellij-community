@@ -3,11 +3,12 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use crate::Result;
-use crate::compose::{ComposeOptions, ComposedBuild, DevBuildComponent, compose_components};
+use component::Result;
+use component::manifest::ComponentEntry;
+use component::plugin_classpath::PLUGIN_CLASSPATH;
+
+use crate::compose::{ComposeOptions, ComposedBuild, DevBuildComponent, compose_with_merge};
 use crate::fingerprint::compute_ide_fingerprint_from_components;
-use crate::manifest::ComponentEntry;
-use crate::plugin_classpath::PLUGIN_CLASSPATH;
 use crate::test_support::{
     TempDir, directory_entry, file_entry, link_entry, no_merge, read_text, require_absent, require_error, runfiles, skip_merge,
     sourced_entry, test_manifest, with_entries, write_file,
@@ -24,7 +25,7 @@ fn compose_local(components: &[DevBuildComponent], target: &Path, source_runfile
         source_runfiles: Some(source_runfiles),
         ..ComposeOptions::default()
     };
-    compose_components(components, target, &options, no_merge)
+    compose_with_merge(components, target, &options, no_merge)
 }
 
 #[track_caller]
@@ -64,7 +65,7 @@ fn directory_components_preserve_modes_in_the_local_layout_without_payload_trees
         let mut invalid = entries[0].clone();
         change(&mut invalid);
         let target = directory.path().join("invalid");
-        let result = compose_components(
+        let result = compose_with_merge(
             &[layout_component("invalid", vec![invalid])],
             &target,
             &ComposeOptions::default(),
@@ -163,7 +164,7 @@ fn local_composition_reads_metadata_without_staging_payload() {
         source_runfiles: Some(runfiles(&[(&app, "_main/tree/lib/app.jar"), (&packed, "community+/packed.jar")])),
         ..ComposeOptions::default()
     };
-    compose_components(&components, &target, &options, no_merge).unwrap();
+    compose_with_merge(&components, &target, &options, no_merge).unwrap();
     require_layout(
         &target,
         &[r#""runfile":"_main/tree/lib/app.jar""#, r#""runfile":"community+/packed.jar""#],
@@ -189,14 +190,14 @@ fn local_and_exported_compositions_have_the_same_metadata() {
         plugin_classpath_prefix: Some(prefix.clone().into()),
         ..ComposeOptions::default()
     };
-    let exported = compose_components(&components, &directory.path().join("dist"), &exported_options, skip_merge).unwrap();
+    let exported = compose_with_merge(&components, &directory.path().join("dist"), &exported_options, skip_merge).unwrap();
     std::fs::remove_file(&app).unwrap();
     let local_options = ComposeOptions {
         plugin_classpath_prefix: Some(prefix.into()),
         source_runfiles: Some(runfiles(&[(&app, "_main/tree/lib/app.jar")])),
         ..ComposeOptions::default()
     };
-    let local = compose_components(&components, &directory.path().join("metadata"), &local_options, no_merge).unwrap();
+    let local = compose_with_merge(&components, &directory.path().join("metadata"), &local_options, no_merge).unwrap();
     assert_eq!(local, exported);
     assert_eq!(
         read_text(directory.path().join("metadata").join(PLUGIN_CLASSPATH)),
@@ -243,7 +244,7 @@ fn local_composition_resolves_files_inside_declared_directories_without_reading_
         "plugin",
         vec![sourced_entry("plugins/demo/lib/plugin.jar", &packed)],
     )];
-    compose_components(&components, &target, &options, no_merge).unwrap();
+    compose_with_merge(&components, &target, &options, no_merge).unwrap();
     require_layout(&target, &[r#""runfile":"_main/plugin/lib/nested/plugin.jar""#]);
     require_absent(&plugin_directory);
     require_absent(target.join("plugins"));
@@ -272,7 +273,7 @@ fn the_deepest_declared_directory_names_the_runfile() {
         "plugin",
         vec![sourced_entry("lib/plugin.jar", &format!("{inner}/plugin.jar"))],
     )];
-    compose_components(&components, &target, &options, no_merge).unwrap();
+    compose_with_merge(&components, &target, &options, no_merge).unwrap();
     require_layout(&target, &[r#""runfile":"_main/lib/plugin.jar""#]);
 }
 
@@ -291,7 +292,7 @@ fn directory_references_reject_sibling_prefixes_and_escaping_paths() {
             ..ComposeOptions::default()
         };
         let components = [layout_component("plugin", vec![sourced_entry("lib/plugin.jar", &source)])];
-        let result = compose_components(&components, &directory.path().join("metadata"), &options, no_merge);
+        let result = compose_with_merge(&components, &directory.path().join("metadata"), &options, no_merge);
         assert!(result.is_err(), "accepted the source {source}");
     }
 }
@@ -462,7 +463,7 @@ fn a_plugin_classpath_joins_the_metadata_list() {
         source_runfiles: Some(runfiles(&[])),
         ..ComposeOptions::default()
     };
-    compose_components(&[plugins], &target, &options, no_merge).unwrap();
+    compose_with_merge(&[plugins], &target, &options, no_merge).unwrap();
     require_layout(
         &target,
         &[r#""metadata":["core-classpath.txt","fingerprint.txt","plugins/plugin-classpath.txt"]"#],

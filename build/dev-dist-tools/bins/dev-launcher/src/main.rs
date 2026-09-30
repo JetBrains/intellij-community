@@ -20,7 +20,7 @@ use std::ffi::OsString;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use component::paths::resolve_relative;
+use component::paths::from_slash;
 use std::process::Command;
 
 use anyhow::{Context, anyhow, bail};
@@ -228,25 +228,25 @@ fn read_ide_config(file: &str) -> anyhow::Result<(String, String)> {
     let home = if Path::new(home).is_absolute() {
         home.clone()
     } else {
-        resolve_relative(component::paths::parent(file), home)
+        path_string(Path::new(file).parent().unwrap_or(Path::new(file)).join(from_slash(home).as_ref()))?
     };
     Ok((home, main_class.clone()))
 }
 
 fn read_class_path(home: &str) -> anyhow::Result<Vec<String>> {
     let lines = read_lines(&Path::new(home).join("core-classpath.txt"))?;
-    Ok(lines
+    lines
         .iter()
         .map(|line| line.trim())
         .filter(|line| !line.is_empty())
         .map(|line| {
             if Path::new(line).is_absolute() {
-                line.to_owned()
+                Ok(line.to_owned())
             } else {
-                resolve_relative(home, line)
+                path_string(Path::new(home).join(from_slash(line).as_ref()))
             }
         })
-        .collect())
+        .collect()
 }
 
 /// The properties that the command line of a launcher keeps against the properties of the distribution, as
@@ -338,9 +338,9 @@ fn link_local_home(
     workspace: &str,
     warnings: &mut dyn Write,
 ) -> anyhow::Result<String> {
-    let homes = resolve_relative(workspace, &manifest.home);
+    let homes = path_string(Path::new(workspace).join(from_slash(&manifest.home).as_ref()))?;
     remove_stale_homes(Path::new(&homes), warnings);
-    let home = resolve_relative(&homes, &std::process::id().to_string());
+    let home = path_string(Path::new(&homes).join(std::process::id().to_string()))?;
     match std::fs::remove_dir_all(&home) {
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
             return Err(error).with_context(|| format!("remove {home}"));

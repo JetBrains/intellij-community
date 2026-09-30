@@ -1,21 +1,26 @@
-//! The copy step of a full distribution: the `merge` step of [`compose_components`].
+//! The copy step of a full distribution, which [`compose_components`] calls.
 //!
 //! [`compose_components`] checks every destination and the link graph of all components before it calls this step.
 //! [`ComponentSources::resolve`] checks every source. So this step only refuses the entry shapes that those checks
 //! accept and that no collector writes.
 //!
-//! [`compose_components`]: component::compose::compose_components
+//! For each component in order, the step creates each entry below the target and the missing parents. It accepts a
+//! directory that exists, and it refuses anything else at a destination, so it never replaces a file. After all
+//! components, it applies the mode of each directory entry, the deepest first. It writes no reserved file.
+//!
+//! [`compose_components`]: crate::compose::compose_components
 
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use component::compose::DevBuildComponent;
 use component::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest};
-use component::spec::ComponentSources;
 use component::{Error, Result, fail, paths};
 use rayon::prelude::*;
 use tracing::field::Empty;
+
+use crate::compose::DevBuildComponent;
+use crate::spec::ComponentSources;
 
 /// The thread count of the copy step. A clone copies only file metadata, and the Bazel rule books four CPUs for the
 /// composer action.

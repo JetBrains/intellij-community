@@ -1,6 +1,7 @@
+use component::layout::{LocalFileKind, LocalLayoutFile};
+
 use super::*;
 use crate::test_support::{TempDir, read_text, require_error, write_file};
-use component::layout::{LocalFileKind, LocalLayoutFile};
 
 fn write_layout(directory: &TempDir, layout: &LocalLayout) -> PathBuf {
     let file = directory.path().join("local-layout.json");

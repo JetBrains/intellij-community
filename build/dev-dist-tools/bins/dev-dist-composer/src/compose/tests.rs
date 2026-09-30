@@ -1,9 +1,10 @@
-// The composer tests that need only manifests and records. The tests of the copy step stay with the composer binary.
+// The composer tests that need only manifests and records. The tests of the copy step are in `merge/tests.rs`.
 
 use std::path::PathBuf;
 
+use component::manifest::ComponentEntry;
+
 use super::*;
-use crate::manifest::ComponentEntry;
 use crate::test_support::{
     TempDir, directory_entry, file_entry, link_entry, no_merge, require_absent, require_error, runfiles, skip_merge, sourced_entry,
     test_manifest, with_entries, write_file,
@@ -19,7 +20,7 @@ fn sourced_component(directory: &TempDir, name: &str, relative_file: &str, mut m
 }
 
 fn compose(components: &[DevBuildComponent], target: &Path) -> Result<ComposedBuild> {
-    compose_components(components, target, &ComposeOptions::default(), skip_merge)
+    compose_with_merge(components, target, &ComposeOptions::default(), skip_merge)
 }
 
 #[test]
@@ -28,7 +29,7 @@ fn the_merge_step_runs_only_for_a_full_distribution() {
     let components = [DevBuildComponent::new(test_manifest("platform"))];
     let options = ComposeOptions::default();
     let mut merged = None;
-    compose_components(&components, &directory.path().join("dist"), &options, |components, target| {
+    compose_with_merge(&components, &directory.path().join("dist"), &options, |components, target| {
         merged = Some((components.len(), target.to_path_buf()));
         Ok(())
     })
@@ -38,7 +39,7 @@ fn the_merge_step_runs_only_for_a_full_distribution() {
         source_runfiles: Some(runfiles(&[])),
         ..options
     };
-    compose_components(&components, &directory.path().join("metadata"), &local, no_merge).unwrap();
+    compose_with_merge(&components, &directory.path().join("metadata"), &local, no_merge).unwrap();
     assert!(directory.path().join("metadata/local-layout.json").is_file());
 }
 
@@ -71,7 +72,7 @@ fn composer_accepts_ordered_platform_layers_and_plugins() {
         ],
         ..ComposeOptions::default()
     };
-    let result = compose_components(&components, &directory.path().join("target"), &options, skip_merge).unwrap();
+    let result = compose_with_merge(&components, &directory.path().join("target"), &options, skip_merge).unwrap();
     // Ordered here rather than left in component order, because each component sorted only the share it packed.
     assert_eq!(
         result.core_class_path,
@@ -133,7 +134,7 @@ fn composer_builds_plugin_classpath_from_the_prefix_and_every_components_records
         plugin_classpath_prefix: Some(PathBuf::from(&prefix)),
         ..ComposeOptions::default()
     };
-    compose_components(&components, &target, &options, skip_merge).unwrap();
+    compose_with_merge(&components, &target, &options, skip_merge).unwrap();
     // The prefix, then the summed plugin count as a big-endian short, then the records in component order.
     assert_eq!(
         fs::read(target.join(PLUGIN_CLASSPATH)).unwrap(),
@@ -166,7 +167,7 @@ fn composer_rejects_a_positive_plugin_count_without_records_before_writing_outpu
     let target = directory.path().join("target");
     let components = [sourced_component(&directory, "air", "plugins/air-plugin/lib/air.jar", air)];
     require_error(
-        compose_components(&components, &target, &ComposeOptions::default(), no_merge),
+        compose_with_merge(&components, &target, &ComposeOptions::default(), no_merge),
         "plugins_air (1)",
     );
     require_absent(&target);
@@ -269,7 +270,7 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
             expected_fragments: expected_fragments.into_iter().map(String::from).collect(),
             ..ComposeOptions::default()
         };
-        require_error(compose_components(&components, &target, &options, no_merge), message);
+        require_error(compose_with_merge(&components, &target, &options, no_merge), message);
         require_absent(&target);
     }
 }
@@ -306,7 +307,7 @@ fn composer_declares_the_modules_of_the_spec() {
         additional_modules: vec!["intellij.air.plugin".into(), "intellij.bridge.plugin".into()],
         ..ComposeOptions::default()
     };
-    let result = compose_components(&components, &directory.path().join("target"), &options, skip_merge).unwrap();
+    let result = compose_with_merge(&components, &directory.path().join("target"), &options, skip_merge).unwrap();
     assert_eq!(result.additional_modules, ["intellij.air.plugin", "intellij.bridge.plugin"]);
     // The declaration is part of the launch metadata, so a distribution that only declared more is not reused.
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
@@ -366,7 +367,7 @@ fn composer_checks_every_destination_before_the_merge_step() {
     for (components, message) in cases {
         let target = directory.path().join("target");
         require_error(
-            compose_components(&components, &target, &ComposeOptions::default(), no_merge),
+            compose_with_merge(&components, &target, &ComposeOptions::default(), no_merge),
             message,
         );
         require_absent(&target);
@@ -375,7 +376,7 @@ fn composer_checks_every_destination_before_the_merge_step() {
         component("platform", vec![directory_entry("lib", 0o755), file_entry("lib/a.jar")]),
         component("plugins", vec![file_entry("lib/b.jar")]),
     ];
-    compose_components(
+    compose_with_merge(
         &shared_directory,
         &directory.path().join("shared"),
         &ComposeOptions::default(),
@@ -390,11 +391,11 @@ fn composer_requires_an_absent_or_empty_target() {
     let components = [DevBuildComponent::new(test_manifest("platform"))];
     let empty = directory.path().join("empty");
     fs::create_dir(&empty).unwrap();
-    compose_components(&components, &empty, &ComposeOptions::default(), skip_merge).unwrap();
+    compose_with_merge(&components, &empty, &ComposeOptions::default(), skip_merge).unwrap();
     let used = directory.path().join("used");
     write_file(used.join("stale.txt"), "stale");
     require_error(
-        compose_components(&components, &used, &ComposeOptions::default(), no_merge),
+        compose_with_merge(&components, &used, &ComposeOptions::default(), no_merge),
         "The dev-build composition target must be empty",
     );
 }

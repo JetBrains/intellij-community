@@ -1,38 +1,37 @@
 //! The composition of the component manifests into one distribution or into launch metadata only.
 //!
-//! This module holds every step that reads only manifests and records. The copy of the component files is the
-//! `merge` step of [`compose_components`], and the composer binary supplies it.
+//! This module holds every step that reads only manifests and records. [`crate::merge`] copies the component files
+//! of a full distribution.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::classpath;
-use crate::error::{Error, Result};
-use crate::fail;
-use crate::fingerprint;
-use crate::layout::{self, CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE};
-use crate::manifest::{self, ComponentManifest};
-use crate::paths;
-use crate::plugin_classpath::{self, PLUGIN_CLASSPATH};
+use component::classpath;
+use component::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE};
+use component::manifest::{self, ComponentManifest};
+use component::plugin_classpath::PLUGIN_CLASSPATH;
+use component::{Error, Result, fail, paths};
+
 use crate::spec::ComponentSources;
+use crate::{fingerprint, local_layout, merge, plugin_classpath};
 
 /// The files that the composer writes itself. No component can provide them.
-pub const RESERVED_FILES: [&str; 4] = [CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, PLUGIN_CLASSPATH];
+pub(crate) const RESERVED_FILES: [&str; 4] = [CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, PLUGIN_CLASSPATH];
 
 /// One component to compose. Its manifest names each file where it already is.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct DevBuildComponent {
-    pub manifest: ComponentManifest,
+pub(crate) struct DevBuildComponent {
+    pub(crate) manifest: ComponentManifest,
     /// The absolute path of the plugin records of the component. `None` is a component without plugin records.
-    pub plugin_classpath_part: Option<PathBuf>,
+    pub(crate) plugin_classpath_part: Option<PathBuf>,
     /// The artifacts that Bazel staged for the component, when the spec names source bindings.
-    pub source_bindings: Option<ComponentSources>,
+    pub(crate) source_bindings: Option<ComponentSources>,
 }
 
 impl DevBuildComponent {
-    pub const fn new(manifest: ComponentManifest) -> Self {
+    pub(crate) const fn new(manifest: ComponentManifest) -> Self {
         Self {
             manifest,
             plugin_classpath_part: None,
@@ -44,26 +43,26 @@ impl DevBuildComponent {
 /// The optional arguments of [`compose_components`]. A `None` `source_runfiles` requests a full distribution, and a
 /// map requests launch metadata only. The keys of both maps are absolute paths, as [`absolute_keys`] gives them.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct ComposeOptions {
-    pub plugin_classpath_prefix: Option<PathBuf>,
-    pub expected_fragments: Vec<String>,
-    pub additional_modules: Vec<String>,
-    pub source_runfiles: Option<BTreeMap<String, String>>,
-    pub source_directory_runfiles: Option<BTreeMap<String, String>>,
+pub(crate) struct ComposeOptions {
+    pub(crate) plugin_classpath_prefix: Option<PathBuf>,
+    pub(crate) expected_fragments: Vec<String>,
+    pub(crate) additional_modules: Vec<String>,
+    pub(crate) source_runfiles: Option<BTreeMap<String, String>>,
+    pub(crate) source_directory_runfiles: Option<BTreeMap<String, String>>,
 }
 
 /// The values of the IDE config, the core classpath and the fingerprint of a composition.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ComposedBuild {
-    pub platform_prefix: String,
-    pub main_class: String,
-    pub additional_modules: Vec<String>,
-    pub core_class_path: Vec<String>,
-    pub fingerprint: String,
+pub(crate) struct ComposedBuild {
+    pub(crate) platform_prefix: String,
+    pub(crate) main_class: String,
+    pub(crate) additional_modules: Vec<String>,
+    pub(crate) core_class_path: Vec<String>,
+    pub(crate) fingerprint: String,
 }
 
 /// Checks that the components form one distribution. It reads no file, so a failure leaves no output.
-pub fn validate_components(components: &[DevBuildComponent], expected_fragments: &[String]) -> Result<()> {
+pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fragments: &[String]) -> Result<()> {
     if components.is_empty() {
         fail!("At least one dev-build component is required");
     }
@@ -151,7 +150,7 @@ pub fn validate_components(components: &[DevBuildComponent], expected_fragments:
 /// Each destination must be a valid inventory path, and only one component can provide it. The reserved files are
 /// destinations too. [`filemeta::merge`] then checks the spellings, the ancestors and the link graph of all entries
 /// together.
-pub fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<()> {
+pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<()> {
     let mut destinations: HashSet<&str> = HashSet::from(RESERVED_FILES);
     let mut entries: Vec<filemeta::Entry> = RESERVED_FILES
         .iter()
@@ -174,12 +173,23 @@ pub fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<()> {
 
 /// Checks that the components form one distribution, then assembles them at `target`.
 ///
-/// The function runs [`validate_components`] and [`validate_destinations`] first. Then it requires that `target` is
-/// absent or an empty directory, and it creates it. For a full distribution, it calls `merge` once with the
-/// components and the target. `merge` must copy the component files, see
-/// `API.md`. Launch metadata never calls `merge`. Then the function writes the plugin classpath, writes the local
-/// layout for launch metadata, and computes the fingerprint.
-pub fn compose_components<M>(components: &[DevBuildComponent], target: &Path, options: &ComposeOptions, merge: M) -> Result<ComposedBuild>
+/// The function runs [`validate_components`] and [`validate_destinations`] first. A failure there creates nothing.
+/// Then it requires that `target` is absent or an empty directory, and it creates it. For a full distribution, it
+/// calls [`merge::merge_components`] once with the components in spec order. Launch metadata never copies a component
+/// file. Then the function writes the plugin classpath, writes the local layout for launch metadata, and computes the
+/// fingerprint. The caller writes `core-classpath.txt`, `fingerprint.txt` and the IDE config.
+pub(crate) fn compose_components(components: &[DevBuildComponent], target: &Path, options: &ComposeOptions) -> Result<ComposedBuild> {
+    compose_with_merge(components, target, options, merge::merge_components)
+}
+
+/// [`compose_components`] with another copy step. A test gives a step that copies nothing, so it checks the metadata
+/// of a full distribution without payload.
+pub(crate) fn compose_with_merge<M>(
+    components: &[DevBuildComponent],
+    target: &Path,
+    options: &ComposeOptions,
+    merge: M,
+) -> Result<ComposedBuild>
 where
     M: FnOnce(&[DevBuildComponent], &Path) -> Result<()>,
 {
@@ -214,7 +224,7 @@ where
         .collect();
     let core_class_path = classpath::order_core_classpath_entries(&core_class_path);
     if let Some(source_runfiles) = &options.source_runfiles {
-        layout::write_local_layout(
+        local_layout::write_local_layout(
             &manifests,
             target,
             source_runfiles,
@@ -235,7 +245,7 @@ where
 
 /// Writes `plugins/plugin-classpath.txt` from the prefix and the records of all components. The plugin count between
 /// the two covers the whole distribution. The result is `None` when no component has records.
-pub fn write_plugin_classpath(components: &[DevBuildComponent], target: &Path, prefix: Option<&Path>) -> Result<Option<PathBuf>> {
+pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &Path, prefix: Option<&Path>) -> Result<Option<PathBuf>> {
     let kinds: Vec<&str> = components
         .iter()
         .filter(|component| component.plugin_classpath_part.is_some())
@@ -268,7 +278,7 @@ pub fn write_plugin_classpath(components: &[DevBuildComponent], target: &Path, p
 }
 
 /// The map with the absolute path of each key. Two keys with one absolute path fail.
-pub fn absolute_keys(source: &BTreeMap<String, String>) -> Result<BTreeMap<String, String>> {
+pub(crate) fn absolute_keys(source: &BTreeMap<String, String>) -> Result<BTreeMap<String, String>> {
     let mut result = BTreeMap::new();
     for (key, value) in source {
         if result.insert(paths::absolute_path(key)?, value.clone()).is_some() {
@@ -279,7 +289,7 @@ pub fn absolute_keys(source: &BTreeMap<String, String>) -> Result<BTreeMap<Strin
 }
 
 /// The first occurrence of each value, in order.
-pub fn distinct<S: AsRef<str>>(values: impl IntoIterator<Item = S>) -> Vec<String> {
+pub(crate) fn distinct<S: AsRef<str>>(values: impl IntoIterator<Item = S>) -> Vec<String> {
     let mut known = HashSet::new();
     values
         .into_iter()

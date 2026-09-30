@@ -6,8 +6,9 @@
 
 use std::path::Path;
 
+use component::manifest::{ComponentEntry, ComponentEntryType, validate_manifest};
+
 use super::*;
-use crate::manifest::{ComponentEntry, ComponentEntryType, validate_manifest};
 use crate::test_support::{TempDir, reference_bytes, test_manifest, write_file};
 
 // The Kotlin run read `additionalModules` from these manifests. The composer takes the modules from the composition

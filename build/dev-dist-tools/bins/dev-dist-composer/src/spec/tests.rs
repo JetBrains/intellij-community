@@ -132,7 +132,7 @@ fn create_bound_tree(directory: &str, members: &[&str]) -> Result<BoundTree> {
         fs::create_dir_all(format!("{tree}/lib")).unwrap();
     }
     write_file(format!("{physical}/lib/native.jar"), "native bytes");
-    crate::test_support::symlink(format!("{physical}/lib/native.jar"), format!("{staged}/lib/native.jar"));
+    crate::test_support::file_symlink(format!("{physical}/lib/native.jar"), format!("{staged}/lib/native.jar"));
     let physical_metadata = format!("{directory}/physical/metadata/bindings.jsonl");
     let staged_metadata = format!("{directory}/sandbox/metadata/bindings.jsonl");
     let line = serde_json::json!({
@@ -143,8 +143,8 @@ fn create_bound_tree(directory: &str, members: &[&str]) -> Result<BoundTree> {
         "members": members,
     });
     write_file(&physical_metadata, format!("{line}\n"));
-    fs::create_dir_all(paths::parent(&staged_metadata)).unwrap();
-    crate::test_support::symlink(&physical_metadata, &staged_metadata);
+    fs::create_dir_all(host_paths::parent(&staged_metadata)).unwrap();
+    crate::test_support::file_symlink(&physical_metadata, &staged_metadata);
     let components = [CompositionComponent {
         manifest: "plugin".into(),
         plugin_classpath_part: None,
@@ -211,7 +211,7 @@ fn source_bindings_reject_outside_sources_and_member_tampering() {
     );
     let staged = format!("{}/lib/native.jar", fixture.staged);
     fs::remove_file(&staged).unwrap();
-    crate::test_support::symlink(&outside, &staged);
+    crate::test_support::file_symlink(&outside, &staged);
     require_error(fixture.bindings.resolve(&staged), "Staged source differs");
 }
 
@@ -229,17 +229,17 @@ fn source_bindings_reject_genuine_file_links_and_directory_escapes() {
         write_file(format!("{outside}/native.jar"), "native bytes");
         let member = format!("{}/lib/native.jar", fixture.physical);
         fs::remove_file(&member).unwrap();
-        let member_directory = paths::parent(&member);
+        let member_directory = host_paths::parent(&member);
         match escape {
-            "file" => crate::test_support::symlink(format!("{outside}/native.jar"), &member),
+            "file" => crate::test_support::file_symlink(format!("{outside}/native.jar"), &member),
             "directory" => {
                 fs::remove_dir(member_directory).unwrap();
-                crate::test_support::symlink(&outside, member_directory);
+                crate::test_support::file_symlink(&outside, member_directory);
             }
             _ => {
                 fs::remove_dir(member_directory).unwrap();
                 fs::remove_dir(&fixture.physical).unwrap();
-                crate::test_support::symlink(paths::parent(&outside), &fixture.physical);
+                crate::test_support::file_symlink(host_paths::parent(&outside), &fixture.physical);
             }
         }
         require_error(fixture.bindings.resolve(&format!("{}/lib/native.jar", fixture.staged)), message);
@@ -284,7 +284,7 @@ fn source_bindings_reject_changed_owners_and_anchor_paths() {
     .enumerate()
     {
         let fixture = must_bound_tree(&directory.join(&format!("tamper-{index}")));
-        let physical = paths::eval_symlinks(&fixture.file).unwrap();
+        let physical = host_paths::eval_symlinks(&fixture.file).unwrap();
         write_file(&physical, read_text(&physical).replacen(from, to, 1));
         assert!(
             read_source_bindings(&fixture.file, &components(&["plugin"])).is_err(),
@@ -302,14 +302,14 @@ fn source_bindings_accept_a_file_artifact_and_reject_its_members() {
     let physical_file = format!("{root}/physical/metadata/bindings.jsonl");
     let staged_file = format!("{root}/sandbox/metadata/bindings.jsonl");
     fs::create_dir_all(format!("{root}/sandbox/metadata")).unwrap();
-    crate::test_support::symlink(format!("{root}/physical/packed.jar"), format!("{root}/sandbox/packed.jar"));
+    crate::test_support::file_symlink(format!("{root}/physical/packed.jar"), format!("{root}/sandbox/packed.jar"));
     let line = |members: &str| {
         format!(
             r#"{{"component":"plugin","source":"{root}/sandbox/packed.jar","anchorRelativePath":"../packed.jar","type":"file","members":[{members}]}}"#
         )
     };
     write_file(&physical_file, format!("{}\r\n", line("")));
-    crate::test_support::symlink(&physical_file, &staged_file);
+    crate::test_support::file_symlink(&physical_file, &staged_file);
     let bindings = read_source_bindings(&staged_file, &components(&["plugin"])).unwrap();
     let resolved = bindings["plugin"].resolve(&format!("{root}/sandbox/packed.jar")).unwrap();
     assert_eq!(resolved, format!("{root}/physical/packed.jar"));

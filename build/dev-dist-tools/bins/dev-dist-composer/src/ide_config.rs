@@ -3,19 +3,20 @@
 use std::fs;
 use std::path::Path;
 
-use crate::error::{Error, Result};
-use crate::paths;
+use component::{Error, Result, paths};
+
+use crate::host_paths;
 
 /// The text of the config file. When the home is below the directory of the config file, the text names the home
 /// relative to the config file. Then the pair can move as a unit. Both paths are absolute and normalized.
-pub fn dev_ide_config_text<S: AsRef<str>>(
+pub(crate) fn dev_ide_config_text<S: AsRef<str>>(
     config_file: &str,
     home: &str,
     main_class: &str,
     platform_prefix: &str,
     additional_modules: &[S],
 ) -> String {
-    let config_directory = paths::parent(config_file);
+    let config_directory = host_paths::parent(config_file);
     let has_parent = config_directory != config_file;
     let mut home_path = home;
     if has_parent && Path::new(home).starts_with(config_directory) {
@@ -31,14 +32,14 @@ pub fn dev_ide_config_text<S: AsRef<str>>(
 }
 
 /// Writes the config file and creates its directory.
-pub fn write_dev_ide_config<S: AsRef<str>>(
+pub(crate) fn write_dev_ide_config<S: AsRef<str>>(
     config_file: &str,
     home: &str,
     main_class: &str,
     platform_prefix: &str,
     additional_modules: &[S],
 ) -> Result<()> {
-    let config_directory = paths::parent(config_file);
+    let config_directory = host_paths::parent(config_file);
     if config_directory != config_file {
         fs::create_dir_all(config_directory).map_err(|error| Error::io(config_directory, error))?;
     }

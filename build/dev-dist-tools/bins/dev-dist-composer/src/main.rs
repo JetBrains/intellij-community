@@ -5,6 +5,11 @@
 //!
 //! The rule `intellij_dev_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
 //! `--fingerprint` and an optional `--trace-file`, each in the `--key=value` form. Every failure exits with 1.
+//!
+//! The composer owns the composition of the component contract. [`spec`] reads the composition spec and the source
+//! bindings. [`compose`] checks the components and their destinations, then [`merge`] copies the files of a full
+//! distribution, and [`local_layout`] writes the layout of launch metadata. [`plugin_classpath`] joins the plugin
+//! records, [`fingerprint`] computes fingerprint v5, and [`ide_config`] writes the file of `DevIdeConfig`.
 
 use std::ffi::OsString;
 use std::fs;
@@ -12,10 +17,18 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::process::ExitCode;
 
-use component::compose::{self, ComposeOptions, DevBuildComponent};
-use component::{Error, Result, classpath, ide_config, manifest, paths, spec};
+use component::{Error, Result, classpath, manifest, paths};
 
+use crate::compose::{ComposeOptions, DevBuildComponent};
+
+mod compose;
+mod fingerprint;
+mod host_paths;
+mod ide_config;
+mod local_layout;
 mod merge;
+mod plugin_classpath;
+mod spec;
 
 #[cfg(test)]
 mod test_support;
@@ -202,7 +215,7 @@ fn compose_dev_distribution(options: &mut CommandLineOptions, root: &tracing::Sp
         source_directory_runfiles: Some(compose::absolute_keys(&spec.source_directory_runfiles)?),
     };
     let home = Path::new(&output_dir);
-    let result = compose::compose_components(&components, home, &compose_options, merge::merge_components)?;
+    let result = compose::compose_components(&components, home, &compose_options)?;
     for (file, content) in [
         (
             home.join("core-classpath.txt"),

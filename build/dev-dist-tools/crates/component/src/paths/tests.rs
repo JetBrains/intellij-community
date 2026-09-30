@@ -33,12 +33,3 @@ fn absolute_path_starts_at_the_working_directory() {
     assert_eq!(absolute_path("a/b.jar").unwrap(), expected.to_str().unwrap());
     require_error(absolute_path("a/../b.jar"), "Unsupported host path");
 }
-
-#[cfg(unix)]
-#[test]
-fn parent_and_resolve_relative_of_absolute_paths() {
-    assert_eq!(parent("/a/b"), "/a");
-    assert_eq!(parent("/a"), "/");
-    assert_eq!(parent("/"), "/");
-    assert_eq!(resolve_relative("/a", "b/c.jar"), "/a/b/c.jar");
-}

@@ -11,14 +11,16 @@ workspace = true
 
 [dependencies]
 component.workspace = true
+distpath.workspace = true
+filemeta.workspace = true
 fscopy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 trace.workspace = true
 tracing.workspace = true
 lexopt.workspace = true
 rayon.workspace = true
 
 [dev-dependencies]
-filemeta.workspace = true
 libc.workspace = true
-serde_json.workspace = true
 tempfile.workspace = true

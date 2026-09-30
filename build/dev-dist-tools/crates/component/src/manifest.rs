@@ -122,7 +122,7 @@ impl ComponentEntry {
         let (entry_type, mode) = match self.entry_type {
             ComponentEntryType::ComponentFile => (
                 filemeta::EntryType::File,
-                self.mode.unwrap_or(fscopy::conventional_mode(self.executable)),
+                self.mode.unwrap_or(if self.executable { 0o755 } else { 0o644 }),
             ),
             ComponentEntryType::Directory => (filemeta::EntryType::Directory, self.mode.unwrap_or_default()),
             ComponentEntryType::Symlink => (filemeta::EntryType::Symlink, self.mode.unwrap_or_default()),

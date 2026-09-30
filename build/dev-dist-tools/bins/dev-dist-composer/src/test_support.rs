@@ -6,10 +6,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
-use component::compose::{self, ComposeOptions, ComposedBuild, DevBuildComponent};
 use component::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
 use component::paths;
-use component::spec::{self, ComponentSources, CompositionComponent};
+
+use crate::compose::{self, ComposeOptions, ComposedBuild, DevBuildComponent};
+use crate::spec::{self, ComponentSources, CompositionComponent};
 
 /// A test directory whose path has no symbolic link.
 pub(crate) struct TempDir {
@@ -29,6 +30,11 @@ impl TempDir {
 
     pub(crate) fn path(&self) -> &Path {
         &self.path
+    }
+
+    /// The absolute path of this directory, as text.
+    pub(crate) fn root(&self) -> String {
+        self.path.to_str().expect("a UTF-8 path").to_owned()
     }
 
     /// The absolute path of `relative`, a path in slash form, in this directory. The text has native separators.
@@ -248,9 +254,7 @@ pub(crate) fn compose_with(
     options: ComposeOptions,
 ) -> component::Result<ComposedBuild> {
     let dispatch = trace::Tracer::new("dev-dist-composer test").dispatch();
-    tracing::dispatcher::with_default(&dispatch, || {
-        compose::compose_components(components, target.as_ref(), &options, crate::merge::merge_components)
-    })
+    tracing::dispatcher::with_default(&dispatch, || compose::compose_components(components, target.as_ref(), &options))
 }
 
 pub(crate) fn with_directory_runfiles(directory: impl AsRef<Path>, runfile: &str) -> ComposeOptions {
@@ -339,4 +343,25 @@ pub(crate) fn directory_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>
 
 fn create_symlink(target: &Path, link: &Path, target_is_directory: bool) {
     fscopy::symlink(target, link, target_is_directory).unwrap_or_else(|error| panic!("{error}"));
+}
+
+/// The bytes of the reference vectors of the Kotlin content hash.
+#[expect(clippy::cast_possible_truncation, reason = "the vector keeps the low byte of each value")]
+pub(crate) fn reference_bytes(size: usize) -> Vec<u8> {
+    (0..size).map(|index| (index.wrapping_mul(31).wrapping_add(7)) as u8).collect()
+}
+
+/// A copy step that must not run, for launch metadata and for the checks before the first write.
+pub(crate) fn no_merge(_: &[DevBuildComponent], _: &Path) -> component::Result<()> {
+    panic!("the composition merged component files")
+}
+
+/// A copy step that copies nothing, for a test of the metadata of a full distribution without payload.
+#[expect(clippy::unnecessary_wraps, reason = "the signature of a copy step")]
+pub(crate) fn skip_merge(_: &[DevBuildComponent], _: &Path) -> component::Result<()> {
+    Ok(())
+}
+
+pub(crate) fn runfiles(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
+    pairs.iter().map(|(key, value)| ((*key).to_owned(), (*value).to_owned())).collect()
 }
