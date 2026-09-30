@@ -34,7 +34,9 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.templates.ScriptTemplateDefinition
+
+// legacy templates (e.g. Gradle < 9.1) are still supported, but the deprecated annotation class is not referenced directly
+private const val LEGACY_SCRIPT_TEMPLATE_DEFINITION_FQN = "kotlin.script.templates.ScriptTemplateDefinition"
 
 /**
  * @param additionalResolverClasspath Allows to specify additional jars needed for DependenciesResolver (and not script template).
@@ -77,7 +79,8 @@ fun loadDefinitionsFromTemplates(
                         hostConfiguration, template, ScriptDefinition::class
                     )
 
-                template.annotations.firstIsInstanceOrNull<ScriptTemplateDefinition>() != null ->
+                template.annotations.any { it.annotationClass.qualifiedName == LEGACY_SCRIPT_TEMPLATE_DEFINITION_FQN } ->
+                    @Suppress("DEPRECATION")
                     ScriptDefinition.FromConfigurations(
                         hostConfiguration,
                         ScriptCompilationConfigurationFromLegacyTemplate(

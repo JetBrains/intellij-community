@@ -14,7 +14,7 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
 
 class ReloadScriptConfigurationActionTest : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -52,7 +52,7 @@ class ReloadScriptConfigurationActionTest : KotlinLightCodeInsightFixtureTestCas
 
     private fun registerCustomDefinition(reloadable: Boolean) {
         val customDefinition = createScriptDefinitionFromTemplate(
-            KotlinType(ScriptTemplateWithArgs::class),
+            KotlinType(ScriptWithArgs::class),
             defaultJvmScriptingHostConfiguration,
             compilation = {
                 fileExtension("custom.kts")

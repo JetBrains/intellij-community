@@ -21,7 +21,7 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition as IdeScriptDefinition
 
 class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -99,7 +99,7 @@ class KotlinScriptingUsageCollectorTest : KotlinLightCodeInsightFixtureTestCase(
 
     private fun registerProvider() {
         val definition = createScriptDefinitionFromTemplate(
-            KotlinType(ScriptTemplateWithArgs::class),
+            KotlinType(ScriptWithArgs::class),
             defaultJvmScriptingHostConfiguration,
             compilation = { fileExtension(PROVIDED_EXTENSION) },
         )
