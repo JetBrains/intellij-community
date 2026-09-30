@@ -38,9 +38,7 @@ internal fun insertTerminalCompletionItem(
   // First step - remove characters after cursor (if any)
   // Move right and then backspace to delete text after cursor
   if (optimizedInfo.afterPrefixReplacementLength > 0) {
-    repeat(optimizedInfo.afterPrefixReplacementLength) {
-      terminalInput.sendRight()
-    }
+    terminalInput.sendRight(times = optimizedInfo.afterPrefixReplacementLength)
     terminalInput.sendBytes(ByteArray(optimizedInfo.afterPrefixReplacementLength) { Ascii.DEL })
   }
 
@@ -59,9 +57,7 @@ internal fun insertTerminalCompletionItem(
   val cursorOffset = optimizedInfo.insertValue.indexOf(CURSOR_MARKER)
   if (cursorOffset != -1) {
     val delta = realInsertValue.length - cursorOffset
-    repeat(delta) {
-      terminalInput.sendLeft()
-    }
+    terminalInput.sendLeft(times = delta)
   }
 }
 

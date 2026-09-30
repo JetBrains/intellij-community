@@ -41,11 +41,9 @@ internal fun installPromptClickHandling(
       val block = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return
       val clickOffset = outputModel.startOffset + event.clickedCharacterOffset().toLong()
       val move = calculateCursorMoveToClick(outputModel, block, clickOffset) ?: return
-      repeat(move.keyCount) {
-        when (move.direction) {
-          TerminalCursorMove.Direction.LEFT -> terminalInput.sendLeft()
-          TerminalCursorMove.Direction.RIGHT -> terminalInput.sendRight()
-        }
+      when (move.direction) {
+        TerminalCursorMove.Direction.LEFT -> terminalInput.sendLeft(times = move.keyCount)
+        TerminalCursorMove.Direction.RIGHT -> terminalInput.sendRight(times = move.keyCount)
       }
     }
   }, parentDisposable)

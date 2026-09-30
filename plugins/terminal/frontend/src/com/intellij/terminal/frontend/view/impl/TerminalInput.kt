@@ -134,14 +134,28 @@ class TerminalInput(
     sendBytes(enterBytes)
   }
 
-  fun sendLeft() {
+  fun sendLeft(times: Int = 1) {
     val leftBytes = encodingManager.getCode(KeyEvent.VK_LEFT, 0)!!
-    sendBytes(leftBytes)
+    sendBytesMultiple(leftBytes, times)
   }
 
-  fun sendRight() {
+  fun sendRight(times: Int = 1) {
     val rightBytes = encodingManager.getCode(KeyEvent.VK_RIGHT, 0)!!
-    sendBytes(rightBytes)
+    sendBytesMultiple(rightBytes, times)
+  }
+
+  private fun sendBytesMultiple(sequence: ByteArray, times: Int) {
+    // Zero is possible: a move over zero-width code points only needs no key press.
+    if (times <= 0) return
+    if (times == 1) {
+      sendBytes(sequence)
+    }
+    else {
+      val bytes = ByteArray(times * sequence.size) {
+        sequence[it % sequence.size]
+      }
+      sendBytes(bytes)
+    }
   }
 
   private fun doSendBytes(data: ByteArray) {
