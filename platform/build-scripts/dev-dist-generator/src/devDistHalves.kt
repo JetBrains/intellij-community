@@ -256,10 +256,9 @@ internal fun computeDevDistBazelFiles(
       executions = executions,
       targets = index.targets,
       runConfigurationRows = derivation.runConfigurations.rows,
+      upstreamLaunchModels = upstream?.plan?.launchModels,
     )
   }
-  // One key of both registries with one product class states one product, so the two halves render one launch model.
-  upstream?.let { other -> checkSharedLaunchModels(half = half, launchModels = plan.launchModels, otherLaunchModels = other.plan.launchModels) }
   return DevDistBazelComputes(
     sections = sectionFiles,
     plan = plan,
@@ -294,16 +293,18 @@ private fun computeUpstreamAwareSections(
 internal data class DevDistLaunchModel(@JvmField val productClass: String, @JvmField val text: String)
 
 /**
- * Fails when a key of both registries has one product class and two launch models. [launchModels] are the models of
- * [half], and [otherLaunchModels] are the models of the other half. Both are keyed by the `dev-build.json` key. A key
- * with two classes, such as `AndroidStudio`, states two products, so its models may differ. The message names the key
- * and the class.
+ * The keys of both registries with one product class and one launch model, so [half] reuses the model of the other
+ * half. [launchModels] are the models of [half], and [otherLaunchModels] are the models of the other half. Both are
+ * keyed by the `dev-build.json` key. A key with two classes, such as `AndroidStudio`, states two products, so its models
+ * may differ, and neither half reuses. Fails for a key with one class and two texts. The message names the key and the
+ * class.
  */
-internal fun checkSharedLaunchModels(
+internal fun sharedLaunchModels(
   half: DevDistHalf,
   launchModels: Map<String, DevDistLaunchModel>,
   otherLaunchModels: Map<String, DevDistLaunchModel>,
-) {
+): Set<String> {
+  val shared = LinkedHashSet<String>()
   for ((product, model) in launchModels) {
     val other = otherLaunchModels.get(product) ?: continue
     if (other.productClass != model.productClass) {
@@ -313,7 +314,9 @@ internal fun checkSharedLaunchModels(
       "The two halves render two launch models for '$product' of ${model.productClass}. The ${half.name} half renders:\n" +
       model.text + "\nand the other half renders:\n" + other.text
     }
+    shared.add(product)
   }
+  return shared
 }
 
 /**

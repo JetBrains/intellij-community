@@ -124,14 +124,16 @@ class DevDistOwnershipTest {
   }
 
   @Test
-  fun `the launch models of one key and one class must be equal`() {
-    val half = CommunityDevDistHalf
-    val community = mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n"), "AndroidStudio" to DevDistLaunchModel("A", "{}\n"))
+  fun `a key of one class and one launch model is shared, and one class with two models fails`() {
+    val half = monorepoHalf
+    val ultimate = mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n"), "AndroidStudio" to DevDistLaunchModel("A", "{}\n"))
 
-    checkSharedLaunchModels(half, community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n")))
-    // A key with two classes states two products.
-    checkSharedLaunchModels(half, community, mapOf("AndroidStudio" to DevDistLaunchModel("B", "{\"b\": 2}\n")))
-    assertThatThrownBy { checkSharedLaunchModels(half, community, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 2}\n"))) }
+    assertThat(sharedLaunchModels(half, ultimate, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 1}\n")))).containsExactly("Idea")
+    // A key with two classes states two products, so neither half reuses.
+    assertThat(sharedLaunchModels(half, ultimate, mapOf("AndroidStudio" to DevDistLaunchModel("B", "{\"b\": 2}\n")))).isEmpty()
+    // A key the other half does not state is not shared.
+    assertThat(sharedLaunchModels(half, ultimate, emptyMap())).isEmpty()
+    assertThatThrownBy { sharedLaunchModels(half, ultimate, mapOf("Idea" to DevDistLaunchModel("IdeaCommunityProperties", "{\"a\": 2}\n"))) }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("'Idea'")
       .hasMessageContaining("IdeaCommunityProperties")

@@ -313,6 +313,10 @@ internal fun computeDevDistPluginExecutions(
  * [half] is the half the run writes, and every path is relative to its root, the project root of the index of
  * [sections]. A half writes the reference plan, the platform patches and the embedded descriptors only when it has the
  * capability, see [requireHalfCapabilities]. A half writes only into its own packages, see [DevDistHalf.ownsPackage].
+ *
+ * [upstreamLaunchModels] are the launch models of the community half, which the ultimate half passes. A key of both
+ * registries with one product class and an equal text names the community file, see [sharedLaunchModels]. `null` for
+ * the community half, which renders first.
  */
 internal fun computeDevDistPlan(
   half: DevDistHalf,
@@ -323,6 +327,7 @@ internal fun computeDevDistPlan(
   executions: DevDistPluginExecutions,
   targets: BazelTargetsInfo.TargetsFile,
   runConfigurationRows: List<DevRunConfigurationRow>,
+  upstreamLaunchModels: Map<String, DevDistLaunchModel>? = null,
 ): DevDistPlanCompute {
   sections.requireDescriptorDeclarationsUnchanged()
   val pluginPlans = executions.files
@@ -380,10 +385,22 @@ internal fun computeDevDistPlan(
   val productDescriptorFiles = renderProductDescriptorPackage(sortedProducts.mapNotNull(ProductFragmentPlan::productDescriptor).distinct(), index, half)
   val relocatedContentModuleJarPackage = renderRelocatedContentModuleJarPackage(sections.relocatedContentModuleJarCalls, half)
   val relocatedContentModuleJarPackagePath = "$DEV_DIST_CONTENT_MODULE_JARS_PACKAGE/BUILD.bazel"
+  // One key of both registries with one product class states one product, so the two halves render one launch model.
+  // The half that renders second names the community file of such a key and writes no copy. The file name is the
+  // case-safe name of the key, which both halves state alike, see [checkSplitDistributionsExtend].
+  val productClasses = products.associate { it.name to (it.properties?.javaClass?.name ?: "") }
+  val launchModels = sortedProducts.associateTo(TreeMap()) { product ->
+    product.platformPrefix to DevDistLaunchModel(productClass = productClasses.get(product.platformPrefix).orEmpty(), text = encodeProductLaunchModel(product.launchModel))
+  }
+  val reusedLaunchModels = if (upstreamLaunchModels == null) emptySet() else sharedLaunchModels(half, launchModels, upstreamLaunchModels)
+  val reusedLaunchModelLabels = sortedProducts.filter { it.platformPrefix in reusedLaunchModels }.associate { product ->
+    val path = product.launchModelRelativePath
+    product.platformPrefix to "$COMMUNITY_REPOSITORY_PREFIX${path.substringBeforeLast('/')}:${path.substringAfterLast('/')}"
+  }
   val fileContents = buildList {
     add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
     add(DEV_DIST_PRODUCT_INFO_RELATIVE_PATH to renderProductInfo(collected.pluginDescriptorPlans, half))
-    add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half))
+    add(DEV_DIST_PLAN_RELATIVE_PATH to renderPartition(sortedProducts, half, reusedLaunchModelLabels))
     if (DevDistCapability.REFERENCE_PLAN in half.capabilities) {
       add(DEV_DIST_REFERENCE_PLAN_RELATIVE_PATH to renderReferencePlan(sortedProducts, half))
     }
@@ -398,7 +415,9 @@ internal fun computeDevDistPlan(
     collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
     relocatedContentModuleJarPackage?.let { add(relocatedContentModuleJarPackagePath to it) }
     for (product in sortedProducts) {
-      add(product.launchModelRelativePath to encodeProductLaunchModel(product.launchModel))
+      if (product.platformPrefix !in reusedLaunchModels) {
+        add(product.launchModelRelativePath to launchModels.getValue(product.platformPrefix).text)
+      }
       platformJarOrderRelativePath(product)?.let { add(it to product.platformJarOrder.joinToString(separator = "\n", postfix = "\n")) }
     }
   }
@@ -420,10 +439,10 @@ internal fun computeDevDistPlan(
   if (relocatedContentModuleJarPackage == null && !half.writesCommunityPackages && Files.exists(projectRoot.resolve(relocatedContentModuleJarPackagePath))) {
     updater.delete(projectRoot.resolve(relocatedContentModuleJarPackagePath))
   }
-  // A product that leaves the split path leaves its launch model behind.
-  val launchModels = sortedProducts.mapTo(HashSet()) { it.launchModelRelativePath }
+  // A product that leaves the split path, or whose model the community half now states, leaves its launch model behind.
+  val launchModelPaths = sortedProducts.filter { it.platformPrefix !in reusedLaunchModels }.mapTo(HashSet()) { it.launchModelRelativePath }
   for (relativePath in listLaunchModels(projectRoot)) {
-    if (relativePath !in launchModels) {
+    if (relativePath !in launchModelPaths) {
       updater.delete(projectRoot.resolve(relativePath))
     }
   }
@@ -445,14 +464,11 @@ internal fun computeDevDistPlan(
   for (relativePath in staleProductDescriptorSources(projectRoot, productDescriptorFiles.keys)) {
     updater.delete(projectRoot.resolve(relativePath))
   }
-  val productClasses = products.associate { it.name to (it.properties?.javaClass?.name ?: "") }
   return DevDistPlanCompute(
     updater = updater,
     files = files + pluginPlans.updates.results,
     pluginPlans = pluginPlans.updates,
-    launchModels = sortedProducts.associateTo(TreeMap()) { product ->
-      product.platformPrefix to DevDistLaunchModel(productClass = productClasses.get(product.platformPrefix).orEmpty(), text = encodeProductLaunchModel(product.launchModel))
-    },
+    launchModels = launchModels,
   )
 }
 
@@ -2785,7 +2801,8 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DevDistHalf): S
   append("]\n")
 }
 
-private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHalf): String = buildString {
+/** [reusedLaunchModelLabels] names the community launch model of each product whose key the community half states alike. */
+private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHalf, reusedLaunchModelLabels: Map<String, String>): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
   append("# The plan of every split product: the facts that its dev distribution reads. Bazel consumes this plan directly\n")
@@ -2842,11 +2859,14 @@ private fun renderPartition(products: List<ProductFragmentPlan>, half: DevDistHa
   append("# The launch model of every product, which its `platform_resources` component renders. A model file takes the\n")
   append("# case-safe name of its product, so two products never share one file on a case-insensitive disk. The map is\n")
   append("# apart from the plans, so products with equal launch facts still share one plan.\n")
+  if (reusedLaunchModelLabels.isNotEmpty()) {
+    append("# A model that the community half states alike for the same key is the community file, so this half writes no copy.\n")
+  }
   append("DEV_DIST_LAUNCH_MODELS = {\n")
   for (product in products) {
     val path = product.launchModelRelativePath
-    append("    \"").append(product.platformPrefix).append("\": \"//").append(path.substringBeforeLast('/')).append(":")
-      .append(path.substringAfterLast('/')).append("\",\n")
+    val label = reusedLaunchModelLabels.get(product.platformPrefix) ?: "//${path.substringBeforeLast('/')}:${path.substringAfterLast('/')}"
+    append("    \"").append(product.platformPrefix).append("\": \"").append(label).append("\",\n")
   }
   append("}\n")
   append("\n")

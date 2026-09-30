@@ -1,7 +1,8 @@
-# The launch model of every community split product, `<product>.launch.json`, which `plugin-model-tool` writes. The
-# `platform_resources` component of a platform set renders `build.txt`, `bin/idea.properties`, the vmoptions file and
-# `bin/product-info.json` from it, see `dev_dist_product_files`.
+# The launch model of every community split product, `<product>.launch.json`, which the community half of the dev-dist
+# generator writes. The `platform_resources` component of a platform set renders `build.txt`, `bin/idea.properties`, the
+# vmoptions file and `bin/product-info.json` from it, see `dev_dist_product_files`. Public, because the ultimate half
+# names the model of a key that both registries state alike instead of writing a copy.
 exports_files(
     glob(["*.launch.json"]),
-    visibility = ["//build:__pkg__"],
+    visibility = ["//visibility:public"],
 )
