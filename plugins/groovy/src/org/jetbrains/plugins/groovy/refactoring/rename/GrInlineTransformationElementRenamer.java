@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtilBase;
 import com.intellij.usageView.UsageInfo;
@@ -14,7 +15,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
 import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
-public final class GrInlineTransformationElementRenamer extends RenamePsiElementProcessor {
+public final class GrInlineTransformationElementRenamer extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.psi.PsiClass
@@ -18,6 +18,8 @@ import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+import com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.refactoring.util.MoveRenameUsageInfo
@@ -183,6 +185,25 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
       if (newSetter != null && newSetter !is GrAccessorMethod) {
         conflicts.putValue(newSetter, message("implicit.setter.will.by.overridden.by.method", field.name, newSetter.name))
       }
+    }
+  }
+
+  /**
+   * Renames a Groovy field for a caller that has no user.
+   *
+   * The outer class does not state the headless rename itself, because it has a subclass. A subclass
+   * must not inherit that statement.
+   */
+  class HeadlessRenameGrFieldProcessor : RenameGrFieldProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+    /**
+     * Dispatches the conflicts of every element through [HeadlessRenamePsiElementProcessor], for the
+     * reason [RenameJavaVariableProcessor.HeadlessRenameJavaVariableProcessor] states.
+     */
+    override fun findExistingNameConflictsHeadless(element: PsiElement,
+                                                   newName: String,
+                                                   conflicts: MultiMap<PsiElement, String>,
+                                                   allRenames: Map<PsiElement, String>) {
+      findExistingNameConflicts(conflicts, allRenames) { HeadlessRenamePsiElementProcessor.processorOf(it) }
     }
   }
 }

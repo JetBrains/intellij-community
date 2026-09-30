@@ -237,6 +237,7 @@ jvm_library(
         # do not sort,
         "//plugins/groovy/langInjection",
         "//plugins/groovy/spock",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -271,6 +272,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//plugins/groovy/langInjection:langInjection_test_lib",
         "//plugins/groovy/spock:spock_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -20,7 +21,8 @@ import java.util.Map;
 /**
  * @author Maxim.Medvedev
  */
-public final class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor {
+public final class RenameGroovyPropertyProcessor extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
   Logger LOG = Logger.getInstance(RenameGroovyPropertyProcessor.class);
 
   @Override

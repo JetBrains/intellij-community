@@ -38,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,7 +209,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
    *                    {@code renamePsiElementProcessor}, and a rename with no user takes it from
    *                    {@link HeadlessRenamePsiElementProcessor}, which is registered on its own.
    */
-  static void findExistingNameConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
+  @ApiStatus.Internal
+  public static void findExistingNameConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @NotNull Map<PsiElement, String> allRenames,
                                         @NotNull Function<PsiElement, ? extends RenamePsiElementProcessorBase> processorOf) {
     for (PsiElement psiElement : allRenames.keySet()) {

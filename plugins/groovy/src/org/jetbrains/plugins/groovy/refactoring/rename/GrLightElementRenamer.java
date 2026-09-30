@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.lang.Language;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,16 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 /**
  * @author Maxim.Medvedev
  */
-public final class GrLightElementRenamer extends RenamePsiElementProcessor {
+public final class GrLightElementRenamer extends RenamePsiElementProcessor
+  implements DelegatingHeadlessRenamePsiElementProcessor {
+
+  /**
+   * Refuses the rename as {@link #substituteElementToRename} does, and shows no error hint.
+   */
+  @Override
+  public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {
+    return null;
+  }
 
   @Override
   public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {

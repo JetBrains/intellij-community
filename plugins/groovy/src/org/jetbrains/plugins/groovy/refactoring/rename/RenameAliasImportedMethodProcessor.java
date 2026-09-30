@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.editor.Document;
@@ -16,6 +16,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -190,6 +191,23 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     document.replaceString(range.getStartOffset(), range.getEndOffset(), newName);
 
     return null;
+  }
+
+  /**
+   * Renames a Groovy method for a caller that has no user.
+   * <p>
+   * The outer class does not state the headless rename itself, because it has a subclass. A subclass
+   * must not inherit that statement.
+   */
+  public static final class HeadlessRenameAliasImportedMethodProcessor extends RenameAliasImportedMethodProcessor
+    implements DelegatingHeadlessRenamePsiElementProcessor {
+    /**
+     * The base method and its whole hierarchy, as {@link HeadlessRenameJavaMethodProcessor} answers.
+     */
+    @Override
+    public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {
+      return substituteElementToRename(element, null, false);
+    }
   }
 
   private static class FieldNameCollisionInfo extends UnresolvableCollisionUsageInfo {

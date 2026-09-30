@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.IProperty;
@@ -85,6 +85,7 @@ public final class DGMMemberContributor {
 
     Collection<PsiMethod> macros = macroService.getAllKnownMacros(place);
     for (PsiMethod macro : macros) {
+      if (!name.equals(macro.getName())) continue;
       if (!processor.execute(GdkMethodUtil.createMacroMethod(macro), state)) {
         return false;
       }
