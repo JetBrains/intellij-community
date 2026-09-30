@@ -460,7 +460,7 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
     val dir = createTempDirectory(prefix)
     Disposer.register(testRootDisposable) {
       try {
-        tempDirectory.deleteRecursively()
+        dir.deleteRecursively()
       }
       catch (e: Throwable) {
         LOG.warn(e)
