@@ -339,10 +339,14 @@ class TerminalViewImpl(
       component = terminalPanel,
       coroutineScope.childScope("Terminal VFS refresh on focus change"),
     )
-    refreshVfsOnCommandFinish(
-      terminalView = this,
-      coroutineScope.childScope("Terminal VFS refresh on command finish")
-    )
+    // No command can finish before the session starts, so do not install this in the constructor event.
+    coroutineScope.launch(Dispatchers.Default) {
+      sessionDeferred.await()
+      refreshVfsOnCommandFinish(
+        terminalView = this@TerminalViewImpl,
+        coroutineScope.childScope("Terminal VFS refresh on command finish")
+      )
+    }
 
     shellIntegrationFeaturesInitJob = coroutineScope.launch(
       Dispatchers.EDT +
