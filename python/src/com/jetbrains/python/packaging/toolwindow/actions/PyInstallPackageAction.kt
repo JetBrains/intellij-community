@@ -17,7 +17,7 @@ internal class PyInstallPackageAction : DumbAwareAction() {
     // dependency entry. Without one, the dialog can't do anything useful, so hide the action.
     val project = e.project
     e.presentation.isEnabledAndVisible =
-      project != null && project.service<PyPackagingToolWindowService>().currentSdk != null
+      project != null && project.service<PyPackagingToolWindowService>().currentInterpreter != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -25,7 +25,7 @@ internal class PyInstallPackageAction : DumbAwareAction() {
     // Defensive guard for the shortcut path: `update` should have already disabled the action
     // when no SDK is available, but invoking it through a keymap binding bypasses that gate in
     // some contexts (Find Action / global shortcut), so re-check before showing the dialog.
-    if (project.service<PyPackagingToolWindowService>().currentSdk == null) return
+    if (project.service<PyPackagingToolWindowService>().currentInterpreter == null) return
     PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.SHORTCUT)
     PyInstallPackageDialog(project).show()
   }

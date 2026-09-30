@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.python.requirements.pyRequirement
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
@@ -69,7 +68,7 @@ internal class PyPackagesTreeDocPreviewSupport(private val tree: PyPackagesTree,
       session?.documentationSession?.mouseOutsideOfSourceArea()
       return
     }
-    val sdk = project.service<PyPackagingToolWindowService>().currentSdk ?: return
+    val packageManager = project.service<PyPackagingToolWindowService>().currentPackageManager ?: return
     session?.let { existing ->
       if (existing.row == row && existing.packageName == packageName) {
         existing.documentationSession.mouseWithinSourceArea()
@@ -82,7 +81,7 @@ internal class PyPackagesTreeDocPreviewSupport(private val tree: PyPackagesTree,
       requirementsFile = null,
       pyRequirement = pyRequirement(packageName),
       anchor = null,
-      packageManagerOverride = PythonPackageManager.forSdk(project, sdk),
+      packageManagerOverride = packageManager,
     )
     // showDocumentationOnHoverAround calls target.documentationRequest() inline (which asserts read
     // access); use the *ByRequests overload and resolve the request inside a read action ourselves.

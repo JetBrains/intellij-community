@@ -15,7 +15,7 @@ abstract class ModifyPackagesActionBase : DumbAwareAction() {
       return
     }
     val service = PyPackagingToolWindowService.getInstance(project)
-    e.presentation.isEnabledAndVisible = service.currentSdk?.isReadOnly == false
+    e.presentation.isEnabledAndVisible = service.currentInterpreter?.isReadOnly == false
   }
 
 

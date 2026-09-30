@@ -4,14 +4,12 @@ package com.jetbrains.python.packaging.toolwindow.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.toolwindow.PyPackageIcons
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
@@ -34,7 +32,6 @@ internal data class PackageLeafNode(@param:NlsContexts.Label val packageName: St
 internal data class CommandLeafNode(@param:NlsSafe val fullCommand: String) : PyInstallResultNode
 
 internal class PyInstallDialogResultsList(
-  private val project: Project,
   private val packagingService: PyPackagingToolWindowService,
   private val onPackageSelected: (name: String, repoName: String) -> Unit,
   private val onCommandSelected: (command: String) -> Unit,
@@ -106,8 +103,7 @@ internal class PyInstallDialogResultsList(
   }
 
   fun performSearch(query: String) {
-    val sdk = packagingService.currentSdk ?: return
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    val packageManager = packagingService.currentPackageManager ?: return
     loadMoreJob?.cancel()
     searchJob?.cancel()
     if (query.isBlank()) {

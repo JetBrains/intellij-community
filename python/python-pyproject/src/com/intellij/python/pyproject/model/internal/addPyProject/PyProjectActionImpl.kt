@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.python.pyproject.icons.PythonPyprojectIcons
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.internal.PyProjectScopeService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -17,7 +18,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyErrorDetail
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -25,6 +25,9 @@ import org.jetbrains.annotations.VisibleForTesting
  * Action for both create new pyproject and convert existing. It is called when user clicks on the directory.
  * in [forNewProject] in shows [AddPyProjectDialog] to ask user for a project name, and creates subproject.
  * Otherwise, it just creates project directly in the directory used clicked on.
+ *
+ * The action is hidden until the first [com.intellij.python.pyproject.model.evolution.EvoPyProjectModel] snapshot is
+ * ready, because the tool it offers comes from the interpreter the snapshot holds.
  */
 internal abstract class PyProjectActionImpl protected constructor(private val forNewProject: Boolean) : AnAction() {
   init {
@@ -70,8 +73,9 @@ internal fun AnActionEvent.projectCreationPresenter(forNewProject: Boolean): PyP
                ?: CommonDataKeys.VIRTUAL_FILE.getData(dataContext))
               ?: return null
 
-  @Suppress("UsagesOfObsoleteApi") // action doesn't support suspend API
-  val sdk = LangDataKeys.MODULE.getData(dataContext)?.pythonSdk ?: return null
-  return PyProjectPresenter.create(where = vPath, sdk = sdk, forNewProject = forNewProject)
+  val module = LangDataKeys.MODULE.getData(dataContext) ?: return null
+  val snapshot = EvoPyProjectModel.getInstance(module.project).snapshotOrNull() ?: return null
+  val interpreter = snapshot.evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.interpreter ?: return null
+  return PyProjectPresenter.create(where = vPath, interpreter = interpreter, forNewProject = forNewProject)
 }
 

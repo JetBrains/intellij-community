@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyChangeVersionPopupLauncher
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialogLauncher
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -632,11 +633,16 @@ internal class PyPackagesTreePane(
   private fun triggerInstallPackageDialog() {
     val sdkToOpenOn = currentSdk
     val moduleForPreselect = preselectModuleName
-    PyInstallPackageDialogLauncher.open(
-      project = project,
-      sdk = sdkToOpenOn,
-      preselectModuleName = moduleForPreselect,
-    )
+    PyPackageCoroutine.launch(project) {
+      val interpreterToOpenOn = sdkToOpenOn?.pythonInterpreterAsync()
+      withContext(Dispatchers.EDT) {
+        PyInstallPackageDialogLauncher.open(
+          project = project,
+          interpreter = interpreterToOpenOn,
+          preselectModuleName = moduleForPreselect,
+        )
+      }
+    }
   }
 
   /**

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAction
 import com.intellij.python.pyproject.model.internal.addPyProject.ConvertToPyProjectAction
 import com.intellij.python.pyproject.model.internal.addPyProject.PyProjectPresenter
@@ -21,6 +22,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.withSdkConfigurationLock
@@ -91,6 +93,8 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
         module.pythonSdk = sdk
       }
     }
+    // The action reads the interpreter from the model snapshot, which follows the module change a moment later.
+    EvoPyProjectModel.getInstance(projectFixture.get()).awaitInterpreterOf(listOfNotNull(module.asPyProject()))
 
     val actionManager = ActionManager.getInstance()
     val action = if (forNewProject) {

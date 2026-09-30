@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
@@ -18,7 +18,7 @@ import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
  */
 internal object UvDependencyGroupSupport : PySdkDependencyGroupSupport {
   override suspend fun formatDependencyGroupArgs(
-    sdk: Sdk,
+    interpreter: PythonInterpreter,
     group: PyDependencyGroup,
     pyProjectToml: PyProjectToml?,
   ): List<String> {

@@ -128,12 +128,12 @@ internal class PyPackagesTree(
   private var sortedAllMatches: List<DisplayablePackage>? = null
 
   internal val isReadOnly
-    get() = packagingService.currentSdk?.isReadOnly != false
+    get() = packagingService.currentInterpreter?.isReadOnly != false
 
   /** Whether an install for [packageName] is currently running on the current SDK (shared across all surfaces). */
   internal fun isInstalling(packageName: String): Boolean {
-    val sdk = packagingService.currentSdk ?: return false
-    return packagingService.isPackageInstalling(sdk, packageName)
+    val interpreter = packagingService.currentInterpreter ?: return false
+    return packagingService.isPackageInstalling(interpreter, packageName)
   }
 
   /**
@@ -451,8 +451,8 @@ internal class PyPackagesTree(
    * nothing is installing or the install carries no trace (see [installSpinnerTooltip]).
    */
   private fun installTraceUuid(pkg: DisplayablePackage): String? {
-    val sdk = packagingService.currentSdk ?: return null
-    return packagingService.installTraceUuid(sdk, PyPackagingToolWindowService.packageKey(pkg.name))
+    val interpreter = packagingService.currentInterpreter ?: return null
+    return packagingService.installTraceUuid(interpreter, PyPackagingToolWindowService.packageKey(pkg.name))
   }
 
   /**
@@ -479,20 +479,20 @@ internal class PyPackagesTree(
   private fun installPackage(pkg: InstallablePackage) {
     val spec = pkg.repository.findPackageSpecification(pyRequirement(pkg.name, null)) ?: return
     val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
-    val sdk = packagingService.currentSdk ?: return
-    // Reject a repeated click while this package is already installing on this SDK — otherwise every
+    val interpreter = packagingService.currentInterpreter ?: return
+    // Reject a repeated click while this package is already installing on this interpreter — otherwise every
     // click fires another heavy install coroutine (PY-91529). The renderer greys the link in parallel.
     val key = PyPackagingToolWindowService.packageKey(pkg.name)
     // Own the trace rather than letting the service open a nested one: the uuid stored next to the key
     // has to be the one the spawned pip / uv process reports, or clicking the spinner finds nothing.
     val trace = TraceContext(PyBundle.message("python.packaging.installing.package", pkg.name), null)
-    if (!packagingService.markInstalling(sdk, key, trace.uuid.toString())) return
+    if (!packagingService.markInstalling(interpreter, key, trace.uuid.toString())) return
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       try {
         packagingService.installPackage(installRequest, trace = trace)
       }
       finally {
-        packagingService.unmarkInstalling(sdk, key)
+        packagingService.unmarkInstalling(interpreter, key)
       }
     }
   }

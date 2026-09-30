@@ -22,7 +22,7 @@ import com.jetbrains.python.sdk.pySdkAdditionalData
  * interpreter.
  *
  * One provider serves one flavor, and an interpreter has one flavor, so no call site chooses between providers. This is
- * the same selection that `PyProjectManager.forSdk` makes.
+ * the same selection that `PyProjectManager.forPythonInterpreter` makes.
  */
 interface PythonInterpreterPresentationProvider {
   /** The flavor whose interpreters this provider labels. */

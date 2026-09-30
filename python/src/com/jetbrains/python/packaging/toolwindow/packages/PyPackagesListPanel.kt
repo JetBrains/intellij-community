@@ -3,7 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.packages
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.ui.SimpleToolWindowPanel.LEFT_ALIGNMENT
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ScrollPaneFactory
@@ -71,9 +71,9 @@ internal class PyPackagesListPanel(
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun resetSearch(installed: List<DisplayablePackage>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<DisplayablePackage>, currentInterpreter: PythonInterpreter?) {
     showPackageList()
-    tablesView.resetSearch(installed, currentSdk)
+    tablesView.resetSearch(installed, currentInterpreter)
   }
 
   fun selectPackage(name: String) {

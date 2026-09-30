@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.ui
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
 import com.intellij.python.pytools.backend.PyTool
@@ -33,13 +33,13 @@ import java.net.URI
  */
 
 /**
- * Installs [packageName] (optionally pinned to [version]) from [repository] into [sdk]. Returns
+ * Installs [packageName] (optionally pinned to [version]) from [repository] into [interpreter]. Returns
  * `true` on success, `false` if the background install task was cancelled or the package manager
  * UI refused to run.
  */
 internal suspend fun installPackageFromRepository(
   service: PyPackagingToolWindowService,
-  sdk: Sdk,
+  interpreter: PythonInterpreter,
   repository: PyPackageRepository,
   packageName: PyPackageName,
   version: PyPackageVersion?,
@@ -50,20 +50,20 @@ internal suspend fun installPackageFromRepository(
   val versionSpec = version?.let { pyRequirementVersionSpec(PyRequirementRelation.EQ, it) }
   val spec = PythonRepositoryPackageSpecification(repository = repository, requirement = pyRequirement(packageName.name, versionSpec))
   val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
-  return runInstall(service, sdk, request, editable, dependencyGroup, moduleOrProject)
+  return runInstall(service, interpreter, request, editable, dependencyGroup, moduleOrProject)
 }
 
-/** Installs whatever lives at [location] (URL / local path) into [sdk]. */
+/** Installs whatever lives at [location] (URL / local path) into [interpreter]. */
 internal suspend fun installPackageFromLocation(
   service: PyPackagingToolWindowService,
-  sdk: Sdk,
+  interpreter: PythonInterpreter,
   location: URI,
   editable: Boolean,
   dependencyGroup: PyDependencyGroup?,
   moduleOrProject: ModuleOrProject,
 ): Boolean = runInstall(
   service = service,
-  sdk = sdk,
+  interpreter = interpreter,
   request = PythonPackageInstallRequest.ByLocation(location),
   editable = editable,
   dependencyGroup = dependencyGroup,
@@ -72,7 +72,7 @@ internal suspend fun installPackageFromLocation(
 
 private suspend fun runInstall(
   service: PyPackagingToolWindowService,
-  sdk: Sdk,
+  interpreter: PythonInterpreter,
   request: PythonPackageInstallRequest,
   editable: Boolean,
   dependencyGroup: PyDependencyGroup?,
@@ -82,11 +82,12 @@ private suspend fun runInstall(
     editable = editable,
     dependencyGroup = dependencyGroup?.takeIf { it.name.isNotEmpty() },
   )
-  val cliArgs = options.toCliArgs(sdk, moduleOrProject)
+  val managerUI = PythonPackageManagerUI.forPythonInterpreter(moduleOrProject.project, interpreter)
+  val cliArgs = options.toCliArgs(interpreter, moduleOrProject)
   val module = (moduleOrProject as? ModuleOrProject.ModuleAndProject)?.module
   // Group flag already baked into cliArgs via toCliArgs; skip the separate [dependencyGroup] hook
   // so the SDK low-level layer doesn't re-emit the flag.
-  PythonPackageManagerUI.forSdk(moduleOrProject.project, sdk).installPackagesRequestBackground(request, cliArgs, module)
+  managerUI.installPackagesRequestBackground(request, cliArgs, module)
     ?: return false
   service.reloadPackages()
   refreshModulePyprojectToml(moduleOrProject)

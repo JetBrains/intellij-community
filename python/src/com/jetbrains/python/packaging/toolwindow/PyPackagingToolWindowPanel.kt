@@ -11,7 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -241,8 +241,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.showSearchResult(installed, repoData)
   }
 
-  fun resetSearch(installed: List<DisplayablePackage>, currentSdk: Sdk?) {
-    packageListController.resetSearch(installed, currentSdk)
+  fun resetSearch(installed: List<DisplayablePackage>, currentInterpreter: PythonInterpreter?) {
+    packageListController.resetSearch(installed, currentInterpreter)
   }
 
   fun setEmpty() {
@@ -270,8 +270,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  internal fun syncSdkControllerSelection(sdk: Sdk?) {
-    moduleController.refreshAndSyncSelection(sdk)
+  internal fun syncSdkControllerSelection(interpreter: PythonInterpreter?) {
+    moduleController.refreshAndSyncSelection(interpreter)
   }
 
   fun syncSearchText(text: String) {

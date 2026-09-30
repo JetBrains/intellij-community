@@ -5,6 +5,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.packaging.PyPackageName
 import java.util.concurrent.ConcurrentHashMap
 
@@ -54,8 +56,14 @@ internal class PyActiveInstalls {
   companion object {
     private val KEY = Key.create<PyActiveInstalls>(PyActiveInstalls::class.java.name)
 
-    /** The [Sdk]'s active-installations map, created on first use and living in its user data. */
-    fun forSdk(sdk: Sdk): PyActiveInstalls = of(sdk)
+    /**
+     * The active-installations map of [interpreter], created on first use.
+     *
+     * It lives in the user data of the SDK the interpreter wraps. So every [PythonInterpreter] of one SDK shares the
+     * map, as they share the same environment.
+     */
+    @Suppress("DEPRECATION") // The map lives on the SDK, so this is the one place that reaches it.
+    fun of(interpreter: PythonInterpreter): PyActiveInstalls = of(interpreter.getSdkAPI())
 
     /** Storage accessor by raw [UserDataHolder] — the SDK in production, any holder in tests. */
     internal fun of(holder: UserDataHolder): PyActiveInstalls =

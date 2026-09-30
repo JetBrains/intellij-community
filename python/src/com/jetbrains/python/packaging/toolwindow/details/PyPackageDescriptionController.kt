@@ -34,7 +34,6 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
@@ -51,6 +50,8 @@ import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.packaging.PyPackageUtil
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
 import com.jetbrains.python.ui.PyHtmlPanel
@@ -142,7 +143,7 @@ internal class PyPackageDescriptionController(
     selectedPackageDetails.afterChange { packageDetails ->
       packageDetails ?: return@afterChange
       PyPackageCoroutine.launch(project, Dispatchers.Default) {
-        val render = PyPackageDetailsHtmlRender(project, service.currentSdk)
+        val render = PyPackageDetailsHtmlRender(project, service.currentInterpreter)
         val html = render.getHtml(packageDetails)
             panel.setHtml(html)
       }
@@ -278,7 +279,9 @@ internal class PyPackageDescriptionController(
       packageVersionProperty.set(calculateVersionText())
       currentPackageKey = newKey
     }
-    isManagement.set(service.currentSdk?.isReadOnly == false && PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false))
+    val interpreter = service.currentInterpreter
+    @Suppress("DEPRECATION")
+    isManagement.set(interpreter != null && !interpreter.isReadOnly && PyPackageUtil.packageManagementEnabled(interpreter.getSdkAPI(), true, false))
   }
 
   fun setPackageDetails(packageDetails: PythonPackageDetails) {
@@ -352,8 +355,8 @@ internal class PyPackageDescriptionController(
   private fun wrapInvokeOp(@Nls progressText: String, installKey: String? = null, actionPerformed: suspend () -> Unit) {
     progressEnabledProperty.set(true)
     // Capture the SDK now so mark/unmark target the same interpreter even if the selection changes.
-    val installSdk = service.currentSdk
-    if (installKey != null && installSdk != null) service.markInstalling(installSdk, installKey)
+    val installInterpreter = service.currentInterpreter
+    if (installKey != null && installInterpreter != null) service.markInstalling(installInterpreter, installKey)
     val progressIndicator = OneLineProgressIndicator(true, true)
     progressIndicator.text = progressText
     progressIndicatorComponent.removeAll()
@@ -367,7 +370,7 @@ internal class PyPackageDescriptionController(
       finally {
         withContext(Dispatchers.EDT) {
           progressEnabledProperty.set(false)
-          if (installKey != null && installSdk != null) service.unmarkInstalling(installSdk, installKey)
+          if (installKey != null && installInterpreter != null) service.unmarkInstalling(installInterpreter, installKey)
           selectedPackage.set(null)
           onActionCompleted?.invoke()
         }
@@ -389,8 +392,8 @@ internal class PyPackageDescriptionController(
 
   private fun recomputeSharedInstalling() {
     val name = selectedPackage.get()?.name
-    val sdk = service.currentSdk
-    sharedInstallingProperty.set(name != null && sdk != null && service.isPackageInstalling(sdk, name))
+    val interpreter = service.currentInterpreter
+    sharedInstallingProperty.set(name != null && interpreter != null && service.isPackageInstalling(interpreter, name))
   }
 
   override fun dispose() {

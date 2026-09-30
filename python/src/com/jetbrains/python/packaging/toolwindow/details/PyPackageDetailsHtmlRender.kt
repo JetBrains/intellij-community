@@ -7,7 +7,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
@@ -25,7 +26,7 @@ import com.jetbrains.python.sdk.sdkFlavor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: Sdk?) {
+internal class PyPackageDetailsHtmlRender(val project: Project, val currentInterpreter: PythonInterpreter?) {
   suspend fun getHtml(packageDetails: PythonPackageDetails): String {
     return runCatching {
       with(packageDetails) {
@@ -45,14 +46,15 @@ internal class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: 
     return withContext(Dispatchers.IO) {
       when (contentType?.split(';')?.firstOrNull()?.trim()) {
         "text/markdown" -> markdownToHtml(description)
-        "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
+        "text/x-rst", "" -> rstToHtml(description, currentInterpreter!!)
         else -> description
       }
     }
   }
 
-  private suspend fun rstToHtml(text: String, sdk: Sdk): String {
-    val localSdk = PythonSdkType.findLocalCPythonForSdk(sdk)
+  private suspend fun rstToHtml(text: String, interpreter: PythonInterpreter): String {
+    @Suppress("DEPRECATION") // The rst helper runs on a local CPython that the SDK table resolves.
+    val localSdk = PythonSdkType.findLocalCPythonForSdk(interpreter.getSdkAPI())
     if (localSdk == null)
       return wrapHtml("<p>${message("python.toolwindow.packages.documentation.local.interpreter")}</p>")
 

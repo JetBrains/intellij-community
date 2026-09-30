@@ -1,21 +1,21 @@
 package com.intellij.python.pyproject.model.spi
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectIssue
 import com.intellij.python.pyproject.PyProjectTable
 import com.intellij.python.pyproject.dependencies.spi.PyDependencyGroupLocator
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathLocator
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.flavor
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 
 /**
- * Manager provides various specific extensions to `pyproject.toml` (i.e.: uv-specific) and coupled with python SDK with additional data.
- * It can also be created by [forSdk].
+ * Manager provides various specific extensions to `pyproject.toml` (i.e.: uv-specific) and coupled with the flavor of a Python interpreter.
+ * [forPythonInterpreter] finds the one of an interpreter.
  */
 interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator, PyProjectTomlPathLocator {
   companion object {
@@ -25,15 +25,16 @@ interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator, PyProje
      */
     internal val EP = ExtensionPointName.create<PyProjectManager>("com.intellij.python.pyproject.model.pyprojectmanager")
 
-    fun forSdk(sdk: Sdk): PyProjectManager {
-      val flavor = sdk.pySdkAdditionalData.flavor
+    /** The manager of the tool that set up [interpreter], or `DefaultPyProjectManager` when no tool did. */
+    fun forPythonInterpreter(interpreter: PythonInterpreter): PyProjectManager {
+      val flavor = interpreter.flavor
       return EP.extensionList.firstOrNull { it.flavorDataType.isInstance(flavor) }
              ?: error("No PyProjectManager accepts the flavor $flavor. DefaultPyProjectManager must have order=\"last\".")
     }
   }
 
   /**
-   * To be used by [forSdk]
+   * To be used by [forPythonInterpreter]
    */
   val flavorDataType: Class<out PythonSdkFlavor<*>>
 

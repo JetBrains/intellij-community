@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.internal.addPyProject
 
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -67,7 +67,7 @@ private constructor(
      * [forNewProject] false means "convert existing project in [where]"
      */
     @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-    fun create(where: VirtualFile, sdk: Sdk, forNewProject: Boolean): PyProjectPresenter? {
+    fun create(where: VirtualFile, interpreter: PythonInterpreter, forNewProject: Boolean): PyProjectPresenter? {
       // If provided path is a file
       val where = if (!where.isDirectory) {
         where.parent
@@ -80,7 +80,7 @@ private constructor(
         // Can't convert existing project that already has pyproject.toml
         return null
       }
-      val manager = PyProjectManager.forSdk(sdk)
+      val manager = PyProjectManager.forPythonInterpreter(interpreter)
       return PyProjectPresenter(manager, where.toNioPath(), manager.ui.toolName, forNewProject)
     }
   }

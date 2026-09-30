@@ -21,7 +21,6 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.dependencies.spi.resolveDependencyGroupName
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -35,10 +34,11 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.isDependencyGroupSupported
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
 import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.ui.PyInstallPackageDialog
-import com.jetbrains.python.sdk.PythonSdkUtil
 import org.toml.lang.psi.TomlKeySegment
 import java.awt.Graphics2D
 import javax.swing.JComponent
@@ -74,9 +74,8 @@ internal class PyDependencyGroupInlayHintsProvider : InlayHintsProvider<NoSettin
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     val virtualFile = file.virtualFile ?: return null
     if (virtualFile.name != PY_PROJECT_TOML) return null
-    val module = ModuleUtilCore.findModuleForFile(file) ?: return null
-    val sdk = PythonSdkUtil.findPythonSdk(module) ?: return null
-    if (!isDependencyGroupSupported(sdk)) return null
+    val interpreter = file.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
+    if (!isDependencyGroupSupported(interpreter)) return null
     if (hasParseErrors(file)) return null
     return Collector(editor)
   }
@@ -122,14 +121,14 @@ internal class PyDependencyGroupInlayHintsProvider : InlayHintsProvider<NoSettin
                               ?.let { PyProjectToml.parseCached(project, it) }
                               ?.project?.name
                             ?: module.name
-        // Bind the packaging service to the *clicked* module's SDK before the dialog opens.
-        // Without this, the dialog falls back to `findFirstPythonSdk()`, which in a multi-project
-        // workspace (e.g. poetry subprojects) may pick the wrong SDK — or the service may still
+        // Bind the packaging service to the *clicked* project's interpreter before the dialog opens.
+        // Without this, the dialog falls back to the first project's interpreter, which in a multi-project
+        // workspace (e.g. poetry subprojects) may be the wrong one — or the service may still
         // be uninitialized, in which case the install click silently no-ops because
-        // `packagingService.currentSdk` is null (PY-91300).
-        val moduleSdk = readAction { PythonSdkUtil.findPythonSdk(module) }
-        if (moduleSdk != null) {
-          project.service<PyPackagingToolWindowService>().initForSdk(moduleSdk)
+        // `packagingService.currentInterpreter` is null (PY-91300).
+        val interpreter = pyprojectVf?.let { project.findPythonInterpreter(it, mainForOrphans = false) }
+        if (interpreter != null) {
+          project.service<PyPackagingToolWindowService>().initForInterpreter(interpreter)
         }
         withContext(Dispatchers.EDT) {
           PythonPackagesToolwindowStatisticsCollector.installDialogOpenedEvent.log(PyInstallDialogSource.INLAY_HINT)

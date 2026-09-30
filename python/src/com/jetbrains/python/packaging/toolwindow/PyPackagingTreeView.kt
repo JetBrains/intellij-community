@@ -3,7 +3,8 @@ package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.asItem
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
@@ -199,11 +200,11 @@ internal class PyPackagingTreeView(
     installedPackages.setSdkToHeader(sdkName)
   }
 
-  fun resetSearch(installed: List<DisplayablePackage>, currentSdk: Sdk?) {
+  fun resetSearch(installed: List<DisplayablePackage>, currentInterpreter: PythonInterpreter?) {
     updatePackages(installed, emptyList())
 
     installedPackages.expand()
-    installedPackages.setSdkToHeader(currentSdk?.name)
+    installedPackages.setSdkToHeader(currentInterpreter?.asItem()?.name)
 
     repositories.forEach { it.removeFrom(uninstalledContainerPanel) }
     repositories.clear()

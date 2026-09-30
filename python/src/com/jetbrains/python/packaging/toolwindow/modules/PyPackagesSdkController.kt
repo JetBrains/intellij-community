@@ -8,13 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleListCellRenderer
@@ -24,13 +19,13 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.intellij.python.pyproject.model.evolution.findPythonInterpreter
+import com.intellij.python.pyproject.model.evolution.pythonInterpreters
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.asInterpreterRef
-import com.intellij.python.sdk.backend.findSdk
-import com.intellij.python.sdk.backend.pyInterpreterItems
+import com.intellij.python.sdk.backend.asItem
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.application.readAction
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,8 +46,8 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
   private val toolWindowService: PyPackagingToolWindowService
     get() = project.service<PyPackagingToolWindowService>()
 
-  private val allSdks: List<Sdk>
-    get() = ModuleManager.getInstance(project).modules.mapNotNull { it.pythonSdk }.distinct().sortedBy { it.name }
+  /** Every interpreter a Python project of the structure uses, in the order the list shows them. */
+  private suspend fun allInterpreters(): List<PythonInterpreter> = project.pythonInterpreters().sortedBy { it.asItem().name }
 
   private val sdkListRenderer = object : SimpleListCellRenderer<PyInterpreterItem>() {
     override fun customize(list: JList<out PyInterpreterItem>, value: PyInterpreterItem, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -75,9 +70,12 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
 
   private val fileEditorListener = object : FileEditorManagerListener {
     override fun selectionChanged(event: FileEditorManagerEvent) {
-      if (allSdks.size <= 1) return
-      val sdk = getModuleForVirtualFile(event.newFile)?.pythonSdk ?: return
-      updateSelectedSdkIndex(sdk)
+      val file = event.newFile ?: return
+      packagingScope.launch {
+        if (project.pythonInterpreters().size <= 1) return@launch
+        val interpreter = project.findPythonInterpreter(file) ?: return@launch
+        updateSelectedSdkIndex(interpreter)
+      }
     }
   }
 
@@ -98,8 +96,8 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     }
   }
 
-  /** The interpreters of every module, as the list holds them. Runs each interpreter, so never on the EDT. */
-  private suspend fun loadItems(): List<PyInterpreterItem> = readAction { allSdks }.pyInterpreterItems()
+  /** The interpreters of every Python project, as the list holds them. */
+  private suspend fun loadItems(): List<PyInterpreterItem> = allInterpreters().map { it.asItem() }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun refreshModuleList(items: List<PyInterpreterItem>) {
@@ -109,22 +107,22 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     }
   }
 
-  private fun updateSelectedSdkIndex(sdk: Sdk) {
+  private fun updateSelectedSdkIndex(interpreter: PythonInterpreter) {
     packagingScope.launch(Dispatchers.EDT) {
-      val index = sdkList.indexOfInterpreter(sdk)
+      val index = sdkList.indexOfInterpreter(interpreter)
       sdkList.selectionModel.setSelectionInterval(index, index)
     }
   }
 
-  internal fun refreshAndSyncSelection(sdk: Sdk?) {
+  internal fun refreshAndSyncSelection(interpreter: PythonInterpreter?) {
     packagingScope.launch {
       val items = loadItems()
       withContext(Dispatchers.EDT) {
         sdkList.removeListSelectionListener(selectionListener)
         try {
           refreshModuleList(items)
-          if (sdk != null) {
-            val index = sdkList.indexOfInterpreter(sdk)
+          if (interpreter != null) {
+            val index = sdkList.indexOfInterpreter(interpreter)
             if (index >= 0) {
               sdkList.selectionModel.setSelectionInterval(index, index)
             }
@@ -137,9 +135,9 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     }
   }
 
-  /** Where [sdk] sits in the list, or -1 when the list does not hold it. Matched by the row's own ref. */
-  private fun JBList<PyInterpreterItem>.indexOfInterpreter(sdk: Sdk): Int {
-    val ref = sdk.asInterpreterRef()
+  /** Where [interpreter] sits in the list, or -1 when the list does not hold it. Matched by the row's own ref. */
+  private fun JBList<PyInterpreterItem>.indexOfInterpreter(interpreter: PythonInterpreter): Int {
+    val ref = interpreter.asInterpreterRef()
     return (0 until model.size).firstOrNull { model.getElementAt(it).ref == ref } ?: -1
   }
 
@@ -148,15 +146,10 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
       if (!event.valueIsAdjusting) {
         val selected = sdkList.selectedValue ?: return@ListSelectionListener
         packagingScope.launch {
-          val selectedSdk = readAction { selected.findSdk() } ?: return@launch
-          toolWindowService.initForSdk(selectedSdk)
+          val interpreter = allInterpreters().firstOrNull { it.asInterpreterRef() == selected.ref } ?: return@launch
+          toolWindowService.initForInterpreter(interpreter)
         }
       }
     }
-  }
-
-  private fun getModuleForVirtualFile(file: VirtualFile?): Module? {
-    file ?: return null
-    return ModuleUtilCore.findModuleForFile(file, project)
   }
 }

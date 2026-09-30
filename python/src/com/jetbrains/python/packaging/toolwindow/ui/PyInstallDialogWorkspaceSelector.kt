@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging.toolwindow.ui
 import com.intellij.icons.AllIcons
 import com.jetbrains.python.icons.PythonIcons
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.util.text.trimMiddle
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -16,12 +15,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.intellij.ide.ui.icons.icon
 import com.intellij.python.sdk.backend.asItem
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
-import com.jetbrains.python.sdk.findModuleForSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -147,13 +143,13 @@ internal class PyInstallDialogWorkspaceSelector(
    * fragments arrive a moment later.
    */
   private fun createInterpreterLabel(): JComponent? {
-    val sdk = packagingService.currentSdk ?: return null
+    val interpreter = packagingService.currentInterpreter ?: return null
     val component = com.intellij.ui.SimpleColoredComponent().apply {
       iconTextGap = JBUI.scale(4)
       isOpaque = false
     }
     packagingService.serviceScope.launch {
-      val item = sdk.pythonInterpreterAsync().asItem()
+      val item = interpreter.asItem()
       withContext(Dispatchers.EDT) {
         component.icon = item.icon.icon()
         component.toolTipText = item.fullName
@@ -337,10 +333,9 @@ internal class PyInstallDialogWorkspaceSelector(
   }
 
   private fun loadWorkspaceMembers() {
-    val sdk = packagingService.currentSdk ?: return
-    val workspace = PythonPackageManager.forSdk(project, sdk).workspaceSupport
+    val workspace = (packagingService.currentPackageManager ?: return).workspaceSupport
     packagingService.serviceScope.launch {
-      val sdkModule = readAction { project.findModuleForSdk(sdk) }
+      val sdkModule = packagingService.findCurrentInterpreterModule()
       val state = PyInstallWorkspaceState.load(
         workspace = workspace,
         projectFallbackName = project.name,

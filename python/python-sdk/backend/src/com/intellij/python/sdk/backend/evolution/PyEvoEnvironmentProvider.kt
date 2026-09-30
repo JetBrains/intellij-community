@@ -272,7 +272,7 @@ interface PyEvoEnvironmentProvider {
    * tool, for the same reason [pyvenvMarker] is: which flavor a tool stamps on its SDKs is the tool's own knowledge, and
    * a table of it kept in the core would drift from the tools it names.
    *
-   * A flavor names its node exactly. `PyProjectManager.forSdk` is not usable for this: it resolves uv, poetry and hatch
+   * A flavor names its node exactly. `PyProjectManager.forPythonInterpreter` is not usable for this: it resolves uv, poetry and hatch
    * and answers `ToolId("pip")` for everything else, which is a wrong answer rather than a missing one — and does not
    * even equal the venv node's own id.
    */

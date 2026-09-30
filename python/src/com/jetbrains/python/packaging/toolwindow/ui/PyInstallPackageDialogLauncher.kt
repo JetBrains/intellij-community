@@ -4,7 +4,7 @@ package com.jetbrains.python.packaging.toolwindow.ui
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,22 +19,22 @@ import org.jetbrains.annotations.ApiStatus
  * modules (for example, the redesigned "Workspace Structure" settings page — PY-89840) can open the
  * dialog without going through the packaging tool window.
  *
- * When [sdk] is supplied and the packaging service has no bound SDK yet, the service is warmed up
- * with [sdk] before the dialog is shown so the popup opens on the target environment instead of a
- * blank state. Without pre-init the dialog's own `ensureSdkInitialized` step would eventually pick
- * `Project.findFirstPythonSdk()`, which is the wrong module in a multi-module workspace.
+ * When `interpreter` is supplied and the packaging service is bound to another one, the service is
+ * bound to that interpreter before the dialog is shown so the popup opens on the target environment
+ * instead of a blank state. Without it the dialog's own `ensureSdkInitialized` step would pick the
+ * interpreter of the first Python project, which is the wrong one in a multi-project workspace.
  */
 @ApiStatus.Internal
 object PyInstallPackageDialogLauncher {
   fun open(
     project: Project,
-    sdk: Sdk? = null,
+    interpreter: PythonInterpreter? = null,
     initialSearchText: String? = null,
     preselectModuleName: String? = null,
     preselectGroupName: String? = null,
   ) {
     val service = project.service<PyPackagingToolWindowService>()
-    if (sdk == null || service.currentSdk == sdk) {
+    if (interpreter == null || service.currentInterpreter == interpreter) {
       PyInstallPackageDialog(project).show(
         initialSearchText = initialSearchText,
         preselectModuleName = preselectModuleName,
@@ -43,7 +43,7 @@ object PyInstallPackageDialogLauncher {
       return
     }
     service.serviceScope.launch {
-      service.initForSdk(sdk)
+      service.initForInterpreter(interpreter)
       withContext(Dispatchers.EDT) {
         PyInstallPackageDialog(project).show(
           initialSearchText = initialSearchText,
