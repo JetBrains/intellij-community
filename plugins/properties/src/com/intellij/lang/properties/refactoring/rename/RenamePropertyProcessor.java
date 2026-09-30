@@ -11,6 +11,7 @@ import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class RenamePropertyProcessor extends RenamePsiElementProcessor {
+public class RenamePropertyProcessor extends RenamePsiElementProcessor implements DelegatingHeadlessRenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(final @NotNull PsiElement element) {
     return element instanceof IProperty ||
