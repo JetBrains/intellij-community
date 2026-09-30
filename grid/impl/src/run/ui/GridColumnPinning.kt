@@ -20,6 +20,15 @@ interface GridColumnPinning {
 
   fun pinnedColumnsFit(columns: ModelIndexSet<GridColumn>): Boolean
 
+  /**
+   * The columns whose pin control can act, read in one pass.
+   *
+   * A pinned column can always unpin. An unpinned one can pin while the columns that stay scrollable keep
+   * a usable width. A caller that asks about every column uses this rather than [pinnedColumnsFit] on each
+   * of them, which reads every column width again each time.
+   */
+  fun columnsThatCanTogglePin(): Set<ModelIndex<GridColumn>>
+
   /** Pins every column up to and including [column], in the order the grid displays them. */
   fun pinColumnsUpToHere(column: ModelIndex<GridColumn>)
 

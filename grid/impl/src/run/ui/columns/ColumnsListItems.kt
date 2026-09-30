@@ -8,11 +8,10 @@ import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn
 import com.intellij.database.datagrid.ModelIndex
-import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.GridColumnPinning
+import com.intellij.database.run.ui.TableResultPanel
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.IntUnaryOperator
 
 /**
  * The rows of the column list, read from [grid].
@@ -20,20 +19,22 @@ import java.util.function.IntUnaryOperator
  * A pinned column comes first, then the rest in the sequence the grid shows them.
  * A nested column result keeps its tree, and a node comes before its children.
  *
- * [previous] is the order the list showed last. A hidden column has no place in the grid view, so it keeps
- * the place it held there, and a row does not move when the user clears its checkbox.
+ * The grid owns the complete order, the hidden columns included, so the list is a projection of it and
+ * keeps nothing of its own. A row therefore holds its place when the user clears its checkbox, and it
+ * holds it again after the popup closes and opens.
  */
 @ApiStatus.Internal
-fun buildColumnsListItems(grid: DataGrid, previous: List<ModelIndex<GridColumn>> = emptyList()): List<ColumnsListItem> {
+fun buildColumnsListItems(grid: DataGrid): List<ColumnsListItem> {
   val model = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
   val hierarchy = model as? HierarchicalColumnsDataGridModel
   val roots = hierarchy?.topLevelColumns
+  val canTogglePin = (grid as? GridColumnPinning)?.columnsThatCanTogglePin() ?: emptySet()
   if (roots != null) {
     val items = ArrayList<ColumnsListItem>()
-    for (root in roots) addTree(grid, root, null, items)
+    for (root in roots) addTree(grid, root, null, items, canTogglePin)
     return items
   }
-  return gridOrder(grid, model.columnIndices.asList(), previous).map { item(grid, it, null) }
+  return columnsInOrder(grid).map { item(grid, it, null, canTogglePin) }
 }
 
 private fun addTree(
@@ -41,18 +42,24 @@ private fun addTree(
   column: HierarchicalGridColumn,
   parent: ColumnsListItem?,
   items: MutableList<ColumnsListItem>,
+  canTogglePin: Set<ModelIndex<GridColumn>>,
 ) {
   val children = column.children
   if (children.isEmpty()) {
-    items.add(item(grid, ModelIndex.forColumn(grid, column.columnNumber), parent))
+    items.add(item(grid, ModelIndex.forColumn(grid, column.columnNumber), parent, canTogglePin))
     return
   }
   val node = ColumnsListItem(modelIndex = null, name = column.name, parent = parent)
   items.add(node)
-  for (child in children) addTree(grid, child, node, items)
+  for (child in children) addTree(grid, child, node, items, canTogglePin)
 }
 
-private fun item(grid: DataGrid, columnIdx: ModelIndex<GridColumn>, parent: ColumnsListItem?): ColumnsListItem {
+private fun item(
+  grid: DataGrid,
+  columnIdx: ModelIndex<GridColumn>,
+  parent: ColumnsListItem?,
+  canTogglePin: Set<ModelIndex<GridColumn>>,
+): ColumnsListItem {
   val model: GridModel<GridRow, GridColumn> = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
   val column = model.getColumn(columnIdx)
   val helper = GridHelper.get(grid)
@@ -61,60 +68,25 @@ private fun item(grid: DataGrid, columnIdx: ModelIndex<GridColumn>, parent: Colu
     name = grid.getUnambiguousColumnName(columnIdx),
     typeText = column?.let { helper.getColumnTypeText(grid, it) },
     parent = parent,
-    traits = column?.let { helper.getColumnTraits(grid, it) } ?: emptySet(),
     visible = grid.isColumnEnabled(columnIdx),
     pinned = grid.isPinned(columnIdx),
     icon = column?.let { helper.getColumnIcon(grid, it, true) },
-    canTogglePin = grid.canTogglePin(columnIdx),
+    canTogglePin = columnIdx in canTogglePin,
   )
 }
 
 /**
- * The sequence the grid shows, with the pinned columns first.
+ * The complete order of the grid, with the pinned columns first.
  *
- * The frozen strip takes its order from the main table, so one view position orders both groups.
+ * The frozen strip takes its order from the main table, so the two groups keep the sequence they have here.
  */
-private fun gridOrder(
-  grid: DataGrid,
-  columns: List<ModelIndex<GridColumn>>,
-  previous: List<ModelIndex<GridColumn>>,
-): List<ModelIndex<GridColumn>> {
-  val toView = grid.rawIndexConverter.column2View()
-  val pinned = columns.filter { grid.isPinned(it) }
-  val rest = columns.filter { !grid.isPinned(it) }
-  return inViewOrder(toView, pinned, previous) + inViewOrder(toView, rest, previous)
-}
-
-/**
- * Puts the shown columns of [group] in the sequence of the grid view, and leaves every hidden column where
- * it already sat.
- *
- * The places come from [previous], the order the list showed last, because a hidden column has no view
- * position of its own. Taking them from the data instead would move a hidden row as soon as the user had
- * reordered anything, since the data order and the view order then differ.
- */
-private fun inViewOrder(
-  toView: IntUnaryOperator,
-  group: List<ModelIndex<GridColumn>>,
-  previous: List<ModelIndex<GridColumn>>,
-): List<ModelIndex<GridColumn>> {
-  fun shown(column: ModelIndex<GridColumn>) = toView.applyAsInt(column.asInteger()) >= 0
-
-  val places = previous.indices.associateBy { previous[it] }
-  val slots = group.sortedBy { places[it] ?: (previous.size + group.indexOf(it)) }
-  val shownColumns = group.filter { shown(it) }.sortedBy { toView.applyAsInt(it.asInteger()) }.iterator()
-  return slots.map { if (shown(it)) shownColumns.next() else it }
+@ApiStatus.Internal
+fun columnsInOrder(grid: DataGrid): List<ModelIndex<GridColumn>> {
+  val order = (grid as? TableResultPanel)?.columnsDisplayOrder
+              ?: grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).columnIndices.asList()
+  val (pinned, rest) = order.partition { grid.isPinned(it) }
+  return pinned + rest
 }
 
 private fun DataGrid.isPinned(column: ModelIndex<GridColumn>): Boolean =
   this is GridColumnPinning && isColumnPinned(column)
-
-/**
- * Whether the pin control of [column] can act.
- *
- * An unpin always acts. A pin acts only while the columns that stay scrollable keep a usable width,
- * which is the same rule the Pin Columns action applies.
- */
-private fun DataGrid.canTogglePin(column: ModelIndex<GridColumn>): Boolean =
-  this is GridColumnPinning &&
-  (isColumnPinned(column) || pinnedColumnsFit(ModelIndexSet.forColumns(this, column.asInteger())))

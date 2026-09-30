@@ -738,6 +738,14 @@ public class TableResultPanel extends UserDataHolderBase
     return columnsFit(myColumnPinModel.pinAll(columns.asIterable()));
   }
 
+  @Override
+  public @NotNull Set<ModelIndex<GridColumn>> columnsThatCanTogglePin() {
+    Set<ModelIndex<GridColumn>> result = new HashSet<>(myColumnPinModel.pinnedColumns());
+    if (!(myResultView instanceof TableResultView view)) return result;
+    for (int modelIndex : view.columnsThatCanBePinned(myColumnPinModel.pinnedColumns())) result.add(ModelIndex.forColumn(this, modelIndex));
+    return result;
+  }
+
   /**
    * Checks width for pin actions. Restore paths preserve existing pins even when the strip needs scrolling.
    */
@@ -1222,6 +1230,17 @@ public class TableResultPanel extends UserDataHolderBase
     // The remembered place of a hidden column describes the arrangement this call replaces.
     if (myResultView instanceof TableResultView view) view.forgetHiddenColumnPositions();
     setColumnsDisplayOrder(getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList());
+  }
+
+  /**
+   * Every column in the order the user arranged them, the hidden ones included.
+   * <p>
+   * This is the one complete order. A view that cannot arrange its columns reports the data order.
+   */
+  public @NotNull List<ModelIndex<GridColumn>> getColumnsDisplayOrder() {
+    return myResultView instanceof TableResultView view && !view.isTransposed()
+           ? view.columnsInDisplayOrder()
+           : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asList();
   }
 
   /**

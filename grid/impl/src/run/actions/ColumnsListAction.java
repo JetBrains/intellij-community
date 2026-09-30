@@ -43,12 +43,7 @@ public class ColumnsListAction extends ColumnHeaderActionBase {
     ColumnsListPopup.show(grid, e);
   }
 
-  /**
-   * The toolbar icon, which carries a badge while the grid hides a column.
-   * <p>
-   * The badge comes from the icon manager of the running IDE. A test application installs a manager that
-   * returns the icon unchanged, so a test compares against this method rather than against the badge.
-   */
+  /** Returns the toolbar icon for the current column visibility. */
   public static @NotNull Icon icon(boolean anyColumnHidden) {
     return anyColumnHidden ? Icons.WITH_HIDDEN_COLUMNS : Icons.PLAIN;
   }
@@ -57,30 +52,37 @@ public class ColumnsListAction extends ColumnHeaderActionBase {
   private static final class Icons {
     private static final Icon BASE = AllIcons.Nodes.DataColumn;
 
-    /** The badge tells the user that the grid hides a column, without opening the popup. */
-    static final Icon WITH_HIDDEN_COLUMNS =
+    private static final Icon BADGED =
       IconManager.getInstance().withIconBadge(BASE, JBUI.CurrentTheme.IconBadge.INFORMATION);
 
-    /**
-     * The plain icon, padded to the bounds of the badged one.
-     * <p>
-     * A badge dot protrudes past the base icon, so {@link HoledIcon} reports a larger size than the icon it
-     * wraps. A toolbar centers whatever icon it is given, so without this padding the glyph moves as soon as
-     * the badge appears.
-     */
-    static final Icon PLAIN = paddedToBadgedBounds();
+    /** The plain icon, on the same canvas as the badged one. */
+    static final Icon PLAIN = onCanvas(BASE, 0, 0);
 
-    private static @NotNull Icon paddedToBadgedBounds() {
-      int width = WITH_HIDDEN_COLUMNS.getIconWidth();
-      int height = WITH_HIDDEN_COLUMNS.getIconHeight();
-      if (width == BASE.getIconWidth() && height == BASE.getIconHeight()) {
-        return BASE;
-      }
-      Insets extra = WITH_HIDDEN_COLUMNS instanceof HoledIcon holed ? holed.getExtraInsets() : JBUI.emptyInsets();
-      LayeredIcon padded = new LayeredIcon(2);
-      padded.setIcon(EmptyIcon.create(width, height), 0);
-      padded.setIcon(BASE, 1, extra.left, extra.top);
-      return padded;
+    /** The badge tells the user that the grid hides a column, without opening the popup. */
+    static final Icon WITH_HIDDEN_COLUMNS = onCanvas(BADGED, badgeInsets().left, badgeInsets().top);
+
+    /** How far the badge reaches past the base icon, on each side. */
+    private static @NotNull Insets badgeInsets() {
+      return BADGED instanceof HoledIcon holed ? holed.getExtraInsets() : JBUI.emptyInsets();
+    }
+
+    /**
+     * Puts {@code icon} on a canvas that is even on both sides of the glyph, so that a menu or a toolbar
+     * centers the glyph and not the room the badge needs.
+     * <p>
+     * A badge dot reaches past the top right corner, so {@link HoledIcon} reports a size larger than the
+     * icon it wraps and leaves the glyph in a corner of it. {@code glyphX} and {@code glyphY} say where the
+     * glyph sits inside {@code icon}, so that both icons put their glyph in the same place and it does not
+     * move when the badge appears.
+     */
+    private static @NotNull Icon onCanvas(@NotNull Icon icon, int glyphX, int glyphY) {
+      Insets extra = badgeInsets();
+      int horizontal = Math.max(extra.left, extra.right);
+      int vertical = Math.max(extra.top, extra.bottom);
+      LayeredIcon canvas = new LayeredIcon(2);
+      canvas.setIcon(EmptyIcon.create(BASE.getIconWidth() + 2 * horizontal, BASE.getIconHeight() + 2 * vertical), 0);
+      canvas.setIcon(icon, 1, horizontal - glyphX, vertical - glyphY);
+      return canvas;
     }
   }
 }

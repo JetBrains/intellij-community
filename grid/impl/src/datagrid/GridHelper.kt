@@ -52,10 +52,6 @@ interface GridHelper : CoreGridHelper {
 
   fun getColumnIcon(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn, forDisplay: Boolean): Icon?
 
-  /** The traits that the column list can search on, or an empty set when the source has no such data. */
-  @ApiStatus.Experimental
-  fun getColumnTraits(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn): Set<GridColumnTrait> = emptySet()
-
   /** The type text that the column list shows after the name, or null when the source reports no type. */
   @ApiStatus.Experimental
   fun getColumnTypeText(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn): @NlsSafe String? = column.typeName

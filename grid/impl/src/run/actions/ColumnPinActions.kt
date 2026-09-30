@@ -56,25 +56,17 @@ class PinColumnsAction : ColumnHeaderActionBase(true) {
     val one = columnIdxs.size() == 1
     e.presentation.text = DataGridBundle.message(if (one) "action.Console.TableResult.PinColumn.text"
                                                  else "action.Console.TableResult.PinColumns.text")
-    val panel = pinPanel(grid)
-    if (panel == null || columnIdxs.size() == 0) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    if (grid.resultView.isTransposed) {
-      showReason(e, DataGridBundle.message(TRANSPOSED))
-      return
-    }
+    val commands = ColumnPinCommands(grid)
     // Offer unpin actions for pinned columns.
-    if (!allPinned(panel, columnIdxs, false)) {
+    if (!commands.offersPin(columnIdxs)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, if (panel.pinnedColumnsFit(columnIdxs)) null else DataGridBundle.message(NO_SPACE))
+    showReason(e, commands.reasonPinRefuses(columnIdxs))
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
-    actablePanel(grid)?.pinColumns(columnIdxs)
+    ColumnPinCommands(grid).pin(columnIdxs)
   }
 }
 
@@ -89,16 +81,16 @@ class UnpinColumnsAction : ColumnHeaderActionBase(true) {
     e.presentation.text = DataGridBundle.message(if (one) "action.Console.TableResult.UnpinColumn.text"
                                                  else "action.Console.TableResult.UnpinColumns.text")
     // Offer this action only when all target columns are pinned.
-    val panel = pinPanel(grid)
-    if (panel == null || columnIdxs.size() == 0 || !allPinned(panel, columnIdxs, true)) {
+    val commands = ColumnPinCommands(grid)
+    if (!commands.offersUnpin(columnIdxs)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, if (grid.resultView.isTransposed) DataGridBundle.message(TRANSPOSED) else null)
+    showReason(e, commands.reasonUnpinRefuses())
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
-    actablePanel(grid)?.setColumnsPinned(columnIdxs, false)
+    ColumnPinCommands(grid).unpin(columnIdxs)
   }
 }
 
@@ -107,27 +99,18 @@ class PinColumnsUpToHereAction : ColumnHeaderActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
-    val panel = pinPanel(grid)
+    val commands = ColumnPinCommands(grid)
     val column = columnIdxs.asIterable().singleOrNull()
-    if (panel == null || column == null) {
+    if (column == null || !commands.offersPinUpToHere(column)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    if (grid.resultView.isTransposed) {
-      showReason(e, DataGridBundle.message(TRANSPOSED))
-      return
-    }
-    if (!panel.canPinColumnsUpToHere(column)) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    showReason(e, if (panel.pinnedColumnsUpToHereFit(column)) null else DataGridBundle.message(NO_SPACE))
+    showReason(e, commands.reasonPinUpToHereRefuses(column))
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
-    val panel = actablePanel(grid) ?: return
     val column: ModelIndex<GridColumn> = columnIdxs.asIterable().firstOrNull() ?: return
-    panel.pinColumnsUpToHere(column)
+    ColumnPinCommands(grid).pinUpToHere(column)
   }
 }
 
@@ -136,15 +119,15 @@ class UnpinAllColumnsAction : ColumnHeaderActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
-    val panel = pinPanel(grid)
-    if (panel == null || !panel.hasPinnedColumns()) {
+    val commands = ColumnPinCommands(grid)
+    if (!commands.offersUnpinAll()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, if (grid.resultView.isTransposed) DataGridBundle.message(TRANSPOSED) else null)
+    showReason(e, commands.reasonUnpinRefuses())
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
-    actablePanel(grid)?.unpinAllColumns()
+    ColumnPinCommands(grid).unpinAll()
   }
 }

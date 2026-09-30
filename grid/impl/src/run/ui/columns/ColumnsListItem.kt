@@ -1,7 +1,6 @@
 package com.intellij.database.run.ui.columns
 
 import com.intellij.database.datagrid.GridColumn
-import com.intellij.database.datagrid.GridColumnTrait
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +18,6 @@ class ColumnsListItem(
   val name: @NlsSafe String,
   val typeText: @NlsSafe String? = null,
   val parent: ColumnsListItem? = null,
-  val traits: Set<GridColumnTrait> = emptySet(),
   val visible: Boolean = true,
   val pinned: Boolean = false,
   val icon: Icon? = null,

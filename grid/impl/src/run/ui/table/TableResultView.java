@@ -124,6 +124,7 @@ import com.intellij.util.ui.UpdateScaleHelper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -265,7 +266,13 @@ public class TableResultView extends JBTableWithResizableCells
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
   private TableFloatingToolbar myFloatingToolbar;
 
-  /** Model index of the column that stood left of a hidden one, so that showing it puts it back. */
+  /**
+   * Model index of the column that stands left of a hidden one in the display order.
+   * <p>
+   * The shown columns carry their own order in the column model, so this map holds the rest of it. The two
+   * together make the one complete order that {@link #columnsInDisplayOrder()} returns. The neighbour can
+   * be hidden too, which puts two hidden columns in a chain and keeps them apart.
+   */
   private final Map<Integer, Integer> myLeftNeighbourWhenHidden = new HashMap<>();
   /** Says that a hidden column belongs at the start, rather than after some other column. */
   public static final int NO_LEFT_NEIGHBOUR = -1;
@@ -826,11 +833,71 @@ public class TableResultView extends JBTableWithResizableCells
   private int viewIndexBesideRememberedNeighbour(@NotNull ModelIndex<?> modelColumnIdx) {
     Integer neighbour = myLeftNeighbourWhenHidden.remove(modelColumnIdx.asInteger());
     if (neighbour == null) return -1;
-    if (neighbour == NO_LEFT_NEIGHBOUR) return 0;
+    // The neighbour can be hidden, so follow the chain left until a column that the view shows.
+    IntSet seen = new IntOpenHashSet();
+    while (neighbour != null && neighbour != NO_LEFT_NEIGHBOUR && seen.add((int)neighbour)) {
+      int viewIdx = viewIndexOfModelColumn(neighbour);
+      if (viewIdx >= 0) return viewIdx + 1;
+      neighbour = myLeftNeighbourWhenHidden.get((int)neighbour);
+    }
+    return neighbour != null && neighbour == NO_LEFT_NEIGHBOUR ? 0 : -1;
+  }
+
+  private int viewIndexOfModelColumn(int modelIndex) {
     for (int viewIdx = 0; viewIdx < getColumnCount(); viewIdx++) {
-      if (getColumnModel().getColumn(viewIdx).getModelIndex() == neighbour) return viewIdx + 1;
+      if (getColumnModel().getColumn(viewIdx).getModelIndex() == modelIndex) return viewIdx;
     }
     return -1;
+  }
+
+  /**
+   * Every column in the order the user arranged them, the hidden ones included.
+   * <p>
+   * The shown columns come from the column model, so a header drag is in here at once. A hidden column
+   * goes after the neighbour it was left with. One that never had a neighbour takes its place from the
+   * data, which is where {@link #addColumnAndMoveToTheCorrectPosition} would put it.
+   */
+  public @NotNull List<ModelIndex<GridColumn>> columnsInDisplayOrder() {
+    IntList order = new IntArrayList();
+    for (int viewIdx = 0; viewIdx < getColumnCount(); viewIdx++) {
+      order.add(getColumnModel().getColumn(viewIdx).getModelIndex());
+    }
+    IntList waiting = new IntArrayList();
+    for (ModelIndex<GridColumn> columnIdx : myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
+      if (!order.contains(columnIdx.asInteger())) waiting.add(columnIdx.asInteger());
+    }
+    placeHiddenColumns(order, waiting);
+    List<ModelIndex<GridColumn>> result = new ArrayList<>(order.size());
+    for (int modelIndex : order) result.add(ModelIndex.forColumn(myResultPanel, modelIndex));
+    return result;
+  }
+
+  /** Puts each column of {@code waiting} after its neighbour, and the rest where the data puts them. */
+  private void placeHiddenColumns(@NotNull IntList order, @NotNull IntList waiting) {
+    boolean placedOne = true;
+    while (placedOne && !waiting.isEmpty()) {
+      placedOne = false;
+      for (IntIterator it = waiting.iterator(); it.hasNext(); ) {
+        int column = it.nextInt();
+        Integer neighbour = myLeftNeighbourWhenHidden.get(column);
+        if (neighbour == null) continue;
+        int at = neighbour == NO_LEFT_NEIGHBOUR ? 0 : order.indexOf((int)neighbour) + 1;
+        if (at == 0 && neighbour != NO_LEFT_NEIGHBOUR) continue;
+        order.add(at, column);
+        it.remove();
+        placedOne = true;
+      }
+    }
+    for (int column : waiting) {
+      int at = order.size();
+      for (int i = 0; i < order.size(); i++) {
+        if (order.getInt(i) > column) {
+          at = i;
+          break;
+        }
+      }
+      order.add(at, column);
+    }
   }
 
   /**
@@ -851,12 +918,23 @@ public class TableResultView extends JBTableWithResizableCells
     myLeftNeighbourWhenHidden.put(modelIndex, leftNeighbour);
   }
 
-  /** Remembers where [viewColumnIdx] sits, so that showing it again puts it back. */
+  /**
+   * Remembers where [viewColumnIdx] sits, so that showing it again puts it back.
+   * <p>
+   * The neighbour comes from the complete order and not from the view, so a hidden column that already
+   * sits between the two keeps its own place instead of sharing one.
+   */
   private void rememberPositionBeforeHiding(@NotNull ViewIndex<?> viewColumnIdx) {
-    int viewIdx = viewColumnIdx.asInteger();
-    TableColumn column = getColumnModel().getColumn(viewIdx);
-    int neighbour = viewIdx > 0 ? getColumnModel().getColumn(viewIdx - 1).getModelIndex() : NO_LEFT_NEIGHBOUR;
-    myLeftNeighbourWhenHidden.put(column.getModelIndex(), neighbour);
+    int modelIndex = getColumnModel().getColumn(viewColumnIdx.asInteger()).getModelIndex();
+    List<ModelIndex<GridColumn>> order = columnsInDisplayOrder();
+    int at = -1;
+    for (int i = 0; i < order.size(); i++) {
+      if (order.get(i).asInteger() == modelIndex) {
+        at = i;
+        break;
+      }
+    }
+    myLeftNeighbourWhenHidden.put(modelIndex, at > 0 ? order.get(at - 1).asInteger() : NO_LEFT_NEIGHBOUR);
   }
 
   public void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible) {
@@ -1501,11 +1579,37 @@ public class TableResultView extends JBTableWithResizableCells
     scrollRectToVisible(cell);
   }
 
-  /**
-   * Whether pinning exactly {@code pinnedColumns} would leave the unpinned table usable. Widths are the ones the
-   * strip would render, so the scroll position does not matter and a column hidden from the view counts for nothing,
-   * just as the pin operation skips it.
-   */
+  /** Returns the unpinned columns that fit in the pinned strip. */
+  public @NotNull IntSet columnsThatCanBePinned(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
+    IntSet pinned = new IntOpenHashSet(pinnedColumns.size());
+    for (ModelIndex<GridColumn> column : pinnedColumns) pinned.add(column.value);
+    var candidates = new ArrayList<TableResultViewColumn>();
+    int pinnedWidth = 0;
+    int unpinnedWidth = 0;
+    TableColumnModel columnModel = getColumnModel();
+    for (int viewColumn = 0; viewColumn < columnModel.getColumnCount(); viewColumn++) {
+      if (!(renderedColumnAt(viewColumn) instanceof TableResultViewColumn column)) continue;
+      int modelIndex = columnModel.getColumn(viewColumn).getModelIndex();
+      int width = column.getFrozenStripWidth();
+      if (pinned.contains(modelIndex)) {
+        pinnedWidth += width;
+      }
+      else {
+        unpinnedWidth += width;
+        candidates.add(column);
+      }
+    }
+    IntSet result = new IntOpenHashSet(candidates.size());
+    int availableWidth = getAvailableColumnsWidth();
+    for (var column : candidates) {
+      int width = column.getFrozenStripWidth();
+      if (availableWidth <= 0 || PinnedColumnsFit.fits(pinnedWidth + width, unpinnedWidth - width, availableWidth)) {
+        result.add(column.getModelIndex());
+      }
+    }
+    return result;
+  }
+
   public boolean canFitPinnedColumns(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
     int availableWidth = getAvailableColumnsWidth();
     if (availableWidth <= 0) return true;
