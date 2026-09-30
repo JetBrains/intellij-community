@@ -8,7 +8,7 @@ fun Driver.updateAndShowResult(project: Project?) {
   utility<UpdateChecker>().updateAndShowResult(project)
 }
 
-@Remote("com.intellij.openapi.updateSettings.impl.UpdateChecker")
+@Remote("com.intellij.openapi.updateSettings.impl.UpdateChecker", plugin = "com.intellij/intellij.platform.ide.updateChecker")
 interface UpdateChecker {
   fun updateAndShowResult(project: Project?)
 }

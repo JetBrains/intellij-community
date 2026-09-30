@@ -468,6 +468,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.find.backend",
             "intellij.platform.ide.internal",
             "intellij.platform.ide.internal.backend",
+            "intellij.platform.ide.updateChecker",
             "intellij.platform.managed.cache",
             "intellij.platform.managed.cache.backend",
             "intellij.platform.pluginManager.backend",
