@@ -13,12 +13,17 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ActivateHierarchyToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.HIERARCHY, AllIcons.Toolwindows.ToolWindowHierarchy) {
+  override fun hasEmptyState(project: Project): Boolean {
+    return !IdeProductMode.isLight
+  }
+
   override fun setupEmptyText(project: Project, text: StatusText) {
     text.clear()
     text.appendLine(LangBundle.message("hierarchy.empty.text"))
