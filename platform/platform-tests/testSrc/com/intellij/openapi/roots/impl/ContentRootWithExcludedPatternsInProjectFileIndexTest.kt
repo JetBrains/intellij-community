@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase.createChildData
 import com.intellij.testFramework.HeavyPlatformTestCase.createChildDirectory
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -114,6 +115,50 @@ class ContentRootWithExcludedPatternsInProjectFileIndexTest {
     assertNotExcluded(dir)
     assertNotExcluded(underDir)
     assertIteratedContent(module, listOf(underDir), listOf(underExc, underDirUnderExc, underExcUnderDir))
+  }
+
+  @Test
+  @RegistryKey(key = "workspace.model.exclude.by.pattern.apply.to.root.enable", value = "true")
+  fun `exclude matching content root and its descendants`() {
+    val dir = createChildDirectory(moduleDir, "dir")
+    val file = createChildData(dir, "a.txt")
+    addExcludePattern("mod*")
+
+    assertExcluded(moduleDir)
+    assertExcluded(dir)
+    assertExcluded(file)
+    assertIteratedContent(module, emptyList(), listOf(moduleDir, dir, file))
+  }
+
+  @Test
+  @RegistryKey(key = "workspace.model.exclude.by.pattern.apply.to.root.enable", value = "false")
+  fun `keep matching content root when root exclusion is disabled`() {
+    val dir = createChildDirectory(moduleDir, "dir")
+    val file = createChildData(dir, "a.txt")
+    val excludedDir = createChildDirectory(moduleDir, "module-child")
+    val excludedFile = createChildData(excludedDir, "a.txt")
+    addExcludePattern("mod*")
+
+    assertNotExcluded(moduleDir)
+    assertNotExcluded(dir)
+    assertNotExcluded(file)
+    assertExcluded(excludedDir)
+    assertExcluded(excludedFile)
+    assertIteratedContent(module, listOf(moduleDir, dir, file), listOf(excludedDir, excludedFile))
+  }
+
+  @Test
+  @RegistryKey(key = "workspace.model.exclude.by.pattern.apply.to.root.enable", value = "true")
+  fun `include nested content root under matching content root`() {
+    val nestedRoot = createChildDirectory(moduleDir, "nested")
+    val file = createChildData(nestedRoot, "a.txt")
+    addExcludePattern("mod*")
+    PsiTestUtil.addContentRoot(module, nestedRoot)
+
+    assertExcluded(moduleDir)
+    fileIndex.assertInModule(nestedRoot, module, nestedRoot)
+    fileIndex.assertInModule(file, module, nestedRoot)
+    assertIteratedContent(module, listOf(nestedRoot, file), listOf(moduleDir))
   }
 
   @Test

@@ -26,6 +26,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="workspaceModel.update.under.wa" defaultValue="false" restartRequired="false"
                  description="Disable workspace model initial 2 attempts to execute updater without write action"/>
+    <registryKey key="workspace.model.exclude.by.pattern.apply.to.root.enable" defaultValue="true" restartRequired="true"
+                 description="Apply exclusion patterns to the root name as well as descendant names"/>
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros" open="true"
                         serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
     <projectService serviceInterface="com.intellij.configurationStore.ProjectIdManager"

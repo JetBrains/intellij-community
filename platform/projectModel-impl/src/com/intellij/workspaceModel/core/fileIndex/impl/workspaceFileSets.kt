@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -465,7 +466,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet, WorkspaceExcludeFileS
   }
 
   /**
-   * Excludes matching files and directories strictly below [root] from all kinds.
+   * Excludes matching files and directories from all kinds.
+   * The rule applies to [root] when `workspace.model.exclude.by.pattern.apply.to.root.enable` is enabled, and always to its descendants.
    * The [patterns] match file names and support `*` and `?` wildcards.
    * The rule also excludes the descendants of matching directories.
    * A nested inclusion rule can include files again.
@@ -491,7 +493,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet, WorkspaceExcludeFileS
         }
         current = current.parent
       }
-      return false
+      return RegistryManager.getInstance().`is`("workspace.model.exclude.by.pattern.apply.to.root.enable", false)
+             && matches(root.nameSequence)
     }
 
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
