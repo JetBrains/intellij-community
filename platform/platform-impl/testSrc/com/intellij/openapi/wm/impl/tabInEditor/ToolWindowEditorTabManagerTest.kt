@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -21,10 +20,6 @@ import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
 import com.intellij.testFramework.replaceService
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
-import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
@@ -71,45 +66,21 @@ class ToolWindowEditorTabManagerTest {
     )
   }
 
-  /**
-   * A tool window backed by a real [ContentManager]. The headless [ToolWindowHeadlessManagerImpl]
-   * does not carry the id into its mock tool window, so the id is overridden explicitly.
-   */
-  private fun createToolWindow(id: String = toolWindowId): ToolWindow {
-    val contentManager = ContentFactory.getInstance().createContentManager(false, project)
-    Disposer.register(disposable, contentManager)
-    return object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
-      override fun getId(): String = id
-      override fun getContentManager(): ContentManager = contentManager
-    }
-  }
-
-  private fun addContent(toolWindow: ToolWindow, displayName: String = "tab"): Content {
-    val content = createTabContent(displayName = displayName)
-    toolWindow.contentManager.addContent(content)
-    return content
-  }
-
-  private fun openTabFiles(): List<ToolWindowEditorTabFile> =
-    manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()
-
-  private fun openTabFile(): ToolWindowEditorTabFile = openTabFiles().single()
-
-  // Tests that [ToolWindowEditorTabManager]
+  private fun createToolWindow(): FakeToolWindow = FakeToolWindow(project, toolWindowId, disposable)
 
   @Test
   fun `releasing the attached content closes the editor tab`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       controller.moveContentToEditor(toolWindow, content)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
       assertThat(manager.isFileOpen(tabFile)).isTrue()
 
       content.release()
 
       assertThat(manager.isFileOpen(tabFile)).isFalse()
-      assertThat(openTabFiles()).isEmpty()
+      assertThat(manager.openTabFiles()).isEmpty()
       // The session and the file must not outlive the content that backed them.
       assertThat(tabFile.session(project)).isNull()
       assertThat(tabFile.isValid).isFalse()
@@ -134,9 +105,9 @@ class ToolWindowEditorTabManagerTest {
   fun `moving the content back to the tool window keeps it alive`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       controller.moveContentToEditor(toolWindow, content)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
 
       controller.moveContentToToolWindow(toolWindow, tabFile)
 
@@ -148,16 +119,16 @@ class ToolWindowEditorTabManagerTest {
       toolWindow.contentManager.removeContent(content, true)
 
       assertThat(Disposer.isDisposed(content)).isTrue()
-      assertThat(openTabFiles()).isEmpty()
+      assertThat(manager.openTabFiles()).isEmpty()
     }
 
   @Test
   fun `moving the content back publishes fileClosed once the file is invalid`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       controller.moveContentToEditor(toolWindow, content)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
       val validityOnClose = mutableListOf<Boolean>()
       project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun fileClosed(source: FileEditorManager, file: VirtualFile) {

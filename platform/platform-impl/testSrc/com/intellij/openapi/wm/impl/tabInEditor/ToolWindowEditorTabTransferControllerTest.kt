@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -26,17 +25,13 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
 import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.InternalDecoratorImpl
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
@@ -85,34 +80,12 @@ class ToolWindowEditorTabTransferControllerTest {
     return support
   }
 
-  /**
-   * A tool window backed by a real [ContentManager]. The headless [ToolWindowHeadlessManagerImpl]
-   * does not carry the id into its mock tool window, so the id is overridden explicitly.
-   */
-  private fun createToolWindow(id: String): ToolWindow {
-    val contentManager = ContentFactory.getInstance().createContentManager(false, project)
-    Disposer.register(disposable, contentManager)
-    return object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
-      override fun getId(): String = id
-      override fun getContentManager(): ContentManager = contentManager
-    }
-  }
+  private fun createToolWindow(id: String): FakeToolWindow = FakeToolWindow(project, id, disposable)
 
-  private fun addContent(toolWindow: ToolWindow, displayName: String = "tab"): Content {
-    val content = createTabContent(displayName = displayName)
-    toolWindow.contentManager.addContent(content)
-    return content
-  }
-
-  private fun createRegisteredToolWindow(component: JPanel = JPanel()): ToolWindowImpl {
-    return registerLocalToolWindow(project, toolWindowId, disposable, component)
-  }
+  private fun createRegisteredToolWindow(): ToolWindowImpl = registerLocalToolWindow(project, toolWindowId, disposable)
 
   private fun createDetachedTabFile(content: Content = createTabContent()): ToolWindowEditorTabFile =
     createTabFile(project = project, toolWindowId = toolWindowId, content = content)
-
-  private fun openTabFile(): ToolWindowEditorTabFile =
-    manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>().single()
 
   /**
    * Two editor windows that both show [plainFile], as a user gets them from the "Split Right" action.
@@ -131,12 +104,12 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `move content to editor opens a tool window editor tab`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isTrue()
       controller.moveContentToEditor(toolWindow, content)
 
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
       assertThat(manager.isFileOpen(tabFile)).isTrue()
       assertThat(tabFile.toolWindowId).isEqualTo(toolWindowId)
       assertThat(manager.getSelectedEditor(tabFile)).isInstanceOf(ToolWindowEditorTabFileEditor::class.java)
@@ -156,7 +129,7 @@ class ToolWindowEditorTabTransferControllerTest {
       assertThat(rootDecorator.mode.isSplit).isTrue()
       controller.moveContentToEditor(toolWindow, movingContent, sourceDecorator = sourceDecorator)
 
-      assertThat(openTabFile().attachedContent(project)).isSameAs(movingContent)
+      assertThat(manager.openTabFile().attachedContent(project)).isSameAs(movingContent)
       assertThat(rootDecorator.mode).isEqualTo(InternalDecoratorImpl.Mode.SINGLE)
     }
 
@@ -173,7 +146,7 @@ class ToolWindowEditorTabTransferControllerTest {
 
       controller.moveContentToEditor(toolWindow, movingContent, sourceDecorator = sourceDecorator)
 
-      assertThat(openTabFile().attachedContent(project)).isSameAs(movingContent)
+      assertThat(manager.openTabFile().attachedContent(project)).isSameAs(movingContent)
       assertThat(rootDecorator.mode.isSplit).isTrue()
       assertThat(sourceDecorator.contentManager.contents.toList()).containsExactly(stayingContent)
     }
@@ -182,14 +155,14 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `move content to editor opens the tab in the given editor window`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       val editor = splitEditor()
       manager.currentWindow = editor.secondWindow
 
       // Drag-and-drop passes the window under the cursor, which is not necessarily the current one.
       controller.moveContentToEditor(toolWindow, content, window = editor.firstWindow)
 
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
       assertThat(editor.firstWindow.getComposite(tabFile)).isNotNull()
       assertThat(editor.secondWindow.getComposite(tabFile)).isNull()
     }
@@ -198,7 +171,7 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `move content to editor returns the content to the tool window when the editor tab does not open`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       val closedFiles = mutableSetOf<VirtualFile>()
       project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
@@ -210,7 +183,7 @@ class ToolWindowEditorTabTransferControllerTest {
 
       controller.moveContentToEditor(toolWindow, content)
 
-      assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+      assertThat(manager.openTabFiles()).isEmpty()
       // The content is not lost: it is back in the tool window, selected, alive, and no longer temporarily removed.
       assertThat(toolWindow.contentManager.contents.toList()).containsExactly(content)
       assertThat(toolWindow.contentManager.selectedContent).isSameAs(content)
@@ -226,9 +199,9 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `move content back to tool window restores it and invalidates the file`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       controller.moveContentToEditor(toolWindow, content)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
 
       assertThat(controller.canMoveContentToToolWindow(toolWindow, tabFile)).isTrue()
       controller.moveContentToToolWindow(toolWindow, tabFile)
@@ -244,7 +217,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val toolWindow = createRegisteredToolWindow()
       val movingContent = toolWindow.contentManager.contents.single()
       controller.moveContentToEditor(toolWindow, movingContent)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
 
       val rootDecorator = toolWindow.getOrCreateDecoratorComponent()
       toolWindow.contentManager.addContent(createTabContent(displayName = "placeholder"))
@@ -263,10 +236,10 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `move content back closes the tab in the window that holds it when another window is current`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       val editor = splitEditor()
       controller.moveContentToEditor(toolWindow, content, window = editor.firstWindow)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
       manager.currentWindow = editor.secondWindow
 
       controller.moveContentToToolWindow(toolWindow, tabFile)
@@ -317,7 +290,7 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `nothing moves when the feature is disabled`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
 
       val registryValue = Registry.get(ToolWindowEditorTabSupportUtil.REGISTRY_KEY)
       registryValue.setValue(false)
@@ -325,7 +298,7 @@ class ToolWindowEditorTabTransferControllerTest {
         assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
         controller.moveContentToEditor(toolWindow, content)
 
-        assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+        assertThat(manager.openTabFiles()).isEmpty()
         assertThat(toolWindow.contentManager.contents.toList()).contains(content)
       }
       finally {
@@ -338,12 +311,12 @@ class ToolWindowEditorTabTransferControllerTest {
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       // A tool window with no ToolWindowEditorTabSupport registered for its id.
       val toolWindow = createToolWindow("UnsupportedToolWindow")
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
       controller.moveContentToEditor(toolWindow, content)
 
-      assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+      assertThat(manager.openTabFiles()).isEmpty()
     }
 
   @Test
@@ -352,12 +325,12 @@ class ToolWindowEditorTabTransferControllerTest {
       val rejectingToolWindowId = "RejectingToolWindow"
       registerSupport(rejectingToolWindowId, canBeMovedToEditorAction = { false })
       val toolWindow = createToolWindow(rejectingToolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
       controller.moveContentToEditor(toolWindow, content)
 
-      assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+      assertThat(manager.openTabFiles()).isEmpty()
       assertThat(toolWindow.contentManager.contents.toList()).contains(content)
     }
 
@@ -366,19 +339,19 @@ class ToolWindowEditorTabTransferControllerTest {
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val mixedToolWindowId = "MixedToolWindow"
       val toolWindow = createToolWindow(mixedToolWindowId)
-      val supported = addContent(toolWindow, displayName = "supported")
-      val unsupported = addContent(toolWindow, displayName = "unsupported")
+      val supported = toolWindow.addTabContent(displayName ="supported")
+      val unsupported = toolWindow.addTabContent(displayName ="unsupported")
       val mixedSupport = registerSupport(mixedToolWindowId, canBeMovedToEditorAction = { it === supported })
 
       assertThat(controller.canMoveContentToEditor(toolWindow, supported)).isTrue()
       assertThat(controller.canMoveContentToEditor(toolWindow, unsupported)).isFalse()
 
       controller.moveContentToEditor(toolWindow, unsupported)
-      assertThat(manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()).isEmpty()
+      assertThat(manager.openTabFiles()).isEmpty()
 
       controller.moveContentToEditor(toolWindow, supported)
 
-      assertThat(openTabFile().attachedContent(project)).isSameAs(supported)
+      assertThat(manager.openTabFile().attachedContent(project)).isSameAs(supported)
       assertThat(toolWindow.contentManager.contents.toList()).containsExactly(unsupported)
       assertThat(mixedSupport.presentationFlowRequests).containsExactly(supported)
     }
@@ -407,9 +380,9 @@ class ToolWindowEditorTabTransferControllerTest {
   fun `cannot move a tab back to a tool window with a different id`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       controller.moveContentToEditor(toolWindow, content)
-      val tabFile = openTabFile()
+      val tabFile = manager.openTabFile()
 
       val otherToolWindow = createToolWindow("OtherToolWindow")
       assertThat(controller.canMoveContentToToolWindow(otherToolWindow, tabFile)).isFalse()

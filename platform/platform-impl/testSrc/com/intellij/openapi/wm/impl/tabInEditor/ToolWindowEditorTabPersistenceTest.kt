@@ -11,12 +11,10 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -26,10 +24,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
@@ -87,26 +82,7 @@ class ToolWindowEditorTabPersistenceTest {
     registerFakeToolWindowEditorTabSupport(id, FakeToolWindowEditorTabSupport(flowOf(ToolWindowEditorTabPresentation("Tab"))), disposable)
   }
 
-  /**
-   * A tool window backed by a real [ContentManager]. The headless [ToolWindowHeadlessManagerImpl]
-   * does not carry the id into its mock tool window, so the id is overridden explicitly.
-   */
-  private fun createToolWindow(id: String = toolWindowId): ToolWindow {
-    val contentManager = ContentFactory.getInstance().createContentManager(false, project)
-    Disposer.register(disposable, contentManager)
-    return object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
-      override fun getId(): String = id
-      override fun getContentManager(): ContentManager = contentManager
-    }
-  }
-
-  private fun addContent(toolWindow: ToolWindow, displayName: String = "tab"): Content {
-    val content = createTabContent(displayName = displayName)
-    toolWindow.contentManager.addContent(content)
-    return content
-  }
-
-  private fun openTabFiles(): List<ToolWindowEditorTabFile> = manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()
+  private fun createToolWindow(id: String = toolWindowId): FakeToolWindow = FakeToolWindow(project, id, disposable)
 
   /**
    * Moves a new content to the editor and returns it with its tab file.
@@ -116,10 +92,10 @@ class ToolWindowEditorTabPersistenceTest {
    */
   private fun moveToEditor(displayName: String = "tab"): Pair<Content, ToolWindowEditorTabFile> {
     val toolWindow = createToolWindow()
-    val content = addContent(toolWindow, displayName)
+    val content = toolWindow.addTabContent(displayName)
     controller.moveContentToEditor(toolWindow, content)
     provider.serializeInvocations.clear()
-    return content to openTabFiles().single { it.attachedContent(project) === content }
+    return content to manager.openTabFiles().single { it.attachedContent(project) === content }
   }
 
   private fun selectedEditor(file: ToolWindowEditorTabFile): FileEditor = requireNotNull(manager.getSelectedEditor(file))
@@ -152,7 +128,7 @@ class ToolWindowEditorTabPersistenceTest {
 
       assertThat(secondFile).isNotSameAs(firstFile)
       assertThat(secondFile.persistentPath).isNotEqualTo(firstFile.persistentPath)
-      assertThat(openTabFiles()).containsExactlyInAnyOrder(firstFile, secondFile)
+      assertThat(manager.openTabFiles()).containsExactlyInAnyOrder(firstFile, secondFile)
     }
 
   @Test
@@ -161,7 +137,7 @@ class ToolWindowEditorTabPersistenceTest {
       val idWithoutProvider = "ToolWindowWithoutProvider"
       registerSupport(idWithoutProvider)
       val toolWindowWithoutProvider = createToolWindow(idWithoutProvider)
-      val contentWithoutProvider = addContent(toolWindowWithoutProvider)
+      val contentWithoutProvider = toolWindowWithoutProvider.addTabContent()
 
       val idWithRefusingProvider = "ToolWindowWithRefusingProvider"
       registerSupport(idWithRefusingProvider)
@@ -171,12 +147,12 @@ class ToolWindowEditorTabPersistenceTest {
         disposable,
       )
       val toolWindowWithRefusingProvider = createToolWindow(idWithRefusingProvider)
-      val refusedContent = addContent(toolWindowWithRefusingProvider)
+      val refusedContent = toolWindowWithRefusingProvider.addTabContent()
 
       controller.moveContentToEditor(toolWindowWithoutProvider, contentWithoutProvider)
       controller.moveContentToEditor(toolWindowWithRefusingProvider, refusedContent)
 
-      val tabFiles = openTabFiles()
+      val tabFiles = manager.openTabFiles()
       assertThat(tabFiles).hasSize(2)
       assertThat(tabFiles).allSatisfy { file ->
         assertThat(file.persistentPath).isNull()

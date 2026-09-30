@@ -27,12 +27,9 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
 import com.intellij.testFramework.replaceService
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
 import com.intellij.util.ui.withShowingChanged
 import kotlinx.coroutines.CoroutineScope
@@ -276,7 +273,7 @@ class ToolWindowEditorTabPendingContentTest {
   @Test
   fun `a restored tab moved back to the tool window creates its content first`(): Unit = uiTest {
     val editor = createRestoredTabEditor()
-    val toolWindow = createToolWindow()
+    val toolWindow = FakeToolWindow(project, toolWindowId, disposable)
 
     ToolWindowEditorTabTransferController.getInstance(project).moveContentToToolWindow(toolWindow, editor.file)
 
@@ -401,19 +398,6 @@ class ToolWindowEditorTabPendingContentTest {
   private fun uiTest(action: suspend CoroutineScope.() -> Unit) {
     withForcedRespectIsShowingClientProperty {
       timeoutRunBlocking(context = Dispatchers.UiWithModelAccess, action = action)
-    }
-  }
-
-  /**
-   * A tool window backed by a real [ContentManager]. The headless [ToolWindowHeadlessManagerImpl]
-   * does not carry the id into its mock tool window, so the id is overridden explicitly.
-   */
-  private fun createToolWindow(): ToolWindow {
-    val contentManager = ContentFactory.getInstance().createContentManager(false, project)
-    Disposer.register(disposable, contentManager)
-    return object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
-      override fun getId(): String = toolWindowId
-      override fun getContentManager(): ContentManager = contentManager
     }
   }
 

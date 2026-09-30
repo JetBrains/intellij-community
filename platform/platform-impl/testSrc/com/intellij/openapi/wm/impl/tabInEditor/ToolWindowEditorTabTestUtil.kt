@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.tabInEditor
 import com.intellij.ide.util.treeView.findCachedImageIcon
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
@@ -19,9 +20,11 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.icons.createCachedIcon
 import com.intellij.ui.scale.ScaleContext
 import kotlinx.coroutines.CoroutineScope
@@ -131,6 +134,37 @@ internal fun createTabContent(component: JComponent = JPanel(), displayName: Str
   ContentFactory.getInstance().createContent(component, displayName, false)
 
 /**
+ * A tool window backed by a real [ContentManager]. The headless [ToolWindowHeadlessManagerImpl.MockToolWindow]
+ * reports an empty id and uses a mock content manager, so the tests override both.
+ */
+internal open class FakeToolWindow(
+  project: Project,
+  private val id: String,
+  disposable: Disposable,
+) : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
+  private val contentManager: ContentManager = ContentFactory.getInstance().createContentManager(false, project).also {
+    Disposer.register(disposable, it)
+  }
+
+  override fun getId(): String = id
+
+  override fun getContentManager(): ContentManager = contentManager
+}
+
+/**
+ * Adds a new content named [displayName] to the tool window and returns it.
+ */
+internal fun ToolWindow.addTabContent(displayName: String = "tab"): Content {
+  val content = createTabContent(displayName = displayName)
+  contentManager.addContent(content)
+  return content
+}
+
+internal fun FileEditorManager.openTabFiles(): List<ToolWindowEditorTabFile> = openFiles.filterIsInstance<ToolWindowEditorTabFile>()
+
+internal fun FileEditorManager.openTabFile(): ToolWindowEditorTabFile = openTabFiles().single()
+
+/**
  * Creates an icon that can be serialized, as the platform icons in the IDE can.
  * The platform icons in unit tests cannot be serialized, because the tests do not activate the icon manager.
  */
@@ -144,8 +178,8 @@ internal fun Icon?.serialized(): ByteArray? = findCachedImageIcon(this)?.encodeT
 
 /**
  * Builds a transient tool window editor tab with its content already attached, which is the state a tab moved out of a
- * tool window is in. Transient is enough for every test here: none of them registers a
- * [ToolWindowEditorTabPersistenceProvider], so no tab would be restorable anyway.
+ * tool window is in. A test that needs a persistent tab moves content to the editor with a
+ * [ToolWindowEditorTabPersistenceProvider] registered, or creates the file through [ToolWindowEditorTabFileRegistry].
  *
  * [presentationFlow] drives the tab presentation directly, so a test can both push presentations of its own and get a
  * tab with a session before it registers any [ToolWindowEditorTabSupport].
@@ -227,17 +261,11 @@ internal class RecordingFileEditorManager private constructor(
   val closeRequests = mutableListOf<VirtualFile>()
   val closeInWindowRequests = mutableListOf<Pair<VirtualFile, EditorWindow>>()
 
-  var currentWindowOverride: EditorWindow? = null
-  var windowsOverride: Array<EditorWindow> = emptyArray()
-
-  override var currentWindow: EditorWindow?
-    get() = currentWindowOverride
-    set(window) {
-      currentWindowOverride = window
-    }
+  // This double opens no editor, so it has no windows.
+  override var currentWindow: EditorWindow? = null
 
   override val windows: Array<EditorWindow>
-    get() = windowsOverride
+    get() = emptyArray()
 
   override fun closeFile(file: VirtualFile) {
     closeRequests += file

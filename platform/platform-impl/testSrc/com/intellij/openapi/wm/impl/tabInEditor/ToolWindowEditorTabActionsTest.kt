@@ -11,7 +11,6 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import com.intellij.testFramework.ExtensionTestUtil
@@ -22,10 +21,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
-import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
@@ -64,34 +59,17 @@ class ToolWindowEditorTabActionsTest {
   }
 
   /**
-   * A tool window backed by a real [ContentManager]. The headless mock does not carry the id and ignores `hide()`,
-   * so the id is overridden and the hide calls are counted.
+   * A tool window that counts the `hide()` calls, which the headless mock ignores.
    */
-  private class HideRecordingToolWindow(
-    project: Project,
-    private val id: String,
-    private val contentManager: ContentManager,
-  ) : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
+  private class HideRecordingToolWindow(project: Project, id: String, disposable: Disposable) : FakeToolWindow(project, id, disposable) {
     var hideCount: Int = 0
 
-    override fun getId(): String = id
-    override fun getContentManager(): ContentManager = contentManager
     override fun hide(runnable: Runnable?) {
       hideCount++
     }
   }
 
-  private fun createToolWindow(id: String = toolWindowId): HideRecordingToolWindow {
-    val contentManager = ContentFactory.getInstance().createContentManager(false, project)
-    Disposer.register(disposable, contentManager)
-    return HideRecordingToolWindow(project, id, contentManager)
-  }
-
-  private fun addContent(toolWindow: HideRecordingToolWindow, displayName: String = "tab"): Content {
-    val content = createTabContent(displayName = displayName)
-    toolWindow.contentManager.addContent(content)
-    return content
-  }
+  private fun createToolWindow(id: String = toolWindowId): HideRecordingToolWindow = HideRecordingToolWindow(project, id, disposable)
 
   /**
    * Creates the event of the tab context menu: the tool window and its content manager, whose selected content is the tab.
@@ -105,13 +83,11 @@ class ToolWindowEditorTabActionsTest {
     return TestActionEvent.createTestEvent(action, dataContext)
   }
 
-  private fun openTabFiles(): List<ToolWindowEditorTabFile> = manager.openFiles.filterIsInstance<ToolWindowEditorTabFile>()
-
   @Test
   fun `the action is available for the selected content of a supported tool window`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      addContent(toolWindow)
+      toolWindow.addTabContent()
       val event = createEvent(toolWindow)
 
       action.update(event)
@@ -123,7 +99,7 @@ class ToolWindowEditorTabActionsTest {
   fun `the action is hidden while the feature is disabled`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      addContent(toolWindow)
+      toolWindow.addTabContent()
       val event = createEvent(toolWindow)
 
       val registryValue = Registry.get(ToolWindowEditorTabSupportUtil.REGISTRY_KEY)
@@ -142,7 +118,7 @@ class ToolWindowEditorTabActionsTest {
   fun `the action is hidden for a tool window without support`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow("UnsupportedToolWindow")
-      addContent(toolWindow)
+      toolWindow.addTabContent()
       val event = createEvent(toolWindow)
 
       action.update(event)
@@ -165,12 +141,12 @@ class ToolWindowEditorTabActionsTest {
   fun `moving the last content hides the tool window`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      val content = addContent(toolWindow)
+      val content = toolWindow.addTabContent()
       val event = createEvent(toolWindow)
 
       action.actionPerformed(event)
 
-      assertThat(openTabFiles().single().attachedContent(project)).isSameAs(content)
+      assertThat(manager.openTabFile().attachedContent(project)).isSameAs(content)
       assertThat(toolWindow.contentManager.contents).isEmpty()
       assertThat(toolWindow.hideCount).isEqualTo(1)
     }
@@ -179,14 +155,14 @@ class ToolWindowEditorTabActionsTest {
   fun `moving one of several contents keeps the tool window visible`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow()
-      val moved = addContent(toolWindow, displayName = "moved")
-      val remaining = addContent(toolWindow, displayName = "remaining")
+      val moved = toolWindow.addTabContent(displayName = "moved")
+      val remaining = toolWindow.addTabContent(displayName = "remaining")
       toolWindow.contentManager.setSelectedContent(moved)
       val event = createEvent(toolWindow)
 
       action.actionPerformed(event)
 
-      assertThat(openTabFiles().single().attachedContent(project)).isSameAs(moved)
+      assertThat(manager.openTabFile().attachedContent(project)).isSameAs(moved)
       assertThat(toolWindow.contentManager.contents.toList()).containsExactly(remaining)
       assertThat(toolWindow.hideCount).isZero()
     }
