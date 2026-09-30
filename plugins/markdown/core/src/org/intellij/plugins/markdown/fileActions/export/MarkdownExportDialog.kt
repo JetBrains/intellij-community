@@ -87,6 +87,8 @@ internal class MarkdownExportDialog(
   }
 
   private inner class FileTypeRenderer : SimpleListCellRenderer<MarkdownExportProvider>() {
+    private val validationErrors = supportedExportProviders.associateWith { it.validate(project, file) }
+
     override fun customize(
       list: JList<out MarkdownExportProvider>,
       value: MarkdownExportProvider?,
@@ -98,13 +100,14 @@ internal class MarkdownExportDialog(
         return
       }
       text = value.formatDescription.formatName
-      val errorMessage = value.validate(project, file)
+      val errorMessage = validationErrors[value]
       if (errorMessage != null) {
         isEnabled = false
         toolTipText = errorMessage
       }
       else {
         isEnabled = true
+        toolTipText = null
       }
     }
   }

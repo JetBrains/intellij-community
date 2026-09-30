@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -39,7 +40,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
    */
   @Deprecated
   public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview, @NotNull Project project) {
-    this(editor, preview, project, MarkdownSettings.getInstance(project));
+    this(editor, preview, project, MarkdownSettings.getInstance());
   }
 
   public MarkdownEditorWithPreview(@NotNull TextEditor editor,
@@ -75,7 +76,8 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
 
     autoScrollPreview = settings.isAutoScrollEnabled();
 
-    project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, new MarkdownSettings.ChangeListener() {
+    var messageBus = ApplicationManager.getApplication().getMessageBus();
+    messageBus.connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, new MarkdownSettings.ChangeListener() {
       private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
 
       @Override

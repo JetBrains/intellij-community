@@ -471,7 +471,7 @@ enum class RunnerType {
 fun getMarkdownCommandWorkingDirectory(project: Project, virtualFile: VirtualFile?): String? {
   val fileDirectory = virtualFile?.parent?.canonicalPath ?: return null
   val projectDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)?.canonicalPath ?: fileDirectory
-  return when (MarkdownSettings.getInstance(project).useFileDirectoryForCommands) {
+  return when (MarkdownSettings.getInstance().useFileDirectoryForCommands) {
     true -> fileDirectory
     false -> projectDirectory
     null -> null
@@ -485,7 +485,7 @@ fun getMarkdownCommandWorkingDirectories(project: Project, virtualFile: VirtualF
   if (virtualFile == null) return emptyList()
   val fileDirectory = markdownCommandFileDirectory(virtualFile) ?: return emptyList()
   val projectDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)?.canonicalPath ?: fileDirectory
-  return when (MarkdownSettings.getInstance(project).useFileDirectoryForCommands) {
+  return when (MarkdownSettings.getInstance().useFileDirectoryForCommands) {
     true -> listOf(fileDirectory)
     false -> listOf(projectDirectory)
     null -> listOf(projectDirectory, fileDirectory).distinct()

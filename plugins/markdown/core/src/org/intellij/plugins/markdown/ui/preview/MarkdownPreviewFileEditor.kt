@@ -26,6 +26,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
@@ -92,7 +93,7 @@ class MarkdownPreviewFileEditor(
       }
     }
 
-    val messageBusConnection = project.messageBus.connect(this)
+    val messageBusConnection = application.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
     messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener)
     messageBusConnection.subscribe(
@@ -273,7 +274,7 @@ class MarkdownPreviewFileEditor(
         document.text
       }
       else {
-        val textPreprocessor = retrievePanelProvider(MarkdownSettings.getInstance(project)).sourceTextPreprocessor
+        val textPreprocessor = retrievePanelProvider(MarkdownSettings.getInstance()).sourceTextPreprocessor
         textPreprocessor.preprocessText(project, document, file)
       }
       logger.debug("MarkdownPreviewFileEditor: readAction finished")
@@ -301,7 +302,7 @@ class MarkdownPreviewFileEditor(
       return
     }
     logger.info("MarkdownPreviewFileEditor: attachHtmlPanel")
-    val settings = MarkdownSettings.getInstance(project)
+    val settings = MarkdownSettings.getInstance()
     val panelProvider = retrievePanelProvider(settings)
     val panel = panelProvider.createHtmlPanel(project, file)
     this.panel = panel

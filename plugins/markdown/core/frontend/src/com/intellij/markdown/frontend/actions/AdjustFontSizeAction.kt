@@ -4,14 +4,13 @@ package com.intellij.markdown.frontend.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_POPUP_POINT
@@ -39,11 +38,11 @@ class AdjustFontSizeAction : DumbAwareAction() {
   }
 
   private class HintComponent(preview: MarkdownPreviewBrowserActions) : JPanel(FlowLayout(FlowLayout.LEFT, 10, 5)) {
-    private val previewSettings
-      get() = service<MarkdownPreviewSettings>()
+    private val settings
+      get() = MarkdownSettings.getInstance()
 
     init {
-      val fontSizeLabel = JBLabel(previewSettings.state.fontSize.toString(), SwingConstants.CENTER).apply {
+      val fontSizeLabel = JBLabel(settings.fontSize.toString(), SwingConstants.CENTER).apply {
         preferredSize = JBUI.size(22, 22)
       }
       val decreaseButton = JButton(AllIcons.General.Remove).apply {
@@ -52,7 +51,7 @@ class AdjustFontSizeAction : DumbAwareAction() {
         preferredSize = JBUI.size(22, 22)
 
         setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.General.Remove))
-        isEnabled = previewSettings.state.fontSize != fontSizeOptions.first()
+        isEnabled = settings.fontSize != fontSizeOptions.first()
       }
       val increaseButton = JButton(AllIcons.General.Add).apply {
         border = BorderFactory.createEmptyBorder()
@@ -60,13 +59,13 @@ class AdjustFontSizeAction : DumbAwareAction() {
         preferredSize = JBUI.size(22, 22)
 
         setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.General.Add))
-        isEnabled = previewSettings.state.fontSize != fontSizeOptions.last()
+        isEnabled = settings.fontSize != fontSizeOptions.last()
       }
 
       fun updateFontSize(transform: (Int) -> Int?) {
         val currentSize = preview.getCurrentFontSize()
         val newSize = transform(currentSize) ?: currentSize
-        previewSettings.state.fontSize = newSize
+        settings.fontSize = newSize
         preview.changeFontSize(newSize)
 
         fontSizeLabel.text = newSize.toString()
@@ -80,7 +79,7 @@ class AdjustFontSizeAction : DumbAwareAction() {
       add(increaseButton.apply { addActionListener { updateFontSize { fontSizeOptions.find { step -> step > it } } } })
     }
 
-    private fun MarkdownPreviewBrowserActions.getCurrentFontSize() = getTemporaryFontSize() ?: previewSettings.state.fontSize
+    private fun MarkdownPreviewBrowserActions.getCurrentFontSize() = getTemporaryFontSize() ?: settings.fontSize
   }
 
   override fun update(event: AnActionEvent) {

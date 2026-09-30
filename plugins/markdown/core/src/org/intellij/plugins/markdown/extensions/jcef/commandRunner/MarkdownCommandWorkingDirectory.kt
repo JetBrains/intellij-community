@@ -80,7 +80,7 @@ fun withMarkdownCommandWorkingDirectory(
     return
   }
 
-  val settings = MarkdownSettings.getInstance(project)
+  val settings = MarkdownSettings.getInstance()
   val useFileDirectoryForCommands = settings.useFileDirectoryForCommands
   if (useFileDirectoryForCommands != null) {
     action(if (useFileDirectoryForCommands) fileDirectory else projectDirectory)

@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownStylesheetSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
@@ -34,7 +34,7 @@ internal class BaseStylesExtension(private val project: Project?) : MarkdownBrow
   }
 
   private fun tryToLoadCustomStylesheet(project: Project): ResourceProvider.Resource? {
-    val settings = MarkdownSettings.getInstance(project)
+    val settings = MarkdownStylesheetSettings.getInstance(project)
     if (!settings.useCustomStylesheetPath) {
       return null
     }
@@ -44,7 +44,7 @@ internal class BaseStylesExtension(private val project: Project?) : MarkdownBrow
       showLoadFailedNotification(project)
       return null
     }
-    val belongsToTheProject = runReadAction { MarkdownSettingsUtil.belongsToTheProject(project, path) }
+    val belongsToTheProject = runReadActionBlocking { MarkdownSettingsUtil.belongsToTheProject(project, path) }
     if (!belongsToTheProject) {
       MarkdownNotifications.showWarning(
         project,

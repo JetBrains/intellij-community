@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -28,7 +29,12 @@ import org.intellij.plugins.markdown.util.MarkdownPluginScope
 internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   class CodeAnalyzerRestartListener: MarkdownSettings.ChangeListener {
     override fun settingsChanged(settings: MarkdownSettings) {
-      val project = settings.project
+      for (project in getOpenedProjects()) {
+        restartCodeAnalyzer(project)
+      }
+    }
+
+    private fun restartCodeAnalyzer(project: Project) {
       val editorManager = FileEditorManager.getInstance(project) ?: return
       val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project) ?: return
       val psiManager = PsiManager.getInstance(project)
@@ -54,7 +60,7 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   override fun getFamilyName(): String = text
 
   override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
-    if (psiFile?.fileType != MarkdownFileType.INSTANCE || !MarkdownSettings.getInstance(project).showProblemsInCodeBlocks) {
+    if (psiFile?.fileType != MarkdownFileType.INSTANCE || !MarkdownSettings.getInstance().showProblemsInCodeBlocks) {
       return false
     }
     val element = psiFile?.findElementAt(editor?.caretModel?.offset ?: return false) ?: return false
@@ -62,7 +68,7 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   }
 
   override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
-    setHideErrors(project, true)
+    setHideErrors(true)
     val notification = MarkdownNotifications.group.createNotification(
       MarkdownBundle.message("markdown.hide.problems.notification.title"),
       MarkdownBundle.message("markdown.hide.problems.notification.content"),
@@ -70,15 +76,15 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
     )
     notification.addAction(object: NotificationAction(MarkdownBundle.message("markdown.hide.problems.notification.rollback.action.text")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        setHideErrors(project, false)
+        setHideErrors(false)
         notification.expire()
       }
     })
     notification.notify(project)
   }
 
-  private fun setHideErrors(project: Project, hideErrors: Boolean) {
-    MarkdownSettings.getInstance(project).update {
+  private fun setHideErrors(hideErrors: Boolean) {
+    MarkdownSettings.getInstance().update {
       it.showProblemsInCodeBlocks = !hideErrors
     }
   }

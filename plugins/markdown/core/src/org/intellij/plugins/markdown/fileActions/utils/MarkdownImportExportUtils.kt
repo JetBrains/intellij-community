@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -31,7 +32,7 @@ import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvid
 import org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable
-import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
+import org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
@@ -111,8 +112,11 @@ object MarkdownImportExportUtils {
       private val resourcesDir = PandocSettings.getInstance(project).pathToImages ?: project.basePath!!
 
       override fun run(indicator: ProgressIndicator) {
+        check(TrustedProjects.isProjectTrusted(project)) {
+          MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+        }
         val filePath = FileUtil.join(dirToImport, "${newFileName}.${MarkdownFileType.INSTANCE.defaultExtension}")
-        val cmd = getConvertDocxToMdCommandLine(vFileToImport, resourcesDir, filePath, project)
+        val cmd = getConvertDocxToMdCommandLine(vFileToImport, resourcesDir, filePath)
 
         output = ExecUtil.execAndGetOutput(cmd)
         createdFilePath = filePath
@@ -165,10 +169,8 @@ object MarkdownImportExportUtils {
   /**
    * returns a platform-independent cmd to perform the converting of docx to markdown using pandoc.
    */
-  private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String, project: Project): GeneralCommandLine {
-    val pandoc = PandocSettings.getInstance(project).pathToPandoc?.takeIf { it.isNotBlank() }
-      ?: PandocExecutableDetector.detect(project)?.takeIf { it.isNotBlank() }
-      ?: "pandoc"
+  private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String): GeneralCommandLine {
+    val pandoc = PandocApplicationSettings.getInstance().resolveExecutable().ifBlank { "pandoc" }
     return GeneralCommandLine(
       pandoc,
       "--extract-media=$mediaSrc",

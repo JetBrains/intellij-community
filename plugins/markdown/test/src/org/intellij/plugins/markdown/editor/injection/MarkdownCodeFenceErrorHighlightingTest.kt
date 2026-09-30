@@ -9,7 +9,7 @@ class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
   private var oldShowErrorsSetting = false
 
   private val settings
-    get() = MarkdownSettings.getInstance(project)
+    get() = MarkdownSettings.getInstance()
 
   override fun setUp() {
     super.setUp()

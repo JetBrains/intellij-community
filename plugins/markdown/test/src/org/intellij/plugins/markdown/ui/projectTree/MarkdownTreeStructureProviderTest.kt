@@ -27,7 +27,7 @@ class MarkdownTreeStructureProviderTest {
       PsiFileNode(project, MockPsiFile(it, psiManager), null)
     }
 
-    val settings = MarkdownSettings.getInstance(project)
+    val settings = MarkdownSettings.getInstance()
     val wasGroupingEnabled = settings.isFileGroupingEnabled
     try {
       settings.isFileGroupingEnabled = true

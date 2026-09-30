@@ -50,7 +50,7 @@ import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
-import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelEx
@@ -168,8 +168,19 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
       }
     })
     val connection = application.messageBus.connect(this)
-    connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
-      changeFontSize(settings.state.fontSize)
+    connection.subscribe(MarkdownSettings.ChangeListener.TOPIC, object : MarkdownSettings.ChangeListener {
+      private var fontSize = MarkdownSettings.getInstance().fontSize
+
+      override fun beforeSettingsChanged(settings: MarkdownSettings) {
+        fontSize = settings.fontSize
+      }
+
+      override fun settingsChanged(settings: MarkdownSettings) {
+        if (fontSize != settings.fontSize) {
+          fontSize = settings.fontSize
+          changeFontSize(fontSize)
+        }
+      }
     })
 
     coroutineScope.launch {

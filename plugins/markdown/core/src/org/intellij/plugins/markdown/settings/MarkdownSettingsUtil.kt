@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
@@ -62,9 +63,12 @@ object MarkdownSettingsUtil {
     return false
   }
 
+  /** Returns false if the project index is unavailable. */
+  @Suppress("SplitModeApiUsage")
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   internal fun belongsToTheProject(project: Project, path: Path): Boolean {
+    val index = project.serviceOrNull<ProjectFileIndex>() ?: return false
     val file = VfsUtil.findFile(path, true) ?: return false
-    return ProjectFileIndex.getInstance(project).isInProjectOrExcluded(file)
+    return index.isInProjectOrExcluded(file)
   }
 }

@@ -18,8 +18,7 @@ public final class MarkdownStripTrailingSpacesFilterFactory extends StripTrailin
   public @NotNull StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document) {
     Language documentLanguage = PsiBasedStripTrailingSpacesFilter.getDocumentLanguage(document);
     if (documentLanguage != null && documentLanguage.is(MarkdownLanguage.INSTANCE)) {
-      if (project == null) return StripTrailingSpacesFilter.NOT_ALLOWED;
-      return MarkdownSettings.getInstance(project).isStripTrailingSpacesOnSave()
+      return MarkdownSettings.getInstance().isStripTrailingSpacesOnSave()
              ? StripTrailingSpacesFilter.ALL_LINES
              : StripTrailingSpacesFilter.NOT_ALLOWED;
     }

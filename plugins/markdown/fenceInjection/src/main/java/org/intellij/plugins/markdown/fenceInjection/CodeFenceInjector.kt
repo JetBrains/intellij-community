@@ -60,7 +60,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
   protected open fun findLangForInjection(element: MarkdownCodeFence): Pair<Language, String?>? {
     val name = element.fenceLanguage ?: return null
     return CodeFenceLanguageGuesser.guessLanguageWithExtensionForInjection(name).takeIf {
-      MarkdownSettings.getInstance(element.project).areInjectionsEnabled
+      MarkdownSettings.getInstance().areInjectionsEnabled
     }
   }
 

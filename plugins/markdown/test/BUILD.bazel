@@ -74,7 +74,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.markdown.tests",
+    associates = [
+        "//plugins/markdown/core:markdown",
+        "//plugins/markdown/core:markdown_test_lib",
+    ],
     resource_strip_prefix = "data",
     resources = glob(
         ["data/**/*"],
@@ -93,8 +96,6 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//plugins/markdown/core:markdown",
-        "//plugins/markdown/core:markdown_test_lib",
         "//plugins/markdown/core/frontend",
         "//plugins/markdown/core/frontend:frontend_test_lib",
         "//plugins/markdown/jcef",
@@ -195,6 +196,8 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//platform/util/jdom",
+        "//platform/util/jdom:jdom_test_lib",
         "//libraries/markdown",
         "//libraries/markdown:markdown_test_lib",
         "//plugins/toml",

@@ -27,7 +27,7 @@ class MarkdownSplitEditorProvider : TextEditorWithPreviewProvider(MarkdownPrevie
 
   /** Waits a short time for live preview, so an editor that opens in live preview does not show its source markup first. */
   override suspend fun createSplitEditorAsync(project: Project, firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
-    val settings = MarkdownSettings.getInstanceAsync(project)
+    val settings = MarkdownSettings.getInstanceAsync()
     val createdEditors = createdFileEditorSink()
     val splitEditor = withContext(Dispatchers.EDT) {
       createMarkdownSplitEditor(firstEditor, secondEditor, settings).also { createdEditors?.register(it) }
@@ -37,7 +37,7 @@ class MarkdownSplitEditorProvider : TextEditorWithPreviewProvider(MarkdownPrevie
   }
 
   override fun createSplitEditor(firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
-    return createMarkdownSplitEditor(firstEditor, secondEditor, MarkdownSettings.getInstance(getProject(firstEditor)))
+    return createMarkdownSplitEditor(firstEditor, secondEditor, MarkdownSettings.getInstance())
   }
 
   private fun createMarkdownSplitEditor(firstEditor: TextEditor, secondEditor: FileEditor, settings: MarkdownSettings): FileEditor {

@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
-import com.intellij.openapi.components.service
-import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import java.awt.Color
 
 object PreviewLAFThemeStyles {
@@ -14,7 +13,7 @@ object PreviewLAFThemeStyles {
   val fontSizeOptions: List<Int> = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
 
   val defaultFontSize: Int
-    get() = service<MarkdownPreviewSettings>().state.fontSize
+    get() = MarkdownSettings.getInstance().fontSize
 
   /**
    * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.

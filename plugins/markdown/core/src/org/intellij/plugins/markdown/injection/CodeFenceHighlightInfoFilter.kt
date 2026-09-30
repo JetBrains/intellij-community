@@ -20,7 +20,7 @@ internal class CodeFenceHighlightInfoFilter: HighlightInfoFilter {
     val topLevelFile = manager.getTopLevelFile(psiFile) ?: return true
     if (topLevelFile.fileType == MarkdownFileType.INSTANCE && manager.getInjectionHost(psiFile) is MarkdownCodeFence) {
       if (highlightInfo.severity == HighlightSeverity.ERROR && highlightInfo.severity !in internalSeverities) {
-        return MarkdownSettings.getInstance(project).showProblemsInCodeBlocks
+        return MarkdownSettings.getInstance().showProblemsInCodeBlocks
       }
     }
     return true

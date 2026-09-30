@@ -23,7 +23,7 @@ class MarkdownTreeStructureProvider(private val project: Project) : TreeStructur
   ): MutableCollection<AbstractTreeNode<*>> {
     if (parent is MarkdownViewNode) return children
     if (children.none { it.markdownVirtualFile() != null }) return children
-    if (!MarkdownSettings.getInstance(project).isFileGroupingEnabled) return children
+    if (!MarkdownSettings.getInstance().isFileGroupingEnabled) return children
 
     ProgressManager.checkCanceled()
     val documentNodesByName = mutableMapOf<String, MutableList<AbstractTreeNode<*>>>()

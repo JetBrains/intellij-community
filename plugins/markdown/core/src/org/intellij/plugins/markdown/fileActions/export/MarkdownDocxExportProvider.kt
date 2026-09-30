@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.fileActions.export
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -13,8 +14,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
-import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
+import org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import java.util.Locale
 
@@ -27,10 +27,12 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
   }
 
   override fun validate(project: Project, file: VirtualFile): String? {
-    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: PandocExecutableDetector.detect(project)
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      return MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+    }
+    val pandoc = PandocApplicationSettings.getInstance().resolveExecutable()
 
     return when {
-      pandoc == null -> MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
       pandoc.isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
       else -> null
     }
@@ -44,6 +46,9 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     private lateinit var output: ProcessOutput
 
     override fun run(indicator: ProgressIndicator) {
+      check(TrustedProjects.isProjectTrusted(project)) {
+        MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+      }
       //Note: if the reference document is not found for some reason, then all styles in the created docx document will be default.
       val refDocx = FileUtil.join(mdFile.parent.path, "${mdFile.nameWithoutExtension}.${formatDescription.extension}")
       val cmd = getConvertMdToDocxCommandLine(mdFile, outputFile, refDocx)
@@ -77,7 +82,7 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     }
 
     private fun getConvertMdToDocxCommandLine(srcFile: VirtualFile, targetFile: String, refFile: String): GeneralCommandLine {
-      val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: "pandoc"
+      val pandoc = PandocApplicationSettings.getInstance().resolveExecutable().ifBlank { "pandoc" }
       val commandLine = mutableListOf(
         pandoc,
         srcFile.path,

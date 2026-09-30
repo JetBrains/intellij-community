@@ -39,6 +39,7 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.indexing"/>
@@ -240,7 +241,6 @@
     <projectConfigurable id="Settings.Markdown"
                          bundle="messages.MarkdownBundle"
                          groupId="language"
-                         nonDefaultProject="false"
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
 
@@ -253,10 +253,9 @@
 
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings"/>
-    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownPreviewSettings"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings"/>
-
-    <projectSettings service="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
+    <projectSettings service="org.intellij.plugins.markdown.settings.MarkdownStylesheetSettings"/>
 
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>
     <httpRequestHandler implementation="org.intellij.plugins.markdown.ui.preview.PreviewStaticServer"/>
@@ -372,6 +371,7 @@
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.DocumentLinksSafeState"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings"/>
   </extensions>
 
   <applicationListeners>
@@ -379,12 +379,11 @@
               class="org.intellij.plugins.markdown.settings.SettingsChangeLafListener"/>
     <listener topic="com.intellij.ide.ui.LafManagerListener"
               class="org.intellij.plugins.markdown.extensions.common.highlighter.HtmlCacheManager$InvalidateHtmlCacheLafListener"/>
-  </applicationListeners>
-
-  <projectListeners>
+    <listener topic="org.intellij.plugins.markdown.settings.MarkdownSettings$ChangeListener"
+              class="org.intellij.plugins.markdown.settings.MarkdownSettingsCompatibilityListener"/>
     <listener topic="org.intellij.plugins.markdown.settings.MarkdownSettings$ChangeListener"
               class="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeAnalyzerRestartListener"/>
-  </projectListeners>
+  </applicationListeners>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>

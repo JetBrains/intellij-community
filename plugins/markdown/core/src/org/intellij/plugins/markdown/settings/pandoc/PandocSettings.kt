@@ -2,37 +2,31 @@
 package org.intellij.plugins.markdown.settings.pandoc
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.currentOrDefaultProject
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-@State(name = "Pandoc.Settings", storages = [Storage(value = "pandoc.xml", roamingType = RoamingType.PER_OS)])
+@State(name = "Pandoc.Settings", storages = [Storage("pandoc.xml")], allowLoadInTests = true)
 internal class PandocSettings: SimplePersistentStateComponent<PandocSettings.State>(State()) {
   @ApiStatus.Internal
   class State: BaseState() {
-    var pathToPandoc by string()
-    var pathToImages by string()
+    /** The legacy executable path retained for migration to application settings. */
+    @Deprecated("Use PandocApplicationSettings.pathToPandoc. This field is retained for migration.")
+    var pathToPandoc: String? by string()
+    var pathToImages: String? by string()
   }
 
-  var pathToPandoc
-    get() = state.pathToPandoc
-    set(value) { state.pathToPandoc = value }
-
-  var pathToImages
+  var pathToImages: String?
     get() = state.pathToImages
     set(value) { state.pathToImages = value }
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project? = null): PandocSettings {
-      return currentOrDefaultProject(project).service()
-    }
+    fun getInstance(project: Project): PandocSettings = project.service()
   }
 }

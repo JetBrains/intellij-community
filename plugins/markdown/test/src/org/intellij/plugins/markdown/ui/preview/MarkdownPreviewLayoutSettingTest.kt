@@ -13,8 +13,17 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
  * see IJPL-253568
  */
 class MarkdownPreviewLayoutSettingTest : BasePlatformTestCase() {
+  override fun setUp() {
+    super.setUp()
+    val settings = MarkdownSettings.getInstance()
+    val wasVerticalSplit = settings.isVerticalSplit
+    Disposer.register(testRootDisposable) {
+      settings.update { it.isVerticalSplit = wasVerticalSplit }
+    }
+  }
+
   fun testSplitHorizontallySurvivesRestoredPerFileOrientation() {
-    val settings = MarkdownSettings.getInstance(project)
+    val settings = MarkdownSettings.getInstance()
     settings.update { it.isVerticalSplit = false }
 
     val splitter = splitterOf(settings)
@@ -22,7 +31,7 @@ class MarkdownPreviewLayoutSettingTest : BasePlatformTestCase() {
   }
 
   fun testRestoredStateDoesNotOverrideSetting() {
-    val settings = MarkdownSettings.getInstance(project)
+    val settings = MarkdownSettings.getInstance()
     settings.update { it.isVerticalSplit = false }
 
     val editorWithPreview = createEditor(settings)

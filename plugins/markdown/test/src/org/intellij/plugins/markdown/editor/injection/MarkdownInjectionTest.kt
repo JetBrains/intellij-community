@@ -456,7 +456,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
   }
 
   fun `test fence with lang with disabled auto injection`() {
-    val markdownSettings = MarkdownSettings.getInstance(project)
+    val markdownSettings = MarkdownSettings.getInstance()
     val oldValue = markdownSettings.areInjectionsEnabled
     try {
       markdownSettings.areInjectionsEnabled = false

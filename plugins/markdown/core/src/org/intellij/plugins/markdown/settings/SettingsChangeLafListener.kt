@@ -5,19 +5,16 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.util.application
 
 internal class SettingsChangeLafListener: LafManagerListener {
   override fun lookAndFeelChanged(source: LafManager) {
     if (!LoadingState.APP_STARTED.isOccurred) {
       return
     }
-    for (project in getOpenedProjects()) {
-      project.serviceIfCreated<MarkdownSettings>()?.let { settings ->
-        val publisher = project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
-        publisher.beforeSettingsChanged(settings)
-        publisher.settingsChanged(settings)
-      }
-    }
+    val settings = serviceIfCreated<MarkdownSettings>() ?: return
+    val publisher = application.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
+    publisher.beforeSettingsChanged(settings)
+    publisher.settingsChanged(settings)
   }
 }

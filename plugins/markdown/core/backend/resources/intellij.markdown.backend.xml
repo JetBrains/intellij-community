@@ -37,6 +37,7 @@
       <action id="CopyReference" class="com.intellij.markdown.backend.reference.headers.MarkdownHeaderCopyAction" overrides="true"/>
     </actions>
     <extensions defaultExtensionNs="com.intellij">
+      <postStartupActivity implementation="org.intellij.plugins.markdown.settings.MarkdownSettingsMigration"/>
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.fence.CodeFenceBackgroundHighlightingPassFactory"/>
@@ -204,4 +205,8 @@
 
       <useScopeEnlarger implementation="com.intellij.markdown.backend.lang.references.MarkdownReferenceUseScopeEnlarger"/>
     </extensions>
+    <applicationListeners>
+      <listener topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
+                class="org.intellij.plugins.markdown.settings.MarkdownSettingsMigration"/>
+    </applicationListeners>
 </idea-plugin>
