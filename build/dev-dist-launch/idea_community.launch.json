@@ -103,7 +103,6 @@
       "-XX:TieredOldPercentage=100000",
       "-XX:+UseCompactObjectHeaders",
       "--sun-misc-unsafe-memory-access=allow",
-      "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
       "-Dsun.io.useCanonCaches=false",
       "-Dsun.java2d.metal=true",
@@ -131,7 +130,6 @@
       "-XX:TieredOldPercentage=100000",
       "-XX:+UseCompactObjectHeaders",
       "--sun-misc-unsafe-memory-access=allow",
-      "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
       "-Dsun.io.useCanonCaches=false",
       "-Dsun.java2d.metal=true",
@@ -160,7 +158,6 @@
       "-XX:TieredOldPercentage=100000",
       "-XX:+UseCompactObjectHeaders",
       "--sun-misc-unsafe-memory-access=allow",
-      "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
       "-Dsun.io.useCanonCaches=false",
       "-Dsun.java2d.metal=true",
@@ -182,6 +179,6 @@
   },
   "ideaProperties": {
     "settingsDir": "IdeaIC",
-    "suffix": "\n#-----------------------------------------------------------------------\n# Change to 'disabled' if you don't want to receive instant visual notifications\n# about fatal errors that happen to an IDE or plugins installed.\n#-----------------------------------------------------------------------\nidea.fatal.error.notification=enabled\n"
+    "fatalErrorNotification": true
   }
 }

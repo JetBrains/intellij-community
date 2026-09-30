@@ -69,16 +69,25 @@ internal fun generateVmOptions(
   }
   result += additionalVmOptions
   if (isEAP) {
-    var index = result.indexOf("-ea")
-    if (index < 0) index = result.indexOfFirst { it.startsWith("-D") }
-    if (index < 0) index = result.size
-    result.add(index, "-XX:MaxJavaStackTraceDepth=10000")  // must be consistent with `ConfigImportHelper#updateVMOptions`
+    insertEapVmOptions(result)
   }
   if (isHeadless) {
     result.removeIf { it.contains("awt.") || it.contains("swing.") || it.contains("java2d.") || it.contains("skiko.") }
     result += "-Djava.awt.headless=true"
   }
   return result
+}
+
+/**
+ * Inserts the line that an EAP build adds: before `-ea`, else before the first `-D` line, else at the end.
+ *
+ * The tool `product-files` ports this rule, because the dev-dist launch model states no EAP flag.
+ */
+internal fun insertEapVmOptions(vmOptions: MutableList<String>) {
+  var index = vmOptions.indexOf("-ea")
+  if (index < 0) index = vmOptions.indexOfFirst { it.startsWith("-D") }
+  if (index < 0) index = vmOptions.size
+  vmOptions.add(index, "-XX:MaxJavaStackTraceDepth=10000")  // must be consistent with `ConfigImportHelper#updateVMOptions`
 }
 
 private fun customPluginRepositoryOptions(context: BuildContext): List<String> {

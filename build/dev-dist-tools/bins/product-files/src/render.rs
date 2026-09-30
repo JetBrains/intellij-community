@@ -65,8 +65,12 @@ pub(crate) fn render_launch_files(
         bail!("the model states no vmoptions for {}", target.os);
     };
     let separator = if target.os == OS_WINDOWS { "\r\n" } else { "\n" };
+    let mut vm_options = vm_options.clone();
+    if product.application_info.is_eap {
+        insert_eap_vm_options(&mut vm_options);
+    }
     let mut vm_options_text = String::new();
-    for line in vm_options {
+    for line in &vm_options {
         if !line.is_ascii() {
             bail!("the vmoptions line {line:?} is not ASCII");
         }
@@ -76,19 +80,53 @@ pub(crate) fn render_launch_files(
     let product_info = render_product_info(product, target, &opened_packages(opened_packages_file, target.os)?)?;
     Ok(LaunchFiles {
         build_txt: format!("{}-{}", model.product_code, product.build_number),
-        idea_properties: render_idea_properties(&model.idea_properties, idea_properties_base),
+        idea_properties: render_idea_properties(&model.idea_properties, idea_properties_base, product.application_info.is_eap),
         vm_options: vm_options_text,
         product_info,
     })
 }
 
-fn render_idea_properties(properties: &IdeaProperties, base: &str) -> String {
+/// `insertEapVmOptions` of `VmOptionsGenerator.kt`: the line of an EAP build goes before `-ea`, else before the first
+/// `-D` line, else at the end.
+pub(crate) fn insert_eap_vm_options(lines: &mut Vec<String>) {
+    let index = lines
+        .iter()
+        .position(|line| line == "-ea")
+        .or_else(|| lines.iter().position(|line| line.starts_with("-D")))
+        .unwrap_or(lines.len());
+    // It must be consistent with `ConfigImportHelper#updateVMOptions`.
+    lines.insert(index, "-XX:MaxJavaStackTraceDepth=10000".to_owned());
+}
+
+/// The block of `ideaPropertiesFatalErrorNotification` (`BuildTasksImpl.kt`) for an EAP build.
+const FATAL_ERROR_NOTIFICATION_EAP: &str = "\n#-----------------------------------------------------------------------\n\
+# Change to 'disabled' if you don't want to receive instant visual notifications\n\
+# about fatal errors that happen to an IDE or plugins installed.\n\
+#-----------------------------------------------------------------------\n\
+idea.fatal.error.notification=enabled\n";
+
+/// The block of `ideaPropertiesFatalErrorNotification` (`BuildTasksImpl.kt`) for a release build.
+const FATAL_ERROR_NOTIFICATION_RELEASE: &str = "\n#-----------------------------------------------------------------------\n\
+# Change to 'enabled' if you want to receive instant visual notifications\n\
+# about fatal errors that happen to an IDE or plugins installed.\n\
+#-----------------------------------------------------------------------\n\
+idea.fatal.error.notification=disabled\n";
+
+fn render_idea_properties(properties: &IdeaProperties, base: &str, is_eap: bool) -> String {
     let mut text = base.to_owned();
     for addition in &properties.additions {
         text.push('\n');
         text.push_str(addition);
     }
-    text.replace("@@settings_dir@@", &properties.settings_dir) + &properties.suffix
+    let mut text = text.replace("@@settings_dir@@", &properties.settings_dir);
+    if properties.fatal_error_notification {
+        text.push_str(if is_eap {
+            FATAL_ERROR_NOTIFICATION_EAP
+        } else {
+            FATAL_ERROR_NOTIFICATION_RELEASE
+        });
+    }
+    text
 }
 
 /// `JavaModuleOptions.readOptions` of the `OpenedPackages.txt` text for `os`: every line, minus the lines that name a

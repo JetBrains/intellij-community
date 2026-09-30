@@ -52,6 +52,6 @@
       "b=1"
     ],
     "settingsDir": "IntelliJIdea",
-    "suffix": "#end\n"
+    "fatalErrorNotification": true
   }
 }

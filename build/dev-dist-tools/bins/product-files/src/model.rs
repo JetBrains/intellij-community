@@ -8,7 +8,8 @@
 //! Thus the parser refuses a model that sets one as an unknown field.
 //!
 //! The model states no fact of the application info and no build number. The tool reads them from the declared
-//! sources, so the parser also refuses a model that states `version`, `versionSuffix` or `linuxStartupWmClass`.
+//! sources, so the parser also refuses a model that states `version`, `versionSuffix` or `linuxStartupWmClass`. The
+//! EAP flag decides the fatal error block of `idea.properties`, so the parser refuses its old field `suffix` too.
 
 use std::collections::HashMap;
 
@@ -31,7 +32,7 @@ pub(crate) struct LaunchModel {
     pub launch: LaunchCommand,
     #[serde(default)]
     pub custom_commands: Vec<CustomCommand>,
-    /// The lines of the vmoptions file, keyed by `OsFamily.osName`.
+    /// The lines of the vmoptions file of a release build, keyed by `OsFamily.osName`. An EAP build inserts one line.
     pub vm_options: HashMap<String, Vec<String>>,
     pub idea_properties: IdeaProperties,
 }
@@ -104,7 +105,7 @@ pub(crate) struct JvmArguments {
 }
 
 /// The parts of `bin/idea.properties`: the base file, then each addition after a newline, with `@@settings_dir@@`
-/// replaced by `settings_dir`, then `suffix`.
+/// replaced by `settings_dir`, then the fatal error block when `fatal_error_notification` is set.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct IdeaProperties {
@@ -116,8 +117,9 @@ pub(crate) struct IdeaProperties {
     #[serde(default)]
     pub additions: Vec<String>,
     pub settings_dir: String,
+    /// Appends the fatal error block, whose text follows the EAP flag of the application info.
     #[serde(default)]
-    pub suffix: String,
+    pub fatal_error_notification: bool,
 }
 
 pub(crate) fn parse_launch_model(text: &[u8]) -> anyhow::Result<LaunchModel> {

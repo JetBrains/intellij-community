@@ -91,7 +91,6 @@
       "x=@@settings_dir@@/x",
       ""
     ],
-    "settingsDir": "IntelliJServer",
-    "suffix": ""
+    "settingsDir": "IntelliJServer"
   }
 }

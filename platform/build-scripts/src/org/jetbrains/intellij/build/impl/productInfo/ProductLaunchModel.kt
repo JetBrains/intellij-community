@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.generateVmOptions
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.hasIcnsForFrontendMacApp
-import org.jetbrains.intellij.build.impl.ideaPropertiesFatalErrorNotification
 import org.jetbrains.intellij.build.impl.ideaPropertiesSettingsDir
 import org.jetbrains.intellij.build.impl.osVmOptions
 import org.jetbrains.intellij.build.impl.stdioMcpRunner.STDIO_MCP_RUNNER_BOOT_CLASS_PATH_JAR_NAMES
@@ -42,9 +41,10 @@ import java.nio.file.Files
  * model of each split product as JSON, and the tool `product-files` renders the four files of one OS and
  * architecture from it. They must be the files that the production writers write, byte for byte.
  *
- * The model states the facts of the product code. It states no fact of the application info and no build number. The
- * tool reads the application info sources and `build.txt` for the names, the version, the suffix, the icon, the vendor,
- * the release date and the Linux window class.
+ * The model states no value that the version, the suffix, the release date or the EAP flag of the application info decide.
+ * It keeps the product code, the vendor, the environment variable name and the data directory name. Product Kotlin can
+ * override each, and only a major bump changes them. The tool reads the application info sources and `build.txt` for the
+ * names, the version, the suffix, the icon, the release date, the EAP flag and the Linux window class.
  */
 @ApiStatus.Internal
 @Serializable
@@ -62,7 +62,10 @@ data class ProductLaunchModel(
   @JvmField val languageServer: Boolean = false,
   @JvmField val launch: ProductLaunchCommand,
   @JvmField val customCommands: List<ProductLaunchCustomCommand> = emptyList(),
-  /** The lines of the vmoptions file, keyed by [OsFamily.osName]. */
+  /**
+   * The lines of the vmoptions file of a release build, keyed by [OsFamily.osName]. The tool inserts the line of an EAP
+   * build, see [org.jetbrains.intellij.build.impl.insertEapVmOptions].
+   */
   @JvmField val vmOptions: Map<String, List<String>>,
   @JvmField val ideaProperties: ProductLaunchIdeaProperties,
 )
@@ -137,7 +140,7 @@ data class ProductJvmArguments(
 
 /**
  * The parts of `bin/idea.properties`: the base file, then each of [additions] after a newline, with
- * `@@settings_dir@@` replaced by [settingsDir], then [suffix].
+ * `@@settings_dir@@` replaced by [settingsDir].
  */
 @ApiStatus.Internal
 @Serializable
@@ -146,7 +149,8 @@ data class ProductLaunchIdeaProperties(
   @JvmField val languageServerBase: Boolean = false,
   @JvmField val additions: List<String> = emptyList(),
   @JvmField val settingsDir: String,
-  @JvmField val suffix: String = "",
+  /** When set, the tool appends `ideaPropertiesFatalErrorNotification(isEAP)` with the EAP flag of the application info. */
+  @JvmField val fatalErrorNotification: Boolean = false,
 )
 
 /** One product as a build context sees it, which [computeProductLaunchModel] reads instead of the context. */
@@ -203,7 +207,11 @@ fun computeProductLaunchModel(
   val applicationInfo = product.applicationInfo
   val bundledRuntimeVersion = bundledRuntimeBuild.takeWhile { it != '.' }.toInt()
   val jvmArguments = productJvmArguments(product, bundledRuntimeVersion)
-  val frontendMacIcon = hasIcnsForFrontendMacApp(properties.imagesDirectoryPath, applicationInfo.isEAP)
+  val frontendMacIcon = hasIcnsForFrontendMacApp(properties.imagesDirectoryPath, isEap = false)
+  check(frontendMacIcon == hasIcnsForFrontendMacApp(properties.imagesDirectoryPath, isEap = true)) {
+    "${properties.imagesDirectoryPath} must hold both product_frontend.icns and product_frontend_EAP.icns or neither, " +
+    "because the launch model states no EAP flag"
+  }
 
   fun frontendCommand(commands: List<String>, frontend: ProductLaunchInputs, extraJvmArguments: List<String>): ProductLaunchCustomCommand {
     return ProductLaunchCustomCommand(
@@ -265,7 +273,7 @@ fun computeProductLaunchModel(
     customCommands = customCommands,
     vmOptions = OsFamily.ALL.associate { os ->
       os.osName to generateVmOptions(
-        isEAP = applicationInfo.isEAP,
+        isEAP = false,
         customMemoryVmOptions = properties.customJvmMemoryOptions,
         additionalVmOptions = buildList {
           addAll(properties.additionalVmOptions)
@@ -280,7 +288,7 @@ fun computeProductLaunchModel(
       languageServerBase = product.isLanguageServer,
       additions = properties.additionalIDEPropertiesFilePaths.map { Files.readString(it) },
       settingsDir = ideaPropertiesSettingsDir(product.systemSelector),
-      suffix = if (product.isLanguageServer) "" else ideaPropertiesFatalErrorNotification(applicationInfo.isEAP),
+      fatalErrorNotification = !product.isLanguageServer,
     ),
   )
 }

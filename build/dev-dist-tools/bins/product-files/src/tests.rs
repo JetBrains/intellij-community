@@ -8,8 +8,8 @@ use serde_json::Value;
 
 use crate::model::{JvmArguments, LaunchModel, parse_launch_model};
 use crate::render::{
-    LaunchFiles, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, opened_packages, parse_platform,
-    render_launch_files,
+    LaunchFiles, OS_LINUX, OS_MAC, OS_WINDOWS, Platform, Product, additional_jvm_arguments, insert_eap_vm_options, opened_packages,
+    parse_platform, render_launch_files,
 };
 use crate::run;
 
@@ -61,6 +61,31 @@ const IDEA: Fixture = Fixture {
     replacements: &[],
     build_number: "build.txt",
 };
+
+/// A release product with a release date.
+const RELEASE: Fixture = Fixture {
+    model: "model.json",
+    application_info: "release",
+    replacements: &[],
+    build_number: "build.txt",
+};
+
+/// The fatal error block of an EAP build, as `ideaPropertiesFatalErrorNotification` writes it.
+const EAP_BLOCK: &str = "\n#-----------------------------------------------------------------------\n\
+# Change to 'disabled' if you don't want to receive instant visual notifications\n\
+# about fatal errors that happen to an IDE or plugins installed.\n\
+#-----------------------------------------------------------------------\n\
+idea.fatal.error.notification=enabled\n";
+
+/// The fatal error block of a release build.
+const RELEASE_BLOCK: &str = "\n#-----------------------------------------------------------------------\n\
+# Change to 'enabled' if you want to receive instant visual notifications\n\
+# about fatal errors that happen to an IDE or plugins installed.\n\
+#-----------------------------------------------------------------------\n\
+idea.fatal.error.notification=disabled\n";
+
+/// The line that an EAP build inserts into the vmoptions.
+const EAP_LINE: &str = "-XX:MaxJavaStackTraceDepth=10000";
 
 /// A language server whose markers state the EAP flag and the product name.
 const SERVER: Fixture = Fixture {
@@ -247,8 +272,9 @@ fn rendered_files_of_one_model() {
         )
         .unwrap();
     assert_eq!(files.build_txt, "IU-263.SNAPSHOT");
-    assert_eq!(files.idea_properties, "a=IntelliJIdea\n\nb=1#end\n");
-    assert_eq!(files.vm_options, "-Xmx2048m\n-Dx=linux\n");
+    // The fixture is EAP and states no `-ea`, so the EAP line goes before the first `-D` line.
+    assert_eq!(files.idea_properties, format!("a=IntelliJIdea\n\nb=1{EAP_BLOCK}"));
+    assert_eq!(files.vm_options, format!("-Xmx2048m\n{EAP_LINE}\n-Dx=linux\n"));
     let info = &files.product_info;
     assert!(
         !info.ends_with('\n'),
@@ -293,6 +319,7 @@ fn product_info_matches_the_recorded_bytes_on_every_platform() {
 
 #[test]
 fn full_model_renders_the_other_three_files() {
+    // The server is a release build and a language server, so it gets no EAP line and no fatal error block.
     let model = test_model(SERVER.model);
     let windows = SERVER.render(&model, "windows_x64", "", "a=@@settings_dir@@\n").unwrap();
     assert_eq!(windows.build_txt, "IIS-263.1234");
@@ -300,6 +327,37 @@ fn full_model_renders_the_other_three_files() {
     assert_eq!(windows.idea_properties, "a=IntelliJServer\n\nx=IntelliJServer/x\n");
     let linux = SERVER.render(&model, "linux_x64", "", "").unwrap();
     assert_eq!(linux.vm_options, "");
+}
+
+/// The EAP flag of the application info decides the vmoptions line and the fatal error block. The model states neither.
+#[test]
+fn eap_parts_follow_the_application_info() {
+    let mut model = test_model(IDEA.model);
+    model
+        .vm_options
+        .insert(OS_MAC.to_owned(), strings(&["-Xmx2048m", "-XX:+A", "-ea", "-Dx=mac"]));
+    let eap = IDEA.render(&model, "darwin_aarch64", "", "a=@@settings_dir@@\n").unwrap();
+    assert_eq!(eap.vm_options, format!("-Xmx2048m\n-XX:+A\n{EAP_LINE}\n-ea\n-Dx=mac\n"));
+    assert_eq!(eap.idea_properties, format!("a=IntelliJIdea\n\nb=1{EAP_BLOCK}"));
+
+    let release = RELEASE.render(&model, "darwin_aarch64", "", "a=@@settings_dir@@\n").unwrap();
+    assert_eq!(release.vm_options, "-Xmx2048m\n-XX:+A\n-ea\n-Dx=mac\n");
+    assert_eq!(release.idea_properties, format!("a=IntelliJIdea\n\nb=1{RELEASE_BLOCK}"));
+    let info: Value = serde_json::from_str(&release.product_info).unwrap();
+    assert_eq!(
+        (&info["versionSuffix"], &info["majorVersionReleaseDate"]),
+        (&Value::Null, &Value::from("20261201"))
+    );
+
+    // A model without the flag gets no block, whatever the application info states.
+    model.idea_properties.fatal_error_notification = false;
+    let eap = IDEA.render(&model, "darwin_aarch64", "", "a=@@settings_dir@@\n").unwrap();
+    assert_eq!(eap.idea_properties, "a=IntelliJIdea\n\nb=1");
+
+    // With neither `-ea` nor a `-D` line, the EAP line goes to the end.
+    let mut lines = strings(&["-Xmx2048m", "-XX:+A"]);
+    insert_eap_vm_options(&mut lines);
+    assert_eq!(lines, strings(&["-Xmx2048m", "-XX:+A", EAP_LINE]));
 }
 
 #[test]
@@ -337,6 +395,8 @@ fn render_refusals() {
         (r#""productVendor": "JetBrains""#, "productVendor"),
         (r#""majorVersionReleaseDate": "20260101""#, "majorVersionReleaseDate"),
         (r#""launch": {"linuxStartupWmClass": "jetbrains-idea"}"#, "linuxStartupWmClass"),
+        // The EAP flag of the application info decides the fatal error block.
+        (r#""ideaProperties": {"suffix": "x"}"#, "suffix"),
     ] {
         let error = parse_launch_model(format!(r#"{{"productCode": "IU", {field}}}"#).as_bytes()).unwrap_err();
         assert!(
@@ -392,11 +452,14 @@ fn the_tool_writes_the_four_files() {
     let result = run_tool(&args);
     assert_eq!(result.code, 0, "{}", result.errors);
     assert_eq!(result.output, format!("Rendered the launch files of {model} for darwin_aarch64\n"));
-    assert_eq!(std::fs::read_to_string(out("out.vmoptions")).unwrap(), "-Xmx2048m\n-Dx=mac\n");
+    assert_eq!(
+        std::fs::read_to_string(out("out.vmoptions")).unwrap(),
+        format!("-Xmx2048m\n{EAP_LINE}\n-Dx=mac\n")
+    );
     assert_eq!(std::fs::read_to_string(out("build.txt")).unwrap(), "IU-263.SNAPSHOT");
     assert_eq!(
         std::fs::read_to_string(out("out.properties")).unwrap(),
-        "a=IntelliJIdea\n\nb=1#end\n"
+        format!("a=IntelliJIdea\n\nb=1{EAP_BLOCK}")
     );
 
     let result = run_tool(&args[..1]);

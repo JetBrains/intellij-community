@@ -39,7 +39,8 @@ dev_dist_product_files = rule(
     output. The component that places them maps each one to its path in the distribution. The action reads the launch
     model, the application info sources, `build.txt`, `OpenedPackages.txt` and one `idea.properties`, and nothing else.
     So it does not read the project model. The launch model states no fact of the application info and no build number.
-    The action derives them from the declared sources, so an edit of the version or the suffix changes no generated file.
+    The action derives them from the declared sources. So an edit of the version, the suffix, the release date or the EAP
+    flag changes no generated file.
     """,
     implementation = _dev_dist_product_files_impl,
     attrs = {
