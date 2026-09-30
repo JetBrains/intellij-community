@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.markdown" type="repository">
-        <properties maven-id="org.jetbrains:markdown-jvm:0.7.15">
+        <properties maven-id="org.jetbrains:markdown-jvm:0.7.16">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.15/markdown-jvm-0.7.15.jar">
-              <sha256sum>108f094927f176391aac6c41b2e7c4f49db1d8a97448c116157705e8bfe71ac4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.16/markdown-jvm-0.7.16.jar">
+              <sha256sum>62ff33e1acf5191b9309735cac4b9bf2e8cf03e4326448c93586026bfc0de94c</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -21,11 +21,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.15/markdown-jvm-0.7.15.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.16/markdown-jvm-0.7.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.15/markdown-jvm-0.7.15-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.7.16/markdown-jvm-0.7.16-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

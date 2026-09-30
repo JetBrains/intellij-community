@@ -26,9 +26,7 @@ import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 
-private fun ASTNode.isBlockQuoteContinuationWhitespace(): Boolean {
-  return elementType in MarkdownTokenTypeSets.WHITE_SPACES && text.contains('>')
-}
+private fun ASTNode.isBlockQuoteContinuationMarker(): Boolean = elementType == MarkdownTokenTypes.BLOCK_QUOTE
 
 /**
  * Formatting block used by markdown plugin
@@ -85,11 +83,10 @@ internal open class MarkdownFormattingBlock(
     if (node.elementType == MarkdownElementTypes.CODE_FENCE) {
       return Spacing.getReadOnlySpacing()
     }
-    val continuation = (child1 as? AbstractBlock)?.node?.takeIf { it.isBlockQuoteContinuationWhitespace() }
-    if (node.elementType == MarkdownElementTypes.LIST_ITEM && continuation != null
-        && (child2 as? AbstractBlock)?.node?.elementType in MarkdownTokenTypeSets.LISTS) {
-      val spaces = continuation.text.substringAfter('>').length.coerceAtLeast(1)
-      return Spacing.createSpacing(spaces, spaces, 0, false, 0)
+    // The spaces after a `>` inside a list set the list nesting of that line
+    if ((node.elementType == MarkdownElementTypes.LIST_ITEM || node.elementType in MarkdownTokenTypeSets.LISTS)
+        && (child1 as? AbstractBlock)?.node?.isBlockQuoteContinuationMarker() == true) {
+      return Spacing.getReadOnlySpacing()
     }
     val result = spacing.getSpacing(this, child1, child2)
     if (result != null && isTextGluedToFollowingInline(child1, child2)) {
@@ -155,7 +152,7 @@ internal open class MarkdownFormattingBlock(
         val hasTableChild = node.children().any { it.elementType == MarkdownElementTypes.TABLE }
         val nonAlignable = if (hasTableChild) MarkdownTokenTypeSets.LIST_MARKERS else NON_ALIGNABLE_LIST_ELEMENTS
         MarkdownBlocks.create(node.children(), settings, spacing) {
-          if (it.elementType in nonAlignable || it.isBlockQuoteContinuationWhitespace()) alignment else newAlignment
+          if (it.elementType in nonAlignable || it.isBlockQuoteContinuationMarker()) alignment else newAlignment
         }.toList()
       }
       MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.BLOCK_QUOTE -> {

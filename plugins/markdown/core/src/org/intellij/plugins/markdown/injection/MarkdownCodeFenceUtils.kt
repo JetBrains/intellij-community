@@ -49,8 +49,7 @@ object MarkdownCodeFenceUtils {
       (it !is OuterLanguageElement
        && (it.node.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT
            || (MarkdownPsiUtil.WhiteSpaces.isNewLine(it))
-           //WHITE_SPACES may also include `>`
-           || (withWhitespaces && MarkdownTokenTypeSets.WHITE_SPACES.contains(it.elementType))
+           || (withWhitespaces && isLinePrefix(it))
           )
       )
     }.toList()
@@ -62,13 +61,16 @@ object MarkdownCodeFenceUtils {
     if (elements.isNotEmpty() && MarkdownPsiUtil.WhiteSpaces.isNewLine(elements.last())) {
       elements = elements.dropLast(1)
     }
-    //also drop a trailing blockquote-prefix WHITE_SPACE so the range stays aligned with the decoded content
-    if (withWhitespaces && elements.isNotEmpty()
-        && MarkdownTokenTypeSets.WHITE_SPACES.contains(elements.last().elementType)
-        && !MarkdownPsiUtil.WhiteSpaces.isNewLine(elements.last())) {
-      elements = elements.dropLast(1)
+    //also drop a trailing blockquote prefix so the range stays aligned with the decoded content
+    if (withWhitespaces) {
+      elements = elements.dropLastWhile { isLinePrefix(it) && !MarkdownPsiUtil.WhiteSpaces.isNewLine(it) }
     }
     return elements.takeIf { it.isNotEmpty() }
+  }
+
+  /** The whitespace and the `>` of the block quotes before a code fence line */
+  private fun isLinePrefix(element: PsiElement): Boolean {
+    return element.elementType in MarkdownTokenTypeSets.WHITE_SPACES || element.elementType == MarkdownTokenTypes.BLOCK_QUOTE
   }
 
   /**
