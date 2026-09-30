@@ -201,5 +201,7 @@
       <runLineMarkerContributor language="Markdown" implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownRunLineMarkersProvider"/>
 
       <treeStructureProvider implementation="com.intellij.markdown.backend.projectTree.MarkdownTreeStructureProvider"/>
+
+      <useScopeEnlarger implementation="com.intellij.markdown.backend.lang.references.MarkdownReferenceUseScopeEnlarger"/>
     </extensions>
 </idea-plugin>
