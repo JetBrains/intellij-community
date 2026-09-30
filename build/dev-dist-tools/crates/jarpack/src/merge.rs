@@ -5,9 +5,7 @@ use std::collections::HashSet;
 use std::fmt;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, LazyLock};
-
-use regex::bytes::{NoExpand, Regex};
+use std::sync::Arc;
 
 use crate::error::{Error, IoContext, Result, bail, invalid};
 use crate::nativelib::{self, extension};
@@ -431,15 +429,61 @@ pub(crate) fn trim_entity_list<'a>(data: &'a [u8], source: &Path) -> Result<&'a 
     Ok(text.trim_matches(|value: char| value != '\u{85}' && (value.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&value))))
 }
 
-/// The `Boot-Class-Path` of a coverage agent jar. `[0-9]` stands for the Go `\d`, which is ASCII only.
-static COVERAGE_AGENT_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"Boot-Class-Path: intellij-coverage-agent-[0-9]+(\.[0-9]+)*\.jar").expect("a valid pattern"));
+/// The literal start of the `Boot-Class-Path` of a coverage agent jar.
+const COVERAGE_AGENT_ATTRIBUTE: &[u8] = b"Boot-Class-Path: intellij-coverage-agent-";
+
+/// The `Boot-Class-Path` that names the merged jar.
+const MERGED_COVERAGE_AGENT_ATTRIBUTE: &[u8] = b"Boot-Class-Path: intellij.platform.coverage.agent.jar";
 
 /// Points the manifest of a coverage agent at the jar it is in. The agent instruments from any class loader, and for
 /// that the attribute must name its own jar. The merge into `lib/<module>.jar` renames it. A manifest without the
 /// attribute comes back unchanged.
+///
+/// The function replaces each non-overlapping match of the Go pattern
+/// `Boot-Class-Path: intellij-coverage-agent-\d+(\.\d+)*\.jar` from the left, as the Go `ReplaceAll` did. The Go `\d` is
+/// ASCII only. It is written by hand, because a crate dependency in the packer re-keys every packing action when the
+/// crate changes.
 pub(crate) fn replace_coverage_agent(data: &[u8]) -> Vec<u8> {
-    COVERAGE_AGENT_PATTERN
-        .replace_all(data, NoExpand(b"Boot-Class-Path: intellij.platform.coverage.agent.jar"))
-        .into_owned()
+    let mut replaced = Vec::with_capacity(data.len());
+    let mut copied = 0;
+    let mut search = 0;
+    while let Some(start) = find(&data[search..], COVERAGE_AGENT_ATTRIBUTE).map(|offset| search + offset) {
+        let version_start = start + COVERAGE_AGENT_ATTRIBUTE.len();
+        match version_and_jar_length(&data[version_start..]) {
+            Some(length) => {
+                replaced.extend_from_slice(&data[copied..start]);
+                replaced.extend_from_slice(MERGED_COVERAGE_AGENT_ATTRIBUTE);
+                copied = version_start + length;
+                search = copied;
+            }
+            None => search = start + 1,
+        }
+    }
+    replaced.extend_from_slice(&data[copied..]);
+    replaced
+}
+
+/// The length of `\d+(\.\d+)*\.jar` at the start of `text`, or `None`.
+///
+/// The greedy scan gives the only possible match. A shorter version leaves a digit or a `.` and a digit before `.jar`,
+/// and `.jar` cannot start there.
+fn version_and_jar_length(text: &[u8]) -> Option<usize> {
+    let digits = |from: usize| text[from..].iter().take_while(|byte| byte.is_ascii_digit()).count();
+    let mut end = digits(0);
+    if end == 0 {
+        return None;
+    }
+    while text.get(end) == Some(&b'.') {
+        let more = digits(end + 1);
+        if more == 0 {
+            break;
+        }
+        end += 1 + more;
+    }
+    text[end..].starts_with(b".jar").then_some(end + ".jar".len())
+}
+
+/// The position of the first `needle` in `haystack`.
+fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    haystack.windows(needle.len()).position(|window| window == needle)
 }

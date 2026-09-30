@@ -15,7 +15,6 @@ flate2.workspace = true
 crc32fast.workspace = true
 distpath.workspace = true
 filemeta.workspace = true
-regex.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]

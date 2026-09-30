@@ -1,5 +1,4 @@
 adler2
-aho_corasick
 anyhow
 cfg_if
 crc32fast
@@ -27,9 +26,6 @@ once_cell
 pin_project_lite
 rayon
 rayon_core
-regex
-regex_automata
-regex_syntax
 same_file
 serde
 serde_core

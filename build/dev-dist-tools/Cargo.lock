@@ -399,7 +399,6 @@ dependencies = [
  "filemeta",
  "flate2",
  "memmap2",
- "regex",
  "sha2",
  "tempfile",
  "thiserror",

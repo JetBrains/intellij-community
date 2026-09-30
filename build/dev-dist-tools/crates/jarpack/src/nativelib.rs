@@ -4,9 +4,6 @@
 //! entry. They also select the entries of a target platform and give the path of each one under `lib/native`.
 
 use std::fmt;
-use std::sync::LazyLock;
-
-use regex::Regex;
 
 use crate::error::{Result, bail};
 
@@ -88,17 +85,57 @@ impl fmt::Display for Arch {
     }
 }
 
-/// The family pattern of `OsFamilyDetector`, tried at the leftmost position first and then in the order of its
-/// alternatives. The Kotlin `IGNORE_CASE` also folds U+017F LATIN SMALL LETTER LONG S to `s`. This pattern folds ASCII
-/// case only, so [`select`] refuses an entry that is not ASCII.
-static FAMILY_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(concat!(
-        r"(?i-u)(?:^|-|/)",
-        r"(?:(?P<macos>(?:darwin|mac|macos)[-/])|(?P<win>win32-|(?:win|windows)[-/])",
-        r"|(?P<android>linux-(?:android|musl)/)|(?P<linux>linux[-/]))"
-    ))
-    .expect("a valid pattern")
-});
+/// A token of the `OsFamilyDetector` pattern: one family, or an Android or a Musl token, which names no family.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum FamilyToken {
+    Family(Family),
+    NoFamily,
+}
+
+/// Finds the family token of `entry_path` as the `OsFamilyDetector` pattern finds it, and returns the token and its
+/// start. The pattern, with the Kotlin `IGNORE_CASE`, is:
+///
+/// ```text
+/// (^|-|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>linux-(android|musl)/)|(?<linux>linux[-/]))
+/// ```
+///
+/// It is written by hand, because a crate dependency in the packer re-keys every packing action when the crate changes.
+/// It gives the answer of a leftmost-first match. A token can start at 0 or after a `-` or a `/`. The leftmost start
+/// that one alternative matches wins, and at that start the first alternative in the pattern order wins.
+///
+/// The Kotlin `IGNORE_CASE` also folds U+017F LATIN SMALL LETTER LONG S to `s`. This function folds ASCII case only, so
+/// [`select`] refuses an entry that is not ASCII. A non-ASCII byte matches no token, and every start is a character
+/// boundary.
+pub(crate) fn find_family_token(entry_path: &str) -> Option<(FamilyToken, usize)> {
+    let bytes = entry_path.as_bytes();
+    (0..bytes.len())
+        .filter(|&start| start == 0 || matches!(bytes[start - 1], b'-' | b'/'))
+        .find_map(|start| family_token_at(&bytes[start..]).map(|token| (token, start)))
+}
+
+/// The first alternative of the family pattern that matches at the start of `text`, in the pattern order.
+fn family_token_at(text: &[u8]) -> Option<FamilyToken> {
+    let word_and_separator = |word: &str| starts_with_ignore_ascii_case(text, word) && matches!(text.get(word.len()), Some(b'-' | b'/'));
+    if ["darwin", "mac", "macos"].into_iter().any(word_and_separator) {
+        Some(FamilyToken::Family(Family::MacOS))
+    } else if starts_with_ignore_ascii_case(text, "win32-") || ["win", "windows"].into_iter().any(word_and_separator) {
+        Some(FamilyToken::Family(Family::Windows))
+    } else if ["linux-android/", "linux-musl/"]
+        .into_iter()
+        .any(|token| starts_with_ignore_ascii_case(text, token))
+    {
+        Some(FamilyToken::NoFamily)
+    } else if word_and_separator("linux") {
+        Some(FamilyToken::Family(Family::Linux))
+    } else {
+        None
+    }
+}
+
+fn starts_with_ignore_ascii_case(text: &[u8], prefix: &str) -> bool {
+    text.get(..prefix.len())
+        .is_some_and(|head| head.eq_ignore_ascii_case(prefix.as_bytes()))
+}
 
 /// `OsFamilyDetector.detectOsFamily`. It returns the family of the entry and the path prefix before the family token,
 /// or `None` for an entry of no family. An Android or a Musl entry has no family.
@@ -127,10 +164,10 @@ pub(crate) fn detect_os_family(entry_path: &str) -> Option<(Family, &str)> {
         };
     }
     // The leftmost match decides. An Android or a Musl match has no family, also when a later token names one.
-    let captures = FAMILY_PATTERN.captures(entry_path)?;
-    [("macos", Family::MacOS), ("win", Family::Windows), ("linux", Family::Linux)]
-        .into_iter()
-        .find_map(|(group, family)| captures.name(group).map(|token| (family, &entry_path[..token.start()])))
+    match find_family_token(entry_path)? {
+        (FamilyToken::Family(family), start) => Some((family, &entry_path[..start])),
+        (FamilyToken::NoFamily, _) => None,
+    }
 }
 
 /// `determineArch`: the architecture of an entry from its directory, or `None` for an entry that names none.

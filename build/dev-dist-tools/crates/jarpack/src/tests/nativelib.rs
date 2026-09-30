@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use crate::nativelib::{
-    Arch, Family, Match, detect_os_family, determine_arch, is_executable, is_native_entry, lib_name_from_file, parse_variant,
-    relative_path, select,
+    Arch, Family, FamilyToken, Match, detect_os_family, determine_arch, find_family_token, is_executable, is_native_entry,
+    lib_name_from_file, parse_variant, relative_path, select,
 };
 
 /// The native entries of `org.sqlite:native` in their central-directory order.
@@ -54,6 +54,72 @@ fn detect_os_family_follows_the_kotlin_regexes() {
         ("a/macx/libx.dylib", None),
     ] {
         assert_eq!(detect_os_family(entry), want, "{entry}");
+    }
+}
+
+/// The cases of the hand-written family matcher: every alternative, the order of the alternatives at one start, the
+/// leftmost start, the ASCII case folding, and a token that is a prefix of another.
+#[test]
+fn the_family_token_is_the_leftmost_first_match_of_the_pattern() {
+    const MACOS: Option<(FamilyToken, usize)> = Some((FamilyToken::Family(Family::MacOS), 2));
+    const WINDOWS: Option<(FamilyToken, usize)> = Some((FamilyToken::Family(Family::Windows), 2));
+    const LINUX: Option<(FamilyToken, usize)> = Some((FamilyToken::Family(Family::Linux), 2));
+    const NO_FAMILY: Option<(FamilyToken, usize)> = Some((FamilyToken::NoFamily, 2));
+    for (entry, want) in [
+        // Every alternative, with each separator.
+        ("a/darwin-x/l", MACOS),
+        ("a/darwin/l", MACOS),
+        ("a/mac-x/l", MACOS),
+        ("a/mac/l", MACOS),
+        ("a/macos-x/l", MACOS),
+        ("a/macos/l", MACOS),
+        ("a/win32-x/l", WINDOWS),
+        ("a/win-x/l", WINDOWS),
+        ("a/win/l", WINDOWS),
+        ("a/windows-x/l", WINDOWS),
+        ("a/windows/l", WINDOWS),
+        ("a/linux-android/l", NO_FAMILY),
+        ("a/linux-musl/l", NO_FAMILY),
+        ("a/linux-x/l", LINUX),
+        ("a/linux/l", LINUX),
+        // A token that is a prefix of another. `mac`, `win` and `linux` need a separator directly after them, and the
+        // Android and Musl tokens need a `/` after them.
+        ("a/macosx/l", None),
+        ("a/macx/l", None),
+        ("a/windowsx/l", None),
+        ("a/win64/l", None),
+        ("a/win32/l", None),
+        ("a/linux-androidx/l", LINUX),
+        ("a/linux-musl-x/l", LINUX),
+        ("a/linuxx/l", None),
+        // ASCII case folding.
+        ("a/DaRwIn/l", MACOS),
+        ("a/MACOS-x/l", MACOS),
+        ("a/WIN32-x/l", WINDOWS),
+        ("a/Windows/l", WINDOWS),
+        ("a/LINUX-MUSL/l", NO_FAMILY),
+        ("a/Linux-Android/l", NO_FAMILY),
+        ("a/LiNuX/l", LINUX),
+        // The leftmost start wins, in both orders, and a later token does not override an Android or a Musl token.
+        ("a/linux/darwin/l", LINUX),
+        ("a/darwin/linux/l", MACOS),
+        ("a/win-linux/l", WINDOWS),
+        ("a/linux-win/l", LINUX),
+        ("a/linux-musl/darwin/l", NO_FAMILY),
+        ("a/darwin/linux-musl/l", MACOS),
+        // A token starts at 0 or after a `-` or a `/`, and at 0 the start before a separator comes first.
+        ("linux/l", Some((FamilyToken::Family(Family::Linux), 0))),
+        ("-linux/l", Some((FamilyToken::Family(Family::Linux), 1))),
+        ("/darwin/l", Some((FamilyToken::Family(Family::MacOS), 1))),
+        ("a-win/l", WINDOWS),
+        ("ab/c_linux/l", None),
+        ("xlinux/l", None),
+        ("", None),
+        // A non-ASCII byte matches no token, and the start after it is a character boundary.
+        ("a/ſ-linux/l", Some((FamilyToken::Family(Family::Linux), 5))),
+        ("a/macoſ/l", None),
+    ] {
+        assert_eq!(find_family_token(entry), want, "{entry}");
     }
 }
 

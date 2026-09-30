@@ -157,6 +157,42 @@ fn coverage_rewrite_uses_the_production_pattern() {
 }
 
 #[test]
+fn coverage_rewrite_replaces_every_match_from_the_left() {
+    for (input, want) in [
+        // Two attributes, each replaced.
+        (
+            "Boot-Class-Path: intellij-coverage-agent-1.jar Boot-Class-Path: intellij-coverage-agent-2.0.jar",
+            "Boot-Class-Path: intellij.platform.coverage.agent.jar Boot-Class-Path: intellij.platform.coverage.agent.jar",
+        ),
+        // A candidate that fails does not stop the search.
+        (
+            "Boot-Class-Path: intellij-coverage-agent-x\r\nBoot-Class-Path: intellij-coverage-agent-3.jar",
+            "Boot-Class-Path: intellij-coverage-agent-x\r\nBoot-Class-Path: intellij.platform.coverage.agent.jar",
+        ),
+        // The longest version wins, and a dot after the version must start `.jar`.
+        (
+            "Boot-Class-Path: intellij-coverage-agent-10.20.30.jar!",
+            "Boot-Class-Path: intellij.platform.coverage.agent.jar!",
+        ),
+        (
+            "Boot-Class-Path: intellij-coverage-agent-1.2.ja",
+            "Boot-Class-Path: intellij-coverage-agent-1.2.ja",
+        ),
+        (
+            "Boot-Class-Path: intellij-coverage-agent-",
+            "Boot-Class-Path: intellij-coverage-agent-",
+        ),
+        ("", ""),
+    ] {
+        assert_eq!(
+            String::from_utf8(replace_coverage_agent(input.as_bytes())).unwrap(),
+            want,
+            "{input:?}"
+        );
+    }
+}
+
+#[test]
 fn prepared_entities_follow_source_order() {
     let scratch = Scratch::new();
     let file = scratch.file("prepared", b"\x1c Prepared \x1f");
