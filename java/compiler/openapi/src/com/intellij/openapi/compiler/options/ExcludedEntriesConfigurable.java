@@ -114,7 +114,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
   }
 
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     if (myExcludedEntriesPanel == null) {
       myExcludedEntriesPanel = new ExcludedEntriesPanel();
     }

@@ -14,6 +14,8 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
@@ -152,6 +154,8 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
     setElements(elements, markState);
     installActions(myTable);
+
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   private static void installActions(JTable table) {

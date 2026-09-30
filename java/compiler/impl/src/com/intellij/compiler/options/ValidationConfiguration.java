@@ -26,7 +26,7 @@ public class ValidationConfiguration implements PersistentStateComponent<JpsVali
     myProject = project;
   }
 
-  public static boolean shouldValidate(Validator validator, Project project) {
+  public static boolean shouldValidate(Validator validator, @NotNull Project project) {
     ValidationConfiguration configuration = getInstance(project);
     return (configuration.myState.VALIDATE_ON_BUILD) && configuration.isSelected(validator);
   }
@@ -62,11 +62,11 @@ public class ValidationConfiguration implements PersistentStateComponent<JpsVali
     myState.VALIDATORS.put(validatorId, selected);
   }
 
-  public static ValidationConfiguration getInstance(Project project) {
+  public static ValidationConfiguration getInstance(@NotNull Project project) {
     return project.getService(ValidationConfiguration.class);
   }
 
-  public static ExcludesConfiguration getExcludedEntriesConfiguration(Project project) {
+  public static ExcludesConfiguration getExcludedEntriesConfiguration(@NotNull Project project) {
     return project.getService(ExcludedFromValidationConfiguration.class);
   }
 
