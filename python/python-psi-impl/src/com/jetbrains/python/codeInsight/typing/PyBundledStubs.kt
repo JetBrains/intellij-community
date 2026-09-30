@@ -16,10 +16,7 @@ object PyBundledStubs {
    * The actual bundled stubs directory.
    */
   val root: VirtualFile? by lazy {
-    var helpersPath = PythonHelpersLocator.findPathStringInHelpers(BUNDLED_STUBS_PATH)
-    if (helpersPath.isEmpty()) {
-      return@lazy null
-    }
+    val helpersPath = PythonHelpersLocator.findPathStringInHelpers(BUNDLED_STUBS_PATH)
     StandardFileSystems.local().findFileByPath(helpersPath)
   }
 
