@@ -36,11 +36,11 @@ public class PyStructureViewTest extends PyTestCase {
                f(self, x)
               -B2(object)
                g(x)
-              C(B1, B2)
-              D1(C)
-              D2(C)
-              D3(lib1.C)
-              D4(foo.bar.C)
+              -C(B1, B2)
+              -D1(C)
+              -D2(C)
+              -D3(lib1.C)
+              -D4(foo.bar.C)
              """,
            false);
   }
