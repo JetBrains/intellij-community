@@ -41,6 +41,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Provides a column structure view for Big Data Tools Core.
+ * Table editors use Manage Columns instead.
+ *
  * @author Sergey.Rieder
  */
 @ApiStatus.Internal

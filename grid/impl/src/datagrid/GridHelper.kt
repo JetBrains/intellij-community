@@ -58,10 +58,12 @@ interface GridHelper : CoreGridHelper {
 
   fun getVirtualFile(grid: CoreGrid<GridRow, GridColumn>): VirtualFile?
 
+  /** Returns entries for a column structure view. */
   fun getChildrenFromModel(grid: CoreGrid<GridRow, GridColumn>): JBIterable<TreeElement> {
     return JBIterable.empty()
   }
 
+  /** Returns the location text for a structure entry. */
   fun getLocationString(element: PsiElement?): String? {
     return null
   }

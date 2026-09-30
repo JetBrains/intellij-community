@@ -5,7 +5,6 @@ import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridDataHookUp;
 import com.intellij.database.datagrid.GridRow;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -64,11 +63,6 @@ public abstract class TableEditorBase extends UserDataHolderBase implements File
   public @NotNull DatabaseTableEditorLocation getCurrentLocation() {
     //TODO provide coordinates
     return new DatabaseTableEditorLocation(this, -1, -1);
-  }
-
-  @Override
-  public @Nullable StructureViewBuilder getStructureViewBuilder() {
-    return GridStructureViewModelFactory.createBuilder(myProject, getDataGrid());
   }
 
   @Override
