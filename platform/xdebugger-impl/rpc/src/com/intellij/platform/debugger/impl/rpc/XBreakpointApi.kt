@@ -2,13 +2,10 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentPatchVersion
-import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
@@ -149,9 +146,3 @@ data class XLineBreakpointTypeInfo(
   val priority: Int,
   val supportsInterLinePlacement: Boolean,
 )
-
-
-@ApiStatus.Internal
-fun Document.patchVersion(project: Project): DocumentPatchVersion? {
-  return DocumentPatchVersionAccessor.getDocumentVersion(this, project)
-}

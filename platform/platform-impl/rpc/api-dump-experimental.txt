@@ -43,6 +43,23 @@ f:com.intellij.ide.rpc.DataContextIdKt
 f:com.intellij.ide.rpc.DocumentIdKt
 - *sf:document(com.intellij.ide.rpc.DocumentId):com.intellij.openapi.editor.Document
 - *sf:rpcId(com.intellij.openapi.editor.Document):com.intellij.ide.rpc.DocumentId
+*f:com.intellij.ide.rpc.DocumentPatchVersion
+- *sf:Companion:com.intellij.ide.rpc.DocumentPatchVersion$Companion
+- equals(java.lang.Object):Z
+- hashCode():I
+*bf:com.intellij.ide.rpc.DocumentPatchVersion$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.rpc.DocumentPatchVersion$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.rpc.DocumentPatchVersion
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.rpc.DocumentPatchVersion):V
+*f:com.intellij.ide.rpc.DocumentPatchVersion$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.ide.rpc.DocumentPatchVersionKt
+- *sf:createDocumentPatchVersionForTests(I):com.intellij.ide.rpc.DocumentPatchVersion
+- *sf:maskDocumentPatchVersionsForTests(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *sf:patchVersion(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.ide.rpc.DocumentPatchVersion
 *f:com.intellij.ide.rpc.FileEditorId
 - *sf:Companion:com.intellij.ide.rpc.FileEditorId$Companion
 - <init>():V

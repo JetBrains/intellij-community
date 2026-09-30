@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.ide.rpc.patchVersion
 import com.intellij.ide.rpc.util.TextRangeDto
 import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.rpc.util.toRpc
@@ -22,7 +23,6 @@ import com.intellij.platform.debugger.impl.frontend.util.RequestsDebouncer
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
-import com.intellij.platform.debugger.impl.rpc.patchVersion
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachment
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointAttachmentNotifier
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange

@@ -2,11 +2,11 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.ide.rpc.patchVersion
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.ContentPreloadable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.debugger.impl.rpc.patchVersion
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 

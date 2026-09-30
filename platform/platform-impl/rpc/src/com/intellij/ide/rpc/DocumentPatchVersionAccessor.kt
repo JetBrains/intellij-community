@@ -4,7 +4,6 @@ package com.intellij.ide.rpc
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
@@ -13,20 +12,18 @@ interface DocumentPatchVersionAccessor {
   fun getDocumentVersion(document: Document, project: Project): DocumentPatchVersion?
 
   companion object {
-    private val EP_NAME = ExtensionPointName<DocumentPatchVersionAccessor>("com.intellij.rpc.documentVersionAccessor")
+    internal val EP_NAME = ExtensionPointName<DocumentPatchVersionAccessor>("com.intellij.rpc.documentVersionAccessor")
 
     /**
      * Gives access to the document patch version shared between the frontend and the backend.
      *
      * In monolith mode, always returns null.
      * In split mode, returns the version of the document that can be used for comparison both on the frontend and the backend.
+     *
+     * Code outside the platform uses [patchVersion] instead.
      */
     fun getDocumentVersion(document: Document, project: Project): DocumentPatchVersion? {
       return EP_NAME.extensionList.firstNotNullOfOrNull { it.getDocumentVersion(document, project) }
     }
   }
 }
-
-@ApiStatus.Internal
-@Serializable
-data class DocumentPatchVersion(private val version: Int, private val hash: Long)
