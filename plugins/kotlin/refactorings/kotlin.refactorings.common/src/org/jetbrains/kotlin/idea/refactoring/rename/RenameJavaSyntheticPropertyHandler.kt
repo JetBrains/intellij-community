@@ -17,13 +17,13 @@ import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 
@@ -121,7 +121,7 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         @OptIn(KaAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
             analyze(refExpr) {
-              val symbol = refExpr.mainReference.resolveToSymbol() as? KaSyntheticJavaPropertySymbol
+              val symbol = refExpr.tryResolveSymbols()?.symbols?.singleOrNull() as? KaSyntheticJavaPropertySymbol
                       ?: return null
 
                 val getter = symbol.javaGetterSymbol.psi as? PsiMethod ?: return null

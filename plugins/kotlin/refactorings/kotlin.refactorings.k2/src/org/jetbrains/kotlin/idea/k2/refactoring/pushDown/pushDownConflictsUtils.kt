@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
@@ -36,7 +38,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -247,7 +248,7 @@ private fun checkSuperCalls(
             override fun visitSuperExpression(expression: KtSuperExpression) {
                 val qualifiedExpression = expression.getQualifiedExpressionForReceiver() ?: return
                 val refExpr = qualifiedExpression.selectorExpression.getCalleeExpressionIfAny() as? KtSimpleNameExpression ?: return
-                for (symbol in refExpr.mainReference.resolveToSymbols()) {
+                for (symbol in refExpr.tryResolveSymbols()?.symbols.orEmpty()) {
                     val callableSymbol = symbol as? KaCallableSymbol ?: continue
                     val containingClass = callableSymbol.containingDeclaration as? KaClassSymbol ?: continue
                     if (!(context.sourceClass.symbol as KaClassSymbol).isSubClassOf(containingClass)) continue

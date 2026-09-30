@@ -8,15 +8,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 class RenameBackingFieldReferenceHandler : KotlinVariableInplaceRenameHandler() {
@@ -26,7 +26,7 @@ class RenameBackingFieldReferenceHandler : KotlinVariableInplaceRenameHandler() 
     @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
       analyze(refExpression) {
-        val target = refExpression.mainReference.resolveToSymbol() ?: return false
+        val target = refExpression.tryResolveSymbols()?.symbols?.singleOrNull() ?: return false
         return target is KaBackingFieldSymbol
       }
     }
