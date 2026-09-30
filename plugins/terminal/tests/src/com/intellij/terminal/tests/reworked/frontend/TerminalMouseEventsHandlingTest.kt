@@ -18,12 +18,21 @@ import com.intellij.terminal.frontend.view.TerminalTextSelectionChangeEvent
 import com.intellij.terminal.frontend.view.TerminalTextSelectionListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
+import com.intellij.terminal.tests.reworked.util.ESC
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
+import com.intellij.terminal.tests.reworked.util.TerminalViewFixture
+import com.intellij.terminal.tests.reworked.util.assertBlocksModelState
+import com.intellij.terminal.tests.reworked.util.assertOutputModelState
+import com.intellij.terminal.tests.reworked.util.promptFinishedOsc
+import com.intellij.terminal.tests.reworked.util.promptStartedOsc
+import com.intellij.terminal.tests.reworked.util.shellIntegrationInitializedOsc
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -34,6 +43,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -42,33 +52,35 @@ import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.EnumSource
 import java.awt.Color
 import java.awt.Font
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.text.Normalizer
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Checks the full effect of mouse events in the terminal: whether a hyperlink is followed, whether the event
  * is reported to the [TerminalSession], whether the editor's own handling (text/rectangular selection) kicks
  * in, and whether the event ends up consumed.
  *
- * Handling order in production is hyperlinks -> mouse reporting -> editor.
+ * Handling order in production is hyperlinks -> mouse reporting -> editor -> prompt clicks, which handle the click after the release.
  *
- * Tests are grouped by scenario: plain events, hyperlink interactions, text selection, rectangular (block) selection.
+ * Tests are grouped by scenario: plain events, hyperlink interactions, text selection, rectangular (block) selection, prompt clicks.
  * And, within each, by whether mouse reporting is enabled.
  */
 @TestApplication
 internal class TerminalMouseEventsHandlingTest {
   companion object {
     private val projectFixture = projectFixture()
-
-    /** An arbitrary hover-attributes value owned by the test, so it doesn't depend on the default hover formula. */
-    private val TEST_HOVERED_LINK_ATTRIBUTES = TextAttributes(null, null, Color.RED, EffectType.LINE_UNDERSCORE, Font.PLAIN)
   }
 
   private val project: Project by projectFixture
@@ -87,15 +99,6 @@ internal class TerminalMouseEventsHandlingTest {
         block(fixture)
       }
     }
-
-  @OptIn(LowLevelLocalMachineAccess::class)
-  private fun ctrlModifierMask(): Int {
-    return if (OS.CURRENT == OS.macOS) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
-  }
-
-  private enum class MouseEventKind {
-    PRESSED, RELEASED, MOVED, DRAGGED,
-  }
 
   @Nested
   inner class PlainMouseEvents {
@@ -786,6 +789,236 @@ internal class TerminalMouseEventsHandlingTest {
   }
 
   /**
+   * A click in the typed command moves the shell cursor to the clicked character with the arrow keys.
+   *
+   * [RecordingTerminalSession] has no shell integration. So these tests use [TerminalViewFixture] for each emulator:
+   * the prompt marks, the cursor, the mouse reporting and the written keys go through a real session.
+   */
+  @Nested
+  @ParameterizedClass
+  @EnumSource(TerminalEmulatorType::class)
+  inner class PromptClicks(private val emulatorType: TerminalEmulatorType) {
+    @Test
+    fun `click in the typed command moves the cursor there`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(3))
+      }
+
+    @Test
+    fun `click on the right half of a character moves the cursor to this character`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5, xInCell = 0.75f) }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(3))
+      }
+
+    @Test
+    fun `click on the right half of the last character moves the cursor to it`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.moveCursorToColumn(2)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 7, xInCell = 0.75f) }
+
+        assertThat(written.joinToString("")).isEqualTo(RIGHT_ARROW.repeat(5))
+      }
+
+    @Test
+    fun `click after the line end moves the cursor to the text end`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.moveCursorToColumn(2)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 11, xInCell = 0.75f) }
+
+        assertThat(written.joinToString("")).isEqualTo(RIGHT_ARROW.repeat(6))
+      }
+
+    @Test
+    fun `click in the spaces that the user typed at the end moves the cursor there`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls   ")
+        fixture.moveCursorToColumn(2)
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 6) }
+
+        assertThat(written.joinToString("")).isEqualTo(RIGHT_ARROW.repeat(4))
+      }
+
+    @Test
+    fun `click on the second cell of a double-width character moves the cursor to it`(): Unit =
+      doPromptClickTest { fixture ->
+        // The character takes the cells 7 and 8.
+        fixture.typeCommand("echo ${HANGUL_HAN}x")
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 8) }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(2))
+      }
+
+    @Test
+    fun `click on the right half of a character with a combining mark moves the cursor to it`(): Unit =
+      doPromptClickTest { fixture ->
+        // The accented character takes the cell 5. JediTerm keeps it in the NFC form, Ghostty keeps the mark after the "e".
+        fixture.typeCommand("cafe${COMBINING_ACUTE_ACCENT}x")
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5, xInCell = 0.75f) }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(2))
+      }
+
+    @Test
+    fun `click sends the application arrow keys when the program enables them`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.connector.feed("$ESC[?1h")
+        fixture.view.sessionModel.terminalState.first { it.isApplicationArrowKeys }
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
+
+        assertThat(written.joinToString("")).isEqualTo("${ESC}OD".repeat(3))
+      }
+
+    @Test
+    fun `click is reported and does not move the cursor when the program tracks the mouse`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.connector.feed("$ESC[?1000h$ESC[?1006h")
+        fixture.view.sessionModel.terminalState.first { it.mouseMode != MouseMode.MOUSE_REPORTING_NONE }
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
+
+        // The press and the release in the SGR format, at the 1-based column 6 and row 1.
+        assertThat(written.joinToString("")).isEqualTo("$ESC[<0;6;1M$ESC[<0;6;1m")
+      }
+
+    @Test
+    fun `shift click does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5, modifiers = InputEvent.SHIFT_DOWN_MASK) }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
+    fun `press-drag-release selects text and does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+
+        val written = fixture.awaitInputEventsHandled { fixture.selectByDrag(fromColumn = 2, toColumn = 5) }
+
+        assertThat(written).isEmpty()
+        assertThat(fixture.activeEditor.selectionModel.selectedText).isEqualTo("ls ")
+      }
+
+    @Test
+    fun `click after a text selection removes the selection and moves the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.selectByDrag(fromColumn = 2, toColumn = 5)
+        check(fixture.activeEditor.selectionModel.hasSelection()) { "Setup failed: no selection to remove" }
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 7) }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW)
+        assertThat(fixture.activeEditor.selectionModel.hasSelection()).isFalse()
+      }
+
+    @Test
+    fun `click inside a text selection removes the selection and moves the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+        fixture.selectByDrag(fromColumn = 2, toColumn = 6)
+        check(fixture.activeEditor.selectionModel.selectedText == "ls -") { "Setup failed: no selection to click inside" }
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 4) }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(4))
+        assertThat(fixture.activeEditor.selectionModel.hasSelection()).isFalse()
+      }
+
+    @Test
+    fun `double click selects a word and moves the cursor only with the first click`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+
+        val written = fixture.awaitInputEventsHandled {
+          fixture.click(column = 6)
+          fixture.click(column = 6, clickCount = 2)
+        }
+
+        assertThat(written.joinToString("")).isEqualTo(LEFT_ARROW.repeat(2))
+        assertThat(fixture.activeEditor.selectionModel.hasSelection()).isTrue()
+      }
+
+    @Test
+    fun `click without the shell integration does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.connector.feed("${PROMPT}ls -la")
+        fixture.assertOutputModelState(fixture.view.outputModels.regular) {
+          it.text.trimEnd() == "${PROMPT}ls -la" && it.cursorOffset == it.startOffset + 8L
+        }
+
+        val written = fixture.awaitInputEventsHandled { fixture.click(column = 5) }
+
+        assertThat(written).isEmpty()
+      }
+
+    private fun doPromptClickTest(test: suspend (TerminalViewFixture) -> Unit): Unit =
+      timeoutRunBlocking(30.seconds, context = Dispatchers.EDT) {
+        TerminalViewFixture(project, emulatorType).use { fixture ->
+          // The size of the loopback session, so the resize does not change the screen.
+          fixture.resize(columns = 80, rows = 24)
+          test(fixture)
+        }
+      }
+
+    /** Prints [PROMPT] between the prompt marks of the shell integration, then [command], as a shell does. */
+    private suspend fun TerminalViewFixture.typeCommand(command: String) {
+      connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY) + promptStartedOsc() + PROMPT + promptFinishedOsc() + command)
+      // The prompt click handling is installed in this job.
+      view.shellIntegrationFeaturesInitJob.join()
+      val model = view.outputModels.regular
+      // JediTerm keeps the printed text in the NFC form.
+      val typedText = Normalizer.normalize(PROMPT + command, Normalizer.Form.NFC)
+      assertOutputModelState(model) {
+        val shownText = it.text.trimEnd('\n')
+        Normalizer.normalize(shownText, Normalizer.Form.NFC) == typedText && it.cursorOffset == it.startOffset + shownText.length.toLong()
+      }
+      assertBlocksModelState(view.shellIntegrationDeferred.await().blocksModel) {
+        (it.activeBlock as TerminalCommandBlock).commandStartOffset == model.startOffset + PROMPT.length.toLong()
+      }
+    }
+
+    /** Moves the cursor to [column] of its line, as the shell does for the arrow keys. */
+    private suspend fun TerminalViewFixture.moveCursorToColumn(column: Int) {
+      connector.feed("$ESC[${column + 1}G")
+      assertOutputModelState(view.outputModels.regular) { it.cursorOffset == it.startOffset + column.toLong() }
+    }
+
+    private fun TerminalViewFixture.click(column: Int, xInCell: Float = 1f / 3f, modifiers: Int = 0, clickCount: Int = 1) {
+      val point = activeEditor.pointAtCell(column, xInCell = xInCell)
+      activeEditor.dispatchMouseEvent(MouseEventKind.PRESSED, point, modifiers or InputEvent.BUTTON1_DOWN_MASK, clickCount)
+      activeEditor.dispatchMouseEvent(MouseEventKind.RELEASED, point, modifiers, clickCount)
+    }
+
+    private fun TerminalViewFixture.selectByDrag(fromColumn: Int, toColumn: Int) {
+      val editor = activeEditor
+      editor.dispatchMouseEvent(MouseEventKind.PRESSED, editor.pointAtCell(fromColumn), InputEvent.BUTTON1_DOWN_MASK)
+      editor.dispatchMouseEvent(MouseEventKind.DRAGGED, editor.pointAtCell(toColumn), InputEvent.BUTTON1_DOWN_MASK)
+      editor.dispatchMouseEvent(MouseEventKind.RELEASED, editor.pointAtCell(toColumn), 0)
+    }
+  }
+
+  /**
    * A real [TerminalViewImpl] connected to a [RecordingTerminalSession], so the production mouse events handler,
    * hyperlinks logic, and editor logic are exercised as-is.
    */
@@ -885,11 +1118,7 @@ internal class TerminalMouseEventsHandlingTest {
     /**
      * A point safely inside the given grid [column]'s cell on the given [row] (0-based).
      */
-    fun pointAt(column: Int, row: Int = 0): Point {
-      val characterGrid = editor.characterGrid ?: error("Character grid is not initialized")
-      val x = (characterGrid.charWidth * (column + 1f / 3f)).toInt()
-      return Point(x, row * editor.lineHeight + editor.lineHeight / 2)
-    }
+    fun pointAt(column: Int, row: Int = 0): Point = editor.pointAtCell(column, row)
 
     /** Every caret's selected text, ordered by line - the readable shape of a rectangular (block) selection. */
     fun caretSelectionsByLine(): List<String?> {
@@ -920,23 +1149,7 @@ internal class TerminalMouseEventsHandlingTest {
       return dispatch(MouseEventKind.DRAGGED, point, modifiers).isConsumed
     }
 
-    private fun dispatch(kind: MouseEventKind, point: Point, modifiers: Int): MouseEvent {
-      val id = when (kind) {
-        MouseEventKind.PRESSED -> MouseEvent.MOUSE_PRESSED
-        MouseEventKind.RELEASED -> MouseEvent.MOUSE_RELEASED
-        MouseEventKind.MOVED -> MouseEvent.MOUSE_MOVED
-        MouseEventKind.DRAGGED -> MouseEvent.MOUSE_DRAGGED
-      }
-      val event =
-        MouseEvent(editor.contentComponent, id, System.currentTimeMillis(), modifiers, point.x, point.y, 1, false, MouseEvent.BUTTON1)
-      when (kind) {
-        MouseEventKind.PRESSED -> editor.mouseListener.mousePressed(event)
-        MouseEventKind.RELEASED -> editor.mouseListener.mouseReleased(event)
-        MouseEventKind.MOVED -> editor.contentComponent.mouseMotionListeners.forEach { it.mouseMoved(event) }
-        MouseEventKind.DRAGGED -> editor.contentComponent.mouseMotionListeners.forEach { it.mouseDragged(event) }
-      }
-      return event
-    }
+    private fun dispatch(kind: MouseEventKind, point: Point, modifiers: Int): MouseEvent = editor.dispatchMouseEvent(kind, point, modifiers)
 
     override fun close() {
       scope.cancel()
@@ -985,4 +1198,55 @@ internal class TerminalMouseEventsHandlingTest {
       private val REPORTED_EVENT_BYTES = byteArrayOf(1)
     }
   }
+}
+
+/** An arbitrary hover-attributes value owned by the test, so it doesn't depend on the default hover formula. */
+private val TEST_HOVERED_LINK_ATTRIBUTES = TextAttributes(null, null, Color.RED, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+
+/** The prompt that the prompt click tests print. The command starts at column 2. */
+private const val PROMPT = "$ "
+
+private const val WORKING_DIRECTORY = "/home/user"
+
+private val LEFT_ARROW = "$ESC[D"
+private val RIGHT_ARROW = "$ESC[C"
+
+/** The Hangul syllable "han", a double-width character. */
+private val HANGUL_HAN = Char(0xD55C)
+
+private val COMBINING_ACUTE_ACCENT = Char(0x0301)
+
+/** A point inside the grid cell at [column] and [row] (0-based). [xInCell] is the x of the point in the cell, from 0 to 1. */
+private fun EditorImpl.pointAtCell(column: Int, row: Int = 0, xInCell: Float = 1f / 3f): Point {
+  val characterGrid = characterGrid ?: error("Character grid is not initialized")
+  val x = (characterGrid.charWidth * (column + xInCell)).toInt()
+  return Point(x, row * lineHeight + lineHeight / 2)
+}
+
+private enum class MouseEventKind {
+  PRESSED, RELEASED, MOVED, DRAGGED,
+}
+
+/** Dispatches a mouse event to the editor, as AWT does, and returns the event. */
+private fun EditorImpl.dispatchMouseEvent(kind: MouseEventKind, point: Point, modifiers: Int, clickCount: Int = 1): MouseEvent {
+  val id = when (kind) {
+    MouseEventKind.PRESSED -> MouseEvent.MOUSE_PRESSED
+    MouseEventKind.RELEASED -> MouseEvent.MOUSE_RELEASED
+    MouseEventKind.MOVED -> MouseEvent.MOUSE_MOVED
+    MouseEventKind.DRAGGED -> MouseEvent.MOUSE_DRAGGED
+  }
+  val event =
+    MouseEvent(contentComponent, id, System.currentTimeMillis(), modifiers, point.x, point.y, clickCount, false, MouseEvent.BUTTON1)
+  when (kind) {
+    MouseEventKind.PRESSED -> mouseListener.mousePressed(event)
+    MouseEventKind.RELEASED -> mouseListener.mouseReleased(event)
+    MouseEventKind.MOVED -> contentComponent.mouseMotionListeners.forEach { it.mouseMoved(event) }
+    MouseEventKind.DRAGGED -> contentComponent.mouseMotionListeners.forEach { it.mouseDragged(event) }
+  }
+  return event
+}
+
+@OptIn(LowLevelLocalMachineAccess::class)
+private fun ctrlModifierMask(): Int {
+  return if (OS.CURRENT == OS.macOS) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
 }

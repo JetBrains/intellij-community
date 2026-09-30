@@ -367,6 +367,14 @@ class TerminalViewImpl(
         coroutineScope.childScope("TerminalBlocksDecorator")
       )
 
+      installPromptClickHandling(
+        outputEditor,
+        outputModel,
+        shellIntegration,
+        terminalInput,
+        coroutineScope.asDisposable()
+      )
+
       val typingTracker = installTypingTracker(
         project = project,
         terminalView = this@TerminalViewImpl,
