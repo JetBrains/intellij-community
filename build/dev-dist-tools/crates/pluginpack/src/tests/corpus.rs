@@ -130,7 +130,8 @@ fn every_checked_in_plan_file_plans() {
         .filter(|path| path.to_string_lossy().ends_with(".dev-plan.json"))
         .collect();
     paths.sort();
-    assert!(paths.len() > 90, "the corpus holds only {} plan files", paths.len());
+    // The floor stays at or under the count in `planfile/API.md`. A plugin that becomes simple lowers both.
+    assert!(paths.len() >= 88, "the corpus holds only {} plan files", paths.len());
     for path in &paths {
         let text = expand_platform(&std::fs::read_to_string(path).unwrap());
         let file = planfile::from_slice(text.as_bytes()).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
