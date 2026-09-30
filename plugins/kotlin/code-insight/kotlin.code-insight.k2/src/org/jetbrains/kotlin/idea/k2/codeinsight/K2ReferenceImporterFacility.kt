@@ -3,15 +3,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -101,6 +100,6 @@ private fun KtFile.hasUnresolvedImportWhichCanImport(element: PsiElement): Boole
 
 context(_: KaSession)
 private fun KtImportDirective.isResolved(): Boolean {
-    val reference = importedReference?.getQualifiedElementSelector()?.mainReference
-    return reference?.resolveToSymbol() != null
+    val selector = importedReference?.getQualifiedElementSelector() as? KtSimpleNameExpression
+    return selector?.resolveSuccessfulSymbol() != null
 }

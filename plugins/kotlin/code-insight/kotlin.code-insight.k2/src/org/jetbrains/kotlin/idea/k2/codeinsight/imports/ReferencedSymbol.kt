@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -276,8 +276,8 @@ private fun canBeResolvedViaImport(reference: KDocReference, target: KaSymbol): 
     val qualifier = reference.element.getQualifier() ?: return true
 
     return if (target is KaCallableSymbol && target.isExtension) {
-        val elementHasFunctionDescriptor = reference.element.mainReference.resolveToSymbols().any { it is KaCallableSymbol }
-        val qualifierHasClassDescriptor = qualifier.mainReference.resolveToSymbols().any { it is KaClassLikeSymbol }
+        val elementHasFunctionDescriptor = reference.element.resolveSuccessfulSymbols().any { it is KaCallableSymbol }
+        val qualifierHasClassDescriptor = qualifier.resolveSuccessfulSymbols().any { it is KaClassLikeSymbol }
         elementHasFunctionDescriptor && qualifierHasClassDescriptor
     } else {
         false

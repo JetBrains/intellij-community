@@ -12,9 +12,9 @@ import com.intellij.slicer.JavaSliceUsage
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.base.searching.usages.processAllExactUsages
 import org.jetbrains.kotlin.idea.base.searching.usages.processAllUsages
 import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
@@ -257,7 +256,7 @@ abstract class Slicer(
 
             //explicit this
             body.forEachDescendantOfType<KtThisExpression> { thisExpression ->
-                val receiverDescriptor = thisExpression.instanceReference.mainReference.resolveToSymbol()
+                val receiverDescriptor = thisExpression.resolveSuccessfulSymbol()
                 if (receiverDescriptor == extensionReceiver) {
                     thisExpression.passToProcessor(mode)
                 }

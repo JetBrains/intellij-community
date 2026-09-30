@@ -9,7 +9,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
@@ -17,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -297,7 +298,7 @@ class InflowSlicer(
 
             is KtSimpleNameExpression -> {
                 val resolve = analyze(expression) {
-                    val resolveToSymbol = expression.mainReference.resolveToSymbol()
+                    val resolveToSymbol = expression.tryResolveSymbols()?.symbols?.singleOrNull()
                     when {
                       resolveToSymbol is KaBackingFieldSymbol -> {
                           val property = resolveToSymbol.owningProperty.psi as? KtProperty ?: return
@@ -424,7 +425,7 @@ class InflowSlicer(
         return this is KtSimpleNameExpression &&
                 getReferencedName() == KtTokens.FIELD_KEYWORD.value &&
                 analyze(this) {
-                    this@isBackingFieldReference.mainReference.resolveToSymbol() is KaBackingFieldSymbol
+                    this@isBackingFieldReference.tryResolveSymbols()?.symbols?.singleOrNull() is KaBackingFieldSymbol
                 }
     }
 

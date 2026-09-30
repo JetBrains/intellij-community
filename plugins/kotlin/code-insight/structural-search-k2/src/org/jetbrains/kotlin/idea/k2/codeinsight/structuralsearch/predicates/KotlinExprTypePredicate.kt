@@ -17,10 +17,12 @@ import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.renderNames
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.psiUtil.isNull
@@ -43,7 +45,7 @@ internal class KotlinExprTypePredicate(
                 node is KtExpression -> {
                     // because `getKtType` will return void for enum references we resolve and build type from the resolved class when
                     // possible.
-                    val symbol = node.mainReference?.resolveToSymbol()
+                    val symbol = (node as? KtSimpleNameExpression)?.tryResolveSymbolsCallFirst()?.singleOrNull()
                     if (symbol is KaNamedClassSymbol) {
                         symbol.defaultType
                     } else {
