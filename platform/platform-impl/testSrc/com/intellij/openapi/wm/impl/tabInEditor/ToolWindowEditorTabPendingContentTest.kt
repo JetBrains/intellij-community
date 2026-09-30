@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JTextField
 
 /**
  * Tests that a persisted tool window editor tab creates its content only when the content is necessary:
@@ -155,6 +157,39 @@ class ToolWindowEditorTabPendingContentTest {
 
     assertThat((editor.component as Wrapper).targetComponent).isSameAs(content.component)
     assertThat(editor.preferredFocusedComponent).isSameAs(content.component)
+  }
+
+  @Test
+  fun `the editor focuses the preferred component of the content`(): Unit = uiTest {
+    val content = createTabContent(component = JPanel(), displayName = "moved")
+    val focusTarget = JTextField()
+    content.preferredFocusableComponent = focusTarget
+    val editor = ToolWindowEditorTabFileEditor(project, createTabFile(project = project, toolWindowId = toolWindowId, content = content))
+    Disposer.register(disposable, editor)
+
+    assertThat(editor.preferredFocusedComponent).isSameAs(focusTarget)
+  }
+
+  @Suppress("DEPRECATION") // Disposer.isDisposed is the clearest check that the content was released.
+  @Test
+  fun `restored content is released when its tool window has no support`(): Unit = uiTest {
+    val providerOnlyId = "ProviderOnlyToolWindow"
+    val orphanContent = createTabContent(displayName = "orphan")
+    registerFakeToolWindowEditorTabPersistenceProvider(
+      providerOnlyId,
+      FakeToolWindowEditorTabPersistenceProvider(deserializeAction = { _, _ -> orphanContent }),
+      disposable,
+    )
+    val editor = createRestoredTabEditor(providerOnlyId)
+
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      assertThat(tabManager.getOrRestoreSession(editor.file)).isNull()
+    }
+
+    assertThat(error).hasMessageContaining("No ToolWindowEditorTabSupport found for tool window '$providerOnlyId'")
+    // The content was created but cannot be shown, so it must not leak.
+    assertThat(Disposer.isDisposed(orphanContent)).isTrue()
+    assertThat(editor.file.session(project)).isNull()
   }
 
   @Test
