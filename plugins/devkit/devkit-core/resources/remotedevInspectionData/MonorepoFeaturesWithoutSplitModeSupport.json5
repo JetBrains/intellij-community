@@ -157,6 +157,7 @@
     "intellij.database.model.gen",
     "intellij.database.plugin.frameworks",
     "intellij.database.pro",
+    "intellij.database.schemaEditor",
     "intellij.database.sql",
     "intellij.database.sql.copyright",
     "intellij.database.sql.core.impl",
