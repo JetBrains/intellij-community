@@ -183,6 +183,7 @@
     <!-- endregion -->
 
     <!-- region core.platform -->
+    <module name="intellij.platform.productMode" loading="embedded"/>
     <module name="intellij.platform.runtime.product" loading="embedded"/>
     <module name="intellij.platform.bazel.runfiles" loading="embedded"/>
     <module name="intellij.platform.buildScripts.concurrency"/>
