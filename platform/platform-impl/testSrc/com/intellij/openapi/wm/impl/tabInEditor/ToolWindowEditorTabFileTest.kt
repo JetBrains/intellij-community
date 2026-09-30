@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -100,6 +101,9 @@ class ToolWindowEditorTabFileTest {
 
     assertThat(file.tabTitle(project)).isEqualTo("Title")
     assertThat(file.tabIcon(project)).isEqualTo(AllIcons.General.Gear)
+    assertThat(file.isWritable).isFalse()
+    // A tab file stays read-only.
+    assertThatThrownBy { file.isWritable = true }.isInstanceOf(UnsupportedOperationException::class.java)
     assertThat(file.isWritable).isFalse()
     assertThat(file.isValid).isTrue()
     assertThat(file.isIncludedInEditorHistory(project)).isTrue()

@@ -339,6 +339,20 @@ class ToolWindowEditorTabPersistenceTest {
     }
 
   @Test
+  fun `the presentable URL falls back to the path for an unknown, unparsable, or nameless tab`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val fileSystem = getToolWindowEditorTabFileSystem()
+      val unparsablePath = "not/a/tab"
+      val unknownPath = PersistentToolWindowEditorTabPath(project.locationHash, toolWindowId, "unknown-tab", name = "Unknown").toString()
+      val namelessPath = PersistentToolWindowEditorTabPath(project.locationHash, toolWindowId, "nameless-tab", name = "")
+      requireNotNull(registry.getOrCreatePersistentFile(namelessPath))
+
+      assertThat(fileSystem.extractPresentableUrl(unparsablePath)).isEqualTo(unparsablePath)
+      assertThat(fileSystem.extractPresentableUrl(unknownPath)).isEqualTo(unknownPath)
+      assertThat(fileSystem.extractPresentableUrl(namelessPath.toString())).isEqualTo(namelessPath.toString())
+    }
+
+  @Test
   fun `a transient tab has no URL in the tab file system`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val transientFile = createTabFile(project = project, toolWindowId = toolWindowId)
