@@ -18,7 +18,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.isControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -62,6 +61,7 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import fleet.kernel.change
 import fleet.kernel.rebase.shared
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +72,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -93,7 +95,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
   @Suppress("unused")
   constructor(coroutineScope: CoroutineScope) : this(null, coroutineScope)
 
-  private val popupSemaphore = OverflowSemaphore(1, overflow = BufferOverflow.DROP_LATEST)
+  private val popupSemaphore = OverflowSemaphore(1, overflow = BufferOverflow.SUSPEND)
 
   @Volatile
   private var popupInstanceFuture: CompletableFuture<SePopupInstance>? = null
@@ -145,12 +147,19 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val exportVm = AtomicReference<SePopupVm?>()
     val searchStatePublisher = SeSearchStatePublisher()
     val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
-    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, initialSearchText, selectSearchText,
-                                                           searchStatePublisher, toolbarField) {
-      popupInstance?.saveSearchText()
+    val (popup, popupContentPane) = try {
+      createAndShowIdlePopup(popupScope, initialTabs, tabId, initialSearchText, selectSearchText,
+                             searchStatePublisher, toolbarField) {
+        popupInstance?.saveSearchText()
+        toolbarField?.endSession()
+        visibleTabsState = it.visibleTabsInfo
+        popupClosedCompletable.complete(Unit)
+      }
+    }
+    catch (t: Throwable) {
       toolbarField?.endSession()
-      visibleTabsState = it.visibleTabsInfo
-      popupClosedCompletable.complete(Unit)
+      popupScope.cancel()
+      throw t
     }
 
     val showIdlePopupEndTime = System.currentTimeMillis()
@@ -162,6 +171,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     coroutineScope.launch {
       val session = SeSessionEntity.createSession()
       var sessionProvidersHolder: SeProvidersHolder? = null
+      var initFailure: Throwable? = null
 
       try {
         try {
@@ -216,7 +226,9 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           }
         }
         catch (e: Throwable) {
-          if (e.isControlFlowException) throw e
+          initFailure = e
+
+          if (e is CancellationException && !currentCoroutineContext().isActive) throw e
 
           if (!popupFuture.isDone) {
             // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
@@ -224,10 +236,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
               popup.cancel()
 
               if (isRetry) {
-                SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Closing the popup. Exception: ${e.message}\n${e.stackTraceToString()}" }
+                SeLog.warn("Exception while opening the popup. Closing the popup. Exception: ${e.message}\n${e.stackTraceToString()}")
               }
               else {
-                SeLog.log(LIFE_CYCLE) { "Exception while opening the popup. Will try to reopen once. Exception: ${e.message}\n${e.stackTraceToString()}" }
+                SeLog.warn("Exception while opening the popup. Will try to reopen once. Exception: ${e.message}\n${e.stackTraceToString()}")
                 show(tabId, searchText, initEvent, true)
               }
             }
@@ -239,7 +251,8 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
               popupInstanceFuture = null
             }
             if (!popupFuture.isDone && !popup.isDisposed) {
-              SeLog.log(LIFE_CYCLE) { "The viewModel hasn't reached the popup without an exception. Closing the popup." }
+              SeLog.warn("The viewModel hasn't reached the popup, the popup session was cancelled. Closing the popup." +
+                         (initFailure?.let { " Cause: ${it.message}\n${it.stackTraceToString()}" } ?: ""))
               popup.cancel()
             }
           }
@@ -424,6 +437,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       onCancel(contentPane)
       selectionState = contentPane.getSelectionState()
     }
+
+    // The content pane is disposed together with the popup. Stop its UI coroutines at the same time.
+    Disposer.register(popup) { popupScope.cancel() }
+
     if (toolbarField == null) {
       calcPopupPositionAndShow(popup, contentPane)
     }

@@ -340,11 +340,6 @@ class SePopupContentPane(
   }
 
   private suspend fun connectTo(vm: SePopupVm) = coroutineScope {
-    DumbAwareAction.create { vm.getHistoryItem(true).let { textField.setText(it, selectAll = true, reason = "history-prev") } }
-      .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, shortcutHost, contentPane)
-    DumbAwareAction.create { vm.getHistoryItem(false).let { textField.setText(it, selectAll = true, reason = "history-next") } }
-      .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, shortcutHost, contentPane)
-
     launch {
       vm.tabsModelFlow.map {
         SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIdFlow)
@@ -354,6 +349,13 @@ class SePopupContentPane(
     }
 
     withContext(Dispatchers.UI) {
+
+
+      DumbAwareAction.create { vm.getHistoryItem(true).let { textField.setText(it, selectAll = true, reason = "history-prev") } }
+        .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, shortcutHost, contentPane)
+      DumbAwareAction.create { vm.getHistoryItem(false).let { textField.setText(it, selectAll = true, reason = "history-next") } }
+        .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, shortcutHost, contentPane)
+
       val pattern = vm.searchPattern.value
       SeLog.log(SeLog.CARET) { "SePopupContentPane.connectTo will configure: pattern='${pattern}' - ${textField.stateLogMessage()}" }
 
