@@ -62,7 +62,7 @@ private class TerminalEventDispatcher(
   private val eventsHandler: TerminalKeyEventsHandler,
   private val parentDisposable: Disposable,
 ) : IdeEventQueue.NonLockedEventDispatcher {
-  private val sendShortcutAction = SendShortcutToTerminalAction(eventsHandler)
+  private val sendShortcutAction by lazy(LazyThreadSafetyMode.NONE) { SendShortcutToTerminalAction(eventsHandler) }
   private var myRegistered = false
   private var allowedActionIds: List<String> = emptyList()
 
