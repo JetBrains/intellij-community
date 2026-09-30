@@ -63,8 +63,6 @@ def dev_dist_plugin(
         file_prefixes = {},
         executable_files = [],
         directory_name = "",
-        # TRANSITION(descriptor_modules): the generated packages still pass it. Remove after the next generator run.
-        descriptor_modules = None,
         **descriptor_attrs):
     """Declare plugin modules and derive their build targets.
 
@@ -106,7 +104,6 @@ def dev_dist_plugin(
         frontend_product_application_info: The application info of the product the frontend takes its names and version from.
         directory_name: The plugin directory, when the layout does not take the derived one. Only the packed component
             reads it.
-        descriptor_modules: Transition only, and ignored.
         **descriptor_attrs: Other descriptor attributes. Shared leaf attributes are refused.
     """
     if not main_module or type(module_targets) != "dict":

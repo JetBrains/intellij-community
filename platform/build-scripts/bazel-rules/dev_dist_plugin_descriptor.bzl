@@ -816,8 +816,6 @@ def dev_dist_plugin_descriptor(
         variant = "",
         tags = [],
         visibility = ["//visibility:public"],
-        # TRANSITION(descriptor_module): the generated packages still pass it. Remove after the next generator run.
-        descriptor_module = "",
         **kwargs):
     """`_dev_dist_plugin_descriptor` with what every plugin says the same way filled in.
 
@@ -840,16 +838,12 @@ def dev_dist_plugin_descriptor(
         variant: the layout variant, which joins the target's name and the output's directory.
         tags: extra tags. `manual` is added.
         visibility: public by default.
-        descriptor_module: transition only, the package of a relative `descriptor`.
         **kwargs: see `_dev_dist_plugin_descriptor`.
     """
     if bool(descriptor) == bool(descriptor_jar):
         fail("dev_dist_plugin_descriptor requires exactly one descriptor source")
     source = descriptor or None
 
-    # TRANSITION(descriptor_module): a cross-half package still states the descriptor inside the package of this label.
-    if descriptor and descriptor_module:
-        source = descriptor_module.rpartition(":")[0] + ":" + descriptor
     descriptors = dict(kwargs.pop("descriptors", {}))
     stated_load_paths = {path: True for path in descriptors.values()}
     for module_name in content_modules:
