@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -21,11 +23,15 @@ interface TerminalWorkingDirectoryCustomizer {
    * It serves as a default value for the "Start directory" field in "Settings | Tools | Terminal".
    * The value of this field determines the working directory for new shell sessions.
    *
+   * **This method is called only once and returned value is cached, so the result shouldn't depend on the variable project state.**
+   *
    * @return the NIO Path of starting directory, or `null` to not provide any customization
    * and use value provided by the default implementation.
    * **Note that in RemDev case, NIO Path should point to the remote (host) machine, not the local (frontend) one**
    */
-  suspend fun getDefaultStartWorkingDirectory(project: Project): Path? = null
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  fun getDefaultStartWorkingDirectory(project: Project): Path? = null
 
   /**
    * Customizes the working directory of a new terminal session.

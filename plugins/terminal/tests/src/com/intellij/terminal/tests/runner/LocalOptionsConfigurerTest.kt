@@ -430,7 +430,7 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
       TerminalWorkingDirectoryCustomizer.EP_NAME,
       contextualDirectories.map { directory ->
         object : TerminalWorkingDirectoryCustomizer {
-          override suspend fun getDefaultStartWorkingDirectory(project: Project): Path? = null
+          override fun getDefaultStartWorkingDirectory(project: Project): Path? = null
           override suspend fun getContextualStartWorkingDirectory(project: Project): Path? = directory
         }
       },

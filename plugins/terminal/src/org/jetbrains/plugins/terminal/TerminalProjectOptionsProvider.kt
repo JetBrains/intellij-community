@@ -35,24 +35,36 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getRemoteProjectBaseNioPath
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
-import com.intellij.util.ui.EDT
 import com.intellij.util.xmlb.annotations.Property
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import org.jetbrains.plugins.terminal.settings.impl.TerminalProjectOptionsMigration
 import org.jetbrains.plugins.terminal.startup.TerminalWorkingDirectoryCustomizer
 import java.nio.file.Files
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
 @Service(Service.Level.PROJECT)
 @State(name = TerminalProjectOptionsProvider.COMPONENT_NAME, storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
-class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
+class TerminalProjectOptionsProvider(
+  val project: Project,
+  coroutineScope: CoroutineScope,
+) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
   private val state = State()
+
+  private val defaultStartingDirectoryFuture: CompletableFuture<String?> = coroutineScope.future(Dispatchers.IO) {
+    callWorkingDirectoryCustomizers(project)
+    ?: callDeprecatedWorkingDirectoryCustomizers(project)
+    ?: PathUtil.toSystemDependentName(getDefaultWorkingDirectory())
+  }
 
   override fun getState(): State {
     return state
@@ -107,34 +119,21 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   var startingDirectory: String? by ValueWithDefault(state::startingDirectory) { defaultStartingDirectory }
 
+  /**
+   * The value is computed once, in the background, when the service is created.
+   * The getter blocks the calling thread only if the computation is still running.
+   */
   val defaultStartingDirectory: String?
     get() {
-      val customized = getCustomizedDefaultWorkingDirectory(project)
-      return customized ?: PathUtil.toSystemDependentName(getDefaultWorkingDirectory())
-    }
-
-  private fun getCustomizedDefaultWorkingDirectory(project: Project): String? {
-    val customized = if (EDT.isCurrentThreadEdt()) {
-      runWithModalProgressBlocking(project, TerminalBundle.message("working.directory.calculation.progress")) {
-        callWorkingDirectoryCustomizers(project)
+      try {
+        return defaultStartingDirectoryFuture.get()
+      }
+      catch (e: ExecutionException) {
+        throw e.cause ?: e
       }
     }
-    else runBlockingMaybeCancellable {
-      callWorkingDirectoryCustomizers(project)
-    }
-    if (customized != null) {
-      return customized
-    }
 
-    val deprecatedCustomized = callDeprecatedWorkingDirectoryCustomizers(project)
-    if (deprecatedCustomized != null) {
-      return deprecatedCustomized
-    }
-
-    return null
-  }
-
-  private suspend fun callWorkingDirectoryCustomizers(project: Project): String? {
+  private fun callWorkingDirectoryCustomizers(project: Project): String? {
     for (customizer in TerminalWorkingDirectoryCustomizer.EP_NAME.extensionList) {
       try {
         val dir = customizer.getDefaultStartWorkingDirectory(project)

@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.settings
 
 import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -9,9 +10,11 @@ import org.jetbrains.plugins.terminal.startup.TerminalWorkingDirectoryCustomizer
 import java.nio.file.Path
 
 internal class WelcomeProjectTerminalWorkingDirectoryCustomizer : TerminalWorkingDirectoryCustomizer {
-  override suspend fun getDefaultStartWorkingDirectory(project: Project): Path? {
+  override fun getDefaultStartWorkingDirectory(project: Project): Path? {
     if (WelcomeUtils.isWelcomeProject(project)) {
-      return getUserHomePath(project)
+      return runBlockingMaybeCancellable {
+        getUserHomePath(project)
+      }
     }
     return null
   }
