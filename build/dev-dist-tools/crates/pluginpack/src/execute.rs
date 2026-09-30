@@ -6,7 +6,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use jarpack::{DirectoryMode, ManifestMode, MergeSpec};
+use jarpack::{DirectoryMode, ManifestMode, MergeOptions, MergeSpec};
 use planfile::contract::{Asset, Manifest, Operation, Reference, Source};
 use planfile::validate::asset_kind;
 
@@ -131,7 +131,8 @@ impl Execution {
                 Action::Jar(spec) => {
                     let mut spec = (**spec).clone();
                     spec.output = destination.clone();
-                    spec.merge().map_err(|error| Error::from(error).context(&resolved.destination))?;
+                    spec.merge(&MergeOptions::default())
+                        .map_err(|error| Error::chain(error).context(&resolved.destination))?;
                 }
                 Action::Copy(input) => fscopy::replace_with_copy(input, &destination)?,
             }
@@ -234,15 +235,14 @@ impl Execution {
                                 spec.sources.extend(entries);
                             }
                             Source::Patch { entry, input, manifest } => {
-                                let mut patch = jarpack::Source::patch(entry.clone(), resolver.resolve(input)?);
-                                patch.manifest = Some(manifest_mode(*manifest));
-                                spec.sources.push(patch);
+                                let patch = jarpack::Source::patch(entry.clone(), resolver.resolve(input)?);
+                                spec.sources.push(patch.with_manifest(manifest_mode(*manifest)));
                             }
-                            Source::Archive { input, filter, manifest } => {
-                                let mut archive = jarpack::Source::archive(resolver.resolve(input)?, source_filter(*filter));
-                                archive.manifest = Some(manifest_mode(*manifest));
-                                spec.sources.push(archive);
-                            }
+                            Source::Archive { input, filter, manifest } => spec.sources.push(jarpack::Source::Jar {
+                                path: resolver.resolve(input)?,
+                                filter: source_filter(*filter),
+                                manifest: Some(manifest_mode(*manifest)),
+                            }),
                         }
                     }
                     operations.push(Resolved {

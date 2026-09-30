@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 
 use filemeta::EntryType;
 use jarpack::nativelib::{Arch, Family};
-use jarpack::{MergeReport, MergeSpec, NativeSpec, Source};
+use jarpack::{MergeOptions, MergeReport, MergeSpec, NativeSpec, NativeTree, Source};
 use tempfile::TempDir;
 use zip::{CompressionMethod, ZipArchive};
 
@@ -24,8 +24,8 @@ use super::{InventoryReport, write_inventory};
 use crate::tests::write_jar;
 
 /// The two steps of the binary: the jar, then the inventory from the report of the merge.
-fn pack(spec: &MergeSpec) -> jarpack::Result<InventoryReport> {
-    let merged = spec.pack()?;
+fn pack(spec: &MergeSpec) -> anyhow::Result<InventoryReport> {
+    let merged = spec.pack(&MergeOptions::default())?;
     write_inventory(spec, &merged)
 }
 
@@ -84,10 +84,12 @@ fn natives_spec(base: &Path, layout: &Layout, family: Family, arch: Arch) -> Mer
         output: layout.output.clone(),
         metadata_file: Some(layout.metadata.clone()),
         native: Some(NativeSpec {
-            tree: Some(layout.tree.clone()),
-            family: Some(family),
-            arch: Some(arch),
             lib_name: "jna".into(),
+            tree: Some(NativeTree {
+                dir: layout.tree.clone(),
+                family,
+                arch,
+            }),
         }),
         sources: vec![Source::library(jna_library(base))],
         ..MergeSpec::default()
@@ -140,7 +142,7 @@ fn the_inventory_refuses_a_jar_output_that_is_a_link() {
         sources: vec![Source::module(&module)],
         ..MergeSpec::default()
     };
-    let error = pack(&spec).unwrap_err().to_string();
+    let error = format!("{:#}", pack(&spec).unwrap_err());
     assert!(error.contains("the packed jar is not a regular file: "), "{error}");
     assert!(!base.join("example.metadata.json").exists());
 }

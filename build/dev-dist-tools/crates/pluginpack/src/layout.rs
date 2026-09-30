@@ -216,10 +216,7 @@ impl Resolver<'_> {
         Ok(writer
             .into_entries()
             .into_iter()
-            .map(|(name, file)| jarpack::Source {
-                manifest: Some(jarpack::ManifestMode::Keep),
-                ..jarpack::Source::file(name, file)
-            })
+            .map(|(name, file)| jarpack::Source::file(name, file).with_manifest(jarpack::ManifestMode::Keep))
             .collect())
     }
 

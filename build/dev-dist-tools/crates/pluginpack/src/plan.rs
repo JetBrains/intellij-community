@@ -2,7 +2,6 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use javaglob::JavaGlob;
 use planfile::LayoutFormat;
@@ -325,12 +324,11 @@ pub(crate) fn includes_entry(rules: &[IncludeRule], name: &str) -> bool {
 }
 
 /// Selects the entries of one archive source. The manifest policy stays with jarpack.
-pub(crate) fn source_filter(filter: Filter) -> jarpack::Filter {
-    let base: fn(&str) -> bool = match filter {
-        Filter::Module => jarpack::module_output_name_filter,
-        Filter::Library => jarpack::library_name_filter,
-    };
-    Arc::new(base)
+pub(crate) const fn source_filter(filter: Filter) -> jarpack::EntryFilter {
+    match filter {
+        Filter::Module => jarpack::EntryFilter::ModuleOutput,
+        Filter::Library => jarpack::EntryFilter::Library,
+    }
 }
 
 pub(crate) fn valid_id(value: &str) -> bool {

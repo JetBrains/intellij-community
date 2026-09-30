@@ -573,11 +573,12 @@ fn a_one_shot_run_fails_with_the_error_of_the_failed_group() {
 
 /// Parses the recipe of `base` and packs it on `workers` threads. It returns the result, the stderr text, and the names
 /// of the packed jars.
-fn pack_on_workers(base: &Path, workers: usize) -> (jarpack::Result<()>, String, Vec<String>) {
-    let specs = jarpack::parse_flag_file(&base.join("recipe.txt"), base).expect("a recipe that parses");
+fn pack_on_workers(base: &Path, workers: usize) -> (anyhow::Result<()>, String, Vec<String>) {
+    let flag_file = jarpack::parse_flag_file(&base.join("recipe.txt"), base).expect("a recipe that parses");
     let mut stderr = Vec::new();
     let result = pack_in_parallel(
-        &specs,
+        &flag_file.groups,
+        &jarpack::MergeOptions::default(),
         workers,
         &trace::Tracer::disabled().span("pack content modules"),
         &mut stderr,
@@ -629,7 +630,7 @@ fn a_one_shot_run_stops_after_an_early_failure_and_reports_the_first_error() {
     // its own output, because the merge creates the jar before it opens the missing source.
     write_recipe(base, &recipe(&[0]));
     let (result, stderr, packed) = pack_on_workers(base, 1);
-    let error = result.expect_err("the first group fails").to_string();
+    let error = format!("{:#}", result.expect_err("the first group fails"));
     assert!(error.contains("missing0.jar"), "{error}");
     assert_eq!(stderr, "");
     assert!(
@@ -641,7 +642,7 @@ fn a_one_shot_run_stops_after_an_early_failure_and_reports_the_first_error() {
     fs::remove_dir_all(base.join("out")).expect("the output of the first run");
     write_recipe(base, &recipe(&[0, 6]));
     let (result, _, _) = pack_on_workers(base, 4);
-    let error = result.expect_err("two groups fail").to_string();
+    let error = format!("{:#}", result.expect_err("two groups fail"));
     assert!(error.contains("missing0.jar"), "{error}");
 }
 

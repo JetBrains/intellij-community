@@ -4,8 +4,9 @@
 
 use std::io::{BufWriter, Write};
 
+use anyhow::{Result, anyhow};
+
 use crate::INDEX_FILE_NAME;
-use crate::error::{Error, Result, bail, invalid};
 use crate::index::{IkvEntry, IndexBuilder};
 use xxh3::hash_bytes;
 
@@ -28,25 +29,6 @@ pub enum DirectoryMode {
     All,
 }
 
-impl DirectoryMode {
-    /// Reads a mode as the recipes spell it. It refuses an unknown spelling, the empty string and the Go `resources`.
-    pub fn parse(value: &str) -> Result<Self> {
-        match value {
-            "none" => Ok(Self::None),
-            "all" => Ok(Self::All),
-            "resources" => bail!("the directory mode \"resources\" is not supported: no recipe states it"),
-            _ => bail!("unknown directory mode {value:?}"),
-        }
-    }
-
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::None => "none",
-            Self::All => "all",
-        }
-    }
-}
-
 /// Writes a distribution-shaped jar with STORED entries and a generated `__index__` as the last entry. The default mode
 /// writes no directory entry. A 5-byte end-record comment points into the index.
 ///
@@ -57,18 +39,18 @@ impl DirectoryMode {
 ///
 /// Writing goes forward only. Each offset is known when the writer gets to it, so there is one buffered pass and no
 /// seek. A writer dropped before a successful [`Writer::close`] discards its buffer, as the Go writer did. So a failed
-/// merge leaves no plausible tail in the output file.
+/// merge leaves no plausible tail in the output file. After a failed call the state of the writer is not defined, so the
+/// caller drops it.
+///
+/// An I/O error of the output has no path, because the writer does not know the path of its output. A caller adds it.
 pub struct Writer<W: Write> {
-    /// `None` only inside [`Writer::into_inner`] and `drop`.
+    /// `None` only after a successful [`Writer::close`].
     out: Option<BufWriter<W>>,
-    closed: bool,
     offset: u32,
     /// The names of all central-directory records, one after the other. Each [`CdEntry`] holds its range.
     names: Vec<u8>,
     entries: Vec<CdEntry>,
     pub(crate) index: IndexBuilder,
-    /// The message of the first failure. Every later call fails with it, as the Go writer did.
-    failure: Option<String>,
 }
 
 struct CdEntry {
@@ -89,12 +71,10 @@ impl<W: Write> Writer<W> {
         index.directory_mode = mode;
         Self {
             out: Some(BufWriter::with_capacity(BUFFER_SIZE, out)),
-            closed: false,
             offset: 0,
             names: Vec::new(),
             entries: Vec::new(),
             index,
-            failure: None,
         }
     }
 
@@ -112,15 +92,11 @@ impl<W: Write> Writer<W> {
         reason = "the two checks below bound the size and the name to the zip field widths"
     )]
     pub fn add(&mut self, name: &str, data: &[u8], crc: u32, add_to_package_index: bool) -> Result<()> {
-        self.check()?;
         if data.len() > (1 << 31) - 1 {
-            return Err(self.fail(invalid!(
-                "{name}: entry is {} bytes, past what a 32-bit zip field holds",
-                data.len()
-            )));
+            anyhow::bail!("{name}: entry is {} bytes, past what a 32-bit zip field holds", data.len());
         }
         if name.len() > 65535 {
-            return Err(self.fail(invalid!("entry name exceeds the zip field limit")));
+            anyhow::bail!("entry name exceeds the zip field limit");
         }
         let header_offset = self.offset;
         let size = data.len() as u32;
@@ -140,9 +116,7 @@ impl<W: Write> Writer<W> {
             offset: data_offset,
             size: size as i32,
         };
-        if let Err(error) = self.index.add(entry, name.as_bytes()) {
-            return Err(self.fail(error));
-        }
+        self.index.add(entry, name.as_bytes())?;
         self.entries.push(CdEntry {
             name_start,
             name_len: name.len(),
@@ -154,19 +128,22 @@ impl<W: Write> Writer<W> {
     }
 
     /// Writes the generated index, the central directory and the end record, and flushes the buffer. It returns the
-    /// total number of bytes written, which is the size of the jar.
+    /// underlying writer and the total number of bytes written, which is the size of the jar.
+    pub fn close(self) -> Result<(W, u64)> {
+        let (out, size, _) = self.finish()?;
+        Ok((out, size))
+    }
+
+    /// [`Writer::close`], which also returns the index that the jar holds. The tests read its records.
     #[expect(
         clippy::cast_possible_truncation,
         clippy::cast_possible_wrap,
         clippy::cast_sign_loss,
         reason = "the offsets stay below 4 GiB through `advance`, the count below `MAX_ENTRIES`, and the index pointer -1 is the u32 the reader expects"
     )]
-    pub fn close(&mut self) -> Result<u64> {
-        self.check()?;
+    pub(crate) fn finish(mut self) -> Result<(W, u64, IndexBuilder)> {
         if self.index.directory_mode == DirectoryMode::None {
-            if let Err(error) = self.index.finish() {
-                return Err(self.fail(error));
-            }
+            self.index.finish()?;
         } else {
             for directory in self.index.sorted_directories() {
                 let name_start = self.names.len();
@@ -179,9 +156,7 @@ impl<W: Write> Writer<W> {
                     offset: -1,
                     size: 0,
                 };
-                if let Err(error) = self.index.add(entry, directory.as_bytes()) {
-                    return Err(self.fail(error));
-                }
+                self.index.add(entry, directory.as_bytes())?;
                 self.entries.push(CdEntry {
                     name_start,
                     name_len: directory.len() + 1,
@@ -222,9 +197,7 @@ impl<W: Write> Writer<W> {
             // No content-module jar comes near this count, and the Kotlin writer truncates silently here. So this
             // writer refuses the jar and has no zip64 tail.
             let count = self.entries.len();
-            return Err(self.fail(invalid!(
-                "{count} entries reaches the zip64 threshold, which this writer does not implement"
-            )));
+            anyhow::bail!("{count} entries reaches the zip64 threshold, which this writer does not implement");
         }
 
         let central_directory_offset = self.offset;
@@ -246,21 +219,13 @@ impl<W: Write> Writer<W> {
         eocd.push(INDEX_FORMAT_VERSION);
         eocd.extend_from_slice(&(index_data_end as u32).to_le_bytes());
         self.write_raw(&eocd)?;
-        if let Err(error) = self.out().flush() {
-            return Err(self.fail(Error::Bare(error)));
-        }
-        self.closed = true;
-        Ok(u64::from(self.offset) + eocd.len() as u64)
-    }
-
-    pub fn get_ref(&self) -> &W {
-        self.out.as_ref().expect("the writer is open").get_ref()
-    }
-
-    /// Returns the underlying writer. Call [`Writer::close`] first: this flushes the buffer and writes nothing else.
-    pub fn into_inner(mut self) -> Result<W> {
+        self.out().flush()?;
+        let size = u64::from(self.offset) + eocd.len() as u64;
         let out = self.out.take().expect("the writer is open");
-        out.into_inner().map_err(|error| Error::Bare(error.into_error()))
+        // The buffer is empty after the flush, so this writes nothing.
+        let out = out.into_inner().map_err(std::io::IntoInnerError::into_error)?;
+        let index = std::mem::replace(&mut self.index, IndexBuilder::new());
+        Ok((out, size, index))
     }
 
     #[expect(clippy::cast_possible_truncation, reason = "`add` bounds a name to the u16 of the header")]
@@ -304,16 +269,12 @@ impl<W: Write> Writer<W> {
 
     fn write_name(&mut self, start: usize, len: usize) -> Result<()> {
         let out = self.out.as_mut().expect("the writer is open");
-        if let Err(error) = out.write_all(&self.names[start..start + len]) {
-            return Err(self.fail(Error::Bare(error)));
-        }
+        out.write_all(&self.names[start..start + len])?;
         Ok(())
     }
 
     fn write_raw(&mut self, data: &[u8]) -> Result<()> {
-        if let Err(error) = self.out().write_all(data) {
-            return Err(self.fail(Error::Bare(error)));
-        }
+        self.out().write_all(data)?;
         Ok(())
     }
 
@@ -323,7 +284,7 @@ impl<W: Write> Writer<W> {
     fn advance(&mut self, n: u64) -> Result<()> {
         let next = u64::from(self.offset) + n;
         if next > u64::from(u32::MAX) {
-            return Err(self.fail(invalid!("output would exceed 4 GiB, past what a 32-bit zip offset holds")));
+            return Err(anyhow!("output would exceed 4 GiB, past what a 32-bit zip offset holds"));
         }
         self.offset = next as u32;
         Ok(())
@@ -332,29 +293,11 @@ impl<W: Write> Writer<W> {
     const fn out(&mut self) -> &mut BufWriter<W> {
         self.out.as_mut().expect("the writer is open")
     }
-
-    fn check(&self) -> Result<()> {
-        match &self.failure {
-            Some(message) => Err(Error::Invalid(message.clone())),
-            None => Ok(()),
-        }
-    }
-
-    fn fail(&mut self, error: Error) -> Error {
-        if let Some(message) = &self.failure {
-            Error::Invalid(message.clone())
-        } else {
-            self.failure = Some(error.to_string());
-            error
-        }
-    }
 }
 
 impl<W: Write> Drop for Writer<W> {
     fn drop(&mut self) {
-        if let Some(out) = self.out.take()
-            && !self.closed
-        {
+        if let Some(out) = self.out.take() {
             // `into_parts` returns the buffer without a write, so the unwritten tail is dropped.
             let _ = out.into_parts();
         }

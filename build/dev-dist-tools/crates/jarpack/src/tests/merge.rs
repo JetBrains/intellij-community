@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use super::golden::*;
 use super::testjar::{
     RawEntry, Scratch, SourceEntry, digest, entry, entry_names, index_pointer, pack, raw, read_entry, write_raw_jar, write_zip_jar,
 };
 use crate::merge::{replace_coverage_agent, trim_entity_list};
-use crate::{INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Source, duplicate_line, library_filter, module_output_filter};
+use crate::{EntryFilter, INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, ManifestMode, MergeOptions, MergeSpec, Source, duplicate_line};
 
 fn spec(output: &str, sources: Vec<Source>) -> MergeSpec {
     MergeSpec {
@@ -18,15 +17,10 @@ fn spec(output: &str, sources: Vec<Source>) -> MergeSpec {
     }
 }
 
-/// A jar source with the library filter that is not a `library=` source, as the Go tests wrote it.
-fn library_filtered(path: &Path) -> Source {
-    Source::archive(path, library_filter())
-}
-
 fn pack_error(spec: &MergeSpec) -> String {
-    match spec.pack() {
+    match spec.pack(&MergeOptions::default()) {
         Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
-        Err(error) => error.to_string(),
+        Err(error) => format!("{error:#}"),
     }
 }
 
@@ -49,12 +43,11 @@ fn entity_merge_keeps_source_order() {
     let scratch = Scratch::new();
     let first = write_zip_jar(&scratch, "first.jar", &[entry("META-INF/listOfEntities.txt", "  First\n")]);
     let second = write_zip_jar(&scratch, "second.jar", &[entry("META-INF/listOfEntities.txt", "\nSecond  ")]);
-    let sources = vec![library_filtered(&first), Source::module(&second)];
+    let sources = vec![Source::library(&first), Source::module(&second)];
     let (data, duplicates) = pack(
         &scratch,
         MergeSpec {
             merge_entities: true,
-            verify_crc: true,
             ..spec("entities.jar", sources.clone())
         },
     );
@@ -94,19 +87,18 @@ fn manifest_policy_belongs_to_the_source() {
             "Boot-Class-Path: intellij.platform.coverage.agent.jar\r\nOther: unchanged\r\n",
         ),
     ] {
+        // No entry filter drops the manifest, so the two policies take the two filters.
         let filter = if mode == ManifestMode::CoverageAgent {
-            Arc::new(|_: &str| false)
+            EntryFilter::Library
         } else {
-            module_output_filter()
+            EntryFilter::ModuleOutput
         };
         let sources = vec![
-            Source {
-                manifest: Some(ManifestMode::Drop),
-                ..Source::module(&first)
-            },
-            Source {
+            Source::module(&first).with_manifest(ManifestMode::Drop),
+            Source::Jar {
+                path: agent.clone(),
+                filter,
                 manifest: Some(mode),
-                ..Source::archive(&agent, filter)
             },
         ];
         let (data, _) = pack(
@@ -237,48 +229,25 @@ fn merge_rejects_unsafe_or_stale_source_operations() {
         &[entry("present.so", "native"), entry("icon-robots.txt", "excluded")],
     );
     let agent_file = scratch.file("MANIFEST.MF", b"Boot-Class-Path: intellij-coverage-agent-1.jar\r\n");
-    for source in [
-        Source {
-            path: archive.clone(),
-            ..Source::default()
-        },
-        Source {
-            name: "entry".into(),
-            ..Source::default()
-        },
-        Source {
-            path: archive,
-            name: "../escape".into(),
-            ..Source::default()
-        },
+    // The type of `Source` cannot state a jar without a filter or a patch of a jar, so those cases of the Go test are
+    // gone.
+    for (source, want) in [
+        (Source::module(PathBuf::new()), "invalid archive source"),
+        (Source::file("entry", PathBuf::new()), "invalid file source"),
+        (Source::file("../escape", &archive), "../escape"),
         // No producer gives a single file the coverage-agent policy, so the merge refuses it.
-        Source {
-            manifest: Some(ManifestMode::CoverageAgent),
-            ..Source::file(MANIFEST_ENTRY_NAME, &agent_file)
-        },
+        (
+            Source::file(MANIFEST_ENTRY_NAME, &agent_file).with_manifest(ManifestMode::CoverageAgent),
+            "which only a jar source takes",
+        ),
     ] {
         let output = scratch.dir().join("invalid.jar");
         let recipe = MergeSpec {
             validate_entry_names: true,
             ..spec(output.to_str().unwrap(), vec![source.clone()])
         };
-        assert!(recipe.pack().is_err(), "accepted an invalid source: {source:?}");
-    }
-    // The Go test also passed the manifest policy "unknown". ManifestMode has no such value, and the parser refuses it.
-    ManifestMode::parse("unknown").unwrap_err();
-}
-
-#[test]
-fn manifest_policy_parse_takes_what_the_recipes_state() {
-    for mode in [ManifestMode::Drop, ManifestMode::Keep, ManifestMode::CoverageAgent] {
-        assert_eq!(ManifestMode::parse(mode.as_str()).unwrap(), mode);
-    }
-    // The Go packer had this policy, and no flag file or plan file states it.
-    let error = ManifestMode::parse("rewrite-boot-class-path").unwrap_err().to_string();
-    assert!(error.contains("\"rewrite-boot-class-path\" is not supported"), "{error}");
-    for value in ["", "Keep", "unknown"] {
-        let error = ManifestMode::parse(value).unwrap_err().to_string();
-        assert!(error.contains(&format!("{value:?}")), "the error {error:?} must name {value:?}");
+        let error = pack_error(&recipe);
+        assert!(error.contains(want), "{source:?}: {error}");
     }
 }
 
@@ -377,7 +346,7 @@ fn pack_merges_a_library_before_the_module_output() {
     let module = module_source(&scratch, "module.jar");
     let (data, duplicates) = pack(
         &scratch,
-        spec("intellij.example.jar", vec![library_filtered(&library), Source::module(&module)]),
+        spec("intellij.example.jar", vec![Source::library(&library), Source::module(&module)]),
     );
     assert!(duplicates.is_empty(), "these two sources share no entry name, got {duplicates:?}");
     // The library entries come first, in the order of the library. There is no manifest, because the surviving manifest
@@ -418,7 +387,7 @@ fn pack_resolves_a_duplicate_to_the_first_source() {
     );
     let (data, duplicates) = pack(
         &scratch,
-        spec("intellij.example.jar", vec![library_filtered(&first), library_filtered(&second)]),
+        spec("intellij.example.jar", vec![Source::library(&first), Source::library(&second)]),
     );
     assert_eq!(duplicates, ["META-INF/services/org.Spi"]);
     assert_eq!(read_entry(&data, "META-INF/services/org.Spi"), "from the first library");
@@ -459,10 +428,7 @@ fn pack_points_the_coverage_agent_manifest_at_the_jar_it_ends_up_in() {
     let scratch = Scratch::new();
     let (agent, module) = coverage_agent_sources(&scratch);
     let sources = vec![
-        Source {
-            manifest: Some(ManifestMode::CoverageAgent),
-            ..Source::library(&agent)
-        },
+        Source::library(&agent).with_manifest(ManifestMode::CoverageAgent),
         Source::module(&module),
     ];
     let (data, _) = pack(
@@ -505,7 +471,7 @@ fn pack_reads_the_local_extra_field_rather_than_the_central_one() {
 #[test]
 fn pack_refuses_a_recipe_with_no_sources() {
     assert!(
-        spec("intellij.example.jar", vec![]).pack().is_err(),
+        spec("intellij.example.jar", vec![]).pack(&MergeOptions::default()).is_err(),
         "packing a recipe with no source succeeded"
     );
 }
@@ -539,7 +505,7 @@ fn residual_packing_rejects_native_entries() {
         reject_native_entries: true,
         ..spec(output.to_str().unwrap(), vec![Source::module(&source)])
     };
-    recipe.pack().unwrap();
+    recipe.pack(&MergeOptions::default()).unwrap();
 }
 
 #[test]
@@ -621,11 +587,8 @@ fn pack_reports_the_size_and_the_duplicates() {
     let first = write_zip_jar(&scratch, "first.jar", &fixture);
     let second = write_zip_jar(&scratch, "second.jar", &fixture);
     let output = scratch.dir().join("intellij.example.jar");
-    let recipe = MergeSpec {
-        verify_crc: true,
-        ..spec(output.to_str().unwrap(), vec![Source::module(&first), Source::module(&second)])
-    };
-    let report = recipe.pack().unwrap();
+    let recipe = spec(output.to_str().unwrap(), vec![Source::module(&first), Source::module(&second)]);
+    let report = recipe.pack(&MergeOptions { verify_crc: true }).unwrap();
     assert_eq!(recipe.jar_name(), "intellij.example.jar");
     assert_eq!(report.bytes_written, std::fs::metadata(&output).unwrap().len());
     assert_eq!(report.content_hash, xxh3::hash_file(&output).unwrap());
@@ -665,7 +628,7 @@ fn pack_reports_the_content_hash_of_a_jar_past_the_write_buffer() {
         output.to_str().unwrap(),
         vec![Source::file("resources/large.bin", &file), Source::module(&module)],
     );
-    let report = recipe.pack().unwrap();
+    let report = recipe.pack(&MergeOptions::default()).unwrap();
     assert_eq!(report.bytes_written, std::fs::metadata(&output).unwrap().len());
     assert!(report.bytes_written > large.len() as u64);
     assert_eq!(report.content_hash, xxh3::hash_file(&output).unwrap());
@@ -710,14 +673,11 @@ fn a_failed_write_names_the_jar() {
     let sources = (0..100)
         .map(|number| Source::file(format!("entry-{number:03}.txt"), &file))
         .collect();
-    let error = spec(output.to_str().unwrap(), sources).pack().unwrap_err();
-    let text = error.to_string();
-    match error {
-        crate::Error::Io { path, error } => {
-            assert_eq!(path, output);
-            assert_eq!(error.kind(), std::io::ErrorKind::FileTooLarge, "{text}");
-        }
-        error => panic!("not an I/O error with a path: {error:?}"),
-    }
+    let error = spec(output.to_str().unwrap(), sources).pack(&MergeOptions::default()).unwrap_err();
+    let text = format!("{error:#}");
+    let io_error = error
+        .downcast_ref::<std::io::Error>()
+        .unwrap_or_else(|| panic!("not an I/O error: {error:?}"));
+    assert_eq!(io_error.kind(), std::io::ErrorKind::FileTooLarge, "{text}");
     assert!(text.starts_with(&format!("{}: ", output.display())), "{text}");
 }

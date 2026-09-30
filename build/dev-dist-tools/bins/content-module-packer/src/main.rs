@@ -9,7 +9,7 @@
 //!
 //! The inventory is the port of `inventoryPackingOutput` of the Go `main.go`. It goes to the `metadata-file=` of the
 //! group through `filemeta`, after the jar. It lists the jar, and in natives mode also the tree root and every entry under
-//! it. A tree file gets `NativeSpec::file_mode`, not the mode that a stat returns. A tree directory gets the mode that a
+//! it. A tree file gets `NativeTree::file_mode`, not the mode that a stat returns. A tree directory gets the mode that a
 //! stat returns. The Kotlin build and the collector read the file, so its bytes are the inventory JSON version 1.
 //!
 //! The merge hashes the jar while it writes it, and its report holds the size and the content hash. So the inventory
@@ -32,7 +32,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use jarpack::MergeSpec;
+use jarpack::{FlagFile, MergeOptions, MergeSpec};
 
 /// The name of the producer in the merged build trace.
 const SERVICE_NAME: &str = "content-module-packer";
@@ -66,29 +66,30 @@ fn run(arguments: impl IntoIterator<Item = OsString>, base_dir: &Path, stderr: &
 
     // A build names the trace destination in the recipe, so the parse comes before the tracer. Thus the parse is not in
     // the root span, and a recipe that does not parse writes no span file.
-    let mut specs = match jarpack::parse_flag_file(&base_dir.join(&options.flag_file), base_dir) {
-        Ok(specs) => specs,
+    let flag_file = match jarpack::parse_flag_file(&base_dir.join(&options.flag_file), base_dir) {
+        Ok(flag_file) => flag_file,
         Err(error) => return report_failure(stderr, &error),
     };
-    let trace_file = match trace_destination(options.trace_file.as_deref(), &specs, base_dir) {
+    let trace_file = match trace_destination(options.trace_file.as_deref(), &flag_file, base_dir) {
         Ok(trace_file) => trace_file,
         Err(error) => return report_failure(stderr, &error),
     };
     if let Some(trace_file) = &trace_file
-        && let Err(error) = check_trace_destination(trace_file, &specs)
+        && let Err(error) = check_trace_destination(trace_file, &flag_file.groups)
     {
         return report_failure(stderr, &error);
     }
-    for spec in &mut specs {
-        spec.verify_crc |= options.verify_crc;
-    }
+    let merge_options = MergeOptions {
+        verify_crc: options.verify_crc,
+    };
 
     trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer, stderr| {
+        let specs = &flag_file.groups;
         let root = tracer.span("pack content modules");
         root.tag("jars", specs.len());
-        let result = pack::pack_all(&specs, &root, stderr);
+        let result = pack::pack_all(specs, &merge_options, &root, stderr);
         if let Err(error) = &result {
-            root.fail(error);
+            root.fail(&format!("{error:#}"));
         }
         root.end();
         match result {
@@ -98,8 +99,9 @@ fn run(arguments: impl IntoIterator<Item = OsString>, base_dir: &Path, stderr: &
     })
 }
 
+/// Prints `ERROR:` and the error. The alternate form prints the context chain of an `anyhow::Error`.
 fn report_failure(stderr: &mut dyn Write, error: &dyn Display) -> u8 {
-    let _ = writeln!(stderr, "ERROR: {error}");
+    let _ = writeln!(stderr, "ERROR: {error:#}");
     FAILURE
 }
 
@@ -110,15 +112,15 @@ fn report_failure(stderr: &mut dyn Write, error: &dyn Display) -> u8 {
 /// `--trace-file=`, as every other producer of span files does. The command line wins. Thus a flag file from
 /// `bazel aquery` can run again with the trace in a safe location.
 ///
-/// `jarpack::parse_flag_file` resolves the `trace-file=` line and refuses a second, different line. So the first group
-/// with a line names the destination of the run.
+/// `jarpack::parse_flag_file` resolves the `trace-file=` line and refuses a second, different line. So
+/// [`FlagFile::trace_file`] names the destination of the run.
 ///
 /// The command line goes through [`jarpack::resolve_path`], the path rule of the recipe parser. So
 /// [`check_trace_destination`] compares two paths in one form.
-fn trace_destination(command_line: Option<&str>, specs: &[MergeSpec], base_dir: &Path) -> jarpack::Result<Option<PathBuf>> {
+fn trace_destination(command_line: Option<&str>, flag_file: &FlagFile, base_dir: &Path) -> anyhow::Result<Option<PathBuf>> {
     match command_line {
         Some(trace_file) => jarpack::resolve_path(trace_file, base_dir).map(Some),
-        None => Ok(specs.iter().find_map(|spec| spec.trace_file.clone())),
+        None => Ok(flag_file.trace_file.clone()),
     }
 }
 
@@ -132,9 +134,15 @@ fn check_trace_destination(trace_file: &Path, specs: &[MergeSpec]) -> Result<(),
             "a jar output"
         } else if spec.metadata_file.as_deref() == Some(trace_file) {
             "a metadata output"
-        } else if spec.native.as_ref().and_then(|native| native.tree.as_deref()) == Some(trace_file) {
+        } else if spec
+            .native
+            .as_ref()
+            .and_then(|native| native.tree.as_ref())
+            .map(|tree| tree.dir.as_path())
+            == Some(trace_file)
+        {
             "a native tree output"
-        } else if spec.sources.iter().any(|source| source.path == trace_file) {
+        } else if spec.sources.iter().any(|source| source.path() == trace_file) {
             "an input"
         } else {
             continue;

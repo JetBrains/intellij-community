@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use crate::error::{Result, bail};
+use anyhow::{Result, bail};
 
 /// The OS family of a native entry, spelled as the dev-dist variant spells it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

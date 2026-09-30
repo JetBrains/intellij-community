@@ -22,7 +22,6 @@ serde
 serde_core
 serde_json
 simd_adler32
-thiserror
 trace
 walkdir
 xxh3

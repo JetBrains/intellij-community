@@ -254,9 +254,7 @@ fn is_native_entry_and_is_executable() {
 
 #[test]
 fn select_refuses_an_entry_that_is_not_ascii() {
-    let error = select(&["a/macoſ/libx.dylib"], Family::MacOS, Arch::AArch64)
-        .unwrap_err()
-        .to_string();
+    let error = format!("{:#}", select(&["a/macoſ/libx.dylib"], Family::MacOS, Arch::AArch64).unwrap_err());
     assert!(
         error.contains("\"a/macoſ/libx.dylib\" is not ASCII"),
         "the error {error:?} must name the entry"
@@ -379,7 +377,7 @@ fn select_takes_the_entries_of_one_platform() {
         assert_eq!(path, want, "rocksdbjni {variant}");
     }
     let error = select(&["a/linux-x64/libx.so", "b/linux-x64/libx.so"], Family::Linux, Arch::X64).unwrap_err();
-    assert!(error.to_string().contains("common path prefix"), "two prefixes: {error}");
+    assert!(format!("{error:#}").contains("common path prefix"), "two prefixes: {error:#}");
 }
 
 #[test]

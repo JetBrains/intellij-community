@@ -13,18 +13,18 @@
 use zip::{CompressionMethod, HasZipMetadata};
 
 use super::testjar::{entry_names, open_packed};
+use crate::index::IndexBuilder;
 use crate::writer::LOCAL_HEADER_SIZE;
 use crate::{DirectoryMode, Writer};
 
-fn write(mode: DirectoryMode, names: &[&str]) -> (Writer<Vec<u8>>, Vec<u8>) {
+fn write(mode: DirectoryMode, names: &[&str]) -> (IndexBuilder, Vec<u8>) {
     let mut writer = Writer::with_directory_mode(Vec::new(), mode);
     for name in names {
         writer.add(name, name.as_bytes(), crc32fast::hash(name.as_bytes()), true).unwrap();
     }
-    let size = writer.close().unwrap();
-    let data = writer.get_ref().clone();
+    let (data, size, index) = writer.finish().unwrap();
     assert_eq!(size, data.len() as u64, "close returns the size of the jar");
-    (writer, data)
+    (index, data)
 }
 
 fn pointer_count(data: &[u8]) -> u32 {
@@ -48,8 +48,7 @@ fn writer_emits_normalised_headers() {
     writer
         .add("com/example/Service.class", b"class bytes", crc32fast::hash(b"class bytes"), true)
         .unwrap();
-    writer.close().unwrap();
-    let data = writer.into_inner().unwrap();
+    let (data, _) = writer.close().unwrap();
 
     let local = &data[..LOCAL_HEADER_SIZE];
     for (name, offset, size) in [
@@ -102,15 +101,15 @@ fn writer_points_the_end_record_comment_into_the_index() {
 #[test]
 fn writer_directory_modes_match_kotlin_index_records() {
     for mode in [DirectoryMode::None, DirectoryMode::All] {
-        let (writer, data) = write(mode, &["classes/Value.class", "resources/nested/value.txt"]);
+        let (index, data) = write(mode, &["classes/Value.class", "resources/nested/value.txt"]);
         let directories: Vec<String> = entry_names(&data).into_iter().filter(|name| name.ends_with('/')).collect();
         let want: Vec<&str> = match mode {
             DirectoryMode::None => vec![],
             DirectoryMode::All => vec!["classes/", "resources/", "resources/nested/"],
         };
         assert_eq!(directories, want, "{mode:?}");
-        for (position, entry) in writer.index.entries.iter().enumerate() {
-            let name = writer.index.name(position);
+        for (position, entry) in index.entries.iter().enumerate() {
+            let name = index.name(position);
             if ![b"classes".as_slice(), b"resources", b"resources/nested"].contains(&name) {
                 continue;
             }
@@ -123,7 +122,7 @@ fn writer_directory_modes_match_kotlin_index_records() {
                 assert!(entry.offset == -1 && entry.size == 0, "{mode:?}: a real directory record {entry:?}");
             }
         }
-        assert_eq!(pointer_count(&data), writer.index.entries.len() as u32, "{mode:?}");
+        assert_eq!(pointer_count(&data), index.entries.len() as u32, "{mode:?}");
         let mut archive = open_packed(&data);
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
@@ -144,25 +143,10 @@ fn writer_directory_modes_match_kotlin_index_records() {
 }
 
 #[test]
-fn writer_rejects_unknown_directory_modes_and_long_names() {
-    for value in ["guess", "", "All"] {
-        let error = DirectoryMode::parse(value).unwrap_err().to_string();
-        assert!(error.contains(&format!("{value:?}")), "the error {error:?} must name {value:?}");
-    }
-    // The Go writer had this mode, and no plan file states it.
-    let error = DirectoryMode::parse("resources").unwrap_err().to_string();
-    assert!(error.contains("\"resources\" is not supported"), "{error}");
-    for mode in [DirectoryMode::None, DirectoryMode::All] {
-        assert_eq!(DirectoryMode::parse(mode.as_str()).unwrap(), mode);
-    }
+fn writer_rejects_long_names() {
     let mut writer = Writer::new(Vec::new());
-    assert!(
-        writer.add(&"a".repeat(65536), b"", 0, true).is_err(),
-        "accepted an overflowing entry name"
-    );
-    // The failure is sticky, as in the Go writer.
-    writer.add("a.txt", b"", 0, true).unwrap_err();
-    writer.close().unwrap_err();
+    let error = writer.add(&"a".repeat(65536), b"", 0, true).unwrap_err();
+    assert_eq!(format!("{error:#}"), "entry name exceeds the zip field limit");
 }
 
 #[test]

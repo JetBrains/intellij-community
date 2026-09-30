@@ -5,6 +5,7 @@
 use std::fs;
 use std::path::Path;
 
+use anyhow::{Context as _, bail};
 use filemeta::{Entry, EntryType};
 use jarpack::{MergeReport, MergeSpec};
 
@@ -28,32 +29,27 @@ pub(crate) struct InventoryReport {
 /// jar is not read again. The files of the tree are read again and hashed.
 ///
 /// The collector places the files of the tree from this inventory alone, so it holds the hash, the size and the mode of
-/// each. The mode of a tree file is [`jarpack::NativeSpec::file_mode`], not the mode a stat returns: POSIX reads the
+/// each. The mode of a tree file is [`jarpack::NativeTree::file_mode`], not the mode a stat returns: POSIX reads the
 /// same bits back, and NTFS stores none.
-pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> jarpack::Result<InventoryReport> {
+pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> anyhow::Result<InventoryReport> {
     let Some(metadata_file) = &spec.metadata_file else {
-        return Err(jarpack::Error::Invalid(format!(
-            "{}: the spec names no metadata file",
-            spec.output.display()
-        )));
+        bail!("{}: the spec names no metadata file", spec.output.display());
     };
     let jar = jar_entry(&spec.output, merged)?;
     let mut hashed_file_count = 1;
     let mut byte_count = merged.bytes_written;
     let mut native_file_count = None;
     let mut entries = vec![jar];
-    if let Some(native) = spec.native.as_ref()
-        && let Some(tree) = &native.tree
-    {
-        let base = file_name(tree);
-        let root = filemeta::inspect(tree, &base).map_err(metadata_error)?;
-        let items = filemeta::inventory(tree).map_err(metadata_error)?;
+    if let Some(tree) = spec.native.as_ref().and_then(|native| native.tree.as_ref()) {
+        let base = file_name(&tree.dir);
+        let root = filemeta::inspect(&tree.dir, &base)?;
+        let items = filemeta::inventory(&tree.dir)?;
         entries.push(root);
         let mut native_files = 0;
         for mut item in items {
             if item.entry_type == EntryType::File {
                 let name = item.relative_path.rsplit('/').next().unwrap_or_default();
-                item.mode = native.file_mode(name);
+                item.mode = tree.file_mode(name);
                 item.executable = item.mode & 0o111 != 0;
                 native_files += 1;
                 hashed_file_count += 1;
@@ -64,7 +60,7 @@ pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> jarpack
         }
         native_file_count = Some(native_files);
     }
-    filemeta::write(metadata_file, &entries).map_err(metadata_error)?;
+    filemeta::write(metadata_file, &entries)?;
     Ok(InventoryReport {
         file_count: entries.len() as u64,
         hashed_file_count,
@@ -75,16 +71,10 @@ pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> jarpack
 
 /// Returns the entry of the jar at `output` from the report of its merge. Only the mode comes from the file, through one
 /// stat that does not follow a link. The result equals `filemeta::inspect` of the jar.
-fn jar_entry(output: &Path, merged: &MergeReport) -> jarpack::Result<Entry> {
-    let metadata = fs::symlink_metadata(output).map_err(|error| jarpack::Error::Io {
-        path: output.to_path_buf(),
-        error,
-    })?;
+fn jar_entry(output: &Path, merged: &MergeReport) -> anyhow::Result<Entry> {
+    let metadata = fs::symlink_metadata(output).with_context(|| output.display().to_string())?;
     if !metadata.is_file() {
-        return Err(jarpack::Error::Invalid(format!(
-            "the packed jar is not a regular file: {}",
-            output.display()
-        )));
+        bail!("the packed jar is not a regular file: {}", output.display());
     }
     let mode = filemeta::permissions(&metadata);
     Ok(Entry {
@@ -96,11 +86,6 @@ fn jar_entry(output: &Path, merged: &MergeReport) -> jarpack::Result<Entry> {
         executable: mode & 0o111 != 0,
         symlink_target: String::new(),
     })
-}
-
-/// Keeps the text of a `filemeta` error, with its context chain, in a packing error.
-fn metadata_error(error: impl std::fmt::Display) -> jarpack::Error {
-    jarpack::Error::Invalid(format!("{error:#}"))
 }
 
 fn file_name(path: &Path) -> String {

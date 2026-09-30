@@ -4,11 +4,22 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{self, Path, PathBuf};
 
-use crate::error::{IoContext, Result, bail, invalid};
+use anyhow::{Context as _, Result, anyhow, bail};
+
 use crate::merge::{ManifestMode, MergeSpec, Source};
 use crate::nativelib;
-use crate::natives::NativeSpec;
+use crate::natives::{NativeSpec, NativeTree};
 use crate::writer::DirectoryMode;
+
+/// A parsed flag file: the groups in file order, and the span file of the run.
+#[derive(Clone, Debug, Default)]
+pub struct FlagFile {
+    /// One [`MergeSpec`] per `output=` line.
+    pub groups: Vec<MergeSpec>,
+    /// The `trace-file=` destination, the span file of the *run*. Nothing about packing reads it. It comes in the flag
+    /// file because a packing action passes no other argument. Every `trace-file=` line of the file names this path.
+    pub trace_file: Option<PathBuf>,
+}
 
 /// Reads the argument grammar of the packer: one `output=` line per jar, then the `module=`, `library=` and `file=`
 /// lines it is built from.
@@ -17,7 +28,8 @@ use crate::writer::DirectoryMode;
 /// flag file. `output=` starts a group, so the file is ordered, and that order is the precedence the merge uses for
 /// duplicates. A relative path is resolved against `base_dir`.
 ///
-/// `trace-file=` is here and not on the command line, because a packing action passes one argument, `--flagfile=`.
+/// `trace-file=` is here and not on the command line, because a packing action passes one argument, `--flagfile=`. It
+/// is a line inside a group. A run writes one trace, so the parser refuses two lines with different paths.
 ///
 /// `native-tree=`, `native-variant=` and `native-lib=` together put a group in natives mode. See [`NativeSpec`]. They
 /// are three lines because each is a different kind of value: an output path, a platform token and a library name.
@@ -35,12 +47,17 @@ use crate::writer::DirectoryMode;
 ///   [`resolve_path`].
 ///
 /// The flag file must be UTF-8. The Go parser kept the raw bytes of a path, and no Bazel path needs that.
-pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<Vec<MergeSpec>> {
-    let content = fs::read(path).at(path)?;
-    let content = String::from_utf8(content).map_err(|error| invalid!("{}: the flag file is not valid UTF-8: {error}", path.display()))?;
+#[expect(
+    clippy::unnecessary_debug_formatting,
+    reason = "the Debug form quotes the path, and a refusal keeps its text"
+)]
+pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<FlagFile> {
+    let content = fs::read(path).with_context(|| path.display().to_string())?;
+    let content = String::from_utf8(content).map_err(|error| anyhow!("{}: the flag file is not valid UTF-8: {error}", path.display()))?;
     let resolve = |value: &str| resolve_path(value, base_dir);
 
     let mut specs: Vec<MergeSpec> = Vec::new();
+    let mut trace_file: Option<PathBuf> = None;
     let mut current: Option<MergeSpec> = None;
     let mut natives = NativeLines::default();
 
@@ -70,7 +87,21 @@ pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<Vec<MergeSpec>> {
                 parse_true(option, value)?;
                 spec.directory_mode = DirectoryMode::All;
             }
-            "trace-file" => spec.trace_file = Some(resolve(value)?),
+            "trace-file" => {
+                // A run writes one trace, so two groups with different destinations have no answer. The flag file of
+                // an action holds one group. A flag file made by hand from many command lines can hold two. If every
+                // span went into the first destination, bazel-out would get a file that no action produced.
+                let destination = resolve(value)?;
+                if let Some(trace) = &trace_file
+                    && *trace != destination
+                {
+                    bail!(
+                        "two `trace-file=` destinations, {trace:?} and {destination:?}: a run writes one trace, so pass \
+                         `--trace-file=` for the whole run or drop the lines"
+                    );
+                }
+                trace_file = Some(destination);
+            }
             "metadata-file" => {
                 if value.is_empty() || spec.metadata_file.is_some() {
                     bail!("expected one nonempty `metadata-file=` per output");
@@ -90,13 +121,16 @@ pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<Vec<MergeSpec>> {
                 let Some(source) = spec.sources.last_mut() else {
                     bail!("`source-manifest=` requires a preceding archive source");
                 };
-                if !source.name.is_empty() || source.manifest.is_some() {
+                let Source::Jar {
+                    manifest: manifest @ None, ..
+                } = source
+                else {
                     bail!("`source-manifest=` requires an archive source without a manifest policy");
-                }
+                };
                 if value != "coverage-agent" {
                     bail!("`source-manifest={value}` is not supported: a flag file states only `coverage-agent`");
                 }
-                source.manifest = Some(ManifestMode::CoverageAgent);
+                *manifest = Some(ManifestMode::CoverageAgent);
             }
             "file" | "patch" => {
                 // `file=<entry name>=<path>`, cut at the first `=`. So the entry name has no `=` and the path can have
@@ -107,18 +141,19 @@ pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<Vec<MergeSpec>> {
                 if name.is_empty() || file_path.is_empty() {
                     bail!("`file=` states an empty entry name or path in {line:?}");
                 }
-                let source = Source::file(name, resolve(file_path)?);
-                spec.sources.push(Source {
-                    patch: option == "patch",
-                    ..source
+                let file_path = resolve(file_path)?;
+                spec.sources.push(if option == "patch" {
+                    Source::patch(name, file_path)
+                } else {
+                    Source::file(name, file_path)
                 });
             }
             _ => bail!("unknown option {option:?} in {line:?}"),
         }
     }
     flush(&mut specs, current.take(), &mut natives)?;
-    check_destinations(&specs)?;
-    Ok(specs)
+    check_destinations(&specs, trace_file.as_deref())?;
+    Ok(FlagFile { groups: specs, trace_file })
 }
 
 /// Resolves a path of a recipe against `base_dir`, and keeps an absolute path as it is. It refuses a path with a `.` or
@@ -137,16 +172,17 @@ fn flush(specs: &mut Vec<MergeSpec>, current: Option<MergeSpec>, natives: &mut N
     let Some(mut spec) = current else {
         return Ok(());
     };
-    spec.native = std::mem::take(natives)
-        .spec()
-        .map_err(|error| error.context(spec.output.display()))?;
+    spec.native = std::mem::take(natives).spec().with_context(|| spec.output.display().to_string())?;
     specs.push(spec);
     Ok(())
 }
 
-fn check_destinations(specs: &[MergeSpec]) -> Result<()> {
+#[expect(
+    clippy::unnecessary_debug_formatting,
+    reason = "the Debug form quotes the path, and a refusal keeps its text"
+)]
+fn check_destinations(specs: &[MergeSpec], trace: Option<&Path>) -> Result<()> {
     let mut seen: HashMap<&Path, usize> = HashMap::with_capacity(specs.len());
-    let mut trace: Option<&Path> = None;
     for (i, spec) in specs.iter().enumerate() {
         if spec.sources.is_empty() {
             bail!("no inputs for {:?}", spec.output);
@@ -155,21 +191,6 @@ fn check_destinations(specs: &[MergeSpec]) -> Result<()> {
             bail!("{:?} is declared twice, at group {previous} and {i}", spec.output);
         }
         seen.insert(&spec.output, i);
-        // A run writes one trace, so two groups with different destinations have no answer. The flag file of an
-        // action holds one group. A flag file made by hand from many command lines can hold two. If every span went
-        // into the first destination, bazel-out would get a file that no action produced.
-        let Some(trace_file) = spec.trace_file.as_deref() else {
-            continue;
-        };
-        if let Some(trace) = trace
-            && trace != trace_file
-        {
-            bail!(
-                "two `trace-file=` destinations, {trace:?} and {trace_file:?}: a run writes one trace, so pass \
-                 `--trace-file=` for the whole run or drop the lines"
-            );
-        }
-        trace = Some(trace_file);
     }
     let mut metadata_paths: HashSet<&Path> = HashSet::new();
     for metadata_file in specs.iter().filter_map(|spec| spec.metadata_file.as_deref()) {
@@ -189,7 +210,7 @@ fn check_destinations(specs: &[MergeSpec]) -> Result<()> {
                 spec.output.display()
             );
         }
-        let Some(tree) = native.tree.as_deref() else {
+        let Some(tree) = native.tree.as_ref().map(|tree| tree.dir.as_path()) else {
             continue;
         };
         if seen.contains_key(tree) || metadata_paths.contains(tree) || native_trees.contains(tree) || trace == Some(tree) {
@@ -197,12 +218,12 @@ fn check_destinations(specs: &[MergeSpec]) -> Result<()> {
         }
         native_trees.insert(tree);
     }
-    for source in specs.iter().flat_map(|spec| &spec.sources) {
-        if metadata_paths.contains(source.path.as_path()) {
-            bail!("metadata destination is an input: {}", source.path.display());
+    for path in specs.iter().flat_map(|spec| &spec.sources).map(Source::path) {
+        if metadata_paths.contains(path) {
+            bail!("metadata destination is an input: {}", path.display());
         }
-        if native_trees.contains(source.path.as_path()) {
-            bail!("native tree destination is an input: {}", source.path.display());
+        if native_trees.contains(path) {
+            bail!("native tree destination is an input: {}", path.display());
         }
     }
     Ok(())
@@ -233,17 +254,12 @@ impl NativeLines {
     fn spec(self) -> Result<Option<NativeSpec>> {
         match (self.tree, self.variant, self.lib) {
             (None, None, None) => Ok(None),
-            (None, None, Some(lib)) => Ok(Some(NativeSpec {
-                lib_name: lib,
-                ..NativeSpec::default()
-            })),
-            (Some(tree), Some(variant), Some(lib)) => {
+            (None, None, Some(lib)) => Ok(Some(NativeSpec { lib_name: lib, tree: None })),
+            (Some(dir), Some(variant), Some(lib)) => {
                 let (family, arch) = nativelib::parse_variant(&variant)?;
                 Ok(Some(NativeSpec {
-                    tree: Some(tree),
-                    family: Some(family),
-                    arch: Some(arch),
                     lib_name: lib,
+                    tree: Some(NativeTree { dir, family, arch }),
                 }))
             }
             _ => bail!("`native-tree=` and `native-variant=` require each other and `native-lib=`"),

@@ -3,11 +3,26 @@
 use std::path::{Path, PathBuf};
 
 use super::testjar::{Scratch, entry, entry_names, pack, read_entry, write_zip_jar};
-use crate::{DirectoryMode, MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Result, Source, library_filter, parse_flag_file, resolve_path};
+use crate::{DirectoryMode, EntryFilter, FlagFile, MANIFEST_ENTRY_NAME, ManifestMode, MergeSpec, Source, parse_flag_file, resolve_path};
 
-pub(crate) fn parse_recipe(scratch: &Scratch, lines: &str) -> Result<Vec<MergeSpec>> {
+/// Returns the groups of a flag file with the text `lines`.
+pub(crate) fn parse_recipe(scratch: &Scratch, lines: &str) -> anyhow::Result<Vec<MergeSpec>> {
+    parse_recipe_file(scratch, lines).map(|flag_file| flag_file.groups)
+}
+
+fn parse_recipe_file(scratch: &Scratch, lines: &str) -> anyhow::Result<FlagFile> {
     let path = scratch.file("recipe.params", lines.as_bytes());
     parse_flag_file(&path, Path::new("/exec/root"))
+}
+
+pub(crate) const fn is_library(source: &Source) -> bool {
+    matches!(
+        source,
+        Source::Jar {
+            filter: EntryFilter::Library,
+            ..
+        }
+    )
 }
 
 fn at_root(relative: &str) -> PathBuf {
@@ -24,13 +39,13 @@ fn parse_source_manifest_policy() {
              output=out/b.jar\nmodule=other.jar\n"
         );
         let specs = parse_recipe(&scratch, &recipe).unwrap();
-        let policies: Vec<_> = specs[0].sources.iter().map(|source| source.manifest).collect();
+        let policies: Vec<_> = specs[0].sources.iter().map(Source::manifest).collect();
         assert_eq!(
             policies,
             [None, Some(ManifestMode::CoverageAgent), None],
             "the policy did not stay on the selected source"
         );
-        assert_eq!(specs[1].sources[0].manifest, None);
+        assert_eq!(specs[1].sources[0].manifest(), None);
     }
     for recipe in [
         "source-manifest=coverage-agent\noutput=out.jar\nmodule=in.jar\n",
@@ -50,7 +65,7 @@ fn parse_source_manifest_policy() {
     // No producer writes another policy into a flag file, so the parser refuses each one and names it.
     for value in ["keep", "drop", "rewrite-boot-class-path"] {
         let recipe = format!("output=out.jar\nlibrary=in.jar\nsource-manifest={value}\n");
-        let error = parse_recipe(&scratch, &recipe).unwrap_err().to_string();
+        let error = format!("{:#}", parse_recipe(&scratch, &recipe).unwrap_err());
         assert!(
             error.contains(&format!("`source-manifest={value}` is not supported")),
             "{value}: {error}"
@@ -96,7 +111,7 @@ fn independent_production_entity_recipe() {
     let unchanged_spec = MergeSpec {
         output: "legacy.jar".into(),
         sources: vec![
-            Source::archive(&library, library_filter()),
+            Source::library(&library),
             Source::module(&before),
             Source::module(&owner),
             Source::module(&after),
@@ -181,8 +196,8 @@ fn parse_flag_file_groups_by_output_and_keeps_source_order() {
         "merge-entities applied to the wrong group"
     );
     // The order is the precedence of the merge, so it is part of the grammar.
-    assert_eq!(specs[0].sources[0].path, at_root("lib/one.jar"));
-    assert!(specs[0].sources[0].library && !specs[0].sources[1].library);
+    assert_eq!(specs[0].sources[0].path(), at_root("lib/one.jar"));
+    assert!(is_library(&specs[0].sources[0]) && !is_library(&specs[0].sources[1]));
 }
 
 #[test]
@@ -248,35 +263,33 @@ fn parse_flag_file_reads_lines_with_carriage_returns_and_blank_lines() {
     let scratch = Scratch::new();
     let specs = parse_recipe(&scratch, "\r\n  \noutput=out/a.jar\r\r\nmodule=mod/a.jar\r\n\n").unwrap();
     assert_eq!(specs[0].output, at_root("out/a.jar"));
-    assert_eq!(specs[0].sources[0].path, at_root("mod/a.jar"));
+    assert_eq!(specs[0].sources[0].path(), at_root("mod/a.jar"));
 }
 
 #[test]
 fn parse_flag_file_reads_the_trace_destination() {
     let scratch = Scratch::new();
     // The line the packing rule writes, where it writes it: directly after `output=`, because the group starts there.
-    let specs = parse_recipe(&scratch, "output=out/a.jar\ntrace-file=out/a.jar.spans.json\nmodule=mod/a.jar\n").unwrap();
-    assert_eq!(specs[0].trace_file.as_deref(), Some(at_root("out/a.jar.spans.json").as_path()));
+    let flag_file = parse_recipe_file(&scratch, "output=out/a.jar\ntrace-file=out/a.jar.spans.json\nmodule=mod/a.jar\n").unwrap();
+    assert_eq!(flag_file.trace_file.as_deref(), Some(at_root("out/a.jar.spans.json").as_path()));
     // It changes nothing about the pack: it is not a source.
-    assert_eq!(specs[0].sources.len(), 1);
+    assert_eq!(flag_file.groups[0].sources.len(), 1);
 
-    let absolute = parse_recipe(&scratch, "output=out/a.jar\ntrace-file=/tmp/a.spans.json\nmodule=mod/a.jar\n").unwrap();
-    assert_eq!(absolute[0].trace_file.as_deref(), Some(Path::new("/tmp/a.spans.json")));
+    let absolute = parse_recipe_file(&scratch, "output=out/a.jar\ntrace-file=/tmp/a.spans.json\nmodule=mod/a.jar\n").unwrap();
+    assert_eq!(absolute.trace_file.as_deref(), Some(Path::new("/tmp/a.spans.json")));
 
     // The same destination twice is what a flag file made from the command lines of one action holds. Only two
     // *different* ones have no answer.
-    let repeated = parse_recipe(
+    let repeated = parse_recipe_file(
         &scratch,
         "output=out/a.jar\ntrace-file=out/a.spans.json\nmodule=mod/a.jar\noutput=out/b.jar\ntrace-file=out/a.spans.json\nmodule=mod/b.jar\n",
     )
     .unwrap();
-    assert_eq!(
-        repeated[1].trace_file, repeated[0].trace_file,
-        "the second group lost the destination"
-    );
+    assert_eq!(repeated.groups.len(), 2);
+    assert_eq!(repeated.trace_file.as_deref(), Some(at_root("out/a.spans.json").as_path()));
 
-    let none = parse_recipe(&scratch, "output=out/a.jar\nmodule=mod/a.jar\n").unwrap();
-    assert_eq!(none[0].trace_file, None);
+    let none = parse_recipe_file(&scratch, "output=out/a.jar\nmodule=mod/a.jar\n").unwrap();
+    assert_eq!(none.trace_file, None);
 }
 
 #[test]
@@ -313,7 +326,7 @@ fn parse_flag_file_takes_absolute_paths_as_written() {
     .unwrap();
     assert_eq!(specs[0].output, Path::new("/tmp/a.jar"));
     assert_eq!(specs[0].metadata_file.as_deref(), Some(Path::new("/tmp/a.metadata.json")));
-    assert_eq!(specs[0].sources[0].path, Path::new("/tmp/module.jar"));
+    assert_eq!(specs[0].sources[0].path(), Path::new("/tmp/module.jar"));
 }
 
 #[test]
@@ -322,7 +335,7 @@ fn resolve_path_joins_a_relative_path_and_keeps_an_absolute_one() {
     assert_eq!(resolve_path("out/a.jar", base_dir).unwrap(), at_root("out/a.jar"));
     assert_eq!(resolve_path("/tmp/a.jar", base_dir).unwrap(), Path::new("/tmp/a.jar"));
     for value in ["./a.jar", "out/../a.jar", "out/.", ".."] {
-        let error = resolve_path(value, base_dir).unwrap_err().to_string();
+        let error = format!("{:#}", resolve_path(value, base_dir).unwrap_err());
         assert!(
             error.contains(&format!("{value:?} has a `.` or `..` component")),
             "{value}: {error}"
@@ -356,7 +369,7 @@ fn parse_flag_file_refuses_a_path_that_is_not_clean() {
             };
             let error = match parse_recipe(&scratch, &recipe) {
                 Ok(_) => panic!("accepted a path that is not clean: {recipe}"),
-                Err(error) => error.to_string(),
+                Err(error) => format!("{error:#}"),
             };
             let value = line.rsplit('=').next().unwrap();
             assert!(error.contains(&format!("{value:?} has a `.` or `..` component")), "{line}: {error}");
@@ -377,7 +390,11 @@ fn parse_patch_and_entity_merge() {
         spec.merge_entities && spec.reject_native_entries && spec.sources.len() == 3,
         "{spec:?}"
     );
-    assert!(spec.sources[1].patch && spec.sources[1].name == "META-INF/plugin.xml", "{spec:?}");
+    assert_eq!(
+        spec.sources[1],
+        Source::patch("META-INF/plugin.xml", at_root("descriptor.xml")),
+        "{spec:?}"
+    );
     parse_recipe(&scratch, "output=out/plugin.jar\nmerge-entities=yes\nmodule=main.jar\n").unwrap_err();
     parse_recipe(&scratch, "output=out/plugin.jar\nreject-native-entries=yes\nmodule=main.jar\n").unwrap_err();
 }
@@ -390,17 +407,14 @@ fn parse_flag_file_reads_a_file_source_and_its_entry_name() {
         "output=out/a.jar\nfile=META-INF/plugin.xml=gen/a.plugin.xml\nmodule=mod/a.jar\n",
     )
     .unwrap();
-    let source = &specs[0].sources[0];
-    assert_eq!(source.name, "META-INF/plugin.xml");
-    assert_eq!(source.path, at_root("gen/a.plugin.xml"));
-    assert!(
-        source.filter.is_none(),
-        "a source of one entry has nothing to select, so its filter stays None"
+    // A source of one entry has nothing to select, so it has no filter.
+    assert_eq!(
+        specs[0].sources[0],
+        Source::file("META-INF/plugin.xml", at_root("gen/a.plugin.xml"))
     );
     // The path can hold a `=`, because the entry name ends at the first one.
     let specs = parse_recipe(&scratch, "output=out/a.jar\nfile=a.txt=gen/x=y.txt\n").unwrap();
-    assert_eq!(specs[0].sources[0].name, "a.txt");
-    assert_eq!(specs[0].sources[0].path, at_root("gen/x=y.txt"));
+    assert_eq!(specs[0].sources[0], Source::file("a.txt", at_root("gen/x=y.txt")));
 }
 
 #[test]

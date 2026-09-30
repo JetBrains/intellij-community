@@ -4,11 +4,12 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use super::flagfile::is_library;
 use super::flagfile::parse_recipe;
 use super::merge::module_source;
 use super::testjar::{Scratch, entry, entry_names, pack, read_entry, write_zip_jar};
 use crate::nativelib::{self, Arch, Family};
-use crate::{INDEX_FILE_NAME, MergeSpec, NativeSpec, Source, library_filter};
+use crate::{INDEX_FILE_NAME, MergeOptions, MergeSpec, NativeSpec, NativeTree, Source};
 
 /// A presigned library as `JarPackager` sees one. It is a jar with a Maven name and one native per platform under a
 /// common prefix. It also has a class that must stay in the jar.
@@ -28,15 +29,17 @@ fn native_library_source(scratch: &Scratch) -> PathBuf {
 fn native_spec(scratch: &Scratch, variant: &str, lib: &str) -> NativeSpec {
     let (family, arch) = nativelib::parse_variant(variant).unwrap();
     NativeSpec {
-        tree: Some(scratch.dir().join("native")),
-        family: Some(family),
-        arch: Some(arch),
         lib_name: lib.into(),
+        tree: Some(NativeTree {
+            dir: scratch.dir().join("native"),
+            family,
+            arch,
+        }),
     }
 }
 
 fn tree_of(native: &NativeSpec) -> &Path {
-    native.tree.as_deref().unwrap()
+    &native.tree.as_ref().unwrap().dir
 }
 
 /// The regular files under `root` with their modes, keyed by slash path.
@@ -92,9 +95,9 @@ fn spec(output: impl Into<PathBuf>, native: Option<NativeSpec>, sources: Vec<Sou
 }
 
 fn pack_error(spec: &MergeSpec) -> String {
-    match spec.pack() {
+    match spec.pack(&MergeOptions::default()) {
         Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
-        Err(error) => error.to_string(),
+        Err(error) => format!("{error:#}"),
     }
 }
 
@@ -107,14 +110,16 @@ fn parse_flag_file_natives_mode_takes_all_three_lines_the_lib_or_none() {
     )
     .unwrap();
     let want = NativeSpec {
-        tree: Some(Path::new("/exec/root").join("out/native")),
-        family: Some(Family::MacOS),
-        arch: Some(Arch::AArch64),
         lib_name: "jna".into(),
+        tree: Some(NativeTree {
+            dir: Path::new("/exec/root").join("out/native"),
+            family: Family::MacOS,
+            arch: Arch::AArch64,
+        }),
     };
     assert_eq!(specs[0].native.as_ref(), Some(&want));
     assert!(
-        specs[0].sources[0].library && !specs[0].sources[1].library,
+        is_library(&specs[0].sources[0]) && !is_library(&specs[0].sources[1]),
         "`library=` alone marks a library source"
     );
     assert_eq!(specs[1].native, None, "the second group inherited the natives mode of the first");
@@ -128,16 +133,16 @@ fn parse_flag_file_natives_mode_takes_all_three_lines_the_lib_or_none() {
             ..NativeSpec::default()
         }
     );
-    assert!(!reservation.writes_tree(), "`native-lib=` alone is a reservation");
+    assert!(reservation.tree.is_none(), "`native-lib=` alone is a reservation");
 
     let absolute = parse_recipe(
         &scratch,
         "output=out/a.jar\nnative-tree=/tmp/native\nnative-variant=windows_x64\nnative-lib=jna\nlibrary=lib/jna-5.14.0.jar\n",
     )
     .unwrap();
-    let native = absolute[0].native.as_ref().unwrap();
-    assert_eq!(native.tree.as_deref(), Some(Path::new("/tmp/native")));
-    assert_eq!((native.family, native.arch), (Some(Family::Windows), Some(Arch::X64)));
+    let tree = absolute[0].native.as_ref().unwrap().tree.as_ref().unwrap();
+    assert_eq!(tree.dir, Path::new("/tmp/native"));
+    assert_eq!((tree.family, tree.arch), (Family::Windows, Arch::X64));
 
     for (name, lines) in [
         (
@@ -337,7 +342,10 @@ fn natives_reservation_packs_the_natives_mode_jar_and_no_tree() {
         }),
         sources(),
     );
-    assert!(missing.pack().is_err(), "packed a reservation of a library that no source is");
+    assert!(
+        missing.pack(&MergeOptions::default()).is_err(),
+        "packed a reservation of a library that no source is"
+    );
 }
 
 #[test]
@@ -489,15 +497,16 @@ fn natives_mode_writes_an_executable_on_every_host() {
     );
     let native = native_spec(&scratch, "linux_x64", "pty4j");
     spec(scratch.dir().join("out.jar"), Some(native.clone()), vec![library(&pty4j)])
-        .pack()
+        .pack(&MergeOptions::default())
         .unwrap();
     let files = tree_files(tree_of(&native));
     assert!(
         files.contains_key("linux/x86-64/pty4j-unix-spawn-helper") && files.len() == 2,
         "{files:?}"
     );
-    assert_eq!(native.file_mode("pty4j-unix-spawn-helper"), 0o755);
-    assert_eq!(native.file_mode("libpty.so"), 0o644);
+    let tree = native.tree.as_ref().unwrap();
+    assert_eq!(tree.file_mode("pty4j-unix-spawn-helper"), 0o755);
+    assert_eq!(tree.file_mode("libpty.so"), 0o644);
 }
 
 #[test]
@@ -525,7 +534,7 @@ fn natives_mode_refuses_what_would_leave_a_native_in_the_jar() {
         (
             "a module output named like the native library",
             "foo",
-            vec![Source::archive(&library_jar, library_filter())],
+            vec![Source::module(&library_jar)],
             "no library source",
         ),
         (
@@ -627,30 +636,28 @@ fn natives_spec_validation_refuses_an_incomplete_spec() {
     let scratch = Scratch::new();
     let library_jar = native_library_source(&scratch);
     let tree = scratch.dir().join("native");
+    // The type of `NativeSpec` cannot state a platform without a tree, or a tree without a platform.
     for (native, want) in [
-        (
-            NativeSpec {
-                lib_name: "foo".into(),
-                family: Some(Family::Linux),
-                ..NativeSpec::default()
-            },
-            "incomplete native reservation",
-        ),
         (NativeSpec::default(), "incomplete native reservation"),
         (
             NativeSpec {
-                tree: Some(tree.clone()),
-                family: Some(Family::Linux),
-                arch: Some(Arch::Universal),
                 lib_name: "foo".into(),
+                tree: Some(NativeTree {
+                    dir: tree.clone(),
+                    family: Family::Linux,
+                    arch: Arch::Universal,
+                }),
             },
             "incomplete native tree specification",
         ),
         (
             NativeSpec {
-                tree: Some(tree),
-                lib_name: "foo".into(),
-                ..NativeSpec::default()
+                lib_name: String::new(),
+                tree: Some(NativeTree {
+                    dir: tree,
+                    family: Family::Linux,
+                    arch: Arch::X64,
+                }),
             },
             "incomplete native tree specification",
         ),
@@ -692,7 +699,7 @@ fn natives_mode_creates_each_directory_with_mode_0755() {
         Some(native.clone()),
         vec![Source::library(&library)],
     )
-    .pack()
+    .pack(&MergeOptions::default())
     .unwrap();
     let tree = tree_of(&native);
     for dir in [

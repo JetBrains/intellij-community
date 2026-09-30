@@ -720,10 +720,10 @@ fn batch_writes_only_its_assets_in_layout_order() {
     jarpack::MergeSpec {
         output: reference.clone(),
         keep_manifest: true,
-        sources: vec![jarpack::Source::archive(root.path().join("first.jar"), jarpack::library_filter())],
+        sources: vec![jarpack::Source::library(root.path().join("first.jar"))],
         ..jarpack::MergeSpec::default()
     }
-    .pack()
+    .pack(&jarpack::MergeOptions::default())
     .unwrap();
     assert_eq!(
         read_test_file(&reference),

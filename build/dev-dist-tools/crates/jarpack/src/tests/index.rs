@@ -68,7 +68,7 @@ fn add_refuses_a_key_collision() {
             b"org/example/B.class",
         )
         .unwrap_err();
-    assert!(error.to_string().contains("index key collision"), "{error}");
+    assert!(format!("{error:#}").contains("index key collision"), "{error:#}");
 }
 
 #[test]

@@ -22,8 +22,8 @@ use tempfile::TempDir;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, DateTime, ZipArchive, ZipWriter};
 
-use crate::MergeSpec;
 use crate::writer::INDEX_FORMAT_VERSION;
+use crate::{MergeOptions, MergeSpec};
 
 /// The temporary directories of one test. [`Scratch::dir`] returns a new empty directory, as the Go `t.TempDir()` did.
 pub(crate) struct Scratch {
@@ -162,8 +162,9 @@ pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'
 pub(crate) fn pack(scratch: &Scratch, mut spec: MergeSpec) -> (Vec<u8>, Vec<String>) {
     let file_name = spec.output.file_name().expect("an output file name").to_owned();
     spec.output = scratch.dir().join(file_name);
-    spec.verify_crc = true;
-    let report = spec.pack().unwrap_or_else(|error| panic!("{error}"));
+    let report = spec
+        .pack(&MergeOptions { verify_crc: true })
+        .unwrap_or_else(|error| panic!("{error:#}"));
     let data = fs::read(&spec.output).expect("the packed jar");
     assert_eq!(report.bytes_written, data.len() as u64, "the size of {}", spec.output.display());
     let content_hash = xxh3::hash_file(&spec.output).expect("the hash of the packed jar");

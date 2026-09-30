@@ -14,7 +14,7 @@ fn opened_names(path: &Path) -> Vec<String> {
 fn open_error(path: &Path) -> String {
     match Jar::open(path) {
         Ok(_) => panic!("{} was accepted", path.display()),
-        Err(error) => error.to_string(),
+        Err(error) => format!("{error:#}"),
     }
 }
 
@@ -72,7 +72,7 @@ fn data_refuses_a_truncated_deflate_stream() {
     fs::write(&path, data).unwrap();
     let jar = Jar::open(&path).unwrap();
     let entries: Vec<_> = jar.entries().collect();
-    let error = jar.data(&entries[0]).unwrap_err().to_string();
+    let error = format!("{:#}", jar.data(&entries[0]).unwrap_err());
     assert!(error.starts_with("org/Deflated.txt: inflating: "), "{error}");
 }
 

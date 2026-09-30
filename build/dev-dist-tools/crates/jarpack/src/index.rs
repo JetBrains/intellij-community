@@ -6,8 +6,8 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
 use crate::MANIFEST_ENTRY_NAME;
-use crate::error::{Result, bail};
 use crate::writer::DirectoryMode;
+use anyhow::{Result, bail};
 use xxh3::{hash_bytes, hash_chars};
 
 /// Collects the `__index__` entry. It follows `PackageIndexBuilder` and `IkvIndexBuilder` in `zip/src`. The default

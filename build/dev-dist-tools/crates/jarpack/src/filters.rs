@@ -1,9 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::sync::Arc;
-
-use crate::merge::Filter;
-
 /// The generated per-jar class-path index. The reader drops it on the way in, and the writer writes a new one. So a jar
 /// packed from jars with an index does not inherit a stale index.
 pub const INDEX_FILE_NAME: &str = "__index__";
@@ -25,14 +21,26 @@ pub fn module_output_name_filter(name: &str) -> bool {
         && name != "module-info.class"
 }
 
-/// [`module_output_name_filter`] as a [`Filter`].
-pub fn module_output_filter() -> Filter {
-    Arc::new(module_output_name_filter)
+/// The entry filter of one jar source. The two kinds of jar input are filtered differently. A module output gives almost
+/// all it holds. A third-party library jar must lose its licences, signatures and multi-release `module-info` entries.
+/// Otherwise several of them collide on one name, and the survivors ship for nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum EntryFilter {
+    /// A module output jar, a `module=` line: [`module_output_name_filter`].
+    ModuleOutput,
+    /// A third-party library jar, a `library=` line: [`library_name_filter`]. Only such a source gives the native entries
+    /// of a group in natives mode.
+    Library,
 }
 
-/// [`library_name_filter`] as a [`Filter`].
-pub fn library_filter() -> Filter {
-    Arc::new(library_name_filter)
+impl EntryFilter {
+    /// Reports whether the entry `name` of a jar of this kind belongs in a distribution jar.
+    pub fn accepts(self, name: &str) -> bool {
+        match self {
+            Self::ModuleOutput => module_output_name_filter(name),
+            Self::Library => library_name_filter(name),
+        }
+    }
 }
 
 /// Reports whether `name` is in the exact-name set of `getIgnoredNames` in `zip/src/librarySourcesFilter.kt`, apart
