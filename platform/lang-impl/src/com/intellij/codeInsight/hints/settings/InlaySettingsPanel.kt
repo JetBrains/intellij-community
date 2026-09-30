@@ -40,7 +40,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
 import java.util.concurrent.Callable
 import java.util.function.Predicate
 import javax.swing.JPanel
@@ -54,8 +53,9 @@ import javax.swing.tree.TreeNode
 val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create("inlay.case.key")
 
 @ApiStatus.Internal
-class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
+class InlaySettingsPanel(val project: Project) {
 
+  val content: JBSplitter = JBSplitter(false, "inlay.settings.proportion.key", 0.45f)
   val tree: CheckboxTree
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, fillx"))
   private val groups: MutableMap<InlayGroup, List<InlayProviderSettingsModel>>
@@ -141,12 +141,10 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
       TreeUtil.selectNode(tree, nodeToSelect)
     }
 
-    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.45f)
-    splitter.setHonorComponentsMinimumSize(false)
-    splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+    content.setHonorComponentsMinimumSize(false)
+    content.firstComponent = ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
-    splitter.secondComponent = rightPanel
-    add(splitter, BorderLayout.CENTER)
+    content.secondComponent = rightPanel
   }
 
   @Nls
@@ -310,7 +308,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
       val continuation = model.collectData(editor, file)
       continuation
     })
-      .finishOnUiThread(ModalityState.stateForComponent(this)) { continuation ->
+      .finishOnUiThread(ModalityState.stateForComponent(content)) { continuation ->
         ApplicationManager.getApplication().runWriteAction {
           continuation.run()
         }

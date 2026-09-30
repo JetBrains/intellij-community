@@ -19,7 +19,7 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
   private val panel: InlaySettingsPanel by lazy  { InlaySettingsPanel(project) }
 
   override fun createComponent(): JComponent {
-    return panel
+    return panel.content
   }
 
   override fun getPreferredFocusedComponent(): JComponent {
