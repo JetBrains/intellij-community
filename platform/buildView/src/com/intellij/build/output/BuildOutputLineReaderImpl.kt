@@ -12,11 +12,11 @@ class BuildOutputLineReaderImpl(
   private val channel = Channel<String>(linesBufferSize)
 
   private val lineProcessor = BuildOutputLineProcessor {
-    channel.send(it)
+    channel.send(it.text)
   }
 
   override suspend fun notifyTextAvailable(text: CharSequence) {
-    lineProcessor.notifyTextAvailable(text)
+    lineProcessor.notifyTextAvailable(BuildOutputText.createOutputText(text.toString()))
   }
 
   override suspend fun readLine(): String? {

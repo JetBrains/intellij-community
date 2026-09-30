@@ -6,12 +6,14 @@ import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildId
 import com.intellij.build.events.OutputBuildEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.OutputBuildEventImpl
 import com.intellij.build.output.BuildOutputLineProcessor
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.BuildOutputParserDispatcher
+import com.intellij.build.output.BuildOutputText
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -76,31 +78,31 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       private val delegate = BuildOutputLineProcessor { line ->
         val cleanLine = removeLoggerPrefix(line)
         // skip Gradle test runner output
-        if (cleanLine.startsWith("<ijLog>")) return@BuildOutputLineProcessor
+        if (cleanLine.text.startsWith("<ijLog>")) return@BuildOutputLineProcessor
 
-        if (cleanLine.startsWith("> Task :")) {
-          currentTaskId = TaskNameId(cleanLine.removePrefix("> Task ").substringBefore(' '))
+        if (cleanLine.text.startsWith("> Task :")) {
+          currentTaskId = TaskNameId(cleanLine.text.removePrefix("> Task ").substringBefore(' '))
         }
-        else if (cleanLine.startsWith("> Configure") ||
-                 cleanLine.startsWith("FAILURE: Build failed") ||
-                 cleanLine.startsWith("FAILURE: Build completed") ||
-                 cleanLine.startsWith("[Incubating] Problems report is available at:") ||
-                 cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
-                 cleanLine.startsWith("BUILD SUCCESSFUL")) {
+        else if (cleanLine.text.startsWith("> Configure") ||
+                 cleanLine.text.startsWith("FAILURE: Build failed") ||
+                 cleanLine.text.startsWith("FAILURE: Build completed") ||
+                 cleanLine.text.startsWith("[Incubating] Problems report is available at:") ||
+                 cleanLine.text.startsWith("CONFIGURE SUCCESSFUL") ||
+                 cleanLine.text.startsWith("BUILD SUCCESSFUL")) {
           currentTaskId = buildId
         }
 
         val taskId = currentTaskId
 
         if (taskId != buildId) {
-          notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line + '\n', outputType)) //NON-NLS todo!!
+          notifyBuildEvent(buildId, OutputBuildEventImpl(taskId, line.text + '\n', outputType)) //NON-NLS todo!!
         }
 
         parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
-          .notifyTextAvailable(cleanLine + '\n')
+          .notifyTextAvailable(cleanLine.text + '\n')
       }
 
-      suspend fun notifyTextAvailable(text: String) {
+      suspend fun notifyTextAvailable(text: BuildOutputText) {
         delegate.notifyTextAvailable(text)
       }
 
@@ -164,9 +166,12 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     }
 
     override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
+      val outputId = OutputId()
+
       notifyBuildEvent(
         buildId,
         OutputBuildEvent.builder(text) //NON-NLS
+          .withId(outputId)
           .withOutputType(outputType)
           .build()
       )
@@ -174,13 +179,13 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
         lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
-          .notifyTextAvailable(text)
+          .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
       }
     }
 
-    private fun removeLoggerPrefix(line: String): String {
+    private fun removeLoggerPrefix(line: BuildOutputText): BuildOutputText {
       val list = mutableListOf<String>()
-      list += line.split(' ', limit = 3)
+      list += line.text.split(' ', limit = 3)
       if (list.size < 3) return line
       if (!list[1].startsWith('[') || !list[1].endsWith(']')) return line
       if (!list[2].startsWith('[')) return line
@@ -196,7 +201,10 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         line
       }
       else {
-        line.drop(list.sumOf { it.length } + 2).trimStart()
+        BuildOutputText.createOutputText(
+          line.ids,
+          line.text.drop(list.sumOf { it.length } + 2).trimStart()
+        )
       }
     }
 
