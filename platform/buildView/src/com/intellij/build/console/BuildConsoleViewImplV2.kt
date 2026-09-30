@@ -176,7 +176,7 @@ internal class BuildConsoleViewImplV2(
 
   private fun onOutputReferenceEvent(event: OutputReferenceEvent) {
     state.access {
-      addNodeOutputMarkers(event.startId, event.outputIds)
+      addNodeOutputMarkers(event.parentId, event.outputIds)
     }
   }
 

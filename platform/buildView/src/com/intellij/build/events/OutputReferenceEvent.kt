@@ -5,7 +5,7 @@ import com.intellij.build.eventBuilders.OutputReferenceEventBuilder
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 /**
- * Attaches the already reported output to the [StartEvent] node with the [startId] id.
+ * Attaches the already reported output to the [StartEvent] node with the [parentId] id.
  *
  * This event doesn't produce any output.
  * It allows reusing the output of the main build process [StartBuildEvent] in subtasks or sub-processes [StartEvent],
@@ -22,7 +22,7 @@ interface OutputReferenceEvent : BuildEvent {
   /**
    * [StartEvent.id] of the node to attach the referenced output to.
    */
-  val startId: StartId
+  override fun getParentId(): StartId
 
   /**
    * [OutputBuildEvent.id]'s that are referenced by this event.

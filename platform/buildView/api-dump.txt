@@ -252,7 +252,7 @@ com.intellij.build.events.OutputReferenceEvent
 - sf:Companion:com.intellij.build.events.OutputReferenceEvent$Companion
 - s:builder(java.lang.Object,java.util.List):com.intellij.build.eventBuilders.OutputReferenceEventBuilder
 - a:getOutputIds():java.util.List
-- a:getStartId():java.lang.Object
+- a:getParentId():java.lang.Object
 f:com.intellij.build.events.OutputReferenceEvent$Companion
 - f:builder(java.lang.Object,java.util.List):com.intellij.build.eventBuilders.OutputReferenceEventBuilder
 com.intellij.build.events.ProgressBuildEvent

@@ -6,7 +6,7 @@ import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.build.events.StartId
 
 internal data class OutputReferenceEventImpl(
-  override val startId: StartId,
+  private val startId: StartId,
   override val outputIds: List<OutputId>,
 ) : OutputReferenceEvent {
 
@@ -14,9 +14,8 @@ internal data class OutputReferenceEventImpl(
     throw UnsupportedOperationException("Output reference events do not have a id.")
   }
 
-  override fun getParentId(): Nothing {
-    throw UnsupportedOperationException("Output reference events do not have a parent id.")
-  }
+  override fun getParentId(): StartId =
+    startId
 
   override fun getEventTime(): Nothing {
     throw UnsupportedOperationException("Output reference events do not have a time.")
