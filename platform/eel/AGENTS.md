@@ -13,6 +13,8 @@ Read [docs/agents/README.md](docs/agents/README.md) first. It holds the key rule
 | [docs/internal/](docs/internal/README.md) | Developers who change Eel: module layout, tests |
 | [docs/agents/](docs/agents/README.md) | AI agents |
 
+Before you write `if (x is Something)`, `if (x == Enum.Case)`, or `else ->` on a sealed type or an enum, read [Exhaustive `when`](docs/api/exhaustive-when.md). This covers `SafeDeferred.State`, `EelOsFamily`, and `EelPlatform`.
+
 The IJent internals are documented in `platform/ijent/docs/` in an ultimate checkout.
 
 ## Tests

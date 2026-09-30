@@ -19,6 +19,11 @@ Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
   - Use `.put()`/`.get()` instead of `[]` operator
   - Use explicit `HashMap`/`HashSet`/`LinkedHashMap` instead of `mutableMapOf()`/`mutableSetOf()`
 
+## Sealed hierarchies
+
+- Before you list several subtypes in a `when` branch, an `is` check, or a `catch`, open the declaration of the type.
+- If a common supertype covers exactly those subtypes, use the supertype. It stays correct when someone adds a new subtype.
+
 ## Formatting
 
 - Read every applicable `.editorconfig` before you review or change formatting.
