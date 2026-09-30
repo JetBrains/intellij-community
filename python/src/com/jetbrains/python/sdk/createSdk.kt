@@ -31,6 +31,7 @@ import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -222,7 +223,18 @@ private suspend fun createSdkImpl(
     }
   }
   if (advancedOpts.setupPaths) {
-    sdkType.setupSdkPaths(sdk)
+    try {
+      sdkType.setupSdkPaths(sdk)
+    }
+    catch (e: Throwable) {
+      // Do not leave a broken SDK in the table
+      if (advancedOpts.persist) {
+        withContext(NonCancellable) {
+          edtWriteAction { ProjectJdkTable.getInstance().removeJdk(sdk) }
+        }
+      }
+      throw e
+    }
   }
   return Result.success(sdk.pythonInterpreterAsync())
 }

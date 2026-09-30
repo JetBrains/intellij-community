@@ -8,6 +8,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import java.nio.file.Path
 import kotlin.io.path.pathString
 
 // Local target
@@ -16,6 +17,9 @@ internal class PyTargetsIntrospectionFacadeLocal(sdk: Sdk, project: Project) : P
 
   override fun synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator: ProgressIndicator) = Unit
   @RequiresBackgroundThread(generateAssertion = false)
-  override fun getInterpreterPaths(): List<String> =
-    super.getInterpreterPaths().map { EelPath.parse(it, project.getEelDescriptor()).asNioPath().pathString }
+  override fun getInterpreterPaths(): List<String> {
+    // sys.path is in the eel of the interpreter. The eel of the project can be another one (i.e. the default project is local).
+    val eelDescriptor = Path.of(sdk.homePath ?: error("No home path for $sdk")).getEelDescriptor()
+    return super.getInterpreterPaths().map { EelPath.parse(it, eelDescriptor).asNioPath().pathString }
+  }
 }
