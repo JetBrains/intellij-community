@@ -17,6 +17,12 @@ interface ChangeListManager {
 interface LocalChangeList {
   fun getName(): String
   fun getComment(): String?
+  fun getChanges(): Collection<Change>
+}
+
+@Remote("com.intellij.openapi.vcs.changes.Change")
+interface Change {
+  fun getVirtualFile(): VirtualFile?
 }
 
 fun Driver.changeListManager(): ChangeListManager {
