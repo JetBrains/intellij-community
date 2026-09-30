@@ -3,6 +3,7 @@ package com.intellij.platform.compose.swing.modifier
 
 import com.intellij.ui.components.ActionLink
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.modifier.ComponentPropertyDescriptor
 import org.jetbrains.compose.swing.modifier.RestorePolicy
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.property
@@ -11,25 +12,13 @@ import javax.swing.Icon
 /** @see com.intellij.ui.components.ActionLink.autoHideOnDisable */
 @ApiStatus.Experimental
 public fun SwingModifier.autoHideOnDisable(value: Boolean): SwingModifier =
-  property<ActionLink, Boolean>(
-    name = "autoHideOnDisable",
-    value = value,
-    read = { it.autoHideOnDisable },
-    write = { link, declared -> link.autoHideOnDisable = declared },
-    // The setter shows or hides the link from the value it is handed. Putting the value back runs that
-    // again, so the link ends up as visible as the value says, not as visible as it was found.
-    restores = RestorePolicy.DeclaredPropertyOnly,
-  )
+  // The setter shows or hides the link from the value it is handed. Putting the value back runs that
+  // again, so the link ends up as visible as the value says, not as visible as it was found.
+  property(AutoHideOnDisableProperty, value, restores = RestorePolicy.DeclaredPropertyOnly)
 
 /** @see com.intellij.ui.components.ActionLink.visited */
 @ApiStatus.Experimental
-public fun SwingModifier.visited(value: Boolean): SwingModifier =
-  property<ActionLink, Boolean>(
-    name = "visited",
-    value = value,
-    read = { it.visited },
-    write = { link, declared -> link.visited = declared },
-  )
+public fun SwingModifier.visited(value: Boolean): SwingModifier = property(VisitedProperty, value)
 
 /** @see com.intellij.ui.components.ActionLink.setLinkIcon */
 @ApiStatus.Experimental
@@ -53,22 +42,49 @@ public fun SwingModifier.actionLinkIcon(icon: Icon, atRight: Boolean): SwingModi
   declaredIcon(ActionLinkIcon.Custom(icon, atRight))
 
 /**
- * Declares the link's icon. Every icon builder writes through this one lambda, so the alternatives share
- * a slot and the last one declared stands.
+ * Declares the link's icon. Every icon builder here, and the library's own `icon`, declares the `icon`
+ * property, so they share a slot and the last one declared stands. The icon-text gap and the horizontal
+ * text position are held beside it, because every setter here writes them too.
  */
 private fun SwingModifier.declaredIcon(icon: ActionLinkIcon): SwingModifier =
-  property<ActionLink, ActionLinkIcon>(
-    name = "icon",
-    value = icon,
-    read = { ActionLinkIcon.Held(it.icon, it.iconTextGap, it.horizontalTextPosition) },
-    write = { link, declared -> declared.writeTo(link) },
+  property(IconProperty, icon, alsoOverwrites = listOf(IconTextGapProperty, HorizontalTextPositionProperty))
+
+private val AutoHideOnDisableProperty =
+  ComponentPropertyDescriptor<ActionLink, Boolean>(
+    name = "autoHideOnDisable",
+    read = { it.autoHideOnDisable },
+    write = { link, value -> link.autoHideOnDisable = value },
   )
 
-/**
- * An icon a link is given, and the icon a link was found carrying. Every setter here writes the icon, the
- * icon-text gap and the horizontal text position together, so [Held] carries all three and puts back
- * exactly what the modifier found.
- */
+private val VisitedProperty =
+  ComponentPropertyDescriptor<ActionLink, Boolean>(
+    name = "visited",
+    read = { it.visited },
+    write = { link, value -> link.visited = value },
+  )
+
+private val IconProperty =
+  ComponentPropertyDescriptor<ActionLink, ActionLinkIcon>(
+    name = "icon",
+    read = { ActionLinkIcon.Held(it.icon) },
+    write = { link, value -> value.writeTo(link) },
+  )
+
+private val IconTextGapProperty =
+  ComponentPropertyDescriptor<ActionLink, Int>(
+    name = "iconTextGap",
+    read = { it.iconTextGap },
+    write = { link, value -> link.iconTextGap = value },
+  )
+
+private val HorizontalTextPositionProperty =
+  ComponentPropertyDescriptor<ActionLink, Int>(
+    name = "horizontalTextPosition",
+    read = { it.horizontalTextPosition },
+    write = { link, value -> link.horizontalTextPosition = value },
+  )
+
+/** An icon a link is given, and the icon a link was found carrying. */
 private sealed interface ActionLinkIcon {
   fun writeTo(link: ActionLink)
 
@@ -102,15 +118,9 @@ private sealed interface ActionLinkIcon {
     }
   }
 
-  data class Held(
-    private val icon: Icon?,
-    private val iconTextGap: Int,
-    private val horizontalTextPosition: Int,
-  ) : ActionLinkIcon {
+  data class Held(private val icon: Icon?) : ActionLinkIcon {
     override fun writeTo(link: ActionLink) {
       link.icon = icon
-      link.iconTextGap = iconTextGap
-      link.horizontalTextPosition = horizontalTextPosition
     }
   }
 }

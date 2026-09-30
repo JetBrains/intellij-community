@@ -308,6 +308,14 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/JetBrains/compose-swing-ui/blob/master/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+  LibraryLicense("Compose Swing UI Animation", libraryName = "org.jetbrains.compose.swing.swing-ui-animation", url = "https://github.com/JetBrains/compose-swing-ui")
+    .apache("https://github.com/JetBrains/compose-swing-ui/blob/master/LICENSE")
+    .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+  LibraryLicense("Compose Swing UI Foundation", libraryName = "org.jetbrains.compose.swing.swing-ui-foundation", url = "https://github.com/JetBrains/compose-swing-ui")
+    .apache("https://github.com/JetBrains/compose-swing-ui/blob/master/LICENSE")
+    .suppliedByOrganizations(Suppliers.JETBRAINS),
+
   // For ADB wireless QR Code generation
   LibraryLicense("Core barcode encoding/decoding library", url = "https://github.com/zxing/zxing/tree/master/core", libraryName = "zxing-core")
     .apache("https://github.com/zxing/zxing/blob/master/LICENSE")

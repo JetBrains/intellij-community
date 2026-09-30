@@ -227,27 +227,27 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         modifier = SwingModifier.cell(smallGapAfter = true),
         onCheckedChange = ::requestEnabledChange,
       )
-      if (enabled) {
-        FormGroup(McpServerBundle.message("mcp.server.global.configuration"), indent = true) {
-          FormRow {
-            Label(McpServerBundle.message("mcp.server.global.port.label"))
-            TextField(
-              value = port.toString(),
-              onValueChange = { newVal ->
-                newVal.toIntOrNull()?.let { parsedPort -> if (isValidPort(parsedPort)) port = parsedPort }
-              },
-              modifier = SwingModifier.cell(smallGapAfter = true),
-              columns = PORT_TXT_WIDTH
-            )
-          }
-          FormRow {
-            BrowserLink(
-              text = sseUrl,
-              url = sseUrl,
-              modifier = SwingModifier.cell(smallGapAfter = true).toolTip(sseUrl),
-            )
-            BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
-          }
+    }
+    if (enabled) {
+      FormGroup(McpServerBundle.message("mcp.server.global.configuration"), indent = true) {
+        FormRow {
+          Label(McpServerBundle.message("mcp.server.global.port.label"))
+          TextField(
+            value = port.toString(),
+            onValueChange = { newVal ->
+              newVal.toIntOrNull()?.let { parsedPort -> if (isValidPort(parsedPort)) port = parsedPort }
+            },
+            modifier = SwingModifier.cell(smallGapAfter = true),
+            columns = PORT_TXT_WIDTH
+          )
+        }
+        FormRow {
+          BrowserLink(
+            text = sseUrl,
+            url = sseUrl,
+            modifier = SwingModifier.cell(smallGapAfter = true).toolTip(sseUrl),
+          )
+          BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
         }
       }
     }
