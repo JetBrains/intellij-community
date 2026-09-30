@@ -541,6 +541,8 @@ jvm_library(
         "//plugins/gradle/java:java-tests_test_lib",
         "//plugins/gradle/java/toml/tests",
         "//plugins/gradle/java/toml/tests:tests_test_lib",
+        "//plugins/gradle/java/coverage/tests",
+        "//plugins/gradle/java/coverage/tests:tests_test_lib",
         "//plugins/gradle/jps-plugin:jps-tests",
         "//plugins/gradle/jps-plugin:jps-tests_test_lib",
         "//plugins/gradle/properties:properties-tests",
