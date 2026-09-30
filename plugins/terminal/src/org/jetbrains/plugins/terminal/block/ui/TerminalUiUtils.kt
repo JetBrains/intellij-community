@@ -199,7 +199,8 @@ object TerminalUiUtils {
       isUseCustomSoftWrapIndent = false
     }
 
-    editor.applyFontSettings(settings)
+    // The editor is not shown yet, so there is no size to validate.
+    editor.applyFontSettings(settings, validateImmediately = false)
 
     val editorGrid = checkNotNull(editor.characterGrid) { "The editor did not switch into the grid mode" }
 
@@ -491,7 +492,7 @@ object TerminalUiUtils {
   const val YELLOW_COLOR_INDEX: Int = 3
 }
 
-fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
+fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase, validateImmediately: Boolean = true) {
   val colorScheme = checkNotNull(getUserData(TerminalColorScheme.KEY)) { "Should've been set on creation" }
   colorScheme.fontPreferences = newSettings.fontPreferences
   // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
@@ -503,13 +504,14 @@ fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBa
   // Global user scaling will be applied by the editor itself,
   // but if the _terminal_ font size was changed temporarily (Ctrl/Cmd+wheel, pinch zoom, etc.),
   // it needs to be applied explicitly to the new editor.
-  setTerminalFontSize(newSettings.terminalFontSize, showZoomIndicator = false)
+  setTerminalFontSize(newSettings.terminalFontSize, showZoomIndicator = false, validateImmediately = validateImmediately)
 }
 
 @ApiStatus.Internal
 fun EditorImpl.setTerminalFontSize(
   fontSize: Float,
   showZoomIndicator: Boolean,
+  validateImmediately: Boolean = true,
 ) {
   if (!showZoomIndicator) {
     putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
@@ -517,7 +519,7 @@ fun EditorImpl.setTerminalFontSize(
   setFontSize(
     fontSize,
     ChangeTerminalFontSizeStrategy.preferredZoomPointRelative(this),
-    true
+    validateImmediately
   )
 }
 
