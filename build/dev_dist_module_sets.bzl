@@ -11,10 +11,13 @@
 #
 # `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A
 # product's `platform_lib` payload in `dev_dist_fragment_inputs.bzl` names only the labels no set carries.
-# Every product that references a set hands over the labels of its members.
+# Every product that references a set hands over the labels of its members, less the ones its mode refuses.
 #
 # `module_system_loaded` names the `packed` members whose jar the module system loads in every product that
 # references the set. The payload puts every other packed direct child of `lib/` on the core classpath.
+#
+# `mode_refused` names, per product mode, the `packed` members that the mode refuses. The layout of a product of
+# that mode places no jar of them. Such a product hands over no such label, and the binder skips it.
 #
 # A set name a payload references and this table no longer has is dropped with a warning, like any other
 # stale plan name: this is read during module-extension evaluation, so failing would make the very tool that
@@ -214,6 +217,11 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.util.io.native",
             "intellij.platform.wsl.impl",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.backend.workspace.impl",
+            ],
+        },
     ),
     "intellij.moduleSets.core.platform": struct(
         modules = [
@@ -361,6 +369,12 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.debugger.impl.shared",
             "intellij.platform.debugger.impl.ui",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.debugger.impl.backend",
+                "intellij.platform.debugger.impl.dashboard",
+            ],
+        },
     ),
     "intellij.moduleSets.duplicates": struct(
         modules = [
@@ -465,6 +479,17 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.scopes.backend",
             "intellij.platform.util.commonsLangV2Shim",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.completion.backend",
+                "intellij.platform.execution.impl.backend",
+                "intellij.platform.find.backend",
+                "intellij.platform.ide.internal.backend",
+                "intellij.platform.managed.cache.backend",
+                "intellij.platform.pluginManager.backend",
+                "intellij.platform.scopes.backend",
+            ],
+        },
     ),
     "intellij.moduleSets.essential.minimal": struct(
         modules = [
@@ -537,6 +562,18 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.searchEverywhere.frontend",
             "intellij.platform.settings.local",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.backend",
+                "intellij.platform.editor.backend",
+                "intellij.platform.indexing.impl.backend",
+                "intellij.platform.lang.impl.backend",
+                "intellij.platform.monolith",
+                "intellij.platform.progress.backend",
+                "intellij.platform.project.backend",
+                "intellij.platform.searchEverywhere.backend",
+            ],
+        },
     ),
     "intellij.moduleSets.fleet": struct(
         modules = [
@@ -679,6 +716,23 @@ DEV_DIST_MODULE_SETS = {
             "intellij.spellchecker.vcs",
             "intellij.spellchecker.xml",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.buildView.backend",
+                "intellij.platform.collaborationTools",
+                "intellij.platform.collaborationTools.auth",
+                "intellij.platform.collaborationTools.auth.base",
+                "intellij.platform.inspect",
+                "intellij.platform.lvcs.impl",
+                "intellij.platform.projectView.backend",
+                "intellij.platform.scriptDebugger.backend",
+                "intellij.platform.scriptDebugger.protocolReaderRuntime",
+                "intellij.platform.scriptDebugger.ui",
+                "intellij.platform.warmup",
+                "intellij.spellchecker.vcs",
+                "intellij.spellchecker.xml",
+            ],
+        },
     ),
     "intellij.moduleSets.libraries.dap": struct(
         modules = [
@@ -1122,6 +1176,11 @@ DEV_DIST_MODULE_SETS = {
         module_system_loaded = [
             "intellij.platform.ml.impl",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.ml.impl",
+            ],
+        },
     ),
     "intellij.moduleSets.platform.resources.defaults": struct(
         modules = [
@@ -1163,6 +1222,13 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.rpc.topics.backend",
             "intellij.platform.rpc.topics.frontend",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.platform.kernel.backend",
+                "intellij.platform.rpc.backend",
+                "intellij.platform.rpc.topics.backend",
+            ],
+        },
     ),
     "intellij.moduleSets.rpc.minimal": struct(
         modules = [
@@ -1199,6 +1265,11 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.jgit",
             "intellij.settingsSync.core",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.settingsSync.core",
+            ],
+        },
     ),
     "intellij.moduleSets.spellchecker": struct(
         modules = [
@@ -1215,6 +1286,11 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.lucene.common",
             "intellij.spellchecker",
         ],
+        mode_refused = {
+            "frontend": [
+                "intellij.spellchecker",
+            ],
+        },
     ),
     "intellij.moduleSets.telemetry": struct(
         modules = [

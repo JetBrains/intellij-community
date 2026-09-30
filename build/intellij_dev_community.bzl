@@ -11,6 +11,7 @@ load(":dev_dist_fragment_inputs.bzl", "DEV_DIST_FRAGMENT_INPUTS")
 load(":dev_dist_module_sets.bzl", "DEV_DIST_MODULE_SETS")
 load(":dev_dist_packed_labels.bzl", "dev_dist_packed_labels")
 load(":dev_dist_plan.bzl", "DEV_DIST_APPLICATION_INFOS", "DEV_DIST_LAUNCH_MODELS", "DEV_DIST_PLANS", "DEV_DIST_PLATFORM_JAR_ORDERS")
+load(":dev_dist_product_info.bzl", "DEV_DIST_PRODUCT_INFO")
 load(":dev_dist_products.bzl", "DEV_DIST_PRODUCTS", "dev_dist_product")
 load(":intellij_dev_dist_declarations.bzl", "intellij_dev_dist_declarations")
 
@@ -36,7 +37,10 @@ _PLATFORM_LIB_FRAGMENT = "platform_lib"
 _PLATFORM_RUNTIME_MODULE_REPOSITORY_FRAGMENT = "platform_runtime_module_repository"
 
 def _platform_lib_payload(product):
-    return dev_dist_packed_labels(DEV_DIST_FRAGMENT_INPUTS, DEV_DIST_MODULE_SETS, product)
+    info = DEV_DIST_PRODUCT_INFO.get(product)
+    if info == None:
+        fail("No generated dev-distribution product info for product '%s', so its product mode is unknown" % product)
+    return dev_dist_packed_labels(DEV_DIST_FRAGMENT_INPUTS, DEV_DIST_MODULE_SETS, product, info.mode)
 
 def _product_info_label(product):
     return "//build/dev-dist-descriptors:%s_product_info" % product

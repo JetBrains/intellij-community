@@ -16,6 +16,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
@@ -33,6 +34,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.createContentModuleFilter
 import org.jetbrains.intellij.build.impl.createPlatformLayout
+import org.jetbrains.intellij.build.impl.createProductModeContentModuleFilter
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
@@ -653,11 +655,14 @@ class ResidualPlatformJar(
  * repo-global and the payloads carry only what no set covers.
  *
  * [packed] is keyed by member name. The label is a fact about the module, not about the product that reaches it, so
- * every product that references the set hands it over, see [sharePackedLabels].
+ * every product that references the set hands it over, less the members its mode refuses, see [sharePackedLabels].
  *
  * [moduleSystemLoaded] names the [packed] members whose jar the module system loads in every product that reaches the
  * set, sorted. A product can override the loading of a member, so the list comes from the product verdicts, see
  * [moduleSetModuleSystemLoaded].
+ *
+ * [modeRefused] maps a product mode id to the sorted [packed] members that the mode refuses. The layout of a product of
+ * that mode places no jar of them. The refusal is a fact about the module dependencies, so the table states it once.
  */
 internal data class ModuleSetData(
   @JvmField val name: String,
@@ -665,6 +670,7 @@ internal data class ModuleSetData(
   @JvmField val nested: List<String>,
   @JvmField val packed: Map<String, String> = emptyMap(),
   @JvmField val moduleSystemLoaded: List<String> = emptyList(),
+  @JvmField val modeRefused: Map<String, List<String>> = emptyMap(),
 )
 
 private class MutableModuleSet {
@@ -674,6 +680,8 @@ private class MutableModuleSet {
 
 private data class ProductFragmentPlan(
   @JvmField val platformPrefix: String,
+  /** The id of the product mode. The payload hands over no module set member that this mode refuses. */
+  @JvmField val productMode: String,
   @JvmField val buildModules: List<String>,
   /**
    * Whether the product has the runtime module repository fragment: a row asks for it, or the product loads the
@@ -1045,6 +1053,9 @@ private fun collectDescriptorFiles(
     )
   }
 
+  // The filter of each stated mode, keyed by mode id. The layout of a product of that mode applies the same filter. The
+  // module set table and the payload of each product ask these filters, so both state one refusal.
+  val modeFilters = devDistModeFilters(half = half, products = products, outputProvider = outputProvider)
   // Only the split products contribute: this table exists to expand their platform payloads, and a set no split
   // product references would be data nothing reads.
   val moduleSets = sortedMapOf<String, MutableModuleSet>()
@@ -1076,22 +1087,35 @@ private fun collectDescriptorFiles(
       runtimeModuleRepository = product.name in runtimeModuleRepositoryProducts,
       embeddedFrontendOf = { frontendProperties -> embeddedFrontendOf(product, frontendProperties) },
       productDescriptor = productDescriptors.get(product.name),
+      modeFilters = modeFilters,
     )
   }
   // After every product ran, because a set gains members while the products run. The label of a set member is written
   // once here, and a product body keeps only the labels no set carries, see `sharePackedLabels`.
   val packedTable = moduleSets.map { (name, set) ->
+    val packed = set.modules.mapNotNull { module -> verdicts.contentModuleJarLabels.get(module)?.let { module to it.label } }.toMap(TreeMap())
     ModuleSetData(
       name = name,
       modules = set.modules.toList(),
       nested = set.nested.toList(),
-      packed = set.modules.mapNotNull { module -> verdicts.contentModuleJarLabels.get(module)?.let { module to it.label } }.toMap(TreeMap()),
+      packed = packed,
+      modeRefused = modeFilters.entries
+        .mapNotNull { (mode, filter) ->
+          val refused = packed.keys.filterNot { filter.isOptionalModuleIncluded(moduleName = it, pluginMainModuleName = null) }
+          if (refused.isEmpty()) null else mode to refused
+        }
+        .toMap(TreeMap()),
     )
   }
   // The module system loading of a member is a product verdict, so the set list waits for every product too.
-  val platformLibPayloads = fragmentPlans.associate { plan -> plan.platformPrefix to plan.payloads.single { it.name == PLATFORM_LIB_FRAGMENT } }
-  val moduleSetTable = moduleSetModuleSystemLoaded(table = packedTable, payloads = platformLibPayloads.map { (product, payload) ->
-    ProductModuleSystemLoading(product = product, moduleSets = payload.moduleSets, moduleSystemLoaded = payload.moduleSystemLoaded)
+  val moduleSetTable = moduleSetModuleSystemLoaded(table = packedTable, payloads = fragmentPlans.map { plan ->
+    val payload = plan.payloads.single { it.name == PLATFORM_LIB_FRAGMENT }
+    ProductModuleSystemLoading(
+      product = plan.platformPrefix,
+      productMode = plan.productMode,
+      moduleSets = payload.moduleSets,
+      moduleSystemLoaded = payload.moduleSystemLoaded,
+    )
   })
   val moduleSetsByName = moduleSetTable.associateBy(ModuleSetData::name)
   return CollectedPlan(
@@ -1107,12 +1131,14 @@ private fun collectDescriptorFiles(
           payload.copy(
             packedContentModuleJars = sharePackedLabels(
               product = plan.platformPrefix,
+              productMode = plan.productMode,
               handedOver = payload.packedContentModuleJars,
               moduleSets = payload.moduleSets,
               table = moduleSetsByName,
             ),
             moduleSystemLoaded = shareModuleSystemLoadedLabels(
               product = plan.platformPrefix,
+              productMode = plan.productMode,
               moduleSystemLoaded = payload.moduleSystemLoaded,
               moduleSets = payload.moduleSets,
               table = moduleSetsByName,
@@ -1143,11 +1169,28 @@ private fun walkModuleSets(moduleSets: Collection<String>, table: Map<String, Mo
 }
 
 /**
- * The top-level module sets of one `platform_lib` payload, and the labels of its packed jars that the module system
- * loads.
+ * The content module filter of each mode of [DEV_DIST_STATED_PRODUCT_MODES], keyed by mode id. The layout of a product
+ * of that mode applies the same filter. Empty when [half] has no split product.
+ */
+private fun devDistModeFilters(
+  half: DevDistHalf,
+  products: List<DiscoveredProduct>,
+  outputProvider: ModuleOutputProvider,
+): Map<String, ContentModuleFilter> {
+  val applicationInfoModule = products.firstNotNullOfOrNull { product ->
+    (product.properties as? ProductProperties)?.takeIf { product.name in half.splitDistributions }?.applicationInfoModule
+  } ?: return emptyMap()
+  val project = outputProvider.findRequiredModule(applicationInfoModule).project
+  return DEV_DIST_STATED_PRODUCT_MODES.associateTo(TreeMap()) { mode -> mode.id to createProductModeContentModuleFilter(project, mode) }
+}
+
+/**
+ * The top-level module sets of one `platform_lib` payload, the id of its product mode, and the labels of its packed
+ * jars that the module system loads.
  */
 internal class ProductModuleSystemLoading(
   @JvmField val product: String,
+  @JvmField val productMode: String,
   @JvmField val moduleSets: List<String>,
   @JvmField val moduleSystemLoaded: Collection<String>,
 )
@@ -1156,16 +1199,17 @@ internal class ProductModuleSystemLoading(
  * [table] with [ModuleSetData.moduleSystemLoaded] filled from the verdicts of [payloads].
  *
  * A packed member goes into the list of a set when its label is in [ProductModuleSystemLoading.moduleSystemLoaded] of
- * every payload that reaches the set. A member with a mixed verdict gets no set entry, and the product payloads keep
- * its label. A set that no payload reaches gets an empty list.
+ * every payload that reaches the set and whose mode does not refuse the member. A member with a mixed verdict gets no
+ * set entry, and the product payloads keep its label. A member that every reaching payload refuses gets no set entry.
+ * A set that no payload reaches gets an empty list.
  */
 internal fun moduleSetModuleSystemLoaded(table: List<ModuleSetData>, payloads: List<ProductModuleSystemLoading>): List<ModuleSetData> {
   val byName = table.associateBy(ModuleSetData::name)
-  val reachingPayloads = HashMap<String, MutableList<Set<String>>>()
+  val reachingPayloads = HashMap<String, MutableList<ProductModuleSystemLoading>>()
+  val loadedByPayload = payloads.associateWith { it.moduleSystemLoaded.toHashSet() }
   for (payload in payloads) {
-    val loaded = payload.moduleSystemLoaded.toHashSet()
     for (moduleSet in walkModuleSets(payload.moduleSets, byName)) {
-      reachingPayloads.computeIfAbsent(moduleSet.name) { ArrayList() }.add(loaded)
+      reachingPayloads.computeIfAbsent(moduleSet.name) { ArrayList() }.add(payload)
     }
   }
   return table.map { moduleSet ->
@@ -1174,7 +1218,10 @@ internal fun moduleSetModuleSystemLoaded(table: List<ModuleSetData>, payloads: L
       moduleSet
     }
     else {
-      moduleSet.copy(moduleSystemLoaded = moduleSet.packed.filter { (_, label) -> reaching.all { label in it } }.keys.sorted())
+      moduleSet.copy(moduleSystemLoaded = moduleSet.packed.filter { (module, label) ->
+        val loading = reaching.filterNot { module in moduleSet.modeRefused.get(it.productMode).orEmpty() }
+        loading.isNotEmpty() && loading.all { label in loadedByPayload.getValue(it) }
+      }.keys.sorted())
     }
   }
 }
@@ -1183,11 +1230,13 @@ internal fun moduleSetModuleSystemLoaded(table: List<ModuleSetData>, payloads: L
  * The labels of [moduleSystemLoaded] that no module set of one `platform_lib` payload carries, sorted.
  *
  * The Bazel side rebuilds [moduleSystemLoaded] as the union of the result and the labels of the walked sets, see
- * `dev_dist_packed_labels`. The union is exact only when every set label is in [moduleSystemLoaded], so this function
- * fails for a set member that the module system of [product] does not load.
+ * `dev_dist_packed_labels`. Both sides skip a set member that [productMode] refuses. The union is exact only when every
+ * other set label is in [moduleSystemLoaded], so this function fails for a set member that the module system of
+ * [product] does not load.
  */
 internal fun shareModuleSystemLoadedLabels(
   product: String,
+  productMode: String,
   moduleSystemLoaded: Collection<String>,
   moduleSets: Collection<String>,
   table: Map<String, ModuleSetData>,
@@ -1195,7 +1244,11 @@ internal fun shareModuleSystemLoadedLabels(
   val full = moduleSystemLoaded.toHashSet()
   val setLabels = TreeMap<String, String>()
   for (moduleSet in walkModuleSets(moduleSets, table)) {
+    val refused = moduleSet.modeRefused.get(productMode).orEmpty()
     for (module in moduleSet.moduleSystemLoaded) {
+      if (module in refused) {
+        continue
+      }
       setLabels.put(module, requireNotNull(moduleSet.packed.get(module)) {
         "Module set '${moduleSet.name}' names '$module' as loaded by the module system, but has no packing label for it"
       })
@@ -1216,25 +1269,37 @@ internal fun shareModuleSystemLoadedLabels(
  *
  * [handedOver] is the whole handover set: the label of every payload module that packs a `lib/` jar. [moduleSets] are
  * the top-level sets the payload references, and [table] holds every set with its [ModuleSetData.packed] labels. The
- * Bazel side rebuilds [handedOver] as the union of the result and the labels of the walked sets. The union is exact
- * only when every set label is in [handedOver], so this function fails for a set member the payload does not hand over.
+ * Bazel side rebuilds [handedOver] as the union of the result and the labels of the walked sets. Both sides skip a set
+ * member that [productMode] refuses, see [ModuleSetData.modeRefused]. The union is exact only when every other set
+ * label is in [handedOver] and no refused label is. So this function fails for a set member the payload does not hand
+ * over, and for a refused member it hands over.
  */
 internal fun sharePackedLabels(
   product: String,
+  productMode: String,
   handedOver: Collection<String>,
   moduleSets: Collection<String>,
   table: Map<String, ModuleSetData>,
 ): List<String> {
   val full = handedOver.toHashSet()
   val setLabels = TreeMap<String, String>()
+  val refusedLabels = TreeMap<String, String>()
   for (moduleSet in walkModuleSets(moduleSets, table)) {
-    setLabels.putAll(moduleSet.packed)
+    val refused = moduleSet.modeRefused.get(productMode).orEmpty()
+    for ((module, label) in moduleSet.packed) {
+      (if (module in refused) refusedLabels else setLabels).put(module, label)
+    }
   }
   val notHandedOver = setLabels.filterValues { it !in full }
   check(notHandedOver.isEmpty()) {
     "'$product' does not hand over the packing label of these module set members. A module set carries the label " +
-    "of a member for every product that references the set:\n" +
+    "of a member for every product that references the set, less the members the product mode refuses:\n" +
     notHandedOver.entries.joinToString(separator = "\n") { (module, label) -> "  $module ($label)" }
+  }
+  val refusedHandedOver = refusedLabels.filterValues { it in full }
+  check(refusedHandedOver.isEmpty()) {
+    "'$product' hands over these module set members, which its mode '$productMode' refuses:\n" +
+    refusedHandedOver.entries.joinToString(separator = "\n") { (module, label) -> "  $module ($label)" }
   }
   val carried = setLabels.values.toHashSet()
   return full.filterTo(TreeSet()) { it !in carried }.toList()
@@ -1266,17 +1331,12 @@ internal fun collectContentVetoModules(products: List<DiscoveredProduct>): List<
  *
  * A library-only jar is not in [handedOver]. Both answers put it on the core classpath when it is a direct child of `lib/`.
  * [contentModuleJarDestinations] maps a handed-over destination to the `content_module_jar` label that packs it.
- *
- * [unplacedLabels] are the content module jars of the payload that the layout does not place. For example, a frontend
- * packs backend content modules of its module sets. The layout gives such a jar no reason to be on the core classpath,
- * so the result names it too.
  */
 private fun moduleSystemLoadedLabels(
   product: String,
   coreClassPath: Set<String>,
   handedOver: Set<String>,
   contentModuleJarDestinations: Map<String, String>,
-  unplacedLabels: Collection<String>,
 ): List<String> {
   val nested = coreClassPath.filter { '/' in it }.sorted()
   check(nested.isEmpty()) {
@@ -1289,9 +1349,7 @@ private fun moduleSystemLoadedLabels(
     "$product: these lib/ jars are off the core classpath, but no content_module_jar packs them, so no label can name them: " +
     unlabeled.joinToString()
   }
-  val result = off.mapTo(TreeSet()) { contentModuleJarDestinations.getValue(it) }
-  result.addAll(unplacedLabels)
-  return result.toList()
+  return off.mapTo(TreeSet()) { contentModuleJarDestinations.getValue(it) }.toList()
 }
 
 /**
@@ -1328,6 +1386,8 @@ private fun collectFragmentPlan(
   embeddedFrontendOf: (ProductProperties) -> String,
   /** The actions that write the two generated entries of the application-info module jar, or `null` when none do. */
   productDescriptor: ProductDescriptorPlan?,
+  /** The content module filter of each stated mode, keyed by mode id. The monolith has none. */
+  modeFilters: Map<String, ContentModuleFilter>,
 ): ProductFragmentPlan? {
   val config = half.splitDistributions.get(product.name) ?: return null
   val properties = product.properties as? ProductProperties
@@ -1450,6 +1510,8 @@ private fun collectFragmentPlan(
   // payload reached. The payload also holds the application-info module and the module excludes, which are not content
   // modules and correctly have no such label.
   val staleTargetNames = ArrayList<String>()
+  // The module set members that the product mode refuses. The payload hands over none of them.
+  val refusedSetMembers = HashSet<String>()
   val platformLibPayload = platformPayload.let { payload ->
     // The `lib/`-owning payload hands jars over to another producer, and `dev_dist_platform_payload` needs the handover
     // set. See `FragmentPayload.packedContentModuleJars`.
@@ -1465,6 +1527,10 @@ private fun collectFragmentPlan(
       // under another jar name is skipped for the same reason the filter below skips it. The seed holds the content
       // modules the spec names itself, and the walk below adds the ones a module set carries.
       val contentModules = directContentModules.mapTo(HashSet<String>()) { it.substringBeforeLast('/') }
+      // A set member that the product mode refuses is not handed over, as `ModuleSetData.modeRefused` states. The
+      // filter applies to set members only. The layout places a refused module the spec names itself, so the checks
+      // below report it.
+      val modeFilter = modeFilters.get(properties.productMode.id)
       val pending = ArrayDeque(payload.moduleSets)
       val visited = HashSet<String>()
       while (pending.isNotEmpty()) {
@@ -1473,7 +1539,14 @@ private fun collectFragmentPlan(
           continue
         }
         val moduleSet = moduleSets.get(setName) ?: continue
-        reached.addAll(moduleSet.modules)
+        for (module in moduleSet.modules) {
+          if (modeFilter == null || modeFilter.isOptionalModuleIncluded(moduleName = module, pluginMainModuleName = null)) {
+            reached.add(module)
+          }
+          else {
+            refusedSetMembers.add(module)
+          }
+        }
         contentModules.addAll(moduleSet.modules)
         pending.addAll(moduleSet.nested)
       }
@@ -1529,6 +1602,12 @@ private fun collectFragmentPlan(
       val placedLabels = HashSet<String>()
       for ((destination, items) in layout.includedModules.groupBy { it.relativeOutputFile }) {
         val memberNames = items.map { it.moduleName }
+        // The layout and `ModuleSetData.modeRefused` ask the same filter. The layout asks it for an optional module
+        // only, so a refused member that the layout still places fails here.
+        val placedRefused = memberNames.filter { it in refusedSetMembers }
+        check(placedRefused.isEmpty()) {
+          "${product.name}: the layout places '$destination', but the product mode refuses its module set members $placedRefused"
+        }
         val contentModuleJarLabel = verdicts.contentModuleJarLabels.get(destination.removeSuffix(".jar"))?.label
         if (contentModuleJarLabel != null && contentModuleJarLabel in packed) {
           handedOver.add(destination)
@@ -1619,12 +1698,16 @@ private fun collectFragmentPlan(
         externallyPackedJars = handedOver,
         skipNioFs = false,
       ).mapTo(HashSet()) { libDir.relativize(it).invariantSeparatorsPathString }
+      // The payload packs every handed-over jar, so a jar that the layout does not place is a defect of the handover.
+      val notPlaced = packed.filterNot { it in placedLabels }
+      check(notPlaced.isEmpty()) {
+        "${product.name}: the layout places no jar of these handed-over labels:\n" + notPlaced.joinToString(separator = "\n") { "  $it" }
+      }
       val moduleSystemLoaded = moduleSystemLoadedLabels(
         product = product.name,
         coreClassPath = coreClassPath,
         handedOver = handedOver,
         contentModuleJarDestinations = contentModuleJarDestinations,
-        unplacedLabels = packed.filterNot { it in placedLabels },
       )
       // A project library the layout places in a residual jar with a module member is inside that jar and nowhere
       // else, so the fragment that no longer packs the jar has no use for the raw library either. The libraries of a
@@ -1677,6 +1760,7 @@ private fun collectFragmentPlan(
   val launchModel = computeDevProductLaunchModel(properties, outputProvider, PINNED_BUILD_DATE_IN_SECONDS)
   return ProductFragmentPlan(
     platformPrefix = product.name,
+    productMode = properties.productMode.id,
     buildModules = (sequenceOf("intellij.idea.community.build") + product.config.modules).distinct().sorted().toList(),
     runtimeModuleRepository = hasRuntimeModuleRepository,
     embeddedFrontend = embeddedFrontend,
@@ -3333,10 +3417,13 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
   append("#\n")
   append("# `packed` maps each member that owns a `content_module_jar` target to that label, written once per set. A\n")
   append("# product's `platform_lib` payload in `dev_dist_fragment_inputs.bzl` names only the labels no set carries.\n")
-  append("# Every product that references a set hands over the labels of its members.\n")
+  append("# Every product that references a set hands over the labels of its members, less the ones its mode refuses.\n")
   append("#\n")
   append("# `module_system_loaded` names the `packed` members whose jar the module system loads in every product that\n")
   append("# references the set. The payload puts every other packed direct child of `lib/` on the core classpath.\n")
+  append("#\n")
+  append("# `mode_refused` names, per product mode, the `packed` members that the mode refuses. The layout of a product of\n")
+  append("# that mode places no jar of them. Such a product hands over no such label, and the binder skips it.\n")
   append("#\n")
   append("# A set name a payload references and this table no longer has is dropped with a warning, like any other\n")
   append("# stale plan name: this is read during module-extension evaluation, so failing would make the very tool that\n")
@@ -3354,6 +3441,17 @@ private fun renderModuleSets(moduleSets: List<ModuleSetData>, half: DevDistHalf)
       append("        },\n")
     }
     appendNonEmptyNameList("module_system_loaded", moduleSet.moduleSystemLoaded)
+    if (moduleSet.modeRefused.isNotEmpty()) {
+      append("        mode_refused = {\n")
+      for ((mode, modules) in moduleSet.modeRefused) {
+        append("            \"").append(mode).append("\": [\n")
+        for (module in modules) {
+          append("                \"").append(module).append("\",\n")
+        }
+        append("            ],\n")
+      }
+      append("        },\n")
+    }
     append("    ),\n")
   }
   append("}\n")
