@@ -11,42 +11,43 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/devkit:devkit",
-    descriptors = {
-        "//libraries/workspace-model-codegen:resources/intellij.libraries.workspace.model.codegen.xml": "intellij.libraries.workspace.model.codegen.xml",
-        "//platform/jewel/samples/showcase:src/main/resources/intellij.platform.jewel.samples.showcase.xml": "intellij.platform.jewel.samples.showcase.xml",
-        "//plugins/devkit/api-dump-lang:resources/intellij.devkit.apiDump.lang.xml": "intellij.devkit.apiDump.lang.xml",
-        "//plugins/devkit/api-dump:resources/intellij.devkit.apiDump.xml": "intellij.devkit.apiDump.xml",
-        "//plugins/devkit/devkit-core:resources/intellij.devkit.core.xml": "intellij.devkit.core.xml",
-        "//plugins/devkit/intellij.devkit.compose:resources/intellij.devkit.compose.xml": "intellij.devkit.compose.xml",
-        "//plugins/devkit/intellij.devkit.debugger:resources/intellij.devkit.debugger.xml": "intellij.devkit.debugger.xml",
-        "//plugins/devkit/intellij.devkit.experiments:resources/intellij.devkit.experiments.xml": "intellij.devkit.experiments.xml",
-        "//plugins/devkit/intellij.devkit.gradle.toml:resources/intellij.devkit.gradle.toml.xml": "intellij.devkit.gradle.toml.xml",
-        "//plugins/devkit/intellij.devkit.gradle.tooling:resources/intellij.devkit.gradle.tooling.xml": "intellij.devkit.gradle.tooling.xml",
-        "//plugins/devkit/intellij.devkit.gradle:resources/intellij.devkit.gradle.xml": "intellij.devkit.gradle.xml",
-        "//plugins/devkit/intellij.devkit.i18n:resources/intellij.devkit.i18n.xml": "intellij.devkit.i18n.xml",
-        "//plugins/devkit/intellij.devkit.intelliLang:resources/intellij.devkit.intelliLang.xml": "intellij.devkit.intelliLang.xml",
-        "//plugins/devkit/intellij.devkit.mcp.inspections:resources/intellij.devkit.mcp.inspections.xml": "intellij.devkit.mcp.inspections.xml",
-        "//plugins/devkit/intellij.devkit.mcp:resources/intellij.devkit.mcp.xml": "intellij.devkit.mcp.xml",
-        "//plugins/devkit/intellij.devkit.modules:resources/intellij.devkit.modules.xml": "intellij.devkit.modules.xml",
-        "//plugins/devkit/intellij.devkit.scaffolding:resources/intellij.devkit.scaffolding.xml": "intellij.devkit.scaffolding.xml",
-        "//plugins/devkit/intellij.devkit.smartupdate:resources/intellij.devkit.smartupdate.xml": "intellij.devkit.smartupdate.xml",
-        "//plugins/devkit/intellij.devkit.stacktrace:resources/intellij.devkit.stacktrace.xml": "intellij.devkit.stacktrace.xml",
-        "//plugins/devkit/intellij.devkit.themes:resources/intellij.devkit.themes.xml": "intellij.devkit.themes.xml",
-        "//plugins/devkit/intellij.devkit.threading:resources/intellij.devkit.threading.xml": "intellij.devkit.threading.xml",
-        "//plugins/devkit/intellij.devkit.uiDesigner:resources/intellij.devkit.uiDesigner.xml": "intellij.devkit.uiDesigner.xml",
-        "//plugins/devkit/intellij.devkit.uiDsl:resources/intellij.devkit.uiDsl.xml": "intellij.devkit.uiDsl.xml",
-        "//plugins/devkit/intellij.devkit.workspaceModel/k2:resources/intellij.devkit.workspaceModel.k2.xml": "intellij.devkit.workspaceModel.k2.xml",
-        "//plugins/devkit/intellij.devkit.workspaceModel:resources/intellij.devkit.workspaceModel.xml": "intellij.devkit.workspaceModel.xml",
-        "//plugins/devkit/intellij.kotlin.devkit/k2:resources/intellij.kotlin.devkit.k2.xml": "intellij.kotlin.devkit.k2.xml",
-        "//plugins/devkit/intellij.kotlin.devkit:resources/intellij.kotlin.devkit.xml": "intellij.kotlin.devkit.xml",
-    },
+    content_modules = [
+        "intellij.devkit.apiDump",
+        "intellij.devkit.apiDump.lang",
+        "intellij.devkit.compose",
+        "intellij.devkit.core",
+        "intellij.devkit.debugger",
+        "intellij.devkit.experiments",
+        "intellij.devkit.gradle",
+        "intellij.devkit.gradle.toml",
+        "intellij.devkit.gradle.tooling",
+        "intellij.devkit.i18n",
+        "intellij.devkit.intelliLang",
+        "intellij.devkit.mcp",
+        "intellij.devkit.mcp.inspections",
+        "intellij.devkit.modules",
+        "intellij.devkit.scaffolding",
+        "intellij.devkit.smartupdate",
+        "intellij.devkit.stacktrace",
+        "intellij.devkit.themes",
+        "intellij.devkit.threading",
+        "intellij.devkit.uiDesigner",
+        "intellij.devkit.uiDsl",
+        "intellij.devkit.workspaceModel",
+        "intellij.devkit.workspaceModel.k2",
+        "intellij.kotlin.devkit",
+        "intellij.kotlin.devkit.k2",
+        "intellij.libraries.workspace.model.codegen",
+        "intellij.platform.jewel.samples.showcase",
+    ],
+    descriptor = "//plugins/devkit:resources/META-INF/plugin.xml",
     main_module = "intellij.devkit",
     mode_refused_content_modules = {
         "frontend": [

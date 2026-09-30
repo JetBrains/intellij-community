@@ -19,10 +19,6 @@ dev_dist_plugin(
         "intellij.testng.rt",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.testng",
-        "intellij.testng.langInjection",
-    ],
     jars = {
         "lib/intellij.libraries.testng.jar": [
             "intellij.libraries.testng",

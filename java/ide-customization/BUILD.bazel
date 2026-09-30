@@ -11,10 +11,6 @@ dev_dist_plugin(
         "intellij.java.ide.customization.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.java.ide.customization.backend",
-        "intellij.java.ide.customization.training",
-    ],
     jars = {
         "lib/java-ide-customization.jar": ["intellij.java.ide.customization"],
     },

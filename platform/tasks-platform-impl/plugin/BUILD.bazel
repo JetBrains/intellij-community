@@ -12,12 +12,6 @@ dev_dist_plugin(
         "intellij.platform.tasks.impl.debugger",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.platform.tasks",
-        "intellij.platform.tasks.impl",
-        "intellij.platform.tasks.impl.bookmarks",
-        "intellij.platform.tasks.impl.debugger",
-    ],
     jars = {
         "lib/platform-tasks-plugin.jar": ["intellij.platform.tasks.plugin"],
     },

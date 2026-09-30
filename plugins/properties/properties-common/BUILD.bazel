@@ -15,14 +15,6 @@ dev_dist_plugin(
         "intellij.properties.psi",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.properties",
-        "intellij.properties.backend",
-        "intellij.properties.backend.psi",
-        "intellij.properties.copyright",
-        "intellij.properties.psi",
-        "intellij.properties.structuralSearch",
-    ],
     jars = {
         "lib/intellij.properties.jar": ["intellij.properties"],
     },

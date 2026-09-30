@@ -12,12 +12,6 @@ dev_dist_plugin(
         "intellij.searchEverywhereLucene.performanceTesting",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.searchEverywhereLucene.backend",
-        "intellij.searchEverywhereLucene.common",
-        "intellij.searchEverywhereLucene.frontend",
-        "intellij.searchEverywhereLucene.performanceTesting",
-    ],
     jars = {
         "lib/searchEverywhereLucene-plugin.jar": ["intellij.searchEverywhereLucene.plugin"],
     },

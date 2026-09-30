@@ -11,36 +11,37 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/gradle/plugin:plugin",
-    descriptors = {
-        "//libraries/gradle:resources/intellij.libraries.gradle.xml": "intellij.libraries.gradle.xml",
-        "//plugins/gradle/backend:resources/intellij.gradle.backend.xml": "intellij.gradle.backend.xml",
-        "//plugins/gradle/codeInsight/backend:resources/intellij.gradle.codeInsight.backend.xml": "intellij.gradle.codeInsight.backend.xml",
-        "//plugins/gradle/codeInsight/groovy/backend:resources/intellij.gradle.codeInsight.groovy.backend.xml": "intellij.gradle.codeInsight.groovy.backend.xml",
-        "//plugins/gradle/codeInsight/groovy:resources/intellij.gradle.codeInsight.groovy.xml": "intellij.gradle.codeInsight.groovy.xml",
-        "//plugins/gradle/codeInsight/kotlin/backend:resources/intellij.gradle.codeInsight.kotlin.backend.xml": "intellij.gradle.codeInsight.kotlin.backend.xml",
-        "//plugins/gradle/codeInsight/kotlin:resources/intellij.gradle.codeInsight.kotlin.xml": "intellij.gradle.codeInsight.kotlin.xml",
-        "//plugins/gradle/codeInsight/properties/backend:resources/intellij.gradle.codeInsight.properties.backend.xml": "intellij.gradle.codeInsight.properties.backend.xml",
-        "//plugins/gradle/codeInsight/properties:resources/intellij.gradle.codeInsight.properties.xml": "intellij.gradle.codeInsight.properties.xml",
-        "//plugins/gradle/codeInsight/toml/backend:resources/intellij.gradle.codeInsight.toml.backend.xml": "intellij.gradle.codeInsight.toml.backend.xml",
-        "//plugins/gradle/codeInsight/toml:resources/intellij.gradle.codeInsight.toml.xml": "intellij.gradle.codeInsight.toml.xml",
-        "//plugins/gradle/codeInsight:resources/intellij.gradle.codeInsight.xml": "intellij.gradle.codeInsight.xml",
-        "//plugins/gradle/completion/kotlin:resources/intellij.gradle.completion.kotlin.xml": "intellij.gradle.completion.kotlin.xml",
-        "//plugins/gradle/completion/toml:resources/intellij.gradle.completion.toml.xml": "intellij.gradle.completion.toml.xml",
-        "//plugins/gradle/completion:resources/intellij.gradle.completion.xml": "intellij.gradle.completion.xml",
-        "//plugins/gradle/properties:resources/intellij.gradle.properties.xml": "intellij.gradle.properties.xml",
-        "//plugins/gradle/settings:resources/intellij.gradle.settings.xml": "intellij.gradle.settings.xml",
-        "//plugins/gradle/tooling-extension-api:resources/intellij.gradle.toolingExtension.xml": "intellij.gradle.toolingExtension.xml",
-        "//plugins/gradle/tooling-extension-impl:resources/intellij.gradle.toolingExtension.impl.xml": "intellij.gradle.toolingExtension.impl.xml",
-        "//plugins/gradle/tooling-proxy:resources/intellij.gradle.toolingProxy.xml": "intellij.gradle.toolingProxy.xml",
-        "//plugins/gradle:plugin-resources/intellij.gradle.xml": "intellij.gradle.xml",
-    },
+    content_modules = [
+        "intellij.gradle",
+        "intellij.gradle.backend",
+        "intellij.gradle.codeInsight",
+        "intellij.gradle.codeInsight.backend",
+        "intellij.gradle.codeInsight.groovy",
+        "intellij.gradle.codeInsight.groovy.backend",
+        "intellij.gradle.codeInsight.kotlin",
+        "intellij.gradle.codeInsight.kotlin.backend",
+        "intellij.gradle.codeInsight.properties",
+        "intellij.gradle.codeInsight.properties.backend",
+        "intellij.gradle.codeInsight.toml",
+        "intellij.gradle.codeInsight.toml.backend",
+        "intellij.gradle.completion",
+        "intellij.gradle.completion.kotlin",
+        "intellij.gradle.completion.toml",
+        "intellij.gradle.properties",
+        "intellij.gradle.settings",
+        "intellij.gradle.toolingExtension",
+        "intellij.gradle.toolingExtension.impl",
+        "intellij.gradle.toolingProxy",
+        "intellij.libraries.gradle",
+    ],
+    descriptor = "//plugins/gradle/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.gradle.plugin",
     mode_refused_content_modules = {
         "frontend": [

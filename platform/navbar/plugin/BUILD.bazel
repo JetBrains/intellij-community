@@ -12,12 +12,6 @@ dev_dist_plugin(
         "intellij.platform.navbar.monolith",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.platform.navbar",
-        "intellij.platform.navbar.backend",
-        "intellij.platform.navbar.frontend",
-        "intellij.platform.navbar.monolith",
-    ],
     jars = {
         "lib/platform-navbar-plugin.jar": ["intellij.platform.navbar.plugin"],
     },

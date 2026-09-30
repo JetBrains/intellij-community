@@ -10,10 +10,6 @@ dev_dist_plugin(
         "intellij.java.jshell.protocol",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.java.jshell.console",
-        "intellij.java.jshell.execution",
-    ],
     jars = {
         "lib/intellij.java.jshell.execution.jar": [
             "intellij.java.jshell.execution",

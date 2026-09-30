@@ -29,20 +29,6 @@ dev_dist_plugin(
         "intellij.libraries.completion.ranking.typescript",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.completionMlRankingModels.libraries",
-        "intellij.libraries.completion.ranking.cpp",
-        "intellij.libraries.completion.ranking.go",
-        "intellij.libraries.completion.ranking.java",
-        "intellij.libraries.completion.ranking.js",
-        "intellij.libraries.completion.ranking.kotlin",
-        "intellij.libraries.completion.ranking.php",
-        "intellij.libraries.completion.ranking.ruby",
-        "intellij.libraries.completion.ranking.rust",
-        "intellij.libraries.completion.ranking.sh",
-        "intellij.libraries.completion.ranking.swift",
-        "intellij.libraries.completion.ranking.typescript",
-    ],
     jars = {
         "lib/intellij.completionMlRankingModels.libraries.jar": [
             "intellij.completionMlRankingModels.libraries",

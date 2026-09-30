@@ -11,20 +11,23 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/terminal:terminal",
+    content_modules = [
+        "intellij.libraries.completion.ranking.sh",
+        "intellij.terminal.backend",
+        "intellij.terminal.cloud",
+        "intellij.terminal.emulator",
+        "intellij.terminal.frontend",
+        "intellij.terminal.libraries.completionDbWithExtensions",
+        "intellij.terminal.sh",
+    ],
+    descriptor = "//plugins/terminal:resources/META-INF/plugin.xml",
     descriptors = {
-        "//libraries/completion-ranking-sh:resources/intellij.libraries.completion.ranking.sh.xml": "intellij.libraries.completion.ranking.sh.xml",
-        "//plugins/terminal/backend:resources/intellij.terminal.backend.xml": "intellij.terminal.backend.xml",
-        "//plugins/terminal/cloud:resources/intellij.terminal.cloud.xml": "intellij.terminal.cloud.xml",
-        "//plugins/terminal/emulator:resources/intellij.terminal.emulator.xml": "intellij.terminal.emulator.xml",
-        "//plugins/terminal/frontend:resources/intellij.terminal.frontend.xml": "intellij.terminal.frontend.xml",
-        "//plugins/terminal/libraries:resources/intellij.terminal.libraries.completionDbWithExtensions.xml": "intellij.terminal.libraries.completionDbWithExtensions.xml",
-        "//plugins/terminal/sh:resources/intellij.terminal.sh.xml": "intellij.terminal.sh.xml",
         "//plugins/terminal:resources/META-INF/terminal.xml": "META-INF/terminal.xml",
     },
     main_module = "intellij.terminal",

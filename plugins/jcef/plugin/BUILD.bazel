@@ -14,14 +14,6 @@ dev_dist_plugin(
         "intellij.internal.jcef",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.internal.jcef",
-        "intellij.jcef.frontend",
-        "intellij.libraries.jcef",
-        "intellij.platform.ide.impl.jcef",
-        "intellij.platform.ide.newUiOnboarding.jcef",
-        "intellij.platform.ui.jcef",
-    ],
     main_module = "intellij.jcef.plugin",
     variants = [
         "darwin_aarch64",

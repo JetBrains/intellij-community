@@ -443,8 +443,7 @@ def dev_plugin_test_suite(name):
     _fixture_xml(name = source)
     dev_dist_plugin_descriptor(
         main_module = _MAIN_MODULE,
-        descriptor_module = ":" + source,
-        descriptor = source,
+        descriptor = ":" + source,
     )
     descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MAIN_MODULE)
     modules = {":" + owner: _MAIN_MODULE, ":" + split: _SPLIT_MODULE}
@@ -577,8 +576,7 @@ def dev_plugin_test_suite(name):
     _fixture_module(name = mode_owner, module_name = _MODE_MODULE)
     dev_dist_plugin_descriptor(
         main_module = _MODE_MODULE,
-        descriptor_module = ":" + source,
-        descriptor = source,
+        descriptor = ":" + source,
         mode_refused_content_modules = {"frontend": [_SPLIT_MODULE, _MEMBER_MODULE]},
     )
     mode_component = name + "_mode"

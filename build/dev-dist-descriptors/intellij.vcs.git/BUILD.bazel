@@ -11,22 +11,23 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/git4idea:vcs-git",
-    descriptors = {
-        "//plugins/git4idea/backend:resources/intellij.vcs.git.backend.xml": "intellij.vcs.git.backend.xml",
-        "//plugins/git4idea/frontend:resources/intellij.vcs.git.frontend.xml": "intellij.vcs.git.frontend.xml",
-        "//plugins/git4idea/intellij.vcs.git.coverage:resources/intellij.vcs.git.coverage.xml": "intellij.vcs.git.coverage.xml",
-        "//plugins/git4idea/localHistory:resources/intellij.vcs.git.localHistory.xml": "intellij.vcs.git.localHistory.xml",
-        "//plugins/git4idea/performanceTesting:resources/intellij.vcs.git.performanceTesting.xml": "intellij.vcs.git.performanceTesting.xml",
-        "//plugins/git4idea/shared:resources/intellij.vcs.git.shared.xml": "intellij.vcs.git.shared.xml",
-        "//plugins/git4idea/terminal:resources/intellij.vcs.git.terminal.xml": "intellij.vcs.git.terminal.xml",
-    },
+    content_modules = [
+        "intellij.vcs.git.backend",
+        "intellij.vcs.git.coverage",
+        "intellij.vcs.git.frontend",
+        "intellij.vcs.git.localHistory",
+        "intellij.vcs.git.performanceTesting",
+        "intellij.vcs.git.shared",
+        "intellij.vcs.git.terminal",
+    ],
+    descriptor = "//plugins/git4idea:resources/META-INF/plugin.xml",
     main_module = "intellij.vcs.git",
     mode_refused_content_modules = {
         "frontend": [

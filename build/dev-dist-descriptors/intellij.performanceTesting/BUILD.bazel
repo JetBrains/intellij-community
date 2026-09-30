@@ -11,34 +11,35 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/performanceTesting/core:performanceTesting",
-    descriptors = {
-        "//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
-        "//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml": "intellij.libraries.assertj.swing.xml",
-        "//libraries/oshi-core:resources/intellij.libraries.oshi.core.xml": "intellij.libraries.oshi.core.xml",
-        "//platform/remote-driver/client:resources/intellij.driver.client.xml": "intellij.driver.client.xml",
-        "//platform/remote-driver/core:resources/intellij.driver.impl.xml": "intellij.driver.impl.xml",
-        "//platform/remote-driver/model:resources/intellij.driver.model.xml": "intellij.driver.model.xml",
-        "//plugins/performanceTesting/backend:resources/intellij.performanceTesting.backend.xml": "intellij.performanceTesting.backend.xml",
-        "//plugins/performanceTesting/debugger:resources/intellij.performanceTesting.debugger.xml": "intellij.performanceTesting.debugger.xml",
-        "//plugins/performanceTesting/event-bus:resources/intellij.tools.ide.starter.bus.xml": "intellij.tools.ide.starter.bus.xml",
-        "//plugins/performanceTesting/freezes:resources/intellij.performanceTesting.freezes.xml": "intellij.performanceTesting.freezes.xml",
-        "//plugins/performanceTesting/frontend-base:resources/intellij.performanceTesting.frontend.base.xml": "intellij.performanceTesting.frontend.base.xml",
-        "//plugins/performanceTesting/frontend:resources/intellij.performanceTesting.frontend.xml": "intellij.performanceTesting.frontend.xml",
-        "//plugins/performanceTesting/problemsView:resources/intellij.performanceTesting.problemsView.xml": "intellij.performanceTesting.problemsView.xml",
-        "//plugins/performanceTesting/rdct:resources/intellij.performanceTesting.rdct.xml": "intellij.performanceTesting.rdct.xml",
-        "//plugins/performanceTesting/remote-driver.compose:resources/intellij.performanceTesting.remoteDriver.compose.xml": "intellij.performanceTesting.remoteDriver.compose.xml",
-        "//plugins/performanceTesting/remote-driver.jcef:resources/intellij.performanceTesting.remoteDriver.jcef.xml": "intellij.performanceTesting.remoteDriver.jcef.xml",
-        "//plugins/performanceTesting/remote-driver:resources/intellij.performanceTesting.remoteDriver.xml": "intellij.performanceTesting.remoteDriver.xml",
-        "//plugins/performanceTesting/structureView:resources/intellij.performanceTesting.structureView.xml": "intellij.performanceTesting.structureView.xml",
-        "//plugins/performanceTesting/vcs:resources/intellij.performanceTesting.vcs.xml": "intellij.performanceTesting.vcs.xml",
-    },
+    content_modules = [
+        "intellij.driver.client",
+        "intellij.driver.impl",
+        "intellij.driver.model",
+        "intellij.libraries.assertj.core",
+        "intellij.libraries.assertj.swing",
+        "intellij.libraries.oshi.core",
+        "intellij.performanceTesting.backend",
+        "intellij.performanceTesting.debugger",
+        "intellij.performanceTesting.freezes",
+        "intellij.performanceTesting.frontend",
+        "intellij.performanceTesting.frontend.base",
+        "intellij.performanceTesting.problemsView",
+        "intellij.performanceTesting.rdct",
+        "intellij.performanceTesting.remoteDriver",
+        "intellij.performanceTesting.remoteDriver.compose",
+        "intellij.performanceTesting.remoteDriver.jcef",
+        "intellij.performanceTesting.structureView",
+        "intellij.performanceTesting.vcs",
+        "intellij.tools.ide.starter.bus",
+    ],
+    descriptor = "//plugins/performanceTesting/core:resources/META-INF/plugin.xml",
     main_module = "intellij.performanceTesting",
     mode_refused_content_modules = {
         "frontend": [

@@ -15,14 +15,6 @@ dev_dist_plugin(
         "intellij.tasks.compatibility",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.xml.rpc",
-        "intellij.tasks.bugzilla",
-        "intellij.tasks.core.libraries.commonsDiscovery",
-        "intellij.tasks.java",
-        "intellij.tasks.jira",
-        "intellij.tasks.trac",
-    ],
     directory_name = "tasks",
     jars = {
         "lib/intellij.tasks.core.libraries.commonsDiscovery.jar": [

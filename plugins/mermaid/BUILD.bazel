@@ -22,12 +22,6 @@ dev_dist_plugin(
         "intellij.mermaid.spellchecker",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.mermaid.frontend",
-        "intellij.mermaid.json",
-        "intellij.mermaid.markdown",
-        "intellij.mermaid.spellchecker",
-    ],
     jars = {
         "lib/mermaid.jar": ["intellij.mermaid"],
     },

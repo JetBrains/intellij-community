@@ -11,20 +11,21 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//aether-dependency-resolver/plugin:plugin",
-    descriptors = {
-        "//aether-dependency-resolver:resources/intellij.java.aetherDependencyResolver.xml": "intellij.java.aetherDependencyResolver.xml",
-        "//libraries/maven-resolver-provider:resources/intellij.libraries.maven.resolver.provider.xml": "intellij.libraries.maven.resolver.provider.xml",
-        "//libraries/maven-resolver-transport:resources/intellij.libraries.maven.resolver.transport.xml": "intellij.libraries.maven.resolver.transport.xml",
-        "//libraries/plexus-utils:resources/intellij.libraries.plexus.utils.xml": "intellij.libraries.plexus.utils.xml",
-        "//plugins/repository-search/completion:resources/intellij.repository.search.completion.xml": "intellij.repository.search.completion.xml",
-    },
+    content_modules = [
+        "intellij.java.aetherDependencyResolver",
+        "intellij.libraries.maven.resolver.provider",
+        "intellij.libraries.maven.resolver.transport",
+        "intellij.libraries.plexus.utils",
+        "intellij.repository.search.completion",
+    ],
+    descriptor = "//aether-dependency-resolver/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.java.aetherDependencyResolver.plugin",
     refused_content_modules = [
         "intellij.repository.search.ultimate",

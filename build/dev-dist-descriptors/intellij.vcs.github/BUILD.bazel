@@ -11,20 +11,21 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/github/github-core:vcs-github",
-    descriptors = {
-        "//plugins/github/github-core:resources/intellij.vcs.github.xml": "intellij.vcs.github.xml",
-        "//plugins/github/github-git:resources/intellij.vcs.github.git.xml": "intellij.vcs.github.git.xml",
-        "//plugins/github/github-json:resources/intellij.vcs.github.json.xml": "intellij.vcs.github.json.xml",
-        "//plugins/github/github-tracker:resources/intellij.vcs.github.tracker.xml": "intellij.vcs.github.tracker.xml",
-        "//plugins/github/ultimate-promo:resources/intellij.vcs.github.ultimatePromo.xml": "intellij.vcs.github.ultimatePromo.xml",
-    },
+    content_modules = [
+        "intellij.vcs.github",
+        "intellij.vcs.github.git",
+        "intellij.vcs.github.json",
+        "intellij.vcs.github.tracker",
+        "intellij.vcs.github.ultimatePromo",
+    ],
+    descriptor = "//plugins/github/github-core:resources/META-INF/plugin.xml",
     main_module = "intellij.vcs.github",
     mode_refused_content_modules = {
         "frontend": [

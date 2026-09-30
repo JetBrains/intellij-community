@@ -33,15 +33,6 @@ dev_dist_plugin(
         "intellij.debugger.streams.java.rt.gatherers",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.debugger.streams.backend",
-        "intellij.debugger.streams.core",
-        "intellij.debugger.streams.java",
-        "intellij.debugger.streams.java.frontend",
-        "intellij.debugger.streams.java.rt",
-        "intellij.debugger.streams.java.rt.gatherers",
-        "intellij.debugger.streams.shared",
-    ],
     jars = {
         "lib/debugger-streams-plugin.jar": ["intellij.debugger.streams.plugin"],
     },

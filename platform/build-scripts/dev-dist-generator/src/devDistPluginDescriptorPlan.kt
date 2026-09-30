@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.devDistGenerator
 
+import com.intellij.platform.buildScripts.pluginModelTool.descriptorFiles
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.FrontendModuleFilter
@@ -31,6 +32,7 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.module.JpsModule
 import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -1234,6 +1236,53 @@ private fun separateJarContentModules(
 internal fun conventionalDescriptor(descriptor: ReachedDescriptor, contentModules: List<String>): Boolean {
   val owner = contentModules.firstOrNull { it.replace('/', '.') + ".xml" == descriptor.loadPath }?.substringBeforeLast('/')
   return owner == descriptor.moduleName && descriptor.relativePath.endsWith("/${descriptor.loadPath}")
+}
+
+/**
+ * The entry of [module] in the descriptor index `MODULE_DESCRIPTORS` of the JPS bridge, in the recorded form, or `null`
+ * when the index has no entry for the module.
+ *
+ * `compute_module_descriptor_target` of `jps_target_derivation.bzl` is the Starlark twin. The rule takes the first
+ * production resource root in `.iml` order that the jar takes at its own root and that holds `<module name>.xml`. The
+ * file must lie inside the Bazel package of the module, and on the repository half of the module.
+ */
+internal fun bridgeDescriptorLabel(module: JpsModule, index: DevDistBazelIndex): String? {
+  val moduleTarget = moduleRuleTarget(module = module.name, targets = index.targets) ?: return null
+  val isCommunity = index.isCommunity(module.name) ?: return null
+  val packageDirectory = index.packageDirectory(moduleTarget)
+  val projectRoot = index.projectRoot.normalize()
+  val communityRoot = index.communityRoot.normalize()
+  for (file in descriptorFiles(module = module, loadPath = module.name + ".xml")) {
+    val normalized = file.normalize()
+    if (normalized.startsWith(communityRoot) != isCommunity || !normalized.startsWith(projectRoot)) {
+      continue
+    }
+    val relativePath = projectRoot.relativize(normalized).invariantSeparatorsPathString
+    val insidePackage = when {
+      packageDirectory.isEmpty() -> relativePath
+      relativePath.startsWith("$packageDirectory/") -> relativePath.removePrefix("$packageDirectory/")
+      else -> continue
+    }
+    return moduleTarget.substringBeforeLast(':') + ":" + insidePackage
+  }
+  return null
+}
+
+/**
+ * Whether the descriptor leaf derives the row [label] to [loadPath] itself, so the generator states nothing for it.
+ *
+ * The leaf derives one row for each of its [contentModules] that the bridge index knows, at the load path
+ * `<module name>.xml`. [bridgeLabel] gives the index entry of a module name, see [bridgeDescriptorLabel]. A row of a
+ * module outside [contentModules] stays explicit, because the leaf derives no row for it.
+ */
+internal fun isBridgeDerivedDescriptor(
+  label: String,
+  loadPath: String,
+  contentModules: Collection<String>,
+  bridgeLabel: (moduleName: String) -> String?,
+): Boolean {
+  val moduleName = loadPath.removeSuffix(".xml")
+  return moduleName != loadPath && moduleName in contentModules && bridgeLabel(moduleName) == label
 }
 
 /**

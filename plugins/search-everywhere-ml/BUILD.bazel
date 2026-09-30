@@ -26,18 +26,6 @@ dev_dist_plugin(
         "intellij.libraries.search.everywhere.find.ec.model",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.mlapi.core",
-        "intellij.libraries.search.everywhere.find.all.model",
-        "intellij.libraries.search.everywhere.find.ec.model",
-        "intellij.platform.ml.logs",
-        "intellij.searchEverywhereMl.ranking.core",
-        "intellij.searchEverywhereMl.ranking.ext",
-        "intellij.searchEverywhereMl.ranking.java",
-        "intellij.searchEverywhereMl.ranking.vcs",
-        "intellij.searchEverywhereMl.ranking.yaml",
-        "intellij.searchEverywhereMl.typos",
-    ],
     jars = {
         "lib/searchEverywhereMl.jar": [
             "intellij.searchEverywhereMl",

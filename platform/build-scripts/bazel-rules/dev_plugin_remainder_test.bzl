@@ -690,15 +690,13 @@ def dev_plugin_remainder_test_suite(name):
     normal_descriptor = dev_dist_plugin_descriptor_target_name(normal_main_module)
     dev_dist_plugin_descriptor(
         main_module = normal_main_module,
-        descriptor_module = ":" + descriptor_source,
-        descriptor = descriptor_source,
+        descriptor = ":" + descriptor_source,
     )
     scrambled_main_module = "test.%s.scrambled" % name
     scrambled_descriptor = dev_dist_plugin_descriptor_target_name(scrambled_main_module)
     dev_dist_plugin_descriptor(
         main_module = scrambled_main_module,
-        descriptor_module = ":" + descriptor_source,
-        descriptor = descriptor_source,
+        descriptor = ":" + descriptor_source,
         embed_content_modules = False,
     )
 

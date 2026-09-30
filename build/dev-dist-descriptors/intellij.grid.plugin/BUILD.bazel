@@ -11,24 +11,25 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//grid/plugin:plugin",
-    descriptors = {
-        "//grid/api:resources/intellij.grid.xml": "intellij.grid.xml",
-        "//grid/core-impl:resources/intellij.grid.core.impl.xml": "intellij.grid.core.impl.xml",
-        "//grid/csv:resources/intellij.grid.csv.core.impl.xml": "intellij.grid.csv.core.impl.xml",
-        "//grid/images:resources/intellij.grid.images.impl.xml": "intellij.grid.images.impl.xml",
-        "//grid/impl-ide:resources/intellij.grid.impl.ide.xml": "intellij.grid.impl.ide.xml",
-        "//grid/impl:resources/intellij.grid.impl.xml": "intellij.grid.impl.xml",
-        "//grid/json:resources/intellij.grid.json.impl.xml": "intellij.grid.json.impl.xml",
-        "//grid/structureview:resources/intellij.grid.structureview.xml": "intellij.grid.structureview.xml",
-        "//grid/types:resources/intellij.grid.types.xml": "intellij.grid.types.xml",
-    },
+    content_modules = [
+        "intellij.grid",
+        "intellij.grid.core.impl",
+        "intellij.grid.csv.core.impl",
+        "intellij.grid.images.impl",
+        "intellij.grid.impl",
+        "intellij.grid.impl.ide",
+        "intellij.grid.json.impl",
+        "intellij.grid.structureview",
+        "intellij.grid.types",
+    ],
+    descriptor = "//grid/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.grid.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.grid.json.impl"],

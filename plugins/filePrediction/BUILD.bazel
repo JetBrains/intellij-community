@@ -10,10 +10,6 @@ dev_dist_plugin(
         "intellij.filePrediction.vcs",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.filePrediction.java",
-        "intellij.filePrediction.vcs",
-    ],
     jars = {
         "lib/filePrediction.jar": ["intellij.filePrediction"],
         "lib/file-prediction-model.jar": ["@lib//:file_prediction-file-prediction-model"],

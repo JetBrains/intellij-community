@@ -134,7 +134,6 @@ class DevDistHalfTest {
     val leaf = PluginDescriptorLeaf(
       variant = "",
       descriptor = "resources/META-INF/plugin.xml",
-      descriptorModules = listOf("intellij.c.frontend"),
       descriptors = emptyMap(),
       libraryDescriptors = emptyMap(),
       refusedContentModules = emptyList(),
@@ -159,7 +158,10 @@ class DevDistHalfTest {
 
     val body = draft.render(packaging = null).body
     assertThat(body).contains("mode_refused_content_modules")
-    assertThat(body).contains("descriptor_modules = [\"intellij.c.frontend\"]")
+    // The leaf derives the conventional row of every content module, so the section states no row for it.
+    assertThat(body).contains("content_modules = [\"intellij.c.frontend\"]")
+    assertThat(body).doesNotContain("descriptor_modules")
+    assertThat(body).doesNotContain("descriptors =")
   }
 
   @Test

@@ -12,12 +12,6 @@ dev_dist_plugin(
         "intellij.platform.structureView.impl",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.platform.structureView",
-        "intellij.platform.structureView.backend",
-        "intellij.platform.structureView.frontend",
-        "intellij.platform.structureView.impl",
-    ],
     jars = {
         "lib/platform-structureView-plugin.jar": ["intellij.platform.structureView.plugin"],
     },

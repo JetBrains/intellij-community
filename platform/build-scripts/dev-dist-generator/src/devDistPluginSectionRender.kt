@@ -98,13 +98,11 @@ internal fun computeDevSection(
   )
   val entries = descriptorEntries.sortedBy { it.variant }
   check(entries.map { it.variant }.distinct().size == entries.size) { "Plugin '$mainModule' has two baseline entries of one variant" }
-  val descriptors = computePluginDescriptors(context = context, entries = entries)
-  val content = computePluginContent(
-    context = context,
-    memberNames = packing.content.memberNames,
-    declareMainModule = descriptors.isNotEmpty(),
-  )
-  val statesSection = content != null || descriptors.isNotEmpty()
+  val contentModuleNames = sectionContentModuleNames(context = context, memberNames = packing.content.memberNames)
+  // `dev_dist_plugin` passes the main module and the content modules to the leaf, and the leaf derives their rows.
+  val descriptors = computePluginDescriptors(context = context, entries = entries, derivedModules = setOf(mainModule) + contentModuleNames)
+  val statesSection = contentModuleNames.isNotEmpty() || descriptors.isNotEmpty()
+  val content = if (statesSection) PluginContentModules(contentModuleNames = contentModuleNames) else null
   val packagePrefix = index.bazelPackagePrefix(mainModule) ?: error("Plugin '$mainModule' has no Bazel package prefix")
   val descriptorTargets = TreeMap<String, String>()
   for (descriptor in descriptors) {
@@ -153,15 +151,11 @@ internal class PluginContentModules(
 )
 
 /**
- * The content modules the section states, or `null` when the plugin states none and declares no main module.
+ * The content modules the section states, in order.
  *
  * A community section cannot name an ultimate member, so this function skips the member. The packed components state it.
  */
-private fun computePluginContent(
-  context: DevSectionContext,
-  memberNames: Collection<String>,
-  declareMainModule: Boolean,
-): PluginContentModules? {
+private fun sectionContentModuleNames(context: DevSectionContext, memberNames: Collection<String>): List<String> {
   val contentModuleNames = LinkedHashSet<String>()
   for (memberName in memberNames) {
     if (!context.isKnown(memberName)) {
@@ -173,10 +167,7 @@ private fun computePluginContent(
     }
     contentModuleNames.add(memberName)
   }
-  if (!declareMainModule && contentModuleNames.isEmpty()) {
-    return null
-  }
-  return PluginContentModules(contentModuleNames = contentModuleNames.toList())
+  return contentModuleNames.toList()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -186,8 +177,7 @@ private fun computePluginContent(
 internal class PluginDescriptorLeaf(
   @JvmField val variant: String,
   @JvmField val descriptor: String,
-  @JvmField val descriptorModules: List<String>,
-  /** Label to load path, in label order. */
+  /** Label to load path, in label order. The leaf derives every conventional row, so this map holds only the other rows. */
   @JvmField val descriptors: Map<String, String>,
   /** Container label to space-joined load paths, in first-appearance order. */
   @JvmField val libraryDescriptors: Map<String, String>,
@@ -208,34 +198,37 @@ internal class PluginDescriptorLeaf(
 /**
  * One leaf per variant, or an empty list when the plugin gets no descriptor leaf.
  *
+ * A leaf states no row that it derives itself from [derivedModules] and the bridge index, see [isBridgeDerivedDescriptor].
+ *
  * Empty when the plugin is outside the population. Empty when the plugin's own package holds no `META-INF/plugin.xml`.
  * Empty when a community plugin would have to name an ultimate label, and that case discards every variant, the leaves
  * already built included.
  */
-private fun computePluginDescriptors(context: DevSectionContext, entries: List<PluginDescriptorEntry>): List<PluginDescriptorLeaf> {
+private fun computePluginDescriptors(
+  context: DevSectionContext,
+  entries: List<PluginDescriptorEntry>,
+  derivedModules: Set<String>,
+): List<PluginDescriptorLeaf> {
   if (entries.isEmpty()) {
     return emptyList()
+  }
+  fun bridgeLabel(moduleName: String): String? {
+    return context.outputProvider.findModule(moduleName)?.let { bridgeDescriptorLabel(module = it, index = context.index) }
   }
   val mainModule = context.jpsModule(context.mainModule)
   val descriptorPath = descriptorPackagePaths(context = context, module = mainModule, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return emptyList()
   val result = ArrayList<PluginDescriptorLeaf>(entries.size)
   for (entry in entries) {
     val rowLabels = residueDescriptorLabels(context = context, entry = entry) ?: return emptyList()
-    val conventionalModules = LinkedHashMap<String, String>()
-    val contentLabels = contentDescriptorLabels(
-      context = context,
-      mainModule = mainModule,
-      entry = entry,
-      conventionalModules = conventionalModules,
-    ) ?: return emptyList()
+    val contentLabels = contentDescriptorLabels(context = context, mainModule = mainModule, entry = entry) ?: return emptyList()
     val libraryLabels = libraryDescriptorLabels(context = context, entry = entry) ?: return emptyList()
     val descriptors = TreeMap(contentLabels + rowLabels)
-    val descriptorModules = conventionalModules.filter { (label, module) -> label !in rowLabels && descriptors.get(label) == "$module.xml" }
-    descriptorModules.keys.forEach(descriptors::remove)
+    descriptors.entries.removeIf { (label, loadPath) ->
+      isBridgeDerivedDescriptor(label = label, loadPath = loadPath, contentModules = derivedModules, bridgeLabel = ::bridgeLabel)
+    }
     result.add(PluginDescriptorLeaf(
       variant = entry.variant,
       descriptor = descriptorPath,
-      descriptorModules = descriptorModules.values.sorted(),
       descriptors = descriptors,
       libraryDescriptors = libraryLabels,
       refusedContentModules = entry.refusedContentModules,
@@ -316,7 +309,6 @@ private fun contentDescriptorLabels(
   context: DevSectionContext,
   mainModule: JpsModule,
   entry: PluginDescriptorEntry,
-  conventionalModules: MutableMap<String, String>,
 ): Map<String, String>? {
   val result = LinkedHashMap<String, String>()
   val descriptor = descriptorFiles(module = mainModule, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return result
@@ -335,19 +327,13 @@ private fun contentDescriptorLabels(
     if (context.isCommunity && context.index.isCommunity(declaringName) != true) {
       return null
     }
-    val paths = descriptorPackagePaths(context = context, module = context.jpsModule(declaringName), loadPath = loadPath).take(2).toList()
-    val path = paths.firstOrNull()
+    val path = descriptorPackagePaths(context = context, module = context.jpsModule(declaringName), loadPath = loadPath).firstOrNull()
     if (path == null) {
       context.warn("WARN: ${context.mainModule} descriptor target: no production resource root of $declaringName holds $loadPath")
       continue
     }
     val prefix = context.index.bazelPackagePrefix(declaringName) ?: error("Module '$declaringName' has no Bazel package prefix")
-    val label = "$prefix:$path"
-    result.put(label, loadPath)
-    val inCommunity = context.index.packageDir(declaringName)!!.resolve(path).startsWith(context.index.communityRoot)
-    if (paths.size == 1 && declaringName == contentModule && inCommunity == context.index.isCommunity(declaringName)) {
-      conventionalModules.put(label, declaringName)
-    }
+    result.put("$prefix:$path", loadPath)
   }
   return result
 }
@@ -410,7 +396,6 @@ private fun PluginDescriptorLeaf.deviatesFrom(other: PluginDescriptorLeaf): List
   }
   compare("descriptor", descriptor, other.descriptor)
   compare("descriptors", descriptors, other.descriptors)
-  compare("descriptor_modules", descriptorModules, other.descriptorModules)
   compare("library_descriptors", libraryDescriptors, other.libraryDescriptors)
   compare("refused_content_modules", refusedContentModules, other.refusedContentModules)
   compare("mode_refused_content_modules", modeRefusedContentModules, other.modeRefusedContentModules)
@@ -453,7 +438,6 @@ private fun renderBody(
   declaredPackaging?.contentModuleJarLabels?.ifNotEmpty { call.option("content_module_jar_labels", LinkedHashMap(it)) }
   content?.contentModuleNames?.ifNotEmpty { call.option("content_modules", it.unsorted()) }
   descriptor?.descriptor?.ifNotEmpty { call.option("descriptor", it) }
-  descriptor?.descriptorModules?.ifNotEmpty { call.option("descriptor_modules", it) }
   descriptor?.descriptors?.ifNotEmpty { call.option("descriptors", LinkedHashMap(it)) }
   descriptor?.directoryName?.ifNotEmpty { call.option("directory_name", it) }
   if (descriptor != null && !descriptor.embedContentModules) {

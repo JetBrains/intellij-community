@@ -11,33 +11,34 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/markdown/core:markdown",
-    descriptors = {
-        "//plugins/markdown/compose:src/main/resources/intellij.markdown.compose.preview.xml": "intellij.markdown.compose.preview.xml",
-        "//plugins/markdown/core/backend:resources/intellij.markdown.backend.xml": "intellij.markdown.backend.xml",
-        "//plugins/markdown/core/frontend:resources/intellij.markdown.frontend.xml": "intellij.markdown.frontend.xml",
-        "//plugins/markdown/core:resources/intellij.markdown.xml": "intellij.markdown.xml",
-        "//plugins/markdown/fenceInjection:src/main/resources/intellij.markdown.fenceInjection.xml": "intellij.markdown.fenceInjection.xml",
-        "//plugins/markdown/figmaAdvertiser:resources/intellij.markdown.figmaAdvertiser.xml": "intellij.markdown.figmaAdvertiser.xml",
-        "//plugins/markdown/frontmatter/toml:src/main/resources/intellij.markdown.frontmatter.toml.xml": "intellij.markdown.frontmatter.toml.xml",
-        "//plugins/markdown/frontmatter/yaml:src/main/resources/intellij.markdown.frontmatter.yaml.xml": "intellij.markdown.frontmatter.yaml.xml",
-        "//plugins/markdown/frontmatter:src/main/resources/intellij.markdown.frontmatter.xml": "intellij.markdown.frontmatter.xml",
-        "//plugins/markdown/images:src/main/resources/intellij.markdown.images.xml": "intellij.markdown.images.xml",
-        "//plugins/markdown/java:resources/intellij.markdown.java.xml": "intellij.markdown.java.xml",
-        "//plugins/markdown/jcef:resources/intellij.markdown.jcef.xml": "intellij.markdown.jcef.xml",
-        "//plugins/markdown/model:src/main/resources/intellij.markdown.model.xml": "intellij.markdown.model.xml",
-        "//plugins/markdown/projectView:resources/intellij.markdown.projectView.xml": "intellij.markdown.projectView.xml",
-        "//plugins/markdown/spellchecker:src/main/resources/intellij.markdown.spellchecker.xml": "intellij.markdown.spellchecker.xml",
-        "//plugins/markdown/textMate:resources/intellij.markdown.fenceInjector.textMate.xml": "intellij.markdown.fenceInjector.textMate.xml",
-        "//plugins/markdown/vcs:resources/intellij.markdown.vcs.xml": "intellij.markdown.vcs.xml",
-        "//plugins/markdown/xml:src/main/resources/intellij.markdown.xml.xml": "intellij.markdown.xml.xml",
-    },
+    content_modules = [
+        "intellij.markdown",
+        "intellij.markdown.backend",
+        "intellij.markdown.compose.preview",
+        "intellij.markdown.fenceInjection",
+        "intellij.markdown.fenceInjector.textMate",
+        "intellij.markdown.figmaAdvertiser",
+        "intellij.markdown.frontend",
+        "intellij.markdown.frontmatter",
+        "intellij.markdown.frontmatter.toml",
+        "intellij.markdown.frontmatter.yaml",
+        "intellij.markdown.images",
+        "intellij.markdown.java",
+        "intellij.markdown.jcef",
+        "intellij.markdown.model",
+        "intellij.markdown.projectView",
+        "intellij.markdown.spellchecker",
+        "intellij.markdown.vcs",
+        "intellij.markdown.xml",
+    ],
+    descriptor = "//plugins/markdown/core:resources/META-INF/plugin.xml",
     main_module = "intellij.markdown",
     mode_refused_content_modules = {
         "frontend": [

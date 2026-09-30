@@ -566,6 +566,47 @@ def _plugin_macro_tests(name):
         ]),
     )
 
+    # The descriptor leaf derives a row for the main module and each member the index knows. A module outside the plugin
+    # gets no row. An explicit row wins by load path, so the second member keeps its own label.
+    indexed = {
+        role: name + "_macro_indexed_" + role
+        for role in ["owner", "first", "second", "source", "main_xml", "first_xml", "second_xml", "explicit_xml", "stranger_xml"]
+    }
+    _fake_module(name = indexed["owner"], module_name = "test.indexed")
+    _fake_module(name = indexed["first"], module_name = "test.indexed.first")
+    _fake_module(name = indexed["second"], module_name = "test.indexed.second")
+    for role in ["source", "main_xml", "first_xml", "second_xml", "explicit_xml", "stranger_xml"]:
+        _fake_descriptor(name = indexed[role])
+    dev_dist_plugin(
+        main_module = "test.indexed",
+        module_targets = {
+            "test.indexed": [":" + indexed["owner"] + ".jar"],
+            "test.indexed.first": [":" + indexed["first"] + ".jar"],
+            "test.indexed.second": [":" + indexed["second"] + ".jar"],
+        },
+        descriptor_index = {
+            "test.indexed": ":" + indexed["main_xml"],
+            "test.indexed.first": ":" + indexed["first_xml"],
+            "test.indexed.second": ":" + indexed["second_xml"],
+            "test.stranger": ":" + indexed["stranger_xml"],
+        },
+        content_modules = ["test.indexed.first", "test.indexed.second"],
+        descriptor = indexed["source"],
+        descriptors = {":" + indexed["explicit_xml"]: "test.indexed.second.xml"},
+    )
+    indexed_descriptors = native.existing_rule(dev_dist_plugin_descriptor_target_name("test.indexed"))["descriptors"]
+    indexed_test = name + "_plugin_macro_indexed_test"
+    _declaration_test(
+        name = indexed_test,
+        # The target names only: `existing_rule` returns a label key in its canonical form.
+        actual = json.encode([[str(label).rpartition(":")[2], path] for label, path in indexed_descriptors.items()]),
+        expected = json.encode(sorted([
+            [indexed["main_xml"], "test.indexed.xml"],
+            [indexed["first_xml"], "test.indexed.first.xml"],
+            [indexed["explicit_xml"], "test.indexed.second.xml"],
+        ])),
+    )
+
     # A plugin that states `jars` also declares a packed component: the main module and the merged modules go in as
     # `modules`, a content module no jar merges is reused from its own packing target, and the library token passes
     # through unchanged.
@@ -659,7 +700,7 @@ def _plugin_macro_tests(name):
 
     # The stale-module case of the macro lives in `dev_plugin_test.bzl`: its warning must not print in a dist analysis,
     # and every dist loads this package for `:trace_spans`.
-    return [test, packed_test, relocated_test]
+    return [test, indexed_test, packed_test, relocated_test]
 
 def dev_dist_content_test_suite(name):
     library = name + "_library"

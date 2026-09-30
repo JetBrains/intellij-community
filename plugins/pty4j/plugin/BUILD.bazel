@@ -6,7 +6,6 @@ load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_
 dev_dist_plugin(
     content_modules = ["intellij.libraries.pty4j"],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = ["intellij.libraries.pty4j"],
     main_module = "intellij.pty4j.plugin",
 )
 

@@ -15,13 +15,6 @@ dev_dist_plugin(
         "intellij.junit.v6.rt",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.junit.dashboard",
-        "intellij.junit.properties",
-        "intellij.junit.vcs",
-        "intellij.libraries.hamcrest",
-        "intellij.libraries.junit4",
-    ],
     jars = {
         "lib/junit.jar": ["intellij.junit"],
         "lib/junit-rt.jar": ["intellij.junit.rt"],

@@ -21,12 +21,6 @@ dev_dist_plugin(
         "intellij.java.coverage.rt.testng",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.java.coverage.rt",
-        "intellij.java.coverage.rt.junit",
-        "intellij.java.coverage.rt.testng",
-        "intellij.libraries.test.discovery",
-    ],
     jars = {
         "lib/intellij.libraries.test.discovery.jar": ["intellij.libraries.test.discovery"],
         "lib/intellij-test-discovery-agent.jar": ["@lib//:libraries-test-discovery-intellij-test-discovery"],

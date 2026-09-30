@@ -23,15 +23,6 @@ dev_dist_plugin(
         "intellij.libraries.git.learning.project",
     ],
     descriptor = "res/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.featuresTrainer.onboarding",
-        "intellij.featuresTrainer.tips",
-        "intellij.kotlin.onboarding.promoter",
-        "intellij.libraries.assertj.core",
-        "intellij.libraries.assertj.swing",
-        "intellij.libraries.git.learning.project",
-        "intellij.vcs.git.featuresTrainer",
-    ],
     jars = {
         "lib/featuresTrainer.jar": [
             "intellij.featuresTrainer",

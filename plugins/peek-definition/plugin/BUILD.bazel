@@ -6,7 +6,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 dev_dist_plugin(
     content_modules = ["intellij.peek.definition.frontend"],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = ["intellij.peek.definition.frontend"],
     jars = {
         "lib/peek-definition-plugin.jar": ["intellij.peek.definition.plugin"],
     },

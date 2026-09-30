@@ -11,20 +11,21 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/toml:toml",
-    descriptors = {
-        "//plugins/toml/backend:resources/intellij.toml.backend.xml": "intellij.toml.backend.xml",
-        "//plugins/toml/core:src/main/resources/intellij.toml.core.xml": "intellij.toml.core.xml",
-        "//plugins/toml/frontend:resources/intellij.toml.frontend.xml": "intellij.toml.frontend.xml",
-        "//plugins/toml/grazie:src/main/resources/intellij.toml.grazie.xml": "intellij.toml.grazie.xml",
-        "//plugins/toml/json:src/main/resources/intellij.toml.json.xml": "intellij.toml.json.xml",
-    },
+    content_modules = [
+        "intellij.toml.backend",
+        "intellij.toml.core",
+        "intellij.toml.frontend",
+        "intellij.toml.grazie",
+        "intellij.toml.json",
+    ],
+    descriptor = "//plugins/toml:resources/META-INF/plugin.xml",
     main_module = "intellij.toml",
     mode_refused_content_modules = {
         "frontend": [

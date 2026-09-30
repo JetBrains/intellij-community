@@ -15,7 +15,6 @@ jps_test(
 dev_dist_plugin(
     content_modules = ["intellij.copyright.vcs"],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = ["intellij.copyright.vcs"],
     jars = {
         "lib/copyright.jar": [
             "intellij.copyright",

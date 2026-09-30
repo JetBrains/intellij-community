@@ -496,11 +496,6 @@ def _descriptor_declaration_json(declaration):
     }) + "\n"
 
 def _dev_dist_plugin_descriptor_impl(ctx):
-    if ctx.attr.unresolved_descriptor_modules:
-        fail("Missing selected descriptors for %s: %s. Regenerate the dev sections." % (
-            ctx.attr.main_module,
-            ctx.attr.unresolved_descriptor_modules,
-        ), attr = "unresolved_descriptor_modules")
     module_name = ctx.attr.main_module
     if not module_name:
         fail("The plugin must state its main module", attr = "main_module")
@@ -618,11 +613,6 @@ _dev_dist_plugin_descriptor = rule(
         "main_module": attr.string(
             doc = "The main JPS module that identifies this descriptor.",
             mandatory = True,
-        ),
-        "unresolved_descriptor_modules": attr.string_list(
-            doc = """The descriptor modules the dev section names but no descriptor target answers.
-
-The macro writes the list. A non-empty list fails analysis and asks for a regeneration of the dev sections.""",
         ),
         "descriptor": attr.label(
             doc = """The plugin's own `META-INF/plugin.xml`, as the exported source file.
@@ -819,32 +809,56 @@ def dev_dist_plugin_descriptor_target_name(main_module, variant = ""):
 def dev_dist_plugin_descriptor(
         main_module,
         descriptor = "",
-        descriptor_module = "",
         descriptor_jar = None,
         descriptor_entry = "",
+        content_modules = [],
+        descriptor_index = {},
         variant = "",
         tags = [],
         visibility = ["//visibility:public"],
+        # TRANSITION(descriptor_module): the generated packages still pass it. Remove after the next generator run.
+        descriptor_module = "",
         **kwargs):
     """`_dev_dist_plugin_descriptor` with what every plugin says the same way filled in.
 
     Three things the macro derives rather than have them restated once per plugin. `name` comes from `main_module`, the
-    way `content_module_jar` derives its own. The descriptor's label comes from the module target's own package, which
-    is where `exportDescriptorFiles` put the `exports_files` entry. And `manual` is added, for `content_module_jar`'s
-    reason: these are per-plugin targets of a measurement, and `bazel build //...` must not run all of them.
+    way `content_module_jar` derives its own. The conventional `descriptors` rows come from `descriptor_index`. And
+    `manual` is added, for `content_module_jar`'s reason: these are per-plugin targets of a measurement, and
+    `bazel build //...` must not run all of them.
+
+    A row is derived for each name in `content_modules` that the index knows. A name the index does not know is a
+    merged member, a `sub/module` name or a module whose row the caller states. The macro skips it. An explicit row wins
+    by label and by load path, because the descriptor writer refuses a load path declared twice.
 
     Args:
         main_module: the plugin's main JPS module, which names the target.
-        descriptor_module: The main target label, used only to resolve the descriptor's package.
-        descriptor: the descriptor's path inside that module's Bazel package, normally `<resource root>/META-INF/plugin.xml`.
+        descriptor: the label of the plugin's `META-INF/plugin.xml`, package-relative or full.
+        descriptor_jar: the jar that holds the plugin descriptor, in place of `descriptor`.
+        descriptor_entry: the plugin descriptor path inside `descriptor_jar`.
+        content_modules: the module names whose conventional descriptors the patch can reach.
+        descriptor_index: the conventional descriptor label of each module, from the JPS bridge of this half.
         variant: the layout variant, which joins the target's name and the output's directory.
         tags: extra tags. `manual` is added.
         visibility: public by default.
+        descriptor_module: transition only, the package of a relative `descriptor`.
         **kwargs: see `_dev_dist_plugin_descriptor`.
     """
     if bool(descriptor) == bool(descriptor_jar):
         fail("dev_dist_plugin_descriptor requires exactly one descriptor source")
-    source = descriptor_module.rpartition(":")[0] + ":" + descriptor if descriptor else None
+    source = descriptor or None
+
+    # TRANSITION(descriptor_module): a cross-half package still states the descriptor inside the package of this label.
+    if descriptor and descriptor_module:
+        source = descriptor_module.rpartition(":")[0] + ":" + descriptor
+    descriptors = dict(kwargs.pop("descriptors", {}))
+    stated_load_paths = {path: True for path in descriptors.values()}
+    for module_name in content_modules:
+        label = descriptor_index.get(module_name)
+        if label == None or label in descriptors or (module_name + ".xml") in stated_load_paths:
+            continue
+        descriptors[label] = module_name + ".xml"
+    if descriptors:
+        kwargs["descriptors"] = {label: descriptors[label] for label in sorted(descriptors)}
     name = dev_dist_plugin_descriptor_target_name(main_module, variant)
     descriptor_jars = kwargs.pop("descriptor_jars", {})
     library_descriptors = kwargs.pop("library_descriptors", {})

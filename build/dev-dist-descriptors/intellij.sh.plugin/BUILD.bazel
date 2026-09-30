@@ -11,22 +11,23 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/sh/plugin:plugin",
-    descriptors = {
-        "//plugins/sh/backend:resources/intellij.sh.backend.xml": "intellij.sh.backend.xml",
-        "//plugins/sh/copyright:resources/intellij.sh.copyright.xml": "intellij.sh.copyright.xml",
-        "//plugins/sh/core:resources/intellij.sh.core.xml": "intellij.sh.core.xml",
-        "//plugins/sh/markdown:resources/intellij.sh.markdown.xml": "intellij.sh.markdown.xml",
-        "//plugins/sh/python:resources/intellij.sh.python.xml": "intellij.sh.python.xml",
-        "//plugins/sh/terminal/frontend:resources/intellij.sh.terminal.frontend.xml": "intellij.sh.terminal.frontend.xml",
-        "//plugins/sh/terminal:resources/intellij.sh.terminal.xml": "intellij.sh.terminal.xml",
-    },
+    content_modules = [
+        "intellij.sh.backend",
+        "intellij.sh.copyright",
+        "intellij.sh.core",
+        "intellij.sh.markdown",
+        "intellij.sh.python",
+        "intellij.sh.terminal",
+        "intellij.sh.terminal.frontend",
+    ],
+    descriptor = "//plugins/sh/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.sh.plugin",
     mode_refused_content_modules = {
         "frontend": [

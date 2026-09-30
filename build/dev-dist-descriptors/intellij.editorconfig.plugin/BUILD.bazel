@@ -11,20 +11,21 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/editorconfig:editorconfig-plugin",
-    descriptors = {
-        "//libraries/ec4j/core:resources/intellij.libraries.ec4j.core.xml": "intellij.libraries.ec4j.core.xml",
-        "//plugins/editorconfig/backend.spellchecking:resources/intellij.editorconfig.backend.spellchecking.xml": "intellij.editorconfig.backend.spellchecking.xml",
-        "//plugins/editorconfig/backend:resources/intellij.editorconfig.backend.xml": "intellij.editorconfig.backend.xml",
-        "//plugins/editorconfig/common:resources/intellij.editorconfig.common.xml": "intellij.editorconfig.common.xml",
-        "//plugins/editorconfig/frontend:resources/intellij.editorconfig.frontend.xml": "intellij.editorconfig.frontend.xml",
-    },
+    content_modules = [
+        "intellij.editorconfig.backend",
+        "intellij.editorconfig.backend.spellchecking",
+        "intellij.editorconfig.common",
+        "intellij.editorconfig.frontend",
+        "intellij.libraries.ec4j.core",
+    ],
+    descriptor = "//plugins/editorconfig:resources/META-INF/plugin.xml",
     main_module = "intellij.editorconfig.plugin",
     mode_refused_content_modules = {
         "frontend": [

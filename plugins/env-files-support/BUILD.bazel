@@ -10,11 +10,6 @@ dev_dist_plugin(
         "intellij.dotenv.python",
     ],
     descriptor = "src/main/resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.dotenv.java",
-        "intellij.dotenv.kotlin",
-        "intellij.dotenv.python",
-    ],
     jars = {
         "lib/dotenv.jar": [
             "intellij.dotenv",

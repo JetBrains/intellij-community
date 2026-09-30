@@ -45,7 +45,6 @@ def dev_dist_plugin(
         main_module,
         module_targets,
         descriptor_index = {},
-        descriptor_modules = [],
         content_modules = [],
         descriptor = "",
         variants = [],
@@ -64,6 +63,8 @@ def dev_dist_plugin(
         file_prefixes = {},
         executable_files = [],
         directory_name = "",
+        # TRANSITION(descriptor_modules): the generated packages still pass it. Remove after the next generator run.
+        descriptor_modules = None,
         **descriptor_attrs):
     """Declare plugin modules and derive their build targets.
 
@@ -71,10 +72,10 @@ def dev_dist_plugin(
         main_module: The main JPS module. It identifies every leaf.
         module_targets: The production map from the applicable JPS bridge. Entries contain one jar output label. The
             bridge's own `dev_dist_plugin` binds it, so a generated section states neither map.
-        descriptor_index: The conventional descriptor index from that bridge. A content-only plugin ignores it.
-        descriptor_modules: The exact conventional descriptor modules selected by the generator.
+        descriptor_index: The conventional descriptor index from that bridge. The descriptor leaf derives a row for the
+            main module and every member it knows, unless `descriptors` states the label or the load path.
         content_modules: The complete ordered list of plugin member JPS module names.
-        descriptor: The main descriptor path inside the main module's package.
+        descriptor: The main descriptor label, package-relative.
         variants: Layout variants. An empty list selects the common variant.
         jars: The packed jars of a simple plugin, keyed by destination relative to the plugin directory and valued by
             source tokens in merge order. A token is a JPS module name or a library container label. A content module
@@ -105,6 +106,7 @@ def dev_dist_plugin(
         frontend_product_application_info: The application info of the product the frontend takes its names and version from.
         directory_name: The plugin directory, when the layout does not take the derived one. Only the packed component
             reads it.
+        descriptor_modules: Transition only, and ignored.
         **descriptor_attrs: Other descriptor attributes. Shared leaf attributes are refused.
     """
     if not main_module or type(module_targets) != "dict":
@@ -139,18 +141,16 @@ def dev_dist_plugin(
             fail("dev_dist_plugin: %s marks the directory copy '%s' executable, and only a single file has a stated mode" % (main_module, destination))
 
     if not descriptor:
-        if variants or descriptor_attrs or descriptor_modules:
+        if variants or descriptor_attrs:
             fail("dev_dist_plugin: %s states descriptor attributes and no descriptor" % main_module)
         if not content_modules:
             fail("dev_dist_plugin: %s states neither content modules nor a descriptor" % main_module)
 
-    unresolved = []
     stale = {}
     owner = module_rule_label(main_module, module_targets)
     if owner == None:
         _warn_stale(main_module, {main_module: True})
         return
-    descriptor_module = ":" + owner.rpartition(":")[2]
 
     # Nothing reads the labels. The resolution fills `stale`, and the `if jars and not stale` guard below reads it.
     _module_labels(content_modules, module_targets, stale)
@@ -172,24 +172,15 @@ def dev_dist_plugin(
             elif label not in packed_modules:
                 packed_modules[label] = token
     _warn_stale(main_module, stale)
-    descriptors = dict(descriptor_attrs.get("descriptors", {}))
-    for name in descriptor_modules:
-        label = descriptor_index.get(name)
-        if label == None:
-            unresolved.append(name)
-        elif label not in descriptors:
-            descriptors[label] = name + ".xml"
-    if descriptors:
-        descriptor_attrs["descriptors"] = {label: descriptors[label] for label in sorted(descriptors)}
 
     if descriptor:
         for variant in variants if variants else [""]:
             dev_dist_plugin_descriptor(
                 main_module = main_module,
-                descriptor_module = descriptor_module,
                 descriptor = descriptor,
+                content_modules = [main_module] + content_modules,
+                descriptor_index = descriptor_index,
                 variant = variant,
-                unresolved_descriptor_modules = unresolved,
                 **descriptor_attrs
             )
     if jars and not stale:

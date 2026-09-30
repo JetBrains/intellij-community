@@ -21,11 +21,6 @@ dev_dist_plugin(
         "intellij.platform.images.xdebugger",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.platform.images.copyright",
-        "intellij.platform.images.jcef",
-        "intellij.platform.images.xdebugger",
-    ],
     jars = {
         "lib/platform-images.jar": ["intellij.platform.images"],
     },

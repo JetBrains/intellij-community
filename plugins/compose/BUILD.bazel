@@ -13,14 +13,6 @@ dev_dist_plugin(
         "intellij.compose.ide.plugin.resources.android",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.compose.ide.plugin.codeInsight",
-        "intellij.compose.ide.plugin.gradleTooling.rt",
-        "intellij.compose.ide.plugin.resources",
-        "intellij.compose.ide.plugin.resources.android",
-        "intellij.compose.ide.plugin.shared",
-        "intellij.compose.ide.plugin.shared.android",
-    ],
     jars = {
         "lib/compose-ide-plugin.jar": [
             "intellij.compose.ide.plugin",

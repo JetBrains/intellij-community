@@ -20,21 +20,6 @@ dev_dist_plugin(
         "intellij.libraries.schema.kenerator",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.kotlin.logging",
-        "intellij.libraries.ktor.server.content.negotiation",
-        "intellij.libraries.ktor.server.sse",
-        "intellij.libraries.mcp.kotlin.sdk",
-        "intellij.libraries.night.config.toml",
-        "intellij.libraries.schema.kenerator",
-        "intellij.mcpserver",
-        "intellij.mcpserver.frontend",
-        "intellij.mcpserver.stdio",
-        "intellij.mcpserver.terminal",
-        "intellij.mcpserver.terminal.frontend",
-        "intellij.mcpserver.toolsets",
-        "intellij.mcpserver.vcs",
-    ],
     jars = {
         "lib/intellij.libraries.kotlin.logging.jar": [
             "intellij.libraries.kotlin.logging",

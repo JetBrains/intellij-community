@@ -637,7 +637,13 @@ internal class DevDistBuildSections private constructor(
         )
         val index = inputs.index
         val crossHalfDescriptorPackages = buildSpan("dev sections: cross-half descriptor packages") {
-          collectCrossHalfDescriptorPackages(verdicts = verdicts, classes = inputs.residueClasses, planLabel = index::planLabel, half = inputs.half)
+          collectCrossHalfDescriptorPackages(
+            verdicts = verdicts,
+            classes = inputs.residueClasses,
+            planLabel = index::planLabel,
+            bridgeLabel = { moduleName -> inputs.outputProvider.findModule(moduleName)?.let { bridgeDescriptorLabel(module = it, index = index) } },
+            half = inputs.half,
+          )
         }
         val result = DevDistBuildSections(
           contentModuleJarCalls = inputs.contentModuleJarCalls,
@@ -1027,9 +1033,6 @@ internal const val DEV_PLUGIN_TARGET_SUFFIX: String = "_dev_plugin"
 
 /** The `.bzl` file that exports `dev_dist_complex_plugin`. The `dev` section of an ultimate complex plugin loads it. */
 internal const val DEV_PLUGIN_REMAINDER_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl"
-
-/** The `.bzl` file that exports `dev_dist_plugin_descriptor`. A cross-half descriptor package loads it. */
-internal const val DEV_DIST_PLUGIN_DESCRIPTOR_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl"
 
 /** The `.bzl` file that exports `dev_plugin`. A cross-half descriptor package loads it for a simple plugin. */
 internal const val DEV_PLUGIN_RULE: String = "@community//platform/build-scripts/bazel-rules:dev_plugin.bzl"

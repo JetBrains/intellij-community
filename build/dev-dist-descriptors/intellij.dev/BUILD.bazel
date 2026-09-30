@@ -11,27 +11,28 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/dev/intellij.dev:dev",
-    descriptors = {
-        "//platform/platform-impl/ui-inspector:resources/intellij.platform.ide.ui.inspector.xml": "intellij.platform.ide.ui.inspector.xml",
-        "//platform/statistics/devkit/backend:resources/intellij.platform.statistics.devkit.backend.xml": "intellij.platform.statistics.devkit.backend.xml",
-        "//platform/statistics/devkit/frontend:resources/intellij.platform.statistics.devkit.frontend.xml": "intellij.platform.statistics.devkit.frontend.xml",
-        "//platform/statistics/devkit:resources/intellij.platform.statistics.devkit.xml": "intellij.platform.statistics.devkit.xml",
-        "//plugins/dev/intellij.dev.codeInsight:resources/intellij.dev.codeInsight.xml": "intellij.dev.codeInsight.xml",
-        "//plugins/dev/intellij.dev.core:resources/intellij.dev.core.xml": "intellij.dev.core.xml",
-        "//plugins/dev/intellij.dev.leakDetection:resources/intellij.dev.leakDetection.xml": "intellij.dev.leakDetection.xml",
-        "//plugins/dev/intellij.dev.pluginLoading:resources/intellij.dev.pluginLoading.xml": "intellij.dev.pluginLoading.xml",
-        "//plugins/dev/intellij.dev.psiViewer:resources/intellij.dev.psiViewer.xml": "intellij.dev.psiViewer.xml",
-        "//plugins/dev/intellij.groovy.dev:resources/intellij.groovy.dev.xml": "intellij.groovy.dev.xml",
-        "//plugins/dev/intellij.java.dev:resources/intellij.java.dev.xml": "intellij.java.dev.xml",
-        "//plugins/dev/intellij.kotlin.dev:resources/intellij.kotlin.dev.xml": "intellij.kotlin.dev.xml",
-    },
+    content_modules = [
+        "intellij.dev.codeInsight",
+        "intellij.dev.core",
+        "intellij.dev.leakDetection",
+        "intellij.dev.pluginLoading",
+        "intellij.dev.psiViewer",
+        "intellij.groovy.dev",
+        "intellij.java.dev",
+        "intellij.kotlin.dev",
+        "intellij.platform.ide.ui.inspector",
+        "intellij.platform.statistics.devkit",
+        "intellij.platform.statistics.devkit.backend",
+        "intellij.platform.statistics.devkit.frontend",
+    ],
+    descriptor = "//plugins/dev/intellij.dev:resources/META-INF/plugin.xml",
     main_module = "intellij.dev",
     mode_refused_content_modules = {
         "frontend": [

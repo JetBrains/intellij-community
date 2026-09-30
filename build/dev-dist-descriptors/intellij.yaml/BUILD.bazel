@@ -11,18 +11,19 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/yaml:yaml",
-    descriptors = {
-        "//plugins/yaml/backend:resources/intellij.yaml.backend.xml": "intellij.yaml.backend.xml",
-        "//plugins/yaml/syntax:resources/intellij.yaml.syntax.xml": "intellij.yaml.syntax.xml",
-        "//plugins/yaml:resources/intellij.yaml.xml": "intellij.yaml.xml",
-    },
+    content_modules = [
+        "intellij.yaml",
+        "intellij.yaml.backend",
+        "intellij.yaml.syntax",
+    ],
+    descriptor = "//plugins/yaml:resources/META-INF/plugin.xml",
     main_module = "intellij.yaml",
     mode_refused_content_modules = {
         "frontend": ["intellij.yaml.backend"],

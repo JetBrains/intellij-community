@@ -10,10 +10,6 @@ dev_dist_plugin(
         "intellij.libraries.jgit.ssh",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.jgit.ssh",
-        "intellij.libraries.sshd.osgi",
-    ],
     jars = {
         "lib/intellij.libraries.sshd.osgi.jar": [
             "intellij.libraries.sshd.osgi",

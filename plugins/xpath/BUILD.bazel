@@ -18,7 +18,6 @@ dev_dist_plugin(
         "intellij.xpath.rt",
     ],
     descriptor = "xpath-lang/resources/META-INF/plugin.xml",
-    descriptor_modules = ["intellij.xml.langInjection.xpath"],
     jars = {
         "lib/xpath.jar": ["intellij.xpath"],
         "lib/rt/xslt-rt.jar": ["intellij.xpath.rt"],

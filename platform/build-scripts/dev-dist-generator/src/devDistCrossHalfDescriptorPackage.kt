@@ -7,6 +7,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Collections
 import java.util.TreeMap
+import java.util.TreeSet
 
 /** One declared label and an immutable snapshot of the entry its owner consumed. This records no action or producer. */
 internal class DevDistDescriptorDeclaration(
@@ -198,11 +199,14 @@ private fun listDirectories(directory: Path): List<Path> {
  *
  * A declaration keeps the labels of its entry in the recorded form. [planLabel] spells them for a package of the half
  * of the run when a leaf renders, see [DevDistBazelIndex.planLabel]. The header of [half] opens each package file.
+ * [bridgeLabel] gives the entry of a module name in the descriptor index of the bridge of [half], see
+ * [bridgeDescriptorLabel]. A leaf states no row that it derives from that index.
  */
 internal fun collectCrossHalfDescriptorPackages(
   verdicts: DevDistToolVerdicts,
   classes: Map<String, DescriptorResidueClasses>,
   planLabel: (String) -> String,
+  bridgeLabel: (moduleName: String) -> String?,
   half: DevDistHalf,
 ): CrossHalfDescriptorPackages {
   val targetsByPackage = TreeMap<String, MutableList<CrossHalfDescriptorTarget>>()
@@ -233,7 +237,7 @@ internal fun collectCrossHalfDescriptorPackages(
   }
   val files = LinkedHashMap<String, List<String>>()
   for ((path, targets) in targetsByPackage) {
-    files.put(path, targets.sortedBy { it.declaration.entry.variant }.map { it.render(planLabel) })
+    files.put(path, targets.sortedBy { it.declaration.entry.variant }.map { it.render(planLabel = planLabel, bridgeLabel = bridgeLabel) })
   }
   return CrossHalfDescriptorPackages(
     planLabel = planLabel,
@@ -308,16 +312,26 @@ private fun renderCrossHalfPackage(
   append("# Every target is `manual`, which the macros add. A set target names the descriptor and states the product of\n")
   append("# the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`\n")
   append("# call.\n")
-  append("\n")
-  // The load lines in the order buildifier sorts them: by file, so the descriptor rule comes first.
   if (descriptorTargets.isNotEmpty()) {
-    append("load(\"").append(planLabel(DEV_DIST_PLUGIN_DESCRIPTOR_RULE)).append("\", \"dev_dist_plugin_descriptor\")\n")
+    append("#\n")
+    append("# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.\n")
+  }
+  append("\n")
+  // The bridge of the half exports `dev_dist_plugin_descriptor` bound to its descriptor index.
+  val loads = ArrayList<Pair<String, String>>()
+  if (descriptorTargets.isNotEmpty()) {
+    loads.add("@${half.jpsBridge}//:targets.bzl" to "dev_dist_plugin_descriptor")
   }
   if (pluginTarget != null) {
-    append("load(\"").append(planLabel(DEV_PLUGIN_RULE)).append("\", \"dev_plugin\")\n")
+    loads.add(planLabel(DEV_PLUGIN_RULE) to "dev_plugin")
   }
   if (complexPluginCalls != null) {
-    append("load(\"").append(planLabel(DEV_PLUGIN_REMAINDER_RULE)).append("\", \"dev_dist_complex_plugin\")\n")
+    loads.add(planLabel(DEV_PLUGIN_REMAINDER_RULE) to "dev_dist_complex_plugin")
+  }
+  // The load lines in the order buildifier sorts them: a file of an explicit repository before a file of this one.
+  val loadOrder = BazelLabelComparator(forLoadStatements = true)
+  for ((file, symbol) in loads.sortedWith { a, b -> loadOrder.compare(a.first, b.first) }) {
+    append("load(\"").append(file).append("\", \"").append(symbol).append("\")\n")
   }
   for (target in descriptorTargets) {
     append("\n")
@@ -398,26 +412,33 @@ private class CrossHalfDescriptorTarget(entry: PluginDescriptorEntry, product: S
     entry = entry,
   )
 
-  /** The leaf with every label spelled by [planLabel]. */
-  fun render(planLabel: (String) -> String): String = buildString {
+  /**
+   * The leaf with every label spelled by [planLabel].
+   *
+   * The leaf names the declared content modules of the plugin. It derives the row of each one [bridgeLabel] knows, so
+   * `descriptors` states only the other rows, see [isBridgeDerivedDescriptor].
+   */
+  fun render(planLabel: (String) -> String, bridgeLabel: (moduleName: String) -> String?): String = buildString {
     val entry = declaration.entry
+    val contentModules = entry.contentModules.mapTo(TreeSet()) { it.name }
     append("dev_dist_plugin_descriptor(\n")
+    appendStarlarkStringList(name = "content_modules", values = contentModules.toList())
     if (entry.descriptorInTestOutput) {
       appendStarlarkString(name = "descriptor_entry", value = entry.descriptor)
       appendStarlarkString(name = "descriptor_jar", value = planLabel(entry.moduleTarget + ".jar"))
     }
     else {
-      appendStarlarkString(name = "descriptor", value = entry.descriptor)
-      appendStarlarkString(name = "descriptor_module", value = planLabel(entry.moduleTarget))
+      appendStarlarkString(name = "descriptor", value = planLabel(entry.moduleTarget.substringBeforeLast(':') + ":" + entry.descriptor))
     }
     appendStarlarkStringDict(
       name = "descriptor_jars",
       rows = entry.descriptors.filter(DeclaredDescriptor::testOutput).associate { planLabel(it.label) to it.loadPath },
     )
-    appendStarlarkStringDict(
-      name = "descriptors",
-      rows = entry.descriptors.filterNot(DeclaredDescriptor::testOutput).associate { planLabel(it.label) to it.loadPath },
-    )
+    val statedDescriptors = entry.descriptors.filterNot { declared ->
+      declared.testOutput ||
+      isBridgeDerivedDescriptor(label = declared.label, loadPath = declared.loadPath, contentModules = contentModules, bridgeLabel = bridgeLabel)
+    }
+    appendStarlarkStringDict(name = "descriptors", rows = statedDescriptors.associate { planLabel(it.label) to it.loadPath })
     if (!entry.embedsContentModules) {
       append("    embed_content_modules = False,\n")
     }

@@ -19,20 +19,6 @@ dev_dist_plugin(
         "intellij.libraries.kotlin.logging",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.grazie.core",
-        "intellij.grazie.java",
-        "intellij.grazie.json",
-        "intellij.grazie.markdown",
-        "intellij.grazie.properties",
-        "intellij.grazie.todo",
-        "intellij.grazie.xml",
-        "intellij.grazie.yaml",
-        "intellij.libraries.ai.grazie.rule.engine",
-        "intellij.libraries.ai.grazie.semantic.engine",
-        "intellij.libraries.ai.grazie.spell.gec.engine.local",
-        "intellij.libraries.kotlin.logging",
-    ],
     jars = {
         "lib/intellij.grazie.core.jar": [
             "intellij.grazie.core",

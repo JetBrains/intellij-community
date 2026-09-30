@@ -11,11 +11,6 @@ dev_dist_plugin(
         "intellij.libraries.ivy",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.libraries.groovy",
-        "intellij.libraries.groovy.jsr223",
-        "intellij.libraries.ivy",
-    ],
     jars = {
         "lib/intellij.libraries.groovy.jar": [
             "intellij.libraries.groovy",

@@ -14,14 +14,6 @@ dev_dist_plugin(
         "intellij.platform.problemView.frontend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = [
-        "intellij.platform.problemView.backend",
-        "intellij.platform.problemView.collector",
-        "intellij.platform.problemView.core",
-        "intellij.platform.problemView.frontend",
-        "intellij.platform.problemView.shared",
-        "intellij.platform.problemView.ui",
-    ],
     jars = {
         "lib/platform-problemView-plugin.jar": ["intellij.platform.problemView.plugin"],
     },

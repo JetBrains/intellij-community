@@ -5,7 +5,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 dev_dist_plugin(
     content_modules = ["intellij.tips"],
     descriptor = "resources/META-INF/plugin.xml",
-    descriptor_modules = ["intellij.tips"],
     jars = {
         "lib/tipsOfTheDay-plugin.jar": ["intellij.tipsOfTheDay.plugin"],
     },

@@ -11,24 +11,27 @@
 # Every target is `manual`, which the macros add. A set target names the descriptor and states the product of
 # the stamps. The component index names the `dev_plugin` target or the component of a `dev_dist_complex_plugin`
 # call.
+#
+# A descriptor leaf derives its conventional descriptor rows from the bridge index of its half.
 
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin_descriptor")
 load("//platform/build-scripts/bazel-rules:dev_plugin.bzl", "dev_plugin")
 
 dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = "//plugins/groovy:groovy",
+    content_modules = [
+        "intellij.groovy.ant",
+        "intellij.groovy.byteCodeViewer",
+        "intellij.groovy.copyright",
+        "intellij.groovy.git",
+        "intellij.groovy.langInjection",
+        "intellij.groovy.spock",
+        "intellij.groovy.structuralSearch",
+        "intellij.libraries.hamcrest",
+        "intellij.libraries.junit4",
+        "intellij.libraries.opentest4j",
+    ],
+    descriptor = "//plugins/groovy:resources/META-INF/plugin.xml",
     descriptors = {
-        "//libraries/hamcrest:resources/intellij.libraries.hamcrest.xml": "intellij.libraries.hamcrest.xml",
-        "//libraries/junit4:resources/intellij.libraries.junit4.xml": "intellij.libraries.junit4.xml",
-        "//libraries/opentest4j:resources/intellij.libraries.opentest4j.xml": "intellij.libraries.opentest4j.xml",
-        "//plugins/groovy/ant:resources/intellij.groovy.ant.xml": "intellij.groovy.ant.xml",
-        "//plugins/groovy/byteCodeViewer:resources/intellij.groovy.byteCodeViewer.xml": "intellij.groovy.byteCodeViewer.xml",
-        "//plugins/groovy/git:resources/intellij.groovy.git.xml": "intellij.groovy.git.xml",
-        "//plugins/groovy/intellij.groovy.copyright:resources/intellij.groovy.copyright.xml": "intellij.groovy.copyright.xml",
-        "//plugins/groovy/langInjection:resources/intellij.groovy.langInjection.xml": "intellij.groovy.langInjection.xml",
-        "//plugins/groovy/spock:resources/intellij.groovy.spock.xml": "intellij.groovy.spock.xml",
-        "//plugins/groovy/structuralsearch-groovy:resources/intellij.groovy.structuralSearch.xml": "intellij.groovy.structuralSearch.xml",
         "//plugins/groovy:resources/META-INF/gant-support.xml": "META-INF/gant-support.xml",
         "//plugins/groovy:resources/META-INF/geb-support.xml": "META-INF/geb-support.xml",
         "//plugins/groovy:resources/META-INF/groovy-console.xml": "META-INF/groovy-console.xml",
