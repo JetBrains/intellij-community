@@ -42,6 +42,7 @@ public interface PyTypeProvider {
   @Nullable
   Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context);
 
+  @ApiStatus.Internal
   @Nullable
   Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteOwner callSite, @NotNull TypeEvalContext context);
 

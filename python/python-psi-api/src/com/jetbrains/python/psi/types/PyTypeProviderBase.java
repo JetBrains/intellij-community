@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
                                            @NotNull PyCallSiteOwner callSite,
