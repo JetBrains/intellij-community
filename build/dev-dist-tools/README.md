@@ -55,12 +55,32 @@ cd community && ./bazel.cmd test //build/dev-dist-tools/...
 
 - `jars` compares every packed content-module jar with the `JarPackager` reference, byte for byte.
 - The tests include the frozen jar digests in `crates/jarpack/src/tests/golden.rs`, the Kotlin goldens of
-  `crates/pluginpack/testdata`, the plan file corpus, and the `<crate>-clippy` test of every crate.
+  `crates/pluginpack/testdata`, the plan file corpus, the crate closure test of each action tool, and the
+  `<crate>-clippy` test of every crate.
 - The clippy tests of the community crates run only from `community/`. The clippy aspect of rules_rust skips a target
   of an external repository, and from the ultimate root this module is one. There the tests are incompatible, and
   `bazel test` reports them as skipped. The clippy tests of the ultimate tools run from the ultimate root.
 - The fingerprint of `//build:idea_air_dist` and `./build/dev-dist.cmd snapshot diff` guard a change of the composed
   bytes. The validation spec states them.
+
+### The crate closure test
+
+Each action tool under `bins/` has the test `<bin>_closure_test`. It compares the crates that the tool links with
+`closure.txt` of its package. A change to a crate changes the bytes of each tool that links it. Then Bazel reruns every
+action of that tool, and the packer runs once per content-module jar. The test makes each new crate in a closure a
+visible choice. The launcher runs no Bazel action, so it has no closure test.
+
+`closure.txt` lists the rustc crate names, one per line. It leaves out the proc macros, because the compiler runs them
+and the tool does not link them. It also leaves out the host-only crates of `_HOST_CRATES` in `defs.bzl`, so one file
+holds on macOS, Linux and Windows. A new dependency that only some hosts link adds its crates to `_HOST_CRATES`.
+`cargo tree --target <triple>` shows the crates of each host.
+
+After an intended change of a closure, regenerate the file in `community/`:
+
+```sh
+./bazel.cmd build //build/dev-dist-tools/bins/<bin>:<bin>_closure
+cp out/bazel-bin/build/dev-dist-tools/bins/<bin>/<bin>_closure.txt build/dev-dist-tools/bins/<bin>/closure.txt
+```
 
 ## The subset rule
 

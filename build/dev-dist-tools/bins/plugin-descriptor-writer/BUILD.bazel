@@ -8,7 +8,10 @@ load("//platform/build-scripts/bazel-rules:dev_dist_frontend_application_info.bz
 load("//platform/build-scripts/bazel-rules:dev_dist_product_descriptor.bzl", "dev_dist_product_application_info", "dev_dist_product_descriptor")
 load(":descriptor_rules_test.bzl", "descriptor_action_test")
 
-dev_dist_rust_crate(name = "plugin-descriptor-writer")
+dev_dist_rust_crate(
+    name = "plugin-descriptor-writer",
+    closure = True,
+)
 
 pkg_zip(
     name = "unrelated_descriptors_jar",

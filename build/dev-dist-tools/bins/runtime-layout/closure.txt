@@ -1,0 +1,15 @@
+anyhow
+equivalent
+foldhash
+hashbrown
+indexmap
+itoa
+lexopt
+memchr
+planfile
+quick_xml
+serde
+serde_core
+serde_json
+thiserror
+zmij

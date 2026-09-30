@@ -1,10 +1,11 @@
 """Declares one crate of the dev-distribution tools, the Cargo workspace in this directory."""
 
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@ddt//:defs.bzl", "aliases", "all_crate_deps", "crate_name", "edition", "lint_config")
 load("@rules_rs//rs:rust_binary.bzl", "rust_binary")
 load("@rules_rs//rs:rust_library.bzl", "rust_library")
 load("@rules_rs//rs:rust_test.bzl", "rust_test")
-load("@rules_rust//rust:defs.bzl", "rust_clippy_test")
+load("@rules_rust//rust:defs.bzl", "rust_clippy_test", "rust_common")
 
 # The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@ddt` renders it, plus `-Dwarnings` for
 # clippy. `BUILD.bazel` of this package declares it. A `Label` resolves in this repository when the ultimate root
@@ -14,7 +15,48 @@ _LINTS = Label("//build/dev-dist-tools:lints")
 # What `@ddt` names as the `lint_config` of a crate whose `Cargo.toml` says `[lints] workspace = true`.
 _WORKSPACE_LINTS = "@ddt//:workspace_cargo_lints"
 
-def dev_dist_rust_crate(name, test_data = []):
+# The crates that a platform-conditional dependency adds on some hosts only. `cargo tree --target <triple>` over the six
+# triples of `@ddt` lists them. The crate closure test leaves them out, so one `closure.txt` holds on every host.
+_HOST_CRATES = [
+    "bitflags",
+    "errno",
+    "libc",
+    "linux_raw_sys",
+    "rustix",
+    "winapi_util",
+    "windows_link",
+    "windows_sys",
+    "xattr",
+]
+
+def _crate_closure_impl(ctx):
+    # `transitive_crates` holds the crates that the binary links, and each proc macro that one of them uses directly.
+    # A proc macro runs in the compiler and is not linked, so the closure leaves it out.
+    names = {
+        crate.name: None
+        for crate in ctx.attr.binary[rust_common.dep_info].transitive_crates.to_list()
+        if "proc-macro" not in (crate.type, crate.wrapped_crate_type) and crate.name not in _HOST_CRATES
+    }
+    out = ctx.actions.declare_file(ctx.label.name + ".txt")
+    ctx.actions.write(out, "".join([crate + "\n" for crate in sorted(names)]))
+    return [DefaultInfo(files = depset([out]))]
+
+dev_dist_crate_closure = rule(
+    doc = """Writes `<name>.txt`: the rustc names of the crates that `binary` links, sorted, one per line.
+
+    The file leaves out the proc macros and the host-only crates of `_HOST_CRATES`.
+    """,
+    implementation = _crate_closure_impl,
+    attrs = {
+        "binary": attr.label(
+            doc = "The `rust_binary` of an action tool.",
+            mandatory = True,
+            providers = [rust_common.dep_info],
+        ),
+    },
+)
+
+def dev_dist_rust_crate(name, test_data = [], closure = False):
     """Declares the crate `<name>`, its unit test `<name>_test`, a test `<name>_<stem>_test` per `tests/<stem>.rs`, and
     the clippy test `<name>-clippy` over all of them.
 
@@ -28,9 +70,13 @@ def dev_dist_rust_crate(name, test_data = []):
 
     The filegroup `<name>_testdata` holds `testdata/`, for the tests of another crate.
 
+    A binary with `closure = True` also gets `<name>_closure` and the test `<name>_closure_test`. The first writes the
+    crates that the binary links, and the test compares them with `closure.txt` of the package.
+
     Args:
       name: the directory name. `@ddt` names a local crate by its package label.
       test_data: more run-time data of the unit test, such as the `<name>_testdata` filegroup of another crate.
+      closure: pins the crate closure of an action tool in `closure.txt`. The README states how to regenerate it.
     """
     package = native.package_name()
     if not crate_name():
@@ -52,6 +98,19 @@ def dev_dist_rust_crate(name, test_data = []):
         lint_config = _LINTS,
         visibility = ["//visibility:public"],
     )
+
+    if closure:
+        if not is_binary:
+            fail("{}: only a binary under `bins/` has a crate closure test.".format(package))
+        dev_dist_crate_closure(name = name + "_closure", binary = ":" + name)
+        diff_test(
+            name = name + "_closure_test",
+            file1 = ":" + name + "_closure",
+            file2 = "closure.txt",
+            failure_message = ("The crates that {name} links differ from closure.txt. If the change is intended, run " +
+                               "`./bazel.cmd build //{package}:{name}_closure` in community/ and copy " +
+                               "{name}_closure.txt over closure.txt.").format(name = name, package = package),
+        )
 
     # rules_rust sets the run-time `CARGO_MANIFEST_DIR` to `external/<repo>/<package>`, and the runfiles do not have that
     # path when this module is not the root. Thus a test reads `testdata/` from `DDT_TESTDATA_DIR`. Under `cargo test`, it
