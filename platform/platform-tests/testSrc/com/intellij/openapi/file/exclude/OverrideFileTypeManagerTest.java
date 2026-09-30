@@ -13,18 +13,33 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
   public void testMarkAsPlainText() {
@@ -58,11 +73,190 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     try {
       var lightFile = new LightVirtualFile("test.xml", PlainTextFileType.INSTANCE, "");
       assertEquals(PlainTextFileType.INSTANCE, lightFile.getFileType());
+      assertNull(manager.getFileValue(new LightVirtualFile("test.xml")));
     }
     finally {
       manager.removeFile(xml);
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
     }
+  }
+
+  public void testLoadedOverrideAppliesToCachedFile() {
+    var manager = emptyManager();
+    var xml = myFixture.getTempDirFixture().createFile("test.xml");
+    try {
+      manager.loadState(state(xml.getUrl(), ArchiveFileType.INSTANCE.getName()));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
+      assertEquals(ArchiveFileType.INSTANCE.getName(), manager.getFileValue(xml));
+    }
+    finally {
+      reset(manager);
+    }
+  }
+
+  public void testOverrideLoadedBeforeFileCreationApplies() throws IOException {
+    var manager = emptyManager();
+    var dir = myFixture.getTempDirFixture().findOrCreateDir("dir");
+    try {
+      manager.loadState(state(dir.getUrl() + "/test.xml", ArchiveFileType.INSTANCE.getName()));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      var xml = myFixture.getTempDirFixture().createFile("dir/test.xml");
+      assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
+      assertEquals(ArchiveFileType.INSTANCE.getName(), manager.getFileValue(xml));
+    }
+    finally {
+      reset(manager);
+    }
+  }
+
+  public void testUnresolvedEntrySurvivesSave() throws IOException {
+    var manager = emptyManager();
+    var url = myFixture.getTempDirFixture().findOrCreateDir("dir").getUrl() + "/missing/test.xml";
+    try {
+      manager.loadState(state(url, ArchiveFileType.INSTANCE.getName()));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      var file = assertOneElement(manager.getState().getChildren("file"));
+      assertEquals(url, file.getAttributeValue("url"));
+      assertEquals(ArchiveFileType.INSTANCE.getName(), file.getAttributeValue("value"));
+    }
+    finally {
+      reset(manager);
+    }
+  }
+
+  public void testStateWritesFileUrl() {
+    var manager = emptyManager();
+    var xml = myFixture.getTempDirFixture().createFile("test.xml");
+    try {
+      manager.addFile(xml, ArchiveFileType.INSTANCE);
+      var file = assertOneElement(manager.getState().getChildren("file"));
+      assertEquals(xml.getUrl(), file.getAttributeValue("url"));
+      assertEquals(ArchiveFileType.INSTANCE.getName(), file.getAttributeValue("value"));
+
+      manager.addFile(xml, PlainTextFileType.INSTANCE);
+      file = assertOneElement(manager.getState().getChildren("file"));
+      assertEquals(xml.getUrl(), file.getAttributeValue("url"));
+      assertNull(file.getAttribute("value"));
+    }
+    finally {
+      reset(manager);
+    }
+  }
+
+  public void testRemoveDropsUnresolvedEntry() throws IOException {
+    var manager = emptyManager();
+    var dir = myFixture.getTempDirFixture().findOrCreateDir("dir");
+    try {
+      manager.loadState(state(dir.getUrl() + "/test.xml", ArchiveFileType.INSTANCE.getName()));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      var xml = myFixture.getTempDirFixture().createFile("dir/test.xml");
+      assertTrue(manager.removeFile(xml));
+      assertEmpty(manager.getState().getChildren("file"));
+      assertNull(manager.getFileValue(xml));
+    }
+    finally {
+      reset(manager);
+    }
+  }
+
+  public void testReloadWithChangedValueReparses() {
+    var manager = emptyManager();
+    var xml = myFixture.getTempDirFixture().createFile("test.xml");
+    try {
+      manager.addFile(xml, ArchiveFileType.INSTANCE);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
+      var psiManager = PsiManager.getInstance(getProject());
+      var binaryPsi = psiManager.findFile(xml);
+      assertInstanceOf(binaryPsi, PsiBinaryFile.class);
+
+      manager.loadState(state(xml.getUrl(), null));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      assertEquals(PlainTextFileType.INSTANCE, xml.getFileType());
+      var textPsi = psiManager.findFile(xml);
+      assertNotNull(textPsi);
+      assertNotSame(binaryPsi, textPsi);
+      assertFalse(textPsi instanceof PsiBinaryFile);
+    }
+    finally {
+      reset(manager);
+    }
+  }
+
+  public void testLoadStateDoesNotLoadTheDirectory() throws IOException {
+    var root = Files.createTempDirectory(Path.of(FileUtil.getTempDirectory()), "override");
+    var sub = root.resolve("sub");
+    var xmlPath = sub.resolve("test.xml");
+    Files.createDirectories(sub);
+    Files.writeString(xmlPath, "<root/>");
+    var xmlSystemPath = FileUtil.toSystemIndependentName(xmlPath.toString());
+    var localFileSystem = (LocalFileSystem)StandardFileSystems.local();
+    var manager = emptyManager();
+    try {
+      manager.loadState(state(VfsUtilCore.pathToUrl(xmlSystemPath), ArchiveFileType.INSTANCE.getName()));
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      assertNull(localFileSystem.findFileByPathIfCached(FileUtil.toSystemIndependentName(sub.toString())));
+
+      var xml = localFileSystem.refreshAndFindFileByPath(xmlSystemPath);
+      assertNotNull(xml);
+      assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
+      assertEquals(ArchiveFileType.INSTANCE.getName(), manager.getFileValue(xml));
+    }
+    finally {
+      reset(manager);
+      NioFiles.deleteRecursively(root);
+      localFileSystem.refreshNioFiles(List.of(root));
+    }
+  }
+
+  public void testStateWritesJarEntryUrl() throws IOException {
+    var root = Files.createTempDirectory(Path.of(FileUtil.getTempDirectory()), "override");
+    var jarPath = root.resolve("test.jar");
+    try (var out = new ZipOutputStream(Files.newOutputStream(jarPath))) {
+      out.putNextEntry(new ZipEntry("a.xml"));
+      out.write("<root/>".getBytes(StandardCharsets.UTF_8));
+      out.closeEntry();
+    }
+    var manager = emptyManager();
+    try {
+      var jar = StandardFileSystems.local().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(jarPath.toString()));
+      assertNotNull(jar);
+      var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jar);
+      assertNotNull(jarRoot);
+      var entry = jarRoot.findChild("a.xml");
+      assertNotNull(entry);
+
+      manager.addFile(entry, PlainTextFileType.INSTANCE);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      var file = assertOneElement(manager.getState().getChildren("file"));
+      assertEquals(entry.getUrl(), file.getAttributeValue("url"));
+      assertTrue(entry.getUrl(), entry.getUrl().startsWith("jar://"));
+    }
+    finally {
+      reset(manager);
+      JarFileSystemImpl.cleanupForNextTest();
+      NioFiles.deleteRecursively(root);
+    }
+  }
+
+  private static @NotNull Element state(@NotNull String url, @Nullable String value) {
+    var file = new Element("file").setAttribute("url", url);
+    if (value != null) {
+      file.setAttribute("value", value);
+    }
+    return new Element("root").addContent(file);
+  }
+
+  private static @NotNull OverrideFileTypeManager emptyManager() {
+    var manager = OverrideFileTypeManager.getInstance();
+    reset(manager);
+    return manager;
+  }
+
+  private static void reset(@NotNull OverrideFileTypeManager manager) {
+    manager.loadState(new Element("root"));
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
   }
 
   public void testMustNotBeAbleToOverrideNotOverridableFileType() throws IOException {
