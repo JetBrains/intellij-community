@@ -173,6 +173,10 @@ class BuildOutputParserDispatcherTest {
     System.getProperty("kotlinx.coroutines.io.parallelism")?.toIntOrNull()
     ?: 64.coerceAtLeast(Runtime.getRuntime().availableProcessors())
 
+  private suspend fun BuildOutputParserDispatcher.notifyTextAvailable(text: String) {
+    notifyTextAvailable(BuildOutputText.createOutputText(text))
+  }
+
   private object NoopBuildOutputMulticaster : BuildOutputMulticaster {
     override fun notifyBuildEvent(event: BuildEvent): Unit = Unit
   }

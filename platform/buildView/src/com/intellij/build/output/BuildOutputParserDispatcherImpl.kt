@@ -67,8 +67,8 @@ class BuildOutputParserDispatcherImpl(
     }
   }
 
-  override suspend fun notifyTextAvailable(text: CharSequence) {
-    reader.notifyTextAvailable(text)
+  override suspend fun notifyTextAvailable(text: BuildOutputText) {
+    reader.notifyTextAvailable(text.text)
   }
 
   override suspend fun close() {

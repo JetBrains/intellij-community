@@ -34,7 +34,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl = apply {
     runBlocking {
-      dispatcher.notifyTextAvailable(csq)
+      dispatcher.notifyTextAvailable(BuildOutputText.createOutputText(csq.toString()))
     }
   }
 

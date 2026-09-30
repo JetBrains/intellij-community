@@ -109,7 +109,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         }
 
         parserDispatchers.getOrPut(taskId) { createParserDispatcher(taskId) }
-          .notifyTextAvailable(cleanLine.text)
+          .notifyTextAvailable(cleanLine)
       }
 
       suspend fun notifyTextAvailable(text: BuildOutputText) {

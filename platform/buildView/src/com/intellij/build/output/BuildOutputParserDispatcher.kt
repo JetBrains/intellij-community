@@ -25,7 +25,7 @@ interface BuildOutputParserDispatcher {
   /**
    * Forwards [text] to the underlying line reader. Suspends if the internal buffer is full.
    */
-  suspend fun notifyTextAvailable(text: CharSequence)
+  suspend fun notifyTextAvailable(text: BuildOutputText)
 
   /**
    * Closes the underlying line reader and suspends until all buffered lines have been dispatched to parsers.

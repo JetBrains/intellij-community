@@ -4,9 +4,11 @@ package com.intellij.openapi.externalSystem.service.execution
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewSettingsProvider
 import com.intellij.build.events.BuildId
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.build.output.BuildOutputParserDispatcher
+import com.intellij.build.output.BuildOutputText
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.runBlocking
@@ -24,14 +26,17 @@ class ExternalSystemOutputMessageDispatcherImpl(
   private val parserDispatchers: MutableMap<ProcessOutputType, BuildOutputParserDispatcher> = ConcurrentHashMap()
 
   override fun notifyTextAvailable(text: @NlsSafe String, outputType: ProcessOutputType) {
+    val outputId = OutputId()
+
     notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
+      .withId(outputId)
       .withOutputType(outputType)
       .build())
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       parserDispatchers.getOrPut(outputType) { createParserDispatcher(buildId) }
-        .notifyTextAvailable(text)
+        .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
     }
   }
 
