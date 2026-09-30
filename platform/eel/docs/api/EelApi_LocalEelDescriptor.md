@@ -19,11 +19,12 @@ Understanding the relationship between `LocalEelDescriptor` and `LocalEelMachine
 **LocalEelMachine**:
 - A singleton that represents the physical local machine
 - Implements the `EelMachine` interface
-- Contains platform information (OS family, name)
+- Converts to `localEel`, which exposes platform information
 
-They are related: `LocalEelDescriptor.machine === LocalEelMachine`
+`LocalEelDescriptor.resolveEelMachine()` and `LocalEelDescriptor.getResolvedEelMachine()` return `LocalEelMachine` without I/O.
+Read [Descriptor and Machine Identity](eel-descriptor-and-machine.md) for comparison and conversion rules.
 
-## Role in the EEL API
+## Role in the Eel API
 
 `LocalEelDescriptor` serves as the default environment when no other environment is applicable. When a path doesn't match any known remote environment pattern, it's assumed to be a local path and associated with `LocalEelDescriptor`.
 
@@ -70,7 +71,7 @@ If you identify other legitimate use cases, please report them to the DevEnv tea
 val localApi: LocalEelApi = localEel
 
 // For polymorphic code, use toEelApi()
-fun doSomething(descriptor: EelDescriptor) {
+suspend fun doSomething(descriptor: EelDescriptor) {
     val api = descriptor.toEelApi()  // Works for any descriptor
 }
 ```
@@ -88,7 +89,7 @@ when {
 }
 
 // Get a human-readable name
-println("Running on: ${LocalEelMachine.name}")
+println("Running on: ${LocalEelDescriptor.name}")
 // Output: "Local: Windows 11" or "Local: macOS Sonoma"
 ```
 

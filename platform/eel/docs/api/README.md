@@ -13,6 +13,7 @@ These documents explain how to call the Eel API from a plugin or from platform c
 7. [Real-World Examples](EelApi_Real_World_Examples.md) shows how IntelliJ plugins and features use the Eel API.
 8. [Opening Projects with Eel API](Opening_Projects_with_EelApi.md) explains how to open a project in WSL or Docker, with configuration options.
 9. [Exhaustive `when`](exhaustive-when.md) states how to check a sealed type or an enum such as `EelOsFamily` and `EelPlatform`.
+10. [Descriptor and Machine Identity](eel-descriptor-and-machine.md) explains comparisons, machine resolution, API conversion, cache keys, and descriptor subinterfaces.
 
 `images/` holds the screenshots for [Opening Projects with Eel API](Opening_Projects_with_EelApi.md).
 

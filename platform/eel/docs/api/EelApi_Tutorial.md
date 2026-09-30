@@ -10,30 +10,25 @@ This tutorial will guide you through the core concepts of EelApi and show you ho
 
 ### EelDescriptor vs EelMachine
 
-Understanding the distinction between `EelDescriptor` and `EelMachine` is fundamental to working with EelApi:
+Read [Descriptor and Machine Identity](eel-descriptor-and-machine.md) before you compare descriptors or convert them.
 
-**EelDescriptor** represents a specific path-based access to an environment:
-- Lightweight identifier for an environment
-- Multiple descriptors can point to the same physical machine
-- Example: `\\wsl$\Ubuntu` and `\\wsl.localhost\Ubuntu` are different descriptors
+**`EelDescriptor`** identifies access to an environment, including its path namespace.
+You can obtain and compare descriptors without I/O.
+Different descriptors can address the same machine.
+For example, `\\wsl$\Ubuntu` and `\\wsl.localhost\Ubuntu` use different roots for the same WSL distribution.
 
-**EelMachine** represents the physical or logical host:
-- The actual machine (container, distribution, remote host)
-- Multiple descriptors may resolve to the same machine
-- Used for caching and resource pooling
+**`EelMachine`** represents the machine identity that the integration resolves.
+Resolution can perform I/O.
+Use a machine key for machine-wide data, not for paths or API views that depend on a descriptor.
 
-Example:
 ```kotlin
-// Two different descriptors
-val descriptor1 = Path.of("\\\\wsl$\\Ubuntu\\home").getEelDescriptor()
-val descriptor2 = Path.of("\\\\wsl.localhost\\Ubuntu\\home").getEelDescriptor()
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.resolveEelMachine
 
-// But they point to the same machine
-descriptor1.machine === descriptor2.machine  // true
-
-// Use machine for caching shared resources
+val descriptor = project.getEelDescriptor()
+val machine = descriptor.resolveEelMachine()
 val cache: MutableMap<EelMachine, SomeData> = mutableMapOf()
-cache[descriptor1.machine] = data  // Accessible via descriptor2 as well
+cache[machine] = data
 ```
 
 ### EelDescriptor
@@ -442,8 +437,9 @@ val process = (wslApi as EelPosixApi).exec.spawnProcess("/bin/bash")
 2. **Cache by EelMachine, not EelDescriptor**: When caching data that should be shared across different paths to the same environment, use `EelMachine` as the key:
    ```kotlin
    val cache: MutableMap<EelMachine, CachedData> = mutableMapOf()
-   cache[descriptor.machine] = data  // Shared across all descriptors to same machine
+   cache[descriptor.resolveEelMachine()] = data
    ```
+   Resolution can perform I/O. Keep descriptor-dependent paths and API views separate.
 
 3. **Handle errors properly**: Use try-catch blocks to handle exceptions that may be thrown during API operations.
 

@@ -9,6 +9,7 @@ Read this page before you edit a file under `community/platform/eel*/` or write 
 3. **Use `EelPlatform` for OS detection, not `SystemInfo`.** `SystemInfo` reflects the IDE host machine, not the target environment.
 4. **`localEel` always represents the IDE host machine.** Use it only when you need the local environment. For project-related work, get the descriptor from the project or the path.
 5. **Use an exhaustive `when` for a sealed type or an enum.** Do not use `if (x == SomeEnum.SomeCase)`, `if (x is SomeSealed.SomeCase)`, or `else` in a `when`. A helper next to the type, such as `EelOsFamily.isWindows`, is correct. See [Exhaustive `when`](../api/exhaustive-when.md).
+6. **Separate descriptor identity from machine identity.** Read [Descriptor and Machine Identity](../api/eel-descriptor-and-machine.md) before you compare descriptors or convert one into a machine or an API.
 
 The [Quick Reference](../api/quick-reference.md) shows the calls for each rule.
 
@@ -16,6 +17,7 @@ The [Quick Reference](../api/quick-reference.md) shows the calls for each rule.
 
 1. [Eel Architecture](../overview/architecture.md). Five minutes. It explains the model and the Eel and IJent split.
 2. [Quick Reference](../api/quick-reference.md). The common calls.
+   Read [Descriptor and Machine Identity](../api/eel-descriptor-and-machine.md) before descriptor comparisons, machine resolution, or API conversion.
 3. [Two File System APIs](../overview/file-systems.md) and [EelPath and nio Path](../api/eel-path-and-nio-path.md) before you touch a path or a file.
 4. [Exhaustive `when`](../api/exhaustive-when.md) before you check `EelOsFamily`, `EelPlatform`, or another sealed type or enum.
 5. [Eel API Tutorial](../api/EelApi_Tutorial.md) when you need the full explanation.

@@ -6,31 +6,31 @@ This page collects the most common Eel API calls on one screen. Read the [Eel AP
 
 ### EelDescriptor vs EelMachine
 
-**EelDescriptor** is a specific path-based access to an environment.
+Read [Descriptor and Machine Identity](eel-descriptor-and-machine.md) before comparisons or conversions.
 
-- It represents one way to access an environment. `\\wsl$\Ubuntu` and `\\wsl.localhost\Ubuntu` are two descriptors.
-- It is a lightweight identifier. You can obtain it quickly.
-- Different descriptors can point to the same physical machine.
-- Use it when you work with specific paths.
+**`EelDescriptor`** identifies access to an environment, including its path namespace.
 
-**EelMachine** is the physical or logical host.
+- Obtain and compare it without I/O.
+- Different descriptors can address the same machine.
+- Use it for paths and data that depend on the path namespace.
 
-- It represents the actual machine: a container, a distribution, or a remote host.
-- Multiple descriptors can resolve to the same machine.
-- Use it as a cache key for shared resources such as connection pools.
-- It holds the platform information: the OS family and the architecture.
+**`EelMachine`** represents the machine identity that the integration resolves.
+
+- Resolve it with `descriptor.resolveEelMachine()`. Resolution can perform I/O.
+- Use `descriptor.getResolvedEelMachine()` when I/O is not allowed. A `null` result means unknown.
+- Compare machines with `==`, not `===`.
+- Use it as a key for machine-wide data. Keep descriptor-dependent paths and APIs separate.
+- Obtain the platform from `EelApi.platform`, not from the machine.
 
 ```kotlin
-// Two different descriptors.
-val desc1 = Path.of("\\\\wsl$\\Ubuntu\\home").getEelDescriptor()
-val desc2 = Path.of("\\\\wsl.localhost\\Ubuntu\\home").getEelDescriptor()
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.resolveEelMachine
 
-// They point to the same machine.
-desc1.machine === desc2.machine  // true
+val descriptor = project.getEelDescriptor()
+val machine = descriptor.resolveEelMachine()
 
-// Use the machine for shared caching.
 val cache: MutableMap<EelMachine, Data> = mutableMapOf()
-cache[desc1.machine] = data  // Accessible through desc2.machine as well.
+cache[machine] = data
 ```
 
 ### EelApi Subsystems
