@@ -10,6 +10,7 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyClassTypeImpl
@@ -137,6 +138,32 @@ class PyCompositeMatchCostTest : PyCodeInsightTestCase() {
     }
     finally {
       registry.resetToDefault()
+    }
+  }
+
+  /**
+   * A PEP 604 annotation is a union form, not a chain of `__or__` calls, so declaring one must cost no match.
+   * Checking those calls used to make an annotation of n members cost O(n^2).
+   */
+  @Test
+  fun `declaring a pep604 union annotation costs no match`() {
+    val width = WIDTHS.max()
+    val classes = (1..width).joinToString("\n") { "class C$it: pass" }
+    val pipe = (1..width).joinToString(" | ") { "C$it" }
+    val disposable = Disposer.newDisposable("PY-91327 match counter")
+    try {
+      ExtensionTestUtil.maskExtensions(
+        PyTypeCheckerExtension.EP_NAME,
+        PyTypeCheckerExtension.EP_NAME.extensionList + CountingExtension(),
+        disposable,
+      )
+      myFixture.enableInspections(PyTypeCheckerInspection())
+      myFixture.configureByText("a.py", "$classes\ndef f(u: $pipe) -> None:\n    pass")
+      val cost = count { myFixture.doHighlighting() }
+      assertEquals(0L, cost, "A PEP 604 annotation of $width members must not be type-checked as `__or__` calls")
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
   }
 
