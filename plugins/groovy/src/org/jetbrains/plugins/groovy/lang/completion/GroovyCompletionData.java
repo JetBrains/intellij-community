@@ -230,6 +230,9 @@ public final class GroovyCompletionData {
       if (PsiJavaPatterns.psiElement().withSuperParent(2, GrImportStatement.class).accepts(position)) {
         if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.IMPORT).accepts(position)) {
           addKeywords(consumer, true, JavaKeywords.STATIC);
+          if (GroovyConfigUtils.isAtLeastGroovy60(position)) {
+            addKeywords(consumer, true, JavaKeywords.MODULE);
+          }
         }
       } else {
         if (suggestModifiers(position)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,8 +9,12 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -53,6 +57,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -358,7 +363,24 @@ public final class GroovyCompletionUtil {
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 
-  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName) {
+  /**
+   * Marks the given {@code LookupElement} as inaccessible.
+   *
+   * @param lookup the {@link LookupElement} to be marked as inaccessible
+   * @return the modified {@link LookupElement} marked as inaccessible
+   */
+  public static @NotNull LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
+    return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(lookup, new LookupElementRenderer<>() {
+      @Override
+      public void renderElement(@NotNull LookupElementDecorator<LookupElement> element, @NotNull LookupElementPresentation presentation) {
+        element.getDelegate().renderElement(presentation);
+        presentation.setItemTextForeground(JBColor.RED);
+      }
+    }), -1);
+  }
+
+  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult,
+                                                                                String importedName) {
     final PsiElement element = resolveResult.getElement();
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();

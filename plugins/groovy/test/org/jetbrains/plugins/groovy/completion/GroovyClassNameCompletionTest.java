@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -46,6 +46,13 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
     complete();
     myFixture.type("\n");
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
+  public void testInModuleImport() {
+    myFixture.configureByText("a.groovy", "import module j<caret>");
+    complete();
+    myFixture.type("\n");
+    myFixture.checkResult("import module org.jetbrains.annotations");
   }
 
   public void testWhenClassExistsInSamePackage() {

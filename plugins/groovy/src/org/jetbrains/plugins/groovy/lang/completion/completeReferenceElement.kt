@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CompleteCodeReferenceElement")
 
 package org.jetbrains.plugins.groovy.lang.completion
@@ -6,21 +6,27 @@ package org.jetbrains.plugins.groovy.lang.completion
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor.createClassLookupItems
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Key
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.ResolveState
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.CLASS
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.PACKAGE
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.search.ProjectScope
 import com.intellij.util.Consumer
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.markAsInaccessible
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.setupLookupBuilder
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
@@ -49,8 +55,24 @@ fun GrCodeReferenceElement.complete(matcher: PrefixMatcher, consumer: LookupCons
   val processor = CompleteReferenceProcessor(matcher, consumer, afterNew)
 
   if (parent is GrImportStatement) {
-    if (parent.isStatic) processClassDeclarations(processor)
-    processPackageDeclarations(GrDelegatingScopeProcessorWithHints(processor, CLASS, PACKAGE))
+    if (parent.isModule) {
+      val index = JavaModuleNameIndex.getInstance()
+      val scope = ProjectScope.getAllScope(project)
+      for (name in index.getAllKeys(project)) {
+        val modules = index.getModules(name, project, scope)
+        if (!modules.isEmpty()) {
+          var item: LookupElement = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule)
+          if (!modules.all { module: PsiJavaModule -> JavaModuleGraphUtil.isModuleReadable(parent, module) }) {
+            item = markAsInaccessible(item)
+          }
+          consumer.consume(item)
+        }
+      }
+    }
+    else {
+      if (parent.isStatic) processClassDeclarations(processor)
+      processPackageDeclarations(GrDelegatingScopeProcessorWithHints(processor, CLASS, PACKAGE))
+    }
     return
   }
 
@@ -86,7 +108,7 @@ private fun GrCodeReferenceElement.processClassDeclarations(processor: PsiScopeP
 private fun GrCodeReferenceElement.processTypeParameters(processor: PsiScopeProcessor) {
   val typeParameterProcessor = object : GrDelegatingScopeProcessorWithHints(processor, emptySet()), GroovyResolveKind.Hint {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any?> getHint(hintKey: Key<T>): T? = if (hintKey === GroovyResolveKind.HINT_KEY) this as T else super.getHint(hintKey)
+    override fun <T> getHint(hintKey: Key<T>): T? = if (hintKey === GroovyResolveKind.HINT_KEY) this as T else super.getHint(hintKey)
 
     override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind === GroovyResolveKind.TYPE_PARAMETER
   }
@@ -118,7 +140,7 @@ private class CompleteReferenceProcessor(
       }
       else {
         val builder = LookupElementBuilder.create(element, name)
-        val item = GroovyCompletionUtil.setupLookupBuilder(element, PsiSubstitutor.EMPTY, builder, null)
+        val item = setupLookupBuilder(element, PsiSubstitutor.EMPTY, builder, null)
         consumer.consume(item)
       }
     }
