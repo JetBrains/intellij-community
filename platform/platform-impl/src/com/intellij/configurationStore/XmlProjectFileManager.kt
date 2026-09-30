@@ -9,6 +9,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.JDOMUtil
@@ -204,19 +205,23 @@ abstract class XmlProjectFileManager<T : Any>(
 
   private suspend fun saveToFile(filePath: String, data: BufferExposingByteArrayOutputStream) {
     edtWriteAction {
-      var file = StandardFileSystems.local().findFileByPath(filePath)
-      if (file == null) {
-        val parentPath = PathUtil.getParentPath(filePath)
-        val dir = VfsUtil.createDirectoryIfMissing(parentPath)
-        if (dir == null) {
-          log.error("Failed to create directory $parentPath")
-          return@edtWriteAction
+      // the file is created and written in one write action; a cancellation of the saving coroutine between the two VFS operations
+      // would leave an empty file behind (the VFS itself keeps a cancellation away from its listeners, see PersistentFSImpl.nonCancellableEventProcessing)
+      Cancellation.withNonCancelableSection().use {
+        var file = StandardFileSystems.local().findFileByPath(filePath)
+        if (file == null) {
+          val parentPath = PathUtil.getParentPath(filePath)
+          val dir = VfsUtil.createDirectoryIfMissing(parentPath)
+          if (dir == null) {
+            log.error("Failed to create directory $parentPath")
+            return@edtWriteAction
+          }
+
+          file = dir.createChildData(this@XmlProjectFileManager, PathUtil.getFileName(filePath))
         }
 
-        file = dir.createChildData(this@XmlProjectFileManager, PathUtil.getFileName(filePath))
+        file.getOutputStream(this@XmlProjectFileManager).use { data.writeTo(it) }
       }
-
-      file.getOutputStream(this@XmlProjectFileManager).use { data.writeTo(it) }
     }
   }
 

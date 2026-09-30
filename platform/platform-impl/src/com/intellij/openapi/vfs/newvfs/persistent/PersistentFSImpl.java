@@ -11,11 +11,13 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
@@ -1304,27 +1306,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         ThreadingAssertions.assertWriteAccess();
 
-        long oldLength = getLastRecordedLength(file);
-        VFileContentChangeEvent event = new VFileContentChangeEvent(
-          requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count
-        );
-        List<VFileEvent> events = List.of(event);
-        fireBeforeEvents(getPublisherEdt(), getPublisherBackgroundable(), events);
+        try (AccessToken ignored = nonCancellableEventProcessing()) {
+          long oldLength = getLastRecordedLength(file);
+          VFileContentChangeEvent event = new VFileContentChangeEvent(
+            requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count
+          );
+          List<VFileEvent> events = List.of(event);
+          fireBeforeEvents(getPublisherEdt(), getPublisherBackgroundable(), events);
 
-        NewVirtualFileSystem fs = fileSystemOf(file);
-        try {
-          if (shouldCacheFileContentInVFS(count)) {
-            // `FSRecords.ContentOutputStream` is already buffered => no need to wrap in `BufferedStream`
-            try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
-              persistenceStream.write(buf, 0, count);
+          NewVirtualFileSystem fs = fileSystemOf(file);
+          try {
+            if (shouldCacheFileContentInVFS(count)) {
+              // `FSRecords.ContentOutputStream` is already buffered => no need to wrap in `BufferedStream`
+              try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
+                persistenceStream.write(buf, 0, count);
+              }
+            }
+            else {
+              cleanPersistedContent(fileId(file));//so next turn content will be loaded from FS again
             }
           }
-          else {
-            cleanPersistedContent(fileId(file));//so next turn content will be loaded from FS again
+          finally {
+            writeToDisk(fs, event, events);
           }
-        }
-        finally {
-          writeToDisk(fs, event, events);
         }
       }
 
@@ -1389,29 +1393,43 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     if (!event.isValid()) return;
 
-    List<VFileEvent> outValidatedEvents = new ArrayList<>();
-    outValidatedEvents.add(event);
-    List<Runnable> outApplyActions = new ArrayList<>();
-    List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
-    BulkFileListener publisher = getPublisherEdt();
-    BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
-    if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
-      // optimisation: skip all groupings
-      runSuppressing(
-        () -> fireBeforeEvents(publisher, publisherBackgroundable, outValidatedEvents),
-        () -> applyEvent(event),
-        () -> fireAfterEvents(publisher, publisherBackgroundable, AsyncEventSupport.ChangeAppliers.EMPTY, outValidatedEvents)
-      );
-    }
-    else {
-      outApplyActions.add(() -> applyEvent(event));
-      // there are a number of additional jar events generated
-      for (VFileEvent jarDeleteEvent : jarDeleteEvents) {
-        outApplyActions.add(() -> applyEvent(jarDeleteEvent));
-        outValidatedEvents.add(jarDeleteEvent);
+    try (AccessToken ignored = nonCancellableEventProcessing()) {
+      List<VFileEvent> outValidatedEvents = new ArrayList<>();
+      outValidatedEvents.add(event);
+      List<Runnable> outApplyActions = new ArrayList<>();
+      List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
+      BulkFileListener publisher = getPublisherEdt();
+      BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
+      if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
+        // optimisation: skip all groupings
+        runSuppressing(
+          () -> fireBeforeEvents(publisher, publisherBackgroundable, outValidatedEvents),
+          () -> applyEvent(event),
+          () -> fireAfterEvents(publisher, publisherBackgroundable, AsyncEventSupport.ChangeAppliers.EMPTY, outValidatedEvents)
+        );
       }
-      applyMultipleEvents(publisher, publisherBackgroundable, AsyncEventSupport.ChangeAppliers.EMPTY, outApplyActions, outValidatedEvents, false);
+      else {
+        outApplyActions.add(() -> applyEvent(event));
+        // there are a number of additional jar events generated
+        for (VFileEvent jarDeleteEvent : jarDeleteEvents) {
+          outApplyActions.add(() -> applyEvent(jarDeleteEvent));
+          outValidatedEvents.add(jarDeleteEvent);
+        }
+        applyMultipleEvents(publisher, publisherBackgroundable, AsyncEventSupport.ChangeAppliers.EMPTY, outApplyActions, outValidatedEvents, false);
+      }
     }
+  }
+
+  /**
+   * VFS events are applied and published atomically under the write lock.
+   * A cancellation of the caller cannot roll the change back once the lock is held, so it must not surface to the listeners
+   * as a {@link ProcessCanceledException} in the middle of the event processing: PSI listeners call {@code checkCanceled}
+   * while they reload the changed file (IJPL-9299, an explicit save cancelling a running auto-save).
+   * The section starts only under the write lock; waiting for the lock stays cancellable.
+   */
+  @ApiStatus.Internal
+  public static @NotNull AccessToken nonCancellableEventProcessing() {
+    return Cancellation.withNonCancelableSection();
   }
 
   private static void runSuppressing(@NotNull Runnable r1,
@@ -1749,42 +1767,44 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                 boolean excludeAsyncListeners) {
     ThreadingAssertions.assertWriteAccess();
 
-    int startIndex = 0;
-    int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
-    List<Runnable> applyActions = new ArrayList<>(cappedInitialSize);
-    // even in the unlikely case when case-insensitive maps falsely detect conflicts of case-sensitive paths,
-    // the worst outcome will be one extra event batch, which is acceptable
-    MostlySingularMultiMap<String, VFileEvent> files = new MostlySingularMultiMap<>(createFilePathMap(cappedInitialSize));
-    Set<String> middleDirs = createFilePathSet(cappedInitialSize);
+    try (AccessToken ignored = nonCancellableEventProcessing()) {
+      int startIndex = 0;
+      int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
+      List<Runnable> applyActions = new ArrayList<>(cappedInitialSize);
+      // even in the unlikely case when case-insensitive maps falsely detect conflicts of case-sensitive paths,
+      // the worst outcome will be one extra event batch, which is acceptable
+      MostlySingularMultiMap<String, VFileEvent> files = new MostlySingularMultiMap<>(createFilePathMap(cappedInitialSize));
+      Set<String> middleDirs = createFilePathSet(cappedInitialSize);
 
-    List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
-    BulkFileListener publisherEdt = getPublisherEdt();
-    BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
-    Map<VirtualDirectoryImpl, Object> toCreate = new LinkedHashMap<>();
-    Set<VFileEvent> toIgnore = new ReferenceOpenHashSet<>(); // VFileEvent overrides equals(), hence identity-based
-    Set<VirtualFile> toDelete = createSmallMemoryFootprintSet();
-    while (startIndex != events.size()) {
-      PingProgress.interactWithEdtProgress();
+      List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
+      BulkFileListener publisherEdt = getPublisherEdt();
+      BulkFileListenerBackgroundable publisherBackgroundable = getPublisherBackgroundable();
+      Map<VirtualDirectoryImpl, Object> toCreate = new LinkedHashMap<>();
+      Set<VFileEvent> toIgnore = new ReferenceOpenHashSet<>(); // VFileEvent overrides equals(), hence identity-based
+      Set<VirtualFile> toDelete = createSmallMemoryFootprintSet();
+      while (startIndex != events.size()) {
+        PingProgress.interactWithEdtProgress();
 
-      applyActions.clear();
-      files.clear();
-      middleDirs.clear();
-      validated.clear();
-      toCreate.clear();
-      toIgnore.clear();
-      toDelete.clear();
-      startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs, toCreate, toIgnore, toDelete,
-                                    excludeAsyncListeners);
+        applyActions.clear();
+        files.clear();
+        middleDirs.clear();
+        validated.clear();
+        toCreate.clear();
+        toIgnore.clear();
+        toDelete.clear();
+        startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs, toCreate, toIgnore, toDelete,
+                                      excludeAsyncListeners);
 
-      if (!validated.isEmpty()) {
-        applyMultipleEvents(
-          publisherEdt,
-          publisherBackgroundable,
-          earlyAfterEventChangeAppliers,
-          applyActions,
-          validated,
-          excludeAsyncListeners
-        );
+        if (!validated.isEmpty()) {
+          applyMultipleEvents(
+            publisherEdt,
+            publisherBackgroundable,
+            earlyAfterEventChangeAppliers,
+            applyActions,
+            validated,
+            excludeAsyncListeners
+          );
+        }
       }
     }
   }

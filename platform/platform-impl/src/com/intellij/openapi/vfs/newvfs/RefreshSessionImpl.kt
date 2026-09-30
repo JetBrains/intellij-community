@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.withPrefetchForRemoteRoots
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -311,25 +312,28 @@ internal class RefreshSessionImpl internal constructor(
   private fun fireEventsInWriteAction(events: List<CompoundVFileEvent>, appliers: AsyncEventSupport.ChangeAppliers, excludeAsyncListeners: Boolean) {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
 
-    invokeOnEdt {
-      manager.fireBeforeRefreshStart(this.isAsynchronous)
-    }
-    try {
-      AsyncEventSupport.processEventsFromRefresh(events, appliers, excludeAsyncListeners)
-    }
-    catch (e: AssertionError) {
-      if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING == e.message) {
-        throw AssertionError("VFS changes are not allowed during highlighting", myStartTrace)
-      }
-      throw e
-    }
-    finally {
+    // the change appliers run outside PersistentFSImpl.processEventsImpl and need the same protection, see PersistentFSImpl.nonCancellableEventProcessing
+    PersistentFSImpl.nonCancellableEventProcessing().use {
       invokeOnEdt {
-        try {
-          manager.fireAfterRefreshFinish(this.isAsynchronous)
+        manager.fireBeforeRefreshStart(this.isAsynchronous)
+      }
+      try {
+        AsyncEventSupport.processEventsFromRefresh(events, appliers, excludeAsyncListeners)
+      }
+      catch (e: AssertionError) {
+        if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING == e.message) {
+          throw AssertionError("VFS changes are not allowed during highlighting", myStartTrace)
         }
-        finally {
-          myFinishRunnable?.run()
+        throw e
+      }
+      finally {
+        invokeOnEdt {
+          try {
+            manager.fireAfterRefreshFinish(this.isAsynchronous)
+          }
+          finally {
+            myFinishRunnable?.run()
+          }
         }
       }
     }
