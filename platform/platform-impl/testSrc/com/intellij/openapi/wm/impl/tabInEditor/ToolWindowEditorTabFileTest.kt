@@ -156,7 +156,7 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
-  fun `onEditorClosed invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `closing the tab invalidates the file`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
     assertThat(file.isValid).isTrue()
 
@@ -166,7 +166,7 @@ class ToolWindowEditorTabFileTest {
   }
 
   @Test
-  fun `onEditorClosed keeps the file valid when closing to reopen`(): Unit =
+  fun `closing the tab to reopen it keeps the file valid`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val file = createFile(ToolWindowEditorTabPresentation("Title"))
       // Set by the "return to tool window" path: the file is closed only to be moved, not invalidated.
@@ -178,7 +178,7 @@ class ToolWindowEditorTabFileTest {
     }
 
   @Test
-  fun `invalidateEditorTabFile marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+  fun `invalidate marks the file invalid`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val file = createFile(ToolWindowEditorTabPresentation("Title"))
 
     file.invalidate()

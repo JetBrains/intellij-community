@@ -46,8 +46,11 @@ import javax.swing.JPanel
 import javax.swing.JTextField
 
 /**
- * Tests that a persisted tool window editor tab creates its content only when the content is necessary:
- * when the editor is shown for the first time, or when an operation needs the content.
+ * Tests the editor of a tool window tab and the actions that work on it.
+ *
+ * Most tests start from a restored tab whose content is not created yet. They check that the content is created only
+ * when it is necessary, when the editor is shown for the first time or when an operation needs the content, and what
+ * the editor and the actions show before that.
  */
 @TestApplication
 class ToolWindowEditorTabPendingContentTest {
