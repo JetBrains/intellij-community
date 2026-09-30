@@ -761,7 +761,6 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleWithoutDedicatedJpsModuleInspection"
                      key="inspection.content.module.without.dedicated.jps.module.name"/>
 
-    <!-- Reports both the <toolWindow> extension and the bundle key, so an empty language covers XML and Properties. -->
     <localInspection language="" projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"

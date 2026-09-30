@@ -78,9 +78,6 @@ internal class ToolWindowStripeTitleInspection : LocalInspectionTool() {
   }
 }
 
-/**
- * Highlights the `id` attribute of a `<toolWindow>` extension.
- */
 private class DescriptorVisitor(private val holder: ProblemsHolder) : XmlElementVisitor() {
 
   override fun visitXmlTag(tag: XmlTag) {
