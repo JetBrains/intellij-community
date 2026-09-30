@@ -19,7 +19,8 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil
@@ -30,7 +31,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.possibleGetMethodNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -81,7 +81,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         if (localReferenceExpression !is KtSimpleNameExpression) return null
 
         return runDumbAnalyze(localReferenceExpression, fallback = null) f@{
-            for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
+            for (symbol in localReferenceExpression.tryResolveSymbols()?.symbols.orEmpty()) {
                 if (symbol !is KaVariableSymbol) continue
 
                 if (symbol is KaValueParameterSymbol && symbol.isImplicitLambdaParameter) {

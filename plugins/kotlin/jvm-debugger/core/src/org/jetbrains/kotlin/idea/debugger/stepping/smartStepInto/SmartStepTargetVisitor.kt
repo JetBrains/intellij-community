@@ -11,10 +11,12 @@ import com.intellij.util.containers.OrderedSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -95,7 +97,7 @@ class SmartStepTargetVisitor(
 
     private fun recordCallableReference(expression: KtCallableReferenceExpression): Boolean {
         analyze(expression) {
-            val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return false
+            val symbol = expression.tryResolveCall()?.single?.simple?.symbol ?: return false
             if (symbol is KaPropertySymbol) {
                 return recordProperty(expression, symbol)
             }

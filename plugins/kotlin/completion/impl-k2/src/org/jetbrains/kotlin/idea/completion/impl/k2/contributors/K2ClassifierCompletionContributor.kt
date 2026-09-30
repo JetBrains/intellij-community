@@ -12,12 +12,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
-import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.scopes.staticDeclaredMemberScope
-import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -26,8 +26,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.ShortenCommandForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
@@ -63,6 +65,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
@@ -278,11 +281,9 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         receiverExpression: KtDotQualifiedExpression,
         nameToImport: FqName,
     ): Sequence<LookupElement> {
-        val selectorExpression = receiverExpression.selectorExpression ?: return emptySequence()
+        val selectorExpression = receiverExpression.selectorExpression as? KtNameReferenceExpression ?: return emptySequence()
 
-        val reference = receiverExpression.reference() ?: return emptySequence()
-
-        return reference.resolveToSymbols()
+        return selectorExpression.tryResolveSymbols()?.symbols.orEmpty()
             .asSequence()
             .mapNotNull { it.staticScope }
             .flatMap { it.completeClassifiers(context.visibilityChecker) }

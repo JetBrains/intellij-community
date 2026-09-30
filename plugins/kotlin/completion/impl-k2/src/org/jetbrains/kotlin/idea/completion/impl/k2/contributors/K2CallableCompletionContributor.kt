@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -28,6 +27,8 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.scopes.asCompositeScope
 import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
@@ -106,7 +107,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionIn
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
@@ -1321,7 +1321,7 @@ internal class K2KDocCallableCompletionContributor : K2AbstractCallableCompletio
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         if (explicitReceiver !is KDocName) return@sequence
 
-        val resolvedSymbols = explicitReceiver.mainReference.resolveToSymbols()
+        val resolvedSymbols = explicitReceiver.tryResolveSymbols()?.symbols.orEmpty()
         val scopesWithKinds = resolvedSymbols.flatMap { parentSymbol ->
             when (parentSymbol) {
                 is KaPackageSymbol -> sequenceOfNotNull(parentSymbol.staticScope)

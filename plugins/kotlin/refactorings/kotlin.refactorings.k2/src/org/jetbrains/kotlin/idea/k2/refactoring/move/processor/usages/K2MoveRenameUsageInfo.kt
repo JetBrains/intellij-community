@@ -28,7 +28,8 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -273,7 +274,7 @@ sealed class K2MoveRenameUsageInfo(
                         val mainReference = refElem.mainReference
                         if (mainReference != null) {
                             val declPsi = allowAnalysisFromWriteActionInEdt(refElem) {
-                              mainReference.resolveToSymbols().firstOrNull { declSymbol ->
+                              refElem.tryResolveSymbols()?.symbols.orEmpty().firstOrNull { declSymbol ->
                                 (declSymbol as KaCallableSymbol).isExtensionDecl()
                               }?.psi
                             }

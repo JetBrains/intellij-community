@@ -75,10 +75,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -135,7 +138,6 @@ import org.jetbrains.kotlin.idea.debugger.core.isInsideInlineArgument
 import org.jetbrains.kotlin.idea.debugger.core.isInsideProjectWithCompose
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -445,7 +447,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (!methodName.startsWith("$enclosingName\$")) return false
 
         val targetName = runDumbAnalyze(this, fallback = null) {
-            (callableReference.mainReference.resolveToSymbol() as? KaNamedFunctionSymbol)?.name?.asString()
+            (tryResolveCall()?.single?.simple?.symbol as? KaNamedFunctionSymbol)?.name?.asString()
         } ?: return false
         val adapterName = "$enclosingName\$$targetName"
         if (methodName == adapterName) return true

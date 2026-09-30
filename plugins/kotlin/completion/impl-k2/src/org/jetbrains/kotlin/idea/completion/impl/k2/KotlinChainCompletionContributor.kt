@@ -11,11 +11,11 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -53,7 +53,7 @@ internal class KotlinChainCompletionContributor : CompletionContributor() {
                         ?: return
 
                     analyze(parameters.completionFile) {
-                        if (nameExpression.mainReference.resolveToSymbols().isNotEmpty()) {
+                        if (!nameExpression.tryResolveSymbols()?.symbols.isNullOrEmpty()) {
                             // The receiver is resolved, therefore we do not run chain completion
                             return
                         }
