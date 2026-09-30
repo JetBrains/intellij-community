@@ -12,10 +12,13 @@ import com.intellij.openapi.project.Project
  * This class relies on the result calculated in [LspImplicitReferenceProvider.getImplicitReference].
  */
 internal class LspSymbolTypeProvider : SymbolTypeProvider {
-  // When [GotoTypeDeclarationAction] action is running,
-  // the `LspNavigatableSymbol` is a result of `LspResolvedSymbolReference.resolveReference`,
-  // and it points to the type declaration as a result of the `textDocument/typeDefinition` request
   override fun getSymbolTypes(project: Project, symbol: Symbol): List<Symbol> =
-    (symbol as? LspNavigatableSymbol)?.let { listOf(it) }
-    ?: emptyList()
+    when (symbol as? LspNavigationSymbol) {
+      // When [GotoTypeDeclarationAction] is running, the `LspDefinitionSymbol` is a result of
+      // `LspResolvedSymbolReference.resolveReference`, and it already points to the type declaration
+      // as a result of the `textDocument/typeDefinition` request
+      is LspDefinitionSymbol -> listOf(symbol)
+      // A document link leads to a file, a directory or a web page, and none of those has a type
+      is LspPathDocumentLinkSymbol, is LspOpenBrowserNavigatableSymbol, null -> emptyList()
+    }
 }

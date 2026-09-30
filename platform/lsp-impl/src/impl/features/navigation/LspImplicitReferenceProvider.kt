@@ -184,7 +184,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 
     var rangeInFile: TextRange? = null
 
-    val resolveResults: List<LspNavigatableSymbol> = clientsAndLocationLinks.flatMap { clientAndLocationLinks ->
+    val resolveResults: List<LspDefinitionSymbol> = clientsAndLocationLinks.flatMap { clientAndLocationLinks ->
       clientAndLocationLinks.locationLinks.mapNotNull { locationLink ->
         val originSelectionRange = locationLink.originSelectionRange
         val textRange = if (originSelectionRange != null) {
@@ -200,7 +200,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
         rangeInFile = rangeInFile?.union(textRange) ?: textRange
         val targetFile = clientAndLocationLinks.lspClient.dynamicFiles.findTargetFile(locationLink.targetUri)
                          ?: return@mapNotNull null
-        LspNavigatableSymbol(clientAndLocationLinks.lspClient.project, targetFile, locationLink.targetSelectionRange)
+        LspDefinitionSymbol(clientAndLocationLinks.lspClient.project, targetFile, locationLink.targetSelectionRange)
       }
     }
 
