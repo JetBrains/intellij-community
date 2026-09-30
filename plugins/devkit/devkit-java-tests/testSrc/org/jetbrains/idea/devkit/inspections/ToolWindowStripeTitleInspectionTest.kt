@@ -99,6 +99,66 @@ class ToolWindowStripeTitleInspectionTest : ToolWindowStripeTitleInspectionTestB
     myFixture.testHighlightingAllFiles(true, false, false, pluginXml, bundle)
   }
 
+  fun `test reports a content module that does not inherit the bundle of its plugin`() {
+    addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.plugin</id>
+        <resource-bundle>messages.PluginBundle</resource-bundle>
+        <content>
+          <module name="my.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val moduleXml = addFile(
+      "my.module.xml", """
+      <idea-plugin>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The module '$moduleName' declares this tool window but no <resource-bundle>, so the platform reads no stripe title. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.PluginBundle'. Declare 'messages.PluginBundle' as the <resource-bundle> of '$moduleName'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val pluginBundle = addFile(
+      "messages/PluginBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window' but no <resource-bundle>, so the platform does not read this key. Declare this bundle as the <resource-bundle> of '$moduleName'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, moduleXml, pluginBundle)
+  }
+
+  fun `test reports a content module of the core plugin against IdeBundle`() {
+    addFile(
+      "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.intellij</id>
+        <content>
+          <module name="my.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val moduleXml = addFile(
+      "my.module.xml", """
+      <idea-plugin>
+        <resource-bundle>messages.MyBundle</resource-bundle>
+        <extensions defaultExtensionNs="com.intellij">
+          <toolWindow id="<warning descr="The core plugin owns the module '$moduleName'. The platform therefore reads the stripe title from 'messages.IdeBundle'. The key 'toolwindow.stripe.My_Tool_Window' is in 'messages.MyBundle'. Move the key to 'messages.IdeBundle'.">My Tool Window</warning>"/>
+        </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val bundle = addFile(
+      "messages/MyBundle.properties", """
+      <warning descr="The module '$moduleName' declares the tool window 'My Tool Window'. The platform reads its stripe title from 'messages.IdeBundle'. It does not read this bundle. Move this key to 'messages.IdeBundle'.">toolwindow.stripe.My_Tool_Window</warning>=My Tool Window
+      """.trimIndent()
+    )
+
+    myFixture.testHighlightingAllFiles(true, false, false, moduleXml, bundle)
+  }
+
   fun `test reports a sub-descriptor against the bundle of the descriptor that loads it`() {
     addFile(
       "META-INF/plugin.xml", """
