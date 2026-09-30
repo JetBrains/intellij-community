@@ -27,25 +27,17 @@ import com.intellij.openapi.editor.ComponentInlayRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.addComponentInlay
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.text.nullize
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.util.concurrent.ConcurrentHashMap
 import com.intellij.util.Alarm
-import javax.swing.JComponent
-import javax.swing.SwingUtilities
-import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.util.text.nullize
 import kotlinx.html.HTML
 import kotlinx.html.body
 import kotlinx.html.html
@@ -53,6 +45,14 @@ import kotlinx.html.link
 import kotlinx.html.stream.createHTML
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.TestOnly
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
@@ -218,20 +218,16 @@ internal class BuildConsoleViewImplV2(
   }
 
   override fun scrollToNodeOutput(nodeId: Any) {
-    val clientId = ClientId.currentOrNull
     state.access {
-      val targetEditor = getClientEditor(editor, clientId)
       val inlay = nodeInlays(nodeId).firstOrNull()
       val bounds = inlay?.bounds
       if (inlay != null && bounds != null) {
-        targetEditor.caretModel.moveToOffset(inlay.offset)
-        // local environment
-        if (targetEditor === editor) {
-          targetEditor.scrollingModel.scrollVertically(bounds.y)
-        }
-        else {
-          // rem-dev environment with a remote editor
-          targetEditor.scrollingModel.scrollTo(targetEditor.offsetToLogicalPosition(inlay.offset), ScrollType.CENTER)
+        editor.caretModel.moveToOffset(inlay.offset)
+        if (ClientId.isCurrentlyUnderLocalId) {
+          editor.scrollingModel.scrollVertically(bounds.y)
+        } else {
+          val targetOffset = editor.offsetToLogicalPosition(inlay.offset)
+          editor.scrollingModel.scrollTo(targetOffset, ScrollType.CENTER)
         }
         editor.flashInlayComponent(inlay.renderer.component)
       }
@@ -239,10 +235,10 @@ internal class BuildConsoleViewImplV2(
         val outputMarkers = sortedOutputMarkers(nodeId).toList()
         val outputMarker = outputMarkers.firstOrNull()
         if (outputMarker != null) {
-          targetEditor.caretModel.moveToOffset(outputMarker.startOffset)
-          targetEditor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+          editor.caretModel.moveToOffset(outputMarker.startOffset)
+          editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
         }
-        targetEditor.selectOutputText(outputMarkers)
+        editor.selectOutputText(outputMarkers)
       }
     }
   }
@@ -396,7 +392,8 @@ internal class BuildConsoleViewImplV2(
       invokeAndWaitIfNeeded {
         consoleView.performWhenNoDeferredOutput {
           val editor = consoleView.editor ?: return@performWhenNoDeferredOutput
-          val accessor = ConsoleViewStateAccessor(editor)
+          val targetEditor = getClientEditor(editor, ClientId.currentOrNull)
+          val accessor = ConsoleViewStateAccessor(targetEditor)
           accessor.action()
         }
       }
