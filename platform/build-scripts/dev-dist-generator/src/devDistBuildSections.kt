@@ -336,15 +336,33 @@ internal class DevDistBuildSections private constructor(
   /** Whether a plan names a resource filegroup or an exported resource file that the section of [module] declares. */
   fun ownsResourceFilegroup(module: String): Boolean = renderedResourceFilegroups.containsKey(module)
 
+  /** The resource statements of every package a plan names, see [renderResourceFilegroups]. */
+  private val renderedResourceStatements: DevDistResourceStatements
+    get() = checkNotNull(resourceStatements) { "The resource statements render after the plugin plan entries are bound" }
+
   /**
-   * Fails when a plan of this run names a resource filegroup or an exported file of a community package that the section
-   * of [upstream] does not declare. The ultimate half writes no
-   * community section, so the community half must declare every such statement. The message names the package, the
-   * missing statements and the layouts that need them.
+   * What the half that renders second reads of this half, see [DevDistUpstreamHalf]. [launchModels] and
+   * [ownPackagePlans] come from the plan and the plugin executions over these sections.
    */
-  fun requireResourcesDeclaredBy(upstream: DevDistBuildSections) {
-    val own = checkNotNull(resourceStatements) { "The resource statements render after the plugin plan entries are bound" }
-    val declared = checkNotNull(upstream.resourceStatements) { "The upstream resource statements are not rendered" }
+  fun upstreamSummary(launchModels: Map<String, DevDistLaunchModel>, ownPackagePlans: DevDistOwnPackagePlans): DevDistUpstreamHalf {
+    return DevDistUpstreamHalf(
+      halfName = half.name,
+      contentModuleJarCalls = contentModuleJarCalls,
+      devSections = devSections,
+      resourceStatements = renderedResourceStatements,
+      launchModels = launchModels,
+      ownPackagePlans = ownPackagePlans,
+    )
+  }
+
+  /**
+   * Fails when a plan of this run names a resource filegroup or an exported file of a community package that
+   * [upstream] does not declare. The ultimate half writes no community section, so the community half must declare
+   * every such statement. The message names the package, the missing statements and the layouts that need them.
+   */
+  fun requireResourcesDeclaredBy(upstream: DevDistUpstreamHalf) {
+    val own = renderedResourceStatements
+    val declared = upstream.resourceStatements
     val missing = TreeMap<String, List<String>>()
     for (absolutePackage in own.packages) {
       val owner = index.modulesInPackage(absolutePackage).firstOrNull() ?: continue
@@ -354,7 +372,7 @@ internal class DevDistBuildSections private constructor(
     }
     check(missing.isEmpty()) {
       missing.entries.joinToString(
-        prefix = "The ${half.name} half needs resource statements of community packages that the ${upstream.half.name} half does not declare:\n",
+        prefix = "The ${half.name} half needs resource statements of community packages that the ${upstream.halfName} half does not declare:\n",
         separator = "\n",
       ) { (absolutePackage, gaps) -> "$absolutePackage: $gaps, for the layouts ${own.requesters(absolutePackage)}" }
     }
@@ -613,7 +631,7 @@ internal class DevDistBuildSections private constructor(
       testPlugins: List<TestPluginSpec>,
       verifyPlanUnits: Boolean = false,
       foreignSections: Set<String> = emptySet(),
-      upstream: DevDistBuildSections? = null,
+      upstream: DevDistUpstreamHalf? = null,
     ): DevDistBuildSections {
       val index = snapshotDevDistBazelIndex(sourceIndex)
 
@@ -898,8 +916,9 @@ internal const val CROSS_HALF_PACKAGE_ROOT: String = "build/dev-dist-descriptors
  * run writes its leaf and its `dev_plugin` into the product package of the plugin.
  *
  * Every descriptor entry states the refusals of every stated mode, and the community half states the resources of every
- * layout of its registry. [upstream] is the result of the community half, which the ultimate half reads. A `content_module_jar` call of a community module that differs from the one of
- * [upstream] goes to the product package, see [DevDistBuildSections.relocatedContentModuleJarCalls].
+ * layout of its registry. [upstream] is the upstream summary of the community half, which the ultimate half reads. A
+ * `content_module_jar` call of a community module that differs from the one of [upstream] goes to the product package,
+ * see [DevDistBuildSections.relocatedContentModuleJarCalls].
  */
 internal fun computeDevDistBuildSections(
   outputProvider: ModuleOutputProvider,
@@ -912,7 +931,7 @@ internal fun computeDevDistBuildSections(
   testPlugins: List<TestPluginSpec>,
   verifyPlanUnits: Boolean = false,
   foreignSections: Set<String> = emptySet(),
-  upstream: DevDistBuildSections? = null,
+  upstream: DevDistUpstreamHalf? = null,
 ): DevDistBuildSections {
   return DevDistBuildSections.compute(
     outputProvider, products, walk, derivation, index, files, half, testPlugins, verifyPlanUnits, foreignSections, upstream,
@@ -926,7 +945,7 @@ internal fun computeDevDistBuildSections(
  * state the refusals of every stated mode, so the whole bodies compare. A plugin that no community product plans has
  * no community section, so it is in the result.
  */
-internal fun foreignCommunitySections(upstream: DevDistBuildSections, ultimate: DevDistBuildSections): Set<String> {
+internal fun foreignCommunitySections(upstream: DevDistUpstreamHalf, ultimate: DevDistBuildSections): Set<String> {
   val planned = ultimate.pluginPlanEntries.mapTo(TreeSet()) { it.mainModule }.filter { ultimate.index.isCommunity(it) == true }
   return divergentDevSections(plugins = planned, sections = ultimate.devSections, otherSections = upstream.devSections)
 }

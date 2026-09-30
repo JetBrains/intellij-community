@@ -29,8 +29,9 @@ import java.nio.file.Path
  * community half, and then the plugin packings, the `dev` sections and the plan of [half].
  *
  * Each half writes the generated files of its own packages, see [DevDistHalf.ownsPackage]. The community half renders
- * first from the community model. [half] renders second, and it reads the community result as the upstream result:
- * it reuses a community target when its own text is equal, and else it writes a product package outside `community/`.
+ * first from the community model. [half] renders second, and it reads the upstream summary of the community half, see
+ * [DevDistUpstreamHalf]. It reuses a community target when its own text is equal, and else it writes a product package
+ * outside `community/`.
  *
  * The renders read the product model of [productDerivation] and no pipeline output. Only the write decision reads the
  * errors of the pipeline, so [DevDistHalvesRun.finish] takes it afterwards. A run without `bazel-targets.json` forks no
@@ -62,7 +63,7 @@ fun TaskScope.forkDevDistHalves(
   }
   var bazelTask: Subtask<DevDistBazelComputes>? = null
   var communityTask: Subtask<DevDistBazelComputes>? = null
-  // The community half renders first, and the half of this run reads its result as the upstream result.
+  // The community half renders first, and the half of this run reads its upstream summary.
   if (devDistPlanInputExists(projectRoot)) {
     val upstreamTask = fork("generate community dev-distribution plan") {
       computeCommunityDevDistFiles(projectRoot = projectRoot, verifyPlanUnits = verifyPlanUnits)
@@ -78,7 +79,7 @@ fun TaskScope.forkDevDistHalves(
         verifyPlanUnits = verifyPlanUnits,
         targets = BazelTargetsInfo.loadBazelTargetsJson(projectRoot),
         testPlugins = testPlugins,
-        upstream = upstreamTask.await(),
+        upstream = upstreamTask.await().upstream,
       )
     }
   }
@@ -132,7 +133,7 @@ class DevDistHalvesRun internal constructor(
         verifyPlanUnits = verifyPlanUnits,
         targets = BazelTargetsInfo.loadBazelTargetsJson(projectRoot),
         testPlugins = testPlugins,
-        upstream = upstream,
+        upstream = upstream.upstream,
       )
     }
     val results = listOfNotNull(communityFiles, bazelFiles).flatMap { listOf(it.sections.finish(commitChanges = commitPlan), it.plan.finish(commitChanges = commitPlan)) }
@@ -150,14 +151,35 @@ class DevDistHalvesFiles(
 /**
  * The two dev-distribution outputs that need `bazel-targets.json`: the `BUILD.bazel` dev sections and the plan.
  *
- * [buildSections] is the computation both outputs read. The half that renders second compares its own sections with the
- * ones of the upstream result. [ownPackagePlans] are the plan files and the calls that the community half writes into
- * the own package of a community plugin, and the half that renders second reuses them.
+ * [upstream] is what the half that renders second reads of this half. The computation of the sections is not part of
+ * the result, so it is unreachable once [computeDevDistBazelFiles] returns.
  */
 internal class DevDistBazelComputes(
   @JvmField val sections: DevDistPlanCompute,
   @JvmField val plan: DevDistPlanCompute,
-  @JvmField val buildSections: DevDistBuildSections,
+  @JvmField val upstream: DevDistUpstreamHalf,
+)
+
+/**
+ * What the ultimate half reads of the community half, and nothing else. The rules are those of ADR 0030.
+ *
+ * - [contentModuleJarCalls] are the `content_module_jar` calls, keyed by module. An ultimate call with another text is
+ *   relocated, see R3 and [isRelocatedContentModuleJarCall].
+ * - [devSections] are the bodies of the `dev` sections, keyed by main module. A plugin with another body gets a product
+ *   package, see R2 and [foreignCommunitySections].
+ * - [resourceStatements] are the declared resource statements. The ultimate half fails on a statement outside them,
+ *   see R5 and [DevDistBuildSections.requireResourcesDeclaredBy].
+ * - [launchModels] are the launch models, keyed by the `dev-build.json` key, see [sharedLaunchModels].
+ * - [ownPackagePlans] are the plan files and the calls of the own packages of community plugins, see R6.
+ *
+ * [halfName] is the name of the half, for a failure message.
+ */
+internal class DevDistUpstreamHalf(
+  @JvmField val halfName: String,
+  @JvmField val contentModuleJarCalls: Map<String, String>,
+  @JvmField val devSections: Map<String, String>,
+  @JvmField val resourceStatements: DevDistResourceStatements,
+  @JvmField val launchModels: Map<String, DevDistLaunchModel>,
   @JvmField val ownPackagePlans: DevDistOwnPackagePlans,
 )
 
@@ -172,7 +194,8 @@ internal class DevDistBazelComputes(
  * runs once, and every render reads it.
  *
  * [root] is the root of [half], and every path of the run is relative to it, see [DevDistHalf.root]. [upstream] is the
- * result of the community half, which the ultimate half reads. It is `null` for the community half, which renders first.
+ * upstream summary of the community half, which the ultimate half reads. It is `null` for the community half, which
+ * renders first. The result holds the upstream summary of [half] and not the computation of its sections.
  * [testPlugins] are the Product DSL test plugins that a run-configuration module can be.
  */
 internal fun computeDevDistBazelFiles(
@@ -184,10 +207,9 @@ internal fun computeDevDistBazelFiles(
   verifyPlanUnits: Boolean,
   targets: BazelTargetsInfo.TargetsFile,
   testPlugins: List<TestPluginSpec>,
-  upstream: DevDistBazelComputes? = null,
+  upstream: DevDistUpstreamHalf? = null,
 ): DevDistBazelComputes {
-  check(upstream == null || !half.writesCommunityPackages) { "The ${half.name} half renders first, so it reads no upstream result" }
-  val upstreamSections = upstream?.buildSections
+  check(upstream == null || !half.writesCommunityPackages) { "The ${half.name} half renders first, so it reads no upstream summary" }
   val index = DevDistBazelIndex(
     targets = targets,
     projectRoot = root,
@@ -216,12 +238,12 @@ internal fun computeDevDistBazelFiles(
         testPlugins = testPlugins,
         verifyPlanUnits = verifyPlanUnits,
         foreignSections = foreignSections,
-        upstream = upstreamSections,
+        upstream = upstream,
       )
     }
   }
-  val sections = if (upstreamSections == null) computeSections(emptySet()) else computeUpstreamAwareSections(upstreamSections, ::computeSections)
-  upstreamSections?.let(sections::requireResourcesDeclaredBy)
+  val sections = if (upstream == null) computeSections(emptySet()) else computeUpstreamAwareSections(upstream, ::computeSections)
+  upstream?.let(sections::requireResourcesDeclaredBy)
   val executions = buildSpan("generate dev-distribution plugin executions") {
     computeDevDistPluginExecutions(
       sections = sections,
@@ -241,14 +263,16 @@ internal fun computeDevDistBazelFiles(
       executions = executions,
       targets = index.targets,
       runConfigurationRows = derivation.runConfigurations.rows,
-      upstreamLaunchModels = upstream?.plan?.launchModels,
+      upstreamLaunchModels = upstream?.launchModels,
     )
   }
   return DevDistBazelComputes(
     sections = sectionFiles,
     plan = plan,
-    buildSections = sections,
-    ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, half),
+    upstream = sections.upstreamSummary(
+      launchModels = plan.launchModels,
+      ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, half),
+    ),
   )
 }
 
@@ -259,11 +283,11 @@ internal fun computeDevDistBazelFiles(
  * Every other community plugin reuses the targets of its community section. The census prints one line per plugin.
  */
 private fun computeUpstreamAwareSections(
-  upstreamSections: DevDistBuildSections,
+  upstream: DevDistUpstreamHalf,
   computeSections: (Set<String>) -> DevDistBuildSections,
 ): DevDistBuildSections {
   val first = computeSections(emptySet())
-  val foreign = foreignCommunitySections(upstream = upstreamSections, ultimate = first)
+  val foreign = foreignCommunitySections(upstream = upstream, ultimate = first)
   for (mainModule in foreign) {
     println("product package of $mainModule: the ultimate half states another leaf or packaging than its community section")
   }
