@@ -523,6 +523,7 @@ fn every_planfile_derivation_plans() {
             &[],
         )
         .unwrap_or_else(|error| panic!("{name}: {error}"));
-        plan(&derivation.recipe, &derivation.catalogue).unwrap_or_else(|error| panic!("{name}: the derived recipe does not plan: {error}"));
+        plan(&derivation.recipe, &derivation.catalogue)
+            .unwrap_or_else(|error| panic!("{name}: the derived recipe does not plan: {error:#}"));
     }
 }

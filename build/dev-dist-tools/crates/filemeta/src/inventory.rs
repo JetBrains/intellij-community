@@ -92,12 +92,8 @@ pub fn inventory(root: &Path) -> Result<Vec<Entry>> {
             anyhow::Error::from(io::Error::from(error)).context(path)
         })?;
         let relative = item.path().strip_prefix(root).expect("a walk entry is below the root");
-        let relative_path = relative
-            .iter()
-            .map(|part| part.to_str())
-            .collect::<Option<Vec<_>>>()
-            .with_context(|| format!("the file name is not valid UTF-8: {}", item.path().display()))?
-            .join("/");
+        let relative_path =
+            distpath::slash_path(relative).with_context(|| format!("the file name is not valid UTF-8: {}", item.path().display()))?;
         entries.push(inspect(item.path(), &relative_path)?);
     }
     merge(&entries)

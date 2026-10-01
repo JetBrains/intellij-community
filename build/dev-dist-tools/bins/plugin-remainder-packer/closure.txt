@@ -35,7 +35,6 @@ serde_json
 simd_adler32
 tar
 tempfile
-thiserror
 twox_hash
 typed_path
 walkdir

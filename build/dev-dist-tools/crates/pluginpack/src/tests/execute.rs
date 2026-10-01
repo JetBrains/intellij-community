@@ -76,11 +76,11 @@ fn independent_destinations_collide_with_remainder_tree_entries() {
             assert_content(&written.output.join("lib/modules/other.jar"), "entry");
             continue;
         }
-        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error}"));
+        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error:#}"));
         let error = execution
             .write(&root.path().join("output"), &root.path().join("inventory.json"))
             .unwrap_err();
-        assert!(error.message().contains(want), "{name}: expected {want:?}, got {error}");
+        assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}");
         assert_no_published_outputs(root.path());
     }
 }
@@ -128,11 +128,11 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
             );
             continue;
         }
-        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error}"));
+        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error:#}"));
         let error = execution
             .write(&root.path().join("output"), &root.path().join("inventory.json"))
             .unwrap_err();
-        assert!(error.message().contains(want), "{name}: expected {want:?}, got {error}");
+        assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}");
         assert_no_published_outputs(root.path());
     }
 }
@@ -283,8 +283,8 @@ fn filesystem_aliases_cannot_put_outputs_inside_inputs() {
                 let before = materialization_record(root.path());
                 let error = execution.write(&output, &inventory).unwrap_err();
                 assert!(
-                    error.message().contains("overlaps input"),
-                    "tree={tree}/{name}/{output_kind}: {error}"
+                    format!("{error:#}").contains("overlaps input"),
+                    "tree={tree}/{name}/{output_kind}: {error:#}"
                 );
                 assert_eq!(materialization_record(root.path()), before, "the boundary failure wrote files");
             }
@@ -309,13 +309,13 @@ fn output_and_inventory_reserve_aliased_roots_before_writing() {
             let before = materialization_record(root.path());
             let result = boundary_execution(&source, true).write(&output, &alias.join("inventory.json"));
             if !aliased {
-                result.unwrap_or_else(|error| panic!("distinct output names were rejected: {error}"));
+                result.unwrap_or_else(|error| panic!("distinct output names were rejected: {error:#}"));
                 continue;
             }
             let error = result.unwrap_err();
             assert!(
-                error.message().contains("outside the payload"),
-                "{name}/existing={existing}: {error}"
+                format!("{error:#}").contains("outside the payload"),
+                "{name}/existing={existing}: {error:#}"
             );
             assert_eq!(materialization_record(root.path()), before, "the boundary failure wrote files");
         }
@@ -338,8 +338,8 @@ fn output_root_symlinks_reject_trailing_separators() {
                 .write(&output, &root.path().join("inventory.json"))
                 .unwrap_err();
             assert!(
-                error.message().contains("not a real directory"),
-                "tree={tree}/suffix={suffix:?}: {error}"
+                format!("{error:#}").contains("not a real directory"),
+                "tree={tree}/suffix={suffix:?}: {error:#}"
             );
             assert_eq!(materialization_record(root.path()), before, "the boundary failure wrote files");
         }
@@ -363,7 +363,7 @@ fn input_root_links_reject_output_aliases() {
         }
         let before = materialization_record(root.path());
         let error = execution.write(&output, &inventory).unwrap_err();
-        assert!(error.message().contains("overlaps input"), "{destination}: {error}");
+        assert!(format!("{error:#}").contains("overlaps input"), "{destination}: {error:#}");
         assert_eq!(materialization_record(root.path()), before, "the raw inputs changed");
     }
 }
@@ -384,7 +384,7 @@ fn filesystem_boundaries_accept_distinct_source_names() {
         let before = filemeta::inventory(&source).unwrap();
         boundary_execution(&source, true)
             .write(&output, &root.path().join("inventory.json"))
-            .unwrap_or_else(|error| panic!("distinct names were rejected: {error}"));
+            .unwrap_or_else(|error| panic!("distinct names were rejected: {error:#}"));
         assert_eq!(filemeta::inventory(&source).unwrap(), before, "the source changed");
     }
 }
@@ -462,7 +462,7 @@ fn copy_tree_rejects_declared_descendant_collision_before_writing() {
     let error = execution
         .write(&root.path().join("output"), &root.path().join("inventory.json"))
         .unwrap_err();
-    assert!(error.message().contains("conflicting output destination"), "{error}");
+    assert!(format!("{error:#}").contains("conflicting output destination"), "{error:#}");
     assert_no_published_outputs(root.path());
 }
 
@@ -799,7 +799,7 @@ fn directory_boundary_and_declared_root_symlinks() {
             .write(&root.path().join("output"), &root.path().join("inventory.json"));
         match (escape, result) {
             (false, Ok(())) => {}
-            (true, Err(error)) => assert!(error.message().contains("escapes"), "{error}"),
+            (true, Err(error)) => assert!(format!("{error:#}").contains("escapes"), "{error:#}"),
             (escape, result) => panic!("escape={escape}: {result:?}"),
         }
     }
@@ -920,7 +920,7 @@ fn write_rejects_file_directory_collisions_across_independent_assets() {
                 recipe.assets.reverse();
             }
             let error = plan(&recipe, &catalogue).map(|_| ()).unwrap_err();
-            assert!(error.message().contains("destination collision"), "{error}");
+            assert!(format!("{error:#}").contains("destination collision"), "{error:#}");
             assert_no_published_outputs(root.path());
         }
     }

@@ -2,7 +2,7 @@
 
 The slash-path rules of the dev-distribution tools: the path inside a distribution, the jar entry name, the link target,
 and the Go `path` functions. The functions read no file and have no dependency except `anyhow`. A host path is not in
-this crate.
+this crate, except for the input of `slash_path`.
 
 `filemeta`, `jarpack`, `pluginpack`, `component` and the collector call these functions. A crate with its own error type
 keeps the text of the refusal.
@@ -44,5 +44,6 @@ empty segment.
 | `validate_entry_name(&str) -> Result<()>` | | Accepts a portable, relative jar entry name. The generated `__index__` is not a source entry. |
 | `validate_relative_path(&str) -> Result<()>` | | Accepts a safe jar entry name that is also a portable file name on every host. |
 | `clean(&str) -> String`, `dir(&str) -> String`, `join(&str, &str) -> String` | `path.Clean`, `path.Dir`, `path.Join` | The Go `path` functions over slash paths. `join` takes two elements. |
+| `slash_path(&Path) -> Option<String>` | | The components of a relative host path joined by `/`. `None` when a component is not UTF-8. The inventory walk of `filemeta` and the tree walks of `pluginpack` name their entries through it. |
 
 `Result` is `anyhow::Result`. A refusal has no context, so `to_string()` and `{:#}` give the same text.

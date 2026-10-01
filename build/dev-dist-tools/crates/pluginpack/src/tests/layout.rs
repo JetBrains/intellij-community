@@ -1,6 +1,5 @@
 //! The port of `layout_test.go`.
 
-use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
@@ -641,7 +640,7 @@ fn a_single_visit_reads_the_target_from_the_archive_again() {
     );
     let mut reader = LayoutArchive::Tar {
         file: archive,
-        hard_link_targets: HashSet::new(),
+        hard_link_targets: None,
     };
     let mut kinds = Vec::new();
     reader
@@ -657,7 +656,42 @@ fn a_single_visit_reads_the_target_from_the_archive_again() {
     let LayoutArchive::Tar { hard_link_targets, .. } = &reader else {
         unreachable!()
     };
-    assert!(hard_link_targets.contains("bin/ld"), "the visit recorded {hard_link_targets:?}");
+    assert!(
+        hard_link_targets.as_ref().is_some_and(|targets| targets.contains("bin/ld")),
+        "the visit recorded {hard_link_targets:?}"
+    );
+}
+
+/// The layout of the binutils links in the Linux GDB archive. A transform without mappings visits the archive once, so
+/// the first link that it writes finds a target before it, and a later link finds a target that comes after that link.
+#[test]
+fn a_single_visit_keeps_the_targets_before_and_after_the_first_link() {
+    let root = temp();
+    let archive = root.path().join("gdb.tar.gz");
+    write_tar_gz(
+        &archive,
+        &[
+            tar_file("bin/nm", "nm", 0o755),
+            tar_file("bin/ld", "ld", 0o755),
+            tar_hard_link("bin/ld.bfd", "bin/ld", 0o755),
+            tar_file("bin/objcopy", "objcopy", 0o755),
+            tar_hard_link("x/bin/nm", "bin/nm", 0o755),
+            tar_hard_link("x/bin/ld.bfd", "bin/ld.bfd", 0o755),
+            tar_hard_link("x/bin/objcopy", "bin/objcopy", 0o755),
+        ],
+    );
+    let written = write_execution(
+        &layout_tree_recipe("payload", one_archive(archive_tree(0, Vec::new()))),
+        &archive_catalogue(&archive),
+    );
+    for (name, content) in [
+        ("payload/bin/ld.bfd", "ld"),
+        ("payload/x/bin/nm", "nm"),
+        ("payload/x/bin/ld.bfd", "ld"),
+        ("payload/x/bin/objcopy", "objcopy"),
+    ] {
+        assert_content(&written.output.join(name), content);
+    }
 }
 
 /// First claim wins, the kind conflict, and the entries order. The Go case of mode 0644 on a layout-tree has no port.
@@ -950,7 +984,10 @@ fn layout_includes_and_executables_validation() {
         );
         match plan(&layout_jar_recipe(layout), &catalogue(vec![artifact.clone()])) {
             Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+            Err(error) => assert!(
+                format!("{error:#}").contains(message),
+                "{name}: expected {message:?}, got {error:#}"
+            ),
         }
     }
 }
@@ -1058,7 +1095,10 @@ fn layout_plan_rejects_invalid_payloads() {
     for (name, recipe, catalogue, message) in tests {
         match plan(&recipe, &catalogue) {
             Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(error.message().contains(message), "{name}: expected {message:?}, got {error}"),
+            Err(error) => assert!(
+                format!("{error:#}").contains(message),
+                "{name}: expected {message:?}, got {error:#}"
+            ),
         }
     }
 }

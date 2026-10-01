@@ -29,18 +29,11 @@ A jar operation writes no directory entries. The simple tier writes them for a t
 The Go distribution transport root `.distribution-root/` does not exist. Every asset is below the plugin directory,
 and the remainder writes only plugin files.
 
-## Public items
+## Errors
 
-- `plan(recipe: &contract::Recipe, catalogue: &contract::Catalogue) -> Result<Execution>`: validates the recipe
-  against the catalogue without file system access. The catalogue artifacts, in their order, are the inputs.
-- `Execution::write(&self, output_directory: &Path, inventory_file: &Path) -> Result<()>`: writes the remainder into
-  a stage beside the output, renames the stage over the output, and then writes the inventory (filemeta version 1).
-  The output must be absent or an empty real directory, and the inventory must not exist. A failure publishes nothing.
-- `write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()>`: writes `<output>/<entry>.gzip` for each
-  `.xml` entry of each archive. The member holds the deflate stream of the zip entry. The first archive that holds a
-  name wins, and a directory entry writes nothing.
-- `Error`: one refusal or failure. `Display` and `Error::message()` give the Go error text. `Result<T>` is its alias.
-  A refusal of `distpath` or `planfile::validate` keeps its text.
+Every function returns `anyhow::Result`. `{:#}` prints the text of the Go error with its context, and a refusal of
+`distpath` or `planfile::validate` keeps its text. The doc comments of `plan`, `Execution::write` and
+`write_gzip_resources` state their contracts.
 
 ## Archive readers
 
@@ -49,6 +42,9 @@ and the remainder writes only plugin files.
 - `.zip.zst`: `ruzstd` decodes the zip into the scratch directory. The entries have mode zero and no links.
 - `.tar.gz`: `flate2` and the `tar` crate, in stream order, the first gzip member only. A hard link is a file with the
   bytes of its target.
+
+A transform without mappings reads the archive once. With mappings, a first visit selects the mapping. A single visit
+that meets a hard link scans the archive once more for every target, and reads it again up to the link.
 
 ## Layout modes
 

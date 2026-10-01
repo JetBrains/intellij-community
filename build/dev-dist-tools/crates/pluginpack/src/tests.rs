@@ -232,13 +232,13 @@ pub(crate) struct Written {
 }
 
 pub(crate) fn write_execution(recipe: &Recipe, catalogue: &Catalogue) -> Written {
-    let execution = plan(recipe, catalogue).unwrap_or_else(|error| panic!("plan: {error}"));
+    let execution = plan(recipe, catalogue).unwrap_or_else(|error| panic!("plan: {error:#}"));
     let root = temp();
     let output = root.path().join("plugin");
     let inventory = root.path().join("inventory.json");
     execution
         .write(&output, &inventory)
-        .unwrap_or_else(|error| panic!("write: {error}"));
+        .unwrap_or_else(|error| panic!("write: {error:#}"));
     let inventory = filemeta::read(&inventory).unwrap();
     Written {
         _root: root,
@@ -250,17 +250,17 @@ pub(crate) fn write_execution(recipe: &Recipe, catalogue: &Catalogue) -> Written
 pub(crate) fn expect_plan_error(recipe: &Recipe, catalogue: &Catalogue, message: &str) {
     match plan(recipe, catalogue) {
         Ok(_) => panic!("expected a plan failure with {message:?}"),
-        Err(error) => assert!(error.message().contains(message), "expected {message:?}, got {error}"),
+        Err(error) => assert!(format!("{error:#}").contains(message), "expected {message:?}, got {error:#}"),
     }
 }
 
 /// Plans the recipe, expects the write to fail with the message, and expects no published output.
 pub(crate) fn expect_write_failure(recipe: &Recipe, catalogue: &Catalogue, message: &str) {
-    let execution = plan(recipe, catalogue).unwrap_or_else(|error| panic!("plan: {error}"));
+    let execution = plan(recipe, catalogue).unwrap_or_else(|error| panic!("plan: {error:#}"));
     let root = temp();
     match execution.write(&root.path().join("output"), &root.path().join("inventory.json")) {
         Ok(()) => panic!("expected a write failure with {message:?}"),
-        Err(error) => assert!(error.message().contains(message), "expected {message:?}, got {error}"),
+        Err(error) => assert!(format!("{error:#}").contains(message), "expected {message:?}, got {error:#}"),
     }
     assert_no_published_outputs(root.path());
 }

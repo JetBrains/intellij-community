@@ -8,7 +8,7 @@ use crate::write_gzip_resources;
 
 fn expect_gzip_failure(archives: &[PathBuf], output: &Path, message: &str) {
     let error = write_gzip_resources(archives, output).unwrap_err();
-    assert!(error.message().contains(message), "expected {message:?}, got {error}");
+    assert!(format!("{error:#}").contains(message), "expected {message:?}, got {error:#}");
 }
 
 #[test]

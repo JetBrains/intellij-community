@@ -310,3 +310,19 @@ fn slash_paths_follow_the_go_rules() {
         assert_eq!(join(first, second), expected, "join({first:?}, {second:?})");
     }
 }
+
+#[test]
+fn slash_path_joins_the_components_of_a_relative_host_path() {
+    assert_eq!(slash_path(Path::new("")).as_deref(), Some(""));
+    assert_eq!(slash_path(Path::new("lib")).as_deref(), Some("lib"));
+    assert_eq!(
+        slash_path(&Path::new("lib").join("modules").join("a.jar")).as_deref(),
+        Some("lib/modules/a.jar")
+    );
+    #[cfg(unix)]
+    {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        assert_eq!(slash_path(&Path::new("lib").join(OsStr::from_bytes(b"\xff"))), None);
+    }
+}

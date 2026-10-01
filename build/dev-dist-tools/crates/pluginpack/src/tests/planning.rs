@@ -337,7 +337,7 @@ fn plan_rejects_invalid_contracts() {
         change(&mut recipe, &mut catalogue);
         match plan(&recipe, &catalogue) {
             Ok(_) => panic!("{name}: expected {want:?}"),
-            Err(error) => assert!(error.message().contains(want), "{name}: expected {want:?}, got {error}"),
+            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}"),
         }
     }
 }
@@ -487,7 +487,7 @@ fn link_graph_uses_raw_components_and_known_directories() {
             (Ok(()), "") => {}
             (Ok(()), want) => panic!("{name}: expected {want:?}"),
             (Err(error), "") => panic!("{name}: {error}"),
-            (Err(error), want) => assert!(error.message().contains(want), "{name}: expected {want:?}, got {error}"),
+            (Err(error), want) => assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}"),
         }
     }
 }

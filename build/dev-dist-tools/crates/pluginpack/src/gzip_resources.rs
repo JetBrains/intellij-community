@@ -4,7 +4,8 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::error::{Result, fail};
+use anyhow::{Context as _, Result, bail};
+
 use crate::layout::LayoutScratch;
 use crate::layout_archive::{EntryKind, LayoutArchive, gzip_member};
 use crate::layout_writer::{Content, LayoutWriter, TreeWriter};
@@ -24,7 +25,7 @@ pub fn write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()> {
             .map(|name| name.to_string_lossy().to_lowercase())
             .unwrap_or_default();
         if !name.ends_with(".zip") && !name.ends_with(".jar") {
-            fail!("a gzip resource source is a zip or jar archive: {}", file.display());
+            bail!("a gzip resource source is a zip or jar archive: {}", file.display());
         }
         let mut archive = LayoutArchive::open(file, &mut scratch)?;
         archive.visit(&mut |entry| {
@@ -32,11 +33,9 @@ pub fn write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()> {
                 return Ok(());
             }
             if entry.kind != EntryKind::File || !entry.name.ends_with(".xml") {
-                fail!("unexpected file {:?} in {}", entry.name, file.display());
+                bail!("unexpected file {:?} in {}", entry.name, file.display());
             }
-            let stream = entry
-                .deflate()
-                .map_err(|error| error.context(format_args!("{}: {}", file.display(), entry.name)))?;
+            let stream = entry.deflate().with_context(|| format!("{}: {}", file.display(), entry.name))?;
             writer.file(&format!("{}.gzip", entry.name), Content::Bytes(gzip_member(&stream)), 0o644)
         })?;
     }

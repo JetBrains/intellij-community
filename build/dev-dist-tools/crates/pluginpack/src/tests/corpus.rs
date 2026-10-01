@@ -159,6 +159,6 @@ fn every_checked_in_plan_file_plans() {
         .unwrap_or_else(|error| panic!("{}: derive: {error}", path.display()));
         validate_assets(file.version, &derivation.assets, true)
             .unwrap_or_else(|error| panic!("{}: validate_assets: {error}", path.display()));
-        plan(&derivation.recipe, &derivation.catalogue).unwrap_or_else(|error| panic!("{}: plan: {error}", path.display()));
+        plan(&derivation.recipe, &derivation.catalogue).unwrap_or_else(|error| panic!("{}: plan: {error:#}", path.display()));
     }
 }

@@ -2,9 +2,11 @@
 //!
 //! A path inside a distribution, a jar entry name and a link target are text in slash form. The functions of this crate
 //! check and rewrite such text without file system access. A host path is not text here: the tools that read the file
-//! system keep their own host-path helpers. `API.md` beside this crate lists what the functions refuse.
+//! system keep their own host-path helpers. The one exception is [`slash_path`], the name of a walked entry in slash
+//! form. `API.md` beside this crate lists what the functions refuse.
 
 use std::collections::{BTreeMap, HashMap};
+use std::path::Path;
 
 use anyhow::{Result, bail};
 
@@ -235,6 +237,19 @@ pub fn join(first: &str, second: &str) -> String {
         (false, true) => clean(first),
         (false, false) => clean(&format!("{first}/{second}")),
     }
+}
+
+/// Returns the slash form of a relative host path, such as the part of a walked path below its root: the components
+/// joined by `/`, or an empty string for an empty path. It returns `None` when a component is not valid UTF-8.
+///
+/// The function reads no file. The inventory walk and the tree walks of the remainder packer name their entries through
+/// it.
+pub fn slash_path(relative: &Path) -> Option<String> {
+    let parts = relative
+        .components()
+        .map(|component| component.as_os_str().to_str())
+        .collect::<Option<Vec<_>>>()?;
+    Some(parts.join("/"))
 }
 
 #[cfg(test)]

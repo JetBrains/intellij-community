@@ -43,7 +43,7 @@ pub(crate) fn within(root: &Path, file: &Path) -> bool {
 
 /// The identity of one file: the device and the inode on Unix, an open handle on Windows. It follows a link.
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub(crate) struct FileId(#[cfg(unix)] (u64, u64), #[cfg(not(unix))] same_file::Handle);
+pub(crate) struct FileId(#[cfg(unix)] (u64, u64), #[cfg(windows)] same_file::Handle);
 
 /// Returns the [`FileId`] of the file that `path` names, as Go `os.Stat` and `os.SameFile` compare it.
 pub(crate) fn file_id(path: &Path) -> io::Result<FileId> {
@@ -53,7 +53,7 @@ pub(crate) fn file_id(path: &Path) -> io::Result<FileId> {
         let metadata = fs::metadata(path)?;
         Ok(FileId((metadata.dev(), metadata.ino())))
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
         same_file::Handle::from_path(path).map(FileId)
     }
@@ -68,7 +68,7 @@ pub(crate) fn entry_id(path: &Path, metadata: &fs::Metadata) -> io::Result<FileI
         let _ = path;
         Ok(FileId((metadata.dev(), metadata.ino())))
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
         let _ = metadata;
         file_id(path)
@@ -100,6 +100,12 @@ pub(crate) fn create_symlink(target: &str, link: &Path) -> io::Result<()> {
 /// Reports whether the link target text is an absolute host path, as Go `filepath.IsAbs` does.
 pub(crate) fn is_absolute_target(target: &str) -> bool {
     Path::new(target).is_absolute()
+}
+
+/// Keeps the text of a walk error. Its `Display` names the path and the I/O error, and its source is the same I/O error,
+/// so `{:#}` of a plain conversion prints the I/O error twice.
+pub(crate) fn walk_error(error: &walkdir::Error) -> anyhow::Error {
+    anyhow::anyhow!("{error}")
 }
 
 #[cfg(test)]

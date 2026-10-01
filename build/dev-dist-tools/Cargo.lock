@@ -549,6 +549,7 @@ dependencies = [
 name = "pluginpack"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "distpath",
  "filemeta",
  "flate2",
@@ -563,7 +564,6 @@ dependencies = [
  "sha2",
  "tar",
  "tempfile",
- "thiserror",
  "walkdir",
  "xxhash-rust",
  "zip",

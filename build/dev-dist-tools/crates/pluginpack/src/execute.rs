@@ -6,13 +6,15 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result, bail};
+use distpath::path_identity;
+use filemeta::{Entry, EntryType};
 use jarpack::{DirectoryMode, ManifestMode, MergeOptions, MergeSpec};
 use planfile::contract::{ArtifactKind, Asset, AssetKind, Manifest, Operation, Producer, Reference, Source};
 
-use crate::error::{Error, IoContext, Result, fail};
 use crate::layout::LayoutScratch;
 use crate::paths::{self, FileId};
-use crate::plan::{Execution, identity, source_filter, validate_plugin_links};
+use crate::plan::{Execution, source_filter, validate_plugin_links};
 
 /// What one resolved operation writes at its destination.
 pub(crate) enum Action {
@@ -48,7 +50,7 @@ impl Stage {
         let root = tempfile::Builder::new()
             .prefix(".plugin-remainder-")
             .tempdir_in(parent)
-            .at(parent)?
+            .with_context(|| parent.display().to_string())?
             .keep();
         Ok(Self {
             root: Some(root),
@@ -62,7 +64,7 @@ impl Stage {
 
     /// Renames the stage to `output`, and then keeps it.
     fn publish(&mut self, output: &Path) -> Result<()> {
-        fs::rename(self.path(), output).at(output)?;
+        fs::rename(self.path(), output).with_context(|| output.display().to_string())?;
         self.root = None;
         Ok(())
     }
@@ -95,7 +97,7 @@ impl Execution {
         for backing_root in &backing_roots {
             for destination in [&output, &inventory] {
                 if overlapping_paths(destination, backing_root)? {
-                    fail!(
+                    bail!(
                         "output overlaps the transport backing root {:?}",
                         backing_root.display().to_string()
                     );
@@ -121,7 +123,7 @@ impl Execution {
         let mut links = Vec::new();
         for resolved in &operations {
             let destination = paths::host(stage.path(), &resolved.destination);
-            match &resolved.action {
+            let mut file = match &resolved.action {
                 Action::Directory => continue,
                 Action::Symlink(target) => {
                     links.push((resolved.destination.as_str(), target.as_str()));
@@ -130,13 +132,22 @@ impl Execution {
                 Action::Jar(spec) => {
                     let mut spec = (**spec).clone();
                     spec.output = destination.clone();
-                    spec.merge(&MergeOptions::default())
-                        .map_err(|error| Error::chain(error).context(&resolved.destination))?;
+                    let merged = spec.merge(&MergeOptions::default()).with_context(|| resolved.destination.clone())?;
+                    // The merge hashes the jar as it writes it, so the jar is not read again.
+                    Entry {
+                        relative_path: resolved.destination.clone(),
+                        entry_type: EntryType::File,
+                        hash: merged.content_hash,
+                        size: merged.bytes_written,
+                        ..Entry::default()
+                    }
                 }
-                Action::Copy(input) => fscopy::replace_with_copy(input, &destination)?,
-            }
-            // The inspection runs before the chmod, because a declared mode can deny the read.
-            let mut file = filemeta::inspect(&destination, &resolved.destination).map_err(Error::chain)?;
+                Action::Copy(input) => {
+                    fscopy::replace_with_copy(input, &destination)?;
+                    // The inspection runs before the chmod, because a declared mode can deny the read.
+                    filemeta::inspect(&destination, &resolved.destination)?
+                }
+            };
             fscopy::set_mode(&destination, resolved.mode)?;
             // The inventory records the mode the packer set. POSIX reads the same bits back, and NTFS stores none.
             file.mode = resolved.mode;
@@ -147,16 +158,16 @@ impl Execution {
         // target.
         for (name, target) in links {
             let destination = paths::host(stage.path(), name);
-            fs::remove_file(&destination).at(&destination)?;
+            fs::remove_file(&destination).with_context(|| destination.display().to_string())?;
             paths::create_symlink(target, &destination)?;
-            files.push(filemeta::inspect(&destination, name).map_err(Error::chain)?);
+            files.push(filemeta::inspect(&destination, name)?);
         }
         let mut directories: Vec<&Resolved> = operations.iter().filter(|resolved| resolved.is_directory()).collect();
         directories.sort_by(|first, second| second.destination.cmp(&first.destination));
         for resolved in directories {
             let destination = paths::host(stage.path(), &resolved.destination);
             fscopy::set_mode(&destination, resolved.mode)?;
-            let mut entry = filemeta::inspect(&destination, &resolved.destination).map_err(Error::chain)?;
+            let mut entry = filemeta::inspect(&destination, &resolved.destination)?;
             entry.mode = resolved.mode;
             files.push(entry);
         }
@@ -165,21 +176,21 @@ impl Execution {
         let mut metadata = tempfile::Builder::new()
             .prefix(".plugin-inventory-")
             .tempfile_in(inventory_parent)
-            .at(inventory_parent)?
+            .with_context(|| inventory_parent.display().to_string())?
             .into_temp_path();
-        filemeta::write(&metadata, &files).map_err(Error::chain)?;
+        filemeta::write(&metadata, &files)?;
         fscopy::set_mode(&metadata, 0o644)?;
         scratch.remove()?;
         check_empty_directory(&output)?;
         match fs::remove_dir(&output) {
-            Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error).at(&output),
+            Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error).with_context(|| output.display().to_string()),
             _ => {}
         }
         stage.publish(&output)?;
         // `fs::rename` gives a long path the `\\?\` prefix. `TempPath::persist` does not, so it fails past `MAX_PATH`.
         if let Err(error) = fs::rename(&metadata, &inventory) {
             remove_stage(&output, &stage.directories);
-            return Err(error).at(&inventory);
+            return Err(error).with_context(|| inventory.display().to_string());
         }
         metadata.disable_cleanup(true);
         Ok(())
@@ -198,14 +209,12 @@ impl Execution {
             match operation {
                 Operation::CopyTree { destination, input } => {
                     let root = PathBuf::from(&self.artifacts[&input.artifact].root);
-                    let (tree, backing_root) = resolve_directory_tree(destination, &root).map_err(|error| error.context(destination))?;
+                    let (tree, backing_root) = resolve_directory_tree(destination, &root).with_context(|| destination.clone())?;
                     operations.extend(tree);
                     backing_roots.extend(backing_root);
                 }
                 Operation::LayoutTree { destination, layout } => {
-                    let (tree, backing_root) = resolver
-                        .layout_tree(destination, layout)
-                        .map_err(|error| error.context(destination))?;
+                    let (tree, backing_root) = resolver.layout_tree(destination, layout).with_context(|| destination.clone())?;
                     operations.extend(tree);
                     backing_roots.extend(backing_root);
                 }
@@ -230,7 +239,7 @@ impl Execution {
                     for source in sources {
                         match source {
                             Source::Layout(layout) => {
-                                let entries = resolver.layout_entries(layout).map_err(|error| error.context(destination))?;
+                                let entries = resolver.layout_entries(layout).with_context(|| destination.clone())?;
                                 spec.sources.extend(entries);
                             }
                             Source::Patch { entry, input, manifest } => {
@@ -269,23 +278,23 @@ impl Execution {
 
     fn output_paths(&self, output_directory: &Path, inventory_file: &Path) -> Result<(PathBuf, PathBuf)> {
         if output_directory.as_os_str().is_empty() || inventory_file.as_os_str().is_empty() {
-            fail!("output directory and inventory file are required");
+            bail!("output directory and inventory file are required");
         }
         check_empty_directory(output_directory)?;
         match fs::symlink_metadata(inventory_file) {
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            _ => fail!("inventory must not exist: {}", inventory_file.display()),
+            _ => bail!("inventory must not exist: {}", inventory_file.display()),
         }
         let output = physical_path(output_directory)?;
         let inventory = physical_path(inventory_file)?;
         if overlapping_paths(&output, &inventory)? {
-            fail!("inventory must be outside the payload directory");
+            bail!("inventory must be outside the payload directory");
         }
         for artifact in &self.inputs {
             let root = physical_path(Path::new(&artifact.root))?;
             for destination in [&output, &inventory] {
                 if overlapping_paths(destination, &root)? {
-                    fail!("output overlaps input {:?}", artifact.id);
+                    bail!("output overlaps input {:?}", artifact.id);
                 }
             }
         }
@@ -314,25 +323,25 @@ fn check_independent_namespace(independent: &[&str], operations: &[Resolved]) ->
     let mut files: HashMap<String, &str> = HashMap::new();
     for resolved in operations.iter().filter(|resolved| !resolved.destination.is_empty()) {
         let entry = resolved.destination.as_str();
-        let key = identity(entry)?;
+        let key = path_identity(entry)?;
         if !resolved.is_directory() {
             files.insert(key.clone(), entry);
         }
         names.insert(key, entry);
         let mut parent = distpath::dir(entry);
         while parent != "." {
-            names.entry(identity(&parent)?).or_insert(entry);
+            names.entry(path_identity(&parent)?).or_insert(entry);
             parent = distpath::dir(&parent);
         }
     }
     for destination in independent {
-        if let Some(entry) = names.get(&identity(destination)?) {
-            fail!("conflicting output destination {destination:?}: the remainder writes {entry:?}");
+        if let Some(entry) = names.get(&path_identity(destination)?) {
+            bail!("conflicting output destination {destination:?}: the remainder writes {entry:?}");
         }
         let mut parent = distpath::dir(destination);
         while parent != "." {
-            if let Some(file) = files.get(&identity(&parent)?) {
-                fail!("conflicting output directory {parent:?} of {destination:?}: the remainder writes the file {file:?}");
+            if let Some(file) = files.get(&path_identity(&parent)?) {
+                bail!("conflicting output directory {parent:?} of {destination:?}: the remainder writes the file {file:?}");
             }
             parent = distpath::dir(&parent);
         }
@@ -375,16 +384,16 @@ impl Resolver<'_> {
         let mut file = root.clone();
         if artifact.kind == ArtifactKind::Directory {
             if !fs::metadata(&root).is_ok_and(|metadata| metadata.is_dir()) {
-                fail!("input {} is not a directory", artifact.id);
+                bail!("input {} is not a directory", artifact.id);
             }
             file = fscopy::real_path(&paths::host(&root, &reference.path))
-                .map_err(|error| Error::new(format!("input {}/{}: {error}", artifact.id, reference.path)))?;
+                .with_context(|| format!("input {}/{}", artifact.id, reference.path))?;
             if !paths::within(&root, &file) {
-                fail!("input {}/{} escapes its declared directory", artifact.id, reference.path);
+                bail!("input {}/{} escapes its declared directory", artifact.id, reference.path);
             }
         }
         if !fs::metadata(&file).is_ok_and(|metadata| metadata.is_file()) {
-            fail!("input {}/{} is not a regular file", artifact.id, reference.path);
+            bail!("input {}/{} is not a regular file", artifact.id, reference.path);
         }
         self.cache.insert(reference.clone(), file.clone());
         Ok(file)
@@ -407,15 +416,13 @@ fn reserve_outputs(root: &Path, destinations: &[(String, bool)]) -> Result<()> {
             if directories.contains(&parent) {
                 continue;
             }
-            paths::create_directory(&paths::host(root, &parent))
-                .map_err(|error| Error::new(format!("conflicting output directory {parent:?}: {error}")))?;
+            paths::create_directory(&paths::host(root, &parent)).with_context(|| format!("conflicting output directory {parent:?}"))?;
             directories.insert(parent.clone());
         }
         if *directory {
             continue;
         }
-        fs::File::create_new(paths::host(root, destination))
-            .map_err(|error| Error::new(format!("conflicting output destination {destination:?}: {error}")))?;
+        fs::File::create_new(paths::host(root, destination)).with_context(|| format!("conflicting output destination {destination:?}"))?;
     }
     Ok(())
 }
@@ -426,7 +433,7 @@ fn reserve_outputs(root: &Path, destinations: &[(String, bool)]) -> Result<()> {
 /// transport backing root.
 pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Result<(Vec<Resolved>, Option<PathBuf>)> {
     if !fs::symlink_metadata(tree_root).is_ok_and(|metadata| metadata.is_dir()) {
-        fail!("tree root is not a directory: {}", tree_root.display());
+        bail!("tree root is not a directory: {}", tree_root.display());
     }
     let root = fscopy::real_path(tree_root)?;
     let mut operations = Vec::new();
@@ -436,13 +443,18 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
     let mut identities: HashSet<FileId> = HashSet::new();
     let mut backing_root: Option<PathBuf> = None;
     for item in walkdir::WalkDir::new(&root).sort_by_file_name() {
-        let item = item.map_err(|error| Error::new(error.to_string()))?;
+        let item = item.map_err(|error| paths::walk_error(&error))?;
         let mut source = item.path().to_path_buf();
-        let mut metadata = item.metadata().map_err(|error| Error::new(error.to_string()))?;
-        let name = relative_name(&root, &source)?;
-        if name != "." {
-            distpath::validate_relative_path(&name).map_err(Error::refused)?;
-        }
+        let mut metadata = item.metadata().map_err(|error| paths::walk_error(&error))?;
+        let relative = source.strip_prefix(&root).expect("a walk entry is below the walked root");
+        let name = match distpath::slash_path(relative) {
+            Some(name) if name.is_empty() => ".".to_owned(),
+            Some(name) => {
+                distpath::validate_relative_path(&name)?;
+                name
+            }
+            None => bail!("unsupported tree entry name: {}", source.display()),
+        };
         let action;
         let file_type = metadata.file_type();
         if file_type.is_dir() {
@@ -450,7 +462,7 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
         } else if file_type.is_file() {
             action = Action::Copy(source.clone());
         } else if file_type.is_symlink() {
-            let target = filemeta::read_link_target(&source).at(&source)?;
+            let target = filemeta::read_link_target(&source).with_context(|| source.display().to_string())?;
             if paths::is_absolute_target(&target) {
                 let (file, file_metadata, root) = resolve_transport_file(&target, &name, backing_root.as_deref())?;
                 backing_root = Some(root);
@@ -459,27 +471,29 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
                 action = Action::Copy(source.clone());
             } else {
                 if target.contains(['\r', '\n']) {
-                    fail!("unsafe tree link: {}", source.display());
+                    bail!("unsafe tree link: {}", source.display());
                 }
                 links.insert(name.clone(), target.clone());
                 action = Action::Symlink(target);
             }
         } else {
-            fail!("unsupported tree entry: {}", source.display());
+            bail!("unsupported tree entry: {}", source.display());
         }
         if fscopy::has_special_bits(&metadata) {
-            fail!("unsupported tree mode: {}", source.display());
+            bail!("unsupported tree mode: {}", source.display());
         }
-        if !matches!(action, Action::Symlink(_)) && !identities.insert(paths::entry_id(&source, &metadata).at(&source)?) {
-            fail!("aliased tree entry: {}", source.display());
+        if !matches!(action, Action::Symlink(_))
+            && !identities.insert(paths::entry_id(&source, &metadata).with_context(|| source.display().to_string())?)
+        {
+            bail!("aliased tree entry: {}", source.display());
         }
         let mut prefix = name.clone();
         while prefix != "." {
-            let identity = identity(&prefix)?;
+            let identity = path_identity(&prefix)?;
             if let Some(previous) = spellings.get(&identity)
                 && *previous != prefix
             {
-                fail!("conflicting tree entries {previous:?} and {prefix:?}");
+                bail!("conflicting tree entries {previous:?} and {prefix:?}");
             }
             let parent = distpath::dir(&prefix);
             spellings.insert(identity, prefix);
@@ -505,28 +519,13 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
     Ok((operations, backing_root))
 }
 
-/// The slash path of `path` below `root`, or `.` for the root itself.
-fn relative_name(root: &Path, path: &Path) -> Result<String> {
-    let Ok(relative) = path.strip_prefix(root) else {
-        return Err(Error::new(format!("{} is outside {}", path.display(), root.display())));
-    };
-    let mut parts = Vec::new();
-    for component in relative.components() {
-        match component.as_os_str().to_str() {
-            Some(part) => parts.push(part),
-            None => fail!("unsupported tree entry name: {}", path.display()),
-        }
-    }
-    Ok(if parts.is_empty() { ".".to_owned() } else { parts.join("/") })
-}
-
 /// Finds the backing root of an absolute Bazel transport link: the target without the components of the relative
 /// path of the link. The target must end with that relative path.
 fn resolve_transport_entry(target: &str, relative_path: &str, previous_root: Option<&Path>) -> Result<(PathBuf, fs::Metadata, PathBuf)> {
-    let mut root = fscopy::absolute_path(Path::new(target)).at(Path::new(target))?;
+    let mut root = fscopy::absolute_path(Path::new(target)).with_context(|| target.to_owned())?;
     for part in relative_path.split('/').rev() {
         if root.file_name().and_then(|name| name.to_str()) != Some(part) {
-            fail!("transport link path conflicts with tree entry {relative_path:?}");
+            bail!("transport link path conflicts with tree entry {relative_path:?}");
         }
         root = root.parent().map(Path::to_path_buf).unwrap_or(root);
     }
@@ -539,27 +538,27 @@ fn resolve_transport_root_entry(
     previous_root: Option<&Path>,
 ) -> Result<(PathBuf, fs::Metadata, PathBuf)> {
     if !fs::symlink_metadata(root).is_ok_and(|metadata| metadata.is_dir()) {
-        fail!("transport backing root is not a real directory: {}", root.display());
+        bail!("transport backing root is not a real directory: {}", root.display());
     }
     let root = fscopy::real_path(root)?;
     if let Some(previous) = previous_root
-        && paths::file_id(previous).at(previous)? != paths::file_id(&root).at(&root)?
+        && paths::file_id(previous).with_context(|| previous.display().to_string())?
+            != paths::file_id(&root).with_context(|| root.display().to_string())?
     {
-        fail!("tree files have conflicting transport roots");
+        bail!("tree files have conflicting transport roots");
     }
     let source = paths::host(&root, relative_path);
     let mut parent = parent_of(&source).to_path_buf();
     while paths::within(&root, &parent) {
         if !fs::symlink_metadata(&parent).is_ok_and(|metadata| metadata.is_dir()) {
-            fail!("transport member parent is not a real directory: {}", parent.display());
+            bail!("transport member parent is not a real directory: {}", parent.display());
         }
         if parent == root {
             break;
         }
         parent = parent_of(&parent).to_path_buf();
     }
-    let metadata = fs::symlink_metadata(&source)
-        .map_err(|error| Error::new(format!("cannot inspect transport member {}: {error}", source.display())))?;
+    let metadata = fs::symlink_metadata(&source).with_context(|| format!("cannot inspect transport member {}", source.display()))?;
     Ok((source, metadata, root))
 }
 
@@ -571,7 +570,7 @@ pub(crate) fn resolve_transport_file(
 ) -> Result<(PathBuf, fs::Metadata, PathBuf)> {
     let (source, metadata, root) = resolve_transport_entry(target, relative_path, previous_root)?;
     if !metadata.is_file() || fscopy::has_special_bits(&metadata) {
-        fail!("transport member is not a regular file: {}", source.display());
+        bail!("transport member is not a regular file: {}", source.display());
     }
     Ok((source, metadata, root))
 }
@@ -608,7 +607,7 @@ fn overlapping_paths(first: &Path, second: &Path) -> Result<bool> {
         }
         let mut current = other.clone();
         loop {
-            if paths::file_id(&current).at(&current)? == *id {
+            if paths::file_id(&current).with_context(|| current.display().to_string())? == *id {
                 return Ok(true);
             }
             match current.parent() {
@@ -630,7 +629,7 @@ fn existing_path(file: &Path) -> Result<(PathBuf, PathBuf, FileId)> {
             Ok(id) => return Ok((current, suffix, id)),
             Err(error) if error.kind() == io::ErrorKind::NotFound => {
                 let (Some(parent), Some(name)) = (current.parent(), current.file_name()) else {
-                    return Err(error).at(&current);
+                    return Err(error).with_context(|| current.display().to_string());
                 };
                 suffix = if suffix.as_os_str().is_empty() {
                     PathBuf::from(name)
@@ -639,7 +638,7 @@ fn existing_path(file: &Path) -> Result<(PathBuf, PathBuf, FileId)> {
                 };
                 current = parent.to_path_buf();
             }
-            Err(error) => return Err(error).at(&current),
+            Err(error) => return Err(error).with_context(|| current.display().to_string()),
         }
     }
 }
@@ -655,15 +654,14 @@ fn check_output_namespace(output: &Path, inventory: &Path) -> Result<()> {
     let probe = tempfile::Builder::new()
         .prefix(".plugin-output-boundary-")
         .tempdir_in(&ancestor)
-        .at(&ancestor)?;
+        .with_context(|| ancestor.display().to_string())?;
     let output_path = probe.path().join(&output_suffix);
     let inventory_path = probe.path().join(&inventory_suffix);
     filemeta::create_dir_all_0755(&output_path)?;
     filemeta::create_dir_all_0755(parent_of(&inventory_path))?;
-    fs::File::create_new(&inventory_path)
-        .map_err(|error| Error::new(format!("inventory must be outside the payload directory: {error}")))?;
+    fs::File::create_new(&inventory_path).context("inventory must be outside the payload directory")?;
     if overlapping_paths(&output_path, &inventory_path)? {
-        fail!("inventory must be outside the payload directory");
+        bail!("inventory must be outside the payload directory");
     }
     Ok(())
 }
@@ -674,13 +672,17 @@ fn check_empty_directory(directory: &Path) -> Result<()> {
     let metadata = match fs::symlink_metadata(&directory) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => return Err(error).at(&directory),
+        Err(error) => return Err(error).with_context(|| directory.display().to_string()),
     };
     if !metadata.is_dir() {
-        fail!("output is not a real directory: {}", directory.display());
+        bail!("output is not a real directory: {}", directory.display());
     }
-    if fs::read_dir(&directory).at(&directory)?.next().is_some() {
-        fail!("output directory is not empty: {}", directory.display());
+    if fs::read_dir(&directory)
+        .with_context(|| directory.display().to_string())?
+        .next()
+        .is_some()
+    {
+        bail!("output directory is not empty: {}", directory.display());
     }
     Ok(())
 }

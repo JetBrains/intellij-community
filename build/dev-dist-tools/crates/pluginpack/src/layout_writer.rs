@@ -5,7 +5,8 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-use crate::error::{Error, IoContext, Result, fail};
+use anyhow::{Context as _, Result, bail};
+
 use crate::paths;
 
 /// The bytes of one layout file: bytes that an archive entry holds, or a regular file on disk, which the tree writer
@@ -62,14 +63,14 @@ impl TreeWriter {
 
     /// Records the kind of a path. It reports whether this is the first claim.
     fn claim(&mut self, name: &str, kind: Claim) -> Result<bool> {
-        distpath::validate_relative_path(name).map_err(Error::refused)?;
+        distpath::validate_relative_path(name)?;
         match self.claimed.get(name) {
             None => {
                 self.claimed.insert(name.to_owned(), kind);
                 Ok(true)
             }
             Some(previous) if *previous != kind => {
-                fail!("layout asset {name:?} conflicts with a {}", previous.name())
+                bail!("layout asset {name:?} conflicts with a {}", previous.name())
             }
             Some(_) => Ok(false),
         }
@@ -91,17 +92,17 @@ impl TreeWriter {
         let mut parent = distpath::dir(name);
         while parent != "." {
             if self.claimed.get(&parent) == Some(&Claim::Symlink) {
-                fail!("layout asset parent {parent:?} is not a directory");
+                bail!("layout asset parent {parent:?} is not a directory");
             }
             match fs::symlink_metadata(self.path(&parent)) {
                 Ok(metadata) => {
                     if !metadata.is_dir() {
-                        fail!("layout asset parent {parent:?} is not a directory");
+                        bail!("layout asset parent {parent:?} is not a directory");
                     }
                     break;
                 }
                 Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-                Err(error) => return Err(error).at(&self.path(&parent)),
+                Err(error) => return Err(error).with_context(|| self.path(&parent).display().to_string()),
             }
             let next = distpath::dir(&parent);
             missing.push(parent);
@@ -109,7 +110,7 @@ impl TreeWriter {
         }
         for directory in missing.iter().rev() {
             let target = self.path(directory);
-            paths::create_directory(&target).at(&target)?;
+            paths::create_directory(&target).with_context(|| target.display().to_string())?;
             fscopy::set_mode(&target, 0o755)?;
         }
         Ok(())
@@ -127,7 +128,7 @@ impl LayoutWriter for TreeWriter {
         match fs::symlink_metadata(&target) {
             Ok(metadata) => {
                 if !metadata.is_dir() {
-                    fail!("layout asset {name:?} conflicts with a file");
+                    bail!("layout asset {name:?} conflicts with a file");
                 }
                 if first {
                     fscopy::set_mode(&target, mode)?;
@@ -135,10 +136,10 @@ impl LayoutWriter for TreeWriter {
                 return Ok(());
             }
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(error) => return Err(error).at(&target),
+            Err(error) => return Err(error).with_context(|| target.display().to_string()),
         }
         self.create_parents(name)?;
-        paths::create_directory(&target).at(&target)?;
+        paths::create_directory(&target).with_context(|| target.display().to_string())?;
         Ok(fscopy::set_mode(&target, mode)?)
     }
 
@@ -150,8 +151,8 @@ impl LayoutWriter for TreeWriter {
         let target = self.path(name);
         match content {
             Content::Bytes(bytes) => {
-                let mut output = fs::File::create_new(&target).at(&target)?;
-                output.write_all(&bytes).at(&target)?;
+                let mut output = fs::File::create_new(&target).with_context(|| target.display().to_string())?;
+                output.write_all(&bytes).with_context(|| target.display().to_string())?;
             }
             Content::File(source) => fscopy::clone_or_copy(&source, &target)?,
         }
@@ -196,11 +197,11 @@ pub(crate) fn normalize_layout_link_target(target: &str) -> String {
 /// Accepts a relative link whose resolved target stays inside the tree.
 fn validate_layout_link(name: &str, target: &str) -> Result<()> {
     if target.is_empty() || target.starts_with('/') || target.contains(['\\', ':', '\0', '\r', '\n']) {
-        fail!("layout asset link {name:?} escapes its tree: {target}");
+        bail!("layout asset link {name:?} escapes its tree: {target}");
     }
     let resolved = distpath::join(&distpath::dir(name), target);
     if resolved == ".." || resolved.starts_with("../") {
-        fail!("layout asset link {name:?} escapes its tree: {target}");
+        bail!("layout asset link {name:?} escapes its tree: {target}");
     }
     Ok(())
 }
@@ -234,14 +235,14 @@ impl LayoutWriter for EntriesWriter {
     }
 
     fn file(&mut self, name: &str, content: Content, _mode: u32) -> Result<()> {
-        distpath::validate_relative_path(name).map_err(Error::refused)?;
+        distpath::validate_relative_path(name)?;
         if !self.names.insert(name.to_owned()) {
             return Ok(());
         }
         let file = match content {
             Content::Bytes(bytes) => {
                 let file = self.root.join(self.entries.len().to_string());
-                fs::write(&file, bytes).at(&file)?;
+                fs::write(&file, bytes).with_context(|| file.display().to_string())?;
                 file
             }
             Content::File(source) => source,
@@ -251,6 +252,6 @@ impl LayoutWriter for EntriesWriter {
     }
 
     fn symlink(&mut self, name: &str, _target: &str) -> Result<()> {
-        fail!("a jar layout asset cannot contain the symbolic link {name:?}")
+        bail!("a jar layout asset cannot contain the symbolic link {name:?}")
     }
 }

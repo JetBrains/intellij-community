@@ -6,9 +6,9 @@
 //! rules are in `planfile::validate`, because the collector applies them too.
 //!
 //! The Go packer supported more shapes than the checked-in plan files use. The crate ports only the shapes in use, and
-//! it refuses every other shape with an error that names it. `API.md` beside this crate lists the refused shapes.
+//! it refuses every other shape with an error that names it. `API.md` beside this crate lists the refused shapes. Every
+//! function that can fail returns `anyhow::Result`, and `{:#}` prints the text of the Go error.
 
-mod error;
 mod execute;
 mod gzip_resources;
 mod layout;
@@ -17,7 +17,6 @@ mod layout_writer;
 mod paths;
 mod plan;
 
-pub use error::{Error, Result};
 pub use gzip_resources::write_gzip_resources;
 pub use plan::{Execution, plan};
 
