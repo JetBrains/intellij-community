@@ -305,7 +305,15 @@ open class IdeStatusBarImpl @Internal constructor(
 
     fun sortWidgets(sorted: MutableList<Orderable>) {
       LoadingOrder.sortByLoadingOrder(sorted)
+      applyCustomOrder(sorted)
+    }
 
+    /**
+     * Moves the widgets with a custom position to their indices in [sorted].
+     *
+     * The indices count only real widgets, so [sorted] must not contain virtual anchors.
+     */
+    fun applyCustomOrder(sorted: MutableList<Orderable>) {
       val customMoves = order.entries.sortedBy { it.value }
       for (entry in customMoves) {
         val widgetId = entry.key
@@ -837,7 +845,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
   // Builds a sorted list of right-position widgets with virtual placeholders injected
   // for disabled-but-EP-registered factories. Virtuals exist solely to anchor `after X` /
-  // `before X` chains during LoadingOrder topological sort and are skipped during rendering.
+  // `before X` chains during LoadingOrder topological sort and are removed before the custom order is applied.
   private fun buildSortedRightWidgets(): MutableList<Orderable> {
     val sorted = widgetRegistry.filterByPosition(Position.RIGHT)
     StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
@@ -853,7 +861,10 @@ open class IdeStatusBarImpl @Internal constructor(
           }
         }
       }
-    widgetSorter.sortWidgets(sorted)
+    LoadingOrder.sortByLoadingOrder(sorted)
+    // The custom indices count only real widgets, so drop the virtuals before they are applied.
+    sorted.retainAll { it is WidgetBean }
+    widgetSorter.applyCustomOrder(sorted)
     return sorted
   }
 

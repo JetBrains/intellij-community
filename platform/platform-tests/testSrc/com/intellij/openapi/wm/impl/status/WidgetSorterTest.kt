@@ -90,6 +90,28 @@ class WidgetSorterTest {
   }
 
   @Test
+  fun `applyCustomOrder should not count virtual anchors`() {
+    var persisted: Map<String, Int> = emptyMap()
+    val sorter = IdeStatusBarImpl.WidgetSorter(initialOrder = emptyMap(), persist = { persisted = it })
+    val loadingOrder = listOf(
+      TestOrderable("A", LoadingOrder.ANY),
+      TestOrderable("Virtual1", LoadingOrder.FIRST),
+      TestOrderable("Virtual2", LoadingOrder.FIRST),
+      TestOrderable("B", LoadingOrder.ANY),
+      TestOrderable("C", LoadingOrder.ANY),
+      TestOrderable("D", LoadingOrder.ANY),
+    )
+    val visible = loadingOrder.filterNot { it.orderId.startsWith("Virtual") }.toMutableList()
+
+    // The drop placeholder showed the order A, B, D, C.
+    sorter.reorderToIndex("D", 2, visible.map { it.orderId })
+    sorter.applyCustomOrder(visible.cast())
+
+    assertEquals(mapOf("D" to 2), persisted)
+    assertEquals(listOf("A", "B", "D", "C"), visible.map { it.orderId })
+  }
+
+  @Test
   fun `should handle complex dependencies from example`() {
     val widgets = mutableListOf(
       TestOrderable("Position", LoadingOrder.ANY),
