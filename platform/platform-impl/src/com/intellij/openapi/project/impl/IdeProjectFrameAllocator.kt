@@ -82,6 +82,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.recordStartupSpan
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
@@ -690,7 +691,11 @@ private suspend fun postOpenEditors(
                                  }
       if (!isNotificationSilentMode(project)) {
         finishEmptyEditorStartupBeforeProjectView(
-          finishOpeningStartupEditors = { findAndOpenReadmeIfNeeded(project) },
+          finishOpeningStartupEditors = {
+            val readmeCheckStart = System.nanoTime()
+            findAndOpenReadmeIfNeeded(project)
+            recordStartupSpan("readme opening check", readmeCheckStart, System.nanoTime())
+          },
           presentEmptyEditor = {
             releaseStartupEmptyStatePresentationHold()
             val settled = emptyStateFocusSettled

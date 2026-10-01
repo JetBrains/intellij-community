@@ -13,12 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
 import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
+import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupSpanTracer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -92,6 +94,12 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
   }
 
   override fun createComponent(): JComponent {
+    return welcomeScreenStartupSpanTracer.spanBuilder("welcome left panel creating").use {
+      doCreateComponent()
+    }
+  }
+
+  private fun doCreateComponent(): JComponent {
     val mainPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
       border = JBUI.Borders.empty()
     }
@@ -158,11 +166,13 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
   }
 
   private fun createRecentProjectTree(): RecentProjectFilteringTree =
-    RecentProjectPanelComponentFactory.createComponent(
-      this,
-      collectors = listOf(ProjectCollectors.cloneableProjectsCollector, ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
-      treeBackground = null
-    ).apply {
+    welcomeScreenStartupSpanTracer.spanBuilder("welcome recent projects collecting").use {
+      RecentProjectPanelComponentFactory.createComponent(
+        this,
+        collectors = listOf(ProjectCollectors.cloneableProjectsCollector, ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
+        treeBackground = null
+      )
+    }.apply {
       tree.emptyText.text = NonModalWelcomeScreenBundle.message("welcome.screen.no.recent.projects")
       selectLastOpenedProjectOrTheFirstInTree()
     }

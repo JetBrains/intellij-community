@@ -3,9 +3,11 @@
   <dependencies>
     <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>

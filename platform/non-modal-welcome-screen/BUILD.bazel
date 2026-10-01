@@ -57,6 +57,9 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//platform/project/shared:project",
         "//fleet/rhizomedb",
+        "//platform/diagnostic",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
     ],
 )
 
@@ -95,6 +98,9 @@ jvm_library(
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/project/shared:project_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//platform/diagnostic:diagnostic_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen` end

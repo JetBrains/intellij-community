@@ -4,7 +4,9 @@ import com.intellij.ide.IdeView
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -16,6 +18,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.createToolWindowWelcomeScreenVerticalToolbar
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.recordStartupSpan
+import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenPaintTracker
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -24,8 +28,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.BorderLayout
+import java.awt.Graphics
+import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 @ApiStatus.Internal
 class WelcomeScreenLeftPanelActions(val project: Project) {
@@ -34,6 +42,7 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
     val toolbar = createToolWindowWelcomeScreenVerticalToolbar(group)
 
     scope.launch {
+      val fillStart = System.nanoTime()
       val actionManager = serviceAsync<ActionManager>()
       // TODO: Do something with the action group. Now it only is present in Rider
       val actions = (actionManager.getAction("NonModalWelcomeScreen.LeftTabActions") as? DefaultActionGroup)
@@ -49,11 +58,20 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
       }
 
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        toolbar.updateActionsAsync()
+        val update = toolbar.updateActionsAsync()
+        // The callback only records the span. The coroutine does not wait for the update.
+        (update as? CompletableFuture<*>)?.whenComplete { _, error ->
+          if (error == null) {
+            val hasVisibleActions = toolbar.hasVisibleActions()
+            recordStartupSpan("welcome left toolbar first fill", fillStart, System.nanoTime()) {
+              it.setAttribute("hasVisibleActions", hasVisibleActions)
+            }
+          }
+        }
       }
     }
 
-    return UiDataProvider.wrapComponent(toolbar.component) { sink ->
+    return WelcomeScreenLeftToolbarPanel(toolbar, WelcomeScreenPaintTracker.getInstance(project)) { sink ->
       sink[WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN] = true
       sink[CommonDataKeys.PROJECT] = project
       sink[LangDataKeys.IDE_VIEW] = getIdeView(project)
@@ -80,6 +98,35 @@ class WelcomeScreenLeftPanelActions(val project: Project) {
       override fun selectElement(element: PsiElement) {
         baseView.selectElement(element)
       }
+    }
+  }
+}
+
+/**
+ * Holds the toolbar of the left panel and gives its data.
+ * The first paint that shows the actions calls [WelcomeScreenPaintTracker.leftPainted].
+ */
+private class WelcomeScreenLeftToolbarPanel(
+  private val toolbar: ActionToolbar,
+  private val paintTracker: WelcomeScreenPaintTracker,
+  private val dataProvider: UiDataProvider,
+) : JPanel(BorderLayout()), UiDataProvider {
+  private var isActionsPainted = false
+
+  init {
+    add(toolbar.component, BorderLayout.CENTER)
+    isOpaque = toolbar.component.isOpaque
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    DataSink.uiDataSnapshot(sink, dataProvider)
+  }
+
+  override fun paint(g: Graphics) {
+    super.paint(g)
+    if (!isActionsPainted && toolbar.hasVisibleActions()) {
+      isActionsPainted = true
+      paintTracker.leftPainted()
     }
   }
 }

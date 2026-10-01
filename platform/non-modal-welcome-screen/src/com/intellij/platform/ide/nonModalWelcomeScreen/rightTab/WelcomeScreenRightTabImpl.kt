@@ -37,10 +37,12 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
+import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenPaintTracker
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupTracer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.ui.components.labels.LinkLabel
@@ -63,6 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Container
 import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
 import java.awt.dnd.DnDConstants
@@ -91,7 +94,24 @@ internal class WelcomeScreenRightTabImpl(
   contentProvider: WelcomeRightTabContentProvider,
 ) : WelcomeScreenRightTab(project, contentProvider) {
 
-  override val component = JPanel()
+  private val paintTracker = WelcomeScreenPaintTracker.getInstance(project)
+
+  /**
+   * Tells if the default content holds its body. The first paint after that calls [WelcomeScreenPaintTracker.rightPainted].
+   * Read and written on the EDT only.
+   */
+  private var isBodyPlaced = false
+  private var isBodyPainted = false
+
+  override val component: JPanel = object : JPanel() {
+    override fun paint(g: Graphics) {
+      super.paint(g)
+      if (isBodyPlaced && !isBodyPainted) {
+        isBodyPainted = true
+        paintTracker.rightPainted()
+      }
+    }
+  }
 
   private val contentPanel = BorderLayoutPanel()
 
@@ -251,11 +271,13 @@ internal class WelcomeScreenRightTabImpl(
     val generation = contentGeneration
     contentProvider.coroutineScope.launch {
       try {
-        val offeredFeatures = offeredFeatures(
-          project = project,
-          registeredFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds(),
-          features = WelcomeScreenFeatureUI.features(),
-        )
+        val offeredFeatures = withContext(welcomeScreenStartupTracer.span("welcome right tab body: feature ids")) {
+          offeredFeatures(
+            project = project,
+            registeredFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds(),
+            features = WelcomeScreenFeatureUI.features(),
+          )
+        }
         val sections = createFeatureContents(offeredFeatures)
 
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -267,7 +289,10 @@ internal class WelcomeScreenRightTabImpl(
             disposeContents(sections.map { it.content })
             return@withContext
           }
-          createDefaultContent(offeredFeatures, sections, finish)
+          withContext(welcomeScreenStartupTracer.span("welcome right tab body: EDT build")) {
+            createDefaultContent(offeredFeatures, sections, finish)
+          }
+          isBodyPlaced = true
         }
       }
       catch (e: CancellationException) {
@@ -288,7 +313,9 @@ internal class WelcomeScreenRightTabImpl(
       .sortedBy { it.contentOrder }
       .mapNotNull { feature ->
         try {
-          feature.createContent(project)?.let { FeatureSection(feature.featureKey, it) }
+          withContext(welcomeScreenStartupTracer.span("welcome right tab body: createContent ${feature.featureKey}")) {
+            feature.createContent(project)
+          }?.let { FeatureSection(feature.featureKey, it) }
         }
         catch (e: CancellationException) {
           throw e
