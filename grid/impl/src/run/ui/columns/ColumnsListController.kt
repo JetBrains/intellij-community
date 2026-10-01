@@ -11,18 +11,24 @@ import com.intellij.database.run.actions.ColumnPinCommands
 import com.intellij.database.run.ui.ColumnOrderRestorer
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.concurrency.CancellablePromise
-import javax.swing.Icon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Owns the column list state, grid commands, and presentation loading. The popup owns its widgets. */
 internal class ColumnsListController(
   private val grid: DataGrid,
   private val disposable: Disposable,
+  private val scope: CoroutineScope,
   private val render: (preserveSelection: Boolean) -> Unit,
 ) {
   val commands = ColumnPinCommands(grid)
@@ -34,13 +40,18 @@ internal class ColumnsListController(
   private var applying = false
   private var disposed = false
   private var columnSnapshot: Map<ModelIndex<GridColumn>, GridColumn?>? = null
-  private var presentationTask: CancellablePromise<*>? = null
+  private val presentationRequests = MutableStateFlow<PresentationRequest?>(null)
 
   init {
     Disposer.register(disposable) { disposed = true }
   }
 
   fun start() {
+    scope.launch {
+      presentationRequests.collectLatest { request ->
+        if (request != null) loadPresentations(request)
+      }
+    }
     grid.addDataGridListener(object : DataGridListener {
       override fun onContentChanged(dataGrid: DataGrid, place: GridRequestSource.RequestPlace?) {
         if (!applying) refresh()
@@ -122,10 +133,24 @@ internal class ColumnsListController(
     apply { order.restoreNaturalColumnsOrder() }
   }
 
+  /** Selects [columns] without moving the grid. */
   fun selectColumns(columns: List<ModelIndex<GridColumn>>) {
     if (!ensureCurrentColumns()) return
     val visible = columns.filter { grid.isColumnEnabled(it) }
-    grid.selectionModel.setColumnSelection(ModelIndexSet.forColumns(grid, visible), true)
+    grid.autoscrollLocker.runWithLock {
+      grid.selectionModel.setColumnSelection(ModelIndexSet.forColumns(grid, visible), true)
+    }
+  }
+
+  /** Shows and selects [columns], then scrolls them into view. */
+  fun revealColumns(columns: List<ModelIndex<GridColumn>>): Boolean {
+    if (!ensureCurrentColumns()) return false
+    grid.autoscrollLocker.runWithLock {
+      applyVisibility(columns, true)
+      selectColumns(columns)
+    }
+    grid.resultView.scrollColumnsIntoView(columns)
+    return true
   }
 
   private fun apply(operation: () -> Unit) {
@@ -143,7 +168,6 @@ internal class ColumnsListController(
     if (disposed) return
     val columnsChanged = !hasCurrentColumns()
     if (columnsChanged) {
-      presentationTask?.cancel()
       val dataModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
       columnSnapshot = dataModel.columnIndices.asIterable().associateWith { dataModel.getColumn(it) }
     }
@@ -153,7 +177,9 @@ internal class ColumnsListController(
       if (item == null) column.typeName to null else item.typeText to item.icon
     }
     updateItems(items, preserveSelection = !columnsChanged)
-    if (columnsChanged) loadPresentations(columnSnapshot!!)
+    if (columnsChanged) {
+      presentationRequests.value = PresentationRequest(columnSnapshot!!, ModalityState.defaultModalityState())
+    }
   }
 
   private fun updateItems(items: List<ColumnsListItem>, preserveSelection: Boolean = true) {
@@ -162,24 +188,27 @@ internal class ColumnsListController(
     render(preserveSelection)
   }
 
-  private fun loadPresentations(snapshot: Map<ModelIndex<GridColumn>, GridColumn?>) {
-    if (snapshot.isEmpty()) return
+  private suspend fun loadPresentations(request: PresentationRequest) = withContext(request.modality.asContextElement()) {
+    val snapshot = request.columns
     val helper = GridHelper.get(grid)
-    presentationTask = ReadAction.nonBlocking<Map<ModelIndex<GridColumn>, Pair<String?, Icon?>?>> {
+    val presentations = readAction {
       snapshot.mapValues { (_, column) ->
         ProgressManager.checkCanceled()
         column?.let { helper.getColumnTypeText(grid, it) to helper.getColumnIcon(grid, it, true) }
       }
     }
-      .expireWith(disposable)
-      .expireWith(grid)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { presentations ->
-        if (columnSnapshot !== snapshot || !ensureCurrentColumns()) return@finishOnUiThread
-        updateItems(model.items.map { item ->
-          val presentation = presentations[item.modelIndex]
-          if (presentation == null) item else item.copy(typeText = presentation.first, icon = presentation.second)
-        })
-      }
-      .submit(AppExecutorUtil.getAppExecutorService())
+    withContext(Dispatchers.EDT) update@ {
+      if (columnSnapshot !== snapshot || !ensureCurrentColumns()) return@update
+      updateItems(model.items.map { item ->
+        val presentation = presentations[item.modelIndex]
+        if (presentation == null) item else item.copy(typeText = presentation.first, icon = presentation.second)
+      })
+    }
   }
+
+  /** Keeps replacement columns distinct even when their values compare equal. */
+  private class PresentationRequest(
+    val columns: Map<ModelIndex<GridColumn>, GridColumn?>,
+    val modality: ModalityState,
+  )
 }

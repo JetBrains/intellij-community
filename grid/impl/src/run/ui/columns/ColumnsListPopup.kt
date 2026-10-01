@@ -1,39 +1,27 @@
 package com.intellij.database.run.ui.columns
 
 import com.intellij.database.DataGridBundle
-import com.intellij.database.DatabaseDataKeys
 import com.intellij.database.datagrid.DataGrid
-import com.intellij.database.datagrid.DataGridPomTarget
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
-import com.intellij.database.run.actions.showReason
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.GridColumnPinning
-import com.intellij.database.run.ui.grid.GridScrollPositionManager
 import com.intellij.database.run.ui.table.ColumnPinning
-import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
@@ -51,11 +39,11 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
-import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -99,7 +87,11 @@ class ColumnsListPopup(private val grid: DataGrid) {
   /** The spacer row that holds the line between the pinned columns and the rest, or -1 when there is none. */
   private var separatorRow = -1
 
-  private val list = object : JBList<Row>(listModel) {
+  private val list = object : JBList<Row>(listModel), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[PlatformDataKeys.COPY_PROVIDER] = actions.copyProvider
+    }
+
     override fun paintComponent(g: Graphics) {
       super.paintComponent(g)
       drag?.paintBand(g)
@@ -161,29 +153,7 @@ class ColumnsListPopup(private val grid: DataGrid) {
     .apply { horizontalAlignment = SwingConstants.RIGHT }
 
   private val content: JComponent = object : BorderLayoutPanel(), UiDataProvider {
-    /**
-     * Hands the platform the grid and the selected columns.
-     *
-     * It sits on the whole popup and not on the list, because the context is built from the focused
-     * component and that is the filter field. A popup window inherits nothing from the grid either.
-     */
-    override fun uiDataSnapshot(sink: DataSink) {
-      val columns = selectedColumns().asIterable().toList()
-      val file = GridUtil.getVirtualFile(grid)
-      sink[CommonDataKeys.PROJECT] = grid.project
-      // GridUtil.getDataGrid reads this key, so an action that asks for the grid finds one.
-      sink[DatabaseDataKeys.DATA_GRID_KEY] = grid
-      // The popup shows a list and not text. An action that needs an editor must stay disabled.
-      sink.setNull(CommonDataKeys.EDITOR)
-      sink.lazy(CommonDataKeys.PSI_FILE) {
-        file?.let { PsiManager.getInstance(grid.project).findFile(it) }
-      }
-      sink.lazy(CommonDataKeys.PSI_ELEMENT) { columnElements(columns).firstOrNull() }
-      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY) { columnElements(columns).toTypedArray() }
-      // A wrapped column is navigable, and Jump to Source reads this rather than the element.
-      sink.lazy(CommonDataKeys.NAVIGATABLE) { columnElements(columns).filterIsInstance<Navigatable>().firstOrNull() }
-      sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) { columnElements(columns).filterIsInstance<Navigatable>().toTypedArray() }
-    }
+    override fun uiDataSnapshot(sink: DataSink) = actions.uiDataSnapshot(sink)
   }.apply {
     border = JBUI.Borders.empty(POPUP_PAD)
     preferredSize = Dimension(JBUIScale.scale(DEFAULT_WIDTH), JBUIScale.scale(DEFAULT_HEIGHT))
@@ -227,13 +197,20 @@ class ColumnsListPopup(private val grid: DataGrid) {
 
   /** The drag, or null in a document grid, where a reorder would have to write the file. */
   private var drag: ColumnsListDrag? = null
-  private val controller = ColumnsListController(grid, popup, ::updateRows)
+  private val scope = grid.coroutineScope.childScope("ColumnsListPopup")
+  private val controller = ColumnsListController(grid, popup, scope, ::updateRows)
+  private val actions = ColumnsListActions(
+    grid, controller, ::selectedColumns, ::copyTargets,
+    canMoveRow = { targetOfMove(it) != null },
+    moveRow = { moveSelectedRow(it) },
+  )
   private var previousLead = -1
   private var restoringSelection = false
   private var pointerInsideList = false
 
   init {
     Disposer.register(grid, popup)
+    Disposer.register(popup) { scope.cancel() }
     searchField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) = search()
     })
@@ -449,11 +426,6 @@ class ColumnsListPopup(private val grid: DataGrid) {
     item.modelIndex?.let(controller::togglePin)
   }
 
-  /** The columns under the selection, as the platform sees a column. */
-  private fun columnElements(columns: List<ModelIndex<GridColumn>>): List<PsiElement> =
-    columns.filter { it.isValid(grid) }
-      .map { DataGridPomTarget.wrapColumn(grid.project, grid, it) }
-
   /** Selects the columns of the selected rows in the table, then closes. A double click and Enter do this. */
   fun selectColumnsInGridAndClose() {
     if (!ensureCurrentColumns()) return
@@ -461,11 +433,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
       val first = listModel.items.indexOfFirst { it is Row.Item && it.value.isColumn }
       if (first >= 0) list.selectedIndex = first
     }
-    val selected = list.selectedValuesList.filterIsInstance<Row.Item>().map { it.value }
-    applyVisibility(selected, true)
-    selectColumnsInGrid()
-    GridScrollPositionManager.get(grid.resultView, grid).scrollSelectionToVisible()
-    popup.cancel()
+    val selected = list.selectedValuesList.filterIsInstance<Row.Item>().mapNotNull { it.value.modelIndex }
+    if (controller.revealColumns(selected)) popup.cancel()
   }
 
   fun selectColumnsInGrid() {
@@ -483,22 +452,9 @@ class ColumnsListPopup(private val grid: DataGrid) {
     return listModel.items.filterIsInstance<Row.Item>().map { it.value }.filter { it.isColumn }
   }
 
-  /** Copies the names, separated by a comma, the way the Copy Column Name action of the header does. */
-  fun copyNames() {
-    val names = copyTargets().map { it.name }
-    if (names.isEmpty()) return
-    CopyPasteManager.getInstance().setContents(StringSelection(names.joinToString(",")))
-  }
+  fun copyNames(): Unit = actions.copyNames()
 
-  /** Copies one column per line, with a tab between the name and the type. */
-  fun copyNamesAndTypes() {
-    val rows = copyTargets()
-    if (rows.isEmpty()) return
-    val text = rows.joinToString("\n") { item ->
-      if (item.typeText == null) item.name else "${item.name}\t${item.typeText}"
-    }
-    CopyPasteManager.getInstance().setContents(StringSelection(text))
-  }
+  fun copyNamesAndTypes(): Unit = actions.copyNamesAndTypes()
 
   /** Whether the grid shows its columns in the order the data has. */
   fun isOriginalOrder(): Boolean = controller.isOriginalOrder()
@@ -535,68 +491,8 @@ class ColumnsListPopup(private val grid: DataGrid) {
     PopupHandler.installPopupMenu(list, contextMenuGroup(), ACTION_PLACE)
   }
 
-  /**
-   * The right click menu.
-   *
-   * The pin items keep the rules of the column header, through the helpers that header uses, so a pin
-   * refuses for the same reasons and says the same thing. They act on the rows selected here.
-   */
   fun contextMenuGroup(): ActionGroup =
-    DefaultActionGroup(
-      CopyAction(false),
-      CopyAction(true),
-      Separator.getInstance(),
-      RestoreOriginalOrderAction(),
-      Separator.getInstance(),
-      PinSelectedAction(),
-      UnpinSelectedAction(),
-      PinUpToHereAction(),
-      UnpinAllAction(),
-    )
-
-  private abstract class ListAction : DumbAwareAction() {
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  }
-
-  /** Copies the names, and the types too when [withTypes]. The wording follows the number of columns. */
-  private inner class CopyAction(private val withTypes: Boolean) : ListAction() {
-    init {
-      // The names take the Copy shortcut of the active keymap, so a user who rebinds Copy keeps it here.
-      if (!withTypes) shortcutSet = CommonShortcuts.getCopy()
-    }
-
-    override fun update(e: AnActionEvent) {
-      val one = copyTargets().size == 1
-      e.presentation.text = DataGridBundle.message(
-        when {
-          withTypes && one -> "action.Console.TableResult.ColumnsList.Popup.CopyNameAndType"
-          withTypes -> "action.Console.TableResult.ColumnsList.Popup.CopyNamesAndTypes"
-          one -> "action.Console.TableResult.ColumnsList.Popup.CopyName"
-          else -> "action.Console.TableResult.ColumnsList.Popup.CopyNames"
-        }
-      )
-      e.presentation.isEnabledAndVisible = copyTargets().isNotEmpty()
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      if (withTypes) copyNamesAndTypes() else copyNames()
-    }
-  }
-
-  /** Moves the selected row, so that a reorder needs no pointer. The drag does the same work. */
-  private inner class MoveRowAction(private val delta: Int) : ListAction() {
-    override fun update(e: AnActionEvent) {
-      e.presentation.text = DataGridBundle.message(
-        if (delta < 0) "action.Console.TableResult.ColumnsList.Popup.MoveRowUp"
-        else "action.Console.TableResult.ColumnsList.Popup.MoveRowDown"
-      )
-      e.presentation.isEnabledAndVisible = targetOfMove(delta) != null
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      moveSelectedRow(delta)
-    }
-  }
+    CustomActionsSchema.getInstance().getCorrectedAction(COLUMNS_LIST_POPUP_GROUP) as ActionGroup
 
   /**
    * The row the selected one would land on when it moves by [delta], or null when it cannot move.
@@ -620,103 +516,14 @@ class ColumnsListPopup(private val grid: DataGrid) {
     return true
   }
 
-  private inner class RestoreOriginalOrderAction : ListAction() {
-    override fun update(e: AnActionEvent) {
-      e.presentation.text = DataGridBundle.message("action.Console.TableResult.ColumnsList.Popup.RestoreOriginalOrder")
-      e.presentation.isEnabledAndVisible = !isOriginalOrder()
-    }
-
-    override fun actionPerformed(e: AnActionEvent) = restoreOriginalOrder()
-  }
-
-  private inner class PinSelectedAction : ListAction() {
-    init {
-      templatePresentation.icon = AllIcons.General.Pin
-    }
-
-    override fun update(e: AnActionEvent) {
-      val columns = selectedColumns()
-      val one = columns.size() == 1
-      e.presentation.text = DataGridBundle.message(
-        if (one) "action.Console.TableResult.PinColumn.text" else "action.Console.TableResult.PinColumns.text"
-      )
-      if (!commands.offersPin(columns)) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-      showReason(e, commands.reasonPinRefuses(columns))
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      controller.pin(selectedColumns())
-    }
-  }
-
-  private inner class UnpinSelectedAction : ListAction() {
-    override fun update(e: AnActionEvent) {
-      val columns = selectedColumns()
-      val one = columns.size() == 1
-      e.presentation.text = DataGridBundle.message(
-        if (one) "action.Console.TableResult.UnpinColumn.text" else "action.Console.TableResult.UnpinColumns.text"
-      )
-      if (!commands.offersUnpin(columns)) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-      showReason(e, commands.reasonUnpinRefuses())
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      controller.unpin(selectedColumns())
-    }
-  }
-
-  private inner class PinUpToHereAction : ListAction() {
-    init {
-      templatePresentation.icon = AllIcons.General.Pin
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.text = DataGridBundle.message("action.Console.TableResult.PinColumnsUpToHere.text")
-      val column = selectedColumns().asIterable().singleOrNull()
-      if (column == null || !commands.offersPinUpToHere(column)) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-      showReason(e, commands.reasonPinUpToHereRefuses(column))
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val column = selectedColumns().asIterable().singleOrNull() ?: return
-      controller.pinUpToHere(column)
-    }
-  }
-
-  private inner class UnpinAllAction : ListAction() {
-    override fun update(e: AnActionEvent) {
-      e.presentation.text = DataGridBundle.message("action.Console.TableResult.UnpinAllColumns.text")
-      if (!commands.offersUnpinAll()) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-      showReason(e, commands.reasonUnpinRefuses())
-    }
-
-    override fun actionPerformed(e: AnActionEvent) = unpinAllColumns()
-  }
-
   private fun installKeys() {
     list.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), TOGGLE_ACTION)
     list.actionMap.put(TOGGLE_ACTION, object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent) = toggleSelected()
     })
-    CopyAction(false).registerCustomShortcutSet(CommonShortcuts.getCopy(), list, popup)
-    list.actionMap.put("copy", object : AbstractAction() {
-      override fun actionPerformed(e: ActionEvent) = copyNames()
-    })
     if (reorderable) {
-      MoveRowAction(-1).registerCustomShortcutSet(CommonShortcuts.MOVE_UP, list, popup)
-      MoveRowAction(1).registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, list, popup)
+      actions.moveRowAction(-1).registerCustomShortcutSet(CommonShortcuts.MOVE_UP, list, popup)
+      actions.moveRowAction(1).registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, list, popup)
     }
     list.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NAVIGATE_ACTION)
     list.actionMap.put(NAVIGATE_ACTION, object : AbstractAction() {

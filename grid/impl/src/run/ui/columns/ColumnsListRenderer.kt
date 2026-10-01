@@ -10,6 +10,7 @@ import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -24,13 +25,13 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
+import javax.swing.border.EmptyBorder
 
 /**
  * The shape of one row.
  *
  * The renderer draws these and [ColumnsListPopup] hit tests against them, so both read them from here.
  */
-internal const val ROW_INDENT: Int = 14
 internal const val CONTROLS_LEFT_PAD: Int = 28
 internal const val CONTROLS_RIGHT_PAD: Int = 10
 internal const val CONTROL_GAP: Int = 10
@@ -46,7 +47,7 @@ internal val gripWidth: Int get() = AllIcons.General.Drag.iconWidth
 private val disabledPin: Icon get() = IconLoader.getDisabledIcon(AllIcons.General.Pin)
 
 /** How far a row of a nested column tree sits from the left edge. */
-internal fun indent(item: ColumnsListItem): Int = JBUIScale.scale(ROW_INDENT) * item.depth
+internal fun indent(item: ColumnsListItem): Int = (UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent()) * item.depth
 
 /** A label that keeps the room of [icon] even while it shows none, plus [trailingGap] of space after it. */
 private fun iconLabel(icon: Icon, trailingGap: Int): JLabel = JLabel().apply {
@@ -67,6 +68,15 @@ internal class ItemRenderer(
     // The row reads as one thing, so a screen reader must not stop on an unnamed check box of its own.
     isFocusable = false
     accessibleContext.accessibleName = ""
+  }
+  private val groupIcon = JLabel(AllIcons.Json.Object).apply {
+    isOpaque = false
+    horizontalAlignment = SwingConstants.LEFT
+  }
+  private val checkBoxHolder = BorderLayoutPanel().apply {
+    isOpaque = false
+    addToLeft(groupIcon)
+    addToCenter(checkBox)
   }
   private val text = SimpleColoredComponent().apply { isOpaque = false }
   private val pin = iconLabel(AllIcons.General.Pin, CONTROL_GAP)
@@ -95,7 +105,7 @@ internal class ItemRenderer(
   }.apply {
     isOpaque = false
     border = JBUI.Borders.empty(1, 0)
-    addToLeft(checkBox)
+    addToLeft(checkBoxHolder)
     addToCenter(text)
     addToRight(controls)
   }
@@ -121,8 +131,16 @@ internal class ItemRenderer(
   }
 
   private fun renderItem(list: JList<out ColumnsListPopup.Row>, value: ColumnsListItem, index: Int, selected: Boolean): Component {
+    checkBox.isVisible = value.isColumn
+    groupIcon.isVisible = !value.isColumn
     checkBox.isSelected = value.visible
-    checkBox.border = JBUI.Borders.emptyLeft(indent(value))
+    // The tree indent already includes the UI scale.
+    @Suppress("UseDPIAwareBorders")
+    val border = EmptyBorder(0, indent(value), 0, 0)
+    checkBox.border = border
+    groupIcon.border = border
+    groupIcon.preferredSize = checkBox.preferredSize
+    checkBoxHolder.preferredSize = checkBox.preferredSize
     text.clear()
     text.icon = value.icon
     text.append(value.name, if (value.visible) SimpleTextAttributes.REGULAR_ATTRIBUTES else SimpleTextAttributes.GRAYED_ATTRIBUTES)
@@ -146,14 +164,10 @@ internal class ItemRenderer(
     return content
   }
 
-  /**
-   * What a screen reader says for a row.
-   *
-   * The list reads the component this returns, and it holds a check box and two icons that say nothing
-   * alone. The row therefore carries the name, the type, the visibility and the pin state itself.
-   */
+  /** The row name, with visibility and pin state for a column. */
   private fun accessibleName(value: ColumnsListItem): @Nls String {
     val name = if (value.typeText == null) value.name else "${value.name}, ${value.typeText}"
+    if (!value.isColumn) return name
     val shown = DataGridBundle.message(
       if (value.visible) "action.Console.TableResult.ColumnsList.Popup.RowShown"
       else "action.Console.TableResult.ColumnsList.Popup.RowHidden",

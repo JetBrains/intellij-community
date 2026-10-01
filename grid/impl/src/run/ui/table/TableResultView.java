@@ -1460,19 +1460,17 @@ public class TableResultView extends JBTableWithResizableCells
     forEachRenderedColumn(column -> column.setColumnWidthByUser(columnWidth));
   }
 
-  /**
-   * The width the columns share: the scrollable viewport plus the pinned strip, which is the row header and so sits
-   * outside that viewport. Zero or less while the grid is not laid out.
-   */
+  /** Returns the viewport width, or the table width when it has no viewport. */
   public int getAvailableColumnsWidth() {
     int mainWidth = getParent() instanceof JViewport viewport ? viewport.getExtentSize().width : getWidth();
     return mainWidth;
   }
 
   /**
-   * Brings the leftmost of {@code columns} back into view. The rows stay where they are, because unpinning returns
-   * the columns and must not move the caller's place in the data.
+   * Aligns the leftmost requested column with the visible area in an untransposed table.
+   * Keeps the current vertical scroll position.
    */
+  @Override
   public void scrollColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> columns) {
     if (isTransposed()) return;
     IntUnaryOperator column2View = getRawIndexConverter().column2View();
@@ -1484,8 +1482,8 @@ public class TableResultView extends JBTableWithResizableCells
     if (target < 0) return;
     Rectangle visible = getVisibleRect();
     Rectangle cell = getCellRect(Math.max(0, getSelectionModel().getLeadSelectionIndex()), target, true);
-    cell.y = visible.y;
-    cell.height = visible.height;
+    // Use the viewport width to show the start of a column wider than the viewport.
+    cell.setBounds(cell.x, visible.y, visible.width, visible.height);
     scrollRectToVisible(cell);
   }
 

@@ -94,6 +94,7 @@
     <projectService serviceImplementation="com.intellij.database.datagrid.GridDataHookUpManager"/>
     <search.optionContributor implementation="com.intellij.database.settings.DataGridAppearanceOptionContributor"/>
     <customizableActionGroupProvider implementation="com.intellij.database.run.ui.table.TableFloatingToolbar$CustomizableGroupProvider"/>
+    <customizableActionGroupProvider implementation="com.intellij.database.run.ui.columns.ColumnsListCustomizableGroupProvider"/>
   </extensions>
 
   <applicationListeners>
@@ -102,6 +103,28 @@
   </applicationListeners>
 
   <actions resource-bundle="messages.DataGridBundle">
+    <group id="Console.TableResult.ColumnsList.Popup">
+      <action id="Console.TableResult.ColumnsList.CopyNames"
+              class="com.intellij.database.run.ui.columns.ColumnsListCopyNamesAction" use-shortcut-of="$Copy"/>
+      <action id="Console.TableResult.ColumnsList.CopyNamesAndTypes"
+              class="com.intellij.database.run.ui.columns.ColumnsListCopyNamesAndTypesAction"/>
+      <separator/>
+      <action id="Console.TableResult.ColumnsList.RestoreOriginalOrder"
+              class="com.intellij.database.run.ui.columns.ColumnsListRestoreOriginalOrderAction"/>
+      <separator/>
+      <group id="Console.TableResult.ColumnsList.PinActions">
+        <action id="Console.TableResult.ColumnsList.PinSelected"
+                class="com.intellij.database.run.ui.columns.ColumnsListPinSelectedAction" icon="AllIcons.General.Pin"/>
+        <action id="Console.TableResult.ColumnsList.UnpinSelected"
+                class="com.intellij.database.run.ui.columns.ColumnsListUnpinSelectedAction"/>
+        <!--suppress PluginXmlCapitalization -->
+        <action id="Console.TableResult.ColumnsList.PinUpToHere"
+                class="com.intellij.database.run.ui.columns.ColumnsListPinUpToHereAction" icon="AllIcons.General.Pin"/>
+        <action id="Console.TableResult.ColumnsList.UnpinAll"
+                class="com.intellij.database.run.ui.columns.ColumnsListUnpinAllAction"/>
+      </group>
+    </group>
+
     <action id="DecreaseColumnWidth" class="com.intellij.database.actions.ColumnsWidthAction$DecreaseColumnsWidthAction"
             use-shortcut-of="ResizeToolWindowLeft"/>
     <action id="IncreaseColumnWidth" class="com.intellij.database.actions.ColumnsWidthAction$IncreaseColumnsWidthAction"

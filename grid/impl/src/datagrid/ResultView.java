@@ -37,6 +37,10 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
     for (var column : columns) setColumnEnabled(column, state);
   }
 
+  /** Brings the leftmost of {@code columns} into view, leaving the rows where they are. */
+  default void scrollColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> columns) {
+  }
+
   void setRowEnabled(@NotNull ModelIndex<GridRow> rowIdx, boolean state);
 
   void showFirstCell(int rowNumOnCurrentPage);

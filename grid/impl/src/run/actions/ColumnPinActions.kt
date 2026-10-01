@@ -35,11 +35,11 @@ private fun pinTargetColumns(grid: DataGrid, base: ModelIndexSet<GridColumn>): M
 }
 
 /**
- * Disables the action with [reason], or restores its normal description when available.
+ * Disables the action with [reason]. A null reason enables it, restores its description, and clears its tooltip.
  *
  * Use a tooltip too: disabled popup items cannot show their description in the status bar.
  */
-internal fun AnAction.showReason(e: AnActionEvent, reason: @ActionDescription String?) {
+internal fun AnAction.disableWithReason(e: AnActionEvent, reason: @ActionDescription String?) {
   e.presentation.isVisible = true
   e.presentation.isEnabled = reason == null
   e.presentation.description = reason ?: templatePresentation.description
@@ -62,7 +62,7 @@ class PinColumnsAction : ColumnHeaderActionBase(true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, commands.reasonPinRefuses(columnIdxs))
+    disableWithReason(e, commands.reasonPinRefuses(columnIdxs))
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
@@ -86,7 +86,7 @@ class UnpinColumnsAction : ColumnHeaderActionBase(true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, commands.reasonUnpinRefuses())
+    disableWithReason(e, commands.reasonUnpinRefuses())
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
@@ -105,7 +105,7 @@ class PinColumnsUpToHereAction : ColumnHeaderActionBase() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, commands.reasonPinUpToHereRefuses(column))
+    disableWithReason(e, commands.reasonPinUpToHereRefuses(column))
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
@@ -124,7 +124,7 @@ class UnpinAllColumnsAction : ColumnHeaderActionBase() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    showReason(e, commands.reasonUnpinRefuses())
+    disableWithReason(e, commands.reasonUnpinRefuses())
   }
 
   override fun actionPerformed(e: AnActionEvent, grid: DataGrid, columnIdxs: ModelIndexSet<GridColumn>) {
