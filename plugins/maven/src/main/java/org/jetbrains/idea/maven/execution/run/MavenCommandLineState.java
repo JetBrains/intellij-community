@@ -232,7 +232,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
 
     if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration)) {
       MavenResumeAction resumeAction =
-        new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
+        new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext(), myConfiguration);
       restartActions.add(resumeAction);
     }
     res.setRestartActions(restartActions.toArray(AnAction.EMPTY_ARRAY));
@@ -246,8 +246,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
     return ctx ->
       withResumeAction ? startBuildEvent
         .withRestartActions(new MavenRebuildAction(getEnvironment()),
-                            new MavenResumeAction(processHandler, runner, getEnvironment(),
-                                                  ctx))
+                            new MavenResumeAction(processHandler, runner, getEnvironment(), ctx, myConfiguration))
                        : startBuildEvent.withRestartActions(new MavenRebuildAction(getEnvironment()));
   }
 

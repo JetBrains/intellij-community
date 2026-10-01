@@ -66,16 +66,19 @@ public class MavenResumeAction extends AnAction {
 
   private String myMavenVersion;
 
+  private final MavenRunConfiguration myConfiguration;
+
   public MavenResumeAction(ProcessHandler processHandler,
                            ProgramRunner runner,
                            ExecutionEnvironment environment,
-                           MavenParsingContext context) {
+                           MavenParsingContext context,
+                           @NotNull MavenRunConfiguration runConfiguration) {
     super(RunnerBundle.message("maven.resume.from.title"), null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
     myEnvironment = environment;
     myContext = context;
+    myConfiguration = runConfiguration;
 
-    final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();
     myMavenVersion = getMavenVersion(runConfiguration);
 
     if (VersionComparatorUtil.compare(myMavenVersion, "3.5.3") < 0 || context == null) {
@@ -228,7 +231,7 @@ public class MavenResumeAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = myEnvironment.getProject();
-    MavenRunConfiguration runConfiguration = ((MavenRunConfiguration)myEnvironment.getRunProfile()).clone();
+    MavenRunConfiguration runConfiguration = myConfiguration.clone();
 
     List<String> goals = new ArrayList<>(runConfiguration.getRunnerParameters().getGoals());
 

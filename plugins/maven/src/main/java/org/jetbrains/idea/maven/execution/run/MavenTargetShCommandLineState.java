@@ -59,7 +59,6 @@ import org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTypeConstants;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
-import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -69,8 +68,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-
-import static org.jetbrains.idea.maven.server.MavenDistributionKt.isMaven4;
 
 public class MavenTargetShCommandLineState extends CommandLineState implements TargetEnvironmentAwareRunProfileState {
 
@@ -134,8 +131,7 @@ public class MavenTargetShCommandLineState extends CommandLineState implements T
     return ctx ->
       withResumeAction ? startBuildEvent
         .withRestartActions(new MavenRebuildAction(myEnvironment),
-                            new MavenResumeAction(processHandler, runner, myEnvironment,
-                                                  ctx))
+                            new MavenResumeAction(processHandler, runner, myEnvironment, ctx, myConfiguration))
                        : startBuildEvent.withRestartActions(new MavenRebuildAction(myEnvironment));
   }
 

@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
@@ -20,14 +19,12 @@ private val LOG = logger<SurefireRerunFailedTestsAction>()
  * The failed test names are read from the SM runner model (populated by [SurefireReportParser])
  * and reconstructed into a `-Dtest=Class1#method1+method2,Class2#method3` Surefire filter.
  *
- * We override [actionPerformed] rather than [getRunProfile] to avoid the [MyRunProfile] wrapper
- * that [AbstractRerunFailedTestsAction] normally uses: [MavenResumeAction] hard-casts
- * [ExecutionEnvironment.getRunProfile] to [MavenRunConfiguration], so the wrapper cannot be in
- * the environment's profile slot.
+ * We override [actionPerformed] rather than [getRunProfile], so the rerun executes a plain
+ * [MavenRunConfiguration] and not the [MyRunProfile] wrapper of [AbstractRerunFailedTestsAction].
  */
 internal class SurefireRerunFailedTestsAction(
   componentContainer: ComponentContainer,
-  private val configuration: MavenSurefireRunConfiguration,
+  private val configuration: MavenRunConfiguration,
 ) : AbstractRerunFailedTestsAction(componentContainer) {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -35,15 +32,13 @@ internal class SurefireRerunFailedTestsAction(
     val model = model ?: run { LOG.debug("SurefireRerunFailedTestsAction: SM runner model not yet available"); return }
     val failedTestParam = buildFailedTestParam(model.root.allTests) ?: return
 
-    val cloned = configuration.clone() as MavenSurefireRunConfiguration
+    val cloned = configuration.clone()
     val goals = ArrayList(cloned.runnerParameters.goals)
     val idx = goals.indexOfFirst { it.startsWith("-Dtest=") }
     if (idx >= 0) goals[idx] = "-Dtest=$failedTestParam" else goals.add("-Dtest=$failedTestParam")
     cloned.runnerParameters.setGoals(goals)
 
     try {
-      // Pass the cloned MavenSurefireRunConfiguration directly — not a MyRunProfile wrapper —
-      // so MavenResumeAction can cast environment.runProfile to MavenRunConfiguration safely.
       val newEnv = ExecutionEnvironmentBuilder(environment).runProfile(cloned).build()
       environment.runner.execute(newEnv)
     }

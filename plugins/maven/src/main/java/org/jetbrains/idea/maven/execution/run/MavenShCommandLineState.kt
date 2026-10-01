@@ -360,7 +360,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
     if (MavenResumeAction.isApplicable(myConfiguration)) {
       val resumeAction =
-        MavenResumeAction(res.getProcessHandler(), runner, environment, eventProcessor.parsingContext)
+        MavenResumeAction(res.getProcessHandler(), runner, environment, eventProcessor.parsingContext, myConfiguration)
       restartActions.add(resumeAction)
     }
     res.setRestartActions(*restartActions.toTypedArray())

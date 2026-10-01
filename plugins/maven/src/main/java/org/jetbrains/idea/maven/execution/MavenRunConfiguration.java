@@ -48,7 +48,15 @@ import java.util.Objects;
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
 
+  private static final String SUREFIRE_ELEMENT = "surefire";
+  private static final String TEST_MODULE_DIRECTORY_ATTRIBUTE = "testModuleDirectory";
+  private static final String REPORT_SUFFIX_ATTRIBUTE = "reportSuffix";
+
   private @NotNull MavenSettings settings = new MavenSettings(getProject());
+  /** The directory of the Maven module whose Surefire reports the test console shows. Null for a plain Maven run. */
+  private @Nullable String testModuleDirectory;
+  /** The suffix of the Surefire report file names, passed to Maven as {@code -Dsurefire.reportNameSuffix}. */
+  private @Nullable String reportSuffix;
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
@@ -76,6 +84,22 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   public void setRunnerParameters(@NotNull MavenRunnerParameters parameters) {
     settings.setRunnerParameters(parameters);
+  }
+
+  public @Nullable String getTestModuleDirectory() {
+    return testModuleDirectory;
+  }
+
+  public void setTestModuleDirectory(@Nullable String testModuleDirectory) {
+    this.testModuleDirectory = testModuleDirectory;
+  }
+
+  public @Nullable String getReportSuffix() {
+    return reportSuffix;
+  }
+
+  public void setReportSuffix(@Nullable String reportSuffix) {
+    this.reportSuffix = reportSuffix;
   }
 
   @Override
@@ -131,6 +155,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
+    RunProfileState state = createMavenState(env);
+    if (testModuleDirectory == null) {
+      return state;
+    }
+    return new SurefireTestRunProfileState(state, this, executor, testModuleDirectory);
+  }
+
+  private @NotNull RunProfileState createMavenState(@NotNull ExecutionEnvironment env) {
     if (Registry.is("maven.use.scripts")) {
       if (env.getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
         return new MavenShCommandLineState(env, this);
@@ -153,6 +185,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     super.readExternal(element);
     settings.readExternal(element);
     getExtensionsManager().readExternal(this, element);
+    Element surefire = element.getChild(SUREFIRE_ELEMENT);
+    testModuleDirectory = surefire == null ? null : surefire.getAttributeValue(TEST_MODULE_DIRECTORY_ATTRIBUTE);
+    reportSuffix = surefire == null ? null : surefire.getAttributeValue(REPORT_SUFFIX_ATTRIBUTE);
   }
 
   @Override
@@ -160,6 +195,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     super.writeExternal(element);
     settings.writeExternal(element);
     getExtensionsManager().writeExternal(this, element);
+    if (testModuleDirectory != null) {
+      Element surefire = new Element(SUREFIRE_ELEMENT);
+      surefire.setAttribute(TEST_MODULE_DIRECTORY_ATTRIBUTE, testModuleDirectory);
+      if (reportSuffix != null) {
+        surefire.setAttribute(REPORT_SUFFIX_ATTRIBUTE, reportSuffix);
+      }
+      element.addContent(surefire);
+    }
   }
 
   @Override

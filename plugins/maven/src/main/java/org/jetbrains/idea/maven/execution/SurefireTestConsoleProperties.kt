@@ -9,7 +9,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.execution.ui.ConsoleView
 
 internal class SurefireTestConsoleProperties(
-  private val mavenConfiguration: MavenSurefireRunConfiguration,
+  private val mavenConfiguration: MavenRunConfiguration,
   executor: Executor,
 ) : SMTRunnerConsoleProperties(mavenConfiguration, "Maven Surefire", executor) {
 

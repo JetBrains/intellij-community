@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -52,19 +53,7 @@ class MavenSurefireRunConfiguration(
   configurationFactory: ConfigurationFactory?,
   name: String,
   private val alternativeJrePath: String?,
-) : MavenRunConfiguration(project, configurationFactory, name), SurefireRunConfiguration {
-
-  /** Directory of the Maven module whose Surefire test results to display after the build. */
-  var testModuleDirectory: String? = null
-
-  /** Suffix appended to Surefire report filenames via `-Dsurefire.reportNameSuffix`. Isolates parallel runs. */
-  var reportSuffix: String? = null
-
-  override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState? {
-    val delegate = super.getState(executor, env) ?: return null
-    val testDir = testModuleDirectory ?: return delegate
-    return SurefireTestRunProfileState(delegate, this, executor, testDir)
-  }
+) : MavenRunConfiguration(project, configurationFactory, name) {
 
   override fun createRemoteConnectionCreator(javaParameters: JavaParameters): RemoteConnectionCreator {
     return object : RemoteConnectionCreator {
@@ -97,9 +86,11 @@ class MavenSurefireRunConfiguration(
   }
 }
 
-private class SurefireTestRunProfileState(
+/** Runs Maven and shows the Surefire reports of [testModuleDirectory] in the test console. */
+@ApiStatus.Internal
+class SurefireTestRunProfileState(
   private val delegate: RunProfileState,
-  private val configuration: MavenSurefireRunConfiguration,
+  private val configuration: MavenRunConfiguration,
   private val executor: Executor,
   private val testModuleDirectory: String,
 ) : RunProfileState, RemoteConnectionCreator {
@@ -202,6 +193,3 @@ private class SurefireProcessProxy(
   override fun detachIsDefault(): Boolean = false
   override fun getProcessInput(): OutputStream? = null
 }
-
-/** Identifies a [MavenRunConfiguration] that runs tests through Maven Surefire. */
-interface SurefireRunConfiguration

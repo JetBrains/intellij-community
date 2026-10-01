@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.execution.run.MavenRemoteConnectionWrapper
 internal class SurefireRemoteConnectionCreator : MavenRemoteConnectionCreator() {
 
   override fun createRemoteConnectionForScript(runConfiguration: MavenRunConfiguration): MavenRemoteConnectionWrapper? {
-    if (runConfiguration !is SurefireRunConfiguration) return null
+    if (runConfiguration.testModuleDirectory == null) return null
 
     val parameters = JavaParameters()
     val connection = createConnection(runConfiguration.project, parameters)
