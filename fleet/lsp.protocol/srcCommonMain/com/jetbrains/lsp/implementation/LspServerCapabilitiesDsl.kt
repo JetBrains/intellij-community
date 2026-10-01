@@ -427,9 +427,14 @@ fun LspServerCapabilitiesBuilder.diagnosticProvider(
 
 fun LspServerCapabilitiesBuilder.workspaceSymbolProvider(
     value: OrBoolean<WorkspaceSymbolRegistrationOptions> = OrBoolean(true),
+    /** Handles `workspaceSymbol/resolve`; the caller sets `resolveProvider = true` in [value]. */
+    resolveHandler: (suspend context(LspHandlerContext) CoroutineScope.(WorkspaceSymbol) -> WorkspaceSymbol)? = null,
     handler: suspend context(LspHandlerContext) CoroutineScope.(WorkspaceSymbolParams) -> List<WorkspaceSymbol>,
 ): Unit = capability(update = { copy(workspaceSymbolProvider = value) }, register = {
     request(WorkspaceSymbolRequests.WorkspaceSymbolRequest, handler)
+    if (resolveHandler != null) {
+        request(Workspace.ResolveSymbol, resolveHandler)
+    }
 })
 
 /**

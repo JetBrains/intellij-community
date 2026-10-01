@@ -44,9 +44,19 @@ data class WorkspaceSymbolParams(
     override val partialResultToken: ProgressToken? = null,
     override val workDoneToken: ProgressToken? = null,
     /**
-     * When true, return symbols from the project only.
+     * JetBrains extension: When true, return symbols from the project only.
      */
     val excludeLibraries: Boolean? = null,
+    /**
+     * JetBrains extension: when set, return only symbols of these kinds.
+     * Other servers ignore it, so clients should still filter.
+     */
+    val kinds: List<SymbolKind>? = null,
+    /**
+     * JetBrains extension: the most symbols to return, the best matching names first; null: the server's default.
+     * Other servers ignore it.
+     */
+    val limit: Int? = null,
 ) : WorkDoneProgressParams, PartialResultParams
 
 
