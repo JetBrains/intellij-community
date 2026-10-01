@@ -5,12 +5,14 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.StartId
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
+import java.util.LinkedList
 import java.util.function.Consumer
 import kotlin.io.path.extension
 import kotlin.io.path.pathString
@@ -171,6 +173,29 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
     }
 
     return false
+  }
+
+  private class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
+    private val readLines = LinkedList<String>()
+    override fun getParentEventId(): StartId = reader.parentEventId
+
+    override fun readLine(): String? {
+      val line = reader.readLine() ?: return null
+      readLines.add(line)
+      return line
+    }
+
+    override fun pushBack() {
+      reader.pushBack()
+      readLines.pollLast()
+    }
+
+    override fun pushBack(numberOfLines: Int) {
+      reader.pushBack(numberOfLines)
+      repeat(numberOfLines) { readLines.pollLast() ?: return@repeat }
+    }
+
+    fun getOutput(): @NlsSafe String = readLines.joinToString(separator = "\n")
   }
 
   private companion object {

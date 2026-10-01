@@ -10,10 +10,8 @@ import com.intellij.build.output.BuildOutputMulticaster.Companion.asMulticaster
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
-import java.util.LinkedList
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
@@ -206,31 +204,4 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
         else -> BuildOutputMulticasterWrapper(this)
       }
   }
-}
-
-@Internal
-@Experimental
-class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
-  private val readLines = LinkedList<String>()
-  override fun getParentEventId(): StartId = reader.parentEventId
-
-  override fun readLine(): String? {
-    val line = reader.readLine()
-    if (line != null) {
-      readLines.add(line)
-    }
-    return line
-  }
-
-  override fun pushBack() {
-    reader.pushBack()
-    readLines.pollLast()
-  }
-
-  override fun pushBack(numberOfLines: Int) {
-    reader.pushBack(numberOfLines)
-    repeat(numberOfLines) { readLines.pollLast() ?: return@repeat }
-  }
-
-  fun getOutput(): String = readLines.joinToString(separator = "\n")
 }
