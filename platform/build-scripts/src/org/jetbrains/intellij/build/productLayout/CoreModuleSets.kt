@@ -314,7 +314,7 @@ object CoreModuleSets {
     // Additional dependencies specific to lang.impl and ide.impl
     embeddedModule("intellij.platform.ide.concurrency")
     embeddedModule("intellij.platform.builtInServer")
-    embeddedModule("intellij.platform.discoverability")
+    module("intellij.platform.discoverability")
     embeddedModule("intellij.platform.eel.impl")
     embeddedModule("intellij.platform.eel.nioFs.impl")
     embeddedModule("intellij.platform.eel.impl.base")

@@ -228,6 +228,7 @@ DEV_DIST_MODULE_SETS = {
         module_system_loaded = [
             "intellij.libraries.zip.signer",
             "intellij.platform.backend.workspace.impl",
+            "intellij.platform.discoverability",
             "intellij.platform.ide.osCertificates",
             "intellij.platform.ide.pluginSignatureVerifier",
             "intellij.platform.ide.util.io.native",
