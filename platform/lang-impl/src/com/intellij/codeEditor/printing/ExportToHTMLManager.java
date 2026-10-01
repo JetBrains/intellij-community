@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
@@ -326,7 +326,7 @@ final class ExportToHTMLManager {
           dirToShow += File.separatorChar;
         }
         dirToShow += PsiDirectoryFactory.getInstance(myProject).getQualifiedName(myPsiDirectory, false).replace('.', File.separatorChar);
-        BrowserUtil.browse(dirToShow);
+        BrowserUtil.browse(Path.of(dirToShow).toUri());
       }
     }
   }
