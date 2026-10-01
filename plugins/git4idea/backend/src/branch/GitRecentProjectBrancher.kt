@@ -3,6 +3,7 @@ package git4idea.branch
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectBrancher
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.awt.RelativePoint
@@ -25,10 +26,20 @@ internal class GitRecentProjectBrancher : RecentProjectBrancher {
       loadBranchRepositories(project, projectPath)
     }
     withContext(Dispatchers.EDT) {
-      val popup = GitBranchesPopup.createDefaultPopup(project, preferredSelection = null, repositories = repositories)
+      val popup = GitBranchesPopup.createDefaultPopup(project, preferredSelection = null, repositories = repositories,
+                                                      excludedTopLevelActions = excludedTopLevelActions())
       if (anchor != null) popup.show(anchor) else popup.showInFocusCenter()
     }
   }
+
+  /**
+   * The top level actions the popup leaves out for a recent project.
+   *
+   * Committing one needs its changes, which only [RECENT_PROJECT_COMMIT] has the project compute, so both commit actions are offered only
+   * with it: otherwise they would open a dialog listing the changes the project settings happen to remember.
+   */
+  private fun excludedTopLevelActions(): Set<String> =
+    if (Registry.`is`(RECENT_PROJECT_COMMIT)) emptySet() else setOf(COMMIT_ACTION, COMMIT_AND_STAGE_ACTION)
 
   @VisibleForTesting
   internal suspend fun loadBranchRepositories(project: Project, projectPath: Path): List<GitRepositoryModel> {
@@ -38,3 +49,8 @@ internal class GitRecentProjectBrancher : RecentProjectBrancher {
     return repositories
   }
 }
+
+/** Declared in VcsExtensions.xml, where the change tracking it also turns on lives. */
+private const val RECENT_PROJECT_COMMIT = "vcs.recent.project.commit"
+private const val COMMIT_ACTION = "CheckinProject"
+private const val COMMIT_AND_STAGE_ACTION = "Git.Commit.Stage"

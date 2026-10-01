@@ -3,6 +3,7 @@ package com.intellij.vcs.git.branch.popup
 
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
@@ -35,6 +36,8 @@ class GitDefaultBranchesPopupStep private constructor(
   selectedRepository: GitRepositoryModel?,
   repositories: List<GitRepositoryModel>,
   private val isFirstStep: Boolean,
+  /** Ids of the top level actions this popup leaves out, for a caller that offers only some of them. */
+  private val excludedTopLevelActions: Set<String> = emptySet(),
 ) : GitBranchesPopupStepBase(project, selectedRepository, repositories) {
   init {
     check(repositories.isNotEmpty()) { "Repositories list must not be empty" }
@@ -49,6 +52,7 @@ class GitDefaultBranchesPopupStep private constructor(
 
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val actions = GitBranchesPopupActions.createTopLevelActionItems(dataContext, GitBranchesPopupActions.NEW_UI_TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
+        .filterNot { it.isExcluded() }
       if (actions.isNotEmpty()) {
         addAll(actions)
         add(GitBranchesPopupBase.createTreeSeparator())
@@ -56,11 +60,15 @@ class GitDefaultBranchesPopupStep private constructor(
     }
 
     val actions = GitBranchesPopupActions.createTopLevelActionItems(dataContext, GitBranchesPopupActions.TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
+      .filterNot { it.isExcluded() }
     if (actions.isNotEmpty()) {
       addAll(actions)
       add(GitBranchesPopupBase.createTreeSeparator())
     }
   }
+
+  private fun PopupFactoryImpl.ActionItem.isExcluded(): Boolean =
+    excludedTopLevelActions.isNotEmpty() && ActionManager.getInstance().getId(action) in excludedTopLevelActions
 
   override var treeModel: GitBranchesTreeModel = createTreeModel(false)
     private set
@@ -141,6 +149,7 @@ class GitDefaultBranchesPopupStep private constructor(
       project: Project,
       preferredSelection: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
+      excludedTopLevelActions: Set<String> = emptySet(),
     ): GitDefaultBranchesPopupStep {
       val selectedRepoIfNeeded = when {
         repositories.size <= 1 -> null
@@ -148,7 +157,7 @@ class GitDefaultBranchesPopupStep private constructor(
         else -> preferredSelection
       }
 
-      return GitDefaultBranchesPopupStep(project, selectedRepoIfNeeded, repositories, true)
+      return GitDefaultBranchesPopupStep(project, selectedRepoIfNeeded, repositories, true, excludedTopLevelActions)
     }
 
     /**
