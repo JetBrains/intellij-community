@@ -34,6 +34,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [poly-context](poly-context/SKILL.md) | Implement PolyContext feature gating and environment detection. |
 | [poly-symbols](poly-symbols/SKILL.md) | Implement PolySymbols completion, references, and rename. |
 | [pseudo-kmp](pseudo-kmp/SKILL.md) | Create or modify IntelliJ pseudo-KMP expect/actual modules. |
+| [py-code-insight-counters](py-code-insight-counters/SKILL.md) | Count Python code insight work in tests with PyCodeInsightCounters. |
 | [registry](registry/SKILL.md) | Use the IntelliJ Registry API for registry keys and feature flags. |
 | [rust-code-style](rust-code-style/SKILL.md) | Write or review Rust in the build tools: the error model, the CLI grammar, the crate rule, the test layout, the shared lint, format and Bazel configuration. |
 | [safe-push](safe-push/SKILL.md) | Push IntelliJ repository changes through the Safe Push workflow. |
