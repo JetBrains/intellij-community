@@ -67,7 +67,7 @@ internal object GitLabMergeRequestSubmitReviewPopup : CodeReviewSubmitPopupHandl
     }
     if (!vm.canDeleteWorktree) return buttonsPanel
 
-    val deleteWorktreeCheckBox = JBCheckBox(GitLabBundle.message("merge.request.review.submit.delete.worktree"),
+    val deleteWorktreeCheckBox = JBCheckBox(GitBundle.message("Git.WorkingTrees.delete.current.worktree.checkbox"),
                                             vm.deleteWorktreeAfterSubmit.value).apply {
       isOpaque = false
       bindDisabledIn(cs, vm.isBusy)

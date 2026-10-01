@@ -66,7 +66,7 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
     if (!vm.canDeleteWorktree) return buttonsPanel
 
     val deleteWorktreeCheckBox =
-      JBCheckBox(GithubBundle.message("pull.request.review.submit.delete.worktree"), vm.deleteWorktreeAfterSubmit.value).apply {
+      JBCheckBox(GitBundle.message("Git.WorkingTrees.delete.current.worktree.checkbox"), vm.deleteWorktreeAfterSubmit.value).apply {
         isOpaque = false
         bindDisabledIn(cs, vm.isBusy)
         addActionListener { vm.setDeleteWorktreeAfterSubmit(isSelected) }
