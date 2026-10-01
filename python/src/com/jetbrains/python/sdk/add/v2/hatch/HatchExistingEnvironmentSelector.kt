@@ -56,8 +56,10 @@ internal class HatchExistingEnvironmentSelector<P : PathHolder>(
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {
     val environment = model.hatchViewModel.selectedEnvFromExisting.get()
-    val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing<P>
-                            ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
+    val existingHatchVenv = when (val r = environment?.pythonVirtualEnvironment) {
+      is PythonVirtualEnvironment.Existing -> r
+      is PythonVirtualEnvironment.NotExisting, null -> return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
+    }
 
     val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
       model.fileSystem.resolvePythonBinary(existingHatchVenv.pythonHomePath)
