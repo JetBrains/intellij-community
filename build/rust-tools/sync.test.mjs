@@ -127,6 +127,11 @@ describe("detectRoots and resolveManifests", () => {
 })
 
 describe("runCli", () => {
+  // A skip of the vm-lane clippy.toml, so that the tests cover a skipped copy whatever `skippedCopies` holds.
+  const skips = {
+    "plugins/air/tests/integration/vm-lane/Cargo.toml": {skip: ["clippy.toml"], reason: "the test keeps its own copy"},
+  }
+
   async function withCheckout(run) {
     const root = await mkdtemp(join(tmpdir(), "rust-tools-sync-test-"))
     try {
@@ -139,7 +144,7 @@ describe("runCli", () => {
         writeFile(join(sourceDir, name), text)
       }
       // The community workspace has a stale table, a drifted rustfmt.toml and no clippy.toml. The ultimate one is in sync.
-      // The vm-lane workspace has the tables, no rustfmt.toml, and a clippy.toml of its own, which skippedCopies keeps.
+      // The vm-lane workspace has the tables, no rustfmt.toml, and a clippy.toml of its own, which `skips` keeps.
       const communityDir = join(community, "build/dev-dist-tools")
       const ultimateDir = join(root, "build/dev-dist-tools")
       const vmLaneDir = join(root, "plugins/air/tests/integration/vm-lane")
@@ -154,17 +159,17 @@ describe("runCli", () => {
       writeFile(join(vmLaneDir, "Cargo.toml"), manifestWith(block.split("\n").slice(1, -1)))
       writeFile(join(vmLaneDir, "clippy.toml"), "# Its own.\n")
       const roots = {community, ultimate: root}
-      await run({roots, sourceDir, communityDir, communityManifest, ultimateManifest, vmLaneDir})
+      await run({roots, sourceDir, skippedCopies: skips, communityDir, communityManifest, ultimateManifest, vmLaneDir})
     } finally {
       await rm(root, {recursive: true, force: true})
     }
   }
 
   it("check names each copy that differs or is missing and writes nothing", async () => {
-    await withCheckout(({roots, sourceDir, communityDir, communityManifest, vmLaneDir}) => {
+    await withCheckout(({roots, sourceDir, skippedCopies, communityDir, communityManifest, vmLaneDir}) => {
       const {io, err} = createIo()
       const before = readFileSync(communityManifest, "utf8")
-      equal(runCli(["--check"], {io, roots, sourceDir}), checkFailedExitCode)
+      equal(runCli(["--check"], {io, roots, sourceDir, skippedCopies}), checkFailedExitCode)
       equal(readFileSync(communityManifest, "utf8"), before)
       equal(readFileSync(join(communityDir, "rustfmt.toml"), "utf8"), "max_width = 100\n")
       equal(existsSync(join(communityDir, "clippy.toml")), false)
@@ -173,7 +178,7 @@ describe("runCli", () => {
       match(text, /community\/build\/dev-dist-tools\/rustfmt.toml differs from rustfmt.toml/)
       match(text, /community\/build\/dev-dist-tools\/clippy.toml is missing/)
       match(text, /plugins\/air\/tests\/integration\/vm-lane\/rustfmt.toml is missing/)
-      match(text, /skipped plugins\/air\/tests\/integration\/vm-lane\/clippy.toml: clippy.toml joins/)
+      match(text, /skipped plugins\/air\/tests\/integration\/vm-lane\/clippy.toml: the test keeps its own copy/)
       match(text, /skipped community\/tools\/bt\/Cargo.toml: not in this checkout/)
       match(text, /4 file\(s\) differ/)
       equal(existsSync(join(vmLaneDir, "rustfmt.toml")), false)
@@ -183,9 +188,9 @@ describe("runCli", () => {
   })
 
   it("write updates the differing copies only, then check is clean", async () => {
-    await withCheckout(({roots, sourceDir, communityDir, communityManifest, ultimateManifest, vmLaneDir}) => {
+    await withCheckout(({roots, sourceDir, skippedCopies, communityDir, communityManifest, ultimateManifest, vmLaneDir}) => {
       const {io, out} = createIo()
-      equal(runCli([], {io, roots, sourceDir}), 0)
+      equal(runCli([], {io, roots, sourceDir, skippedCopies}), 0)
       deepEqual(out, [
         "updated community/build/dev-dist-tools/Cargo.toml",
         "updated community/build/dev-dist-tools/rustfmt.toml",
@@ -199,7 +204,7 @@ describe("runCli", () => {
         equal(readFileSync(join(communityDir, name), "utf8"), renderCopy(name, text))
       }
       equal(existsSync(ultimateManifest), true)
-      equal(runCli(["--check"], {io: createIo().io, roots, sourceDir}), 0)
+      equal(runCli(["--check"], {io: createIo().io, roots, sourceDir, skippedCopies}), 0)
     })
   })
 

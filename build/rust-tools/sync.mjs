@@ -139,6 +139,7 @@ export function runCli(argv = process.argv.slice(2), options = {}) {
   const readText = options.readText ?? ((file) => readFileSync(file, "utf8"))
   const writeText = options.writeText ?? ((file, text) => writeFileSync(file, text, "utf8"))
   const exists = options.exists ?? existsSync
+  const skips = options.skippedCopies ?? skippedCopies
 
   const flags = new Set(argv)
   if (flags.has("--help")) {
@@ -175,7 +176,7 @@ export function runCli(argv = process.argv.slice(2), options = {}) {
     }
     const manifest = readText(file)
     sync(file, manifest, applyBlock(manifest, block), "differs from lints.toml")
-    const skipped = skippedCopies[path]
+    const skipped = skips[path]
     for (const {name, text} of copies) {
       const copy = join(dirname(file), name)
       if (skipped?.skip.includes(name)) {
