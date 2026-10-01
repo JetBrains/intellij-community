@@ -46,7 +46,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
   public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       @Override
@@ -57,7 +57,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
   }
 
   @Override
-  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @NotNull CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JavaCodeStyleSettings(settings);
   }
 
@@ -113,8 +113,6 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
         "checkbox.strip.whitespace.from.blank.lines.in.text.blocks"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaFrontbackBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
-
-
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_DECONSTRUCTION_LIST", JavaFrontbackBundle.message(
         "checkbox.spaces.before.deconstruction.list"), getInstance().SPACES_BEFORE_PARENTHESES);
     }
@@ -426,7 +424,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
   }
 
   @Override
-  public PsiFile createFileFromText(final @NotNull Project project, final @NotNull String text) {
+  public PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
       "sample.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), false, false
     );
@@ -434,12 +432,10 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     return file;
   }
 
-
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new JavaIndentOptionsEditor();
   }
-
 
   @Override
   public @NotNull DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
@@ -492,8 +488,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
   @Override
   public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
-    if (codeStyleObject instanceof JavaCodeStyleSettings) {
-      return Collections.singletonList(new RepeatAnnotationsAccessor((JavaCodeStyleSettings)codeStyleObject));
+    if (codeStyleObject instanceof JavaCodeStyleSettings settings) {
+      return Collections.singletonList(new RepeatAnnotationsAccessor(settings));
     }
     return super.getAdditionalAccessors(codeStyleObject);
   }
