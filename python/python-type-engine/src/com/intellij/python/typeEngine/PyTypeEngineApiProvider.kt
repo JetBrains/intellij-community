@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.typeEngine
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -33,9 +34,12 @@ import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.sdk.PySdkListener
 import com.jetbrains.python.sdk.pythonSdk
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 
 internal class PyTypeEngineApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
@@ -44,28 +48,11 @@ internal class PyTypeEngineApiProvider : RemoteApiProvider {
 }
 
 private object PyTypeEngineApiImpl : PyTypeEngineApi {
-  override suspend fun observeState(projectId: ProjectId): Flow<PyTypeEngineStateDto> = callbackFlow {
+  override suspend fun observeState(projectId: ProjectId): Flow<PyTypeEngineStateDto> {
     val project = projectId.findProject()
-    val connection = project.messageBus.connect()
-    fun publish() {
-      trySend(state(project))
-    }
-
-    connection.subscribe(PyLspListener.TOPIC, object : PyLspListener {
-      override fun onTypeSettingsChange() = publish()
-    })
-    connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
-      override fun modulesAdded(project: Project, modules: List<Module?>) = publish()
-      override fun moduleRemoved(project: Project, module: Module) = publish()
-    })
-    connection.subscribe(PySdkListener.TOPIC, object : PySdkListener {
-      override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) = publish()
-    })
-    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
-      override fun packagesChanged(sdk: Sdk) = publish()
-    })
-    publish()
-    awaitClose { connection.disconnect() }
+    return stateChanges(project)
+      .buffer(Channel.CONFLATED)
+      .map { readAction { state(project) } }
   }
 
   /**
@@ -112,6 +99,33 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
       PyTypeEngineEvent.STATUS_WIDGET_CLICKED -> PyTypeEngineUsageCollector.logStatusBarWidgetClicked(project)
     }
   }
+}
+
+/**
+ * Signals a possible change of the type engine state.
+ * The project model sends one module event per module inside a write action, so the listeners do not compute the state.
+ */
+private fun stateChanges(project: Project): Flow<Unit> = callbackFlow {
+  val connection = project.messageBus.connect()
+  fun publish() {
+    trySend(Unit)
+  }
+
+  connection.subscribe(PyLspListener.TOPIC, object : PyLspListener {
+    override fun onTypeSettingsChange() = publish()
+  })
+  connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
+    override fun modulesAdded(project: Project, modules: List<Module?>) = publish()
+    override fun moduleRemoved(project: Project, module: Module) = publish()
+  })
+  connection.subscribe(PySdkListener.TOPIC, object : PySdkListener {
+    override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) = publish()
+  })
+  connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
+    override fun packagesChanged(sdk: Sdk) = publish()
+  })
+  publish()
+  awaitClose { connection.disconnect() }
 }
 
 private fun state(project: Project): PyTypeEngineStateDto {
