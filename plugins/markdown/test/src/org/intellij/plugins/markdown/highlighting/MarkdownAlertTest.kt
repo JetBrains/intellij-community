@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.highlighting
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.icons.AllIcons
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
@@ -46,7 +46,7 @@ class MarkdownAlertTest : BasePlatformTestCase() {
   private fun doGutterIconTest(title: String, expectedIcon: javax.swing.Icon) {
     myFixture.configureByText("test.md", "> $title\n> Content")
     myFixture.doHighlighting()
-    val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
     assertEquals("Expected exactly one gutter icon $expectedIcon for $title", 1, markers.count { it.icon == expectedIcon })
   }
 }

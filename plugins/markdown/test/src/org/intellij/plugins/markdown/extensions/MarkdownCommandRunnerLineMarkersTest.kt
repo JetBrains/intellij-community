@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.execution.Executor
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
@@ -88,7 +88,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   @Test
   fun `block run marker is shown for shell code fence`() {
     myFixture.doHighlighting()
-    val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
     assertNotNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
   }
 
@@ -101,7 +101,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
       val file = myFixture.addFileToProject("foo/$alias.md", "```$alias\npwd\n```")
       myFixture.openFileInEditor(file.virtualFile)
       myFixture.doHighlighting()
-      val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+      val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
       val marker = markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
       assertNotNull("The $alias fence must have a block marker", marker)
       val action = (marker!!.createGutterRenderer() as GutterIconRenderer).clickAction!!
@@ -155,7 +155,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
       val file = myFixture.addFileToProject("foo/$language.md", "```$language\ntext\n```")
       myFixture.openFileInEditor(file.virtualFile)
       myFixture.doHighlighting()
-      val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+      val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
       assertNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
     }
   }
@@ -309,7 +309,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   @Test
   fun `gutter popup action tells the user that it opens the terminal chooser`() {
     myFixture.doHighlighting()
-    val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
     val blockMarker = markers.first { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
     val action = (blockMarker.createGutterRenderer() as GutterIconRenderer).clickAction!!
     val dataContext = SimpleDataContext.builder().add(CommonDataKeys.PROJECT, project).build()
@@ -434,7 +434,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     inputEvent: MouseEvent? = MouseEvent(editor.component, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false),
   ) {
     myFixture.doHighlighting()
-    val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
     val blockMarker = markers.first { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
     val action = (blockMarker.createGutterRenderer() as GutterIconRenderer).clickAction!!
     val dataContext = SimpleDataContext.builder()

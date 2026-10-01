@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.images
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.images.MarkdownImagesBundle
@@ -54,7 +54,7 @@ class MarkdownConfigureImageLineMarkerTooltipTest: BasePlatformTestCase() {
   private fun doTest(content: String, expectedTooltips: Iterable<String>) {
     myFixture.configureByText(getTestFileName(), content)
     myFixture.doHighlighting()
-    val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, myFixture.project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
     val tooltips = markers.mapNotNull { it.lineMarkerTooltip }.sorted()
     assertEquals(expectedTooltips.sorted(), tooltips)
   }

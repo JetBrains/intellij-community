@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.stubs
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiDocumentManager
@@ -38,7 +38,7 @@ abstract class AbstractMultiHighlightingTest : AbstractMultiModuleTest() {
 
         val text = myEditor.document.text
         if (shouldCheckLineMarkers) {
-            data.checkLineMarkers(myFile, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), project), text)
+            data.checkLineMarkers(myFile, getDisplayedLineMarkers(getDocument(file), project), text)
         }
         if (shouldCheckResult) {
             data.checkResult(myFile, infos, text)

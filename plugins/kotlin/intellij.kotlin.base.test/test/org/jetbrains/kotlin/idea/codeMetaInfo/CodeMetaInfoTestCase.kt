@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeMetaInfo
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -76,7 +77,7 @@ open class CodeMetaInfoTestCase(
             return emptyList()
 
         CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
-        val lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), project)
+        val lineMarkers = getDisplayedLineMarkers(getDocument(file), project)
         return getCodeMetaInfo(lineMarkers, filterMetaInfo) { info ->
             listOf(LineMarkerCodeMetaInfo(configuration, info))
         }

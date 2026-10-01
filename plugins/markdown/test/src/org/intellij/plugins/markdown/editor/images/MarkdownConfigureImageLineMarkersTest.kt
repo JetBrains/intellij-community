@@ -2,8 +2,8 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.application.options.editor.GutterIconsConfigurable
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.intellij.plugins.markdown.MarkdownTestingUtil
@@ -84,7 +84,7 @@ class MarkdownConfigureImageLineMarkersTest: BasePlatformTestCase() {
   private fun doTest(expectedCount: Int, file: String = getTestFileName()) {
     myFixture.configureByFile(file)
     myFixture.doHighlighting()
-    val markers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, myFixture.project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
     assertSize(expectedCount, markers)
   }
 

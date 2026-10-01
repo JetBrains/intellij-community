@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.PsiUtilCore
@@ -72,7 +72,7 @@ abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BaseP
   protected open fun doTest(expectedCount: Int, predicate: (LineMarkerInfo<*>) -> Boolean) {
     configureContent()
     myFixture.doHighlighting()
-    val allMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, myFixture.project)
+    val allMarkers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
     val markers = allMarkers.filter(predicate)
     assertSize(expectedCount, markers)
     for (info in markers) {

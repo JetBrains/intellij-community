@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.NavigatablePsiElement;
@@ -127,14 +127,14 @@ public final class PyLineMarkerProviderTest extends PyTestCase {
     });
   }
 
-  private void doSingleFileLineMarkersTest(@SuppressWarnings("BoundedWildcard") Consumer<List<LineMarkerInfo<?>>> consumer) {
+  private void doSingleFileLineMarkersTest(@SuppressWarnings("BoundedWildcard") Consumer<List<? extends LineMarkerInfo<?>>> consumer) {
     myFixture.configureByFile(getTestName(false) + ".py");
     final DaemonCodeAnalyzerSettings analyzer = DaemonCodeAnalyzerSettings.getInstance();
     analyzer.SHOW_METHOD_SEPARATORS = true;
     try {
       myFixture.doHighlighting();
       final Document document = myFixture.getEditor().getDocument();
-      final List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, myFixture.getProject());
+      final List<LineMarkerInfo<?>> lineMarkers = LineMarkersPass.getDisplayedLineMarkers(document, myFixture.getProject());
       consumer.consume(lineMarkers);
     }
     finally {
@@ -152,15 +152,15 @@ public final class PyLineMarkerProviderTest extends PyTestCase {
       .first();
   }
 
-  private static void assertHasNoSeparator(@NotNull PsiElement element, @NotNull List<LineMarkerInfo<?>> lineMarkers) {
+  private static void assertHasNoSeparator(@NotNull PsiElement element, @NotNull List<? extends LineMarkerInfo<?>> lineMarkers) {
     assertFalse("Element " + element + " shouldn't have a method separator", hasSeparator(element, lineMarkers));
   }
 
-  private static void assertHasSeparator(@NotNull PsiElement element, @NotNull List<LineMarkerInfo<?>> lineMarkers) {
+  private static void assertHasSeparator(@NotNull PsiElement element, @NotNull List<? extends LineMarkerInfo<?>> lineMarkers) {
     assertTrue("Element " + element + " should have a method separator", hasSeparator(element, lineMarkers));
   }
 
-  private static boolean hasSeparator(@NotNull PsiElement element, @NotNull List<LineMarkerInfo<?>> lineMarkers) {
+  private static boolean hasSeparator(@NotNull PsiElement element, @NotNull List<? extends LineMarkerInfo<?>> lineMarkers) {
     final PsiElement separatorAnchor = PsiTreeUtil.getDeepestFirst(element);
     final LineMarkerInfo<?> marker = ContainerUtil.find(lineMarkers, maker -> maker.getElement() == separatorAnchor);
     return marker != null && marker.separatorPlacement != null;

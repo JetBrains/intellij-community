@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
@@ -1060,21 +1059,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
       return HighlightInfo.createComposite(foundInfoList, myProject);
     }
-  }
-
-  public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
-    List<LineMarkerInfo<?>> result = new ArrayList<>();
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-    markupModel.processRangeHighlightersOverlappingWith(0, document.getTextLength(),
-      highlighter -> {
-        LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
-        if (info != null) {
-          result.add(info);
-        }
-        return true;
-      }
-    );
-    return result;
   }
 
   @VisibleForTesting

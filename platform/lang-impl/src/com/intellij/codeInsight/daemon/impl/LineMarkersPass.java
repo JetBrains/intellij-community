@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +41,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.InjectionUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FreezableArrayList;
 import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -333,5 +336,22 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
      * No constraints, collect all <code>{@link LineMarkerInfo}</code>s
      */
     ALL
+  }
+
+  /// Return a list of [line markers][LineMarkerInfo] that were computed by the last run of [LineMarkersPass] and displayed in the editor.
+  /// Note that this list could be out of sync if the document was changed and the pass wasn't restarted/completed yet.
+  public static @NotNull @Unmodifiable List<LineMarkerInfo<?>> getDisplayedLineMarkers(@NotNull Document document, @NotNull Project project) {
+    FreezableArrayList<LineMarkerInfo<?>> result = new FreezableArrayList<>();
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    markupModel.processRangeHighlightersOverlappingWith(0, document.getTextLength(),
+      highlighter -> {
+        LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+        if (info != null) {
+          result.add(info);
+        }
+        return true;
+      }
+    );
+    return result.emptyOrFrozen();
   }
 }

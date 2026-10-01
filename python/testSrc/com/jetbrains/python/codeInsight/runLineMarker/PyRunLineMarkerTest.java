@@ -15,15 +15,18 @@
  */
 package com.jetbrains.python.codeInsight.runLineMarker;
 
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
+import com.intellij.openapi.editor.Document;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -56,10 +59,11 @@ public class PyRunLineMarkerTest extends PyTestCase {
     assertEmpty("Should not be runnable", infos);
   }
 
-  private List<LineMarkerInfo<?>> getInfos(String fileName) {
+  private @Unmodifiable List<LineMarkerInfo<?>> getInfos(String fileName) {
     myFixture.configureByFile(fileName);
     myFixture.doHighlighting();
-    return DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.getEditor().getDocument(), myFixture.getProject());
+    @NotNull Document document = myFixture.getEditor().getDocument();
+    return LineMarkersPass.getDisplayedLineMarkers(document, myFixture.getProject());
   }
 
   @Override

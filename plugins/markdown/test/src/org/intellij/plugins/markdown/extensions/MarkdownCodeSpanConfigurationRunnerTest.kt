@@ -1,7 +1,7 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.execution.RunManager
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.icons.AllIcons
@@ -79,7 +79,7 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
   }
 
   private fun findRunMarkers(icon: Icon = AllIcons.RunConfigurations.TestState.Run_run): List<LineMarkerInfo<*>> {
-    return DaemonCodeAnalyzerImpl.getLineMarkers(myFixture.editor.document, project)
+    return getDisplayedLineMarkers(myFixture.editor.document, project)
       .filter { it.icon == icon }
   }
 

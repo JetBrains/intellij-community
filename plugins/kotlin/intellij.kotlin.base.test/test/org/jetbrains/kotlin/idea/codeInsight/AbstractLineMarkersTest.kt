@@ -5,8 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.GutterIconDescriptor
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerSettings
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Document
@@ -222,7 +222,7 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
             expectedHighlighting: ExpectedHighlightingData,
             expectedFile: File
         ): List<LineMarkerInfo<*>> {
-            val markers = DaemonCodeAnalyzerImpl.getLineMarkers(documentToAnalyze, psiFile.project)
+            val markers = getDisplayedLineMarkers(documentToAnalyze, psiFile.project)
 
             try {
                 ActionUtil.underModalProgress(project, "") {

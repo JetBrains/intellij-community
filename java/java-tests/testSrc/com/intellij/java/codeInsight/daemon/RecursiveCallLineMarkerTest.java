@@ -3,9 +3,11 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.editor.Document;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -20,7 +22,8 @@ public class RecursiveCallLineMarkerTest extends LightJavaCodeInsightFixtureTest
   public void testQualifiedCall() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.doHighlighting();
-    final List<LineMarkerInfo<?>> infoList = DaemonCodeAnalyzerImpl.getLineMarkers(getEditor().getDocument(), getProject());
+    @NotNull Document document = getEditor().getDocument();
+    final List<LineMarkerInfo<?>> infoList = LineMarkersPass.getDisplayedLineMarkers(document, getProject());
    
     assertSize(2, infoList);
     for (LineMarkerInfo<?> info : infoList) {

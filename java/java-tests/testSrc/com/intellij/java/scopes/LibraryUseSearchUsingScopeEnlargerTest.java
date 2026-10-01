@@ -3,7 +3,7 @@ package com.intellij.java.scopes;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -79,7 +79,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
     myFixture.doHighlighting();
     Document document = myFixture.getDocument(sourceClass.getContainingFile());
 
-    List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
+    List<LineMarkerInfo<?>> lineMarkers = LineMarkersPass.getDisplayedLineMarkers(document, getProject());
     assertSize(2, lineMarkers);
 
     assertEquals(MarkerType.SUBCLASSED_CLASS.getNavigationHandler(), lineMarkers.get(0).getNavigationHandler());

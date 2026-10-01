@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -1932,7 +1933,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     data.checkResult(file, infos, file.getText());
     if (data.hasLineMarkers()) {
       Document document = getDocument(getFile());
-      data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
+      data.checkLineMarkers(file, LineMarkersPass.getDisplayedLineMarkers(document, getProject()), document.getText());
     }
     Reference.reachabilityFence(hardRefToFileElement);
     return elapsed;

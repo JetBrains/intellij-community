@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.codeInsight
 
-import com.intellij.codeInsight.daemon.LineMarkerProviders
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ColorIconRenderer
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ComposeColorLineMarkerProviderDescriptor
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
@@ -390,7 +389,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
     codeInsightTestFixture.doHighlighting()
 
     val highlightInfos = runReadAction {
-      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, myProject)
+      getDisplayedLineMarkers(codeInsightTestFixture.editor.document, myProject)
         .filter { lineMarkerInfo -> lineMarkerInfo.navigationHandler is ColorIconRenderer }
         .sortedBy { it.startOffset }
     }
@@ -409,7 +408,7 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : KotlinGradleImport
 
     codeInsightTestFixture.doHighlighting()
     val highlightInfo = runReadAction {
-      DaemonCodeAnalyzerImpl.getLineMarkers(codeInsightTestFixture.editor.document, myProject)
+      getDisplayedLineMarkers(codeInsightTestFixture.editor.document, myProject)
         .single { lineMarkerInfo ->
           lineMarkerInfo.navigationHandler is ColorIconRenderer && lineMarkerInfo.element == element
         }

@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 import com.intellij.codeInsight.EditorInfo
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -67,7 +67,7 @@ abstract class GradleDaemonAnalyzerTestCase(
     private fun performGenericHighlightingAndLineMarkersChecks(infos: Collection<HighlightInfo>, text: String) {
         val lineMarkersTags: List<TagInfo<*>> = if (testLineMarkers) {
             TagsTestDataUtil.toLineMarkerTagPoints(
-                DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), project),
+                getDisplayedLineMarkers(getDocument(file), project),
                 /* withDescription = */ true
             )
         } else {

@@ -5,7 +5,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.fixtures.PyTestCase
@@ -139,8 +139,7 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
 
     myFixture.doHighlighting()
 
-    val result = DaemonCodeAnalyzerImpl
-      .getLineMarkers(myFixture.editor.document, myFixture.project)
+    val result = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
       .filter { it.element?.parentOfType<PyQualifiedNameOwner>()?.name == elementName }
 
     assertProjectFilesNotParsed(myFixture.file)
