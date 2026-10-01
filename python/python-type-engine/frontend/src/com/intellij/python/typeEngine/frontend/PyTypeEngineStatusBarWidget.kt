@@ -146,8 +146,13 @@ private class PyTypeEngineStatusBarWidget(
       else
         null
 
-      if (engine !in state.installed && engine == PyTypeEngineId.PYREFLY) {
-        e.presentation.text = TypeEngineFrontendBundle.message("action.engine.pyrefly.install.and.use")
+      if (engine == PyTypeEngineId.PYREFLY) {
+        if (Registry.`is`("use.bundled.pyrefly", false)) {
+          e.presentation.text = TypeEngineFrontendBundle.message("action.engine.pyrefly.bundled")
+        }
+        else if (engine !in state.installed) {
+          e.presentation.text = TypeEngineFrontendBundle.message("action.engine.pyrefly.install.and.use")
+        }
       }
     }
 
