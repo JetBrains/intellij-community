@@ -713,6 +713,16 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AnonymousFunctionCaret.kt")
+        public void testAnonymousFunctionCaret() throws Exception {
+            runTest("testData/introduceVariable/AnonymousFunctionCaret.kt");
+        }
+
+        @TestMetadata("AnonymousFunctionSelection.kt")
+        public void testAnonymousFunctionSelection() throws Exception {
+            runTest("testData/introduceVariable/AnonymousFunctionSelection.kt");
+        }
+
         @TestMetadata("ArrayAccessExpr.kt")
         public void testArrayAccessExpr() throws Exception {
             runTest("testData/introduceVariable/ArrayAccessExpr.kt");

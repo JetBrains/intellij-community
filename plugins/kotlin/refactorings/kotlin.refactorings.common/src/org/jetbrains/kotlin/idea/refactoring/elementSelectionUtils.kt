@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.isFunctionalExpression
 import java.util.concurrent.Callable
 
 @Deprecated("If called on EDT, callback is called on EDT. Use overload, passing `failOnEmptySuggestion = false` instead")
@@ -147,7 +148,7 @@ fun getSmartSelectSuggestions(
 
     val elements = ArrayList<KtElement>()
     while (element != null && !(element is KtBlockExpression && element.parent !is KtFunctionLiteral) &&
-        element !is KtNamedFunction
+        !(element is KtNamedFunction && !element.isFunctionalExpression())
         && element !is KtClassBody
     ) {
         var addElement = false
@@ -160,7 +161,7 @@ fun getSmartSelectSuggestions(
             if (!addElement) {
                 keepPrevious = false
             }
-        } else if (element is KtExpression && element !is KtStatementExpression) {
+        } else if (element is KtExpression && (element !is KtStatementExpression || element.isFunctionalExpression())) {
             addElement = elementKind == ElementKind.EXPRESSION
 
             if (addElement) {

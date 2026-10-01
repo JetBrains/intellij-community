@@ -221,7 +221,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             is KtProperty -> expression !is KtBackingField
             is KtQualifiedExpression -> parent.receiverExpression == physicalExpression
             is KtOperationExpression if parent.operationReference == physicalExpression -> false
-            else -> physicalExpression !is KtStatementExpression
+            else -> physicalExpression !is KtStatementExpression || physicalExpression.isFunctionalExpression()
         }
         if (!isApplicable) {
             showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.no.expression"))
