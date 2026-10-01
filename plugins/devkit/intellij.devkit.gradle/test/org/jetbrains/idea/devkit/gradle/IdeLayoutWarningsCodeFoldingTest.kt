@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class IntelliJPlatformGradleConsoleFoldingTest : LightJavaCodeInsightFixtureTestCase() {
+class IdeLayoutWarningsCodeFoldingTest : LightJavaCodeInsightFixtureTestCase() {
 
   private lateinit var console: ConsoleViewImpl
 
@@ -24,7 +24,7 @@ class IntelliJPlatformGradleConsoleFoldingTest : LightJavaCodeInsightFixtureTest
     super.setUp()
     ExtensionTestUtil.maskExtensions(
       ConsoleFolding.EP_NAME,
-      listOf(IntelliJPlatformGradleConsoleFolding()),
+      listOf(IdeLayoutWarningsCodeFolding()),
       testRootDisposable
     )
     console = ConsoleViewImpl(project, GlobalSearchScope.allScope(project), false, true)
