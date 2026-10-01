@@ -18,7 +18,6 @@ pub const TREE_VERSION: u32 = 2;
 pub struct Recipe {
     pub version: u32,
     pub plugin: String,
-    pub layout_signature: String,
     pub assets: Vec<Asset>,
     pub operations: Vec<Operation>,
 }

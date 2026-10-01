@@ -13,16 +13,15 @@ use serde_json::{Value, json};
 
 use super::*;
 
-// The plan file of a fixture, in the shape that `PluginPackingProjectionEncoding.kt` emits. The fixtures compute the
-// layout signature as `pluginPackingLayoutSignature` does, and each operation signature as
-// `devPluginPreparationOperationSignature` does. So `plugin-model-tool --check` accepts a fixture as a plan file.
+// The plan file of a fixture, in the shape that `PluginPackingProjectionEncoding.kt` emits. The fixtures compute each
+// operation signature as `devPluginPreparationOperationSignature` does. So `plugin-model-tool --check` accepts a fixture
+// as a plan file.
 
 #[derive(Clone, Default)]
 pub(crate) struct KotlinPlanFile {
     pub(crate) version: u32,
     pub(crate) plugin: String,
     pub(crate) variant: String,
-    pub(crate) layout_signature: String,
     pub(crate) assets: Vec<KotlinPlanAsset>,
     pub(crate) preparations: Vec<KotlinPreparation>,
     /// The kotlinx text of each operation.
@@ -101,45 +100,6 @@ pub(crate) fn prepared_source(input: &str) -> KotlinJarSource {
     }
 }
 
-fn module_jar_recipe(module: &str) -> KotlinJarRecipe {
-    KotlinJarRecipe {
-        sources: vec![module_source(module)],
-        writer: KotlinJarWriter {
-            merge_entities: true,
-            ..KotlinJarWriter::default()
-        },
-    }
-}
-
-impl KotlinPlanAsset {
-    /// The full form, as the Kotlin codec decodes it. The compact module form becomes the module jar asset. Absent
-    /// inputs are the recipe sources, and the decoder fills in the defaults.
-    fn expanded(&self) -> Self {
-        let mut asset = if self.module.is_empty() {
-            self.clone()
-        } else {
-            Self {
-                destination: format!("lib/modules/{}.jar", self.module),
-                inputs: Some(vec![self.module.clone()]),
-                recipe: Some(module_jar_recipe(&self.module)),
-                ..Self::default()
-            }
-        };
-        if asset.inputs.is_none()
-            && let Some(recipe) = &asset.recipe
-        {
-            asset.inputs = Some(recipe.sources.iter().map(|source| source.input.clone()).collect());
-        }
-        if asset.mode == 0 {
-            asset.mode = 420;
-        }
-        if asset.kind.is_empty() {
-            asset.kind = "file".to_owned();
-        }
-        asset
-    }
-}
-
 fn source_json(source: &KotlinJarSource) -> Value {
     let mut value = json!({"input": source.input, "kind": source.kind, "filter": source.filter});
     if !source.entry.is_empty() {
@@ -205,7 +165,6 @@ pub(crate) fn plan_json(plan: &KotlinPlanFile) -> String {
         "version": plan.version,
         "plugin": plan.plugin,
         "variant": plan.variant,
-        "layoutSignature": plan.layout_signature,
         "assets": assets,
     });
     if !plan.preparations.is_empty() {
@@ -244,10 +203,6 @@ impl Hash4jStream {
         self.0.extend_from_slice(&value.to_le_bytes());
     }
 
-    fn put_boolean(&mut self, value: bool) {
-        self.0.push(u8::from(value));
-    }
-
     /// hash4j `putString`: the UTF-16 code units, then their count.
     fn put_string(&mut self, value: &str) {
         let mut count = 0;
@@ -256,13 +211,6 @@ impl Hash4jStream {
             count += 1;
         }
         self.put_int(count);
-    }
-
-    fn put_strings(&mut self, values: &[String]) {
-        self.put_int(values.len() as i32);
-        for value in values {
-            self.put_string(value);
-        }
     }
 }
 
@@ -369,101 +317,13 @@ pub(crate) fn kotlin_layout_assets_operation(id: &str, output: &str, format: &st
     )
 }
 
-/// `pluginPackingLayoutSignature` over the plan file in its full form.
-pub(crate) fn kotlin_layout_signature(plan: &KotlinPlanFile) -> String {
-    let mut stream = Hash4jStream::default();
-    let assets: Vec<KotlinPlanAsset> = plan.assets.iter().map(KotlinPlanAsset::expanded).collect();
-    let trees = assets.iter().any(|asset| asset.kind == "tree");
-    let prepared_manifests = trees
-        || assets.iter().any(|asset| {
-            asset
-                .recipe
-                .as_ref()
-                .is_some_and(|recipe| recipe.sources.iter().any(|source| source.prepared_manifest.is_some()))
-        });
-    let class_path_facts = prepared_manifests || assets.iter().any(|asset| asset.class_path == Some(false));
-    let directories = class_path_facts || assets.iter().any(|asset| asset.kind != "file");
-    stream.put_int(if trees {
-        5
-    } else if prepared_manifests {
-        4
-    } else if class_path_facts {
-        3
-    } else if directories {
-        2
-    } else {
-        1
-    });
-    stream.put_string(&plan.plugin);
-    stream.put_string(&plan.variant);
-    stream.put_int(assets.len() as i32);
-    for asset in &assets {
-        stream.put_string(&asset.destination);
-        if directories {
-            stream.put_string(&asset.kind);
-        }
-        if class_path_facts {
-            stream.put_boolean(asset.class_path != Some(false));
-        }
-        stream.put_int(asset.mode as i32);
-        stream.put_boolean(asset.symlink_target.is_some());
-        if let Some(target) = &asset.symlink_target {
-            stream.put_string(target);
-        }
-        stream.put_strings(asset.inputs.as_deref().unwrap_or_default());
-        stream.put_boolean(asset.recipe.is_some());
-        if let Some(recipe) = &asset.recipe {
-            stream.put_int(recipe.sources.len() as i32);
-            for source in &recipe.sources {
-                stream.put_string(&source.input);
-                stream.put_string(&source.kind);
-                stream.put_string(&source.filter);
-                stream.put_string(&source.entry);
-                stream.put_strings(&source.options);
-                if prepared_manifests {
-                    stream.put_boolean(source.prepared_manifest.is_some());
-                    if let Some(manifest) = &source.prepared_manifest {
-                        stream.put_int(1);
-                        stream.put_int(manifest.original_meaningful_source_count.unwrap_or(-1));
-                        stream.put_strings(&manifest.source_manifest_policies);
-                    }
-                }
-            }
-            let manifest = if recipe.writer.manifest.is_empty() {
-                "single-meaningful-source"
-            } else {
-                &recipe.writer.manifest
-            };
-            stream.put_string(manifest);
-            stream.put_boolean(recipe.writer.merge_entities);
-            // The slot of the retired directory-entries flag, as the Kotlin signature keeps it.
-            stream.put_boolean(false);
-            stream.put_boolean(false);
-            stream.put_string("");
-        }
-    }
-    stream.put_int(plan.preparations.len() as i32);
-    for preparation in &plan.preparations {
-        stream.put_string(&preparation.id);
-        stream.put_strings(&preparation.inputs);
-        stream.put_strings(&preparation.outputs);
-        stream.put_string(&preparation.model_signature);
-        if directories {
-            stream.put_boolean(false);
-        }
-    }
-    stream.put_strings(&[]);
-    signature128(&stream.0)
-}
-
-/// Signs every preparation from its operation by position, and signs the layout.
+/// Signs every preparation from its operation by position.
 pub(crate) fn signed_plan(mut plan: KotlinPlanFile, operations: &[String]) -> KotlinPlanFile {
     assert_eq!(operations.len(), plan.preparations.len(), "one operation per preparation");
     for (preparation, operation) in plan.preparations.iter_mut().zip(operations) {
         preparation.model_signature = kotlin_model_signature(operation);
         plan.operations.push(operation.clone());
     }
-    plan.layout_signature = kotlin_layout_signature(&plan);
     plan
 }
 
@@ -477,37 +337,14 @@ pub(crate) fn kotlin_filter_operation(output: &str) -> String {
     kotlin_layout_assets_operation("filter", output, "entries", "", &layout)
 }
 
-/// Pins the two signature helpers against the constants that `PluginPackingProjectionEncodingTest` of the Kotlin build
+/// Pins the model signature helper against the constant that `PluginPackingProjectionEncodingTest` of the Kotlin build
 /// scripts pins for the filtered demo projection.
 #[test]
-fn kotlin_signature_helpers_reproduce_the_fixture_constants() {
-    let filter = kotlin_filter_operation("filtered");
-    assert_eq!(kotlin_model_signature(&filter), "5nm0sqi8af0srealvdtoxpzqm");
-    let filtered = KotlinPlanFile {
-        version: VERSION,
-        plugin: "filtered-plugin".to_owned(),
-        variant: "linux".to_owned(),
-        assets: vec![KotlinPlanAsset {
-            destination: "lib/main.jar".to_owned(),
-            inputs: Some(strings(&["filtered"])),
-            recipe: Some(KotlinJarRecipe {
-                sources: vec![prepared_source("filtered")],
-                writer: KotlinJarWriter {
-                    manifest: "drop".to_owned(),
-                    ..KotlinJarWriter::default()
-                },
-            }),
-            ..KotlinPlanAsset::default()
-        }],
-        preparations: vec![KotlinPreparation {
-            id: "filter".to_owned(),
-            inputs: strings(&["raw"]),
-            outputs: strings(&["filtered"]),
-            model_signature: kotlin_model_signature(&filter),
-        }],
-        ..KotlinPlanFile::default()
-    };
-    assert_eq!(kotlin_layout_signature(&filtered), "abd1jj2mitamhwlzozt2d0zlo");
+fn kotlin_model_signature_reproduces_the_fixture_constant() {
+    assert_eq!(
+        kotlin_model_signature(&kotlin_filter_operation("filtered")),
+        "5nm0sqi8af0srealvdtoxpzqm"
+    );
 }
 
 /// The Kotlin half of the Go `TestLayoutTransformExcludesEncoding`: the kotlinx operation holds the transform in the
@@ -799,7 +636,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
             Recipe {
                 version: TREE_VERSION,
                 plugin: plan_file.plugin,
-                layout_signature: plan_file.layout_signature,
                 assets: vec![tree_asset(fixture.root)],
                 operations: vec![Operation::LayoutTree {
                     destination: fixture.root.to_owned(),
@@ -830,7 +666,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
             Recipe {
                 version: VERSION,
                 plugin: plan_file.plugin,
-                layout_signature: plan_file.layout_signature,
                 assets: vec![remainder(&jar)],
                 operations: vec![Operation::Jar {
                     destination: jar,

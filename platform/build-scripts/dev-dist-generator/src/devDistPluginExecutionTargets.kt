@@ -8,13 +8,15 @@ import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 
 /**
  * The plan file label of one record, and the value of each `{platform:<name>}` slot of a folded plan file for the
- * record's platform. [platformValues] is empty for a neutral record and for a platform record whose fold was refused.
+ * record's platform. [folded] is true when the record reads a folded plan file. A folded plan file can have no slot.
+ * [platformValues] is empty for a neutral record and for a platform record whose fold was refused.
  * [planClass] names the plan text in the plan file name, or is empty for the baseline text.
  */
 internal data class DevDistPluginExecutionGraphLabels(
   @JvmField val projection: String,
   @JvmField val platformValues: Map<String, String> = emptyMap(),
   @JvmField val planClass: String = "",
+  @JvmField val folded: Boolean = false,
 )
 
 /**
@@ -40,14 +42,16 @@ internal class DevDistPluginExecutionConfiguration(
 
 /**
  * The `dev_dist_complex_plugin` arguments of one chain, rendered as Starlark, the label of its component, and the slot
- * values of its folded plan file. [platform] is null for a chain that serves every platform. [platformValues] is empty
- * for a chain without a folded plan file. The fold over the platforms happens in [renderDevDistPluginExecutionCalls].
+ * values of its folded plan file. [platform] is null for a chain that serves every platform. [folded] is true for a
+ * chain with a folded plan file. [platformValues] is empty for a chain without a folded plan file, and for a folded
+ * plan file without a slot. The fold over the platforms happens in [renderDevDistPluginExecutionCalls].
  */
 internal class DevDistPluginExecutionVariant(
   @JvmField val platform: String?,
   @JvmField val arguments: List<Pair<String, String>>,
   @JvmField val componentLabel: String,
   @JvmField val platformValues: Map<String, String>,
+  @JvmField val folded: Boolean = false,
 )
 
 internal fun renderDevDistPluginExecutionTargets(
@@ -90,7 +94,6 @@ internal fun renderDevDistPluginExecutionTargets(
   }
   val plan = record.plan
   requireNotNull(record.preparationRecipe) { "The execution record is incomplete: no preparation recipe" }
-  require(plan.layoutSignature == plan.projection.layoutSignature) { "The execution record has a stale layout signature" }
   val selected = plan.selectedPlan()
   val version = pluginPackingExecutionVersion(plan.projection.assets)
   require(plan.projection.version == version) { "The execution record has a stale execution version" }
@@ -198,8 +201,8 @@ internal fun renderDevDistPluginExecutionTargets(
   val dependencies = inputs + graphLabels
   require(declarations.map(::devBuildPathIdentity).none { it in dependencies.map(::devBuildPathIdentity) }) { "An execution target collides with an input label" }
   // The macro derives the chain stem, the component name, the plan file label and the descriptor's catalogue ID. Its
-  // inputs are the main module, the chain class, the plan class, the plan package, the platform and the presence of
-  // platform values. The checked-in values must be what it derives, or a chain would read another plugin's plan.
+  // inputs are the main module, the chain class, the plan class, the plan package, the platform and `platform_plans`.
+  // The checked-in values must be what it derives, or a chain would read another plugin's plan.
   val chainClass = configuration.chainClass
   if (chainClass.isNotEmpty()) checkExecutionName(chainClass)
   require(configuration.name == devDistChainStem(entry.mainModule, chainClass, platform)) {
@@ -207,12 +210,14 @@ internal fun renderDevDistPluginExecutionTargets(
   }
   require(configuration.componentName == entry.mainModule) { "The component name of ${configuration.name} is not its main module" }
   val platformValues = configuration.graph.platformValues
-  require(platform != null || platformValues.isEmpty()) { "The chain ${configuration.name} serves every platform but states platform values" }
+  val folded = configuration.graph.folded
+  require(platform != null || !folded) { "The chain ${configuration.name} serves every platform but reads a folded plan file" }
+  require(folded || platformValues.isEmpty()) { "The chain ${configuration.name} states platform values without a folded plan file" }
   val planClass = configuration.graph.planClass
   if (planClass.isNotEmpty()) checkExecutionName(planClass)
   val planClassSuffix = if (planClass.isEmpty()) "" else ".$planClass"
   val planPackageLabel = planPackage.ifEmpty { configuration.packageLabel }
-  val stem = "$planPackageLabel:${entry.mainModule}$planClassSuffix${if (platform != null && platformValues.isEmpty()) ".$platform" else ""}"
+  val stem = "$planPackageLabel:${entry.mainModule}$planClassSuffix${if (platform != null && !folded) ".$platform" else ""}"
   require(configuration.graph.projection == "$stem$PLAN_FILE_SUFFIX") {
     "The plan file of ${configuration.name} does not follow `<plan package>:<main module>[.<plan class>]$PLAN_FILE_SUFFIX` for a folded or neutral plan " +
     "and `<plan package>:<main module>[.<plan class>].<platform>$PLAN_FILE_SUFFIX` for a refused fold"
@@ -224,7 +229,8 @@ internal fun renderDevDistPluginExecutionTargets(
   // The macro derives the `.production.jar` file of each reused artifact from its owner label, so the owner labels are
   // stated once. A source tree is keyed by its artifact ID, so one target can serve two IDs with different prefixes.
   // A call in a community package names a label as a community package spells it. An ID keeps its spelling, because
-  // the plan file keeps it.
+  // the plan file keeps it. A chain that reads a plan file of a community package spells a label-shaped ID as that
+  // package does, because the ultimate half reuses such a plan file as the community half wrote it.
   val communityPass = owner.index.planPackageIsCommunity
   if (inCommunity) {
     require(isCommunityCallLabel(descriptorLabel, communityPass) && planPackage.isEmpty()) {
@@ -232,6 +238,8 @@ internal fun renderDevDistPluginExecutionTargets(
     }
   }
   val label: (String) -> String = { if (inCommunity) communityCallLabel(it, communityPass) else it }
+  val planInCommunity = planPackage.ifEmpty { configuration.packageLabel }.startsWith(COMMUNITY_REPOSITORY_PREFIX)
+  val id: (String) -> String = { if (planInCommunity && "//" in it) communityCallLabel(it, communityPass) else it }
   val arguments = listOf(
     "main_module" to executionQuote(entry.mainModule),
     "descriptor" to executionQuote(label(descriptorLabel)),
@@ -247,10 +255,10 @@ internal fun renderDevDistPluginExecutionTargets(
     "resource_inputs" to executionDictionary(
       raw.values.filter { it.id in resources && it.sourceTreePrefix == null && it.id != descriptorInput.id }.map { label(it.label) to executionQuote(it.id) }
     ),
-    "libraries" to executionDictionary(requiredLibraries.map { label(it) to executionQuote(it) }),
+    "libraries" to executionDictionary(requiredLibraries.map { label(it) to executionQuote(id(it)) }),
     "independent_artifacts" to executionStrings(independent.keys.map(label)),
   )
-  return DevDistPluginExecutionVariant(platform, arguments, "${configuration.packageLabel}:${names.getValue("component")}", platformValues)
+  return DevDistPluginExecutionVariant(platform, arguments, "${configuration.packageLabel}:${names.getValue("component")}", platformValues, folded)
 }
 
 private const val PLATFORM_TOKEN = "{platform}"
@@ -291,8 +299,9 @@ private val PLATFORM_ARGUMENTS = java.util.Set.of(
 /**
  * Renders the `dev_dist_complex_plugin` calls of one plugin. One call declares every platform chain when the chains
  * differ only in the platform token. Otherwise each chain keeps a call of its own, so the difference stays visible in
- * the generated file instead of hidden behind a fallback. A call whose chains have a folded plan file states the slot
- * values of each of its platforms in `platform_values`.
+ * the generated file instead of hidden behind a fallback. A call whose chains keep a plan file per platform, because
+ * the fold was refused, states `platform_plans = True`. A call whose chains have a folded plan file with slots states
+ * the slot values of each of its platforms in `platform_values`. A folded plan file without a slot states neither.
  *
  * The calls are top-level statements of a `BUILD.bazel`: each ends with one newline, one blank line separates two
  * calls, and the text has no leading blank line.
@@ -305,7 +314,9 @@ internal fun renderDevDistPluginExecutionCalls(mainModule: String, variants: Lis
     }
   }
   // Every chain of a plugin with a folded plan file states the same slots. Every chain of another plugin states none.
+  require(variants.map { it.folded }.distinct().size == 1) { "Plugin '$mainModule' mixes folded and unfolded plan files across its chains" }
   require(variants.map { it.platformValues.keys }.distinct().size == 1) { "Plugin '$mainModule' states different plan slots across its chains" }
+  val folded = variants.first().folded
   val calls: List<Pair<List<String>, List<Pair<String, String>>>> = if (variants.size == 1 && variants.single().platform == null) {
     require(variants.single().platformValues.isEmpty()) { "Plugin '$mainModule' states plan slot values on a chain that serves every platform" }
     listOf(emptyList<String>() to variants.single().arguments)
@@ -323,14 +334,19 @@ internal fun renderDevDistPluginExecutionCalls(mainModule: String, variants: Lis
   return buildString {
     for ((platforms, arguments) in calls) {
       val platformValues = executionPlatformValues(platforms.associateWith { valuesByPlatform.getValue(it) })
-      executionCall("dev_dist_complex_plugin", arguments + ("platforms" to executionStrings(platforms)) + ("platform_values" to platformValues))
+      val platformPlans = if (platforms.isNotEmpty() && !folded) listOf("platform_plans" to "True") else emptyList()
+      executionCall(
+        "dev_dist_complex_plugin",
+        arguments + ("platforms" to executionStrings(platforms)) + ("platform_values" to platformValues) + platformPlans,
+      )
     }
   }.removePrefix("\n")
 }
 
 /**
  * `{platform: {slot: value}}` in `HOST_PLATFORMS` order, which is the alphabetical order of the ids, with the slots
- * sorted by name. `{}` when the platforms of the call state no slot.
+ * sorted by name. `{}` when the platforms of the call state no slot: a folded plan file without a slot, or a plan file
+ * per platform.
  */
 private fun executionPlatformValues(valuesByPlatform: Map<String, Map<String, String>>): String {
   if (valuesByPlatform.values.all { it.isEmpty() }) return "{}"
@@ -385,7 +401,7 @@ private val DEFAULT_ARGUMENT_VALUES = java.util.Set.of("[]", "{}", "\"\"")
 
 /**
  * The argument order of a call in a `BUILD.bazel` is the buildifier order: `name` first, and every other argument in
- * name order. So `main_module` stands among the others, and `platform_values` precedes `platforms`.
+ * name order. So `main_module` stands among the others, and `platform_plans` and `platform_values` precede `platforms`.
  */
 private const val LEADING_ARGUMENT = "name"
 

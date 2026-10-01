@@ -221,7 +221,12 @@ internal class DevDistPluginPlanFiles private constructor(
           }
           for ((key, record) in group) {
             if (fold != null && key.variant.isNotEmpty()) {
-              val labels = DevDistPluginExecutionGraphLabels(planHome.label(foldedFileName), fold.valuesByPlatform.getValue(key.variant), planClass)
+              val labels = DevDistPluginExecutionGraphLabels(
+                projection = planHome.label(foldedFileName),
+                platformValues = fold.valuesByPlatform.getValue(key.variant),
+                planClass = planClass,
+                folded = true,
+              )
               bindings.put(key, EmittedRecord(record, planHome.path(foldedFileName), labels, folded = true, home = planHome))
             }
             else {
@@ -321,8 +326,8 @@ private fun productPlanTexts(product: String, plugin: String, group: Map<DevDist
 /**
  * Folds the platform records of one plugin and prints its census line. `folded` names the slots when one tokenized
  * body resolves to every record; the fold proves the resolution and fails the run on a mismatch. `kept` names the
- * first differing path when the records differ in shape, or the one platform record. `layoutSignature` hashes the
- * variant, so a folded plan always has that slot. Returns null when the records keep their per-platform files.
+ * first differing path when the records differ in shape, or the one platform record. A folded plan can have no slot.
+ * Returns null when the records keep their per-platform files.
  */
 private fun foldPlatformRecords(product: String, plugin: String, textsByPlatform: LinkedHashMap<String, String>): DevDistPluginPlanFold.Folded? {
   if (textsByPlatform.isEmpty()) return null
@@ -339,7 +344,6 @@ private fun foldPlatformRecords(product: String, plugin: String, textsByPlatform
   }
   return when (fold) {
     is DevDistPluginPlanFold.Folded -> {
-      check("layoutSignature" in fold.slotNames) { "The folded plan of $product/$plugin has no layoutSignature slot" }
       println("folded $plugin platforms=[$platforms] slots=[${fold.slotNames.joinToString(", ")}] proof=resolved ${textsByPlatform.size} of ${textsByPlatform.size} records")
       fold
     }
@@ -399,7 +403,6 @@ private fun validateRecord(key: DevDistPluginPlanKey, record: DevDistPluginPlanR
   require(projection.version == executionVersion) {
     "Unsupported plugin projection version: ${projection.version}; expected $executionVersion for its assets"
   }
-  require(projection.layoutSignature == plan.layoutSignature) { "Plugin plan '$key' has a stale layout signature" }
   val reused = plan.reusedModules
   require(reused.distinct().size == reused.size && reused.none(String::isBlank)) {
     "Plugin plan '$key' has a duplicate or empty reused module"

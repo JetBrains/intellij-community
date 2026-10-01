@@ -163,7 +163,6 @@ class PluginSymbolicLayout internal constructor(
       version = pluginPackingExecutionVersion(assets),
       plugin = plugin,
       variant = variant,
-      layoutSignature = plan.layoutSignature,
       assets = assets,
       preparations = preparations,
       preparationRoots = preparationRoots,

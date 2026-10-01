@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.clion.radler",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "module": "intellij.rider.rdclient.xml"

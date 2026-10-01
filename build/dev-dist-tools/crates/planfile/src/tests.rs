@@ -25,8 +25,7 @@ fn must_read_plan(text: &str) -> PlanFile {
 
 /// Wraps the assets and the optional sections into one neutral plan file text.
 fn plan(version: u32, assets: &str, sections: &[&str]) -> String {
-    let mut text =
-        format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "layoutSignature": "signature", "assets": [{assets}]"#);
+    let mut text = format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "assets": [{assets}]"#);
     for section in sections {
         text.push_str(", ");
         text.push_str(section);
@@ -476,13 +475,18 @@ fn read_refuses_malformed_forms() {
             "unknown field `alwaysRun`",
         ),
         (
+            "a layout signature",
+            r#"{"version": 1, "plugin": "demo", "variant": "", "layoutSignature": "s", "assets": []}"#.to_owned(),
+            "unknown field `layoutSignature`",
+        ),
+        (
             "no version",
-            r#"{"plugin": "demo", "variant": "", "layoutSignature": "s", "assets": []}"#.to_owned(),
+            r#"{"plugin": "demo", "variant": "", "assets": []}"#.to_owned(),
             "missing field `version`",
         ),
         (
             "a duplicate key",
-            r#"{"version": 1, "version": 1, "plugin": "demo", "variant": "", "layoutSignature": "s", "assets": []}"#.to_owned(),
+            r#"{"version": 1, "version": 1, "plugin": "demo", "variant": "", "assets": []}"#.to_owned(),
             "duplicate field `version`",
         ),
         (

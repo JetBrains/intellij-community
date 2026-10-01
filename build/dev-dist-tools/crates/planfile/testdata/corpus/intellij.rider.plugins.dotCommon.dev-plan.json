@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.dotCommon",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/dotCommon.jar",

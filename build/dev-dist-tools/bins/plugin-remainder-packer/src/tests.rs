@@ -77,7 +77,7 @@ fn arguments_are_refused_with_the_usage_code() {
 /// A plan file with one remainder jar, one module jar that the chain reuses, and one raw file copy. The chain names the
 /// reused module with `--independent-module`, and the plan states it as a module asset only.
 const PROJECTION_PLAN: &str = r#"{
-  "version": 1, "plugin": "example", "variant": "", "layoutSignature": "signature",
+  "version": 1, "plugin": "example", "variant": "",
   "assets": [
     {"destination": "lib/example.jar", "recipe": {"sources": [{"input": "example.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
     {"module": "example.content"},

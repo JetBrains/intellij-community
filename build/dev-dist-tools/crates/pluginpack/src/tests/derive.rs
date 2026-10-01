@@ -322,8 +322,7 @@ fn plan_derivation_refuses_every_kotlin_preparer_fixture() {
 }
 
 fn plan_text(version: u32, assets: &str, sections: &[&str]) -> String {
-    let mut text =
-        format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "layoutSignature": "signature", "assets": [{assets}]"#);
+    let mut text = format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "assets": [{assets}]"#);
     for section in sections {
         text.push_str(", ");
         text.push_str(section);

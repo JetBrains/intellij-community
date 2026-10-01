@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.pty4j.plugin",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.pty4j.jar",

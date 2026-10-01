@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.java.plugin",
     "variant": "",
-    "layoutSignature": "4t0z3v43u6vbco5z8xc9j4scv",
     "assets": [
         {
             "destination": "lib/intellij.java.syntax.jar",

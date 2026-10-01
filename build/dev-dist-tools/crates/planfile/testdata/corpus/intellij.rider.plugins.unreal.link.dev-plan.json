@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.unreal.link",
     "variant": "",
-    "layoutSignature": "bbnvbkhbvk3ju4q8h10jke5ug",
     "assets": [
         {
             "module": "intellij.rider.plugins.unreal.link.mcp"

@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.python.plugin",
     "variant": "",
-    "layoutSignature": "2xx31s1lrwvelnbryepgpjuv8",
     "assets": [
         {
             "module": "intellij.python.frontend.base"

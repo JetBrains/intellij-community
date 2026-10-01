@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.localization.ko",
     "variant": "",
-    "layoutSignature": "7ifpc52rpuzwue56pdmfpzlzg",
     "assets": [
         {
             "destination": "lib/localization-ko.jar",

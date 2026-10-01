@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.remoteDevelopment.plugin",
     "variant": "",
-    "layoutSignature": "1u6qnypwq7qcbkyoky7vzpw54",
     "assets": [
         {
             "module": "intellij.platform.kernel.backend.split"

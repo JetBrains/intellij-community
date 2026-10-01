@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.sqlproj",
     "variant": "",
-    "layoutSignature": "72h9fph01l698fqaufww2f3vw",
     "assets": [
         {
             "destination": "lib/rider-plugins-sqlproj.jar",

@@ -7,9 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 
 /**
- * The plan file of one complex plugin. The preparer recomputes [layoutSignature] from the other fields and refuses a
- * stale file. [operations] holds the preparation operations with their options. Its IDs are the IDs of [preparations].
- * [plan] ignores [operations]. The preparer compiles them.
+ * The plan file of one complex plugin. [operations] holds the preparation operations with their options. Its IDs are
+ * the IDs of [preparations]. [plan] ignores [operations]. The preparer compiles them.
  *
  * The file states a reused jar as a module asset only. The chain hands the reused modules to the packer, so the file
  * holds no label of a `content_module_jar` target and no second spelling of the reuse.
@@ -25,7 +24,6 @@ data class PluginPackingProjection(
   @EncodeDefault(EncodeDefault.Mode.ALWAYS) @JvmField val version: Int = 1,
   @JvmField val plugin: String,
   @JvmField val variant: String,
-  @JvmField val layoutSignature: String,
   /** Encoded in the compact form; see `PluginPackingProjectionEncoding.kt`. */
   @Serializable(with = CompactPluginPackingAssetsSerializer::class) @JvmField val assets: List<PluginPackingAsset>,
   @JvmField val preparations: List<PluginPackingPreparation> = emptyList(),
@@ -49,7 +47,6 @@ data class PluginPackingProjection(
       preparationRoots = preparationRoots,
       artifacts = reusableArtifacts,
     )
-    result.validateLayout(layoutSignature)
     val usedModules = result.assets.mapNotNull { it.artifact?.module }.toSet()
     require(reusableArtifacts.size == usedModules.size && reusableArtifacts.map(ReusableJarArtifact::module).toSet() == usedModules) {
       "Plugin '$plugin' has duplicate or unused reusable artifacts. Regenerate the dev distribution declarations."

@@ -23,6 +23,7 @@ them. The table lists what the Go packer supported and this crate refuses.
 | a gzip resource source that is not a `.zip` or a `.jar` | `a gzip resource source is a zip or jar archive` |
 | a gzip resource entry that is not an `.xml` file, or that is a link | `unexpected file` |
 | a jar writer with `directoryEntries` | the `planfile` error ``unknown field `directoryEntries` `` |
+| a plan file with `layoutSignature`, because a plan file carries no layout signature | the `planfile` error ``unknown field `layoutSignature` `` |
 
 A jar operation writes no directory record. A directory of a non-class file is an index row of `__index__`.
 

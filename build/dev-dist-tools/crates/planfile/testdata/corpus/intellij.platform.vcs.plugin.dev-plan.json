@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.platform.vcs.plugin",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "module": "intellij.platform.vcs"

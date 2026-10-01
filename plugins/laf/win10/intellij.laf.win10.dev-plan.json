@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.laf.win10",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/laf-win10.jar",

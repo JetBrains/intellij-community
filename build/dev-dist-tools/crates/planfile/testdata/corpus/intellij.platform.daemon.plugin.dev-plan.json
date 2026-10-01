@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.platform.daemon.plugin",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.daemon.client.jar",

@@ -79,7 +79,6 @@ pub fn derive(
         recipe: Recipe {
             version,
             plugin: file.plugin.clone(),
-            layout_signature: file.layout_signature.clone(),
             assets: assets.clone(),
             operations,
         },

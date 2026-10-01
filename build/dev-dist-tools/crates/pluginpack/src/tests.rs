@@ -185,7 +185,6 @@ pub(crate) fn layout_tree_recipe(destination: &str, layout: LayoutAssets) -> Rec
     Recipe {
         version: TREE_VERSION,
         plugin: "layout".to_owned(),
-        layout_signature: "layout-v2".to_owned(),
         assets: vec![tree_asset(destination)],
         operations: vec![Operation::LayoutTree {
             destination: destination.to_owned(),
@@ -199,7 +198,6 @@ pub(crate) fn layout_jar_recipe(layout: LayoutAssets) -> Recipe {
     Recipe {
         version: VERSION,
         plugin: "layout".to_owned(),
-        layout_signature: "layout-v1".to_owned(),
         assets: vec![remainder("lib/layout.jar")],
         operations: vec![jar("lib/layout.jar", vec![Source::Layout(layout)])],
     }
@@ -211,7 +209,6 @@ pub(crate) fn sample_plan(root: &Path) -> (Recipe, Catalogue) {
     let recipe = Recipe {
         version: VERSION,
         plugin: "example".to_owned(),
-        layout_signature: "ordered-layout-v1".to_owned(),
         assets: vec![
             independent("lib/modules/separate.jar", "packed-separate"),
             remainder("lib/plugin.jar"),

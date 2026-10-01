@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.jupyter.plugin",
     "variant": "",
-    "layoutSignature": "1ts1kgsliyonillk4izk185zo",
     "assets": [
         {
             "module": "intellij.jupyter.psi"

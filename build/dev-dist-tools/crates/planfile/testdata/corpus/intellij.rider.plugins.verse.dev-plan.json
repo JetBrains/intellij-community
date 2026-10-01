@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.verse",
     "variant": "",
-    "layoutSignature": "3tax6ewvb79x7f0ac0uv1umiu",
     "assets": [
         {
             "destination": "lib/rider-plugins-verse.jar",

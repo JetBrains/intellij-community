@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.cidr.clangd",
     "variant": "linux_aarch64",
-    "layoutSignature": "bzf7h7vnh40ztkgp56kqvm3ac",
     "assets": [
         {
             "module": "intellij.cidr.clangd.core"

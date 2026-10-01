@@ -16,14 +16,6 @@ dev_dist_complex_plugin(
     descriptor = "//plugins/laf/win10:intellij.laf.win10_windows_dev_descriptor",
     execution_version = 1,
     main_module = "intellij.laf.win10",
-    platform_values = {
-        "windows_aarch64": {
-            "layoutSignature": "93m6hoe8y7ntmylulhng6ckh1",
-        },
-        "windows_x64": {
-            "layoutSignature": "aoru4juio7k0qwnd7mmkxxo5t",
-        },
-    },
     platforms = [
         "windows_x64",
         "windows_aarch64",

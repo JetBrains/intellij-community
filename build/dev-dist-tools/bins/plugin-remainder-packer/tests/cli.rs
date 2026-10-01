@@ -79,9 +79,7 @@ fn projection_contracts(contracts: &Path, tree: bool, source: &Path) -> Vec<Stri
     } else {
         (1, "file", r#"{"destination": "lib/raw.jar", "inputs": ["raw"]}"#)
     };
-    let plan = format!(
-        r#"{{"version": {version}, "plugin": "test.plugin", "variant": "default", "layoutSignature": "raw-v{version}", "assets": [{asset}]}}"#
-    );
+    let plan = format!(r#"{{"version": {version}, "plugin": "test.plugin", "variant": "default", "assets": [{asset}]}}"#);
     let catalogue = serde_json::json!({"version": 1, "artifacts": [{"id": "raw", "kind": kind, "root": source}]});
     write_file(contracts.join("plan.json"), plan.as_bytes());
     write_file(contracts.join("catalogue.json"), serde_json::to_vec(&catalogue).unwrap());
@@ -261,7 +259,7 @@ fn projection_mode_matches_the_in_process_derivation() {
             ("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\nModule: demo.extra\r\n\r\n"),
         ]),
     );
-    let plan = r#"{"version": 1, "plugin": "filtered", "variant": "", "layoutSignature": "signature", "assets": [
+    let plan = r#"{"version": 1, "plugin": "filtered", "variant": "", "assets": [
       {"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered:output", "kind": "prepared", "filter": "prepared"}, {"input": "demo.extra", "kind": "module", "filter": "module-v1"}], "writer": {"manifest": "keep", "mergeEntities": true}}}],
       "preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered:output"], "modelSignature": "x"}],
       "operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered:output", "manifest": "keep",

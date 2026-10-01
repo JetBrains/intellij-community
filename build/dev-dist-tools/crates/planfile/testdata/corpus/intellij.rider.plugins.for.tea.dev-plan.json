@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.for.tea",
     "variant": "",
-    "layoutSignature": "38b935hl0ffnfki6mdr8li7y4",
     "assets": [
         {
             "destination": "lib/rider-plugins-for-tea.jar",

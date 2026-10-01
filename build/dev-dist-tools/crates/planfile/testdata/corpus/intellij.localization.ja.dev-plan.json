@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.localization.ja",
     "variant": "",
-    "layoutSignature": "dtydcsq3mj67zusk9i98ru3et",
     "assets": [
         {
             "destination": "lib/localization-ja.jar",

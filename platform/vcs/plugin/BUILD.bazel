@@ -49,26 +49,6 @@ dev_dist_complex_plugin(
         "//libraries/sqlite-native:sqlite-native_content_module_jar",
     ],
     main_module = "intellij.platform.vcs.plugin",
-    platform_values = {
-        "darwin_aarch64": {
-            "layoutSignature": "r4hddiq0se9dka2mg84a8p0f",
-        },
-        "darwin_x64": {
-            "layoutSignature": "8aho7ppial2l8nh6m3xlitjv2",
-        },
-        "linux_aarch64": {
-            "layoutSignature": "531zq99yy0e1y5wuy1t9bl419",
-        },
-        "linux_x64": {
-            "layoutSignature": "28lqriwtb7ti2bdgqwab7pwst",
-        },
-        "windows_aarch64": {
-            "layoutSignature": "5qt3644sr12m581lwlzh06azs",
-        },
-        "windows_x64": {
-            "layoutSignature": "9ls444o8o44g48fxf9gcymca6",
-        },
-    },
     platforms = [
         "windows_x64",
         "windows_aarch64",

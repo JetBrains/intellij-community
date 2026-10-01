@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.webp",
     "variant": "linux_x64",
-    "layoutSignature": "314bf35333f25db24402cce4a3f6e708fdf84dc28fcf8c62bc84a62ca88d4cc2",
     "assets": [
         {
             "destination": "lib/webp.jar",

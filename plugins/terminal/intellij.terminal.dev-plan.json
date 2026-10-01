@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.terminal",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "module": "intellij.terminal.backend"

@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
-import org.jetbrains.intellij.build.devDist.pluginPackingLayoutSignature
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.intellij.build.productLayout.model.error.FileChangeType
 import org.junit.jupiter.api.BeforeEach
@@ -77,9 +76,8 @@ class DevDistPluginPlanFilesTest {
     val recipe = CanonicalJarRecipe(sources = sources)
     val inputs = listOfNotNull(plugin, library)
     val assets = destinations.map { PluginPackingAsset(destination = it, inputs = inputs, recipe = recipe) }
-    val signature = pluginPackingLayoutSignature(plugin, variant, assets, emptyList(), emptyList())
     val plan = object : DevDistPluginBuildPlan {
-      override val projection = PluginPackingProjection(plugin = plugin, variant = variant, layoutSignature = signature, assets = assets)
+      override val projection = PluginPackingProjection(plugin = plugin, variant = variant, assets = assets)
       override val catalogue = PluginSymbolicArtifactCatalogue(
         artifacts = listOf(PluginSymbolicArtifact(id = plugin, kind = "directory", fileName = plugin)),
         moduleRoots = mapOf(plugin to listOf(plugin)),
@@ -88,7 +86,6 @@ class DevDistPluginPlanFilesTest {
       override val requiredRawInputs = listOf(DevDistPluginRawInput(id = plugin, label = "//plugins/x:x", kind = "directory", fileName = plugin))
       override val requiredLibraries = listOfNotNull(library)
       override val reusableArtifacts = emptyList<ReusableJarArtifact>()
-      override val layoutSignature = signature
     }
     return DevDistPluginPlanRecord(variant = PluginSymbolicVariant(id = variant), plan = plan, preparationRecipe = DevPluginPreparationRecipe(operations = emptyList()))
   }
@@ -225,12 +222,13 @@ class DevDistPluginPlanFilesTest {
     val files = collectDevDistPluginPlanFiles(dir, records, index, CommunityDevDistHalf, productOrder = listOf("idea", "server"))
 
     assertThat(files.files.keys).containsExactly("$planDirectory/$plugin.dev-plan.json")
-    assertThat(files.files.getValue("$planDirectory/$plugin.dev-plan.json")).contains("\"{platform}\"").contains("\"{platform:layoutSignature}\"")
+    assertThat(files.files.getValue("$planDirectory/$plugin.dev-plan.json")).contains("\"{platform}\"").doesNotContain("{platform:")
     for (product in listOf("idea", "server")) {
       for ((_, labels) in platformLabels(files, records, product)) {
         assertThat(labels.projection).isEqualTo("$planPackage:$plugin.dev-plan.json")
         assertThat(labels.planClass).isEmpty()
-        assertThat(labels.platformValues.keys).containsExactly("layoutSignature")
+        assertThat(labels.folded).isTrue()
+        assertThat(labels.platformValues).isEmpty()
       }
     }
   }
@@ -249,12 +247,14 @@ class DevDistPluginPlanFilesTest {
     for ((_, labels) in platformLabels(files, records, "idea")) {
       assertThat(labels.projection).isEqualTo("$planPackage:$plugin.dev-plan.json")
       assertThat(labels.planClass).isEmpty()
-      assertThat(labels.platformValues.keys).containsExactly("layoutSignature")
+      assertThat(labels.folded).isTrue()
+      assertThat(labels.platformValues).isEmpty()
     }
     for ((_, labels) in platformLabels(files, records, "server")) {
       assertThat(labels.projection).isEqualTo("$planPackage:$plugin.server.dev-plan.json")
       assertThat(labels.planClass).isEqualTo("server")
-      assertThat(labels.platformValues.keys).containsExactly("layoutSignature")
+      assertThat(labels.folded).isTrue()
+      assertThat(labels.platformValues).isEmpty()
     }
   }
 
@@ -279,6 +279,7 @@ class DevDistPluginPlanFilesTest {
       for ((platform, labels) in platformLabels(files, records, product)) {
         assertThat(labels.projection).isEqualTo("$planPackage:$plugin.$platform.dev-plan.json")
         assertThat(labels.planClass).isEmpty()
+        assertThat(labels.folded).isFalse()
         assertThat(labels.platformValues).isEmpty()
       }
     }
@@ -390,7 +391,7 @@ class DevDistPluginPlanFilesTest {
   @Test
   fun `the ultimate half reuses an equal plan file and call of the community half and writes nothing under community`() {
     val call = "dev_dist_complex_plugin(descriptor = \"//plugins/c:d\")\n"
-    // The layout signature hashes the input labels, so only a text whose labels both halves spell alike is equal.
+    // The plan text names the input labels, so only a text whose labels both halves spell alike is equal.
     val (_, plans) = communityHalfPlans(neutralRecords(communityPlugin, library = "@lib//:c"), sectionCall = call)
     val records = neutralRecords(communityPlugin, library = "@lib//:c")
 

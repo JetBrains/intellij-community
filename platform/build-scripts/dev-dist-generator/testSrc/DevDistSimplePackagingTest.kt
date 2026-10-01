@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.devDist.pluginPackingExecutionVersion
-import org.jetbrains.intellij.build.devDist.pluginPackingLayoutSignature
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -119,14 +118,12 @@ class DevDistSimplePackagingTest {
     reusable: List<ReusableJarArtifact> = emptyList(),
     testModules: Set<String> = emptySet(),
   ): DevDistPluginPlanEntry {
-    val signature = pluginPackingLayoutSignature(plugin, "", assets, preparations, emptyList())
     val moduleLabel = if (plugin == communityPlugin) "@community//plugins/c:c" else "//plugins/x:x"
     val plan = object : DevDistPluginBuildPlan {
       override val projection = PluginPackingProjection(
         version = pluginPackingExecutionVersion(assets),
         plugin = plugin,
         variant = "",
-        layoutSignature = signature,
         assets = assets,
         preparations = preparations,
       )
@@ -139,7 +136,6 @@ class DevDistSimplePackagingTest {
       override val requiredRawInputs = listOf(DevDistPluginRawInput(id = plugin, label = moduleLabel, kind = "directory", fileName = plugin)) + inputs
       override val requiredLibraries = emptyList<String>()
       override val reusableArtifacts = reusable
-      override val layoutSignature = signature
     }
     val record = DevDistPluginPlanRecord(variant = PluginSymbolicVariant(id = ""), plan = plan)
     return DevDistPluginPlanEntry(

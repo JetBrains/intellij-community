@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.serial.monitor",
     "variant": "",
-    "layoutSignature": "8yg9wx20qnpqr3vejonvk65jy",
     "assets": [
         {
             "destination": "lib/serial-monitor.jar",

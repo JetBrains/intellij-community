@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.code.provenance",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "module": "intellij.code.provenance.dev"

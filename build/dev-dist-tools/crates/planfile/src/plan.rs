@@ -24,7 +24,6 @@ pub const EXECUTABLE_MODE: u32 = 0o755;
 pub struct PlanFile {
     pub version: u32,
     pub plugin: String,
-    pub layout_signature: String,
     pub assets: Vec<Asset>,
     pub preparations: Vec<Preparation>,
     pub operations: Vec<Operation>,
@@ -140,7 +139,6 @@ struct RawFile {
     plugin: String,
     #[serde(rename = "variant")]
     _variant: String,
-    layout_signature: String,
     assets: Vec<RawAsset>,
     #[serde(default)]
     preparations: Vec<Preparation>,
@@ -234,7 +232,6 @@ impl RawFile {
         Ok(PlanFile {
             version: self.version,
             plugin: self.plugin,
-            layout_signature: self.layout_signature,
             assets,
             preparations: self.preparations,
             operations,

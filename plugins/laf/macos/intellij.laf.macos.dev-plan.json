@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.laf.macos",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/laf-macos.jar",

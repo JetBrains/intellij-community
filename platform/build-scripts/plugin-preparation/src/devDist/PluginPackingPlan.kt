@@ -158,17 +158,10 @@ data class PlannedPluginAsset(
 class PluginPackingPlan internal constructor(
   @JvmField val plugin: String,
   @JvmField val variant: String,
-  @JvmField val layoutSignature: String,
   @JvmField val assets: List<PlannedPluginAsset>,
   @JvmField val preparations: List<PluginPackingPreparation>,
   @JvmField val requiredInputs: List<String>,
-) {
-  fun validateLayout(signature: String) {
-    check(layoutSignature == signature) {
-      "Plugin '$plugin' has a stale layout plan: stored=$signature computed=$layoutSignature. Regenerate the dev distribution declarations."
-    }
-  }
-}
+)
 
 @ApiStatus.Internal
 fun planPluginPacking(
@@ -295,81 +288,10 @@ fun planPluginPacking(
   return PluginPackingPlan(
     plugin = plugin,
     variant = variant,
-    layoutSignature = pluginPackingLayoutSignature(plugin, variant, assets, preparations, preparationRoots),
     assets = planned,
     preparations = requiredPreparations.toList(),
     requiredInputs = requiredInputs.toList(),
   )
-}
-
-@ApiStatus.Internal
-fun pluginPackingLayoutSignature(
-  plugin: String,
-  variant: String,
-  assets: List<PluginPackingAsset>,
-  preparations: List<PluginPackingPreparation>,
-  preparationRoots: List<String>,
-): String {
-  return devDistSignature {
-    fun texts(values: List<String>) {
-      putInt(values.size)
-      for (value in values) putString(value)
-    }
-
-    val trees = assets.any { it.kind == "tree" }
-    val preparedManifests = trees || assets.any { asset -> asset.recipe?.sources?.any { it.preparedManifest != null } == true }
-    val classPathFacts = preparedManifests || assets.any { !it.classPath }
-    val directories = classPathFacts || assets.any { it.kind != "file" } || preparations.any { it.alwaysRun }
-    putInt(if (trees) 5 else if (preparedManifests) 4 else if (classPathFacts) 3 else if (directories) 2 else 1)
-    putString(plugin)
-    putString(variant)
-    putInt(assets.size)
-    for (asset in assets) {
-      putString(asset.destination)
-      if (directories) putString(asset.kind)
-      if (classPathFacts) putBoolean(asset.classPath)
-      putInt(asset.mode)
-      putBoolean(asset.symlinkTarget != null)
-      asset.symlinkTarget?.let { putString(it) }
-      texts(asset.inputs)
-      val recipe = asset.recipe
-      putBoolean(recipe != null)
-      if (recipe != null) {
-        putInt(recipe.sources.size)
-        for (source in recipe.sources) {
-          putString(source.input)
-          putString(source.kind)
-          putString(source.filter)
-          putString(source.entry)
-          texts(source.options)
-          if (preparedManifests) {
-            val manifest = source.preparedManifest
-            putBoolean(manifest != null)
-            if (manifest != null) {
-              putInt(manifest.version)
-              putInt(manifest.originalMeaningfulSourceCount ?: -1)
-              texts(manifest.sourceManifestPolicies)
-            }
-          }
-        }
-        putString(recipe.writer.manifest)
-        putBoolean(recipe.writer.mergeEntities)
-        // The slot of the retired directory-entries flag. It keeps every checked-in plan signature stable.
-        putBoolean(false)
-        putBoolean(recipe.writer.rewriteBootClassPath)
-        putString(recipe.writer.outputName)
-      }
-    }
-    putInt(preparations.size)
-    for (preparation in preparations) {
-      putString(preparation.id)
-      texts(preparation.inputs)
-      texts(preparation.outputs)
-      putString(preparation.modelSignature)
-      if (directories) putBoolean(preparation.alwaysRun)
-    }
-    texts(preparationRoots)
-  }
 }
 
 private fun validateDestination(destination: String, allowRoot: Boolean) {

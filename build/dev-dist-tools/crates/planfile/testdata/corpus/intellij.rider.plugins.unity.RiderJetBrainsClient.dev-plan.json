@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.rider.plugins.unity",
     "variant": "",
-    "layoutSignature": "etuudr5vwj7ldkm6id4ff6f25",
     "assets": [
         {
             "module": "intellij.rider.plugins.unity.common"

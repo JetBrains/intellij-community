@@ -16,14 +16,6 @@ dev_dist_complex_plugin(
     descriptor = "//plugins/laf/macos:intellij.laf.macos_darwin_dev_descriptor",
     execution_version = 1,
     main_module = "intellij.laf.macos",
-    platform_values = {
-        "darwin_aarch64": {
-            "layoutSignature": "6zm1fq0fgqc1qp8tzn81ehrb2",
-        },
-        "darwin_x64": {
-            "layoutSignature": "7vd02lvgfh0xl0av96n3pyf6b",
-        },
-    },
     platforms = [
         "darwin_x64",
         "darwin_aarch64",

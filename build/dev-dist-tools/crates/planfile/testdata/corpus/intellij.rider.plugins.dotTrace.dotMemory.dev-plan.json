@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.dotTrace.dotMemory",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "module": "intellij.rider.plugins.dotTrace.dotMemory.core"

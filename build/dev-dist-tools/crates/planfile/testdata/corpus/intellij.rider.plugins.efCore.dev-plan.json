@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.efCore",
     "variant": "",
-    "layoutSignature": "6m2961zbzz2ms1jgg48ecu2vd",
     "assets": [
         {
             "destination": "lib/rider-plugins-efCore.jar",

@@ -30,7 +30,6 @@ const TEST_PLAN: &str = r#"{
   "version": 2,
   "plugin": "p.main",
   "variant": "",
-  "layoutSignature": "signature",
   "assets": [
     {"module": "p.content"},
     {"destination": "lib/modules/p.natives.jar", "recipe": {"sources": [

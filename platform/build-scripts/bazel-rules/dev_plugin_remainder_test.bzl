@@ -542,14 +542,13 @@ def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
     if visibility != component_visibility:
         fail("chain %s declares %s_component with the visibility %s; expected %s" % (chain, chain, visibility, component_visibility))
 
-def _plan(variant, layout_signature, destination):
+def _plan(variant, destination):
     """The plan file of a fixture: one jar packed from a layout-assets operation over the raw input. An analysis test
     runs no action, so the packer never reads it. The content states what the chain would pack."""
     return json.encode({
         "version": 1,
         "plugin": "test.plugin",
         "variant": variant,
-        "layoutSignature": layout_signature,
         "assets": [{
             "destination": destination,
             "recipe": {
@@ -571,31 +570,37 @@ def _plan(variant, layout_signature, destination):
         }],
     }) + "\n"
 
-_PLAN = _plan("", "0" * 64, "lib/test.jar")
+_PLAN = _plan("", "lib/test.jar")
 
-# The folded form of the same plan: the variant is the chain's platform, and the two leaves that differ per platform
-# are slots. The graph of each chain resolves them from the call's `platform_values`.
-_FOLDED_PLAN = _plan("{platform}", "{platform:layoutSignature}", "{platform:destination}")
+# The folded form of the same plan: the variant is the chain's platform, and the leaf that differs per platform is a
+# slot. The graph of each chain resolves it from the call's `platform_values`.
+_FOLDED_PLAN = _plan("{platform}", "{platform:destination}")
+
+# A folded plan without a slot: only the variant differs per platform. The call states neither `platform_values` nor
+# `platform_plans`.
+_ZERO_SLOT_PLAN = _plan("{platform}", "lib/test.jar")
 
 def _check_platform_values_refusals(main_module):
     """Fails at load time when `platform_values_error` accepts a shape or a value the macro must refuse, or refuses a
-    dict that fits its platforms."""
+    call that fits its platforms."""
     platforms = ["linux_x64", "darwin_aarch64"]
-    values = {"linux_x64": {"layoutSignature": "1" * 64}, "darwin_aarch64": {"layoutSignature": "2" * 64}}
-    for call_platforms, platform_values, expected in [
-        (None, values, "platform_values without platforms"),
-        (["linux_x64"], values, "but its platforms are"),
-        (platforms, {"linux_x64": {"layoutSignature": "1" * 64}, "darwin_aarch64": {"destination": "lib/test.jar"}}, "states the slots"),
-        (platforms, {"linux_x64": {"layoutSignature": 'a"b'}, "darwin_aarch64": {"layoutSignature": "b"}}, "needs JSON escaping"),
-        (platforms, {"linux_x64": {"layoutSignature": "{platform}"}, "darwin_aarch64": {"layoutSignature": "b"}}, "holds a token"),
+    values = {"linux_x64": {"destination": "lib/linux"}, "darwin_aarch64": {"destination": "lib/darwin"}}
+    for call_platforms, platform_values, platform_plans, expected in [
+        (None, values, False, "platform_values without platforms"),
+        (["linux_x64"], values, False, "but its platforms are"),
+        (platforms, {"linux_x64": {"destination": "lib/linux"}, "darwin_aarch64": {"pattern": "libx"}}, False, "states the slots"),
+        (platforms, {"linux_x64": {"destination": 'a"b'}, "darwin_aarch64": {"destination": "b"}}, False, "needs JSON escaping"),
+        (platforms, {"linux_x64": {"destination": "{platform}"}, "darwin_aarch64": {"destination": "b"}}, False, "holds a token"),
+        (None, {}, True, "platform_plans without platforms"),
+        (platforms, values, True, "states platform_values and platform_plans"),
     ]:
-        error = platform_values_error(main_module, call_platforms, platform_values)
+        error = platform_values_error(main_module, call_platforms, platform_values, platform_plans)
         if error == None or expected not in error:
-            fail("platform_values_error accepted %s with platforms %s: %s" % (platform_values, call_platforms, error))
-    for accepted in [{}, values]:
-        error = platform_values_error(main_module, platforms, accepted)
+            fail("platform_values_error accepted %s and platform_plans %s with platforms %s: %s" % (platform_values, platform_plans, call_platforms, error))
+    for accepted, platform_plans in [({}, False), (values, False), ({}, True)]:
+        error = platform_values_error(main_module, platforms, accepted, platform_plans)
         if error != None:
-            fail("platform_values_error refused %s: %s" % (accepted, error))
+            fail("platform_values_error refused %s and platform_plans %s: %s" % (accepted, platform_plans, error))
 
 def _reused_component_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -1060,6 +1065,7 @@ def dev_plugin_remainder_test_suite(name):
 
     # The derived form: one call, one chain per platform, the plan label `<main module>.<platform>.dev-plan.json` in
     # the package of the call and the descriptor entry derived, and the platform token substituted in a label.
+    # `platform_plans` states that the call keeps a plan file per platform.
     derived_module = "test.%s.derived" % name
     derived_platforms = ["linux_x64", "darwin_aarch64"]
     for platform in derived_platforms:
@@ -1070,6 +1076,7 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = derived_platforms,
+        platform_plans = True,
         resource_inputs = {":" + name + "_derived_raw_{platform}": "raw"},
     )
     derived_tests = []
@@ -1111,6 +1118,7 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = ["linux_x64"],
+        platform_plans = True,
         resource_inputs = {":" + plan_home_raw: "raw"},
         tags = ["manual"],
     )
@@ -1131,8 +1139,8 @@ def dev_plugin_remainder_test_suite(name):
     folded_module = "test.%s.folded" % name
     folded_platforms = ["linux_x64", "darwin_aarch64"]
     folded_values = {
-        "linux_x64": {"destination": "lib/linux-x64/test.jar", "layoutSignature": "1" * 64},
-        "darwin_aarch64": {"destination": "lib/darwin-aarch64/test.jar", "layoutSignature": "2" * 64},
+        "linux_x64": {"destination": "lib/linux-x64/test.jar"},
+        "darwin_aarch64": {"destination": "lib/darwin-aarch64/test.jar"},
     }
     _check_platform_values_refusals(folded_module)
     folded_projection = folded_module + ".dev-plan.json"
@@ -1164,6 +1172,35 @@ def dev_plugin_remainder_test_suite(name):
         )
         folded_tests.append(folded_test)
 
+    # The folded form without a slot: the call states neither `platform_values` nor `platform_plans`, so every chain
+    # reads `<main module>.dev-plan.json`, and its graph substitutes the platform token alone.
+    zero_slot_module = "test.%s.zero_slot" % name
+    zero_slot_projection = zero_slot_module + ".dev-plan.json"
+    _file(name = zero_slot_projection, content = _ZERO_SLOT_PLAN)
+    for platform in folded_platforms:
+        _file(name = name + "_zero_slot_raw_" + platform)
+    dev_dist_complex_plugin(
+        main_module = zero_slot_module,
+        descriptor = ":" + normal_descriptor,
+        execution_version = 1,
+        platforms = folded_platforms,
+        resource_inputs = {":" + name + "_zero_slot_raw_{platform}": "raw"},
+        tags = ["manual"],
+    )
+    for platform in folded_platforms:
+        stem = zero_slot_module + "_" + platform
+        _check_chain_shape(stem)
+        zero_slot_test = stem + "_graph_test"
+        _graph_resolution_test(
+            name = zero_slot_test,
+            target_under_test = ":" + stem + "_graph",
+            projection = ":" + zero_slot_projection,
+            platform = platform,
+            execution_version = 1,
+            consumer = ":" + stem + "_remainder",
+        )
+        folded_tests.append(zero_slot_test)
+
     # The plan class: `plan_class` names a plan text that differs from the baseline text, `<main module>.<plan_class>`,
     # before the platform of a refused fold and alone for a folded plan. The descriptor entry stays
     # `descriptor:<main module>`, and the chain stem does not change.
@@ -1178,6 +1215,7 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = class_platforms,
+        platform_plans = True,
         resource_inputs = {":" + name + "_plan_class_raw_{platform}": "raw"},
         tags = ["manual"],
     )
@@ -1250,6 +1288,7 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + normal_descriptor,
         execution_version = 1,
         platforms = chain_class_platforms,
+        platform_plans = True,
         resource_inputs = {":" + name + "_chain_class_raw_{platform}": "raw"},
         tags = ["manual"],
     )
@@ -1279,7 +1318,7 @@ def dev_plugin_remainder_test_suite(name):
     # JSON string leaf.
     refused_graph_tests = []
     for suffix, platform, platform_values, expected_message in [
-        ("neutral_values", "", {"layoutSignature": "0" * 64}, "serves every platform"),
+        ("neutral_values", "", {"destination": "lib/test.jar"}, "serves every platform"),
         ("quoted_value", "linux_x64", {"destination": 'lib/"test".jar'}, "needs JSON escaping"),
         ("token_value", "linux_x64", {"destination": "lib/{platform}/test.jar"}, "holds a token"),
     ]:

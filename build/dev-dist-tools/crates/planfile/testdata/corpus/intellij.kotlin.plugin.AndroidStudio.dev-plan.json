@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.kotlin.plugin",
     "variant": "",
-    "layoutSignature": "c0vvqq8o5rxyljpy7vtoyrtab",
     "assets": [
         {
             "module": "intellij.kotlin.highlighting.minimal"

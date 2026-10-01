@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.renderdoc",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/intellij.libraries.rd.client.renderdoc.jar",

@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.jna.plugin",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.jna.jar",

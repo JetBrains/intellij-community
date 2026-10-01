@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.grid.loader.json",
     "variant": "",
-    "layoutSignature": "dz2p58jds1uxosypwr66f87ya",
     "assets": [
         {
             "destination": "lib/grid-loader-json.jar",

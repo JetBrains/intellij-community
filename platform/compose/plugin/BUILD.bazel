@@ -52,26 +52,6 @@ dev_dist_complex_plugin(
         "//platform/compose/markdown:markdown_content_module_jar",
     ],
     main_module = "intellij.platform.compose.plugin",
-    platform_values = {
-        "darwin_aarch64": {
-            "layoutSignature": "2g07wyft6atqslujwy5s6ocnu",
-        },
-        "darwin_x64": {
-            "layoutSignature": "bnuoprdydz11ieunolqt7fc5m",
-        },
-        "linux_aarch64": {
-            "layoutSignature": "8g24ksisoaet8m8bkqjoeolly",
-        },
-        "linux_x64": {
-            "layoutSignature": "7mgpeqagkmy93f0c3tilj2f5p",
-        },
-        "windows_aarch64": {
-            "layoutSignature": "dentnqk9axzfkxf0qlxz6ijpa",
-        },
-        "windows_x64": {
-            "layoutSignature": "82w78enn4w96qnjix5is642kg",
-        },
-    },
     platforms = [
         "windows_x64",
         "windows_aarch64",

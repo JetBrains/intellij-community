@@ -17,26 +17,6 @@ dev_dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = ["//libraries/pty4j:pty4j_content_module_jar"],
     main_module = "intellij.pty4j.plugin",
-    platform_values = {
-        "darwin_aarch64": {
-            "layoutSignature": "1qi4ik2ojbgxlggi5quqhmlro",
-        },
-        "darwin_x64": {
-            "layoutSignature": "13liucayr6bi5apk6j7i2dxsn",
-        },
-        "linux_aarch64": {
-            "layoutSignature": "fiqaxbqxntkvguyzvjm6utcd",
-        },
-        "linux_x64": {
-            "layoutSignature": "eh0ati1euod82sa7tz8e9bfnf",
-        },
-        "windows_aarch64": {
-            "layoutSignature": "6csxvx0wb3wmcikkxdgtzmjhw",
-        },
-        "windows_x64": {
-            "layoutSignature": "c7ma3y7uu8wzikldrj6dm45w1",
-        },
-    },
     platforms = [
         "windows_x64",
         "windows_aarch64",

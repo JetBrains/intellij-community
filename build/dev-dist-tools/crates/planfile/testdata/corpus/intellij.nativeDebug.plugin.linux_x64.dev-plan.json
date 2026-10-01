@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.nativeDebug.plugin",
     "variant": "linux_x64",
-    "layoutSignature": "avzupvjfwnmfht3e8pynaiqmc",
     "assets": [
         {
             "module": "intellij.nativeDebug.backend"

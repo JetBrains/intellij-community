@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.clion",
     "variant": "darwin_x64",
-    "layoutSignature": "4uihwed1bphx7jttphtxu7tpn",
     "assets": [
         {
             "module": "intellij.cidr.apinotes"

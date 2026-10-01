@@ -14,7 +14,6 @@ fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
     let recipe = Recipe {
         version: TREE_VERSION,
         plugin: "tree".to_owned(),
-        layout_signature: "tree-v2".to_owned(),
         assets: vec![tree_asset("kotlinc"), independent("lib/independent.jar", "independent")],
         operations: vec![Operation::CopyTree {
             destination: "kotlinc".to_owned(),
@@ -65,7 +64,6 @@ fn independent_destinations_collide_with_remainder_tree_entries() {
         let recipe = Recipe {
             version: TREE_VERSION,
             plugin: "tree".to_owned(),
-            layout_signature: "tree-v2".to_owned(),
             assets: vec![tree_asset("lib"), independent(destination, "independent")],
             operations: vec![Operation::CopyTree {
                 destination: "lib".to_owned(),
@@ -105,7 +103,6 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
         let recipe = Recipe {
             version: TREE_VERSION,
             plugin: "natives".to_owned(),
-            layout_signature: "natives-v2".to_owned(),
             assets: vec![
                 tree_asset("lib"),
                 independent("lib/modules/demo.natives.jar", "demo.natives"),
@@ -149,7 +146,6 @@ fn version_three_is_refused() {
     let recipe = Recipe {
         version: 3,
         plugin: "scoped".to_owned(),
-        layout_signature: "scoped-v3".to_owned(),
         assets: vec![Asset {
             class_path: Some(false),
             ..remainder("lib/native.bin")
@@ -171,7 +167,6 @@ fn copy_recipe(mode: u32) -> Recipe {
     Recipe {
         version: VERSION,
         plugin: "resource".to_owned(),
-        layout_signature: "resource-v1".to_owned(),
         assets: vec![remainder("resource.txt")],
         operations: vec![Operation::Copy {
             destination: "resource.txt".to_owned(),
@@ -1059,7 +1054,6 @@ fn default_field_recipe_plans_and_writes() {
     let recipe = Recipe {
         version: VERSION,
         plugin: "example".to_owned(),
-        layout_signature: "signature".to_owned(),
         assets: vec![remainder("lib/plugin.jar")],
         operations: vec![jar("lib/plugin.jar", Vec::new())],
     };

@@ -34,8 +34,8 @@ pub fn plan(recipe: &Recipe, catalogue: &Catalogue) -> Result<Execution> {
     if !(VERSION..=TREE_VERSION).contains(&recipe.version) || catalogue.version != VERSION {
         bail!("unsupported contract version; the recipe must use version 1 or 2, the catalogue version 1");
     }
-    if !valid_id(&recipe.plugin) || !valid_id(&recipe.layout_signature) {
-        bail!("invalid plugin identity or layout signature");
+    if !valid_id(&recipe.plugin) {
+        bail!("invalid plugin identity");
     }
     let has_trees = recipe.assets.iter().any(|asset| asset.kind == AssetKind::Tree);
     let assets = validated_assets(recipe.version, &recipe.assets, has_trees)?;

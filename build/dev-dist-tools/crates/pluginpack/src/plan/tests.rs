@@ -14,7 +14,6 @@ fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
     let recipe = Recipe {
         version: TREE_VERSION,
         plugin: "tree".to_owned(),
-        layout_signature: "tree-v2".to_owned(),
         assets: vec![tree_asset("kotlinc"), independent("lib/independent.jar", "independent")],
         operations: vec![Operation::CopyTree {
             destination: "kotlinc".to_owned(),
@@ -130,7 +129,6 @@ fn plan_accepts_a_reused_native_tree_next_to_its_jar() {
     let recipe = |version: u32, assets: Vec<Asset>| Recipe {
         version,
         plugin: "natives".to_owned(),
-        layout_signature: "natives-v2".to_owned(),
         assets,
         operations: Vec::new(),
     };

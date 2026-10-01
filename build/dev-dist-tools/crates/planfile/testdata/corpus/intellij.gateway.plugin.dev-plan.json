@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.gateway.plugin",
     "variant": "",
-    "layoutSignature": "1wuh1iamunkgzjikbfoikshtl",
     "assets": [
         {
             "module": "intellij.gateway.core"

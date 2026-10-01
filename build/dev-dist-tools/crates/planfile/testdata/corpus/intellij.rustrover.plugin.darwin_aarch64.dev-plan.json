@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rustrover.plugin",
     "variant": "darwin_aarch64",
-    "layoutSignature": "7fyfjupb7l89mft3jd6xr35dv",
     "assets": [
         {
             "destination": "lib/intellij.rustrover.common.jar",

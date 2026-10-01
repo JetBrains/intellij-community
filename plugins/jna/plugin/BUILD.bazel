@@ -17,26 +17,6 @@ dev_dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = ["//libraries/jna:jna_content_module_jar"],
     main_module = "intellij.jna.plugin",
-    platform_values = {
-        "darwin_aarch64": {
-            "layoutSignature": "d2ln36u7cgl7ck8k3tfqaxey",
-        },
-        "darwin_x64": {
-            "layoutSignature": "ctdt13famncziek48nftyhs1v",
-        },
-        "linux_aarch64": {
-            "layoutSignature": "7fkrc4i24um63l0bvqfxpr7to",
-        },
-        "linux_x64": {
-            "layoutSignature": "2okon4rnhp3j7akgjx6q7hhna",
-        },
-        "windows_aarch64": {
-            "layoutSignature": "citya3bpm1aw4lm9jznrniczk",
-        },
-        "windows_x64": {
-            "layoutSignature": "i11elp3wte3fqx2k6qemx39d",
-        },
-    },
     platforms = [
         "windows_x64",
         "windows_aarch64",

@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.grid.loader.xls",
     "variant": "",
-    "layoutSignature": "bllkgk6p02hjmlzpsho3vwmgg",
     "assets": [
         {
             "destination": "lib/grid-loader-xls.jar",

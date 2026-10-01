@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.wsl.remoteSdk",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/wsl-remoteSdk.jar",

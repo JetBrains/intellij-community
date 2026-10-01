@@ -292,7 +292,8 @@ internal fun computeDevDistPluginExecutions(
       for (plugin in reused) {
         val calls = rendering.calls.getValue(plugin)
         check(calls.sectionText != null && upstreamPackagePlans.acceptsCalls(plugin, calls)) {
-          "The ${sections.half.name} half renders another call of $plugin in its community package than the community half:\n" + calls.sectionText
+          "The ${sections.half.name} half renders another call of $plugin in its community package than the community half:\n" +
+          calls.sectionText + "\nThe community half states:\n" + upstreamPackagePlans.sectionCalls(plugin)
         }
       }
     }

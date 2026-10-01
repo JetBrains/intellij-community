@@ -950,20 +950,27 @@ def _dict_for_platform(values, platform, what):
         fail("two %s entries name the same key on %s: %s" % (what, platform, sorted(values.keys())))
     return result
 
-def platform_values_error(main_module, platforms, platform_values):
-    """Returns why `platform_values` does not fit `platforms`, or None when it does.
+def platform_values_error(main_module, platforms, platform_values, platform_plans = False):
+    """Returns why `platform_values` and `platform_plans` do not fit `platforms`, or None when they do.
 
-    `dev_dist_complex_plugin` fails with the message at load time. A non-empty dict needs `platforms`. Its keys are
-    exactly `platforms`. Every platform states the same slot names. Every value stands as a whole JSON string leaf.
+    `dev_dist_complex_plugin` fails with the message at load time. `platform_plans` needs `platforms` and excludes
+    `platform_values`, because a plan file per platform has no slot. A non-empty `platform_values` needs `platforms`.
+    Its keys are exactly `platforms`. Every platform states the same slot names. Every value stands as a whole JSON
+    string leaf.
 
     Args:
         main_module: The plugin's main module, named in the message.
         platforms: The `platforms` argument of the call.
         platform_values: The `platform_values` argument of the call.
+        platform_plans: The `platform_plans` argument of the call.
 
     Returns:
         The message, or None.
     """
+    if platform_plans and not platforms:
+        return "%s states platform_plans without platforms" % main_module
+    if platform_plans and platform_values:
+        return "%s states platform_values and platform_plans, but a plan file per platform has no slot" % main_module
     if not platform_values:
         return None
     if not platforms:
@@ -987,6 +994,7 @@ def dev_dist_complex_plugin(
         execution_version,
         platforms = None,
         platform_values = {},
+        platform_plans = False,
         plan_class = "",
         chain_class = "",
         plan_package = "",
@@ -1012,7 +1020,8 @@ def dev_dist_complex_plugin(
     descriptor's catalogue entry `descriptor:<main module>`. A `{platform}` token in a label or an ID is replaced by the
     chain's platform, so a plugin whose platform layouts differ only in that token is one call. A plan file holds the
     same token and `{platform:<name>}` slots as whole string leaves. The graph of each chain resolves them from
-    `platform_values`. Each chain is one `dev_dist_complex_plugin_variant`.
+    `platform_values`. The `.<platform>` part of the plan file label follows from `platform_plans` alone. Each chain is
+    one `dev_dist_complex_plugin_variant`.
 
     Args:
         main_module: The plugin's main module. It is the component name and the plan file stem.
@@ -1021,9 +1030,12 @@ def dev_dist_complex_plugin(
         platforms: The `HOST_PLATFORMS` entries the plugin is bundled on, one chain each, or `None` for one chain
             that serves every platform.
         platform_values: The value of each plan file slot per platform, `{platform: {slot name: value}}`. A non-empty
-            dict needs `platforms`, names every one of them, states the same slot names on each, and names the plan
-            file `<main module>[.<plan class>].dev-plan.json`. An empty dict with `platforms` names one plan file
-            per chain, `<main module>[.<plan class>].<platform>.dev-plan.json`.
+            dict needs `platforms`, names every one of them, and states the same slot names on each. A folded plan
+            file without a slot states nothing.
+        platform_plans: True when the call names one plan file per platform, because the fold of the plugin's records
+            was refused. A folded or neutral plugin states nothing. With True, each chain reads
+            `<main module>[.<plan class>].<platform>.dev-plan.json`. Otherwise every chain reads
+            `<main module>[.<plan class>].dev-plan.json`. True needs `platforms` and excludes `platform_values`.
         plan_class: The name of a plan text that differs from the baseline text, the first product that states it.
             Empty for the baseline text.
         chain_class: The name of a call that differs from the baseline call, the first product that states it. Empty
@@ -1048,14 +1060,14 @@ def dev_dist_complex_plugin(
     for platform in platforms or []:
         if platform not in HOST_PLATFORMS:
             fail("%s names platform '%s', which is not one of %s" % (main_module, platform, HOST_PLATFORMS))
-    error = platform_values_error(main_module, platforms, platform_values)
+    error = platform_values_error(main_module, platforms, platform_values, platform_plans)
     if error:
         fail(error)
     descriptor_id = "descriptor:" + main_module
     plan_stem = plan_package + ":" + main_module + ("." + plan_class if plan_class else "")
     chain_stem = main_module + ("." + chain_class if chain_class else "")
     for platform in platforms or [None]:
-        projection = plan_stem + ("." + platform if platform and not platform_values else "") + ".dev-plan.json"
+        projection = plan_stem + ("." + platform if platform and platform_plans else "") + ".dev-plan.json"
         chain_descriptor = _for_platform(descriptor, platform)
         chain_resources = _dict_for_platform(resource_inputs, platform, "resource_inputs")
         if chain_descriptor in chain_resources:

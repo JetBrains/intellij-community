@@ -1189,8 +1189,7 @@ private fun hasSameBuildPlan(a: DevDistPluginBuildPlan, b: DevDistPluginBuildPla
          a.catalogue == b.catalogue &&
          a.requiredRawInputs == b.requiredRawInputs &&
          a.requiredLibraries == b.requiredLibraries &&
-         a.reusableArtifacts == b.reusableArtifacts &&
-         a.layoutSignature == b.layoutSignature
+         a.reusableArtifacts == b.reusableArtifacts
 }
 
 /**

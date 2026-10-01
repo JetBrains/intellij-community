@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.maven.plugin",
     "variant": "",
-    "layoutSignature": "bli4e8o0bxmgla8w7u9e5rkhu",
     "assets": [
         {
             "destination": "lib/intellij.maven.model.jar",

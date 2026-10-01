@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "language-server.plugins.kotlin",
     "variant": "",
-    "layoutSignature": "5r4vsirobmo5wrw8yabubik9y",
     "assets": [
         {
             "module": "language-server.analyzer.kotlin"

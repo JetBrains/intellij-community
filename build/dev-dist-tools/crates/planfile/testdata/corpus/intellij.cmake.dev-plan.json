@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.cmake",
     "variant": "",
-    "layoutSignature": "1k8d3ujk0qrapxevj8whb1gab",
     "assets": [
         {
             "module": "intellij.cmake.json"

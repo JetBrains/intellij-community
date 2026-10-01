@@ -52,7 +52,6 @@ internal class DevPluginNativeTreeAssetTest {
       version = 3,
       plugin = plan.plugin,
       variant = plan.variant,
-      layoutSignature = plan.layoutSignature,
       assets = listOf(jar, nativeTree),
     )
 
@@ -64,7 +63,7 @@ internal class DevPluginNativeTreeAssetTest {
   @Test
   fun `plan file asset with a scope is refused`() {
     val text = """
-      {"version": 2, "plugin": "intellij.jna.plugin", "variant": "linux_x64", "layoutSignature": "signature", "assets": [
+      {"version": 2, "plugin": "intellij.jna.plugin", "variant": "linux_x64", "assets": [
         {"destination": "lib/jna", "inputs": ["native-tree:intellij.libraries.jna"], "kind": "tree", "classPath": false, "scope": "distribution"}
       ]}
     """.trimIndent()

@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.godot",
     "variant": "",
-    "layoutSignature": "an08xvuaf269xyr7jc8c46yok",
     "assets": [
         {
             "destination": "lib/rider-plugins-godot.jar",

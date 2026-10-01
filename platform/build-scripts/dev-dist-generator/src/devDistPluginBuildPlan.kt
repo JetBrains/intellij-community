@@ -87,7 +87,6 @@ internal interface DevDistPluginBuildPlan {
   val requiredRawInputs: List<DevDistPluginRawInput>
   val requiredLibraries: List<String>
   val reusableArtifacts: List<ReusableJarArtifact>
-  val layoutSignature: String
 
   /** The reused modules, the keys the chain and the asset rows use. */
   val reusedModules: List<String>
@@ -217,7 +216,6 @@ internal fun computeDevDistPluginBuildPlan(
     requiredRawInputs = requiredRawInputs,
     requiredLibraries = requiredLibraries,
     reusableArtifacts = symbolicProjection.reusableArtifacts,
-    layoutSignature = plan.layoutSignature,
   )
 }
 
@@ -270,7 +268,6 @@ private class PluginBuildPlan(
   override val requiredRawInputs: List<DevDistPluginRawInput>,
   override val requiredLibraries: List<String>,
   override val reusableArtifacts: List<ReusableJarArtifact>,
-  override val layoutSignature: String,
 ) : DevDistPluginBuildPlan
 
 /**

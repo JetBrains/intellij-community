@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.debuggerLinq",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/debuggerLinq.jar",

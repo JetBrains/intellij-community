@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.go.plugin",
     "variant": "",
-    "layoutSignature": "bzfn4adocr3l8hd4s03jzvc95",
     "assets": [
         {
             "module": "intellij.go.template.integration"

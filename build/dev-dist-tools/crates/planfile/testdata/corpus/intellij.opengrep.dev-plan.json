@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.opengrep",
     "variant": "",
-    "layoutSignature": "9ok2rjxi8qyeqa7dufn8y24w3",
     "assets": [
         {
             "destination": "lib/intellij.opengrep.common.jar",

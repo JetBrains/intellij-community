@@ -2,7 +2,6 @@
     "version": 1,
     "plugin": "intellij.localization.zh",
     "variant": "",
-    "layoutSignature": "8pkg2nt1mqe8q4af72f85tpzz",
     "assets": [
         {
             "destination": "lib/localization-zh.jar",

@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.platform.compose.plugin",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "destination": "lib/modules/intellij.libraries.skiko.jar",

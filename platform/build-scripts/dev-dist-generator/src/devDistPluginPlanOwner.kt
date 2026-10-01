@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
 import org.jetbrains.intellij.build.dev.snapshotDevPluginPreparationRecipe
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
-import org.jetbrains.intellij.build.devDist.pluginPackingLayoutSignature
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
@@ -52,26 +51,17 @@ internal class DevDistPluginPlanRecord(
     get() = plan.projection.copy(operations = preparationRecipe?.operations.orEmpty())
 
   /**
-   * This record for [variant]: the same graph, with the plan stamped for [variant] and its layout signature computed again.
+   * This record for [variant]: the same graph, with the plan stamped for [variant].
    * The projection reads the variant id only to stamp it, so a plan that no platform input changes needs no second run.
    */
   fun relabel(variant: PluginSymbolicVariant): DevDistPluginPlanRecord {
     val source = plan
-    val projection = source.projection
-    val signature = pluginPackingLayoutSignature(
-      plugin = projection.plugin,
-      variant = variant.id,
-      assets = projection.assets,
-      preparations = projection.preparations,
-      preparationRoots = projection.preparationRoots,
-    )
     val relabeled = object : DevDistPluginBuildPlan {
-      override val projection = projection.copy(variant = variant.id, layoutSignature = signature)
+      override val projection = source.projection.copy(variant = variant.id)
       override val catalogue = source.catalogue
       override val requiredRawInputs = source.requiredRawInputs
       override val requiredLibraries = source.requiredLibraries
       override val reusableArtifacts = source.reusableArtifacts
-      override val layoutSignature = signature
     }
     return DevDistPluginPlanRecord(variant, relabeled, retainedRecipe, originalLayout)
   }
@@ -94,13 +84,13 @@ internal class DevDistPluginPlanRecord(
   ): DevDistPluginPlanRecord = DevDistPluginPlanRecord(variant, plan, preparationRecipe)
 
   /**
-   * The graph without the platform: the variant and the layout signature that hashes it are masked.
+   * The graph without the platform: the variant is masked.
    * Two records with equal neutral graphs describe the same plugin content on different platforms.
    */
   fun neutralGraph(): List<Any?> {
     val projection = plan.projection
     return listOf(
-      projection.copy(variant = "", layoutSignature = ""),
+      projection.copy(variant = ""),
       plan.catalogue,
       plan.requiredRawInputs,
       plan.requiredLibraries,
@@ -117,7 +107,6 @@ internal class DevDistPluginPlanRecord(
            plan.requiredRawInputs == other.plan.requiredRawInputs &&
            plan.requiredLibraries == other.plan.requiredLibraries &&
            plan.reusableArtifacts == other.plan.reusableArtifacts &&
-           plan.layoutSignature == other.plan.layoutSignature &&
            retainedRecipeText == other.retainedRecipeText &&
            remainderInputs == other.remainderInputs
   }
@@ -236,7 +225,6 @@ internal fun snapshotDevDistPluginPlan(plan: DevDistPluginBuildPlan): DevDistPlu
     override val requiredRawInputs = java.util.List.copyOf(plan.requiredRawInputs)
     override val requiredLibraries = java.util.List.copyOf(plan.requiredLibraries)
     override val reusableArtifacts = java.util.List.copyOf(plan.reusableArtifacts.map { it.copy(recipe = snapshotDevDistJarRecipe(it.recipe)) })
-    override val layoutSignature = plan.layoutSignature
   }
 }
 

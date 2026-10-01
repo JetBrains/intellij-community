@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * A module's own jar is the commonest asset by far: one `module-v1` source, the dev-distribution writer, the module as
  * the one input, and `lib/modules/<module>.jar` as the destination. The compact form states it as `{"module": "<m>"}`.
  * Any other asset leaves `inputs` out when the list repeats the recipe sources. The full form stays readable, and a
- * decoded projection equals the encoded one, so the layout signature, which hashes the objects, does not change.
+ * decoded projection equals the encoded one.
  *
  * Only `PluginPackingProjection.assets` uses this codec. A library layout recipe embeds the same classes, and keeps
  * the full form, so the recipe text and every signature over it stay as they are.

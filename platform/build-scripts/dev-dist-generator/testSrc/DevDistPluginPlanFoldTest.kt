@@ -13,32 +13,47 @@ class DevDistPluginPlanFoldTest {
 
   @Test
   fun `two platform texts fold into one body that resolves back to each`() {
-    val darwin = planText(variant = "darwin_aarch64", signature = "sig-darwin", destination = "lib/native/mac", pattern = "macOS/libx.dylib")
-    val linux = planText(variant = "linux_x64", signature = "sig-linux", destination = "lib/native/linux", pattern = "Linux/libx.so")
+    val darwin = planText(variant = "darwin_aarch64", destination = "lib/native/mac", pattern = "macOS/libx.dylib")
+    val linux = planText(variant = "linux_x64", destination = "lib/native/linux", pattern = "Linux/libx.so")
 
     val fold = fold("darwin_aarch64" to darwin, "linux_x64" to linux) as DevDistPluginPlanFold.Folded
 
-    assertThat(fold.slotNames).containsExactly("layoutSignature", "destination", "pattern")
+    assertThat(fold.slotNames).containsExactly("destination", "pattern")
     assertThat(fold.body)
       .contains("\"variant\": \"{platform}\"")
-      .contains("\"layoutSignature\": \"{platform:layoutSignature}\"")
       .contains("\"destination\": \"{platform:destination}\"")
       .contains("\"root\": \"{platform:destination}\"")
       .contains("\"pattern\": \"{platform:pattern}\"")
-      .doesNotContain("darwin_aarch64", "sig-darwin", "lib/native/mac")
+      .doesNotContain("darwin_aarch64", "lib/native/mac")
     assertThat(fold.valuesByPlatform.keys).containsExactly("darwin_aarch64", "linux_x64")
     assertThat(fold.valuesByPlatform.getValue("darwin_aarch64"))
-      .containsExactly(entry("layoutSignature", "sig-darwin"), entry("destination", "lib/native/mac"), entry("pattern", "macOS/libx.dylib"))
+      .containsExactly(entry("destination", "lib/native/mac"), entry("pattern", "macOS/libx.dylib"))
     assertThat(fold.valuesByPlatform.getValue("linux_x64"))
-      .containsExactly(entry("layoutSignature", "sig-linux"), entry("destination", "lib/native/linux"), entry("pattern", "Linux/libx.so"))
+      .containsExactly(entry("destination", "lib/native/linux"), entry("pattern", "Linux/libx.so"))
     assertThat(resolvePluginPlanText(fold.body, "darwin_aarch64", fold.valuesByPlatform.getValue("darwin_aarch64"))).isEqualTo(darwin)
     assertThat(resolvePluginPlanText(fold.body, "linux_x64", fold.valuesByPlatform.getValue("linux_x64"))).isEqualTo(linux)
   }
 
+  /** Records that differ only in the variant fold with no slot. Every platform keeps an entry with no value. */
+  @Test
+  fun `texts that differ only in the variant fold with no slot`() {
+    val darwin = planText(variant = "darwin_aarch64", destination = "lib/native", pattern = "libx")
+    val linux = planText(variant = "linux_x64", destination = "lib/native", pattern = "libx")
+
+    val fold = fold("darwin_aarch64" to darwin, "linux_x64" to linux) as DevDistPluginPlanFold.Folded
+
+    assertThat(fold.slotNames).isEmpty()
+    assertThat(fold.body).contains("\"variant\": \"{platform}\"").doesNotContain("{platform:")
+    assertThat(fold.valuesByPlatform).containsOnlyKeys("darwin_aarch64", "linux_x64")
+    assertThat(fold.valuesByPlatform.values).allSatisfy { assertThat(it).isEmpty() }
+    assertThat(resolvePluginPlanText(fold.body, "darwin_aarch64", emptyMap())).isEqualTo(darwin)
+    assertThat(resolvePluginPlanText(fold.body, "linux_x64", emptyMap())).isEqualTo(linux)
+  }
+
   @Test
   fun `a distinct tuple under a reused key refuses the fold`() {
-    val darwin = """{"variant": "darwin_aarch64", "layoutSignature": "a", "first": {"inputs": ["x:0:output"]}, "second": {"inputs": ["y:0:0", "x:0:output"]}}"""
-    val linux = """{"variant": "linux_x64", "layoutSignature": "b", "first": {"inputs": ["x:4:output"]}, "second": {"inputs": ["y:4:0", "x:4:output"]}}"""
+    val darwin = """{"variant": "darwin_aarch64", "first": {"inputs": ["x:0:output"]}, "second": {"inputs": ["y:0:0", "x:0:output"]}}"""
+    val linux = """{"variant": "linux_x64", "first": {"inputs": ["x:4:output"]}, "second": {"inputs": ["y:4:0", "x:4:output"]}}"""
 
     val fold = fold("darwin_aarch64" to darwin, "linux_x64" to linux) as DevDistPluginPlanFold.Refused
 
@@ -112,7 +127,7 @@ class DevDistPluginPlanFoldTest {
 
     val fold = foldDevDistPluginPlanTexts(texts) as DevDistPluginPlanFold.Folded
 
-    assertThat(fold.slotNames).containsExactly("layoutSignature", "destination", "modelSignature", "pattern")
+    assertThat(fold.slotNames).containsExactly("destination", "modelSignature", "pattern")
     assertThat(fold.body).contains("\"variant\": \"{platform}\"").doesNotContain("darwin", "aarch64")
     assertThat(fold.valuesByPlatform.getValue("windows_x64"))
       .containsEntry("destination", "lib/libwebp/win/amd64")
@@ -135,12 +150,11 @@ class DevDistPluginPlanFoldTest {
   }
 
   /** A text in the plan file form: pretty-printed, string leaves, a string array, a number and a boolean. */
-  private fun planText(variant: String, signature: String, destination: String, pattern: String): String = """
+  private fun planText(variant: String, destination: String, pattern: String): String = """
     {
         "version": 2,
         "plugin": "intellij.sample",
         "variant": "$variant",
-        "layoutSignature": "$signature",
         "assets": [
             {
                 "destination": "$destination",

@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.rider.plugins.dotCover",
     "variant": "{platform}",
-    "layoutSignature": "{platform:layoutSignature}",
     "assets": [
         {
             "module": "intellij.rider.plugins.dotCover.mcp"

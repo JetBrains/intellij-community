@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.cidr.debugger.plugin",
     "variant": "linux_x64",
-    "layoutSignature": "dznw2ctfds2ye6n4ji3r11f0x",
     "assets": [
         {
             "module": "intellij.cidr.debugger.backend"

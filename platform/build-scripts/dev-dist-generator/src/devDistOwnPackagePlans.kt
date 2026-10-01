@@ -35,6 +35,9 @@ internal class DevDistOwnPackagePlans(
     return calls.sectionText == null || calls.sectionText == sectionCalls.get(mainModule)
   }
 
+  /** The calls the own section of [mainModule] states, or `null`. For a failure message. */
+  fun sectionCalls(mainModule: String): String? = sectionCalls.get(mainModule)
+
   /**
    * Whether the ultimate half can reuse the plan files and the calls that the community half writes into the own
    * package of [mainModule].

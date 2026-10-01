@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.android.plugin.descriptor",
     "variant": "linux_x64",
-    "layoutSignature": "10g2iomcflpe4ty34m6u5kkp8",
     "assets": [
         {
             "destination": "lib/intellij.libraries.ffmpeg.jar",

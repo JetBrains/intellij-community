@@ -2,7 +2,6 @@
     "version": 2,
     "plugin": "intellij.database.artifactsBundle",
     "variant": "",
-    "layoutSignature": "8nnfi7tlpy6xuo87mx5obfsa7",
     "assets": [
         {
             "destination": "lib/database-artifactsBundle.jar",
