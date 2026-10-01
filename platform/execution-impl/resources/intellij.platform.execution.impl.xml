@@ -189,6 +189,8 @@
     <extensionPoint qualifiedName="com.intellij.projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
   </extensionPoints>
   <projectListeners>
+    <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
               topic="com.intellij.execution.ExecutionListener"/>
     <listener class="com.intellij.execution.ui.RunPopupVoidExecutionListener"

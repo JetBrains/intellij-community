@@ -4,8 +4,8 @@ package com.intellij.execution.lineMarker;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
+import com.intellij.codeInsight.daemon.LineMarkersAccessor;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -44,7 +44,7 @@ final class RunnableStatusListener implements DaemonCodeAnalyzer.DaemonListener 
 
   private static boolean hasRunMarkers(Editor editor, Project project) {
     @NotNull Document document = editor.getDocument();
-    for (LineMarkerInfo<?> marker : LineMarkersPass.getDisplayedLineMarkers(document, project)) {
+    for (LineMarkerInfo<?> marker : LineMarkersAccessor.getInstance().getDisplayedLineMarkers(document, project)) {
       if (marker instanceof RunLineMarkerProvider.RunLineMarkerInfo) {
         return true;
       }

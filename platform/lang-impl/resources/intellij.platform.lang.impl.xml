@@ -747,6 +747,8 @@
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.LineMarkerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.daemon.LineMarkersAccessor"
+                        serviceImplementation="com.intellij.codeInsight.daemon.impl.LineMarkersAccessorImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.actions.VcsFacade" open="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.actions.FormatChangedTextUtil"/>
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
@@ -1982,8 +1984,6 @@
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.codeInsight.completion.command.CustomLookupIntentionPreviewListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
-    <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
-              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.psi.impl.file.impl.PsiVFSModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
     <listener class="com.intellij.psi.impl.file.impl.PsiWsmListener"
