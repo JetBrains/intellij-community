@@ -698,13 +698,11 @@ object ActionUtil {
     return KeymapUtil.getShortcutsForMnemonicCode(action.templatePresentation.mnemonic)
   }
 
-  @ApiStatus.Experimental
   @JvmStatic
   fun getShortcutSet(id: @NonNls String): ShortcutSet {
     return getAction(id)?.shortcutSet ?: CustomShortcutSet.EMPTY
   }
 
-  @ApiStatus.Experimental
   @JvmStatic
   fun getAction(id: @NonNls String): AnAction? {
     val action = ActionManager.getInstance().getAction(id)
@@ -712,7 +710,6 @@ object ActionUtil {
     return action
   }
 
-  @ApiStatus.Experimental
   @JvmStatic
   fun getActionGroup(id: @NonNls String): ActionGroup? {
     val action = getAction(id) ?: return null
@@ -720,7 +717,6 @@ object ActionUtil {
     else DefaultActionGroup(listOf(action))
   }
 
-  @ApiStatus.Experimental
   @JvmStatic
   fun getActionGroup(vararg ids: String): ActionGroup? {
     if (ids.size == 1) return getActionGroup(ids[0])
@@ -752,7 +748,6 @@ object ActionUtil {
     return action
   }
 
-  @ApiStatus.Experimental
   @JvmStatic
   fun createToolbarComponent(
     target: JComponent,
