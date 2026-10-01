@@ -3156,7 +3156,7 @@ object PyTypeChecker {
     }
 
     override fun toString(): String =
-      "GenericSubstitutions(typeVars=$typeVars, typeVarTuples$typeVarTuples, paramSpecs=$paramSpecs)"
+      "GenericSubstitutions(typeVars=$typeVars, typeVarTuples$typeVarTuples, paramSpecs=$paramSpecs, selfType=$selfType)"
   }
 
   sealed class Key
