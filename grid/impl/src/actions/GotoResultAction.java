@@ -5,7 +5,6 @@ import com.intellij.database.connection.throwable.info.SimpleErrorInfo;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.run.actions.GridAction;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +29,8 @@ public abstract class GotoResultAction extends DumbAwareAction implements GridAc
   @Override
   public void update(@NotNull AnActionEvent e) {
     DataGrid grid = GridUtil.getDataGrid(e.getDataContext());
-    e.getPresentation().setEnabledAndVisible(grid != null && isEnabled(grid, e));
+    boolean hasResults = e.getData(DatabaseDataKeys.DATA_GRID_RESULT_CONTENTS_KEY) != null;
+    e.getPresentation().setEnabledAndVisible(grid != null && hasResults && isEnabled(grid, e));
   }
 
   protected abstract boolean isEnabled(@NotNull DataGrid grid, @NotNull AnActionEvent e);
@@ -39,11 +39,11 @@ public abstract class GotoResultAction extends DumbAwareAction implements GridAc
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataGrid grid = GridUtil.getDataGrid(e.getDataContext());
     if (grid == null) return;
-    RunnerLayoutUi ui = e.getData(DatabaseDataKeys.DATA_GRID_RUNNER_LAYOUT_UI_KEY);
-    if (ui == null) return;
+    Content[] results = e.getData(DatabaseDataKeys.DATA_GRID_RESULT_CONTENTS_KEY);
+    if (results == null) return;
     Predicate<Content> resultPredicate = getResultPredicate(grid, e);
     if (resultPredicate == null) return;
-    for (Content content : ui.getContents()) {
+    for (Content content : results) {
       if (resultPredicate.test(content)) {
         ContentManager manager = content.isValid() ? content.getManager() : null;
         if (manager != null) manager.setSelectedContent(content, false, false);
