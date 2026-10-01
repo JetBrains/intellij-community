@@ -20,8 +20,9 @@ workspaces follow it. The Air UI-lane tooling joins at the vm lane rework.
   `rustfmt.toml` and `clippy.toml` into the directory of each such manifest. The first line of a copy names its
   source. `--check` names a copy that differs or is missing, and writes nothing. A manifest outside the checkout is
   skipped with a note, and so is a workspace of `optedOutManifests`.
-- `defs.bzl`: `rust_lints_as_errors`, which appends `-Dwarnings` to the clippy flags of a rendered table, and
-  `rust_lints_equal_check`, which fails when two crate hubs render different tables.
+- `defs.bzl`: the lint rules and the macro core. `rust_lints_as_errors` appends `-Dwarnings` to the clippy flags of a
+  rendered table. `rust_lints_equal_check` fails when two crate hubs render different tables. The macro core is the
+  next section.
 
 Cargo inherits `[lints]` inside one workspace only. There is no include across workspaces, and rules_rs reads the
 tables from the workspace `Cargo.toml`, not from `.cargo/config.toml`. rustfmt and clippy also find `rustfmt.toml` and
@@ -38,10 +39,10 @@ equal to the sources.
 5. `rust_lints_as_errors(name = "lints", cargo = "@<hub>//:workspace_cargo_lints")` in the workspace package. Every
    `rust_library`, `rust_binary` and `rust_test` gets it as `lint_config`.
 6. One `<crate>-clippy` test per crate, over the crate and its tests.
-7. A Windows clippy target set: one `rust_clippy_test` per Windows platform over the binaries, built from a Unix host.
-   It lints the `cfg(windows)` code that the host never compiles.
+7. A Windows clippy target set: `windows_clippy_tests` over the binaries, one test per Windows platform, run from a
+   macOS or Linux host. It lints the `cfg(windows)` code that the host never compiles.
 8. A closure test for every Bazel action tool: `<bin>_closure_test` compares the crates that the tool links with its
-   `closure.txt`.
+   `closure.txt`. `rust_tool_crate` declares it with `closure = True`.
 9. A `README.md` with the crate map and the gates.
 10. An `API.md` for each crate under the subset rule, with a table of the input that the crate refuses.
 
@@ -49,9 +50,32 @@ equal to the sources.
 
 | Workspace | Gaps |
 |---|---|
-| dev-dist tools | No Windows clippy target set. The Windows check is a manual `cargo test` on a Windows host. |
+| dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
-| Air UI-lane tooling | Opted out of `sync.mjs` until the vm lane rework. Its tables are a hand copy, which `lints_equal_test` of the ultimate root compares with the others. It has no `rustfmt.toml` or `clippy.toml` copy, the sources use the width of 100 columns, and the code calls the banned methods at about 30 sites. `avl_lints` is a copy of `rust_lints_as_errors`. |
+| Air UI-lane tooling | Opted out of `sync.mjs` until the vm lane rework. Its tables are a hand copy, which `lints_equal_test` of the ultimate root compares with the others. It has no `rustfmt.toml` or `clippy.toml` copy, the sources use the width of 100 columns, and the code calls the banned methods at about 30 sites. `avl_lints` is a copy of `rust_lints_as_errors`, `avl_crate` does not bind the macro core, and `avl.bzl` loads `optimized_binary` through the BT `defs.bzl`. |
+
+## The Bazel macro core
+
+`defs.bzl` declares the targets of every crate, so the workspaces do not each carry a copy. The doc string of each
+declaration states its arguments.
+
+- `rust_tool_hub` binds the core to one crate hub. Starlark cannot load a file by a name that is known only at run
+  time, so the `defs.bzl` of a workspace loads the functions of its hub and passes them in.
+- `rust_tool_crate` declares one crate: the library or the binary, its unit test, an integration test per
+  `tests/*.rs` of a binary, the `testdata/` filegroup, the closure test, and `<crate>-clippy`.
+- `rust_tool_binary` declares one binary of a workspace that Bazel builds without a hub, from explicit dependencies.
+- `rust_crate_closure` writes the crate closure of a binary. `_HOST_CRATES` lists the crates that it leaves out.
+- `optimized_binary` gives one shipped binary in `opt`, for the host or for one platform. The test stays on the
+  `rust_binary` of the build configuration.
+- `windows_clippy_tests` declares `clippy-windows-x86_64` and `clippy-windows-arm64`, and optional compile checks.
+
+Each workspace keeps a thin binding with its own signature:
+
+| Binding | Binds | Passes |
+|---|---|---|
+| `dev_dist_rust_crate(name, test_data, closure)` | `rust_tool_crate` | the `@ddt` hub, `:lints`, `bins_prefix = "build/dev-dist-tools/bins/"`, `testdata_env = "DDT_TESTDATA_DIR"` |
+| `bt_rust_crate(name, compile_data)` | `rust_tool_crate` | the `@bt` hub, `:lints`, `bins_prefix = "tools/bt/bins/"`, `test_sharding = True` |
+| `dev_dist_rust_binary(name, deps, test_deps)` | `rust_tool_binary` | the community `:lints`, `edition = "2024"`, `testdata_env = "DDT_TESTDATA_DIR"` |
 
 ## The checks
 
@@ -62,6 +86,15 @@ cd community && ./bazel.cmd test //build/rust-tools/...     # the tables of @ddt
 ./bazel.cmd test //build/dev-dist-tools:lints_equal_test     # from the ultimate root: @ddt, @bt and @avl
 cargo fmt --check && cargo clippy --all-targets             # in each workspace directory of manifestPaths
 ```
+
+The Windows check of a workspace is `bazel test` of its `windows_clippy_tests` targets, plus a cross-target cargo
+clippy. The cargo command lints the tests too, which the Bazel targets do not:
+
+```sh
+RUSTC_BOOTSTRAP=1 cargo clippy -Zbuild-std=std,panic_abort --target x86_64-pc-windows-msvc --workspace --all-targets
+```
+
+Both only check the code. They run no test on Windows, and the CI only builds there.
 
 Run `sync.mjs` after an edit of a source file here, then run the checks. The Cargo edit-test loop is
 `cargo clippy --all-targets` in the workspace directory. Bazel runs the same policy through the `<crate>-clippy` tests
@@ -84,12 +117,13 @@ has the copy.
 2. Give every member `Cargo.toml` a `[lints]` table with `workspace = true`.
 3. Set `generate_lint_config = True` on the `crate.from_cargo` tag of the workspace hub.
 4. Declare `rust_lints_as_errors(name = "lints", cargo = "@<hub>//:workspace_cargo_lints")` in the workspace
-   package. Pass it as `lint_config` to every `rust_library`, `rust_binary` and `rust_test`, and declare one
-   `rust_clippy_test` per crate over those targets. `community/build/dev-dist-tools/defs.bzl` shows the pattern.
-5. The clippy aspect of rules_rust skips a target of an external repository, and a `rust_clippy_test` over such
-   targets passes without a check. A crate of the community module is external from the ultimate root, so its
-   clippy test must run from `community/`. Mark the test incompatible when `native.repo_name()` is not empty, so
-   that `bazel test` reports a skip and not a pass.
+   package. Bind `rust_tool_crate` to the hub in the workspace `defs.bzl` with `rust_tool_hub`, and pass `:lints`.
+   `community/tools/bt/defs.bzl` shows the pattern. Declare `windows_clippy_tests` over the binaries in the workspace
+   package.
+5. Run the clippy tests of a community workspace from `community/`. The clippy aspect of rules_rust skips a target
+   of an external repository, and a `rust_clippy_test` over such targets passes without a check. A crate of the
+   community module is external from the ultimate root. So the core marks each clippy test incompatible when
+   `native.repo_name()` is not empty, and `bazel test` reports a skip and not a pass.
 6. Add `@<hub>//:workspace_cargo_lints` to the targets of a `rust_lints_equal_check`. A community hub goes into
    `COMMUNITY_WORKSPACE_LINTS` of `defs.bzl`. An ultimate hub goes into `//build/dev-dist-tools:lints_equal_check` of
    the ultimate root.

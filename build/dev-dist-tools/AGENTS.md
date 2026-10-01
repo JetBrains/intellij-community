@@ -15,11 +15,9 @@ ultimate root.
   there: the clippy aspect skips a target of an external repository.
 - **Refresh the Bazel lockfiles after a change of `Cargo.lock`.** Run the two commands of the README, in `community/`
   and in the ultimate root.
-- **Pass the Windows gate after a change of file-system code.** Run `cargo test --workspace` on a Windows host as a
-  normal user, with Developer Mode on and `TMP` and `TEMP` at a directory of about 230 characters. Then every test
-  path is longer than `MAX_PATH`. The CI only builds on Windows, so this run is the only Windows test. A new failure
-  blocks the change. The known failures come from Unix modes, `/` separators, Unix-only tools, and link targets
-  longer than `MAX_PATH` in the test fixtures.
+- **Pass the Windows gate after a change of file-system code.** Run the two `clippy-windows-*` tests and the
+  cross-target `cargo clippy` of the README section "The Windows gate". They lint the `cfg(windows)` code from a macOS
+  or Linux host. No test runs on Windows.
 - **Do not call a banned method.** `clippy.toml` bans `fs::canonicalize` and the tempfile calls that fail past
   `MAX_PATH`, and names the replacement of each. Its source is `community/build/rust-tools/clippy.toml`.
 - **Follow the lint policy.** `cargo clippy --all-targets` must print no warning in both workspaces before a commit.

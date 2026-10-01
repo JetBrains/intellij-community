@@ -1,7 +1,7 @@
 # `community/MODULE.bazel` reads `Cargo.toml`, `Cargo.lock` and `.cargo/config.toml` of this package to generate `@ddt`.
 # `defs.bzl` declares the binaries of the Cargo workspace in this directory.
 
-load("//build/rust-tools:defs.bzl", "rust_lints_as_errors")
+load("//build/rust-tools:defs.bzl", "rust_lints_as_errors", "windows_clippy_tests")
 
 # The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@ddt` renders it, with every clippy warning
 # an error. `dev_dist_rust_crate` passes it to each target, and the ultimate workspace `build/dev-dist-tools` too.
@@ -9,4 +9,22 @@ rust_lints_as_errors(
     name = "lints",
     cargo = "@ddt//:workspace_cargo_lints",
     visibility = ["//visibility:public"],
+)
+
+# Clippy over the `cfg(windows)` code that a macOS or Linux host never compiles, one test per Windows host:
+# `:clippy-windows-x86_64` and `:clippy-windows-arm64`. The binaries bring every crate that they link, and
+# `contentreport` is here because only the ultimate tools link it. The tests run from the community root only.
+windows_clippy_tests(
+    targets = [
+        "//build/dev-dist-tools/bins/content-module-packer",
+        "//build/dev-dist-tools/bins/dev-dist-collector",
+        "//build/dev-dist-tools/bins/dev-dist-composer",
+        "//build/dev-dist-tools/bins/dev-launcher",
+        "//build/dev-dist-tools/bins/plugin-descriptor-writer",
+        "//build/dev-dist-tools/bins/plugin-remainder-packer",
+        "//build/dev-dist-tools/bins/product-files",
+        "//build/dev-dist-tools/bins/project-model-tree",
+        "//build/dev-dist-tools/bins/runtime-layout",
+        "//build/dev-dist-tools/crates/contentreport",
+    ],
 )

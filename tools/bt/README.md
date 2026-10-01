@@ -15,13 +15,16 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/bt` | The binary: the command line and the help, one invocation end to end, the text digest, the `--json` payload, and the process boundary. | `@community//tools/bt/bins/bt:bt_test` |
 
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
-`optimized_binary` in `defs.bzl` declares a shipped binary: one file, and always optimized.
+It binds `rust_tool_crate`, the shared macro core in `community/build/rust-tools/defs.bzl`, to the `@bt` hub.
+`optimized_binary` of the core declares a shipped binary: one file, and always optimized. `defs.bzl` re-exports it for
+the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build/rust-tools/README.md`.
 
 ## The binaries
 
 `BUILD.bazel` declares `:bt`, which `community/tools/bt.cmd` runs: `@community//tools/bt:bt` from an ultimate root and
-`//tools/bt:bt` from a community root. `:bt-windows-x86_64` and `:bt-windows-arm64` are compile checks you build by
-hand (`manual`), and `:clippy-windows-x86_64` and `:clippy-windows-arm64` lint the `cfg(windows)` code from a Unix host.
+`//tools/bt:bt` from a community root. `windows_clippy_tests` of the core declares the Windows targets.
+`:bt-windows-x86_64` and `:bt-windows-arm64` are compile checks you build by hand (`manual`), and
+`:clippy-windows-x86_64` and `:clippy-windows-arm64` lint the `cfg(windows)` code from a Unix host.
 
 ## Areas
 

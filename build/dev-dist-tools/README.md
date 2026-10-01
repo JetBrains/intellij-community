@@ -65,6 +65,28 @@ cd community && ./bazel.cmd test //build/dev-dist-tools/...
   `bazel test` reports them as skipped. The clippy tests of the ultimate tools run from the ultimate root.
 - The fingerprint of `//build:idea_air_dist` and `./build/dev-dist.cmd snapshot diff` guard a change of the composed
   bytes. The validation spec states them.
+- `./build/dev-dist.cmd` runs `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`, the binary built in `opt`. The
+  unit test of `dev-dist` stays on the `rust_binary`.
+
+### The Windows gate
+
+The CI only builds on Windows, so the Windows check runs from a macOS or Linux host. Run it after a change of
+file-system code or of a `cfg(windows)` branch:
+
+```sh
+cd community && ./bazel.cmd test //build/dev-dist-tools:clippy-windows-x86_64 //build/dev-dist-tools:clippy-windows-arm64
+RUSTC_BOOTSTRAP=1 cargo clippy -Zbuild-std=std,panic_abort --target x86_64-pc-windows-msvc --workspace --all-targets
+```
+
+- The two Bazel tests lint every binary of this workspace and every crate that it links, for each Windows platform.
+  `./bazel.cmd test //build/dev-dist-tools/...` in `community/` runs them too.
+- Run the cargo command in this directory and in `build/dev-dist-tools`. It also lints the tests and the ultimate
+  tools, which the Bazel tests do not.
+- Both only check the code. They run no test on Windows.
+- A test run on a Windows host stays possible, for a change that the path length can break. Run `cargo test
+  --workspace` as a normal user, with Developer Mode on and `TMP` and `TEMP` at a directory of about 230 characters.
+  Then every test path is longer than `MAX_PATH`. The known failures come from Unix modes, `/` separators, Unix-only
+  tools, and link targets longer than `MAX_PATH` in the test fixtures.
 
 ### The crate closure test
 
@@ -74,7 +96,7 @@ action of that tool, and the packer runs once per content-module jar. The test m
 visible choice. The launcher runs no Bazel action, so it has no closure test.
 
 `closure.txt` lists the rustc crate names, one per line. It leaves out the proc macros, because the compiler runs them
-and the tool does not link them. It also leaves out the host-only crates of `_HOST_CRATES` in `defs.bzl`, so one file
+and the tool does not link them. It also leaves out the host-only crates of `_HOST_CRATES` in `community/build/rust-tools/defs.bzl`, so one file
 holds on macOS, Linux and Windows. A new dependency that only some hosts link adds its crates to `_HOST_CRATES`.
 `cargo tree --target <triple>` shows the crates of each host.
 
