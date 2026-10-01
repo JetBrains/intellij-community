@@ -395,11 +395,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
+  /**
+   * [onDefaultPaneToolWindowsRegistered] runs once on the EDT after the tool windows of the default pane are registered.
+   * At this time, [invokeLater] still puts a task in the queue of the pending tasks.
+   */
   internal suspend fun init(
     pane: ToolWindowPane,
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>,
     projectFrameTypeId: String? = null,
+    onDefaultPaneToolWindowsRegistered: (() -> Unit)? = null,
   ) {
     this.projectFrameTypeId = projectFrameTypeId
     doInit(
@@ -408,6 +413,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       reopeningEditorJob = reopeningEditorJob,
       taskListDeferred = taskListDeferred,
       projectFrameTypeId = projectFrameTypeId,
+      onDefaultPaneToolWindowsRegistered = onDefaultPaneToolWindowsRegistered,
     )
   }
 
@@ -419,6 +425,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
     projectFrameTypeId: String? = this.projectFrameTypeId,
+    onDefaultPaneToolWindowsRegistered: (() -> Unit)? = null,
   ) {
     this.projectFrameTypeId = projectFrameTypeId
 
@@ -452,7 +459,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         toolWindowPanes.put(pane.paneId, pane)
       }
       defaultPaneInitialization.join()
-      toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
+      toolWindowSetInitializer.initUi(
+        reopeningEditorJob = reopeningEditorJob,
+        taskListDeferred = taskListDeferred,
+        onDefaultPaneToolWindowsRegistered = onDefaultPaneToolWindowsRegistered,
+      )
     }
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
