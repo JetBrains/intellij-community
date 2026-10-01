@@ -13,10 +13,8 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
-import org.jetbrains.intellij.build.dev.devPluginPreparationOperationSignature
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import java.nio.file.Path
@@ -134,19 +132,13 @@ fun generateDevPluginLayoutAssetBindings(
     manifest = "keep",
     layoutAssets = DevPluginLayoutAssetPreparation(format = requestedFormat, root = root, assets = payloadAssets),
   )
-  val preparation = PluginPackingPreparation(
-    id = id,
-    inputs = operationInputs.map(DevPluginReference::artifact).distinct(),
-    outputs = listOf(output),
-    modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-  )
   val effect = when (requestedFormat) {
     "entries" -> PluginSymbolicPreparedEffect(
-      preparation = preparation,
+      operation = operation,
       sources = listOf(JarSourceRecipe(output, "prepared", "prepared")),
     )
     "tree" -> PluginSymbolicPreparedEffect(
-      preparation = preparation,
+      operation = operation,
       assets = listOf(PluginPackingAsset(
         destination = root,
         inputs = listOf(output),

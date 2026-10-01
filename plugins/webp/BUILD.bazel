@@ -21,32 +21,26 @@ dev_dist_complex_plugin(
     platform_values = {
         "darwin_aarch64": {
             "destination": "lib/libwebp/mac/aarch64",
-            "modelSignature": "ehzlcjwzv6zrrujth8pkdrrv0",
             "pattern": "macOS-AArch64/libwebp_jni.dylib",
         },
         "darwin_x64": {
             "destination": "lib/libwebp/mac/amd64",
-            "modelSignature": "7dq37jyrc28zfz5dr06l53xq3",
             "pattern": "macOS-X86_64/libwebp_jni.dylib",
         },
         "linux_aarch64": {
             "destination": "lib/libwebp/linux/aarch64",
-            "modelSignature": "ast43hkxgazwbumy003n06dwn",
             "pattern": "Linux-AArch64/libwebp_jni.so",
         },
         "linux_x64": {
             "destination": "lib/libwebp/linux/amd64",
-            "modelSignature": "9iq8gkd6ai51t4nv9e57ezdxy",
             "pattern": "Linux-X86_64/libwebp_jni.so",
         },
         "windows_aarch64": {
             "destination": "lib/libwebp/win/aarch64",
-            "modelSignature": "1kmmhuz3z1cy2mqbaq6yezi0b",
             "pattern": "Windows-AArch64/webp_jni.dll",
         },
         "windows_x64": {
             "destination": "lib/libwebp/win/amd64",
-            "modelSignature": "cizxaa10h68whzi56qiv6n06d",
             "pattern": "Windows-X86_64/webp_jni.dll",
         },
     },

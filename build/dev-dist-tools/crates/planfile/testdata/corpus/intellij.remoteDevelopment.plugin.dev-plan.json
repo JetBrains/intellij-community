@@ -380,18 +380,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:layout-patcher:1",
-            "inputs": [
-                "cwm-frontend:branding"
-            ],
-            "outputs": [
-                "layout-assets:layout-patcher:1:output"
-            ],
-            "modelSignature": "apsalhfl93fd3tw5f16ub70oh"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:layout-patcher:1",

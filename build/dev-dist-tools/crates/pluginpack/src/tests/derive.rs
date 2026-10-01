@@ -4,8 +4,8 @@
 use planfile::contract::{Artifact, Catalogue, Library, Reference, TREE_VERSION, VERSION};
 
 use super::kotlin::{
-    KotlinJarRecipe, KotlinJarSource, KotlinJarWriter, KotlinPlanAsset, KotlinPlanFile, KotlinPreparation, KotlinPreparedManifest,
-    kotlin_layout_assets_operation, module_source, plan_json, prepared_source, signed_plan,
+    KotlinJarRecipe, KotlinJarSource, KotlinJarWriter, KotlinPlanAsset, KotlinPlanFile, KotlinPreparedManifest,
+    kotlin_layout_assets_operation, module_source, plan_json, prepared_source,
 };
 use super::*;
 
@@ -31,7 +31,7 @@ fn module_filter_plan(manifest: &str, prepared_manifest: Option<KotlinPreparedMa
         "demo.extra"
     };
     let operation_manifest = if manifest.is_empty() { "keep" } else { manifest };
-    let plan = KotlinPlanFile {
+    KotlinPlanFile {
         version: VERSION,
         plugin: "filtered".to_owned(),
         assets: vec![KotlinPlanAsset {
@@ -51,16 +51,15 @@ fn module_filter_plan(manifest: &str, prepared_manifest: Option<KotlinPreparedMa
             }),
             ..KotlinPlanAsset::default()
         }],
-        preparations: vec![KotlinPreparation {
-            id: "filter".to_owned(),
-            inputs: strings(&["raw"]),
-            outputs: strings(&["filtered:output"]),
-            ..KotlinPreparation::default()
-        }],
+        operations: vec![retired_module_filter_operation(
+            "filter",
+            "raw",
+            "filtered:output",
+            operation_manifest,
+            &["drop/**"],
+        )],
         ..KotlinPlanFile::default()
-    };
-    let operation = retired_module_filter_operation("filter", "raw", "filtered:output", operation_manifest, &["drop/**"]);
-    signed_plan(plan, &[operation])
+    }
 }
 
 /// The plan of the Go fixture of jars, ownership rows and the classpath order. It states a link and a directory
@@ -90,7 +89,7 @@ fn jars_ownership_rows_and_classpath_order_plan() -> KotlinPlanFile {
         filter: "library-v1".to_owned(),
         ..KotlinJarSource::default()
     };
-    let plan = KotlinPlanFile {
+    KotlinPlanFile {
         version: VERSION,
         plugin: "demo".to_owned(),
         assets: vec![
@@ -153,8 +152,7 @@ fn jars_ownership_rows_and_classpath_order_plan() -> KotlinPlanFile {
             },
         ],
         ..KotlinPlanFile::default()
-    };
-    signed_plan(plan, &[])
+    }
 }
 
 /// The plan of the Go fixture of a layout-assets tree and entries beside a raw copy-tree. Its tree normalizes the
@@ -165,7 +163,7 @@ fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
         vec![layout_asset("", &[0], Some(archive_tree(1, Vec::new())))],
     );
     let entries = layout(&[Reference::artifact("properties")], vec![layout_asset("", &[0], None)]);
-    let plan = KotlinPlanFile {
+    KotlinPlanFile {
         version: TREE_VERSION,
         plugin: "layout".to_owned(),
         assets: vec![
@@ -196,35 +194,18 @@ fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
                 ..KotlinPlanAsset::default()
             },
         ],
-        preparations: vec![
-            KotlinPreparation {
-                id: "layout-tree".to_owned(),
-                inputs: strings(&["archive"]),
-                outputs: strings(&["layout-tree:output"]),
-                ..KotlinPreparation::default()
-            },
-            KotlinPreparation {
-                id: "layout-entries".to_owned(),
-                inputs: strings(&["properties"]),
-                outputs: strings(&["layout-entries:output"]),
-                ..KotlinPreparation::default()
-            },
-        ],
-        ..KotlinPlanFile::default()
-    };
-    signed_plan(
-        plan,
-        &[
+        operations: vec![
             kotlin_layout_assets_operation("layout-tree", "layout-tree:output", "tree", "payload", &tree),
             kotlin_layout_assets_operation("layout-entries", "layout-entries:output", "entries", "", &entries),
         ],
-    )
+        ..KotlinPlanFile::default()
+    }
 }
 
 /// The plan of the Go fixture of version 3 with a distribution-scope copy. The distribution scope is retired, so
 /// `planfile` refuses the `scope` key.
 fn distribution_scope_copy_plan() -> KotlinPlanFile {
-    let plan = KotlinPlanFile {
+    KotlinPlanFile {
         version: 3,
         plugin: "scoped".to_owned(),
         assets: vec![
@@ -249,8 +230,7 @@ fn distribution_scope_copy_plan() -> KotlinPlanFile {
             },
         ],
         ..KotlinPlanFile::default()
-    };
-    signed_plan(plan, &[])
+    }
 }
 
 /// Every golden fixture of the deleted Kotlin preparer states a shape that no plan file uses. `planfile` refuses each
@@ -361,14 +341,10 @@ fn every_planfile_derivation_plans() {
     let patch = r#"{"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}"#;
     let demo_lib = r#"{"input": "@lib//:demo-lib", "kind": "library", "filter": "library-v1"}"#;
     let rt = r#"{"input": "demo.rt", "kind": "module", "filter": "module-v1"}"#;
-    let entries = r#""preparations": [{"id": "entries", "inputs": ["@lib//:one", "raw"], "outputs": ["entries:output"], "modelSignature": "e"}],
-    "operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
+    let entries = r#""operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
       "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "archive-tree"}},
         {"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}]"#;
     let entries_jar = r#"{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}}"#;
-    let every_kind_preparations = r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"},
-      {"id": "tree", "inputs": ["archive"], "outputs": ["tree:output"], "modelSignature": "y"},
-      {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"}]"#;
     let every_kind_operations = r#""operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep",
         "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}},
       {"id": "tree", "kind": "layout-assets", "inputs": [{"artifact": "archive"}], "output": "tree:output", "manifest": "keep",
@@ -479,7 +455,7 @@ fn every_planfile_derivation_plans() {
         ),
         (
             "every operation kind",
-            plan_text(2, every_kind_assets, &[every_kind_preparations, every_kind_operations]),
+            plan_text(2, every_kind_assets, &[every_kind_operations]),
             catalogue(vec![
                 inputs_artifact("raw"),
                 inputs_artifact("descriptor"),

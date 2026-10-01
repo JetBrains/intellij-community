@@ -13,9 +13,7 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
-import org.jetbrains.intellij.build.dev.devPluginPreparationOperationSignature
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
@@ -65,12 +63,7 @@ class DevDistRenderDocRuntimeTest {
       PluginSymbolicPreparationFacts(
         effects = mapOf(
           KEY to PluginSymbolicPreparedEffect(
-            preparation = PluginPackingPreparation(
-              id = operationId,
-              inputs = listOf(libraryLabel),
-              outputs = listOf(output),
-              modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-            ),
+            operation = operation,
             assets = listOf(PluginPackingAsset(destination = "runtime", inputs = listOf(output), kind = "tree", classPath = false)),
           )
         )

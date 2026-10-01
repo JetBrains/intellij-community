@@ -22,6 +22,9 @@ derives every copy, and it requires every accepted source kind and operation kin
 library for each library source and for each `@<repository>//:<name>` input of a layout-assets operation, as the
 generated catalogue does. A plan author who needs a new shape updates the corpus and the contract together.
 
+A plan file holds `operations` only. The packer reads the ID, the input artifacts and the output of an operation from
+the operation itself. `preparations` is an unknown key.
+
 | Refused input | Error |
 | --- | --- |
 | an asset with `symlinkTarget`, `normalizeTreeModes` or `scope`, or of the kind `directory` | unknown field, or the kind |
@@ -33,13 +36,15 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | a source option other than `patch`, and a `file` source without `patch` and an entry | the entry and the options |
 | `preparedManifest`, and the writer keys `rewriteBootClassPath`, `outputName` and `directoryEntries` | unknown field |
 | a writer manifest other than `single-meaningful-source`, `keep` and `drop` | unknown variant |
-| `preparationRoots`, `alwaysRun`, and every field of a Kotlin-executed operation | unknown field |
+| `preparations`, `preparationRoots`, and every field of a Kotlin-executed operation | unknown field |
 | `layoutSignature`, because a plan file carries no layout signature | unknown field |
 | an operation kind other than `layout-assets`, for example the retired `module-filter` | the kind |
 | an operation manifest other than `keep` | the manifest |
 | a layout format other than `tree` and `entries`, or a transform kind other than `archive-tree`, such as the removed `tree-map` and `gzip-xml-archive` | unknown variant |
 | the `tree-map` fields `excludes` and `directoryExcludes` on a transform | unknown field |
-| a preparation that reads the output of a preparation | no preparation chain |
+| an operation that reads the output of an operation | no operation chain |
+| an operation with an empty or repeated ID, an empty input artifact, or an output that another operation writes | the operation, or the output |
+| an operation that no remainder asset reads | unexpected operation |
 | a plugin directory that is not `plugins/<name>` | the directory |
 | a plugin classpath name that is not ASCII, or that holds NUL | the name |
 | a refused module that no asset of the plan merges, an empty one, or one named twice | the module |

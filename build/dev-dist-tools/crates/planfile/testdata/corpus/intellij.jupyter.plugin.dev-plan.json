@@ -327,18 +327,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "jupyter-frontend:jupyter_frontend_8388dc772e39289a127330db712a0b91dae72bc69df797955c7cd071e5c531c6"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "bq631cvvfx4rtdyl0kanyyskt"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

@@ -50,9 +50,6 @@ const TEST_PLAN: &str = r#"{
     ], "writer": {"manifest": "drop", "mergeEntities": true}}},
     {"destination": "js", "inputs": ["module-resource:0:source"], "kind": "tree", "classPath": false}
   ],
-  "preparations": [
-    {"id": "layout-assets:0", "inputs": ["p.main"], "outputs": ["layout-assets:0:output"], "modelSignature": "m"}
-  ],
   "operations": [
     {"id": "layout-assets:0", "kind": "layout-assets", "inputs": [{"artifact": "p.main"}], "output": "layout-assets:0:output", "manifest": "keep",
       "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}

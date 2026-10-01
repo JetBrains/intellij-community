@@ -7,9 +7,9 @@ import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
@@ -105,7 +105,7 @@ private class SymbolicLayoutProjector(
         (layout.hasRawPluginXmlPatcher || layout.hasPluginXmlPatcher || layout.hasCustomVersion ||
          variant.scramble && layout.getDeprecatedPostScrambleProcessor().isNotEmpty() || preparationFacts.effects.containsKey("descriptor"))) {
       effect("descriptor", "Descriptor callbacks require ordered inputs and the resulting descriptor facts")?.let {
-        roots.addAll(it.preparation.outputs)
+        roots.add(it.operation.output)
       }
     }
     var requiresModulePatches = false
@@ -143,15 +143,15 @@ private class SymbolicLayoutProjector(
         }
       }
     }
-    val preparationsById = LinkedHashMap<String, PluginPackingPreparation>()
-    for (preparation in preparationFacts.dependencies + effects.values.map { it.preparation }) {
-      val previous = preparationsById.putIfAbsent(preparation.id, preparation)
-      if (previous != null && previous != preparation) {
-        gap("preparation:${preparation.id}", "Preparation '${preparation.id}' has conflicting definitions")
+    val operationsById = LinkedHashMap<String, DevPluginPreparationOperation>()
+    for (operation in preparationFacts.dependencies + effects.values.map { it.operation }) {
+      val previous = operationsById.putIfAbsent(operation.id, operation)
+      if (previous != null && previous != operation) {
+        gap("preparation:${operation.id}", "Operation '${operation.id}' has conflicting definitions")
       }
     }
-    val preparations = preparationsById.values.toList()
-    validateInputs(assets, preparations)
+    val operations = operationsById.values.toList()
+    validateInputs(assets, operations)
     for (slot in preparationFacts.omittedSlots) {
       if (slot !in omittedSlots) gap("omitted-slot:$slot", "The omitted slot does not name a selected layout callback")
     }
@@ -159,7 +159,7 @@ private class SymbolicLayoutProjector(
       plugin = layout.mainModule,
       variant = variant.id,
       assets = assets,
-      preparations = preparations,
+      operations = operations,
       preparationRoots = roots.toList(),
       gaps = gaps.values.toList(),
     )
@@ -567,9 +567,7 @@ private class SymbolicLayoutProjector(
       gap(key, detail)
       return null
     }
-    require((effect.preparation.outputs.isNotEmpty() || effect.preparation.alwaysRun) && effect.preparation.modelSignature.isNotBlank()) {
-      "Preparation '$key' requires outputs or an always-run marker, and a signature"
-    }
+    require(effect.operation.output.isNotBlank()) { "Operation '$key' requires an output" }
     effects.putIfAbsent(key, effect)
     return effect
   }
@@ -600,29 +598,31 @@ private class SymbolicLayoutProjector(
   }
 
   private fun requireInputs(effect: PluginSymbolicPreparedEffect, inputs: List<String>) {
-    val producers = (preparationFacts.dependencies + preparationFacts.effects.values.map { it.preparation })
-      .flatMap { preparation -> preparation.outputs.map { it to preparation } }.toMap()
+    val producers = (preparationFacts.dependencies + preparationFacts.effects.values.map { it.operation }).associateBy { it.output }
     val required = HashSet<String>()
     fun visit(input: String) {
-      if (required.add(input)) producers.get(input)?.inputs?.forEach(::visit)
+      if (required.add(input)) producers.get(input)?.inputs?.forEach { visit(it.artifact) }
     }
-    effect.preparation.inputs.forEach(::visit)
-    require(required.containsAll(inputs)) { "Preparation '${effect.preparation.id}' does not require every source input: $inputs" }
+    effect.operation.inputs.forEach { visit(it.artifact) }
+    require(required.containsAll(inputs)) { "Operation '${effect.operation.id}' does not require every source input: $inputs" }
   }
 
-  private fun validateInputs(assets: List<PluginPackingAsset>, preparations: List<PluginPackingPreparation>) {
-    val produced = preparations.flatMap { it.outputs }.toSet()
+  private fun validateInputs(assets: List<PluginPackingAsset>, operations: List<DevPluginPreparationOperation>) {
+    val produced = operations.mapTo(HashSet()) { it.output }
     val libraryIds = catalogue.libraries.mapNotNull { it.id }.toSet()
     // A native tree names its reused natives jar, not a catalogue input.
-    val consumed = assets.filterNot(::isNativeTreeAsset).flatMap { it.inputs } + preparations.flatMap { it.inputs } + roots
+    val consumed = buildList {
+      assets.filterNot(::isNativeTreeAsset).flatMapTo(this) { it.inputs }
+      operations.flatMapTo(this) { operation -> operation.inputs.map { it.artifact } }
+      addAll(roots)
+    }
     for (input in consumed) {
       if (input !in artifacts && input !in produced && input !in libraryIds) {
         gap("artifact:$input", "Declare this input in the catalogue or preparation graph")
       }
     }
     for ((key, effect) in effects) {
-      val used = effect.preparation.alwaysRun || effect.preparation.outputs.any { it in consumed }
-      if (!used) gap(key, "The declared preparation has no output in the symbolic contributions")
+      if (effect.operation.output !in consumed) gap(key, "The declared operation has no output in the symbolic contributions")
     }
   }
 

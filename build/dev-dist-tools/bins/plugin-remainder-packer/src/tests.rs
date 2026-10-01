@@ -167,7 +167,6 @@ fn projection_run_refuses_a_kotlin_preparation_and_a_stale_version() {
         .replacen(
             tail,
             r#"  ],
-  "preparations": [{"id": "native", "inputs": ["tool"], "outputs": ["native:output"], "modelSignature": "x"}],
   "operations": [{"id": "native", "kind": "library-layout-patches", "inputs": [{"artifact": "tool"}], "output": "native:output", "manifest": "keep", "libraryLayout": {"any": 1}}]
 }"#,
             1,

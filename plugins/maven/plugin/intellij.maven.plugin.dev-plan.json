@@ -346,39 +346,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "layout-source:resource-generator:0:0"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "97mqrgywqmbjwcehk4ebap5vv"
-        },
-        {
-            "id": "layout-assets:resource-generator:1",
-            "inputs": [
-                "layout-source:resource-generator:1:0",
-                "layout-source:resource-generator:1:1"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:1:output"
-            ],
-            "modelSignature": "cvk2804w8nfq4ih5v4pihg4se"
-        },
-        {
-            "id": "layout-assets:resource-generator:2",
-            "inputs": [
-                "layout-source:resource-generator:2:0"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:2:output"
-            ],
-            "modelSignature": "6vyidf1uc25f330tru59x74bm"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

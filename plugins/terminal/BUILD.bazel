@@ -51,32 +51,26 @@ dev_dist_complex_plugin(
     platform_values = {
         "darwin_aarch64": {
             "destination": "libghostty-vt/macos-aarch64",
-            "modelSignature": "bl17ak84xi6zy07qccita3ugi",
             "pattern": "macos-aarch64/libghostty-vt.dylib",
         },
         "darwin_x64": {
             "destination": "libghostty-vt/macos-x86_64",
-            "modelSignature": "kx1wq3zfk390ntxzvethgphp",
             "pattern": "macos-x86_64/libghostty-vt.dylib",
         },
         "linux_aarch64": {
             "destination": "libghostty-vt/linux-aarch64",
-            "modelSignature": "cttjgv17svtlvj4yxqhbtykc4",
             "pattern": "linux-aarch64/libghostty-vt.so",
         },
         "linux_x64": {
             "destination": "libghostty-vt/linux-x86_64",
-            "modelSignature": "74b929htgze7w1iw54s9leskk",
             "pattern": "linux-x86_64/libghostty-vt.so",
         },
         "windows_aarch64": {
             "destination": "libghostty-vt/windows-aarch64",
-            "modelSignature": "2ng9tk18owca2r9lxlppc3mqh",
             "pattern": "windows-aarch64/ghostty-vt.dll",
         },
         "windows_x64": {
             "destination": "libghostty-vt/windows-x86_64",
-            "modelSignature": "50g6ndkc9p1wxr1e4hf1nv25x",
             "pattern": "windows-x86_64/ghostty-vt.dll",
         },
     },

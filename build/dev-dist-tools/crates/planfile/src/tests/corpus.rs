@@ -39,13 +39,11 @@ fn layout_library_inputs(file: &PlanFile) -> impl Iterator<Item = &str> {
 }
 
 /// The catalogue that Starlark writes for the remainder: the raw inputs of the remainder assets and of their
-/// preparations. A library source and a library input of a layout-assets operation name a library. Each library has two
+/// operations. A library source and a library input of a layout-assets operation name a library. Each library has two
 /// member files, so the derivation expands the sources of a layout asset. A tree input is a directory.
 fn catalogue(file: &PlanFile) -> Catalogue {
-    let producers: HashMap<&str, &[String]> = file
-        .preparations
-        .iter()
-        .flat_map(|preparation| (preparation.outputs.iter()).map(|output| (output.as_str(), preparation.inputs.as_slice())))
+    let producers: HashMap<&str, &[Reference]> = (file.operations.iter())
+        .map(|operation| (operation.output.as_str(), operation.inputs.as_slice()))
         .collect();
     let libraries: HashSet<&str> = (file.assets.iter())
         .filter_map(|asset| asset.recipe.as_ref())
@@ -58,7 +56,7 @@ fn catalogue(file: &PlanFile) -> Catalogue {
     for asset in file.assets.iter().filter(|asset| !is_independent(asset)) {
         for input in &asset.inputs {
             match producers.get(input.as_str()) {
-                Some(inputs) => raw.extend(inputs.iter().map(|input| (input.as_str(), ArtifactKind::File))),
+                Some(inputs) => raw.extend(inputs.iter().map(|input| (input.artifact.as_str(), ArtifactKind::File))),
                 None => raw.push((
                     input,
                     if asset.kind == AssetKind::Tree {

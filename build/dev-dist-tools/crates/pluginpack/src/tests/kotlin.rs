@@ -13,9 +13,7 @@ use serde_json::{Value, json};
 
 use super::*;
 
-// The plan file of a fixture, in the shape that `PluginPackingProjectionEncoding.kt` emits. The fixtures compute each
-// operation signature as `devPluginPreparationOperationSignature` does. So `plugin-model-tool --check` accepts a fixture
-// as a plan file.
+// The plan file of a fixture, in the shape that `PluginPackingProjectionEncoding.kt` emits.
 
 #[derive(Clone, Default)]
 pub(crate) struct KotlinPlanFile {
@@ -23,7 +21,6 @@ pub(crate) struct KotlinPlanFile {
     pub(crate) plugin: String,
     pub(crate) variant: String,
     pub(crate) assets: Vec<KotlinPlanAsset>,
-    pub(crate) preparations: Vec<KotlinPreparation>,
     /// The kotlinx text of each operation.
     pub(crate) operations: Vec<String>,
 }
@@ -72,14 +69,6 @@ pub(crate) struct KotlinPreparedManifest {
 pub(crate) struct KotlinJarWriter {
     pub(crate) manifest: String,
     pub(crate) merge_entities: bool,
-}
-
-#[derive(Clone, Default)]
-pub(crate) struct KotlinPreparation {
-    pub(crate) id: String,
-    pub(crate) inputs: Vec<String>,
-    pub(crate) outputs: Vec<String>,
-    pub(crate) model_signature: String,
 }
 
 pub(crate) fn module_source(module: &str) -> KotlinJarSource {
@@ -167,21 +156,6 @@ pub(crate) fn plan_json(plan: &KotlinPlanFile) -> String {
         "variant": plan.variant,
         "assets": assets,
     });
-    if !plan.preparations.is_empty() {
-        let preparations: Vec<Value> = plan
-            .preparations
-            .iter()
-            .map(|preparation| {
-                json!({
-                    "id": preparation.id,
-                    "inputs": preparation.inputs,
-                    "outputs": preparation.outputs,
-                    "modelSignature": preparation.model_signature,
-                })
-            })
-            .collect();
-        value["preparations"] = json!(preparations);
-    }
     if !plan.operations.is_empty() {
         let operations: Vec<Value> = plan
             .operations
@@ -191,49 +165,6 @@ pub(crate) fn plan_json(plan: &KotlinPlanFile) -> String {
         value["operations"] = json!(operations);
     }
     serde_json::to_string(&value).unwrap()
-}
-
-/// Frames values the way a hash4j `HashStream` does, so [`signature128`] over its bytes equals the Kotlin
-/// `devDistSignature` over the same puts.
-#[derive(Default)]
-struct Hash4jStream(Vec<u8>);
-
-impl Hash4jStream {
-    fn put_int(&mut self, value: i32) {
-        self.0.extend_from_slice(&value.to_le_bytes());
-    }
-
-    /// hash4j `putString`: the UTF-16 code units, then their count.
-    fn put_string(&mut self, value: &str) {
-        let mut count = 0;
-        for unit in value.encode_utf16() {
-            self.0.extend_from_slice(&unit.to_le_bytes());
-            count += 1;
-        }
-        self.put_int(count);
-    }
-}
-
-/// `devDistSignature` of the Kotlin plugin-preparation module: hash4j `Hashing.xxh3_128()` over the stream bytes, as one
-/// base-36 number of the 128-bit value.
-fn signature128(stream: &[u8]) -> String {
-    let mut value = xxhash_rust::xxh3::xxh3_128(stream);
-    if value == 0 {
-        return "0".to_owned();
-    }
-    let mut digits = Vec::new();
-    while value != 0 {
-        digits.push(char::from_digit((value % 36) as u32, 36).unwrap());
-        value /= 36;
-    }
-    digits.iter().rev().collect()
-}
-
-/// Hashes a preparation recipe of format 2 that holds one operation in its kotlinx encoding.
-pub(crate) fn kotlin_model_signature(operation: &str) -> String {
-    let mut stream = Hash4jStream::default();
-    stream.put_string(&format!(r#"{{"version":2,"operations":[{operation}]}}"#));
-    signature128(&stream.0)
 }
 
 fn kotlin_json<T: serde::Serialize + ?Sized>(value: &T) -> String {
@@ -317,36 +248,6 @@ pub(crate) fn kotlin_layout_assets_operation(id: &str, output: &str, format: &st
     )
 }
 
-/// Signs every preparation from its operation by position.
-pub(crate) fn signed_plan(mut plan: KotlinPlanFile, operations: &[String]) -> KotlinPlanFile {
-    assert_eq!(operations.len(), plan.preparations.len(), "one operation per preparation");
-    for (preparation, operation) in plan.preparations.iter_mut().zip(operations) {
-        preparation.model_signature = kotlin_model_signature(operation);
-        plan.operations.push(operation.clone());
-    }
-    plan
-}
-
-/// The one operation of the filtered demo projection: the entries of the raw input become `raw.txt` of `lib/main.jar`.
-/// `PluginPackingProjectionEncodingTest` of the Kotlin build scripts states the same operation.
-pub(crate) fn kotlin_filter_operation(output: &str) -> String {
-    let layout = LayoutAssets {
-        inputs: vec![Reference::artifact("raw")],
-        assets: vec![layout_asset("raw.txt", &[0], None)],
-    };
-    kotlin_layout_assets_operation("filter", output, "entries", "", &layout)
-}
-
-/// Pins the model signature helper against the constant that `PluginPackingProjectionEncodingTest` of the Kotlin build
-/// scripts pins for the filtered demo projection.
-#[test]
-fn kotlin_model_signature_reproduces_the_fixture_constant() {
-    assert_eq!(
-        kotlin_model_signature(&kotlin_filter_operation("filtered")),
-        "5nm0sqi8af0srealvdtoxpzqm"
-    );
-}
-
 /// The Kotlin half of the Go `TestLayoutTransformExcludesEncoding`: the kotlinx operation holds the transform in the
 /// encoding that the `planfile` crate reads. The encoding half is in the `planfile` crate.
 #[test]
@@ -379,24 +280,15 @@ fn layout_transform_encoding_in_a_kotlin_operation() {
     }
 }
 
-/// A plan of one preparation whose operation is the kotlinx text, signed.
-fn kotlin_plan(
-    version: u32,
-    plugin: &str,
-    assets: Vec<KotlinPlanAsset>,
-    preparation: KotlinPreparation,
-    operation: &str,
-) -> KotlinPlanFile {
-    signed_plan(
-        KotlinPlanFile {
-            version,
-            plugin: plugin.to_owned(),
-            assets,
-            preparations: vec![preparation],
-            ..KotlinPlanFile::default()
-        },
-        &[operation.to_owned()],
-    )
+/// A plan of one operation in its kotlinx text.
+fn kotlin_plan(version: u32, plugin: &str, assets: Vec<KotlinPlanAsset>, operation: &str) -> KotlinPlanFile {
+    KotlinPlanFile {
+        version,
+        plugin: plugin.to_owned(),
+        assets,
+        operations: vec![operation.to_owned()],
+        ..KotlinPlanFile::default()
+    }
 }
 
 /// One layout-assets operation with its raw inputs on disk. A tree fixture names its root, and an entries fixture names
@@ -593,16 +485,6 @@ const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 5] = [
     }),
 ];
 
-fn layout_input_ids(layout: &LayoutAssets) -> Vec<String> {
-    let mut ids: Vec<String> = Vec::new();
-    for reference in &layout.inputs {
-        if !ids.contains(&reference.artifact) {
-            ids.push(reference.artifact.clone());
-        }
-    }
-    ids
-}
-
 /// Packs the hand-written recipe of every layout-assets fixture: the layout-tree operation or the layout source. The
 /// packer executes it from the raw inputs, and the result must have the bytes, the modes and the links of the golden.
 #[test]
@@ -612,12 +494,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
     for (name, build) in LAYOUT_PARITY_FIXTURES {
         let inputs = temp();
         let fixture = build(inputs.path());
-        let preparation = KotlinPreparation {
-            id: "layout".to_owned(),
-            inputs: layout_input_ids(&fixture.layout),
-            outputs: strings(&[OUTPUT]),
-            ..KotlinPreparation::default()
-        };
         let recipe = if fixture.format == "tree" {
             let operation = kotlin_layout_assets_operation("layout", OUTPUT, "tree", fixture.root, &fixture.layout);
             let plan_file = kotlin_plan(
@@ -630,7 +506,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
                     class_path: Some(false),
                     ..KotlinPlanAsset::default()
                 }],
-                preparation,
                 &operation,
             );
             Recipe {
@@ -660,7 +535,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
                     }),
                     ..KotlinPlanAsset::default()
                 }],
-                preparation,
                 &operation,
             );
             Recipe {
@@ -714,12 +588,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
             normalize_tree_modes: true,
             ..KotlinPlanAsset::default()
         }],
-        KotlinPreparation {
-            id: "layout".to_owned(),
-            inputs: strings(&["selected"]),
-            outputs: strings(&[OUTPUT]),
-            ..KotlinPreparation::default()
-        },
         &kotlin_layout_assets_operation("layout", OUTPUT, "tree", "jcef", &normalized_layout),
     );
     let error = planfile::from_slice(plan_json(&normalized).as_bytes()).map(|_| ()).unwrap_err();

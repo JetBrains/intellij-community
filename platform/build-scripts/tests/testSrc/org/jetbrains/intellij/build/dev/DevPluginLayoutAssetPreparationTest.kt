@@ -7,7 +7,6 @@ import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.planPluginPacking
 import org.junit.jupiter.api.Test
 
@@ -25,7 +24,7 @@ internal class DevPluginLayoutAssetPreparationTest {
         manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(asset)),
       )
       assertThat(isPackerExecutedOperation(operation)).isFalse()
-      assertThatThrownBy { devPluginPreparationOperationSignature(operation, version = 2) }
+      assertThatThrownBy { validatePreparationOperation(operation) }
         .hasMessageContaining("No packer operation executes 'layout-assets:$kind'")
     }
   }
@@ -54,14 +53,7 @@ internal class DevPluginLayoutAssetPreparationTest {
           recipe = CanonicalJarRecipe(listOf(JarSourceRecipe("layout-assets:entries:output", "prepared", "prepared")), JarWriterRecipe(manifest = "drop")),
         ),
       ),
-      preparations = operations.map { operation ->
-        PluginPackingPreparation(
-          id = operation.id,
-          inputs = operation.sourceReferences().map(DevPluginReference::artifact),
-          outputs = listOf(operation.output),
-          modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-        )
-      },
+      operations = operations,
       preparationRoots = emptyList(),
       artifacts = emptyList(),
     )
@@ -97,11 +89,11 @@ internal class DevPluginLayoutAssetPreparationTest {
     assertThat(isPackerExecutedOperation(entries)).isTrue()
     assertThat(isPackerExecutedOperation(file)).isFalse()
     assertThat(isPackerExecutedOperation(presigned)).isFalse()
-    assertThatThrownBy { devPluginPreparationOperationSignature(moduleFilter, version = 2) }
+    assertThatThrownBy { validatePreparationOperation(moduleFilter) }
       .hasMessageContaining("No packer operation executes 'filter' of kind 'module-filter'")
-    assertThatThrownBy { devPluginPreparationOperationSignature(presigned, version = 2) }
+    assertThatThrownBy { validatePreparationOperation(presigned) }
       .hasMessageContaining("No packer operation executes 'presigned' of kind 'native-presigned'")
-    assertThatThrownBy { devPluginPreparationOperationSignature(file, version = 2) }
+    assertThatThrownBy { validatePreparationOperation(file) }
       .hasMessageContaining("No packer operation executes 'file' of kind 'layout-assets'")
   }
 
@@ -120,22 +112,24 @@ internal class DevPluginLayoutAssetPreparationTest {
   }
 
   @Test
-  fun `archive includes and executable patterns change the preparation signature`() {
+  fun `archive includes and executable patterns change the operation text`() {
     val archive = DevPluginLayoutAssetTransform.archiveTree()
-    fun signature(value: DevPluginLayoutAssetTransform, input: String): String {
-      return devPluginPreparationOperationSignature(DevPluginPreparationOperation(
+    fun text(value: DevPluginLayoutAssetTransform, input: String): String {
+      val operation = DevPluginPreparationOperation(
         id = "layout-assets:native", kind = "layout-assets", inputs = listOf(DevPluginReference(input)), output = "native:output", manifest = "keep",
         layoutAssets = DevPluginLayoutAssetPreparation(
           format = "tree", root = "bin",
           assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = value)),
         ),
-      ), version = 2)
+      )
+      validatePreparationOperation(operation)
+      return Json.encodeToString(DevPluginPreparationOperation.serializer(), operation)
     }
 
-    assertThat(signature(archive.copy(includes = listOf("bin/**", "!bin/LLDBFrontend")), "archive")).isNotEqualTo(signature(archive, "archive"))
-    assertThat(signature(archive.copy(executables = listOf("bin/*")), "archive")).isNotEqualTo(signature(archive, "archive"))
-    assertThat(signature(DevPluginLayoutAssetTransform.archiveTree(includes = listOf("!x"), executables = listOf("y")), "archive"))
-      .isEqualTo(signature(archive.copy(includes = listOf("!x"), executables = listOf("y")), "archive"))
+    assertThat(text(archive.copy(includes = listOf("bin/**", "!bin/LLDBFrontend")), "archive")).isNotEqualTo(text(archive, "archive"))
+    assertThat(text(archive.copy(executables = listOf("bin/*")), "archive")).isNotEqualTo(text(archive, "archive"))
+    assertThat(text(DevPluginLayoutAssetTransform.archiveTree(includes = listOf("!x"), executables = listOf("y")), "archive"))
+      .isEqualTo(text(archive.copy(includes = listOf("!x"), executables = listOf("y")), "archive"))
   }
 
   @Test
@@ -178,11 +172,11 @@ internal class DevPluginLayoutAssetPreparationTest {
     )
   }
 
-  /** Runs the generation-time validation of one layout-assets operation through its signature. */
+  /** Runs the generation-time validation of one layout-assets operation. */
   private fun validateLayoutAssets(preparation: DevPluginLayoutAssetPreparation, inputs: List<DevPluginReference>) {
     val operation = DevPluginPreparationOperation(
       id = "layout-assets:test", kind = "layout-assets", inputs = inputs, output = "layout-assets:test:output", manifest = "keep", layoutAssets = preparation,
     )
-    devPluginPreparationOperationSignature(operation, version = 2)
+    validatePreparationOperation(operation)
   }
 }

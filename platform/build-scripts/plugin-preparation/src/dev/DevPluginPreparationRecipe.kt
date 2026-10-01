@@ -3,15 +3,10 @@ package org.jetbrains.intellij.build.dev
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.devDist.PluginPackingPlan
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
-import org.jetbrains.intellij.build.devDist.devDistSignature
 
-private val preparationRecipeJson = Json { encodeDefaults = true }
-
-/** The recipe format of every generated operation. The generator hashes an operation with this version. */
+/** The recipe format of every generated operation. [validatePreparationOperation] accepts only this version. */
 @ApiStatus.Internal
 const val DEV_PLUGIN_PREPARATION_FORMAT: Int = 2
 
@@ -48,8 +43,8 @@ val GO_LAYOUT_TRANSFORMS: Set<String> = java.util.Set.of("archive-tree")
 /**
  * The one statement of what the remainder packer executes from a plan file. A `layout-assets` operation in every
  * layout format (`tree`, `entries`) with every transform in [GO_LAYOUT_TRANSFORMS] is packer-executed.
- * [devPluginPreparationOperationSignature] refuses every other operation, so a plan file never holds one. The chain of
- * a complex plugin declares no preparation target, and the packer reads the plan file directly.
+ * [validatePreparationOperation] refuses every other operation, so a plan file never holds one. The chain of a
+ * complex plugin declares no preparation target, and the packer reads the plan file directly.
  */
 @ApiStatus.Internal
 fun isPackerExecutedOperation(operation: DevPluginPreparationOperation): Boolean {
@@ -57,22 +52,6 @@ fun isPackerExecutedOperation(operation: DevPluginPreparationOperation): Boolean
   val layoutAssets = requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }
   return layoutAssets.format in setOf("tree", "entries") &&
          layoutAssets.assets.all { asset -> asset.transform?.let { it.kind in GO_LAYOUT_TRANSFORMS } ?: true }
-}
-
-/**
- * Returns the SHA-256 signature for [PluginPackingPreparation.modelSignature].
- * The canonical input is compact UTF-8 JSON for a recipe with this operation alone, in declaration order.
- * Default never-encoded fields are omitted. Other defaults are included. The recipe version is part of the signature.
- */
-@ApiStatus.Internal
-fun devPluginPreparationOperationSignature(
-  operation: DevPluginPreparationOperation,
-  version: Int = 1,
-): String {
-  require(version in 1..2) { "Unsupported preparation recipe version $version" }
-  validatePreparationOperation(operation, version)
-  val configuration = preparationRecipeJson.encodeToString(DevPluginPreparationRecipe(version, listOf(operation)))
-  return devDistSignature { putString(configuration) }
 }
 
 /**
@@ -94,7 +73,9 @@ fun validateDevPluginLayoutAssetConsumers(operation: DevPluginPreparationOperati
   }
 }
 
-private fun validatePreparationOperation(operation: DevPluginPreparationOperation, version: Int) {
+/** Checks that the remainder packer executes [operation] and that its IDs, paths and layout assets are safe. */
+@ApiStatus.Internal
+fun validatePreparationOperation(operation: DevPluginPreparationOperation, version: Int = DEV_PLUGIN_PREPARATION_FORMAT) {
   require(isPackerExecutedOperation(operation)) { "No packer operation executes '${operation.id}' of kind '${operation.kind}'" }
   require(operation.kind == "layout-assets" || operation.layoutAssets == null) { "Only a layout-assets operation may declare layout assets" }
   require(operation.manifest in setOf("keep", "drop", "coverage-agent", "rewrite-boot-class-path")) {
@@ -121,21 +102,25 @@ private fun validatePreparationOperation(operation: DevPluginPreparationOperatio
 /** Copies mutable recipe values before they cross the generation and execution boundary. */
 @ApiStatus.Internal
 fun snapshotDevPluginPreparationRecipe(recipe: DevPluginPreparationRecipe): DevPluginPreparationRecipe {
-  return recipe.copy(operations = java.util.List.copyOf(recipe.operations.map { operation ->
-    operation.copy(
-      inputs = java.util.List.copyOf(operation.inputs),
-      layoutAssets = operation.layoutAssets?.let { preparation ->
-        preparation.copy(assets = java.util.List.copyOf(preparation.assets.map { asset ->
-          asset.copy(
-            sources = java.util.List.copyOf(asset.sources),
-            transform = asset.transform?.let { transform ->
-              transform.copy(mappings = java.util.List.copyOf(transform.mappings))
-            },
-          )
-        }))
-      },
-    )
-  }))
+  return recipe.copy(operations = java.util.List.copyOf(recipe.operations.map(::snapshotDevPluginPreparationOperation)))
+}
+
+/** Copies the mutable values of [operation]. */
+@ApiStatus.Internal
+fun snapshotDevPluginPreparationOperation(operation: DevPluginPreparationOperation): DevPluginPreparationOperation {
+  return operation.copy(
+    inputs = java.util.List.copyOf(operation.inputs),
+    layoutAssets = operation.layoutAssets?.let { preparation ->
+      preparation.copy(assets = java.util.List.copyOf(preparation.assets.map { asset ->
+        asset.copy(
+          sources = java.util.List.copyOf(asset.sources),
+          transform = asset.transform?.let { transform ->
+            transform.copy(mappings = java.util.List.copyOf(transform.mappings))
+          },
+        )
+      }))
+    },
+  )
 }
 
 /** The catalogue references an operation reads. */

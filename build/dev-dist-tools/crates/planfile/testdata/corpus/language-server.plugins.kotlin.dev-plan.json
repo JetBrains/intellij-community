@@ -1391,18 +1391,6 @@
             }
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:layout-patcher:0",
-            "inputs": [
-                "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"
-            ],
-            "outputs": [
-                "layout-assets:layout-patcher:0:output"
-            ],
-            "modelSignature": "9rrjhjkhq9mupnbiblcj6344c"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:layout-patcher:0",

@@ -7,8 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 
 /**
- * The plan file of one complex plugin. [operations] holds the preparation operations with their options. Its IDs are
- * the IDs of [preparations]. [plan] ignores [operations]. The preparer compiles them.
+ * The plan file of one complex plugin. [operations] holds each operation once. [plan] derives from them the operations
+ * that the assets require and the raw inputs of each one.
  *
  * The file states a reused jar as a module asset only. The chain hands the reused modules to the packer, so the file
  * holds no label of a `content_module_jar` target and no second spelling of the reuse.
@@ -26,7 +26,6 @@ data class PluginPackingProjection(
   @JvmField val variant: String,
   /** Encoded in the compact form; see `PluginPackingProjectionEncoding.kt`. */
   @Serializable(with = CompactPluginPackingAssetsSerializer::class) @JvmField val assets: List<PluginPackingAsset>,
-  @JvmField val preparations: List<PluginPackingPreparation> = emptyList(),
   @JvmField val preparationRoots: List<String> = emptyList(),
   @JvmField val operations: List<DevPluginPreparationOperation> = emptyList(),
 ) {
@@ -43,7 +42,7 @@ data class PluginPackingProjection(
       plugin = plugin,
       variant = variant,
       assets = assets,
-      preparations = preparations,
+      operations = operations,
       preparationRoots = preparationRoots,
       artifacts = reusableArtifacts,
     )

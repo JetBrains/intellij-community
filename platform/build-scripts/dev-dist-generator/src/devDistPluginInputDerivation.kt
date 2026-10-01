@@ -5,9 +5,9 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import org.jetbrains.intellij.build.dev.DEV_PLUGIN_PREPARATION_FORMAT
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
-import org.jetbrains.intellij.build.dev.devPluginPreparationOperationSignature
 import org.jetbrains.intellij.build.dev.sourceReferences
 import org.jetbrains.intellij.build.dev.validateDevPluginLayoutAssetConsumers
+import org.jetbrains.intellij.build.dev.validatePreparationOperation
 import org.jetbrains.intellij.build.dev.validatePreparationPath
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingPlan
@@ -54,31 +54,25 @@ internal class DevDistPluginInputKinds(
 }
 
 /**
- * Checks every operation against the selected preparations and the input kinds. The generator runs it, so a mismatch
- * fails `plugin-model-tool` and not a Bazel action. The packer runs the same checks from the plan file.
+ * Checks every operation against the operations that [plan] requires and against the input kinds. The generator runs
+ * it, so a mismatch fails `plugin-model-tool` and not a Bazel action. The packer runs the same checks from the plan file.
  */
 internal fun validateDevDistPluginOperations(
   plan: PluginPackingPlan,
   inputs: DevDistPluginInputKinds,
   operations: List<DevPluginPreparationOperation>,
 ) {
-  val definitions = plan.preparations.associateBy { it.id }
+  val required = plan.operations.associateBy { it.id }
   val seen = HashSet<String>()
   for (operation in operations) {
-    val signature = devPluginPreparationOperationSignature(operation, DEV_PLUGIN_PREPARATION_FORMAT)
+    validatePreparationOperation(operation, DEV_PLUGIN_PREPARATION_FORMAT)
     require(seen.add(operation.id)) { "Duplicate preparation operation '${operation.id}'" }
-    val definition = requireNotNull(definitions.get(operation.id)) { "Unexpected preparation operation '${operation.id}'" }
-    val references = operation.sourceReferences()
-    val requiredInputs = references.mapTo(LinkedHashSet(), DevPluginReference::artifact)
-    require(definition.inputs == requiredInputs.toList()) { "Preparation '${operation.id}' must declare exactly inputs $requiredInputs" }
-    require(definition.outputs == listOf(operation.output)) { "Preparation '${operation.id}' must declare exactly output '${operation.output}'" }
-    require(definition.modelSignature == signature) {
-      "Preparation '${operation.id}' has a stale operation signature: stated=${definition.modelSignature} computed=$signature"
-    }
-    references.forEach(inputs::requireReference)
+    val planned = requireNotNull(required.get(operation.id)) { "Unexpected preparation operation '${operation.id}'" }
+    require(planned == operation) { "Preparation operation '${operation.id}' differs from the operation of the plan" }
+    operation.sourceReferences().forEach(inputs::requireReference)
     validateDevPluginLayoutAssetConsumers(operation, plan)
   }
-  val missing = definitions.keys - seen
+  val missing = required.keys - seen
   require(missing.isEmpty()) { "Missing preparation operations: $missing" }
 }
 
@@ -93,11 +87,8 @@ internal fun deriveDevDistPluginRemainderInputs(
   inputs: DevDistPluginInputKinds,
   operations: List<DevPluginPreparationOperation>,
 ): List<String> {
-  require(plan.preparations.map { it.id }.distinct().size == plan.preparations.size) { "Duplicate preparation IDs" }
-  val outputs = plan.preparations.flatMap { it.outputs }
-  require(outputs.distinct().size == outputs.size) { "Duplicate preparation outputs" }
   require(plan.requiredInputs.distinct().size == plan.requiredInputs.size) { "Duplicate required inputs" }
-  require(outputs.none { inputs.contains(it) }) { "A preparation output aliases a raw catalogue ID" }
+  require(plan.operations.none { inputs.contains(it.output) }) { "An operation output aliases a raw catalogue ID" }
   val prepared = operations.associateBy { it.output }
 
   val usedInputs = LinkedHashSet<String>()

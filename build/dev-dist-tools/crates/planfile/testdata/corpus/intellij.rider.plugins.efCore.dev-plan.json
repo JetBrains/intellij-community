@@ -36,18 +36,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/rider-efcore"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "9k6vobvdfwcr1oy6c82yeo33l"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

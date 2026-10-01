@@ -3,12 +3,12 @@
 package com.intellij.platform.buildScripts.pluginModelTool
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.NATIVE_TREE_INPUT_PREFIX
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.devDist.planPluginPacking
@@ -77,14 +77,14 @@ data class PluginSymbolicVariant(
 )
 
 /**
- * Declares an opaque operation and all its contributions without running its callback.
+ * Declares an [operation] and all its contributions without running its callback.
  * [sources] replace a filtered root or supply a custom jar. [assets] declare generated files outside that jar.
  * [sourceContributions] maps each original root to its own ordered sources when multiple roots share an operation.
  * Such contributions must not share a source: a merged bundle cannot stand in for separate source positions.
  */
 @ApiStatus.Internal
 data class PluginSymbolicPreparedEffect(
-  @JvmField val preparation: PluginPackingPreparation,
+  @JvmField val operation: DevPluginPreparationOperation,
   @JvmField val sources: List<JarSourceRecipe> = emptyList(),
   @JvmField val assets: List<PluginPackingAsset> = emptyList(),
   @JvmField val sourceContributions: Map<String, List<JarSourceRecipe>> = emptyMap(),
@@ -119,7 +119,7 @@ data class PluginSymbolicNativeUse(
 data class PluginSymbolicPreparationFacts(
   @JvmField val effects: Map<String, PluginSymbolicPreparedEffect> = emptyMap(),
   @JvmField val modulePatches: Map<String, List<JarSourceRecipe>> = emptyMap(),
-  @JvmField val dependencies: List<PluginPackingPreparation> = emptyList(),
+  @JvmField val dependencies: List<DevPluginPreparationOperation> = emptyList(),
   @JvmField val preparedSourceManifests: Map<String, PluginSymbolicPreparedSourceManifest> = emptyMap(),
   /** Declared assets that need no Kotlin preparation. Keys use the same layout slots as [effects]. */
   @JvmField val declaredAssets: Map<String, List<PluginPackingAsset>> = emptyMap(),
@@ -139,7 +139,7 @@ class PluginSymbolicLayout internal constructor(
   @JvmField val plugin: String,
   @JvmField val variant: String,
   @JvmField val assets: List<PluginPackingAsset>,
-  @JvmField val preparations: List<PluginPackingPreparation>,
+  @JvmField val operations: List<DevPluginPreparationOperation>,
   @JvmField val preparationRoots: List<String>,
   @JvmField val gaps: List<PluginSymbolicLayoutGap>,
 ) {
@@ -155,7 +155,7 @@ class PluginSymbolicLayout internal constructor(
       plugin = plugin,
       variant = variant,
       assets = assets,
-      preparations = preparations,
+      operations = operations,
       preparationRoots = preparationRoots,
       artifacts = artifacts,
     )
@@ -164,8 +164,8 @@ class PluginSymbolicLayout internal constructor(
       plugin = plugin,
       variant = variant,
       assets = assets,
-      preparations = preparations,
       preparationRoots = preparationRoots,
+      operations = operations,
     )
     return PluginSymbolicProjection(projection, plan.assets.mapNotNull { it.artifact }.distinct())
   }

@@ -22,7 +22,7 @@ pub mod validate;
 pub use compile::{Derivation, derive, omitted_assets};
 pub use plan::{
     Asset, DEFAULT_MODE, EXECUTABLE_MODE, JarRecipe, JarSource, JarWriter, LayoutAssetPreparation, LayoutFormat, ManifestPolicy, Operation,
-    OperationKind, PlanFile, Preparation, SourceKind, from_slice, module_jar_asset, module_jar_recipe, read,
+    OperationKind, PlanFile, SourceKind, from_slice, module_jar_asset, module_jar_recipe, read,
 };
 
 #[cfg(test)]

@@ -36,18 +36,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/rider-plugins-for-tea"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "6kudqn16ojbo61wf6dkl045c4"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

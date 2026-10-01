@@ -26,9 +26,7 @@ import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
 import org.jetbrains.intellij.build.dev.DevPluginReference
 import org.jetbrains.intellij.build.dev.devBuildPathIdentity
-import org.jetbrains.intellij.build.dev.devPluginPreparationOperationSignature
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.impl.LibraryEntriesLayoutPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
@@ -622,13 +620,7 @@ private fun libraryEntriesLayoutBinding(
       )),
     ),
   )
-  val preparation = PluginPackingPreparation(
-    id = id,
-    inputs = listOf(input),
-    outputs = listOf(output),
-    modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-  )
-  return LibraryEntriesLayoutBinding(key = key, output = output, effect = PluginSymbolicPreparedEffect(preparation), operation = operation)
+  return LibraryEntriesLayoutBinding(key = key, output = output, effect = PluginSymbolicPreparedEffect(operation), operation = operation)
 }
 
 /**
@@ -701,16 +693,10 @@ private fun embeddedFrontendLayoutBinding(
       assets = support.iconPatches.mapIndexed { index, (_, destination) -> DevPluginLayoutAsset(destination = destination, sources = listOf(index)) },
     ),
   )
-  val preparation = PluginPackingPreparation(
-    id = id,
-    inputs = listOf(brandingInput.id),
-    outputs = listOf(output),
-    modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-  )
   return EmbeddedFrontendLayoutBinding(
     key = key,
     output = output,
-    effect = PluginSymbolicPreparedEffect(preparation),
+    effect = PluginSymbolicPreparedEffect(operation),
     operation = operation,
     inputs = listOf(clientApplicationInfo, brandingInput, embeddedDescriptor),
     frontendSplitSources = listOf(

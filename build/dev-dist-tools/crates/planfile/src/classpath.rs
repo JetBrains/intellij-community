@@ -1,7 +1,7 @@
 //! The record of one plugin in `plugins/plugin-classpath.txt`.
 //!
 //! The dev-dist collector writes the record for the packed shape. [`crate::derive`] writes it for a plan whose
-//! preparation the packer executes. Both call [`record`], so one algorithm serves both shapes.
+//! operations the packer executes. Both call [`record`], so one algorithm serves both shapes.
 //!
 //! Every plugin directory and jar name in the repository is ASCII text, so [`record`] refuses any other name. For such a
 //! name, Java's modified UTF-8 is the name itself, and a UTF-16 length is the byte length. A Kotlin comparison that

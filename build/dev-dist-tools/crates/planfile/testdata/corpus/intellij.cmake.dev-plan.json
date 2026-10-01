@@ -102,18 +102,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "cidr-dependency:cmake-quickdoc:any:any"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "194i9so4hwrp9t0naxb3ukiy6"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

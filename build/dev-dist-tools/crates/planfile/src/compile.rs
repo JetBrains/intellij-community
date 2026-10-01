@@ -10,9 +10,7 @@ use crate::contract::{
     self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAssets, Library, Manifest, Producer, Recipe, Reference, Source,
     TREE_VERSION, VERSION,
 };
-use crate::plan::{
-    Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, ManifestPolicy, Operation, PlanFile, Preparation, SourceKind, module_jar_recipe,
-};
+use crate::plan::{Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, ManifestPolicy, Operation, PlanFile, SourceKind, module_jar_recipe};
 
 /// The prefix of a module that holds only a library. Such a module is no meaningful jar source.
 const LIBRARY_PREFIX: &str = "intellij.libraries.";
@@ -205,10 +203,11 @@ struct Compiler<'a> {
     /// The omission of each asset of the file, in plan order.
     omitted: Vec<bool>,
     assets: Vec<PlannedAsset<'a>>,
-    /// The preparations of the remainder assets in first use order.
-    required: Vec<&'a Preparation>,
-    producers: HashMap<&'a str, &'a Preparation>,
-    /// The raw inputs of the remainder assets and of their preparations in first use order.
+    /// The operations of the remainder assets in first use order.
+    required: Vec<&'a Operation>,
+    /// The operations by output.
+    producers: HashMap<&'a str, &'a Operation>,
+    /// The raw inputs of the remainder assets and of their operations in first use order.
     required_raw: Vec<&'a str>,
     artifacts: HashMap<&'a str, &'a Artifact>,
     libraries: HashMap<&'a str, &'a Library>,
@@ -232,7 +231,7 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    /// `planPluginPacking`: the asset rules, the ownership match and the required preparations.
+    /// `planPluginPacking`: the asset rules, the ownership match and the required operations.
     fn plan(&mut self) -> Result<()> {
         let file = self.file;
         if file.plugin.is_empty() {
@@ -298,27 +297,30 @@ impl<'a> Compiler<'a> {
         if let Some(module) = self.independent_modules.iter().find(|module| !used.contains(module.as_str())) {
             bail!("independent module {module:?} matches no module jar asset; regenerate the dev distribution declarations");
         }
-        let mut seen = HashSet::with_capacity(file.preparations.len());
-        for preparation in &file.preparations {
-            if !seen.insert(preparation.id.as_str())
-                || preparation.id.is_empty()
-                || preparation.model_signature.is_empty()
-                || preparation.inputs.iter().any(String::is_empty)
+        let mut seen = HashSet::with_capacity(file.operations.len());
+        for operation in &file.operations {
+            if !seen.insert(operation.id.as_str())
+                || operation.id.is_empty()
+                || operation.inputs.iter().any(|reference| reference.artifact.is_empty())
             {
-                bail!("invalid or repeated preparation {:?}", preparation.id);
+                bail!("invalid or repeated operation {:?}", operation.id);
             }
-            for output in &preparation.outputs {
-                if output.is_empty() || self.producers.contains_key(output.as_str()) {
-                    bail!("conflicting preparation output {output:?}");
-                }
-                self.producers.insert(output, preparation);
+            let output = operation.output.as_str();
+            if output.is_empty() || self.producers.contains_key(output) {
+                bail!("conflicting operation output {output:?}");
             }
+            self.producers.insert(output, operation);
         }
-        for preparation in &file.preparations {
-            if let Some(input) = preparation.inputs.iter().find(|input| self.producers.contains_key(input.as_str())) {
+        for operation in &file.operations {
+            if let Some(reference) = operation
+                .inputs
+                .iter()
+                .find(|reference| self.producers.contains_key(reference.artifact.as_str()))
+            {
                 bail!(
-                    "preparation {:?} reads the output {input:?} of a preparation; the packer executes no preparation chain",
-                    preparation.id
+                    "operation {:?} reads the output {:?} of an operation; the packer executes no operation chain",
+                    operation.id,
+                    reference.artifact
                 );
             }
         }
@@ -340,14 +342,14 @@ impl<'a> Compiler<'a> {
         for planned in self.assets.iter().filter(|planned| planned.artifact.is_none()) {
             let asset: &'a Asset = planned.asset;
             for input in &asset.inputs {
-                let Some(&preparation) = self.producers.get(input.as_str()) else {
+                let Some(&operation) = self.producers.get(input.as_str()) else {
                     push_new(&mut self.required_raw, input);
                     continue;
                 };
-                if required_ids.insert(preparation.id.as_str()) {
-                    self.required.push(preparation);
-                    for dependency in &preparation.inputs {
-                        push_new(&mut self.required_raw, dependency);
+                if required_ids.insert(operation.id.as_str()) {
+                    self.required.push(operation);
+                    for reference in &operation.inputs {
+                        push_new(&mut self.required_raw, &reference.artifact);
                     }
                 }
             }
@@ -355,41 +357,15 @@ impl<'a> Compiler<'a> {
         Ok(())
     }
 
-    /// Pairs every required preparation with its operation. It checks the operation against its definition and its
-    /// consumers.
+    /// Checks every operation against its consumers. An operation that no remainder asset requires is refused.
     fn bind_operations(&mut self) -> Result<()> {
-        let required: HashMap<&str, &Preparation> = self
-            .required
-            .iter()
-            .map(|preparation| (preparation.id.as_str(), *preparation))
-            .collect();
-        let mut bound = HashSet::new();
+        let required: HashSet<&str> = self.required.iter().map(|operation| operation.id.as_str()).collect();
         for operation in &self.file.operations {
-            if !bound.insert(operation.id.as_str()) {
-                bail!("duplicate preparation operation {:?}", operation.id);
-            }
-            let Some(definition) = required.get(operation.id.as_str()) else {
-                bail!("unexpected preparation operation {:?}", operation.id);
-            };
-            let mut expected_inputs: Vec<&str> = Vec::new();
-            for reference in &operation.inputs {
-                push_new(&mut expected_inputs, &reference.artifact);
-            }
-            if definition.inputs != expected_inputs {
-                bail!("preparation {:?} must declare exactly the inputs {expected_inputs:?}", operation.id);
-            }
-            if definition.outputs != [operation.output.as_str()] {
-                bail!(
-                    "preparation {:?} must declare exactly the output {:?}",
-                    operation.id,
-                    operation.output
-                );
+            if !required.contains(operation.id.as_str()) {
+                bail!("unexpected operation {:?}", operation.id);
             }
             self.validate_consumers(operation)?;
             self.go_executed.insert(&operation.output, operation.clone());
-        }
-        if let Some(preparation) = self.required.iter().find(|preparation| !bound.contains(preparation.id.as_str())) {
-            bail!("missing preparation operation {:?}", preparation.id);
         }
         Ok(())
     }
@@ -475,9 +451,13 @@ impl<'a> Compiler<'a> {
             self.libraries.insert(&library.id, library);
             raw.insert(&library.id);
         }
-        for preparation in &self.file.preparations {
-            if let Some(output) = preparation.outputs.iter().find(|output| raw.contains(output.as_str())) {
-                bail!("preparation {:?} output {output:?} aliases a raw catalogue ID", preparation.id);
+        for operation in &self.file.operations {
+            if raw.contains(operation.output.as_str()) {
+                bail!(
+                    "operation {:?} output {:?} aliases a raw catalogue ID",
+                    operation.id,
+                    operation.output
+                );
             }
         }
         let mut expected: Vec<&str> = Vec::new();
@@ -583,7 +563,10 @@ impl<'a> Compiler<'a> {
         for planned in self.assets.iter().filter(|planned| planned.executed()) {
             for input in &planned.asset.inputs {
                 match self.producers.get(input.as_str()) {
-                    Some(preparation) => preparation.inputs.iter().for_each(|dependency| push_new(&mut raw, dependency)),
+                    Some(operation) => operation
+                        .inputs
+                        .iter()
+                        .for_each(|reference| push_new(&mut raw, &reference.artifact)),
                     None => push_new(&mut raw, input),
                 }
             }

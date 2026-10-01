@@ -39,18 +39,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/UnrealLink"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "cyv79vj449cm1w57gfq6yyjwx"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

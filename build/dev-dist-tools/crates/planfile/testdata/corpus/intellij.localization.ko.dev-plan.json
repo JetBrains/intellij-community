@@ -34,19 +34,6 @@
             }
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:custom-asset:0",
-            "inputs": [
-                "localization:properties/ko",
-                "localization:inspections_intentions/ko"
-            ],
-            "outputs": [
-                "layout-assets:custom-asset:0:output"
-            ],
-            "modelSignature": "bgg50p4hdl0unj7dx4bbssrmk"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:custom-asset:0",

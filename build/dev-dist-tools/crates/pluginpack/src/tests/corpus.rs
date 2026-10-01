@@ -63,15 +63,10 @@ fn directory_inputs(file: &PlanFile) -> HashSet<&str> {
 }
 
 /// The catalogue that Starlark writes for the remainder: the raw inputs of the remainder assets and of their
-/// preparations. Each library has one member. A root is a clean relative path, as a Bazel path is.
+/// operations. Each library has one member. A root is a clean relative path, as a Bazel path is.
 fn catalogue(file: &PlanFile) -> Catalogue {
-    let producers: HashMap<&str, &[String]> = (file.preparations.iter())
-        .flat_map(|preparation| {
-            preparation
-                .outputs
-                .iter()
-                .map(|output| (output.as_str(), preparation.inputs.as_slice()))
-        })
+    let producers: HashMap<&str, &[Reference]> = (file.operations.iter())
+        .map(|operation| (operation.output.as_str(), operation.inputs.as_slice()))
         .collect();
     let layout_inputs = (file.operations.iter())
         .flat_map(|operation| &operation.inputs)
@@ -93,7 +88,7 @@ fn catalogue(file: &PlanFile) -> Catalogue {
     for asset in file.assets.iter().filter(|asset| !is_independent(asset)) {
         for input in &asset.inputs {
             let raw: Vec<(&str, ArtifactKind)> = match producers.get(input.as_str()) {
-                Some(inputs) => inputs.iter().map(|input| (input.as_str(), ArtifactKind::File)).collect(),
+                Some(inputs) => inputs.iter().map(|input| (input.artifact.as_str(), ArtifactKind::File)).collect(),
                 None => vec![(
                     input.as_str(),
                     if asset.kind == AssetKind::Tree {

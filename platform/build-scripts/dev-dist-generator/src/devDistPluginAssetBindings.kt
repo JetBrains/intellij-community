@@ -14,12 +14,10 @@ import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
-import org.jetbrains.intellij.build.dev.devPluginPreparationOperationSignature
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.impl.LibraryResourceGenerator
 import org.jetbrains.intellij.build.impl.ModuleResourceTree
 import org.jetbrains.jps.util.JpsPathUtil
@@ -165,12 +163,7 @@ fun generateDevPluginAssetBindings(
       ),
     )
     effects.put(key, PluginSymbolicPreparedEffect(
-      preparation = PluginPackingPreparation(
-        id = id,
-        inputs = listOf(inputId),
-        outputs = listOf(output),
-        modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-      ),
+      operation = operation,
       assets = listOf(PluginPackingAsset(
         destination = resource.relativeOutputPath,
         inputs = listOf(output),
@@ -242,16 +235,10 @@ fun generateDevPluginAssetBindings(
         assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree())),
       ),
     )
-    val preparation = PluginPackingPreparation(
-      id = id,
-      inputs = listOf(inputId),
-      outputs = listOf(output),
-      modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-    )
     effects.put(
       "resource-generator:$generatorIndex",
       PluginSymbolicPreparedEffect(
-        preparation = preparation,
+        operation = operation,
         assets = listOf(PluginPackingAsset(generator.targetPath, listOf(output), kind = "tree", classPath = false)),
       ),
     )
@@ -308,15 +295,9 @@ private fun bindDirectResourceTrees(
         assets = group.indices.map { DevPluginLayoutAsset(destination = "", sources = listOf(it)) },
       ),
     )
-    val preparation = PluginPackingPreparation(
-      id = id,
-      inputs = group.map(DirectResourceTree::input),
-      outputs = listOf(output),
-      modelSignature = devPluginPreparationOperationSignature(operation, version = 2),
-    )
     for ((index, tree) in group.withIndex()) {
       effects.put(tree.key, PluginSymbolicPreparedEffect(
-        preparation = preparation,
+        operation = operation,
         assets = if (index == 0) listOf(PluginPackingAsset(
           destination = destination,
           inputs = listOf(output),

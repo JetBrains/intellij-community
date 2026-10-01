@@ -194,23 +194,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "cidr-dependency:mingw:win:x64",
-                "cidr-dependency:ninja:cygwin:x64",
-                "cidr-dependency:ninja:win:x64",
-                "cidr-dependency:ninja:wsl:x64",
-                "cidr-dependency:cmake:win:x64",
-                "cidr-dependency:cmake:wsl:x64"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "5dkerlkbo65cid4sggpnm930w"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

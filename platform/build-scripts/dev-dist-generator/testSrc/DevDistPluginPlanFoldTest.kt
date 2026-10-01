@@ -127,7 +127,7 @@ class DevDistPluginPlanFoldTest {
 
     val fold = foldDevDistPluginPlanTexts(texts) as DevDistPluginPlanFold.Folded
 
-    assertThat(fold.slotNames).containsExactly("destination", "modelSignature", "pattern")
+    assertThat(fold.slotNames).containsExactly("destination", "pattern")
     assertThat(fold.body).contains("\"variant\": \"{platform}\"").doesNotContain("darwin", "aarch64")
     assertThat(fold.valuesByPlatform.getValue("windows_x64"))
       .containsEntry("destination", "lib/libwebp/win/amd64")

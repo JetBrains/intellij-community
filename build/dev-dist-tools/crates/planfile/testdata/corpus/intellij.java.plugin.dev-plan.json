@@ -633,18 +633,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource:0",
-            "inputs": [
-                "module-resource:0:source"
-            ],
-            "outputs": [
-                "layout-assets:resource:0:output"
-            ],
-            "modelSignature": "46hv095kevag1u3mloywj2lfu"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource:0",

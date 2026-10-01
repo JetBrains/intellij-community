@@ -161,23 +161,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:platform-custom-asset:0",
-            "inputs": [
-                "cidr-dependency:LLDB:linux:aarch64",
-                "cidr-dependency:LLDB:linux:x64",
-                "cidr-dependency:gdb:linux:aarch64",
-                "cidr-dependency:gdb:linux:x64",
-                "cidr-dependency:LLDBFrontend:linux:aarch64",
-                "cidr-dependency:LLDBFrontend:linux:x64"
-            ],
-            "outputs": [
-                "layout-assets:platform-custom-asset:0:output"
-            ],
-            "modelSignature": "4jo3jfwk028rgi7vnljicnzbi"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:platform-custom-asset:0",

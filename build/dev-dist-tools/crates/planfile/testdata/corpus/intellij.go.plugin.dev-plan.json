@@ -197,18 +197,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:1",
-            "inputs": [
-                "layout-source:resource-generator:1:0"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:1:output"
-            ],
-            "modelSignature": "48feujsg04i97g99r4v4lzyog"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:1",

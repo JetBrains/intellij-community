@@ -569,7 +569,6 @@ dependencies = [
  "tempfile",
  "testkit",
  "walkdir",
- "xxhash-rust",
  "zip",
 ]
 

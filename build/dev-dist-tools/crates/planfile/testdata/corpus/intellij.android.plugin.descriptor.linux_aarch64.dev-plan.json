@@ -1088,18 +1088,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource:3",
-            "inputs": [
-                "module-resource:3:source"
-            ],
-            "outputs": [
-                "layout-assets:resource:3:output"
-            ],
-            "modelSignature": "2x9je1fco4o9lazaembjqtjq1"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource:3",

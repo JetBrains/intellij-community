@@ -191,18 +191,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:1",
-            "inputs": [
-                "rust-native-helper"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:1:output"
-            ],
-            "modelSignature": "et51vtwowftiok5uzwq0a16ij"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:1",

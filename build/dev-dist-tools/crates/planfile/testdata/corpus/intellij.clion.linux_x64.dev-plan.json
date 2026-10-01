@@ -194,19 +194,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "cidr-dependency:ninja:linux:x64",
-                "cidr-dependency:cmake:linux:x64"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "2k8ebz2qe5hirzjn93xvwltrn"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

@@ -49,18 +49,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/rider-plugins-fsharp"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "28tyh7n5abey5zmmwx6nwqps8"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

@@ -1,4 +1,4 @@
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DestructuringDeclaration")
 
 package com.intellij.platform.buildScripts.devDistGenerator
 
@@ -14,10 +14,10 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparat
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicProjectionCache
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import com.intellij.platform.buildScripts.pluginModelTool.projectPluginSymbolicLayout
+import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginResourceExclusions
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingPlan
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
@@ -131,10 +131,10 @@ internal fun computeDevDistPluginBuildPlan(
   )
   builder.validatePreparationNamespaces(originalDiscovery)
   val originalDiscoveryPlan = planWithoutReuse(originalDiscovery)
-  val originalPreparationIds = originalDiscoveryPlan.preparations.mapTo(HashSet()) { it.id }
+  val originalOperationIds = originalDiscoveryPlan.operations.mapTo(HashSet()) { it.id }
   val discoveredModules = builder.moduleCount
   val originalCatalogue = builder.includeRequiredModules(originalDiscoveryPlan.requiredInputs)
-  val originalDependencies = preparationFacts.dependencies.filter { it.id in originalPreparationIds }
+  val originalDependencies = preparationFacts.dependencies.filter { it.id in originalOperationIds }
   // The original sources must plan without reuse, as the discovery did. With no new module and no dropped dependency,
   // the sources are the discovery itself, which planned already.
   if (builder.moduleCount != discoveredModules || originalDependencies.size != preparationFacts.dependencies.size) {
@@ -164,9 +164,9 @@ internal fun computeDevDistPluginBuildPlan(
   )
   builder.validatePreparationNamespaces(discovery)
   val discoveryPlan = planWithoutReuse(discovery)
-  val requiredPreparationIds = discoveryPlan.preparations.mapTo(HashSet()) { it.id }
+  val requiredOperationIds = discoveryPlan.operations.mapTo(HashSet()) { it.id }
   val selectedPreparations = selectedPreparationFacts.copy(
-    dependencies = selectedPreparationFacts.dependencies.filter { it.id in requiredPreparationIds },
+    dependencies = selectedPreparationFacts.dependencies.filter { it.id in requiredOperationIds },
   )
   val selectedModules = builder.moduleCount
   val catalogue = builder.includeRequiredModules(discoveryPlan.requiredInputs)
@@ -224,7 +224,7 @@ private fun planWithoutReuse(symbolic: PluginSymbolicLayout): PluginPackingPlan 
     plugin = symbolic.plugin,
     variant = symbolic.variant,
     assets = symbolic.assets,
-    preparations = symbolic.preparations,
+    operations = symbolic.operations,
     preparationRoots = symbolic.preparationRoots,
     artifacts = emptyList(),
   )
@@ -426,25 +426,17 @@ private class PluginBuildCatalogueBuilder(
   }
 
   fun validatePreparationNamespaces(symbolic: PluginSymbolicLayout) {
-    val producers = HashMap<String, MutableList<PluginPackingPreparation>>()
-    for (preparation in symbolic.preparations) {
-      for (output in preparation.outputs) producers.computeIfAbsent(output) { ArrayList() }.add(preparation)
+    val producers = HashMap<String, MutableList<DevPluginPreparationOperation>>()
+    for (operation in symbolic.operations) {
+      producers.computeIfAbsent(operation.output) { ArrayList() }.add(operation)
     }
     val pending = ArrayDeque(symbolic.assets.flatMap { it.inputs } + symbolic.preparationRoots)
-    val visited = HashSet<PluginPackingPreparation>()
-    fun visit(preparation: PluginPackingPreparation) {
-      if (!visited.add(preparation)) return
-      for (output in preparation.outputs) {
-        require(!isRawModelId(output)) { "Preparation '${preparation.id}' output '$output' aliases a raw model ID" }
-      }
-      pending.addAll(preparation.inputs)
-    }
-    for (preparation in symbolic.preparations) {
-      if (preparation.alwaysRun) visit(preparation)
-    }
+    val visited = HashSet<String>()
     while (pending.isNotEmpty()) {
-      for (preparation in producers.get(pending.removeFirst()).orEmpty()) {
-        visit(preparation)
+      for (operation in producers.get(pending.removeFirst()).orEmpty()) {
+        if (!visited.add(operation.id)) continue
+        require(!isRawModelId(operation.output)) { "Operation '${operation.id}' output '${operation.output}' aliases a raw model ID" }
+        operation.inputs.mapTo(pending) { it.artifact }
       }
     }
   }

@@ -25,7 +25,6 @@ pub struct PlanFile {
     pub version: u32,
     pub plugin: String,
     pub assets: Vec<Asset>,
-    pub preparations: Vec<Preparation>,
     pub operations: Vec<Operation>,
 }
 
@@ -50,7 +49,7 @@ pub struct JarRecipe {
 }
 
 /// One ordered jar source. Only a file source has an entry, and the jar writer patches that file into the jar at the
-/// entry. A prepared source names a preparation output.
+/// entry. A prepared source names an operation output.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct JarSource {
     pub input: String,
@@ -87,16 +86,6 @@ pub enum ManifestPolicy {
     SingleMeaningfulSource,
     Keep,
     Drop,
-}
-
-/// One preparation definition. Its operation is in [`PlanFile::operations`] under the same ID.
-#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct Preparation {
-    pub id: String,
-    pub inputs: Vec<String>,
-    pub outputs: Vec<String>,
-    pub model_signature: String,
 }
 
 /// One preparation operation: the operation reads the inputs into the layout assets. The packer keeps the manifest of
@@ -140,8 +129,6 @@ struct RawFile {
     #[serde(rename = "variant")]
     _variant: String,
     assets: Vec<RawAsset>,
-    #[serde(default)]
-    preparations: Vec<Preparation>,
     #[serde(default)]
     operations: Vec<RawOperation>,
 }
@@ -233,7 +220,6 @@ impl RawFile {
             version: self.version,
             plugin: self.plugin,
             assets,
-            preparations: self.preparations,
             operations,
         })
     }

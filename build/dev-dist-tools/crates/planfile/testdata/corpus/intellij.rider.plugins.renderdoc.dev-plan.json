@@ -94,28 +94,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/rider-plugins-renderdoc"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "9kehnz8qu7aj2fsmwd0o95ty4"
-        },
-        {
-            "id": "layout-assets:platform-custom-asset:0",
-            "inputs": [
-                "{platform:inputs}"
-            ],
-            "outputs": [
-                "layout-assets:platform-custom-asset:0:output"
-            ],
-            "modelSignature": "{platform:modelSignature}"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

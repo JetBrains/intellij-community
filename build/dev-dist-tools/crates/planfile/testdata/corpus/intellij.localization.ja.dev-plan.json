@@ -34,19 +34,6 @@
             }
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:custom-asset:0",
-            "inputs": [
-                "localization:properties/ja",
-                "localization:inspections_intentions/ja"
-            ],
-            "outputs": [
-                "layout-assets:custom-asset:0:output"
-            ],
-            "modelSignature": "67b01hxmi4eskp6p1vgcpiq7e"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:custom-asset:0",

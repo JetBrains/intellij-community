@@ -24,6 +24,7 @@ them. The table lists what the Go packer supported and this crate refuses.
 | a gzip resource entry that is not an `.xml` file, or that is a link | `unexpected file` |
 | a jar writer with `directoryEntries` | the `planfile` error ``unknown field `directoryEntries` `` |
 | a plan file with `layoutSignature`, because a plan file carries no layout signature | the `planfile` error ``unknown field `layoutSignature` `` |
+| a plan file with `preparations`, because a plan file holds `operations` only | the `planfile` error ``unknown field `preparations` `` |
 
 A jar operation writes no directory record. A directory of a non-class file is an index row of `__index__`.
 

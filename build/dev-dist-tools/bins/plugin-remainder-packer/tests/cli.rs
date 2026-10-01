@@ -261,7 +261,6 @@ fn projection_mode_matches_the_in_process_derivation() {
     );
     let plan = r#"{"version": 1, "plugin": "filtered", "variant": "", "assets": [
       {"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered:output", "kind": "prepared", "filter": "prepared"}, {"input": "demo.extra", "kind": "module", "filter": "module-v1"}], "writer": {"manifest": "keep", "mergeEntities": true}}}],
-      "preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered:output"], "modelSignature": "x"}],
       "operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered:output", "manifest": "keep",
         "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]}}]}"#;
     let catalogue_json = serde_json::json!({"version": 1, "artifacts": [

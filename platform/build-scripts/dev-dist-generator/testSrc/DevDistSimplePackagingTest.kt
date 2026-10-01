@@ -9,11 +9,14 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
+import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
+import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
+import org.jetbrains.intellij.build.dev.DevPluginReference
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
-import org.jetbrains.intellij.build.devDist.PluginPackingPreparation
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.devDist.pluginPackingExecutionVersion
@@ -114,7 +117,7 @@ class DevDistSimplePackagingTest {
     assets: List<PluginPackingAsset>,
     inputs: List<DevDistPluginRawInput>,
     plugin: String = this.plugin,
-    preparations: List<PluginPackingPreparation> = emptyList(),
+    operations: List<DevPluginPreparationOperation> = emptyList(),
     reusable: List<ReusableJarArtifact> = emptyList(),
     testModules: Set<String> = emptySet(),
   ): DevDistPluginPlanEntry {
@@ -125,7 +128,7 @@ class DevDistSimplePackagingTest {
         plugin = plugin,
         variant = "",
         assets = assets,
-        preparations = preparations,
+        operations = operations,
       )
       override val catalogue = PluginSymbolicArtifactCatalogue(
         artifacts = listOf(PluginSymbolicArtifact(id = plugin, kind = "directory", fileName = plugin)),
@@ -291,10 +294,17 @@ class DevDistSimplePackagingTest {
   @Test
   fun `a transform output keeps the plan tier`() {
     val output = "layout-assets:custom-asset:0:output"
-    val preparation = PluginPackingPreparation(id = "layout-assets:custom-asset:0", inputs = listOf(plugin), outputs = listOf(output), modelSignature = "sig")
+    val operation = DevPluginPreparationOperation(
+      id = "layout-assets:custom-asset:0",
+      kind = "layout-assets",
+      inputs = listOf(DevPluginReference(plugin)),
+      output = output,
+      manifest = "keep",
+      layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "jcef", assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0)))),
+    )
     val assets = listOf(mainJar(), PluginPackingAsset(destination = "jcef", inputs = listOf(output), kind = "tree", classPath = false))
 
-    assertKeepsPlanTier(planEntry(assets = assets, inputs = emptyList(), preparations = listOf(preparation)))
+    assertKeepsPlanTier(planEntry(assets = assets, inputs = emptyList(), operations = listOf(operation)))
   }
 
   @Test

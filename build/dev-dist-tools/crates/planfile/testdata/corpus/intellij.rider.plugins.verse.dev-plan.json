@@ -36,18 +36,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/rider-verse"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "4oal8bksv13crn9yl4m7q01zd"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

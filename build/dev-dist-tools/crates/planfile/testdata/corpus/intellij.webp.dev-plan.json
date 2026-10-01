@@ -51,18 +51,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:platform-resource-generator:0",
-            "inputs": [
-                "layout-source:platform-resource-generator:0:0"
-            ],
-            "outputs": [
-                "layout-assets:platform-resource-generator:0:output"
-            ],
-            "modelSignature": "{platform:modelSignature}"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:platform-resource-generator:0",

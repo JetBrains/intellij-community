@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
 import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
+import org.jetbrains.intellij.build.dev.snapshotDevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.snapshotDevPluginPreparationRecipe
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
@@ -44,8 +45,8 @@ internal class DevDistPluginPlanRecord(
     get() = retainedRecipe?.let(::snapshotDevPluginPreparationRecipe)
 
   /**
-   * The projection as the plan file holds it: [DevDistPluginBuildPlan.projection] with the operations of the recipe.
-   * The in-memory projection stays operation-free, so the graph comparisons never meet a frozen configuration.
+   * The projection as the plan file holds it: [DevDistPluginBuildPlan.projection] with the operations in the order of
+   * the recipe. The record checks that the recipe states the operations of the plan.
    */
   val fileProjection: PluginPackingProjection
     get() = plan.projection.copy(operations = preparationRecipe?.operations.orEmpty())
@@ -191,7 +192,7 @@ private fun originalModuleState(module: ModuleItem): List<Any?> {
 
 /**
  * The ordered inputs of the remainder action. The derivation also checks every operation of [recipe] against the
- * selected preparations, so a mismatch fails the generator and not a Bazel action.
+ * operations of the selected plan, so a mismatch fails the generator and not a Bazel action.
  */
 private fun deriveRemainderInputs(plan: DevDistPluginBuildPlan, recipe: DevPluginPreparationRecipe): List<String> {
   val selected = plan.selectedPlan()
@@ -211,10 +212,8 @@ internal fun snapshotDevDistPluginPlan(plan: DevDistPluginBuildPlan): DevDistPlu
       assets = java.util.List.copyOf(plan.projection.assets.map { asset ->
         asset.copy(inputs = java.util.List.copyOf(asset.inputs), recipe = asset.recipe?.let(::snapshotDevDistJarRecipe))
       }),
-      preparations = java.util.List.copyOf(plan.projection.preparations.map { preparation ->
-        preparation.copy(inputs = java.util.List.copyOf(preparation.inputs), outputs = java.util.List.copyOf(preparation.outputs))
-      }),
       preparationRoots = java.util.List.copyOf(plan.projection.preparationRoots),
+      operations = java.util.List.copyOf(plan.projection.operations.map(::snapshotDevPluginPreparationOperation)),
     )
     override val catalogue = plan.catalogue.copy(
       artifacts = java.util.List.copyOf(plan.catalogue.artifacts),

@@ -36,18 +36,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "optional-local-directory:out/bundle-plugins/rider-sqlproj-plugin"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "8rlzfm87aa3f9adzyrwpj7owx"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

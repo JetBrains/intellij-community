@@ -65,8 +65,7 @@ fn strings(values: &[&str]) -> Vec<String> {
 /// A layout-assets entries operation over the raw input. Its output is the one prepared source of [`FILTERED_JAR`].
 const ENTRIES_OPERATION: &str = r#"{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep", "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}}"#;
 
-const ENTRIES_SECTION: &str = r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"}],
-  "operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep", "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}}]"#;
+const ENTRIES_SECTION: &str = r#""operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "raw"}], "output": "filtered", "manifest": "keep", "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}}]"#;
 
 const FILTERED_JAR: &str = r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "drop"}}}"#;
 
@@ -245,7 +244,6 @@ fn read_refuses_malformed_forms() {
         )
     };
     let operation = |text: &str| plan(1, one_module, &[&format!(r#""operations": [{text}]"#)]);
-    let preparation = |text: &str| plan(1, one_module, &[&format!(r#""preparations": [{text}]"#)]);
     for (name, text, message) in [
         (
             "a module asset with another field",
@@ -465,14 +463,9 @@ fn read_refuses_malformed_forms() {
             "must not declare a tree root for its entries",
         ),
         (
-            "a preparation without signature",
-            preparation(r#"{"id": "p", "inputs": [], "outputs": ["o"]}"#),
-            "missing field `modelSignature`",
-        ),
-        (
-            "an always-run preparation",
-            preparation(r#"{"id": "p", "inputs": [], "outputs": ["o"], "modelSignature": "x", "alwaysRun": true}"#),
-            "unknown field `alwaysRun`",
+            "preparations",
+            plan(1, one_module, &[r#""preparations": []"#]),
+            "unknown field `preparations`",
         ),
         (
             "a layout signature",
@@ -501,7 +494,7 @@ fn read_refuses_malformed_forms() {
         ),
         (
             "null for a list",
-            plan(1, one_module, &[r#""preparations": null"#]),
+            plan(1, one_module, &[r#""operations": null"#]),
             "invalid type: null, expected a sequence",
         ),
     ] {
@@ -823,8 +816,7 @@ fn library_catalogue(libraries: &[(&str, &[&str])]) -> Catalogue {
 /// for every member, and the asset sources follow the expanded positions.
 #[test]
 fn derive_resolves_a_library_input_to_its_members() {
-    let entries = r#""preparations": [{"id": "entries", "inputs": ["@lib//:one", "raw"], "outputs": ["entries:output"], "modelSignature": "e"}],
-    "operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
+    let entries = r#""operations": [{"id": "entries", "kind": "layout-assets", "inputs": [{"artifact": "@lib//:one"}, {"artifact": "raw"}], "output": "entries:output", "manifest": "keep",
       "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "archive-tree"}},
         {"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}]"#;
     let jar_asset = r#"{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "entries:output", "kind": "prepared", "filter": "prepared"}], "writer": {"manifest": "keep"}}}"#;
@@ -882,12 +874,7 @@ fn derive_compiles_every_operation_kind() {
       {"destination": "payload", "inputs": ["tree:output"], "kind": "tree", "classPath": false},
       {"destination": "lib/standardDsls", "inputs": ["dsls"], "kind": "tree", "classPath": false},
       {"destination": "bin/tool", "inputs": ["native"], "mode": 493}"#,
-            &[
-                r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"},
-          {"id": "tree", "inputs": ["archive"], "outputs": ["tree:output"], "modelSignature": "y"},
-          {"id": "entries", "inputs": ["properties"], "outputs": ["entries:output"], "modelSignature": "z"}]"#,
-                &operations,
-            ],
+            &[&operations],
         ),
         &inputs,
         2,
@@ -1005,17 +992,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             "an operation no asset needs",
             plan(1, r#"{"destination": "bin/tool", "inputs": ["raw"]}"#, &[ENTRIES_SECTION]),
             filter_inputs(),
-            "unexpected preparation operation",
-        ),
-        (
-            "a preparation without operation",
-            plan(
-                1,
-                FILTERED_JAR,
-                &[r#""preparations": [{"id": "filter", "inputs": ["raw"], "outputs": ["filtered"], "modelSignature": "x"}]"#],
-            ),
-            filter_inputs(),
-            "missing preparation operation",
+            "unexpected operation",
         ),
         (
             "stale preparation inputs",
@@ -1030,26 +1007,12 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             "stale preparation inputs",
         ),
         (
-            "a definition with other inputs",
-            plan(
-                1,
-                FILTERED_JAR,
-                &[&format!(
-                    r#""preparations": [{{"id": "filter", "inputs": ["raw", "more"], "outputs": ["filtered"], "modelSignature": "x"}}],
-          "operations": [{ENTRIES_OPERATION}]"#
-                )],
-            ),
-            filter_inputs(),
-            r#"must declare exactly the inputs ["raw"]"#,
-        ),
-        (
             "a tree with another root",
             plan(
                 2,
                 r#"{"destination": "other", "inputs": ["layout:output"], "kind": "tree", "classPath": false}"#,
                 &[
-                    r#""preparations": [{"id": "layout", "inputs": ["source"], "outputs": ["layout:output"], "modelSignature": "x"}],
-          "operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
+                    r#""operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
             "layoutAssets": {"format": "tree", "root": "payload", "assets": [{"destination": "", "sources": [0], "transform": {"kind": "archive-tree"}}]}}]"#,
                 ],
             ),
@@ -1093,8 +1056,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
                 1,
                 layout_jar,
                 &[
-                    r#""preparations": [{"id": "layout", "inputs": ["source"], "outputs": ["layout:output"], "modelSignature": "x"}],
-          "operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
+                    r#""operations": [{"id": "layout", "kind": "layout-assets", "inputs": [{"artifact": "source"}], "output": "layout:output", "manifest": "keep",
             "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [1], "transform": {"kind": "archive-tree"}}]}}]"#,
                 ],
             ),
@@ -1112,14 +1074,39 @@ fn derive_refuses_what_the_packer_does_not_execute() {
             "a jar with a native library must be a reused content_module_jar",
         ),
         (
-            "a preparation chain",
+            "an operation chain",
             plan(
                 1,
                 FILTERED_JAR,
-                &[r#""preparations": [{"id": "filter", "inputs": ["filtered"], "outputs": ["filtered"], "modelSignature": "x"}]"#],
+                &[
+                    r#""operations": [{"id": "filter", "kind": "layout-assets", "inputs": [{"artifact": "filtered"}], "output": "filtered", "manifest": "keep", "layoutAssets": {"format": "entries", "assets": [{"destination": "raw.txt", "sources": [0]}]}}]"#,
+                ],
             ),
             filter_inputs(),
-            r#"preparation "filter" reads the output "filtered" of a preparation; the packer executes no preparation chain"#,
+            r#"operation "filter" reads the output "filtered" of an operation; the packer executes no operation chain"#,
+        ),
+        (
+            "a repeated operation",
+            plan(
+                1,
+                FILTERED_JAR,
+                &[&format!(r#""operations": [{ENTRIES_OPERATION}, {ENTRIES_OPERATION}]"#)],
+            ),
+            filter_inputs(),
+            r#"invalid or repeated operation "filter""#,
+        ),
+        (
+            "a conflicting operation output",
+            plan(
+                1,
+                FILTERED_JAR,
+                &[&format!(
+                    r#""operations": [{ENTRIES_OPERATION}, {}]"#,
+                    ENTRIES_OPERATION.replacen(r#""id": "filter""#, r#""id": "other""#, 1)
+                )],
+            ),
+            filter_inputs(),
+            r#"conflicting operation output "filtered""#,
         ),
         (
             "a native tree without its jar",

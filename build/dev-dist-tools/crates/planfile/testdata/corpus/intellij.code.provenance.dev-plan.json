@@ -60,18 +60,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:platform-custom-asset:0",
-            "inputs": [
-                "layout-source:platform-custom-asset:0:0"
-            ],
-            "outputs": [
-                "layout-assets:platform-custom-asset:0:output"
-            ],
-            "modelSignature": "{platform:modelSignature}"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:platform-custom-asset:0",

@@ -6,6 +6,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.devBuildPathIdentity
 import org.jetbrains.intellij.build.dev.validateDevBuildDirectorySpellings
 import java.nio.file.Path
@@ -137,29 +138,18 @@ fun pluginPackingExecutionVersion(assets: List<PluginPackingAsset>): Int {
 }
 
 @ApiStatus.Internal
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-data class PluginPackingPreparation(
-  @JvmField val id: String,
-  @JvmField val inputs: List<String>,
-  @JvmField val outputs: List<String>,
-  @JvmField val modelSignature: String,
-  /** Runs the validation action even when it produces no file outputs. */
-  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val alwaysRun: Boolean = false,
-)
-
-@ApiStatus.Internal
 data class PlannedPluginAsset(
   @JvmField val asset: PluginPackingAsset,
   @JvmField val artifact: ReusableJarArtifact?,
 )
 
+/** [operations] are the operations that the assets and the preparation roots require, in the order a producer leads its consumer. */
 @ApiStatus.Internal
 class PluginPackingPlan internal constructor(
   @JvmField val plugin: String,
   @JvmField val variant: String,
   @JvmField val assets: List<PlannedPluginAsset>,
-  @JvmField val preparations: List<PluginPackingPreparation>,
+  @JvmField val operations: List<DevPluginPreparationOperation>,
   @JvmField val requiredInputs: List<String>,
 )
 
@@ -168,7 +158,7 @@ fun planPluginPacking(
   plugin: String,
   variant: String,
   assets: List<PluginPackingAsset>,
-  preparations: List<PluginPackingPreparation>,
+  operations: List<DevPluginPreparationOperation>,
   preparationRoots: List<String>,
   artifacts: Collection<ReusableJarArtifact>,
 ): PluginPackingPlan {
@@ -245,35 +235,36 @@ fun planPluginPacking(
     }
     PlannedPluginAsset(asset = asset, artifact = artifact)
   }
-  val producers = HashMap<String, PluginPackingPreparation>()
-  val preparationIds = HashSet<String>()
-  for (preparation in preparations) {
-    require(preparation.id.isNotEmpty() && preparation.modelSignature.isNotEmpty() && preparationIds.add(preparation.id)) {
-      "Plugin '$plugin' has an invalid or repeated preparation '${preparation.id}'"
+  // An operation produces its one output. An input that no operation produces is a raw input of the plan.
+  val producers = HashMap<String, DevPluginPreparationOperation>()
+  val operationIds = HashSet<String>()
+  for (operation in operations) {
+    require(operation.id.isNotEmpty() && operationIds.add(operation.id)) {
+      "Plugin '$plugin' has an invalid or repeated operation '${operation.id}'"
     }
-    for (output in preparation.outputs) {
-      require(output.isNotEmpty() && producers.putIfAbsent(output, preparation) == null) {
-        "Plugin '$plugin' has conflicting preparation output '$output'"
-      }
+    require(operation.output.isNotEmpty() && producers.putIfAbsent(operation.output, operation) == null) {
+      "Plugin '$plugin' has conflicting operation output '${operation.output}'"
     }
   }
   val requiredInputs = LinkedHashSet<String>()
-  val requiredPreparations = LinkedHashSet<PluginPackingPreparation>()
+  val requiredOperations = LinkedHashMap<String, DevPluginPreparationOperation>()
   val visiting = HashSet<String>()
   fun requireInput(input: String) {
-    require(input.isNotEmpty()) { "Plugin '$plugin' has an empty preparation input" }
-    val preparation = producers.get(input)
-    if (preparation == null) {
+    require(input.isNotEmpty()) { "Plugin '$plugin' has an empty input" }
+    val operation = producers.get(input)
+    if (operation == null) {
       requiredInputs.add(input)
       return
     }
-    if (preparation in requiredPreparations) {
+    if (requiredOperations.containsKey(operation.id)) {
       return
     }
-    require(visiting.add(preparation.id)) { "Plugin '$plugin' has a preparation cycle at '${preparation.id}'" }
-    preparation.inputs.forEach(::requireInput)
-    visiting.remove(preparation.id)
-    requiredPreparations.add(preparation)
+    require(visiting.add(operation.id)) { "Plugin '$plugin' has an operation cycle at '${operation.id}'" }
+    for (reference in operation.inputs) {
+      requireInput(reference.artifact)
+    }
+    visiting.remove(operation.id)
+    requiredOperations.put(operation.id, operation)
   }
   for (asset in planned) {
     if (asset.artifact == null && !isNativeTreeAsset(asset.asset)) {
@@ -281,15 +272,11 @@ fun planPluginPacking(
     }
   }
   preparationRoots.forEach(::requireInput)
-  for (preparation in preparations.filter { it.alwaysRun }) {
-    preparation.inputs.forEach(::requireInput)
-    requiredPreparations.add(preparation)
-  }
   return PluginPackingPlan(
     plugin = plugin,
     variant = variant,
     assets = planned,
-    preparations = requiredPreparations.toList(),
+    operations = requiredOperations.values.toList(),
     requiredInputs = requiredInputs.toList(),
   )
 }

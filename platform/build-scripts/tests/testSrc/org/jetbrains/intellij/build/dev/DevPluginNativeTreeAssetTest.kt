@@ -31,7 +31,7 @@ internal class DevPluginNativeTreeAssetTest {
       plugin = "intellij.jna.plugin",
       variant = "linux_x64",
       assets = assets,
-      preparations = emptyList(),
+      operations = emptyList(),
       preparationRoots = emptyList(),
       artifacts = emptyList(),
     )
@@ -44,7 +44,7 @@ internal class DevPluginNativeTreeAssetTest {
       plugin = "intellij.jna.plugin",
       variant = "linux_x64",
       assets = listOf(jar, nativeTree),
-      preparations = emptyList(),
+      operations = emptyList(),
       preparationRoots = emptyList(),
       artifacts = emptyList(),
     )

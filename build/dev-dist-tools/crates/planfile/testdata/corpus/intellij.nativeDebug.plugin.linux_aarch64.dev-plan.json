@@ -174,30 +174,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "cidr-dependency:LLDBFrontend:linux:aarch64",
-                "cidr-dependency:LLDBFrontend:linux:x64"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "e41wj8jsqk3tohuy6wa2bmsvw"
-        },
-        {
-            "id": "layout-assets:resource-generator:1",
-            "inputs": [
-                "cidr-dependency:LLDB:linux:aarch64",
-                "cidr-dependency:gdb:linux:aarch64"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:1:output"
-            ],
-            "modelSignature": "1j95h2rwhtx5jxungcg0q9vd4"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

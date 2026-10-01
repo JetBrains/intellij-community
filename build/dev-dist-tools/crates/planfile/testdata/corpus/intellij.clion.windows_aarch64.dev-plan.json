@@ -194,28 +194,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:resource-generator:0",
-            "inputs": [
-                "cidr-dependency:mingw:win:x64",
-                "cidr-dependency:ninja:cygwin:x64",
-                "cidr-dependency:ninja:win:x64",
-                "cidr-dependency:ninja:wsl:x64",
-                "cidr-dependency:cmake:win:x64",
-                "cidr-dependency:cmake:wsl:x64",
-                "cidr-dependency:ninja:cygwin:aarch64",
-                "cidr-dependency:ninja:win:aarch64",
-                "cidr-dependency:ninja:wsl:aarch64",
-                "cidr-dependency:cmake:win:aarch64",
-                "cidr-dependency:cmake:wsl:aarch64"
-            ],
-            "outputs": [
-                "layout-assets:resource-generator:0:output"
-            ],
-            "modelSignature": "c6h9m0hfagkgqaewikdwqlcws"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:resource-generator:0",

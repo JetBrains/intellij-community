@@ -140,7 +140,7 @@ internal fun classifySimplePluginPackaging(
   val record = entry.records.getValue("")
   val plan = record.plan
   val projection = plan.projection
-  if (projection.preparations.isNotEmpty() || projection.preparationRoots.isNotEmpty()) return null
+  if (projection.operations.isNotEmpty() || projection.preparationRoots.isNotEmpty()) return null
   val testModules = plan.catalogue.testModules
   val mainModule = entry.mainModule
   val jars = LinkedHashMap<String, List<String>>()

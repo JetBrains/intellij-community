@@ -161,31 +161,6 @@
             "classPath": false
         }
     ],
-    "preparations": [
-        {
-            "id": "layout-assets:platform-custom-asset:0",
-            "inputs": [
-                "cidr-dependency:LLDB:win:aarch64",
-                "cidr-dependency:LLDB:win:x64",
-                "cidr-dependency:LLDB:win:x86",
-                "cidr-dependency:gdb:win:aarch64",
-                "cidr-dependency:gdb:win:x64",
-                "cidr-dependency:LLDBFrontend:win:aarch64",
-                "cidr-dependency:LLDBFrontend:win:x64",
-                "cidr-dependency:LLDBFrontend:win:x86",
-                "cidr-dependency:rust-LLDB:win:aarch64",
-                "cidr-dependency:rust-LLDB:win:x64",
-                "cidr-dependency:rust-LLDB:win:x86",
-                "cidr-dependency:rust-LLDBFrontend:win:aarch64",
-                "cidr-dependency:rust-LLDBFrontend:win:x64",
-                "cidr-dependency:rust-LLDBFrontend:win:x86"
-            ],
-            "outputs": [
-                "layout-assets:platform-custom-asset:0:output"
-            ],
-            "modelSignature": "2ehyxhgqk9swb5vyfkq8n3f2y"
-        }
-    ],
     "operations": [
         {
             "id": "layout-assets:platform-custom-asset:0",
