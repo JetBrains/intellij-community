@@ -164,7 +164,9 @@ JDK answer for every glob of the corpus. A plan author who needs a new shape cha
 ### After a change of `Cargo.lock`
 
 `community/MODULE.bazel` generates the crate hub `@ddt` from `Cargo.toml`, `Cargo.lock` and `.cargo/config.toml` of
-this directory. After a change of `Cargo.lock`, update the Bazel lockfiles of both roots:
+this directory. The hub also resolves the triple `x86_64-unknown-linux-musl`, where no dev-dist tool runs, because the
+closure checks of `vm` and `air-trace` analyze `distpath` there. After a change of `Cargo.lock`, update the Bazel
+lockfiles of both roots:
 
 ```sh
 cd community && ./bazel.cmd build --nobuild --lockfile_mode=update //build/dev-dist-tools/...

@@ -15,6 +15,7 @@ workspace = true
 
 [dependencies]
 bt-junit = { path = "../bt-junit" }
+distpath = { path = "../../../../build/dev-dist-tools/crates/distpath" }
 percent-encoding = "2.3.2"
 refusal = { path = "../refusal" }
 regex = "1.13.1"

@@ -431,10 +431,10 @@ fn repo_relative_path(platform: Platform, root: &str, raw: &str) -> Option<Strin
         Platform::Windows => {
             // Either separator, a drive letter, and a rooted-but-driveless path such as `\plugins\air`, compared
             // without case.
-            let clean_root = paths::clean(&root.replace('\\', "/"));
+            let clean_root = distpath::clean(&root.replace('\\', "/"));
             let raw = raw.replace('\\', "/");
             let absolute = if paths::has_windows_drive(&raw) {
-                paths::clean(&raw)
+                distpath::clean(&raw)
             } else if raw.starts_with('/') {
                 // `\plugins\air` names the current drive, and the repository's is the only drive this wrapper has
                 // an opinion about.
@@ -443,18 +443,18 @@ fn repo_relative_path(platform: Platform, root: &str, raw: &str) -> Option<Strin
                 } else {
                     ""
                 };
-                paths::clean(&format!("{volume}{raw}"))
+                distpath::clean(&format!("{volume}{raw}"))
             } else {
-                paths::join(&clean_root, &raw)
+                distpath::join(&clean_root, &raw)
             };
             repo_tail(&clean_root, &absolute, true)
         }
         Platform::Darwin | Platform::Linux => {
-            let clean_root = paths::clean(root);
+            let clean_root = distpath::clean(root);
             let absolute = if raw.starts_with('/') {
-                paths::clean(raw)
+                distpath::clean(raw)
             } else {
-                paths::join(&clean_root, raw)
+                distpath::join(&clean_root, raw)
             };
             repo_tail(&clean_root, &absolute, false)
         }

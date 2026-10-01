@@ -249,7 +249,8 @@ register_toolchains(
 
 # The crates of //build/dev-dist-tools, resolved from its `Cargo.lock`. The name is short on purpose. It becomes part
 # of every dependency path, and a long name breaks the build on Windows. The tools run only on the host, so the
-# triples are the hosts that run Bazel here. A host without a triple fails to resolve the crates.
+# triples are the hosts that run Bazel here, plus the one triple below that a closure check needs. A host without a
+# triple fails to resolve the crates.
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
 crate.from_cargo(
     name = "ddt",
@@ -265,12 +266,16 @@ crate.from_cargo(
         "x86_64-pc-windows-msvc",
         "aarch64-unknown-linux-gnu",
         "x86_64-unknown-linux-gnu",
+        # No dev-dist tool runs here. The closure checks of `vm` and `air-trace` analyze bt-core for x86_64 Linux musl,
+        # and through bt-core `distpath` and its `anyhow`.
+        "x86_64-unknown-linux-musl",
     ],
 )
 use_repo(crate, "ddt")
 
 # The crates of //tools/bt, resolved from its `Cargo.lock`. The name is short for the same reason. BT runs on every
-# host, and the Air UI-lane workspace links `bt-junit` into its guest agent, so the triples also cover the guests.
+# host. The Air UI-lane workspace links BT's crates into `vm` and `air-trace`, and their closure checks configure the
+# crates for x86_64 Linux musl.
 crate.from_cargo(
     name = "bt",
     cargo_config = "//tools/bt:.cargo/config.toml",
@@ -288,7 +293,7 @@ crate.from_cargo(
         # A Linux host.
         "aarch64-unknown-linux-gnu",
         "x86_64-unknown-linux-gnu",
-        # The Linux guest agents.
+        # x86_64: the closure checks of `vm` and `air-trace`. No target uses the aarch64 triple today.
         "aarch64-unknown-linux-musl",
         "x86_64-unknown-linux-musl",
     ],

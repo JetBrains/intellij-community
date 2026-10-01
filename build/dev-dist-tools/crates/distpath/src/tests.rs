@@ -311,6 +311,56 @@ fn slash_paths_follow_the_go_rules() {
     }
 }
 
+/// BT resolves a selector against the repository root with these functions, also a Windows root in slash form. The
+/// vectors add a drive letter, `..` above the root, and repeated and trailing slashes. The expectations are the results
+/// of Go `path.Clean`, `path.Dir` and `path.Join`.
+#[test]
+fn slash_paths_keep_the_rules_that_bt_reads() {
+    for (path, expected) in [
+        ("a/b/../c", "a/c"),
+        ("/repo//plugins/./air/", "/repo/plugins/air"),
+        ("C:/repo/../x", "C:/x"),
+        ("C:", "C:"),
+        ("C:/", "C:"),
+        ("C:/..", "."),
+        ("C:/../..", ".."),
+        ("C:/a/../../b", "b"),
+        ("/..", "/"),
+        ("/../..", "/"),
+        ("/a/../..", "/"),
+        ("a/b//", "a/b"),
+        ("//", "/"),
+    ] {
+        assert_eq!(clean(path), expected, "clean({path:?})");
+    }
+    for (path, expected) in [
+        ("a/b/c.kt", "a/b"),
+        ("c.kt", "."),
+        ("/", "/"),
+        ("//", "/"),
+        ("//a", "/"),
+        ("C:/a", "C:"),
+        ("C:/", "C:"),
+        ("C:", "."),
+        ("a/b//", "a/b"),
+        ("C:/repo/x/", "C:/repo/x"),
+    ] {
+        assert_eq!(dir(path), expected, "dir({path:?})");
+    }
+    for (first, second, expected) in [
+        ("/repo", "../other", "/other"),
+        ("/repo", "../../x", "/x"),
+        ("/", "..", "/"),
+        ("C:/repo", "../..", "."),
+        ("C:/repo", "../../x", "x"),
+        ("C:/repo", "plugins/air/", "C:/repo/plugins/air"),
+        ("/repo/", "a/", "/repo/a"),
+        ("/repo", "/abs", "/repo/abs"),
+    ] {
+        assert_eq!(join(first, second), expected, "join({first:?}, {second:?})");
+    }
+}
+
 #[test]
 fn slash_path_joins_the_components_of_a_relative_host_path() {
     assert_eq!(slash_path(Path::new("")).as_deref(), Some(""));
