@@ -312,6 +312,13 @@ Untested: No focused test covers the complete Settings menu or the staged automa
     `disk install clears the search and selects the new plugin`
   )
 
+- Auto-Update mode for a plugin must remove it from automatic and regular update exclusions.
+- Manual Update mode for a plugin must exclude it from automatic update only.
+- Ignore Updates mode for a plugin must exclude it from automatic and regular update checks.
+  [@test] ../../../platform-tests/testSrc/com/intellij/openapi/application/UpdateCheckerFacadeTest.kt (
+    `plugin excluded from updates is omitted from update check`
+  )
+
 - Repository, proxy, and certificate changes must refresh the page after a successful edit.
 - A repository edit must give the active customizer the added and removed repository URLs.
 

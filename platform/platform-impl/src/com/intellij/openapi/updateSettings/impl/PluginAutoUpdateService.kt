@@ -127,10 +127,15 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
     val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
       listOf(it.contentModuleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
     }.toSet()
+    val updateExclusionService = PluginUpdateExclusionService.getInstance()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
       if (PluginManagerCore.getPlugin(downloader.id) == null) {
         LOG.debug { "skipping the update for plugin ${downloader.pluginName}, as the plugin is not installed" }
+        return@filter false
+      }
+      if (!updateExclusionService.allowedAutoupdate(downloader.id)) {
+        LOG.debug { "skipping the update for plugin ${downloader.pluginName}, as it is excluded from auto-update" }
         return@filter false
       }
       if (existingUpdateState != null && VersionComparatorUtil.compare(existingUpdateState.version, downloader.pluginVersion) >= 0) {

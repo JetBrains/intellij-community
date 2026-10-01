@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.PluginUpdateCheckService
 import com.intellij.openapi.updateSettings.PluginUpdateInfo
 import com.intellij.openapi.updateSettings.impl.InternalPluginResults
+import com.intellij.openapi.updateSettings.impl.PluginUpdateExclusionService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.junit5.RegistryKey
@@ -535,5 +536,33 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
     val internalResult = UpdateCheckerFacade.getInstance().getPluginUpdates(listOf(PluginId.getId(pluginId)))
     assertIsEmpty(internalResult)
+  }
+
+  @Test
+  fun `plugin excluded from updates is omitted from update check`() {
+    val excludedPlugin = "ColourChooser"
+    val excludedPluginId = PluginId.getId(excludedPlugin)
+    val service = PluginUpdateExclusionService.getInstance()
+    service.setExcluded(excludedPluginId, PluginUpdateExclusionService.Exclusion.FromUpdate)
+
+    try {
+      setInstalledPluginMocks(
+        InstalledPluginMock(excludedPlugin, "Colour Chooser", "JetBrains", "0.1", "0", "999.99999", true),
+        InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
+      )
+
+      val serverPlugins = listOf(
+        RepositoryPluginMock(excludedPlugin, "501", "101", "2.0"),
+        RepositoryPluginMock("ImageView", "502", "102", "2.1"),
+      )
+      setServerPlugins(serverPlugins, serverPlugins)
+
+      val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates().pluginUpdates
+      assertEquals(listOf("ImageView"), result.all.map { it.id.idString })
+      assertFalse(getPluginIdsFromQuery(receivedUpdatesRequestUri).contains(excludedPlugin))
+    }
+    finally {
+      service.setExcluded(excludedPluginId, null)
+    }
   }
 }

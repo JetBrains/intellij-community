@@ -371,12 +371,13 @@ object UpdateChecker {
       }
     }
 
-    if (plugins.isEmpty()) {
+    val requestedPlugins = plugins.filter { PluginUpdateExclusionService.getInstance().allowedUpdate(it) }
+    if (requestedPlugins.isEmpty()) {
       return InternalPluginResults(PluginUpdates())
     }
 
     val updateable = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
-    for (id in plugins) {
+    for (id in requestedPlugins) {
       updateable[id] = UpdateCheckerPluginsFacade.getInstance().getPlugin(id)
     }
 
