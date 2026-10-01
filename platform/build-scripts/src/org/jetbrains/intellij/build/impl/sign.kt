@@ -42,8 +42,10 @@ import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 
 @org.jetbrains.annotations.ApiStatus.Internal
 fun isMacLibrary(name: String): Boolean =
@@ -208,6 +210,23 @@ internal fun signMacBinaries(
 
 @org.jetbrains.annotations.ApiStatus.Internal
 fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
+
+/**
+ * Mach-O libraries under [root], relative to [distDir] and sorted, to be returned from `MacDistributionCustomizer.binariesToSign`.
+ * Such libraries may carry a third-party (e.g. Microsoft) signature, which [recursivelySignMacBinaries] keeps as it is,
+ * so they must be listed explicitly to be (re)signed with the JetBrains certificate; otherwise, Apple notarization rejects them.
+ * Fails if there are no such libraries under [root], since a caller passes a directory that is expected to contain them.
+ */
+@org.jetbrains.annotations.ApiStatus.Internal
+fun collectMacLibrariesForExplicitSigning(root: Path, distDir: Path): List<String> {
+  val libraries = root.walk()
+    .filter { isMacLibrary(it.name) && isMacBinary(it) }
+    .map { it.relativeTo(distDir).invariantSeparatorsPathString }
+    .sorted()
+    .toList()
+  check(libraries.isNotEmpty()) { "No macOS libraries in $root" }
+  return libraries
+}
 
 internal fun isSigned(path: Path): Boolean {
   return Files.newByteChannel(path).use {
