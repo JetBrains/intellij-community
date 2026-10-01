@@ -4,15 +4,16 @@ package com.intellij.python.venv.environment
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.sdk.backend.ActivationScript
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.PythonEnvironmentProvider
+import com.intellij.python.sdk.backend.ShellActivation
 import com.intellij.python.venv.PyVenvBundle.message
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.terminal.Shell
+import com.jetbrains.python.sdk.ShellType
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -36,28 +37,32 @@ data class VenvEnvironment(
   /** The `lib/` or `lib/pythonX.Y/` directory of the virtual environment. */
   override val libRoot: Path,
 ) : PythonEnvironment {
-  /**
-   * Resolves the venv activation script that fits [Shell.Type] in the directory next to the python
-   * binary (`Scripts/` on Windows, `bin/` on Unix). Returns `null` if no matching script exists.
-   *
-   * On Windows the choice depends on the shell: PowerShell needs `Activate.ps1` (cmd's `activate.bat`
-   * cannot mutate the calling PowerShell session), while cmd / unknown shells get `activate.bat`.
-   */
   override val isActivatable: Boolean = true
 
   /** A virtual environment is created for one project, so its SDK must say which one. */
   override val requiresAssociation: Boolean = true
 
-  override fun activationScript(shellType: Shell.Type): ActivationScript? {
-    val isWindows = pythonBinaryPath.getEelDescriptor().osFamily == EelOsFamily.Windows
+  /**
+   * Resolves the venv activation script that fits [shellType] in the directory next to the python
+   * binary (`Scripts/` on Windows, `bin/` on Unix). Returns `null` if no matching script exists.
+   *
+   * bash, zsh and sh get `activate`, also on Windows. PowerShell needs `Activate.ps1`, because cmd's `activate.bat`
+   * cannot change the calling PowerShell session. cmd gets `activate.bat`.
+   */
+  override fun activationScript(shellType: ShellType?): ShellActivation? {
+    val eelDescriptor = pythonBinaryPath.getEelDescriptor()
+    val isWindows = eelDescriptor.osFamily.isWindows
+
+    // When the shell is unknown, use the default shell of the OS
+    val shellType = shellType ?: if (isWindows) ShellType.CMD else ShellType.SH
     val scriptName = when (shellType) {
-      Shell.Type.POWERSHELL -> "Activate.ps1"
-      Shell.Type.FISH -> "activate.fish"
-      Shell.Type.CSH -> "activate.csh"
-      Shell.Type.BASH, Shell.Type.SH, Shell.Type.ZSH, Shell.Type.UNKNOWN ->
-        if (isWindows) "activate.bat" else "activate"
+      ShellType.POWERSHELL -> "Activate.ps1"
+      ShellType.FISH -> "activate.fish"
+      ShellType.CSH -> "activate.csh"
+      ShellType.BASH, ShellType.ZSH, ShellType.SH -> "activate"
+      ShellType.CMD -> "activate.bat"
     }
-    return pythonBinaryPath.resolveSibling(scriptName).takeIf { it.exists() }?.let { ActivationScript(it) }
+    return pythonBinaryPath.resolveSibling(scriptName).takeIf { it.exists() }?.let { ShellActivation.SourceScript(it) }
   }
 }
 

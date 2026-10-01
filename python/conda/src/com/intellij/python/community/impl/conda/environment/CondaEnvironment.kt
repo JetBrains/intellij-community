@@ -8,7 +8,6 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.impl.conda.PyCondaBundle.message
-import com.intellij.python.sdk.backend.ActivationScript
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.PythonEnvironmentProvider
 import com.intellij.python.sdk.backend.ShellActivation
@@ -17,7 +16,7 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.sdk.terminal.Shell
+import com.jetbrains.python.sdk.ShellType
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -49,7 +48,18 @@ data class CondaEnvironment(
    */
   override val requiresAssociation: Boolean get() = !isBase
 
-  override fun activationScript(shellType: Shell.Type): ActivationScript? {
+  /**
+   * PowerShell activates through the `conda init` hook, so it gets a snippet. Every other shell sources the script.
+   *
+   * `conda init` writes the hook into the user profile. The IDE runs the hook by hand, because it cannot ask the
+   * user to install the hook and then restart the terminal. When the conda executable is missing, the snippet tells
+   * the user to run `conda init` instead.
+   */
+  override fun activationScript(shellType: ShellType?): ShellActivation? {
+    if (shellType == ShellType.POWERSHELL) {
+      // See the TODO on [ShellActivation.Snippet]: only PowerShell runs a snippet
+      return ShellActivation.Snippet(powerShellActivationCode())
+    }
     val osFamily = pythonBinaryPath.getEelDescriptor().osFamily
     val isWindows = osFamily == EelOsFamily.Windows
 
@@ -82,20 +92,9 @@ data class CondaEnvironment(
           patched
         }
 
-      ActivationScript(activateScript, listOf(pythonHomePath.pathString), postProcessEnv)
+      ShellActivation.SourceScript(activateScript, listOf(pythonHomePath.pathString), postProcessEnv)
     }
   }
-
-  /**
-   * PowerShell activates through the `conda init` hook, so it gets a snippet. Every other shell sources the script.
-   *
-   * `conda init` writes the hook into the user profile. The IDE runs the hook by hand, because it cannot ask the
-   * user to install the hook and then restart the terminal. When the conda executable is missing, the snippet tells
-   * the user to run `conda init` instead.
-   */
-  override fun shellActivation(shellType: Shell.Type): ShellActivation? =
-    if (shellType == Shell.Type.POWERSHELL) ShellActivation.Snippet(powerShellActivationCode())
-    else super.shellActivation(shellType)
 
   private fun powerShellActivationCode(): String {
     val condaPath = condaExecutable?.takeIf { it.isExecutable() }

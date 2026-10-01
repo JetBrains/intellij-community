@@ -7,19 +7,22 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.getShell
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.ShellActivation
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService.Companion.nonActivationEnvVars
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.terminal.Shell
-import com.jetbrains.python.sdk.terminal.Shell.Companion.systemDefaultShell
+import com.jetbrains.python.sdk.ShellType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -62,45 +65,63 @@ internal class ActivatableEnvironmentService {
   }
 
   suspend fun activationEnvironment(environment: PythonEnvironment): PyResult<Map<String, String>> = withContext(Dispatchers.IO) {
-    try {
-      // Only a successful read is cached: a throwing loader records nothing in Caffeine, so a transient failure
-      // (e.g. a timed-out conda activation) is retried next call instead of being remembered as an empty map.
-      val value = cache.get(environment.pythonBinaryPath) {
-        readActivationEnvironment(environment)
-      }
-      PyResult.success(value)
+    val key = environment.pythonBinaryPath
+    val cachedValue = cache.getIfPresent(key)
+    if (cachedValue != null) {
+      PyResult.success(cachedValue)
     }
-    catch (e: IOException) {
-      thisLogger().warn("Failed to read the activation environment of ${environment.pythonBinaryPath}", e)
-      @NlsSafe val message = e.localizedMessage
-      PyResult.localizedError(message)
+    else {
+      try {
+        val shell = key.getEelDescriptor().toEelApi().exec.getShell().first
+        // Only a successful read is cached: a throwing loader records nothing in Caffeine, so a transient failure
+        // (e.g. a timed-out conda activation) is retried next call instead of being remembered as an empty map.
+        val value = cache.get(key) {
+          readActivationEnvironment(environment, shell)
+        }
+        PyResult.success(value)
+      }
+      catch (e: IOException) {
+        thisLogger().warn("Failed to read the activation environment of $key", e)
+        @NlsSafe val message = e.localizedMessage
+        PyResult.localizedError(message)
+      }
     }
   }
 
   /**
    * Reads the environment produced by activating [environment].
    *
-   * The login shell is read twice — once plain, once after sourcing the activation script — and only the variables
+   * The [shell] is read twice — once plain, once after sourcing the activation script — and only the variables
    * the script added or changed are returned (see [activationEnvDelta]). Diffing against a reference shell keeps
    * whatever the script exports (conda `activate.d` hooks routinely set arbitrary package-specific variables,
    * PY-71917) while not leaking the reader shell's own variables into the target process.
+   *
+   * [shell] is the shell of the eel ([getShell]): cmd on Windows, sh on Unix. It is not the login shell of the user.
+   * On Unix, [ShellEnvironmentReader.shellCommand] sources the script with POSIX syntax (`. 'script' && env`),
+   * and fish, csh or pwsh cannot run it. So the function asks for the script of [shell], not of the user shell.
    */
   @OptIn(LowLevelLocalMachineAccess::class)
-  private fun readActivationEnvironment(environment: PythonEnvironment): Map<String, String> {
-    if (environment.pythonBinaryPath.getEelDescriptor() != LocalEelDescriptor) {
+  @RequiresBackgroundThread
+  private fun readActivationEnvironment(environment: PythonEnvironment, shell: EelPath): Map<String, String> {
+    val eelDescriptor = environment.pythonBinaryPath.getEelDescriptor()
+    if (eelDescriptor != LocalEelDescriptor) {
       //  ShellEnvironmentReader is broken, doesn't work with remote machines, and probably isn't required
       return emptyMap()
     }
-    val shellType = systemDefaultShell?.type ?: Shell.Type.UNKNOWN
-    val script = environment.activationScript(shellType) ?: return emptyMap()
-    val isWindows = script.scriptPath.getEelDescriptor().osFamily == EelOsFamily.Windows
 
-    fun readShellEnv(sourced: ActivationScript?): Map<String, String> {
+    val isWindows = eelDescriptor.osFamily.isWindows
+    val shellType = if (isWindows) ShellType.CMD else ShellType.SH
+    val script = when (val activation = environment.activationScript(shellType)) {
+      is ShellActivation.SourceScript -> activation
+      is ShellActivation.Snippet, null -> return emptyMap()
+    }
+
+    fun readShellEnv(sourced: ShellActivation.SourceScript?): Map<String, String> {
       val command = if (isWindows) {
         ShellEnvironmentReader.winShellCommand(sourced?.scriptPath, sourced?.args)
       }
       else {
-        ShellEnvironmentReader.shellCommand(systemDefaultShell?.path?.toString(), sourced?.scriptPath, false, sourced?.args)
+        ShellEnvironmentReader.shellCommand(shell.toString(), sourced?.scriptPath, false, sourced?.args)
       }
       command.environment().putAll(EnvironmentUtil.getEnvironmentMap())
       return ShellEnvironmentReader.readEnvironment(command, activationEnvReaderTimeoutMs()).first
@@ -111,7 +132,6 @@ internal class ActivatableEnvironmentService {
     val envDelta = activationEnvDelta(referenceEnv = referenceEnv, activatedEnv = activatedEnv)
     return script.postProcessEnv(envDelta)
   }
-
 
   companion object {
     /**

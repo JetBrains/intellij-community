@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
@@ -20,12 +21,12 @@ import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.python.junit5Tests.framework.pyModuleFixture
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -43,6 +44,7 @@ import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
+import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.util.ShellIntegration
@@ -67,7 +69,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 @OptIn(LowLevelLocalMachineAccess::class)
 @PyEnvTestCaseWithConda
-class PyVirtualEnvTerminalCustomizerTest {
+internal class PyVirtualEnvTerminalCustomizerTest {
   private val projectFixture = projectFixture()
   private val tempDirFixture = tempPathFixture(prefix = "some_path_with_underscores")
   private val moduleFixture = projectFixture.pyModuleFixture(tempDirFixture, addPathToSourceRoot = true)
@@ -106,7 +108,7 @@ class PyVirtualEnvTerminalCustomizerTest {
   }
 
 
-  @ThrowsChecked(ExecuteProcessException::class)
+  @ThrowsChecked(ExecuteProcessException::class, EelReceiveChannelException::class)
   @CartesianTest
   fun testShellActivation(
     @CartesianTest.Values(booleans = [true, false]) useConda: Boolean,
@@ -257,11 +259,12 @@ class PyVirtualEnvTerminalCustomizerTest {
   private suspend fun getShellStartupOptions(workDir: Path, shellType: ShellType): ShellStartupOptions {
     val sut = PyVirtualEnvTerminalCustomizer()
     val env = mutableMapOf<String, String>()
-    val command = arrayOf(getShellPath(shellType).pathString)
+    val shellPath = getShellPath(shellType)
+    val command = arrayOf(shellPath.pathString)
     sut.customizeEnvironment(
       projectFixture.get(),
       workDir.pathString,
-      command,
+      ShellName.of(shellPath.fileName.name),
       env,
       localEel.descriptor)
 

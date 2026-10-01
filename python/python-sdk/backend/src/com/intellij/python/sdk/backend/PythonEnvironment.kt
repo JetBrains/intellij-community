@@ -2,24 +2,11 @@
 package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
-import com.jetbrains.python.sdk.terminal.Shell
+import com.jetbrains.python.sdk.ShellType
 import java.nio.file.Path
-
-/**
- * A script a shell sources to activate an environment.
- */
-data class ActivationScript(
-  val scriptPath: Path,
-  val args: List<String>? = null,
-  /**
-   * Post-processes the environment captured after running this activation script. Identity by default.
-   * conda uses it to append the base install's `Library\bin` to `PATH` (PY-57146): conda runs base python
-   * under the hood and its MKL DLLs live there, which activating a non-base env does not add.
-   */
-  val postProcessEnv: (Map<String, String>) -> Map<String, String> = { it },
-)
 
 /**
  * What a live shell runs to activate an environment.
@@ -29,8 +16,19 @@ data class ActivationScript(
  */
 sealed interface ShellActivation {
   /** A script the shell sources, with its arguments. */
-  data class SourceScript(val scriptPath: Path, val args: List<String>? = null) : ShellActivation
+  data class SourceScript(
+    val scriptPath: Path,
+    val args: List<String>? = null,
+    /**
+     * Post-processes the environment captured after running this activation script. Identity by default.
+     * conda uses it to append the base install's `Library\bin` to `PATH` (PY-57146): conda runs base python
+     * under the hood and its MKL DLLs live there, which activating a non-base env does not add.
+     */
+    val postProcessEnv: (Map<String, String>) -> Map<String, String> = { it },
+  ) : ShellActivation
 
+  // TODO: Only PowerShell runs a snippet. Extend the terminal API to run any code.
+  //  A file is not an option: PowerShell requires a signed script.
   /** Shell code the shell runs. conda uses it, because it activates through a hook rather than a script. */
   data class Snippet(val code: String) : ShellActivation
 }
@@ -89,31 +87,25 @@ interface PythonEnvironment {
    */
   val requiresAssociation: Boolean get() = false
 
-  /** Whether anything must run to activate this environment. Answers for every shell, unlike the two below. */
+  /** Whether anything must run to activate this environment. Answers for every shell, unlike [activationScript]. */
   val isActivatable: Boolean get() = false
 
   /**
-   * The script the IDE sources to read this environment's variables, or null when there is none.
+   * What a shell of [shellType] must run to activate this environment, or null when there is nothing to run.
    *
-   * The IDE runs it in a child shell and keeps the variables it added, so the script must be a file that a shell
-   * can source. Use [shellActivation] for the shell the user sees.
+   * Two callers use it:
+   * - The terminal gives the result to the shell the user sees.
+   * - The IDE sources a [ShellActivation.SourceScript] in a child shell and keeps the variables that the script
+   *   added. Only this caller applies [ShellActivation.SourceScript.postProcessEnv].
+   *
+   * When [shellType] is null, the shell is not known. Then the environment uses the default shell of the OS:
+   * cmd on Windows, sh on Unix. This is usually correct, but not always.
+   *
+   * Most environments return a [ShellActivation.SourceScript]. conda on PowerShell returns a [ShellActivation.Snippet],
+   * because it activates through the `conda init` hook.
    */
-  fun activationScript(shellType: Shell.Type): ActivationScript? = null
-
-  /**
-   * What a live shell running [shellType] must run to activate this environment, or null when there is nothing to
-   * run.
-   *
-   * Sourcing [activationScript] serves most environments and most shells, so that is the default. The two answers
-   * differ only where a shell activates through something the IDE cannot source and capture: conda on PowerShell
-   * runs the `conda init` hook, and hands the IDE its `activate` script instead.
-   *
-   * [postProcessEnv][ActivationScript.postProcessEnv] plays no part here. The shell activates itself and the IDE
-   * never reads the result back, which is what makes this different from [activationEnvironment].
-   */
-  fun shellActivation(shellType: Shell.Type): ShellActivation? =
-    activationScript(shellType)?.let { ShellActivation.SourceScript(it.scriptPath, it.args) }
-
+  @RequiresBackgroundThread
+  fun activationScript(shellType: ShellType?): ShellActivation?
 }
 
 /**
@@ -124,5 +116,7 @@ data class SystemPythonEnvironment(
   /** Always null: a system interpreter records nothing about itself, so its version is only known by running it. */
   override val version: @NlsSafe String? = null,
   override val pythonBinaryPath: PythonBinary,
-) : PythonEnvironment
+) : PythonEnvironment {
+  override fun activationScript(shellType: ShellType?): ShellActivation? = null
+}
 
