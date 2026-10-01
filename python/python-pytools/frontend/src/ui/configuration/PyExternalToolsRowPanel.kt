@@ -85,6 +85,7 @@ internal class PyExternalToolRowPanel(
         return@addActionListener
       }
       row.staged = row.staged.copy(enabled = newEnabled)
+      row.enabledEdited = true
       // Turning off a tool that is the staged type engine clears the staged engine, keeping them in sync.
       if (!newEnabled && isEngine) host.onTypeEngineToolDisabled()
       updateHeader()

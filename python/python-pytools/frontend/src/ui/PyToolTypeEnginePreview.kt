@@ -5,6 +5,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
+import com.intellij.python.pytools.common.FusId
+import com.intellij.python.pytools.frontend.PyToolsFrontendState
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class PyToolTypeEnginePreview {
+class PyToolTypeEnginePreview(private val project: Project) {
   val stagedEnginePackage: AtomicProperty<String?> = AtomicProperty(null)
 
   /**
@@ -28,6 +30,15 @@ class PyToolTypeEnginePreview {
    * to flip the toggle, and committed at the engine's Apply so it works without opening that page.
    */
   val pendingDisable: AtomicProperty<Set<String>> = AtomicProperty(emptySet())
+
+  /**
+   * Returns true when the persisted enabled flag of the tool [packageName] is on.
+   *
+   * The selected engine runs its tool without this flag. So only a tool with this flag on stays in use after
+   * a switch to another engine. The answer is false until the frontend receives the flags from the backend.
+   */
+  fun isToolEnabled(packageName: String): Boolean =
+    PyToolsFrontendState.getInstance(project).isEnabled(FusId(packageName))
 
   companion object {
     fun getInstance(project: Project): PyToolTypeEnginePreview = project.service()

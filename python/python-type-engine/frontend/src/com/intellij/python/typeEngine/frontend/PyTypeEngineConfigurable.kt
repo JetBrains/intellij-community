@@ -64,9 +64,10 @@ class PyTypeEngineConfigurable(
     availableOptions.first { it.id == id }
 
   /**
-   * A user picked [newEngine] in the segmented button. Publish it to the shared bridge, and — when
-   * switching **away** from a tool-backed engine — offer to turn that engine's External Tools tool off
-   * too (it may be used for other purposes). The choice is staged in [PyToolTypeEnginePreview.pendingDisable]
+   * A user picked [newEngine] in the segmented button. Publish it to the shared bridge.
+   *
+   * When the user switches away from a tool-backed engine whose tool flag is on, offer to turn that tool off
+   * too. The tool may be used for other purposes. The choice is staged in [PyToolTypeEnginePreview.pendingDisable]
    * and committed at Apply, so it works whether or not the External Tools page is open.
    */
   private fun onEngineSelectedByUser(newEngine: PyTypeEngineId) {
@@ -77,9 +78,10 @@ class PyTypeEngineConfigurable(
     if (newEngine.packageName.isNotEmpty()) {
       preview.pendingDisable.set(preview.pendingDisable.get() - newEngine.packageName)
     }
-    // Only prompt when leaving the *persisted* (actually active) engine. A merely staged engine that was
-    // never applied has nothing enabled to turn off — its tool auto-reverts on the External Tools page.
+    // Prompt only when the user leaves the persisted engine and turned its tool on. A tool that runs only as
+    // the engine stops with the engine.
     if (oldType == PyTypeEngineId.PYCHARM || oldType == newEngine || oldType != previousTypeEngine) return
+    if (!preview.isToolEnabled(oldType.packageName)) return
     val turnOff = MessageDialogBuilder.yesNo(
       TypeEngineFrontendBundle.message("type.engine.disable.tool.title"),
       TypeEngineFrontendBundle.message("type.engine.disable.tool.message", frontendFor(oldType).presentableName),

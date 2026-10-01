@@ -44,6 +44,12 @@ internal class ToolRow(
   val tool: PyTool,
   var staged: RowState,
   var persistedEnabled: Boolean = false,
+  /**
+   * True when the user set the enable toggle since the last reset or Apply.
+   *
+   * The page also sets the toggle for the type engine. Only a toggle that the user set is an edit.
+   */
+  var enabledEdited: Boolean = false,
   var persistedCustomPath: String? = null,
   var detail: UnnamedConfigurable? = null,
   /** Non-null when the most recent validation of [staged].customPath failed. */

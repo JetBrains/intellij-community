@@ -14,7 +14,6 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector
-import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.pytools.backend.PyToolsState
@@ -69,29 +68,29 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
     awaitClose { connection.disconnect() }
   }
 
+  /**
+   * Selects the engine, then turns off the tools that the request names.
+   *
+   * The selection does not turn on the tool of the selected engine.
+   */
   override suspend fun select(request: PyTypeEngineSelectionRequest): PyTypeEngineStateDto {
     val project = request.projectId.findProject()
-    val toolsState = PyToolsState.getInstance(project)
-    ProjectLevelPyTool.findByPackageName(request.selected.packageName)?.let { tool ->
-      val isBundledPyreflyEnabled = tool is PyreflyPyTool && PyreflyPyTool.isBundledPyreflyEnabled()
-      if (!isBundledPyreflyEnabled && !toolsState.isEnabled(tool)) {
-        tool.setEnabledOn(project, true)
-      }
-    }
-    request.disabledToolPackages.forEach { packageName ->
-      ProjectLevelPyTool.findByPackageName(packageName)?.let { tool ->
-        if (toolsState.isEnabled(tool)) {
-          tool.setEnabledOn(project, false)
-        }
-      }
-    }
-
     val settings = PyTypeEngineProjectSettings.getInstance(project)
     val selected = request.selected.toBackendType()
     if (settings.typeEngine != selected) {
       settings.typeEngine = selected
       PyTypeEngineUsageCollector.logEngineChanged(project, selected)
       PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
+    }
+
+    // The engine goes first. Turning off the tool of the selected engine also deselects that engine.
+    val toolsState = PyToolsState.getInstance(project)
+    request.disabledToolPackages.forEach { packageName ->
+      ProjectLevelPyTool.findByPackageName(packageName)?.let { tool ->
+        if (toolsState.isEnabled(tool)) {
+          tool.setEnabledOn(project, false)
+        }
+      }
     }
     return state(project)
   }

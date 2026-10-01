@@ -26,6 +26,9 @@ class TyPyTool : PyLspTool<TyConfiguration>() {
   override fun configuration(project: Project): TyConfiguration = project.service()
 
   override fun onEnabledChanged(project: Project, enabled: Boolean) {
+    if (!enabled && isSelectedAsTypeEngine(project)) {
+      PyTypeEngineProjectSettings.getInstance(project).typeEngine = PyTypeEngineType.PYCHARM
+    }
     val manager = LspClientManager.getInstance(project)
     if (isActiveOn(project)) manager.startClientsIfNeeded(TyLspIntegrationProvider::class.java)
     else manager.stopClients(TyLspIntegrationProvider::class.java)

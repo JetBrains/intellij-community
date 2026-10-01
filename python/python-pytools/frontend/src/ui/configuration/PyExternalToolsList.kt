@@ -127,11 +127,14 @@ internal class PyExternalToolsList(
         when {
           // Became the staged engine → turn its toggle on.
           staged == pkg && !row.staged.enabled -> {
-            row.staged = row.staged.copy(enabled = true); refreshRow(row)
+            row.staged = row.staged.copy(enabled = true)
+            row.enabledEdited = false
+            refreshRow(row)
           }
           // Was on only because it was the staged engine (not persisted-enabled) and no longer is →
           // revert to off, so staging an engine and switching away leaves the tool unchanged.
-          lastStagedEngine == pkg && staged != pkg && row.staged.enabled && !snapshotOf(row).enabled -> {
+          lastStagedEngine == pkg && staged != pkg && row.staged.enabled &&
+          !snapshotOf(row).enabled && !row.enabledEdited -> {
             row.staged = row.staged.copy(enabled = false); refreshRow(row)
           }
         }
@@ -143,7 +146,9 @@ internal class PyExternalToolsList(
     preview.pendingDisable.afterChange(engineObserverDisposable) { pending ->
       rows.forEach { row ->
         if (row.tool.fusId.value in pending && row.staged.enabled) {
-          row.staged = row.staged.copy(enabled = false); refreshRow(row)
+          row.staged = row.staged.copy(enabled = false)
+          row.enabledEdited = true
+          refreshRow(row)
         }
       }
     }
@@ -271,6 +276,7 @@ internal class PyExternalToolsList(
       row.applyBackendState(state, updateStagedPath = true, updateStagedEnabled = true)
       if (enabledUntouched && !row.staged.enabled && isEngineFor(row.tool)) {
         row.staged = row.staged.copy(enabled = true)
+        row.enabledEdited = false
       }
       persistedPaths[row.tool.fusId] = row.persistedCustomPath
     }
@@ -289,25 +295,27 @@ internal class PyExternalToolsList(
     }
   }
 
-  /** True iff any row has unsaved edits — a staged enable/path diff, or a dirty detail configurable. */
+  /** True iff any row has unsaved edits: an [enabledToApply] edit, a path edit, or a dirty detail configurable. */
   fun isModified(): Boolean = rows.any { row ->
-    row.staged != snapshotOf(row) || row.detail?.isModified() == true
+    enabledToApply(row) != null ||
+    row.staged.customPath != snapshotOf(row).customPath ||
+    row.detail?.isModified() == true
   }
 
-  /** Persist all rows' staged state on the backend and apply any dirty detail configurables. */
+  /** Persist all rows' edits on the backend and apply any dirty detail configurables. See [enabledToApply]. */
   fun apply() {
     checkNoPathErrors(rows)
     rows.forEach { row ->
-      val current = snapshotOf(row)
       val detailModified = row.detail?.isModified() == true
-      val rowChanged = row.staged != current || detailModified
-      val pathChanged = row.staged.customPath != current.customPath
-      val enabledChanged = row.staged.enabled != current.enabled
+      val pathChanged = row.staged.customPath != snapshotOf(row).customPath
+      val enabled = enabledToApply(row)
+      val rowChanged = enabled != null || pathChanged || detailModified
       // The path goes before an enable, so the server that the enable starts resolves the binary the
       // user chose. It goes after a disable, so a tool the user turns off does not restart for the path.
-      if (enabledChanged && !row.staged.enabled) applyEnabled(row)
+      if (enabled == false) applyEnabled(row, false)
       if (pathChanged) applyPath(row)
-      if (enabledChanged && row.staged.enabled) applyEnabled(row)
+      if (enabled == true) applyEnabled(row, true)
+      row.enabledEdited = false
       if (detailModified) {
         try {
           row.detail?.apply()
@@ -346,13 +354,13 @@ internal class PyExternalToolsList(
     persistedPaths[row.tool.fusId] = row.persistedCustomPath
   }
 
-  private fun applyEnabled(row: ToolRow) {
+  private fun applyEnabled(row: ToolRow, enabled: Boolean) {
     val backendState = runWithModalProgressBlocking(
       project,
       PyToolsUiBundle.message("settings.external.tools.apply.progress"),
     ) {
       ProjectLevelPyToolApi.getInstance().setEnabled(
-        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.fusId), row.staged.enabled),
+        PyToolSetEnabledRequest(PyToolRequest(project.projectId(), row.tool.fusId), enabled),
       )
     }
     row.applyBackendState(backendState)
@@ -363,6 +371,7 @@ internal class PyExternalToolsList(
   fun reset() {
     rows.forEach { row ->
       row.staged = stagedFor(row)
+      row.enabledEdited = false
       row.detail?.reset()
       // Re-probe so the path field / version reflect the reverted path, and clear any stale error
       // from a rejected custom edit (a non-custom probe never clears it on its own).
@@ -374,6 +383,10 @@ internal class PyExternalToolsList(
 
   fun disposeUIResources() {
     Disposer.dispose(engineObserverDisposable)
+    // The staged engine belongs to this Settings dialog. The Type Engine page also clears it, but only after
+    // the user opened that page.
+    PyToolTypeEnginePreview.getInstance(project).stagedEnginePackage.set(null)
+    PyToolTypeEnginePreview.getInstance(project).pendingDisable.set(emptySet())
     rows.forEach { it.detail?.disposeUIResources(); it.detail = null }
   }
 
@@ -432,13 +445,29 @@ internal class PyExternalToolsList(
 
   /**
    * Initial (and post-reset) editing state for a row: the persisted [snapshotOf], but with the enable
-   * toggle shown **on** when the tool is the project's current type engine ([isEngineFor]). This reflects
-   * the engine selection as a pending "enabled" edit; since [snapshotOf] stays the modified/apply
-   * baseline, the edit is detected and persisted on Apply, and discarded if not applied.
+   * toggle shown **on** when the tool is the project's current type engine ([isEngineFor]).
+   *
+   * This toggle is not an edit, and Apply does not persist it. See [enabledToApply].
    */
   private fun stagedFor(row: ToolRow): RowState {
     val persisted = snapshotOf(row)
     return if (!persisted.enabled && isEngineFor(row.tool)) persisted.copy(enabled = true) else persisted
+  }
+
+  /**
+   * Returns the enabled flag that Apply sends for [row], or `null` when the row has no enabled edit.
+   *
+   * Only a toggle that the user set is an edit. The page turns the toggle on for the type engine, but the
+   * engine runs the tool without the flag. A persisted flag would keep the tool running after a switch to
+   * another engine.
+   *
+   * A toggle that the user turned off on the tool of the selected engine is an edit, also when the flag is
+   * off. The backend deselects the engine when it turns off the tool of the engine.
+   */
+  private fun enabledToApply(row: ToolRow): Boolean? {
+    if (!row.enabledEdited) return null
+    val enabled = row.staged.enabled
+    return enabled.takeIf { it != row.persistedEnabled || !it && row.selectedAsTypeEngine }
   }
 
   /**
