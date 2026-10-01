@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -51,7 +52,13 @@ private data class Jediterm(val source: String, val sourceArgs: List<String>? = 
     const val JEDITERM_SOURCE_SINGLE_ARG = "JEDITERM_SOURCE_SINGLE_ARG"
   }
 
-  constructor(path: Path, args: List<String>? = null) : this(path.toAbsolutePath().toString(), args)
+  /**
+   * [path] is a path on the IDE side, for example `\\wsl.localhost\Ubuntu\home\user\.venv\bin\activate`.
+   * The shell runs inside the eel of [path] and cannot open this path.
+   * So [asEelPath] converts [path] to the path inside the eel, for example `/home/user/.venv/bin/activate`.
+   * A local path does not change.
+   */
+  constructor(path: Path, args: List<String>? = null) : this(path.asEelPath().toString(), args)
 
   fun buildEnvironmentVariables(): Map<String, String> = buildMap {
     put(JEDITERM_SOURCE, source)

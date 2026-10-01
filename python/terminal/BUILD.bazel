@@ -82,6 +82,10 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5/eel",
+        "//platform/testFramework/junit5/eel:eel_test_lib",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.terminal.tests` end

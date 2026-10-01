@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.sdk.backend.ShellActivation
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.ShellType
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.name
 
 /**
@@ -22,7 +22,7 @@ fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, Strin
     when (it) {
       is ShellActivation.Snippet -> null
       is ShellActivation.SourceScript -> {
-        Pair(it.scriptPath.absolutePathString(), it.args?.firstOrNull())
+        Pair(it.scriptPath.asEelPath().toString(), it.args?.firstOrNull())
       }
     }
   }

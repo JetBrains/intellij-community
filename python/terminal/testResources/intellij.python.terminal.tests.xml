@@ -11,6 +11,7 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.testFramework.junit5.eel.tests"/>
     <module name="intellij.python.community.junit5Tests.framework"/>
     <module name="intellij.python.terminal.backend"/>
     <module name="intellij.python.test.env.junit5"/>
