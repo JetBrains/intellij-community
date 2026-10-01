@@ -148,6 +148,7 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("platform/platform-api/resources/intellij.platform.ide.actions.xml", "intellij.platform.ide"),
     ("platform/platform-impl/initial-config-import/resources/intellij.platform.ide.initialConfigImport.actions.xml", "intellij.platform.ide.initialConfigImport"),
     ("platform/platform-impl/resources/intellij.platform.ide.impl.actions.xml", "intellij.platform.ide.impl"),
+    ("platform/platform-resources/generated/META-INF/intellij.moduleSets.builtInServer.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.compose.runtime.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.core.ide.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.core.lang.xml", "intellij.platform.resources"),

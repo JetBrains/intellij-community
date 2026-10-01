@@ -138,7 +138,7 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
 class DriverWithContextError(message: String, e: Throwable) : AssertionError(message, e)
 
 
-@Remote("org.jetbrains.builtInWebServer.BuiltInServerOptions")
+@Remote("org.jetbrains.builtInWebServer.BuiltInServerOptions", plugin = "com.intellij/intellij.platform.builtInServer.impl")
 private interface BuiltInServerOptions {
   fun getInstance(): BuiltInServerOptions
   fun getEffectiveBuiltInServerPort(): Int

@@ -46,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.resources.iml",
+        "generated/META-INF/intellij.moduleSets.builtInServer.xml",
         "generated/META-INF/intellij.moduleSets.compose.runtime.xml",
         "generated/META-INF/intellij.moduleSets.core.ide.xml",
         "generated/META-INF/intellij.moduleSets.core.lang.xml",

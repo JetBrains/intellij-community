@@ -136,7 +136,6 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.mvstore")
 
     embeddedModule("intellij.libraries.netty.buffer")
-    embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
     embeddedModule("intellij.libraries.netty.codec.protobuf")
     module("intellij.libraries.netty.handler.proxy")

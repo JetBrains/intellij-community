@@ -102,7 +102,6 @@
     <module name="intellij.libraries.markdown" loading="embedded"/>
     <module name="intellij.libraries.mvstore" loading="embedded"/>
     <module name="intellij.libraries.netty.buffer" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.protobuf" loading="embedded"/>
     <module name="intellij.libraries.netty.handler.proxy"/>
@@ -366,6 +365,11 @@
     <!-- endregion -->
     <!-- endregion -->
 
+    <!-- region nested: essential > builtInServer -->
+    <module name="intellij.libraries.netty.codec.compression"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <!-- endregion -->
+
     <!-- region direct modules -->
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.scopes.backend"/>
@@ -390,7 +394,6 @@
     <module name="intellij.platform.completion.backend"/>
     <module name="intellij.platform.polySymbols" loading="embedded"/>
     <module name="intellij.platform.polySymbols.web"/>
-    <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.dependencyUpdater"/>
     <module name="intellij.platform.externalSystem.impl"/>

@@ -23,6 +23,22 @@
 # stale plan name: this is read during module-extension evaluation, so failing would make the very tool that
 # regenerates it unbuildable.
 DEV_DIST_MODULE_SETS = {
+    "intellij.moduleSets.builtInServer": struct(
+        modules = [
+            "intellij.libraries.netty.codec.compression",
+            "intellij.platform.builtInServer.impl",
+        ],
+        nested = [
+        ],
+        packed = {
+            "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
+            "intellij.platform.builtInServer.impl": "//platform/built-in-server:builtInServer-impl_content_module_jar",
+        },
+        module_system_loaded = [
+            "intellij.libraries.netty.codec.compression",
+            "intellij.platform.builtInServer.impl",
+        ],
+    ),
     "intellij.moduleSets.compose.runtime": struct(
         modules = [
             "intellij.libraries.compose.runtime.desktop",
@@ -390,7 +406,6 @@ DEV_DIST_MODULE_SETS = {
     ),
     "intellij.moduleSets.essential": struct(
         modules = [
-            "intellij.platform.builtInServer.impl",
             "intellij.platform.completion.backend",
             "intellij.platform.completion.common",
             "intellij.platform.completion.frontend",
@@ -421,10 +436,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.util.commonsLangV2Shim",
         ],
         nested = [
+            "intellij.moduleSets.builtInServer",
             "intellij.moduleSets.essential.minimal",
         ],
         packed = {
-            "intellij.platform.builtInServer.impl": "//platform/built-in-server:builtInServer-impl_content_module_jar",
             "intellij.platform.completion.backend": "//platform/completion/backend:backend_content_module_jar",
             "intellij.platform.completion.common": "//platform/completion/common:common_content_module_jar",
             "intellij.platform.completion.frontend": "//platform/completion/frontend:frontend_content_module_jar",
@@ -1030,7 +1045,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.markdown",
             "intellij.libraries.mvstore",
             "intellij.libraries.netty.buffer",
-            "intellij.libraries.netty.codec.compression",
             "intellij.libraries.netty.codec.http",
             "intellij.libraries.netty.codec.protobuf",
             "intellij.libraries.netty.handler.proxy",
@@ -1114,7 +1128,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.markdown": "//libraries/markdown:markdown_content_module_jar",
             "intellij.libraries.mvstore": "//libraries/mvstore:mvstore_content_module_jar",
             "intellij.libraries.netty.buffer": "//libraries/netty/buffer:buffer_content_module_jar",
-            "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
             "intellij.libraries.netty.codec.http": "//libraries/netty/codec-http:libraries-netty-codec-http_content_module_jar",
             "intellij.libraries.netty.codec.protobuf": "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_content_module_jar",
             "intellij.libraries.netty.handler.proxy": "//libraries/netty/handler-proxy:libraries-netty-handler-proxy_content_module_jar",

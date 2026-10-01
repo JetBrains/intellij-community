@@ -155,7 +155,7 @@ object CommunityModuleSets {
 
     // Platform language modules (moved from platformLangBase for consolidation)
     // These provide core IDE functionality needed by all full IDE products
-    embeddedModule("intellij.platform.builtInServer.impl")
+    moduleSet(builtInServer())
     module("intellij.platform.externalSystem")
     module("intellij.platform.externalSystem.dependencyUpdater")
     module("intellij.platform.externalSystem.impl")
@@ -184,6 +184,18 @@ object CommunityModuleSets {
   // endregion
 
   // region Feature Module Sets
+
+  /**
+   * The built-in HTTP server and its REST services.
+   *
+   * The API module `intellij.platform.builtInServer` stays in [CoreModuleSets.coreLang], because the core
+   * resolves the server through it. The implementation loads in its own class loader.
+   * The netty compression codec is a dependency of `intellij.platform.builtInServer.impl` only.
+   */
+  fun builtInServer(): ModuleSet = moduleSet("builtInServer") {
+    module("intellij.libraries.netty.codec.compression")
+    module("intellij.platform.builtInServer.impl")
+  }
 
   /**
    * VCS (Version Control System) shared anchor modules.
