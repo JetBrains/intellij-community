@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyUnreachableCodeInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -979,6 +980,18 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       def func(val: Decimal) -> None:
           res = val
       #    └ TYPE Decimal
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92706"])
+    @TestInspections(enableInspections = [PyUnreachableCodeInspection::class])
+    fun `branch for an older version or another platform is reachable`() = test("""
+      import sys
+
+      if sys.version_info < (3, 9):
+          old = 1 # WARNING FIXME This code is unreachable
+      if sys.platform == "win32":
+          win = 1 # WARNING FIXME This code is unreachable
       """.trimIndent())
   }
 

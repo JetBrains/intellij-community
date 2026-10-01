@@ -1,13 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.types
 
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
+import com.jetbrains.python.extensions.isExhaustive
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyMatchStatement
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -840,6 +847,59 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           else:
               expr = v
       #       └ TYPE Color
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92703"])
+    fun `match that covers every member is exhaustive`() = runInEdtAndWait {
+      val file = myFixture.configureByText("a.py", """
+        from enum import Enum
+
+        class Color(Enum):
+            RED = 1
+            GREEN = 2
+
+        def f(c: Color) -> int:
+            match c:
+                case Color.RED: return 1
+                case Color.GREEN: return 2
+        """.trimIndent())
+      val match = PsiTreeUtil.findChildOfType(file, PyMatchStatement::class.java)!!
+      val context = TypeEvalContext.codeAnalysis(file.project, file)
+      // FIXME: the match is exhaustive
+      assertEquals(false, runReadActionBlocking { match.isExhaustive(context) })
+    }
+
+    @Test
+    @TestFor(issues = ["PY-92703"])
+    fun `match that misses a member is reported`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+          BLUE = 3
+
+      def f(c: Color) -> int:
+      #                  ^^^ WARNING Expected type 'int', got 'Literal[2, 1] | None' instead
+          match c: # WEAK_WARNING FIXME Cases do not cover Color.BLUE
+              case Color.RED: return 1
+              case Color.GREEN: return 2
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92703"])
+    fun `function with an exhaustive match does not return None`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+
+      def f(c: Color) -> int:
+          match c:
+              case Color.RED: return 1
+              case Color.GREEN: return 2
       """.trimIndent())
   }
 

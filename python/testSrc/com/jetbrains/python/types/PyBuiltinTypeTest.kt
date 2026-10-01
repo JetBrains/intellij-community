@@ -1342,4 +1342,30 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     f(open('foo').read())
     g(open('foo').read()) # WARNING Expected type 'int', got 'str' instead
     """.trimIndent())
+
+  @Nested
+  inner class ReMatchGroups {
+    @Test
+    @TestFor(issues = ["PY-92702"])
+    fun `unknown group name is reported`() = test("""
+      import re
+
+      m = re.match(r"(?P<year>\d+)", "2026")
+      if m:
+          m.group("yaer") # WARNING FIXME No group 'yaer' in the pattern
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class StructPackAndUnpack {
+    @Test
+    @TestFor(issues = ["PY-92705"])
+    fun `struct unpack gives the element types and pack checks the item count`() = test("""
+      import struct
+
+      values = struct.unpack("<ih", b"\x00\x00\x00\x00\x00\x00")
+      #└ TYPE tuple[Any, ...] FIXME tuple[int, int]
+      struct.pack("<ih", 1) # WARNING FIXME pack expected 2 items for packing (got 1)
+      """.trimIndent())
+  }
 }

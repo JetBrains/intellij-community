@@ -90,4 +90,19 @@ class PyAssertTypeInspectionTest : PyInspectionTestCase() {
   }
 
   override fun getInspectionClass(): Class<out PyInspection> = PyAssertTypeInspection::class.java
+
+  @TestFor(issues = ["PY-92701"])
+  fun `test failed assert_type offers no replacement and reveal_type offers no intention to write it`() {
+    doTestByText("""
+      from typing import assert_type, reveal_type
+
+      def f(x: int | None) -> None:
+          assert_type(<warning descr="Expected type 'int', got 'int | None' instead">x</warning>, int)
+          reveal_<caret>type(x)
+      """.trimIndent())
+    // FIXME: the fixes also have 'Replace with assert_type(x, int | None)'
+    assertEquals(listOf("Inspection 'Violated 'typing.assert_type'' options"), myFixture.getAllQuickFixes().map { it.text })
+    // FIXME: an intention writes 'assert_type(x, int | None)'
+    assertEquals(emptyList<String>(), myFixture.availableIntentions.map { it.text }.filter { "assert_type(" in it })
+  }
 }

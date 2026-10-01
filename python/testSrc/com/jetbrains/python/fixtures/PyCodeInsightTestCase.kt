@@ -55,7 +55,9 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sk
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType.Companion.TOOLTIP_KEYWORD
+import com.jetbrains.python.documentation.PyDocumentationSettings
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -423,6 +425,19 @@ abstract class PyCodeInsightTestCase {
     val file = myFixture.configureByText(fileName, code)
     myFixture.editor.caretModel.moveToOffset(marker.codeOffsetStart)
     return file
+  }
+
+  /** Runs [action] with [format] as the docstring format of the module, and restores the previous format after it. */
+  protected fun withDocstringFormat(format: DocStringFormat, action: () -> Unit) {
+    val settings = PyDocumentationSettings.getInstance(myFixture.module)
+    val previous = settings.format
+    settings.format = format
+    try {
+      action()
+    }
+    finally {
+      settings.format = previous
+    }
   }
 
   protected fun test(@Language("Python") fileContent: String, vararg otherFiles: Pair<String, String>) {
