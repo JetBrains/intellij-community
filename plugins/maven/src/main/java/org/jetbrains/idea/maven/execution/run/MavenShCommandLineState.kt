@@ -66,6 +66,7 @@ import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenExternalParameters
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
+import org.jetbrains.idea.maven.execution.MavenRebuildAction
 import org.jetbrains.idea.maven.execution.MavenResumeAction
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
@@ -402,15 +403,31 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     descriptor.withProcessHandler(MavenBuildHandlerFilterSpyWrapper(processHandler, isWindows()), null)
     descriptor.withExecutionEnvironment(environment)
     val startBuildEvent = StartBuildEventImpl(descriptor, "")
+    val withResumeAction = MavenResumeAction.isApplicable(myConfiguration)
     val commandLine: @NlsSafe String? = (processHandler as? OSProcessHandler)?.commandLine
     val eventProcessor =
-      MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId,
-                               { it }, { startBuildEvent }, commandLine)
+      MavenBuildEventProcessor(myConfiguration, viewManager, descriptor, taskId, { it },
+                               { context ->
+                                 startBuildEvent.withRestartActions(*buildRestartActions(runner, processHandler, context, withResumeAction))
+                               },
+                               commandLine)
 
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
     val res = DefaultExecutionResult(consoleView, processHandler, DefaultActionGroup())
     res.setRestartActions(JvmToggleAutoTestAction())
     return res
+  }
+
+  /** The Build tool window shows a rerun action for a delegated build, and a resume action when Maven can resume from a module. */
+  private fun buildRestartActions(
+    runner: ProgramRunner<*>,
+    processHandler: ProcessHandler,
+    context: MavenParsingContext?,
+    withResumeAction: Boolean,
+  ): Array<AnAction> {
+    val rebuildAction = MavenRebuildAction(environment)
+    if (!withResumeAction) return arrayOf(rebuildAction)
+    return arrayOf(rebuildAction, MavenResumeAction(processHandler, runner, environment, context, myConfiguration))
   }
 
 
