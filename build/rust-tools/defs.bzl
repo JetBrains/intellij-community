@@ -14,6 +14,12 @@ load("@rules_rust//rust:defs.bzl", "rust_clippy_test", "rust_common")
 # No public file exports `LintsInfo`; rules_rs `cargo_lints.bzl` loads it from here too.
 load("@rules_rust//rust/private:providers.bzl", "LintsInfo")
 
+# The `target_compatible_with` of a target that a Windows host must not build or run.
+NOT_ON_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 def _rust_lints_as_errors_impl(ctx):
     cargo = ctx.attr.cargo[LintsInfo]
     return [LintsInfo(
@@ -141,6 +147,8 @@ def _cross_module_deps(dep_data, kinds, cross_module_crates):
     branches["//conditions:default"] = []
     return sorted(shared) + select(branches)
 
+_PLATFORMS = "//command_line_option:platforms"
+
 # The crates that a platform-conditional dependency adds on some hosts only. `cargo tree --target <triple>` over the
 # triples of a hub lists them. The crate closure test leaves them out, so one `closure.txt` holds on every host.
 _HOST_CRATES = [
@@ -155,12 +163,21 @@ _HOST_CRATES = [
     "xattr",
 ]
 
+def _closure_platform_transition_impl(settings, attr):
+    return {_PLATFORMS: [str(attr.platform)] if attr.platform else settings[_PLATFORMS]}
+
+_closure_platform_transition = transition(
+    implementation = _closure_platform_transition_impl,
+    inputs = [_PLATFORMS],
+    outputs = [_PLATFORMS],
+)
+
 def _crate_closure_impl(ctx):
     # `transitive_crates` holds the crates that the binary links, and each proc macro that one of them uses directly.
     # A proc macro runs in the compiler and is not linked, so the closure leaves it out.
     names = {
         crate.name: None
-        for crate in ctx.attr.binary[rust_common.dep_info].transitive_crates.to_list()
+        for crate in ctx.attr.binary[0][rust_common.dep_info].transitive_crates.to_list()
         if "proc-macro" not in (crate.type, crate.wrapped_crate_type) and crate.name not in _HOST_CRATES
     }
     out = ctx.actions.declare_file(ctx.label.name + ".txt")
@@ -170,7 +187,8 @@ def _crate_closure_impl(ctx):
 rust_crate_closure = rule(
     doc = """Writes `<name>.txt`: the rustc names of the crates that `binary` links, sorted, one per line.
 
-    The file leaves out the proc macros and the host-only crates of `_HOST_CRATES`.
+    The file leaves out the proc macros and the host-only crates of `_HOST_CRATES`. The rule reads the crates from the
+    analysis of the binary, so it compiles nothing, also for another `platform`.
     """,
     implementation = _crate_closure_impl,
     attrs = {
@@ -178,6 +196,15 @@ rust_crate_closure = rule(
             doc = "The `rust_binary` of an action tool.",
             mandatory = True,
             providers = [rust_common.dep_info],
+            cfg = _closure_platform_transition,
+        ),
+        "platform": attr.label(
+            doc = "The platform whose closure the file holds; the host's when unset. A binary whose dependencies " +
+                  "differ by platform in more crates than `_HOST_CRATES` names needs one, so that one file holds on " +
+                  "every host.",
+        ),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
     },
 )
@@ -186,36 +213,55 @@ def rust_tool_crate(
         name,
         hub,
         lints,
-        bins_prefix,
+        bins_prefix = None,
         cross_module_crates = {},
         test_data = [],
         compile_data = [],
         test_sharding = False,
         testdata_env = None,
         closure = False,
-        integration_tests = True):
+        closure_platform = None,
+        integration_tests = True,
+        rustc_env = {},
+        target_compatible_with = None,
+        library_tags = [],
+        clippy_on_windows = True,
+        visibility = ["//visibility:public"],
+        test_rule = None,
+        test_suffix = "_test",
+        test_crate_suffix = "",
+        test_env = {},
+        test_env_inherit = None,
+        test_size = None,
+        test_tags = []):
     """Declares one crate of a Rust tool workspace, its tests, and the clippy test over all of them.
 
     The hub supplies the crate name, the edition and the dependencies from `Cargo.toml` and `Cargo.lock`. A crate whose
     package starts with `bins_prefix` is a `rust_binary` with `src/main.rs`. Any other crate is a `rust_library` with
-    `src/lib.rs`. The targets:
+    `src/lib.rs`. When the hub has `dep_data`, such a library crate also gets a `rust_binary` per binary of its
+    `Cargo.toml`, as Cargo builds a package with both `src/lib.rs` and `src/main.rs` or a `[[bin]]` table. The targets:
 
     - `<name>`: the library or the binary.
-    - `<name>_test`: the unit test.
+    - `<bin>-bin` per binary of a library crate. The binary is `src/main.rs` or the `[[bin]]` path alone, and it links
+      the library.
+    - `<name><test_suffix>`: the unit test, `<name>_test` by default.
     - `<name>_<stem>_test` per `tests/<stem>.rs` of a binary, when `integration_tests` is set. Such a file is a Cargo
       integration test. It gets the dependencies and the dev-dependencies of the crate, and the binary as data. The
       run-time `CARGO_BIN_EXE_<name>` holds the path of the binary. Under Bazel, the path is relative to the start
       directory of the test. A test must make it absolute before it runs the binary in another directory.
     - `<name>_testdata`, when `testdata_env` is set: a filegroup of `testdata/`, for the tests of another crate.
-    - `<name>_closure` and `<name>_closure_test`, when `closure` is set. The first writes the crates that the binary
-      links, and the test compares them with `closure.txt` of the package.
-    - `<name>-clippy`: clippy over the crate and its tests. It runs only when this module is the main repository.
+    - `<bin>_closure` and `<bin>_closure_test`, when `closure` is set. The first writes the crates that the binary
+      links, and the test compares them with `closure.txt` of the package. `<bin>` is `<name>` for a binary crate, and
+      the one binary of a library crate.
+    - `<name>-clippy`: clippy over the crate, its binaries and its tests. It runs only when this module is the main
+      repository.
 
     Args:
       name: the directory name. The hub names a local crate by its package label.
       hub: the crate hub, from `rust_tool_hub`.
       lints: the `rust_lints_as_errors` target of the workspace. Every target gets it as `lint_config`.
-      bins_prefix: the package prefix of the binaries, such as `"build/dev-dist-tools/bins/"`.
+      bins_prefix: the package prefix of the binaries, such as `"build/dev-dist-tools/bins/"`. When unset, every
+        crate is a library.
       cross_module_crates: `{package name: label}` of the crates of another workspace that the crate links through a
         path dependency. The hub would build such a crate a second time, without the lint policy. The label names the
         target of the module that builds it already. It needs `dep_data` of the hub.
@@ -225,8 +271,28 @@ def rust_tool_crate(
       test_sharding: lets the rules_rust wrapper split the libtest cases across the shards of the unit test.
       testdata_env: the environment variable that gives a test the path of `testdata/`. The test also gets
         `testdata/` as compile data and as run-time data.
-      closure: pins the crate closure of an action tool in `closure.txt`. Only a binary can have it.
+      closure: pins the crate closure of an action tool in `closure.txt`. Only a binary crate, or a library crate
+        with one binary, can have it.
+      closure_platform: the `platform` of `rust_crate_closure`, for a binary whose dependencies differ by host.
       integration_tests: declares a test per `tests/*.rs` of a binary.
+      rustc_env: the compile-time environment (`option_env!`) of the library or the binary. Its unit test takes it
+        from the crate.
+      target_compatible_with: the constraints of the tests, the binaries and the clippy test. The library carries
+        none, because a `rust_binary` lists its dependencies as `proc_macro_deps` too, and Bazel analyzes those in
+        the exec configuration. A constrained library would then refuse a cross build on a host that it excludes. Use
+        `library_tags = ["manual"]` instead, so that `//...` does not build the library there.
+      library_tags: the tags of the library.
+      clippy_on_windows: when false, `<name>-clippy` is incompatible with a Windows host. The workspace then lints its
+        `cfg(windows)` code only through `windows_clippy_tests`, from a macOS or Linux host.
+      visibility: the visibility of the library and the binaries.
+      test_rule: the rule or the macro of the unit test, with the arguments of `rust_test`. `rust_test` when unset.
+      test_suffix: the unit test is `<name><test_suffix>`.
+      test_crate_suffix: the suffix that `test_rule` adds to the name of the `rust_test` that it declares inside, such
+        as `"_libtest"` of a wrapper that runs the test binary. Clippy lints that `rust_test`.
+      test_env: the run-time environment of the unit test, such as an `$(rlocationpath ...)`.
+      test_env_inherit: the variables that the unit test takes from the environment of `bazel test`.
+      test_size: the Bazel size of the unit test.
+      test_tags: the tags of the unit test.
     """
     package = native.package_name()
     if not hub.crate_name():
@@ -251,9 +317,14 @@ def rust_tool_crate(
         test_deps = hub.all_crate_deps(normal_dev = True)
         integration_test_deps = hub.all_crate_deps(normal = True, normal_dev = True)
 
+    is_binary = bins_prefix != None and package.startswith(bins_prefix)
+    binaries = {}
+    if not is_binary and hub.dep_data != None:
+        binaries = hub.dep_data[package]["binaries"]
+
     _rust_tool_targets(
         name = name,
-        is_binary = package.startswith(bins_prefix),
+        is_binary = is_binary,
         crate_attrs = {"aliases": aliases, "crate_name": hub.crate_name(), "edition": hub.edition()},
         lints = lints,
         deps = deps,
@@ -264,7 +335,21 @@ def rust_tool_crate(
         test_sharding = test_sharding,
         testdata_env = testdata_env,
         closure = closure,
+        closure_platform = closure_platform,
         integration_tests = integration_tests,
+        binaries = binaries,
+        rustc_env = rustc_env,
+        target_compatible_with = target_compatible_with,
+        library_tags = library_tags,
+        clippy_on_windows = clippy_on_windows,
+        visibility = visibility,
+        test_rule = test_rule,
+        test_suffix = test_suffix,
+        test_crate_suffix = test_crate_suffix,
+        test_env = test_env,
+        test_env_inherit = test_env_inherit,
+        test_size = test_size,
+        test_tags = test_tags,
     )
 
 def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = None):
@@ -312,30 +397,80 @@ def _rust_tool_targets(
         test_sharding,
         testdata_env,
         closure,
-        integration_tests):
+        integration_tests,
+        closure_platform = None,
+        binaries = {},
+        rustc_env = {},
+        target_compatible_with = None,
+        library_tags = [],
+        clippy_on_windows = True,
+        visibility = ["//visibility:public"],
+        test_rule = None,
+        test_suffix = "_test",
+        test_crate_suffix = "",
+        test_env = {},
+        test_env_inherit = None,
+        test_size = None,
+        test_tags = []):
     package = native.package_name()
     repo = native.repo_name()
+
+    # An argument that the caller left unset stays out of the call, so that a target renders as it did before the
+    # argument existed.
+    srcs = native.glob(["src/**/*.rs"])
+    crate_extra = {}
+    if binaries:
+        srcs = [src for src in srcs if src not in binaries.values()]
+    if rustc_env:
+        crate_extra["rustc_env"] = rustc_env
+    if library_tags and not is_binary:
+        crate_extra["tags"] = library_tags
+    if target_compatible_with != None and is_binary:
+        crate_extra["target_compatible_with"] = target_compatible_with
     (rust_binary if is_binary else rust_library)(
         name = name,
-        srcs = native.glob(["src/**/*.rs"]),
+        srcs = srcs,
         compile_data = compile_data,
         deps = deps,
         lint_config = lints,
-        visibility = ["//visibility:public"],
-        **crate_attrs
+        visibility = visibility,
+        **(crate_attrs | crate_extra)
     )
 
+    binary_attrs = {"target_compatible_with": target_compatible_with} if target_compatible_with != None else {}
+    binary_names = []
+    for binary, main in sorted(binaries.items()):
+        binary_names.append(binary + "-bin")
+        rust_binary(
+            name = binary + "-bin",
+            binary_name = binary,
+            crate_name = binary.replace("-", "_"),
+            crate_root = main,
+            srcs = [main],
+            aliases = crate_attrs["aliases"],
+            deps = [":" + name] + deps,
+            edition = crate_attrs["edition"],
+            lint_config = lints,
+            visibility = visibility,
+            **binary_attrs
+        )
+
     if closure:
-        if not is_binary:
-            fail("{}: only a binary has a crate closure test.".format(package))
-        rust_crate_closure(name = name + "_closure", binary = ":" + name)
+        if is_binary:
+            closure_name, closure_binary = name, ":" + name
+        elif len(binaries) == 1:
+            closure_name, closure_binary = binaries.keys()[0], ":" + binary_names[0]
+        else:
+            fail("{}: only a binary crate, or a library crate with one binary, has a crate closure test.".format(package))
+        closure_attrs = {"platform": closure_platform} if closure_platform else {}
+        rust_crate_closure(name = closure_name + "_closure", binary = closure_binary, **closure_attrs)
         diff_test(
-            name = name + "_closure_test",
-            file1 = ":" + name + "_closure",
+            name = closure_name + "_closure_test",
+            file1 = ":" + closure_name + "_closure",
             file2 = "closure.txt",
             failure_message = ("The crates that {name} links differ from closure.txt. If the change is intended, run " +
                                "`./bazel.cmd build //{package}:{name}_closure` in the root of this module and copy " +
-                               "{name}_closure.txt over closure.txt.").format(name = name, package = package),
+                               "{name}_closure.txt over closure.txt.").format(name = closure_name, package = package),
         )
 
     # rules_rust sets the run-time `CARGO_MANIFEST_DIR` to `external/<repo>/<package>`, and the runfiles do not have that
@@ -352,15 +487,26 @@ def _rust_tool_targets(
     # A `rust_test` does not take `lint_config` from its `crate`, so it is passed again. With `test_sharding`, the
     # rules_rust wrapper splits the libtest cases across the shards. A lane that runs a test with
     # `--test_sharding_strategy=forced=2` fails a runner that does not report sharding.
-    rust_test(
-        name = name + "_test",
+    test_extra = {}
+    if test_env_inherit != None:
+        test_extra["env_inherit"] = test_env_inherit
+    if test_size:
+        test_extra["size"] = test_size
+    if test_tags:
+        test_extra["tags"] = test_tags
+    if target_compatible_with != None:
+        test_extra["target_compatible_with"] = target_compatible_with
+    test_name = name + test_suffix
+    (test_rule or rust_test)(
+        name = test_name,
         crate = ":" + name,
         compile_data = compile_data + testdata,
         data = compile_data + testdata + test_data,
         deps = test_deps,
-        env = env,
+        env = env | test_env,
         experimental_enable_sharding = test_sharding,
         lint_config = lints,
+        **test_extra
     )
 
     integration_test_names = []
@@ -387,15 +533,20 @@ def _rust_tool_targets(
     # a target of an external repository, and from the ultimate root a community crate is one. So the test runs only
     # when this module is the main repository. Elsewhere it is incompatible, and `bazel test` reports it as skipped
     # rather than as a pass that checked nothing.
+    clippy_compatible = ["@platforms//:incompatible"] if repo else []
+    if target_compatible_with != None:
+        clippy_compatible = target_compatible_with + clippy_compatible
+    if not clippy_on_windows:
+        clippy_compatible = NOT_ON_WINDOWS + clippy_compatible
     rust_clippy_test(
         name = name + "-clippy",
         size = "small",
-        targets = [":" + name, ":" + name + "_test"] + [":" + test_name for test_name in integration_test_names],
-        target_compatible_with = ["@platforms//:incompatible"] if repo else [],
+        targets = [":" + name, ":" + name + test_suffix + test_crate_suffix] + [":" + target for target in binary_names] +
+                  [":" + test_name for test_name in integration_test_names],
+        target_compatible_with = clippy_compatible,
     )
 
 _COMPILATION_MODE = "//command_line_option:compilation_mode"
-_PLATFORMS = "//command_line_option:platforms"
 
 def _optimized_transition_impl(settings, attr):
     return {
@@ -452,13 +603,41 @@ _WINDOWS_PLATFORMS = {
     "x86_64": "@rules_rs//rs/platforms:x86_64-pc-windows-msvc",
 }
 
+# The statically linked Linux platforms: a binary that runs inside a Linux guest of any distribution.
+LINUX_MUSL_PLATFORMS = {
+    "arm64": "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
+    "x86_64": "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
+}
+
+def platform_clippy_tests(os, platforms, targets, target_compatible_with = []):
+    """Declares `clippy-<os>-<arch>` per entry of `platforms`: clippy over `targets` and the crates they link.
+
+    A host compiles only the `cfg` code of its own platform. These tests lint the code of another platform from the
+    host, one test per platform. They only check, so they need no linker for the platform. They also run only when this
+    module is the main repository, because the clippy aspect skips a target of an external repository.
+
+    Args:
+      os: the platform name in the test names, such as `"linux"`.
+      platforms: `{arch: platform}`, such as `LINUX_MUSL_PLATFORMS`.
+      targets: the binaries and the libraries to lint, with the crates that they link.
+      target_compatible_with: the constraints of the tests, such as `NOT_ON_WINDOWS`.
+    """
+    for arch, platform in platforms.items():
+        rust_clippy_test(
+            name = "clippy-{}-{}".format(os, arch),
+            size = "small",
+            platform = platform,
+            target_compatible_with = target_compatible_with + (["@platforms//:incompatible"] if native.repo_name() else []),
+            targets = targets,
+            transitive = True,
+        )
+
 def windows_clippy_tests(targets, compile_checks = {}):
     """Declares `clippy-windows-x86_64` and `clippy-windows-arm64`: clippy over `targets` and the crates they link.
 
     A macOS or Linux host never compiles the `cfg(windows)` code. These tests lint it from such a host, one test per
-    Windows platform. They only check, so they need no linker for the platform. A Windows host lints that code in the
-    `<crate>-clippy` tests, so there these tests are incompatible. They also run only when this module is the main
-    repository, because the clippy aspect skips a target of an external repository.
+    Windows platform, through `platform_clippy_tests`. A Windows host lints that code in the `<crate>-clippy` tests, so
+    there these tests are incompatible.
 
     Args:
       targets: the binaries and the libraries to lint, with the crates that they link.
@@ -473,14 +652,4 @@ def windows_clippy_tests(targets, compile_checks = {}):
                 platform = platform,
                 tags = ["manual"],
             )
-        rust_clippy_test(
-            name = "clippy-windows-" + arch,
-            size = "small",
-            platform = platform,
-            target_compatible_with = select({
-                "@platforms//os:windows": ["@platforms//:incompatible"],
-                "//conditions:default": [],
-            }) + (["@platforms//:incompatible"] if native.repo_name() else []),
-            targets = targets,
-            transitive = True,
-        )
+    platform_clippy_tests("windows", _WINDOWS_PLATFORMS, targets, NOT_ON_WINDOWS)

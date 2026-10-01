@@ -61,13 +61,20 @@ declaration states its arguments.
 
 - `rust_tool_hub` binds the core to one crate hub. Starlark cannot load a file by a name that is known only at run
   time, so the `defs.bzl` of a workspace loads the functions of its hub and passes them in.
-- `rust_tool_crate` declares one crate: the library or the binary, its unit test, an integration test per
-  `tests/*.rs` of a binary, the `testdata/` filegroup, the closure test, and `<crate>-clippy`.
+- `rust_tool_crate` declares one crate: the library or the binary, a `<bin>-bin` per binary of a library crate, its
+  unit test, an integration test per `tests/*.rs` of a binary, the `testdata/` filegroup, the closure test, and
+  `<crate>-clippy`. A workspace can give it another test rule, such as a wrapper that writes a JUnit report, and the
+  constraints of a crate that some hosts do not build.
 - `rust_tool_binary` declares one binary of a workspace that Bazel builds without a hub, from explicit dependencies.
-- `rust_crate_closure` writes the crate closure of a binary. `_HOST_CRATES` lists the crates that it leaves out.
+- `rust_crate_closure` writes the crate closure of a binary, for the host or for one platform. `_HOST_CRATES` lists the
+  crates that it leaves out. A binary whose dependencies differ by host in more crates names a platform, so that one
+  `closure.txt` holds on every host.
 - `optimized_binary` gives one shipped binary in `opt`, for the host or for one platform. The test stays on the
   `rust_binary` of the build configuration.
-- `windows_clippy_tests` declares `clippy-windows-x86_64` and `clippy-windows-arm64`, and optional compile checks.
+- `platform_clippy_tests` declares `clippy-<os>-<arch>` per platform, such as the Linux platforms of
+  `LINUX_MUSL_PLATFORMS`. `windows_clippy_tests` declares `clippy-windows-x86_64` and `clippy-windows-arm64` with it,
+  and optional compile checks.
+- `NOT_ON_WINDOWS` is the `target_compatible_with` of a target that a Windows host does not build.
 
 Each workspace keeps a thin binding with its own signature:
 
