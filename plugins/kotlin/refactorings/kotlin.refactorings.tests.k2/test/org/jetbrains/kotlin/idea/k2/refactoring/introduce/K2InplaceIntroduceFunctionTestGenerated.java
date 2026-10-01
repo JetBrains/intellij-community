@@ -38,6 +38,16 @@ public class K2InplaceIntroduceFunctionTestGenerated extends AbstractK2InplaceIn
         runTest("testData/extractFunctionInplace/ConsecutiveDuplicates.kt");
     }
 
+    @TestMetadata("CustomCodeStyleWithIfElse.kt")
+    public void testCustomCodeStyleWithIfElse() throws Exception {
+        runTest("testData/extractFunctionInplace/CustomCodeStyleWithIfElse.kt");
+    }
+
+    @TestMetadata("CustomCodeStyleWithLambda.kt")
+    public void testCustomCodeStyleWithLambda() throws Exception {
+        runTest("testData/extractFunctionInplace/CustomCodeStyleWithLambda.kt");
+    }
+
     @TestMetadata("DontSkipWhitespacesBefore.kt")
     public void testDontSkipWhitespacesBefore() throws Exception {
         runTest("testData/extractFunctionInplace/DontSkipWhitespacesBefore.kt");

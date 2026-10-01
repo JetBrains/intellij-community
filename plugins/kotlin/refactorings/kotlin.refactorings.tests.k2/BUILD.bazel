@@ -28,13 +28,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.refactorings.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin:kotlin-plugin-community-main",
-        "//plugins/kotlin/fir",
-        "//plugins/kotlin/base/psi",
-        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
-    ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
 )
 
 jvm_library(
@@ -130,6 +124,8 @@ jvm_library(
         "//libraries/gson:gson_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "//plugins/editorconfig:editorconfig-plugin",
+        "//plugins/editorconfig:editorconfig-plugin_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//platform/projectModel-api:projectModel",
@@ -176,6 +172,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//plugins/editorconfig/backend",
+        "//plugins/editorconfig/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.refactorings.tests` end

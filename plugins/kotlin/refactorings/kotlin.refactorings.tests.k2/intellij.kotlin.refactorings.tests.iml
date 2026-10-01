@@ -35,7 +35,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
@@ -50,7 +50,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.psi" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
@@ -59,6 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.editorconfig.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
@@ -76,13 +77,14 @@
     <orderEntry type="module" module-name="intellij.platform.ide.observable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.editorconfig.backend" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.refactorings" />
 </module>

@@ -25,6 +25,19 @@ abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixt
     }
 
     private fun doTestInternal() {
+        if (getTestName(false).startsWith("CustomCodeStyle")) {
+            doTestWithEditorConfig()
+        }
+        else {
+            doTestWithConfiguredStyle()
+        }
+    }
+
+    protected open fun doTestWithEditorConfig() {
+        doTestWithConfiguredStyle()
+    }
+
+    protected fun doTestWithConfiguredStyle() {
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
         val mainFile = File(testDataDirectory, fileName())
         myFixture.testDataPath = mainFile.parent

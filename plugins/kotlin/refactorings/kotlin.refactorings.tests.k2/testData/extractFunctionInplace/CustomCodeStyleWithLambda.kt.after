@@ -1,0 +1,21 @@
+// CHANGED_NAME: extracted
+
+class BackendCompletionSession
+class RpcCompletionRequestId(val id: Int)
+
+class X {
+  fun closeSession(session: BackendCompletionSession, request: RpcCompletionRequestId) {
+    println("Stopping $session")
+    extracted<caret>(session, request)
+  }
+
+  private fun extracted(
+    session: BackendCompletionSession,
+    request: RpcCompletionRequestId,
+  ) {
+    run {
+      println("Closing $session")
+      println("Removing ${request.id}")
+    }
+  }
+}

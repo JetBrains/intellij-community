@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.psi.setPropertyInitializer
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
@@ -495,8 +497,12 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
         }
 
         val shouldInsert = !(generatorOptions.inTempFile || generatorOptions.target == ExtractionTarget.FAKE_LAMBDALIKE_FUNCTION)
-        val declaration =
-            createDeclaration().let { if (shouldInsert) insertDeclaration(declarationToReplace, descriptor, it, anchor) else it }
+        val declaration = createDeclaration().let {
+            if (shouldInsert) {
+                PostprocessReformattingAspect.getInstance(descriptor.extractionData.project)
+                    .disablePostprocessFormattingInside(Computable { insertDeclaration(declarationToReplace, descriptor, it, anchor) })
+            } else it
+        }
         adjustDeclarationBody(declaration)
 
         if (generatorOptions.inTempFile) return config.createExtractionResult(declaration, Collections.emptyMap())
@@ -540,9 +546,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             resolveNameConflict(declaration)
         }
 
-        CodeStyleManager.getInstance(descriptor.extractionData.project).reformat(declaration)
-
-        return config.createExtractionResult(declaration, duplicateReplacers)
+        return config.createExtractionResult(declaration.reformatted() as KtNamedDeclaration, duplicateReplacers)
     }
 
     private fun getDeclarationPattern(
