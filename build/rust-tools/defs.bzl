@@ -237,22 +237,26 @@ def rust_tool_crate(
     """Declares one crate of a Rust tool workspace, its tests, and the clippy test over all of them.
 
     The hub supplies the crate name, the edition and the dependencies from `Cargo.toml` and `Cargo.lock`. A crate whose
-    package starts with `bins_prefix` is a `rust_binary` with `src/main.rs`. Any other crate is a `rust_library` with
-    `src/lib.rs`. When the hub has `dep_data`, such a library crate also gets a `rust_binary` per binary of its
-    `Cargo.toml`, as Cargo builds a package with both `src/lib.rs` and `src/main.rs` or a `[[bin]]` table. The targets:
+    package starts with `bins_prefix` is a `rust_binary` with `src/main.rs`. When the hub has `dep_data`, a package
+    without `src/lib.rs` is a binary crate too, as Cargo has it. Any other crate is a `rust_library` with `src/lib.rs`.
+    When the hub has `dep_data`, such a library crate also gets a `rust_binary` per binary of its `Cargo.toml`, as Cargo
+    builds a package with both `src/lib.rs` and `src/main.rs` or a `[[bin]]` table. The targets:
 
-    - `<name>`: the library or the binary.
+    - `<name>`: the library or the binary. A binary crate with one `[[bin]]` in `dep_data` names its binary target and
+      its crate after that binary instead, as Cargo names the executable.
     - `<bin>-bin` per binary of a library crate. The binary is `src/main.rs` or the `[[bin]]` path alone, and it links
       the library.
     - `<name><test_suffix>`: the unit test, `<name>_test` by default.
-    - `<name>_<stem>_test` per `tests/<stem>.rs` of a binary, when `integration_tests` is set. Such a file is a Cargo
-      integration test. It gets the dependencies and the dev-dependencies of the crate, and the binary as data. The
-      run-time `CARGO_BIN_EXE_<name>` holds the path of the binary. Under Bazel, the path is relative to the start
-      directory of the test. A test must make it absolute before it runs the binary in another directory.
+    - `<name>_<stem>_test` per `tests/<stem>.rs` of a binary, when `integration_tests` is set. The separators are the
+      first character of `test_suffix`, so `-test` gives `<name>-<stem>-test`. Such a file is a Cargo integration test
+      of `test_rule`, with the test attributes of the unit test. It gets the dependencies and the dev-dependencies of
+      the crate, and the binary as data. The run-time `CARGO_BIN_EXE_<binary>` holds the path of the binary, by the
+      name of the binary target. Under Bazel, the path is relative to the start directory of the test. A test must make
+      it absolute before it runs the binary in another directory.
     - `<name>_testdata`, when `testdata_env` is set: a filegroup of `testdata/`, for the tests of another crate.
     - `<bin>_closure` and `<bin>_closure_test`, when `closure` is set. The first writes the crates that the binary
-      links, and the test compares them with `closure.txt` of the package. `<bin>` is `<name>` for a binary crate, and
-      the one binary of a library crate.
+      links, and the test compares them with `closure.txt` of the package. `<bin>` is the binary target of a binary
+      crate, and the one binary of a library crate.
     - `<name>-clippy`: clippy over the crate, its binaries and its tests. It runs only when this module is the main
       repository.
 
@@ -319,13 +323,23 @@ def rust_tool_crate(
 
     is_binary = bins_prefix != None and package.startswith(bins_prefix)
     binaries = {}
-    if not is_binary and hub.dep_data != None:
+    if hub.dep_data != None:
         binaries = hub.dep_data[package]["binaries"]
+        if not native.glob(["src/lib.rs"], allow_empty = True):
+            is_binary = True
+    crate_target = name
+    crate_name = hub.crate_name()
+    if is_binary:
+        if len(binaries) == 1:
+            crate_target = binaries.keys()[0]
+            crate_name = crate_target.replace("-", "_")
+        binaries = {}
 
     _rust_tool_targets(
         name = name,
+        crate_target = crate_target,
         is_binary = is_binary,
-        crate_attrs = {"aliases": aliases, "crate_name": hub.crate_name(), "edition": hub.edition()},
+        crate_attrs = {"aliases": aliases, "crate_name": crate_name, "edition": hub.edition()},
         lints = lints,
         deps = deps,
         test_deps = test_deps,
@@ -398,6 +412,7 @@ def _rust_tool_targets(
         testdata_env,
         closure,
         integration_tests,
+        crate_target = None,
         closure_platform = None,
         binaries = {},
         rustc_env = {},
@@ -414,6 +429,7 @@ def _rust_tool_targets(
         test_tags = []):
     package = native.package_name()
     repo = native.repo_name()
+    crate_target = crate_target or name
 
     # An argument that the caller left unset stays out of the call, so that a target renders as it did before the
     # argument existed.
@@ -428,7 +444,7 @@ def _rust_tool_targets(
     if target_compatible_with != None and is_binary:
         crate_extra["target_compatible_with"] = target_compatible_with
     (rust_binary if is_binary else rust_library)(
-        name = name,
+        name = crate_target,
         srcs = srcs,
         compile_data = compile_data,
         deps = deps,
@@ -448,7 +464,7 @@ def _rust_tool_targets(
             crate_root = main,
             srcs = [main],
             aliases = crate_attrs["aliases"],
-            deps = [":" + name] + deps,
+            deps = [":" + crate_target] + deps,
             edition = crate_attrs["edition"],
             lint_config = lints,
             visibility = visibility,
@@ -457,7 +473,7 @@ def _rust_tool_targets(
 
     if closure:
         if is_binary:
-            closure_name, closure_binary = name, ":" + name
+            closure_name, closure_binary = crate_target, ":" + crate_target
         elif len(binaries) == 1:
             closure_name, closure_binary = binaries.keys()[0], ":" + binary_names[0]
         else:
@@ -499,7 +515,7 @@ def _rust_tool_targets(
     test_name = name + test_suffix
     (test_rule or rust_test)(
         name = test_name,
-        crate = ":" + name,
+        crate = ":" + crate_target,
         compile_data = compile_data + testdata,
         data = compile_data + testdata + test_data,
         deps = test_deps,
@@ -515,18 +531,19 @@ def _rust_tool_targets(
         if tests and not is_binary:
             fail("{} is a library. Only a binary can have an integration test in `tests/`.".format(package))
         integration_attrs = {key: value for key, value in crate_attrs.items() if key != "crate_name"}
+        separator = test_suffix[0]
         for test in tests:
-            test_name = "{}_{}_test".format(name, test.removeprefix("tests/").removesuffix(".rs"))
+            test_name = name + separator + test.removeprefix("tests/").removesuffix(".rs") + test_suffix
             integration_test_names.append(test_name)
-            rust_test(
+            (test_rule or rust_test)(
                 name = test_name,
                 srcs = [test],
                 compile_data = compile_data + testdata,
-                data = [":" + name] + compile_data + testdata,
+                data = [":" + crate_target] + compile_data + testdata,
                 deps = integration_test_deps,
-                env = env | {"CARGO_BIN_EXE_" + name: "$(rootpath :{})".format(name)},
+                env = env | {"CARGO_BIN_EXE_" + crate_target: "$(rootpath :{})".format(crate_target)},
                 lint_config = lints,
-                **integration_attrs
+                **(integration_attrs | test_extra)
             )
 
     # Clippy over this crate only: each crate it depends on has its own `-clippy`. The clippy aspect of rules_rust skips
@@ -541,8 +558,8 @@ def _rust_tool_targets(
     rust_clippy_test(
         name = name + "-clippy",
         size = "small",
-        targets = [":" + name, ":" + name + test_suffix + test_crate_suffix] + [":" + target for target in binary_names] +
-                  [":" + test_name for test_name in integration_test_names],
+        targets = [":" + crate_target, ":" + name + test_suffix + test_crate_suffix] + [":" + target for target in binary_names] +
+                  [":" + test_name + test_crate_suffix for test_name in integration_test_names],
         target_compatible_with = clippy_compatible,
     )
 
