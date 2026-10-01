@@ -167,6 +167,7 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.jackson2.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.jackson3.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.ktor.xml", "intellij.platform.resources"),
+    ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.netty.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.opentelemetry.exporter.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.opentelemetry.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.platform.xml", "intellij.platform.resources"),

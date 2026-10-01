@@ -41,6 +41,14 @@
     <module name="intellij.libraries.ktor.server.cio"/>
     <!-- endregion -->
 
+    <!-- region nested: essential.minimal > core.lang > core.ide > core.platform > libraries.platform > libraries.netty -->
+    <module name="intellij.libraries.netty.buffer" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.protobuf" loading="embedded"/>
+    <module name="intellij.libraries.netty.handler.proxy"/>
+    <!-- endregion -->
+
     <!-- region direct modules -->
     <module name="intellij.libraries.java.compatibility" loading="embedded"/>
     <module name="intellij.libraries.jetbrains.annotations" loading="embedded"/>
@@ -100,11 +108,6 @@
     <module name="intellij.libraries.lz4" loading="embedded"/>
     <module name="intellij.libraries.markdown" loading="embedded"/>
     <module name="intellij.libraries.mvstore" loading="embedded"/>
-    <module name="intellij.libraries.netty.buffer" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
-    <module name="intellij.libraries.netty.codec.protobuf" loading="embedded"/>
-    <module name="intellij.libraries.netty.handler.proxy"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
     <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.protobuf.kotlin"/>

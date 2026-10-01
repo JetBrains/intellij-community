@@ -964,6 +964,27 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.eclipse.lsp4j.jsonrpc": "//libraries/lsp4j/jsonrpc:jsonrpc_content_module_jar",
         },
     ),
+    "intellij.moduleSets.libraries.netty": struct(
+        modules = [
+            "intellij.libraries.netty.buffer",
+            "intellij.libraries.netty.codec.compression",
+            "intellij.libraries.netty.codec.http",
+            "intellij.libraries.netty.codec.protobuf",
+            "intellij.libraries.netty.handler.proxy",
+        ],
+        nested = [
+        ],
+        packed = {
+            "intellij.libraries.netty.buffer": "//libraries/netty/buffer:buffer_content_module_jar",
+            "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
+            "intellij.libraries.netty.codec.http": "//libraries/netty/codec-http:libraries-netty-codec-http_content_module_jar",
+            "intellij.libraries.netty.codec.protobuf": "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_content_module_jar",
+            "intellij.libraries.netty.handler.proxy": "//libraries/netty/handler-proxy:libraries-netty-handler-proxy_content_module_jar",
+        },
+        module_system_loaded = [
+            "intellij.libraries.netty.handler.proxy",
+        ],
+    ),
     "intellij.moduleSets.libraries.opentelemetry": struct(
         modules = [
             "intellij.libraries.opentelemetry",
@@ -1052,11 +1073,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.lz4",
             "intellij.libraries.markdown",
             "intellij.libraries.mvstore",
-            "intellij.libraries.netty.buffer",
-            "intellij.libraries.netty.codec.compression",
-            "intellij.libraries.netty.codec.http",
-            "intellij.libraries.netty.codec.protobuf",
-            "intellij.libraries.netty.handler.proxy",
             "intellij.libraries.oro.matcher",
             "intellij.libraries.protobuf",
             "intellij.libraries.protobuf.java.util",
@@ -1076,6 +1092,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.moduleSets.libraries.jackson2",
             "intellij.moduleSets.libraries.jackson3",
             "intellij.moduleSets.libraries.ktor",
+            "intellij.moduleSets.libraries.netty",
         ],
         packed = {
             "intellij.libraries.aalto.xml": "//libraries/aalto-xml:aalto-xml_content_module_jar",
@@ -1136,11 +1153,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.lz4": "//libraries/lz4:lz4_content_module_jar",
             "intellij.libraries.markdown": "//libraries/markdown:markdown_content_module_jar",
             "intellij.libraries.mvstore": "//libraries/mvstore:mvstore_content_module_jar",
-            "intellij.libraries.netty.buffer": "//libraries/netty/buffer:buffer_content_module_jar",
-            "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
-            "intellij.libraries.netty.codec.http": "//libraries/netty/codec-http:libraries-netty-codec-http_content_module_jar",
-            "intellij.libraries.netty.codec.protobuf": "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_content_module_jar",
-            "intellij.libraries.netty.handler.proxy": "//libraries/netty/handler-proxy:libraries-netty-handler-proxy_content_module_jar",
             "intellij.libraries.oro.matcher": "//libraries/oro-matcher:oro-matcher_content_module_jar",
             "intellij.libraries.protobuf": "//libraries/protobuf:protobuf_content_module_jar",
             "intellij.libraries.protobuf.java.util": "//libraries/protobuf-java-util:protobuf-java-util_content_module_jar",
@@ -1166,7 +1178,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.kotlin.metadata",
             "intellij.libraries.kotlinx.coroutines.guava",
             "intellij.libraries.kotlinx.serialization.cbor",
-            "intellij.libraries.netty.handler.proxy",
             "intellij.libraries.protobuf.java.util",
             "intellij.libraries.protobuf.kotlin",
             "intellij.libraries.proxy.vole",

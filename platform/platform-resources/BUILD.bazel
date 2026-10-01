@@ -65,6 +65,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.libraries.jackson2.xml",
         "generated/META-INF/intellij.moduleSets.libraries.jackson3.xml",
         "generated/META-INF/intellij.moduleSets.libraries.ktor.xml",
+        "generated/META-INF/intellij.moduleSets.libraries.netty.xml",
         "generated/META-INF/intellij.moduleSets.libraries.opentelemetry.exporter.xml",
         "generated/META-INF/intellij.moduleSets.libraries.opentelemetry.xml",
         "generated/META-INF/intellij.moduleSets.libraries.platform.xml",
