@@ -21,7 +21,10 @@ import kotlinx.coroutines.CancellationException
 private val LOG get() = Logger.getInstance(DynamicPluginsValidators::class.java)
 
 internal data class DynamicPluginsValidationConfig(
+  /** When `true`, the validation does not run. */
   val skipDynamicPluginReconfigurationValidation: Boolean,
+  /** When `true`, the validation runs and logs every issue, but the issues do not block the reconfiguration. */
+  val disregardDynamicPluginReconfigurationIssues: Boolean,
   val allowServiceOverridesUnloading: Boolean,
   val allowUnloadingWhenRunFromSources: Boolean,
   val allowNonDynamicExtensionPointsWithExtensionsInTheSameRuntimeModuleGroup: Boolean,

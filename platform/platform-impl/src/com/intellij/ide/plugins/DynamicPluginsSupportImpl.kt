@@ -67,6 +67,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(DynamicPluginsSupportImpl::class.java)
 private const val REPORT_ISSUES_COUNT_PROPERTY = "dynamic.plugins.report.issues.count"
+private const val DISREGARD_ISSUES_PROPERTY = "ide.plugins.disregard.dynamic.plugin.reconfiguration.issues"
 
 internal class DynamicPluginsSupportImpl(
   val classloaderUnloadAwaitStrategy: AwaitClassloaderUnloadStrategy
@@ -84,9 +85,13 @@ internal class DynamicPluginsSupportImpl(
           val target = targetState.resolvedPluginSet
           val current = getCurrentlyLoadedPluginSet()
           val sequence = buildTransitionSequence(current, target).also { LOG.debug { it.getExplanationLogMessage() } }
-          validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
-            .also { issues -> if (LOG.isDebugEnabled) buildExplanationMessage(issues)?.let { LOG.debug(it) } }
-            .firstOrNull()?.let(DynamicPluginsReconfigurationResult::Invalid)
+          val validationConfig = getDynamicPluginsValidationConfig()
+          val issues = validateTransitionSequenceCanBePerformedDynamically(sequence, validationConfig, reporter)
+          if (issues.isEmpty()) {
+            return@reportSequentialProgress null
+          }
+          LOG.debug { buildExplanationMessage(issues, validationConfig) }
+          if (validationConfig.disregardDynamicPluginReconfigurationIssues) null else DynamicPluginsReconfigurationResult.Invalid(issues.first())
         }
       }
     }
@@ -104,11 +109,13 @@ internal class DynamicPluginsSupportImpl(
             LOG.info(it.getExplanationLogMessage())
           }
 
-          val dynamicReconfigurationIsNotPossibleReason = validateTransitionSequenceCanBePerformedDynamically(sequence, reporter)
-            .also { issues -> buildExplanationMessage(issues)?.let { msg -> LOG.warn(msg) } }
-            .firstOrNull()
-          if (dynamicReconfigurationIsNotPossibleReason != null) {
-            return@withContext dynamicReconfigurationIsNotPossibleReason.let(DynamicPluginsReconfigurationResult::Invalid)
+          val validationConfig = getDynamicPluginsValidationConfig()
+          val issues = validateTransitionSequenceCanBePerformedDynamically(sequence, validationConfig, reporter)
+          if (issues.isNotEmpty()) {
+            LOG.warn(buildExplanationMessage(issues, validationConfig))
+            if (!validationConfig.disregardDynamicPluginReconfigurationIssues) {
+              return@withContext DynamicPluginsReconfigurationResult.Invalid(issues.first())
+            }
           }
 
           saveAllSettings() // TODO should be converted to pre-reconfiguration listener
@@ -149,15 +156,23 @@ internal class DynamicPluginsSupportImpl(
     }
   }
 
-  private fun buildExplanationMessage(issues: List<DynamicReconfigurationIsNotPossibleReason>): String? {
-    if (issues.isEmpty()) return null
+  private fun buildExplanationMessage(
+    issues: List<DynamicReconfigurationIsNotPossibleReason>,
+    validationConfig: DynamicPluginsValidationConfig,
+  ): String {
     return buildString {
-      append("Dynamic plugins reconfiguration is not possible")
-      val count = System.getProperty(REPORT_ISSUES_COUNT_PROPERTY)
-      if (count != null) {
-        append(" ($REPORT_ISSUES_COUNT_PROPERTY=$count)")
-      } else {
-        append(" (use -D$REPORT_ISSUES_COUNT_PROPERTY=100 to see more issues right away)")
+      if (validationConfig.disregardDynamicPluginReconfigurationIssues) {
+        append("Dynamic plugins reconfiguration issues are disregarded because of the '$DISREGARD_ISSUES_PROPERTY' option")
+      }
+      else {
+        append("Dynamic plugins reconfiguration is not possible")
+        val count = System.getProperty(REPORT_ISSUES_COUNT_PROPERTY)
+        if (count != null) {
+          append(" ($REPORT_ISSUES_COUNT_PROPERTY=$count)")
+        }
+        else {
+          append(" (use -D$REPORT_ISSUES_COUNT_PROPERTY=100 to see more issues right away)")
+        }
       }
       appendLine(":")
       append(issues.joinToString("\n") { it.logMessage })
@@ -175,15 +190,20 @@ internal class DynamicPluginsSupportImpl(
 
   private suspend fun validateTransitionSequenceCanBePerformedDynamically(
     sequence: TransitionSequence,
+    validationConfig: DynamicPluginsValidationConfig,
     reporter: SequentialProgressReporter,
   ): List<DynamicReconfigurationIsNotPossibleReason> {
-    val validationConfig = getDynamicPluginsValidationConfig()
     if (validationConfig.skipDynamicPluginReconfigurationValidation) {
       return emptyList()
     }
 
     return reporter.indeterminateStep(IdeBundle.message("progress.text.validating.dynamic.reconfiguration")) {
-      val issuesToReport = SystemProperties.getIntProperty(REPORT_ISSUES_COUNT_PROPERTY, 1).coerceAtLeast(1)
+      val issuesToReport = if (validationConfig.disregardDynamicPluginReconfigurationIssues) {
+        Int.MAX_VALUE // the issues do not stop the reconfiguration, so collect all of them
+      }
+      else {
+        SystemProperties.getIntProperty(REPORT_ISSUES_COUNT_PROPERTY, 1).coerceAtLeast(1)
+      }
       val issues = LinkedHashMap<String, DynamicReconfigurationIsNotPossibleReason>()
       val reporter = IssueReporter { reason: DynamicReconfigurationIsNotPossibleReason ->
         issues.putIfAbsent(reason.logMessage, reason) // deduplicate messages
@@ -382,6 +402,7 @@ internal class DynamicPluginsSupportImpl(
     return DynamicPluginsValidationConfig(
       skipDynamicPluginReconfigurationValidation =
         SystemProperties.getBooleanProperty("idea.plugins.skip.dynamic.plugin.reconfiguration.validation", false),
+      disregardDynamicPluginReconfigurationIssues = SystemProperties.getBooleanProperty(DISREGARD_ISSUES_PROPERTY, false),
       allowServiceOverridesUnloading = Registry.`is`("ide.plugins.allow.dynamic.services.overrides", false),
       allowUnloadingWhenRunFromSources = Registry.`is`("ide.plugins.allow.unload.from.sources", false),
       allowNonDynamicExtensionPointsWithExtensionsInTheSameRuntimeModuleGroup =
