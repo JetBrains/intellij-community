@@ -4,6 +4,7 @@ package com.intellij.ide.todo.model
 import com.intellij.ide.todo.rpc.TodoDirectoryResult
 import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.psi.util.QualifiedName
 
 internal class TodoGrouping private constructor(
   val key: Key,
@@ -90,28 +91,26 @@ internal class TodoGrouping private constructor(
     }
 
     private fun getPackageGroup(file: TodoFileResult, moduleName: String?): Key {
-      var packageName = requireNotNull(file.packageName)
+      val packageName = requireNotNull(file.packageName)
       val key = Key.Package(moduleName, packageName)
       addGroup(key)
       if (flattenPackages) return key
 
-      val packageRootName = file.packageRootName.orEmpty()
-      while (packageName != packageRootName) {
-        packageName = packageName.substringBeforeLast('.', "")
-        if (packageName.isEmpty()) break
-        if (packageRootName.isNotEmpty() &&
-            packageName != packageRootName && !packageName.startsWith("$packageRootName.")) break
-        addGroup(Key.Package(moduleName, packageName))
+      val packageRootName = file.packageRootName?.takeIf { it.isNotEmpty() }?.let(QualifiedName::fromDottedString)
+      var parentPackageName = QualifiedName.fromDottedString(packageName).removeLastComponent()
+      while (parentPackageName.componentCount > 0 && (packageRootName == null || parentPackageName.matchesPrefix(packageRootName))) {
+        addGroup(Key.Package(moduleName, parentPackageName.toString()))
+        parentPackageName = parentPackageName.removeLastComponent()
       }
       return key
     }
 
     private fun findParentPackage(key: Key.Package): Key.Package? {
-      var name = key.qualifiedName.substringBeforeLast('.', "")
-      while (name.isNotEmpty()) {
-        val parent = Key.Package(key.moduleName, name)
+      var name = QualifiedName.fromDottedString(key.qualifiedName).removeLastComponent()
+      while (name.componentCount > 0) {
+        val parent = Key.Package(key.moduleName, name.toString())
         if (parent in children) return parent
-        name = name.substringBeforeLast('.', "")
+        name = name.removeLastComponent()
       }
       return null
     }
@@ -138,8 +137,9 @@ internal class TodoGrouping private constructor(
         Key.Root -> ""
         is Key.Module -> visibleGroup.name
         is Key.Package -> {
-          val qualifiedName = visibleGroup.qualifiedName
-          if (parentPackageName == null) qualifiedName else qualifiedName.removePrefix("$parentPackageName.")
+          val qualifiedName = QualifiedName.fromDottedString(visibleGroup.qualifiedName)
+          if (parentPackageName == null) qualifiedName.toString()
+          else qualifiedName.removeHead(QualifiedName.fromDottedString(parentPackageName).componentCount).toString()
         }
         is Key.Directory -> {
           val directory = directories.getValue(visibleGroup)
