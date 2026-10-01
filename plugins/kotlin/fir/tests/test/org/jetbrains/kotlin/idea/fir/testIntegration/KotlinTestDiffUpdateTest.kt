@@ -1094,6 +1094,101 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         ) { document -> document.insertString(myFixture.editor.caretModel.offset, "Foo") }
     }
 
+    fun `test accept raw string literal diff through helpers that invoke a lambda`() {
+        checkAcceptFullDiff(
+            """
+            import org.junit.jupiter.api.Assertions
+            import org.junit.jupiter.api.Test
+
+            class MyJUnitTest {
+                @Test
+                fun testFoo() = test($TQ
+                    line one
+                    line two
+                $TQ.trimIndent())
+
+                private fun test(fileContent: String) {
+                    runTestBody {
+                        doTest(fileContent)
+                    }
+                }
+
+                private fun runTestBody(body: () -> Unit) {
+                    body()
+                }
+
+                private fun doTest(fileContent: String) {
+                    val originalText = fileContent.trimIndent()
+                    withInspections {
+                        collectAndCheckHighlighting(originalText)
+                    }
+                }
+
+                private fun withInspections(body: () -> Unit) {
+                    body()
+                }
+
+                private fun collectAndCheckHighlighting(expectedText: String) {
+                    val actualText = generateActualText(expectedText)
+                    Assertions.assertEquals(expectedText, actualText, "one assertion differs")
+                }
+
+                private fun generateActualText(text: String): String = "actual"
+            }
+        """.trimIndent(), """
+            import org.junit.jupiter.api.Assertions
+            import org.junit.jupiter.api.Test
+
+            class MyJUnitTest {
+                @Test
+                fun testFoo() = test($TQ
+                    actual one
+                    actual two
+                $TQ.trimIndent())
+
+                private fun test(fileContent: String) {
+                    runTestBody {
+                        doTest(fileContent)
+                    }
+                }
+
+                private fun runTestBody(body: () -> Unit) {
+                    body()
+                }
+
+                private fun doTest(fileContent: String) {
+                    val originalText = fileContent.trimIndent()
+                    withInspections {
+                        collectAndCheckHighlighting(originalText)
+                    }
+                }
+
+                private fun withInspections(body: () -> Unit) {
+                    body()
+                }
+
+                private fun collectAndCheckHighlighting(expectedText: String) {
+                    val actualText = generateActualText(expectedText)
+                    Assertions.assertEquals(expectedText, actualText, "one assertion differs")
+                }
+
+                private fun generateActualText(text: String): String = "actual"
+            }
+        """.trimIndent(), "MyJUnitTest", "testFoo", "line one\nline two", "actual one\nactual two", $$"""
+            at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1210)
+            at MyJUnitTest.collectAndCheckHighlighting(MyJUnitTest.kt:34)
+            at MyJUnitTest.doTest$lambda$0(MyJUnitTest.kt:24)
+            at MyJUnitTest.withInspections(MyJUnitTest.kt:29)
+            at MyJUnitTest.doTest(MyJUnitTest.kt:23)
+            at MyJUnitTest.test$lambda$0(MyJUnitTest.kt:13)
+            at MyJUnitTest.runTestBody(MyJUnitTest.kt:18)
+            at MyJUnitTest.test(MyJUnitTest.kt:12)
+            at MyJUnitTest.testFoo(MyJUnitTest.kt:6)
+            at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+        """.trimIndent()
+        )
+    }
+
     fun `test accept raw string literal diff through trimMargin`() {
         checkAcceptFullDiff(
             """
