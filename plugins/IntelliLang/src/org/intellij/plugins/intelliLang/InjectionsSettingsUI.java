@@ -372,14 +372,14 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return true;
   }
 
+  /**
+   * A child page declares itself in the plugin XML with {@code parentId="IntelliLang.Configuration"}.
+   * The extension point is not dynamic, so the platform never calls this method. A dynamic page costs
+   * one construction of this class during the settings tree build.
+   */
   @Override
   protected @NotNull Configurable @NotNull [] buildConfigurables() {
-      final ArrayList<Configurable> configurables = new ArrayList<>();
-      for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-        ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
-      }
-      configurables.sort((o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName()));
-      return configurables.toArray(new Configurable[0]);
+    return new Configurable[0];
   }
 
   @Override

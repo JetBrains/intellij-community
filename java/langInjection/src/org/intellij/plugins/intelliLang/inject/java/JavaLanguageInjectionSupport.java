@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -63,7 +62,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -115,11 +113,6 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   @Override
   public Class<?> @NotNull [] getPatternClasses() {
     return new Class[] { PsiJavaPatterns.class };
-  }
-
-  @Override
-  public Configurable[] createSettings(final Project project, final Configuration configuration) {
-    return new Configurable[]{new AdvancedSettingsUI(project, configuration)};
   }
 
   @Override

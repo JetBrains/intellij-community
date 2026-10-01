@@ -100,7 +100,16 @@ public abstract class LanguageInjectionSupport {
 
   public abstract void setupPresentation(final BaseInjection injection, final SimpleColoredText presentation, final boolean isSelected);
 
-  public abstract Configurable[] createSettings(final Project project, final Configuration configuration);
+  /**
+   * @deprecated the settings page does not call this method any more. Declare the page in the plugin XML with
+   * {@code <projectConfigurable parentId="IntelliLang.Configuration" .../>} instead. A dynamic parent page costs
+   * one construction during the settings tree build.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
+  public Configurable[] createSettings(final Project project, final Configuration configuration) {
+    return new Configurable[0];
+  }
 
   public abstract AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer);
 

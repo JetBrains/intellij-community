@@ -92,7 +92,6 @@ a:org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport
 - s:createDefaultEditAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Factory):com.intellij.openapi.actionSystem.AnAction
 - createEditAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Factory):com.intellij.openapi.actionSystem.AnAction
 - createInjection(org.jdom.Element):org.intellij.plugins.intelliLang.inject.config.BaseInjection
-- createSettings(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.Configuration):com.intellij.openapi.options.Configurable[]
 - editInjectionInPlace(com.intellij.psi.PsiLanguageInjectionHost):Z
 - equals(java.lang.Object):Z
 - findCommentInjection(com.intellij.psi.PsiElement,com.intellij.openapi.util.Ref):org.intellij.plugins.intelliLang.inject.config.BaseInjection
@@ -165,7 +164,7 @@ a:org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 - a:createAddActions(com.intellij.openapi.project.Project,com.intellij.util.Consumer):com.intellij.openapi.actionSystem.AnAction[]
 - a:createEditAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Factory):com.intellij.openapi.actionSystem.AnAction
 - a:createInjection(org.jdom.Element):org.intellij.plugins.intelliLang.inject.config.BaseInjection
-- a:createSettings(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.Configuration):com.intellij.openapi.options.Configurable[]
+- createSettings(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.Configuration):com.intellij.openapi.options.Configurable[]
 - a:editInjectionInPlace(com.intellij.psi.PsiLanguageInjectionHost):Z
 - a:findCommentInjection(com.intellij.psi.PsiElement,com.intellij.openapi.util.Ref):org.intellij.plugins.intelliLang.inject.config.BaseInjection
 - a:getId():java.lang.String

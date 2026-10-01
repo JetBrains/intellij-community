@@ -55,6 +55,12 @@
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.java.JavaFormatInjector"/>
 
     <psi.referenceContributor language="UAST" implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+
+    <!--suppress SplitModeXmlApiUsage The page edits Java class names, so it needs Java PSI. Its parent page IntelliLang.Configuration is also backend. -->
+    <projectConfigurable parentId="IntelliLang.Configuration" id="IntelliLang.Advanced"
+                         bundle="messages.IntelliLangBundle" key="configurable.AdvancedSettingsUI.display.name"
+                         instance="org.intellij.plugins.intelliLang.AdvancedSettingsUI"
+                         nonDefaultProject="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

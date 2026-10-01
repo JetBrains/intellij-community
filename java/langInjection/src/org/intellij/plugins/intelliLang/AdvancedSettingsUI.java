@@ -28,9 +28,9 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
   private AdvancedSettingsPanel myPanel;
   private final Project myProject;
 
-  public AdvancedSettingsUI(final @NotNull Project project, Configuration configuration) {
+  public AdvancedSettingsUI(final @NotNull Project project) {
     myProject = project;
-    myConfiguration = configuration.getAdvancedConfiguration();
+    myConfiguration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
   }
 
   @Override

@@ -5,7 +5,6 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -19,7 +18,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
@@ -80,11 +78,6 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   @Override
   public void setupPresentation(final BaseInjection injection, final SimpleColoredText presentation, final boolean isSelected) {
     presentation.append(injection.getDisplayName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-  }
-
-  @Override
-  public Configurable[] createSettings(final Project project, final Configuration configuration) {
-    return new Configurable[0];
   }
 
   @Override
