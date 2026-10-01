@@ -50,9 +50,9 @@ fn child_process() {
             0
         }
         "cwd" => {
-            #[allow(
+            #[expect(
                 clippy::disallowed_methods,
-                reason = "the test compares a child's working directory, which macOS reports through /private"
+                reason = "the parent resolves the expected directory with the same call, so both sides agree on /private on macOS"
             )]
             let _ = write!(
                 stdout,
@@ -194,9 +194,9 @@ fn the_heartbeat_beats_while_the_child_runs_and_stops_with_it() {
 fn a_child_runs_in_the_directory_it_was_given() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let entered = run_to_end(child(Some(dir.path()), "cwd"), HEARTBEAT_INTERVAL, None);
-    #[allow(
+    #[expect(
         clippy::disallowed_methods,
-        reason = "the child reports its working directory resolved, which macOS spells through /private"
+        reason = "the child reports its directory through the same call, so both sides agree on /private on macOS"
     )]
     let want = dir.path().canonicalize().expect("the directory exists");
     assert_eq!(entered.exit_code, 0, "{}", entered.output);
