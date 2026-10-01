@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.BrowsableTargetEnvironmentType
@@ -197,6 +197,37 @@ data class EelFileSystem(
     return createSdk(pythonBinaryPath, sdkAdditionalData, suggestedSdkName)
   }
 
+  override suspend fun getExistingSelectableInterpreters(
+    projectPathPrefix: Path,
+  ): List<ExistingSelectableInterpreter<PathHolder.Eel>> = withContext(Dispatchers.IO) {
+    if (!isLocal) return@withContext emptyList()
+
+    val allValidSdks = PythonSdkUtil
+      .getAllSdks()
+      .filter { sdk ->
+        if (sdk.isCondaVirtualEnv) return@filter false
+        if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return@filter false
+
+        try {
+          val associatedModulePath = sdk.associatedModulePath?.let { Path(it) } ?: return@filter true
+          associatedModulePath.startsWith(projectPathPrefix)
+        }
+        catch (e: InvalidPathException) {
+          LOG.warn("Skipping bad association ${sdk.associatedModulePath}", e)
+          false
+        }
+      }.mapNotNull { sdk ->
+        val pythonInterpreter = sdk.pythonInterpreterAsync()
+        val pythonInfo = pythonInterpreter.getPythonInfo()
+        val languageLevel = pythonInfo.successOrNull?.languageLevel
+
+        languageLevel?.let {
+          ExistingSelectableInterpreter(wrapSdk(pythonInterpreter), PythonInfo(it), sdk.isSystemWide)
+        }
+      }
+    allValidSdks
+  }
+
   override fun parsePath(raw: String): PyResult<PathHolder.Eel> {
     val mayBeFull = try {
       Path(raw)
@@ -287,10 +318,11 @@ data class EelFileSystem(
     return PyResult.success(interpreter)
   }
 
-  override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Eel> = withContext(Dispatchers.IO) {
-    val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.getSdkAPI().homePath!!)
-    PythonInterpreterWrapper(pythonInterpreter, PathHolder.Eel(Path.of(adjustedHomePath)))
-  }
+  override suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<PathHolder.Eel> =
+    withContext(Dispatchers.IO) {
+      val adjustedHomePath = PythonSdkType.getInstance().adjustSelectedSdkHome(pythonInterpreter.getSdkAPI().homePath!!)
+      PythonInterpreterWrapper(pythonInterpreter, PathHolder.Eel(Path.of(adjustedHomePath)))
+    }
 
   override suspend fun detectSelectableVenv(projectPathPrefix: Path): List<DetectedSelectableInterpreter<PathHolder.Eel>> {
     // Venvs are not detected manually, but must migrate to VenvService or so
@@ -426,6 +458,8 @@ internal data class TargetFileSystem(
   private val targetProbeWorkingDirectory: Path? = null,
 ) : FileSystem<PathHolder.Target> {
   override val eelOrTarget: EelOrTarget.IsTarget = EelOrTarget.IsTarget(targetEnvironmentConfiguration)
+
+  override suspend fun getExistingSelectableInterpreters(projectPathPrefix: Path): List<ExistingSelectableInterpreter<PathHolder.Target>> = emptyList()
 
   override fun createBrowseFolderListener(
     textField: TextFieldWithBrowseButton,
@@ -872,36 +906,6 @@ internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<I
   }
   else emptyList()
 
-internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpreters(
-  projectPathPrefix: Path,
-): List<ExistingSelectableInterpreter<P>> = withContext(Dispatchers.IO) {
-  if (!isLocal) return@withContext emptyList()
-
-  val allValidSdks = PythonSdkUtil
-    .getAllSdks()
-    .filter { sdk ->
-      if (sdk.isCondaVirtualEnv) return@filter false
-      if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return@filter false
-
-      try {
-        val associatedModulePath = sdk.associatedModulePath?.let { Path(it) } ?: return@filter true
-        associatedModulePath.startsWith(projectPathPrefix)
-      }
-      catch (e: InvalidPathException) {
-        LOG.warn("Skipping bad association ${sdk.associatedModulePath}", e)
-        false
-      }
-    }.mapNotNull { sdk ->
-      val pythonInterpreter = sdk.pythonInterpreterAsync()
-      val pythonInfo = pythonInterpreter.getPythonInfo()
-      val languageLevel = pythonInfo.successOrNull?.languageLevel
-
-      languageLevel?.let {
-        ExistingSelectableInterpreter(wrapSdk(pythonInterpreter), PythonInfo(it), sdk.isSystemWide)
-      }
-    }
-  allValidSdks
-}
 
 private suspend fun <P : PathHolder> FileSystem<P>.resolveToolSearchPaths(toolSpec: ToolCommandSpec): List<P> {
   return toolSpec.searchPathsFor(platformAndRoot.platform).mapNotNull { searchPath ->

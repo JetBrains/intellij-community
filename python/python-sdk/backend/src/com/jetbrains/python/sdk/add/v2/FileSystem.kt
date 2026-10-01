@@ -6,7 +6,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -52,6 +51,9 @@ interface FileSystem<P : PathHolder> {
   fun parsePath(raw: String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
+  suspend fun getExistingSelectableInterpreters(
+    projectPathPrefix: Path,
+  ): List<ExistingSelectableInterpreter<P>>
 
   // TODO: Almost same as configureFileBrowseEditor, unify
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
