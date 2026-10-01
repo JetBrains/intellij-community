@@ -157,14 +157,12 @@ fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow
     let (files, classpath) = match &options.mode {
         Mode::Jars { jars_file, catalogue } => {
             let span = root.child("collect platform jars");
-            let result = collect::platform_jars(jars_file)
-                .and_then(|files| inventory::attach_metadata(&files, Path::new(catalogue)))
-                .and_then(|files| collect::validate_destinations(&files).map(|()| files));
+            let result = collect::platform_jars(jars_file).and_then(|records| inventory::attach_metadata(&records, Path::new(catalogue)));
             (record_collection(&span, "jarCount", result)?, None)
         }
         Mode::Files { files_file } => {
             let span = root.child("collect explicit files");
-            let result = collect::explicit_files(files_file).and_then(|files| collect::validate_destinations(&files).map(|()| files));
+            let result = collect::explicit_files(files_file);
             (record_collection(&span, "fileCount", result)?, None)
         }
         Mode::PluginComponent { spec, classpath } => {

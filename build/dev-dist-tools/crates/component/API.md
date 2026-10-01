@@ -8,8 +8,8 @@ it. The collector writes the manifests, and the composer reads them. `intellij_d
 catalogue with `json.encode`, and the collector reads it with `json::read`. The composer writes the local layout, and
 the launcher reads it.
 
-A host path is a `&str` or a `String`, as in the Go tools. A function that opens a file takes a `&Path`. A list of
-names is a `&[S]` with `S: AsRef<str>`.
+A host path is a `Path` or a `PathBuf`. A path inside a distribution is a `str` in slash form. A list of names is a
+`&[S]` with `S: AsRef<str>`.
 
 `filemeta::merge` checks a set of entries together, and `ComponentEntry::to_metadata` gives the entry of a manifest
 entry. It is part of the contract.
@@ -33,12 +33,12 @@ the field order, where Go refuses it. No producer writes such an array.
 ## Paths (`paths`)
 
 - `paths::SEPARATOR: char`: the native name separator.
-- `paths::host_path(value) -> Result<String>`: checks a host path and gives it with native separators. It refuses
-  NUL and an empty, `.` or `..` element. Bazel writes none of them.
+- `paths::host_path(value: &str) -> Result<PathBuf>`: checks the text of a host path and gives the path with native
+  separators. It refuses NUL and an empty, `.` or `..` element. Bazel writes none of them.
 - `paths::to_slash(value) -> Cow<str>`: changes each native separator to a slash.
 - `paths::from_slash(value) -> Cow<str>`: changes each slash to a native separator.
-- `paths::absolute_path(value) -> Result<String>`: the absolute path of a host path. A relative path starts at the
-  working directory.
+- `paths::absolute_path(value: impl AsRef<Path>) -> Result<PathBuf>`: the absolute path of a `host_path`. A relative
+  path starts at the working directory. A path that is not UTF-8 fails.
 
 ## Component manifest v10 (`manifest`)
 

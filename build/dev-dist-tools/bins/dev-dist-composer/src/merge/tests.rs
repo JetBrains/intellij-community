@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
 use component::manifest::ComponentManifest;
@@ -203,14 +203,16 @@ fn composer_creates_a_manifest_only_link_from_the_manifest_and_not_from_the_stag
 }
 
 #[test]
+// The reader of the bindings checks the directories of a tree once, so the alias exists before it runs.
 fn composer_rejects_regular_files_through_escaping_directory_aliases() {
     let directory = TempDir::new();
-    let tree = BoundTree::new(directory.path(), &["lib/native.jar", "alias/payload"]);
+    let staged = BoundTree::stage(directory.path());
     let outside = directory.path().join("outside");
     write_file(outside.join("payload"), "outside bytes");
-    for root in [&tree.physical, &tree.staged] {
+    for root in [&staged.physical, &staged.staged] {
         directory_symlink(&outside, root.join("alias"));
     }
+    let tree = staged.bind(&["lib/native.jar", "alias/payload"]).unwrap();
     let file = sourced_entry("plugins/demo/payload", &tree.staged("alias/payload"));
     let component = DevBuildComponent {
         source_bindings: Some(tree.bindings.clone()),
@@ -222,6 +224,27 @@ fn composer_rejects_regular_files_through_escaping_directory_aliases() {
         "escaping directory alias",
     );
     require_absent(target.join("plugins/demo/payload"));
+}
+
+// A macOS framework in a tree has members below a directory link, and the manifest names the link, not those members.
+#[test]
+fn composer_accepts_a_member_below_a_link_that_no_manifest_names() {
+    let directory = TempDir::new();
+    let staged = BoundTree::stage(directory.path());
+    let outside = directory.path().join("outside");
+    write_file(outside.join("payload"), "outside bytes");
+    for root in [&staged.physical, &staged.staged] {
+        directory_symlink(&outside, root.join("alias"));
+    }
+    let tree = staged.bind(&["lib/native.jar", "alias/payload"]).unwrap();
+    let file = sourced_entry("plugins/demo/lib/native.jar", &tree.staged("lib/native.jar"));
+    let component = DevBuildComponent {
+        source_bindings: Some(tree.bindings.clone()),
+        ..DevBuildComponent::new(with_entries(test_manifest("plugin"), vec![file]))
+    };
+    let target = directory.path().join("target");
+    compose_with(&[component], &target, with_directory_runfiles(&tree.staged, "_main/plugin")).unwrap();
+    assert_eq!(read_text(target.join("plugins/demo/lib/native.jar")), "native bytes");
 }
 
 #[test]
@@ -489,7 +512,7 @@ fn directory_components_preserve_modes_in_a_full_layout() {
     let manifest = with_entries(test_manifest("invalid"), vec![directory_entry("resources", 0o1700)]);
     require_error(
         compose(&[unbound_files(manifest)], directory.path().join("invalid")),
-        "Invalid directory",
+        "invalid size or mode for resources",
     );
 }
 
@@ -518,7 +541,7 @@ fn local_and_exported_compositions_have_the_same_metadata() {
     .unwrap();
     assert_eq!(read_text(directory.path().join("dist/lib/app.jar")), "bytes");
     fs::remove_file(&app).unwrap();
-    let runfiles = BTreeMap::from([(app, "_main/tree/lib/app.jar".to_owned())]);
+    let runfiles = BTreeMap::from([(PathBuf::from(app), "_main/tree/lib/app.jar".to_owned())]);
     let local = compose_with(
         &[platform],
         directory.path().join("metadata"),

@@ -265,3 +265,22 @@ fn compose_cli_refuses_a_version_9_manifest() {
     assert!(errors.starts_with("ERROR: ") && errors.ends_with(&message), "errors = {errors:?}");
     require_absent("out/dist");
 }
+
+// The reader of a manifest is the one place that checks the entry modes, and the composer reads every manifest before
+// it removes the output of an earlier run.
+#[test]
+fn compose_cli_refuses_an_invalid_manifest_before_it_removes_the_output() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(false);
+    write_file("out/dist/stale.txt", "stale");
+    let core = read_text("fragments/core.json").replace(r#""hash":1,"#, r#""hash":1,"mode":493,"#);
+    write_file("fragments/core.json", core);
+    let (code, errors) = run_cli(&cli_args(&[]));
+    assert_eq!(code, 1);
+    let message = format!(
+        "{}: Dev-build component entry 'bin/idea.properties' has an invalid or conflicting file mode: 493\n",
+        component::paths::from_slash("fragments/core.json")
+    );
+    assert!(errors.starts_with("ERROR: ") && errors.ends_with(&message), "errors = {errors:?}");
+    assert_eq!(read_text("out/dist/stale.txt"), "stale");
+}

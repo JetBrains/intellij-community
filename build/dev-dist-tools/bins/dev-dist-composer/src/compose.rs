@@ -48,8 +48,8 @@ pub(crate) struct ComposeOptions {
     pub(crate) plugin_classpath_prefix: Option<PathBuf>,
     pub(crate) expected_fragments: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
-    pub(crate) source_runfiles: Option<BTreeMap<String, String>>,
-    pub(crate) source_directory_runfiles: Option<BTreeMap<String, String>>,
+    pub(crate) source_runfiles: Option<BTreeMap<PathBuf, String>>,
+    pub(crate) source_directory_runfiles: Option<BTreeMap<PathBuf, String>>,
 }
 
 /// The values of the IDE config, the core classpath and the fingerprint of a composition.
@@ -63,14 +63,14 @@ pub(crate) struct ComposedBuild {
 }
 
 /// Checks that the components form one distribution. It reads no file, so a failure leaves no output.
+///
+/// Each manifest passed `manifest::validate_manifest` when `manifest::read_component_manifest` read it, so the checks
+/// here concern the components together.
 pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fragments: &[String]) -> Result<()> {
     if components.is_empty() {
         bail!("At least one dev-build component is required");
     }
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
-    for manifest in &manifests {
-        manifest::validate_manifest(manifest)?;
-    }
     let kinds: Vec<&str> = manifests.iter().map(|manifest| manifest.kind.as_str()).collect();
     let first = manifests[0];
     let main_class = manifests.iter().find_map(|manifest| manifest.main_class.as_deref());
@@ -162,7 +162,6 @@ pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<
         })
         .collect();
     for entry in manifests.iter().flat_map(|manifest| &manifest.entries) {
-        manifest::validate_entry_mode(entry)?;
         if !destinations.insert(entry.relative_path()) {
             bail!("Dev-build components both provide '{}'", entry.relative_path());
         }
@@ -224,7 +223,7 @@ where
         merge(components, target)?;
     }
 
-    let plugin_classpath_file = write_plugin_classpath(components, target, options.plugin_classpath_prefix.as_deref())?;
+    let plugin_classpath = write_plugin_classpath(components, target, options.plugin_classpath_prefix.as_deref())?;
     let additional_modules = distinct(&options.additional_modules);
     let core_class_path: Vec<&str> = manifests
         .iter()
@@ -236,12 +235,11 @@ where
             &manifests,
             target,
             source_runfiles,
-            plugin_classpath_file.is_some(),
+            plugin_classpath.is_some(),
             options.source_directory_runfiles.as_ref(),
         )?;
     }
-    let fingerprint =
-        fingerprint::compute_ide_fingerprint_from_components(&manifests, plugin_classpath_file.as_deref(), &additional_modules)?;
+    let fingerprint = fingerprint::compute_ide_fingerprint_from_components(&manifests, plugin_classpath.as_deref(), &additional_modules)?;
     Ok(ComposedBuild {
         platform_prefix: first.platform_prefix.clone(),
         main_class,
@@ -251,9 +249,10 @@ where
     })
 }
 
-/// Writes `plugins/plugin-classpath.txt` from the prefix and the records of all components. The plugin count between
-/// the two is the number of plugin components. The result is `None` when no component has records.
-pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &Path, prefix: Option<&Path>) -> Result<Option<PathBuf>> {
+/// Writes `plugins/plugin-classpath.txt` from the prefix and the records of all components, and returns its bytes. The
+/// plugin count between the two is the number of plugin components. The result is `None` when no component has
+/// records.
+pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &Path, prefix: Option<&Path>) -> Result<Option<Vec<u8>>> {
     let kinds: Vec<&str> = components
         .iter()
         .filter(|component| component.plugin_classpath_part.is_some())
@@ -281,12 +280,12 @@ pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &
         parts.push(fs::read(part).with_context(|| part.display().to_string())?);
     }
     let content = plugin_classpath::compose(&prefix, plugin_count, &parts);
-    fs::write(&file, content).with_context(|| file.display().to_string())?;
-    Ok(Some(file))
+    fs::write(&file, &content).with_context(|| file.display().to_string())?;
+    Ok(Some(content))
 }
 
 /// The map with the absolute path of each key. Two keys with one absolute path fail.
-pub(crate) fn absolute_keys(source: &BTreeMap<String, String>) -> Result<BTreeMap<String, String>> {
+pub(crate) fn absolute_keys(source: &BTreeMap<String, String>) -> Result<BTreeMap<PathBuf, String>> {
     let mut result = BTreeMap::new();
     for (key, value) in source {
         if result.insert(paths::absolute_path(key)?, value.clone()).is_some() {

@@ -1,8 +1,8 @@
 //! The collector side of the manifest: the inventory of the files that a component places. The metadata catalogue
 //! names the inventory entry of each packed source.
 
-use std::collections::{BTreeMap, HashMap};
-use std::path::Path;
+use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
 use component::json;
@@ -26,8 +26,8 @@ pub(crate) enum Classpath {
 /// One file that the collector places in a component.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct SourcedFile {
-    /// Where the bytes are, relative to the working directory of the action.
-    pub(crate) source: String,
+    /// Where the bytes are, relative to the working directory of the action. The manifest states the same text.
+    pub(crate) source: PathBuf,
     /// The destination in the distribution, in slash form.
     pub(crate) relative_path: String,
     pub(crate) executable: bool,
@@ -39,11 +39,19 @@ pub(crate) struct SourcedFile {
 }
 
 impl SourcedFile {
-    pub(crate) fn new(source: impl Into<String>, relative_path: impl Into<String>) -> Self {
+    pub(crate) fn new(source: impl Into<PathBuf>, relative_path: impl Into<String>) -> Self {
         Self {
             source: source.into(),
             relative_path: relative_path.into(),
             ..Self::default()
+        }
+    }
+
+    /// The source as the manifest states it. Each source comes from JSON text, so it is UTF-8.
+    fn source_text(&self) -> Result<String> {
+        match self.source.to_str() {
+            Some(text) => Ok(text.to_owned()),
+            None => bail!("The path is not valid UTF-8: {}", self.source.display()),
         }
     }
 }
@@ -83,16 +91,20 @@ pub(crate) struct ManifestHeader {
 /// A file with an inventory entry takes the hash, the type and the mode of that entry. The collector reads nothing
 /// from its source. Any other file must be a regular file, and the inventory hashes it once per absolute source path.
 pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, InventoryStats)> {
-    let mut hashes: HashMap<String, i64> = HashMap::new();
-    let mut links: BTreeMap<String, String> = BTreeMap::new();
+    // `filemeta::merge` accepts two equal entries at one destination, so a repeated destination needs its own check.
+    // It runs first, so that a conflict reads no payload.
+    let mut destinations = HashSet::with_capacity(files.len());
+    for file in files {
+        if !destinations.insert(file.relative_path.as_str()) {
+            bail!("conflicting destination: {}", file.relative_path);
+        }
+    }
+    let mut hashes: HashMap<PathBuf, i64> = HashMap::new();
     let mut entries = Vec::with_capacity(files.len());
     let mut byte_count = 0u64;
     for file in files {
+        let relative_path = file.relative_path.clone();
         if let Some(metadata) = &file.metadata {
-            let mut metadata = metadata.clone();
-            metadata.relative_path.clone_from(&file.relative_path);
-            filemeta::merge(std::iter::once(&metadata))?;
-            let relative_path = file.relative_path.clone();
             let entry = match metadata.entry_type {
                 EntryType::Directory => ComponentEntry::Directory {
                     relative_path,
@@ -103,7 +115,6 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
                         bail!("symbolic link has an executable override: {}", file.relative_path);
                     }
                     let target = distpath::clean_link_target(&metadata.symlink_target);
-                    links.insert(relative_path.clone(), target.clone());
                     ComponentEntry::Symlink {
                         relative_path,
                         hash: filemeta::hash_symlink_target(&target),
@@ -120,7 +131,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
                         relative_path,
                         hash: metadata.hash,
                         executable,
-                        source: file.source.clone(),
+                        source: file.source_text()?,
                         mode,
                     }
                 }
@@ -130,26 +141,32 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
         }
         let regular = std::fs::metadata(&file.source).ok().filter(std::fs::Metadata::is_file);
         let Some(source_metadata) = regular else {
-            bail!("source of '{}' is not a regular file: {}", file.relative_path, file.source);
+            bail!(
+                "source of '{}' is not a regular file: {}",
+                file.relative_path,
+                file.source.display()
+            );
         };
         let absolute = paths::absolute_path(&file.source)?;
         let hash = if let Some(&hash) = hashes.get(&absolute) {
             hash
         } else {
-            let hash = xxh3::hash_file(Path::new(&absolute)).with_context(|| absolute.clone())?;
+            let hash = xxh3::hash_file(&absolute).with_context(|| absolute.display().to_string())?;
             hashes.insert(absolute, hash);
             byte_count += source_metadata.len();
             hash
         };
         entries.push(ComponentEntry::ComponentFile {
-            relative_path: file.relative_path.clone(),
+            relative_path,
             hash,
             executable: file.executable,
-            source: file.source.clone(),
+            source: file.source_text()?,
             mode: None,
         });
     }
-    distpath::validate_links(&links)?;
+    // One check of all entries together: the paths, the modes, the spellings, the ancestors and the link graph.
+    let metadata: Vec<Entry> = entries.iter().map(ComponentEntry::to_metadata).collect();
+    filemeta::merge(&metadata)?;
     entries.sort_by(|first, second| first.relative_path().cmp(second.relative_path()));
     let stats = InventoryStats {
         file_count: entries.len(),
@@ -207,7 +224,7 @@ pub(crate) struct MetadataRecord {
 /// file of the entries.
 #[derive(Debug, Clone)]
 struct TreeMetadata {
-    metadata: String,
+    metadata: PathBuf,
     entries: Vec<Entry>,
 }
 
@@ -222,7 +239,7 @@ impl TreeMetadata {
             let mut metadata = entry.clone();
             metadata.relative_path.clone_from(&relative_path);
             files.push(SourcedFile {
-                source,
+                source: PathBuf::from(source),
                 relative_path,
                 executable: entry.executable,
                 mode: Some(entry.mode),
@@ -238,9 +255,9 @@ impl TreeMetadata {
 /// The result is what the manifest lists, so a tree without a file contributes nothing.
 pub(crate) fn attach_metadata(records: &[JarRecord], catalogue: &Path) -> Result<Vec<SourcedFile>> {
     let catalogue_records: Vec<MetadataRecord> = json::read(catalogue)?;
-    let mut by_source: HashMap<String, Entry> = HashMap::new();
-    let mut trees: HashMap<String, TreeMetadata> = HashMap::new();
-    let mut cache: HashMap<String, HashMap<String, Entry>> = HashMap::new();
+    let mut by_source: HashMap<PathBuf, Entry> = HashMap::new();
+    let mut trees: HashMap<PathBuf, TreeMetadata> = HashMap::new();
+    let mut cache: HashMap<PathBuf, HashMap<String, Entry>> = HashMap::new();
     for record in &catalogue_records {
         if record.source.is_empty() || record.metadata.is_empty() || distpath::validate_path(&record.relative_path).is_err() {
             bail!(
@@ -250,7 +267,7 @@ pub(crate) fn attach_metadata(records: &[JarRecord], catalogue: &Path) -> Result
         }
         let metadata_path = paths::absolute_path(&record.metadata)?;
         if !cache.contains_key(&metadata_path) {
-            let inventory = filemeta::read(Path::new(&metadata_path))?;
+            let inventory = filemeta::read(&metadata_path)?;
             let entries = inventory.into_iter().map(|entry| (entry.relative_path.clone(), entry)).collect();
             cache.insert(metadata_path.clone(), entries);
         }
@@ -276,7 +293,7 @@ pub(crate) fn attach_metadata(records: &[JarRecord], catalogue: &Path) -> Result
         by_source.insert(source, entry.clone());
     }
 
-    let mut used = std::collections::HashSet::new();
+    let mut used = HashSet::new();
     let mut attached = Vec::with_capacity(records.len());
     for record in records {
         let file = match record {
@@ -300,31 +317,33 @@ pub(crate) fn attach_metadata(records: &[JarRecord], catalogue: &Path) -> Result
         let source = paths::absolute_path(&file.source)?;
         let Some(entry) = by_source.get(&source) else {
             if trees.contains_key(&source) {
-                bail!("file record {} has tree metadata", file.source);
+                bail!("file record {} has tree metadata", file.source.display());
             }
-            bail!("missing metadata for source {}", file.source);
+            bail!("missing metadata for source {}", file.source.display());
         };
         let mut file = file.clone();
         file.metadata = Some(entry.clone());
         attached.push(file);
         used.insert(source);
     }
-    let mut stale: Vec<&String> = by_source.keys().filter(|source| !used.contains(*source)).collect();
-    stale.sort();
-    if let Some(source) = stale.first() {
-        bail!("stale metadata ownership for source {source}");
+    let first_stale = |sources: &mut dyn Iterator<Item = &PathBuf>| {
+        sources
+            .filter(|source| !used.contains(*source))
+            .min_by(|first, second| first.as_os_str().cmp(second.as_os_str()))
+            .cloned()
+    };
+    if let Some(source) = first_stale(&mut by_source.keys()) {
+        bail!("stale metadata ownership for source {}", source.display());
     }
-    let mut stale: Vec<&String> = trees.keys().filter(|source| !used.contains(*source)).collect();
-    stale.sort();
-    if let Some(source) = stale.first() {
-        bail!("stale metadata ownership for tree {source}");
+    if let Some(source) = first_stale(&mut trees.keys()) {
+        bail!("stale metadata ownership for tree {}", source.display());
     }
     Ok(attached)
 }
 
 /// The inventory of a tree. The root must be a directory entry, and every entry below it is a file or a directory.
 /// The packer writes a native tree from archive entries, so a link there means that the producer changed.
-fn tree_entries(entries: &HashMap<String, Entry>, record: &MetadataRecord, metadata_path: &str) -> Result<TreeMetadata> {
+fn tree_entries(entries: &HashMap<String, Entry>, record: &MetadataRecord, metadata_path: &Path) -> Result<TreeMetadata> {
     let root = entries.get(&record.relative_path);
     if root.is_none_or(|root| root.entry_type != EntryType::Directory) {
         bail!(
@@ -335,7 +354,7 @@ fn tree_entries(entries: &HashMap<String, Entry>, record: &MetadataRecord, metad
     }
     let prefix = format!("{}/", record.relative_path);
     let mut tree = TreeMetadata {
-        metadata: metadata_path.to_owned(),
+        metadata: metadata_path.to_path_buf(),
         entries: Vec::new(),
     };
     #[expect(clippy::iter_over_hash_type, reason = "the entries are sorted below")]

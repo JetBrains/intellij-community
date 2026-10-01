@@ -2,7 +2,7 @@
 //! and the launcher links a local home from the file.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
 use component::layout::{
@@ -12,19 +12,16 @@ use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::paths;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
 
-use crate::compose::validate_destinations;
-
-/// The bytes of the local layout.
+/// The bytes of the local layout. The caller checked the destinations with `compose::validate_destinations`.
 ///
 /// Every entry lists `path`, `runfile`, `symlinkTarget`, `executable` and `mode`, `null` included, and `kind` only for
 /// a directory. The metadata list names the files that the composer writes beside the layout.
 pub(crate) fn encode_local_layout(
     components: &[&ComponentManifest],
-    source_runfiles: &BTreeMap<String, String>,
+    source_runfiles: &BTreeMap<PathBuf, String>,
     has_plugin_classpath: bool,
-    source_directory_runfiles: Option<&BTreeMap<String, String>>,
+    source_directory_runfiles: Option<&BTreeMap<PathBuf, String>>,
 ) -> Result<Vec<u8>> {
-    validate_destinations(components)?;
     let mut files = Vec::new();
     for entry in components.iter().flat_map(|component| &component.entries) {
         let path = entry.relative_path().to_owned();
@@ -67,9 +64,9 @@ pub(crate) fn encode_local_layout(
 pub(crate) fn write_local_layout(
     components: &[&ComponentManifest],
     target: &Path,
-    source_runfiles: &BTreeMap<String, String>,
+    source_runfiles: &BTreeMap<PathBuf, String>,
     has_plugin_classpath: bool,
-    source_directory_runfiles: Option<&BTreeMap<String, String>>,
+    source_directory_runfiles: Option<&BTreeMap<PathBuf, String>>,
 ) -> Result<()> {
     let content = encode_local_layout(components, source_runfiles, has_plugin_classpath, source_directory_runfiles)?;
     let file = target.join(LOCAL_LAYOUT_FILE);
@@ -77,11 +74,11 @@ pub(crate) fn write_local_layout(
 }
 
 /// The runfile of a source: an exact file declaration, or a file inside the deepest declared directory. The keys of
-/// both maps are absolute paths.
+/// both maps are absolute paths. The function looks up each ancestor of the source, the deepest first.
 pub(crate) fn resolve_source_runfile(
     source: &str,
-    files: &BTreeMap<String, String>,
-    directories: Option<&BTreeMap<String, String>>,
+    files: &BTreeMap<PathBuf, String>,
+    directories: Option<&BTreeMap<PathBuf, String>>,
     name: &str,
 ) -> Result<String> {
     let Ok(absolute) = paths::absolute_path(source) else {
@@ -91,15 +88,21 @@ pub(crate) fn resolve_source_runfile(
         distpath::validate_path(exact)?;
         return Ok(exact.clone());
     }
-    let directory = directories
-        .into_iter()
-        .flatten()
-        .filter(|(candidate, _)| absolute != **candidate && Path::new(&absolute).starts_with(candidate.as_str()));
-    let Some((directory, runfile)) = directory.max_by_key(|(candidate, _)| candidate.len()) else {
+    let directory = directories.and_then(|directories| {
+        absolute
+            .ancestors()
+            .skip(1)
+            .find_map(|ancestor| directories.get(ancestor).map(|runfile| (ancestor, runfile)))
+    });
+    let Some((directory, runfile)) = directory else {
         bail!("Dev-build component entry '{name}' names an undeclared source: {source}");
     };
     distpath::validate_path(runfile)?;
-    let child = paths::to_slash(absolute[directory.len()..].trim_start_matches(paths::SEPARATOR));
+    let child = absolute
+        .strip_prefix(directory)
+        .ok()
+        .and_then(distpath::slash_path)
+        .unwrap_or_default();
     distpath::validate_path(&child)?;
     Ok(format!("{runfile}/{child}"))
 }

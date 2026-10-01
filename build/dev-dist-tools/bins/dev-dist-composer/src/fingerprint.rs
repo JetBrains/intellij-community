@@ -1,8 +1,6 @@
 //! IDE fingerprint v5: the Kotlin `computeIdeFingerprint` (`IdeFingerprint.kt`) over the component manifests.
 
-use std::path::Path;
-
-use anyhow::{Context as _, Result, bail};
+use anyhow::{Result, bail};
 use component::classpath;
 use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::plugin_classpath::PLUGIN_CLASSPATH;
@@ -121,11 +119,11 @@ pub(crate) fn launch_metadata_hash<S: AsRef<str>>(
 /// The IDE fingerprint of the components.
 ///
 /// The main class comes from the first component that declares one, and the platform from the first component
-/// that names one. `modules` are the additional modules of the composition spec. The source of an entry does not
-/// enter the fingerprint.
+/// that names one. `modules` are the additional modules of the composition spec. `plugin_classpath` holds the bytes of
+/// `plugins/plugin-classpath.txt`. The source of an entry does not enter the fingerprint.
 pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     components: &[&ComponentManifest],
-    plugin_classpath_file: Option<&Path>,
+    plugin_classpath: Option<&[u8]>,
     modules: &[S],
 ) -> Result<String> {
     let Some(first) = components.first() else {
@@ -154,7 +152,6 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     }
     for component in components {
         for entry in &component.entries {
-            manifest::validate_entry_mode(entry)?;
             match entry {
                 ComponentEntry::Directory { relative_path, mode } => {
                     entries.push(FingerprintEntry::new(relative_path, "directory-mode", (*mode).into(), false));
@@ -184,9 +181,15 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
         xxh3::hash_bytes(core_classpath.as_bytes()),
         false,
     ));
-    if let Some(file) = plugin_classpath_file {
-        let hash = xxh3::hash_file(file).with_context(|| file.display().to_string())?;
-        entries.push(FingerprintEntry::new(PLUGIN_CLASSPATH, "generated-plugin-classpath", hash, false));
+    if let Some(content) = plugin_classpath {
+        let mut hasher = xxh3::Hasher::new();
+        hasher.update(content);
+        entries.push(FingerprintEntry::new(
+            PLUGIN_CLASSPATH,
+            "generated-plugin-classpath",
+            hasher.finish(),
+            false,
+        ));
     }
     Ok(compute_ide_fingerprint(&entries))
 }

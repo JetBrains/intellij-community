@@ -1,7 +1,7 @@
 // The local layout that `compose_components` writes for launch metadata.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use component::manifest::ComponentEntry;
@@ -20,7 +20,7 @@ fn layout_component(kind: &str, entries: Vec<ComponentEntry>) -> DevBuildCompone
     DevBuildComponent::new(with_entries(test_manifest(kind), entries))
 }
 
-fn compose_local(components: &[DevBuildComponent], target: &Path, source_runfiles: BTreeMap<String, String>) -> Result<ComposedBuild> {
+fn compose_local(components: &[DevBuildComponent], target: &Path, source_runfiles: BTreeMap<PathBuf, String>) -> Result<ComposedBuild> {
     let options = ComposeOptions {
         source_runfiles: Some(source_runfiles),
         ..ComposeOptions::default()
@@ -61,7 +61,7 @@ fn directory_components_preserve_modes_in_the_local_layout_without_payload_trees
         &ComposeOptions::default(),
         no_merge,
     );
-    require_error(result, "Invalid directory");
+    require_error(result, "invalid size or mode for resources/empty");
 }
 
 #[test]
@@ -117,7 +117,7 @@ fn invalid_or_conflicting_modes_fail_before_creating_launch_metadata() {
         let target = directory.path().join(format!("metadata-{index}"));
         require_error(
             compose_local(&[layout_component("plugin", vec![file])], &target, runfiles(&[])),
-            "file mode",
+            "invalid size or mode for bin/tool",
         );
         require_absent(&target);
     }

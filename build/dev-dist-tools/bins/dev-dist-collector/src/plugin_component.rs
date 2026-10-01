@@ -263,32 +263,94 @@ fn validate_plugin_directory(plugin_directory: &str) -> anyhow::Result<()> {
 }
 
 /// Checks that every declared path is safe, and that no metadata input, payload artifact or output overlaps another.
+///
+/// Two paths overlap when one is the other or holds it. A path is absolute in the check when any declared path is
+/// absolute, as in [`overlap`]. Each error names the first overlapping path in declaration order.
 fn validate_artifact_paths(outputs: &Outputs<'_>, metadata: &[&str], payload: &[&str]) -> anyhow::Result<()> {
     let mut output_paths = vec![outputs.manifest, outputs.classpath];
     output_paths.extend(outputs.trace_file);
     for path in metadata.iter().chain(payload).chain(&output_paths) {
         validate_declared_artifact_path(path)?;
     }
+    let absolute = metadata
+        .iter()
+        .chain(payload)
+        .chain(&output_paths)
+        .any(|path| path.starts_with('/'));
+    let identity = |path: &str| distpath::path_identity(&source_identity_path(path, if absolute { "/" } else { "" })?);
+    let payload_index = PathIndex::new(payload, &identity)?;
     for source in metadata {
-        for artifact in payload {
-            if overlap(source, artifact)? {
-                bail!("metadata input {source} overlaps payload artifact {artifact}");
-            }
+        if let Some(index) = payload_index.first_overlap(&identity(source)?) {
+            bail!("metadata input {source} overlaps payload artifact {}", payload[index]);
         }
     }
+    let metadata_index = PathIndex::new(metadata, &identity)?;
+    let output_index = PathIndex::new(&output_paths, &identity)?;
     for (index, destination) in output_paths.iter().enumerate() {
-        for source in metadata.iter().chain(&output_paths[..index]) {
-            if overlap(destination, source)? {
-                bail!("output {destination} conflicts with metadata path {source}");
-            }
+        let destination_identity = identity(destination)?;
+        let source = metadata_index
+            .first_overlap(&destination_identity)
+            .map(|source| metadata[source])
+            .or_else(|| {
+                output_index
+                    .first_overlap(&destination_identity)
+                    .filter(|&output| output < index)
+                    .map(|output| output_paths[output])
+            });
+        if let Some(source) = source {
+            bail!("output {destination} conflicts with metadata path {source}");
         }
-        for artifact in payload {
-            if overlap(destination, artifact)? {
-                bail!("output {destination} overlaps payload artifact {artifact}");
-            }
+        if let Some(artifact) = payload_index.first_overlap(&destination_identity) {
+            bail!("output {destination} overlaps payload artifact {}", payload[artifact]);
         }
     }
     Ok(())
+}
+
+/// The declared paths of one kind by [`distpath::path_identity`], for the overlap checks of
+/// [`validate_artifact_paths`] without a loop over each pair. A value is the index of the first path in declaration
+/// order.
+struct PathIndex {
+    /// The identity of each path.
+    paths: HashMap<String, usize>,
+    /// The identity of each directory that holds a path.
+    holders: HashMap<String, usize>,
+}
+
+impl PathIndex {
+    fn new(paths: &[&str], identity: &dyn Fn(&str) -> anyhow::Result<String>) -> anyhow::Result<Self> {
+        let mut index = Self {
+            paths: HashMap::with_capacity(paths.len()),
+            holders: HashMap::new(),
+        };
+        for (position, path) in paths.iter().enumerate() {
+            let path = identity(path)?;
+            let mut current = path.as_str();
+            while let Some((parent, _)) = current.rsplit_once('/') {
+                index.holders.entry(parent.to_owned()).or_insert(position);
+                current = parent;
+            }
+            index.paths.entry(path).or_insert(position);
+        }
+        Ok(index)
+    }
+
+    /// The first path that is the path of `identity`, holds it, or lies below it.
+    fn first_overlap(&self, identity: &str) -> Option<usize> {
+        let mut first = [self.paths.get(identity), self.holders.get(identity)]
+            .into_iter()
+            .flatten()
+            .min()
+            .copied();
+        let mut current = identity;
+        while let Some((parent, _)) = current.rsplit_once('/') {
+            if let Some(&position) = self.paths.get(parent) {
+                first = Some(first.map_or(position, |first| first.min(position)));
+            }
+            current = parent;
+        }
+        first
+    }
 }
 
 /// Accepts a path in slash form, relative or absolute, with no empty, `.` or `..` name. Bazel declares every path in
@@ -548,15 +610,9 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
         tree_entries.insert(index, owned);
     }
 
-    let mut files = Vec::new();
-    let mut entries = Vec::with_capacity(assets.len());
+    let mut files = Vec::with_capacity(assets.len());
     let mut used = HashSet::new();
     let mut used_trees = HashSet::new();
-    let mut place = |file: SourcedFile, mut entry: Entry| {
-        entry.relative_path.clone_from(&file.relative_path);
-        entries.push(entry);
-        files.push(file);
-    };
     for (index, asset) in assets.iter().enumerate() {
         if asset.kind == AssetKind::Tree && asset.producer == Producer::Independent {
             let tree = native_trees.get(asset.artifact.as_str());
@@ -574,7 +630,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
                         component_destination(&spec.plugin_directory, &asset.destination),
                     ),
                 };
-                place(tree_file(source, destination, entry), entry.clone());
+                files.push(tree_file(source, destination, entry));
             }
             continue;
         }
@@ -582,7 +638,7 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             for entry in tree_entries.get(&index).into_iter().flatten() {
                 let source = format!("{}/{}", spec.remainder.directory, entry.relative_path);
                 let destination = format!("{}/{}", spec.plugin_directory, entry.relative_path);
-                place(tree_file(source, destination, entry), entry.clone());
+                files.push(tree_file(source, destination, entry));
             }
             continue;
         }
@@ -608,11 +664,11 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
         if asset.class_path.unwrap_or(true) && is_plugin_lib_jar(&asset.destination) {
             file.classpath = Classpath::Plugin;
         }
-        let entry = file.metadata.clone().expect("every asset file has metadata");
+        let entry = file.metadata.as_ref().expect("every asset file has metadata");
         if entry.entry_type != EntryType::Symlink {
             file.mode = Some(entry.mode);
         }
-        place(file, entry);
+        files.push(file);
     }
     if used_trees.len() != native_trees.len() {
         bail!(
@@ -627,20 +683,21 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             independent.len() - used.len()
         );
     }
-    let mut destinations: HashMap<String, &str> = HashMap::with_capacity(entries.len());
-    for entry in &entries {
-        if let Some(previous) = destinations.insert(distpath::path_identity(&entry.relative_path)?, &entry.relative_path) {
-            bail!("conflicting plugin destinations: {previous} and {}", entry.relative_path);
+    // A tree entry and an asset with equal metadata at one destination pass the inventory rules, so the identities
+    // need their own check. The inventory checks the other rules of all files together.
+    let mut destinations: HashMap<String, &str> = HashMap::with_capacity(files.len());
+    for file in &files {
+        if let Some(previous) = destinations.insert(distpath::path_identity(&file.relative_path)?, &file.relative_path) {
+            bail!("conflicting plugin destinations: {previous} and {}", file.relative_path);
         }
     }
-    filemeta::merge(&entries)?;
     Ok(files)
 }
 
 /// A file of a tree. A link keeps no mode, so the inventory records its target only.
 fn tree_file(source: String, relative_path: String, entry: &Entry) -> SourcedFile {
     SourcedFile {
-        source,
+        source: source.into(),
         mode: (entry.entry_type != EntryType::Symlink).then_some(entry.mode),
         metadata: Some(entry.clone()),
         ..SourcedFile::new("", relative_path)
@@ -651,24 +708,19 @@ fn tree_file(source: String, relative_path: String, entry: &Entry) -> SourcedFil
 /// A copied file has no metadata, so the inventory hashes its source.
 fn collect_packed(spec: &PackedSpec) -> anyhow::Result<Vec<SourcedFile>> {
     let mut files = Vec::with_capacity(spec.jars.len() + spec.files.len());
-    let mut entries = Vec::with_capacity(spec.jars.len());
     for jar in &spec.jars {
-        let mut entry = read_packed_jar_metadata(jar)?;
-        let file = SourcedFile {
+        let entry = read_packed_jar_metadata(jar)?;
+        files.push(SourcedFile {
             mode: Some(entry.mode),
-            metadata: Some(entry.clone()),
+            metadata: Some(entry),
             classpath: if is_plugin_lib_jar(&jar.destination) {
                 Classpath::Plugin
             } else {
                 Classpath::None
             },
             ..SourcedFile::new(&jar.source, format!("{}/{}", spec.plugin_directory, jar.destination))
-        };
-        entry.relative_path.clone_from(&file.relative_path);
-        entries.push(entry);
-        files.push(file);
+        });
     }
-    filemeta::merge(&entries)?;
     for copied in &spec.files {
         files.push(SourcedFile {
             executable: copied.executable,

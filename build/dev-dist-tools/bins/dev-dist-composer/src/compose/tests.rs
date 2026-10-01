@@ -347,7 +347,7 @@ fn composer_checks_every_destination_before_the_merge_step() {
         ),
         (
             vec![component("platform", vec![directory_entry("lib", 0o1000)])],
-            "Invalid directory entry 'lib'",
+            "invalid size or mode for lib",
         ),
     ];
     for (components, message) in cases {
@@ -401,16 +401,19 @@ fn the_fingerprint_follows_the_declared_executable_flag() {
 
 #[test]
 fn absolute_keys_join_the_working_directory_and_refuse_a_collision() {
+    let spec_map = |pairs: &[(&str, &str)]| -> BTreeMap<String, String> {
+        pairs.iter().map(|(key, value)| ((*key).to_owned(), (*value).to_owned())).collect()
+    };
     let directory = std::env::current_dir().unwrap();
     let absolute_a = directory.join("a").to_str().unwrap().to_owned();
-    let absolute = absolute_keys(&runfiles(&[("a/b.jar", "_main/a/b.jar")])).unwrap();
+    let absolute = absolute_keys(&spec_map(&[("a/b.jar", "_main/a/b.jar")])).unwrap();
     let expected = directory.join(paths::from_slash("a/b.jar").as_ref());
-    assert_eq!(absolute.get(expected.to_str().unwrap()).map(String::as_str), Some("_main/a/b.jar"));
+    assert_eq!(absolute.get(&expected).map(String::as_str), Some("_main/a/b.jar"));
     require_error(
-        absolute_keys(&runfiles(&[("a", "first"), (absolute_a.as_str(), "second")])),
+        absolute_keys(&spec_map(&[("a", "first"), (absolute_a.as_str(), "second")])),
         "Two dev-build runfile keys name one path",
     );
-    require_error(absolute_keys(&runfiles(&[("a/../b", "b")])), "Unsupported host path");
+    require_error(absolute_keys(&spec_map(&[("a/../b", "b")])), "Unsupported host path");
 }
 
 #[test]

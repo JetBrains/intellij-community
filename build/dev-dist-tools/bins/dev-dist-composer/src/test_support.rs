@@ -200,26 +200,28 @@ pub(crate) fn json(value: &str) -> String {
 
 /// A tree artifact that Bazel stages in a sandbox: each staged member links to the physical output, and the bindings
 /// file describes the tree.
+#[derive(Debug)]
 pub(crate) struct BoundTree {
     pub(crate) physical: PathBuf,
     pub(crate) staged: PathBuf,
     pub(crate) bindings: ComponentSources,
 }
 
-impl BoundTree {
-    pub(crate) fn new(directory: &Path, members: &[&str]) -> Self {
-        let physical = directory.join("physical/trees/plugin");
-        let staged = directory.join("sandbox/trees/plugin");
-        for tree in [&physical, &staged] {
-            fs::create_dir_all(tree.join("lib")).expect("the tree");
-        }
-        write_file(physical.join("lib/native.jar"), "native bytes");
-        file_symlink(physical.join("lib/native.jar"), staged.join("lib/native.jar"));
-        let physical_metadata = directory.join("physical/metadata/bindings.jsonl");
-        let staged_metadata = directory.join("sandbox/metadata/bindings.jsonl");
+/// A staged tree before the composer reads its bindings, so that a test can change the tree first.
+pub(crate) struct StagedTree {
+    pub(crate) physical: PathBuf,
+    pub(crate) staged: PathBuf,
+    directory: PathBuf,
+}
+
+impl StagedTree {
+    /// Writes the bindings file of the tree with `members` and reads it as the composer does.
+    pub(crate) fn bind(self, members: &[&str]) -> anyhow::Result<BoundTree> {
+        let physical_metadata = self.directory.join("physical/metadata/bindings.jsonl");
+        let staged_metadata = self.directory.join("sandbox/metadata/bindings.jsonl");
         let line = binding_line(
             "plugin",
-            staged.to_str().expect("a UTF-8 path"),
+            self.staged.to_str().expect("a UTF-8 path"),
             "../trees/plugin",
             "directory",
             members,
@@ -227,11 +229,37 @@ impl BoundTree {
         write_file(&physical_metadata, line);
         fs::create_dir_all(staged_metadata.parent().expect("a parent")).expect("the directory");
         file_symlink(&physical_metadata, &staged_metadata);
-        let bindings = read_bindings(&staged_metadata, "plugin");
-        Self {
+        let components = [CompositionComponent {
+            manifest: "plugin".to_owned(),
+            plugin_classpath_part: None,
+        }];
+        let mut bindings = spec::read_source_bindings(staged_metadata.to_str().expect("a UTF-8 path"), &components)?;
+        Ok(BoundTree {
+            physical: self.physical,
+            staged: self.staged,
+            bindings: bindings.remove("plugin").expect("the bindings of the component"),
+        })
+    }
+}
+
+impl BoundTree {
+    pub(crate) fn new(directory: &Path, members: &[&str]) -> Self {
+        Self::stage(directory).bind(members).expect("the source bindings")
+    }
+
+    /// Creates the physical tree with `lib/native.jar` and the staged tree that links to it.
+    pub(crate) fn stage(directory: &Path) -> StagedTree {
+        let physical = directory.join("physical/trees/plugin");
+        let staged = directory.join("sandbox/trees/plugin");
+        for tree in [&physical, &staged] {
+            fs::create_dir_all(tree.join("lib")).expect("the tree");
+        }
+        write_file(physical.join("lib/native.jar"), "native bytes");
+        file_symlink(physical.join("lib/native.jar"), staged.join("lib/native.jar"));
+        StagedTree {
             physical,
             staged,
-            bindings,
+            directory: directory.to_path_buf(),
         }
     }
 
@@ -257,7 +285,7 @@ pub(crate) fn compose_with(
 }
 
 pub(crate) fn with_directory_runfiles(directory: impl AsRef<Path>, runfile: &str) -> ComposeOptions {
-    let runfiles = BTreeMap::from([(directory.as_ref().to_str().expect("a UTF-8 path").to_owned(), runfile.to_owned())]);
+    let runfiles = BTreeMap::from([(directory.as_ref().to_path_buf(), runfile.to_owned())]);
     ComposeOptions {
         source_directory_runfiles: Some(runfiles),
         ..ComposeOptions::default()
@@ -361,6 +389,7 @@ pub(crate) fn skip_merge(_: &[DevBuildComponent], _: &Path) -> anyhow::Result<()
     Ok(())
 }
 
-pub(crate) fn runfiles(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
-    pairs.iter().map(|(key, value)| ((*key).to_owned(), (*value).to_owned())).collect()
+/// Runfiles keyed by absolute paths, as `compose::absolute_keys` gives them.
+pub(crate) fn runfiles(pairs: &[(&str, &str)]) -> BTreeMap<PathBuf, String> {
+    pairs.iter().map(|(key, value)| (PathBuf::from(key), (*value).to_owned())).collect()
 }

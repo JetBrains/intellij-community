@@ -5,8 +5,6 @@
 
 #![allow(clippy::unreadable_literal, reason = "the hash values are copied from the Kotlin output")]
 
-use std::path::Path;
-
 use component::manifest::{ComponentEntry, validate_manifest};
 
 use super::*;
@@ -56,11 +54,9 @@ pub(crate) fn read_golden_manifest(content: &str) -> ComponentManifest {
     manifest
 }
 
-/// Writes more than two 256 KiB blocks, so that the content hash frames three of them.
-fn write_golden_plugin_classpath(directory: &TempDir) -> std::path::PathBuf {
-    let file = directory.path().join("plugin-classpath.txt");
-    write_file(&file, reference_bytes(600_001));
-    file
+/// More than two 256 KiB blocks, so that the content hash frames three of them.
+fn golden_plugin_classpath() -> Vec<u8> {
+    reference_bytes(600_001)
 }
 
 const NO_MODULES: &[&str] = &[];
@@ -73,14 +69,13 @@ fn must_fingerprint(components: &[&ComponentManifest]) -> String {
 fn kotlin_fingerprint_golden() {
     let neutral = read_golden_manifest(GOLDEN_NEUTRAL_MANIFEST);
     let platform = read_golden_manifest(GOLDEN_PLATFORM_MANIFEST);
-    let directory = TempDir::new();
-    let plugin_classpath = write_golden_plugin_classpath(&directory);
-    type Case<'a> = (&'a str, Vec<&'a ComponentManifest>, Option<&'a Path>, &'a [&'a str], &'a str);
+    let plugin_classpath = golden_plugin_classpath();
+    type Case<'a> = (&'a str, Vec<&'a ComponentManifest>, Option<&'a [u8]>, &'a [&'a str], &'a str);
     let cases: [Case<'_>; 4] = [
         (
             "declared modules and plugin records",
             vec![&neutral, &platform],
-            Some(&plugin_classpath),
+            Some(plugin_classpath.as_slice()),
             &["intellij.shared", "intellij.json", "intellij.extra"],
             "v5:1mi8fetozs9w2",
         ),
@@ -95,7 +90,7 @@ fn kotlin_fingerprint_golden() {
         (
             "platform first",
             vec![&platform, &neutral],
-            Some(&plugin_classpath),
+            Some(plugin_classpath.as_slice()),
             &["intellij.extra", "intellij.json", "intellij.shared"],
             "v5:18zwy2x3g1pbj",
         ),
@@ -218,20 +213,25 @@ fn component_fingerprint_covers_generated_launch_and_classpath_data() {
     changed_core_classpath.core_class_path = vec!["lib/renamed-platform.jar".to_owned()];
     let mut changed_main_class = base.clone();
     changed_main_class.main_class = Some("com.intellij.idea.OtherMain".to_owned());
-    let directory = TempDir::new();
-    let plugin_classpath = directory.path().join("plugin-classpath.txt");
-    write_file(&plugin_classpath, [1, 2, 3]);
-    let fingerprint =
-        |manifest: &ComponentManifest| compute_ide_fingerprint_from_components(&[manifest], Some(&plugin_classpath), NO_MODULES).unwrap();
-    let expected = fingerprint(&base);
+    let fingerprint = |manifest: &ComponentManifest, plugin_classpath: &[u8]| {
+        compute_ide_fingerprint_from_components(&[manifest], Some(plugin_classpath), NO_MODULES).unwrap()
+    };
+    let expected = fingerprint(&base, &[1, 2, 3]);
     assert_ne!(
-        fingerprint(&changed_core_classpath),
+        fingerprint(&changed_core_classpath, &[1, 2, 3]),
         expected,
         "the fingerprint ignores the core classpath"
     );
-    assert_ne!(fingerprint(&changed_main_class), expected, "the fingerprint ignores the main class");
-    write_file(&plugin_classpath, [1, 2, 4]);
-    assert_ne!(fingerprint(&base), expected, "the fingerprint ignores the plugin classpath");
+    assert_ne!(
+        fingerprint(&changed_main_class, &[1, 2, 3]),
+        expected,
+        "the fingerprint ignores the main class"
+    );
+    assert_ne!(
+        fingerprint(&base, &[1, 2, 4]),
+        expected,
+        "the fingerprint ignores the plugin classpath"
+    );
 }
 
 #[test]

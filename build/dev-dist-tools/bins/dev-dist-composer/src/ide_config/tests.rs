@@ -22,12 +22,12 @@ fn write_dev_ide_config() {
             paths::to_slash(&join("ee/dist")).into_owned(),
         ),
     ] {
-        super::write_dev_ide_config(&config, &home, "Main", "idea", &["a", "b"]).unwrap();
+        super::write_dev_ide_config(Path::new(&config), Path::new(&home), "Main", "idea", &["a", "b"]).unwrap();
         let expected = format!("home.path={home_path}\nmain.class.name=Main\nplatform.prefix=idea\nadditional.modules=a,b\n");
         assert_eq!(read_text(&config), expected);
     }
     let config = join("f.config");
-    super::write_dev_ide_config::<&str>(&config, &root, "Main", "idea", &[]).unwrap();
+    super::write_dev_ide_config::<&str>(Path::new(&config), directory.path(), "Main", "idea", &[]).unwrap();
     assert!(read_text(&config).ends_with("additional.modules=\n"));
 }
 
@@ -36,8 +36,8 @@ fn write_dev_ide_config() {
 fn the_composer_config_names_the_home_relative_to_the_config() {
     assert_eq!(
         dev_ide_config_text(
-            "/out/dist.ide.config",
-            "/out/dist",
+            Path::new("/out/dist.ide.config"),
+            Path::new("/out/dist"),
             "com.intellij.idea.Main",
             "idea",
             &["intellij.packed", "intellij.bundled"]

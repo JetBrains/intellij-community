@@ -2,8 +2,8 @@
 
 use std::path::Path;
 
-use crate::collect::{explicit_files, platform_jars, validate_destinations};
-use crate::inventory::{Classpath, JarRecord, SourcedFile};
+use crate::collect::{explicit_files, platform_jars};
+use crate::inventory::{Classpath, JarRecord, SourcedFile, inventory};
 use crate::test_support::*;
 
 #[track_caller]
@@ -114,23 +114,31 @@ fn invalid_platform_jars() {
     }
 }
 
-/// `validate_destinations` refuses a repeated destination and a destination that holds another. Both modes share
-/// it, so the jar mode has no check of its own.
+/// The inventory refuses a repeated destination and a destination that holds another. Both modes share it, so the
+/// jar mode has no check of its own.
 #[test]
 fn conflicting_destinations() {
+    let packed = |source: &str, relative_path: &str| SourcedFile {
+        metadata: Some(file_entry("packed.jar", 1, 1, 0o644)),
+        ..jar(source, relative_path)
+    };
     for (files, message) in [
         (
-            vec![jar("one", "lib/a.jar"), jar("two", "lib/a.jar")],
+            vec![packed("one", "lib/a.jar"), packed("two", "lib/a.jar")],
             "conflicting destination: lib/a.jar",
         ),
         (
-            vec![jar("one", "lib/ext.jar"), jar("two", "lib/ext.jar/a.jar")],
+            vec![packed("one", "lib/ext.jar"), packed("two", "lib/ext.jar/a.jar")],
             "lib/ext.jar contains lib/ext.jar/a.jar",
         ),
-        (vec![jar("one", "C:/a.jar")], "invalid relative path"),
-        (vec![jar("one", r"lib\a.jar")], "invalid relative path"),
+        (
+            vec![packed("one", "lib/a.jar"), packed("two", "Lib/b.jar")],
+            "conflicting destinations: lib and Lib",
+        ),
+        (vec![packed("one", "C:/a.jar")], "invalid relative path"),
+        (vec![packed("one", r"lib\a.jar")], "invalid relative path"),
     ] {
-        require_error(validate_destinations(&files), message);
+        require_error(inventory(&files), message);
     }
 }
 
@@ -214,7 +222,7 @@ fn invalid_explicit_files() {
         r#"[{"source":"in","relativePath":"out","executable":true},{"source":"other","relativePath":"out","executable":false}]"#,
     );
     require_error(
-        explicit_files("files.json").and_then(|files| validate_destinations(&files)),
+        explicit_files("files.json").and_then(|files| inventory(&files)),
         "conflicting destination: out",
     );
 }

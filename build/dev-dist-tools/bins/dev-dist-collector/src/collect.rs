@@ -1,6 +1,5 @@
-//! The records of the jar mode and the file mode, and the destination check that both modes share.
+//! The records of the jar mode and the file mode. The inventory checks the destinations of both modes.
 
-use std::collections::BTreeSet;
 use std::path::Path;
 
 use anyhow::{Context, bail};
@@ -84,33 +83,9 @@ pub(crate) fn explicit_files(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
         }
         distpath::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
         files.push(SourcedFile {
-            source: record.source,
-            relative_path: record.relative_path,
             executable,
-            ..SourcedFile::default()
+            ..SourcedFile::new(record.source, record.relative_path)
         });
     }
     Ok(files)
-}
-
-/// Refuses an unsafe destination, a repeated one, and a destination below another. It runs after the metadata
-/// expands the tree records, because only then the destinations to check are known.
-pub(crate) fn validate_destinations(files: &[SourcedFile]) -> anyhow::Result<()> {
-    let mut destinations = BTreeSet::new();
-    for file in files {
-        distpath::validate_path(&file.relative_path)?;
-        if !destinations.insert(file.relative_path.as_str()) {
-            bail!("conflicting destination: {}", file.relative_path);
-        }
-    }
-    for name in &destinations {
-        let mut current = *name;
-        while let Some((parent, _)) = current.rsplit_once('/') {
-            if destinations.contains(parent) {
-                bail!("conflicting destinations: {parent} contains {name}");
-            }
-            current = parent;
-        }
-    }
-    Ok(())
 }

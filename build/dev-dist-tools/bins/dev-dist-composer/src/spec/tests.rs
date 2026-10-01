@@ -1,9 +1,9 @@
 use super::*;
-#[cfg(unix)]
-use crate::test_support::read_text;
 use crate::test_support::{TempDir, require_error, write_file};
+#[cfg(unix)]
+use crate::test_support::{file_symlink, read_text};
 
-fn write_spec(directory: &TempDir, content: &str) -> std::path::PathBuf {
+fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
     let file = directory.path().join("composition.json");
     write_file(&file, content);
     file
@@ -115,51 +115,81 @@ fn composition_spec_rejects_invalid_content() {
 }
 
 #[cfg(unix)]
-struct BoundTree {
-    physical: String,
-    staged: String,
-    bindings: ComponentSources,
-    file: String,
+struct StagedTree {
+    physical: PathBuf,
+    staged: PathBuf,
+    file: PathBuf,
 }
 
-/// Stages one tree as Bazel does in a sandbox: the staged members link to the physical outputs, and the bindings
-/// file describes the tree.
 #[cfg(unix)]
-fn create_bound_tree(directory: &str, members: &[&str]) -> Result<BoundTree> {
-    let physical = format!("{directory}/physical/trees/plugin");
-    let staged = format!("{directory}/sandbox/trees/plugin");
-    for tree in [&physical, &staged] {
-        fs::create_dir_all(format!("{tree}/lib")).unwrap();
+#[derive(Debug)]
+struct BoundTree {
+    physical: PathBuf,
+    staged: PathBuf,
+    bindings: ComponentSources,
+    file: PathBuf,
+}
+
+#[cfg(unix)]
+impl BoundTree {
+    fn staged(&self, member: &str) -> String {
+        text(&self.staged.join(member))
     }
-    write_file(format!("{physical}/lib/native.jar"), "native bytes");
-    crate::test_support::file_symlink(format!("{physical}/lib/native.jar"), format!("{staged}/lib/native.jar"));
-    let physical_metadata = format!("{directory}/physical/metadata/bindings.jsonl");
-    let staged_metadata = format!("{directory}/sandbox/metadata/bindings.jsonl");
+}
+
+#[cfg(unix)]
+fn text(path: &Path) -> String {
+    path.to_str().unwrap().to_owned()
+}
+
+/// Stages one tree as Bazel does in a sandbox: the staged members link to the physical outputs, and the bindings file
+/// describes the tree. A test can change the tree before [`bind`] reads the bindings.
+#[cfg(unix)]
+fn stage_tree(directory: &Path, members: &[&str]) -> StagedTree {
+    let physical = directory.join("physical/trees/plugin");
+    let staged = directory.join("sandbox/trees/plugin");
+    for tree in [&physical, &staged] {
+        fs::create_dir_all(tree.join("lib")).unwrap();
+    }
+    write_file(physical.join("lib/native.jar"), "native bytes");
+    file_symlink(physical.join("lib/native.jar"), staged.join("lib/native.jar"));
+    let physical_metadata = directory.join("physical/metadata/bindings.jsonl");
+    let staged_metadata = directory.join("sandbox/metadata/bindings.jsonl");
     let line = serde_json::json!({
         "component": "plugin",
-        "source": staged,
+        "source": text(&staged),
         "anchorRelativePath": "../trees/plugin",
         "type": "directory",
         "members": members,
     });
     write_file(&physical_metadata, format!("{line}\n"));
-    fs::create_dir_all(host_paths::parent(&staged_metadata)).unwrap();
-    crate::test_support::file_symlink(&physical_metadata, &staged_metadata);
-    let components = [CompositionComponent {
-        manifest: "plugin".into(),
-        plugin_classpath_part: None,
-    }];
-    let mut bindings = read_source_bindings(&staged_metadata, &components)?;
-    Ok(BoundTree {
+    fs::create_dir_all(staged_metadata.parent().unwrap()).unwrap();
+    file_symlink(&physical_metadata, &staged_metadata);
+    StagedTree {
         physical,
         staged,
-        bindings: bindings.remove("plugin").unwrap(),
         file: staged_metadata,
+    }
+}
+
+#[cfg(unix)]
+fn bind(tree: StagedTree) -> Result<BoundTree> {
+    let mut bindings = read_source_bindings(&text(&tree.file), &components(&["plugin"]))?;
+    Ok(BoundTree {
+        physical: tree.physical,
+        staged: tree.staged,
+        bindings: bindings.remove("plugin").unwrap(),
+        file: tree.file,
     })
 }
 
 #[cfg(unix)]
-fn must_bound_tree(directory: &str) -> BoundTree {
+fn create_bound_tree(directory: &Path, members: &[&str]) -> Result<BoundTree> {
+    bind(stage_tree(directory, members))
+}
+
+#[cfg(unix)]
+fn must_bound_tree(directory: &Path) -> BoundTree {
     create_bound_tree(directory, &["lib/native.jar"]).unwrap()
 }
 
@@ -178,15 +208,15 @@ fn components(names: &[&str]) -> Vec<CompositionComponent> {
 #[test]
 fn source_bindings_resolve_a_bound_member() {
     let directory = TempDir::new();
-    let fixture = must_bound_tree(&directory.root());
-    let staged = format!("{}/lib/native.jar", fixture.staged);
+    let fixture = must_bound_tree(directory.path());
+    let staged = fixture.staged.join("lib/native.jar");
     assert_eq!(
-        fixture.bindings.resolve(&staged).unwrap(),
-        format!("{}/lib/native.jar", fixture.physical)
+        fixture.bindings.resolve(&text(&staged)).unwrap(),
+        (fixture.physical.join("lib/native.jar"), 12)
     );
     assert_eq!(fixture.bindings.sources[&staged].directory, Some(fixture.physical.clone()));
     assert!(!fixture.bindings.sources.contains_key(&fixture.staged));
-    let lib = &fixture.bindings.sources[&format!("{}/lib", fixture.staged)];
+    let lib = &fixture.bindings.sources[&fixture.staged.join("lib")];
     assert_eq!(lib.kind, SourceKind::Directory);
 }
 
@@ -194,55 +224,52 @@ fn source_bindings_resolve_a_bound_member() {
 #[test]
 fn source_bindings_reject_outside_sources_and_member_tampering() {
     let directory = TempDir::new();
-    let fixture = must_bound_tree(&directory.join("tree"));
+    let fixture = must_bound_tree(&directory.path().join("tree"));
     let outside = directory.join("outside");
     write_file(&outside, "native bytes");
-    for source in [
-        outside.clone(),
-        format!("{}/lib/Native.jar", fixture.staged),
-        fixture.staged.clone(),
-    ] {
+    for source in [outside.clone(), fixture.staged("lib/Native.jar"), text(&fixture.staged)] {
         require_error(fixture.bindings.resolve(&source), "Missing declared artifact binding");
     }
-    let other = read_source_bindings(&fixture.file, &components(&["plugin", "other"])).unwrap();
+    let other = read_source_bindings(&text(&fixture.file), &components(&["plugin", "other"])).unwrap();
     require_error(
-        other["other"].resolve(&format!("{}/lib/native.jar", fixture.staged)),
+        other["other"].resolve(&fixture.staged("lib/native.jar")),
         "Missing declared artifact binding",
     );
-    let staged = format!("{}/lib/native.jar", fixture.staged);
+    let staged = fixture.staged("lib/native.jar");
     fs::remove_file(&staged).unwrap();
-    crate::test_support::file_symlink(&outside, &staged);
+    file_symlink(&outside, &staged);
     require_error(fixture.bindings.resolve(&staged), "Staged source differs");
 }
 
+// A member that becomes a link fails when the composer resolves it. The reader checks the directories of a tree once,
+// so a directory becomes a link before the reader runs, and the member below it fails when the composer resolves it.
 #[cfg(unix)]
 #[test]
 fn source_bindings_reject_genuine_file_links_and_directory_escapes() {
     let directory = TempDir::new();
-    for (escape, message) in [
-        ("file", "not a regular file"),
-        ("directory", "escaping directory alias"),
-        ("root", "escapes its artifact binding"),
-    ] {
-        let fixture = must_bound_tree(&directory.join(escape));
-        let outside = directory.join(&format!("outside-{escape}/lib"));
-        write_file(format!("{outside}/native.jar"), "native bytes");
-        let member = format!("{}/lib/native.jar", fixture.physical);
-        fs::remove_file(&member).unwrap();
-        let member_directory = host_paths::parent(&member);
-        match escape {
-            "file" => crate::test_support::file_symlink(format!("{outside}/native.jar"), &member),
-            "directory" => {
-                fs::remove_dir(member_directory).unwrap();
-                crate::test_support::file_symlink(&outside, member_directory);
-            }
-            _ => {
-                fs::remove_dir(member_directory).unwrap();
-                fs::remove_dir(&fixture.physical).unwrap();
-                crate::test_support::file_symlink(host_paths::parent(&outside), &fixture.physical);
-            }
+    let fixture = must_bound_tree(&directory.path().join("file"));
+    let outside = directory.path().join("outside-file/lib");
+    write_file(outside.join("native.jar"), "native bytes");
+    let member = fixture.physical.join("lib/native.jar");
+    fs::remove_file(&member).unwrap();
+    file_symlink(outside.join("native.jar"), &member);
+    require_error(fixture.bindings.resolve(&fixture.staged("lib/native.jar")), "not a regular file");
+
+    for (escape, message) in [("directory", "escaping directory alias"), ("root", "escapes its artifact binding")] {
+        let tree = stage_tree(&directory.path().join(escape), &["lib/native.jar"]);
+        let outside = directory.path().join(format!("outside-{escape}/lib"));
+        write_file(outside.join("native.jar"), "native bytes");
+        let member_directory = tree.physical.join("lib");
+        fs::remove_file(member_directory.join("native.jar")).unwrap();
+        fs::remove_dir(&member_directory).unwrap();
+        if escape == "directory" {
+            file_symlink(&outside, &member_directory);
+        } else {
+            fs::remove_dir(&tree.physical).unwrap();
+            file_symlink(outside.parent().unwrap(), &tree.physical);
         }
-        require_error(fixture.bindings.resolve(&format!("{}/lib/native.jar", fixture.staged)), message);
+        let fixture = bind(tree).unwrap();
+        require_error(fixture.bindings.resolve(&fixture.staged("lib/native.jar")), message);
     }
 }
 
@@ -250,9 +277,9 @@ fn source_bindings_reject_genuine_file_links_and_directory_escapes() {
 #[test]
 fn source_bindings_reject_missing_members_and_aliases() {
     let directory = TempDir::new();
-    let fixture = create_bound_tree(&directory.join("missing"), &[]).unwrap();
+    let fixture = create_bound_tree(&directory.path().join("missing"), &[]).unwrap();
     require_error(
-        fixture.bindings.resolve(&format!("{}/lib/native.jar", fixture.staged)),
+        fixture.bindings.resolve(&fixture.staged("lib/native.jar")),
         "Missing declared artifact binding",
     );
     let invalid: [&[&str]; 7] = [
@@ -265,7 +292,7 @@ fn source_bindings_reject_missing_members_and_aliases() {
         &["lib", "lib/native.jar"],
     ];
     for (index, members) in invalid.iter().enumerate() {
-        let result = create_bound_tree(&directory.join(&format!("invalid-{index}")), members);
+        let result = create_bound_tree(&directory.path().join(format!("invalid-{index}")), members);
         assert!(result.is_err(), "accepted members {members:?}");
     }
 }
@@ -283,11 +310,11 @@ fn source_bindings_reject_changed_owners_and_anchor_paths() {
     .into_iter()
     .enumerate()
     {
-        let fixture = must_bound_tree(&directory.join(&format!("tamper-{index}")));
-        let physical = host_paths::eval_symlinks(&fixture.file).unwrap();
+        let fixture = must_bound_tree(&directory.path().join(format!("tamper-{index}")));
+        let physical = fscopy::resolve_links(&fixture.file).unwrap();
         write_file(&physical, read_text(&physical).replacen(from, to, 1));
         assert!(
-            read_source_bindings(&fixture.file, &components(&["plugin"])).is_err(),
+            read_source_bindings(&text(&fixture.file), &components(&["plugin"])).is_err(),
             "accepted the mutation {from} -> {to}"
         );
     }
@@ -302,17 +329,17 @@ fn source_bindings_accept_a_file_artifact_and_reject_its_members() {
     let physical_file = format!("{root}/physical/metadata/bindings.jsonl");
     let staged_file = format!("{root}/sandbox/metadata/bindings.jsonl");
     fs::create_dir_all(format!("{root}/sandbox/metadata")).unwrap();
-    crate::test_support::file_symlink(format!("{root}/physical/packed.jar"), format!("{root}/sandbox/packed.jar"));
+    file_symlink(format!("{root}/physical/packed.jar"), format!("{root}/sandbox/packed.jar"));
     let line = |members: &str| {
         format!(
             r#"{{"component":"plugin","source":"{root}/sandbox/packed.jar","anchorRelativePath":"../packed.jar","type":"file","members":[{members}]}}"#
         )
     };
     write_file(&physical_file, format!("{}\r\n", line("")));
-    crate::test_support::file_symlink(&physical_file, &staged_file);
+    file_symlink(&physical_file, &staged_file);
     let bindings = read_source_bindings(&staged_file, &components(&["plugin"])).unwrap();
     let resolved = bindings["plugin"].resolve(&format!("{root}/sandbox/packed.jar")).unwrap();
-    assert_eq!(resolved, format!("{root}/physical/packed.jar"));
+    assert_eq!(resolved, (PathBuf::from(format!("{root}/physical/packed.jar")), 6));
     write_file(&physical_file, line(r#""a""#));
     require_error(
         read_source_bindings(&staged_file, &components(&["plugin"])),

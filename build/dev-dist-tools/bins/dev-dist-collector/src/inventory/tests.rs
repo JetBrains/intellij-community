@@ -299,7 +299,7 @@ fn manifest_ordering_and_escaping() {
     let manifest_file = directory.path().join("component.json");
     let files = [
         SourcedFile::new(&source, "lib/b.jar"),
-        SourcedFile::new(&source, "lib/B.jar"),
+        SourcedFile::new(&source, "lib/Z.jar"),
         SourcedFile::new(&source, "lib/a-b.jar"),
     ];
     let mut header = header("files");
@@ -312,7 +312,7 @@ fn manifest_ordering_and_escaping() {
     );
     let manifest = decode_component_manifest(text.as_bytes()).unwrap();
     let names: Vec<&str> = manifest.entries.iter().map(ComponentEntry::relative_path).collect();
-    assert_eq!(names, ["lib/B.jar", "lib/a-b.jar", "lib/b.jar"]);
+    assert_eq!(names, ["lib/Z.jar", "lib/a-b.jar", "lib/b.jar"]);
 }
 
 // The manifest lists the packed jars of the core classpath in record order. The composer orders the whole core
