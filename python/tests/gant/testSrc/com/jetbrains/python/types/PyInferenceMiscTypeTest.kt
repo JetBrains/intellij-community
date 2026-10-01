@@ -731,6 +731,68 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       expr = B[int]().foo()
       #└ TYPE A[int]
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92837"])
+    fun `container parameters take the types of the base containers of the same kind`() = test("""
+      class Base:
+          def __init__(self, *args: int, **kwargs: str): ...
+
+      class Subclass(Base):
+          def __init__(self, *args, **kwargs):
+              expr = args
+      #       └ TYPE tuple[int, ...]
+              expr = kwargs
+      #       └ TYPE dict[str, str]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92837"])
+    fun `keyword container does not take the type of a positional container`() = test("""
+      class Base:
+          def __init__(self, *args: int): ...
+
+      class Subclass(Base):
+          def __init__(self, rep, *gens, **args):
+              expr = args
+      #       └ TYPE dict[str, Unknown]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92837"])
+    fun `positional container does not take the type of a keyword container`() = test("""
+      class Base:
+          def __init__(self, **args: int): ...
+
+      class Subclass(Base):
+          def __init__(self, *args):
+              expr = args
+      #       └ TYPE tuple[Unknown, ...]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92837"])
+    fun `positional container does not take the type of a plain parameter`() = test("""
+      class Base:
+          def __init__(self, args: int): ...
+
+      class Subclass(Base):
+          def __init__(self, *args):
+              expr = args
+      #       └ TYPE tuple[Unknown, ...]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92837"])
+    fun `plain parameter does not take the type of a positional container`() = test("""
+      class Base:
+          def __init__(self, *args: int): ...
+
+      class Subclass(Base):
+          def __init__(self, args):
+              expr = args
+      #       └ TYPE Unknown
+      """.trimIndent())
   }
 
   @Nested
