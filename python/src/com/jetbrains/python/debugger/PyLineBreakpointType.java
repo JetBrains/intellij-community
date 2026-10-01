@@ -127,6 +127,11 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   }
 
   @Override
+  public boolean supportsInterLinePlacement() {
+    return true;
+  }
+
+  @Override
   public String getBreakpointsDialogHelpTopic() {
     return "reference.dialogs.breakpoints";
   }
