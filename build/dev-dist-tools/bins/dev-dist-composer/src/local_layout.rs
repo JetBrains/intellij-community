@@ -4,12 +4,13 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use anyhow::{Context as _, Result, bail};
 use component::layout::{
     CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, LOCAL_LAYOUT_VERSION, LocalFileKind, LocalLayout, LocalLayoutFile,
 };
 use component::manifest::{ComponentEntryType, ComponentManifest};
+use component::paths;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
-use component::{Error, Result, fail, paths};
 
 use crate::compose::validate_destinations;
 
@@ -32,12 +33,12 @@ pub(crate) fn encode_local_layout(
             ComponentEntryType::Directory => {}
             ComponentEntryType::Symlink => {
                 if entry.source.is_some() {
-                    fail!("Dev-build component must declare the symbolic link '{name}' without a file source");
+                    bail!("Dev-build component must declare the symbolic link '{name}' without a file source");
                 }
             }
             ComponentEntryType::ComponentFile => {
                 let Some(source) = &entry.source else {
-                    fail!("Dev-build component entry '{name}' has no source");
+                    bail!("Dev-build component entry '{name}' has no source");
                 };
                 runfile = Some(resolve_source_runfile(source, source_runfiles, source_directory_runfiles, name)?);
             }
@@ -76,7 +77,7 @@ pub(crate) fn write_local_layout(
 ) -> Result<()> {
     let content = encode_local_layout(components, source_runfiles, has_plugin_classpath, source_directory_runfiles)?;
     let file = target.join(LOCAL_LAYOUT_FILE);
-    std::fs::write(&file, content).map_err(|error| Error::io(&file, error))
+    std::fs::write(&file, content).with_context(|| file.display().to_string())
 }
 
 /// The runfile of a source: an exact file declaration, or a file inside the deepest declared directory. The keys of
@@ -88,10 +89,10 @@ pub(crate) fn resolve_source_runfile(
     name: &str,
 ) -> Result<String> {
     let Ok(absolute) = paths::absolute_path(source) else {
-        fail!("Dev-build component entry '{name}' has an unsafe source: {source}");
+        bail!("Dev-build component entry '{name}' has an unsafe source: {source}");
     };
     if let Some(exact) = files.get(&absolute) {
-        distpath::validate_path(exact).map_err(Error::msg)?;
+        distpath::validate_path(exact)?;
         return Ok(exact.clone());
     }
     let directory = directories
@@ -99,11 +100,11 @@ pub(crate) fn resolve_source_runfile(
         .flatten()
         .filter(|(candidate, _)| absolute != **candidate && Path::new(&absolute).starts_with(candidate.as_str()));
     let Some((directory, runfile)) = directory.max_by_key(|(candidate, _)| candidate.len()) else {
-        fail!("Dev-build component entry '{name}' names an undeclared source: {source}");
+        bail!("Dev-build component entry '{name}' names an undeclared source: {source}");
     };
-    distpath::validate_path(runfile).map_err(Error::msg)?;
+    distpath::validate_path(runfile)?;
     let child = paths::to_slash(absolute[directory.len()..].trim_start_matches(paths::SEPARATOR));
-    distpath::validate_path(&child).map_err(Error::msg)?;
+    distpath::validate_path(&child)?;
     Ok(format!("{runfile}/{child}"))
 }
 

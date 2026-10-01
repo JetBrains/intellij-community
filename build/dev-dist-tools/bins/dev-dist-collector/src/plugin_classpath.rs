@@ -7,14 +7,14 @@
 
 use std::collections::HashSet;
 
-use component::{Error, Result, fail};
+use anyhow::{Result, bail};
 
 use crate::inventory::SourcedFile;
 
 /// The record of a component's classpath files. A file's name in the record is relative to the plugin directory.
 pub(crate) fn component_record(plugin_directory: &str, descriptor: &[u8], files: &[SourcedFile]) -> Result<Vec<u8>> {
     let names: Vec<&str> = class_path_names(plugin_directory, files).collect();
-    planfile::classpath::record(directory_name(plugin_directory), descriptor, &names).map_err(|error| Error::msg(format!("{error:#}")))
+    planfile::classpath::record(directory_name(plugin_directory), descriptor, &names)
 }
 
 /// The last name of the plugin directory, a relative path in slash form.
@@ -36,32 +36,32 @@ pub(crate) fn validate_component_record(data: &[u8], plugin_directory: &str, fil
     let mut expected: HashSet<&[u8]> = HashSet::new();
     for name in std::iter::once(directory).chain(class_path_names(plugin_directory, files)) {
         if !name.is_ascii() || name.contains('\0') {
-            fail!("plugin classpath name is not ASCII text without NUL: {name:?}");
+            bail!("plugin classpath name is not ASCII text without NUL: {name:?}");
         }
     }
     expected.extend(class_path_names(plugin_directory, files).map(str::as_bytes));
     let mut input = data;
     let count = read_u16(&mut input);
     if count.is_none_or(|count| usize::from(count) != expected.len()) {
-        fail!("plugin classpath count does not match the declared assets");
+        bail!("plugin classpath count does not match the declared assets");
     }
     let count = count.unwrap_or_default();
     if read_name(&mut input).is_none_or(|name| name != directory.as_bytes()) {
-        fail!("plugin classpath names the wrong directory");
+        bail!("plugin classpath names the wrong directory");
     }
     let descriptor_size = read_u32(&mut input);
     let Some(descriptor_size) = descriptor_size.filter(|&size| size as usize <= input.len()) else {
-        fail!("plugin classpath has an invalid descriptor size");
+        bail!("plugin classpath has an invalid descriptor size");
     };
     input = &input[descriptor_size as usize..];
     for _ in 0..count {
         match read_name(&mut input) {
             Some(name) if expected.remove(name) => {}
-            _ => fail!("plugin classpath contains an undeclared, excluded, or repeated asset"),
+            _ => bail!("plugin classpath contains an undeclared, excluded, or repeated asset"),
         }
     }
     if !expected.is_empty() || !input.is_empty() {
-        fail!("plugin classpath has missing assets or trailing data");
+        bail!("plugin classpath has missing assets or trailing data");
     }
     Ok(())
 }

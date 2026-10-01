@@ -10,10 +10,10 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result, bail};
 use component::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, LOCAL_LAYOUT_VERSION, LocalLayout};
 use component::paths::from_slash;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
-use component::{Error, Result, fail};
 use filemeta::{Entry, EntryType};
 
 /// The runfiles variables of the process. An empty variable is an absent one.
@@ -51,7 +51,7 @@ impl RunfilesLookup {
         let roots = [&env.java_runfiles, &env.runfiles_dir].into_iter().flatten().cloned().collect();
         let mut lookup = Self { roots, ..Self::default() };
         if let Some(file) = &env.runfiles_manifest_file {
-            let text = fs::read_to_string(file).map_err(|error| Error::io(file, error))?;
+            let text = fs::read_to_string(file).with_context(|| file.display().to_string())?;
             for line in text.lines() {
                 let (name, source) = if let Some(escaped) = line.strip_prefix(' ') {
                     let (name, source) = escaped.split_once(' ').unwrap_or((escaped, ""));
@@ -90,7 +90,7 @@ impl RunfilesLookup {
                 None => break,
             }
         }
-        fail!("missing local dev runfile: {name}")
+        bail!("missing local dev runfile: {name}")
     }
 }
 
@@ -131,17 +131,17 @@ pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup
     let directories = layout_directories(&layout)?;
 
     match fs::symlink_metadata(output_dir) {
-        Ok(metadata) if !metadata.is_dir() => fail!("the local home must be a directory: {}", output_dir.display()),
+        Ok(metadata) if !metadata.is_dir() => bail!("the local home must be a directory: {}", output_dir.display()),
         _ => {}
     }
     match fs::read_dir(output_dir) {
         Ok(mut entries) => {
             if entries.next().is_some() {
-                fail!("the local home must be empty: {}", output_dir.display());
+                bail!("the local home must be empty: {}", output_dir.display());
             }
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => return Err(Error::io(output_dir, error)),
+        Err(error) => return Err(error).with_context(|| output_dir.display().to_string()),
     }
     create_directories(output_dir)?;
 
@@ -154,7 +154,7 @@ pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup
         create_directories(destination.parent().expect("a layout path has a parent in the home"))?;
         if let Some(target) = &file.symlink_target {
             let target_is_directory = targets_directory(&directories, &file.path, target)?;
-            fscopy::symlink(Path::new(target), &destination, target_is_directory).map_err(|error| Error::io(&destination, error))?;
+            fscopy::symlink(Path::new(target), &destination, target_is_directory).with_context(|| destination.display().to_string())?;
             continue;
         }
         let runfile = file
@@ -162,19 +162,20 @@ pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup
             .as_deref()
             .expect("validate_layout requires a runfile or a link target");
         let source = lookup(runfile)?;
-        let source = std::path::absolute(&source).map_err(|error| Error::io(&source, error))?;
-        let metadata = fs::metadata(&source).map_err(|error| Error::io(&source, error))?;
+        let source = std::path::absolute(&source).with_context(|| source.display().to_string())?;
+        let metadata = fs::metadata(&source).with_context(|| source.display().to_string())?;
         if !metadata.is_file() {
-            fail!("the runfile for {} is not a regular file: {}", file.path, source.display());
+            bail!("the runfile for {} is not a regular file: {}", file.path, source.display());
         }
         // Bazel makes a runfile read-only, so only an exact mode other than the two conventional ones needs a copy.
         let exact_mode = file.mode.filter(|&mode| mode != 0o644 && mode != 0o755);
         let permissions = filemeta::permissions(&metadata);
         let needs_copy = exact_mode.is_some_and(|mode| permissions != mode) || (file.executable && permissions & 0o111 == 0);
         if needs_copy {
-            fscopy::copy_with_mode(&source, &destination, file.executable, exact_mode).map_err(|error| Error::io(&destination, error))?;
+            fscopy::copy_with_mode(&source, &destination, file.executable, exact_mode)
+                .with_context(|| destination.display().to_string())?;
         } else {
-            fscopy::symlink(&source, &destination, false).map_err(|error| Error::io(&destination, error))?;
+            fscopy::symlink(&source, &destination, false).with_context(|| destination.display().to_string())?;
         }
     }
     let layout_directory = layout_path.parent().unwrap_or(Path::new(""));
@@ -182,7 +183,7 @@ pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup
         let destination = output_dir.join(from_slash(name).as_ref());
         create_directories(destination.parent().expect("a metadata path has a parent in the home"))?;
         let source = layout_directory.join(from_slash(name).as_ref());
-        fscopy::copy_with_mode(&source, &destination, false, None).map_err(|error| Error::io(&destination, error))?;
+        fscopy::copy_with_mode(&source, &destination, false, None).with_context(|| destination.display().to_string())?;
     }
     // A directory gets its mode after its children exist, the deepest first, so a read-only parent is no obstacle.
     let mut directories: Vec<_> = layout.files.iter().filter(|file| file.is_directory()).collect();
@@ -190,7 +191,7 @@ pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup
     for directory in directories {
         let destination = output_dir.join(from_slash(&directory.path).as_ref());
         let mode = directory.mode.expect("validate_layout requires a directory mode");
-        fscopy::set_distribution_file_mode(&destination, false, Some(mode)).map_err(|error| Error::io(&destination, error))?;
+        fscopy::set_distribution_file_mode(&destination, false, Some(mode)).with_context(|| destination.display().to_string())?;
     }
     Ok(())
 }
@@ -199,29 +200,29 @@ pub(crate) fn link_local_home_with(layout_path: &Path, output_dir: &Path, lookup
 /// ancestors and the links of all files together.
 fn validate_layout(layout: &LocalLayout) -> Result<()> {
     if layout.version != LOCAL_LAYOUT_VERSION {
-        fail!("unsupported local layout version: {}", layout.version);
+        bail!("unsupported local layout version: {}", layout.version);
     }
     let mut known: HashSet<&str> = HashSet::from([LOCAL_LAYOUT_FILE]);
     let mut entries = vec![file_entry(LOCAL_LAYOUT_FILE, None, false)];
     for name in &layout.metadata {
         if ![CORE_CLASSPATH_FILE, FINGERPRINT_FILE, PLUGIN_CLASSPATH].contains(&name.as_str()) {
-            fail!("unknown local metadata file: {name}");
+            bail!("unknown local metadata file: {name}");
         }
         if !known.insert(name) {
-            fail!("duplicate local path: {name}");
+            bail!("duplicate local path: {name}");
         }
         entries.push(file_entry(name, None, false));
     }
     for file in &layout.files {
         if !known.insert(&file.path) {
-            fail!("duplicate local path: {}", file.path);
+            bail!("duplicate local path: {}", file.path);
         }
         if file.is_directory() {
             let Some(mode) = file
                 .mode
                 .filter(|_| file.runfile.is_none() && file.symlink_target.is_none() && !file.executable)
             else {
-                fail!("invalid directory metadata for {}", file.path);
+                bail!("invalid directory metadata for {}", file.path);
             };
             entries.push(Entry {
                 relative_path: file.path.clone(),
@@ -232,15 +233,15 @@ fn validate_layout(layout: &LocalLayout) -> Result<()> {
             continue;
         }
         if file.runfile.is_none() == file.symlink_target.is_none() {
-            fail!("{} requires exactly one runfile or symbolic link target", file.path);
+            bail!("{} requires exactly one runfile or symbolic link target", file.path);
         }
         if let Some(runfile) = &file.runfile {
-            distpath::validate_path(runfile).map_err(Error::msg)?;
+            distpath::validate_path(runfile)?;
         }
         match &file.symlink_target {
             Some(target) => {
                 if file.mode.is_some() || file.executable {
-                    fail!("invalid mode metadata for {}", file.path);
+                    bail!("invalid mode metadata for {}", file.path);
                 }
                 entries.push(Entry {
                     relative_path: file.path.clone(),
@@ -253,7 +254,7 @@ fn validate_layout(layout: &LocalLayout) -> Result<()> {
             None => entries.push(file_entry(&file.path, file.mode, file.executable)),
         }
     }
-    filemeta::merge(&entries).map_err(|error| Error::msg(format!("{error:#}")))?;
+    filemeta::merge(&entries)?;
     Ok(())
 }
 
@@ -263,11 +264,11 @@ fn layout_directories(layout: &LocalLayout) -> Result<HashSet<String>> {
     let mut directories = HashSet::from([String::new()]);
     for file in &layout.files {
         if file.is_directory() {
-            directories.insert(distpath::path_identity(&file.path).map_err(Error::msg)?);
+            directories.insert(distpath::path_identity(&file.path)?);
         }
         let mut current = file.path.as_str();
         while let Some((parent, _)) = current.rsplit_once('/') {
-            directories.insert(distpath::path_identity(parent).map_err(Error::msg)?);
+            directories.insert(distpath::path_identity(parent)?);
             current = parent;
         }
     }
@@ -288,7 +289,7 @@ fn targets_directory(directories: &HashSet<String>, name: &str, target: &str) ->
             _ => resolved.push(part),
         }
     }
-    Ok(directories.contains(&distpath::path_identity(&resolved.join("/")).map_err(Error::msg)?))
+    Ok(directories.contains(&distpath::path_identity(&resolved.join("/"))?))
 }
 
 /// The inventory entry of a file. A file without a mode has the conventional mode.
@@ -303,7 +304,7 @@ fn file_entry(relative_path: &str, mode: Option<u32>, executable: bool) -> Entry
 }
 
 fn create_directories(path: &Path) -> Result<()> {
-    fs::create_dir_all(path).map_err(|error| Error::io(path, error))
+    fs::create_dir_all(path).with_context(|| path.display().to_string())
 }
 
 #[cfg(test)]

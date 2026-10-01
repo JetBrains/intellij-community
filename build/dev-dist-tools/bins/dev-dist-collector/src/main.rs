@@ -158,7 +158,7 @@ fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow
         Mode::Jars { jars_file, catalogue } => {
             let span = root.child("collect platform jars");
             let result = collect::platform_jars(jars_file)
-                .and_then(|files| Ok(inventory::attach_metadata(&files, Path::new(catalogue))?))
+                .and_then(|files| inventory::attach_metadata(&files, Path::new(catalogue)))
                 .and_then(|files| collect::validate_destinations(&files).map(|()| files));
             (record_collection(&span, "jarCount", result)?, None)
         }
@@ -208,8 +208,8 @@ fn write_manifest(options: &Options<PluginComponentSpec>, files: &[SourcedFile],
             Ok(())
         }
         Err(error) => {
-            span.fail(&error);
-            Err(error.into())
+            span.fail(&format_args!("{error:#}"));
+            Err(error)
         }
     }
 }

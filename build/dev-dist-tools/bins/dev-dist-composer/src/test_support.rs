@@ -239,7 +239,7 @@ impl BoundTree {
 }
 
 /// Composes a full distribution with the merge step of the composer.
-pub(crate) fn compose(components: &[DevBuildComponent], target: impl AsRef<Path>) -> component::Result<ComposedBuild> {
+pub(crate) fn compose(components: &[DevBuildComponent], target: impl AsRef<Path>) -> anyhow::Result<ComposedBuild> {
     compose_with(components, target, ComposeOptions::default())
 }
 
@@ -249,7 +249,7 @@ pub(crate) fn compose_with(
     components: &[DevBuildComponent],
     target: impl AsRef<Path>,
     options: ComposeOptions,
-) -> component::Result<ComposedBuild> {
+) -> anyhow::Result<ComposedBuild> {
     let root = trace::Tracer::new("dev-dist-composer test").span(crate::JOB_NAME);
     compose::compose_components(components, target.as_ref(), &options, &root)
 }
@@ -287,7 +287,7 @@ pub(crate) fn require_error<T: std::fmt::Debug, E: std::fmt::Display>(result: Re
     match result {
         Ok(value) => panic!("expected an error with {message:?}, got {value:?}"),
         Err(error) => {
-            let text = error.to_string();
+            let text = format!("{error:#}");
             assert!(text.contains(message), "error = {text:?}, expected a message with {message:?}");
         }
     }
@@ -349,13 +349,13 @@ pub(crate) fn reference_bytes(size: usize) -> Vec<u8> {
 }
 
 /// A copy step that must not run, for launch metadata and for the checks before the first write.
-pub(crate) fn no_merge(_: &[DevBuildComponent], _: &Path) -> component::Result<()> {
+pub(crate) fn no_merge(_: &[DevBuildComponent], _: &Path) -> anyhow::Result<()> {
     panic!("the composition merged component files")
 }
 
 /// A copy step that copies nothing, for a test of the metadata of a full distribution without payload.
 #[expect(clippy::unnecessary_wraps, reason = "the signature of a copy step")]
-pub(crate) fn skip_merge(_: &[DevBuildComponent], _: &Path) -> component::Result<()> {
+pub(crate) fn skip_merge(_: &[DevBuildComponent], _: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 

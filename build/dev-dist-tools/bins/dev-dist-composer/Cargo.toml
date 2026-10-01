@@ -10,6 +10,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 component.workspace = true
 distpath.workspace = true
 filemeta.workspace = true

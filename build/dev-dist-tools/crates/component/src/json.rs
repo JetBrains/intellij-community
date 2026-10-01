@@ -7,12 +7,11 @@
 
 use std::path::Path;
 
+use anyhow::{Context as _, Result};
 use serde::de::DeserializeOwned;
 
-use crate::error::{Error, Result};
-
-/// Reads and decodes a JSON file. The error names the file.
+/// Reads and decodes a JSON file. The error has the path as its context.
 pub fn read<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    let data = std::fs::read(path).map_err(|error| Error::io(path, error))?;
-    serde_json::from_slice(&data).map_err(|error| Error::json(path, error))
+    let data = std::fs::read(path).with_context(|| path.display().to_string())?;
+    serde_json::from_slice(&data).with_context(|| path.display().to_string())
 }

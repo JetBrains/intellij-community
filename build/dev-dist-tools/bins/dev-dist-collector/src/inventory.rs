@@ -4,9 +4,10 @@
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 
+use anyhow::{Context as _, Result, bail};
+use component::json;
 use component::manifest::{self, ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
 use component::paths::{self, compare_utf16};
-use component::{Error, Result, fail, json};
 use filemeta::{Entry, EntryType};
 use serde::Deserialize;
 
@@ -76,7 +77,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
         if let Some(metadata) = &file.metadata {
             let mut metadata = metadata.clone();
             metadata.relative_path.clone_from(&file.relative_path);
-            filemeta::merge(std::iter::once(&metadata)).map_err(|error| Error::msg(format!("{error:#}")))?;
+            filemeta::merge(std::iter::once(&metadata))?;
             let mut entry = ComponentEntry {
                 relative_path: file.relative_path.clone(),
                 entry_type: ComponentEntryType::ComponentFile,
@@ -91,7 +92,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
                 }
                 EntryType::Symlink => {
                     if file.executable {
-                        fail!("symbolic link has an executable override: {}", file.relative_path);
+                        bail!("symbolic link has an executable override: {}", file.relative_path);
                     }
                     let target = distpath::clean_link_target(&metadata.symlink_target);
                     entry.entry_type = ComponentEntryType::Symlink;
@@ -115,13 +116,13 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
         }
         let regular = std::fs::metadata(&file.source).ok().filter(std::fs::Metadata::is_file);
         let Some(source_metadata) = regular else {
-            fail!("source of '{}' is not a regular file: {}", file.relative_path, file.source);
+            bail!("source of '{}' is not a regular file: {}", file.relative_path, file.source);
         };
         let absolute = paths::absolute_path(&file.source)?;
         let hash = if let Some(&hash) = hashes.get(&absolute) {
             hash
         } else {
-            let hash = xxh3::hash_file(Path::new(&absolute)).map_err(|error| Error::io(&absolute, error))?;
+            let hash = xxh3::hash_file(Path::new(&absolute)).with_context(|| absolute.clone())?;
             hashes.insert(absolute, hash);
             byte_count += source_metadata.len();
             hash
@@ -135,7 +136,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             ..ComponentEntry::default()
         });
     }
-    distpath::validate_links(&links).map_err(Error::msg)?;
+    distpath::validate_links(&links)?;
     entries.sort_by(|first, second| compare_utf16(&first.relative_path, &second.relative_path));
     let stats = InventoryStats {
         file_count: entries.len(),
@@ -230,35 +231,35 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
     let mut cache: HashMap<String, HashMap<String, Entry>> = HashMap::new();
     for record in &records {
         if record.source.is_empty() || record.metadata.is_empty() || distpath::validate_path(&record.relative_path).is_err() {
-            fail!(
+            bail!(
                 "{}: metadata records require source, metadata and a safe relativePath",
                 catalogue.display()
             );
         }
         let metadata_path = paths::absolute_path(&record.metadata)?;
         if !cache.contains_key(&metadata_path) {
-            let inventory = filemeta::read(Path::new(&metadata_path)).map_err(|error| Error::msg(format!("{error:#}")))?;
+            let inventory = filemeta::read(Path::new(&metadata_path))?;
             let entries = inventory.into_iter().map(|entry| (entry.relative_path.clone(), entry)).collect();
             cache.insert(metadata_path.clone(), entries);
         }
         let entries = &cache[&metadata_path];
         let source = paths::absolute_path(&record.source)?;
         if (record.tree && by_source.contains_key(&source)) || (!record.tree && trees.contains_key(&source)) {
-            fail!("conflicting metadata for source {}", record.source);
+            bail!("conflicting metadata for source {}", record.source);
         }
         if record.tree {
             let tree = tree_entries(entries, record, &metadata_path)?;
             if trees.get(&source).is_some_and(|previous| previous.metadata != tree.metadata) {
-                fail!("conflicting metadata for source {}", record.source);
+                bail!("conflicting metadata for source {}", record.source);
             }
             trees.insert(source, tree);
             continue;
         }
         let Some(entry) = entries.get(&record.relative_path) else {
-            fail!("metadata {} has no entry for {}", record.metadata, record.relative_path);
+            bail!("metadata {} has no entry for {}", record.metadata, record.relative_path);
         };
         if by_source.get(&source).is_some_and(|previous| previous != entry) {
-            fail!("conflicting metadata for source {}", record.source);
+            bail!("conflicting metadata for source {}", record.source);
         }
         by_source.insert(source, entry.clone());
     }
@@ -270,9 +271,9 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
         if file.tree {
             let Some(tree) = trees.get(&source) else {
                 if by_source.contains_key(&source) {
-                    fail!("tree record {} has file metadata", file.source);
+                    bail!("tree record {} has file metadata", file.source);
                 }
-                fail!("missing metadata for tree {}", file.source);
+                bail!("missing metadata for tree {}", file.source);
             };
             attached.extend(tree.files(file));
             used.insert(source);
@@ -280,9 +281,9 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
         }
         let Some(entry) = by_source.get(&source) else {
             if trees.contains_key(&source) {
-                fail!("file record {} has tree metadata", file.source);
+                bail!("file record {} has tree metadata", file.source);
             }
-            fail!("missing metadata for source {}", file.source);
+            bail!("missing metadata for source {}", file.source);
         };
         let mut file = file.clone();
         file.metadata = Some(entry.clone());
@@ -292,12 +293,12 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
     let mut stale: Vec<&String> = by_source.keys().filter(|source| !used.contains(*source)).collect();
     stale.sort();
     if let Some(source) = stale.first() {
-        fail!("stale metadata ownership for source {source}");
+        bail!("stale metadata ownership for source {source}");
     }
     let mut stale: Vec<&String> = trees.keys().filter(|source| !used.contains(*source)).collect();
     stale.sort();
     if let Some(source) = stale.first() {
-        fail!("stale metadata ownership for tree {source}");
+        bail!("stale metadata ownership for tree {source}");
     }
     Ok(attached)
 }
@@ -307,7 +308,7 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
 fn tree_entries(entries: &HashMap<String, Entry>, record: &MetadataRecord, metadata_path: &str) -> Result<TreeMetadata> {
     let root = entries.get(&record.relative_path);
     if root.is_none_or(|root| root.entry_type != EntryType::Directory) {
-        fail!(
+        bail!(
             "metadata {} has no directory entry for tree {}",
             record.metadata,
             record.relative_path
@@ -324,7 +325,7 @@ fn tree_entries(entries: &HashMap<String, Entry>, record: &MetadataRecord, metad
             continue;
         };
         if entry.entry_type == EntryType::Symlink {
-            fail!(
+            bail!(
                 "metadata {} lists a symbolic link in tree {}: {}",
                 record.metadata,
                 record.relative_path,

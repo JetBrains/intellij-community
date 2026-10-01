@@ -18,7 +18,6 @@ same_file
 serde
 serde_core
 serde_json
-thiserror
 trace
 walkdir
 xxh3

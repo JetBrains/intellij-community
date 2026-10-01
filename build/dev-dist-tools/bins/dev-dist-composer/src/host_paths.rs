@@ -3,8 +3,8 @@
 
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result, bail};
 use component::paths::{self, from_slash};
-use component::{Error, Result, fail};
 
 /// The absolute path of a host path with every symbolic link resolved. The path must exist.
 pub(crate) fn real_path(value: &str) -> Result<String> {
@@ -13,7 +13,7 @@ pub(crate) fn real_path(value: &str) -> Result<String> {
 
 /// An absolute path with every symbolic link resolved. The path must exist.
 pub(crate) fn eval_symlinks(path: &str) -> Result<String> {
-    let resolved = fscopy::real_path(Path::new(path)).map_err(|error| Error::io(path, error))?;
+    let resolved = fscopy::real_path(Path::new(path)).with_context(|| path.to_owned())?;
     text(resolved)
 }
 
@@ -31,7 +31,7 @@ pub(crate) fn resolve_relative(base: &str, relative: &str) -> String {
 fn text(path: PathBuf) -> Result<String> {
     match path.into_os_string().into_string() {
         Ok(value) => Ok(value),
-        Err(value) => fail!("The path is not valid UTF-8: {}", value.display()),
+        Err(value) => bail!("The path is not valid UTF-8: {}", value.display()),
     }
 }
 

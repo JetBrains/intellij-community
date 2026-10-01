@@ -9,8 +9,7 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::path::PathBuf;
 
-use crate::error::{Error, Result};
-use crate::fail;
+use anyhow::{Context as _, Result, bail};
 
 /// The native name separator.
 pub const SEPARATOR: char = std::path::MAIN_SEPARATOR;
@@ -21,7 +20,7 @@ pub fn host_path(value: &str) -> Result<String> {
     let native = from_slash(value);
     let names = native.strip_prefix(SEPARATOR).unwrap_or(&native);
     if value.contains('\0') || names.split(SEPARATOR).any(|name| name.is_empty() || name == "." || name == "..") {
-        fail!("Unsupported host path '{value}': Bazel writes no empty, '.' or '..' element");
+        bail!("Unsupported host path '{value}': Bazel writes no empty, '.' or '..' element");
     }
     Ok(native.into_owned())
 }
@@ -47,7 +46,7 @@ pub fn from_slash(value: &str) -> Cow<'_, str> {
 /// The absolute path of a [`host_path`]. A relative path starts at the working directory.
 pub fn absolute_path(value: &str) -> Result<String> {
     let native = host_path(value)?;
-    let absolute = std::path::absolute(&native).map_err(|error| Error::io(value, error))?;
+    let absolute = std::path::absolute(&native).with_context(|| value.to_owned())?;
     text(absolute)
 }
 
@@ -60,7 +59,7 @@ pub fn compare_utf16(first: &str, second: &str) -> Ordering {
 fn text(path: PathBuf) -> Result<String> {
     match path.into_os_string().into_string() {
         Ok(value) => Ok(value),
-        Err(value) => fail!("The path is not valid UTF-8: {}", value.display()),
+        Err(value) => bail!("The path is not valid UTF-8: {}", value.display()),
     }
 }
 

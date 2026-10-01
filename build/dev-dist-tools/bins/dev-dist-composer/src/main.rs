@@ -12,13 +12,13 @@
 //! records, [`fingerprint`] computes fingerprint v5, and [`ide_config`] writes the file of `DevIdeConfig`.
 
 use std::ffi::OsString;
-use std::fmt::Display;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
 use std::process::ExitCode;
 
-use component::{Error, Result, classpath, manifest, paths};
+use anyhow::{Context as _, Result, bail};
+use component::{classpath, manifest, paths};
 
 use crate::compose::{ComposeOptions, DevBuildComponent};
 
@@ -47,7 +47,7 @@ fn main() -> ExitCode {
 fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let mut options = match cli::parse(args) {
         Ok(options) => options,
-        Err(error) => return report(errors, &option_error(&error)),
+        Err(error) => return report(errors, &error),
     };
     let trace_file = match optional_path(&mut options, "--trace-file") {
         Ok(trace_file) => trace_file,
@@ -57,7 +57,7 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
         let root = tracer.span(JOB_NAME);
         let result = compose_dev_distribution(options, &root);
         if let Err(error) = &result {
-            root.fail(error);
+            root.fail(&format_args!("{error:#}"));
         }
         root.end();
         match result {
@@ -67,14 +67,9 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     })
 }
 
-fn report(errors: &mut dyn Write, error: &Error) -> u8 {
-    let _ = writeln!(errors, "ERROR: {error}");
+fn report(errors: &mut dyn Write, error: &anyhow::Error) -> u8 {
+    cli::report(errors, error);
     1
-}
-
-/// The error of the command line as an error of the composer.
-fn option_error(error: &dyn Display) -> Error {
-    Error::msg(format!("{error:#}"))
 }
 
 /// The absolute path of an option, or `None` when the option is absent or empty.
@@ -82,14 +77,14 @@ fn option_error(error: &dyn Display) -> Error {
 /// Every option has the `--key=value` form, because the Starlark caller writes no other form. An empty value is an
 /// absent option.
 fn optional_path(options: &mut cli::Options, name: &str) -> Result<Option<String>> {
-    match options.take(name).map_err(|error| option_error(&error))? {
+    match options.take(name)? {
         Some(value) if !value.is_empty() => paths::absolute_path(&value).map(Some),
         _ => Ok(None),
     }
 }
 
 fn required_path(options: &mut cli::Options, name: &str) -> Result<String> {
-    paths::absolute_path(&options.require(name).map_err(|error| option_error(&error))?)
+    paths::absolute_path(&options.require(name)?)
 }
 
 /// Checks the composition spec first, then the output options, the unknown options, the source bindings and each
@@ -100,20 +95,20 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
     let output_dir = required_path(&mut options, "--output-dir")?;
     let ide_config = required_path(&mut options, "--ide-config")?;
     let fingerprint_file = required_path(&mut options, "--fingerprint")?;
-    options.finish().map_err(|error| option_error(&error))?;
+    options.finish()?;
     root.tag("componentCount", spec.components.len());
 
     let mut bindings = match (&spec.source_runfiles, &spec.source_bindings) {
-        (Some(_), Some(_)) => return Err(Error::msg("Local launch metadata must not expand source bindings")),
+        (Some(_), Some(_)) => bail!("Local launch metadata must not expand source bindings"),
         (Some(_), None) => None,
         (None, Some(bindings)) => Some(spec::read_source_bindings(bindings, &spec.components)?),
         // The Starlark caller always gives source bindings to a full distribution, so the composer needs no other
         // source.
         (None, None) => {
-            return Err(Error::msg(format!(
+            bail!(
                 "The composition spec {spec_file} requests a full distribution without source bindings, \
                  and the composer does not support that"
-            )));
+            );
         }
     };
     let mut components = Vec::with_capacity(spec.components.len());
@@ -156,7 +151,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
         (home.join("fingerprint.txt"), result.fingerprint.clone()),
         (fingerprint_file.into(), result.fingerprint.clone()),
     ] {
-        fs::write(&file, content).map_err(|error| Error::io(&file, error))?;
+        fs::write(&file, content).with_context(|| file.display().to_string())?;
     }
     ide_config::write_dev_ide_config(
         &ide_config,
@@ -175,5 +170,5 @@ fn remove_output(output_dir: &str) -> Result<()> {
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(error),
     };
-    removed.map_err(|error| Error::io(output_dir, error))
+    removed.with_context(|| output_dir.to_owned())
 }

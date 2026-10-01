@@ -79,7 +79,7 @@ pub(crate) fn require_error<T: std::fmt::Debug, E: std::fmt::Display>(result: Re
     match result {
         Ok(value) => panic!("expected an error with {message:?}, got {value:?}"),
         Err(error) => {
-            let text = error.to_string();
+            let text = format!("{error:#}");
             assert!(text.contains(message), "error = {text:?}, expected a message with {message:?}");
         }
     }

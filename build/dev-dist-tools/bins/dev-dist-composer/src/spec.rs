@@ -7,7 +7,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
-use component::{Error, Result, fail, json, paths};
+use anyhow::{Context as _, Result, bail};
+use component::{json, paths};
 use serde::Deserialize;
 
 use crate::host_paths;
@@ -43,14 +44,14 @@ pub(crate) struct CompositionSpec {
 pub(crate) fn read_composition_spec(path: &Path) -> Result<CompositionSpec> {
     let spec: CompositionSpec = json::read(path)?;
     if spec.version != COMPOSITION_SPEC_VERSION {
-        fail!(
+        bail!(
             "Unsupported dev-build composition spec version {} in {}",
             spec.version,
             path.display()
         );
     }
     if spec.components.is_empty() {
-        fail!("Dev-build composition spec in {} has no components", path.display());
+        bail!("Dev-build composition spec in {} has no components", path.display());
     }
     Ok(spec)
 }
@@ -97,19 +98,19 @@ impl ComponentSources {
     pub(crate) fn resolve(&self, source: &str) -> Result<String> {
         let absolute = paths::absolute_path(source)?;
         let Some(bound) = self.sources.get(&absolute) else {
-            fail!("Missing declared artifact binding for {source}");
+            bail!("Missing declared artifact binding for {source}");
         };
         if let Some(directory) = &bound.directory {
             let is_directory = fs::symlink_metadata(directory).is_ok_and(|metadata| metadata.is_dir());
             if !is_directory || host_paths::eval_symlinks(directory)? != *directory {
-                fail!("Declared source directory escapes its artifact binding: {directory}");
+                bail!("Declared source directory escapes its artifact binding: {directory}");
             }
             if bound.path == *directory {
-                fail!("Declared source member has an escaping directory alias: {source}");
+                bail!("Declared source member has an escaping directory alias: {source}");
             }
             let parent = host_paths::parent(&bound.path);
             if host_paths::eval_symlinks(parent)? != parent || !Path::new(parent).starts_with(directory) {
-                fail!("Declared source member has an escaping directory alias: {source}");
+                bail!("Declared source member has an escaping directory alias: {source}");
             }
         }
         let mut regular = fs::metadata(&bound.path).is_ok_and(|metadata| metadata.is_file());
@@ -117,12 +118,12 @@ impl ComponentSources {
             regular = fs::symlink_metadata(&bound.path).is_ok_and(|metadata| !metadata.file_type().is_symlink());
         }
         if bound.kind != SourceKind::File || !regular {
-            fail!("Declared source member is not a regular file: {source}");
+            bail!("Declared source member is not a regular file: {source}");
         }
         let staged_real = host_paths::real_path(source)?;
         let bound_real = host_paths::eval_symlinks(&bound.path)?;
         if staged_real != bound_real {
-            fail!("Staged source differs from its declared artifact binding: {source}");
+            bail!("Staged source differs from its declared artifact binding: {source}");
         }
         Ok(bound_real)
     }
@@ -137,40 +138,40 @@ pub(crate) fn read_source_bindings(file: &str, components: &[CompositionComponen
     let mut result: HashMap<String, ComponentSources> = HashMap::with_capacity(components.len());
     for component in components {
         if result.insert(component.manifest.clone(), ComponentSources::default()).is_some() {
-            fail!("Duplicate component manifest: {}", component.manifest);
+            bail!("Duplicate component manifest: {}", component.manifest);
         }
     }
-    let text = fs::read_to_string(file).map_err(|error| Error::io(file, error))?;
+    let text = fs::read_to_string(file).with_context(|| file.to_owned())?;
     let mut roots: HashSet<(String, String)> = HashSet::new();
     // Starlark writes one line per artifact and ends each line with `\n`.
     for line in text.lines() {
-        let artifact: SourceArtifact = serde_json::from_str(line).map_err(|error| Error::json(file, error))?;
+        let artifact: SourceArtifact = serde_json::from_str(line).with_context(|| file.to_owned())?;
         let Some(sources) = result.get_mut(&artifact.component) else {
-            fail!("Unknown source binding component: {}", artifact.component);
+            bail!("Unknown source binding component: {}", artifact.component);
         };
         let source = &artifact.source;
         let Ok(root) = paths::absolute_path(source) else {
-            fail!("Unsafe source artifact path: {source}");
+            bail!("Unsafe source artifact path: {source}");
         };
         let relative = &artifact.anchor_relative_path;
         let logical = resolve_anchor_relative(&logical_anchor, relative);
         let physical = resolve_anchor_relative(&physical_anchor, relative);
         let (Some(logical), Some(physical)) = (logical, physical) else {
-            fail!("Source artifact disagrees with its binding anchor: {source}");
+            bail!("Source artifact disagrees with its binding anchor: {source}");
         };
         if logical != root {
-            fail!("Source artifact disagrees with its binding anchor: {source}");
+            bail!("Source artifact disagrees with its binding anchor: {source}");
         }
         if !roots.insert((artifact.component.clone(), root.clone())) {
-            fail!("Duplicate source artifact binding: {source}");
+            bail!("Duplicate source artifact binding: {source}");
         }
         match artifact.kind {
             SourceKind::File => {
                 if !artifact.members.is_empty() {
-                    fail!("File source artifact lists members: {source}");
+                    bail!("File source artifact lists members: {source}");
                 }
                 if sources.sources.contains_key(&root) {
-                    fail!("Overlapping source artifact binding: {source}");
+                    bail!("Overlapping source artifact binding: {source}");
                 }
                 let bound = BoundSource {
                     path: physical,
@@ -196,16 +197,16 @@ fn bind_members(sources: &mut ComponentSources, root: &str, physical: &str, memb
             ..filemeta::Entry::default()
         })
         .collect();
-    filemeta::merge(&entries).map_err(|error| Error::msg(format!("{error:#}")))?;
+    filemeta::merge(&entries)?;
     let mut known = HashSet::with_capacity(members.len());
     let mut directories = BTreeSet::new();
     for member in members {
         if !known.insert(member.as_str()) {
-            fail!("Duplicate source member binding: {member}");
+            bail!("Duplicate source member binding: {member}");
         }
         let key = host_paths::resolve_relative(root, member);
         if sources.sources.contains_key(&key) {
-            fail!("Overlapping source member binding: {member}");
+            bail!("Overlapping source member binding: {member}");
         }
         let bound = BoundSource {
             path: host_paths::resolve_relative(physical, member),
@@ -222,7 +223,7 @@ fn bind_members(sources: &mut ComponentSources, root: &str, physical: &str, memb
     for directory in directories {
         let key = host_paths::resolve_relative(root, directory);
         if sources.sources.contains_key(&key) {
-            fail!("Source directory conflicts with a member binding: {}", paths::from_slash(directory));
+            bail!("Source directory conflicts with a member binding: {}", paths::from_slash(directory));
         }
         let bound = BoundSource {
             path: host_paths::resolve_relative(physical, directory),

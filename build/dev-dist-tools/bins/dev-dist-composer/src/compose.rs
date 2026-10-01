@@ -8,11 +8,12 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result, bail};
 use component::classpath;
 use component::layout::{CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE};
 use component::manifest::{self, ComponentManifest};
+use component::paths;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
-use component::{Error, Result, fail, paths};
 
 use crate::spec::ComponentSources;
 use crate::{fingerprint, local_layout, merge, plugin_classpath};
@@ -64,7 +65,7 @@ pub(crate) struct ComposedBuild {
 /// Checks that the components form one distribution. It reads no file, so a failure leaves no output.
 pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fragments: &[String]) -> Result<()> {
     if components.is_empty() {
-        fail!("At least one dev-build component is required");
+        bail!("At least one dev-build component is required");
     }
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
     for manifest in &manifests {
@@ -75,11 +76,11 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
     let main_class = manifests.iter().find_map(|manifest| manifest.main_class.as_deref());
     let platform = manifests.iter().find(|manifest| !manifest.platform_neutral());
     let Some(main_class) = main_class else {
-        fail!("No dev-build component declares an IDE main class: {}", kinds.join(", "));
+        bail!("No dev-build component declares an IDE main class: {}", kinds.join(", "));
     };
     for manifest in &manifests[1..] {
         if manifest.platform_prefix != first.platform_prefix {
-            fail!(
+            bail!(
                 "Dev-build components have different products: '{}' and '{}'",
                 first.platform_prefix,
                 manifest.platform_prefix
@@ -88,7 +89,7 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
         if let Some(platform) = platform.filter(|_| !manifest.platform_neutral())
             && (manifest.os != platform.os || manifest.arch != platform.arch)
         {
-            fail!(
+            bail!(
                 "Dev-build components have different target platforms: '{}/{}' and '{}/{}'",
                 platform.os,
                 platform.arch,
@@ -97,7 +98,7 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
             );
         }
         if let Some(other) = manifest.main_class.as_deref().filter(|other| *other != main_class) {
-            fail!("Dev-build components have different IDE main classes: '{main_class}' and '{other}'");
+            bail!("Dev-build components have different IDE main classes: '{main_class}' and '{other}'");
         }
     }
 
@@ -107,7 +108,7 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
         .map(|component| format!("{} ({})", component.manifest.kind, component.manifest.plugin_count))
         .collect();
     if !missing_parts.is_empty() {
-        fail!(
+        bail!(
             "Dev-build components report plugins but provide no plugin-classpath records: {}",
             missing_parts.join(", ")
         );
@@ -115,7 +116,7 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
 
     let (present, duplicates) = count_kinds(&kinds);
     if !duplicates.is_empty() {
-        fail!(
+        bail!(
             "Dev-build fragment kinds must be unique, but these occur more than once: {}",
             duplicates.join(", ")
         );
@@ -123,7 +124,7 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
     if !expected_fragments.is_empty() {
         let (expected, duplicate_expected) = count_kinds(expected_fragments);
         if !duplicate_expected.is_empty() {
-            fail!(
+            bail!(
                 "Expected dev-build fragment kinds must be unique, but these occur more than once: {}",
                 duplicate_expected.join(", ")
             );
@@ -139,7 +140,7 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
                 message.push_str(&format!("; unexpected: {}", unexpected.join(", ")));
             }
             message.push_str(&format!("; present: {}", sorted(&present).join(", ")));
-            return Err(Error::Message(message));
+            bail!(message);
         }
     }
     Ok(())
@@ -163,11 +164,11 @@ pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<
     for entry in manifests.iter().flat_map(|manifest| &manifest.entries) {
         manifest::validate_entry_mode(entry)?;
         if !destinations.insert(&entry.relative_path) {
-            fail!("Dev-build components both provide '{}'", entry.relative_path);
+            bail!("Dev-build components both provide '{}'", entry.relative_path);
         }
         entries.push(entry.to_metadata());
     }
-    filemeta::merge(&entries).map_err(|error| Error::msg(format!("{error:#}")))?;
+    filemeta::merge(&entries)?;
     Ok(())
 }
 
@@ -212,13 +213,13 @@ where
     match fs::read_dir(target) {
         Ok(mut children) => {
             if children.next().is_some() {
-                fail!("The dev-build composition target must be empty: {}", target.display());
+                bail!("The dev-build composition target must be empty: {}", target.display());
             }
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => return Err(Error::io(target, error)),
+        Err(error) => return Err(error).with_context(|| target.display().to_string()),
     }
-    fs::create_dir_all(target).map_err(|error| Error::io(target, error))?;
+    fs::create_dir_all(target).with_context(|| target.display().to_string())?;
     if options.source_runfiles.is_none() {
         merge(components, target)?;
     }
@@ -260,27 +261,27 @@ pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &
         .collect();
     let plugin_count: u32 = components.iter().map(|component| component.manifest.plugin_count).sum();
     let Ok(plugin_count) = u16::try_from(plugin_count) else {
-        fail!("The dev-build components report {plugin_count} plugins, and the plugin classpath holds at most 65535");
+        bail!("The dev-build components report {plugin_count} plugins, and the plugin classpath holds at most 65535");
     };
     if kinds.is_empty() {
         return Ok(None);
     }
     let Some(prefix) = prefix else {
-        fail!(
+        bail!(
             "Components contributed plugins ({}), so the plugin-classpath prefix is required",
             kinds.join(", ")
         );
     };
     let file = target.join(paths::from_slash(PLUGIN_CLASSPATH).as_ref());
     let parent = file.parent().expect("the file is below the target");
-    fs::create_dir_all(parent).map_err(|error| Error::io(parent, error))?;
-    let prefix = fs::read(prefix).map_err(|error| Error::io(prefix, error))?;
+    fs::create_dir_all(parent).with_context(|| parent.display().to_string())?;
+    let prefix = fs::read(prefix).with_context(|| prefix.display().to_string())?;
     let mut parts = Vec::with_capacity(kinds.len());
     for part in components.iter().filter_map(|component| component.plugin_classpath_part.as_deref()) {
-        parts.push(fs::read(part).map_err(|error| Error::io(part, error))?);
+        parts.push(fs::read(part).with_context(|| part.display().to_string())?);
     }
     let content = plugin_classpath::compose(&prefix, plugin_count, &parts);
-    fs::write(&file, content).map_err(|error| Error::io(&file, error))?;
+    fs::write(&file, content).with_context(|| file.display().to_string())?;
     Ok(Some(file))
 }
 
@@ -289,7 +290,7 @@ pub(crate) fn absolute_keys(source: &BTreeMap<String, String>) -> Result<BTreeMa
     let mut result = BTreeMap::new();
     for (key, value) in source {
         if result.insert(paths::absolute_path(key)?, value.clone()).is_some() {
-            fail!("Two dev-build runfile keys name one path: {key}");
+            bail!("Two dev-build runfile keys name one path: {key}");
         }
     }
     Ok(result)

@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use component::Result;
+use anyhow::Result;
 use component::manifest::ComponentEntry;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
 

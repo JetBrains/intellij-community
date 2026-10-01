@@ -647,7 +647,7 @@ fn tree_records_must_agree_with_the_catalogue() {
         let result = attach_metadata(&files, &write_catalogue(&directory, &records));
         match result {
             Ok(files) => panic!("{name}: accepted {files:?}"),
-            Err(error) => assert!(error.to_string().contains(&message), "{name}: {error}, expected {message:?}"),
+            Err(error) => assert!(format!("{error:#}").contains(&message), "{name}: {error:#}, expected {message:?}"),
         }
     }
 }

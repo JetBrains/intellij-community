@@ -16,7 +16,7 @@ fn parse_with(base: &[String], extra: &[&str]) -> anyhow::Result<crate::Options<
 fn require_error(result: anyhow::Result<crate::Options<String>>, message: &str) {
     match result {
         Ok(options) => panic!("accepted options {options:?}, expected {message:?}"),
-        Err(error) => assert!(error.to_string().contains(message), "error {error:#}, expected {message:?}"),
+        Err(error) => assert!(format!("{error:#}").contains(message), "error {error:#}, expected {message:?}"),
     }
 }
 

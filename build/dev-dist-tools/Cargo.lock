@@ -75,13 +75,12 @@ dependencies = [
 name = "component"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "filemeta",
  "fscopy",
- "planfile",
  "serde",
  "serde_json",
  "tempfile",
- "thiserror",
 ]
 
 [[package]]
@@ -194,6 +193,7 @@ dependencies = [
 name = "dev-dist-composer"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cli",
  "component",
  "distpath",

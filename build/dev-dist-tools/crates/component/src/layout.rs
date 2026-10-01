@@ -3,9 +3,9 @@
 
 use std::path::Path;
 
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
 use crate::json;
 
 /// The name of the layout file in the metadata tree.

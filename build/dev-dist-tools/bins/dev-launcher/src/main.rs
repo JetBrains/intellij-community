@@ -99,7 +99,7 @@ fn run_local_home(args: &[OsString], output: &mut dyn Write, errors: &mut dyn Wr
     };
     let env = local_home::RunfilesEnv::from_process();
     if let Err(error) = local_home::link_local_home(Path::new(&layout), Path::new(&output_dir), &env) {
-        let _ = writeln!(errors, "ERROR: {error}");
+        cli::report(errors, &error);
         return 1;
     }
     let _ = writeln!(output, "Prepared the local dev home");

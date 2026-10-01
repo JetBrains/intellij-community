@@ -2,11 +2,11 @@
 
 use std::path::Path;
 
+use anyhow::{Context as _, Result, bail};
 use component::classpath;
 use component::manifest::{self, ComponentEntryType, ComponentManifest};
 use component::paths::compare_utf16;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
-use component::{Error, Result, fail};
 
 /// The version prefix of a fingerprint.
 pub(crate) const IDE_FINGERPRINT_VERSION: &str = "v5";
@@ -125,12 +125,12 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     modules: &[S],
 ) -> Result<String> {
     let Some(first) = components.first() else {
-        fail!("At least one dev-build component manifest is required");
+        bail!("At least one dev-build component manifest is required");
     };
     let main_class = components.iter().find_map(|component| component.main_class.as_deref());
     let platform = components.iter().find(|component| !component.platform_neutral()).unwrap_or(first);
     let Some(main_class) = main_class else {
-        fail!("No dev-build component declares an IDE main class");
+        bail!("No dev-build component declares an IDE main class");
     };
     let core_class_path: Vec<&str> = components
         .iter()
@@ -175,7 +175,7 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
         false,
     ));
     if let Some(file) = plugin_classpath_file {
-        let hash = xxh3::hash_file(file).map_err(|error| Error::io(file, error))?;
+        let hash = xxh3::hash_file(file).with_context(|| file.display().to_string())?;
         entries.push(FingerprintEntry::new(PLUGIN_CLASSPATH, "generated-plugin-classpath", hash, false));
     }
     Ok(compute_ide_fingerprint(&entries))

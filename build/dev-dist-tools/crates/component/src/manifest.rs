@@ -5,11 +5,10 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+use anyhow::{Context as _, Result, bail};
 use serde::{Deserialize, Serialize};
 use serde_json::ser::{Formatter, PrettyFormatter};
 
-use crate::error::{Error, Result};
-use crate::fail;
 use crate::json;
 
 /// The only manifest version that the composer accepts. A manifest without a version has this version.
@@ -142,7 +141,7 @@ impl ComponentEntry {
 /// Reads a manifest, then applies [`validate_manifest`].
 pub fn read_component_manifest(path: &Path) -> Result<ComponentManifest> {
     let manifest: ComponentManifest = json::read(path)?;
-    validate_manifest(&manifest).map_err(|error| Error::msg(format!("{}: {error}", path.display())))?;
+    validate_manifest(&manifest).with_context(|| path.display().to_string())?;
     Ok(manifest)
 }
 
@@ -150,17 +149,17 @@ pub fn read_component_manifest(path: &Path) -> Result<ComponentManifest> {
 /// modes. Each core classpath jar must be a component file of the manifest.
 pub fn validate_manifest(manifest: &ComponentManifest) -> Result<()> {
     if manifest.effective_version() != MANIFEST_VERSION {
-        fail!("Unsupported dev-build component manifest version {}", manifest.effective_version());
+        bail!("Unsupported dev-build component manifest version {}", manifest.effective_version());
     }
     if manifest.plugin_count > 1 {
-        fail!(
+        bail!(
             "Dev-build component '{}' reports {} plugins, and a component holds at most one",
             manifest.kind,
             manifest.plugin_count
         );
     }
     if !manifest.additional_modules.is_empty() {
-        fail!(
+        bail!(
             "Dev-build component '{}' lists additional modules, and only the composition spec declares them",
             manifest.kind
         );
@@ -173,7 +172,7 @@ pub fn validate_manifest(manifest: &ComponentManifest) -> Result<()> {
         .collect();
     for jar in &manifest.core_class_path {
         if !component_files.contains(jar.as_str()) {
-            fail!(
+            bail!(
                 "Dev-build component '{}' lists the core classpath jar '{jar}', which is not a component file of the manifest",
                 manifest.kind
             );
@@ -188,9 +187,9 @@ pub fn validate_manifest(manifest: &ComponentManifest) -> Result<()> {
 /// Writes the manifest bytes and creates the parent directory.
 pub fn write_component_manifest(path: &Path, manifest: &ComponentManifest) -> Result<()> {
     if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        fs::create_dir_all(parent).map_err(|error| Error::io(parent, error))?;
+        fs::create_dir_all(parent).with_context(|| parent.display().to_string())?;
     }
-    fs::write(path, manifest.to_json()).map_err(|error| Error::io(path, error))
+    fs::write(path, manifest.to_json()).with_context(|| path.display().to_string())
 }
 
 /// The Kotlin `validateDevBuildEntryMode`. A directory has a mode and nothing else. A file with a mode has the
@@ -198,12 +197,12 @@ pub fn write_component_manifest(path: &Path, manifest: &ComponentManifest) -> Re
 pub fn validate_entry_mode(entry: &ComponentEntry) -> Result<()> {
     if entry.entry_type == ComponentEntryType::Directory {
         if entry.hash.is_some() || entry.source.is_some() || entry.symlink_target.is_some() || entry.executable || !valid_mode(entry.mode) {
-            fail!("Invalid directory entry '{}'", entry.relative_path);
+            bail!("Invalid directory entry '{}'", entry.relative_path);
         }
         return Ok(());
     }
     if entry.hash.is_none() {
-        fail!("Dev-build component entry '{}' requires a hash", entry.relative_path);
+        bail!("Dev-build component entry '{}' requires a hash", entry.relative_path);
     }
     let Some(mode) = entry.mode else {
         return Ok(());
@@ -213,7 +212,7 @@ pub fn validate_entry_mode(entry: &ComponentEntry) -> Result<()> {
         || entry.entry_type != ComponentEntryType::ComponentFile
         || entry.executable != (mode & 0o111 != 0)
     {
-        fail!(
+        bail!(
             "Dev-build component entry '{}' has an invalid or conflicting file mode: {mode}",
             entry.relative_path
         );

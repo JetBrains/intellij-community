@@ -14,8 +14,9 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use anyhow::{Context as _, Result, bail};
 use component::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest};
-use component::{Error, Result, fail, paths};
+use component::paths;
 use rayon::prelude::*;
 
 use crate::compose::DevBuildComponent;
@@ -28,10 +29,7 @@ const COPY_THREADS: usize = 4;
 /// Writes the files of every component at `target`, an empty directory. The source bindings give the bytes of each
 /// file. Each component gets a child span of `parent`.
 pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path, parent: &trace::Span) -> Result<()> {
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(COPY_THREADS)
-        .build()
-        .map_err(Error::msg)?;
+    let pool = rayon::ThreadPoolBuilder::new().num_threads(COPY_THREADS).build()?;
     let mut links = Vec::new();
     for component in components {
         let manifest = &component.manifest;
@@ -44,7 +42,7 @@ pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path, 
                 span.tag("byteCount", byte_count);
             }
             Err(error) => {
-                span.fail(&error);
+                span.fail(&format_args!("{error:#}"));
                 return Err(error);
             }
         }
@@ -62,7 +60,7 @@ pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path, 
         .collect();
     directories.sort_by(|first, second| paths::compare_utf16(&second.relative_path, &first.relative_path));
     for entry in directories {
-        fscopy::set_distribution_file_mode(&destination(target, &entry.relative_path), false, entry.mode).map_err(Error::msg)?;
+        fscopy::set_distribution_file_mode(&destination(target, &entry.relative_path), false, entry.mode)?;
     }
     Ok(())
 }
@@ -96,7 +94,7 @@ fn copy_component<'a>(
             ComponentEntryType::Directory => create_directory_entry(&destination)?,
             ComponentEntryType::Symlink => {
                 let (None, Some(link_target)) = (&entry.source, &entry.symlink_target) else {
-                    fail!(
+                    bail!(
                         "Dev-build component '{}' must declare the symbolic link '{name}' without a file source",
                         manifest.kind
                     );
@@ -105,13 +103,13 @@ fn copy_component<'a>(
             }
             ComponentEntryType::ComponentFile => {
                 let Some(source) = &entry.source else {
-                    fail!(
+                    bail!(
                         "Dev-build component '{}' declares no tree, so '{name}' must name where its bytes are",
                         manifest.kind
                     );
                 };
                 let Some(bindings) = bindings else {
-                    fail!(
+                    bail!(
                         "Dev-build component '{}' has no source bindings, so the composer cannot copy '{name}'",
                         manifest.kind
                     );
@@ -119,7 +117,7 @@ fn copy_component<'a>(
                 // The binding follows the staging link of Bazel to the declared artifact, as the tree walk of the
                 // collector does. A copy of the link would leak the execution root.
                 let source = bindings.resolve(source)?;
-                byte_count += fs::metadata(&source).map_err(|error| Error::io(&source, error))?.len();
+                byte_count += fs::metadata(&source).with_context(|| source.clone())?.len();
                 let parent = destination.parent().expect("a destination is below the target");
                 if parents.insert(parent.to_path_buf()) {
                     create_directories(parent)?;
@@ -143,8 +141,8 @@ fn copy_component<'a>(
 ///
 /// The copy is a clone where the file system can make one, for example with `fclonefileat` on APFS.
 fn copy_file(job: &CopyJob) -> Result<()> {
-    fscopy::copy_with_attributes(&job.source, &job.destination).map_err(Error::msg)?;
-    fscopy::set_distribution_file_mode(&job.destination, job.executable, job.mode).map_err(Error::msg)
+    fscopy::copy_with_attributes(&job.source, &job.destination)?;
+    Ok(fscopy::set_distribution_file_mode(&job.destination, job.executable, job.mode)?)
 }
 
 /// The path of a distribution entry below `target`.
@@ -161,11 +159,11 @@ fn create_link(link: &Path, target: &str) -> Result<()> {
     create_directories(parent)?;
     let target_is_directory =
         cfg!(windows) && fs::metadata(parent.join(paths::from_slash(target).as_ref())).is_ok_and(|metadata| metadata.is_dir());
-    fscopy::symlink(Path::new(target), link, target_is_directory).map_err(Error::msg)
+    Ok(fscopy::symlink(Path::new(target), link, target_is_directory)?)
 }
 
 fn create_directories(directory: &Path) -> Result<()> {
-    fs::create_dir_all(directory).map_err(|error| Error::io(directory, error))
+    fs::create_dir_all(directory).with_context(|| directory.display().to_string())
 }
 
 /// Creates the directory of a directory entry, or accepts the directory that is there.
@@ -174,9 +172,9 @@ fn create_directories(directory: &Path) -> Result<()> {
 fn create_directory_entry(directory: &Path) -> Result<()> {
     create_directories(directory)?;
     // `create_dir_all` accepts a link to a directory, so the entry itself must be a directory.
-    let metadata = fs::symlink_metadata(directory).map_err(|error| Error::io(directory, error))?;
+    let metadata = fs::symlink_metadata(directory).with_context(|| directory.display().to_string())?;
     if !metadata.is_dir() {
-        fail!("Cannot create the directory {}: a symbolic link is there", directory.display());
+        bail!("Cannot create the directory {}: a symbolic link is there", directory.display());
     }
     Ok(())
 }

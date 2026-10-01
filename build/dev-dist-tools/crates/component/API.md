@@ -1,8 +1,8 @@
 # `component` API
 
 The component contract that the collector, the composer and the launcher share. Each line names one `pub` item of
-`src/`, with its module path. The crate root also exports `Error`, `Result`, `ComponentManifest`, `ComponentEntry`
-and `ComponentEntryType`.
+`src/`, with its module path. The crate root also exports `ComponentManifest`, `ComponentEntry` and
+`ComponentEntryType`.
 
 The crate implements only the inputs that the repository produces. Every other input fails with an error that names
 it. The collector writes the manifests, and the composer reads them. `intellij_dev_dist.bzl` writes the metadata
@@ -15,14 +15,10 @@ names is a `&[S]` with `S: AsRef<str>`.
 `filemeta::merge` checks a set of entries together, and `ComponentEntry::to_metadata` gives the entry of a manifest
 entry. It is part of the contract.
 
-## Errors (`error`)
+## Errors
 
-- `Error`: `Message(String)`, `Io { path: String, source }` or `Json { path: String, source }`. A caller keeps a
-  `filemeta` or a `planfile` error as a `Message` with the `{:#}` text.
-- `Error::msg(message: impl Display)`, `Error::io(path, source)`, `Error::json(path, source)`: make an error.
-- `component::fail!(format, arguments...)`: returns `Err(Error::Message(format!(...)))` from a function that returns
-  `Result`.
-- `Result<T>`: `std::result::Result<T, Error>`.
+Every function returns `anyhow::Result`. An I/O or JSON error has the path as its context, so `{:#}` prints
+`<path>: <error>`. A refusal is one message, and the reader of a manifest adds the path of the file as its context.
 
 ## JSON rules (`json`)
 

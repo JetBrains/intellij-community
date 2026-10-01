@@ -3,7 +3,8 @@
 use std::fs;
 use std::path::Path;
 
-use component::{Error, Result, paths};
+use anyhow::{Context as _, Result};
+use component::paths;
 
 use crate::host_paths;
 
@@ -41,10 +42,10 @@ pub(crate) fn write_dev_ide_config<S: AsRef<str>>(
 ) -> Result<()> {
     let config_directory = host_paths::parent(config_file);
     if config_directory != config_file {
-        fs::create_dir_all(config_directory).map_err(|error| Error::io(config_directory, error))?;
+        fs::create_dir_all(config_directory).with_context(|| config_directory.to_owned())?;
     }
     let content = dev_ide_config_text(config_file, home, main_class, platform_prefix, additional_modules);
-    fs::write(config_file, content).map_err(|error| Error::io(config_file, error))
+    fs::write(config_file, content).with_context(|| config_file.to_owned())
 }
 
 #[cfg(test)]

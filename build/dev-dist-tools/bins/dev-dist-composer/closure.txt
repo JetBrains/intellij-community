@@ -17,14 +17,12 @@ httpdate
 indexmap
 itoa
 memchr
-planfile
 rayon
 rayon_core
 same_file
 serde
 serde_core
 serde_json
-thiserror
 trace
 walkdir
 xxh3
