@@ -54,6 +54,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -122,6 +123,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TestTimeOut;
@@ -135,6 +137,10 @@ import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import kotlin.Unit;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.future.FutureKt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -152,6 +158,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -161,6 +168,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * tests general daemon behaviour/interruptibility/restart during highlighting
@@ -2727,4 +2735,32 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     });
   }
 
+  public void testLaunchingZillionCoroutinesDoesNotSaturateDefaultPoolToThePointOfFrozenHighlighting() throws Exception {
+    @Language("JAVA")
+    String text = "class X {  void foo() {\n" +
+                  "     String xxx;\n".repeat(1000) +
+                  "}}";
+
+    configureByText(JavaFileType.INSTANCE, text); // first give a chance an indexer to complete indexing
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // give chance daemon to queue status update on doc commit
+    myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests(); // it uses Alarm which uses coroutines, so we'll give it a chance
+    CoroutineScope scope = ((ComponentManagerEx)getProject()).getCoroutineScope();
+    CountDownLatch latch = new CountDownLatch(1);
+    List<CompletableFuture<Unit>> jobs = IntStream.range(0, 200)
+      .mapToObj(_ -> BuildersKt.launch(scope, scope.getCoroutineContext(), CoroutineStart.DEFAULT, (_, _) -> {
+        try {
+          latch.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        return Unit.INSTANCE;
+      }))
+      .map(job -> FutureKt.asCompletableFuture(job))
+      .toList();
+    List<HighlightInfo> errs = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+    latch.countDown();
+    assertTrue(errs.toString(), errs.size()>900);
+    ConcurrencyUtil.getAll(jobs);
+  }
 }

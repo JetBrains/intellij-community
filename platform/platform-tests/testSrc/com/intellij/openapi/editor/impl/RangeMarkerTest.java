@@ -2016,8 +2016,8 @@ public class RangeMarkerTest {
     Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
     marker[0] = null;
     persistentMarker[0] = null;
-    new TestDaemonCodeAnalyzerImpl(getProject()).waitForUpdateFileStatusBackgroundQueueInTests();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    new TestDaemonCodeAnalyzerImpl(getProject()).waitForUpdateFileStatusBackgroundQueueInTests();
     while (markerRef.get() != null || persistentMarkerRef.get() != null) {
       GCUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();

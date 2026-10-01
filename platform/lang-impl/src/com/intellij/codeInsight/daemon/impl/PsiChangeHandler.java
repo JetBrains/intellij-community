@@ -364,6 +364,9 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   @TestOnly
   void waitForUpdateFileStatusQueue() {
     assert ApplicationManager.getApplication().isUnitTestMode();
+    if (myUpdateFileStatusAlarm.isEmpty()) {
+      return;
+    }
     CountDownLatch s = new CountDownLatch(1);
     myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
     TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
