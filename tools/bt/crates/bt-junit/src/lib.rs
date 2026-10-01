@@ -7,10 +7,11 @@
 //! enough to be authoritative. A truncated document is the normal case for the runs this reader exists to
 //! explain. The tag boundaries and nesting rules are ours; attributes and entities are quick-xml's.
 //!
-//! `bt` and the Air UI-lane tooling read documents through this crate. The lane tooling links it through a path
-//! dependency and re-exports it as `avl_wire::junit`, so `avl_wire::report`, the host's report builder and
-//! aggregates read the same documents. [`simple_class_name_pattern`] is the class-name filter `bt` and the
-//! controller's `/run` request both build, so it is spelled here once.
+//! `bt` and the Air UI-lane tooling read documents through this crate. Three crates of the lane tooling link it
+//! directly through a path dependency: `avl-report` for the run reports and their aggregates, `air-trace` for the
+//! trace bundles, and `avl-vm`, the `vm` controller. So they all read a document the same way. The guest agent does
+//! not link it. [`simple_class_name_pattern`] is the class-name filter that `bt` and the `/run` request of the
+//! controller both build, so it is spelled here once.
 
 use std::borrow::Cow;
 use std::cmp::Ordering;
