@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.Objects
 
-@Experimental
 /**
  * Provides a set of style configuration options for the creation of
  * default CSS rules for the [JBHtmlPane].

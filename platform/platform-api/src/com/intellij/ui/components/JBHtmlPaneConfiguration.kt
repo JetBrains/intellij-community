@@ -6,7 +6,6 @@ import com.intellij.util.ui.CSSFontResolver
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.StyleSheetUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Image
 import java.awt.event.ActionListener
 import java.net.URL
@@ -15,7 +14,6 @@ import javax.swing.Icon
 import javax.swing.KeyStroke
 import javax.swing.text.html.StyleSheet
 
-@Experimental
 /**
  * Provides a set of configuration options for the creation of the [JBHtmlPane].
  *

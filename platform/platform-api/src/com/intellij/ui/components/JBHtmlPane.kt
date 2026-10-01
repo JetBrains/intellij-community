@@ -21,7 +21,6 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Color
@@ -122,7 +121,6 @@ import kotlin.math.roundToInt
  *     ```
  *
  */
-@Experimental
 @Suppress("LeakingThis")
 open class JBHtmlPane : JEditorPane, Disposable, ExtendableHTMLViewFactory.ScaledHtmlJEditorPane {
 
