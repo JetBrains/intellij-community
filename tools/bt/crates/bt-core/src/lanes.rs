@@ -135,16 +135,9 @@ impl Lanes {
     /// Parses a lane table, and answers why it is not one otherwise.
     pub fn parse(text: &str) -> Result<Self, String> {
         let lanes: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
-        let catalog = [
-            &lanes.flow_profile_dir,
-            &lanes.flow_text_dir,
-            &lanes.authored_suites_file,
-        ];
+        let catalog = [&lanes.flow_profile_dir, &lanes.flow_text_dir, &lanes.authored_suites_file];
         if catalog.iter().any(|path| path.is_some()) && catalog.iter().any(|path| path.is_none()) {
-            return Err(
-                "a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together"
-                    .to_owned(),
-            );
+            return Err("a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together".to_owned());
         }
         Ok(lanes)
     }
@@ -154,8 +147,7 @@ impl Lanes {
         let text = runtime
             .read_text_file(&repo_file(runtime, path))
             .map_err(|error| fail_infra(format!("the lane table {path} is unreadable: {error}")))?;
-        Self::parse(&text)
-            .map_err(|reason| fail_infra(format!("the lane table {path} is malformed: {reason}")))
+        Self::parse(&text).map_err(|reason| fail_infra(format!("the lane table {path} is malformed: {reason}")))
     }
 
     pub fn get(&self, name: &str) -> Option<&LaneSpec> {
@@ -183,18 +175,12 @@ impl Lanes {
 
     /// The lane the flow catalog calls `UI`, `UI_REAL` or `GUI_CHAT`.
     pub fn by_catalog_lane(&self, catalog_lane: &str) -> Option<&LaneSpec> {
-        self.lanes
-            .iter()
-            .find(|lane| lane.catalog_lane.as_deref() == Some(catalog_lane))
+        self.lanes.iter().find(|lane| lane.catalog_lane.as_deref() == Some(catalog_lane))
     }
 
     /// Every catalog lane name, sorted.
     pub fn catalog_lane_names(&self) -> Vec<&str> {
-        let mut names: Vec<&str> = self
-            .lanes
-            .iter()
-            .filter_map(|lane| lane.catalog_lane.as_deref())
-            .collect();
+        let mut names: Vec<&str> = self.lanes.iter().filter_map(|lane| lane.catalog_lane.as_deref()).collect();
         names.sort_unstable();
         names
     }
@@ -247,9 +233,7 @@ impl Lanes {
 
     /// The tags a broad local run excludes: the categories, then the dedicated suites.
     fn broad_run_excluded_tags(&self) -> impl Iterator<Item = &String> {
-        self.integration_category_tags
-            .iter()
-            .chain(&self.dedicated_suite_tags)
+        self.integration_category_tags.iter().chain(&self.dedicated_suite_tags)
     }
 
     /// The one `--test_tag_filters` value a broad local run carries.
@@ -291,11 +275,7 @@ impl LaneSpec {
         if labels.is_empty() {
             return None;
         }
-        Some(
-            std::iter::once("build".to_owned())
-                .chain(labels.iter().cloned())
-                .collect(),
-        )
+        Some(std::iter::once("build".to_owned()).chain(labels.iter().cloned()).collect())
     }
 
     /// Whether the run can hit more than one test target: the lane names several, or a wildcard pattern.
@@ -333,10 +313,7 @@ pub fn wildcard_guards(areas: &Areas, labels: &[String]) -> Vec<String> {
     if tags.is_empty() {
         return Vec::new();
     }
-    vec![
-        "--build_tests_only".to_owned(),
-        tag_exclusions(tags.into_iter()),
-    ]
+    vec!["--build_tests_only".to_owned(), tag_exclusions(tags.into_iter())]
 }
 
 /// The argv that runs the repository's bazel wrapper.
@@ -408,10 +385,7 @@ pub const BEP_FLAG: &str = "--build_event_json_file";
 pub fn bep_override(passthrough: &[String]) -> Option<String> {
     let mut found = None;
     for (index, argument) in passthrough.iter().enumerate() {
-        if let Some(value) = argument
-            .strip_prefix(BEP_FLAG)
-            .and_then(|rest| rest.strip_prefix('='))
-        {
+        if let Some(value) = argument.strip_prefix(BEP_FLAG).and_then(|rest| rest.strip_prefix('=')) {
             found = Some(value.to_owned());
         } else if argument == BEP_FLAG
             && let Some(value) = passthrough.get(index + 1)
@@ -470,10 +444,7 @@ pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
         .chain(resolution.junit5_filters.iter().cloned())
         .collect();
     if !junit_filters.is_empty() {
-        args.push(format!(
-            "--test_env=JB_TEST_JUNIT5_FILTERS={}",
-            junit_filters.join(";")
-        ));
+        args.push(format!("--test_env=JB_TEST_JUNIT5_FILTERS={}", junit_filters.join(";")));
     }
     if plan.no_cache {
         args.push("--cache_test_results=no".to_owned());
@@ -483,11 +454,7 @@ pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
         args.push("-k".to_owned());
     }
     args.extend(plan.extra.iter().cloned());
-    args.extend(
-        plan.test_env
-            .iter()
-            .map(|name| format!("--test_env={name}")),
-    );
+    args.extend(plan.test_env.iter().map(|name| format!("--test_env={name}")));
     args.extend(resolution.labels.iter().cloned());
     // Caller args land last so they win over anything above.
     args.extend(plan.passthrough.iter().cloned());

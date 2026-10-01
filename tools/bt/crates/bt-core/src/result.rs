@@ -81,14 +81,12 @@ pub struct Totals {
 }
 
 pub fn totals_of(targets: &[TargetResult]) -> Totals {
-    targets
-        .iter()
-        .fold(Totals::default(), |sum, target| Totals {
-            tests: sum.tests + target.tests,
-            failed: sum.failed + target.failed,
-            skipped: sum.skipped + target.skipped,
-            flaky: sum.flaky + target.flaky,
-        })
+    targets.iter().fold(Totals::default(), |sum, target| Totals {
+        tests: sum.tests + target.tests,
+        failed: sum.failed + target.failed,
+        skipped: sum.skipped + target.skipped,
+        flaky: sum.flaky + target.flaky,
+    })
 }
 
 /// What the decision table reads. A struct rather than five parameters, because every one of them is consulted and
@@ -118,11 +116,7 @@ pub fn classify_run(input: ClassifyInput<'_>) -> (RunStatus, u8) {
     if matches!(input.bazel_exit, 8 | 33 | 127) || (input.degraded && input.targets.is_empty()) {
         return (RunStatus::Infra, exit::INFRA);
     }
-    if input
-        .bep
-        .aborted
-        .iter()
-        .any(|reason| reason == "ANALYSIS_FAILURE")
+    if input.bep.aborted.iter().any(|reason| reason == "ANALYSIS_FAILURE")
         || !input.bep.failed_to_build.is_empty()
         || !input.build_errors.is_empty()
         || input.bazel_exit == 1
@@ -145,9 +139,7 @@ pub fn classify_run(input: ClassifyInput<'_>) -> (RunStatus, u8) {
 /// Whether any target's runner exited 42, "the test filter matched no test class". [`classify_run`] turns it into
 /// NO_TESTS and the digest names it as the cause; both must agree.
 pub fn filter_matched_no_class(targets: &[TargetResult]) -> bool {
-    targets
-        .iter()
-        .any(|target| target.wrapper_exit_code == Some(42))
+    targets.iter().any(|target| target.wrapper_exit_code == Some(42))
 }
 
 /// The repository's out/bazel-testlogs spelling of the absolute execroot path bazel reports, so the path in a
@@ -166,8 +158,7 @@ pub fn relativize_testlogs(path: &str) -> String {
 
 /// Strips the sandbox prefix off a compiler-reported path so it is clickable in the repo.
 pub fn relativize_source_path(path: &str) -> &str {
-    path.split_once("/execroot/_main/")
-        .map_or(path, |(_, relative)| relative)
+    path.split_once("/execroot/_main/").map_or(path, |(_, relative)| relative)
 }
 
 /// One target under construction. The shard count is a set while it is built: the same shard can report several
@@ -186,13 +177,7 @@ struct Aggregate {
 }
 
 /// Reads a finished run.
-pub fn collect_results(
-    runtime: &dyn Runtime,
-    bep: &BepSummary,
-    duration_ms: u64,
-    bazel_exit: i32,
-    bazel_output: &str,
-) -> RunResult {
+pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64, bazel_exit: i32, bazel_output: &str) -> RunResult {
     // The last attempt per (label, run, shard) decides the outcome; earlier ones only signal flakiness. Groups keep
     // their first-seen order, because the `targets` array is part of the published payload.
     let mut groups: Vec<Vec<&BepAttempt>> = Vec::new();
@@ -273,12 +258,7 @@ pub fn collect_results(
             target.tests += suite.tests;
             target.skipped += suite.skipped;
             let before = failures.len();
-            failures.extend(
-                suite
-                    .cases
-                    .into_iter()
-                    .filter(|case| case.outcome == junit::Outcome::Failed),
-            );
+            failures.extend(suite.cases.into_iter().filter(|case| case.outcome == junit::Outcome::Failed));
             let counted = failures.len() - before;
             // Trust the suite header when a runner reported counts without per-case failure elements.
             target.failed += if counted == 0 {
@@ -290,9 +270,7 @@ pub fn collect_results(
 
         if group.len() > 1 && passed {
             target.flaky += 1;
-            let retried_a_failure = group[..group.len() - 1]
-                .iter()
-                .any(|earlier| earlier.status != "PASSED");
+            let retried_a_failure = group[..group.len() - 1].iter().any(|earlier| earlier.status != "PASSED");
             let id = if retried_a_failure {
                 format!("{} shard {}", last.label, last.shard)
             } else {
@@ -379,20 +357,13 @@ pub fn parse_compile_errors(text: &str) -> Vec<String> {
     //
     //   Kotlinc Runner: Error: Unresolved reference 'foo'.
     //   \t/…/execroot/_main/plugins/air/x/testSrc/FooTest.kt:17:16
-    let worker_diagnostic =
-        crate::regex!(r"^(?:[A-Za-z0-9_][A-Za-z0-9_ ]*: )?(?:Error|error):\s*(.+)$");
+    let worker_diagnostic = crate::regex!(r"^(?:[A-Za-z0-9_][A-Za-z0-9_ ]*: )?(?:Error|error):\s*(.+)$");
     let worker_location = crate::regex!(r"^(\S+\.(?:kt|java|kts)):(\d+)(?::(\d+))?$");
     // javac and plain kotlinc use the one-line form instead, so both are recognised.
-    let inline_diagnostic = crate::regex!(
-        r"(?i)^(?:ERROR: )?(\S+\.(?:kt|java|kts)):(\d+)(?::(\d+))?:\s*(?:error|e):\s*(.+)$"
-    );
+    let inline_diagnostic = crate::regex!(r"(?i)^(?:ERROR: )?(\S+\.(?:kt|java|kts)):(\d+)(?::(\d+))?:\s*(?:error|e):\s*(.+)$");
     let render = |file: &str, line: &str, column: Option<regex::Match<'_>>, message: &str| {
         let column = column.map_or(String::new(), |column| format!(":{}", column.as_str()));
-        format!(
-            "{}:{line}{column}: error: {}",
-            relativize_source_path(file),
-            message.trim()
-        )
+        format!("{}:{line}{column}: error: {}", relativize_source_path(file), message.trim())
     };
 
     let lines: Vec<&str> = text.split('\n').collect();
@@ -402,12 +373,7 @@ pub fn parse_compile_errors(text: &str) -> Vec<String> {
         if let Some(worker) = worker_diagnostic.captures(line) {
             let next = lines.get(position + 1).map_or("", |next| next.trim());
             if let Some(location) = worker_location.captures(next) {
-                errors.push(render(
-                    &location[1],
-                    &location[2],
-                    location.get(3),
-                    &worker[1],
-                ));
+                errors.push(render(&location[1], &location[2], location.get(3), &worker[1]));
                 continue;
             }
         }

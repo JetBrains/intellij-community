@@ -52,15 +52,7 @@ pub struct ImlTestRoot {
     pub package_prefix: Option<String>,
 }
 
-const PRUNED_DIRS: &[&str] = &[
-    "out",
-    "node_modules",
-    ".git",
-    ".idea",
-    "generated",
-    "dist",
-    "build",
-];
+const PRUNED_DIRS: &[&str] = &["out", "node_modules", ".git", ".idea", "generated", "dist", "build"];
 
 /// The test source roots an .iml declares: `isTestSource="true"` source folders that are not resource roots. The
 /// tests .iml of a module such as backend/session/runtime declares both a `java-test-resource` testData root and
@@ -78,11 +70,7 @@ pub fn parse_iml_test_roots(iml_text: &str) -> Vec<ImlTestRoot> {
             if !test_source.is_match(attributes) || resource_type.is_match(attributes) {
                 return None;
             }
-            let path = module_dir_url
-                .captures(attributes)?
-                .get(1)?
-                .as_str()
-                .to_owned();
+            let path = module_dir_url.captures(attributes)?.get(1)?.as_str().to_owned();
             // An empty `packagePrefix=""` is read as "no prefix": it declares the default package, which is not a
             // prefix any Air test class shares, and treating it as one would make every package selector match.
             let package_prefix = package_prefix
@@ -91,10 +79,7 @@ pub fn parse_iml_test_roots(iml_text: &str) -> Vec<ImlTestRoot> {
                 .map(|prefix| prefix.as_str())
                 .filter(|prefix| !prefix.is_empty())
                 .map(str::to_owned);
-            Some(ImlTestRoot {
-                path,
-                package_prefix,
-            })
+            Some(ImlTestRoot { path, package_prefix })
         })
         .collect()
 }
@@ -267,9 +252,7 @@ pub fn scan_tree(runtime: &dyn Runtime, dirs: &[&str]) -> TreeScan {
                 if entry.is_dir {
                     // `bazel-*` is the convenience symlink farm bazel drops in a workspace; following it would walk
                     // the whole output base and index stale generated copies of these sources.
-                    if !PRUNED_DIRS.contains(&entry.name.as_str())
-                        && !entry.name.starts_with("bazel-")
-                    {
+                    if !PRUNED_DIRS.contains(&entry.name.as_str()) && !entry.name.starts_with("bazel-") {
                         next.push(path);
                     }
                 } else if entry.name.ends_with(".iml") {
@@ -285,10 +268,7 @@ pub fn scan_tree(runtime: &dyn Runtime, dirs: &[&str]) -> TreeScan {
 }
 
 /// Every test source root of the scan that has a runnable `jps_test` target.
-pub fn collect_test_roots(
-    runtime: &dyn Runtime,
-    scan: &TreeScan,
-) -> Result<Vec<TestRoot>, Refusal> {
+pub fn collect_test_roots(runtime: &dyn Runtime, scan: &TreeScan) -> Result<Vec<TestRoot>, Refusal> {
     let declared = par_map(&scan.imls, |iml| {
         let text = read_text(runtime, iml)?;
         let module_dir = iml.rsplit_once('/').map_or("", |(dir, _)| dir).to_owned();
@@ -354,14 +334,11 @@ pub fn build_index(scan: &TreeScan, roots: &[TestRoot]) -> Index {
         // A file under nested source roots belongs to each of them.
         for root in roots {
             if file.starts_with(&format!("{}/", root.src_dir)) {
-                index
-                    .entry(simple_name.to_owned())
-                    .or_default()
-                    .push(Candidate {
-                        simple_name: simple_name.to_owned(),
-                        file: file.clone(),
-                        root: root.clone(),
-                    });
+                index.entry(simple_name.to_owned()).or_default().push(Candidate {
+                    simple_name: simple_name.to_owned(),
+                    file: file.clone(),
+                    root: root.clone(),
+                });
             }
         }
     }
@@ -399,8 +376,7 @@ impl<'r> ResolutionInputs<'r> {
     }
 
     fn scan(&self) -> &TreeScan {
-        self.scan
-            .get_or_init(|| scan_tree(self.runtime, &self.areas.dirs()))
+        self.scan.get_or_init(|| scan_tree(self.runtime, &self.areas.dirs()))
     }
 
     /// Every test source root with a runnable target. A checkout with no area has nothing to scan, which is

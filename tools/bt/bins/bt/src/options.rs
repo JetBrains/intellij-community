@@ -87,12 +87,7 @@ fn lanes_text(areas: &Areas) -> String {
         let mut text = format!("Lanes of {}:\n", area.dir());
         for lane in area.lanes().iter() {
             let name = format!("  {}", lane.name);
-            let words: Vec<&str> = lane
-                .description
-                .as_deref()
-                .unwrap_or_default()
-                .split_whitespace()
-                .collect();
+            let words: Vec<&str> = lane.description.as_deref().unwrap_or_default().split_whitespace().collect();
             let mut line = if name.len() < LANE_COLUMN {
                 format!("{name:<LANE_COLUMN$}")
             } else {
@@ -131,11 +126,7 @@ fn lanes_text(areas: &Areas) -> String {
 /// the real mistake), while a single-dash value is left alone, because a bazel-style `-k` can legitimately be one.
 /// Everything after `--` is bazel's, verbatim and unexamined.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Parser)]
-#[command(
-    name = "bt",
-    disable_version_flag = true,
-    arg_required_else_help = true
-)]
+#[command(name = "bt", disable_version_flag = true, arg_required_else_help = true)]
 #[expect(
     clippy::struct_excessive_bools,
     reason = "each bool is an independent command-line switch, as clap derives it"
@@ -181,8 +172,7 @@ fn flag_value(value: &str) -> Result<String, String> {
 /// as the typo it most likely is.
 fn count_parser(max: u32) -> impl Fn(&str) -> Result<u32, String> + Clone + Send + Sync + 'static {
     move |value: &str| {
-        let plain = value.starts_with(|first: char| matches!(first, '1'..='9'))
-            && value.bytes().all(|byte| byte.is_ascii_digit());
+        let plain = value.starts_with(|first: char| matches!(first, '1'..='9')) && value.bytes().all(|byte| byte.is_ascii_digit());
         if !plain {
             return Err(format!("must be a positive integer, got: {value}"));
         }
@@ -244,10 +234,7 @@ fn usage_message(error: &clap::Error) -> String {
         .collect::<Vec<_>>()
         .join("\n");
     let message = message.trim();
-    message
-        .strip_prefix("error: ")
-        .unwrap_or(message)
-        .to_owned()
+    message.strip_prefix("error: ").unwrap_or(message).to_owned()
 }
 
 #[cfg(test)]

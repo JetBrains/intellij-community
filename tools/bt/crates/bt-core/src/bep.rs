@@ -60,9 +60,7 @@ pub(crate) fn uri_to_path(uri: &str, platform: Platform) -> String {
     let Some(rest) = uri.strip_prefix("file://") else {
         return uri.to_owned();
     };
-    let decoded = percent_encoding::percent_decode_str(rest)
-        .decode_utf8_lossy()
-        .into_owned();
+    let decoded = percent_encoding::percent_decode_str(rest).decode_utf8_lossy().into_owned();
     match platform {
         Platform::Windows => windows_file_uri_path(&decoded),
         Platform::Darwin | Platform::Linux => decoded,
@@ -72,10 +70,7 @@ pub(crate) fn uri_to_path(uri: &str, platform: Platform) -> String {
 /// The path part of a Windows `file://` URI: `/C:/x` is a drive path, `localhost/C:/x` the same one spelled with
 /// a host, and `server/share/x` a UNC share.
 fn windows_file_uri_path(path: &str) -> String {
-    let path = path
-        .strip_prefix("localhost")
-        .filter(|rest| rest.starts_with('/'))
-        .unwrap_or(path);
+    let path = path.strip_prefix("localhost").filter(|rest| rest.starts_with('/')).unwrap_or(path);
     let path = match path.strip_prefix('/') {
         Some(rest) if has_windows_drive(rest) => rest,
         _ => path,
@@ -100,9 +95,7 @@ fn windows_file_uri_path(path: &str) -> String {
 )]
 fn lenient_integer<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<i64>, D::Error> {
     Ok(match Value::deserialize(deserializer)? {
-        Value::Number(number) => number
-            .as_i64()
-            .or_else(|| number.as_f64().map(|float| float as i64)),
+        Value::Number(number) => number.as_i64().or_else(|| number.as_f64().map(|float| float as i64)),
         Value::String(text) => {
             let text = text.trim();
             text.parse::<i64>()
@@ -116,10 +109,7 @@ fn lenient_integer<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<
 /// A flag that is `true` only when it says so. proto3 omits a false bool, so absence is `false`, and so is any
 /// value that is not a bool.
 fn is_true<'de, D: Deserializer<'de>>(deserializer: D) -> Result<bool, D::Error> {
-    Ok(matches!(
-        Value::deserialize(deserializer)?,
-        Value::Bool(true)
-    ))
+    Ok(matches!(Value::deserialize(deserializer)?, Value::Bool(true)))
 }
 
 /// A string that is absent when it is not a string.
@@ -258,9 +248,7 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
             object::<TestResultId>(id, "testResult"),
             object::<TestResultPayload>(&event, "testResult"),
         ) {
-            summary
-                .attempts
-                .push(read_attempt(identity, payload, platform));
+            summary.attempts.push(read_attempt(identity, payload, platform));
             continue;
         }
 
@@ -268,29 +256,22 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
             object::<Labelled>(id, "testSummary"),
             object::<TestSummaryPayload>(&event, "testSummary"),
         ) {
-            summary.targets.insert(
-                identity.label.unwrap_or_default(),
-                payload.overall_status.unwrap_or_else(no_status),
-            );
+            summary
+                .targets
+                .insert(identity.label.unwrap_or_default(), payload.overall_status.unwrap_or_else(no_status));
             continue;
         }
 
         // proto3 omits a false bool, so failure is "not explicitly true", never `success == false`.
-        if let (Some(identity), Some(completed)) = (
-            object::<Labelled>(id, "targetCompleted"),
-            object::<Success>(&event, "completed"),
-        ) && !completed.success
+        if let (Some(identity), Some(completed)) = (object::<Labelled>(id, "targetCompleted"), object::<Success>(&event, "completed"))
+            && !completed.success
         {
-            summary
-                .failed_to_build
-                .push(identity.label.unwrap_or_default());
+            summary.failed_to_build.push(identity.label.unwrap_or_default());
             continue;
         }
 
         if let Some(aborted) = object::<Aborted>(&event, "aborted") {
-            summary
-                .aborted
-                .push(aborted.reason.unwrap_or_else(|| "UNKNOWN".to_owned()));
+            summary.aborted.push(aborted.reason.unwrap_or_else(|| "UNKNOWN".to_owned()));
             continue;
         }
 
@@ -323,11 +304,7 @@ fn no_status() -> String {
     "NO_STATUS".to_owned()
 }
 
-fn read_attempt(
-    identity: TestResultId,
-    payload: TestResultPayload,
-    platform: Platform,
-) -> BepAttempt {
+fn read_attempt(identity: TestResultId, payload: TestResultPayload, platform: Platform) -> BepAttempt {
     let outputs: Vec<Value> = match payload.test_action_output {
         Some(Value::Array(outputs)) => outputs,
         _ => Vec::new(),
@@ -351,9 +328,7 @@ fn read_attempt(
             cached_remotely: bool,
         }
         match &payload.execution_info {
-            Some(info @ Value::Object(_)) => {
-                ExecutionInfo::deserialize(info).is_ok_and(|info| info.cached_remotely)
-            }
+            Some(info @ Value::Object(_)) => ExecutionInfo::deserialize(info).is_ok_and(|info| info.cached_remotely),
             _ => false,
         }
     };

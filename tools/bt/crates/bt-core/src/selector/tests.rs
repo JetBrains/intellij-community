@@ -12,17 +12,11 @@ fn classify(raw: &str) -> Selector {
 #[test]
 fn classify_selector_reads_each_kind() {
     for (raw, kind) in [
-        (
-            "//plugins/air/shared/core:ai-agent-core-tests_test",
-            SelectorKind::Label,
-        ),
+        ("//plugins/air/shared/core:ai-agent-core-tests_test", SelectorKind::Label),
         ("//plugins/air/...", SelectorKind::Pattern),
         ("//plugins/air/shared/*:all", SelectorKind::Pattern),
         ("AgentThreadCliTest", SelectorKind::SimpleName),
-        (
-            "com.intellij.air.threads.AgentThreadCliTest",
-            SelectorKind::Fqn,
-        ),
+        ("com.intellij.air.threads.AgentThreadCliTest", SelectorKind::Fqn),
         ("com.intellij.air.threads", SelectorKind::Package),
         ("plugins/air/backend/vcs", SelectorKind::Dir),
         ("plugins/air/backend/vcs/...", SelectorKind::Dir),
@@ -48,9 +42,7 @@ fn a_method_is_split_off_a_simple_name() {
     );
     // Kotlin backticked test names carry spaces, and a selector has to be able to name one.
     assert_eq!(
-        classify("FooTest#resolves cwd from worktree")
-            .method
-            .as_deref(),
+        classify("FooTest#resolves cwd from worktree").method.as_deref(),
         Some("resolves cwd from worktree")
     );
 }
@@ -64,33 +56,14 @@ fn selector_method_split_preserves_names_and_label_precedence() {
             "FooTest",
             Some("keeps [a,b] (value)"),
         ),
-        (
-            "a.b.FooTest#checks_value",
-            SelectorKind::Fqn,
-            "a.b.FooTest",
-            Some("checks_value"),
-        ),
+        ("a.b.FooTest#checks_value", SelectorKind::Fqn, "a.b.FooTest", Some("checks_value")),
         ("FooTest", SelectorKind::SimpleName, "FooTest", None),
-        (
-            "//pkg:target#method",
-            SelectorKind::Label,
-            "//pkg:target#method",
-            None,
-        ),
-        (
-            "//pkg/*#method",
-            SelectorKind::Pattern,
-            "//pkg/*#method",
-            None,
-        ),
+        ("//pkg:target#method", SelectorKind::Label, "//pkg:target#method", None),
+        ("//pkg/*#method", SelectorKind::Pattern, "//pkg/*#method", None),
     ] {
         let selector = classify(raw);
         assert_eq!(
-            (
-                selector.kind,
-                selector.name.as_str(),
-                selector.method.as_deref()
-            ),
+            (selector.kind, selector.name.as_str(), selector.method.as_deref()),
             (kind, name, method),
             "{raw}"
         );
@@ -113,66 +86,41 @@ fn selector_method_split_rejects_empty_and_repeated_separators() {
 
 #[test]
 fn a_selector_that_cannot_carry_a_method_refuses_one() {
-    for raw in [
-        "com.intellij.air.threads#foo",
-        "plugins/air/backend/vcs#foo",
-    ] {
+    for raw in ["com.intellij.air.threads#foo", "plugins/air/backend/vcs#foo"] {
         let failure = refusal(Selector::classify(raw));
-        assert!(
-            failure.message.contains("cannot carry a #method"),
-            "{raw}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains("cannot carry a #method"), "{raw}: {}", failure.message);
     }
 }
 
 #[test]
 fn an_uninterpretable_selector_is_a_usage_refusal() {
-    assert_eq!(
-        refusal("not a selector".parse::<Selector>()).exit,
-        exit::USAGE
-    );
+    assert_eq!(refusal("not a selector".parse::<Selector>()).exit, exit::USAGE);
 }
 
 #[test]
 fn as_filter_or_package_routes_by_what_the_field_can_express() {
     let class = "com.intellij.air.threads.AgentThreadCliTest";
-    assert_eq!(
-        as_filter_or_package(Some(class)),
-        (Some(class.to_owned()), None)
-    );
+    assert_eq!(as_filter_or_package(Some(class)), (Some(class.to_owned()), None));
     let method = "com.intellij.air.threads.AgentThreadCliTest#resolvesCwd";
-    assert_eq!(
-        as_filter_or_package(Some(method)),
-        (Some(method.to_owned()), None)
-    );
+    assert_eq!(as_filter_or_package(Some(method)), (Some(method.to_owned()), None));
     // An all-lowercase dotted value cannot be a class, and `--test_filter` would match nothing, which reads as "the
     // filter matched no test class" rather than as a package run.
     let package = "com.intellij.air.threads";
-    assert_eq!(
-        as_filter_or_package(Some(package)),
-        (None, Some(package.to_owned()))
-    );
+    assert_eq!(as_filter_or_package(Some(package)), (None, Some(package.to_owned())));
     assert_eq!(as_filter_or_package(None), (None, None));
 }
 
 #[test]
 fn suggest_names_offers_only_near_names_closest_first() {
     let known = ["AgentThreadCliTest", "AgentThreadIdentityTest", "ZzzTest"];
-    assert_eq!(
-        suggest_names("AgentThreadCliTst", known, 3),
-        ["AgentThreadCliTest"]
-    );
+    assert_eq!(suggest_names("AgentThreadCliTst", known, 3), ["AgentThreadCliTest"]);
     // A name nothing resembles suggests nothing rather than the least-bad match.
     assert_eq!(
         suggest_names("CompletelyUnrelated", ["AgentThreadCliTest"], 3),
         Vec::<String>::new()
     );
     // The threshold is max(2, len/4), the comparison ignores case, and ties go by name.
-    assert_eq!(
-        suggest_names("abc", ["abd", "abe", "xyz", "ABC"], 3),
-        ["ABC", "abd", "abe"]
-    );
+    assert_eq!(suggest_names("abc", ["abd", "abe", "xyz", "ABC"], 3), ["ABC", "abd", "abe"]);
     assert_eq!(suggest_names("abc", ["abd", "abe"], 1), ["abd"]);
 }
 
@@ -199,8 +147,7 @@ fn a_unique_simple_name_resolves_to_label_plus_fqn() {
 
 #[test]
 fn a_method_is_appended_to_the_resolved_fqn() {
-    let resolution =
-        resolve_tree("AgentThreadIdentityTest#buildsAndParsesValidIdentity").expect("resolves");
+    let resolution = resolve_tree("AgentThreadIdentityTest#buildsAndParsesValidIdentity").expect("resolves");
     assert_eq!(
         resolution.filter.as_deref(),
         Some("com.intellij.air.shared.core.AgentThreadIdentityTest#buildsAndParsesValidIdentity")
@@ -216,20 +163,14 @@ fn an_ambiguous_simple_name_names_every_candidate() {
         "com.intellij.air.backend.vcs.context",
         "com.intellij.air.frontend.prompt.vcs.context",
     ] {
-        assert!(
-            failure.message.contains(expected),
-            "no {expected:?} in:\n{}",
-            failure.message
-        );
+        assert!(failure.message.contains(expected), "no {expected:?} in:\n{}", failure.message);
     }
 }
 
 #[test]
 fn the_fully_qualified_form_disambiguates_a_colliding_name() {
-    let resolution = resolve_tree(
-        "com.intellij.air.frontend.prompt.vcs.context.AgentPromptChangesTreeContextContributorTest",
-    )
-    .expect("resolves");
+    let resolution =
+        resolve_tree("com.intellij.air.frontend.prompt.vcs.context.AgentPromptChangesTreeContextContributorTest").expect("resolves");
     assert_eq!(
         resolution.labels,
         ["//plugins/air/frontend/prompt/vcs:air-frontend-prompt-vcs-tests_test"]
@@ -240,26 +181,17 @@ fn the_fully_qualified_form_disambiguates_a_colliding_name() {
 fn an_unknown_name_suggests_the_nearest_one() {
     let failure = refusal(resolve_tree("AgentThreadCliTst"));
     assert!(
-        failure
-            .message
-            .contains("No test class named AgentThreadCliTst"),
+        failure.message.contains("No test class named AgentThreadCliTst"),
         "{}",
         failure.message
     );
-    assert!(
-        failure.message.contains("did you mean  AgentThreadCliTest"),
-        "{}",
-        failure.message
-    );
+    assert!(failure.message.contains("did you mean  AgentThreadCliTest"), "{}", failure.message);
 }
 
 #[test]
 fn a_package_selector_resolves_through_the_declared_prefix() {
     let resolution = resolve_tree("com.intellij.air.shared.core").expect("resolves");
-    assert_eq!(
-        resolution.include_package.as_deref(),
-        Some("com.intellij.air.shared.core")
-    );
+    assert_eq!(resolution.include_package.as_deref(), Some("com.intellij.air.shared.core"));
     // A package goes through the JUnit5 filter, never `--test_filter`, which would match no class.
     assert_eq!(resolution.filter, None);
 }
@@ -267,11 +199,7 @@ fn a_package_selector_resolves_through_the_declared_prefix() {
 #[test]
 fn a_package_spanning_several_targets_asks_for_an_explicit_one() {
     let failure = refusal(resolve_tree("com.intellij.air"));
-    assert!(
-        failure.message.contains("spans 3 test targets"),
-        "{}",
-        failure.message
-    );
+    assert!(failure.message.contains("spans 3 test targets"), "{}", failure.message);
 }
 
 #[test]
@@ -283,11 +211,7 @@ fn a_label_and_a_pattern_bypass_resolution() {
             ..Resolution::default()
         })
     );
-    assert!(
-        resolve_tree("//plugins/air/...")
-            .expect("resolves")
-            .multi_target
-    );
+    assert!(resolve_tree("//plugins/air/...").expect("resolves").multi_target);
 }
 
 /// The point of the lazy inputs: a label names its target already, so paying ~250 ms to scan plugins/air first is
@@ -311,10 +235,7 @@ fn a_class_whose_filename_differs_is_still_found() {
         "package com.intellij.air.shared.core\n\ninternal class SecondaryTest {\n}\n",
     );
     let resolution = resolve_in(&fake, "SecondaryTest").expect("resolves");
-    assert_eq!(
-        resolution.filter.as_deref(),
-        Some("com.intellij.air.shared.core.SecondaryTest")
-    );
+    assert_eq!(resolution.filter.as_deref(), Some("com.intellij.air.shared.core.SecondaryTest"));
 }
 
 #[test]
@@ -328,11 +249,7 @@ fn a_directory_becomes_a_recursive_pattern() {
         absolute.as_str(),
     ] {
         let resolution = resolve_tree(raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
-        assert_eq!(
-            resolution.labels,
-            ["//plugins/air/shared/core/..."],
-            "{raw}"
-        );
+        assert_eq!(resolution.labels, ["//plugins/air/shared/core/..."], "{raw}");
         assert!(resolution.multi_target, "{raw}");
     }
 }
@@ -341,11 +258,7 @@ fn a_directory_becomes_a_recursive_pattern() {
 fn a_path_outside_the_repository_is_a_usage_refusal() {
     for raw in ["/elsewhere/plugins/air", "../other-repo/plugins"] {
         let failure = refusal(resolve_tree(raw));
-        assert!(
-            failure.message.contains("outside the repository"),
-            "{raw}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains("outside the repository"), "{raw}: {}", failure.message);
     }
 }
 
@@ -358,8 +271,7 @@ fn a_windows_directory_selector_is_resolved_against_the_repository_root() {
         FakeRuntime::on(
             Platform::Windows,
             r"C:\repo",
-            tree.iter()
-                .map(|(path, text)| (path.as_str(), text.as_str())),
+            tree.iter().map(|(path, text)| (path.as_str(), text.as_str())),
         )
     };
     for raw in [
@@ -370,13 +282,8 @@ fn a_windows_directory_selector_is_resolved_against_the_repository_root() {
         // Rooted but driveless: the repository's drive is the only one this wrapper has an opinion about.
         r"\repo\plugins\air\shared\core",
     ] {
-        let resolution =
-            resolve_in(&windows(), raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
-        assert_eq!(
-            resolution.labels,
-            ["//plugins/air/shared/core/..."],
-            "{raw}"
-        );
+        let resolution = resolve_in(&windows(), raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
+        assert_eq!(resolution.labels, ["//plugins/air/shared/core/..."], "{raw}");
     }
     for raw in [
         r"D:\repo\plugins\air",
@@ -385,11 +292,7 @@ fn a_windows_directory_selector_is_resolved_against_the_repository_root() {
         r"..\other-repo\plugins",
     ] {
         let failure = refusal(resolve_in(&windows(), raw));
-        assert!(
-            failure.message.contains("outside the repository"),
-            "{raw}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains("outside the repository"), "{raw}: {}", failure.message);
     }
 }
 
@@ -399,9 +302,7 @@ fn a_directory_that_does_not_exist_is_a_usage_refusal() {
     let failure = refusal(resolve_tree("plugins/air/does/not/exist"));
     assert_eq!(failure.exit, exit::USAGE);
     assert!(
-        failure
-            .message
-            .contains("No such directory: plugins/air/does/not/exist"),
+        failure.message.contains("No such directory: plugins/air/does/not/exist"),
         "{}",
         failure.message
     );
@@ -409,14 +310,8 @@ fn a_directory_that_does_not_exist_is_a_usage_refusal() {
 
 #[test]
 fn a_file_path_says_so_rather_than_claiming_the_directory_is_missing() {
-    let failure = refusal(resolve_tree(
-        "plugins/air/shared/core/testSrc/AgentThreadCliTest.kt",
-    ));
-    assert!(
-        failure.message.contains("Not a directory"),
-        "{}",
-        failure.message
-    );
+    let failure = refusal(resolve_tree("plugins/air/shared/core/testSrc/AgentThreadCliTest.kt"));
+    assert!(failure.message.contains("Not a directory"), "{}", failure.message);
 }
 
 #[test]
@@ -424,10 +319,7 @@ fn resolving_a_directory_never_scans_the_air_tree() {
     let fake = fake_air_tree();
     resolve_in(&fake, "plugins/air/shared/core").expect("resolves");
     // One listing to prove the directory exists; the .iml and index passes never ran.
-    assert_eq!(
-        fake.reads(),
-        [format!("readDir {REPO_ROOT}/plugins/air/shared/core")]
-    );
+    assert_eq!(fake.reads(), [format!("readDir {REPO_ROOT}/plugins/air/shared/core")]);
 }
 
 /// A flow id and a suite id are lower-case words joined by hyphens, and the hyphen is what keeps them apart from
@@ -451,11 +343,7 @@ fn a_flow_id_and_a_suite_id_are_their_own_kinds() {
         ("rename-session/", SelectorKind::Dir),
     ] {
         let selector = classify(raw);
-        assert_eq!(
-            (selector.kind, selector.name.as_str()),
-            (want, raw),
-            "{raw}"
-        );
+        assert_eq!((selector.kind, selector.name.as_str()), (want, raw), "{raw}");
         assert_eq!(
             selector.kind.names_suites(),
             matches!(want, SelectorKind::Flow | SelectorKind::Suite),
@@ -469,14 +357,8 @@ fn a_flow_id_and_a_suite_id_are_their_own_kinds() {
 #[test]
 fn a_malformed_flow_or_suite_id_is_refused() {
     for (raw, fragment) in [
-        (
-            "flow-rename-session#renames",
-            "A flow selector cannot carry a #method",
-        ),
-        (
-            "rename-session#renames",
-            "A suite selector cannot carry a #method",
-        ),
+        ("flow-rename-session#renames", "A flow selector cannot carry a #method"),
+        ("rename-session#renames", "A suite selector cannot carry a #method"),
         ("Rename-Session", "Cannot interpret selector"),
         ("flow-", "Cannot interpret selector"),
         ("rename--session", "Cannot interpret selector"),
@@ -484,11 +366,7 @@ fn a_malformed_flow_or_suite_id_is_refused() {
     ] {
         let failure = refusal(Selector::classify(raw));
         assert_eq!(failure.exit, exit::USAGE, "{raw}");
-        assert!(
-            failure.message.contains(fragment),
-            "{raw}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains(fragment), "{raw}: {}", failure.message);
     }
 }
 
@@ -505,11 +383,7 @@ fn a_name_selector_without_an_area_names_itself() {
         ));
         assert_eq!(failure.exit, exit::USAGE, "{raw}");
         assert!(failure.message.contains(raw), "{}", failure.message);
-        assert!(
-            failure.message.contains("names no area"),
-            "{}",
-            failure.message
-        );
+        assert!(failure.message.contains("names no area"), "{}", failure.message);
     }
     assert!(fake.reads().is_empty(), "{:?}", fake.reads());
 }

@@ -34,12 +34,7 @@ pub(crate) const PROGRAM: &str = "./community/tools/bt.cmd";
 /// cannot be given, and `main.rs` is where those are read. An absent or empty one is a refusal, not a search: every
 /// selector, `.iml` and `BUILD.bazel` resolves relative to the checkout root, and guessing it from the working
 /// directory would answer "no such test" for a whole tree that is there.
-pub(crate) fn run<I, T>(
-    argv: I,
-    repo_root: Option<&Path>,
-    stdout: &mut dyn Write,
-    stderr: &mut dyn Write,
-) -> u8
+pub(crate) fn run<I, T>(argv: I, repo_root: Option<&Path>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
@@ -75,11 +70,7 @@ where
 /// Writes one invocation's answer and answers the exit status.
 ///
 /// A refusal is its message line on stderr and leaves by the refusal's own exit status.
-pub(crate) fn report(
-    answer: Result<Outcome, Refusal>,
-    stdout: &mut dyn Write,
-    stderr: &mut dyn Write,
-) -> u8 {
+pub(crate) fn report(answer: Result<Outcome, Refusal>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8 {
     let outcome = match answer {
         Ok(outcome) => outcome,
         Err(refusal) => {
@@ -91,8 +82,7 @@ pub(crate) fn report(
         Some(payload) => {
             // An unencodable payload is a bug in this tool rather than a caller's problem, and the text says so where
             // a caller will see it: on stdout, in place of the payload it was waiting for.
-            let encoded = serde_json::to_string(payload)
-                .unwrap_or_else(|error| format!("unencodable: {error}"));
+            let encoded = serde_json::to_string(payload).unwrap_or_else(|error| format!("unencodable: {error}"));
             write_line(stdout, &encoded);
             // An empty digest writes nothing, rather than a blank line a caller reading stderr would have to ignore.
             if !outcome.text.is_empty() {

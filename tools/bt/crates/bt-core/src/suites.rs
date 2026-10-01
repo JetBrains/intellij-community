@@ -107,8 +107,7 @@ pub struct Affected {
 impl Affected {
     /// The answer as JSON text in field order, for a caller that links another build of `serde`.
     pub fn to_json_text(&self) -> String {
-        serde_json::to_string(self)
-            .unwrap_or_else(|error| json!({"unencodable": error.to_string()}).to_string())
+        serde_json::to_string(self).unwrap_or_else(|error| json!({"unencodable": error.to_string()}).to_string())
     }
 }
 
@@ -123,12 +122,7 @@ pub fn note_via(via: &mut Via, suite: usize, reason: String) {
 ///
 /// The one place an answer is assembled. The changed-path join and [`named_suites`] both end here, so a suite a
 /// path reaches and a suite a flow names are the same entry, sorted the same way.
-pub fn affected_answer(
-    area: &Area,
-    documents: &[SuiteDocument],
-    via: &Via,
-    unmapped: Vec<UnmappedPath>,
-) -> Result<Affected, Refusal> {
+pub fn affected_answer(area: &Area, documents: &[SuiteDocument], via: &Via, unmapped: Vec<UnmappedPath>) -> Result<Affected, Refusal> {
     let lanes = area.lanes();
     let mut suites = Vec::with_capacity(via.len());
     let mut lane_names = BTreeSet::new();
@@ -181,10 +175,7 @@ pub fn suites_by_flow(documents: &[SuiteDocument]) -> BTreeMap<String, Vec<usize
             .iter()
             .flat_map(|profile| profile.scenario_flows().flows())
             .collect();
-        for flow in walked
-            .into_iter()
-            .chain(document.implementation_flows.iter().cloned())
-        {
+        for flow in walked.into_iter().chain(document.implementation_flows.iter().cloned()) {
             by_flow.entry(flow).or_default().push(index);
         }
     }
@@ -230,23 +221,11 @@ pub fn affected_text(affected: &Affected) -> String {
     let mut lines: Vec<String> = affected
         .suites
         .iter()
-        .map(|suite| {
-            format!(
-                "{} {} ({}) via {}",
-                suite.lane,
-                suite.class,
-                suite.suite,
-                suite.via.join(" ")
-            )
-        })
+        .map(|suite| format!("{} {} ({}) via {}", suite.lane, suite.class, suite.suite, suite.via.join(" ")))
         .collect();
     if affected.unmapped.len() <= UNMAPPED_LINES_PER_REASON {
         for unmapped in &affected.unmapped {
-            lines.push(format!(
-                "unmapped {}: {}",
-                unmapped.path,
-                unmapped_reason_text(unmapped)
-            ));
+            lines.push(format!("unmapped {}: {}", unmapped.path, unmapped_reason_text(unmapped)));
         }
     } else {
         let mut by_reason: Vec<(String, Vec<&UnmappedPath>)> = Vec::new();
@@ -261,11 +240,7 @@ pub fn affected_text(affected: &Affected) -> String {
             if let [only] = held.as_slice() {
                 lines.push(format!("unmapped {}: {reason}", only.path));
             } else {
-                lines.push(format!(
-                    "unmapped {} paths: {reason}, the first {}",
-                    held.len(),
-                    held[0].path
-                ));
+                lines.push(format!("unmapped {} paths: {reason}, the first {}", held.len(), held[0].path));
             }
         }
     }
@@ -320,11 +295,7 @@ impl ScenarioFlows {
 /// of an [`Affected`] reads this answer unchanged. It never answers an empty selection: an unknown id is a usage
 /// refusal that names the nearest known ids, and a story flow no suite covers is `no_affected_suite` with
 /// [`REASON_NO_SUITE_TESTS_FLOW`].
-pub fn named_suites(
-    runtime: &dyn Runtime,
-    area: &Area,
-    selector: &Selector,
-) -> Result<Affected, Refusal> {
+pub fn named_suites(runtime: &dyn Runtime, area: &Area, selector: &Selector) -> Result<Affected, Refusal> {
     if !selector.kind.names_suites() {
         return Err(fail_usage(format!(
             "{} is a {} selector, which names no generated suite",
@@ -434,12 +405,7 @@ fn committed_story_flows(runtime: &dyn Runtime, catalog: &Catalog<'_>) -> Vec<St
 /// `requested_lane` is the caller's `--lane`. It is required only to settle an answer that spans two lanes. Naming
 /// a lane the answer does not reach is refused rather than run as an empty selection. `subject` is a plural noun
 /// phrase for what was asked, as [`CHANGED_PATHS_SUBJECT`] or [`describe_named`] spell it.
-pub fn choose_lane(
-    area: &Area,
-    affected: &Affected,
-    requested_lane: Option<&str>,
-    subject: &str,
-) -> Result<String, Refusal> {
+pub fn choose_lane(area: &Area, affected: &Affected, requested_lane: Option<&str>, subject: &str) -> Result<String, Refusal> {
     if let Some(requested) = requested_lane {
         if affected.lanes.iter().any(|lane| lane == requested) {
             return Ok(requested.to_owned());
@@ -450,10 +416,7 @@ pub fn choose_lane(
         return Err(Refusal::new(
             "no_affected_suite",
             exit::USAGE,
-            format!(
-                "no {requested} suite covers {subject}; they reach {}",
-                affected.lanes.join(", ")
-            ),
+            format!("no {requested} suite covers {subject}; they reach {}", affected.lanes.join(", ")),
         )
         .with_details(json!({"affected": affected})));
     }
@@ -503,10 +466,7 @@ fn no_affected_suite(affected: &Affected, subject: &str) -> Refusal {
         .map(|unmapped| format!("{} ({})", unmapped.path, unmapped.reason))
         .collect();
     if affected.unmapped.len() > UNMAPPED_LINES_PER_REASON {
-        reasons.push(format!(
-            "and {} more",
-            affected.unmapped.len() - UNMAPPED_LINES_PER_REASON
-        ));
+        reasons.push(format!("and {} more", affected.unmapped.len() - UNMAPPED_LINES_PER_REASON));
     }
     if reasons.is_empty() {
         reasons.push(subject.to_owned());
@@ -533,8 +493,7 @@ pub struct LaneCount {
 impl LaneCount {
     /// The count as JSON text in field order, for a caller that links another build of `serde`.
     pub fn to_json_text(&self) -> String {
-        serde_json::to_string(self)
-            .unwrap_or_else(|error| json!({"unencodable": error.to_string()}).to_string())
+        serde_json::to_string(self).unwrap_or_else(|error| json!({"unencodable": error.to_string()}).to_string())
     }
 }
 
@@ -619,11 +578,7 @@ pub fn resolve_suite_run(
     Ok(Resolution {
         labels: spec.targets.clone(),
         junit5_filters,
-        suites: affected
-            .suites
-            .into_iter()
-            .filter(|suite| suite.lane == lane)
-            .collect(),
+        suites: affected.suites.into_iter().filter(|suite| suite.lane == lane).collect(),
         multi_target: spec.is_multi_target(),
         lane: Some(lane),
         ..Resolution::default()

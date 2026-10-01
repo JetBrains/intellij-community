@@ -6,10 +6,7 @@ use std::path::Path;
 use super::*;
 use bt_core::bep::parse_bep;
 use bt_core::exit;
-use bt_core::fake::{
-    AttemptSpec, FakeRuntime, attempt, bep_lines, case, suite, suite_xml, test_result_event,
-    wrapper_xml,
-};
+use bt_core::fake::{AttemptSpec, FakeRuntime, attempt, bep_lines, case, suite, suite_xml, test_result_event, wrapper_xml};
 use bt_core::result::{FlakyRun, collect_results};
 use bt_core::runtime::Runtime;
 
@@ -20,13 +17,7 @@ fn clamp_lines_preserves_clipping_and_omitted_counts() {
         ("empty", "", 1, 100, &[""]),
         ("zero lines", "", 0, 100, &["…(1 more lines)"]),
         ("omit all", "first\nsecond\n", 0, 100, &["…(3 more lines)"]),
-        (
-            "trailing newline",
-            "first\n",
-            1,
-            100,
-            &["first", "…(1 more lines)"],
-        ),
+        ("trailing newline", "first\n", 1, 100, &["first", "…(1 more lines)"]),
         ("keep trailing newline", "first\n", 2, 100, &["first", ""]),
         (
             "carriage returns",
@@ -35,29 +26,11 @@ fn clamp_lines_preserves_clipping_and_omitted_counts() {
             100,
             &["first\r", "second\r", "…(1 more lines)"],
         ),
-        (
-            "long body",
-            &long_body,
-            1,
-            100_000,
-            &["line", "…(10000 more lines)"],
-        ),
+        ("long body", &long_body, 1, 100_000, &["line", "…(10000 more lines)"]),
         ("unicode clip", "α🙂\nβγ\nlast", 3, 4, &["α🙂", "β…"]),
-        (
-            "line and character clip",
-            "α🙂\nβγ\nlast",
-            1,
-            4,
-            &["α🙂", "…(1 more lines)"],
-        ),
+        ("line and character clip", "α🙂\nβγ\nlast", 1, 4, &["α🙂", "…(1 more lines)"]),
         ("zero characters", "text", 1, 0, &["…"]),
-        (
-            "maximum line limit",
-            "first\nsecond",
-            usize::MAX,
-            100,
-            &["first", "second"],
-        ),
+        ("maximum line limit", "first\nsecond", usize::MAX, 100, &["first", "second"]),
     ];
     for (name, value, max_lines, max_chars, want) in cases {
         assert_eq!(clamp_lines(value, max_lines, max_chars), want, "{name}");
@@ -83,8 +56,7 @@ fn trim_frames_keeps_the_first_frame_and_the_air_frames() {
         TrimmedStack {
             frames: vec![
                 "at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:38)".to_owned(),
-                "at com.intellij.air.threads.AgentThreadCliTest.resolves(AgentThreadCliTest.kt:88)"
-                    .to_owned(),
+                "at com.intellij.air.threads.AgentThreadCliTest.resolves(AgentThreadCliTest.kt:88)".to_owned(),
             ],
             omitted: 3,
         }
@@ -102,10 +74,7 @@ fn trim_frames_caps_the_kept_frames_and_reports_the_remainder() {
 
 #[test]
 fn trim_frames_returns_nothing_when_there_is_no_stack() {
-    assert_eq!(
-        trim_frames("just a message", DEFAULT_MAX_FRAMES),
-        TrimmedStack::default()
-    );
+    assert_eq!(trim_frames("just a message", DEFAULT_MAX_FRAMES), TrimmedStack::default());
 }
 
 #[test]
@@ -151,11 +120,7 @@ fn trim_frames_keeps_counts_across_line_endings() {
         }
     }
     for detail in ["", "\n", "\r\n\r\n"] {
-        assert_eq!(
-            trim_frames(detail, DEFAULT_MAX_FRAMES),
-            TrimmedStack::default(),
-            "{detail:?}"
-        );
+        assert_eq!(trim_frames(detail, DEFAULT_MAX_FRAMES), TrimmedStack::default(), "{detail:?}");
     }
 }
 
@@ -194,17 +159,14 @@ fn relativize_testlogs_names_the_checkouts_symlink() {
     // A Windows execroot, whose separators the marker has to see through. Left alone, the digest names a path under
     // bazel's output base instead of one in the checkout.
     assert_eq!(
-        relativize_testlogs(
-            r"C:\exec\bazel-out\x64_windows-fastbuild\testlogs\plugins\air\acp\acp-tests_test\test.log"
-        ),
+        relativize_testlogs(r"C:\exec\bazel-out\x64_windows-fastbuild\testlogs\plugins\air\acp\acp-tests_test\test.log"),
         "out/bazel-testlogs/plugins/air/acp/acp-tests_test/test.log"
     );
 }
 
 // --- the digest --------------------------------------------------------------------------------------------------
 
-const DIGEST_LABEL: &str =
-    "//plugins/air/backend/session/runtime:air-backend-session-runtime-tests_test";
+const DIGEST_LABEL: &str = "//plugins/air/backend/session/runtime:air-backend-session-runtime-tests_test";
 
 fn digest_target(apply: impl FnOnce(&mut TargetResult)) -> TargetResult {
     let mut target = TargetResult {
@@ -251,8 +213,7 @@ fn digest_failure(apply: impl FnOnce(&mut TestCase)) -> TestCase {
             kind: FailureKind::Failure,
             r#type: Some("org.opentest4j.AssertionFailedError".to_owned()),
             message: Some(r#"expected: <"/repo/wt"> but was: <"/repo">"#.to_owned()),
-            detail: "\tat com.intellij.air.threads.AgentThreadCliTest.resolvesWorktreeCwd(AgentThreadCliTest.kt:88)"
-                .to_owned(),
+            detail: "\tat com.intellij.air.threads.AgentThreadCliTest.resolvesWorktreeCwd(AgentThreadCliTest.kt:88)".to_owned(),
         }),
         time_seconds: 0.1,
     };
@@ -298,14 +259,8 @@ fn a_green_multi_target_run_summarises_counts() {
 /// A cache hit still reports the duration of the run it was cached from, which was not paid here.
 #[test]
 fn the_cost_line_ignores_cache_hits_when_naming_the_slowest_target() {
-    let cost = render_cost(&[
-        target("//p:slow-but-cached", 6, true, 500_000),
-        target("//p:ran", 6, false, 9_000),
-    ]);
-    assert_eq!(
-        cost.as_deref(),
-        Some("cost   1 ran · 1 cached · slowest ran 9.0s")
-    );
+    let cost = render_cost(&[target("//p:slow-but-cached", 6, true, 500_000), target("//p:ran", 6, false, 9_000)]);
+    assert_eq!(cost.as_deref(), Some("cost   1 ran · 1 cached · slowest ran 9.0s"));
 }
 
 #[test]
@@ -326,10 +281,7 @@ fn a_red_multi_target_run_reports_its_cost_too() {
         ];
         result.failures = vec![digest_failure(|_| {})];
     }));
-    assert!(
-        text.contains("cost   1 ran · 1 cached · slowest a 4.0s"),
-        "{text}"
-    );
+    assert!(text.contains("cost   1 ran · 1 cached · slowest a 4.0s"), "{text}");
 }
 
 #[test]
@@ -340,17 +292,12 @@ fn a_single_target_run_has_no_cost_line() {
 /// Targets that failed to build never reached a test JVM, so "63 ran" would be a lie.
 #[test]
 fn targets_that_never_ran_are_left_out_of_the_cost_line() {
-    let not_built: Vec<TargetResult> = (0..3)
-        .map(|index| target(&format!("//p:x{index}"), 0, false, 0))
-        .collect();
+    let not_built: Vec<TargetResult> = (0..3).map(|index| target(&format!("//p:x{index}"), 0, false, 0)).collect();
     assert_eq!(render_cost(&not_built), None);
     let mut mixed = not_built;
     mixed.push(target("//p:a", 6, false, 1_000));
     mixed.push(target("//p:b", 6, true, 0));
-    assert_eq!(
-        render_cost(&mixed).as_deref(),
-        Some("cost   1 ran · 1 cached · slowest a 1.0s")
-    );
+    assert_eq!(render_cost(&mixed).as_deref(), Some("cost   1 ran · 1 cached · slowest a 1.0s"));
 }
 
 #[test]
@@ -359,18 +306,12 @@ fn cost_line_preserves_target_selection() {
         ("empty run", vec![], None),
         (
             "only one target executed",
-            vec![
-                target("//p:not-built", 0, false, 0),
-                target("//p:ran", 1, false, 1_000),
-            ],
+            vec![target("//p:not-built", 0, false, 0), target("//p:ran", 1, false, 1_000)],
             None,
         ),
         (
             "all targets cached",
-            vec![
-                target("//p:first", 1, true, 1_000),
-                target("//p:second", 2, true, 9_000),
-            ],
+            vec![target("//p:first", 1, true, 1_000), target("//p:second", 2, true, 9_000)],
             Some("cost   0 ran · 2 cached"),
         ),
         (
@@ -384,10 +325,7 @@ fn cost_line_preserves_target_selection() {
         ),
         (
             "zero durations omit the slowest target",
-            vec![
-                target("//p:first", 1, false, 0),
-                target("//p:second", 1, false, 0),
-            ],
+            vec![target("//p:first", 1, false, 0), target("//p:second", 1, false, 0)],
             Some("cost   2 ran · 0 cached"),
         ),
     ];
@@ -439,8 +377,7 @@ fn a_single_failure_renders_id_type_message_and_trimmed_frames() {
         String::new(),
         "1) AgentThreadCliTest#resolvesWorktreeCwd".to_owned(),
         r#"   org.opentest4j.AssertionFailedError: expected: <"/repo/wt"> but was: <"/repo">"#.to_owned(),
-        "   at com.intellij.air.threads.AgentThreadCliTest.resolvesWorktreeCwd(AgentThreadCliTest.kt:88)"
-            .to_owned(),
+        "   at com.intellij.air.threads.AgentThreadCliTest.resolvesWorktreeCwd(AgentThreadCliTest.kt:88)".to_owned(),
         String::new(),
         "log    out/bazel-testlogs/plugins/air/x/test.log".to_owned(),
         format!("rerun  {hint}"),
@@ -469,10 +406,7 @@ fn failures_past_the_cap_collapse_to_one_liners() {
         .lines()
         .filter(|line| line.starts_with("1) ") || line.starts_with("2) "))
         .count();
-    let collapsed = text
-        .lines()
-        .filter(|line| line.starts_with("+ AgentThreadCliTest#case"))
-        .count();
+    let collapsed = text.lines().filter(|line| line.starts_with("+ AgentThreadCliTest#case")).count();
     assert_eq!((rendered, collapsed), (2, 3), "{text}");
 }
 
@@ -481,10 +415,7 @@ fn a_build_failure_lists_diagnostics_and_no_test_counts() {
     let text = render(&digest_result(|result| {
         result.status = RunStatus::BuildFailed;
         result.targets = vec![digest_target(|target| target.tests = 0)];
-        result.build_errors = vec![
-            "plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: resolveCwdd"
-                .to_owned(),
-        ];
+        result.build_errors = vec!["plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: resolveCwdd".to_owned()];
     }));
     assert!(text.contains("BUILD FAILED  0 tests ran"), "{text}");
     assert!(
@@ -509,10 +440,7 @@ fn no_tests(apply: impl FnOnce(&mut TargetResult), options: &RenderOptions) -> S
 /// The NO_TESTS causes look identical from the outside and need different fixes, so the digest names one.
 #[test]
 fn each_no_tests_cause_explains_itself() {
-    let filtered = no_tests(
-        |target| target.wrapper_exit_code = Some(42),
-        &RenderOptions::default(),
-    );
+    let filtered = no_tests(|target| target.wrapper_exit_code = Some(42), &RenderOptions::default());
     assert!(filtered.contains("NO TESTS  0 executed"), "{filtered}");
     assert!(
         filtered.contains("the test filter matched no test class (runner exit 42)"),
@@ -526,10 +454,7 @@ fn each_no_tests_cause_explains_itself() {
         },
         &RenderOptions::default(),
     );
-    assert!(
-        skipped.contains("NO TESTS  0 executed, 6 skipped"),
-        "{skipped}"
-    );
+    assert!(skipped.contains("NO TESTS  0 executed, 6 skipped"), "{skipped}");
     assert!(skipped.contains("assumeTrue"), "{skipped}");
 
     let nothing = render(&digest_result(|result| {
@@ -547,10 +472,7 @@ fn a_method_filtered_no_tests_run_blames_the_method_filter() {
         ..RenderOptions::default()
     };
     let named = no_tests(|_| {}, &method_filtered);
-    assert!(
-        named.contains("cause     the #method filter matched no method"),
-        "{named}"
-    );
+    assert!(named.contains("cause     the #method filter matched no method"), "{named}");
     assert!(named.contains("rerun the class alone"), "{named}");
     // It replaces only the cause the digest could not name; a run that narrowed to no method keeps that one.
     assert!(!no_tests(|_| {}, &RenderOptions::default()).contains("#method filter"));
@@ -568,11 +490,7 @@ fn a_method_filtered_no_tests_run_blames_the_method_filter() {
 fn rerun_selector_keeps_a_method_only_when_the_method_is_selectable() {
     for (class_name, name, want) in [
         // An ordinary method, and a Kotlin backticked one, both round-trip whole.
-        (
-            "com.intellij.air.x.FooTest",
-            "resolvesCwd",
-            "FooTest#resolvesCwd",
-        ),
+        ("com.intellij.air.x.FooTest", "resolvesCwd", "FooTest#resolvesCwd"),
         (
             "com.intellij.air.x.FooTest",
             "the client's token is not logged",
@@ -580,22 +498,14 @@ fn rerun_selector_keeps_a_method_only_when_the_method_is_selectable() {
         ),
         // A dynamic test's display name, and a test-template child's parent-prefixed one.
         ("com.intellij.air.x.FooTest", "[1] value=x", "FooTest"),
-        (
-            "com.intellij.air.x.FooTest",
-            "renders.[1] value=x",
-            "FooTest",
-        ),
+        ("com.intellij.air.x.FooTest", "renders.[1] value=x", "FooTest"),
         // Each JVM-forbidden character on its own.
         ("com.intellij.air.x.FooTest", "a.b", "FooTest"),
         ("com.intellij.air.x.FooTest", "a;b", "FooTest"),
         ("com.intellij.air.x.FooTest", "a/b", "FooTest"),
         ("com.intellij.air.x.FooTest", "<init>", "FooTest"),
         // A `@Nested` class reaches test.xml as `Outer$Nested`, and the outer class runs the nested one.
-        (
-            "com.intellij.air.x.FooTest$Inner",
-            "resolvesCwd",
-            "FooTest#resolvesCwd",
-        ),
+        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd", "FooTest#resolvesCwd"),
         // A suite that named no class leaves the name as the only thing there is to print.
         ("", "orphan", "orphan"),
     ] {
@@ -673,10 +583,7 @@ fn tail_lines_keeps_only_the_end() {
 #[test]
 fn one_line_collapses_and_truncates() {
     assert_eq!(one_line("  a\n\tb   c  ", 120), "a b c");
-    assert_eq!(
-        one_line(&"x".repeat(200), 10),
-        format!("{}…", "x".repeat(9))
-    );
+    assert_eq!(one_line(&"x".repeat(200), 10), format!("{}…", "x".repeat(9)));
 }
 
 // --- digests of collected runs ----------------------------------------------------------------------------------
@@ -700,11 +607,7 @@ fn collected(xml: &str, status: &'static str, bazel_exit: i32) -> RunResult {
 /// A cache hit still has a test.xml, and the digest names the target as cached.
 #[test]
 fn a_cached_replay_is_named_cached() {
-    let result = collected(
-        &suite_xml(&suite("FooTest", vec![case("a"), case("b")])),
-        "PASSED",
-        0,
-    );
+    let result = collected(&suite_xml(&suite("FooTest", vec![case("a"), case("b")])), "PASSED", 0);
     let digest = render_digest(&result, &RenderOptions::default());
     assert!(digest.contains("(cached)"), "{digest}");
 }
@@ -723,10 +626,7 @@ fn the_synthesized_wrapper_suite_leaks_no_log_into_the_digest() {
     );
     assert_eq!(result.exit_code, exit::NO_TESTS);
     let digest = render_digest(&result, &RenderOptions::default());
-    assert!(
-        !digest.contains("noise"),
-        "the captured log leaked into the digest:\n{digest}"
-    );
+    assert!(!digest.contains("noise"), "the captured log leaked into the digest:\n{digest}");
 }
 
 /// Only the wrapper code 42 earns the "the test filter matched no test class" cause; the rest fall to the

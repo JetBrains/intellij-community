@@ -50,10 +50,7 @@ pub(crate) fn trim_frames(detail: &str, max_frames: usize) -> TrimmedStack {
             continue;
         };
         total += 1;
-        let interesting = total == 1
-            || !NOISE_FRAME_PREFIXES
-                .iter()
-                .any(|prefix| target.starts_with(prefix));
+        let interesting = total == 1 || !NOISE_FRAME_PREFIXES.iter().any(|prefix| target.starts_with(prefix));
         if interesting && kept.len() < max_frames {
             kept.push(frame.to_owned());
         }
@@ -85,9 +82,7 @@ pub(crate) fn clamp_lines(value: &str, max_lines: usize, max_chars: usize) -> Ve
     } else {
         value.to_owned()
     };
-    let mut lines: Vec<&str> = truncated
-        .splitn(max_lines.saturating_add(1), '\n')
-        .collect();
+    let mut lines: Vec<&str> = truncated.splitn(max_lines.saturating_add(1), '\n').collect();
     if lines.len() <= max_lines {
         return lines.into_iter().map(str::to_owned).collect();
     }
@@ -98,21 +93,15 @@ pub(crate) fn clamp_lines(value: &str, max_lines: usize, max_chars: usize) -> Ve
 }
 
 pub(crate) fn failure_type(case: &TestCase) -> Option<&str> {
-    case.failure
-        .as_ref()
-        .and_then(|failure| failure.r#type.as_deref())
+    case.failure.as_ref().and_then(|failure| failure.r#type.as_deref())
 }
 
 pub(crate) fn failure_message(case: &TestCase) -> Option<&str> {
-    case.failure
-        .as_ref()
-        .and_then(|failure| failure.message.as_deref())
+    case.failure.as_ref().and_then(|failure| failure.message.as_deref())
 }
 
 pub(crate) fn failure_detail(case: &TestCase) -> &str {
-    case.failure
-        .as_ref()
-        .map_or("", |failure| failure.detail.as_str())
+    case.failure.as_ref().map_or("", |failure| failure.detail.as_str())
 }
 
 /// How the digest names one failure: `SimpleClass#name`, exactly as test.xml carries it.
@@ -164,9 +153,7 @@ pub(crate) fn rerun_selector(case: &TestCase) -> String {
 /// A `@Nested` class reaches test.xml as `Outer$Nested`, which the selector parser refuses. `Outer` is a selector
 /// it accepts, and it runs the nested class too, because the runner's class filter matches a prefix.
 fn rerun_class_name(class_name: &str) -> &str {
-    let simple = class_name
-        .rsplit_once('.')
-        .map_or(class_name, |(_, simple)| simple);
+    let simple = class_name.rsplit_once('.').map_or(class_name, |(_, simple)| simple);
     simple.split_once('$').map_or(simple, |(outer, _)| outer)
 }
 
@@ -178,11 +165,7 @@ pub(crate) fn render_failure(position: usize, case: &TestCase) -> Vec<String> {
         Some(kind) if !kind.is_empty() => format!("{kind}: {message}"),
         _ => message.to_owned(),
     };
-    out.extend(
-        clamp_lines(&headline, 12, 500)
-            .into_iter()
-            .map(|line| format!("   {line}")),
-    );
+    out.extend(clamp_lines(&headline, 12, 500).into_iter().map(|line| format!("   {line}")));
     let stack = trim_frames(failure_detail(case), DEFAULT_MAX_FRAMES);
     out.extend(stack.frames.iter().map(|frame| format!("   {frame}")));
     if stack.omitted > 0 {
@@ -253,23 +236,13 @@ pub(crate) fn render_cost(targets: &[TargetResult]) -> Option<String> {
     if executed.len() <= 1 {
         return None;
     }
-    let ran: Vec<&TargetResult> = executed
-        .iter()
-        .copied()
-        .filter(|target| !target.cached)
-        .collect();
+    let ran: Vec<&TargetResult> = executed.iter().copied().filter(|target| !target.cached).collect();
     // The first of equally slow targets, which `max_by_key` would not answer.
-    let slowest =
-        ran.iter()
-            .copied()
-            .fold(None::<&TargetResult>, |slowest, target| match slowest {
-                Some(slowest) if slowest.duration_ms >= target.duration_ms => Some(slowest),
-                _ => Some(target),
-            });
-    let mut parts = vec![
-        format!("{} ran", ran.len()),
-        format!("{} cached", executed.len() - ran.len()),
-    ];
+    let slowest = ran.iter().copied().fold(None::<&TargetResult>, |slowest, target| match slowest {
+        Some(slowest) if slowest.duration_ms >= target.duration_ms => Some(slowest),
+        _ => Some(target),
+    });
+    let mut parts = vec![format!("{} ran", ran.len()), format!("{} cached", executed.len() - ran.len())];
     if let Some(slowest) = slowest.filter(|slowest| slowest.duration_ms > 0) {
         parts.push(format!(
             "slowest {} {}",
@@ -322,10 +295,7 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             } else {
                 format!("  ({})", notes.join(", "))
             };
-            out.push(format!(
-                "PASS  {}{scope}  {duration}{suffix}{single}",
-                plural(sum.tests, "test")
-            ));
+            out.push(format!("PASS  {}{scope}  {duration}{suffix}{single}", plural(sum.tests, "test")));
             for flaky in &result.flaky {
                 out.push(format!(
                     "flaky  {}  passed on attempt {} of {}",
@@ -354,10 +324,7 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
                 ));
             }
             if rest.len() > MAX_FAILURE_ONE_LINERS {
-                out.push(format!(
-                    "+ {} more (see log)",
-                    rest.len() - MAX_FAILURE_ONE_LINERS
-                ));
+                out.push(format!("+ {} more (see log)", rest.len() - MAX_FAILURE_ONE_LINERS));
             }
         }
         RunStatus::BuildFailed => {
@@ -393,9 +360,7 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             );
         }
         RunStatus::Infra => {
-            out.push(format!(
-                "INFRA  the bazel run did not produce usable results{single}"
-            ));
+            out.push(format!("INFRA  the bazel run did not produce usable results{single}"));
         }
     }
 
@@ -415,10 +380,7 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
     } else {
         blamed
     };
-    let logs: Vec<&str> = source
-        .iter()
-        .filter_map(|target| target.log_path.as_deref())
-        .collect();
+    let logs: Vec<&str> = source.iter().filter_map(|target| target.log_path.as_deref()).collect();
     if let Some(first) = logs.first()
         && result.status != RunStatus::Pass
     {

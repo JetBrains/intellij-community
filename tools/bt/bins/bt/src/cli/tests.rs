@@ -83,14 +83,9 @@ fn the_json_payload_goes_to_stdout_and_the_digest_to_stderr() {
         json: Some(payload()),
     }));
     assert_eq!(answer.exit_code, exit::TEST_FAILED);
-    assert!(
-        answer.stdout.starts_with(r#"{"status":"FAIL""#),
-        "{}",
-        answer.stdout
-    );
+    assert!(answer.stdout.starts_with(r#"{"status":"FAIL""#), "{}", answer.stdout);
     assert_eq!(answer.stdout.matches('\n').count(), 1, "{}", answer.stdout);
-    let decoded: serde_json::Value =
-        serde_json::from_str(&answer.stdout).expect("stdout is one JSON object");
+    let decoded: serde_json::Value = serde_json::from_str(&answer.stdout).expect("stdout is one JSON object");
     assert_eq!(decoded["failures"][0]["name"], "resolvesWorktreeCwd");
     assert_eq!(answer.stderr, "1 failed\n");
 }
@@ -131,11 +126,7 @@ fn a_refusal_is_a_message_line_and_not_the_controller_envelope() {
     assert_eq!(answer.exit_code, exit::USAGE);
     assert_eq!(answer.stdout, "");
     assert_eq!(answer.stderr, "Unknown option: --nonsense\n");
-    assert!(
-        !answer.stderr.contains("schemaVersion"),
-        "{}",
-        answer.stderr
-    );
+    assert!(!answer.stderr.contains("schemaVersion"), "{}", answer.stderr);
     assert!(!answer.stderr.contains(r#""ok""#), "{}", answer.stderr);
 }
 
@@ -149,11 +140,7 @@ fn a_missing_checkout_root_is_refused_and_names_the_wrapper() {
         let answer = invoke(root, &["AgentThreadCliTest"]);
         assert_eq!(answer.exit_code, exit::USAGE, "{answer:?}");
         assert_eq!(answer.stdout, "");
-        assert!(
-            answer.stderr.contains("BUILD_WORKSPACE_DIRECTORY"),
-            "{}",
-            answer.stderr
-        );
+        assert!(answer.stderr.contains("BUILD_WORKSPACE_DIRECTORY"), "{}", answer.stderr);
         assert!(answer.stderr.contains(PROGRAM), "{}", answer.stderr);
     }
 }
@@ -181,9 +168,5 @@ fn an_unresolvable_selector_refuses_without_reaching_bazel() {
     let answer = invoke(Some(dir.path()), &["AgentThreadCliTest"]);
     assert_eq!(answer.exit_code, exit::USAGE, "{answer:?}");
     assert_eq!(answer.stdout, "");
-    assert!(
-        answer.stderr.contains("AgentThreadCliTest"),
-        "{}",
-        answer.stderr
-    );
+    assert!(answer.stderr.contains("AgentThreadCliTest"), "{}", answer.stderr);
 }

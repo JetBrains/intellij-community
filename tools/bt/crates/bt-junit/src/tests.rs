@@ -34,10 +34,7 @@ fn a_complete_document_is_complete() {
     let [suite] = report.suites.as_slice() else {
         panic!("read {} suites", report.suites.len())
     };
-    assert_eq!(
-        (suite.tests, suite.failures, suite.time_seconds),
-        (2, 1, 1.5)
-    );
+    assert_eq!((suite.tests, suite.failures, suite.time_seconds), (2, 1, 1.5));
     assert_eq!(suite.cases.len(), 2);
     assert_eq!(suite.cases[0].outcome, Outcome::Passed);
     assert_eq!(suite.cases[0].time_seconds, 0.5);
@@ -65,18 +62,9 @@ fn captured_output_is_never_interpreted() {
         r#"<system-err><testsuite name="ALSO NOT REAL"></system-err>"#,
         r#"</testsuite></testsuites>"#,
     ));
-    assert_eq!(
-        report.integrity.status,
-        IntegrityStatus::Complete,
-        "{:?}",
-        report.integrity
-    );
+    assert_eq!(report.integrity.status, IntegrityStatus::Complete, "{:?}", report.integrity);
     assert_eq!(names(&report.suites), ["A"]);
-    assert_eq!(
-        report.suites[0].cases.len(),
-        1,
-        "captured output leaked into the structure"
-    );
+    assert_eq!(report.suites[0].cases.len(), 1, "captured output leaked into the structure");
 }
 
 // A `>` inside an attribute value is legal, and assertion messages reach the XML carrying one - and a raw `<`.
@@ -87,20 +75,9 @@ fn a_greater_than_inside_an_attribute_does_not_end_the_tag() {
         r#"<testcase classname="p.A" name="t"><failure message="expected: &lt;&quot;/a&quot;> but was: <&quot;/b&quot;>">d</failure></testcase>"#,
         r#"</testsuite></testsuites>"#,
     ));
-    assert_eq!(
-        report.integrity.status,
-        IntegrityStatus::Complete,
-        "{:?}",
-        report.integrity
-    );
-    let failure = report.suites[0].cases[0]
-        .failure
-        .as_ref()
-        .expect("the failure was dropped");
-    assert_eq!(
-        failure.message.as_deref(),
-        Some(r#"expected: <"/a"> but was: <"/b">"#)
-    );
+    assert_eq!(report.integrity.status, IntegrityStatus::Complete, "{:?}", report.integrity);
+    let failure = report.suites[0].cases[0].failure.as_ref().expect("the failure was dropped");
+    assert_eq!(failure.message.as_deref(), Some(r#"expected: <"/a"> but was: <"/b">"#));
 }
 
 #[test]
@@ -113,11 +90,7 @@ fn a_truncated_document_keeps_what_it_got() {
     assert_eq!(report.integrity.status, IntegrityStatus::Truncated);
     assert!(!report.integrity.is_complete());
     assert_eq!(names(&report.suites), ["A"]);
-    assert_eq!(
-        report.suites[0].cases.len(),
-        1,
-        "a truncated suite lost its finished case"
-    );
+    assert_eq!(report.suites[0].cases.len(), 1, "a truncated suite lost its finished case");
 }
 
 // `str::trim` does not strip a byte-order mark; a document made only of them is still empty.
@@ -133,12 +106,7 @@ fn an_empty_document_is_empty_and_not_malformed() {
 #[test]
 fn a_missing_root_is_malformed() {
     let report = parse_report(r#"<testsuite name="A" tests="0"></testsuite>"#);
-    assert_eq!(
-        report.integrity.status,
-        IntegrityStatus::Malformed,
-        "{:?}",
-        report.integrity
-    );
+    assert_eq!(report.integrity.status, IntegrityStatus::Malformed, "{:?}", report.integrity);
     assert_eq!(
         report.integrity.message.as_deref(),
         Some("<testsuite> lies outside the <testsuites> root")
@@ -149,12 +117,7 @@ fn a_missing_root_is_malformed() {
 #[test]
 fn truncation_outranks_malformedness() {
     let report = parse_report(r#"<testsuite name="A" tests="0"><testcase classname="c" name="n""#);
-    assert_eq!(
-        report.integrity.status,
-        IntegrityStatus::Truncated,
-        "{:?}",
-        report.integrity
-    );
+    assert_eq!(report.integrity.status, IntegrityStatus::Truncated, "{:?}", report.integrity);
 }
 
 // Entities resolve in one pass: `&amp;lt;` is the text `&lt;` and never a `<`, which would turn escaped markup
@@ -191,13 +154,7 @@ fn number_attributes_read_plainly() {
     ));
     let suite = &report.suites[0];
     assert_eq!(
-        (
-            suite.tests,
-            suite.failures,
-            suite.errors,
-            suite.skipped,
-            suite.time_seconds
-        ),
+        (suite.tests, suite.failures, suite.errors, suite.skipped, suite.time_seconds),
         (12, 3, 0, 0, 1.5)
     );
     assert_eq!(suite.cases[0].time_seconds, 0.0);
@@ -214,14 +171,8 @@ fn suites_are_ordered_by_instant_then_document_position() {
         r#"<testsuite name="undated-too" timestamp="not a timestamp" tests="0"/>"#,
         "</testsuites>",
     ));
-    assert_eq!(
-        names(&report.suites),
-        ["first", "second", "undated", "undated-too"]
-    );
-    assert_eq!(
-        report.suites[0].document_index, 1,
-        "sorting lost the document position"
-    );
+    assert_eq!(names(&report.suites), ["first", "second", "undated", "undated-too"]);
+    assert_eq!(report.suites[0].document_index, 1, "sorting lost the document position");
 }
 
 #[test]
@@ -250,10 +201,7 @@ fn parse_keeps_document_order() {
 #[test]
 fn the_bucketing_stub_is_recognized() {
     let stub = parse_report(r#"<testsuites><testsuite name="Bucketing" tests="0"/></testsuites>"#);
-    assert!(
-        stub.suites[0].bucketing_stub,
-        "the bucketing stub was not recognized"
-    );
+    assert!(stub.suites[0].bucketing_stub, "the bucketing stub was not recognized");
     let other = parse_report(r#"<testsuites><testsuite name="Bucketing" tests="1"/></testsuites>"#);
     assert!(
         !other.suites[0].bucketing_stub,
@@ -264,9 +212,7 @@ fn the_bucketing_stub_is_recognized() {
 // A wrapper that reported 0 and no wrapper at all are different facts, and the second is the common one.
 #[test]
 fn the_wrapper_exit_code_is_absent_until_a_wrapper_reports_one() {
-    let plain = parse_report(
-        r#"<testsuites><testsuite name="A" tests="1"><testcase classname="p.A" name="t"/></testsuite></testsuites>"#,
-    );
+    let plain = parse_report(r#"<testsuites><testsuite name="A" tests="1"><testcase classname="p.A" name="t"/></testsuite></testsuites>"#);
     assert_eq!(plain.suites[0].wrapper_exit_code, None);
     let wrapped = parse_report(concat!(
         r#"<testsuites><testsuite name="A" tests="0">"#,
@@ -281,10 +227,7 @@ fn the_wrapper_exit_code_is_absent_until_a_wrapper_reports_one() {
     ));
     assert_eq!(crashed.suites[0].wrapper_exit_code, Some(42));
     assert_eq!(
-        crashed.suites[0].cases[0]
-            .failure
-            .as_ref()
-            .map(|failure| failure.kind),
+        crashed.suites[0].cases[0].failure.as_ref().map(|failure| failure.kind),
         Some(FailureKind::Error)
     );
 }
@@ -308,12 +251,7 @@ fn cdata_and_comments_are_skipped_wholesale() {
         r#"<testsuite name="A" tests="1"><testcase classname="p.A" name="t">"#,
         r#"<failure message="m"><![CDATA[at p.A.t(<A.java>:1) </failure>]]></failure></testcase></testsuite></testsuites>"#,
     ));
-    assert_eq!(
-        report.integrity.status,
-        IntegrityStatus::Complete,
-        "{:?}",
-        report.integrity
-    );
+    assert_eq!(report.integrity.status, IntegrityStatus::Complete, "{:?}", report.integrity);
     assert_eq!(names(&report.suites), ["A"], "a comment produced a suite");
     let failure = report.suites[0].cases[0].failure.as_ref().unwrap();
     assert_eq!(failure.detail, "at p.A.t(<A.java>:1) </failure>");

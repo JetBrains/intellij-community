@@ -82,9 +82,7 @@ impl SuiteDocument {
     /// The lane table's name for the suite's lane (`ui-real` for `UI_REAL`), or `None` for a lane it does not
     /// declare.
     pub fn lane_name<'l>(&self, lanes: &'l Lanes) -> Option<&'l str> {
-        lanes
-            .by_catalog_lane(&self.lane)
-            .map(|lane| lane.name.as_str())
+        lanes.by_catalog_lane(&self.lane).map(|lane| lane.name.as_str())
     }
 }
 
@@ -102,10 +100,7 @@ impl SuiteProfile {
     /// run it.
     pub fn program_ids(&self) -> Vec<String> {
         let mut ids = BTreeSet::new();
-        let parts = self
-            .setups
-            .iter()
-            .chain(self.steps.iter().flat_map(|step| &step.operations));
+        let parts = self.setups.iter().chain(self.steps.iter().flat_map(|step| &step.operations));
         for part in parts {
             ids.insert(part.operation.as_str());
             for instruction in &part.instructions {
@@ -122,10 +117,8 @@ impl SuiteProfile {
 ///
 /// A document is one only with its suite, its lane and its test class: those three are what every reader joins by.
 pub fn parse_suite_document(content: &[u8]) -> Result<SuiteDocument, String> {
-    let document: SuiteDocument =
-        serde_json::from_slice(content).map_err(|error| format!("is malformed: {error}"))?;
-    if document.suite.is_empty() || document.lane.is_empty() || document.test_class_name.is_empty()
-    {
+    let document: SuiteDocument = serde_json::from_slice(content).map_err(|error| format!("is malformed: {error}"))?;
+    if document.suite.is_empty() || document.lane.is_empty() || document.test_class_name.is_empty() {
         return Err("names no suite, lane or test class".to_owned());
     }
     Ok(document)
@@ -135,25 +128,14 @@ pub fn parse_suite_document(content: &[u8]) -> Result<SuiteDocument, String> {
 ///
 /// Both kinds are one set: a suite id and a test class name each name one suite, whichever kind it is. A clash is
 /// refused, because the answer would name one suite for a path that reaches the other.
-pub fn read_suite_documents(
-    runtime: &dyn Runtime,
-    area: &Area,
-) -> Result<Vec<SuiteDocument>, Refusal> {
+pub fn read_suite_documents(runtime: &dyn Runtime, area: &Area) -> Result<Vec<SuiteDocument>, Refusal> {
     let catalog = area.catalog()?;
     let mut documents = read_generated_suites(runtime, &catalog)?;
     let authored = read_authored_suites(runtime, &catalog)?;
-    let mut suites: BTreeSet<String> = documents
-        .iter()
-        .map(|document| document.suite.clone())
-        .collect();
-    let mut classes: BTreeSet<String> = documents
-        .iter()
-        .map(|document| document.test_class_name.clone())
-        .collect();
+    let mut suites: BTreeSet<String> = documents.iter().map(|document| document.suite.clone()).collect();
+    let mut classes: BTreeSet<String> = documents.iter().map(|document| document.test_class_name.clone()).collect();
     for document in &authored {
-        if !suites.insert(document.suite.clone())
-            || !classes.insert(document.test_class_name.clone())
-        {
+        if !suites.insert(document.suite.clone()) || !classes.insert(document.test_class_name.clone()) {
             return Err(fail_infra(format!(
                 "the authored suite {} ({}) has the id or the test class of another suite; rename it where \
                  {} is written from",
@@ -170,10 +152,7 @@ pub fn read_suite_documents(
 /// A checkout without the file answers no authored suite, as every checkout did before the file existed. The
 /// fast-lane test owns that the committed file exists and matches. A file that is there and cannot be read or
 /// parsed is refused.
-fn read_authored_suites(
-    runtime: &dyn Runtime,
-    catalog: &Catalog<'_>,
-) -> Result<Vec<SuiteDocument>, Refusal> {
+fn read_authored_suites(runtime: &dyn Runtime, catalog: &Catalog<'_>) -> Result<Vec<SuiteDocument>, Refusal> {
     #[derive(Deserialize)]
     struct Held {
         #[serde(default)]
@@ -185,11 +164,9 @@ fn read_authored_suites(
     if !runtime.exists(&file) {
         return Ok(Vec::new());
     }
-    let text = runtime.read_text_file(&file).map_err(|error| {
-        fail_infra(format!(
-            "the authored suites are unreadable at {relative}: {error}"
-        ))
-    })?;
+    let text = runtime
+        .read_text_file(&file)
+        .map_err(|error| fail_infra(format!("the authored suites are unreadable at {relative}: {error}")))?;
     let held: Held = serde_json::from_str(&text).map_err(|error| {
         fail_infra(format!(
             "{relative} is malformed: {error}; the test that owns the file prints the text to commit"
@@ -197,10 +174,7 @@ fn read_authored_suites(
     })?;
     let mut suites = held.suites;
     for document in &mut suites {
-        if document.suite.is_empty()
-            || document.lane.is_empty()
-            || document.test_class_name.is_empty()
-        {
+        if document.suite.is_empty() || document.lane.is_empty() || document.test_class_name.is_empty() {
             return Err(fail_infra(format!(
                 "{relative} holds a suite with no suite, lane or test class; the test that owns the file prints \
                  the text to commit"
@@ -217,17 +191,12 @@ fn read_authored_suites(
 /// the directory as a set: a document whose name it cannot read is one nothing else misses. A document that cannot
 /// be read is refused rather than skipped: a reader that silently drops a suite answers "nothing covers this" for a
 /// suite that exists.
-pub fn read_generated_suites(
-    runtime: &dyn Runtime,
-    catalog: &Catalog<'_>,
-) -> Result<Vec<SuiteDocument>, Refusal> {
+pub fn read_generated_suites(runtime: &dyn Runtime, catalog: &Catalog<'_>) -> Result<Vec<SuiteDocument>, Refusal> {
     let relative = catalog.flow_profile_dir;
     let directory = repo_file(runtime, relative);
-    let entries = runtime.read_dir(&directory).map_err(|error| {
-        fail_infra(format!(
-            "the generated suite documents are unreadable at {relative}: {error}"
-        ))
-    })?;
+    let entries = runtime
+        .read_dir(&directory)
+        .map_err(|error| fail_infra(format!("the generated suite documents are unreadable at {relative}: {error}")))?;
     let mut names: Vec<String> = entries
         .into_iter()
         .filter(|entry| !entry.is_dir && entry.name.ends_with(".json"))
@@ -243,11 +212,8 @@ pub fn read_generated_suites(
         let text = runtime
             .read_text_file(&directory.join(name))
             .map_err(|error| fail_infra(format!("suite document {name} is unreadable: {error}")))?;
-        let mut document = parse_suite_document(text.as_bytes()).map_err(|reason| {
-            fail_infra(format!(
-                "suite document {name} {reason}; regenerate the flow catalog"
-            ))
-        })?;
+        let mut document = parse_suite_document(text.as_bytes())
+            .map_err(|reason| fail_infra(format!("suite document {name} {reason}; regenerate the flow catalog")))?;
         document.path = format!("{relative}/{name}");
         Ok(document)
     })

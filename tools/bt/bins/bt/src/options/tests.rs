@@ -28,14 +28,7 @@ fn parse_options_separates_positionals_flags_values_and_passthrough() {
 
 #[test]
 fn a_repeated_test_env_is_collected() {
-    let args = run(&[
-        "--lane",
-        "acp",
-        "--test-env",
-        "CLAUDE_BIN",
-        "--test-env",
-        "NODE_BIN",
-    ]);
+    let args = run(&["--lane", "acp", "--test-env", "CLAUDE_BIN", "--test-env", "NODE_BIN"]);
     assert_eq!(args.test_env, ["CLAUDE_BIN", "NODE_BIN"]);
 }
 
@@ -43,10 +36,7 @@ fn a_repeated_test_env_is_collected() {
 #[test]
 fn an_unknown_flag_is_refused() {
     let failure = refusal(parse_args(["--nope"], areas()));
-    assert_eq!(
-        (failure.code.as_ref(), failure.exit),
-        ("usage", exit::USAGE)
-    );
+    assert_eq!((failure.code.as_ref(), failure.exit), ("usage", exit::USAGE));
     assert!(failure.message.contains("--nope"), "{}", failure.message);
     assert!(!failure.message.contains("Usage:"), "{}", failure.message);
 }
@@ -58,11 +48,7 @@ fn a_value_flag_with_no_value_is_refused() {
     let failure = refusal(parse_args(["--lane", "--json"], areas()));
     assert_eq!(failure.exit, exit::USAGE);
     assert!(failure.message.contains("--lane"), "{}", failure.message);
-    assert!(
-        failure.message.contains("value is required"),
-        "{}",
-        failure.message
-    );
+    assert!(failure.message.contains("value is required"), "{}", failure.message);
 }
 
 /// A flag that may appear once is refused when repeated, rather than one occurrence silently winning.
@@ -71,11 +57,7 @@ fn a_single_value_flag_is_refused_when_repeated() {
     for flag in ["--lane", "--filter", "--shards", "--max-failures"] {
         let failure = refusal(parse_args([flag, "1", flag, "2"], areas()));
         assert_eq!(failure.exit, exit::USAGE, "{flag}");
-        assert!(
-            failure.message.contains(flag),
-            "{flag}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains(flag), "{flag}: {}", failure.message);
     }
     let two_selectors = refusal(parse_args(["FooTest", "BarTest"], areas()));
     assert_eq!(two_selectors.exit, exit::USAGE);
@@ -110,35 +92,18 @@ fn a_single_dash_value_is_kept() {
     for argv in [["--filter", "--json"], ["--filter", "--"]] {
         let failure = refusal(parse_args(argv, areas()));
         assert_eq!(failure.exit, exit::USAGE, "{argv:?}");
-        assert!(
-            failure.message.contains("value is required"),
-            "{argv:?}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains("value is required"), "{argv:?}: {}", failure.message);
     }
 }
 
 /// clap's `tip:` lines suggest `-- -k`, which for bt would hand the value to bazel instead.
 #[test]
 fn a_refusal_carries_no_clap_tip() {
-    for argv in [
-        vec!["--bogus"],
-        vec!["FooTest", "-k"],
-        vec!["--shards", "07"],
-        vec!["--lane"],
-    ] {
+    for argv in [vec!["--bogus"], vec!["FooTest", "-k"], vec!["--shards", "07"], vec!["--lane"]] {
         let failure = refusal(parse_args(argv.clone(), areas()));
         assert_eq!(failure.exit, exit::USAGE, "{argv:?}");
-        assert!(
-            !failure.message.contains("tip:"),
-            "{argv:?}: {}",
-            failure.message
-        );
-        assert!(
-            !failure.message.contains("--help"),
-            "{argv:?}: {}",
-            failure.message
-        );
+        assert!(!failure.message.contains("tip:"), "{argv:?}: {}", failure.message);
+        assert!(!failure.message.contains("--help"), "{argv:?}: {}", failure.message);
     }
 }
 
@@ -155,17 +120,10 @@ fn a_count_is_checked_before_any_work_starts() {
         ["--shards", "+7"],
         ["--shards", "99999999999"],
     ] {
-        assert_eq!(
-            refusal(parse_args(argv, areas())).exit,
-            exit::USAGE,
-            "{argv:?}"
-        );
+        assert_eq!(refusal(parse_args(argv, areas())).exit, exit::USAGE, "{argv:?}");
     }
     assert_eq!(run(&["--lane", "fast"]).shards, None);
-    assert_eq!(
-        run(&["--lane", "fast", "--shards", "50", "--max-failures", "100"]).shards,
-        Some(50)
-    );
+    assert_eq!(run(&["--lane", "fast", "--shards", "50", "--max-failures", "100"]).shards, Some(50));
 }
 
 #[test]
@@ -176,10 +134,7 @@ fn usage_text_names_the_selectors_and_the_exit_codes() {
         "--lane fast",
         "Exit codes: 0 green, 2 usage, 3 tests failed, 4 zero tests executed",
     ] {
-        assert!(
-            usage(areas()).contains(expected),
-            "the usage text does not mention {expected:?}"
-        );
+        assert!(usage(areas()).contains(expected), "the usage text does not mention {expected:?}");
     }
 }
 
@@ -209,15 +164,9 @@ fn help_is_the_curated_text_and_no_arguments_is_a_usage_failure() {
 #[test]
 fn the_help_lists_the_lanes_of_the_areas() {
     let text = usage(areas());
-    assert!(
-        text.contains("Lanes of plugins/air:\n  fast       "),
-        "{text}"
-    );
+    assert!(text.contains("Lanes of plugins/air:\n  fast       "), "{text}");
     assert!(text.contains("\n  acp        "), "{text}");
     assert!(!text.contains("{lanes}"), "{text}");
     let none = usage(&bt_core::Areas::default());
-    assert!(
-        none.contains("Lanes: none, because bt.json names no area."),
-        "{none}"
-    );
+    assert!(none.contains("Lanes: none, because bt.json names no area."), "{none}");
 }

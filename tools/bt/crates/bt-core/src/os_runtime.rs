@@ -86,10 +86,7 @@ impl OsRuntime {
     /// resolution that reached for bazel would start it from inside a held lease or a server request. Its digest
     /// goes nowhere, since a runtime that refuses to spawn bazel has no test run to digest, and its diagnostics go
     /// to `notes`, the caller's own reporter rather than the process's stderr.
-    pub fn resolver(
-        repo_root: impl Into<PathBuf>,
-        notes: impl Fn(&str) + Send + Sync + 'static,
-    ) -> Self {
+    pub fn resolver(repo_root: impl Into<PathBuf>, notes: impl Fn(&str) + Send + Sync + 'static) -> Self {
         Self::builder(repo_root)
             .spawn(Spawner::Refuse)
             .write(|_| {})
@@ -126,9 +123,7 @@ impl OsRuntimeBuilder {
             spawner: self.spawner,
             // A handle per call rather than a held lock: the heartbeat writes from its own thread while the run is
             // in progress.
-            write: self
-                .write
-                .unwrap_or_else(|| Box::new(|text| write_line(&mut io::stdout(), text))),
+            write: self.write.unwrap_or_else(|| Box::new(|text| write_line(&mut io::stdout(), text))),
             write_error: self
                 .write_error
                 .unwrap_or_else(|| Box::new(|text| write_line(&mut io::stderr(), text))),
@@ -152,19 +147,12 @@ pub(crate) fn write_line(out: &mut dyn Write, text: &str) {
 pub fn refuse_spawn(command: &[OsString]) -> SpawnResult {
     SpawnResult {
         exit_code: 127,
-        output: format!(
-            "selector resolution must not spawn subprocesses: {}",
-            joined(command)
-        ),
+        output: format!("selector resolution must not spawn subprocesses: {}", joined(command)),
     }
 }
 
 fn joined(command: &[OsString]) -> String {
-    command
-        .iter()
-        .map(|part| part.to_string_lossy())
-        .collect::<Vec<_>>()
-        .join(" ")
+    command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ")
 }
 
 /// Runs a child to completion, in `dir` when one is given.
@@ -172,11 +160,7 @@ fn joined(command: &[OsString]) -> String {
 /// Never fails: a command that could not start is exit 127, a run outcome the classifier can reason about rather
 /// than an error every caller would have to re-classify. A child killed by a signal has no code and answers -1,
 /// which classifies as infrastructure too.
-pub fn spawn_child(
-    dir: Option<&Path>,
-    command: &[OsString],
-    heartbeat: Option<Heartbeat<'_>>,
-) -> SpawnResult {
+pub fn spawn_child(dir: Option<&Path>, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
     match command_for(dir, command) {
         Some(child) => run_to_end(child, HEARTBEAT_INTERVAL, heartbeat),
         None => SpawnResult {
@@ -208,11 +192,7 @@ fn could_not_start(child: &Command, error: &io::Error) -> SpawnResult {
 /// One pipe for both descriptors, so the tail keeps the order the child wrote in: bazel puts its progress on stderr
 /// and its results on stdout, and a tail that has lost which came first is the one a human reads when a run went
 /// wrong.
-fn run_to_end(
-    mut child: Command,
-    interval: Duration,
-    heartbeat: Option<Heartbeat<'_>>,
-) -> SpawnResult {
+fn run_to_end(mut child: Command, interval: Duration, heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
     let pipe = io::pipe().and_then(|(reader, writer)| Ok((reader, writer.try_clone()?, writer)));
     let (mut reader, stdout, stderr) = match pipe {
         Ok(pipe) => pipe,
@@ -320,10 +300,7 @@ impl Tail {
             self.dropped
         };
         if dropped {
-            let start = tail
-                .iter()
-                .position(|byte| byte & 0xc0 != 0x80)
-                .unwrap_or(tail.len());
+            let start = tail.iter().position(|byte| byte & 0xc0 != 0x80).unwrap_or(tail.len());
             tail = &tail[start..];
         }
         String::from_utf8_lossy(tail).into_owned()
@@ -403,29 +380,14 @@ impl Runtime for OsRuntime {
         let listed = Command::new("git")
             .arg("-C")
             .arg(dir)
-            .args([
-                "ls-files",
-                "-z",
-                "--cached",
-                "--others",
-                "--exclude-standard",
-            ])
+            .args(["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
             .stdin(Stdio::null())
             .output();
-        let refused = |said: String| {
-            io::Error::other(format!(
-                "git cannot list the files under {}: {said}",
-                dir.display()
-            ))
-        };
+        let refused = |said: String| io::Error::other(format!("git cannot list the files under {}: {said}", dir.display()));
         let listed = listed.map_err(|error| refused(error.to_string()))?;
         if !listed.status.success() {
             let stderr = String::from_utf8_lossy(&listed.stderr).trim().to_owned();
-            return Err(refused(if stderr.is_empty() {
-                listed.status.to_string()
-            } else {
-                stderr
-            }));
+            return Err(refused(if stderr.is_empty() { listed.status.to_string() } else { stderr }));
         }
         let stdout = String::from_utf8_lossy(&listed.stdout);
         let mut names: Vec<&str> = stdout.split('\0').filter(|name| !name.is_empty()).collect();
@@ -434,11 +396,7 @@ impl Runtime for OsRuntime {
         let mut files: Vec<PathBuf> = names
             .into_iter()
             .map(|name| {
-                let name = if cfg!(windows) {
-                    name.replace('/', "\\")
-                } else {
-                    name.to_owned()
-                };
+                let name = if cfg!(windows) { name.replace('/', "\\") } else { name.to_owned() };
                 dir.join(name)
             })
             // A tracked file deleted from the disk is still in the index, and a nested checkout is listed as its
@@ -463,11 +421,7 @@ impl Runtime for OsRuntime {
 
     /// A fresh file in the system temporary directory, created so no second process can pick the same name.
     fn temp_file(&self, prefix: &str) -> PathBuf {
-        match tempfile::Builder::new()
-            .prefix(&format!("{prefix}-"))
-            .suffix(".json")
-            .tempfile()
-        {
+        match tempfile::Builder::new().prefix(&format!("{prefix}-")).suffix(".json").tempfile() {
             Ok(mut file) => {
                 // The file outlives the handle: the caller removes it, and bazel writes it meanwhile.
                 file.disable_cleanup(true);
@@ -475,11 +429,7 @@ impl Runtime for OsRuntime {
             }
             // Only reachable when the temporary directory is unwritable, and a temporary name is not worth refusing
             // an invocation over; bazel then reports the path it cannot write, which is the real problem.
-            Err(_) => std::env::temp_dir().join(format!(
-                "{prefix}-{}-{}.json",
-                std::process::id(),
-                self.now_ms()
-            )),
+            Err(_) => std::env::temp_dir().join(format!("{prefix}-{}-{}.json", std::process::id(), self.now_ms())),
         }
     }
 
@@ -492,9 +442,7 @@ impl Runtime for OsRuntime {
     }
 
     fn now_ms(&self) -> u64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_or(0, millis)
+        SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, millis)
     }
 
     fn write(&self, text: &str) {

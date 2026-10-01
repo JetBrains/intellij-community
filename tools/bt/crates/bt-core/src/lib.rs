@@ -41,9 +41,7 @@ macro_rules! regex {
     ($pattern:literal) => {{
         static PATTERN: std::sync::LazyLock<$crate::__regex::Regex> =
             // An invariant: the pattern is a literal, and every one is exercised by a test.
-            std::sync::LazyLock::new(|| {
-                    $crate::__regex::Regex::new($pattern).expect("a literal pattern compiles")
-                });
+            std::sync::LazyLock::new(|| $crate::__regex::Regex::new($pattern).expect("a literal pattern compiles"));
         &*PATTERN
     }};
 }
@@ -60,9 +58,8 @@ pub use runtime::{Platform, Runtime};
 pub use scan::ResolutionInputs;
 pub use selector::{Selector, SelectorKind, resolve_selector};
 pub use suites::{
-    Affected, AffectedSuite, CHANGED_PATHS_SUBJECT, LaneCount, REASON_NO_SUITE_TESTS_FLOW,
-    ScenarioFlows, UnmappedPath, VIA_MODULE, affected_text, choose_lane, classes_of_lane,
-    counted_lane_names, describe_named, lane_counts, lane_counts_text, named_suites,
+    Affected, AffectedSuite, CHANGED_PATHS_SUBJECT, LaneCount, REASON_NO_SUITE_TESTS_FLOW, ScenarioFlows, UnmappedPath, VIA_MODULE,
+    affected_text, choose_lane, classes_of_lane, counted_lane_names, describe_named, lane_counts, lane_counts_text, named_suites,
     reached_by_module_only, suite_class_filters,
 };
 

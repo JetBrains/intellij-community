@@ -51,10 +51,7 @@ fn multiple_test_roots_and_crlf_line_endings() {
         r#"<sourceFolder url="file://$MODULE_DIR$/testFixtures" isTestSource="true" packagePrefix="a.b" />"#,
     ])
     .replace('\n', "\r\n");
-    let paths: Vec<String> = parse_iml_test_roots(&text)
-        .into_iter()
-        .map(|root| root.path)
-        .collect();
+    let paths: Vec<String> = parse_iml_test_roots(&text).into_iter().map(|root| root.path).collect();
     assert_eq!(paths, ["testSrc", "testFixtures"]);
 }
 
@@ -62,39 +59,23 @@ fn multiple_test_roots_and_crlf_line_endings() {
 fn jps_test_name_ignores_the_sibling_library() {
     // //plugins/air/shared/core declares ai-agent-core-tests_test, not air-…: the name is not derivable.
     for target in ["air-thing-tests_test", "ai-agent-core-tests_test"] {
-        assert_eq!(
-            parse_jps_test_name(&build_bazel_text(target)),
-            Ok(Some(target.to_owned()))
-        );
+        assert_eq!(parse_jps_test_name(&build_bazel_text(target)), Ok(Some(target.to_owned())));
     }
 }
 
 #[test]
 fn jps_test_name_is_not_fooled_by_strings_or_comments() {
     let closing_paren = "jps_test(\n  args = [\"--flag=foo)bar\"],\n  name = \"target_test\",\n)";
-    assert_eq!(
-        parse_jps_test_name(closing_paren),
-        Ok(Some("target_test".to_owned()))
-    );
+    assert_eq!(parse_jps_test_name(closing_paren), Ok(Some("target_test".to_owned())));
     let commented = "jps_test(\n  # name = \"commented_out\",\n  args = [\"--tag=#nope)\"],\n  name = \"real_test\",\n)";
-    assert_eq!(
-        parse_jps_test_name(commented),
-        Ok(Some("real_test".to_owned()))
-    );
-    let loaded =
-        "load(\"@rules_jvm//:test.bzl\", \"jps_test\")\n\njps_test(\n  name = \"only_test\",\n)";
-    assert_eq!(
-        parse_jps_test_name(loaded),
-        Ok(Some("only_test".to_owned()))
-    );
+    assert_eq!(parse_jps_test_name(commented), Ok(Some("real_test".to_owned())));
+    let loaded = "load(\"@rules_jvm//:test.bzl\", \"jps_test\")\n\njps_test(\n  name = \"only_test\",\n)";
+    assert_eq!(parse_jps_test_name(loaded), Ok(Some("only_test".to_owned())));
 }
 
 #[test]
 fn a_build_file_with_no_jps_test_has_no_target() {
-    assert_eq!(
-        parse_jps_test_name("jvm_library(\n  name = \"lib\",\n)"),
-        Ok(None)
-    );
+    assert_eq!(parse_jps_test_name("jvm_library(\n  name = \"lib\",\n)"), Ok(None));
 }
 
 /// Two runnable targets in one BUILD.bazel breaks the one-target-per-module invariant resolution rests on, and
@@ -106,10 +87,7 @@ fn two_unfiltered_jps_tests_are_infrastructure() {
         build_bazel_text("one_test"),
         build_bazel_text("two_test")
     )));
-    assert_eq!(
-        (failure.code.as_ref(), failure.exit),
-        ("bt_infra", exit::INFRA)
-    );
+    assert_eq!((failure.code.as_ref(), failure.exit), ("bt_infra", exit::INFRA));
     assert!(failure.message.contains("found 2"), "{}", failure.message);
 }
 
@@ -122,10 +100,7 @@ fn a_target_narrowed_by_junit_filters_is_skipped() {
   env = {"JB_TEST_JUNIT5_FILTERS": "include-classname=com.intellij.air.integration.flow.AirFlowPlanTest"},
 )"#;
     assert_eq!(
-        parse_jps_test_name(&format!(
-            "{}\n{narrowed}",
-            build_bazel_text("integrationTests_test")
-        )),
+        parse_jps_test_name(&format!("{}\n{narrowed}", build_bazel_text("integrationTests_test"))),
         Ok(Some("integrationTests_test".to_owned()))
     );
     let lane_target = "jps_test(\n  name = \"ui_test\",\n  tags = [\"air-integration-ui\"],\n)";
@@ -166,11 +141,7 @@ fn derive_package_reads_the_declaration() {
         ),
         // `$` under `(?m)` matches only before a LF, so without the `\r` in the pattern every class in a CRLF file
         // would resolve to the default package.
-        (
-            "CRLF line endings",
-            "package a.b\r\n\r\nclass Foo\r\n",
-            "a.b",
-        ),
+        ("CRLF line endings", "package a.b\r\n\r\nclass Foo\r\n", "a.b"),
     ] {
         assert_eq!(derive_package(text), want, "{what}");
     }
@@ -178,14 +149,8 @@ fn derive_package_reads_the_declaration() {
 
 #[test]
 fn declares_type_finds_a_top_level_declaration() {
-    assert!(declares_type(
-        "package a\n\ninternal class HelperTest {\n}\n",
-        "HelperTest"
-    ));
-    assert!(declares_type(
-        "@TestOnly\nobject Fixtures {\n}\n",
-        "Fixtures"
-    ));
+    assert!(declares_type("package a\n\ninternal class HelperTest {\n}\n", "HelperTest"));
+    assert!(declares_type("@TestOnly\nobject Fixtures {\n}\n", "Fixtures"));
     // The word boundary is what stops `FooTest` resolving to `FooTestBase` and running the wrong class.
     assert!(!declares_type("class FooTestBase\n", "FooTest"));
 }
@@ -198,26 +163,14 @@ fn test_roots_of(runtime: &dyn Runtime) -> Vec<TestRoot> {
 fn the_scan_prunes_generated_and_vendored_directories() {
     let fake = fake_air_tree();
     fake.put("plugins/air/docs/node_modules/react/index.js", "");
-    fake.put(
-        "plugins/air/docs/node_modules/junk/Fake.kt",
-        "package junk\n\nclass Fake\n",
-    );
-    fake.put(
-        "plugins/air/generated/Generated.kt",
-        "package generated\n\nclass Generated\n",
-    );
-    fake.put(
-        "plugins/air/bazel-out/Stale.kt",
-        "package stale\n\nclass Stale\n",
-    );
+    fake.put("plugins/air/docs/node_modules/junk/Fake.kt", "package junk\n\nclass Fake\n");
+    fake.put("plugins/air/generated/Generated.kt", "package generated\n\nclass Generated\n");
+    fake.put("plugins/air/bazel-out/Stale.kt", "package stale\n\nclass Stale\n");
 
     let scan = scan_tree(&fake, &[AREA_DIR]);
     for forbidden in ["node_modules", "/generated/", "bazel-out"] {
         for file in &scan.sources {
-            assert!(
-                !file.contains(forbidden),
-                "{file} survived pruning of {forbidden}"
-            );
+            assert!(!file.contains(forbidden), "{file} survived pruning of {forbidden}");
         }
     }
     assert!(scan.dirs.contains("plugins/air/shared/core/testSrc"));
@@ -258,10 +211,7 @@ fn the_shortened_package_prefix_is_carried_through() {
         .iter()
         .find(|root| root.label.ends_with("ai-agent-core-tests_test"))
         .expect("the core module's root was collected");
-    assert_eq!(
-        core.package_prefix.as_deref(),
-        Some("com.intellij.air.shared.core")
-    );
+    assert_eq!(core.package_prefix.as_deref(), Some("com.intellij.air.shared.core"));
     assert_eq!(core.src_dir, "plugins/air/shared/core/testSrc");
 }
 
@@ -280,8 +230,5 @@ fn the_index_is_keyed_by_simple_name_only() {
         ]
     );
     // The colliding name keeps both candidates; collapsing them is what would silently run one module's test.
-    assert_eq!(
-        index["AgentPromptChangesTreeContextContributorTest"].len(),
-        2
-    );
+    assert_eq!(index["AgentPromptChangesTreeContextContributorTest"].len(), 2);
 }

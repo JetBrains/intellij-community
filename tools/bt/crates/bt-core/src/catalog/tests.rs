@@ -41,20 +41,10 @@ fn a_profile_answers_every_id_of_its_program_setups_included() {
     let document = parse_suite_document(DOCUMENT.as_bytes()).expect("the document parses");
     let profile = &document.profiles[0];
     assert_eq!(profile.name, "renames-a-session");
-    assert_eq!(
-        profile.program_ids(),
-        ["name-shown", "open", "open-project", "type", "type-name"]
-    );
-    let steps: Vec<&str> = profile
-        .steps
-        .iter()
-        .map(|step| step.step.as_str())
-        .collect();
+    assert_eq!(profile.program_ids(), ["name-shown", "open", "open-project", "type", "type-name"]);
+    let steps: Vec<&str> = profile.steps.iter().map(|step| step.step.as_str()).collect();
     assert_eq!(steps, ["rename", "check"]);
-    assert_eq!(
-        profile.scenario_flows().flows(),
-        ["flow-rename-session", "flow-sidebar"]
-    );
+    assert_eq!(profile.scenario_flows().flows(), ["flow-rename-session", "flow-sidebar"]);
     assert_eq!(document.modules, ["intellij.air.frontend"]);
     assert_eq!(document.implementation_flows, ["flow-impl-rename"]);
     assert!(document.path.is_empty() && !document.authored);

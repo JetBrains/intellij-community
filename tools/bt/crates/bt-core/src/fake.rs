@@ -101,11 +101,7 @@ impl FakeRuntime {
     }
 
     /// [`FakeRuntime::new`] under another platform and root, so a Windows code path can be driven from any host.
-    pub fn on<'a>(
-        platform: Platform,
-        root: &str,
-        files: impl IntoIterator<Item = (&'a str, &'a str)>,
-    ) -> Self {
+    pub fn on<'a>(platform: Platform, root: &str, files: impl IntoIterator<Item = (&'a str, &'a str)>) -> Self {
         let fake = Self {
             root: PathBuf::from(root),
             platform,
@@ -122,16 +118,11 @@ impl FakeRuntime {
 
     /// A tree given as owned pairs, as the fixture builders answer it.
     pub fn with_tree(tree: &BTreeMap<String, String>) -> Self {
-        Self::new(
-            tree.iter()
-                .map(|(path, text)| (path.as_str(), text.as_str())),
-        )
+        Self::new(tree.iter().map(|(path, text)| (path.as_str(), text.as_str())))
     }
 
     pub fn state(&self) -> MutexGuard<'_, State> {
-        self.state
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     fn absolute_key(&self, relative: &str) -> String {
@@ -192,26 +183,12 @@ impl Runtime for FakeRuntime {
     fn read_text_file(&self, path: &Path) -> io::Result<String> {
         let path = key(path);
         self.note("read", &path)?;
-        self.state()
-            .files
-            .get(&path)
-            .cloned()
-            .ok_or_else(|| not_found(&path))
+        self.state().files.get(&path).cloned().ok_or_else(|| not_found(&path))
     }
 
     fn read_lines(&self, path: &Path) -> Box<dyn Iterator<Item = String> + '_> {
-        let text = self
-            .state()
-            .files
-            .get(&key(path))
-            .cloned()
-            .unwrap_or_default();
-        Box::new(
-            text.split('\n')
-                .map(str::to_owned)
-                .collect::<Vec<_>>()
-                .into_iter(),
-        )
+        let text = self.state().files.get(&key(path)).cloned().unwrap_or_default();
+        Box::new(text.split('\n').map(str::to_owned).collect::<Vec<_>>().into_iter())
     }
 
     fn read_dir(&self, path: &Path) -> io::Result<Vec<DirEntry>> {
@@ -267,12 +244,9 @@ impl Runtime for FakeRuntime {
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
         let result = {
             let mut state = self.state();
-            state.spawned.push(
-                command
-                    .iter()
-                    .map(|part| part.to_string_lossy().into_owned())
-                    .collect(),
-            );
+            state
+                .spawned
+                .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
             state.clock += 5000;
             state.spawn_result.clone()
         };
@@ -308,10 +282,7 @@ impl Runtime for FakeRuntime {
 // --- fixture builders ----------------------------------------------------------------------------------------
 
 pub fn iml_text(source_folders: &[&str]) -> String {
-    let indented: Vec<String> = source_folders
-        .iter()
-        .map(|folder| format!("      {folder}"))
-        .collect();
+    let indented: Vec<String> = source_folders.iter().map(|folder| format!("      {folder}")).collect();
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
@@ -357,7 +328,10 @@ pub fn air_tree() -> BTreeMap<String, String> {
         )])
     };
     [
-        ("plugins/air/shared/core/intellij.air.shared.core.tests.iml", source_root("com.intellij.air.shared.core")),
+        (
+            "plugins/air/shared/core/intellij.air.shared.core.tests.iml",
+            source_root("com.intellij.air.shared.core"),
+        ),
         ("plugins/air/shared/core/BUILD.bazel", build_bazel_text("ai-agent-core-tests_test")),
         (
             "plugins/air/shared/core/testSrc/AgentThreadIdentityTest.kt",
@@ -367,35 +341,48 @@ pub fn air_tree() -> BTreeMap<String, String> {
             "plugins/air/shared/core/testSrc/AgentThreadCliTest.kt",
             "package com.intellij.air.shared.core\n\nclass AgentThreadCliTest {\n}\n".to_owned(),
         ),
-        ("plugins/air/backend/vcs/intellij.air.backend.vcs.tests.iml", source_root("com.intellij.air.backend.vcs")),
-        ("plugins/air/backend/vcs/BUILD.bazel", build_bazel_text("air-backend-vcs-tests_test")),
+        (
+            "plugins/air/backend/vcs/intellij.air.backend.vcs.tests.iml",
+            source_root("com.intellij.air.backend.vcs"),
+        ),
+        (
+            "plugins/air/backend/vcs/BUILD.bazel",
+            build_bazel_text("air-backend-vcs-tests_test"),
+        ),
         (
             "plugins/air/backend/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
-            "package com.intellij.air.backend.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n"
-                .to_owned(),
+            "package com.intellij.air.backend.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n".to_owned(),
         ),
         (
             "plugins/air/frontend/prompt/vcs/intellij.air.frontend.prompt.vcs.tests.iml",
             source_root("com.intellij.air.frontend.prompt.vcs"),
         ),
-        ("plugins/air/frontend/prompt/vcs/BUILD.bazel", build_bazel_text("air-frontend-prompt-vcs-tests_test")),
+        (
+            "plugins/air/frontend/prompt/vcs/BUILD.bazel",
+            build_bazel_text("air-frontend-prompt-vcs-tests_test"),
+        ),
         (
             "plugins/air/frontend/prompt/vcs/testSrc/context/AgentPromptChangesTreeContextContributorTest.kt",
-            "package com.intellij.air.frontend.prompt.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n"
-                .to_owned(),
+            "package com.intellij.air.frontend.prompt.vcs.context\n\nclass AgentPromptChangesTreeContextContributorTest {\n}\n".to_owned(),
         ),
         // A module whose .iml declares a test root but which has no jps_test target at all.
         (
             "plugins/air/notest/intellij.air.notest.tests.iml",
             iml_text(&[r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />"#]),
         ),
-        ("plugins/air/notest/testSrc/OrphanTest.kt", "package com.intellij.air.notest\n\nclass OrphanTest {\n}\n".to_owned()),
+        (
+            "plugins/air/notest/testSrc/OrphanTest.kt",
+            "package com.intellij.air.notest\n\nclass OrphanTest {\n}\n".to_owned(),
+        ),
         // Production-only module: no test root, so nothing is indexed from it.
         (
             "plugins/air/shared/api/intellij.air.shared.api.iml",
             iml_text(&[r#"<sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />"#]),
         ),
-        ("plugins/air/shared/api/src/Api.kt", "package com.intellij.air.shared.api\n\nclass Api\n".to_owned()),
+        (
+            "plugins/air/shared/api/src/Api.kt",
+            "package com.intellij.air.shared.api\n\nclass Api\n".to_owned(),
+        ),
     ]
     .into_iter()
     .map(|(path, text)| (path.to_owned(), text))
@@ -430,11 +417,7 @@ pub struct SuiteFixture {
 }
 
 fn json_strings(values: &[&str]) -> String {
-    values
-        .iter()
-        .map(|value| format!("\"{value}\""))
-        .collect::<Vec<_>>()
-        .join(", ")
+    values.iter().map(|value| format!("\"{value}\"")).collect::<Vec<_>>().join(", ")
 }
 
 impl SuiteFixture {
@@ -468,12 +451,7 @@ impl SuiteFixture {
 }
 
 /// One document for a suite the base catalog does not state, so it reaches nothing.
-pub fn suite_document_text(
-    suite: &'static str,
-    lane: &'static str,
-    class_name: &'static str,
-    flow: &'static str,
-) -> String {
+pub fn suite_document_text(suite: &'static str, lane: &'static str, class_name: &'static str, flow: &'static str) -> String {
     SuiteFixture {
         suite,
         lane,
@@ -519,20 +497,13 @@ pub fn base_suite_fixtures() -> BTreeMap<&'static str, SuiteFixture> {
 
 /// The path of a suite's document in the tree.
 pub fn document_path(suite: &str) -> String {
-    let catalog = lanes()
-        .catalog()
-        .expect("the fixture lane table names a catalog");
+    let catalog = lanes().catalog().expect("the fixture lane table names a catalog");
     format!("{}/{suite}.json", catalog.flow_profile_dir)
 }
 
 /// Restates what one suite of the base catalog reaches. The generator writes both facts on the suite document, so
 /// a test states them there too.
-pub fn reaching(
-    tree: &mut BTreeMap<String, String>,
-    suite: &str,
-    modules: &[&'static str],
-    implementation_flows: &[&'static str],
-) {
+pub fn reaching(tree: &mut BTreeMap<String, String>, suite: &str, modules: &[&'static str], implementation_flows: &[&'static str]) {
     let mut fixture = base_suite_fixtures()
         .remove(suite)
         .unwrap_or_else(|| panic!("no base fixture for suite {suite}"));
@@ -639,10 +610,7 @@ pub fn suite(name: &str, cases: Vec<CaseSpec>) -> SuiteSpec {
 }
 
 fn escape_attribute(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('"', "&quot;")
+    value.replace('&', "&amp;").replace('<', "&lt;").replace('"', "&quot;")
 }
 
 /// A test.xml document in the shape the repository's JUnit 5 runner writes.
@@ -684,10 +652,7 @@ pub fn suite_xml(spec: &SuiteSpec) -> String {
     let tail = if spec.system_out.is_empty() {
         String::new()
     } else {
-        format!(
-            "\n    <system-out><![CDATA[{}]]></system-out>",
-            spec.system_out
-        )
+        format!("\n    <system-out><![CDATA[{}]]></system-out>", spec.system_out)
     };
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -718,15 +683,12 @@ pub fn wrapper_xml(label: &str, exit_code: i32, log: &str) -> String {
     )
 }
 
-pub const BUCKETING_XML: &str = r#"<testsuites><testsuite name="Bucketing" tests="0" failures="0" errors="0" skipped="0"></testsuite></testsuites>"#;
+pub const BUCKETING_XML: &str =
+    r#"<testsuites><testsuite name="Bucketing" tests="0" failures="0" errors="0" skipped="0"></testsuite></testsuites>"#;
 
 /// Events as the NDJSON lines of a BEP file.
 pub fn bep_lines(events: &[serde_json::Value]) -> String {
-    events
-        .iter()
-        .map(serde_json::Value::to_string)
-        .collect::<Vec<_>>()
-        .join("\n")
+    events.iter().map(serde_json::Value::to_string).collect::<Vec<_>>().join("\n")
 }
 
 /// One attempt; zero and empty fields take the defaults a real passing attempt would have.

@@ -16,11 +16,7 @@ fn fake_with(files: &[(&str, &str)]) -> FakeRuntime {
 #[test]
 fn the_areas_are_read_from_bt_json() {
     let files = area_files();
-    let fake = FakeRuntime::new(
-        files
-            .iter()
-            .map(|(path, text)| (path.as_str(), text.as_str())),
-    );
+    let fake = FakeRuntime::new(files.iter().map(|(path, text)| (path.as_str(), text.as_str())));
     let areas = Areas::load(&fake).expect("the areas load");
     assert_eq!(areas.dirs(), [AREA_DIR]);
     let area = areas.iter().next().expect("one area");
@@ -43,10 +39,7 @@ fn a_malformed_bt_json_or_a_missing_lane_table_is_refused() {
         ("{", "bt.json is malformed"),
         (r#"{ "areas": [ { "dir": "a" } ] }"#, "bt.json is malformed"),
         (r#"{ "areas": [], "extra": 1 }"#, "bt.json is malformed"),
-        (
-            r#"{ "areas": [ { "dir": "/abs", "lanes": "x.json" } ] }"#,
-            "is repo-relative",
-        ),
+        (r#"{ "areas": [ { "dir": "/abs", "lanes": "x.json" } ] }"#, "is repo-relative"),
         (
             r#"{ "areas": [ { "dir": "a", "lanes": "a/lanes.json" } ] }"#,
             "the lane table a/lanes.json is unreadable",
@@ -54,11 +47,7 @@ fn a_malformed_bt_json_or_a_missing_lane_table_is_refused() {
     ] {
         let failure = refusal(Areas::load(&fake_with(&[(AREAS_FILE, text)])));
         assert_eq!(failure.exit, exit::INFRA, "{text}");
-        assert!(
-            failure.message.contains(fragment),
-            "{text}: {}",
-            failure.message
-        );
+        assert!(failure.message.contains(fragment), "{text}: {}", failure.message);
     }
 }
 
@@ -69,14 +58,8 @@ fn by_dir_answers_the_innermost_owning_area() {
         Area::new("plugins", "plugins/lanes.json", table("")),
         Area::new("plugins/air", "plugins/air/lanes.json", table("")),
     ]);
-    assert_eq!(
-        areas.by_dir("plugins/air/shared").map(Area::dir),
-        Some("plugins/air")
-    );
-    assert_eq!(
-        areas.by_dir("plugins/air").map(Area::dir),
-        Some("plugins/air")
-    );
+    assert_eq!(areas.by_dir("plugins/air/shared").map(Area::dir), Some("plugins/air"));
+    assert_eq!(areas.by_dir("plugins/air").map(Area::dir), Some("plugins/air"));
     assert_eq!(areas.by_dir("plugins/airx").map(Area::dir), Some("plugins"));
     assert_eq!(areas.by_dir("community/x").map(Area::dir), None);
 }
@@ -90,15 +73,8 @@ fn a_lane_two_areas_declare_is_refused() {
         Area::new("b", "b/lanes.json", table(lane)),
     ]);
     let failure = refusal(areas.lane("fast"));
-    assert_eq!(
-        (failure.code.as_ref(), failure.exit),
-        ("bt_infra", exit::INFRA)
-    );
-    assert!(
-        failure.message.contains("declared by the areas a, b"),
-        "{}",
-        failure.message
-    );
+    assert_eq!((failure.code.as_ref(), failure.exit), ("bt_infra", exit::INFRA));
+    assert!(failure.message.contains("declared by the areas a, b"), "{}", failure.message);
     assert_eq!(areas.lane_names(), ["fast", "fast"]);
 
     let single = Areas::new(vec![Area::new("a", "a/lanes.json", table(lane))]);
@@ -113,16 +89,10 @@ fn a_flow_selector_without_a_catalog_is_refused() {
     let areas = Areas::new(vec![Area::new("a", "a/lanes.json", table(""))]);
     let failure = refusal(areas.with_catalog());
     assert_eq!(failure.exit, exit::USAGE);
-    assert!(
-        failure.message.contains("names a suite catalog"),
-        "{}",
-        failure.message
-    );
+    assert!(failure.message.contains("names a suite catalog"), "{}", failure.message);
     let area = areas.iter().next().expect("one area");
     assert!(
-        refusal(area.catalog())
-            .message
-            .contains("names no suite catalog"),
+        refusal(area.catalog()).message.contains("names no suite catalog"),
         "an area without a catalog refuses the catalog readers"
     );
 }
@@ -150,7 +120,6 @@ fn a_lane_target_is_a_string_or_a_list() {
     assert!(many.is_multi_target());
     assert!(lanes.get("labels").expect("labels").is_multi_target());
 
-    let empty = Lanes::parse(r#"{ "lanes": [ { "name": "x", "target": [], "extra": [] } ] }"#)
-        .expect_err("an empty list names no target");
+    let empty = Lanes::parse(r#"{ "lanes": [ { "name": "x", "target": [], "extra": [] } ] }"#).expect_err("an empty list names no target");
     assert!(empty.contains("at least one target"), "{empty}");
 }

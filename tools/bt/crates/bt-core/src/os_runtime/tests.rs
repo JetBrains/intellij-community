@@ -106,40 +106,19 @@ fn both_of_a_childs_streams_are_collected_and_its_exit_code_is_answered() {
     assert_eq!(result.exit_code, 3, "{}", result.output);
     // Merged, not one or the other: bazel puts its progress on stderr and its results on stdout, and a failed run
     // is diagnosed from both.
-    assert!(
-        result.output.contains("said on stdout"),
-        "{}",
-        result.output
-    );
-    assert!(
-        result.output.contains("said on stderr"),
-        "{}",
-        result.output
-    );
+    assert!(result.output.contains("said on stdout"), "{}", result.output);
+    assert!(result.output.contains("said on stderr"), "{}", result.output);
 }
 
 /// The tail, because a lane run's bazel output is megabytes and only its end says why it failed.
 #[test]
 fn output_is_truncated_to_its_tail() {
     let result = run_to_end(child(None, "flood"), HEARTBEAT_INTERVAL, None);
-    assert_eq!(
-        result.exit_code,
-        0,
-        "{}",
-        &result.output[..200.min(result.output.len())]
-    );
-    assert!(
-        result.output.len() <= MAX_RETAINED_OUTPUT,
-        "{}",
-        result.output.len()
-    );
+    assert_eq!(result.exit_code, 0, "{}", &result.output[..200.min(result.output.len())]);
+    assert!(result.output.len() <= MAX_RETAINED_OUTPUT, "{}", result.output.len());
     // And close to the limit: the child wrote twice it, so a tail far short of the limit would mean the trimming
     // threw away more than the head.
-    assert!(
-        result.output.len() >= MAX_RETAINED_OUTPUT - 1024,
-        "{}",
-        result.output.len()
-    );
+    assert!(result.output.len() >= MAX_RETAINED_OUTPUT - 1024, "{}", result.output.len());
     assert!(!result.output.contains(FLOOD_HEAD), "nothing was truncated");
     assert!(
         result.output.contains(FLOOD_TAIL),
@@ -174,32 +153,16 @@ fn a_command_that_cannot_start_is_an_infra_exit() {
 /// The controller's spawn, which is a refusal: a selector is resolved from inside a held lease.
 #[test]
 fn refusing_to_spawn_starts_nothing_and_says_what_it_was_asked() {
-    let argv: Vec<OsString> = ["/bin/sh", "bazel.cmd", "test", "//plugins/air/..."]
-        .map(OsString::from)
-        .into();
+    let argv: Vec<OsString> = ["/bin/sh", "bazel.cmd", "test", "//plugins/air/..."].map(OsString::from).into();
     let result = refuse_spawn(&argv);
     assert_eq!(result.exit_code, 127);
-    assert!(
-        result.output.contains("must not spawn"),
-        "{}",
-        result.output
-    );
-    assert!(
-        result.output.contains("//plugins/air/..."),
-        "{}",
-        result.output
-    );
+    assert!(result.output.contains("must not spawn"), "{}", result.output);
+    assert!(result.output.contains("//plugins/air/..."), "{}", result.output);
     // And a runtime that was never told what spawning means for it refuses too, rather than inheriting one.
     let dir = tempfile::tempdir().expect("a temporary directory");
-    let silent = OsRuntime::builder(dir.path())
-        .build()
-        .spawn(&[OsString::from("bazel")], None);
+    let silent = OsRuntime::builder(dir.path()).build().spawn(&[OsString::from("bazel")], None);
     assert_eq!(silent.exit_code, 127);
-    assert!(
-        silent.output.contains("must not spawn"),
-        "{}",
-        silent.output
-    );
+    assert!(silent.output.contains("must not spawn"), "{}", silent.output);
 }
 
 /// A long bazel run must not look hung, so the heartbeat beats while the child is alive, and never after it,
@@ -212,17 +175,10 @@ fn the_heartbeat_beats_while_the_child_runs_and_stops_with_it() {
         beats.fetch_add(1, Ordering::SeqCst);
         last.store(elapsed, Ordering::SeqCst);
     };
-    let result = run_to_end(
-        child(None, "sleep:200"),
-        Duration::from_millis(5),
-        Some(&beat),
-    );
+    let result = run_to_end(child(None, "sleep:200"), Duration::from_millis(5), Some(&beat));
     assert_eq!(result.exit_code, 0, "{}", result.output);
     let seen = beats.load(Ordering::SeqCst);
-    assert!(
-        seen > 0,
-        "nothing reported that the child was still running"
-    );
+    assert!(seen > 0, "nothing reported that the child was still running");
     assert!(last.load(Ordering::SeqCst) > 0);
     thread::sleep(Duration::from_millis(50));
     assert_eq!(
@@ -244,11 +200,7 @@ fn a_child_runs_in_the_directory_it_was_given() {
     )]
     let want = dir.path().canonicalize().expect("the directory exists");
     assert_eq!(entered.exit_code, 0, "{}", entered.output);
-    assert!(
-        entered.output.ends_with(&format!("cwd={}", want.display())),
-        "{}",
-        entered.output
-    );
+    assert!(entered.output.ends_with(&format!("cwd={}", want.display())), "{}", entered.output);
     // A directory it could not enter refuses rather than running somewhere else.
     let absent = spawn_child(Some(&dir.path().join("gone")), &child_argv(), None);
     assert_eq!(absent.exit_code, 127, "{absent:?}");
@@ -295,10 +247,7 @@ fn lines_are_split_the_way_the_bep_reader_expects() {
     let host = OsRuntime::builder(dir.path()).build();
     let file = dir.path().join("bep.json");
     std::fs::write(&file, "one\r\ntwo\n{\"trunc\r").expect("the file is writable");
-    assert_eq!(
-        host.read_lines(&file).collect::<Vec<_>>(),
-        ["one", "two", "{\"trunc\r"]
-    );
+    assert_eq!(host.read_lines(&file).collect::<Vec<_>>(), ["one", "two", "{\"trunc\r"]);
     std::fs::write(&file, "one\n").expect("the file is writable");
     assert_eq!(host.read_lines(&file).collect::<Vec<_>>(), ["one", ""]);
     assert_eq!(host.read_lines(&dir.path().join("gone")).count(), 0);
@@ -306,8 +255,7 @@ fn lines_are_split_the_way_the_bep_reader_expects() {
     let temporary = host.temp_file("avl-bt-test");
     assert!(temporary.exists());
     host.remove(&temporary).expect("the file is removable");
-    host.remove(&temporary)
-        .expect("an absent file is removed already");
+    host.remove(&temporary).expect("an absent file is removed already");
 }
 
 fn git_available() -> bool {
@@ -339,10 +287,7 @@ fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
             .arg(repo)
             .args(args)
             // Isolated from the host's own configuration, which may sign, hook or template a repository.
-            .env(
-                "GIT_CONFIG_GLOBAL",
-                if cfg!(windows) { "NUL" } else { "/dev/null" },
-            )
+            .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
             .env("GIT_CONFIG_NOSYSTEM", "1")
             .output()
             .expect("git runs");
@@ -365,17 +310,11 @@ fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
     std::fs::remove_file(repo.join("module/src/Gone.kt")).expect("remove");
 
     let module = repo.join("module");
-    let files = OsRuntime::builder(repo)
-        .build()
-        .list_files(&module)
-        .expect("git lists the module");
+    let files = OsRuntime::builder(repo).build().list_files(&module).expect("git lists the module");
 
     assert_eq!(
         files,
-        [
-            module.join("src").join("Tracked.kt"),
-            module.join("src").join("with space.kt"),
-        ]
+        [module.join("src").join("Tracked.kt"), module.join("src").join("with space.kt"),]
     );
 }
 
@@ -393,8 +332,5 @@ fn a_directory_git_cannot_list_is_an_error() {
         .build()
         .list_files(&absent)
         .expect_err("an absent directory is not listable");
-    assert!(
-        error.to_string().contains(&absent.display().to_string()),
-        "{error}"
-    );
+    assert!(error.to_string().contains(&absent.display().to_string()), "{error}");
 }

@@ -137,11 +137,7 @@ pub fn par_map<T: Sync, R: Send>(items: &[T], transform: impl Fn(&T) -> R + Sync
             .collect();
         handles
             .into_iter()
-            .flat_map(|handle| {
-                handle
-                    .join()
-                    .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
-            })
+            .flat_map(|handle| handle.join().unwrap_or_else(|panic| std::panic::resume_unwind(panic)))
             .collect()
     });
     results.sort_unstable_by_key(|(index, _)| *index);
@@ -161,10 +157,7 @@ mod tests {
     fn par_map_answers_in_input_order() {
         let items: Vec<usize> = (0..500).collect();
         let doubled = par_map(&items, |item| item * 2);
-        assert_eq!(
-            doubled,
-            items.iter().map(|item| item * 2).collect::<Vec<_>>()
-        );
+        assert_eq!(doubled, items.iter().map(|item| item * 2).collect::<Vec<_>>());
         assert!(par_map(&[] as &[usize], |item| *item).is_empty());
     }
 }

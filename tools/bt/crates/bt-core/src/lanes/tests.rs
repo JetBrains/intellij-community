@@ -9,9 +9,7 @@ use crate::runtime::Platform;
 use crate::selector::Resolution;
 
 fn lane(name: &str) -> &'static LaneSpec {
-    lanes()
-        .get(name)
-        .unwrap_or_else(|| panic!("no lane {name}"))
+    lanes().get(name).unwrap_or_else(|| panic!("no lane {name}"))
 }
 
 fn base_plan(resolution: Resolution) -> RunPlan {
@@ -67,16 +65,8 @@ fn a_single_class_runs_unsharded_and_everything_else_is_forced() {
         "{single:?}"
     );
     let whole = build_bazel_args(&base_plan(labelled("//p:t")));
-    assert!(
-        has(&whole, "--test_sharding_strategy=forced=6"),
-        "{whole:?}"
-    );
-    assert!(
-        !whole
-            .iter()
-            .any(|argument| argument.starts_with("--test_filter")),
-        "{whole:?}"
-    );
+    assert!(has(&whole, "--test_sharding_strategy=forced=6"), "{whole:?}");
+    assert!(!whole.iter().any(|argument| argument.starts_with("--test_filter")), "{whole:?}");
 }
 
 /// Each shard is another test JVM and another IDE, and the flow lanes rely on one shared instance.
@@ -111,10 +101,7 @@ fn an_explicit_shard_count_is_honoured() {
         shards: 12,
         ..base_plan(labelled("//p:t"))
     };
-    assert!(has(
-        &build_bazel_args(&plan),
-        "--test_sharding_strategy=forced=12"
-    ));
+    assert!(has(&build_bazel_args(&plan), "--test_sharding_strategy=forced=12"));
 }
 
 #[test]
@@ -124,10 +111,7 @@ fn a_package_runs_through_the_junit_filter_environment_variable() {
         ..labelled("//p:t")
     }));
     assert!(
-        has(
-            &args,
-            "--test_env=JB_TEST_JUNIT5_FILTERS=include-package=com.intellij.air.threads"
-        ),
+        has(&args, "--test_env=JB_TEST_JUNIT5_FILTERS=include-package=com.intellij.air.threads"),
         "{args:?}"
     );
 }
@@ -148,10 +132,7 @@ fn keep_going_is_added_only_for_a_multi_target_run() {
 fn cache_suppression_is_opt_in() {
     let plan = base_plan(labelled("//p:t"));
     assert!(!has(&build_bazel_args(&plan), "--cache_test_results=no"));
-    let no_cache = RunPlan {
-        no_cache: true,
-        ..plan
-    };
+    let no_cache = RunPlan { no_cache: true, ..plan };
     assert!(has(&build_bazel_args(&no_cache), "--cache_test_results=no"));
 }
 
@@ -163,10 +144,7 @@ fn the_target_precedes_caller_passthrough() {
         ..base_plan(labelled("//p:t"))
     };
     let args = build_bazel_args(&plan);
-    assert_eq!(
-        args[args.len() - 2..],
-        ["//p:t", "--test_arg=--jvm_flag=-Dfoo=bar"]
-    );
+    assert_eq!(args[args.len() - 2..], ["//p:t", "--test_arg=--jvm_flag=-Dfoo=bar"]);
 }
 
 /// About forwarding, not about the flags themselves: the lane's own extras are the expectation, so the exclusion
@@ -174,10 +152,7 @@ fn the_target_precedes_caller_passthrough() {
 #[test]
 fn lane_extras_and_test_env_names_are_forwarded() {
     let fast = lane("fast");
-    assert!(
-        !fast.extra.is_empty(),
-        "the fast lane carries no extras, so this asserts nothing"
-    );
+    assert!(!fast.extra.is_empty(), "the fast lane carries no extras, so this asserts nothing");
     let plan = RunPlan {
         extra: fast.extra.clone(),
         test_env: vec!["CLAUDE_BIN".to_owned()],
@@ -187,12 +162,7 @@ fn lane_extras_and_test_env_names_are_forwarded() {
         })
     };
     let args = build_bazel_args(&plan);
-    for expected in fast
-        .extra
-        .iter()
-        .map(String::as_str)
-        .chain(["--test_env=CLAUDE_BIN"])
-    {
+    for expected in fast.extra.iter().map(String::as_str).chain(["--test_env=CLAUDE_BIN"]) {
         assert!(has(&args, expected), "{expected} is missing from {args:?}");
     }
 }
@@ -205,10 +175,7 @@ fn the_acp_lane_forwards_folded_agent_requirements() {
         "--test_env=JUNIE_API_KEY",
         "--test_env=OPENAI_API_KEY",
     ] {
-        assert!(
-            has(&lane("acp").extra, expected),
-            "the acp lane does not forward {expected}"
-        );
+        assert!(has(&lane("acp").extra, expected), "the acp lane does not forward {expected}");
     }
 }
 
@@ -218,11 +185,7 @@ fn the_acp_lane_forwards_folded_agent_requirements() {
 #[test]
 fn the_fast_lane_builds_what_it_excludes_from_the_run() {
     let fast = lane("fast");
-    assert!(
-        has(&fast.extra, &lanes().broad_run_exclusions()),
-        "{:?}",
-        fast.extra
-    );
+    assert!(has(&fast.extra, &lanes().broad_run_exclusions()), "{:?}", fast.extra);
     let args = fast
         .build_only_args(lanes())
         .expect("the fast lane excludes targets from its run and compiles none of them");
@@ -244,9 +207,7 @@ fn every_ide_launching_lane_has_its_library_in_the_build_spawn() {
         let mut target = lane(name).targets[0].clone();
         if let Some(directory) = target.strip_suffix("/...") {
             // A lane rooted at a package runs the one target named after that package.
-            let package = directory
-                .rsplit_once('/')
-                .map_or(directory, |(_, package)| package);
+            let package = directory.rsplit_once('/').map_or(directory, |(_, package)| package);
             target = format!("{directory}:{package}_test");
         }
         let library = format!("{target}_lib");
@@ -282,18 +243,9 @@ fn no_lane_selects_its_tests_by_a_junit_filter() {
 
 #[test]
 fn each_ide_launching_lane_selects_its_own_integration_tag() {
-    assert!(has(
-        &lane("ui").extra,
-        "--test_tag_filters=air-integration-ui-flow"
-    ));
-    assert!(has(
-        &lane("gui-chat").extra,
-        "--test_tag_filters=air-integration-gui-chat"
-    ));
-    assert_eq!(
-        lane("ui-real").targets,
-        ["//plugins/air/tests/integration/ui-real:ui-real_test"]
-    );
+    assert!(has(&lane("ui").extra, "--test_tag_filters=air-integration-ui-flow"));
+    assert!(has(&lane("gui-chat").extra, "--test_tag_filters=air-integration-gui-chat"));
+    assert_eq!(lane("ui-real").targets, ["//plugins/air/tests/integration/ui-real:ui-real_test"]);
     for flag in &lane("ui").extra {
         assert!(
             !flag.ends_with("_BIN"),
@@ -306,11 +258,7 @@ fn each_ide_launching_lane_selects_its_own_integration_tag() {
         if let Some(tag) = &spec.integration_tag
             && spec.is_multi_target()
         {
-            assert!(
-                has(&spec.extra, &format!("--test_tag_filters={tag}")),
-                "lane {}",
-                spec.name
-            );
+            assert!(has(&spec.extra, &format!("--test_tag_filters={tag}")), "lane {}", spec.name);
         }
     }
 }
@@ -320,11 +268,7 @@ fn each_ide_launching_lane_selects_its_own_integration_tag() {
 fn no_lane_overrides_a_declared_runtime() {
     for spec in lanes().iter() {
         for variable in ["--test_env=PI_BIN", "--test_env=CODEX_BIN"] {
-            assert!(
-                !has(&spec.extra, variable),
-                "the {} lane forwards {variable}",
-                spec.name
-            );
+            assert!(!has(&spec.extra, variable), "the {} lane forwards {variable}", spec.name);
         }
     }
 }
@@ -334,30 +278,15 @@ fn no_lane_overrides_a_declared_runtime() {
 #[test]
 fn the_property_lane_selects_its_tag_across_the_whole_subtree() {
     let property = lane("property");
-    let tag = lanes()
-        .property_tag()
-        .expect("the table names a property tag");
+    let tag = lanes().property_tag().expect("the table names a property tag");
     assert_eq!(property.targets, ["//plugins/air/..."]);
-    assert!(
-        has(&property.extra, &format!("--test_tag_filters={tag}")),
-        "{:?}",
-        property.extra
-    );
+    assert!(has(&property.extra, &format!("--test_tag_filters={tag}")), "{:?}", property.extra);
     // Nothing about a property target makes JVM bootstrap the wrong thing to amortise, so it keeps the throughput
     // default rather than the IDE lanes' one-shard pin.
     assert_eq!(property.shards, None);
     assert!(!tag.starts_with("air-integration-"));
-    assert!(
-        !lanes()
-            .integration_category_tags()
-            .iter()
-            .any(|category| category == tag)
-    );
-    assert!(
-        !lanes()
-            .iter()
-            .any(|spec| spec.integration_tag.as_deref() == Some(tag))
-    );
+    assert!(!lanes().integration_category_tags().iter().any(|category| category == tag));
+    assert!(!lanes().iter().any(|spec| spec.integration_tag.as_deref() == Some(tag)));
     // `--lane fast` excludes these targets, so this lane is what covers them.
     assert!(lane("fast").extra.join(" ").contains(&format!("-{tag}")));
 }
@@ -369,31 +298,14 @@ fn the_property_lane_selects_its_tag_across_the_whole_subtree() {
 fn the_fast_lane_excludes_the_ci_categories_and_the_dedicated_suite_tags() {
     let fast = lane("fast");
     let joined = fast.extra.join(" ");
-    for tag in lanes()
-        .integration_category_tags()
-        .iter()
-        .chain(lanes().dedicated_suite_tags())
-    {
-        assert!(
-            joined.contains(&format!("-{tag}")),
-            "the fast lane does not exclude {tag}"
-        );
+    for tag in lanes().integration_category_tags().iter().chain(lanes().dedicated_suite_tags()) {
+        assert!(joined.contains(&format!("-{tag}")), "the fast lane does not exclude {tag}");
     }
-    for tag in lanes()
-        .iter()
-        .filter_map(|spec| spec.integration_tag.as_deref())
-    {
-        assert!(
-            !joined.contains(tag),
-            "the fast lane names the lane tag {tag}"
-        );
+    for tag in lanes().iter().filter_map(|spec| spec.integration_tag.as_deref()) {
+        assert!(!joined.contains(tag), "the fast lane names the lane tag {tag}");
     }
     // One flag, not one per axis: --test_tag_filters is last-wins.
-    let filters = fast
-        .extra
-        .iter()
-        .filter(|flag| flag.starts_with("--test_tag_filters"))
-        .count();
+    let filters = fast.extra.iter().filter(|flag| flag.starts_with("--test_tag_filters")).count();
     assert_eq!(filters, 1);
 }
 
@@ -402,18 +314,11 @@ fn the_fast_lane_excludes_the_ci_categories_and_the_dedicated_suite_tags() {
 #[test]
 fn every_dedicated_suite_tag_is_still_covered_by_a_lane() {
     for tag in lanes().dedicated_suite_tags() {
-        let covered = lanes()
-            .iter()
-            .filter(|spec| spec.name != "fast")
-            .any(|spec| {
-                // `all` carries no filters at all, so it runs everything the subtree holds.
-                (spec.extra.is_empty() && spec.is_multi_target())
-                    || has(&spec.extra, &format!("--test_tag_filters={tag}"))
-            });
-        assert!(
-            covered,
-            "{tag} is excluded from fast and selected by no lane"
-        );
+        let covered = lanes().iter().filter(|spec| spec.name != "fast").any(|spec| {
+            // `all` carries no filters at all, so it runs everything the subtree holds.
+            (spec.extra.is_empty() && spec.is_multi_target()) || has(&spec.extra, &format!("--test_tag_filters={tag}"))
+        });
+        assert!(covered, "{tag} is excluded from fast and selected by no lane");
     }
 }
 
@@ -441,9 +346,7 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
             spec.name
         );
         assert!(
-            spec.junit_tag
-                .as_deref()
-                .is_some_and(|tag| tag.starts_with("air-")),
+            spec.junit_tag.as_deref().is_some_and(|tag| tag.starts_with("air-")),
             "the integration lane {} has no JUnit tag",
             spec.name
         );
@@ -455,10 +358,7 @@ fn the_two_tag_axes_are_disjoint_and_every_lane_tag_names_a_real_lane() {
             spec.name
         );
     }
-    assert_eq!(
-        lanes().integration_lane_names(),
-        ["ui", "ui-real", "gui-chat"]
-    );
+    assert_eq!(lanes().integration_lane_names(), ["ui", "ui-real", "gui-chat"]);
 }
 
 /// The declared order is what a caller sees in the "Known lanes" refusal, and each name must be one lane.
@@ -470,8 +370,7 @@ fn lane_names_cover_every_lane_exactly_once() {
     assert_eq!(
         names,
         [
-            "fast", "property", "ui", "ui-real", "gui-chat", "headless", "all", "claude", "codex",
-            "pi", "junie", "acp"
+            "fast", "property", "ui", "ui-real", "gui-chat", "headless", "all", "claude", "codex", "pi", "junie", "acp"
         ]
     );
 }
@@ -510,18 +409,11 @@ fn wildcard_guards_keep_a_broad_run_safe() {
         "//plugins/air/tests/integration/headless/acp/...",
         "//plugins/air/tests/integration/...",
     ] {
-        assert_eq!(
-            wildcard_guards(areas(), &labels(&[label])),
-            Vec::<String>::new(),
-            "{label}"
-        );
+        assert_eq!(wildcard_guards(areas(), &labels(&[label])), Vec::<String>::new(), "{label}");
     }
     let mixed = wildcard_guards(
         areas(),
-        &labels(&[
-            "//plugins/air/tests/integration/...",
-            "//plugins/air/shared/core/...",
-        ]),
+        &labels(&["//plugins/air/tests/integration/...", "//plugins/air/shared/core/..."]),
     );
     assert!(has(&mixed, "--build_tests_only"), "{mixed:?}");
     // An empty list is not "all integration": guarding it is the safe reading.
@@ -532,22 +424,15 @@ fn wildcard_guards_keep_a_broad_run_safe() {
 #[test]
 fn wildcard_guards_come_from_the_areas() {
     let labels = ["//plugins/air/shared/core/...".to_owned()];
-    assert_eq!(
-        wildcard_guards(&Areas::default(), &labels),
-        Vec::<String>::new()
-    );
+    assert_eq!(wildcard_guards(&Areas::default(), &labels), Vec::<String>::new());
 }
 
 /// Passthrough args land last and win, so this flag used to redirect the events away from the file the wrapper then
 /// parsed, reported as INFRA on a run that had in fact passed.
 #[test]
 fn bep_override_adopts_the_callers_path() {
-    let over =
-        |values: &[&str]| bep_override(&values.iter().map(ToString::to_string).collect::<Vec<_>>());
-    assert_eq!(
-        over(&["--build_event_json_file=/tmp/mine.json"]).as_deref(),
-        Some("/tmp/mine.json")
-    );
+    let over = |values: &[&str]| bep_override(&values.iter().map(ToString::to_string).collect::<Vec<_>>());
+    assert_eq!(over(&["--build_event_json_file=/tmp/mine.json"]).as_deref(), Some("/tmp/mine.json"));
     assert_eq!(
         over(&["--build_event_json_file", "/tmp/mine.json"]).as_deref(),
         Some("/tmp/mine.json")

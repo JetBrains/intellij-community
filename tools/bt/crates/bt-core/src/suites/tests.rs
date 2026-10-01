@@ -17,10 +17,7 @@ fn selector(raw: &str) -> Selector {
 
 /// The bazel argv a settled suite run becomes, the way the run builds it: the lane owns the flags and the shards.
 fn argv_of(resolution: &Resolution) -> Vec<String> {
-    let lane = resolution
-        .lane
-        .as_deref()
-        .and_then(|lane| lanes().get(lane));
+    let lane = resolution.lane.as_deref().and_then(|lane| lanes().get(lane));
     build_bazel_args(&RunPlan {
         resolution: resolution.clone(),
         extra: lane.map(|lane| lane.extra.clone()).unwrap_or_default(),
@@ -49,10 +46,7 @@ fn a_flow_selector_runs_its_lane_narrowed_to_its_suites_classes() {
         &ResolutionInputs::new(&fake, areas()),
     )
     .expect("resolves");
-    assert_eq!(
-        resolution.labels,
-        ["//plugins/air/tests/integration/ui-real:ui-real_test"]
-    );
+    assert_eq!(resolution.labels, ["//plugins/air/tests/integration/ui-real:ui-real_test"]);
     assert_eq!(
         suites_of(&resolution),
         ["AirNewSessionTerminalGeneratedFlowUiTest (new-session-terminal, lane ui-real)"]
@@ -72,12 +66,7 @@ fn a_flow_selector_runs_its_lane_narrowed_to_its_suites_classes() {
         );
     }
     // A class filter selects the suites, so no --test_filter may narrow the run a second time.
-    assert!(
-        !argv
-            .iter()
-            .any(|argument| argument.starts_with("--test_filter")),
-        "{argv:?}"
-    );
+    assert!(!argv.iter().any(|argument| argument.starts_with("--test_filter")), "{argv:?}");
     assert!(fake.spawned().is_empty());
 }
 
@@ -87,27 +76,21 @@ fn a_flow_selector_runs_its_lane_narrowed_to_its_suites_classes() {
 fn a_flow_of_two_lanes_is_refused_until_lane_settles_it() {
     let flow = selector("flow-manage-launch-preset");
     let failure = refusal(resolve_suite_run(&catalog(), area(), &flow, None));
-    assert_eq!(
-        (failure.code.as_ref(), failure.exit),
-        ("affected_lanes_ambiguous", exit::USAGE)
-    );
+    assert_eq!((failure.code.as_ref(), failure.exit), ("affected_lanes_ambiguous", exit::USAGE));
     assert!(
-        failure.message.contains(
-            "the scenarios of flow-manage-launch-preset reach 2 suite(s): ui 1, gui-chat 1"
-        ),
+        failure
+            .message
+            .contains("the scenarios of flow-manage-launch-preset reach 2 suite(s): ui 1, gui-chat 1"),
         "{}",
         failure.message
     );
     assert!(
-        failure
-            .message
-            .contains("pass --lane with one of ui, gui-chat"),
+        failure.message.contains("pass --lane with one of ui, gui-chat"),
         "{}",
         failure.message
     );
 
-    let settled =
-        resolve_suite_run(&catalog(), area(), &flow, Some("ui")).expect("--lane settles it");
+    let settled = resolve_suite_run(&catalog(), area(), &flow, Some("ui")).expect("--lane settles it");
     assert_eq!(settled.labels, ["//plugins/air/tests/integration/ui/..."]);
     assert!(argv_of(&settled).contains(&"--test_tag_filters=air-integration-ui-flow".to_owned()));
     assert_eq!(
@@ -115,12 +98,7 @@ fn a_flow_of_two_lanes_is_refused_until_lane_settles_it() {
         [r"include-classname=(^|.*\.)AirManageLaunchPresetQuickStartGeneratedFlowUiTest$"]
     );
 
-    let unreached = refusal(resolve_suite_run(
-        &catalog(),
-        area(),
-        &flow,
-        Some("ui-real"),
-    ));
+    let unreached = refusal(resolve_suite_run(&catalog(), area(), &flow, Some("ui-real")));
     assert_eq!(unreached.code, "no_affected_suite");
     assert!(
         unreached
@@ -134,19 +112,13 @@ fn a_flow_of_two_lanes_is_refused_until_lane_settles_it() {
 /// A suite selector is that one suite, on its own lane, whatever else its flow reaches.
 #[test]
 fn a_suite_selector_runs_its_one_suite() {
-    let resolution = resolve_suite_run(&catalog(), area(), &selector("manage-launch-preset"), None)
-        .expect("resolves");
-    assert_eq!(
-        resolution.labels,
-        ["//plugins/air/tests/integration/gui-chat/..."]
-    );
+    let resolution = resolve_suite_run(&catalog(), area(), &selector("manage-launch-preset"), None).expect("resolves");
+    assert_eq!(resolution.labels, ["//plugins/air/tests/integration/gui-chat/..."]);
     assert_eq!(
         suites_of(&resolution),
         ["AirManageLaunchPresetGeneratedFlowUiTest (manage-launch-preset, lane gui-chat)"]
     );
-    assert!(
-        argv_of(&resolution).contains(&"--test_tag_filters=air-integration-gui-chat".to_owned())
-    );
+    assert!(argv_of(&resolution).contains(&"--test_tag_filters=air-integration-gui-chat".to_owned()));
     assert!(resolution.multi_target);
 }
 
@@ -176,10 +148,7 @@ fn an_implementation_flow_selects_the_suites_of_its_story_flows() {
         &Selector::new(SelectorKind::Flow, "flow-new-session-launch"),
     )
     .expect("named");
-    assert_eq!(
-        classes_of(&affected),
-        "ui-real/AirNewSessionTerminalGeneratedFlowUiTest"
-    );
+    assert_eq!(classes_of(&affected), "ui-real/AirNewSessionTerminalGeneratedFlowUiTest");
     assert_eq!(affected.suites[0].via, ["flow:flow-new-session-launch"]);
 }
 
@@ -189,10 +158,7 @@ fn an_implementation_flow_selects_the_suites_of_its_story_flows() {
 fn an_unknown_id_names_the_nearest_and_an_uncovered_flow_says_no_suite_tests_it() {
     let mut tree = flow_catalog_tree();
     let text_dir = lanes().catalog().expect("a catalog").flow_text_dir;
-    tree.insert(
-        format!("{text_dir}/flow-java-to-kotlin.txt"),
-        "Java to Kotlin\n".to_owned(),
-    );
+    tree.insert(format!("{text_dir}/flow-java-to-kotlin.txt"), "Java to Kotlin\n".to_owned());
     tree.insert(format!("{text_dir}/index.txt"), "flows\n".to_owned());
     let flow_hint = format!("(no similar id; a flow id is a story flow under {text_dir}");
     let suite_hint = format!(
@@ -200,10 +166,7 @@ fn an_unknown_id_names_the_nearest_and_an_uncovered_flow_says_no_suite_tests_it(
         lanes().catalog().expect("a catalog").flow_profile_dir
     );
     for (raw, fragment) in [
-        (
-            "flow-manage-launch-prest",
-            "did you mean  flow-manage-launch-preset",
-        ),
+        ("flow-manage-launch-prest", "did you mean  flow-manage-launch-preset"),
         ("flow-java-to-kotln", "did you mean  flow-java-to-kotlin"),
         ("manage-launch-prest", "did you mean  manage-launch-preset"),
         ("flow-nothing-like-it", flow_hint.as_str()),
@@ -211,16 +174,8 @@ fn an_unknown_id_names_the_nearest_and_an_uncovered_flow_says_no_suite_tests_it(
     ] {
         let fake = FakeRuntime::with_tree(&tree);
         let failure = refusal(resolve_suite_run(&fake, area(), &selector(raw), None));
-        assert_eq!(
-            (failure.code.as_ref(), failure.exit),
-            ("usage", exit::USAGE),
-            "{raw}"
-        );
-        assert!(
-            failure.message.contains(fragment),
-            "{raw}: {}",
-            failure.message
-        );
+        assert_eq!((failure.code.as_ref(), failure.exit), ("usage", exit::USAGE), "{raw}");
+        assert!(failure.message.contains(fragment), "{raw}: {}", failure.message);
     }
 
     let failure = refusal(resolve_suite_run(
@@ -229,14 +184,11 @@ fn an_unknown_id_names_the_nearest_and_an_uncovered_flow_says_no_suite_tests_it(
         &selector("flow-java-to-kotlin"),
         None,
     ));
-    assert_eq!(
-        (failure.code.as_ref(), failure.exit),
-        ("no_affected_suite", exit::USAGE)
-    );
+    assert_eq!((failure.code.as_ref(), failure.exit), ("no_affected_suite", exit::USAGE));
     assert!(
-        failure.message.contains(&format!(
-            "flow-java-to-kotlin: {REASON_NO_SUITE_TESTS_FLOW}"
-        )),
+        failure
+            .message
+            .contains(&format!("flow-java-to-kotlin: {REASON_NO_SUITE_TESTS_FLOW}")),
         "{}",
         failure.message
     );
@@ -249,8 +201,7 @@ fn an_unknown_id_names_the_nearest_and_an_uncovered_flow_says_no_suite_tests_it(
 /// The listing shows every lane a flow reaches, before `--lane` narrows it.
 #[test]
 fn list_names_every_suite_of_a_flow() {
-    let affected =
-        named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
+    let affected = named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
     let text = affected_text(&affected);
     for expected in [
         "gui-chat AirManageLaunchPresetGeneratedFlowUiTest (manage-launch-preset) via flow:flow-manage-launch-preset",
@@ -272,18 +223,9 @@ fn a_scenario_walks_the_flows_of_its_steps() {
             String::new(),
         ],
     };
-    assert!(
-        scenario.walks("flow-add-to-agent-context")
-            && scenario.walks("flow-send-message-with-context")
-    );
+    assert!(scenario.walks("flow-add-to-agent-context") && scenario.walks("flow-send-message-with-context"));
     assert!(!scenario.walks("flow-rename-session") && !scenario.walks(""));
-    assert_eq!(
-        scenario.flows(),
-        [
-            "flow-add-to-agent-context",
-            "flow-send-message-with-context"
-        ]
-    );
+    assert_eq!(scenario.flows(), ["flow-add-to-agent-context", "flow-send-message-with-context"]);
 }
 
 /// A generated class name is embedded in the pattern unquoted, so a name that is not a plain identifier is refused
@@ -292,9 +234,7 @@ fn a_scenario_walks_the_flows_of_its_steps() {
 fn a_suite_class_filter_accepts_only_a_plain_identifier() {
     assert_eq!(
         suite_class_filters(&["AirOneGeneratedFlowUiTest".to_owned()], "ui"),
-        Ok(vec![
-            r"include-classname=(^|.*\.)AirOneGeneratedFlowUiTest$".to_owned()
-        ])
+        Ok(vec![r"include-classname=(^|.*\.)AirOneGeneratedFlowUiTest$".to_owned()])
     );
     for corrupt in ["a.B", "B$Nested", r"B\E", ""] {
         let failure = refusal(suite_class_filters(&[corrupt.to_owned()], "ui"));
@@ -316,46 +256,30 @@ fn the_no_suite_refusal_names_the_first_paths_and_counts_the_rest() {
         ..Affected::default()
     };
     let failure = refusal(choose_lane(area(), &affected, None, CHANGED_PATHS_SUBJECT));
-    assert!(
-        failure.message.contains("and 3 more"),
-        "{}",
-        failure.message
-    );
+    assert!(failure.message.contains("and 3 more"), "{}", failure.message);
     assert!(!failure.message.contains("N12.kt"), "{}", failure.message);
     assert!(failure.message.contains("[@test]"), "{}", failure.message);
     let details = failure.details.expect("the details carry the answer");
-    assert_eq!(
-        details["affected"]["unmapped"].as_array().map(Vec::len),
-        Some(13)
-    );
+    assert_eq!(details["affected"]["unmapped"].as_array().map(Vec::len), Some(13));
 }
 
 /// A settled answer is its one lane, and the counts follow the declared lane order rather than the sorted one.
 #[test]
 fn one_lane_is_chosen_and_the_counts_follow_the_declared_order() {
-    let affected =
-        named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
+    let affected = named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
     assert_eq!(affected.lanes, ["gui-chat", "ui"]);
     let counts = lane_counts(area(), &affected);
     assert_eq!(lane_counts_text(&counts), "ui 1, gui-chat 1");
     assert_eq!(counted_lane_names(&counts), ["ui", "gui-chat"]);
-    let single =
-        named_suites(&catalog(), area(), &selector("new-session-terminal")).expect("named");
-    assert_eq!(
-        choose_lane(area(), &single, None, "x"),
-        Ok("ui-real".to_owned())
-    );
-    assert_eq!(
-        choose_lane(area(), &affected, Some("gui-chat"), "x"),
-        Ok("gui-chat".to_owned())
-    );
+    let single = named_suites(&catalog(), area(), &selector("new-session-terminal")).expect("named");
+    assert_eq!(choose_lane(area(), &single, None, "x"), Ok("ui-real".to_owned()));
+    assert_eq!(choose_lane(area(), &affected, Some("gui-chat"), "x"), Ok("gui-chat".to_owned()));
 }
 
 /// An answer reads back as the answer it was, so a caller that parses the JSON text sees every field.
 #[test]
 fn an_answer_reads_back_from_its_json_text() {
-    let affected =
-        named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
+    let affected = named_suites(&catalog(), area(), &selector("flow-manage-launch-preset")).expect("named");
     let read: Affected = serde_json::from_str(&affected.to_json_text()).expect("reads back");
     assert_eq!(read, affected);
 }

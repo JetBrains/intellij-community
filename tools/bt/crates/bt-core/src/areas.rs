@@ -70,10 +70,7 @@ impl Area {
 
     /// Whether a repo-relative path is the area's directory or a path under it.
     pub fn owns(&self, path: &str) -> bool {
-        path == self.dir
-            || path
-                .strip_prefix(&self.dir)
-                .is_some_and(|rest| rest.starts_with('/'))
+        path == self.dir || path.strip_prefix(&self.dir).is_some_and(|rest| rest.starts_with('/'))
     }
 }
 
@@ -111,8 +108,7 @@ impl Areas {
         let text = runtime
             .read_text_file(&file)
             .map_err(|error| fail_infra(format!("{AREAS_FILE} is unreadable: {error}")))?;
-        let held: AreasFile = serde_json::from_str(&text)
-            .map_err(|error| fail_infra(format!("{AREAS_FILE} is malformed: {error}")))?;
+        let held: AreasFile = serde_json::from_str(&text).map_err(|error| fail_infra(format!("{AREAS_FILE} is malformed: {error}")))?;
         let mut areas = Vec::with_capacity(held.areas.len());
         for entry in held.areas {
             let dir = entry.dir.trim_end_matches('/').to_owned();
@@ -143,10 +139,7 @@ impl Areas {
 
     /// The area that owns a repo-relative path. A nested area wins over the area around it.
     pub fn by_dir(&self, path: &str) -> Option<&Area> {
-        self.areas
-            .iter()
-            .filter(|area| area.owns(path))
-            .max_by_key(|area| area.dir.len())
+        self.areas.iter().filter(|area| area.owns(path)).max_by_key(|area| area.dir.len())
     }
 
     /// The lane of that name and its area, or `None` for a name no area declares.
@@ -154,40 +147,25 @@ impl Areas {
     /// Two areas that declare one name are refused rather than chosen between: which of the two runs would depend
     /// on the order of `bt.json`, and the caller could not tell from the command which one it got.
     pub fn lane(&self, name: &str) -> Result<Option<(&Area, &LaneSpec)>, Refusal> {
-        let found: Vec<(&Area, &LaneSpec)> = self
-            .areas
-            .iter()
-            .filter_map(|area| Some((area, area.lanes.get(name)?)))
-            .collect();
+        let found: Vec<(&Area, &LaneSpec)> = self.areas.iter().filter_map(|area| Some((area, area.lanes.get(name)?))).collect();
         match found.as_slice() {
             [] => Ok(None),
             [only] => Ok(Some(*only)),
             _ => Err(fail_infra(format!(
                 "lane {name} is declared by the areas {}; rename it in one of their lane tables",
-                found
-                    .iter()
-                    .map(|(area, _)| area.dir.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                found.iter().map(|(area, _)| area.dir.as_str()).collect::<Vec<_>>().join(", ")
             ))),
         }
     }
 
     /// Every lane name of every area, in listed order.
     pub fn lane_names(&self) -> Vec<&str> {
-        self.areas
-            .iter()
-            .flat_map(|area| area.lanes.names())
-            .collect()
+        self.areas.iter().flat_map(|area| area.lanes.names()).collect()
     }
 
     /// The one area whose lane table names a suite catalog, which a flow or a suite selector reads.
     pub fn with_catalog(&self) -> Result<&Area, Refusal> {
-        let found: Vec<&Area> = self
-            .areas
-            .iter()
-            .filter(|area| area.lanes.catalog().is_some())
-            .collect();
+        let found: Vec<&Area> = self.areas.iter().filter(|area| area.lanes.catalog().is_some()).collect();
         match found.as_slice() {
             [only] => Ok(only),
             [] => Err(fail_usage(format!(
@@ -195,11 +173,7 @@ impl Areas {
             ))),
             _ => Err(fail_infra(format!(
                 "the areas {} each name a suite catalog; {AREAS_FILE} allows one",
-                found
-                    .iter()
-                    .map(|area| area.dir.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                found.iter().map(|area| area.dir.as_str()).collect::<Vec<_>>().join(", ")
             ))),
         }
     }

@@ -1,0 +1,3 @@
+# A copy of community/build/dev-dist-tools/rustfmt.toml until a sync script writes it.
+edition = "2024"
+max_width = 140

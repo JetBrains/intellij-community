@@ -4,17 +4,13 @@ use serde_json::json;
 use super::*;
 use crate::bep::parse_bep;
 use crate::fake::{
-    AttemptSpec, BUCKETING_XML, FakeRuntime, attempt, bep_lines, case, failing, suite, suite_xml,
-    test_result_event, wrapper_xml,
+    AttemptSpec, BUCKETING_XML, FakeRuntime, attempt, bep_lines, case, failing, suite, suite_xml, test_result_event, wrapper_xml,
 };
 
 #[test]
 fn relativized_paths_keep_first_markers_and_unmatched_values() {
     for (path, want) in [
-        (
-            r"C:\cache\testlogs\module\test.log",
-            "out/bazel-testlogs/module/test.log",
-        ),
+        (r"C:\cache\testlogs\module\test.log", "out/bazel-testlogs/module/test.log"),
         (
             "/cache/testlogs/outer/testlogs/test.log",
             "out/bazel-testlogs/outer/testlogs/test.log",
@@ -24,26 +20,15 @@ fn relativized_paths_keep_first_markers_and_unmatched_values() {
         assert_eq!(relativize_testlogs(path), want, "{path}");
     }
     // An unmatched path is answered verbatim, its own separators included.
-    for path in [
-        "",
-        "/cache/testlogs",
-        "testlogs/test.log",
-        r"C:\cache\other\test.log",
-    ] {
+    for path in ["", "/cache/testlogs", "testlogs/test.log", r"C:\cache\other\test.log"] {
         assert_eq!(relativize_testlogs(path), path);
     }
     for (path, want) in [
         ("/cache/execroot/_main/src/file.kt", "src/file.kt"),
-        (
-            "/cache/execroot/_main/other/execroot/_main/file.kt",
-            "other/execroot/_main/file.kt",
-        ),
+        ("/cache/execroot/_main/other/execroot/_main/file.kt", "other/execroot/_main/file.kt"),
         ("/execroot/_main/", ""),
         ("/execroot/_main", "/execroot/_main"),
-        (
-            r"C:\execroot\_main\src\file.kt",
-            r"C:\execroot\_main\src\file.kt",
-        ),
+        (r"C:\execroot\_main\src\file.kt", r"C:\execroot\_main\src\file.kt"),
         ("", ""),
     ] {
         assert_eq!(relativize_source_path(path), want, "{path}");
@@ -72,13 +57,7 @@ fn plain_target() -> TargetResult {
     classify_target(|_| {})
 }
 
-fn classified(
-    bazel_exit: i32,
-    bep: &BepSummary,
-    targets: &[TargetResult],
-    build_errors: &[String],
-    degraded: bool,
-) -> (RunStatus, u8) {
+fn classified(bazel_exit: i32, bep: &BepSummary, targets: &[TargetResult], build_errors: &[String], degraded: bool) -> (RunStatus, u8) {
     classify_run(ClassifyInput {
         bazel_exit,
         bep,
@@ -111,24 +90,12 @@ fn classify_run_maps_every_outcome_to_its_status_and_exit() {
         (
             // A retry that passed is a pass: the run's verdict is what the last attempt says.
             "a flaky but passed run",
-            classified(
-                0,
-                &empty_bep(),
-                &[classify_target(|target| target.flaky = 1)],
-                &[],
-                false,
-            ),
+            classified(0, &empty_bep(), &[classify_target(|target| target.flaky = 1)], &[], false),
             (RunStatus::Pass, exit::GREEN),
         ),
         (
             "failed tests",
-            classified(
-                3,
-                &empty_bep(),
-                &[classify_target(|target| target.failed = 2)],
-                &[],
-                false,
-            ),
+            classified(3, &empty_bep(), &[classify_target(|target| target.failed = 2)], &[], false),
             (RunStatus::Fail, exit::TEST_FAILED),
         ),
         (
@@ -169,13 +136,7 @@ fn classify_run_maps_every_outcome_to_its_status_and_exit() {
         ),
         (
             "a compile failure",
-            classified(
-                1,
-                &failed_to_build("//p:t"),
-                &[],
-                &["a.kt:1:1: error: nope".to_owned()],
-                false,
-            ),
+            classified(1, &failed_to_build("//p:t"), &[], &["a.kt:1:1: error: nope".to_owned()], false),
             (RunStatus::BuildFailed, exit::BUILD_FAILED),
         ),
         (
@@ -186,13 +147,7 @@ fn classify_run_maps_every_outcome_to_its_status_and_exit() {
         (
             // A build failure has no test count to be zero, so it must be classified before the count is read.
             "a build failure with tests reported anyway",
-            classified(
-                1,
-                &failed_to_build("//p:other"),
-                &[plain_target()],
-                &[],
-                false,
-            ),
+            classified(1, &failed_to_build("//p:other"), &[plain_target()], &[], false),
             (RunStatus::BuildFailed, exit::BUILD_FAILED),
         ),
         (
@@ -233,10 +188,7 @@ fn bep_of(fake: &FakeRuntime, events: &[serde_json::Value]) -> BepSummary {
 }
 
 fn at(label: &'static str, xml: &'static str) -> AttemptSpec {
-    AttemptSpec {
-        xml,
-        ..attempt(label)
-    }
+    AttemptSpec { xml, ..attempt(label) }
 }
 
 fn target_completed_failure(label: &str) -> serde_json::Value {
@@ -281,10 +233,7 @@ fn test_counts_are_summed_across_shards_and_reported_as_one_target() {
 #[test]
 fn a_bucketing_only_shard_contributes_nothing_without_zeroing_the_run() {
     let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/testlogs/p/t/s1/test.xml",
-        &suite_xml(&suite("FooTest", vec![case("a")])),
-    );
+    fake.put_absolute("/exec/testlogs/p/t/s1/test.xml", &suite_xml(&suite("FooTest", vec![case("a")])));
     fake.put_absolute("/exec/testlogs/p/t/s2/test.xml", BUCKETING_XML);
     let bep = bep_of(
         &fake,
@@ -300,27 +249,15 @@ fn a_bucketing_only_shard_contributes_nothing_without_zeroing_the_run() {
         ],
     );
     let result = collect_results(&fake, &bep, 5000, 0, "");
-    assert_eq!(
-        (result.targets[0].tests, result.status),
-        (1, RunStatus::Pass)
-    );
+    assert_eq!((result.targets[0].tests, result.status), (1, RunStatus::Pass));
 }
 
 #[test]
 fn an_all_bucketing_run_is_no_tests() {
     let fake = FakeRuntime::new([]);
     fake.put_absolute("/exec/testlogs/p/t/s1/test.xml", BUCKETING_XML);
-    let bep = bep_of(
-        &fake,
-        &[test_result_event(&at(
-            "//p:t",
-            "/exec/testlogs/p/t/s1/test.xml",
-        ))],
-    );
-    assert_eq!(
-        collect_results(&fake, &bep, 5000, 0, "").status,
-        RunStatus::NoTests
-    );
+    let bep = bep_of(&fake, &[test_result_event(&at("//p:t", "/exec/testlogs/p/t/s1/test.xml"))]);
+    assert_eq!(collect_results(&fake, &bep, 5000, 0, "").status, RunStatus::NoTests);
 }
 
 #[test]
@@ -333,10 +270,7 @@ fn failures_are_collected_and_the_log_path_is_relativized() {
             system_out: "x".repeat(50_000),
             ..suite(
                 "FooTest",
-                vec![
-                    case("a"),
-                    failing("b", "E", "boom", "at com.intellij.air.F.m(F.kt:1)"),
-                ],
+                vec![case("a"), failing("b", "E", "boom", "at com.intellij.air.F.m(F.kt:1)")],
             )
         }),
     );
@@ -349,16 +283,9 @@ fn failures_are_collected_and_the_log_path_is_relativized() {
         })],
     );
     let result = collect_results(&fake, &bep, 5000, 3, "");
+    assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
     assert_eq!(
-        (result.status, result.exit_code),
-        (RunStatus::Fail, exit::TEST_FAILED)
-    );
-    assert_eq!(
-        result
-            .failures
-            .iter()
-            .map(|failure| failure.name.as_str())
-            .collect::<Vec<_>>(),
+        result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
         ["b"]
     );
     assert_eq!(
@@ -370,10 +297,7 @@ fn failures_are_collected_and_the_log_path_is_relativized() {
 #[test]
 fn the_failing_shard_log_wins_over_a_green_one() {
     let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/testlogs/p/t/s1/test.xml",
-        &suite_xml(&suite("FooTest", vec![case("a")])),
-    );
+    fake.put_absolute("/exec/testlogs/p/t/s1/test.xml", &suite_xml(&suite("FooTest", vec![case("a")])));
     fake.put_absolute(
         "/exec/testlogs/p/t/s2/test.xml",
         &suite_xml(&suite("BarTest", vec![failing("b", "E", "boom", "")])),
@@ -395,20 +319,14 @@ fn the_failing_shard_log_wins_over_a_green_one() {
         ],
     );
     let result = collect_results(&fake, &bep, 5000, 3, "");
-    assert_eq!(
-        result.targets[0].log_path.as_deref(),
-        Some("out/bazel-testlogs/p/t/s2/test.log")
-    );
+    assert_eq!(result.targets[0].log_path.as_deref(), Some("out/bazel-testlogs/p/t/s2/test.log"));
 }
 
 /// Shards run concurrently, so the target costs its slowest one, not their sum.
 #[test]
 fn a_targets_duration_is_its_slowest_shard() {
     let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/testlogs/p/t/test.xml",
-        &suite_xml(&suite("FooTest", vec![case("a")])),
-    );
+    fake.put_absolute("/exec/testlogs/p/t/test.xml", &suite_xml(&suite("FooTest", vec![case("a")])));
     let shard = |shard: i64, duration_ms: u64| {
         test_result_event(&AttemptSpec {
             shard,
@@ -417,10 +335,7 @@ fn a_targets_duration_is_its_slowest_shard() {
         })
     };
     let bep = bep_of(&fake, &[shard(1, 4_000), shard(2, 31_000), shard(3, 9_000)]);
-    assert_eq!(
-        collect_results(&fake, &bep, 40_000, 0, "").targets[0].duration_ms,
-        31_000
-    );
+    assert_eq!(collect_results(&fake, &bep, 40_000, 0, "").targets[0].duration_ms, 31_000);
 }
 
 /// Only the final attempt counts. Counting the failed first attempt too would report a red run that passed.
@@ -431,10 +346,7 @@ fn only_the_final_attempt_counts_and_the_retry_is_reported_as_flaky() {
         "/exec/testlogs/p/t/a1/test.xml",
         &suite_xml(&suite("FooTest", vec![failing("a", "E", "boom", "")])),
     );
-    fake.put_absolute(
-        "/exec/testlogs/p/t/a2/test.xml",
-        &suite_xml(&suite("FooTest", vec![case("a")])),
-    );
+    fake.put_absolute("/exec/testlogs/p/t/a2/test.xml", &suite_xml(&suite("FooTest", vec![case("a")])));
     let bep = bep_of(
         &fake,
         &[
@@ -479,10 +391,7 @@ fn a_cached_replay_still_reports_the_real_test_count() {
         })],
     );
     let result = collect_results(&fake, &bep, 300, 0, "");
-    assert_eq!(
-        (result.targets[0].tests, result.targets[0].cached),
-        (2, true)
-    );
+    assert_eq!((result.targets[0].tests, result.targets[0].cached), (2, true));
 }
 
 /// The synthesized wrapper suite carries the runner's exit code and a whole log in `<system-out>`. Reporting it as
@@ -506,10 +415,7 @@ fn the_synthesized_wrapper_suite_becomes_no_tests() {
         })],
     );
     let result = collect_results(&fake, &bep, 5000, 3, "");
-    assert_eq!(
-        (result.status, result.exit_code),
-        (RunStatus::NoTests, exit::NO_TESTS)
-    );
+    assert_eq!((result.status, result.exit_code), (RunStatus::NoTests, exit::NO_TESTS));
     assert!(result.failures.is_empty(), "{:?}", result.failures);
     assert_eq!(result.targets[0].wrapper_exit_code, Some(42));
 }
@@ -554,10 +460,7 @@ fn compiler_diagnostics_are_read_out_of_the_captured_output() {
     let output = "Kotlinc Runner: Error: Unresolved reference 'nope'.\n\
                   \t/c/execroot/_main/plugins/air/x/testSrc/FooTest.kt:41:15\n";
     let result = collect_results(&fake, &bep, 5000, 1, output);
-    assert_eq!(
-        (result.status, result.exit_code),
-        (RunStatus::BuildFailed, exit::BUILD_FAILED)
-    );
+    assert_eq!((result.status, result.exit_code), (RunStatus::BuildFailed, exit::BUILD_FAILED));
     assert_eq!(
         result.build_errors,
         ["plugins/air/x/testSrc/FooTest.kt:41:15: error: Unresolved reference 'nope'."]
@@ -614,11 +517,7 @@ fn a_target_that_failed_to_build_still_appears() {
     let bep = bep_of(&fake, &[target_completed_failure("//p:broken")]);
     let result = collect_results(&fake, &bep, 5000, 1, "");
     assert_eq!(
-        result
-            .targets
-            .iter()
-            .map(|target| target.label.as_str())
-            .collect::<Vec<_>>(),
+        result.targets.iter().map(|target| target.label.as_str()).collect::<Vec<_>>(),
         ["//p:broken"]
     );
     // Zero shards is what keeps it out of the cost line, which reports what actually ran.
@@ -641,10 +540,7 @@ fn the_suite_header_is_trusted_when_there_are_no_per_case_failures() {
         })],
     );
     let result = collect_results(&fake, &bep, 5000, 3, "");
-    assert_eq!(
-        (result.targets[0].failed, result.status),
-        (2, RunStatus::Fail)
-    );
+    assert_eq!((result.targets[0].failed, result.status), (2, RunStatus::Fail));
 }
 
 #[test]
@@ -681,7 +577,5 @@ fn parse_compile_errors_reads_the_worker_and_the_inline_forms() {
         ]
     );
 
-    assert!(
-        parse_compile_errors("INFO: Build completed successfully, 2 total actions\n").is_empty()
-    );
+    assert!(parse_compile_errors("INFO: Build completed successfully, 2 total actions\n").is_empty());
 }

@@ -7,9 +7,7 @@ use std::str::FromStr;
 use crate::areas::AREAS_FILE;
 use crate::refusal::{Refusal, fail_usage};
 use crate::runtime::{Platform, Runtime};
-use crate::scan::{
-    Candidate, Index, ResolutionInputs, TestRoot, derive_package, read_dir_or_none, read_text,
-};
+use crate::scan::{Candidate, Index, ResolutionInputs, TestRoot, derive_package, read_dir_or_none, read_text};
 use crate::suites::{AffectedSuite, resolve_suite_run};
 use crate::{paths, regex, runtime::repo_file};
 
@@ -129,9 +127,7 @@ impl Selector {
         };
         if let Some(kind) = kind {
             if method.is_some() {
-                return Err(fail_usage(format!(
-                    "A {kind} selector cannot carry a #method"
-                )));
+                return Err(fail_usage(format!("A {kind} selector cannot carry a #method")));
             }
             return Ok(Self::new(kind, head));
         }
@@ -184,11 +180,7 @@ fn is_package_name(value: &str) -> bool {
 ///
 /// The threshold scales with the wanted name's length, because a one-character typo in `FooTest` and in
 /// `AgentPromptChangesTreeContextContributorTest` are equally likely and only the second can absorb three.
-pub fn suggest_names<'k>(
-    wanted: &str,
-    known: impl IntoIterator<Item = &'k str>,
-    limit: usize,
-) -> Vec<String> {
+pub fn suggest_names<'k>(wanted: &str, known: impl IntoIterator<Item = &'k str>, limit: usize) -> Vec<String> {
     let threshold = (wanted.len() / 4).max(2);
     let wanted = wanted.to_lowercase();
     let mut matches: Vec<(usize, &str)> = known
@@ -197,11 +189,7 @@ pub fn suggest_names<'k>(
         .filter(|(distance, _)| *distance <= threshold)
         .collect();
     matches.sort_unstable();
-    matches
-        .into_iter()
-        .take(limit)
-        .map(|(_, name)| name.to_owned())
-        .collect()
+    matches.into_iter().take(limit).map(|(_, name)| name.to_owned()).collect()
 }
 
 /// What a selector became: the targets to run and the filter to run them with.
@@ -242,20 +230,13 @@ pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<Stri
 /// The class simple name a name selector asks for.
 pub fn wanted_simple_name(selector: &Selector) -> &str {
     match selector.kind {
-        SelectorKind::Fqn => selector
-            .name
-            .rsplit_once('.')
-            .map_or(&*selector.name, |(_, name)| name),
+        SelectorKind::Fqn => selector.name.rsplit_once('.').map_or(&*selector.name, |(_, name)| name),
         _ => &selector.name,
     }
 }
 
 /// Turns a selector into the targets and filter to run.
-pub fn resolve_selector(
-    runtime: &dyn Runtime,
-    selector: &Selector,
-    inputs: &ResolutionInputs<'_>,
-) -> Result<Resolution, Refusal> {
+pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<Resolution, Refusal> {
     match selector.kind {
         // Before any tree scan: a label and a pattern already name their targets.
         SelectorKind::Label | SelectorKind::Pattern => {
@@ -273,9 +254,7 @@ pub fn resolve_selector(
                 ..Resolution::default()
             });
         }
-        SelectorKind::Package | SelectorKind::SimpleName | SelectorKind::Fqn
-            if inputs.areas().is_empty() =>
-        {
+        SelectorKind::Package | SelectorKind::SimpleName | SelectorKind::Fqn if inputs.areas().is_empty() => {
             return Err(fail_usage(format!(
                 "{} is a {} selector, and {AREAS_FILE} names no area to scan for it; pass a //label or a \
                  //pkg/... pattern",
@@ -298,10 +277,7 @@ pub fn resolve_selector(
         candidates = scan_for_type(runtime, index, simple_name)?;
     }
     if selector.kind == SelectorKind::Fqn && candidates.len() > 1 {
-        let expected_package = selector
-            .name
-            .rsplit_once('.')
-            .map_or("", |(package, _)| package);
+        let expected_package = selector.name.rsplit_once('.').map_or("", |(package, _)| package);
         let mut narrowed = Vec::new();
         for candidate in &candidates {
             if derive_package(&read_text(runtime, &candidate.file)?) == expected_package {
@@ -318,8 +294,7 @@ pub fn resolve_selector(
     if candidates.is_empty() {
         let suggestions = suggest_names(simple_name, index.keys().map(String::as_str), 3);
         let hint = if suggestions.is_empty() {
-            "  (no similar name found; @Nested and secondary top-level classes need a full FQN)"
-                .to_owned()
+            "  (no similar name found; @Nested and secondary top-level classes need a full FQN)".to_owned()
         } else {
             suggestions
                 .iter()
@@ -377,26 +352,16 @@ pub fn roots_declaring<'a>(roots: &'a [TestRoot], package: &str) -> Vec<&'a Test
     roots
         .iter()
         .filter(|root| {
-            root.package_prefix.as_deref().is_some_and(|prefix| {
-                prefix == package
-                    || package
-                        .strip_prefix(prefix)
-                        .is_some_and(|rest| rest.starts_with('.'))
-            })
+            root.package_prefix
+                .as_deref()
+                .is_some_and(|prefix| prefix == package || package.strip_prefix(prefix).is_some_and(|rest| rest.starts_with('.')))
         })
         .collect()
 }
 
-fn resolve_package(
-    runtime: &dyn Runtime,
-    selector: &Selector,
-    inputs: &ResolutionInputs<'_>,
-) -> Result<Resolution, Refusal> {
+fn resolve_package(runtime: &dyn Runtime, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<Resolution, Refusal> {
     let roots = inputs.roots()?;
-    let mut resolved: Vec<TestRoot> = roots_declaring(roots, &selector.name)
-        .into_iter()
-        .cloned()
-        .collect();
+    let mut resolved: Vec<TestRoot> = roots_declaring(roots, &selector.name).into_iter().cloned().collect();
     if resolved.is_empty() {
         // No declared prefix covers it, so fall back to what the files themselves say. This is what makes a
         // package selector work for a root whose .iml declares no prefix at all.
@@ -410,10 +375,7 @@ fn resolve_package(
         )));
     };
     if resolved.iter().any(|root| root.label != first.label) {
-        let listed: Vec<String> = resolved
-            .iter()
-            .map(|root| format!("  {}", root.label))
-            .collect();
+        let listed: Vec<String> = resolved.iter().map(|root| format!("  {}", root.label)).collect();
         return Err(fail_usage(format!(
             "Package {} spans {} test targets; run one explicitly:\n{}",
             selector.name,
@@ -440,11 +402,8 @@ pub fn repo_relative_dir(runtime: &dyn Runtime, raw: &str) -> Result<String, Ref
         .or_else(|| raw.strip_suffix("/..."))
         .unwrap_or_else(|| raw.trim_end_matches(['/', '\\']));
     let root = runtime.repo_root().to_string_lossy();
-    let relative = repo_relative_path(runtime.platform(), &root, trimmed).ok_or_else(|| {
-        fail_usage(format!(
-            "Directory selector {raw} is outside the repository at {root}"
-        ))
-    })?;
+    let relative = repo_relative_path(runtime.platform(), &root, trimmed)
+        .ok_or_else(|| fail_usage(format!("Directory selector {raw} is outside the repository at {root}")))?;
     // A successful listing is the existence check, and it also tells a file apart from a directory.
     if read_dir_or_none(runtime, &relative).is_none() {
         let what = if runtime.exists(&repo_file(runtime, &relative)) {
@@ -520,11 +479,7 @@ fn repo_tail(clean_root: &str, absolute: &str, fold_case: bool) -> Option<String
     (inside && !tail.is_empty()).then(|| tail.to_owned())
 }
 
-fn scan_for_type(
-    runtime: &dyn Runtime,
-    index: &Index,
-    simple_name: &str,
-) -> Result<Vec<Candidate>, Refusal> {
+fn scan_for_type(runtime: &dyn Runtime, index: &Index, simple_name: &str) -> Result<Vec<Candidate>, Refusal> {
     let all: Vec<&Candidate> = index.values().flatten().collect();
     let declaration = crate::scan::type_declaration_pattern(simple_name);
     // The whole index, so the files are read concurrently: this is the fallback, and the only path that reads
@@ -545,12 +500,7 @@ fn scan_for_type(
     Ok(declaring)
 }
 
-fn roots_by_scanned_package(
-    runtime: &dyn Runtime,
-    roots: &[TestRoot],
-    index: &Index,
-    package: &str,
-) -> Result<Vec<TestRoot>, Refusal> {
+fn roots_by_scanned_package(runtime: &dyn Runtime, roots: &[TestRoot], index: &Index, package: &str) -> Result<Vec<TestRoot>, Refusal> {
     let mut matching_dirs: Vec<&str> = Vec::new();
     for candidate in index.values().flatten() {
         let src_dir = candidate.root.src_dir.as_str();
@@ -558,11 +508,7 @@ fn roots_by_scanned_package(
             continue;
         }
         let file_package = derive_package(&read_text(runtime, &candidate.file)?);
-        if file_package == package
-            || file_package
-                .strip_prefix(package)
-                .is_some_and(|rest| rest.starts_with('.'))
-        {
+        if file_package == package || file_package.strip_prefix(package).is_some_and(|rest| rest.starts_with('.')) {
             matching_dirs.push(src_dir);
         }
     }

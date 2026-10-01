@@ -59,9 +59,10 @@ impl Refusal {
     /// it did not, rather than dropped: the evidence is what a caller reads next.
     #[must_use]
     pub fn with_details(mut self, details: impl Serialize) -> Self {
-        self.details = Some(serde_json::to_value(details).unwrap_or_else(|error| {
-            serde_json::Value::String(format!("the details did not serialize: {error}"))
-        }));
+        self.details = Some(
+            serde_json::to_value(details)
+                .unwrap_or_else(|error| serde_json::Value::String(format!("the details did not serialize: {error}"))),
+        );
         self
     }
 

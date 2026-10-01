@@ -2,9 +2,7 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::{BepSummary, parse_bep, uri_to_path};
-use crate::fake::{
-    AttemptSpec, FakeRuntime, attempt, bep_lines, case, suite, suite_xml, test_result_event,
-};
+use crate::fake::{AttemptSpec, FakeRuntime, attempt, bep_lines, case, suite, suite_xml, test_result_event};
 use crate::result::{RunStatus, collect_results, totals_of};
 use crate::runtime::Platform;
 
@@ -32,10 +30,7 @@ fn a_passing_test_result_and_its_artifact_paths() {
     ]);
     assert_eq!(summary.attempts.len(), 1);
     assert_eq!(summary.attempts[0].status, "PASSED");
-    assert_eq!(
-        summary.attempts[0].xml_path.as_deref(),
-        Some("/exec/testlogs/pkg/target/test.xml")
-    );
+    assert_eq!(summary.attempts[0].xml_path.as_deref(), Some("/exec/testlogs/pkg/target/test.xml"));
     assert_eq!(summary.targets["//p:t"], "PASSED");
     assert_eq!(summary.overall_success, Some(true));
 }
@@ -62,10 +57,7 @@ fn a_locally_cached_result_is_marked() {
         cached: true,
         ..attempt("//p:t")
     })]);
-    assert!(
-        summary.attempts[0].cached,
-        "a cache hit was reported as a real run"
-    );
+    assert!(summary.attempts[0].cached, "a cache hit was reported as a real run");
 }
 
 /// A remote cache hit is the same fact spelled elsewhere in the payload, and reading only one of the two makes the
@@ -75,10 +67,7 @@ fn a_remotely_cached_result_is_marked_too() {
     let mut event = test_result_event(&attempt("//p:t"));
     event["testResult"]["executionInfo"] = json!({"cachedRemotely": true});
     let summary = posix_bep(&[event]);
-    assert!(
-        summary.attempts[0].cached,
-        "a remote cache hit was reported as a real run"
-    );
+    assert!(summary.attempts[0].cached, "a remote cache hit was reported as a real run");
 }
 
 #[test]
@@ -125,10 +114,7 @@ fn an_omitted_success_flag_is_failure_the_way_proto3_encodes_it() {
         }),
     ]);
     assert_eq!(summary.failed_to_build, ["//p:t"]);
-    assert_eq!(
-        summary.action_stderr,
-        ["/exec/bazel-out/_tmp/actions/stderr-2"]
-    );
+    assert_eq!(summary.action_stderr, ["/exec/bazel-out/_tmp/actions/stderr-2"]);
 }
 
 #[test]
@@ -137,11 +123,7 @@ fn a_successful_target_is_not_failed_to_build() {
         "id": {"targetCompleted": {"label": "//p:t"}},
         "completed": {"success": true},
     })]);
-    assert!(
-        summary.failed_to_build.is_empty(),
-        "{:?}",
-        summary.failed_to_build
-    );
+    assert!(summary.failed_to_build.is_empty(), "{:?}", summary.failed_to_build);
 }
 
 #[test]
@@ -158,15 +140,9 @@ fn an_analysis_abort_is_recorded() {
 #[test]
 fn a_truncated_final_line_is_skipped() {
     let good = bep_lines(&[test_result_event(&attempt("//p:t"))]);
-    let summary = parse_bep(
-        lines_of(&format!("{good}\n{{\"id\":{{\"testResu")),
-        Platform::Darwin,
-    );
+    let summary = parse_bep(lines_of(&format!("{good}\n{{\"id\":{{\"testResu")), Platform::Darwin);
     assert_eq!(summary.attempts.len(), 1);
-    assert!(
-        summary.saw_any_event,
-        "a file with one good line reported having seen nothing"
-    );
+    assert!(summary.saw_any_event, "a file with one good line reported having seen nothing");
 }
 
 #[test]
@@ -192,22 +168,15 @@ fn a_quoted_int64_is_read_as_a_number() {
 fn an_id_without_its_payload_is_not_an_attempt() {
     let summary = posix_bep(&[json!({"id": {"testResult": {"label": "//p:t"}}})]);
     assert!(summary.attempts.is_empty(), "{:?}", summary.attempts);
-    assert!(
-        summary.saw_any_event,
-        "an announced event did not count as an event"
-    );
+    assert!(summary.saw_any_event, "an announced event did not count as an event");
 }
 
 #[test]
 fn a_non_file_uri_is_left_alone() {
     let mut event = test_result_event(&attempt("//p:t"));
-    *outputs(&mut event) =
-        vec![json!({"name": "test.xml", "uri": "bytestream://remote/blobs/abc"})];
+    *outputs(&mut event) = vec![json!({"name": "test.xml", "uri": "bytestream://remote/blobs/abc"})];
     let summary = posix_bep(&[event]);
-    assert_eq!(
-        summary.attempts[0].xml_path.as_deref(),
-        Some("bytestream://remote/blobs/abc")
-    );
+    assert_eq!(summary.attempts[0].xml_path.as_deref(), Some("bytestream://remote/blobs/abc"));
     // A missing artifact is absent rather than empty: result collection branches on which of the two it is.
     assert_eq!(summary.attempts[0].log_path, None);
 }
@@ -217,10 +186,7 @@ fn a_percent_encoded_uri_is_decoded() {
     let mut event = test_result_event(&attempt("//p:t"));
     outputs(&mut event)[1]["uri"] = json!("file:///exec/test%20logs/test.xml");
     let summary = posix_bep(&[event]);
-    assert_eq!(
-        summary.attempts[0].xml_path.as_deref(),
-        Some("/exec/test logs/test.xml")
-    );
+    assert_eq!(summary.attempts[0].xml_path.as_deref(), Some("/exec/test logs/test.xml"));
 }
 
 #[test]
