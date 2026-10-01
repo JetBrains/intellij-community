@@ -233,6 +233,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.favoritesTreeView",
             "intellij.platform.ide.osCertificates",
             "intellij.platform.ide.pluginSignatureVerifier",
+            "intellij.platform.ide.remote",
             "intellij.platform.ide.util.io.native",
             "intellij.platform.threadDumpParser",
             "intellij.platform.wsl.impl",

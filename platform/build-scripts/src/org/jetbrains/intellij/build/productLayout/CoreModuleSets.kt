@@ -299,7 +299,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.rd.community")
 
     embeddedModule("intellij.platform.remote.core")
-    embeddedModule("intellij.platform.ide.remote")
+    module("intellij.platform.ide.remote")
     module("intellij.platform.threadDumpParser")
     module("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin

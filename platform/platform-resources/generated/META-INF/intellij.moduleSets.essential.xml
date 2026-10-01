@@ -307,7 +307,7 @@
     <module name="intellij.libraries.zip.signer"/>
     <module name="intellij.platform.rd.community" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
-    <module name="intellij.platform.ide.remote" loading="embedded"/>
+    <module name="intellij.platform.ide.remote"/>
     <module name="intellij.platform.threadDumpParser"/>
     <module name="intellij.platform.ide.favoritesTreeView"/>
     <module name="intellij.platform.ide.designer"/>
