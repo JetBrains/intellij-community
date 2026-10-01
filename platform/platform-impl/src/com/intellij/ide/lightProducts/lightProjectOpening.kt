@@ -8,6 +8,8 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.impl.unregisterExtensionsById
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
@@ -119,6 +121,7 @@ suspend fun openProjectForLightProduct(
     (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).setProjectHidden(project, true)
   }
   CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, false)
+  unregisterProjectExtensionsForLightProduct(project)
 
   val machine = eelMachineInitializer(eelDescriptor)
   if (machine != null) {
@@ -127,6 +130,19 @@ suspend fun openProjectForLightProduct(
   }
 
   return project
+}
+
+/**
+ * Unregisters the project-level extensions that a light project does not need.
+ * The application-level counterpart is `unregisterExtensionsForLightProduct` in `intellij.platform.lang.impl`.
+ */
+private fun unregisterProjectExtensionsForLightProduct(project: Project) {
+  Configurable.PROJECT_CONFIGURABLE.getPoint(project)
+    .unregisterExtensionsById(
+      "editor.reader.mode",
+      "fileTemplates",
+      "Errors",
+    )
 }
 
 /**

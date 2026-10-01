@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightProducts
 
+import com.intellij.application.options.editor.EditorOptionsProviderEP
 import com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
 import com.intellij.ide.GeneralSettings
@@ -60,12 +61,23 @@ fun unregisterExtensionsForLightProduct(checkNotInstantiated: Boolean = false) {
       if (reports.none { !it.wasUnregistered }) logger.warn("Can't keep FileTypeUsagesCollector - Not Found")
     }
 
+  // The project-level settings pages are removed in `openProjectForLightProduct`.
   Configurable.APPLICATION_CONFIGURABLE.appPoint
     .unregisterExtensionsById(
       "ide.date.format",
       "editing.templates",
       "trusted.hosts",
       "diff.base",
+      "editor.breadcrumbs",
+      "editor.stickyLines",
+      checkNotInstantiated = checkNotInstantiated,
+    )
+
+  EditorOptionsProviderEP.EP_NAME.appPoint
+    .unregisterExtensionsById(
+      "editor.preferences.smartKeys",
+      "editor.preferences.completion",
+      "reference.settingsdialog.IDE.editor.postfix.templates",
       checkNotInstantiated = checkNotInstantiated,
     )
 
