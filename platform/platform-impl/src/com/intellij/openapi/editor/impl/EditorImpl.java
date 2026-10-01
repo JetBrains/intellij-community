@@ -1840,9 +1840,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
     if (graphics != null) {
-      PaintUtil.alignTxToInt((Graphics2D)graphics, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
-      processKeyTypedImmediately(c, graphics, context);
-      graphics.dispose();
+      PaintUtil.use(graphics, g -> {
+        PaintUtil.alignTxToInt((Graphics2D)g, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
+        processKeyTypedImmediately(c, g, context);
+      });
     }
     else {
       // the editor component is not showing
@@ -2554,15 +2555,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myStickyLinesManager.startDumb();
     }
     BufferedImage image = EditorImageUtil.createEditorImage(this, rect.width, rect.height);
-    Graphics2D graphics = EditorImageUtil.createImageGraphics(this, image, rect);
-    myPaintingDumbBuffer = true;
-    try {
-      myEditorComponent.paintComponent(graphics);
-    }
-    finally {
-      myPaintingDumbBuffer = false;
-      graphics.dispose();
-    }
+    PaintUtil.use(EditorImageUtil.createImageGraphics(this, image, rect), graphics -> {
+      myPaintingDumbBuffer = true;
+      try {
+        myEditorComponent.paintComponent(graphics);
+      }
+      finally {
+        myPaintingDumbBuffer = false;
+      }
+    });
     myDumbBuffer = image;
   }
 

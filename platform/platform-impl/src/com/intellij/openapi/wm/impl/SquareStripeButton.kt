@@ -40,6 +40,8 @@ import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.ui.paint.use
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBUI
@@ -49,7 +51,6 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.GradientPaint
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
@@ -257,9 +258,7 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
     for (text in texts) {
       val textWidth = UIUtil.computeStringWidth(button, fm, text)
 
-      val g2d = g!!.create() as Graphics2D
-
-      try {
+      g!!.useCopy { g2d ->
         g2d.color = getForegroundColor()
         g2d.font = f
         UISettings.setupAntialiasing(g2d)
@@ -282,15 +281,11 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
             val pressedColorKey = "${button.background.rgb}:${bgColor.rgb}"
             if (myPressedColor == null || pressedColorKey != myPressedColorKey) {
               val image = UIUtil.createImage(button, 4, 4, BufferedImage.TYPE_INT_ARGB)
-              val imageG = image.createGraphics()
-              try {
+              image.createGraphics().use { imageG ->
                 imageG.color = button.background
                 imageG.fill(Rectangle(0, 0, 4, 4))
                 imageG.color = bgColor
                 imageG.fill(Rectangle(0, 0, 4, 4))
-              }
-              finally {
-                imageG.dispose()
               }
               @Suppress("UseJBColor")
               myPressedColor = Color(image.getRGB(2, 2))
@@ -305,9 +300,6 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
         }
 
         y += textHeight
-      }
-      finally {
-        g2d.dispose()
       }
     }
   }

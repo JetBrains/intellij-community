@@ -21,6 +21,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.ImageUtil
@@ -536,7 +537,7 @@ private fun doColorGradientPaintLegacy(project: Project, projectWindowCustomizer
 
       val image = ImageUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB)
       cache.legacyImage = image
-      paintColorGradientLegacy(width, height, image.createGraphics(), info, cache)
+      image.createGraphics().use { paintColorGradientLegacy(width, height, it, info, cache) }
     }
 
     @Suppress("UseJBColor")

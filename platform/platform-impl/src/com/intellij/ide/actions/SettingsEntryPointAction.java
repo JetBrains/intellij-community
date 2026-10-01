@@ -62,6 +62,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Consumer;
@@ -83,7 +84,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -509,9 +509,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
 
     public void paintButton(@NotNull ActionButton button, @NotNull ActionButtonLook look, @NotNull Graphics g) {
-      Graphics2D g2 = (Graphics2D)g.create();
-
-      try {
+      PaintUtil.useCopy(g, g2 -> {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
@@ -545,10 +543,7 @@ public final class SettingsEntryPointAction extends ActionGroup
           DarculaNewUIUtil.INSTANCE.drawRoundedRectangle(g2, new Rectangle(insets.left, insets.top, size.width, size.height),
                                                          JBUI.CurrentTheme.Focus.focusColor(), radius, DarculaUIUtil.BW.getFloat());
         }
-      }
-      finally {
-        g2.dispose();
-      }
+      });
     }
 
     @Override

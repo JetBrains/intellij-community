@@ -3,6 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.paint.PaintUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JScrollBar;
@@ -41,27 +42,23 @@ public class GradientViewport extends JBViewport {
   }
 
   protected void paintGradient(Graphics g) {
-    g = g.create();
-    try {
+    PaintUtil.useCopy(g, g2d -> {
       Color background = getViewColor();
       Component header = getHeader();
       if (header != null) {
         header.setBounds(0, 0, getWidth(), header.getPreferredSize().height);
         if (background != null) {
-          g.setColor(background);
-          g.fillRect(header.getX(), header.getY(), header.getWidth(), header.getHeight());
+          g2d.setColor(background);
+          g2d.fillRect(header.getX(), header.getY(), header.getWidth(), header.getHeight());
         }
       }
-      if (g instanceof Graphics2D && background != null && !Registry.is("ui.simplified")) {
-        paintGradient((Graphics2D)g, background, 0, header == null ? 0 : header.getHeight());
+      if (background != null && !Registry.is("ui.simplified")) {
+        paintGradient(g2d, background, 0, header == null ? 0 : header.getHeight());
       }
       if (header != null) {
-        header.paint(g);
+        header.paint(g2d);
       }
-    }
-    finally {
-      g.dispose();
-    }
+    });
   }
 
   @Override

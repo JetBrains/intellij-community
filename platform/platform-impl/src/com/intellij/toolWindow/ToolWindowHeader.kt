@@ -36,6 +36,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.JBUI
@@ -49,7 +50,6 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
@@ -319,15 +319,15 @@ abstract class ToolWindowHeader internal constructor(
 
   @Suppress("UseJBColor")
   override fun paintChildren(g: Graphics) {
-    val graphics = g.create() as Graphics2D
-    setupAntialiasing(graphics)
-    super.paintChildren(graphics)
-    val r = bounds
-    if (!isActive && !StartupUiUtil.isDarkTheme) {
-      graphics.color = Color(255, 255, 255, 30)
-      graphics.fill(r)
+    g.useCopy { graphics ->
+      setupAntialiasing(graphics)
+      super.paintChildren(graphics)
+      val r = bounds
+      if (!isActive && !StartupUiUtil.isDarkTheme) {
+        graphics.color = Color(255, 255, 255, 30)
+        graphics.fill(r)
+      }
     }
-    graphics.dispose()
   }
 
   protected abstract val isActive: Boolean

@@ -4,6 +4,7 @@
 package com.intellij.openapi.fileEditor.impl.skeleton.rendering
 
 import com.intellij.openapi.application.UI
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,12 +68,8 @@ internal class EditorSkeletonCanvas : Canvas(), EditorSkeletonRenderer {
           createBufferStrategy(2)
           bufferStrategy
         }
-        val graphics = buffer.drawGraphics as Graphics2D
-        try {
+        (buffer.drawGraphics as Graphics2D).use { graphics ->
           paintFrame(graphics, w, h, JBUIScale.scale(1f))
-        }
-        finally {
-          graphics.dispose()
         }
         if (!buffer.contentsRestored()) {
           buffer.show()

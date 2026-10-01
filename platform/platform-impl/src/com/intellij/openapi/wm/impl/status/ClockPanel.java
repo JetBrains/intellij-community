@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.text.DateTimeFormatManager;
 import org.jetbrains.annotations.ApiStatus;
@@ -93,8 +94,7 @@ public final class ClockPanel extends JComponent {
 
   @Override
   public void paint(Graphics graphics) {
-    Graphics2D g = (Graphics2D)graphics.create();
-    try {
+    PaintUtil.useCopy(graphics, g -> {
       g.setRenderingHint(KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
       int h = (int)(getHeight() *.8);
@@ -136,10 +136,7 @@ public final class ClockPanel extends JComponent {
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, minutes % 10);
       scheduleNextRepaint();
-    }
-    finally {
-      g.dispose();
-    }
+    });
   }
 
   private static void paintDigit(Graphics2D g, int x, int y, int width, int height, float t, int digit) {

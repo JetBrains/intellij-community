@@ -1,5 +1,6 @@
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ui.paint.use
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Rectangle
@@ -18,14 +19,10 @@ object WindowMask {
     if (right <= left || bottom <= top) return emptyList()
 
     val image = BufferedImage(right - left, bottom - top, BufferedImage.TYPE_BYTE_BINARY)
-    val graphics = image.createGraphics()
-    try {
+    image.createGraphics().use { graphics ->
       graphics.color = Color.WHITE
       graphics.translate(-left, -top)
       graphics.fill(shape)
-    }
-    finally {
-      graphics.dispose()
     }
 
     val rectangles = ArrayList<Rectangle>()

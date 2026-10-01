@@ -18,6 +18,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.icons.loadImageForStartUp
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -281,16 +282,16 @@ private fun doLoadImage(path: String, scale: Float, isJreHiDPIEnabled: Boolean):
   val h = originalImage.height
   @Suppress("UndesirableClassUsage")
   val resultImage = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
-  val g2 = resultImage.createGraphics()
-  g2.composite = AlphaComposite.Src
-  ImageUtil.applyQualityRenderingHints(g2)
-  @Suppress("UseJBColor")
-  g2.color = Color.WHITE
-  val cornerRadius = 8 * scale
-  g2.fill(RoundRectangle2D.Float(0f, 0f, w.toFloat(), h.toFloat(), cornerRadius, cornerRadius))
-  g2.composite = AlphaComposite.SrcIn
-  g2.drawImage(originalImage, 0, 0, null)
-  g2.dispose()
+  resultImage.createGraphics().use { g2 ->
+    g2.composite = AlphaComposite.Src
+    ImageUtil.applyQualityRenderingHints(g2)
+    @Suppress("UseJBColor")
+    g2.color = Color.WHITE
+    val cornerRadius = 8 * scale
+    g2.fill(RoundRectangle2D.Float(0f, 0f, w.toFloat(), h.toFloat(), cornerRadius, cornerRadius))
+    g2.composite = AlphaComposite.SrcIn
+    g2.drawImage(originalImage, 0, 0, null)
+  }
   return createHiDpiAwareImage(rawImage = resultImage, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)
 }
 

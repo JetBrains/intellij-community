@@ -47,15 +47,9 @@ open class SegmentedCustomPanel(protected val presentation: Presentation) : JPan
 
   override fun paintComponent(g: Graphics) {
     if (ui != null) {
-      val scratchGraphics = g.create()
-      try {
-        if (isOpaque) {
-          SegmentedBarPainter.paintDecorations(g.create() as Graphics2D, this, background)
-          ui.paint(g, this)
-        }
-      }
-      finally {
-        scratchGraphics.dispose()
+      if (isOpaque) {
+        SegmentedBarPainter.paintDecorations(g as Graphics2D, this, background)
+        ui.paint(g, this)
       }
     }
   }

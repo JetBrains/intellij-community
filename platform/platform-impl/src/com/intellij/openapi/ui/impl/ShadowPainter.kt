@@ -5,6 +5,8 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JreHiDpiUtil.isJreHiDPIEnabled
+import com.intellij.ui.paint.use
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
@@ -53,9 +55,7 @@ internal class ShadowPainter(private val top: Icon,
 
   fun createShadow(c: JComponent, width: Int, height: Int): BufferedImage {
     val image = c.graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT)
-    val g = image.createGraphics()
-    paintShadow(c, g, 0, 0, width, height)
-    g.dispose()
+    image.createGraphics().use { g -> paintShadow(c, g, 0, 0, width, height) }
     return image
   }
 
@@ -161,8 +161,7 @@ private fun fill(g: Graphics, pattern: Icon, x: Int, y: Int, from: Int, to: Int,
     // direct painting for a fractional scale
     val image = ImageUtil.toBufferedImage(IconLoader.toImage(icon = pattern) ?: BufferedImage(1, 0, BufferedImage.TYPE_INT_ARGB))
     val patternSize = if (horizontally) image.width else image.height
-    val g2d = g.create() as Graphics2D
-    try {
+    g.useCopy { g2d ->
       g2d.scale(1 / scale, 1 / scale)
       g2d.translate(x * scale, y * scale)
       var at = floor(from * scale).toInt()
@@ -175,9 +174,6 @@ private fun fill(g: Graphics, pattern: Icon, x: Int, y: Int, from: Int, to: Int,
         }
         at += patternSize
       }
-    }
-    finally {
-      g2d.dispose()
     }
   }
   else {

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.paint.PaintUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +83,7 @@ public final class GlassPanel extends JComponent {
         area.intersect(innerPanel);
         mask.subtract(area);
       }
-      Graphics clip = g.create(0, 0, size.width, size.height);
-      try {
-        Graphics2D g2 = (Graphics2D)clip;
+      PaintUtil.use((Graphics2D)g.create(0, 0, size.width, size.height), g2 -> {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
@@ -96,10 +95,7 @@ public final class GlassPanel extends JComponent {
         final Color borderColor = UIManager.getColor(SPOTLIGHT_BORDER_COLOR_KEY);
         g2.setColor(borderColor != null ? borderColor : FALLBACK_SPOTLIGHT_BORDER_COLOR);
         g2.draw(mask);
-      }
-      finally {
-        clip.dispose();
-      }
+      });
     }
   }
 

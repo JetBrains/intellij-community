@@ -15,6 +15,8 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.util.Key
+import com.intellij.ui.paint.use
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -99,22 +101,21 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     val (gutterWidth, textWidth) = gutterAndTextWidth()
     val editorBackground = editor.backgroundColor
     var isBackgroundChanged = false
-    var graphics: Graphics? = null
     (editor as EditorImpl).isStickyLinePainting = true
     try {
-      graphics = graphicsOrDumb?.create()
       isBackgroundChanged = setStickyLineBackgroundColor()
-      if (graphics != null) {
-        val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
-        graphics.translate(0, -editorStartY)
-        paintGutter(graphics, editorY, lineHeight, gutterWidth)
-        paintText(graphics, editorY, lineHeight, gutterWidth, textWidth)
+      if (graphicsOrDumb != null) {
+        graphicsOrDumb.useCopy { graphics ->
+          val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
+          graphics.translate(0, -editorStartY)
+          paintGutter(graphics, editorY, lineHeight, gutterWidth)
+          paintText(graphics, editorY, lineHeight, gutterWidth, textWidth)
+        }
       } else {
         dumbTextImage = prepareDumbTextImage(editorY, lineHeight, textWidth)
       }
     } finally {
       editor.isStickyLinePainting = false
-      graphics?.dispose()
       if (isBackgroundChanged) {
         editor.backgroundColor = editorBackground
       }
@@ -146,12 +147,9 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {
-    val g2 = g.create()
-    try {
+    g.useCopy { g2 ->
       g2.clipRect(0, editorY, gutterWidth, lineHeight)
       editor.gutterComponentEx.print(g2)
-    } finally {
-      g2.dispose()
     }
   }
 
@@ -174,12 +172,12 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       lineHeight,
       BufferedImage.TYPE_INT_RGB,
     )
-    val textGraphics = textImage.graphics
-    EditorUIUtil.setupAntialiasing(textGraphics)
-    textGraphics.translate(0, -editorY)
-    textGraphics.setClip(0, editorY, textWidth, lineHeight)
-    doPaintText(textGraphics)
-    textGraphics.dispose()
+    textImage.createGraphics().use { textGraphics ->
+      EditorUIUtil.setupAntialiasing(textGraphics)
+      textGraphics.translate(0, -editorY)
+      textGraphics.setClip(0, editorY, textWidth, lineHeight)
+      doPaintText(textGraphics)
+    }
     return textImage
   }
 

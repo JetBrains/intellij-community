@@ -22,6 +22,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -457,14 +458,10 @@ public final class IdeBackgroundUtil {
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-      Graphics2D clipped = (Graphics2D)myDelegate.create();
-      try {
+      PaintUtil.useCopy(myDelegate, clipped -> {
         clipped.clip(sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
         helper.runAllPainters(clipped, offsets);
-      }
-      finally {
-        clipped.dispose();
-      }
+      });
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.FALSE);
       }

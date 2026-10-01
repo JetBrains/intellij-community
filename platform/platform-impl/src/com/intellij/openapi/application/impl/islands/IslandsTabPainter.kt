@@ -8,6 +8,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
@@ -52,18 +53,13 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
 
     val tabLabelWidth = calcTabLabelWidth(label)
     val rect = Rectangle(tabLabelWidth, label.height)
-    val g2 = g.create() as Graphics2D
-
-    try {
+    g.useCopy { g2 ->
       GraphicsUtil.setupAAPainting(g2)
 
       if (tabs.getFirstTabOffset() == 0) {
         tabs.setFirstTabOffset(IslandsTabPainter.firstTabOffset)
       }
       (tabPainter as IslandsTabPainter).paintTab(g2, tabs.tabsPosition, rect, info.tabColor, active, hovered, selected)
-    }
-    finally {
-      g2.dispose()
     }
   }
 

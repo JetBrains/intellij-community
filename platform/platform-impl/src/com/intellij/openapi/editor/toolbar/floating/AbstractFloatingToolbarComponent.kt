@@ -10,11 +10,11 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.useCopy
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 
@@ -69,34 +69,22 @@ abstract class AbstractFloatingToolbarComponent(
   override fun hideImmediately(): Unit = componentAnimator.hideImmediately()
 
   override fun paintComponent(g: Graphics) {
-    val graphics = g.create()
-    try {
-      if (graphics is Graphics2D) {
-        val opacity = transparentComponent.getOpacity() * backgroundAlpha
-        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity)
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      }
+    g.useCopy { graphics ->
+      val opacity = transparentComponent.getOpacity() * backgroundAlpha
+      graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity)
+      graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       graphics.color = BACKGROUND
       graphics.fillRoundRect(0, 0, bounds.width, bounds.height, 6, 6)
 
       super.paintComponent(graphics)
     }
-    finally {
-      graphics.dispose()
-    }
   }
 
   override fun paintChildren(g: Graphics) {
-    val graphics = g.create()
-    try {
-      if (graphics is Graphics2D) {
-        val opacity = transparentComponent.getOpacity()
-        graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity)
-      }
+    g.useCopy { graphics ->
+      val opacity = transparentComponent.getOpacity()
+      graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity)
       super.paintChildren(graphics)
-    }
-    finally {
-      graphics.dispose()
     }
   }
 

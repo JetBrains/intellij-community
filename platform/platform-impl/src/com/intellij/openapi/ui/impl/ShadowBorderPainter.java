@@ -3,13 +3,13 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.ShadowJava2DPainter;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.JComponent;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
@@ -27,9 +27,7 @@ public final class ShadowBorderPainter {
   private static BufferedImage createJava2dShadow(JComponent component, int width, int height) {
     BufferedImage image = component.getGraphicsConfiguration().createCompatibleImage(width, height, Transparency.TRANSLUCENT);
     ShadowJava2DPainter painter = new ShadowJava2DPainter(ShadowJava2DPainter.Type.IDE, 0, Gray.x00.withAlpha(30));
-    Graphics2D g = image.createGraphics();
-    painter.paintShadow(g, 0, 0, width, height);
-    g.dispose();
+    PaintUtil.use(image.createGraphics(), g -> painter.paintShadow(g, 0, 0, width, height));
     return image;
   }
 
@@ -50,9 +48,10 @@ public final class ShadowBorderPainter {
 
     //noinspection UndesirableClassUsage
     final BufferedImage s = new BufferedImage(scaled.getWidth(null), scaled.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-    final Graphics2D graphics = (Graphics2D)s.getGraphics();
-    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    graphics.drawImage(scaled, 0, 0, null);
+    PaintUtil.use(s.createGraphics(), graphics -> {
+      graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      graphics.drawImage(scaled, 0, 0, null);
+    });
 
     final BufferedImage shadow = blurAlpha(s, shadowSize);
     if (paintSource) {

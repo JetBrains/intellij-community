@@ -20,7 +20,6 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.Icon
@@ -125,13 +124,9 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : 
     val rect = Rectangle(areaSize)
     paintLookBackground(g, rect, color)
 
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.translate(-(button.insets.left + iconPadding.left), -(button.insets.top + iconPadding.top))
       paintIcon(g2, button, button.icon)
-    }
-    finally {
-      g2.dispose()
     }
 
     paintLookBorder(g, rect, color)

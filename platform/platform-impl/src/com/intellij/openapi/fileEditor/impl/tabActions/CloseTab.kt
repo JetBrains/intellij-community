@@ -25,6 +25,7 @@ import com.intellij.ui.BadgeDotProvider
 import com.intellij.ui.BadgeIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.MorePopupAware
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
@@ -187,16 +187,16 @@ private class DotIcon(private val color: Color) : Icon {
      get() = JBUIScale.scale(6.0f)
 
    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-     val g2d = g.create() as Graphics2D
-     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+     g.useCopy { g2d ->
+       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-     val curInset = inset
-     val curDiameter = diameter
-     val circle = Ellipse2D.Float(x + curInset, y + curInset, curDiameter, curDiameter)
+       val curInset = inset
+       val curDiameter = diameter
+       val circle = Ellipse2D.Float(x + curInset, y + curInset, curDiameter, curDiameter)
 
-     g2d.color = color
-     g2d.fill(circle)
-     g2d.dispose()
+       g2d.color = color
+       g2d.fill(circle)
+     }
    }
  }
 

@@ -1979,7 +1979,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
       BufferedImage image = ImageUtil.createImage(g, getWidth(), getHeight(),
                                                   BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-      PaintUtil.useCopy(image.createGraphics(), imageGraphics -> {
+      PaintUtil.use(image.createGraphics(), imageGraphics -> {
         //noinspection UseJBColor
         imageGraphics.setPaint(new Color(myFillColor.getRGB())); // create a copy to remove alpha
         imageGraphics.fillRect(0, 0, getWidth(), getHeight());
@@ -1987,17 +1987,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         super.paintChildren(imageGraphics);
       });
 
-      Graphics2D g2d = (Graphics2D)g.create();
-      try {
+      PaintUtil.useCopy(g, g2d -> {
         if (JreHiDpiUtil.isJreHiDPI(g2d)) {
           float s = 1 / JBUIScale.sysScale(g2d);
           g2d.scale(s, s);
         }
         StartupUiUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
-      }
-      finally {
-        g2d.dispose();
-      }
+      });
     }
 
     private static Image makeColorTransparent(Image image, Color color) {
@@ -2100,7 +2096,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       if (myImage != null) return;
 
       myImage = UIUtil.createImage(component, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      PaintUtil.useCopy(myImage.getGraphics(), imageGraphics -> {
+      PaintUtil.use(myImage.createGraphics(), imageGraphics -> {
         myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
         paintChildrenImpl(imageGraphics);
       });

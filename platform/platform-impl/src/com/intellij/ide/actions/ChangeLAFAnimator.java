@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -11,7 +12,6 @@ import javax.swing.JLayeredPane;
 import javax.swing.RootPaneContainer;
 import java.awt.AlphaComposite;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
@@ -71,16 +71,18 @@ final class ChangeLAFAnimator {
         JLayeredPane layeredPane = rootPaneContainer.getLayeredPane();
         BufferedImage image =
           ImageUtil.createImage(window.getGraphicsConfiguration(), bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
-        Graphics imageGraphics = image.getGraphics();
-        GraphicsUtil.setupAntialiasing(imageGraphics);
-        rootPaneContainer.getRootPane().paint(imageGraphics);
+        PaintUtil.use(image.createGraphics(), imageGraphics -> {
+          GraphicsUtil.setupAntialiasing(imageGraphics);
+          rootPaneContainer.getRootPane().paint(imageGraphics);
+        });
 
         JComponent imageLayer = new JComponent() {
           @Override
           public void paint(Graphics g) {
-            g = g.create();
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
-            UIUtil.drawImage(g, image, 0, 0, this);
+            PaintUtil.useCopy(g, g2 -> {
+              g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
+              UIUtil.drawImage(g2, image, 0, 0, this);
+            });
           }
 
           @Override

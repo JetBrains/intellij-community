@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.ClockPanel
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.TimerUtil
@@ -15,7 +16,6 @@ import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -311,8 +311,7 @@ private class FloatingMenuBarExitFullScreenButton : JButton() {
   override fun getMaximumSize() = preferredSize
 
   override fun paint(g: Graphics) {
-    val g2d = g.create() as Graphics2D
-    try {
+    g.useCopy { g2d ->
       g2d.color = UIManager.getColor("Label.background")
       g2d.fillRect(0, 0, width + 1, height + 1)
       g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
@@ -352,9 +351,6 @@ private class FloatingMenuBarExitFullScreenButton : JButton() {
       path.closePath()
       g2d.fill(path)
       g2d.draw(path)
-    }
-    finally {
-      g2d.dispose()
     }
   }
 }

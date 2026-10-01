@@ -44,6 +44,7 @@ import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.Badge;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -103,7 +104,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -888,9 +888,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         myRenderInfo.second.layoutBeforePaint(myRenderInfo.first, bounds, text, right, baseline);
 
         Rectangle paintBounds = myRenderInfo.first.getBounds();
-        Graphics2D g2 = (Graphics2D)g.create(paintBounds.x, paintBounds.y, paintBounds.width, paintBounds.height);
-        myRenderInfo.first.paint(g2);
-        g2.dispose();
+        PaintUtil.use(g.create(paintBounds.x, paintBounds.y, paintBounds.width, paintBounds.height), myRenderInfo.first::paint);
 
         myRenderInfo = null;
       }
@@ -970,8 +968,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
+      PaintUtil.useCopy(g, g2 -> {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         float diameter = JBUIScale.scale((float)DOT_DIAMETER);
@@ -980,10 +977,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
         g2.setColor(JBUI.CurrentTheme.IconBadge.INFORMATION);
         g2.fill(new Ellipse2D.Float(dotX, dotY, diameter, diameter));
-      }
-      finally {
-        g2.dispose();
-      }
+      });
     }
 
     @Override

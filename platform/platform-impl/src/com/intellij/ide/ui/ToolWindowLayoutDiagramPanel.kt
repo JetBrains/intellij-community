@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Dimension
@@ -60,8 +61,7 @@ internal class ToolWindowLayoutDiagramPanel : JPanel() {
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
       val w = width
@@ -129,20 +129,13 @@ internal class ToolWindowLayoutDiagramPanel : JPanel() {
       val editorH = if (wideScreenSupport) mainH - bottomH - gap else sideHeight
       drawEditor(g2, centerX, mainY, centerW, editorH)
     }
-    finally {
-      g2.dispose()
-    }
   }
 
   private fun drawTitleBar(g2: Graphics2D, w: Int, titleH: Int, arc: Int) {
-    val titleG = g2.create() as Graphics2D
-    try {
+    g2.useCopy { titleG ->
       titleG.clipRect(0, 0, w, titleH)
       titleG.paint = GradientPaint(0f, 0f, titleBarTopColor, w.toFloat(), titleH.toFloat(), titleBarBottomColor)
       titleG.fillRoundRect(0, 0, w, titleH + arc, arc, arc)
-    }
-    finally {
-      titleG.dispose()
     }
 
     val dot = JBUI.scale(3)

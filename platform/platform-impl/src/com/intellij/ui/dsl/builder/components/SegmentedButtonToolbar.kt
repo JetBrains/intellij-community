@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder.components
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Color
@@ -57,8 +58,7 @@ internal fun paintBorder(g: Graphics2D, r: Rectangle) {
 internal class SegmentedButtonBorder : Border {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
       g2.translate(x, y)
@@ -76,9 +76,6 @@ internal class SegmentedButtonBorder : Border {
       else {
         DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, c.hasFocus(), outline)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

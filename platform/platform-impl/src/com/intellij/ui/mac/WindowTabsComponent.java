@@ -47,6 +47,7 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -915,8 +916,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       mySize = frame.getSize();
 
       myImage = UIUtil.createImage(frame, mySize.width, mySize.height, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g = myImage.createGraphics();
-      label.paint(g);
+      PaintUtil.use(myImage.createGraphics(), label::paint);
 
       myPresentation = new Presentation(info.getText());
     }

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.paint.use
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
@@ -78,8 +79,10 @@ internal class AntiFlickeringPanel(private val content: JComponent) : JBLayeredP
       val height = component.height
       if (width <= 0 || height <= 0) return null
       val image = ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_ARGB)
-      setupAntialiasing(image.graphics)
-      component.paint(image.graphics)
+      image.createGraphics().use {
+        setupAntialiasing(it)
+        component.paint(it)
+      }
       return image
     }
   }

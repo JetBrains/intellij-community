@@ -21,6 +21,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.GraphicsUtil;
@@ -39,7 +40,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -211,30 +211,31 @@ final class EditorFragmentRenderer {
         myCacheToY = Math.min(myEditor.visualLineToY(myEditor.getVisibleLineCount()),
                               myCacheFromY + (2 * CACHE_PREVIEW_LINES + 1) * lineHeight);
         myCacheLevel2 = ImageUtil.createImage(g, size.width, myCacheToY - myCacheFromY, BufferedImage.TYPE_INT_RGB);
-        Graphics2D cg = myCacheLevel2.createGraphics();
-        final AffineTransform t = cg.getTransform();
-        EditorUIUtil.setupAntialiasing(cg);
-        int lineShift = -myCacheFromY;
+        PaintUtil.use(myCacheLevel2.createGraphics(), cg -> {
+          final AffineTransform t = cg.getTransform();
+          EditorUIUtil.setupAntialiasing(cg);
+          int lineShift = -myCacheFromY;
 
-        int shift = JBUIScale.scale(EDITOR_FRAGMENT_POPUP_BORDER) + myContentInsets;
-        AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
-        AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth - shift, lineShift);
-        gutterAT.preConcatenate(t);
-        contentAT.preConcatenate(t);
+          int shift = JBUIScale.scale(EDITOR_FRAGMENT_POPUP_BORDER) + myContentInsets;
+          AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
+          AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth - shift, lineShift);
+          gutterAT.preConcatenate(t);
+          contentAT.preConcatenate(t);
 
-        EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, Boolean.TRUE);
-        try {
-          cg.setTransform(gutterAT);
-          cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
-          gutter.paint(cg);
+          EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, Boolean.TRUE);
+          try {
+            cg.setTransform(gutterAT);
+            cg.setClip(0, -lineShift, gutterWidth, myCacheLevel2.getHeight());
+            gutter.paint(cg);
 
-          cg.setTransform(contentAT);
-          cg.setClip(0, -lineShift, content.getWidth(), myCacheLevel2.getHeight());
-          content.paint(cg);
-        }
-        finally {
-          EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, null);
-        }
+            cg.setTransform(contentAT);
+            cg.setClip(0, -lineShift, content.getWidth(), myCacheLevel2.getHeight());
+            content.paint(cg);
+          }
+          finally {
+            EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, null);
+          }
+        });
       }
       if (myCacheLevel1 == null) {
         myCacheLevel1 = ImageUtil.createImage(g, size.width, lineHeight * (2 * PREVIEW_LINES + 1), BufferedImage.TYPE_INT_RGB);
@@ -242,61 +243,61 @@ final class EditorFragmentRenderer {
       }
       if (isDirty) {
         myRelativeY = SwingUtilities.convertPoint(this, 0, 0, myEditor.getScrollPane()).y;
-        Graphics2D g2d = myCacheLevel1.createGraphics();
-        final AffineTransform transform = g2d.getTransform();
-        EditorUIUtil.setupAntialiasing(g2d);
-        GraphicsUtil.setupAAPainting(g2d);
-        g2d.setColor(myEditor.getBackgroundColor());
-        g2d.fillRect(0, 0, getWidth(), getHeight());
-        int topDisplayedY = Math.max(myEditor.visualLineToY(myStartVisualLine),
-                                     myEditor.visualLineToY(myVisualLine) - PREVIEW_LINES * lineHeight);
-        AffineTransform translateInstance = AffineTransform.getTranslateInstance(gutterWidth, myCacheFromY - topDisplayedY);
-        translateInstance.preConcatenate(transform);
-        g2d.setTransform(translateInstance);
-        UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
-        Int2IntMap rightEdges = new Int2IntOpenHashMap();
-        int h = lineHeight - 2;
+        PaintUtil.use(myCacheLevel1.createGraphics(), g2d -> {
+          final AffineTransform transform = g2d.getTransform();
+          EditorUIUtil.setupAntialiasing(g2d);
+          GraphicsUtil.setupAAPainting(g2d);
+          g2d.setColor(myEditor.getBackgroundColor());
+          g2d.fillRect(0, 0, getWidth(), getHeight());
+          int topDisplayedY = Math.max(myEditor.visualLineToY(myStartVisualLine),
+                                       myEditor.visualLineToY(myVisualLine) - PREVIEW_LINES * lineHeight);
+          AffineTransform translateInstance = AffineTransform.getTranslateInstance(gutterWidth, myCacheFromY - topDisplayedY);
+          translateInstance.preConcatenate(transform);
+          g2d.setTransform(translateInstance);
+          UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
+          Int2IntMap rightEdges = new Int2IntOpenHashMap();
+          int h = lineHeight - 2;
 
-        EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-        Font font = UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.PLAIN));
-        g2d.setFont(font.deriveFont(font.getSize() * .8F));
+          EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
+          Font font = UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.PLAIN));
+          g2d.setFont(font.deriveFont(font.getSize() * .8F));
 
-        for (RangeHighlighterEx ex : myHighlighters) {
-          if (!ex.isValid()) continue;
-          int hEndOffset = ex.getAffectedAreaEndOffset();
-          Object tooltip = ex.getErrorStripeTooltip();
-          if (tooltip == null) continue;
-          String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
-          if (StringUtil.isEmpty(s)) continue;
-          s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
-          s = StringUtil.unescapeXmlEntities(s);
+          for (RangeHighlighterEx ex : myHighlighters) {
+            if (!ex.isValid()) continue;
+            int hEndOffset = ex.getAffectedAreaEndOffset();
+            Object tooltip = ex.getErrorStripeTooltip();
+            if (tooltip == null) continue;
+            String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
+            if (StringUtil.isEmpty(s)) continue;
+            s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
+            s = StringUtil.unescapeXmlEntities(s);
 
-          LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
-          int endOfLineOffset = myEditor.getElfDocument().getLineEndOffset(logicalPosition.line);
-          logicalPosition = myEditor.offsetToLogicalPosition(endOfLineOffset);
-          Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
-          logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
-          placeToShow.x += R * 3 / 2;
-          placeToShow.y -= myCacheFromY - 1;
+            LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
+            int endOfLineOffset = myEditor.getElfDocument().getLineEndOffset(logicalPosition.line);
+            logicalPosition = myEditor.offsetToLogicalPosition(endOfLineOffset);
+            Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
+            logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
+            placeToShow.x += R * 3 / 2;
+            placeToShow.y -= myCacheFromY - 1;
 
-          int w = g2d.getFontMetrics().stringWidth(s);
+            int w = g2d.getFontMetrics().stringWidth(s);
 
-          int rightEdge = rightEdges.get(logicalPosition.line);
-          placeToShow.x = Math.max(placeToShow.x, rightEdge);
-          rightEdge = Math.max(rightEdge, placeToShow.x + w + 3 * R);
-          rightEdges.put(logicalPosition.line, rightEdge);
+            int rightEdge = rightEdges.get(logicalPosition.line);
+            placeToShow.x = Math.max(placeToShow.x, rightEdge);
+            rightEdge = Math.max(rightEdge, placeToShow.x + w + 3 * R);
+            rightEdges.put(logicalPosition.line, rightEdge);
 
-          g2d.setColor(MessageType.WARNING.getPopupBackground());
-          g2d.fillRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
-          g2d.setColor(new JBColor(JBColor.GRAY, Gray._200));
-          g2d.drawRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
-          g2d.setColor(JBColor.foreground());
-          g2d.drawString(s, placeToShow.x + R, placeToShow.y + h - g2d.getFontMetrics(g2d.getFont()).getDescent() / 2 - 2);
-        }
+            g2d.setColor(MessageType.WARNING.getPopupBackground());
+            g2d.fillRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
+            g2d.setColor(new JBColor(JBColor.GRAY, Gray._200));
+            g2d.drawRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
+            g2d.setColor(JBColor.foreground());
+            g2d.drawString(s, placeToShow.x + R, placeToShow.y + h - g2d.getFontMetrics(g2d.getFont()).getDescent() / 2 - 2);
+          }
+        });
         isDirty = false;
       }
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
+      PaintUtil.useCopy(g, g2 -> {
         GraphicsUtil.setupAAPainting(g2);
         g2.setClip(new RoundRectangle2D.Double(0, 0, size.width - .5, size.height - .5, 2, 2));
         UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
@@ -320,10 +321,7 @@ final class EditorFragmentRenderer {
           g2.setPaint(new GradientPaint(0, size.height - ry, Gray._0.withAlpha(10), 0, size.height, Gray._255.withAlpha(30)));
           g2.fill(bottomArea);
         }
-      }
-      finally {
-        g2.dispose();
-      }
+      });
     }
   }
 }

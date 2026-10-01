@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.paint.PaintUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,10 +258,9 @@ public final class TextIcon implements Icon {
     if (myForeground != null && bounds != null) {
       int widthDelta = (bounds.width - currentTextBounds.width) / 2;
       int heightDelta = (bounds.height - currentTextBounds.height) / 2 ;
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + widthDelta,
-                                            myInsets.top + y + heightDelta,
-                                            currentTextBounds.width, currentTextBounds.height);
-      try {
+      PaintUtil.use((Graphics2D)g.create(myInsets.left + x + widthDelta,
+                                         myInsets.top + y + heightDelta,
+                                         currentTextBounds.width, currentTextBounds.height), g2d -> {
         Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
         if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, myContext.getAntiAliasingHint());
@@ -273,10 +273,7 @@ public final class TextIcon implements Icon {
           LOG.debug("Drawing \"" + myText + "\" at " + x + ", " + y + ", insets " + myInsets + "," +
                     " with bounds " + bounds + " and currentTextBounds " + currentTextBounds);
         }
-      }
-      finally {
-        g2d.dispose();
-      }
+      });
     }
   }
 

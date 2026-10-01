@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -132,8 +132,7 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
     super.paint(g)
 
     // Paint selected button frame over all children
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
       g2.paint = getSegmentedButtonBorderPaint(this, true)
@@ -143,9 +142,6 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
         JBInsets.addTo(r, JBUI.insets(DarculaUIUtil.LW.unscaled.toInt()))
         paintBorder(g2, r)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

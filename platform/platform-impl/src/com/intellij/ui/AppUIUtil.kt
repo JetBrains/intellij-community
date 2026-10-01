@@ -34,6 +34,7 @@ import com.intellij.ui.AppIcon.MacAppIcon
 import com.intellij.ui.Color16.Companion.toColor16
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.createImageDescriptorList
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.JBUIScale.scale
@@ -581,15 +582,11 @@ private fun addTransparentBorder(img: Image): BufferedImage {
   val width = img.getWidth(null)
   val height = img.getHeight(null)
   val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-  val g = result.createGraphics()
-  try {
+  result.createGraphics().use { g ->
     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
-  }
-  finally {
-    g.dispose()
   }
   return result
 }

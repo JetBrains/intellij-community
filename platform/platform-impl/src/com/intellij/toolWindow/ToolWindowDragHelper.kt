@@ -43,6 +43,7 @@ import com.intellij.ui.drag.DialogWithImage
 import com.intellij.ui.drag.DragImageView
 import com.intellij.ui.drag.GlassPaneDragImageView
 import com.intellij.ui.paint.RectanglePainter
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
@@ -54,7 +55,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.Point
 import java.awt.Rectangle
@@ -129,13 +129,13 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
      */
     internal fun createThumbnailDragImage(component: JComponent, thumbSize: Int = JBUI.scale(THUMB_SIZE)): BufferedImage {
       val image = ImageUtil.createImage(component.graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-      val graphics = image.graphics
-      if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag != true) {
-        graphics.color = UIUtil.getBgFillColor(component)
-        RectanglePainter.FILL.paint(graphics as Graphics2D, 0, 0, component.width, component.height, null)
+      image.createGraphics().use { graphics ->
+        if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag != true) {
+          graphics.color = UIUtil.getBgFillColor(component)
+          RectanglePainter.FILL.paint(graphics, 0, 0, component.width, component.height, null)
+        }
+        component.paint(graphics)
       }
-      component.paint(graphics)
-      graphics.dispose()
       val width: Double = image.getWidth(null).toDouble()
       val height: Double = image.getHeight(null).toDouble()
       if (thumbSize == -1 || width <= thumbSize && height <= thumbSize) return image
@@ -824,7 +824,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       }
 
       val image = ImageUtil.createImage(component.graphicsConfiguration, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_ARGB)
-      image.graphics.let {
+      image.createGraphics().use {
         if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag != true) {
           it.color = if (isNewUi) {
             JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
@@ -844,8 +844,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
             }
           }
         }
-
-        it.dispose()
       }
       return image
     }

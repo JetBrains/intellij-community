@@ -17,6 +17,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.IconUtil;
@@ -48,7 +49,6 @@ import java.awt.Dimension;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -318,8 +318,7 @@ public final class NewRecentProjectPanel extends RecentProjectPanel {
             GraphicsDevice gd = ge.getDefaultScreenDevice();
             GraphicsConfiguration gc = gd.getDefaultConfiguration();
             BufferedImage image = gc.createCompatibleImage(w, h);
-            Graphics2D g2d = image.createGraphics();
-            icon.paintIcon(null, g2d, 0, 0);
+            PaintUtil.use(image.createGraphics(), g2d -> icon.paintIcon(null, g2d, 0, 0));
             Image gray = GrayFilter.createDisabledImage(image);
             return new ImageIcon(gray);
           }

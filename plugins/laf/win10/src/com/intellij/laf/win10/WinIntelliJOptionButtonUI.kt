@@ -3,6 +3,7 @@ package com.intellij.laf.win10
 
 import com.intellij.laf.win10.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL
 import com.intellij.ui.components.BasicOptionButtonUI
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBUI.scale
 import java.awt.AlphaComposite
 import java.awt.Container
@@ -34,7 +35,7 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
 
     override fun paintBorderNotSimple(g: Graphics2D) = super.paintBorderNotSimple(g).also {
       // we do not need any rendering hints set by border here - so we clone again
-      cloneAndPaint(g) { paintSeparatorArea(it, this) }
+      g.useCopy { paintSeparatorArea(it, this) }
     }
   }
 

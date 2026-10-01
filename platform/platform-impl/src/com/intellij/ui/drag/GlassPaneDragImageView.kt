@@ -5,6 +5,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -83,8 +84,7 @@ internal class GlassPaneDragImageView(private val glassPane: IdeGlassPane) : Dra
 
     override fun executePaint(component: Component, g: Graphics2D) {
       val image = image ?: return
-      val g2 = g.create()
-      try {
+      g.useCopy { g2 ->
         g2.color = background
         val size = size
         val location = Point(location)
@@ -93,7 +93,7 @@ internal class GlassPaneDragImageView(private val glassPane: IdeGlassPane) : Dra
         if (InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
           val arcSize = JBUI.scale(20)
 
-          (g2 as Graphics2D).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
           g2.fillRoundRect(location.x, location.y, size.width, size.height, arcSize, arcSize)
           if (drawRoundRect) {
             g2.drawRoundRect(location.x, location.y, size.width, size.height, arcSize, arcSize)
@@ -104,9 +104,6 @@ internal class GlassPaneDragImageView(private val glassPane: IdeGlassPane) : Dra
         }
 
         StartupUiUtil.drawImage(g2, image, location.x, location.y, observer = component)
-      }
-      finally {
-        g2.dispose()
       }
     }
   }

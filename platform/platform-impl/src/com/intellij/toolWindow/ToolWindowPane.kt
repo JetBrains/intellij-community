@@ -37,7 +37,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.paint.useCopy
+import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
@@ -796,7 +796,7 @@ class ToolWindowPane private constructor(
       // Prepare top image. This image is scrolling over the bottom image.
       val topImage = layeredPane.topImage
       val bounds = component.bounds
-      topImage.graphics.useCopy { topGraphics ->
+      topImage.graphics.use { topGraphics ->
         component.putClientProperty(TEMPORARY_ADDED, true)
         try {
           layeredPane.add(component, PALETTE_LAYER, -1)
@@ -813,7 +813,7 @@ class ToolWindowPane private constructor(
       // prepare bottom image
       val bottomImage = layeredPane.bottomImage
       val bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane)
-      bottomImage.graphics.useCopy { bottomGraphics ->
+      (bottomImage.graphics as Graphics2D).use { bottomGraphics ->
         bottomGraphics.setClip(0, 0, bounds.width, bounds.height)
         bottomGraphics.translate(bottomImageOffset.x - bounds.x, bottomImageOffset.y - bounds.y)
         layeredPane.paint(bottomGraphics)
@@ -847,14 +847,14 @@ class ToolWindowPane private constructor(
       val bounds = component.bounds
       // Prepare top image. This image is scrolling over the bottom image. It contains a picture of component is being removed.
       val topImage: Image = layeredPane.topImage
-      topImage.graphics.useCopy { component.paint(it) }
+      topImage.graphics.use { component.paint(it) }
 
       // Prepare the bottom image.
       // This image contains a picture of a component that is located
       // under the component to is being removed.
       val bottomImage: Image = layeredPane.bottomImage
       val bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane)
-      bottomImage.graphics.useCopy { bottomGraphics ->
+      (bottomImage.graphics as Graphics2D).use { bottomGraphics ->
         layeredPane.remove(component)
         bottomGraphics.clipRect(0, 0, bounds.width, bounds.height)
         bottomGraphics.translate(bottomImageOffset.x - bounds.x, bottomImageOffset.y - bounds.y)

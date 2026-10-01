@@ -1,12 +1,12 @@
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ui.paint.useCopy
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Shape
 import java.awt.Window
 import javax.swing.JPanel
@@ -27,21 +27,13 @@ class MacWindowMask(content: Component?) : JPanel(BorderLayout()) {
   }
 
   override fun paint(graphics: Graphics) {
-    val clearGraphics = graphics.create() as Graphics2D
-    try {
+    graphics.useCopy { clearGraphics ->
       clearGraphics.composite = AlphaComposite.Clear
       clearGraphics.fillRect(0, 0, width, height)
     }
-    finally {
-      clearGraphics.dispose()
-    }
-    val contentGraphics = graphics.create() as Graphics2D
-    try {
+    graphics.useCopy { contentGraphics ->
       mask?.let { contentGraphics.clip(it) }
       super.paint(contentGraphics)
-    }
-    finally {
-      contentGraphics.dispose()
     }
   }
 

@@ -11,13 +11,13 @@ import com.intellij.ui.DrawUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
@@ -162,8 +162,7 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
       val hoverBounds = getHoverBounds(component, highlightBounds, statusBar)
       g.color = bg
       if (ExperimentalUI.isNewUI()) {
-        val g2 = g.create() as Graphics2D
-        try {
+        g.useCopy { g2 ->
           DrawUtil.setupRenderingHints(g2)
           val arc = JBUIScale.scale(4).toFloat()
           val shape: RoundRectangle2D = RoundRectangle2D.Float(
@@ -175,9 +174,6 @@ internal class WidgetEffectRenderer(private val statusBar: IdeStatusBarImpl) {
             arc,
           )
           g2.fill(shape)
-        }
-        finally {
-          g2.dispose()
         }
       }
       else {

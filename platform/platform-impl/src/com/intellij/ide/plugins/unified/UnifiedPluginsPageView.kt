@@ -28,6 +28,7 @@ import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
@@ -45,7 +46,6 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.GradientPaint
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.GridBagLayout
 import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager
@@ -1382,8 +1382,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
       super.paintComponent(g)
       if (headerHeight <= 0) return
 
-      val graphics = g.create() as Graphics2D
-      try {
+      g.useCopy { graphics ->
         graphics.color = background
         graphics.fillRect(0, 0, width, headerHeight)
         val gradientHeight = (height - headerHeight).coerceAtLeast(0)
@@ -1399,9 +1398,6 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
           )
           graphics.fillRect(0, headerHeight, width, gradientHeight)
         }
-      }
-      finally {
-        graphics.dispose()
       }
     }
 

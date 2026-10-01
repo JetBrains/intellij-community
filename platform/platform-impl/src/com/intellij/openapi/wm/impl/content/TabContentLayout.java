@@ -23,6 +23,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -388,26 +389,26 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     TabsDrawMode toDrawTabs = isToDrawTabs();
     if (toDrawTabs == TabsDrawMode.HIDE) return;
 
-    Graphics2D g2d = (Graphics2D)g.create();
-    for (ContentTabLabel each : tabs) {
-      //TODO set borderThickness
-      int borderThickness = JBUIScale.scale(1);
-      Rectangle r = each.getBounds();
+    PaintUtil.useCopy(g, g2d -> {
+      for (ContentTabLabel each : tabs) {
+        //TODO set borderThickness
+        int borderThickness = JBUIScale.scale(1);
+        Rectangle r = each.getBounds();
 
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
-        boolean isActive = ui.window.isActive() && ui.isActive();
-        boolean isHovered = each.isHovered() || ui.isPopupOpenedForContent(each.getContent());
-        if (each.isSelected()) {
-          tabPainter.paintSelectedTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(), isActive, isHovered);
-        }
-        else {
-          tabPainter.paintTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(), isActive, isHovered);
+        if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
+          boolean isActive = ui.window.isActive() && ui.isActive();
+          boolean isHovered = each.isHovered() || ui.isPopupOpenedForContent(each.getContent());
+          if (each.isSelected()) {
+            tabPainter.paintSelectedTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(), isActive, isHovered);
+          }
+          else {
+            tabPainter.paintTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(), isActive, isHovered);
+          }
         }
       }
-    }
-    g2d.dispose();
+    });
   }
 
   @Override

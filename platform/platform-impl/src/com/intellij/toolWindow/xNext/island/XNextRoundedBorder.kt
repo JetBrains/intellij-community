@@ -3,6 +3,7 @@ package com.intellij.toolWindow.xNext.island
 
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import com.intellij.util.ui.JBInsets
@@ -96,66 +97,61 @@ open class XNextRoundedBorder protected constructor(
   }
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-    val g2d = g.create() as Graphics2D
-    val g2dOriginal = IdeBackgroundUtil.getOriginalGraphics(g).create() as Graphics2D
-    try {
-      c as JComponent
+    g.useCopy { g2d ->
+      IdeBackgroundUtil.getOriginalGraphics(g).useCopy { g2dOriginal ->
+        c as JComponent
 
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2dOriginal.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g2dOriginal.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-      val fill =fillColor(c) ?: c.background
-      val border = borderColor(c)
-      val emptyCorners = emptyCornersColor(c)
+        val fill =fillColor(c) ?: c.background
+        val border = borderColor(c)
+        val emptyCorners = emptyCornersColor(c)
 
-      val area = Area(Rectangle(0, 0, width, height))
+        val area = Area(Rectangle(0, 0, width, height))
 
-      val borderShape = RoundRectangle2D.Double(outerInsets.left + x.toDouble(),
-                                                outerInsets.top + y.toDouble(),
-                                                width.toDouble() - outerInsets.width - 0.5,
-                                                height.toDouble() - outerInsets.height - 0.5,
-                                                arcDiameter.toDouble(),
-                                                arcDiameter.toDouble())
+        val borderShape = RoundRectangle2D.Double(outerInsets.left + x.toDouble(),
+                                                  outerInsets.top + y.toDouble(),
+                                                  width.toDouble() - outerInsets.width - 0.5,
+                                                  height.toDouble() - outerInsets.height - 0.5,
+                                                  arcDiameter.toDouble(),
+                                                  arcDiameter.toDouble())
 
-      val islandShape = Area(borderShape)
+        val islandShape = Area(borderShape)
 
-      val componentShape = Area(RoundRectangle2D.Double(componentInsets.left + x.toDouble(),
-                                                        componentInsets.top + y.toDouble(),
-                                                        width.toDouble() - componentInsets.width,
-                                                        height.toDouble() - componentInsets.height,
-                                                        arcDiameter.toDouble(),
-                                                        arcDiameter.toDouble()))
-
+        val componentShape = Area(RoundRectangle2D.Double(componentInsets.left + x.toDouble(),
+                                                          componentInsets.top + y.toDouble(),
+                                                          width.toDouble() - componentInsets.width,
+                                                          height.toDouble() - componentInsets.height,
+                                                          arcDiameter.toDouble(),
+                                                          arcDiameter.toDouble()))
 
 
-      area.subtract(islandShape)
-      islandShape.subtract(componentShape)
+
+        area.subtract(islandShape)
+        islandShape.subtract(componentShape)
 
 
-      emptyCorners?.let { paint ->
-        emptyCornersGraphics(g2d, c)?.let {
-          val g2d_ = it as Graphics2D
-          g2d_.paint = paint
-          g2d_.fill(area)
+        emptyCorners?.let { paint ->
+          emptyCornersGraphics(g2d, c)?.let {
+            val g2d_ = it as Graphics2D
+            g2d_.paint = paint
+            g2d_.fill(area)
+          }
+        }
+
+
+        fill?.let {
+          g2dOriginal.paint = it
+          g2dOriginal.fill(islandShape)
+        }
+
+        border?.let {
+          g2dOriginal.paint = it
+          g2dOriginal.stroke = BasicStroke(thickness.toFloat(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+          g2dOriginal.draw(borderShape)
         }
       }
-
-
-      fill?.let {
-        g2dOriginal.paint = it
-        g2dOriginal.fill(islandShape)
-      }
-
-      border?.let {
-        g2dOriginal.paint = it
-        g2dOriginal.stroke = BasicStroke(thickness.toFloat(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-        g2dOriginal.draw(borderShape)
-      }
-
-    }
-    finally {
-      g2d.dispose()
-      g2dOriginal.dispose()
     }
   }
 

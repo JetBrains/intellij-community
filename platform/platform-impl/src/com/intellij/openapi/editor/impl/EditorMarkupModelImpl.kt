@@ -118,6 +118,8 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.paint.use
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.Alarm
 import com.intellij.util.Processor
@@ -1053,18 +1055,20 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
         cachedHeight = componentBounds.height
         myDirtyYPositions = docRange
         dimensionsAreValid = false
-        paintTrackBasement(cachedTrack!!.graphics, Rectangle(0, 0, componentBounds.width, componentBounds.height))
+        cachedTrack!!.createGraphics().use {
+          paintTrackBasement(it, Rectangle(0, 0, componentBounds.width, componentBounds.height))
+        }
       }
       if (myDirtyYPositions === WHOLE_DOCUMENT) {
         myDirtyYPositions = docRange
       }
       if (myDirtyYPositions != null) {
-        val imageGraphics = cachedTrack!!.createGraphics()
-
-        myDirtyYPositions = myDirtyYPositions!!.intersection(docRange)
-        if (myDirtyYPositions == null) myDirtyYPositions = docRange
-        repaint(imageGraphics, componentBounds.width, myDirtyYPositions!!)
-        myDirtyYPositions = null
+        cachedTrack!!.createGraphics().use { imageGraphics ->
+          myDirtyYPositions = myDirtyYPositions!!.intersection(docRange)
+          if (myDirtyYPositions == null) myDirtyYPositions = docRange
+          repaint(imageGraphics, componentBounds.width, myDirtyYPositions!!)
+          myDirtyYPositions = null
+        }
       }
 
       StartupUiUtil.drawImage(g, cachedTrack!!)
@@ -1716,14 +1720,10 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     fun createStyledLabel(text: @Nls String?, icon: Icon?, alignment: Int): JLabel {
       val label: JLabel = object : JLabel(text, icon, alignment) {
         override fun paintComponent(graphics: Graphics) {
-          val g2 = graphics.create() as Graphics2D
-          try {
+          graphics.useCopy { g2 ->
             val alpha = if (translucent) 0.5f else 1.0f
             g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
             super.paintComponent(g2)
-          }
-          finally {
-            g2.dispose()
           }
         }
 

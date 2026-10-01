@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ResourceUtil;
@@ -31,7 +32,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -176,8 +176,9 @@ public final class TipUIUtil {
                   int height = (int)getPreferredSpan(View.Y_AXIS);
                   @SuppressWarnings("UndesirableClassUsage")
                   BufferedImage buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                  Graphics2D graphics = buffer.createGraphics();
-                  super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
+                  PaintUtil.use(buffer.createGraphics(), graphics -> {
+                    super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
+                  });
                   drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
                 }
 

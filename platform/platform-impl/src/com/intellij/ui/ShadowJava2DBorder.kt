@@ -3,13 +3,13 @@ package com.intellij.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.border.Border
@@ -20,9 +20,7 @@ class ShadowJava2DBorder(private val arc: Int, private val background: Color, pr
   private val shadowJava2DPainter = ShadowJava2DPainter(ShadowJava2DPainter.Type.NOTIFICATION, arc)
 
   override fun paintBorder(c: Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
-    val g2 = g!!.create() as Graphics2D
-
-    try {
+    g!!.useCopy { g2 ->
       val insets = getBorderInsets(c)
       val lw = DarculaUIUtil.LW.get()
       shadowJava2DPainter.paintShadow(g2, x, y, width, height)
@@ -36,9 +34,6 @@ class ShadowJava2DBorder(private val arc: Int, private val background: Color, pr
         DarculaNewUIUtil.fillInsideComponentBorder(g2, rect, background, arc.toFloat())
         DarculaNewUIUtil.drawRoundedComponentRectangle(g2, rect, borderColor, arc.toFloat(), DarculaUIUtil.LW.get())
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 

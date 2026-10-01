@@ -71,6 +71,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale.addUserScaleChangeListener
 import com.intellij.ui.scale.JBUIScale.scale
@@ -887,7 +888,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     val size = comp.size
     if (size.width < 1 || size.height < 1) return null
     val image = UIUtil.createImage(comp, size.width, size.height, BufferedImage.TYPE_INT_ARGB)
-    image.graphics.useCopy { comp.paint(it) }
+    image.createGraphics().use { comp.paint(it) }
     return image
   }
 
@@ -928,11 +929,10 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
 
       val service = InternalUICustomization.getInstance()
-      val graphics = g.create()
-      val g2 = (service?.preserveGraphics(graphics) ?: graphics) as Graphics2D
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+      g.useCopy { graphics ->
+        val g2 = (service?.preserveGraphics(graphics) ?: graphics) as Graphics2D
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
 
-      try {
         g2.color = getSeparatorColor()
         if (myOrientation == SwingConstants.HORIZONTAL) {
           val y2 = this@ActionToolbarImpl.getHeight() - gap * 2 - offset
@@ -950,9 +950,6 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           LinePainter2D.paint(g2, gap.toDouble(), center.toDouble(), (this@ActionToolbarImpl.getWidth() - gap * 2 - offset).toDouble(),
                               center.toDouble())
         }
-      }
-      finally {
-        g2.dispose()
       }
     }
   }

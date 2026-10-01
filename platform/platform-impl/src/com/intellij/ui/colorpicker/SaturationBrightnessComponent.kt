@@ -19,6 +19,7 @@ package com.intellij.ui.colorpicker
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
@@ -102,16 +103,16 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
   private fun paintPipetteMode(graphics: Graphics) {
     graphics.color = parent.background
     graphics.fillRect(0,0, width, height)
-    val g = graphics.create() as Graphics2D
     val p = MouseInfo.getPointerInfo().location
     val size = width / 21.0
     val img = robot.createMultiResolutionScreenCapture(Rectangle(p.x - 10, p.y - 5, 21, 11))
     val image = img.resolutionVariants.last()
     val iW = image.getWidth(null)
     val iH = image.getHeight(null)
-    g.scale(width / 21.0, width / 21.0)
-    g.drawImage(image, -((iW - 21) / 2.0).toInt(), -ceil((iH - 11) / 2.0).toInt(), null)
-    g.dispose()
+    graphics.useCopy { g ->
+      g.scale(width / 21.0, width / 21.0)
+      g.drawImage(image, -((iW - 21) / 2.0).toInt(), -ceil((iH - 11) / 2.0).toInt(), null)
+    }
     val xx = ceil(size * 10).toInt()
     val yy = ceil(size * 5).toInt()
     graphics.color = Color.white

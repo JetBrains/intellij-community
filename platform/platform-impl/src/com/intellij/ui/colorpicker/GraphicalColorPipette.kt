@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.paint.use
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -30,7 +31,6 @@ import java.awt.Color
 import java.awt.Dialog
 import java.awt.Dimension
 import java.awt.Frame
-import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.MouseInfo
 import java.awt.Point
@@ -114,13 +114,8 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   private val maskImage = ImageUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
   private val magnifierImage = ImageUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
 
-  private val image: BufferedImage = let {
-    val image = parent.graphicsConfiguration.createCompatibleImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, Transparency.TRANSLUCENT)
-    val graphics2d = image.graphics as Graphics2D
-    graphics2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
-    graphics2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
-    image
-  }
+  private val image: BufferedImage =
+    parent.graphicsConfiguration.createCompatibleImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, Transparency.TRANSLUCENT)
 
   private val robot = Robot()
   private var previousColor: Color? = null
@@ -171,14 +166,14 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   }
 
   init {
-    val maskG = maskImage.createGraphics()
-    maskG.color = Color.BLUE
-    maskG.fillRect(0, 0, ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE)
+    maskImage.createGraphics().use { maskG ->
+      maskG.color = Color.BLUE
+      maskG.fillRect(0, 0, ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE)
 
-    maskG.color = Color.RED
-    maskG.composite = AlphaComposite.SrcOut
-    maskG.fillRect(0, 0, ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE)
-    maskG.dispose()
+      maskG.color = Color.RED
+      maskG.composite = AlphaComposite.SrcOut
+      maskG.fillRect(0, 0, ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE)
+    }
   }
 
   fun pick() {
@@ -278,28 +273,31 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
 
           val capture = robot.createScreenCapture(captureRect)
 
-          val graphics = image.graphics as Graphics2D
+          image.createGraphics().use { graphics ->
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
 
-          // Clear the cursor graphics
-          graphics.composite = AlphaComposite.Src
-          graphics.color = TRANSPARENT_COLOR
-          graphics.fillRect(0, 0, image.width, image.height)
+            // Clear the cursor graphics
+            graphics.composite = AlphaComposite.Src
+            graphics.color = TRANSPARENT_COLOR
+            graphics.fillRect(0, 0, image.width, image.height)
 
-          graphics.drawImage(capture, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
+            graphics.drawImage(capture, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
 
-          // cropping round image
-          graphics.composite = AlphaComposite.DstOut
-          graphics.drawImage(maskImage, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
+            // cropping round image
+            graphics.composite = AlphaComposite.DstOut
+            graphics.drawImage(maskImage, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
 
-          // paint magnifier
-          graphics.composite = AlphaComposite.SrcOver
-          graphics.drawImage(magnifierImage, 0, 0, this)
+            // paint magnifier
+            graphics.composite = AlphaComposite.SrcOver
+            graphics.drawImage(magnifierImage, 0, 0, this)
 
-          graphics.composite = AlphaComposite.SrcOver
-          graphics.color = PIPETTE_BORDER_COLOR
-          graphics.drawRect(0, 0, ZOOM_RECTANGLE_SIZE - 1, ZOOM_RECTANGLE_SIZE - 1)
-          graphics.color = INDICATOR_BOUND_COLOR
-          graphics.drawRect(INDICATOR_BOUND_START, INDICATOR_BOUND_START, INDICATOR_BOUND_SIZE, INDICATOR_BOUND_SIZE)
+            graphics.composite = AlphaComposite.SrcOver
+            graphics.color = PIPETTE_BORDER_COLOR
+            graphics.drawRect(0, 0, ZOOM_RECTANGLE_SIZE - 1, ZOOM_RECTANGLE_SIZE - 1)
+            graphics.color = INDICATOR_BOUND_COLOR
+            graphics.drawRect(INDICATOR_BOUND_START, INDICATOR_BOUND_START, INDICATOR_BOUND_SIZE, INDICATOR_BOUND_SIZE)
+          }
 
           picker.cursor = parent.toolkit.createCustomCursor(image, center, CURSOR_NAME)
 

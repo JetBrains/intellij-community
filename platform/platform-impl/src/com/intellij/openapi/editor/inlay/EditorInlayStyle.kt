@@ -4,13 +4,13 @@ package com.intellij.openapi.editor.inlay
 import com.intellij.ide.ui.UISettings
 import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.RenderingHints
 import java.awt.geom.RoundRectangle2D
@@ -81,20 +81,15 @@ private class RoundedCardPanel(
   }
 
   override fun paintComponent(graphics: Graphics) {
-    val graphics2D = graphics.create() as Graphics2D
-    try {
+    graphics.useCopy { graphics2D ->
       graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       graphics2D.color = background
       graphics2D.fillRoundRect(0, 0, width, height, arc, arc)
     }
-    finally {
-      graphics2D.dispose()
-    }
   }
 
   override fun paintChildren(graphics: Graphics) {
-    val graphics2D = graphics.create() as Graphics2D
-    try {
+    graphics.useCopy { graphics2D ->
       val inset = borderWidth.toFloat()
       val innerWidth = width - inset * 2
       val innerHeight = height - inset * 2
@@ -103,9 +98,6 @@ private class RoundedCardPanel(
       val innerArc = (arc - borderWidth * 2).coerceAtLeast(0).toFloat()
       graphics2D.clip(RoundRectangle2D.Float(inset, inset, innerWidth, innerHeight, innerArc, innerArc))
       super.paintChildren(graphics2D)
-    }
-    finally {
-      graphics2D.dispose()
     }
   }
 }

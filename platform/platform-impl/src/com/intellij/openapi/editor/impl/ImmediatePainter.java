@@ -273,7 +273,7 @@ public final class ImmediatePainter {
 
     createOrUpdateImageBuffer(myEditor.getComponent(), graphics, bounds.getSize());
 
-    PaintUtil.useCopy(myImage.getGraphics(), imageGraphics -> {
+    PaintUtil.use((Graphics2D)myImage.getGraphics(), imageGraphics -> {
       imageGraphics.translate(-bounds.x, -bounds.y);
       painter.accept(imageGraphics);
     });

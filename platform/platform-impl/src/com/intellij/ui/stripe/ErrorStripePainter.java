@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.stripe;
 
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.RegionPainter;
@@ -153,55 +154,54 @@ public class ErrorStripePainter extends RegionPainter.Image {
   private void updateImage(BufferedImage image, boolean force) {
     int width = ImageUtil.getUserWidth(image);
     int height = ImageUtil.getUserHeight(image);
-    Graphics2D g = image.createGraphics();
-
-    myImageHeight = 0;
-    int min = myMin + myGap;
-    int max = height / myArraySize;
-    if (max < min) {
-      max = height / min;
-      int currentIndex = 0;
-      SingleValue currentValue = new SingleValue();
-      for (int index = 0; index < myArraySize; index++) {
-        Value value = myArray[index];
-        int i = index * max / myArraySize;
-        if (i > currentIndex) {
-          currentValue.paint(g, 0, myImageHeight, width, min, force);
-          myImageHeight += min;
-          currentIndex = i;
-          currentValue.myStripe = value == null ? null : value.get();
-          currentValue.myModified = value != null && value.myModified;
-        }
-        else if (value != null) {
-          ErrorStripe stripe = value.get();
-          if (stripe != null && stripe.compareTo(currentValue.myStripe) < 0) {
-            currentValue.myStripe = stripe;
+    PaintUtil.use(image.createGraphics(), g -> {
+      myImageHeight = 0;
+      int min = myMin + myGap;
+      int max = height / myArraySize;
+      if (max < min) {
+        max = height / min;
+        int currentIndex = 0;
+        SingleValue currentValue = new SingleValue();
+        for (int index = 0; index < myArraySize; index++) {
+          Value value = myArray[index];
+          int i = index * max / myArraySize;
+          if (i > currentIndex) {
+            currentValue.paint(g, 0, myImageHeight, width, min, force);
+            myImageHeight += min;
+            currentIndex = i;
+            currentValue.myStripe = value == null ? null : value.get();
+            currentValue.myModified = value != null && value.myModified;
           }
-          if (value.myModified) {
-            currentValue.myModified = true;
+          else if (value != null) {
+            ErrorStripe stripe = value.get();
+            if (stripe != null && stripe.compareTo(currentValue.myStripe) < 0) {
+              currentValue.myStripe = stripe;
+            }
+            if (value.myModified) {
+              currentValue.myModified = true;
+            }
+          }
+          if (value != null) {
+            value.myModified = false;
           }
         }
-        if (value != null) {
-          value.myModified = false;
+        currentValue.paint(g, 0, myImageHeight, width, min, force);
+        myImageHeight += min;
+      }
+      else {
+        if (max > myMax) {
+          max = Math.max(myMax, min);
+        }
+        for (int index = 0; index < myArraySize; index++) {
+          Value value = myArray[index];
+          if (value != null) {
+            value.paint(g, 0, myImageHeight, width, max, force);
+            value.myModified = false;
+          }
+          myImageHeight += max;
         }
       }
-      currentValue.paint(g, 0, myImageHeight, width, min, force);
-      myImageHeight += min;
-    }
-    else {
-      if (max > myMax) {
-        max = Math.max(myMax, min);
-      }
-      for (int index = 0; index < myArraySize; index++) {
-        Value value = myArray[index];
-        if (value != null) {
-          value.paint(g, 0, myImageHeight, width, max, force);
-          value.myModified = false;
-        }
-        myImageHeight += max;
-      }
-    }
-    g.dispose();
+    });
   }
 
   @Override

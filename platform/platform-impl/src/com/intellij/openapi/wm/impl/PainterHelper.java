@@ -306,26 +306,26 @@ final class PainterHelper implements Painter.Listener {
           cached.src.setBounds(src0);
           cached.dst.setBounds(dst0);
         }
-        Graphics2D gg = scaled.createGraphics();
-        gg.setComposite(AlphaComposite.Src);
-        if (fillType == IdeBackgroundUtil.Fill.SCALE) {
-          gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                              RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-          StartupUiUtil.drawImage(gg, image, dst0, src0, null);
-        }
-        else if (fillType == IdeBackgroundUtil.Fill.TILE) {
-          Rectangle r = new Rectangle(0, 0, 0, 0);
-          for (int x = 0; x < dst0.width; x += w) {
-            for (int y = 0; y < dst0.height; y += h) {
-              r.setBounds(dst0.x + x, dst0.y + y, src0.width, src0.height);
-              StartupUiUtil.drawImage(gg, image, r, src0, null);
+        PaintUtil.use(scaled.createGraphics(), gg -> {
+          gg.setComposite(AlphaComposite.Src);
+          if (fillType == IdeBackgroundUtil.Fill.SCALE) {
+            gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            StartupUiUtil.drawImage(gg, image, dst0, src0, null);
+          }
+          else if (fillType == IdeBackgroundUtil.Fill.TILE) {
+            Rectangle r = new Rectangle(0, 0, 0, 0);
+            for (int x = 0; x < dst0.width; x += w) {
+              for (int y = 0; y < dst0.height; y += h) {
+                r.setBounds(dst0.x + x, dst0.y + y, src0.width, src0.height);
+                StartupUiUtil.drawImage(gg, image, r, src0, null);
+              }
             }
           }
-        }
-        else {
-          StartupUiUtil.drawImage(gg, image, dst0, src0, null);
-        }
-        gg.dispose();
+          else {
+            StartupUiUtil.drawImage(gg, image, dst0, src0, null);
+          }
+        });
         repaint = false;
       }
       long currentTime = System.currentTimeMillis();

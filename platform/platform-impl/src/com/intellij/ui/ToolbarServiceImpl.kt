@@ -3,6 +3,8 @@ package com.intellij.ui
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.use
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -59,11 +61,9 @@ open class ToolbarServiceImpl : ToolbarService {
           return
         }
 
-        val graphics = (g.create() as Graphics2D).let {
+        (g.create() as Graphics2D).let {
           if (c is JComponent) JBSwingUtilities.runGlobalCGTransform(c, it) else it
-        }
-
-        try {
+        }.use { graphics ->
           val headerRectangle = Rectangle(0, 0, c.width, topWindowInset.top)
           graphics.color = JBColor.PanelBackground
           graphics.fill(headerRectangle)
@@ -78,9 +78,6 @@ open class ToolbarServiceImpl : ToolbarService {
           }
           val color = if (window.isActive) JBColor.black else JBColor.gray
           graphics.color = color
-        }
-        finally {
-          graphics.dispose()
         }
       }
     }
@@ -106,15 +103,11 @@ private fun setCustomTitleForToolbar(window: Window, rootPane: JRootPane, onDisp
     override fun getBorderInsets(c: Component): Insets = topWindowInset
 
     override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-      val graphics = g.create() as Graphics2D
-      try {
+      g.useCopy { graphics ->
         val headerRectangle = Rectangle(0, 0, c.width, topWindowInset.top)
         val color = UIManager.getColor("MainToolbar.background")
         graphics.color = color ?: UIUtil.getPanelBackground()
         graphics.fill(headerRectangle)
-      }
-      finally {
-        graphics.dispose()
       }
     }
   }

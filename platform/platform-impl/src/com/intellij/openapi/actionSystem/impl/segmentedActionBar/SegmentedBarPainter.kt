@@ -5,9 +5,9 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.DrawUtil
-import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
@@ -16,7 +16,6 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Paint
 import java.awt.Rectangle
-import java.awt.Shape
 import java.awt.geom.Area
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
@@ -57,8 +56,7 @@ internal class SegmentedBarPainter {
       val r = Rectangle(c.size)
       // JBInsets.removeFrom(r, if (DarculaButtonUI.isSmallVariant(c)) c.getInsets() else JBUI.insets(1))
 
-      val g2 = g.create() as Graphics2D
-      try {
+      g.useCopy { g2 ->
         DrawUtil.setupRenderingHints(g2)
         g2.translate(r.x, r.y)
         val arc = DarculaUIUtil.BUTTON_ARC.float
@@ -72,131 +70,84 @@ internal class SegmentedBarPainter {
           } ?: g2.fill(RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc))
         }
       }
-      finally {
-        g2.dispose()
-      }
       return true
     }
 
-  private fun paintComponent(g2: Graphics2D, r: Rectangle, position: String) {
-    DrawUtil.setupRenderingHints(g2)
-    g2.translate(r.x, r.y)
-    val arc = DarculaUIUtil.BUTTON_ARC.float
-
-    val wdth = r.width.toFloat()
-    val offs = arc * 2
-
-    val area = when (position) {
-      SegmentedActionToolbarComponent.CONTROL_BAR_FIRST -> {
-        val rightGap = (wdth / 3).roundToInt().toFloat()
-        val area = Area(RoundRectangle2D.Float(bw, bw, wdth - bw, r.height.toFloat() - (2 * bw), arc, arc))
-        area.add(Area(Rectangle2D.Float(wdth - rightGap, bw, rightGap, r.height.toFloat() - (2 * bw))))
-        area
-      }
-      SegmentedActionToolbarComponent.CONTROL_BAR_MIDDLE -> {
-        Area(Rectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2*bw)))
-      }
-      SegmentedActionToolbarComponent.CONTROL_BAR_LAST -> {
-        val area = Area(RoundRectangle2D.Float(0f, bw, wdth - bw, r.height.toFloat() - (2*bw), arc, arc))
-        area.add(Area(Rectangle2D.Float(0f, bw, offs, r.height.toFloat() - (2*bw))))
-        area
-      }
-      else -> {
-        Area(RoundRectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2*bw), arc, arc))
-      }
-    }
-
-    g2.fill(area)
-  }
-
-  fun paintActionButtonBackground(g: Graphics, component: JComponent, state: Int) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) return
-    g.color = when (state) {
-      ActionButtonComponent.NORMAL -> component.background
-      ActionButtonComponent.PUSHED -> JBUI.CurrentTheme.ActionButton.pressedBackground()
-      else -> JBUI.CurrentTheme.ActionButton.hoverBackground()
-    }
-
-    val rect = Rectangle(component.size)
-    val insets = component.insets
-    JBInsets.removeFrom(rect, JBUI.insets(insets.top, 0, insets.bottom, 0))
-    component.getClientProperty(SegmentedActionToolbarComponent.CONTROL_BAR_PROPERTY)?.let {
-      paintComponent(g as Graphics2D, Rectangle(component.size), it.toString())
-    } ?: g.fillRect(rect.x, rect.y, rect.width, rect.height)
-  }
-
-  fun paintActionBarBorder(component: JComponent, g: Graphics) {
-    val g2 = g.create() as Graphics2D
-    try {
+    private fun paintComponent(g2: Graphics2D, r: Rectangle, position: String) {
       DrawUtil.setupRenderingHints(g2)
-
-      val paint = getGradientPaint(component)
-
-      for(i in 0 until component.componentCount - 1) {
-        val comp = component.getComponent(i)
-        val bounds = comp.bounds
-
-        g2.paint2DLine(bounds.maxX - strokeWidth, bw.toDouble(), bounds.maxX - strokeWidth, (component.height - (bw * 2)).toDouble(),
-                       LinePainter2D.StrokeType.INSIDE,
-                       strokeWidth,
-                       JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-      }
-
-      var arc = DarculaUIUtil.BUTTON_ARC.float
-
-      val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
-      border.append(RoundRectangle2D.Float(bw, bw, component.width - (bw * 2), component.height - (bw * 2), arc, arc), false)
-
-      arc = if (arc > lw) arc - lw else 0.0f
-      border.append(RoundRectangle2D.Float(bw + lw, bw + lw, component.width - ((bw + lw) * 2), component.height - ((bw + lw) * 2), arc,
-                                           arc), false)
-
-      g2.paint = paint
-      g2.fill(border)
-    }
-    finally {
-      g2.dispose()
-    }
-  }
-
-  private fun componentBorder(g: Graphics, h: Int, shape: Shape) {
-    val g2 = g.create() as Graphics2D
-    DrawUtil.setupRenderingHints(g2)
-
-    val paint = GradientPaint(bw, bw,
-                              JBColor.namedColor(
-                                "Button.startBorderColor",
-                                JBColor.namedColor("Button.darcula.outlineStartColor", 0xbfbfbf)),
-                              bw, h - (bw * 2),
-                              JBColor
-                                .namedColor("Button.endBorderColor",
-                                            JBColor.namedColor(
-                                              "Button.darcula.outlineEndColor",
-                                              0xb8b8b8)))
-
-    val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
-    border.append(shape, true)
-    g2.paint = paint
-    g2.draw(border)
-  }
-
-  fun paintActionBarBackground(component: JComponent, g: Graphics) {
-    val g2 = g.create() as Graphics2D
-    try {
-      DrawUtil.setupRenderingHints(g2)
-
+      g2.translate(r.x, r.y)
       val arc = DarculaUIUtil.BUTTON_ARC.float
 
-      val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
-      border.append(RoundRectangle2D.Float(bw, bw, component.width - (bw * 2), component.height - (bw * 2), arc, arc), false)
+      val wdth = r.width.toFloat()
+      val offs = arc * 2
 
-      g2.color = JBColor.namedColor("Panel.background", Gray.xCD)
-      g2.fill(border)
+      val area = when (position) {
+        SegmentedActionToolbarComponent.CONTROL_BAR_FIRST -> {
+          val rightGap = (wdth / 3).roundToInt().toFloat()
+          val area = Area(RoundRectangle2D.Float(bw, bw, wdth - bw, r.height.toFloat() - (2 * bw), arc, arc))
+          area.add(Area(Rectangle2D.Float(wdth - rightGap, bw, rightGap, r.height.toFloat() - (2 * bw))))
+          area
+        }
+        SegmentedActionToolbarComponent.CONTROL_BAR_MIDDLE -> {
+          Area(Rectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2 * bw)))
+        }
+        SegmentedActionToolbarComponent.CONTROL_BAR_LAST -> {
+          val area = Area(RoundRectangle2D.Float(0f, bw, wdth - bw, r.height.toFloat() - (2 * bw), arc, arc))
+          area.add(Area(Rectangle2D.Float(0f, bw, offs, r.height.toFloat() - (2 * bw))))
+          area
+        }
+        else -> {
+          Area(RoundRectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2 * bw), arc, arc))
+        }
+      }
 
+      g2.fill(area)
     }
-    finally {
-      g2.dispose()
+
+    fun paintActionButtonBackground(g: Graphics, component: JComponent, state: Int) {
+      if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) return
+      g.color = when (state) {
+        ActionButtonComponent.NORMAL -> component.background
+        ActionButtonComponent.PUSHED -> JBUI.CurrentTheme.ActionButton.pressedBackground()
+        else -> JBUI.CurrentTheme.ActionButton.hoverBackground()
+      }
+
+      val rect = Rectangle(component.size)
+      val insets = component.insets
+      JBInsets.removeFrom(rect, JBUI.insets(insets.top, 0, insets.bottom, 0))
+      component.getClientProperty(SegmentedActionToolbarComponent.CONTROL_BAR_PROPERTY)?.let {
+        paintComponent(g as Graphics2D, Rectangle(component.size), it.toString())
+      } ?: g.fillRect(rect.x, rect.y, rect.width, rect.height)
     }
-  }
+
+    fun paintActionBarBorder(component: JComponent, g: Graphics) {
+      g.useCopy { g2 ->
+        DrawUtil.setupRenderingHints(g2)
+
+        val paint = getGradientPaint(component)
+
+        for (i in 0 until component.componentCount - 1) {
+          val comp = component.getComponent(i)
+          val bounds = comp.bounds
+
+          g2.paint2DLine(bounds.maxX - strokeWidth, bw.toDouble(), bounds.maxX - strokeWidth, (component.height - (bw * 2)).toDouble(),
+                         LinePainter2D.StrokeType.INSIDE,
+                         strokeWidth,
+                         JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+        }
+
+        var arc = DarculaUIUtil.BUTTON_ARC.float
+
+        val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
+        border.append(RoundRectangle2D.Float(bw, bw, component.width - (bw * 2), component.height - (bw * 2), arc, arc), false)
+
+        arc = if (arc > lw) arc - lw else 0.0f
+        border.append(RoundRectangle2D.Float(bw + lw, bw + lw, component.width - ((bw + lw) * 2), component.height - ((bw + lw) * 2), arc,
+                                             arc), false)
+
+        g2.paint = paint
+        g2.fill(border)
+      }
+    }
   }
 }

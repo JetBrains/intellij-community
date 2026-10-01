@@ -6,12 +6,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AnchoredButton
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.RenderingHints
@@ -92,8 +92,7 @@ class StripeButtonUi : MetalToggleButtonUI() {
     )
 
     // Paint button's background
-    val g2 = g.create() as Graphics2D
-    try {
+    g.useCopy { g2 ->
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
       val model = button.model
@@ -145,9 +144,6 @@ class StripeButtonUi : MetalToggleButtonUI() {
         }
         BasicGraphicsUtils.drawString(g2, clippedText, button.mnemonic2, textRect.x, textRect.y + fm.ascent)
       }
-    }
-    finally {
-      g2.dispose()
     }
   }
 }
