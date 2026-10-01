@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -191,6 +191,8 @@ public class KeywordCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNoVarInFrontOfMethod() { doTest(); }
   
   public void testNoVarInFrontOfMethod2() { doTest(); }
+
+  public void testImportAlias() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

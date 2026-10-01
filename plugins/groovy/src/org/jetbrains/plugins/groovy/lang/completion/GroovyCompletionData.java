@@ -227,7 +227,13 @@ public final class GroovyCompletionData {
         addKeywords(consumer, false, JavaKeywords.BREAK);
       }
 
-      if (PsiJavaPatterns.psiElement().withSuperParent(2, GrImportStatement.class).accepts(position)) {
+      if (parent instanceof GrImportStatement st && !st.isOnDemand() && !st.isModule() && st.getAlias() == null) {
+        GrCodeReferenceElement reference = st.getImportReference();
+        if (reference != null && position.getTextOffset() > reference.getTextOffset() + reference.getTextLength()) {
+          addKeywords(consumer, true, "as");
+        }
+      }
+      else if (PsiJavaPatterns.psiElement().withSuperParent(2, GrImportStatement.class).accepts(position)) {
         if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.IMPORT).accepts(position)) {
           addKeywords(consumer, true, JavaKeywords.STATIC);
           if (GroovyConfigUtils.isAtLeastGroovy60(position)) {
