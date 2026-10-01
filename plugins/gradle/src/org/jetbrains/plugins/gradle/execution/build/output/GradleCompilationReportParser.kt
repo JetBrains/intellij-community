@@ -1,14 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build.output
 
-import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.StartId
 import com.intellij.build.output.BuildOutputInstantReader
-import com.intellij.build.output.BuildOutputParser
+import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
+import com.intellij.build.output.BuildOutputMulticaster
+import com.intellij.build.output.BuildOutputReplayableLineReader
+import com.intellij.build.output.BuildOutputText
 import com.intellij.build.output.JavacOutputParser
 import com.intellij.openapi.util.NlsSafe
 import java.util.function.Consumer
 
-class GradleCompilationReportParser : BuildOutputParser {
+class GradleCompilationReportParser : BuildOutputLineParserBridge() {
 
   private companion object {
     private const val GROUPED_COMPILATION_ERROR = "> Compilation failed; see the compiler output below."
@@ -17,8 +20,14 @@ class GradleCompilationReportParser : BuildOutputParser {
     private val ERROR_GROUP_TERMINATOR = "(\\d+ error(s)?)".toRegex()
   }
 
-  override fun parse(line: @NlsSafe String, reader: BuildOutputInstantReader, messageConsumer: Consumer<in BuildEvent>): Boolean {
-    if (GROUPED_COMPILATION_ERROR != line) {
+  override suspend fun parse(
+    line: BuildOutputText,
+    reader: BuildOutputReplayableLineReader,
+    taskId: StartId,
+    multicaster: BuildOutputMulticaster,
+    isSingleFlow: Boolean,
+  ): Boolean {
+    if (GROUPED_COMPILATION_ERROR != line.text) {
       return false
     }
     val parser by lazy { JavacOutputParser() }
@@ -26,29 +35,33 @@ class GradleCompilationReportParser : BuildOutputParser {
     drainCompilationErrors(reader) { error ->
       parsed = true
       if (error.isNotEmpty()) {
-        parser.parse(error.first(), ErrorHolder(error, reader.parentEventId)) { event ->
-          messageConsumer.accept(event)
+        parser.parse(error.first(), ErrorHolder(error, taskId)) { event ->
+          multicaster.notifyBuildEvent(event)
         }
       }
     }
     return parsed
   }
 
-  private fun drainCompilationErrors(reader: BuildOutputInstantReader, errorConsumer: Consumer<List<String>>) {
+  private suspend fun drainCompilationErrors(reader: BuildOutputReplayableLineReader, errorConsumer: Consumer<List<String>>) {
     val buffer = mutableListOf<String>()
     do {
       val line = reader.readLine()
+      if (line == null) {
+        errorConsumer.accept(buffer)
+        return
+      }
+      val text = line.text
       when {
-        line == null || line == MESSAGE_GROUP_TERMINATOR || ERROR_GROUP_TERMINATOR.matches(line.trim()) -> {
-          errorConsumer.accept(buffer)
+        text == MESSAGE_GROUP_TERMINATOR || ERROR_GROUP_TERMINATOR.matches(text.trim()) -> {
           return
         }
-        line.trim() == ERROR_CURSOR -> {
-          buffer.add(line)
+        text.trim() == ERROR_CURSOR -> {
+          buffer.add(text)
           errorConsumer.accept(buffer)
           buffer.clear()
         }
-        else -> buffer.add(line)
+        else -> buffer.add(text)
       }
     }
     while (true)
