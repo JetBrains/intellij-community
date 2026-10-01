@@ -250,6 +250,42 @@ fn natives_mode_tags_the_inventory_span() {
     assert_eq!(tags(&spans(&trace)[2]), owned(&want));
 }
 
+/// The packer creates the parent of the jar and the tree root, and the pack creates the directories below the root. Each
+/// gets the mode 0755, as the Go `os.MkdirAll(dir, 0o755)` gave it. The inventory records the mode of each tree
+/// directory. The usual umask 022 also turns the 0777 default into 0755. So the test runs itself again in a child
+/// process under the umask 002, where the two differ.
+#[cfg(unix)]
+#[test]
+fn natives_mode_creates_each_directory_with_mode_0755() {
+    use std::os::unix::fs::PermissionsExt;
+
+    const CHILD: &str = "PACKER_TEST_UMASK_CHILD";
+    if std::env::var_os(CHILD).is_none() {
+        let output = std::process::Command::new("/bin/sh")
+            .args(["-c", r#"umask 002 && exec "$0" --exact "$1" --nocapture"#])
+            .arg(std::env::current_exe().unwrap())
+            .arg("tests::natives_mode_creates_each_directory_with_mode_0755")
+            .env(CHILD, "1")
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            output.status.success() && stdout.contains(" 1 passed;"),
+            "the run under the umask 002 failed:\n{stdout}\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    let dir = pack_one_native_jar();
+    let outcome = run_in(dir.path(), &[flag_file_argument(dir.path())]);
+    assert_eq!(outcome.code, 0, "{}", outcome.stderr);
+    for relative in ["out", "out/native", "out/native/aarch64"] {
+        let path = dir.path().join(relative);
+        let mode = fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+        assert!(mode == 0o755, "{relative}: the mode is {mode:o}, not 755");
+    }
+}
+
 #[test]
 fn natives_mode_refuses_a_trace_destination_inside_the_tree() {
     let dir = pack_one_native_jar();

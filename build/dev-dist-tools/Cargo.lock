@@ -403,7 +403,6 @@ dependencies = [
  "anyhow",
  "crc32fast",
  "distpath",
- "filemeta",
  "flate2",
  "memmap2",
  "sha2",

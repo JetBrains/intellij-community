@@ -162,6 +162,10 @@ pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'
 pub(crate) fn pack(scratch: &Scratch, mut spec: MergeSpec) -> (Vec<u8>, Vec<String>) {
     let file_name = spec.output.file_name().expect("an output file name").to_owned();
     spec.output = scratch.dir().join(file_name);
+    // The caller creates the tree root, as the packer does.
+    if let Some(tree) = spec.native.as_ref().and_then(|native| native.tree.as_ref()) {
+        fs::create_dir_all(&tree.dir).expect("the tree root");
+    }
     let report = spec
         .pack(&MergeOptions { verify_crc: true })
         .unwrap_or_else(|error| panic!("{error:#}"));

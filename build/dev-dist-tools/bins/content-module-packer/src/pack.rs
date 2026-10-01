@@ -91,7 +91,7 @@ fn pack_one(spec: &MergeSpec, options: &MergeOptions, parent: &Span, out: &mut d
     let span = parent.child("pack jar");
     span.tag("jar", jar_name.as_str());
     span.tag("sources", spec.sources.len());
-    let merged = match spec.pack(options) {
+    let merged = match create_directories(spec).and_then(|()| spec.pack(options)) {
         Ok(merged) => merged,
         Err(error) => {
             span.fail(&format!("{error:#}"));
@@ -112,6 +112,19 @@ fn pack_one(spec: &MergeSpec, options: &MergeOptions, parent: &Span, out: &mut d
         let _ = writeln!(out, "{line}");
     }
     result
+}
+
+/// Creates the parent of the jar and the root of the native tree before the pack. Each new directory gets the mode 0755
+/// under any umask, because the inventory of a tree records the mode of each directory. The pack creates the directories
+/// below the tree root.
+pub(crate) fn create_directories(spec: &MergeSpec) -> anyhow::Result<()> {
+    if let Some(parent) = spec.output.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+        filemeta::create_dir_all_0755(parent)?;
+    }
+    if let Some(tree) = spec.native.as_ref().and_then(|native| native.tree.as_ref()) {
+        filemeta::create_dir_all_0755(&tree.dir)?;
+    }
+    Ok(())
 }
 
 /// Writes the inventory of the group under an `inventory packing output` span with the counters of the inventory.

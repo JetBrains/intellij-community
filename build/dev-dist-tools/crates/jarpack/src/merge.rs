@@ -197,9 +197,6 @@ impl MergeSpec {
             Some(native) => Some(NativeMerge::new(self.native_source_index(native)?)),
             None => None,
         };
-        if let Some(parent) = output.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-            filemeta::create_dir_all_0755(parent)?;
-        }
         let file = HashingWrite::new(File::create(output).with_context(|| output.display().to_string())?);
 
         let mut writer = Writer::with_directory_mode(file, self.directory_mode);

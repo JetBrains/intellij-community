@@ -94,7 +94,11 @@ fn spec(output: impl Into<PathBuf>, native: Option<NativeSpec>, sources: Vec<Sou
     }
 }
 
+/// Packs as the packer does, with the tree root created first, and returns the error.
 fn pack_error(spec: &MergeSpec) -> String {
+    if let Some(tree) = spec.native.as_ref().and_then(|native| native.tree.as_ref()) {
+        fs::create_dir_all(&tree.dir).unwrap();
+    }
     match spec.pack(&MergeOptions::default()) {
         Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
         Err(error) => format!("{error:#}"),
@@ -496,9 +500,7 @@ fn natives_mode_writes_an_executable_on_every_host() {
         ],
     );
     let native = native_spec(&scratch, "linux_x64", "pty4j");
-    spec(scratch.dir().join("out.jar"), Some(native.clone()), vec![library(&pty4j)])
-        .pack(&MergeOptions::default())
-        .unwrap();
+    pack(&scratch, spec("out.jar", Some(native.clone()), vec![library(&pty4j)]));
     let files = tree_files(tree_of(&native));
     assert!(
         files.contains_key("linux/x86-64/pty4j-unix-spawn-helper") && files.len() == 2,
@@ -667,9 +669,10 @@ fn natives_spec_validation_refuses_an_incomplete_spec() {
     }
 }
 
-/// The parent of the jar and each tree directory get the mode 0755, as the Go `os.MkdirAll(dir, 0o755)` gave them. The
-/// inventory records the mode of each tree directory. The usual umask 022 also turns the 0777 default into 0755. So the
-/// test runs itself again in a child process under the umask 002, where the two differ.
+/// Each directory that the pack creates below the tree root gets the mode 0755, as the Go `os.MkdirAll(dir, 0o755)` gave
+/// it. The inventory records the mode of each tree directory. The root keeps the mode that the caller gave it. The usual
+/// umask 022 also turns the 0777 default into 0755. So the test runs itself again in a child process under the umask
+/// 002, where the two differ.
 #[cfg(unix)]
 #[test]
 fn natives_mode_creates_each_directory_with_mode_0755() {
@@ -693,23 +696,38 @@ fn natives_mode_creates_each_directory_with_mode_0755() {
     let scratch = Scratch::new();
     let library = native_library_source(&scratch);
     let native = native_spec(&scratch, "darwin_aarch64", "foo");
-    let root = scratch.dir();
+    let tree = tree_of(&native);
+    fs::create_dir(tree).unwrap();
     spec(
-        root.join("out/lib/intellij.libraries.foo.jar"),
+        scratch.dir().join("intellij.libraries.foo.jar"),
         Some(native.clone()),
         vec![Source::library(&library)],
     )
     .pack(&MergeOptions::default())
     .unwrap();
-    let tree = tree_of(&native);
-    for dir in [
-        root.join("out"),
-        root.join("out/lib"),
-        tree.to_path_buf(),
-        tree.join("darwin-aarch64"),
-    ] {
+    for (dir, want) in [(tree.to_path_buf(), 0o775), (tree.join("darwin-aarch64"), 0o755)] {
         let metadata = fs::metadata(&dir).unwrap_or_else(|error| panic!("{}: {error}", dir.display()));
         let mode = mode(&metadata);
-        assert!(mode == 0o755, "{}: the mode is {mode:o}, not 755", dir.display());
+        assert!(mode == want, "{}: the mode is {mode:o}, not {want:o}", dir.display());
     }
+}
+
+#[test]
+fn natives_mode_refuses_an_absent_tree() {
+    let scratch = Scratch::new();
+    let library_jar = native_library_source(&scratch);
+    let native = native_spec(&scratch, "darwin_aarch64", "foo");
+    let output = scratch.dir().join("intellij.libraries.foo.jar");
+    let error = spec(&output, Some(native.clone()), vec![library(&library_jar)])
+        .pack(&MergeOptions::default())
+        .unwrap_err();
+    assert_eq!(
+        format!("{error:#}"),
+        format!(
+            "{}: the native tree {} does not exist",
+            output.display(),
+            tree_of(&native).display()
+        )
+    );
+    assert!(!output.exists(), "the jar was written although the tree was refused");
 }

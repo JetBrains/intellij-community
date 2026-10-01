@@ -15,7 +15,6 @@ memmap2.workspace = true
 flate2.workspace = true
 crc32fast.workspace = true
 distpath.workspace = true
-filemeta.workspace = true
 xxh3.workspace = true
 
 [dev-dependencies]

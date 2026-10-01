@@ -23,8 +23,9 @@ use zip::{CompressionMethod, ZipArchive};
 use super::{InventoryReport, write_inventory};
 use crate::tests::write_jar;
 
-/// The two steps of the binary: the jar, then the inventory from the report of the merge.
+/// The steps of the binary: the directories, the jar, then the inventory from the report of the merge.
 fn pack(spec: &MergeSpec) -> anyhow::Result<InventoryReport> {
+    crate::pack::create_directories(spec)?;
     let merged = spec.pack(&MergeOptions::default())?;
     write_inventory(spec, &merged)
 }

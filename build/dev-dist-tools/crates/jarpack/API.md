@@ -25,6 +25,7 @@ plan files through pluginpack. Each other input fails with an error that names i
 | A source path | a nonempty path | an empty path |
 | `META-INF/listOfEntities.txt` with `merge_entities` | UTF-8 text | other bytes. The Go trim stopped at the first bad byte. |
 | A native entry in `nativelib::select` | ASCII | other names. The family match folds ASCII case only. |
+| The native tree before the pack | an empty directory | an absent directory, or a directory that holds an entry |
 
 The one-shot mode with many `output=` groups stays, because the profiling method of the README uses it. No Starlark rule
 writes a `file=` line. The recipe replay of `build/dev-dist` writes one, so the form stays.
@@ -38,6 +39,9 @@ architecture, or no tree, so a platform without a tree cannot occur. The Go port
 - The packer packs one spec in two steps. It calls `spec.pack(&options)` first, and it writes the inventory of the
   spec second when the spec names a metadata file. The `pack jar` span holds the first step, and its
   `inventory packing output` child span holds the second.
+- The caller creates the parent of the jar and the root of the native tree before the pack. The packer creates them
+  with `filemeta::create_dir_all_0755`. pluginpack reserves each destination of its stage before the merge, so the
+  parent exists. A missing parent fails at the create call of the jar with `<path>: <io::Error>`.
 - `MergeSpec::pack` prints nothing. The caller prints `duplicate_line(&spec.jar_name(), &report.duplicates)` to stderr.
   The line is `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end.
   The Go binary printed it before an inventory error, so the caller prints it between the two steps.
@@ -70,9 +74,10 @@ set it, and natives mode now reserves its names inside the merge.
 `jarpack::nativelib` is the port of `internal/nativelib`. The Go `ValidFamily` has no port, because every `Family`
 value is valid. `NativeTree::file_mode` gives the mode of each tree file, and the packer records it in the inventory.
 
-The merge creates each directory with `filemeta::create_dir_all_0755`, so a new directory of the tree gets the mode 0755
-under any umask. The parent of the jar gets the same mode. The Go `os.MkdirAll(path, 0o755)` gave the same mode under
-the umask 022 or 002, but 0700 under the umask 077. A directory that exists keeps its mode.
+The merge creates each directory below the tree root with the mode 0755 under any umask. The packer creates the root
+and the parent of the jar with the same mode. The Go `os.MkdirAll(path, 0o755)` gave the same mode under the umask 022
+or 002, but 0700 under the umask 077. A directory that exists keeps its mode. The merge links no `filemeta`, because
+that crate would put the inventory crates into each tool that reads a jar.
 
 ## Low level
 
@@ -97,5 +102,5 @@ the text. `downcast_ref::<io::Error>()` gives the `io::ErrorKind`.
 A `Writer` does not know the path of its output, so its I/O error has no path. The merge adds the jar path to an I/O
 error of the writer, for example `intellij.example.jar: No space left on device (os error 28)`. The Go text was
 `write intellij.example.jar: no space left on device`. A refusal of the writer names its entry or its limit, and the
-merge keeps it as it is. Another caller of `Writer` adds the path itself. A directory that
-`filemeta::create_dir_all_0755` cannot create gives an error whose text names the directory already.
+merge keeps it as it is. Another caller of `Writer` adds the path itself. A tree directory that the merge cannot
+create gives `<directory>: <io::Error>`.

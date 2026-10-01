@@ -717,6 +717,7 @@ fn batch_writes_only_its_assets_in_layout_order() {
     let (custom, _) = read_archive(&written.output.join("lib/nested/custom.jar"));
     assert_eq!(custom, ["custom/Value.class", "__index__"], "a plan jar has no directory entries");
     let reference = root.path().join("reference/library.jar");
+    fs::create_dir(root.path().join("reference")).unwrap();
     jarpack::MergeSpec {
         output: reference.clone(),
         keep_manifest: true,

@@ -33,9 +33,9 @@ pub struct NativeSpec {
 /// The tree of a [`NativeSpec`] that writes the files of one target platform.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NativeTree {
-    /// The directory the selected files go into. It is absent or empty before the pack, and the pack refuses a tree that
-    /// holds a file. The collector trusts the inventory of the tree, so every file in it must be one this pack wrote. A
-    /// platform with no matching entry leaves it empty.
+    /// The directory the selected files go into. The caller creates it before the pack, and the pack refuses an absent
+    /// tree or a tree that holds a file. The collector trusts the inventory of the tree, so every file in it must be one
+    /// this pack wrote. A platform with no matching entry leaves it empty.
     pub dir: PathBuf,
     /// The target platform, from `native-variant=` through [`nativelib::parse_variant`].
     pub family: Family,
@@ -85,7 +85,7 @@ impl NativeSpec {
                 }
                 Ok(())
             }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => bail!("{output}: the native tree {} does not exist", dir.display()),
             Err(error) => Err(in_tree(error)),
         }
     }
@@ -178,7 +178,6 @@ impl MergeSpec {
     pub(crate) fn write_native_tree(&self, natives: &NativeMerge<'_>, tree: &NativeTree, jar: &Jar, verify_crc: bool) -> Result<()> {
         let lib_name = &self.native.as_ref().expect("a native tree requires a native spec").lib_name;
         let source_path = self.sources[natives.index].path().display();
-        filemeta::create_dir_all_0755(&tree.dir)?;
         let names: Vec<&str> = natives.entries.iter().map(|entry| entry.name).collect();
         let by_name: HashMap<&str, Entry<'_>> = natives.entries.iter().map(|entry| (entry.name, *entry)).collect();
         let matches = nativelib::select(&names, tree.family, tree.arch).with_context(|| source_path.to_string())?;
@@ -209,11 +208,7 @@ impl MergeSpec {
             if verify_crc && crc32fast::hash(&data) != file.entry.crc {
                 bail!("{source_path}: {}: source CRC does not match", file.entry.name);
             }
-            let mut target = tree.dir.clone();
-            target.extend(file.relative_path.split('/'));
-            if let Some(parent) = target.parent() {
-                filemeta::create_dir_all_0755(parent)?;
-            }
+            let target = create_tree_directories(&tree.dir, &file.relative_path)?;
             fs::write(&target, &data).with_context(|| target.display().to_string())?;
             // The mode of a new file is subject to the umask, and the inventory of the tree records the mode.
             set_mode(&target, file.mode)?;
@@ -222,7 +217,30 @@ impl MergeSpec {
     }
 }
 
-/// Sets the mode of a tree file. It is a private copy of `fscopy::set_mode`, because the `fscopy` dependency in the
+/// Creates the missing directories of the slash path `relative_path` below the tree root `dir`, and returns the path of
+/// the file. Each new directory gets the mode 0755 under any umask, because the inventory of the tree records the mode
+/// of each directory. A directory that exists keeps its mode. The caller creates the root.
+///
+/// It is written by hand, because the `filemeta` dependency would put the inventory crates into each tool that reads a
+/// jar.
+fn create_tree_directories(dir: &Path, relative_path: &str) -> Result<PathBuf> {
+    let mut target = dir.to_path_buf();
+    let mut components = relative_path.split('/').peekable();
+    while let Some(component) = components.next() {
+        target.push(component);
+        if components.peek().is_none() {
+            break;
+        }
+        match fs::create_dir(&target) {
+            Ok(()) => set_mode(&target, 0o755)?,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists && target.is_dir() => {}
+            Err(error) => return Err(error).with_context(|| target.display().to_string()),
+        }
+    }
+    Ok(target)
+}
+
+/// Sets the mode of a tree file or directory. It is a private copy of `fscopy::set_mode`, because the `fscopy` dependency in the
 /// packer re-keys every packing action when `fscopy` changes.
 #[cfg(unix)]
 fn set_mode(path: &Path, mode: u32) -> Result<()> {
