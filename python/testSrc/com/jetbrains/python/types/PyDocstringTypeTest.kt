@@ -296,6 +296,32 @@ class PyDocstringTypeTest : PyCodeInsightTestCase() {
         "mod.pyi" to NUMPY_RETURN_STUB,
       )
     }
+
+    @Test
+    @TestFor(issues = ["PY-56612"])
+    fun `Attributes section of a class docstring types an attribute`() = test("""
+      class Message:
+          author: int
+
+
+      class Context:
+          '''The context of a command.
+
+          Attributes
+          ----------
+          message : Message
+              The message
+          '''
+
+          def __init__(self, **attrs):
+              self.message = attrs.pop("message", None)
+
+          @property
+          def author(self):
+              return self.message.author
+      #              ^^^^^^^^^^^^ TYPE Unknown FIXME Message
+      #              ^^^^^^^^^^^^^^^^^^^ TYPE Unknown FIXME int
+      """.trimIndent())
   }
 
   @Nested

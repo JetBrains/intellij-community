@@ -2040,7 +2040,106 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       #└ TYPE int
       """.trimIndent())
 
+  /** A descriptor with one `__get__` overload for the class and one for an instance, in a `.pyi` stub. */
+  @Nested
+  inner class OverloadedDunderGetInStub {
+    @Test
+    @TestFor(issues = ["PY-24183"])
+    fun `instance read of a ClassVar descriptor uses the instance overload`() = test(
+      """
+      from sig import Widget
+
+      w = Widget()
+      x = w.class_var
+      #   ^^^^^^^^^^^ TYPE Bound
+      w.class_var.connect()
+      """.trimIndent(),
+      "sig.pyi" to SIGNAL_STUB,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-24183"])
+    fun `instance read of an annotated descriptor uses the instance overload`() = test(
+      """
+      from sig import Widget
+
+      w = Widget()
+      x = w.declared
+      #   ^^^^^^^^^^ TYPE Bound
+      """.trimIndent(),
+      "sig.pyi" to SIGNAL_STUB,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-24183"])
+    fun `instance read of an assigned descriptor uses the instance overload`() = test(
+      """
+      from sig import Widget
+
+      w = Widget()
+      x = w.assigned
+      #   ^^^^^^^^^^ TYPE Bound
+      """.trimIndent(),
+      "sig.pyi" to SIGNAL_STUB,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-24183"])
+    fun `class read of a ClassVar descriptor uses the class overload`() = test(
+      """
+      from sig import Widget
+
+      x = Widget.class_var
+      #   ^^^^^^^^^^^^^^^^ TYPE Signal
+      """.trimIndent(),
+      "sig.pyi" to SIGNAL_STUB,
+    )
+
+    /**
+     * In the PyQt5 stubs, `class QPaintDevice(PyQt5.sipsimplewrapper)` names a base class that does not exist, so each
+     * `QWidget` has an unresolved ancestor. An unresolved base does not change which overload applies.
+     */
+    @Test
+    @TestFor(issues = ["PY-24183"])
+    fun `instance read on a class with an unresolved base uses the instance overload`() = test(
+      """
+      from sig import Widget, PaintDevice
+
+      class Button(Widget, PaintDevice):
+          pass
+
+      def f(b: Button):
+          x = b.class_var
+      #       ^^^^^^^^^^^ TYPE Signal FIXME Bound
+          b.class_var.connect()
+      #               ^^^^^^^ WARNING Unresolved attribute reference 'connect' for class 'Signal' FIXME
+      """.trimIndent(),
+      "sig.pyi" to SIGNAL_STUB,
+    )
+  }
+
   companion object {
+    /** The shape of `QAbstractButton.clicked` in the PyQt5 stubs. */
+    private val SIGNAL_STUB = """
+      import typing
+
+      class Bound:
+          def connect(self) -> None: ...
+
+      class Signal:
+          @typing.overload
+          def __get__(self, instance: None, owner: typing.Type['Widget']) -> 'Signal': ...
+          @typing.overload
+          def __get__(self, instance: 'Widget', owner: typing.Type['Widget']) -> Bound: ...
+
+      class Widget:
+          class_var: typing.ClassVar[Signal]
+          declared: Signal
+          assigned = ...  # type: Signal
+
+      class PaintDevice(missing_module.MissingBase): ...
+      """.trimIndent()
+
     /** A descriptor in the shape of `propcache.api.under_cached_property`. */
     private val DESCRIPTOR_MODULE = """
       from typing import Any, Callable, Mapping, Protocol, Self, overload
