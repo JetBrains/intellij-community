@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
@@ -36,6 +36,16 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
     myHelper = new MemberLookupHelper(member, containingClass, shouldImport, false);
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
+  }
+
+  @Override
+  public final boolean equals(Object o) {
+    return o instanceof JavaGlobalMemberLookupElement element && myHelper.getMember().equals(element.myHelper.getMember());
+  }
+
+  @Override
+  public int hashCode() {
+    return myHelper.getMember().hashCode();
   }
 
   @Override
