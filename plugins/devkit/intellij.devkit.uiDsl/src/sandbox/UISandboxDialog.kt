@@ -6,6 +6,7 @@ import com.intellij.devkit.uiDsl.sandbox.components.BadgePanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxWithWidePopupPanel
 import com.intellij.devkit.uiDsl.sandbox.components.IconsPanel
+import com.intellij.devkit.uiDsl.sandbox.components.InlineBannerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBIntSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBOptionButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBPasswordFieldPanel
@@ -145,6 +146,8 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     BadgePanel(),
     ComboBoxPanel(),
     ComboBoxWithWidePopupPanel(),
+    IconsPanel(),
+    InlineBannerPanel(),
     JBIntSpinnerPanel(),
     JButtonPanel(),
     JBOptionButtonPanel(),
@@ -161,7 +164,6 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     SearchTextFieldPanel(),
     ShimmerLabelPanel(),
     ThreeStateCheckBoxPanel(),
-    IconsPanel()
   ))
 
   private fun createKotlinUIDSLNode() = Group("Kotlin UI DSL", children = listOf(

@@ -1316,9 +1316,6 @@
     <action id="TestTooltipsAction" internal="true" class="org.jetbrains.idea.devkit.internal.ui.TestTooltipsAction">
       <add-to-group group-id="Internal.UI.Demos"/>
     </action>
-    <action id="ShowInlineBanner" internal="true" class="org.jetbrains.idea.devkit.internal.ui.InlineBannerTestAction">
-      <add-to-group group-id="Internal.UI.Demos"/>
-    </action>
     <action id="ToolbarDemo" internal="true" class="org.jetbrains.idea.devkit.internal.ui.ToolbarDemoAction">
       <add-to-group group-id="Internal.UI.Demos"/>
     </action>
