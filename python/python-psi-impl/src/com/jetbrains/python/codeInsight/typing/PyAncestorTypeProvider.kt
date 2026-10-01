@@ -22,7 +22,8 @@ class PyAncestorTypeProvider : PyTypeProviderBase() {
       val parameters = superFunctionTypeRemovedSelf.getParameters(context)
       parameters?.forEach {
         val parameterName = it.name
-        if (parameterName != null && parameterName == param.name) {
+        val sameKind = it.isPositionalContainer == param.isPositionalContainer && it.isKeywordContainer == param.isKeywordContainer
+        if (parameterName != null && parameterName == param.name && sameKind) {
           it.getType(context)?.let { return Ref(it) }
         }
       }
