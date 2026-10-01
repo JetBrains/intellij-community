@@ -2,9 +2,10 @@
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
-import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.StartId
+import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -21,12 +22,11 @@ import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.toPath
 
-
 /**
  * Parses kotlinc's output.
  */
 @ApiStatus.Internal
-class KotlincOutputParser : BuildOutputParser {
+class KotlincOutputParser : BuildOutputLineParserBridge() {
 
   @ApiStatus.Internal
   companion object {
@@ -51,13 +51,19 @@ class KotlincOutputParser : BuildOutputParser {
     }
   }
 
-  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
-    val colonIndex1 = line.colon()
+  override suspend fun parse(
+    line: BuildOutputText,
+    reader: BuildOutputReplayableLineReader,
+    taskId: StartId,
+    multicaster: BuildOutputMulticaster,
+    isSingleFlow: Boolean,
+  ): Boolean {
+    val colonIndex1 = line.text.colon()
 
-    val severity = if (colonIndex1 >= 0) line.substringBeforeAndTrim(colonIndex1) else return false
+    val severity = if (colonIndex1 >= 0) line.text.substringBeforeAndTrim(colonIndex1) else return false
     if (!severity.startsWithSeverityPrefix()) return false
 
-    val lineWoSeverity = line.substringAfterAndTrim(colonIndex1)
+    val lineWoSeverity = line.text.substringAfterAndTrim(colonIndex1)
     val path = extractPath(lineWoSeverity) ?: return false
 
     val file = when (path.startsWith("file:")) {
@@ -67,9 +73,9 @@ class KotlincOutputParser : BuildOutputParser {
 
     val fileExtension = file?.extension?.lowercase(Locale.getDefault())
     if (file == null || !file.isRegularFile() || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) {
-      consumer.notifyMessageEvent(
+      multicaster.notifyBuildEvent(
         MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
-          .withParentId(reader.parentEventId)
+          .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
           .withDescription(lineWoSeverity.amendNextLinesIfNeeded(reader))
           .build()
@@ -111,16 +117,16 @@ class KotlincOutputParser : BuildOutputParser {
     if (lineWoPositionIndex >= 0) {
       val relatedNextLines = "".amendNextLinesIfNeeded(reader)
       val message = lineWoPath.substringAfterAndTrim(lineWoPositionIndex) + relatedNextLines
-      val details = line + relatedNextLines
+      val details = line.text + relatedNextLines
 
       if (matcher != null && matcher.matches()) {
         val lineNumber = matcher.group(1)
         val symbolNumber = if (matcher.groupCount() >= 2) matcher.group(2) else "1"
         if (lineNumber != null) {
           val symbolNumberText = symbolNumber.toInt()
-          consumer.notifyMessageEvent(
+          multicaster.notifyBuildEvent(
             MessageEvent.builder(message.trim(), getMessageKind(severity)) //NON-NLS
-              .withParentId(reader.parentEventId)
+              .withParentId(taskId)
               .withGroup(COMPILER_MESSAGES_GROUP)
               .withDescription(details)
               .withFilePosition(FilePosition(file, lineNumber.toInt() - 1, symbolNumberText - 1))
@@ -130,9 +136,9 @@ class KotlincOutputParser : BuildOutputParser {
         }
       }
 
-      consumer.notifyMessageEvent(
+      multicaster.notifyBuildEvent(
         MessageEvent.builder(message.trim(), getMessageKind(severity)) //NON-NLS
-          .withParentId(reader.parentEventId)
+          .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
           .withDescription(details)
           .build()
@@ -140,9 +146,9 @@ class KotlincOutputParser : BuildOutputParser {
       return true
     }
     else {
-      consumer.notifyMessageEvent(
+      multicaster.notifyBuildEvent(
         MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
-          .withParentId(reader.parentEventId)
+          .withParentId(taskId)
           .withGroup(COMPILER_MESSAGES_GROUP)
           .withDescription(lineWoSeverity.amendNextLinesIfNeeded(reader))
           .build()
@@ -157,18 +163,18 @@ class KotlincOutputParser : BuildOutputParser {
   private val JAVAC_POSITION_PATTERN = Pattern.compile("([0-9]+)")
   private val LINE_COLON_COLUMN_POSITION_PATTERN = Pattern.compile("([0-9]*):([0-9]*)")
 
-  private fun String.amendNextLinesIfNeeded(reader: BuildOutputInstantReader): @NlsSafe String {
-    var nextLine = reader.readLine()
+  private suspend fun String.amendNextLinesIfNeeded(reader: BuildOutputReplayableLineReader): @NlsSafe String {
+    var nextLine = reader.readLine()?.text
 
     val builder = StringBuilder(this)
     while (nextLine != null) {
       if (nextLine.isNextMessage()) {
-        reader.pushBack()
+        reader.pushBack(1)
         break
       }
       else {
         builder.append("\n").append(nextLine)
-        nextLine = reader.readLine()
+        nextLine = reader.readLine()?.text
       }
     }
     return builder.toString()
