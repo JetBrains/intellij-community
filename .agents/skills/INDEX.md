@@ -37,6 +37,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [registry](registry/SKILL.md) | Use the IntelliJ Registry API for registry keys and feature flags. |
 | [rust-code-style](rust-code-style/SKILL.md) | Write or review Rust in the build tools: the error model, the CLI grammar, the crate rule, the test layout, the shared lint, format and Bazel configuration. |
 | [safe-push](safe-push/SKILL.md) | Push IntelliJ repository changes through the Safe Push workflow. |
+| [sibling-checkout-commits](sibling-checkout-commits/SKILL.md) | Take commits from a sibling checkout as patches, without a fetch. |
 | [ssr](ssr/SKILL.md) | Create or modify IntelliJ Structural Search and Replace patterns. |
 | [symbols-api](symbols-api/SKILL.md) | Use IntelliJ Symbol API for declarations, references, and rename. |
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ `tests.cmd` tests and discovery. |
