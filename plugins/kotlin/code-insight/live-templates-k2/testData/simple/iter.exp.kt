@@ -14,7 +14,7 @@ class MyClass {
         val myList = ArrayList<String>()
         val stream = FileInputStream(".")
         if (o is String) {
-            for (arg in args) {
+            for (string in args) {
                 <caret>
             }
         }

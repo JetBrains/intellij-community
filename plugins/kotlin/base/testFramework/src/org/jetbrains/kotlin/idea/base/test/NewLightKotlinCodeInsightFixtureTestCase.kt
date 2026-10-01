@@ -101,25 +101,6 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
 
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
         val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
-
-        val expectedPath = Paths.get(testDataPath, expectedPathString)
-
-        for (extension in listOf(K2_TEST_FILE_EXTENSION, FIR_TEST_FILE_EXTENSION)) {
-            val k2ExpectedPathString = getExpectedPath(".$extension$expectedSuffix", addSuffixAfterExtension)
-            val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
-
-            if (k2ExpectedPath.exists()) {
-                checkContentByExpectedPath(k2ExpectedPathString)
-                IgnoreTests.cleanUpIdenticalK2TestFile(
-                    originalTestFile = expectedPath.toFile(),
-                    k2Extension = FIR_TEST_FILE_EXTENSION,
-                    k2TestFile = k2ExpectedPath.toFile()
-                )
-
-                return
-            }
-        }
-
         checkContentByExpectedPath(expectedPathString)
     }
 

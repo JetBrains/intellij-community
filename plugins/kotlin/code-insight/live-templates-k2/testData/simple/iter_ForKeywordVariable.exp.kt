@@ -1,5 +1,5 @@
 fun f(objects: List<String>) {
-    for (s in objects) {
+    for (string in objects) {
 
     }
 }
