@@ -221,17 +221,32 @@ fn one_run(
     progress: &mut Progress<'_>,
 ) -> Result<RunRecord, Refusal> {
     let run_dir = session.join(id.dir_name());
-    let sandbox = Sandbox::new(run_dir.join("sandbox"));
-    files::copy_dir(&source.root, &sandbox.root).map_err(|error| fail_infra("session_failed", format!("{error:#}")))?;
+    let infra = |error: anyhow::Error| fail_infra("session_failed", format!("{error:#}"));
+    let sandbox = session::live_sandbox(session, id.arm);
+    if sandbox.root.exists() {
+        std::fs::remove_dir_all(&sandbox.root)
+            .map_err(|error| fail_infra("session_failed", format!("cannot remove {}: {error}", sandbox.root.display())))?;
+    }
+    files::copy_dir(&source.root, &sandbox.root).map_err(infra)?;
     for stale in STALE_DIRS {
         let _ = std::fs::remove_dir_all(sandbox.root.join(stale));
     }
+    session::own_welcome_project(&sandbox).map_err(infra)?;
     let name = match id.kind {
         RunKind::Prime => format!("{} prime", id.arm.label()),
         RunKind::Measured => format!("{} run {}/{}", id.arm.label(), id.index, plan.runs),
     };
     progress.line(&format!("{name}: starting"));
     let facts = launcher.run(&run_dir, &sandbox, id.arm, plan.project.as_deref());
+    let kept = run_dir.join("sandbox");
+    std::fs::create_dir_all(&run_dir)
+        .map_err(|error| fail_infra("session_failed", format!("cannot create {}: {error}", run_dir.display())))?;
+    std::fs::rename(&sandbox.root, &kept).map_err(|error| {
+        fail_infra(
+            "session_failed",
+            format!("cannot move {} to {}: {error}", sandbox.root.display(), kept.display()),
+        )
+    })?;
     let record = record::collect(&run_dir, id, facts);
     write_result(&run_dir, &record, progress);
     progress.line(&format!("{name}: {}", run_line(&record)));

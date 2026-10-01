@@ -26,7 +26,14 @@ the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build
 ## The binaries
 
 `BUILD.bazel` declares `:bt`, which `community/tools/bt.cmd` runs: `@community//tools/bt:bt` from an ultimate root and
-`//tools/bt:bt` from a community root. It declares `:startup-bench` the same way, for `community/tools/startup-bench.cmd`. `windows_clippy_tests` of the core declares the Windows targets.
+`//tools/bt:bt` from a community root. It declares `:startup-bench` the same way, for `community/tools/startup-bench.cmd`.
+
+`startup-bench` measures the start-up of an IDE from the Bazel dev distribution. Each run of an arm executes in
+`<session>/<arm>-sandbox`, and its sandbox then moves into the run directory. The sandbox settings put the welcome
+project into the sandbox, so a session does not touch `~/IdeaProjects`. `open-project` reports no number yet. The IDE
+opens the second project through the socket lock without a trace span, and `editor highlighting completed` is only an
+instant event of the start-up report, which the IDE writes once. So each run of the command fails with a named
+reason and exits with 2. That exit is a gap of the product, not a defect of the tool. `windows_clippy_tests` of the core declares the Windows targets.
 `:bt-windows-x86_64` and `:bt-windows-arm64` are compile checks you build by hand (`manual`), and
 `:clippy-windows-x86_64` and `:clippy-windows-arm64` lint the `cfg(windows)` code from a Unix host.
 

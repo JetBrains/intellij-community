@@ -6,6 +6,7 @@
 //! - `launch.sh`, `build.log`: the launcher that `bazel run --script_path` wrote, and the output of Bazel.
 //! - `template/`: the sandbox template (`config`, `system`, `plugins`), with the FUS test scheme.
 //! - `<arm>-prime/`, `<arm>-run-NN/`: one directory per run, each with `sandbox/`, `log/` and `result.json`.
+//! - `<arm>-sandbox/`: the sandbox of the run that is running now. See [`live_sandbox`].
 //! - `summary.json`: the summary.
 
 use std::path::{Path, PathBuf};
@@ -37,6 +38,48 @@ pub(crate) const GENERAL_SETTINGS: &str = r#"<application>
   </component>
 </application>
 "#;
+
+/// The directory of the welcome project inside a sandbox.
+pub(crate) const PROJECTS_DIR: &str = "projects";
+
+/// The base directory of the projects, and thus of the welcome project. `WelcomeScreenProjectProvider` reads
+/// `GeneralLocalSettings.defaultProjectDirectory`, and without it the IDE uses `~/IdeaProjects`, which every run and
+/// the real IDE share.
+pub(crate) fn local_settings(projects: &Path) -> String {
+    format!(
+        r#"<application>
+  <component name="GeneralLocalSettings">
+    <option name="defaultProjectDirectory" value="{}" />
+  </component>
+</application>
+"#,
+        xml_attribute(&projects.display().to_string())
+    )
+}
+
+fn xml_attribute(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+/// Points the welcome project of a sandbox at its own `projects` directory.
+pub(crate) fn own_welcome_project(sandbox: &Sandbox) -> anyhow::Result<()> {
+    files::write_text(
+        &sandbox.config().join("options").join("ide.general.local.xml"),
+        &local_settings(&sandbox.root.join(PROJECTS_DIR)),
+    )
+}
+
+/// The path at which every run of an arm runs: `<session>/<arm>-sandbox`.
+///
+/// The path is the same for each run of the arm, so the caches that the IDE keys by the path of the welcome project
+/// match in each copy of the primed sandbox. After the run, the sandbox moves into the run directory.
+pub(crate) fn live_sandbox(session: &Path, arm: Arm) -> Sandbox {
+    Sandbox::new(session.join(format!("{}-sandbox", arm.label())))
+}
 
 /// The inputs of a session.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

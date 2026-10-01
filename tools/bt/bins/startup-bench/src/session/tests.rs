@@ -1,6 +1,8 @@
 use pretty_assertions::assert_eq;
 
-use super::{GENERAL_SETTINGS, RESULT_FILE, Sandbox, run_dirs, write_template};
+use std::path::Path;
+
+use super::{GENERAL_SETTINGS, RESULT_FILE, Sandbox, live_sandbox, own_welcome_project, run_dirs, write_template};
 use crate::arm::Arm;
 use crate::record::{RunId, RunKind};
 
@@ -54,4 +56,21 @@ fn lists_the_run_directories_that_have_a_result() {
             },
         ]
     );
+}
+
+#[test]
+fn a_sandbox_owns_its_welcome_project() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let sandbox = live_sandbox(&dir.path().join("s&t"), Arm::NonModal);
+    assert_eq!(sandbox.root, dir.path().join("s&t").join("non-modal-sandbox"));
+    own_welcome_project(&sandbox).expect("the settings");
+    let settings = std::fs::read_to_string(sandbox.config().join("options/ide.general.local.xml")).expect("the settings");
+    let projects = sandbox.root.join("projects").display().to_string().replace('&', "&amp;");
+    assert_eq!(
+        settings,
+        format!(
+            "<application>\n  <component name=\"GeneralLocalSettings\">\n    <option name=\"defaultProjectDirectory\" value=\"{projects}\" />\n  </component>\n</application>\n"
+        )
+    );
+    assert!(Path::new(&projects.replace("&amp;", "&")).starts_with(&sandbox.root));
 }
