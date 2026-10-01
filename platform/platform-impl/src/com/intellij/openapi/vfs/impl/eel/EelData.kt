@@ -19,7 +19,9 @@ internal class EelData(val descriptor: EelDescriptor) {
 
   fun getWatchedPaths(): Set<WatchedPath> {
     return recursive.map { eelPath -> WatchedPath.from(eelPath).recursive() }
-      .plus(flat.map { eelPath -> WatchedPath.from(eelPath) })
+      .plus(flat.asSequence()
+              .filterNot { flatPath -> recursive.any(flatPath::startsWith) }
+              .map { eelPath -> WatchedPath.from(eelPath) })
       .toSet()
   }
 
