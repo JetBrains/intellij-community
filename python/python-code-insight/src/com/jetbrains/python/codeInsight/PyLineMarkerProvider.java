@@ -173,8 +173,10 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     if (elementType == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction function) {
       return getMethodMarker(element, function);
     }
-    if (element instanceof PyTargetExpression && PyUtil.isClassAttribute(element)) {
-      return getAttributeMarker((PyTargetExpression)element);
+    if (elementType == PyTokenTypes.IDENTIFIER &&
+        element.getParent() instanceof PyTargetExpression target &&
+        PyUtil.isClassAttribute(target)) {
+      return getAttributeMarker(element, target);
     }
 
     // Separators are registered only on the first leaf element of a declaration
@@ -226,7 +228,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     return null;
   }
 
-  private static @Nullable LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
+  private static @Nullable LineMarkerInfo<PsiElement> getAttributeMarker(PsiElement identifier, PyTargetExpression element) {
     final String name = element.getReferencedName();
     if (name == null) {
       return null;
@@ -237,13 +239,10 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
       .getAncestorClasses(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()))) {
       final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(name, false, null);
       if (ancestorAttr != null) {
-        PsiElement identifier = element.getNameIdentifier();
-        if (identifier != null) {
-          return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
-                                      new TooltipProvider(
-                                        PyCodeInsightBundle.message("line.markers.tooltip.overrides.attribute.in.class", ancestor.getName())), SUPER_ATTRIBUTE_NAVIGATOR,
-                                      GutterIconRenderer.Alignment.RIGHT);
-        }
+        return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
+                                    new TooltipProvider(
+                                      PyCodeInsightBundle.message("line.markers.tooltip.overrides.attribute.in.class", ancestor.getName())), SUPER_ATTRIBUTE_NAVIGATOR,
+                                    GutterIconRenderer.Alignment.RIGHT);
       }
     }
     return null;
