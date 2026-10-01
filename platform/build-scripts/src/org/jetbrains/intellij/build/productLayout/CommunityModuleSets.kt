@@ -221,8 +221,8 @@ object CommunityModuleSets {
    * VCS shared modules (used by both frontend and backend).
    */
   fun vcsShared(): ModuleSet = moduleSet("vcs.shared") {
-    embeddedModule("intellij.platform.vcs.core")
-    embeddedModule("intellij.platform.vcs.shared")
+    module("intellij.platform.vcs.core")
+    module("intellij.platform.vcs.shared")
     module("intellij.platform.vcs.impl.shared")
     module("intellij.platform.vcs.dvcs.impl.shared")
   }

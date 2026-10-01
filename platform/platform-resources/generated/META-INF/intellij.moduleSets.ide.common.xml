@@ -453,8 +453,8 @@
 
     <!-- region nested: vcs -->
     <!-- region nested: vcs > vcs.shared -->
-    <module name="intellij.platform.vcs.core" loading="embedded"/>
-    <module name="intellij.platform.vcs.shared" loading="embedded"/>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.shared"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
     <!-- endregion -->

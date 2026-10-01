@@ -1406,8 +1406,10 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.vcs.shared": "//platform/vcs-api/shared:shared_content_module_jar",
         },
         module_system_loaded = [
+            "intellij.platform.vcs.core",
             "intellij.platform.vcs.dvcs.impl.shared",
             "intellij.platform.vcs.impl.shared",
+            "intellij.platform.vcs.shared",
         ],
     ),
 }
