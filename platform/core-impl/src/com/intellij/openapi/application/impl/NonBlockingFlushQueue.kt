@@ -17,7 +17,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.SwingUtilities
@@ -460,16 +459,5 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
 
   fun isFlushNow(runnable: Runnable): Boolean {
     return runnable === FLUSH_NOW
-  }
-
-  /**
-   * Whether the queue is in [WriteIntentLockMode.UI_ONLY] and holds write-intent runnables back until a write action
-   * in another thread completes.
-   *
-   * In this state [push] posts no AWT event for a write-intent runnable; [WriteActionFinished] posts one once the write action ends.
-   */
-  @TestOnly
-  fun holdsBackWriteIntentRunnables(): Boolean {
-    return currentWriteIntentLockMode == WriteIntentLockMode.UI_ONLY
   }
 }

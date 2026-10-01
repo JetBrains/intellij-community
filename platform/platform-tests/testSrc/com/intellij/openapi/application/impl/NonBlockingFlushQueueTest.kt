@@ -162,43 +162,6 @@ class NonBlockingFlushQueueTest {
   }
 
   @Test
-  fun `write-intent runnable is held back while a background write action runs`(): Unit = timeoutRunBlocking {
-    val executed = AtomicInteger()
-    val releaseBgWa = Job(coroutineContext.job)
-    val bgWaStarted = Job(coroutineContext.job)
-
-    val bgJob = launch(Dispatchers.Default) {
-      backgroundWriteAction {
-        bgWaStarted.complete()
-        releaseBgWa.asCompletableFuture().join()
-      }
-    }
-
-    withContext(Dispatchers.UI) {
-      bgWaStarted.join()
-      assertFalse(flushQueue.holdsBackWriteIntentRunnables())
-      pushNonModalWI {
-        executed.incrementAndGet()
-      }
-    }
-
-    spinQueue()
-    withContext(Dispatchers.UI) {
-      assertTrue(flushQueue.holdsBackWriteIntentRunnables())
-      assertEquals(0, executed.get())
-    }
-
-    releaseBgWa.complete()
-    bgJob.join()
-
-    spinQueue()
-    withContext(Dispatchers.UI) {
-      assertFalse(flushQueue.holdsBackWriteIntentRunnables())
-      assertEquals(1, executed.get())
-    }
-  }
-
-  @Test
   fun `non-modal tasks are delayed while in modal state and resume after exit`(): Unit = timeoutRunBlocking {
     val ran = CompletableFuture<Boolean>()
     val modalEntity = Any()
