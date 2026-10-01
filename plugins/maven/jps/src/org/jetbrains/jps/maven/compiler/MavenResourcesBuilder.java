@@ -163,7 +163,7 @@ public final class MavenResourcesBuilder extends TargetBuilder<MavenResourceRoot
       if (filter.accept(relPath)) {
         var from = new File(outputDir, relPath);
         var to = new File(new File(config.jarOutput), relPath);
-        FSOperations.copy(from, to);
+        MavenResourceFileProcessor.copyWithRetry(() -> FSOperations.copy(from, to));
       }
     }
   }

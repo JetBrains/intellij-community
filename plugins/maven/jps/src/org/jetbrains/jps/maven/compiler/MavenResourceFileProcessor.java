@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.compiler;
 
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +25,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemException;
+import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,6 +37,10 @@ import java.util.regex.Pattern;
 
 public class MavenResourceFileProcessor {
   private static final int FILTERING_SIZE_LIMIT = 10 * 1024 * 1024 /*10 mb*/;
+  /** The number of copy attempts on Windows while another handle holds the target file. */
+  static final int COPY_ATTEMPTS = 10;
+  /** The pause between two copy attempts, in milliseconds. */
+  static final long COPY_RETRY_DELAY_MS = 50;
   private static final String MAVEN_BUILD_TIMESTAMP_PROPERTY = "maven.build.timestamp";
   private static final String MAVEN_BUILD_TIMESTAMP_FORMAT_PROPERTY = "maven.build.timestamp.format";
   protected final Set<String> myFilteringExcludedExtensions;
@@ -64,11 +71,59 @@ public class MavenResourceFileProcessor {
       shouldFilter = false;
     }
     if (shouldFilter) {
-      copyWithFiltering(file, targetFile);
+      copyWithRetry(() -> copyWithFiltering(file, targetFile));
     }
     else {
-      FSOperations.copy(file, targetFile);
+      copyWithRetry(() -> FSOperations.copy(file, targetFile));
     }
+  }
+
+  /**
+   * Runs the copy and, on Windows, repeats it while another handle holds the target file.
+   * A scanner or an IDE refresh opens a fresh output file for a short time. Windows then rejects the next writer
+   * with a sharing violation. Two modules with one output directory write the same file one after another and hit it.
+   */
+  static void copyWithRetry(@NotNull CopyAction copy) throws IOException {
+    int attempts = SystemInfoRt.isWindows ? COPY_ATTEMPTS : 1;
+    for (int attempt = 1; ; attempt++) {
+      try {
+        copy.run();
+        return;
+      }
+      catch (IOException e) {
+        if (attempt >= attempts || !isTargetInUse(e)) {
+          throw e;
+        }
+        try {
+          Thread.sleep(COPY_RETRY_DELAY_MS);
+        }
+        catch (InterruptedException interrupted) {
+          Thread.currentThread().interrupt();
+          throw e;
+        }
+      }
+    }
+  }
+
+  /**
+   * A sharing violation arrives as a {@link FileSystemException} from the NIO copy and as a {@link FileNotFoundException}
+   * from a stream. A missing file is not a sharing violation.
+   */
+  private static boolean isTargetInUse(@NotNull IOException e) {
+    for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+      if (cause instanceof NoSuchFileException) {
+        return false;
+      }
+      if (cause instanceof FileSystemException || cause instanceof FileNotFoundException) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @FunctionalInterface
+  interface CopyAction {
+    void run() throws IOException;
   }
 
   private void copyWithFiltering(File file, File outputFile) throws IOException {
