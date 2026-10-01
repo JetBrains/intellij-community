@@ -263,3 +263,6 @@ fn set_mode(_path: &Path, _mode: u32) -> Result<()> {
 pub(crate) fn file_name(path: &Path) -> String {
     path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default()
 }
+
+#[cfg(test)]
+mod tests;

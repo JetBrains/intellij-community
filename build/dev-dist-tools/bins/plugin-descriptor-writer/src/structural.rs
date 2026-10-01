@@ -24,11 +24,6 @@
 mod embed;
 mod includes;
 
-#[cfg(test)]
-mod embed_tests;
-#[cfg(test)]
-mod includes_tests;
-
 use std::borrow::Cow;
 use std::collections::{BTreeMap, btree_map};
 

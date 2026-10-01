@@ -1,6 +1,6 @@
 //! The fixtures that the tests of the crate share.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::{Recipe, parse_recipe};
 
@@ -76,13 +76,4 @@ pub(crate) fn write_dist(files: &[(&str, usize)]) -> tempfile::TempDir {
         std::fs::write(full, vec![0u8; *size]).unwrap();
     }
     root
-}
-
-/// `testdata/` of the crate. Bazel names it in `DDT_TESTDATA_DIR`, and `cargo test` sets the run-time
-/// `CARGO_MANIFEST_DIR`.
-pub(crate) fn testdata_dir() -> PathBuf {
-    std::env::var_os("DDT_TESTDATA_DIR")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("CARGO_MANIFEST_DIR").map(|directory| PathBuf::from(directory).join("testdata")))
-        .expect("DDT_TESTDATA_DIR or CARGO_MANIFEST_DIR names the test data")
 }

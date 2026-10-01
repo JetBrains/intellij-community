@@ -1,5 +1,8 @@
 use std::fs;
 
+#[cfg(unix)]
+use testkit::{directory_symlink, file_symlink, set_mode};
+
 use super::*;
 
 fn directory(relative_path: &str, mode: u32) -> Entry {
@@ -13,11 +16,6 @@ fn directory(relative_path: &str, mode: u32) -> Entry {
 
 fn error_text<T: std::fmt::Debug>(result: anyhow::Result<T>) -> String {
     format!("{:#}", result.unwrap_err())
-}
-
-#[cfg(unix)]
-fn symlink(target: &str, link: &std::path::Path) {
-    std::os::unix::fs::symlink(target, link).unwrap();
 }
 
 #[test]
@@ -81,7 +79,7 @@ fn inventory_and_merge_without_payload() {
     fs::create_dir_all(root.join("nested")).unwrap();
     fs::write(root.join("tool"), "tool bytes").unwrap();
     fs::set_permissions(root.join("tool"), std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
-    symlink("../tool", &root.join("nested/link"));
+    file_symlink("../tool", root.join("nested/link"));
 
     let entries = inventory(&root).unwrap();
     assert_eq!(entries.len(), 3, "{entries:?}");
@@ -198,13 +196,13 @@ fn read_rejects_wrong_types_and_null_fields() {
 fn inventory_rejects_escaping_links_and_special_roots() {
     for target in ["../outside", "/outside", "C:/outside", "nested\\outside"] {
         let root = tempfile::tempdir().unwrap();
-        symlink(target, &root.path().join("link"));
+        file_symlink(target, root.path().join("link"));
         assert!(inventory(root.path()).is_err(), "unsafe link accepted: {target}");
     }
     let root = tempfile::tempdir().unwrap();
     let other = tempfile::tempdir().unwrap();
     let link = other.path().join("linked-root");
-    symlink(root.path().to_str().unwrap(), &link);
+    directory_symlink(root.path().to_str().unwrap(), &link);
     assert!(inventory(&link).is_err(), "accepted a symbolic link as the declared directory");
 }
 
@@ -224,7 +222,7 @@ fn assert_empty_segment_is_refused(target: &str) {
     {
         let temporary = tempfile::tempdir().unwrap();
         let link = temporary.path().join("alias");
-        symlink(target, &link);
+        file_symlink(target, &link);
         let message = error_text(inspect(&link, "lib/alias"));
         assert!(message.contains("has an empty segment"), "inspect {target:?}: {message}");
     }
@@ -255,7 +253,7 @@ fn link_graphs_are_validated_across_metadata_boundaries() {
         let mut combined = Vec::new();
         for (relative_path, target) in pairs {
             let source = payload.path().join(relative_path);
-            symlink(target, &source);
+            file_symlink(target, &source);
             let entry = inspect(&source, relative_path).unwrap();
             let group = vec![entry.clone()];
             write(&metadata.path().join(format!("{relative_path}.json")), &group)
@@ -393,13 +391,6 @@ fn mode_of(path: &std::path::Path) -> u32 {
     use std::os::unix::fs::PermissionsExt;
 
     fs::symlink_metadata(path).unwrap().permissions().mode() & 0o7777
-}
-
-#[cfg(unix)]
-fn set_mode(path: &std::path::Path, mode: u32) {
-    use std::os::unix::fs::PermissionsExt;
-
-    fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
 }
 
 /// The mode must not depend on the umask. The test runs its body again in a child process under the umask 002 and

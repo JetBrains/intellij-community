@@ -101,3 +101,6 @@ pub(crate) fn parse_product_content(options: &mut cli::Options) -> Result<Embedd
         separate_jar: BTreeSet::new(),
     })
 }
+
+#[cfg(test)]
+mod tests;

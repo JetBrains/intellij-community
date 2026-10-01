@@ -17,6 +17,6 @@ cli.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
-tempfile.workspace = true
+testkit.workspace = true
 # The tests write their jars with the `zip` crate, which shares no code with the reader.
 zip.workspace = true

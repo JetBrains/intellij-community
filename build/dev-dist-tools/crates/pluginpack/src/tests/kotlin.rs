@@ -706,13 +706,13 @@ const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 5] = [
     }),
     ("plain overlay of two trees keeps the first claim and a relative link", |inputs| {
         let (first, second) = (inputs.join("first"), inputs.join("second"));
-        write_test_file(&first.join("shared.txt"), b"first");
-        write_test_file(&first.join("a.txt"), b"a");
+        write_file(first.join("shared.txt"), b"first");
+        write_file(first.join("a.txt"), b"a");
         symlink("a.txt", &first.join("link.txt"));
-        write_test_file(&first.join("sub/inner.txt"), b"inner");
-        write_test_file(&second.join("shared.txt"), b"second");
-        write_test_file(&second.join("b.txt"), b"b");
-        write_test_file(&second.join("bin/tool"), b"tool");
+        write_file(first.join("sub/inner.txt"), b"inner");
+        write_file(second.join("shared.txt"), b"second");
+        write_file(second.join("b.txt"), b"b");
+        write_file(second.join("bin/tool"), b"tool");
         chmod_tree(&first);
         chmod_tree(&second);
         chmod(&first.join("sub/inner.txt"), 0o600);
@@ -737,8 +737,8 @@ const LAYOUT_PARITY_FIXTURES: [(&str, FixtureBuilder); 5] = [
     }),
     ("plain file copies inside a tree", |inputs| {
         let (launcher, tool) = (inputs.join("launcher"), inputs.join("tool.jar"));
-        write_test_file(&launcher, b"launcher");
-        write_test_file(&tool, b"tool");
+        write_file(&launcher, b"launcher");
+        write_file(&tool, b"tool");
         chmod(&launcher, 0o755);
         chmod(&tool, 0o755);
         tree_fixture(

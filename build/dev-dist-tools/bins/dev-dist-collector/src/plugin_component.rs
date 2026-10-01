@@ -741,3 +741,6 @@ fn read_packed_jar_metadata(jar: &PackedJar) -> anyhow::Result<Entry> {
         _ => bail!("packed jar {} requires metadata for exactly one regular file", jar.source),
     }
 }
+
+#[cfg(test)]
+mod tests;

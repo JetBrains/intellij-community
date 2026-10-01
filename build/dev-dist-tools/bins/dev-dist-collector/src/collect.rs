@@ -89,3 +89,6 @@ pub(crate) fn explicit_files(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
     }
     Ok(files)
 }
+
+#[cfg(test)]
+mod tests;

@@ -15,7 +15,7 @@
 use std::cell::Cell;
 use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use sha2::{Digest, Sha256};
 use tempfile::TempDir;
@@ -23,7 +23,7 @@ use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, DateTime, ZipArchive, ZipWriter};
 
 use crate::writer::INDEX_FORMAT_VERSION;
-use crate::{MergeOptions, MergeSpec};
+use crate::{EntryFilter, FlagFile, INDEX_FILE_NAME, MANIFEST_ENTRY_NAME, MergeOptions, MergeSpec, Source, parse_flag_file};
 
 /// The temporary directories of one test. [`Scratch::dir`] returns a new empty directory, as the Go `t.TempDir()` did.
 pub(crate) struct Scratch {
@@ -217,4 +217,49 @@ pub(crate) fn index_pointer(data: &[u8]) -> i32 {
     assert_eq!(u16::from_le_bytes([tail[20], tail[21]]), 5, "the comment length");
     assert_eq!(tail[22], INDEX_FORMAT_VERSION, "the index format version");
     i32::from_le_bytes(tail[23..27].try_into().unwrap())
+}
+
+// The recipes that several test modules share.
+
+/// Returns the groups of a flag file with the text `lines`.
+pub(crate) fn parse_recipe(scratch: &Scratch, lines: &str) -> anyhow::Result<Vec<MergeSpec>> {
+    parse_recipe_file(scratch, lines).map(|flag_file| flag_file.groups)
+}
+
+pub(crate) fn parse_recipe_file(scratch: &Scratch, lines: &str) -> anyhow::Result<FlagFile> {
+    let path = scratch.file("recipe.params", lines.as_bytes());
+    parse_flag_file(&path, Path::new("/exec/root"))
+}
+
+pub(crate) const fn is_library(source: &Source) -> bool {
+    matches!(
+        source,
+        Source::Jar {
+            filter: EntryFilter::Library,
+            ..
+        }
+    )
+}
+
+/// What `jvm_library` gives the packer: a module output jar from Bazel. It has directory records, the build-time inputs
+/// the filter drops, and what an earlier pack left behind.
+pub(crate) fn module_source(scratch: &Scratch, name: &str) -> PathBuf {
+    write_zip_jar(
+        scratch,
+        name,
+        &[
+            entry("com/", ""),
+            entry("com/example/", ""),
+            entry("com/example/Service.class", "class bytes"),
+            entry("com/example/nested/Inner.class", "inner bytes"),
+            entry("messages/Bundle.properties", "key=value"),
+            entry("icon-robots.txt", "dropped: a build-time input"),
+            entry("com/example/icon-robots.txt", "dropped: same, nested"),
+            entry(".unmodified", "dropped: compilation cache leftover"),
+            entry("classpath.index", "dropped: compilation cache leftover"),
+            entry("module-info.class", "dropped"),
+            entry(INDEX_FILE_NAME, "dropped: a stale index is never inherited"),
+            entry(MANIFEST_ENTRY_NAME, "Manifest-Version: 1.0\r\n\r\n"),
+        ],
+    )
 }

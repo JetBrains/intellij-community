@@ -98,5 +98,4 @@ fn split_distribution_path(path: &str) -> (&str, &str) {
 }
 
 #[cfg(test)]
-#[path = "dist_tests.rs"]
 mod tests;

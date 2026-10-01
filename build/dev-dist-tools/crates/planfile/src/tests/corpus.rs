@@ -3,17 +3,10 @@
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
+use testkit::testdata_dir;
+
 use crate::contract::{Artifact, ArtifactKind, AssetKind, Catalogue, Library, Reference, VERSION};
 use crate::{Asset, OperationKind, PlanFile, SourceKind, derive, read};
-
-/// `testdata/` of the crate. Bazel names it in `DDT_TESTDATA_DIR`, and `cargo test` sets the run-time
-/// `CARGO_MANIFEST_DIR`.
-fn testdata_dir() -> PathBuf {
-    std::env::var_os("DDT_TESTDATA_DIR")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("CARGO_MANIFEST_DIR").map(|directory| PathBuf::from(directory).join("testdata")))
-        .expect("DDT_TESTDATA_DIR or CARGO_MANIFEST_DIR names the test data")
-}
 
 /// A reused natives jar or its native tree. Every other asset stays in the remainder, so the derivation checks the
 /// most assets.

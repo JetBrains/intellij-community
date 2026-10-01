@@ -333,5 +333,4 @@ fn add_example(examples: &mut Vec<String>, path: &str) {
 }
 
 #[cfg(test)]
-#[path = "purity_tests.rs"]
 mod tests;

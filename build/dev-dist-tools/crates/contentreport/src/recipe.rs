@@ -377,5 +377,4 @@ const fn shape(node: &MarkedYaml<'_>) -> &'static str {
 }
 
 #[cfg(test)]
-#[path = "recipe_tests.rs"]
 mod tests;

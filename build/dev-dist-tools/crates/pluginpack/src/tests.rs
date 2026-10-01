@@ -1,5 +1,7 @@
-//! The port of the Go tests of `internal/pluginpack`. Each module names its Go file. A Go case without a port is named
-//! in the doc comment of the nearest test, with the reason. The modules `corpus` and `gzip_resources` have no Go original.
+//! The fixtures that the tests of the modules share, and the tests that cross the modules. The tests of a module are in
+//! `<module>/tests.rs`. The tests port the Go tests of `internal/pluginpack`, and each test module names its Go file. A
+//! Go case without a port is named in the doc comment of the nearest test, with the reason. `corpus` and the tests of
+//! `gzip_resources` have no Go original.
 
 #![allow(
     clippy::cast_possible_truncation,
@@ -10,11 +12,7 @@
 
 mod corpus;
 mod derive;
-mod execute;
-mod gzip_resources;
 mod kotlin;
-mod layout;
-mod planning;
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -26,15 +24,9 @@ use planfile::contract::{
     LayoutTransformKind, Manifest, Operation, Producer, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 use sha2::Digest;
+pub(crate) use testkit::{read_bytes, require_absent, testdata_dir, write_file};
 
 use crate::plan;
-
-pub(crate) fn testdata() -> PathBuf {
-    std::env::var_os("DDT_TESTDATA_DIR")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("CARGO_MANIFEST_DIR").map(|directory| PathBuf::from(directory).join("testdata")))
-        .expect("DDT_TESTDATA_DIR or CARGO_MANIFEST_DIR must name the test data")
-}
 
 pub(crate) fn temp() -> tempfile::TempDir {
     tempfile::tempdir().unwrap()
@@ -42,15 +34,6 @@ pub(crate) fn temp() -> tempfile::TempDir {
 
 pub(crate) fn strings(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
-}
-
-pub(crate) fn write_test_file(file: &Path, data: &[u8]) {
-    fs::create_dir_all(file.parent().unwrap()).unwrap();
-    fs::write(file, data).unwrap();
-}
-
-pub(crate) fn read_test_file(file: &Path) -> Vec<u8> {
-    fs::read(file).unwrap_or_else(|error| panic!("{}: {error}", file.display()))
 }
 
 pub(crate) fn chmod(path: &Path, mode: u32) {
@@ -222,6 +205,35 @@ pub(crate) fn layout_jar_recipe(layout: LayoutAssets) -> Recipe {
     }
 }
 
+// The plans that several test modules share.
+
+pub(crate) fn sample_plan(root: &Path) -> (Recipe, Catalogue) {
+    let recipe = Recipe {
+        version: VERSION,
+        plugin: "example".to_owned(),
+        layout_signature: "ordered-layout-v1".to_owned(),
+        assets: vec![
+            independent("lib/modules/separate.jar", "packed-separate"),
+            remainder("lib/plugin.jar"),
+        ],
+        operations: vec![Operation::Jar {
+            destination: "lib/plugin.jar".to_owned(),
+            mode: 0o644,
+            sources: vec![archive_source(Reference::artifact("module"), Filter::Module, Manifest::Drop)],
+            merge_entities: true,
+        }],
+    };
+    (recipe, catalogue(vec![file_artifact("module", root.join("module.jar"))]))
+}
+
+/// The sources of the single jar operation of a recipe.
+pub(crate) fn jar_sources(recipe: &mut Recipe, index: usize) -> &mut Vec<Source> {
+    match &mut recipe.operations[index] {
+        Operation::Jar { sources, .. } => sources,
+        operation => panic!("not a jar: {operation:?}"),
+    }
+}
+
 // The execution of the tests.
 
 /// The published plugin directory and inventory of one write. The temporary directory lives as long as the value.
@@ -280,7 +292,7 @@ pub(crate) fn assert_no_published_outputs(root: &Path) {
 pub(crate) fn assert_content(file: &Path, want: &str) {
     let metadata = fs::symlink_metadata(file).unwrap_or_else(|error| panic!("{}: {error}", file.display()));
     assert!(metadata.is_file(), "{} is not a regular file", file.display());
-    assert_eq!(String::from_utf8(read_test_file(file)).unwrap(), want, "{}", file.display());
+    assert_eq!(String::from_utf8(read_bytes(file)).unwrap(), want, "{}", file.display());
 }
 
 pub(crate) fn assert_mode(file: &Path, want: u32) {
@@ -296,10 +308,6 @@ pub(crate) fn assert_mode(file: &Path, want: u32) {
 pub(crate) fn assert_link(file: &Path, want: &str) {
     let target = fs::read_link(file).unwrap_or_else(|error| panic!("{}: {error}", file.display()));
     assert_eq!(target, Path::new(want), "{}", file.display());
-}
-
-pub(crate) fn assert_absent(file: &Path) {
-    assert!(!exists(file), "{} exists", file.display());
 }
 
 // The archives of the tests.
@@ -411,7 +419,7 @@ pub(crate) fn zip_bytes(entries: &[ZipEntry]) -> Vec<u8> {
 }
 
 pub(crate) fn write_zip(file: &Path, entries: &[ZipEntry]) {
-    write_test_file(file, &zip_bytes(entries));
+    write_file(file, zip_bytes(entries));
 }
 
 /// Writes a jar whose entries hold the names and contents in order, as Go `zip.Writer.Create` writes them: a file is
@@ -496,13 +504,13 @@ pub(crate) fn write_tar_gz(file: &Path, entries: &[TarEntry]) {
         builder.append(&header, data).unwrap();
     }
     let data = builder.into_inner().unwrap().finish().unwrap();
-    write_test_file(file, &data);
+    write_file(file, &data);
 }
 
 /// Writes the payload as one zstd frame.
 pub(crate) fn write_zstd(file: &Path, payload: &[u8]) {
     let data = ruzstd::encoding::compress_to_vec(payload, ruzstd::encoding::CompressionLevel::Fastest);
-    write_test_file(file, &data);
+    write_file(file, &data);
 }
 
 /// The entry names of a jar in central-directory order, and the content of each entry.
@@ -554,10 +562,7 @@ pub(crate) fn materialization_record(root: &Path) -> Vec<String> {
         let metadata = entry.metadata().unwrap();
         let mode = filemeta::permissions(&metadata);
         if metadata.is_file() {
-            record.push(format!(
-                "{relative}\tfile\t{mode:04o}\t{}",
-                sha256_hex(&read_test_file(entry.path()))
-            ));
+            record.push(format!("{relative}\tfile\t{mode:04o}\t{}", sha256_hex(&read_bytes(entry.path()))));
         } else if metadata.file_type().is_symlink() {
             let target = fs::read_link(entry.path()).unwrap();
             record.push(format!("{relative}\tsymlink\t-\t{}", target.display()));
@@ -622,7 +627,7 @@ pub(crate) struct Golden {
 
 impl Golden {
     pub(crate) fn open(name: &str) -> Self {
-        let directory = testdata();
+        let directory = testdata_dir();
         let matches: Vec<PathBuf> = fs::read_dir(&directory)
             .unwrap_or_else(|error| panic!("{}: {error}", directory.display()))
             .map(|entry| entry.unwrap().path())
@@ -637,7 +642,7 @@ impl Golden {
         let file_name = file.file_name().unwrap().to_string_lossy().into_owned();
         let label = file_name[name.len() + 1..file_name.len() - 4].to_owned();
         let mut fixtures: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for line in text(&read_test_file(file)).split('\n') {
+        for line in text(&read_bytes(file)).split('\n') {
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }

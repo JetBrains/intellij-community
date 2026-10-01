@@ -18,9 +18,6 @@
 mod read;
 mod write;
 
-#[cfg(test)]
-mod roundtrip_tests;
-
 pub use read::read;
 pub use write::write;
 
@@ -217,3 +214,6 @@ impl Element {
         self.attributes.retain(|attribute| attribute.name != name);
     }
 }
+
+#[cfg(test)]
+mod tests;

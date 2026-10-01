@@ -345,3 +345,6 @@ pub(crate) fn validate_plugin_links(nodes: &[(String, bool)], links: &BTreeMap<S
     }
     validate_link_graph(&directories, links)
 }
+
+#[cfg(test)]
+mod tests;

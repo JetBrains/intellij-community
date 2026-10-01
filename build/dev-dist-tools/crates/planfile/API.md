@@ -9,6 +9,9 @@ The crate depends on `anyhow`, `distpath`, `serde` and `serde_json` only. Every 
 `Plan` and `Execution` of `pluginpack/plan.go` are not here. They belong to the `pluginpack` crate. `ValidateAssets` and
 `ValidateLinkGraph` are in `planfile::validate`, because the packer and the collector both apply them.
 
+Rustdoc states each public item: the plan file types, `read`, `derive` and `omitted_assets` at the crate root, and the
+modules `contract`, `validate`, `json` and `classpath`.
+
 ## The subset rule
 
 The crate ports only the shapes that the checked-in `*.dev-plan.json` files use. It refuses every other shape with
@@ -41,65 +44,16 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | a plugin classpath name that is not ASCII, or that holds NUL | the name |
 | a refused module that no asset of the plan merges, an empty one, or one named twice | the module |
 
-## Crate root: the plan file (Go `planfile.go`, `compile.go`)
-
-- `DEFAULT_MODE: u32 = 0o644`, `EXECUTABLE_MODE: u32 = 0o755`: the two asset modes.
-- `PlanFile { version: u32, plugin, layout_signature, assets: Vec<Asset>, preparations: Vec<Preparation>, operations: Vec<Operation> }`: one decoded plan file in its full form.
-- `Asset { destination, inputs: Vec<String>, recipe: Option<JarRecipe>, mode: u32, kind: contract::AssetKind, class_path: bool }`: one plan asset below the plugin directory. The native tree of a reused natives jar is a tree next to its jar. The inputs of a jar asset are the inputs of its recipe sources.
-- `JarRecipe { sources: Vec<JarSource>, writer: JarWriter }`: the canonical recipe of one jar.
-- `JarSource { input, kind: SourceKind, entry }`: one ordered jar source. Only a `file` source has an entry, and the jar writer patches that file into the jar.
-- `SourceKind::{Module, Library, Archive, File, Prepared}`: the kind of a jar source, `module`, `library`, `archive`, `file` or `prepared` in the plan file.
-- `JarWriter { manifest: ManifestPolicy, merge_entities: bool, native_lib }`: the writer options. An empty `native_lib` means none. A plan jar has no directory entries.
-- `ManifestPolicy::{SingleMeaningfulSource, Keep, Drop}`: the manifest policy of a jar writer. The default is `SingleMeaningfulSource`.
-- `Preparation { id, inputs, outputs, model_signature }`: one preparation definition.
-- `Operation { id, kind: OperationKind, inputs: Vec<contract::Reference>, output, layout_assets: LayoutAssetPreparation }`: one preparation operation. The packer keeps the manifest of every operation output.
-- `OperationKind::{LayoutAssets}`: the one kind, `layout-assets` in the plan file.
-- `LayoutAssetPreparation { format: LayoutFormat, root, assets: Vec<contract::LayoutAsset> }`: the `layoutAssets` payload.
-- `LayoutFormat::{Tree, Entries}`: a tree under the root, or the entries of one jar.
-- `read(path: &Path) -> anyhow::Result<PlanFile>`: reads, decodes and expands one plan file. An error has the path as its context.
-- `from_slice(data: &[u8]) -> anyhow::Result<PlanFile>`: the same over bytes.
-- `module_jar_recipe(module: &str) -> JarRecipe`: the recipe of a module's own jar.
-- `module_jar_asset(module: &str) -> Asset`: the asset of a module's own jar at `lib/modules/<module>.jar`.
-- `Derivation { recipe: contract::Recipe, assets: Vec<contract::Asset>, class_path: Vec<u8>, catalogue: contract::Catalogue }`: the execution contract of one chain. `catalogue` keeps the artifacts and drops the libraries.
-- `derive(file: &PlanFile, catalogue: &contract::Catalogue, plugin_directory: &str, descriptor: &[u8], execution_version: u32, independent_modules: &[String], refused_modules: &[String]) -> anyhow::Result<Derivation>`: compiles the plan file for the packer (Go `planfile.Derive`).
-  It does not plan the recipe. The caller passes `recipe` and `catalogue` to the `pluginpack` plan step.
-  Where Go reports the first problem in map order, `derive` reports the first one in plan or catalogue order.
-  `refused_modules` names the content modules that the product mode of the chain refuses. An asset that `omitted_assets` marks is omitted: it has no row, no classpath jar and no operation, and `catalogue` of the derivation drops the inputs that only an omitted asset reads. The Starlark catalogue still lists them.
-- `omitted_assets(file: &PlanFile, refused_modules: &[String]) -> anyhow::Result<Vec<bool>>`: whether each asset of the file, in plan order, is omitted for the refused modules.
-  The modules of an asset are its `module` sources and the module of a reused native tree. A `prepared` source has none. An asset with at least one module, all of them refused, is omitted. An asset that merges a refused module with a kept one stays whole, and an asset without a module is never omitted. The packer and the runtime layout tool both read this answer.
-
-The plan-file types derive `Clone`, `Debug`, `PartialEq`, `Eq`. Only `read` and `from_slice` make them from JSON.
-
-## `planfile::contract` (Go `pluginpack/contract.go`)
+## The rows and the catalogue (`planfile::contract`)
 
 The recipe stays in the process, so it has no JSON form. The asset rows go to `assets.json`, and Starlark writes the
-catalogue.
+catalogue. The bytes of `assets.json` are frozen:
 
-- `VERSION: u32 = 1`, `TREE_VERSION: u32 = 2`: the execution versions. Version 2 has a tree, and a reused native tree is such a tree. The retired version 3 had the distribution scope. The remainder writes only plugin files, so no transport root exists.
-- `Recipe { version: u32, plugin, layout_signature, assets: Vec<Asset>, operations: Vec<Operation> }`.
-- `Asset { destination, producer: Producer, artifact, kind: AssetKind, class_path: Option<bool> }`: one row of `assets.json` (`Serialize`, `Deserialize`). A row has no scope, because every asset is below the plugin directory. `serde_json::to_vec(&rows)` writes the bytes of Go `json.Marshal`, because no plan file holds `<`, `>`, `&`, U+2028 or U+2029.
-- `Producer::{Remainder, Independent}`: `remainder` or `independent`, always written.
-- `AssetKind::{File, Tree}`: `file` is an absent key, as the Go writer omitted an empty kind, and `tree` is written. `AssetKind::is_file(&self)` is the skip rule.
-- `Catalogue { version: u32, artifacts: Vec<Artifact>, libraries: Vec<Library> }` (`Deserialize`).
-- `Artifact { id, kind: ArtifactKind, root }`, and `ArtifactKind::{File, Directory}`: `file` or `directory`.
-- `Library { id, files: Vec<Reference> }`.
-- `Reference { artifact, path }`: `path` is empty for a whole artifact. It is `Hash` and `Eq`.
-  `Reference::artifact(id: impl Into<String>) -> Reference` makes the reference of a whole artifact.
-- `enum Operation`: one remainder operation at its destination in the plugin directory. `Operation::destination(&self) -> &str`.
-  - `Jar { destination, mode: u32, sources: Vec<Source>, merge_entities: bool }`: the packer writes no directory entries into the jar.
-  - `Copy { destination, mode: u32, input: Reference }`: one declared file.
-  - `CopyTree { destination, input: Reference }`: one declared directory with its source modes.
-  - `LayoutTree { destination, layout: LayoutAssets }`: the layout assets under the destination, with their source modes.
-- `enum Source`: one jar source.
-  - `Archive { input: Reference, filter: Filter, manifest: Manifest }`: the entries of one archive through the filter.
-  - `Patch { entry, input: Reference, manifest: Manifest }`: one file at the entry name. The jar writer patches it.
-  - `Layout(LayoutAssets)`: the entries of the layout assets. It keeps their manifests.
-- `Filter::{Module, Library}`, `Manifest::{Keep, Drop}`.
-- `LayoutAssets { inputs: Vec<Reference>, assets: Vec<LayoutAsset> }`.
-- `LayoutAsset { destination, sources: Vec<usize>, transform: Option<LayoutTransform>, mode: u32 }` (`Deserialize`). No transform is a plain copy. Mode zero keeps the source mode.
-- `LayoutTransform { kind: LayoutTransformKind, strip_components: u32, mappings: Vec<LayoutMapping>, includes, executables: Vec<String> }` (`Deserialize`).
-- `LayoutTransformKind::{ArchiveTree}`. A tree needs no transform: a plain copy places it.
-- `LayoutMapping { pattern, strip_components: u32, destination }` (`Deserialize`). An empty pattern is `**`.
+- `serde_json::to_vec(&rows)` writes the bytes of Go `json.Marshal`, because no plan file holds `<`, `>`, `&`, U+2028 or
+  U+2029.
+- A row of the kind `file` has no `kind` key, as the Go writer omitted an empty kind. A row of the kind `tree` has the
+  key, and every row has its producer.
+- A row has no scope, because every asset is below the plugin directory.
 
 The readers of the rows and of the catalogue refuse a value that the enums do not hold, with the text of the Go check.
 The collector and the remainder packer read these files, so both refuse with one text.
@@ -110,7 +64,7 @@ The collector and the remainder packer read these files, so both refuse with one
 | an asset row with a producer other than `remainder` and `independent`, or without a producer | `unknown asset producer`, or `missing field` |
 | a catalogue artifact with a kind other than `file` and `directory`, or without a kind | `unknown artifact root kind`, or `missing field` |
 
-## `planfile::validate` (Go `ValidateAssets` and `ValidateLinkGraph` of `pluginpack/plan.go`)
+## The asset and link-graph rules (`planfile::validate`)
 
 The rules read no file. The remainder packer applies them in its plan step. The collector applies them again to the
 produced table and inventory in a second process, because it does not trust the producer. A refusal names the asset or
@@ -130,26 +84,12 @@ the link.
 | a link that goes through a file, above the root, or to a missing name | `traverses a non-directory`, `escapes the plugin`, `unresolved symlink target` |
 | a directory cycle through links | `symlink directory cycle` |
 
-- `validate_assets(version: u32, assets: &[contract::Asset], check_directory_spellings: bool) -> anyhow::Result<()>`: the
-  shared asset rules. The identity is `distpath::path_identity`, so the Go `identity` parameter is gone. A tree is a
-  remainder tree or the independent native tree of a reused natives jar, and it requires version 2. A native tree
-  requires an independent jar of the same artifact, and it lands below the plugin directory.
-- `validated_assets(version, assets, check_directory_spellings) -> anyhow::Result<BTreeMap<String, &contract::Asset>>`:
-  the same, with each asset keyed by the identity of its destination. The plan step of `pluginpack` reads the map.
-- `validate_link_graph(directories: &BTreeMap<String, bool>, links: &BTreeMap<String, String>) -> anyhow::Result<()>`:
-  the link graph of one tree. `directories` names every node and marks each directory true, with `.` for the root.
-  Call `distpath::validate_links` first, as the Go collector did. That function refuses a target that resolves through
-  another link, so this function does not check it again.
+A caller checks a link graph with `distpath::validate_links` first, as the Go collector did. That function refuses a
+target that resolves through another link, so `validate_link_graph` does not check it again.
 
-## `planfile::json` (Go `pluginpack.ReadJSON`)
+## JSON (`planfile::json`)
 
-- `read<T: DeserializeOwned>(path: &Path) -> anyhow::Result<T>`: Go `ReadJSON`. An error has the path as its context.
-- `from_slice<T: DeserializeOwned>(data: &[u8]) -> anyhow::Result<T>`: the same over bytes.
-
-Both are `serde_json::from_slice`. With a `deny_unknown_fields` type, it refuses an unknown key, a repeated key, trailing
-data and invalid UTF-8. A key must match its field exactly. `null` for an `Option` field is the same as an absent key,
-as for a Go pointer. `null` for any other field is an error. Errors state the line and the column.
-
-## `planfile::classpath` (Go `internal/pluginclasspath`)
-
-- `record<S: AsRef<str>>(plugin_dir_name: &str, descriptor: &[u8], jars: &[S]) -> anyhow::Result<Vec<u8>>`: one record of `plugins/plugin-classpath.txt`. It refuses a name that is not ASCII.
+`json::read` and `json::from_slice` port Go `pluginpack.ReadJSON`. Both are `serde_json::from_slice`. With a
+`deny_unknown_fields` type, it refuses an unknown key, a repeated key, trailing data and invalid UTF-8. A key must match
+its field exactly. `null` for an `Option` field is the same as an absent key, as for a Go pointer. `null` for any other
+field is an error. Errors state the line and the column. `json::read` adds the path as the context of an error.

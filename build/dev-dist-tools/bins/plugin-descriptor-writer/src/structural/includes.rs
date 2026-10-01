@@ -159,3 +159,6 @@ fn binding<'a>(declarations: &'a [Namespace], prefix: &str) -> &'a str {
         .find(|declaration| declaration.prefix == prefix)
         .map_or("", |declaration| declaration.uri.as_str())
 }
+
+#[cfg(test)]
+pub(super) mod tests;

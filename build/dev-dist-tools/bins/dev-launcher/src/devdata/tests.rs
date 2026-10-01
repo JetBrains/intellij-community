@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use testkit::{TempDir, write_file};
+
 use super::*;
 
 #[test]
@@ -33,17 +35,17 @@ fn dev_data_root_is_per_checkout_and_on_by_default_only_on_macos() {
 /// A real workspace and a dev-data parent in temporary directories. The parent comes from [`DEV_DATA_ROOT_VARIABLE`],
 /// so no test touches the cache of the user.
 pub(crate) struct Fixture {
-    _directory: tempfile::TempDir,
+    _directory: TempDir,
     pub(crate) workspace: PathBuf,
     pub(crate) parent: PathBuf,
 }
 
 impl Fixture {
     pub(crate) fn new() -> Self {
-        let directory = tempfile::tempdir().unwrap();
         // The temporary directories of macOS are below a symbolic link (/var -> /private/var), and the launcher
         // hashes real paths.
-        let base = fscopy::resolve_links(directory.path()).unwrap();
+        let directory = TempDir::new();
+        let base = directory.path().to_path_buf();
         let fixture = Self {
             _directory: directory,
             workspace: base.join("idea"),
@@ -76,11 +78,6 @@ impl Fixture {
         ensure_dev_data(&self.workspace, &self.getenv(), &mut warnings);
         String::from_utf8(warnings).unwrap()
     }
-}
-
-fn write_file(path: &Path, content: &str) {
-    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-    std::fs::write(path, content).unwrap();
 }
 
 pub(crate) fn assert_link(link: &Path, target: &Path) {
@@ -120,7 +117,7 @@ fn ensure_dev_data_keeps_an_existing_link_and_restores_its_target() {
 #[test]
 fn ensure_dev_data_moves_the_directory_of_an_older_launch() {
     let fixture = Fixture::new();
-    write_file(&fixture.link().join("idea/config/options/laf.xml"), "dark");
+    write_file(fixture.link().join("idea/config/options/laf.xml"), "dark");
     assert_eq!(fixture.ensure(), "");
     let root = fixture.root();
     assert_link(&fixture.link(), &root);
@@ -132,8 +129,8 @@ fn ensure_dev_data_moves_the_directory_of_an_older_launch() {
 fn ensure_dev_data_merges_into_a_root_that_lacks_the_entries() {
     let fixture = Fixture::new();
     let root = fixture.root();
-    write_file(&root.join("rider/config/a.xml"), "rider");
-    write_file(&fixture.link().join("idea/config/b.xml"), "idea");
+    write_file(root.join("rider/config/a.xml"), "rider");
+    write_file(fixture.link().join("idea/config/b.xml"), "idea");
     fixture.ensure();
     assert_link(&fixture.link(), &root);
     assert_content(&root.join("rider/config/a.xml"), "rider");
@@ -143,8 +140,8 @@ fn ensure_dev_data_merges_into_a_root_that_lacks_the_entries() {
 #[test]
 fn ensure_dev_data_keeps_the_directory_when_both_sides_hold_a_row() {
     let fixture = Fixture::new();
-    write_file(&fixture.root().join("idea/config/a.xml"), "root");
-    write_file(&fixture.link().join("idea/config/a.xml"), "workspace");
+    write_file(fixture.root().join("idea/config/a.xml"), "root");
+    write_file(fixture.link().join("idea/config/a.xml"), "workspace");
     let warnings = fixture.ensure();
     assert!(warnings.contains("both hold idea"), "warnings: {warnings:?}");
     assert_content(&fixture.link().join("idea/config/a.xml"), "workspace");
@@ -155,7 +152,7 @@ fn ensure_dev_data_keeps_the_directory_of_a_running_ide() {
     let fixture = Fixture::new();
     // the parent process of the test runs for sure, and the check ignores the own process ID of the launcher
     let lock = fixture.link().join("idea/config/.lock");
-    write_file(&lock, &std::os::unix::process::parent_id().to_string());
+    write_file(&lock, std::os::unix::process::parent_id().to_string());
     let warnings = fixture.ensure();
     assert!(warnings.contains("a dev IDE runs from"), "warnings: {warnings:?}");
     assert!(
@@ -185,7 +182,7 @@ fn ensure_dev_data_keeps_the_directory_of_a_launcher_home() {
 fn ensure_dev_data_leaves_an_out_outside_the_workspace() {
     let fixture = Fixture::new();
     let out = fixture.workspace.parent().unwrap().join("out-elsewhere");
-    write_file(&out.join("dev-data/idea/config/a.xml"), "x");
+    write_file(out.join("dev-data/idea/config/a.xml"), "x");
     std::os::unix::fs::symlink(&out, fixture.workspace.join("out")).unwrap();
     fixture.ensure();
     assert!(
@@ -198,7 +195,7 @@ fn ensure_dev_data_leaves_an_out_outside_the_workspace() {
 #[test]
 fn ensure_dev_data_keeps_a_file_in_place_of_the_directory() {
     let fixture = Fixture::new();
-    write_file(&fixture.link(), "not a directory");
+    write_file(fixture.link(), "not a directory");
     let warnings = fixture.ensure();
     assert!(warnings.contains("is not a directory"), "warnings: {warnings:?}");
     assert_content(&fixture.link(), "not a directory");
@@ -208,7 +205,7 @@ fn ensure_dev_data_keeps_a_file_in_place_of_the_directory() {
 fn concurrent_launches_make_one_link() {
     let fixture = Fixture::new();
     for index in 0..20 {
-        write_file(&fixture.link().join(format!("row{index}/config/a.xml")), &index.to_string());
+        write_file(fixture.link().join(format!("row{index}/config/a.xml")), index.to_string());
     }
     std::thread::scope(|scope| {
         for _ in 0..8 {
@@ -227,16 +224,16 @@ fn a_new_root_reports_the_roots_of_deleted_checkouts() {
     let fixture = Fixture::new();
     let base = fixture.workspace.parent().unwrap();
     write_file(
-        &fixture.parent.join("gone-1").join(WORKSPACE_MARKER),
-        &format!("{}\n", base.join("gone").display()),
+        fixture.parent.join("gone-1").join(WORKSPACE_MARKER),
+        format!("{}\n", base.join("gone").display()),
     );
     write_file(
-        &fixture.parent.join("alive-2").join(WORKSPACE_MARKER),
-        &format!("{}\n", fixture.workspace.display()),
+        fixture.parent.join("alive-2").join(WORKSPACE_MARKER),
+        format!("{}\n", fixture.workspace.display()),
     );
     // the parent of the checkout is missing, so its volume can be unmounted
     write_file(
-        &fixture.parent.join("unmounted-3").join(WORKSPACE_MARKER),
+        fixture.parent.join("unmounted-3").join(WORKSPACE_MARKER),
         "/Volumes/missing/checkout\n",
     );
     let warnings = fixture.ensure();

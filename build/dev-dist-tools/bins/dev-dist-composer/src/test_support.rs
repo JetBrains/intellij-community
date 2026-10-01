@@ -1,81 +1,17 @@
-//! Helpers of the composer tests. Only the tests of the command line change the working directory. They hold
-//! [`WorkingDirectory`], and every other test uses absolute paths.
+//! The fakes of the composer tests: the manifests, the source bindings, the staged trees and the copy steps. Only the
+//! tests of the command line change the working directory. They hold a [`testkit::WorkingDirectory`], and every other
+//! test uses absolute paths in a [`testkit::TempDir`].
 
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard};
 
 use component::manifest::{ComponentEntry, ComponentManifest, MANIFEST_VERSION};
 use component::paths;
+use testkit::{TempDir, file_symlink, write_file};
 
 use crate::compose::{self, ComposeOptions, ComposedBuild, DevBuildComponent};
 use crate::spec::{self, ComponentSources, CompositionComponent};
-
-/// A test directory whose path has no symbolic link.
-pub(crate) struct TempDir {
-    _directory: tempfile::TempDir,
-    path: PathBuf,
-}
-
-impl TempDir {
-    pub(crate) fn new() -> Self {
-        let directory = tempfile::tempdir().expect("a temporary directory");
-        let path = fscopy::resolve_links(directory.path()).expect("a real path");
-        Self {
-            _directory: directory,
-            path,
-        }
-    }
-
-    pub(crate) fn path(&self) -> &Path {
-        &self.path
-    }
-
-    /// The absolute path of this directory, as text.
-    pub(crate) fn root(&self) -> String {
-        self.path.to_str().expect("a UTF-8 path").to_owned()
-    }
-
-    /// The absolute path of `relative`, a path in slash form, in this directory. The text has native separators.
-    pub(crate) fn join(&self, relative: &str) -> String {
-        let path = self.path.join(paths::from_slash(relative).as_ref());
-        path.to_str().expect("a UTF-8 path").to_owned()
-    }
-}
-
-static WORKING_DIRECTORY_LOCK: Mutex<()> = Mutex::new(());
-
-/// A fresh working directory for one test. The previous one comes back when the value drops.
-pub(crate) struct WorkingDirectory {
-    previous: PathBuf,
-    directory: TempDir,
-    _lock: MutexGuard<'static, ()>,
-}
-
-impl WorkingDirectory {
-    pub(crate) fn enter() -> Self {
-        let lock = WORKING_DIRECTORY_LOCK.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-        let previous = std::env::current_dir().expect("the working directory");
-        let directory = TempDir::new();
-        std::env::set_current_dir(directory.path()).expect("a new working directory");
-        Self {
-            previous,
-            directory,
-            _lock: lock,
-        }
-    }
-
-    pub(crate) fn path(&self) -> &Path {
-        self.directory.path()
-    }
-}
-
-impl Drop for WorkingDirectory {
-    fn drop(&mut self) {
-        let _ = std::env::set_current_dir(&self.previous);
-    }
-}
 
 pub(crate) fn test_manifest(kind: &str) -> ComponentManifest {
     ComponentManifest {
@@ -292,37 +228,6 @@ pub(crate) fn with_directory_runfiles(directory: impl AsRef<Path>, runfile: &str
     }
 }
 
-pub(crate) fn write_file(path: impl AsRef<Path>, content: impl AsRef<[u8]>) {
-    let path = path.as_ref();
-    if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        fs::create_dir_all(parent).expect("the parent directory");
-    }
-    fs::write(path, content).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
-}
-
-pub(crate) fn read_text(path: impl AsRef<Path>) -> String {
-    let path = path.as_ref();
-    fs::read_to_string(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
-}
-
-#[track_caller]
-pub(crate) fn require_absent(path: impl AsRef<Path>) {
-    let path = path.as_ref();
-    assert!(fs::symlink_metadata(path).is_err(), "{} exists", path.display());
-}
-
-/// Fails unless `result` is an error whose text contains `message`.
-#[track_caller]
-pub(crate) fn require_error<T: std::fmt::Debug, E: std::fmt::Display>(result: Result<T, E>, message: &str) {
-    match result {
-        Ok(value) => panic!("expected an error with {message:?}, got {value:?}"),
-        Err(error) => {
-            let text = format!("{error:#}");
-            assert!(text.contains(message), "error = {text:?}, expected a message with {message:?}");
-        }
-    }
-}
-
 #[track_caller]
 pub(crate) fn require_link(path: impl AsRef<Path>, expected: &str) {
     let path = path.as_ref();
@@ -344,38 +249,6 @@ pub(crate) fn require_mode(path: impl AsRef<Path>, expected: u32) {
     }
     #[cfg(not(unix))]
     let _ = (path, expected);
-}
-
-/// Sets the permission bits of a file. It does nothing on Windows.
-pub(crate) fn set_mode(path: impl AsRef<Path>, mode: u32) {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-
-        fs::set_permissions(path.as_ref(), fs::Permissions::from_mode(mode)).expect("the mode");
-    }
-    #[cfg(not(unix))]
-    let _ = (path, mode);
-}
-
-/// Creates a symbolic link to a file.
-pub(crate) fn file_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
-    create_symlink(target.as_ref(), link.as_ref(), false);
-}
-
-/// Creates a symbolic link to a directory.
-pub(crate) fn directory_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
-    create_symlink(target.as_ref(), link.as_ref(), true);
-}
-
-fn create_symlink(target: &Path, link: &Path, target_is_directory: bool) {
-    fscopy::symlink(target, link, target_is_directory).unwrap_or_else(|error| panic!("{error}"));
-}
-
-/// The bytes of the reference vectors of the Kotlin content hash.
-#[expect(clippy::cast_possible_truncation, reason = "the vector keeps the low byte of each value")]
-pub(crate) fn reference_bytes(size: usize) -> Vec<u8> {
-    (0..size).map(|index| (index.wrapping_mul(31).wrapping_add(7)) as u8).collect()
 }
 
 /// A copy step that must not run, for launch metadata and for the checks before the first write.

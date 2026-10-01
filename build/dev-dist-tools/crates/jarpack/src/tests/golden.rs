@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The SHA-256 of the packed jar of each recipe in `merge.rs`. The comment there states why these digests are frozen,
+//! The SHA-256 of the packed jar of each recipe in `merge/tests.rs`. The comment there states why these digests are frozen,
 //! and what a change in one means.
 
 pub(crate) const GOLDEN_MODULE_ONLY: &str = "541f94c6720a58b3abc309099382a4d157cf3e485321c3003fb9be078e7d27cf";

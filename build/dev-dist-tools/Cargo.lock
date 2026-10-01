@@ -77,10 +77,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "filemeta",
- "fscopy",
  "serde",
  "serde_json",
- "tempfile",
+ "testkit",
 ]
 
 [[package]]
@@ -110,6 +109,7 @@ dependencies = [
  "anyhow",
  "saphyr",
  "tempfile",
+ "testkit",
  "walkdir",
 ]
 
@@ -180,11 +180,11 @@ dependencies = [
  "component",
  "distpath",
  "filemeta",
- "fscopy",
  "planfile",
  "serde",
  "serde_json",
  "tempfile",
+ "testkit",
  "trace",
  "xxh3",
 ]
@@ -203,7 +203,7 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
- "tempfile",
+ "testkit",
  "trace",
  "xxh3",
 ]
@@ -226,6 +226,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "tempfile",
+ "testkit",
  "windows-sys",
 ]
 
@@ -298,6 +299,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "testkit",
  "walkdir",
  "xxh3",
 ]
@@ -429,6 +431,7 @@ dependencies = [
  "anyhow",
  "planfile",
  "regex",
+ "testkit",
 ]
 
 [[package]]
@@ -513,6 +516,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "testkit",
 ]
 
 [[package]]
@@ -523,7 +527,7 @@ dependencies = [
  "appinfo",
  "cli",
  "jarpack",
- "tempfile",
+ "testkit",
  "zip",
 ]
 
@@ -539,6 +543,7 @@ dependencies = [
  "pluginpack",
  "serde_json",
  "tempfile",
+ "testkit",
  "walkdir",
  "zip",
 ]
@@ -562,6 +567,7 @@ dependencies = [
  "sha2",
  "tar",
  "tempfile",
+ "testkit",
  "walkdir",
  "xxhash-rust",
  "zip",
@@ -586,6 +592,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "testkit",
 ]
 
 [[package]]
@@ -852,6 +859,14 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys",
+]
+
+[[package]]
+name = "testkit"
+version = "0.1.0"
+dependencies = [
+ "fscopy",
+ "tempfile",
 ]
 
 [[package]]

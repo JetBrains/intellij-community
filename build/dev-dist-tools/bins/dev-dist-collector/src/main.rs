@@ -322,10 +322,4 @@ fn target_arch(value: Option<&str>) -> anyhow::Result<String> {
 mod test_support;
 
 #[cfg(test)]
-mod main_tests;
-
-#[cfg(test)]
-mod collect_tests;
-
-#[cfg(test)]
-mod plugin_component_tests;
+mod tests;

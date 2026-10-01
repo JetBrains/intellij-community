@@ -16,5 +16,4 @@ serde_json.workspace = true
 filemeta.workspace = true
 
 [dev-dependencies]
-fscopy.workspace = true
-tempfile.workspace = true
+testkit.workspace = true

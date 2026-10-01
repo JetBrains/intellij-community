@@ -7,13 +7,13 @@ use planfile::contract::{Artifact, ArtifactKind, AssetKind, Catalogue, Library, 
 use planfile::validate::validate_assets;
 use planfile::{PlanFile, SourceKind, derive};
 
-use super::testdata;
+use super::testdata_dir;
 use crate::plan;
 
 /// `testdata/corpus` of the `planfile` crate. Bazel puts the `planfile_testdata` filegroup beside the test data of this
 /// crate in the runfiles.
 fn corpus_dir() -> PathBuf {
-    let crates = testdata().parent().and_then(|crate_dir| crate_dir.parent()).map(PathBuf::from);
+    let crates = testdata_dir().parent().and_then(|crate_dir| crate_dir.parent()).map(PathBuf::from);
     crates
         .expect("the test data is below crates/pluginpack")
         .join("planfile/testdata/corpus")

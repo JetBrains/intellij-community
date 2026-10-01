@@ -1,5 +1,6 @@
+use testkit::{TempDir, read_text};
+
 use super::*;
-use crate::test_support::{TempDir, read_text};
 
 #[test]
 fn write_dev_ide_config() {

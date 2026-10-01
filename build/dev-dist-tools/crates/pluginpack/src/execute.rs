@@ -686,3 +686,6 @@ fn check_empty_directory(directory: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

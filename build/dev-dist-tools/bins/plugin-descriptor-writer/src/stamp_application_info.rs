@@ -67,3 +67,6 @@ pub(crate) fn parse_stamp_application_info_request(mut options: cli::Options) ->
     }
     Ok(request)
 }
+
+#[cfg(test)]
+mod tests;

@@ -323,3 +323,6 @@ pub fn parse_variant(variant: &str) -> Result<(Family, Arch)> {
 pub fn valid_arch(arch: Arch) -> bool {
     arch == Arch::X64 || arch == Arch::AArch64
 }
+
+#[cfg(test)]
+mod tests;

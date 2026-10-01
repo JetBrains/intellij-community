@@ -59,17 +59,9 @@ mod stamps;
 mod structural;
 
 #[cfg(test)]
-mod application_info_tests;
-#[cfg(test)]
-mod embedded_product_tests;
-#[cfg(test)]
-mod main_tests;
-#[cfg(test)]
-mod product_descriptor_tests;
-#[cfg(test)]
-mod stamp_application_info_tests;
-#[cfg(test)]
 mod test_support;
+#[cfg(test)]
+mod tests;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ffi::OsString;

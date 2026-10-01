@@ -1,67 +1,13 @@
-//! The helpers of the collector tests. The collector reads the relative paths of Bazel, so each test runs in a
-//! temporary working directory. The working directory belongs to the process, so the tests take it one at a time.
-//! The lock also keeps a test thread without a dispatcher from caching the interest "never" for a call site while
-//! another test creates its dispatcher. So a test that reaches a span must hold a [`WorkDir`].
-//!
-//! A test of [`crate::inventory`] or [`crate::plugin_classpath`] uses absolute paths in a [`TempDir`] instead. It holds
-//! a [`WorkDir`] only when it gives a relative source.
+//! The fakes of the collector tests. The collector reads the relative paths of Bazel, so a test of the command line
+//! runs in a [`testkit::WorkingDirectory`]. A test of [`crate::inventory`] or [`crate::plugin_classpath`] uses absolute
+//! paths in a [`testkit::TempDir`] instead. It holds a working directory only when it gives a relative source.
 
 use std::ffi::OsString;
-use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard};
+use std::path::Path;
 
 use filemeta::{Entry, EntryType};
 use serde_json::{Value, json};
-
-static WORKING_DIRECTORY: Mutex<()> = Mutex::new(());
-
-/// A temporary working directory for one test. The drop restores the previous working directory.
-pub(crate) struct WorkDir {
-    previous: PathBuf,
-    _directory: tempfile::TempDir,
-    _lock: MutexGuard<'static, ()>,
-}
-
-impl WorkDir {
-    pub(crate) fn new() -> Self {
-        let lock = WORKING_DIRECTORY.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-        let directory = tempfile::tempdir().unwrap();
-        let previous = std::env::current_dir().unwrap();
-        std::env::set_current_dir(directory.path()).unwrap();
-        Self {
-            previous,
-            _directory: directory,
-            _lock: lock,
-        }
-    }
-
-    /// Reads a file of the `testdata` directory of this crate. Bazel sets `DDT_TESTDATA_DIR` relative to the working
-    /// directory before the test, and `cargo test` sets `CARGO_MANIFEST_DIR`.
-    pub(crate) fn read_testdata(&self, name: &str) -> Vec<u8> {
-        let directory = std::env::var_os("DDT_TESTDATA_DIR").map_or_else(
-            || {
-                let crate_directory = std::env::var_os("CARGO_MANIFEST_DIR").expect("cargo test sets CARGO_MANIFEST_DIR");
-                PathBuf::from(crate_directory).join("testdata")
-            },
-            PathBuf::from,
-        );
-        std::fs::read(self.previous.join(directory).join(name)).unwrap()
-    }
-}
-
-impl Drop for WorkDir {
-    fn drop(&mut self) {
-        let _ = std::env::set_current_dir(&self.previous);
-    }
-}
-
-pub(crate) fn write_file(name: impl AsRef<Path>, data: impl AsRef<[u8]>) {
-    let name = name.as_ref();
-    if let Some(parent) = name.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        std::fs::create_dir_all(parent).unwrap();
-    }
-    std::fs::write(name, data).unwrap();
-}
+use testkit::write_file;
 
 pub(crate) fn write_json(name: impl AsRef<Path>, value: &Value) {
     write_file(name, value.to_string());
@@ -214,65 +160,4 @@ pub(crate) fn span_tag<'a>(span: &'a Value, name: &str) -> Option<&'a str> {
 
 pub(crate) fn exists(name: &str) -> bool {
     std::fs::symlink_metadata(name).is_ok()
-}
-
-#[cfg(unix)]
-pub(crate) fn symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
-    std::os::unix::fs::symlink(target.as_ref(), link.as_ref()).unwrap();
-}
-
-/// A test directory without symbolic links in its path, as `toRealPath` would give it.
-pub(crate) struct TempDir {
-    _directory: tempfile::TempDir,
-    path: PathBuf,
-}
-
-impl TempDir {
-    pub(crate) fn new() -> Self {
-        let directory = tempfile::tempdir().expect("a temporary directory");
-        let path = fscopy::resolve_links(directory.path()).expect("a real path");
-        Self {
-            _directory: directory,
-            path,
-        }
-    }
-
-    pub(crate) fn path(&self) -> &Path {
-        &self.path
-    }
-
-    /// The absolute path of this directory, as text.
-    pub(crate) fn root(&self) -> String {
-        self.path.to_str().expect("a UTF-8 path").to_owned()
-    }
-
-    /// The absolute path of `relative`, a path in slash form, in this directory. The text has native separators.
-    pub(crate) fn join(&self, relative: &str) -> String {
-        let path = self.path.join(component::paths::from_slash(relative).as_ref());
-        path.to_str().expect("a UTF-8 path").to_owned()
-    }
-}
-
-/// Fails unless `result` is an error whose text contains `message`.
-#[track_caller]
-pub(crate) fn require_error<T: std::fmt::Debug, E: std::fmt::Display>(result: Result<T, E>, message: &str) {
-    match result {
-        Ok(value) => panic!("expected an error with {message:?}, got {value:?}"),
-        Err(error) => {
-            let text = format!("{error:#}");
-            assert!(text.contains(message), "error = {text:?}, expected a message with {message:?}");
-        }
-    }
-}
-
-#[cfg(unix)]
-pub(crate) fn set_mode(path: impl AsRef<Path>, mode: u32) {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(path.as_ref(), std::fs::Permissions::from_mode(mode)).expect("the mode");
-}
-
-/// The bytes of the reference vectors of the Kotlin content hash.
-#[expect(clippy::cast_possible_truncation, reason = "the vector keeps the low byte of each value")]
-pub(crate) fn reference_bytes(size: usize) -> Vec<u8> {
-    (0..size).map(|index| (index.wrapping_mul(31).wrapping_add(7)) as u8).collect()
 }

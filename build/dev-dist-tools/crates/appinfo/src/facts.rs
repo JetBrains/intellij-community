@@ -349,3 +349,6 @@ pub fn shorten_company_name(name: &str) -> &str {
     let name = name.strip_suffix(" s.r.o.").unwrap_or(name);
     name.strip_suffix(" Inc.").unwrap_or(name)
 }
+
+#[cfg(test)]
+mod tests;

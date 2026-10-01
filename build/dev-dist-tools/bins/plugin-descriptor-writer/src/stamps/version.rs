@@ -109,3 +109,6 @@ pub(crate) fn compatible_platform_version_range(compatible_build_range: Compatib
     };
     (since_build.to_owned(), format!("{}.*", &build_number[..end]))
 }
+
+#[cfg(test)]
+mod tests;

@@ -389,3 +389,6 @@ fn transport_entry(entry: &TreeEntry, transport_root: &mut Option<PathBuf>) -> R
     *transport_root = Some(root);
     Ok((source, metadata))
 }
+
+#[cfg(test)]
+mod tests;

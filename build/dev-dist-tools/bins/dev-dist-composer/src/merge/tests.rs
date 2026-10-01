@@ -7,6 +7,7 @@ use std::time::{Duration, SystemTime};
 
 use component::manifest::ComponentManifest;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
+use testkit::{TempDir, directory_symlink, file_symlink, read_text, require_absent, require_error, set_mode, write_file};
 
 use crate::compose::{ComposeOptions, DevBuildComponent};
 use crate::test_support::*;

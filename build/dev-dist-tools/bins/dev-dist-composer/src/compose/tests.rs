@@ -3,11 +3,11 @@
 use std::path::PathBuf;
 
 use component::manifest::ComponentEntry;
+use testkit::{TempDir, require_absent, require_error, write_file};
 
 use super::*;
 use crate::test_support::{
-    TempDir, directory_entry, file_entry, file_with_mode, link_entry, no_merge, require_absent, require_error, runfiles, skip_merge,
-    sourced_entry, test_manifest, with_entries, write_file,
+    directory_entry, file_entry, file_with_mode, link_entry, no_merge, runfiles, skip_merge, sourced_entry, test_manifest, with_entries,
 };
 
 const NO_MODULES: &[&str] = &[];

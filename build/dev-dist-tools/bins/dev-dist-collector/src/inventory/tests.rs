@@ -3,9 +3,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use super::*;
+use testkit::{TempDir, WorkingDirectory, read_bytes, reference_bytes, require_error, write_file};
 
-use crate::test_support::{TempDir, WorkDir, reference_bytes, require_error, write_file};
+use super::*;
 
 fn decode_component_manifest(data: &[u8]) -> serde_json::Result<ComponentManifest> {
     serde_json::from_slice(data)
@@ -75,11 +75,11 @@ fn tree_file(source: &str, relative_path: &str) -> JarRecord {
 
 /// The manifest of ten packed jars matches the fixture byte for byte. Its hashes are the Kotlin content hashes of the
 /// reference vectors. The sources stay relative and never exist: the collector takes every hash from the inventory.
-/// The [`WorkDir`] keeps the working directory of the relative sources fixed.
+/// The [`WorkingDirectory`] keeps the working directory of the relative sources fixed.
 #[test]
 fn platform_manifest_bytes() {
-    let working_directory = WorkDir::new();
-    let golden = working_directory.read_testdata("platform.json");
+    let working_directory = WorkingDirectory::enter();
+    let golden = read_bytes(working_directory.testdata("platform.json"));
     let directory = TempDir::new();
     let mut records = Vec::new();
     let mut files = Vec::new();
@@ -208,7 +208,7 @@ fn inventory_follows_staging_links() {
     let directory = TempDir::new();
     write_file(directory.path().join("source.jar"), reference_bytes(3));
     let staged = directory.join("staged.jar");
-    crate::test_support::symlink("source.jar", &staged);
+    testkit::file_symlink("source.jar", &staged);
     let (entries, _) = inventory(&[SourcedFile::new(&staged, "lib/staged.jar")]).unwrap();
     assert_eq!(entries[0].hash(), -737883702129266468);
     assert_eq!(source(&entries[0]), Some(staged.as_str()));
@@ -224,15 +224,15 @@ fn inventory_cleans_link_targets_without_payload() {
     ] {
         let directory = TempDir::new();
         let source = directory.path().join("source");
-        crate::test_support::symlink(target, &source);
+        testkit::file_symlink(target, &source);
         let metadata = filemeta::inspect(&source, "bin/current").unwrap();
         let expected_link = directory.path().join("expected");
-        crate::test_support::symlink(expected, &expected_link);
+        testkit::file_symlink(expected, &expected_link);
         let expected_metadata = filemeta::inspect(&expected_link, "bin/current").unwrap();
         fs::remove_file(&source).unwrap();
         for staged in [false, true] {
             if staged {
-                crate::test_support::symlink(directory.path().join("unavailable"), &source);
+                testkit::file_symlink(directory.path().join("unavailable"), &source);
             }
             let file = SourcedFile {
                 metadata: Some(metadata.clone()),
@@ -262,7 +262,7 @@ fn inventory_cleans_link_targets_without_payload() {
 fn inventory_rejects_a_link_target_with_an_empty_segment() {
     let directory = TempDir::new();
     let source = directory.path().join("source");
-    crate::test_support::symlink("lib//payload/", &source);
+    testkit::directory_symlink("lib//payload/", &source);
     require_error(filemeta::inspect(&source, "bin/current"), "has an empty segment");
 }
 
@@ -404,7 +404,7 @@ fn packed_collector_does_not_read_or_stat_payload() {
     let catalogue = write_metadata_catalogue(&directory, std::slice::from_ref(&shared));
     fs::remove_file(&shared).unwrap();
     // The link names itself, so every read of the payload fails.
-    crate::test_support::symlink("shared.jar", &shared);
+    testkit::file_symlink("shared.jar", &shared);
     let files = attach_metadata(&[packed_jar(&shared, "lib/shared.jar")], &catalogue).unwrap();
     let (_, stats) = build_manifest(&header("files"), &files).unwrap();
     assert_eq!(
@@ -420,7 +420,7 @@ fn packed_collector_does_not_read_or_stat_payload() {
 #[test]
 fn metadata_catalogue_rejects_conflicts_and_stale_ownership() {
     // The source is relative, so the working directory must not change during the test.
-    let _working_directory = WorkDir::new();
+    let _working_directory = WorkingDirectory::enter();
     let directory = TempDir::new();
     let entry = Entry {
         relative_path: "shared.jar".into(),
@@ -464,7 +464,7 @@ fn write_native_tree(tree: &Path, files: &[(&str, u32)]) -> Vec<Entry> {
     for (name, mode) in files {
         let target = tree.join(name);
         write_file(&target, format!("native {name}"));
-        crate::test_support::set_mode(&target, *mode);
+        testkit::set_mode(&target, *mode);
     }
     let mut inventory = vec![filemeta::inspect(tree, "native").unwrap()];
     for mut entry in filemeta::inventory(tree).unwrap() {
@@ -682,7 +682,7 @@ fn directory_entries_and_explicit_links_need_no_payload() {
     let directory = TempDir::new();
     let payload = directory.join("payload");
     write_file(format!("{payload}/lib/a.jar"), "packed bytes");
-    crate::test_support::symlink("a.jar", format!("{payload}/lib/link.jar"));
+    testkit::file_symlink("a.jar", format!("{payload}/lib/link.jar"));
     let entries = filemeta::inventory(Path::new(&payload)).unwrap();
     let metadata = directory.join("metadata.json");
     filemeta::write(Path::new(&metadata), &entries).unwrap();
@@ -719,7 +719,7 @@ fn collector_rejects_links_combined_across_inventories() {
     let mut records = Vec::new();
     for (name, target) in [("a", "b/../file"), ("b", "a")] {
         let source = format!("{payload}/{name}");
-        crate::test_support::symlink(target, &source);
+        testkit::file_symlink(target, &source);
         let entry = filemeta::inspect(Path::new(&source), name).unwrap();
         let metadata = directory.join(&format!("{name}.json"));
         filemeta::write(Path::new(&metadata), &[entry]).unwrap();

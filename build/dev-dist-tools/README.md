@@ -30,6 +30,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/javaglob` | The `java.nio` glob subset that the plan files use. | `@community//build/dev-dist-tools/crates/javaglob:javaglob_test` |
 | `crates/planfile` | The plan file, the remainder contract, the plugin classpath record, and the asset and link-graph rules that the remainder packer and the collector share. | `@community//build/dev-dist-tools/crates/planfile:planfile_test` |
 | `crates/pluginpack` | The plan and the execution of a plugin remainder, for the remainder packer. | `@community//build/dev-dist-tools/crates/pluginpack:pluginpack_test` |
+| `crates/testkit` | The helpers that the tests of several crates share: the `testdata/` lookup, a temporary directory with a real path, the working directory of one test, and the file, mode and link helpers. Only `[dev-dependencies]` name it, so no tool links it. | `@community//build/dev-dist-tools/crates/testkit:testkit_test` |
 | `crates/trace` | The span API of the traced tools and the Jaeger span file of `--trace-file`. | `@community//build/dev-dist-tools/crates/trace:trace_test` |
 | `crates/xxh3` | The hash4j xxh3 hashes: the two hashes of the `__index__` keys, and the content hash of a file or a stream in blocks of 256 KiB. | `@community//build/dev-dist-tools/crates/xxh3:xxh3_test` |
 | `bins/content-module-packer` | The packer and the inventory of each packed jar. | `@community//build/dev-dist-tools/bins/content-module-packer:content-module-packer_test` |
@@ -37,14 +38,14 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/dev-dist-composer` | The composer: the composition spec, the composition and its copy step, the local layout writer, the plugin classpath file and the fingerprint. | `@community//build/dev-dist-tools/bins/dev-dist-composer:dev-dist-composer_test` |
 | `bins/dev-launcher` | The launcher of `intellij_dev_launcher`, the local home, and the `local-home` command of `PreBuiltDevMain`. | `@community//build/dev-dist-tools/bins/dev-launcher:dev-launcher_test` |
 | `bins/plugin-descriptor-writer` | The descriptor writer. | `@community//build/dev-dist-tools/bins/plugin-descriptor-writer:plugin-descriptor-writer_test` and `:descriptor_rule_tests` |
-| `bins/plugin-remainder-packer` | The remainder packer. | `@community//build/dev-dist-tools/bins/plugin-remainder-packer:plugin-remainder-packer_test` and `:plugin-remainder-packer_packer_test` |
+| `bins/plugin-remainder-packer` | The remainder packer. | `@community//build/dev-dist-tools/bins/plugin-remainder-packer:plugin-remainder-packer_test` and `:plugin-remainder-packer_cli_test` |
 | `bins/product-files` | The tool of `dev_dist_product_files`. | `@community//build/dev-dist-tools/bins/product-files:product-files_test` |
 | `bins/project-model-tree` | The `materializer` of `intellij_project_model_tree`. | `@community//build/dev-dist-tools/bins/project-model-tree:project-model-tree_test` |
 | `bins/runtime-layout` | The runtime layout tool. | `@community//build/dev-dist-tools/bins/runtime-layout:runtime-layout_test` |
 | `build/dev-dist-tools/bins/dev-dist` | The binary of `./build/dev-dist.cmd`, in the ultimate root. | `//build/dev-dist-tools/bins/dev-dist:dev-dist_test` |
 | `build/dev-dist-tools/bins/content-report` | The `content-report pure` command, in the ultimate root. | `//build/dev-dist-tools/bins/content-report:content-report_test` |
 
-The `API.md` of each crate lists its public items and the input that it refuses.
+The `API.md` of a crate states its supported subset and the input that it refuses. Rustdoc states the public items.
 
 ## The two gates
 
@@ -133,8 +134,14 @@ JDK answer for every glob of the corpus. A plan author who needs a new shape cha
 - Bazel applies the lint table through `@ddt` and `:lints`, and the `<crate>-clippy` test of each crate fails on any
   clippy warning. `cargo clippy --all-targets` shows the same findings in the edit loop. A site-local exception is
   `#[expect(lint, reason = "...")]`.
-- A test reads `testdata/` from `DDT_TESTDATA_DIR` under Bazel, and from the run-time `CARGO_MANIFEST_DIR` under
-  `cargo test`. The process wrapper of rules_rust refuses `env!("CARGO_MANIFEST_DIR")`.
+- A module `<module>.rs` ends with `#[cfg(test)] mod tests;`, and its tests are in `<module>/tests.rs`. The tests of
+  `lib.rs` or `main.rs` are in `src/tests.rs`. The tests that run a binary as a process are in `tests/cli.rs`.
+- A fixture of one crate, such as the jar writers and the frozen digests of `jarpack`, is a submodule of `src/tests.rs`
+  in `src/tests/<fixture>.rs`. A `src/test_support.rs` holds the fakes of the types of one crate, such as its
+  manifests, its requests or its source bindings. The helpers that the tests of several crates share are in
+  `crates/testkit`.
+- A test reads `testdata/` through `testkit::testdata_dir`: from `DDT_TESTDATA_DIR` under Bazel, and from the run-time
+  `CARGO_MANIFEST_DIR` under `cargo test`. The process wrapper of rules_rust refuses `env!("CARGO_MANIFEST_DIR")`.
 - A test that reads the `testdata/` of another crate adds that crate's `<name>_testdata` filegroup to `test_data` of
   `dev_dist_rust_crate`. The `javaglob` crate reads the plan corpus this way.
 - A new crate or binary goes into `members` of `Cargo.toml`. Then run `cargo build` to update `Cargo.lock`.
@@ -156,7 +163,8 @@ old split until the workspace `Cargo.toml` changes. Touch it (a comment line is 
 ### The ultimate workspace
 
 - Bazel builds the ultimate binaries with the crates of `@ddt`, so each crate has one copy.
-- List a dependency in `Cargo.toml` of the binary and in `deps` of its `BUILD.bazel`.
+- List a dependency in `Cargo.toml` of the binary and in `deps` of its `BUILD.bazel`, and a dev-dependency in
+  `test_deps`.
 - `Cargo.toml` of the ultimate workspace carries the same `[workspace.lints]` copy for `cargo clippy`. Bazel reads the
   community copy: `dev_dist_rust_binary` passes `@community//build/dev-dist-tools:lints` to every target.
 - Name a community crate by its label, such as `@community//build/dev-dist-tools/crates/jarpack`.

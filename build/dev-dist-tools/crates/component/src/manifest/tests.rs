@@ -1,5 +1,7 @@
+use testkit::{TempDir, require_error, write_file};
+
 use super::*;
-use crate::test_support::{TempDir, directory_entry, file_entry, file_with_mode, link_entry, require_error, test_manifest, write_file};
+use crate::test_support::{directory_entry, file_entry, file_with_mode, link_entry, test_manifest};
 
 const VALID: &str = r#"{"version":10,"kind":"a","platformPrefix":"idea","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
 

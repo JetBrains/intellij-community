@@ -41,3 +41,6 @@ pub fn write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()> {
     }
     writer.finish()
 }
+
+#[cfg(test)]
+mod tests;

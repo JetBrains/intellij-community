@@ -249,3 +249,6 @@ const fn u16_at(data: &[u8], at: usize) -> u16 {
 const fn u32_at(data: &[u8], at: usize) -> u32 {
     u32::from_le_bytes([data[at], data[at + 1], data[at + 2], data[at + 3]])
 }
+
+#[cfg(test)]
+mod tests;

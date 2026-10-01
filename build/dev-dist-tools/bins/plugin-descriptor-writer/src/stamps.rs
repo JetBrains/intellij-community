@@ -22,11 +22,6 @@
 
 mod version;
 
-#[cfg(test)]
-mod stamps_tests;
-#[cfg(test)]
-mod version_tests;
-
 pub(crate) use version::{CompatibleBuildRange, compatible_platform_version_range, plugin_build_number};
 
 use crate::descriptorxml::{Element, Node};
@@ -126,3 +121,6 @@ pub(crate) fn get_or_create_top_element<'r>(root: &'r mut Element, name: &str, a
         _ => unreachable!("the index points at an element"),
     }
 }
+
+#[cfg(test)]
+mod tests;

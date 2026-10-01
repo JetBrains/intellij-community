@@ -209,3 +209,6 @@ fn sorted_signed(set: &HashSet<i64>) -> Vec<i64> {
 pub(crate) fn compare_java_string(a: &str, b: &str) -> Ordering {
     a.encode_utf16().cmp(b.encode_utf16())
 }
+
+#[cfg(test)]
+mod tests;

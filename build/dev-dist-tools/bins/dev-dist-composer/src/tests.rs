@@ -3,6 +3,8 @@
 
 use std::ffi::OsString;
 
+use testkit::{WorkingDirectory, read_text, require_absent, write_file};
+
 use crate::test_support::*;
 
 fn cli_args(extra: &[&str]) -> Vec<String> {

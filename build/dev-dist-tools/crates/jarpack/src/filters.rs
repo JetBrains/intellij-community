@@ -166,3 +166,6 @@ pub(crate) fn is_versioned_module_info(name: &str) -> bool {
         .and_then(|rest| rest.strip_suffix("/module-info.class"))
         .is_some_and(|version| !version.is_empty() && version.bytes().all(|byte| byte.is_ascii_digit()))
 }
+
+#[cfg(test)]
+mod tests;

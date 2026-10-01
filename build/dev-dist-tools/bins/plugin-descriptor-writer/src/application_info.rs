@@ -64,3 +64,6 @@ pub(crate) fn parse_application_info_request(mut options: cli::Options) -> Resul
     options.finish()?;
     Ok(request)
 }
+
+#[cfg(test)]
+mod tests;

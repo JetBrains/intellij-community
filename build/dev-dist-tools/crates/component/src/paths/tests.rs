@@ -1,5 +1,6 @@
+use testkit::require_error;
+
 use super::*;
-use crate::test_support::require_error;
 
 #[test]
 fn host_path_accepts_the_bazel_spelling() {

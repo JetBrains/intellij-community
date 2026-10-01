@@ -275,3 +275,6 @@ fn parse_true(option: &str, value: &str) -> Result<bool> {
     }
     Ok(true)
 }
+
+#[cfg(test)]
+mod tests;

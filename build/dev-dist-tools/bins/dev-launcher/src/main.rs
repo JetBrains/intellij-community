@@ -418,7 +418,4 @@ fn path_string(path: PathBuf) -> anyhow::Result<String> {
 }
 
 #[cfg(test)]
-mod main_tests;
-
-#[cfg(test)]
-mod test_support;
+mod tests;

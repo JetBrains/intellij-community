@@ -203,3 +203,6 @@ fn resolve_content_module_descriptor(module_name: &str, cache: &Cache) -> Result
     resolve_includes(&mut element, cache).with_context(|| descriptor_filename.clone())?;
     Ok(element)
 }
+
+#[cfg(test)]
+mod tests;

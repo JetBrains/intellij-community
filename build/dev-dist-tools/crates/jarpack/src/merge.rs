@@ -534,3 +534,6 @@ fn version_and_jar_length(text: &[u8]) -> Option<usize> {
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|window| window == needle)
 }
+
+#[cfg(test)]
+mod tests;

@@ -303,3 +303,6 @@ impl<W: Write> Drop for Writer<W> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -159,6 +159,8 @@ jarpack = { path = "crates/jarpack" }
 javaglob = { path = "crates/javaglob" }
 planfile = { path = "crates/planfile" }
 pluginpack = { path = "crates/pluginpack" }
+# Dev-only: only `[dev-dependencies]` name it.
+testkit = { path = "crates/testkit" }
 trace = { path = "crates/trace" }
 xxh3 = { path = "crates/xxh3" }
 

@@ -126,3 +126,6 @@ pub(crate) fn parse_product_descriptor_request(mut options: cli::Options) -> Res
     options.finish()?;
     Ok(request)
 }
+
+#[cfg(test)]
+mod tests;

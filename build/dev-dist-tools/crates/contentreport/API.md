@@ -75,28 +75,10 @@ The crate loads the text into `saphyr::MarkedYaml` and interprets the tree after
 | several documents | the first document | all documents, refused |
 | a position | none; the accessors never fail | the 1-based line of the node in each refusal |
 
-## Public items
+## Errors
 
 Every error is one `anyhow` message. It names the file, and the line and the field when the refusal is about the YAML
-text.
-
-| Item | Go original | Description |
-| --- | --- | --- |
-| `enum EntryKind { Jar, Link, Placed }` | `ReportEntry.Kind` | The entry kind. `as_str()` gives the YAML word. |
-| `struct FileEntry { path, kind, modules, content_modules, sources }` | `ReportEntry` | One output. The member names have no `/<descriptor>` suffix. |
-| `FileEntry::primary_member(&self) -> Option<&str>` | `PrimaryMember` | The module that the jar is named for: the path when a member confirms it, then the first `modules` member, then the first `contentModules` member. |
-| `struct RecipeSource` | `RecipeSource` | One ordered source with the 13 fields. An absent string field is `None`, and so is an empty `name`. |
-| `RecipeSource::blocker(&self) -> Option<Blocker>` | `Blocker` | Why the source is not data, from its `kind` and `filter`. `None` when it is data. |
-| `enum Blocker` | `Blocker` | The nine blockers. `as_str()` and `Display` give the Go names. |
-| `struct Recipe { file, fragment, entries }` | `Recipe` | One plan. The reader refuses a plan whose head comment states another output count. |
-| `parse_recipe(&Path, &str) -> anyhow::Result<Recipe>` | `ParseRecipe`, `ParseReport` | Interprets one plan text. |
-| `read_recipes(&[PathBuf]) -> anyhow::Result<Vec<Recipe>>` | `ReadRecipes` | Reads plan files and directories of `*.plan.yaml`, sorted by the bytes of the path. A directory with no plan is an error. |
-| `struct Distribution` | `Distribution` | The file sizes of a built distribution. `root()`, `files()`, `directories()`, `lookup_from_root(&str) -> Option<u64>`. |
-| `read_distribution(&Path) -> anyhow::Result<Distribution>` | `ReadDistribution` | Indexes the regular files. It follows a link at the root and no link below it. |
-| `struct Weight { entries, jars, bytes, unjoined, duplicate }` | `Weight` | One row. `balances()`, `+=`, and `-` for a subgroup. |
-| `struct OutputPurity { owner, causes }` | `OutputPurity` | One output. `cause_set()` and `needs_code()`. |
-| `struct Purity` | `Purity` | The run result. The groups are `BTreeMap`s. |
-| `weigh_purity(&[Recipe], Option<&Distribution>) -> Purity` | `WeighPurity` | Classifies and weighs every output. With no distribution, every output is unjoined. |
+text. Rustdoc states each public item.
 
 `ParseReport`, `ContentReport` and `ReportEntry.LibraryOwner` are not public items. No command reads a packaging report
 of a distribution build now, and a plan has no `module` key on an entry.

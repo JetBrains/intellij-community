@@ -6,12 +6,12 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use component::manifest::ComponentEntry;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
+use testkit::{TempDir, read_text, require_absent, require_error, write_file};
 
 use crate::compose::{ComposeOptions, ComposedBuild, DevBuildComponent, compose_with_merge};
 use crate::fingerprint::compute_ide_fingerprint_from_components;
 use crate::test_support::{
-    TempDir, directory_entry, file_with_mode, link_entry, no_merge, read_text, require_absent, require_error, runfiles, skip_merge,
-    sourced_entry, test_manifest, with_entries, write_file,
+    directory_entry, file_with_mode, link_entry, no_merge, runfiles, skip_merge, sourced_entry, test_manifest, with_entries,
 };
 
 const NO_MODULES: &[&str] = &[];

@@ -1,7 +1,7 @@
 use component::layout::{LocalFileKind, LocalLayoutFile};
+use testkit::{TempDir, read_text, require_error, write_file};
 
 use super::*;
-use crate::test_support::{TempDir, read_text, require_error, write_file};
 
 fn write_layout(directory: &TempDir, layout: &LocalLayout) -> PathBuf {
     let file = directory.path().join("local-layout.json");
@@ -50,8 +50,15 @@ fn no_runfile(name: &str) -> Result<PathBuf> {
 mod unix {
     use std::fs;
 
+    use testkit::set_mode;
+
     use super::*;
-    use crate::test_support::{mode_of, set_mode};
+
+    fn mode_of(path: impl AsRef<Path>) -> u32 {
+        use std::os::unix::fs::PermissionsExt;
+
+        fs::metadata(path.as_ref()).expect("the metadata").permissions().mode() & 0o7777
+    }
 
     /// Restores a writable mode, so that the temporary directory can go.
     struct Writable(PathBuf);

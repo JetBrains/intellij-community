@@ -6,9 +6,10 @@
 #![allow(clippy::unreadable_literal, reason = "the hash values are copied from the Kotlin output")]
 
 use component::manifest::{ComponentEntry, validate_manifest};
+use testkit::{TempDir, reference_bytes, write_file};
 
 use super::*;
-use crate::test_support::{TempDir, reference_bytes, test_manifest, write_file};
+use crate::test_support::test_manifest;
 
 // The Kotlin run read `additionalModules` from these manifests. The composer takes the modules from the composition
 // spec now, so the manifests list none, and each case passes the list that Kotlin summed. The expected values are

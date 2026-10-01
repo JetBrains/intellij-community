@@ -21,5 +21,6 @@ serde_json.workspace = true
 [dev-dependencies]
 filemeta.workspace = true
 tempfile.workspace = true
+testkit.workspace = true
 walkdir.workspace = true
 zip.workspace = true

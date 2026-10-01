@@ -12,8 +12,9 @@ rust_lints_as_errors(
 )
 
 # Clippy over the `cfg(windows)` code that a macOS or Linux host never compiles, one test per Windows host:
-# `:clippy-windows-x86_64` and `:clippy-windows-arm64`. The binaries bring every crate that they link, and
-# `contentreport` is here because only the ultimate tools link it. The tests run from the community root only.
+# `:clippy-windows-x86_64` and `:clippy-windows-arm64`. The binaries bring every crate that they link. `contentreport`
+# is here because only the ultimate tools link it, and `testkit` because only the tests link it. The tests run from the
+# community root only.
 windows_clippy_tests(
     targets = [
         "//build/dev-dist-tools/bins/content-module-packer",
@@ -26,5 +27,6 @@ windows_clippy_tests(
         "//build/dev-dist-tools/bins/project-model-tree",
         "//build/dev-dist-tools/bins/runtime-layout",
         "//build/dev-dist-tools/crates/contentreport",
+        "//build/dev-dist-tools/crates/testkit",
     ],
 )

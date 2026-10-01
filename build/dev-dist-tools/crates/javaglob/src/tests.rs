@@ -3,6 +3,8 @@
 use std::collections::{BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 
+use testkit::testdata_dir;
+
 use super::*;
 
 /// One line of `testdata/java-path-matcher.txt`, which `testdata/RecordPathMatcher.java` wrote with the JDK.
@@ -12,23 +14,12 @@ struct RecordedCase {
     matches: bool,
 }
 
-/// The `testdata` directory: `DDT_TESTDATA_DIR` under Bazel, the crate directory under `cargo test`.
-fn testdata_directory() -> PathBuf {
-    std::env::var_os("DDT_TESTDATA_DIR").map_or_else(
-        || {
-            let crate_directory = std::env::var_os("CARGO_MANIFEST_DIR").expect("cargo test sets CARGO_MANIFEST_DIR");
-            PathBuf::from(crate_directory).join("testdata")
-        },
-        PathBuf::from,
-    )
-}
-
 /// Every distinct glob of the plan file corpus of the planfile crate. The packer compiles the includes, executables and
 /// mapping patterns of a layout transform as globs. An include loses its leading `!`, and an empty mapping pattern is
 /// `**`.
 fn corpus_patterns() -> BTreeSet<String> {
     // The corpus is in the testdata of the sibling crate. The lexical path holds in the Bazel runfiles too.
-    let corpus = testdata_directory()
+    let corpus = testdata_dir()
         .parent()
         .and_then(Path::parent)
         .expect("the testdata directory is under crates/javaglob")
@@ -65,7 +56,7 @@ fn corpus_patterns() -> BTreeSet<String> {
 }
 
 fn testdata(name: &str) -> PathBuf {
-    testdata_directory().join(name)
+    testdata_dir().join(name)
 }
 
 /// Reverses the quoting of `RecordPathMatcher.quote`: `\\`, `\"` and `\uXXXX`.

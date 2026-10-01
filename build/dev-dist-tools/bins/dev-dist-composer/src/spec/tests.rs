@@ -1,7 +1,8 @@
-use super::*;
-use crate::test_support::{TempDir, require_error, write_file};
+use testkit::{TempDir, require_error, write_file};
 #[cfg(unix)]
-use crate::test_support::{file_symlink, read_text};
+use testkit::{file_symlink, read_text};
+
+use super::*;
 
 fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
     let file = directory.path().join("composition.json");

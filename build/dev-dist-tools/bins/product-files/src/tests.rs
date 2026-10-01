@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::ffi::OsString;
-use std::path::PathBuf;
 
 use appinfo::{ApplicationInfo, Replacement};
 use serde_json::Value;
+use testkit::{read_text, testdata};
 
 use crate::model::{JvmArguments, LaunchModel, parse_launch_model};
 use crate::render::{
@@ -25,25 +25,8 @@ const HOST_PLATFORMS: [&str; 6] = [
     "windows_x64",
 ];
 
-/// The `testdata` directory: `DDT_TESTDATA_DIR` under Bazel, the crate directory under `cargo test`.
-fn testdata(name: &str) -> PathBuf {
-    let directory = std::env::var_os("DDT_TESTDATA_DIR").map_or_else(
-        || {
-            let crate_directory = std::env::var_os("CARGO_MANIFEST_DIR").expect("cargo test sets CARGO_MANIFEST_DIR");
-            PathBuf::from(crate_directory).join("testdata")
-        },
-        PathBuf::from,
-    );
-    directory.join(name)
-}
-
-fn read_testdata(name: &str) -> String {
-    let file = testdata(name);
-    std::fs::read_to_string(&file).unwrap_or_else(|error| panic!("{}: {error}", file.display()))
-}
-
 fn test_model(name: &str) -> LaunchModel {
-    parse_launch_model(read_testdata(name).as_bytes()).unwrap()
+    parse_launch_model(read_text(testdata(name)).as_bytes()).unwrap()
 }
 
 /// One test product: a launch model, its application info, the markers of that application info and its build number.
@@ -109,7 +92,7 @@ impl Fixture {
     }
 
     fn build_number(&self) -> String {
-        read_testdata(self.build_number).trim().to_owned()
+        read_text(testdata(self.build_number)).trim().to_owned()
     }
 
     fn render(&self, model: &LaunchModel, platform: &str, opened: &str, idea_properties: &str) -> anyhow::Result<LaunchFiles> {
@@ -175,7 +158,7 @@ fn opened_packages_split_like_files_lines() {
 
 #[test]
 fn opened_packages_drop_the_packages_of_other_systems() {
-    let text = read_testdata("opened-packages.txt");
+    let text = read_text(testdata("opened-packages.txt"));
     let common = "--add-opens=java.base/java.lang=ALL-UNNAMED";
     for (os, expected) in [
         (
@@ -299,13 +282,13 @@ fn rendered_files_of_one_model() {
 /// `DevDistProductLaunchModelTest` checked the Go tool against the production writers.
 #[test]
 fn product_info_matches_the_recorded_bytes_on_every_platform() {
-    let opened = read_testdata("opened-packages.txt");
+    let opened = read_text(testdata("opened-packages.txt"));
     for (fixture, golden_dir) in [(IDEA, "product-info"), (SERVER, "full-product-info")] {
         let model_name = fixture.model;
         let model = test_model(model_name);
         for platform in HOST_PLATFORMS {
             let files = fixture.render(&model, platform, &opened, "a=@@settings_dir@@\n").unwrap();
-            let golden = read_testdata(&format!("{golden_dir}/{platform}.json"));
+            let golden = read_text(testdata(&format!("{golden_dir}/{platform}.json")));
             // An editor can add a final newline to the golden. `rendered_files_of_one_model` pins that there is none.
             let expected = golden.strip_suffix('\n').unwrap_or(&golden);
             assert_eq!(files.product_info, expected, "{model_name} on {platform}");
@@ -430,7 +413,7 @@ fn the_tool_writes_the_four_files() {
         path.display().to_string()
     };
     let out = |name: &str| dir.path().join(name).display().to_string();
-    let model = write("model.json", &read_testdata("model.json"));
+    let model = write("model.json", &read_text(testdata("model.json")));
     let mut args = vec![
         format!("--model={model}"),
         "--platform=darwin_aarch64".to_owned(),
@@ -646,7 +629,7 @@ fn the_tool_reads_the_host_of_a_frontend() {
 #[test]
 fn the_tool_applies_the_replacements() {
     let tool = ToolRun::new();
-    let xml = read_testdata("application-info/server.xml").replace("__BUNDLE_EAP__", "__FIRST__");
+    let xml = read_text(testdata("application-info/server.xml")).replace("__BUNDLE_EAP__", "__FIRST__");
     let mut args = tool.base_args();
     args.extend([
         format!("--application-info={}", tool.write("server.xml", &xml)),
@@ -664,7 +647,7 @@ fn the_tool_applies_the_replacements() {
 /// A render error of the application info exits with code 1 and names the file.
 #[test]
 fn the_tool_refuses_an_application_info_it_cannot_read() {
-    let idea = read_testdata("application-info/idea.xml");
+    let idea = read_text(testdata("application-info/idea.xml"));
     for (name, content, want) in [
         (
             "pattern",
