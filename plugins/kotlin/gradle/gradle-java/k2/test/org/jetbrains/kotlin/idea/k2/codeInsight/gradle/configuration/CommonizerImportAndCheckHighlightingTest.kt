@@ -27,7 +27,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     override fun setUp() {
         val testedVersions = setOf(KotlinGradlePluginVersions.latestStable, KotlinGradlePluginVersions.latestPinned)
         Assume.assumeTrue(
-            "CommonizerImportAndCheckHighlightingTest only runs against $testedVersions",
+            "CommonizerImportAndCheckHighlightingTest only runs against $testedVersions but got: ${kotlinPluginVersion.version}",
             kotlinPluginVersion.version in testedVersions,
         )
         super.setUp()
