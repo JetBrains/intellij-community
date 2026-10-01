@@ -1414,6 +1414,41 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-92230"])
+    @TestCaseOptions(additionalSdkRoots = [SdkRoot("types/unannotatedStubFunction", OrderRootTypeEnum.CLASSES)])
+    fun `structural type through unannotated stub function does not parse the stub`() = test("""
+      import unannotated_stub
+
+      def f(x):
+          x.foo
+          g(x)
+          unannotated_stub.forward(x)
+
+      def g(y):
+          return y.bar
+
+      f('string')
+      # ^^^^^^^^ WARNING Type 'Literal["string"]' doesn't have expected attributes 'foo', 'bar'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-92230"])
+    fun `structural type through function in another file uses only the origin file`() = test("""
+      from other import g
+
+      def f(x):
+          x.foo
+          g(x)
+
+      f('string')
+      # ^^^^^^^^ WARNING Type 'Literal["string"]' doesn't have expected attribute 'foo'
+      """.trimIndent(),
+      "other.py" to """
+      def g(y):
+          return y.bar
+      """.trimIndent())
+
+    @Test
     fun `get attribute against structural type`() = test("""
       def f(x):
           return x.foo

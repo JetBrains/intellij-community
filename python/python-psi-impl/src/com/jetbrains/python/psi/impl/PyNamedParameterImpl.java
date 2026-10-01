@@ -289,11 +289,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             return assumedResult;
           }
         }
-        if (context.maySwitchToAST(this)) {
-          final PyType typeFromUsages = getTypeFromUsages(context, new HashSet<>());
-          if (typeFromUsages != null) {
-            return typeFromUsages;
-          }
+        final PyType typeFromUsages = getTypeFromUsages(context, new HashSet<>());
+        if (typeFromUsages != null) {
+          return typeFromUsages;
         }
       }
     }
@@ -340,7 +338,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   private @Nullable PyType getTypeFromUsages(@NotNull TypeEvalContext context, @NotNull Set<PyNamedParameter> visited) {
-    if (!visited.add(this)) return null;
+    if (!context.maySwitchToAST(this) || !visited.add(this)) return null;
 
     final Set<String> usedAttributes = new LinkedHashSet<>();
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
