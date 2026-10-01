@@ -73,6 +73,27 @@ class PyInlayParameterHintsTest : PyTestCase() {
     """.trimIndent())
   }
 
+  fun testHintsNotShownWhenArgumentNameEqualsParameterName() {
+    doTest("""
+      def foo(a, b):
+          pass
+
+      a = 1
+      b = 2
+      foo(a, b)
+    """.trimIndent())
+  }
+
+  fun testHintsShownOnlyForArgumentsWithMismatchedNames() {
+    doTest("""
+      def foo(a, b, c):
+          pass
+
+      a, b, c = 1, 2, 3
+      foo(<hint text="a:"/>c, b, <hint text="c:"/>a)
+    """.trimIndent())
+  }
+
   fun testHintsForBuiltinFunctionCallsNotShownByDefault() {
     doTest("""
       class Clazz:
