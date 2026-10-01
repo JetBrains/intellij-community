@@ -10,8 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Disposer;
@@ -25,6 +23,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.TransientChildScanner;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
@@ -367,7 +366,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test(timeout = 20_000)
   public void testScanNewChildrenMustNotBeRunOutsideOfProjectRoots() throws Exception {
-    checkNewDirAndRefresh(_-> {}, getAllExcludedCalled -> assertFalse(getAllExcludedCalled.get()));
+    checkNewDirAndRefresh(_-> {}, scanStarted -> assertFalse(scanStarted.get()));
   }
 
   @Test(timeout = 20_000)
@@ -380,9 +379,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         project.set(p);
         assertTrue(p.isOpen());
       },
-      getAllExcludedCalled -> {
+      scanStarted -> {
         try {
-          assertTrue(getAllExcludedCalled.get());
+          assertTrue(scanStarted.get());
         }
         finally {
           // this concoction is to ensure close() is called on the mock ProjectManagerImpl
@@ -392,10 +391,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     );
   }
 
-  private void checkNewDirAndRefresh(Consumer<? super Path> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
-    var getAllExcludedCalled = new AtomicBoolean();
-    ((ProjectManagerImpl)ProjectManager.getInstance()).testOnlyGetExcludedUrlsCallback(getTestRootDisposable(), () -> {
-      getAllExcludedCalled.set(true);
+  private void checkNewDirAndRefresh(Consumer<? super Path> dirCreatedCallback, Consumer<? super AtomicBoolean> scanStartedChecker) throws IOException {
+    var scanStarted = new AtomicBoolean();
+    TransientChildScanner.setScanStartedCallbackForTests(getTestRootDisposable(), () -> {
+      scanStarted.set(true);
       assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
     });
 
@@ -416,7 +415,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     while (refreshed.getCount() != 0) {
       UIUtil.pump();
     }
-    getAllExcludedCalledChecker.accept(getAllExcludedCalled);
+    scanStartedChecker.accept(scanStarted);
   }
 
   @Test

@@ -28,10 +28,12 @@ import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -41,9 +43,15 @@ import com.intellij.util.indexing.testEntities.ExcludedKindFileSetTestContributo
 import com.intellij.util.indexing.testEntities.ExcludedTestEntity
 import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.IndexingTestEntity2
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.util.indexing.testEntities.NonRecursiveFileSetContributor
 import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.CompletableDeferred
@@ -84,6 +92,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
 
   companion object {
     private const val CHILDREN_PRELOADING_REGISTRY_KEY = "vfs.refresh.use.transient.files.for.children.preloading"
+    private const val ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY = "vfs.refresh.use.accurate.wfi.data.for.children.preloading"
 
     private fun VFileCreateEvent.isUnder(path: String): Boolean = this.path == path || this.path.startsWith("$path/")
 
@@ -118,14 +127,25 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       return listenerResult.getCompleted().getOrThrow()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun collectCreatedDirectoryChildrenBeforeListenersRuns(
       directoryToRefresh: VirtualFile,
       createdDirectory: Path,
       listenerDisposable: Disposable,
     ): Array<ChildInfo> {
+      return checkNotNull(collectCreatedDirectoryScannedChildren(directoryToRefresh, createdDirectory, listenerDisposable)) {
+        "No scanned children for $createdDirectory"
+      }
+    }
+
+    /** Returns children preloaded by the scanner for [createdDirectory], or `null` if the scanner skipped it */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun collectCreatedDirectoryScannedChildren(
+      directoryToRefresh: VirtualFile,
+      createdDirectory: Path,
+      listenerDisposable: Disposable,
+    ): Array<ChildInfo>? {
       val createdDirectoryPath = createdDirectory.invariantSeparatorsPathString
-      val listenerResult = CompletableDeferred<Result<Array<ChildInfo>>>()
+      val listenerResult = CompletableDeferred<Result<Array<ChildInfo>?>>()
       VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(
         { events ->
           if (listenerResult.isCompleted) {
@@ -137,7 +157,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
             override fun afterVfsChange() {
               listenerResult.complete(runCatching {
                 check(createEvent.isDirectory) { "Expected directory create event for $createdDirectoryPath" }
-                checkNotNull(createEvent.children) { "No scanned children for $createdDirectoryPath" }
+                createEvent.children
               })
             }
           }
@@ -465,6 +485,303 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
         }
       }
     }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner skips directories excluded by pattern in existing content root`() =
+    testScanChildrenSkipsDirectoriesExcludedByPattern(contentRootExists = true)
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner skips directories excluded by pattern in new content root`() =
+    testScanChildrenSkipsDirectoriesExcludedByPattern(contentRootExists = false)
+
+  private fun testScanChildrenSkipsDirectoriesExcludedByPattern(contentRootExists: Boolean): Unit = runBlocking {
+    rootDir.newDirectoryPath(".idea")
+    val contentRoot = rootDir.rootPath.resolve("content")
+    if (contentRootExists) {
+      rootDir.newDirectoryPath("content")
+    }
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      val rootVirtualFile = findVirtualFile(rootDir.rootPath)
+      rootVirtualFile.children // load all children to trigger full sync later
+      val refreshedDirectory = if (contentRootExists) findVirtualFile(contentRoot).also { it.children } else rootVirtualFile
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add content root with exclude pattern") {
+        it.addEntity(ModuleEntity("testModule", listOf(InheritedSdkDependency, ModuleSourceDependency), NonPersistentEntitySource) {
+          contentRoots = listOf(ContentRootEntity(contentRoot.toVirtualFileUrl(urlManager), listOf("*.tmp"), NonPersistentEntitySource))
+        })
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      val createdDirectory = if (contentRootExists) "content/new" else "content"
+      rootDir.newFileNio("$createdDirectory/a.tmp/excluded.txt").writeText("excluded")
+      rootDir.newFileNio("$createdDirectory/b/included.txt").writeText("included")
+
+      val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(refreshedDirectory, rootDir.rootPath.resolve(createdDirectory),
+                                                                               disposable)
+      assertThat(childNames(scannedChildren)).containsExactlyInAnyOrder("a.tmp", "b")
+      assertThat(childInfo(scannedChildren, "a.tmp").children).isNull()
+      assertThat(childNames(childInfo(scannedChildren, "b").children)).containsExactly("included.txt")
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner skips directories excluded by condition`(): Unit = runBlocking {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludedByNameContributor(), disposable)
+    rootDir.newDirectoryPath(".idea")
+    val contentRoot = rootDir.newDirectoryPath("content")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      findVirtualFile(rootDir.rootPath).children // load all children to trigger full sync later
+      val contentVirtualFile = findVirtualFile(contentRoot)
+      contentVirtualFile.children
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add content root with exclusion condition") {
+        it.addEntity(IndexingTestEntity2(listOf(contentRoot.toVirtualFileUrl(urlManager)), emptyList(), NonPersistentEntitySource))
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      rootDir.newFileNio("content/new/${ExcludedByNameContributor.EXCLUDED_NAME}/excluded.txt").writeText("excluded")
+      rootDir.newFileNio("content/new/kept/included.txt").writeText("included")
+
+      val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(contentVirtualFile, contentRoot.resolve("new"), disposable)
+      assertThat(childNames(scannedChildren)).containsExactlyInAnyOrder(ExcludedByNameContributor.EXCLUDED_NAME, "kept")
+      assertThat(childInfo(scannedChildren, ExcludedByNameContributor.EXCLUDED_NAME).children).isNull()
+      assertThat(childNames(childInfo(scannedChildren, "kept").children)).containsExactly("included.txt")
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner skips non-existent excluded root under new directory`(): Unit = runBlocking {
+    rootDir.newDirectoryPath(".idea")
+    val contentRoot = rootDir.newDirectoryPath("content")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      findVirtualFile(rootDir.rootPath).children // load all children to trigger full sync later
+      val contentVirtualFile = findVirtualFile(contentRoot)
+      contentVirtualFile.children
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add content root with non-existent excluded root") {
+        it.addEntity(IndexingTestEntity(
+          listOf(contentRoot.toVirtualFileUrl(urlManager)),
+          listOf(contentRoot.resolve("new/build").toVirtualFileUrl(urlManager)),
+          NonPersistentEntitySource,
+        ))
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      rootDir.newFileNio("content/new/build/excluded.txt").writeText("excluded")
+      rootDir.newFileNio("content/new/src/included.txt").writeText("included")
+
+      val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(contentVirtualFile, contentRoot.resolve("new"), disposable)
+      assertThat(childNames(scannedChildren)).containsExactlyInAnyOrder("build", "src")
+      assertThat(childInfo(scannedChildren, "build").children).isNull()
+      assertThat(childNames(childInfo(scannedChildren, "src").children)).containsExactly("included.txt")
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner loads only path to content root in new excluded directory`(): Unit = runBlocking {
+    rootDir.newDirectoryPath(".idea")
+    val contentRoot = rootDir.newDirectoryPath("content")
+    val excludedRoot = rootDir.newDirectoryPath("content/excluded")
+    val newDirectory = excludedRoot.resolve("new")
+    val nestedContentRoot = newDirectory.resolve("a/root")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      findVirtualFile(rootDir.rootPath).children // load all children to trigger full sync later
+      findVirtualFile(contentRoot).children
+      val excludedVirtualFile = findVirtualFile(excludedRoot)
+      excludedVirtualFile.children
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add content root under excluded dir") {
+        it.addEntity(IndexingTestEntity(
+          listOf(contentRoot.toVirtualFileUrl(urlManager), nestedContentRoot.toVirtualFileUrl(urlManager)),
+          listOf(excludedRoot.toVirtualFileUrl(urlManager)),
+          NonPersistentEntitySource,
+        ))
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      rootDir.newFileNio("content/excluded/new/a/root/Root.kt").writeText("class Root")
+      rootDir.newFileNio("content/excluded/new/a/sibling/sibling.txt").writeText("sibling")
+      rootDir.newFileNio("content/excluded/new/other.txt").writeText("other")
+
+      val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(excludedVirtualFile, newDirectory, disposable)
+      assertThat(childNames(scannedChildren)).containsExactly("a")
+      val aInfo = childInfo(scannedChildren, "a")
+      assertThat(aInfo.isAllChildren).isFalse()
+      assertThat(childNames(aInfo.children)).containsExactly("root")
+      val rootInfo = childInfo(aInfo.children, "root")
+      assertThat(rootInfo.isAllChildren).isTrue()
+      assertThat(childNames(rootInfo.children)).containsExactly("Root.kt")
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner loads non-recursive roots under excluded directory`(): Unit = timeoutRunBlocking(timeout = 1.minutes) {
+    rootDir.newDirectoryPath(".idea")
+    val contentRoot = rootDir.newDirectoryPath("content")
+    val excludedRoot = rootDir.newDirectoryPath("content/excluded")
+    val newDirectory = excludedRoot.resolve("new")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      findVirtualFile(rootDir.rootPath).children
+      findVirtualFile(contentRoot).children
+      val excludedVirtualFile = findVirtualFile(excludedRoot)
+      excludedVirtualFile.children
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add non-recursive roots under excluded directory") {
+        it.addEntity(IndexingTestEntity(
+          listOf(contentRoot.toVirtualFileUrl(urlManager), newDirectory.resolve("directory/nested/root").toVirtualFileUrl(urlManager)),
+          listOf(excludedRoot.toVirtualFileUrl(urlManager)),
+          NonPersistentEntitySource,
+        ))
+        for (path in listOf("a/included.txt", "directory", "empty")) {
+          it.addEntity(NonRecursiveTestEntity(newDirectory.resolve(path).toVirtualFileUrl(urlManager), NonPersistentEntitySource))
+        }
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      rootDir.newFileNio("content/excluded/new/a/included.txt").writeText("included")
+      rootDir.newFileNio("content/excluded/new/a/skipped.txt").writeText("skipped")
+      rootDir.newFileNio("content/excluded/new/directory/nested/root/Root.kt").writeText("class Root")
+      rootDir.newFileNio("content/excluded/new/directory/skipped.txt").writeText("skipped")
+      rootDir.newFileNio("content/excluded/new/empty/skipped.txt").writeText("skipped")
+      rootDir.newFileNio("content/excluded/new/skipped.txt").writeText("skipped")
+
+      val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(excludedVirtualFile, newDirectory, disposable)
+      assertThat(childNames(scannedChildren)).containsExactlyInAnyOrder("a", "directory", "empty")
+      val aInfo = childInfo(scannedChildren, "a")
+      assertThat(aInfo.isAllChildren).isFalse()
+      assertThat(childNames(aInfo.children)).containsExactly("included.txt")
+      assertThat(childInfo(aInfo.children, "included.txt").children).isNull()
+      assertThat(childInfo(scannedChildren, "empty").children).isNull()
+      val directoryInfo = childInfo(scannedChildren, "directory")
+      assertThat(directoryInfo.isAllChildren).isFalse()
+      assertThat(childNames(directoryInfo.children)).containsExactly("nested")
+      val nestedInfo = childInfo(directoryInfo.children, "nested")
+      assertThat(nestedInfo.isAllChildren).isFalse()
+      assertThat(childNames(nestedInfo.children)).containsExactly("root")
+      val rootInfo = childInfo(nestedInfo.children, "root")
+      assertThat(rootInfo.isAllChildren).isTrue()
+      assertThat(childNames(rootInfo.children)).containsExactly("Root.kt")
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner loads content root under excluded content root`(): Unit = runBlocking {
+    rootDir.newDirectoryPath(".idea")
+    val newDirectory = rootDir.rootPath.resolve("new")
+    // like an unloaded module root registered as both content and excluded, with a loaded module root inside
+    val excludedContentRoot = newDirectory.resolve("outer")
+    val nestedContentRoot = excludedContentRoot.resolve("inner")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      val rootVirtualFile = findVirtualFile(rootDir.rootPath)
+      rootVirtualFile.children // load all children to trigger full sync later
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add content root under excluded content root") {
+        it.addEntity(IndexingTestEntity(
+          listOf(excludedContentRoot.toVirtualFileUrl(urlManager), nestedContentRoot.toVirtualFileUrl(urlManager)),
+          listOf(excludedContentRoot.toVirtualFileUrl(urlManager)),
+          NonPersistentEntitySource,
+        ))
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      rootDir.newFileNio("new/outer/inner/Inner.kt").writeText("class Inner")
+      rootDir.newFileNio("new/outer/excluded.txt").writeText("excluded")
+
+      val scannedChildren = collectCreatedDirectoryChildrenBeforeListenersRuns(rootVirtualFile, newDirectory, disposable)
+      assertThat(childNames(scannedChildren)).containsExactly("outer")
+      val outerInfo = childInfo(scannedChildren, "outer")
+      assertThat(outerInfo.isAllChildren).isFalse()
+      assertThat(childNames(outerInfo.children)).containsExactly("inner")
+      val innerInfo = childInfo(outerInfo.children, "inner")
+      assertThat(innerInfo.isAllChildren).isTrue()
+      assertThat(childNames(innerInfo.children)).containsExactly("Inner.kt")
+    }
+  }
+
+  @Test
+  @RegistryKey(CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  @RegistryKey(ACCURATE_WFI_DATA_FOR_CHILDREN_PRELOADING_REGISTRY_KEY, "true")
+  fun `transient scanner doesn't load new non-indexable root`(): Unit = runBlocking {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExternalNonIndexableContributor(), disposable)
+    rootDir.newDirectoryPath(".idea")
+    val libraryRoot = rootDir.rootPath.resolve("library")
+    val options = OpenProjectTask { createModule = false }
+    ProjectUtil.openOrImportAsync(rootDir.rootPath, options)!!.useProjectAsync { project ->
+      TestObservation.awaitConfiguration(project)
+      val rootVirtualFile = findVirtualFile(rootDir.rootPath)
+      rootVirtualFile.children // load all children to trigger full sync later
+
+      val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+      project.workspaceModel.update("Add non-indexable library root") {
+        it.addEntity(NonIndexableTestEntity(libraryRoot.toVirtualFileUrl(urlManager), NonPersistentEntitySource))
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+      rootDir.newFileNio("library/lib/Library.txt").writeText("library")
+
+      val scannedChildren = collectCreatedDirectoryScannedChildren(rootVirtualFile, libraryRoot, disposable)
+      assertThat(scannedChildren).isNull()
+    }
+  }
+
+  private class ExternalNonIndexableContributor : WorkspaceFileIndexContributor<NonIndexableTestEntity> {
+    override val entityClass: Class<NonIndexableTestEntity> = NonIndexableTestEntity::class.java
+
+    override fun registerFileSets(entity: NonIndexableTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+      registrar.registerFileSet(entity.root, WorkspaceFileKind.EXTERNAL_NON_INDEXABLE, entity, null)
+    }
+  }
+
+  private class ExcludedByNameContributor : WorkspaceFileIndexContributor<IndexingTestEntity2> {
+    companion object {
+      const val EXCLUDED_NAME = "skipped"
+    }
+
+    override val entityClass: Class<IndexingTestEntity2> = IndexingTestEntity2::class.java
+
+    override fun registerFileSets(entity: IndexingTestEntity2, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+      for (root in entity.roots) {
+        registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
+        registrar.registerExclusionCondition(root, ExcludedByName(EXCLUDED_NAME), entity)
+      }
+    }
+  }
+
+  private data class ExcludedByName(val name: String) : WorkspaceFileSetExclusionCondition {
+    override fun shouldExclude(file: VirtualFile): Boolean = file.name == name
   }
 
   private fun childNames(children: Array<ChildInfo>?): List<String> = children?.map { it.name.toString() } ?: emptyList()

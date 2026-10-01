@@ -116,9 +116,17 @@ final class RefreshWorker {
     roots = new HashSet<>(refreshRoots);
     refreshQueue = new LinkedBlockingQueue<>(refreshRoots);
     semaphore = new Semaphore(refreshRoots.size());
-    childScanner = Registry.is("vfs.refresh.use.transient.files.for.children.preloading", true)
-                   ? new TransientChildScanner(file -> checkCancelled((NewVirtualFile)file))
-                   : new NioChildScanner(file1 -> checkCancelled((NewVirtualFile)file1));
+    childScanner = getChildScanner();
+  }
+
+  private @NotNull ChildScanner getChildScanner() {
+    if (!Registry.is("vfs.refresh.use.transient.files.for.children.preloading", true)) {
+      return new NioChildScanner(file -> checkCancelled((NewVirtualFile)file));
+    }
+    if (!Registry.is("vfs.refresh.use.accurate.wfi.data.for.children.preloading", true)) {
+      return new TransientChildScannerExcludeOnlyByUrl(file -> checkCancelled((NewVirtualFile)file));
+    }
+    return new TransientChildScanner(file -> checkCancelled((NewVirtualFile)file));
   }
 
   void cancel() {

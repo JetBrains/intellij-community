@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -24,15 +24,16 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
+import com.intellij.workspaceModel.core.fileIndex.impl.TraverseState;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOError;
@@ -45,14 +46,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-final class TransientChildScanner implements ChildScanner {
+@ApiStatus.Internal
+public final class TransientChildScanner implements ChildScanner {
   private static final Logger LOG = Logger.getInstance(TransientChildScanner.class);
+  private static final String ITERATE_INCLUDED_FILES_UNDER_EXCLUDE = "vfs.refresh.iterate.included.files.under.exclude";
+
+  private static volatile @Nullable Runnable scanStartedCallbackForTests;
 
   private final FSRecordsImpl vfsPeer = ((PersistentFSImpl)PersistentFS.getInstance()).peer();
   private final Consumer<VirtualFile> checkCancelled;
 
   TransientChildScanner(@NotNull Consumer<VirtualFile> checkCancelled) {
     this.checkCancelled = checkCancelled;
+  }
+
+  /// `callback` is invoked each time the scanner starts loading children of a new directory
+  @TestOnly
+  public static void setScanStartedCallbackForTests(@NotNull Disposable disposable, @NotNull Runnable callback) {
+    scanStartedCallbackForTests = callback;
+    Disposer.register(disposable, () -> scanStartedCallbackForTests = null);
   }
 
   /// Traverses children of `childName` recursively, so they are loaded into VFS during event processing
@@ -63,17 +75,11 @@ final class TransientChildScanner implements ChildScanner {
     try {
       NewVirtualFileSystem fs = parent.getFileSystem();
       var child = TransientVirtualFileVfsRefreshUtils.createTransientChild(parent, childName, fs);
-      var exists = Cancellation.computeInNonCancelableSection(() -> child.exists());
-      if (!exists || !shouldScanDirectory(parent, child)) {
+      if (!Cancellation.computeInNonCancelableSection(() -> child.exists())) {
         return null;
       }
 
-      String childUrl = child.getUrl();
-      var relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(null), url -> {
-        if (!VfsUtilCore.isEqualOrAncestor(childUrl, url)) return null;
-        return child.findFileByRelativePath(url.substring(childUrl.length()));
-      });
-      return scanChildren(child, relevantExcluded, parent);
+      return scanChildren(child, initialStates(parent), parent);
     }
     catch (InvalidPathException e) {
       LOG.warn("Invalid child name: '" + childName + "'", e);
@@ -85,67 +91,133 @@ final class TransientChildScanner implements ChildScanner {
     }
   }
 
-  private static boolean shouldScanDirectory(VirtualFile parent, VirtualFile child) {
-    if (FileTypeManager.getInstance().isFileIgnored(child.getName())) return false;
-    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      if (ReadAction.computeBlocking(() -> {
-        List<WorkspaceFileSet> indexableFileSet = WorkspaceFileIndex.getInstance(openProject)
-          .findFileSets(parent, true, true, /*includeContentNonIndexableSets*/ false, true, true, /*includeExternalNonIndexableSets*/ false,
-                        true);
-        return ContainerUtil.exists(indexableFileSet, set -> set instanceof WorkspaceFileSetWithCustomData &&
-                                                             ((WorkspaceFileSetWithCustomData<?>)set).getRecursive());
-      })) {
-        return true;
-      }
+  private static void notifyScanStarted() {
+    Runnable callback = scanStartedCallbackForTests;
+    if (callback != null) {
+      callback.run();
     }
-    return isIndexableFilesetRecursiveRoot(child) || !indexableRootsUnder(child).isEmpty();
   }
 
-  private static boolean isIndexableFilesetRecursiveRoot(VirtualFile file) {
-    if (!RegistryManager.getInstance().is("vfs.refresh.iterate.included.files.under.exclude")) return false;
+  /// [TraverseState] of a file in [#project]
+  ///
+  /// Project is stored in a reference, so if it is disposed, it can be released, avoiding temporary project leak
+  private record ProjectState(@NotNull Ref<Project> projectRef, @NotNull TraverseState traverseState, @Nullable VirtualFileUrl vfu) {
+    @Nullable Project project() {
+      var project = projectRef.get();
+      if (project != null && project.isDisposed()) {
+        projectRef.set(null);
+        return null;
+      }
+      return project;
+    }
 
-    String url = file.getUrl();
-    var openProjects = ProjectManager.getInstance().getOpenProjects();
-    return ContainerUtil.exists(openProjects, project -> ReadAction.computeBlocking(
-      () -> WorkspaceFileIndexEx.getInstance(project).isUrlIndexableRecursiveFileSetRoot(url)));
+    /// @return `null` if the project is disposed or excludes the subtree of `file`
+    @Nullable ProjectState goDown(@NotNull VirtualFile file) {
+      Project project = project();
+      if (project == null) return null;
+      VirtualFileUrl vfu = this.vfu == null ? null : this.vfu.findChild(file.getName());
+      TraverseState state = this.traverseState.goDown(file, vfu, WorkspaceFileIndexEx.getInstance(project));
+      if (state == null) return null;
+      return new ProjectState(projectRef, state, vfu);
+    }
   }
 
-  private static @Unmodifiable List<VirtualFile> indexableRootsUnder(VirtualFile directory) {
-    if (!RegistryManager.getInstance().is("vfs.refresh.iterate.included.files.under.exclude")) return Collections.emptyList();
+  /// Whether an indexable recursive file set includes the file in any project, so the children of the file are indexable too
+  private static boolean isIndexableRecursive(@NotNull List<ProjectState> states) {
+    return ContainerUtil.exists(states, state -> state.traverseState().isIndexableRecursive());
+  }
+
+  /// Computes states of `parent` which is loaded into VFS for all open projects.
+  /// Skips the projects which exclude the subtree of `parent`
+  private static @NotNull List<ProjectState> initialStates(@NotNull VirtualFile parent) {
+    String url = parent.getUrl();
+    List<ProjectState> states = new ArrayList<>();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (project.isDisposed()) continue;
+      TraverseState state = TraverseState.getTraverseState(parent, project);
+      if (state == null) continue;
+      VirtualFileUrl vfu = ((VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(project).getVirtualFileUrlManager()).findNode(url);
+      states.add(new ProjectState(Ref.create(project), state, vfu));
+    }
+    return states;
+  }
+
+  /// Computes states of `file` from `parentStates` of its parent.
+  /// Skips the projects which exclude the subtree of `file`
+  private static @NotNull List<ProjectState> goDown(@NotNull List<ProjectState> parentStates, @NotNull VirtualFile file) {
+    if (parentStates.isEmpty()) return parentStates;
+    return ContainerUtil.mapNotNull(parentStates, state -> state.goDown(file));
+  }
+
+  /// Finds roots of indexable file sets under `directory` which aren't excluded in their projects
+  ///
+  /// @param states states of `directory`
+  private static @Unmodifiable List<VirtualFile> indexableRootsUnder(VirtualFile directory, List<ProjectState> states) {
+    if (!RegistryManager.getInstance().is(ITERATE_INCLUDED_FILES_UNDER_EXCLUDE)) {
+      return Collections.emptyList();
+    }
 
     var roots = new LinkedHashMap<String, VirtualFile>();
-    NewVirtualFileSystem fs = (NewVirtualFileSystem)directory.getFileSystem();
     String url = directory.getUrl();
-    for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      ReadAction.runBlocking(() -> {
-        var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(openProject);
-        var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(openProject).getVirtualFileUrlManager();
-        vfuManager.processChildrenRecursively(url, child -> {
-          if (workspaceFileIndex.isUrlIndexableRecursiveFileSetRoot(child.getUrl())) {
-            var root = directory.findFileByRelativePath(child.getUrl().substring(url.length()));
-            if (root != null) {
-              roots.putIfAbsent(root.getPath(), root);
-            }
-            return TreeNodeProcessingResult.SKIP_CHILDREN;
-          }
+    for (ProjectState directoryState : states) {
+      Project project = directoryState.project();
+      if (project == null) continue;
+      var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project);
+      var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
+      vfuManager.processChildrenRecursively(url, child -> {
+        if (workspaceFileIndex.getFileSetsAt(child).getMask() == 0) {
           return TreeNodeProcessingResult.CONTINUE;
-        });
+        }
+        var root = directory.findFileByRelativePath(child.getUrl().substring(url.length()));
+        if (root == null) return TreeNodeProcessingResult.SKIP_CHILDREN; // file does not exist, skip
+
+        TraverseState state = stateUnder(directory, directoryState.traverseState(), root, child, workspaceFileIndex);
+        if (state == null) return TreeNodeProcessingResult.SKIP_CHILDREN; // file is excluded, skip
+
+        if (state.isIndexable()) {
+          roots.putIfAbsent(root.getPath(), root);
+          return TreeNodeProcessingResult.SKIP_CHILDREN; // find indexable file
+        }
+        return TreeNodeProcessingResult.CONTINUE; // file can be indexable underneath, continue
       });
     }
     return ContainerUtil.filter(roots.values(), file -> Cancellation.computeInNonCancelableSection(() -> file.exists()));
   }
 
-  // scan all children of "root" (except excluded dirs) recursively and return them in a ScannedChildren record
-  // `null` means error during scan
-  private @Nullable ScannedChildren scanChildren(VirtualFile root, List<VirtualFile> excluded, NewVirtualFile currentDir) {
+  /// Computes the traverseState of `file` under `directory` from `directoryState`
+  ///
+  /// @param vfu the node of `file` in the [VirtualFileUrl] trie
+  private static @Nullable TraverseState stateUnder(@NotNull VirtualFile directory,
+                                                  @NotNull TraverseState directoryState,
+                                                  @NotNull VirtualFile file,
+                                                  @NotNull VirtualFileUrl vfu,
+                                                  @NotNull WorkspaceFileIndexEx workspaceFileIndex) {
+    List<VirtualFile> path = new ArrayList<>();
+    List<VirtualFileUrl> vfus = new ArrayList<>();
+    VirtualFileUrl currentVfu = vfu;
+    for (VirtualFile current = file; current != null && !current.equals(directory); current = current.getParent()) {
+      path.add(current);
+      vfus.add(currentVfu);
+      currentVfu = currentVfu == null ? null : currentVfu.getParent();
+    }
+    TraverseState state = directoryState;
+    for (int i = path.size() - 1; i >= 0 && state != null; i--) {
+      state = state.goDown(path.get(i), vfus.get(i), workspaceFileIndex);
+    }
+    return state;
+  }
+
+  /// Scans the indexable children of `root` recursively
+  ///
+  /// @param parentStates states of the parent of `root`
+  /// @return `null` if an error occurs or no children need to be loaded
+  private @Nullable ScannedChildren scanChildren(VirtualFile root, List<ProjectState> parentStates, NewVirtualFile currentDir) {
     if (!root.exists() || TransientVirtualFileVfsRefreshUtils.isCached(root)) {
       return null;
     }
-    int nameId = vfsPeer.getNameId("");
-    ChildInfo fakeRoot = new ChildInfoImpl(nameId, null, null, null, false);
-    List<ChildInfo> rootInfos = new SmartList<>(fakeRoot);
+    List<ChildInfo> rootInfos = new SmartList<>();
 
-    record ScanFrame(@NotNull List<ChildInfo> parentChildren, @NotNull List<ChildInfo> children) {
+    record ScanFrame(@NotNull List<ChildInfo> parentChildren, @NotNull List<ChildInfo> children, @NotNull List<ProjectState> states) {
     }
 
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<ScanFrame>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
@@ -153,11 +225,12 @@ final class TransientChildScanner implements ChildScanner {
 
       {
         // The visitor restores its value stack in a finally block if traversal is interrupted.
-        setValueForChildren(new ScanFrame(Collections.emptyList(), rootInfos));
+        setValueForChildren(new ScanFrame(Collections.emptyList(), rootInfos, parentStates));
       }
 
       @Override
       public @NotNull Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        notifyScanStarted();
         VirtualFile[] children = ProgressManager.getInstance().computeInNonCancelableSection(() -> file.getChildren());
         return Arrays.asList(children);
       }
@@ -165,43 +238,29 @@ final class TransientChildScanner implements ChildScanner {
       @Override
       public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
         try {
-          if (!file.equals(root)) {
-            if ((++checkCanceledCount & 0xf) == 0) {
-              checkCancelled.accept(currentDir);
-            }
-
-            ChildInfo info = createChildInfo(file);
-            if (info == null) {
-              return SKIP_CHILDREN;  // ignoring files deleted during the scan
-            }
-            getCurrentValue().children().add(info);
-
-            FileAttributes attributes = info.getFileAttributes();
-            if (attributes == null || !attributes.isDirectory() || attributes.isSymLink()) {
-              return SKIP_CHILDREN;
-            }
-            if (SystemInfoRt.isWindows && attributes.isSpecial()) {
-              return SKIP_CHILDREN;  // bypassing NTFS reparse points
-            }
+          if ((++checkCanceledCount & 0xf) == 0) {
+            checkCancelled.accept(currentDir);
           }
 
-          // on average, this "excluded" array is small for any particular root, so linear search it is.
-          if (isExcluded(file, excluded) && !isIndexableFilesetRecursiveRoot(file)) {
-            List<VirtualFile> contentUnderExcluded = indexableRootsUnder(file);
-            if (contentUnderExcluded.isEmpty()) {
-              return SKIP_CHILDREN;
-            }
-            // `file` is excluded but has registered content roots beneath. Replace its ChildInfo with one whose children
-            // contain shared intermediate dirs down to the scanned content roots. Do not create a frame for the file because
-            // `afterChildrenVisited` will not be called after skipping the children.
-            List<ChildInfo> parentChildren = getCurrentValue().children();
-            ChildInfo dirInfo = ContainerUtil.getLastItem(parentChildren);
-            VirtualFileTreeNode rootNode = VirtualFileTreeNode.create(file, contentUnderExcluded);
-            parentChildren.set(parentChildren.size() - 1, withChildrenUnderExcluded(rootNode, dirInfo, excluded, currentDir));
+          ChildInfo info = createChildInfo(file);
+          if (info == null) {
+            return SKIP_CHILDREN;
+          }
+          ScanFrame frame = getCurrentValue();
+          List<ChildInfo> siblings = frame.children();
+          siblings.add(info);
+
+          FileAttributes attributes = info.getFileAttributes();
+          if (attributes == null || !isTraversableDirectory(attributes)) {
             return SKIP_CHILDREN;
           }
 
-          setValueForChildren(new ScanFrame(getCurrentValue().children(), new ArrayList<>()));
+          List<ProjectState> states = goDown(frame.states(), file);
+          if (!isIndexableRecursive(states)) {
+            siblings.set(siblings.size() - 1, withIndexableRootsUnder(file, info, states, currentDir));
+            return SKIP_CHILDREN;
+          }
+          setValueForChildren(new ScanFrame(siblings, new ArrayList<>(), states));
           return CONTINUE;
         }
         catch (IOError | InvalidPathException | InvalidVirtualFileAccessException e) {
@@ -221,13 +280,17 @@ final class TransientChildScanner implements ChildScanner {
       }
     });
 
-    ChildInfo rootInfo = rootInfos.getFirst();
+    ChildInfo rootInfo = ContainerUtil.getFirstItem(rootInfos);
+    if (rootInfo == null) {
+      return null;
+    }
     ChildInfo[] children = rootInfo.getChildren();
     return children == null ? null : new ScannedChildren(children, rootInfo.isAllChildren());
   }
 
-  private static boolean isExcluded(VirtualFile file, List<VirtualFile> excluded) {
-    return excluded.contains(file);
+  /// Whether the scanner visits children of a file with `attributes`. It skips symlinks and NTFS reparse points
+  private static boolean isTraversableDirectory(@NotNull FileAttributes attributes) {
+    return attributes.isDirectory() && !attributes.isSymLink() && !(SystemInfoRt.isWindows && attributes.isSpecial());
   }
 
   private @Nullable ChildInfo createChildInfo(@NotNull VirtualFile file) {
@@ -261,25 +324,44 @@ final class TransientChildScanner implements ChildScanner {
     });
   }
 
+  /// @param states states of `node.file`
   private ChildInfo withChildrenUnderExcluded(VirtualFileTreeNode node,
-                                              ChildInfo info,
-                                              List<VirtualFile> nestedExcluded,
-                                              NewVirtualFile currentDir) {
-    if (node.isContentRoot) {
-      ScannedChildren children = scanChildren(node.file, nestedExcluded, currentDir);
-      return children == null ? info : ((ChildInfoImpl)info).withChildren(children.children(), children.childrenComplete());
-    }
-
+                                             ChildInfo info,
+                                             List<ProjectState> states,
+                                             NewVirtualFile currentDir) {
     List<ChildInfo> children = new ArrayList<>(node.children.size());
     for (VirtualFileTreeNode childNode : node.children.values()) {
       ChildInfo childInfo = createChildInfo(childNode.file);
       if (childInfo == null) {
         continue;
       }
-      ChildInfo childInfoWithChildren = withChildrenUnderExcluded(childNode, childInfo, nestedExcluded, currentDir);
-      children.add(childInfoWithChildren);
+      if (childNode.isContentRoot) {
+        ScannedChildren scannedChildren = scanChildren(childNode.file, states, currentDir);
+        children.add(scannedChildren == null
+                     ? childInfo
+                     : ((ChildInfoImpl)childInfo).withChildren(scannedChildren.children(), scannedChildren.childrenComplete()));
+      }
+      else {
+        children.add(withChildrenUnderExcluded(childNode, childInfo, goDown(states, childNode.file), currentDir));
+      }
     }
     return ((ChildInfoImpl)info).withChildren(children.toArray(ChildInfo.EMPTY_ARRAY), false);
+  }
+
+  /// Adds to `info` the children of excluded `directory` down to the indexable roots under it
+  ///
+  /// @param states states of `directory`
+  /// @return `info` if there are no indexable roots under `directory`
+  private ChildInfo withIndexableRootsUnder(VirtualFile directory,
+                                           ChildInfo info,
+                                           List<ProjectState> states,
+                                           NewVirtualFile currentDir) {
+    List<VirtualFile> indexableRoots = indexableRootsUnder(directory, states);
+    if (indexableRoots.isEmpty()) {
+      return info;
+    }
+    notifyScanStarted();
+    return withChildrenUnderExcluded(VirtualFileTreeNode.create(directory, indexableRoots), info, states, currentDir);
   }
 
   private static final class VirtualFileTreeNode {
@@ -311,8 +393,8 @@ final class TransientChildScanner implements ChildScanner {
         }
       }
 
+      if (isContentRoot) return;
       VirtualFileTreeNode node = this;
-      if (node.isContentRoot) return;
       for (var child : path.reversed()) {
         node = node.children.computeIfAbsent(child.getName(), ignored -> new VirtualFileTreeNode(child));
         if (node.isContentRoot) return;
