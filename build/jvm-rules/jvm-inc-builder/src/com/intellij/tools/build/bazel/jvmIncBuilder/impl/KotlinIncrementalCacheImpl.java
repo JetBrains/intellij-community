@@ -13,9 +13,12 @@ import org.jetbrains.jps.dependency.java.KotlinMeta;
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache;
 import org.jetbrains.kotlin.load.kotlin.incremental.components.JvmPackagePartProto;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.jps.util.Iterators.filter;
@@ -80,6 +83,11 @@ public final class KotlinIncrementalCacheImpl implements IncrementalCache {
   @Override
   public @Nullable byte[] getModuleMappingData() {
     return myModuleEntryBytes;
+  }
+
+  @Override
+  public @NotNull Map<File, byte[]> getMetadata(String fragmentName) {
+    return Collections.emptyMap();
   }
 
   // No need to implement functions below because they are not used and will be removed in the future
