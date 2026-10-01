@@ -22,7 +22,7 @@ open class WelcomeScreenBanner(private val imageLight: () -> Image, private val 
 }
 
 @ApiStatus.Internal
-open class WelcomeScreenBannerComponent : InlineBanner() {
+open class WelcomeScreenBannerComponent : InlineBanner(status = EditorNotificationPanel.Status.InfoMuted) {
   override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
     val newWidth = JBUI.scale(380)
     if (newWidth < width) {
@@ -30,18 +30,6 @@ open class WelcomeScreenBannerComponent : InlineBanner() {
     }
     else {
       super.setBounds(x, y, width, height)
-    }
-  }
-
-  override fun fillBanner(g: Graphics) {
-    if (status == EditorNotificationPanel.Status.Info) {
-      val fillColor = JBColor.namedColor("WelcomeTab.Banner.infoBackground", JBUI.CurrentTheme.Banner.INFO_BACKGROUND)
-      val borderColor = JBColor.namedColor("WelcomeTab.Banner.infoBorderColor", JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR)
-
-      drawBackground(g, fillColor, borderColor)
-    }
-    else {
-      super.fillBanner(g)
     }
   }
 }

@@ -480,6 +480,10 @@
       "successBorderColor": "feedback-success-border",
       "infoBackground": "feedback-brand-bg",
       "infoBorderColor": "feedback-brand-border",
+      "infoMutedBackground": "blue-30",
+      "infoMutedBorderColor": "blue-40",
+      "neutralBackground": "gray-30",
+      "neutralBorderColor": "gray-40",
       "aiBackground": "feedback-ai-bg",
       "aiBorderColor": "feedback-ai-border",
       "arc": 12,
@@ -1795,11 +1799,6 @@
       "Advertiser": {
         "background": "gray-40"
       }
-    },
-
-    "WelcomeTab.Banner": {
-      "infoBackground": "blue-30",
-      "infoBorderColor": "blue-40"
     }
   },
 

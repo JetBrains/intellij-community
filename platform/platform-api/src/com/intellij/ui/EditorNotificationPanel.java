@@ -815,14 +815,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public enum Status {
     Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
+    InfoMuted(JBUI.CurrentTheme.Banner.INFO_MUTED_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_MUTED_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
     Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Status.Success),
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),
     Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, () -> AllIcons.General.BalloonError),
-    Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon);
+    Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon),
+    Neutral(JBUI.CurrentTheme.Banner.NEUTRAL_BACKGROUND, JBUI.CurrentTheme.Banner.NEUTRAL_BORDER_COLOR, () -> AllIcons.General.BalloonInformation);
 
-    final Color background;
-    final Color border;
-    private final Supplier<Icon> icon;
+    final @NotNull Color background;
+    final @NotNull Color border;
+    private final @NotNull Supplier<Icon> icon;
 
     Status(@NotNull Color background, @NotNull Color border, @NotNull Supplier<Icon> icon) {
       this.background = background;

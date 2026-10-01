@@ -22,6 +22,18 @@
       "key": "Banner.infoBorderColor"
     },
     {
+      "key": "Banner.infoMutedBackground"
+    },
+    {
+      "key": "Banner.infoMutedBorderColor"
+    },
+    {
+      "key": "Banner.neutralBackground"
+    },
+    {
+      "key": "Banner.neutralBorderColor"
+    },
+    {
       "key": "Banner.successBackground"
     },
     {

@@ -304,15 +304,14 @@
     "Banner": {
       "errorBackground": "#800002",
       "errorBorderColor": "#E6194B",
-
       "warningBackground": "#804605",
       "warningBorderColor": "#F58231",
-
+      "successBackground": "Actions.Green",
+      "successBorderColor": "#6FA574",
       "infoBackground": "#450073",
       "infoBorderColor": "#e6e6e6",
-
-      "successBackground": "Actions.Green",
-      "successBorderColor": "#6FA574"
+      "infoMutedBackground": "#450073",
+      "infoMutedBorderColor": "#e6e6e6"
     },
 
     "NotificationsToolwindow": {

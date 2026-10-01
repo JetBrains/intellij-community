@@ -4237,6 +4237,10 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Banner
 - sf:FOREGROUND:java.awt.Color
 - sf:INFO_BACKGROUND:java.awt.Color
 - sf:INFO_BORDER_COLOR:java.awt.Color
+- sf:INFO_MUTED_BACKGROUND:java.awt.Color
+- sf:INFO_MUTED_BORDER_COLOR:java.awt.Color
+- sf:NEUTRAL_BACKGROUND:java.awt.Color
+- sf:NEUTRAL_BORDER_COLOR:java.awt.Color
 - sf:SUCCESS_BACKGROUND:java.awt.Color
 - sf:SUCCESS_BORDER_COLOR:java.awt.Color
 - sf:WARNING_BACKGROUND:java.awt.Color

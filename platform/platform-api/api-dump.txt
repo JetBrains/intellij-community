@@ -6117,6 +6117,8 @@ e:com.intellij.ui.EditorNotificationPanel$Status
 - java.lang.Enum
 - sf:Error:com.intellij.ui.EditorNotificationPanel$Status
 - sf:Info:com.intellij.ui.EditorNotificationPanel$Status
+- sf:InfoMuted:com.intellij.ui.EditorNotificationPanel$Status
+- sf:Neutral:com.intellij.ui.EditorNotificationPanel$Status
 - sf:Promo:com.intellij.ui.EditorNotificationPanel$Status
 - sf:Success:com.intellij.ui.EditorNotificationPanel$Status
 - sf:Warning:com.intellij.ui.EditorNotificationPanel$Status
