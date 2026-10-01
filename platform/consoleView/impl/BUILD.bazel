@@ -39,6 +39,7 @@ jvm_library(
         "//platform/core-ui",
         "//libraries/guava",
         "//platform/ide-core-impl",
+        "//platform/analysis-api:analysis",
     ],
 )
 
@@ -68,6 +69,7 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.consoleView.impl` end

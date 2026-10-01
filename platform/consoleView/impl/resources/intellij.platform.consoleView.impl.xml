@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.consoleView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -18,6 +19,11 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
                         serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.FileHyperlinkNavigation"
+                        serviceImplementation="com.intellij.execution.filters.impl.FileHyperlinkNavigationImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.PreparationOfDocumentForNavigation"
+                        serviceImplementation="com.intellij.execution.filters.impl.PreparationOfDocumentForNavigationImpl"
+                        overrides="true"/>
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$EnterHandler"
                          order="first" id="console.view.impl.enter"/>
     <editorActionHandler action="EditorTab" implementationClass="com.intellij.execution.impl.ConsoleViewImpl$TabHandler"

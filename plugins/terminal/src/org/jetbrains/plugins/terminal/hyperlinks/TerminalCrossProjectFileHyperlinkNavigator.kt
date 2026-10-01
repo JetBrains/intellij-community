@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.hyperlinks
 
 import com.intellij.execution.filters.FileHyperlinkInfo
 import com.intellij.execution.filters.FileHyperlinkInfoBase
+import com.intellij.execution.filters.FileHyperlinkNavigation
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.filters.navigateFileHyperlink
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
@@ -87,7 +87,7 @@ private fun buildTargetDescriptor(targetProject: Project, sourceDescriptor: Open
 }
 
 private suspend fun navigateDescriptorInProject(project: Project, descriptor: OpenFileDescriptor, useBrowser: Boolean): Boolean {
-  return navigateFileHyperlink(project, descriptor, useBrowser)
+  return FileHyperlinkNavigation.getInstance().navigateFileHyperlink(project, descriptor, useBrowser)
 }
 
 private suspend fun focusProjectWindowForNavigation(project: Project) {

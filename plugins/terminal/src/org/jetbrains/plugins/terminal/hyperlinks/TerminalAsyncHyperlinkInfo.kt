@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.terminal.hyperlinks
 
 import com.intellij.execution.filters.FileHyperlinkInfoBase
+import com.intellij.execution.filters.FileHyperlinkNavigation
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.navigate
-import com.intellij.execution.filters.navigateFileHyperlink
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -39,7 +39,7 @@ object TerminalHyperlinkNavigator {
 
   private suspend fun navigateFileHyperlink(project: Project, hyperlinkInfo: FileHyperlinkInfoBase) {
     val descriptor = readAction { hyperlinkInfo.descriptor } ?: return
-    navigateFileHyperlink(project, descriptor, hyperlinkInfo.isUseBrowserForNavigation)
+    FileHyperlinkNavigation.getInstance().navigateFileHyperlink(project, descriptor, hyperlinkInfo.isUseBrowserForNavigation)
   }
 
   suspend fun navigateDefault(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?) {

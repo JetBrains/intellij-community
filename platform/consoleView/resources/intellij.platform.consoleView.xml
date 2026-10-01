@@ -5,13 +5,10 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- endregion -->
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor" dynamic="true"/>
@@ -20,4 +17,7 @@
     <extensionPoint qualifiedName="com.intellij.invisibleHyperlinkFilterProvider" interface="com.intellij.execution.filters.InvisibleHyperlinkFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.execution.filters.PreparationOfDocumentForNavigation" open="true"/>
+  </extensions>
 </idea-plugin>
