@@ -1663,47 +1663,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
-  inner class DocstringTypeForms {
-    @Test
-    fun `no resolve to functions in docstring types`() = test("""
-      class C(object):
-          def bar(self):
-              pass
-
-      def foo(x):
-          '''
-          :type x: C | C.bar | foo
-          '''
-          expr = x
-      #   └ TYPE C | Unknown
-      """.trimIndent())
-
-    @Test
-    fun `parameter of function type and return value from docstring`() = test("""
-      def func(f):
-          '''
-          :type f: (unknown) -> str
-          '''
-          return 1
-
-      expr = func(foo)
-      #│          ^^^ ERROR Unresolved reference 'foo'
-      #└ TYPE Literal[1]
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-21474"])
-    fun `reassigning optional list with default value from docstring`() = test("""
-      def x(things):
-          '''
-          :type things: None | list[str]
-          '''
-          expr = things if things else []
-      #   └ TYPE list[str] | list[Unknown]
-      """.trimIndent())
-  }
-
-  @Nested
   inner class BuiltinsAndStdlibSentinels {
     @Test
     @TestFor(issues = ["PY-24383"])

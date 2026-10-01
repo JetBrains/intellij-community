@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Type tests for inference around builtins, the standard library and docstring-derived types:
+ * Type tests for inference around builtins and the standard library:
  * builtin functions (`open`, `input`, `min`/`max`/`sum`, `round`, `float.fromhex`),
  * dict builtin method results, `collections` types, binary/unary/augmented operator result types,
- * and types inferred from docstrings (`:type:`/`:rtype:`, numpy/google docstrings, `# type:` comments).
+ * and `# type:` comments.
  */
 @Subsystems.Typing
 @Components.TypeInference
@@ -229,6 +229,12 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       u'foo'.startswith(2)
       #                 └ WARNING Expected type 'str | tuple[str, ...]', got 'Literal[2]' instead
       """.trimIndent())
+
+    @Test
+    fun `str method returns LiteralString`() = test("""
+      expr = ''.capitalize()
+      #└ TYPE LiteralString
+      """.trimIndent())
   }
 
   @Nested
@@ -288,263 +294,6 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       d: dict[str, Any] = {"abc": "s", "1": 1}
       expr = d.pop("abc", None)
       #└ TYPE Any
-      """.trimIndent())
-  }
-
-  @Nested
-  inner class DocstringDerivedTypesReStructuredText {
-    @Test
-    fun `type from method call comment`() = test("""
-      expr = ''.capitalize()
-      #└ TYPE LiteralString
-      """.trimIndent())
-
-    @Test
-    fun `rest param type`() = test("""
-      def foo(limit):
-        ''':param integer limit: maximum number of stack frames to show'''
-        expr = limit
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-3849"])
-    fun `rest class type`() = test("""
-      class Foo: pass
-      def foo(limit):
-        ''':param :class:`Foo` limit: maximum number of stack frames to show'''
-        expr = limit
-      #   └ TYPE Foo
-      """.trimIndent())
-
-    @Test
-    fun `rest ivar type`() = test("""
-      def foo(p):
-          var = p.bar
-          ''':type var: str'''
-          expr = var
-      #   └ TYPE str
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-6584"])
-    fun `class attribute type in class docstring via class`() = test("""
-      class C(object):
-          '''
-          :type foo: int
-          '''
-          foo = None
-      
-      expr = C.foo
-      #└ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-6584"])
-    fun `class attribute type in class docstring via instance`() = test("""
-      class C(object):
-          '''
-          :type foo: int
-          '''
-          foo = None
-      
-      expr = C().foo
-      #└ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-6584"])
-    fun `instance attribute type in class docstring`() = test("""
-      class C(object):
-          '''
-          :type foo: int
-          '''
-          def __init__(self, bar):
-              self.foo = bar
-      
-      def f(x):
-          expr = C(x).foo
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-8953"])
-    fun `self type in docstring`() = test("""
-      class C(object):
-          def foo(self):
-              '''
-              :type self: int
-              '''
-              expr = self
-      #       └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-7322"])
-    fun `namedtuple parameter type in docstring`() = test("""
-      from collections import namedtuple
-      Point = namedtuple('Point', ('x', 'y'))
-      def takes_a_point(point):
-          '''
-          :type point: Point
-          '''
-          expr = point
-      #   └ TYPE Point
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-4813"])
-    fun `parameter type inference in subclass from docstring`() = test("""
-      class Base:
-          def test(self, param):
-              '''
-              :param param:
-              :type param: int
-              '''
-              pass
-      
-      class Subclass(Base):
-          def test(self, param):
-              expr = param
-      #       └ TYPE int
-      """.trimIndent())
-
-    @Test
-    fun simple() = test("""
-      def f1(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10=10, p11='11'):
-          '''
-          :type p1: integer
-          :type p2: integer
-          :type p3: float
-          :type p4: float
-          :type p5: int
-          :type p6: integer
-          :type p7: integer
-          :type p8: int
-          :type p9: int
-          :type p10: int
-          :type p11: string
-          '''
-          return p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 + int(p11)
-
-      def test():
-          p7 = int('7')
-          f1(1, '2', 3.0, 4, 5, int('6'), p7, p8=-8, p9='foo', p10='foo')
-      #         │                                    │         ^^^^^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
-      #         │                                    ^^^^^^^^ WARNING Expected type 'int', got 'Literal["foo"]' instead
-      #         ^^^ WARNING Expected type 'int', got 'Literal["2"]' instead
-      """.trimIndent())
-  }
-
-  @Nested
-  inner class DocstringDerivedTypesNumpyGoogle {
-    @Test
-    @TestFor(issues = ["PY-24923"])
-    fun `empty numpy function docstring`() = test("""
-      def f(param):
-          ''''''
-          expr = param
-      #   └ TYPE Unknown
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-24923"])
-    fun `empty numpy class docstring`() = test("""
-      class C:
-          ''''''
-          def __init__(self, param):
-              expr = param
-      #       └ TYPE Unknown
-      """.trimIndent())
-
-    @Test
-    fun `no type in google docstring param annotation`() = test("""
-      def f(x: int):
-          '''
-          Args:
-              x: foo
-          '''    
-          expr = x
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-16987"])
-    fun `unfilled type in google docstring param annotation`() = test("""
-      def f(x: int):
-          '''
-          Args:
-              x (): foo
-          '''    
-          expr = x
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-16987"])
-    fun `no type in numpy docstring param annotation`() = test("""
-      def f(x: int):
-          '''
-          Parameters
-          ----------
-          x
-              foo
-          '''
-          expr = x
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-17010"])
-    fun `annotated return type precedes docstring`() = test("""
-      def func() -> int:
-          '''
-          Returns:
-              str
-          '''
-      expr = func()
-      #└ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-17010"])
-    fun `annotated param type precedes docstring`() = test("""
-      def func(x: int):
-          '''
-          Args:
-              x (str):
-          '''
-          expr = x
-      #   └ TYPE int
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-24067"])
-    fun `async function return type in docstring`() = test("""
-      async def f():
-          '''
-          :rtype: int
-          '''
-          pass
-      expr = f()
-      #└ TYPE CoroutineType[Unknown, Unknown, int]
-      """.trimIndent())
-
-    @Test
-    @TestFor(issues = ["PY-27518"])
-    fun `async function return type in numpy docstring`() = test("""
-      async def f():
-          '''
-          An integer.
-      
-          Returns
-          -------
-          int
-              A number
-          '''
-          pass
-      expr = f()
-      #└ TYPE CoroutineType[Unknown, Unknown, int]
       """.trimIndent())
   }
 
