@@ -13,7 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
 import com.intellij.openapi.project.guessModuleDir
-import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
@@ -81,7 +81,7 @@ internal class PyRequirementsTxtGenerationTest {
       if (source.fileName.startsWith("new_")) CopyActionResult.SKIP_SUBTREE
       else source.copyToIgnoringExistingDirectory(target, followLinks = false)
     }
-    StandardFileSystems.local().refresh(false)
+    VfsUtil.markDirtyAndRefresh(false, true, true, targetPath)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
