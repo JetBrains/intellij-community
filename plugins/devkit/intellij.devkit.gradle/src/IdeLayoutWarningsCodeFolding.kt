@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.gradle
 import com.intellij.execution.ConsoleFolding
 import com.intellij.openapi.project.Project
 
-internal class IntelliJPlatformGradleConsoleFolding : ConsoleFolding() {
+internal class IdeLayoutWarningsCodeFolding : ConsoleFolding() {
 
   override fun shouldFoldLine(project: Project, line: String): Boolean {
     return line.contains("Layout component ") &&
