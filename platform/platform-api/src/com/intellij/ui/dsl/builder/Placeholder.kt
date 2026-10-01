@@ -12,7 +12,6 @@ import javax.swing.JComponent
  * @see Row.placeholder
  */
 @ApiStatus.NonExtendable
-@ApiStatus.Experimental
 interface Placeholder : CellBase<Placeholder> {
 
   override fun visible(isVisible: Boolean): Placeholder
