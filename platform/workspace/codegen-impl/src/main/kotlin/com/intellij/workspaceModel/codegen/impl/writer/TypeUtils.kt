@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.builderWithTypeParameter
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaBuilderFqnName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.defaultJavaBuilderFqnName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
 
@@ -68,7 +68,7 @@ fun GeneratorContext.getJavaBuilderTypeWithGeneric(objProperty: ObjProperty<*, *
       }>")
     is ValueType.ObjRef -> {
       val out = if (valueType.target.openness == ObjClass.Openness.abstract) "out " else ""
-      valueType.target.javaBuilderFqnName.appendSuffix(if (valueType.target.builderWithTypeParameter) "<$out${
+      valueType.target.defaultJavaBuilderFqnName.appendSuffix(if (valueType.target.builderWithTypeParameter) "<$out${
         getJavaType(objProperty,
                     valueType)
       }>"

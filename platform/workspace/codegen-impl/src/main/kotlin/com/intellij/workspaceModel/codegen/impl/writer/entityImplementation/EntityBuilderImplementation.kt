@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -10,12 +10,14 @@ import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBaseMembers
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBaseMembers.calculateSymbolicIdFun
 import com.intellij.workspaceModel.codegen.impl.writer.collectionProperties
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.compatibleJavaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
+import com.intellij.workspaceModel.codegen.impl.writer.getAllReferenceProperties
 import com.intellij.workspaceModel.codegen.impl.writer.getToStringProperty
 import com.intellij.workspaceModel.codegen.impl.writer.getVfuProperties
 import com.intellij.workspaceModel.codegen.impl.writer.referenceNameToSyntheticSymbolicIdFieldName
@@ -27,17 +29,17 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
     +"internal constructor(): this(${objClass.javaDataName}())"
 
     section("override fun checkInitialization()") {
-      line("val _diff = diff")
       val properties = getAllProperties(objClass, withSymbolicId = false, withOptional = false, withDefault = false)
       for (property in properties) {
-        implWsBuilderIsInitializedCode(property)
+        builderPropertyIsInitializedCode(property)
       }
       symbolicIdIsInitializedCode(objClass)
     }
 
-    section("override fun connectionIdList(): List<${ConnectionId}>") {
-      if (hasConnections) +"return connections"
-      else +"return emptyList()"
+    if (hasConnections) {
+      section("override fun ${WorkspaceEntityBaseMembers.connectionIdListFun}(): List<${ConnectionId}>") {
+        +"return connections"
+      }
     }
 
     val collectionFields = collectionProperties(objClass)
@@ -59,7 +61,7 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
       }
     }
 
-    lineComment("Relabeling code, move information from dataSource to this builder")
+    // "Relabeling code, move information from dataSource to this builder"
     section("override fun relabel(dataSource: ${WorkspaceEntity}, parents: Set<${WorkspaceEntity}>?)") {
       line("dataSource as ${objClass.javaFullName}")
       val properties = getAllProperties(objClass, withSymbolicId = false, withRefs = false)
@@ -106,7 +108,7 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
 
     val referencesInSymbolicId = referencesInSymbolicId(objClass)
 
-    val propertiesToGenerate = getAllProperties(objClass, withSymbolicId = false)
+    val propertiesToGenerate = getAllProperties(objClass, withSymbolicId = false, withEntitySource = false)
     for (property in propertiesToGenerate) {
       generateBuilderPropertyCode(objClass, property, vfuProperties)
     }

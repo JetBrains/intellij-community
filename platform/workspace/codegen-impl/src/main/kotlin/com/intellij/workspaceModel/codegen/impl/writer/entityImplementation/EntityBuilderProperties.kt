@@ -8,12 +8,13 @@ import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.dsl.annotation
 import com.intellij.workspaceModel.codegen.impl.dsl.notReferenceError
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
-import com.intellij.workspaceModel.codegen.impl.writer.EntityLink
+import com.intellij.workspaceModel.codegen.impl.metadata.withDoubleQuotes
 import com.intellij.workspaceModel.codegen.impl.writer.LibraryRoot
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
 import com.intellij.workspaceModel.codegen.impl.writer.VfuProperties
 import com.intellij.workspaceModel.codegen.impl.writer.VfuProperty
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBaseMembers
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
@@ -40,6 +41,10 @@ private fun CodeContext.unexpectedReference(objProperty: ObjProperty<*, *>) {
   reportPropertyError("Unexpected reference while building regular property code", objProperty)
 }
 
+private fun CodeContext.changedProperty(name: String) {
+  +"${WorkspaceEntityBaseMembers.addChangedPropertyFun}(${name.withDoubleQuotes()})"
+}
+
 private fun CodeContext.builderProperty(
   receiver: ObjClass<*>,
   valueType: ValueType<*>,
@@ -54,7 +59,7 @@ private fun CodeContext.builderProperty(
       section("set(value)") {
         +"checkModificationAllowed()"
         +"getEntityData(true).${objProperty.javaName} = value"
-        +"changedProperty.add(\"${objProperty.javaName}\")"
+        changedProperty(objProperty.javaName)
       }
     }
 
@@ -65,7 +70,7 @@ private fun CodeContext.builderProperty(
       section("set(value)") {
         +"checkModificationAllowed()"
         +"getEntityData(true).${objProperty.javaName} = value"
-        +"changedProperty.add(\"${objProperty.javaName}\")"
+        changedProperty(objProperty.javaName)
       }
     }
 
@@ -83,17 +88,17 @@ private fun CodeContext.builderProperty(
       +"private val ${objProperty.javaName}Updater: (value: List<${getJavaType(objProperty, elementType)}>) -> Unit = { value ->"
       val vfuList = vfuProperties[objProperty.name]
       if (vfuList != null) virtualFileIndexUpdater(objProperty, vfuList)
-      +"changedProperty.add(\"${objProperty.javaName}\")"
+      changedProperty(objProperty.javaName)
       +"}"
       +"override var ${objProperty.javaName}: MutableList<${getJavaType(objProperty, elementType)}>"
       section("get()") {
         +"val collection_${objProperty.javaName} = getEntityData().${objProperty.javaName}"
         +"if (collection_${objProperty.javaName} !is ${MutableWorkspaceList}) return collection_${objProperty.javaName}"
-        +"if (diff == null || modifiable.get()) {"
-        +"collection_${objProperty.javaName}.setModificationUpdateAction(${objProperty.javaName}Updater)"
-        +"} else {"
-        +"collection_${objProperty.javaName}.cleanModificationUpdateAction()"
-        +"}"
+        ifElse("${WorkspaceEntityBaseMembers.outOfDiffOrModifiableFun}()", {
+          +"collection_${objProperty.javaName}.setModificationUpdateAction(${objProperty.javaName}Updater)"
+        }) {
+          +"collection_${objProperty.javaName}.cleanModificationUpdateAction()"
+        }
         +"return collection_${objProperty.javaName}"
       }
       section("set(value)") {
@@ -115,17 +120,17 @@ private fun CodeContext.builderProperty(
         +"private val ${objProperty.javaName}Updater: (value: Set<${getJavaType(objProperty, elementType)}>) -> Unit = { value ->"
         val vfuList = vfuProperties[objProperty.name]
         if (vfuList != null) virtualFileIndexUpdater(objProperty, vfuList)
-        +"changedProperty.add(\"${objProperty.javaName}\")"
+        changedProperty(objProperty.javaName)
         +"}"
         +"override var ${objProperty.javaName}: MutableSet<${getJavaType(objProperty, elementType)}>"
         section("get()") {
           +"val collection_${objProperty.javaName} = getEntityData().${objProperty.javaName}"
           +"if (collection_${objProperty.javaName} !is ${MutableWorkspaceSet}) return collection_${objProperty.javaName}"
-          +"if (diff == null || modifiable.get()) {"
-          +"collection_${objProperty.javaName}.setModificationUpdateAction(${objProperty.javaName}Updater)"
-          +"} else {"
-          +"collection_${objProperty.javaName}.cleanModificationUpdateAction()"
-          +"}"
+          ifElse("${WorkspaceEntityBaseMembers.outOfDiffOrModifiableFun}()", {
+            +"collection_${objProperty.javaName}.setModificationUpdateAction(${objProperty.javaName}Updater)"
+          }) {
+            +"collection_${objProperty.javaName}.cleanModificationUpdateAction()"
+          }
           +"return collection_${objProperty.javaName}"
         }
         section("set(value)") {
@@ -142,7 +147,7 @@ private fun CodeContext.builderProperty(
       section("set(value)") {
         +"checkModificationAllowed()"
         +"getEntityData(true).${objProperty.javaName} = value"
-        +"changedProperty.add(\"${objProperty.javaName}\")"
+        changedProperty(objProperty.javaName)
       }
     }
 
@@ -154,15 +159,14 @@ private fun CodeContext.builderProperty(
       section("set(value)") {
         +"checkModificationAllowed()"
         +"getEntityData(true).${objProperty.javaName} = value"
-        +"changedProperty.add(\"${objProperty.javaName}\")"
+        changedProperty(objProperty.javaName)
         val vfuList = vfuProperties[objProperty.name]
         if (vfuList != null) {
-          +"val _diff = diff"
-          +"if (_diff != null) {"
-          for (vfu in vfuList) {
-            +"index(this, ${vfu.quotedName}, ${vfu.setterAccess})"
+          `if`("${WorkspaceEntityBaseMembers.inDiffFun}()") {
+            for (vfu in vfuList) {
+              +"index(this, ${vfu.quotedName}, ${vfu.setterAccess})"
+            }
           }
-          +"}"
         }
       }
     }
@@ -173,7 +177,7 @@ private fun CodeContext.builderProperty(
   }
 }
 
-fun CodeContext.implWsBuilderIsInitializedCode(property: ObjProperty<*, *>) {
+fun CodeContext.builderPropertyIsInitializedCode(property: ObjProperty<*, *>) {
   val javaName = property.javaName
   val isChild = unwrapReferenceType(property.valueType)?.child
   when (property.valueType) {
@@ -193,13 +197,10 @@ fun CodeContext.implWsBuilderIsInitializedCode(property: ObjProperty<*, *>) {
         notReferenceError("isInitialized", property)
         return
       }
-      ifElse("_diff != null", {
-        `if`("_diff.${refsConnectionMethodCode(property, true)} == null") {
-          line("error(\"Field ${property.receiver.name}#$javaName should be initialized\")")
-        }
-      }) {
-        isInitializedBaseCode(property, "this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(property)})] == null")
-      }.toString()
+      val connectionId = connectionIdForReference(property)
+      `if`("${WorkspaceEntityBaseMembers.getParentFun}($connectionId) == null") {
+        line("error(\"Field ${property.receiver.name}#$javaName should be initialized\")")
+      }
     }
 
     is ValueType.Int, is ValueType.Boolean, ValueType.Char, ValueType.Long, ValueType.Float, ValueType.Double,
@@ -213,8 +214,8 @@ fun CodeContext.implWsBuilderIsInitializedCode(property: ObjProperty<*, *>) {
 }
 
 private fun CodeContext.isInitializedBaseCode(field: ObjProperty<*, *>, expression: String) {
-  section("if ($expression)") {
-    line("error(\"Field ${field.receiver.name}#${field.javaName} should be initialized\")")
+  `if`(expression) {
+    +"error(\"Field ${field.receiver.name}#${field.javaName} should be initialized\")"
   }
 }
 
@@ -222,15 +223,15 @@ private fun CodeContext.virtualFileIndexUpdater(property: ObjProperty<*, *>, vfu
   val propertyValueType = property.valueType
   val isLibraryRootList = propertyValueType is ValueType.List<*> && (propertyValueType.elementType as? ValueType.JvmClass)?.kotlinClassName == LibraryRoot.decoded
   
-  +"if (diff != null) {"
-  for (vfu in vfuList) {
-    +"index(this, ${vfu.quotedName}, ${vfu.setterAccess})"
+  `if`("${WorkspaceEntityBaseMembers.inDiffFun}()") {
+    for (vfu in vfuList) {
+      +"index(this, ${vfu.quotedName}, ${vfu.setterAccess})"
+    }
+    if (isLibraryRootList) {
+      +"val jarDirectories = value.filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }.toHashSet()"
+      +"indexJarDirectories(this, jarDirectories)"
+    }
   }
-  if (isLibraryRootList) {
-    +"val jarDirectories = value.filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }.toHashSet()"
-    +"indexJarDirectories(this, jarDirectories)"
-  }
-  +"}"
 }
 
 fun CodeContext.suppressUncheckedCast() {
@@ -289,14 +290,14 @@ private fun CodeContext.builderReferenceProperty(
         +"get() = getParent($connectionName) as? $referenceBuilderType ?: error(\"${property.name} is null for $receiverName\")"
         section("set(value)") {
           +"changeParent(value, $connectionName)"
-          +"changedProperty.add(\"${property.name}\")"
+          changedProperty(property.name)
         }
       }
       ReferenceType.ParentOfMany -> {
         +"get() = getParent($connectionName) as? $referenceBuilderType ?: error(\"${property.name} is null for $receiverName\")"
         section("set(value)") {
           +"changeParentOfMany(value, $connectionName)"
-          +"changedProperty.add(\"${property.name}\")"
+          changedProperty(property.name)
         }
       }
       ReferenceType.Children -> {
@@ -304,14 +305,14 @@ private fun CodeContext.builderReferenceProperty(
         +"get() = getChildren($connectionName) as $referenceBuilderType"
         section("set(value)") {
           +"changeChildren(value, $connectionName)"
-          +"changedProperty.add(\"${property.name}\")"
+          changedProperty(property.name)
         }
       }
       ReferenceType.Child -> {
         +"get() = getChild($connectionName) as? $referenceBuilderType"
         section("set(value)") {
           +"changeChild(value, $connectionName)"
-          +"changedProperty.add(\"${property.name}\")"
+          changedProperty(property.name)
         }
       }
     }

@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
 import com.intellij.workspaceModel.codegen.impl.dsl.notReferenceError
 import com.intellij.workspaceModel.codegen.impl.writer.ConnectionId
-import com.intellij.workspaceModel.codegen.impl.writer.Instrumentation
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBaseMembers
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
@@ -78,7 +78,7 @@ fun GeneratorContext.refsConnectionMethodCode(objProperty: ObjProperty<*, *>, bu
   }
   val connectionName = connectionIdForReference(objProperty)
   val getterName = if (unwrappedType.child) {
-    "${Instrumentation.getOneChild}"
+    WorkspaceEntityBaseMembers.getChildFun
   }
   else {
     val valueType = getReferencedField(objProperty)?.valueType.let { if (it is ValueType.Optional<*>) it.type else it }
@@ -86,12 +86,7 @@ fun GeneratorContext.refsConnectionMethodCode(objProperty: ObjProperty<*, *>, bu
       reportPropertyError("Unsupported reference type: $valueType", objProperty)
       return ""
     }
-    if (builder) {
-      "${Instrumentation.getParentBuilder}"
-    }
-    else {
-      "${Instrumentation.getParent}"
-    }
+    WorkspaceEntityBaseMembers.getParentFun
   }
-  return "$getterName($connectionName, this)"
+  return "$getterName($connectionName)"
 }

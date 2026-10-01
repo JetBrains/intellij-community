@@ -37,7 +37,7 @@ internal fun getAllProperties(
     if (!withSymbolicId && isSymbolicId) return@filter false
     if (!withComputable && !isSymbolicId && objProperty.valueKind is ObjProperty.ValueKind.Computable) return@filter false
     if (!withRefs && objProperty.valueType.isReferenceType()) return@filter false
-    if (!withEntitySource && objProperty.name == entitySourceFieldName) return@filter false
+    if (!withEntitySource && objProperty.name == entitySourcePropertyName) return@filter false
     if (!withOptional && objProperty.valueType is ValueType.Optional<*>) return@filter false
     if (!withDefault && objProperty.valueKind !is ObjProperty.ValueKind.Plain) return@filter false
     return@filter true
@@ -92,7 +92,7 @@ private object PropertiesCache {
 fun mandatoryProperties(objClass: ObjClass<*>): List<ObjProperty<*, *>> {
   val properties = getAllProperties(objClass, withSymbolicId = false, withRefs = false, withOptional = false, withDefault = false)
   if (properties.isNotEmpty()) {
-    return properties.filterNot { it.name == entitySourceFieldName } + properties.single { it.name == entitySourceFieldName }
+    return properties.filterNot { it.name == entitySourcePropertyName } + properties.single { it.name == entitySourcePropertyName }
   }
   return properties
 }

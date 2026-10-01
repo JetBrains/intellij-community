@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -15,11 +15,12 @@ import com.intellij.workspaceModel.codegen.impl.dsl.optInWorkspaceEntityInternal
 import com.intellij.workspaceModel.codegen.impl.dsl.packageDirective
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
 import com.intellij.workspaceModel.codegen.impl.writer.ConnectionId
+import com.intellij.workspaceModel.codegen.impl.writer.EntitySource
 import com.intellij.workspaceModel.codegen.impl.writer.EntityStorageInstrumentationApi
-import com.intellij.workspaceModel.codegen.impl.writer.Instrumentation
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBaseMembers
 import com.intellij.workspaceModel.codegen.impl.writer.checkReference
-import com.intellij.workspaceModel.codegen.impl.writer.entitySourceFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.entitySourcePropertyName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.defaultJavaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.hasSetter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.implPackage
@@ -66,21 +67,21 @@ fun CodeContext.entityImplementationClassCode(objClass: ObjClass<*>) {
     }
 
     symbolicIdImplementationCode(objClass)
-    +"" // TODO: empty line to be removed
 
-    for (property in getAllProperties(objClass).filter { it.name !in listOf(entitySourceFieldName, symbolicIdPropertyName) }) {
+    for (property in getAllProperties(objClass).filter { it.name !in listOf(entitySourcePropertyName, symbolicIdPropertyName) }) {
       entityImplementationPropertyCode(property)
     }
 
-    +"override val $entitySourceFieldName: EntitySource"
+    +"override val $entitySourcePropertyName: $EntitySource"
     section("get()") {
-      +"readField(\"$entitySourceFieldName\")"
+      +"readField(\"$entitySourcePropertyName\")"
       +"return dataSource.entitySource"
     }
-
-    section("override fun connectionIdList(): List<${ConnectionId}>") {
-      if (hasConnections) +"return connections"
-      else +"return emptyList()"
+    
+    if (hasConnections) {
+      section("override fun ${WorkspaceEntityBaseMembers.connectionIdListFun}(): List<${ConnectionId}>") {
+        +"return connections"
+      }
     }
 
     customToString(objClass)
@@ -99,7 +100,7 @@ private fun CodeContext.entityImplementationAnnotations(objClass: ObjClass<*>) {
 fun CodeContext.entityImplementationPropertyCode(objProperty: ObjProperty<*, *>) {
   if (objProperty.hasSetter) {
     // TODO: name?!
-    if (objProperty.isOverride && objProperty.name !in listOf("name", entitySourceFieldName)) {
+    if (objProperty.isOverride && objProperty.name !in listOf("name", entitySourcePropertyName)) {
       implWsBlockingCodeOverride(objProperty)
     }
     else {
@@ -130,7 +131,7 @@ internal fun CodeContext.implWsBlockCode(objProperty: ObjProperty<*, *>) {
     is ValueType.ObjRef -> {
       val notNullAssertion = if (!isOptional) " ?: error(\"Parent $name not found for ${objProperty.receiver.name}\")" else ""
       +"override val $name: ${getJavaType(objProperty, propertyType)}$optionalSuffix"
-      +"get() = snapshot.${refsConnectionMethodCode(objProperty)} as? ${getJavaType(objProperty, propertyType)}$notNullAssertion"
+      +"get() = ${refsConnectionMethodCode(objProperty)}$notNullAssertion"
     }
     is ValueType.List<*> -> {
       if (propertyType.isReferenceType()) {
@@ -140,10 +141,8 @@ internal fun CodeContext.implWsBlockCode(objProperty: ObjProperty<*, *>) {
           return
         }
         val notNullAssertion = " ?: error(\"Children list $name not found for ${objProperty.receiver.name}\")"
-        val cast = " as? Sequence<${getJavaType(objProperty, propertyType.elementType)}>)?.toList()"
         +"override val $name: ${getJavaType(objProperty, propertyType)}"
-        suppressUncheckedCast()
-        +"get() = (snapshot.${Instrumentation.getManyChildren}($connectionId, this)$cast$notNullAssertion"
+        +"get() = ${WorkspaceEntityBaseMembers.getChildrenFun}($connectionId)$notNullAssertion"
       }
       else {
         +"override val $name: ${getJavaType(objProperty, propertyType)}$optionalSuffix"
@@ -195,15 +194,14 @@ internal fun CodeContext.implWsBlockingCodeOverride(objProperty: ObjProperty<*, 
     valueType = valueType.type
   }
   val getterName = when (valueType) {
-    is ValueType.List<*> -> Instrumentation.getParent
-    is ValueType.ObjRef<*> -> Instrumentation.getParent
+    is ValueType.List<*>, is ValueType.ObjRef<*>  -> WorkspaceEntityBaseMembers.getParentFun
     else -> {
       reportPropertyError("Unsupported reference type", objProperty)
       return
     }
   }
   +"${explicitApiModifier}override val ${objProperty.name}: ${getJavaType(objProperty)}"
-  +"get() = snapshot.$getterName($connectionName, this) as? ${getJavaType(objProperty)} ?: error(\"Parent ${objProperty.name} not found for ${objProperty.receiver.name}\")"
+  +"get() = $getterName($connectionName) ?: error(\"Parent ${objProperty.name} not found for ${objProperty.receiver.name}\")"
 }
 
 internal fun GeneratorContext.getReferencedField(objProperty: ObjProperty<*, *>): ObjProperty<*, *>? {

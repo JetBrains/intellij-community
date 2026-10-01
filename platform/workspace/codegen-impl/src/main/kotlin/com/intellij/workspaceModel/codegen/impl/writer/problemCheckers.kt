@@ -25,9 +25,18 @@ internal fun GeneratorContext.checkSuperTypes(objClass: ObjClass<*>) {
 internal fun GeneratorContext.checkSymbolicId(objClass: ObjClass<*>) {
   if (!objClass.isEntityWithSymbolicId) return
   if (objClass.openness == ObjClass.Openness.abstract) return
-  if (objClass.fields.none { it.name == symbolicIdPropertyName }) {
+  val property = objClass.symbolicIdProperty
+  if (property == null) {
     reportClassError("Class extends '${WorkspaceEntityWithSymbolicId.simpleName}' but " +
                      "doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property", objClass)
+    return
+  }
+  val expression = (property.valueKind as? ObjProperty.ValueKind.Computable)?.expression
+  if (expression == null) {
+    reportPropertyError("Could not read symbolicId expression", property)
+  } else if (expression.trimStart().first() == '{') {
+    reportPropertyError("Property symbolicId should be defined via expression body 'get() = YourSymbolicIdImpl(...)' but was: " +
+                        expression, property)
   }
 }
 

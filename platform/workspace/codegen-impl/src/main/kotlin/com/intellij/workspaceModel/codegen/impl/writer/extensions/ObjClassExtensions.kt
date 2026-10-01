@@ -22,8 +22,14 @@ internal val ObjClass<*>.defaultJavaBuilderName: String
 internal val ObjClass<*>.javaBuilderName: String
   get() = if (requiresCompatibility) compatibleJavaBuilderName else defaultJavaBuilderName
 
-internal val ObjClass<*>.javaBuilderFqnName: QualifiedName
+internal val ObjClass<*>.defaultJavaBuilderFqnName: QualifiedName
   get() = fqn(module.name, defaultJavaBuilderName)
+
+internal val ObjClass<*>.compatibleJavaBuilderFqnName: QualifiedName
+  get() = fqn(module.name, compatibleJavaBuilderName)
+
+internal val ObjClass<*>.javaBuilderFqnName: QualifiedName
+  get() = if (requiresCompatibility) compatibleJavaBuilderFqnName else defaultJavaBuilderFqnName
 
 internal val ObjClass<*>.javaImplName: String
   get() = "${name.replace(".", "")}Impl"

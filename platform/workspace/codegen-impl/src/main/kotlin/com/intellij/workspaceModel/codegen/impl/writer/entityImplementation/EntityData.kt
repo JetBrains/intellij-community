@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityData
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
 import com.intellij.workspaceModel.codegen.impl.writer.collectionProperties
-import com.intellij.workspaceModel.codegen.impl.writer.entitySourceFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.entitySourcePropertyName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.hasSetter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isOverride
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
@@ -157,13 +157,15 @@ fun CodeContext.entityDataClassCode(objClass: ObjClass<*>) {
       }
     }
 
-    section("override fun getRequiredParents(): List<Class<out $WorkspaceEntity>>") {
-      line("val res = mutableListOf<Class<out $WorkspaceEntity>>()")
-      val requiredParents = getAllReferenceProperties(objClass, onlyParents = true).filter { it.valueType !is ValueType.Optional }
-      for (parentProperty in requiredParents) {
-        line("res.add(${getJavaType(parentProperty)}::class.java)")
+    val requiredParents = getAllReferenceProperties(objClass, onlyParents = true).filter { it.valueType !is ValueType.Optional }
+    if (requiredParents.isNotEmpty()) {
+      section("override fun getRequiredParents(): List<Class<out $WorkspaceEntity>>") {
+        line("val res = mutableListOf<Class<out $WorkspaceEntity>>()")
+        for (parentProperty in requiredParents) {
+          line("res.add(${getJavaType(parentProperty)}::class.java)")
+        }
+        line("return res")
       }
-      line("return res")
     }
 
     val keyFields = getAllProperties(objClass).filter { it.isReplaceBySourceKey }
@@ -196,7 +198,7 @@ fun CodeContext.entityDataClassCode(objClass: ObjClass<*>) {
     }
 
     section("override fun hashCode(): Int") {
-      line("var result = entitySource.hashCode()")
+      line("var result = $entitySourcePropertyName.hashCode()")
       for (property in getAllProperties(objClass, withSymbolicId = false, withRefs = false, withEntitySource = false)) {
         val name = property.name
         +"result = 31 * result + $name.hashCode()"
@@ -242,7 +244,7 @@ fun CodeContext.entityDataClassCode(objClass: ObjClass<*>) {
 internal fun CodeContext.implWsDataFieldCode(objProperty: ObjProperty<*, *>) {
   if (objProperty.hasSetter) {
     // TODO: name?
-    if (objProperty.isOverride && objProperty.name !in listOf("name", entitySourceFieldName)) {
+    if (objProperty.isOverride && objProperty.name !in listOf("name", entitySourcePropertyName)) {
       implWsBlockingCodeOverride(objProperty)
     }
     else {

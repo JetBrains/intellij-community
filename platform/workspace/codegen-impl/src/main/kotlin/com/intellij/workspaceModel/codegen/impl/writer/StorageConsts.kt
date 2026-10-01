@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
 private const val workspaceBasePackageName = "com.intellij.platform.workspace"
@@ -21,31 +21,11 @@ internal val GeneratedCodeApiVersion = fqn(workspaceStoragePackageName, "Generat
 internal val GeneratedCodeImplVersion = fqn(workspaceStoragePackageName, "GeneratedCodeImplVersion")
 
 internal val MutableEntityStorage = fqn(workspaceStoragePackageName, "MutableEntityStorage")
-internal val EntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentation")
-internal val MutableEntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "MutableEntityStorageInstrumentation")
 internal val EntityStorageInstrumentationApi = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentationApi")
 internal val WorkspaceEntityInternalApi = fqn(workspaceStoragePackageName, "WorkspaceEntityInternalApi")
 
-internal object Instrumentation {
-  private const val packageName = workspaceStorageInstrumentationPackageName
-  
-  val getParent = fqn(packageName, "instrumentation.getParent")
-  val getParentBuilder = fqn(packageName, "instrumentation.getParentBuilder")
-  val addChild = fqn(packageName, "instrumentation.addChild")
-  val replaceChildren = fqn(packageName, "instrumentation.replaceChildren")
-
-  val getOneChild = fqn(packageName, "instrumentation.getOneChild")
-  val getManyChildren = fqn(packageName, "instrumentation.getManyChildren")
-  val getManyChildrenBuilders = fqn(packageName, "instrumentation.getManyChildrenBuilders")
-
-  override fun toString(): String {
-    return fqn(workspaceStoragePackageName, "EntityStorageInstrumentation").toString()
-  }
-}
-
 internal val EntityType = fqn(workspaceStoragePackageName, "EntityType")
 internal val ConnectionId = fqn(workspaceStoragePackageName, "ConnectionId")
-internal val EntityLink = fqn(workspaceStorageImplPackageName, "EntityLink")
 internal val WorkspaceEntityBase = fqn(workspaceStorageImplPackageName, "WorkspaceEntityBase")
 internal val SoftLinkable = fqn(workspaceStorageImplPackageName, "SoftLinkable")
 
@@ -71,17 +51,6 @@ internal val WorkspaceEntityWithSymbolicId = fqn(workspaceStoragePackageName, "W
 internal val ModifiableWorkspaceEntityBase = fqn(workspaceStorageImplPackageName, "ModifiableWorkspaceEntityBase")
 
 internal val WorkspaceMutableIndex = fqn(workspaceStorageIndicesPackageName, "WorkspaceMutableIndex")
-
-internal object EntityInformation {
-  private const val packageName = workspaceStoragePackageName
-  private val className  = this::class.simpleName!!
-
-  val Serializer = fqn(packageName, "$className.Serializer")
-  val Deserializer = fqn(packageName, "$className.Deserializer")
-  override fun toString(): String {
-    return fqn(packageName, className).toString()
-  }
-}
 
 //Storage metamodel classes
 internal object MetadataStorage {
@@ -121,10 +90,6 @@ internal val EntityReference = fqn(workspaceStorageMetamodelPackageName, "ValueT
 // Entity
 internal val LibraryEntity = fqn(workspaceEntitiesPackageName, "LibraryEntity")
 internal val LibraryRoot = fqn(workspaceEntitiesPackageName, "LibraryRoot")
-internal val SdkEntity = fqn(workspaceEntitiesPackageName, "SdkEntity")
-// TODO see usages. Index VFUs when they are changed
-internal val SdkRoot = fqn(workspaceEntitiesPackageName, "SdkRoot")
-
 
 // Annotations
 internal val Parent = fqn(workspaceStorageAnnotationsPackageName, "Parent")
@@ -147,8 +112,15 @@ internal object StorageCollection {
 }
 
 internal const val symbolicIdPropertyName = "symbolicId"
-internal const val entitySourceFieldName = "entitySource"
+internal const val entitySourcePropertyName = "entitySource"
 
 internal object WorkspaceEntityBaseMembers {
+  internal const val connectionIdListFun = "connectionIdList"
   internal const val calculateSymbolicIdFun = "calculateSymbolicId"
+  internal const val getParentFun = "getParent"
+  internal const val getChildFun = "getChild"
+  internal const val getChildrenFun = "getChildren"
+  internal const val addChangedPropertyFun = "addChangedProperty"
+  internal const val outOfDiffOrModifiableFun = "outOfDiffOrModifiable"
+  internal const val inDiffFun = "inDiff"
 }
