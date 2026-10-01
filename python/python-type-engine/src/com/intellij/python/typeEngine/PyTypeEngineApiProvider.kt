@@ -14,6 +14,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector
+import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.pytools.backend.PyToolsState
@@ -72,7 +73,8 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
     val project = request.projectId.findProject()
     val toolsState = PyToolsState.getInstance(project)
     ProjectLevelPyTool.findByPackageName(request.selected.packageName)?.let { tool ->
-      if (!toolsState.isEnabled(tool)) {
+      val isBundledPyreflyEnabled = tool is PyreflyPyTool && PyreflyPyTool.isBundledPyreflyEnabled()
+      if (!isBundledPyreflyEnabled && !toolsState.isEnabled(tool)) {
         tool.setEnabledOn(project, true)
       }
     }
