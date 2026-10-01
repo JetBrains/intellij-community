@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
 import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -74,7 +75,8 @@ class KtInternalFileTreeNode(
         file?.let(smartPointerManager::createSmartPsiElementPointer)
     }
 
-    override fun extractPsiFromValue(): PsiElement? = navigatablePsiElement?.element ?: value
+    override fun extractPsiFromValue(): PsiElement? =
+        (if (DumbService.getInstance(this.project).isDumb) null else navigatablePsiElement?.element) ?: value
 
     override fun getNestedFileNodes(): Collection<AbstractTreeNode<*>> = nestedFileNodes
 
