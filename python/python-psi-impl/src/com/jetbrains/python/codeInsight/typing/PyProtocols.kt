@@ -55,12 +55,15 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
     when (val name = protocolMember.name) {
       null -> continue
       PyNames.CALL -> {
-        val invokedMethods = PyCallExpressionHelper.getImplicitlyInvokedMethod(subclass, resolveContext)
+        // A class object matches a callable protocol through its constructor.
+        // When the protocol type is a class object, match `__call__` against the `__call__` of the subclass instance.
+        val callee = if (protocol.isDefinition) subclass.toInstance() else subclass
+        val invokedMethods = PyCallExpressionHelper.getImplicitlyInvokedMethod(callee, resolveContext)
         if (invokedMethods.isNotEmpty()) {
           result.add(Pair(protocolMember, invokedMethods))
         }
         else {
-          val callableType = PyCallExpressionHelper.createCallableFromClass(subclass, resolveContext)
+          val callableType = PyCallExpressionHelper.createCallableFromClass(callee, resolveContext)
           val fallbackTypes = PyTypeUtil.getCallableItems(callableType).map { PyTypeMember(null, it) } // TODO null
           result.add(Pair(protocolMember, fallbackTypes))
         }

@@ -1109,6 +1109,226 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  @TestFor(issues = ["PY-49246"])
+  inner class ProtocolCallAndConstructorMembers {
+
+    @Test
+    fun `protocol __call__ is matched against the subclass __call__ and not its constructor`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def __call__(self, *args, **kwargs):
+              pass
+
+      class MyClass(MyProtocol):
+          def __init__(self):
+              pass
+
+          def __call__(self, *args, **kwargs):
+              pass
+      """.trimIndent())
+
+    @Test
+    fun `inherited protocol __call__ is compatible with any subclass constructor`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def __call__(self, x: int) -> str: ...
+
+      class MyClass(MyProtocol):
+          def __init__(self, y: str) -> None:
+              pass
+      """.trimIndent())
+
+    @Test
+    fun `incompatible __call__ override is reported`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def __call__(self, x: int) -> str: ...
+
+      class MyClass(MyProtocol):
+          def __init__(self, y: str) -> None:
+              pass
+
+          def __call__(self, x: str) -> int: ...
+      #       │       │                 ^^^ WARNING Return type of method 'MyClass.__call__()' does not match return type the base method in class 'MyProtocol'
+      #       │       ^^^^^^^^^^^^^^ WARNING Signature of method 'MyClass.__call__()' does not match signature of the base method in class 'MyProtocol'
+      #       ^^^^^^^^ WARNING Type of '__call__' is incompatible with 'MyProtocol'
+      """.trimIndent())
+
+    @Test
+    fun `same __init__ as the protocol is compatible`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def __init__(self, verbose): ...
+
+      class MyClass(MyProtocol):
+          def __init__(self, verbose):
+              pass
+      """.trimIndent())
+
+    @Test
+    fun `constructor overrides are not checked against the protocol`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def __init__(self, verbose: int) -> None: ...
+
+          def __new__(cls, verbose: int) -> "MyProtocol": ...
+
+      class MyClass(MyProtocol):
+          def __init__(self, verbose: str, extra: bytes) -> None:
+              pass
+
+          def __new__(cls, verbose: str, extra: bytes) -> "MyClass": ...
+      """.trimIndent())
+
+    @Test
+    fun `metaclass __init__ is not checked against the protocol __init__`() = test("""
+      from typing import Protocol
+
+      class Meta(type):
+          def __init__(cls, name, bases, namespace) -> None:
+              super().__init__(name, bases, namespace)
+
+      class MyProtocol(Protocol):
+          def __init__(self, verbose: int) -> None: ...
+
+      class MyClass(MyProtocol, metaclass=Meta):
+          pass
+      """.trimIndent())
+
+    @Test
+    fun `override of a member that type also defines is checked`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def __repr__(self) -> str: ...
+
+      class MyClass(MyProtocol):
+          def __repr__(self) -> int: ...
+      #       │                 ^^^ WARNING Return type of method 'MyClass.__repr__()' does not match return type the base method in class 'MyProtocol'
+      #       ^^^^^^^^ WARNING Type of '__repr__' is incompatible with 'MyProtocol'
+      """.trimIndent())
+
+    @Test
+    fun `metaclass member is not checked instead of the subclass member`() = test("""
+      from typing import Iterator, Protocol
+
+      class Meta(type):
+          def __iter__(cls) -> Iterator[str]: ...
+
+      class MyProtocol(Protocol):
+          def __iter__(self) -> Iterator[int]: ...
+
+      class MyClass(MyProtocol, metaclass=Meta):
+          def __iter__(self) -> Iterator[int]: ...
+      """.trimIndent())
+
+    @Test
+    fun `annotated instance attribute is checked against the protocol attribute`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          x: int
+
+      class MyClass(MyProtocol):
+          def __init__(self) -> None:
+              self.x: str = ""
+      #            └ WARNING Type of 'x' is incompatible with 'MyProtocol'
+      """.trimIndent())
+
+    @Test
+    fun `unannotated instance attribute takes the protocol attribute type`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          x: list[float]
+
+      class MyClass(MyProtocol):
+          def __init__(self) -> None:
+              self.x = [1]
+      """.trimIndent())
+
+    @Test
+    fun `instance attribute that replaces a protocol method is reported`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          def handler(self) -> None: ...
+
+      class MyClass(MyProtocol):
+          def __init__(self) -> None:
+              self.handler = lambda: None
+      #            ^^^^^^^ WARNING Type of 'handler' is incompatible with 'MyProtocol'
+      """.trimIndent())
+
+    @Test
+    fun `incompatible property override is reported`() = test("""
+      from typing import Protocol
+
+      class MyProtocol(Protocol):
+          @property
+          def value(self) -> int: ...
+
+      class MyClass(MyProtocol):
+          @property
+          def value(self) -> str: ...
+      #       │              ^^^ WARNING Return type of method 'MyClass.value()' does not match return type the base method in class 'MyProtocol'
+      #       ^^^^^ WARNING Type of 'value' is incompatible with 'MyProtocol'
+      """.trimIndent())
+
+    @Test
+    fun `protocol class object with __call__ is matched against the instance __call__`() = test("""
+      from typing import Protocol
+
+      class CallP(Protocol):
+          def __call__(self, x: int) -> str: ...
+
+      class Matching:
+          def __init__(self, y: str) -> None: ...
+
+          def __call__(self, x: int) -> str:
+              return ""
+
+      class OnlyConstructor:
+          def __init__(self, x: int) -> None: ...
+
+      def accepts_class(t: type[CallP]) -> None: ...
+
+      def accepts_instance(p: CallP) -> None: ...
+
+      accepts_class(Matching)
+      accepts_class(OnlyConstructor)
+      #             ^^^^^^^^^^^^^^^ WARNING Expected type 'type[CallP]', got 'type[OnlyConstructor]' instead
+      accepts_instance(Matching(""))
+      accepts_instance(Matching)
+      #                ^^^^^^^^ WARNING Expected type 'CallP', got 'type[Matching]' instead
+      """.trimIndent())
+
+    @Test
+    fun `generic protocol class object with __call__ is solved from the instance __call__`() = test("""
+      from typing import Protocol
+
+      class CallP[T](Protocol):
+          def __call__(self) -> T: ...
+
+      class C:
+          def __init__(self, y: str) -> None: ...
+
+          def __call__(self) -> int:
+              return 0
+
+      def f[T](t: type[CallP[T]]) -> T: ...
+
+      expr = f(C)
+      # └ TYPE int
+      """.trimIndent())
+  }
+
+  @Nested
   inner class ProtocolMembersPropertiesClassVarAttributes {
 
     @Test

@@ -80,9 +80,9 @@ class PyProtocolInspection : PyInspection() {
         .filterIsInstance<PyClassType>()
         .filter { it.isProtocol(myTypeEvalContext) }
         .forEach { protocol ->
-          inspectProtocolSubclass(protocol, type, myTypeEvalContext).forEach {
+          inspectProtocolSubclass(protocol.toInstance(), type.toInstance(), myTypeEvalContext).forEach {
             val subclassElements = it.second
-            if (subclassElements.isNotEmpty()) {
+            if (subclassElements.isNotEmpty() && it.first.name !in CONSTRUCTOR_NAMES) {
               checkMemberCompatibility(it.first, subclassElements, type, protocol)
             }
           }
@@ -278,3 +278,6 @@ class PyProtocolInspection : PyInspection() {
     }
   }
 }
+
+/** The inspection does not check these protocol members against a subclass, because a subclass can change its constructor signature. */
+private val CONSTRUCTOR_NAMES = setOf(PyNames.INIT, PyNames.NEW)
