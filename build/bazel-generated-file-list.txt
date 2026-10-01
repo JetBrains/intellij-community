@@ -1356,6 +1356,7 @@ plugins/groovy-live-templates
 plugins/groovy-scripting
 plugins/groovy/ant
 plugins/groovy/byteCodeViewer
+plugins/groovy/compiler-tests
 plugins/groovy/git
 plugins/groovy/groovy-psi
 plugins/groovy/groovy-uast-tests
