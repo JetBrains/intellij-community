@@ -4,12 +4,12 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
 import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.events.IndexingEventsLogger;
+import com.intellij.util.io.ClosedStorageException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

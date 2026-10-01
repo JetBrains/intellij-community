@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex

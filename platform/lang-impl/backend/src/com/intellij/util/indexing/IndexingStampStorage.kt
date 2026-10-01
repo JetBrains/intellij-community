@@ -4,7 +4,6 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
-import com.intellij.util.indexing.TimestampsImmutable.Companion.readTimestamps
 import com.intellij.util.indexing.impl.perFileVersion.EnumeratedFastFileAttribute
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting

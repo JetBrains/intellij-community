@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint;

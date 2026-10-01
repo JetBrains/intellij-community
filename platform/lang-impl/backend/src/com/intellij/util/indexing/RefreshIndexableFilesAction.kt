@@ -9,7 +9,6 @@ import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
