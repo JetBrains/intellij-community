@@ -1,79 +1,51 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output
 
-import com.intellij.build.BuildProgressListener
-import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import com.intellij.testFramework.utils.io.createFile
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Files
-import java.nio.file.Path
 
-class GroovycOutputParserTest {
+class GroovycOutputParserTest : CompilerOutputParserTestCase() {
 
-  @TempDir
-  lateinit var tempDir: Path
+  override fun createParser() = GroovycOutputParser()
 
   @Test
   fun `test groovyc error navigates to line and column`() {
-    val path = Files.createFile(tempDir.resolve("JlinkTask.groovy"))
-    val events = parseEvents(
-      """
+    val path = testRoot.createFile("JlinkTask.groovy")
+    val message = "unable to resolve class Provider <? extends java.lang.Iterable <String>>"
+    val description = """
+      $path: 96: $message
+       @ line 96, column 28.
+    """.trimIndent()
+    val output = """
       > Task :compileGroovy FAILED
       startup failed:
-      $path: 96: unable to resolve class Provider <? extends java.lang.Iterable <String>>
+      $path: 96: $message
        @ line 96, column 28.
 
-      """.trimIndent()
-    )
+    """.trimIndent()
 
-    assertEquals(1, events.size)
-    val event = events.single()
-    assertTrue(event is FileMessageEvent, "Expected FileMessageEvent, got ${event.javaClass.name}")
-    event as FileMessageEvent
+    val event = parseSingleFileMessageEvent(output)
 
-    assertEquals(MessageEvent.Kind.ERROR, event.kind)
-    assertEquals("unable to resolve class Provider <? extends java.lang.Iterable <String>>", event.message)
-    assertEquals(path, event.filePosition.path)
-    assertEquals(95, event.filePosition.startLine)
-    assertEquals(27, event.filePosition.startColumn)
+    assertMessageEvent(event, MessageEvent.Kind.ERROR, message, description)
+    assertFilePosition(event, path, 95, 27)
   }
 
   @Test
   fun `test groovyc error with location on the same line`() {
-    val path = Files.createFile(tempDir.resolve("Script.groovy"))
-    val events = parseEvents(
-      """
+    val path = testRoot.createFile("Script.groovy")
+    val message = "unexpected token: static"
+    val description = "$path: 7: $message @ line 7, column 1."
+    val output = """
       > Task :compileGroovy FAILED
       startup failed:
-      $path: 7: unexpected token: static @ line 7, column 1.
+      $description
 
-      """.trimIndent()
-    )
+    """.trimIndent()
 
-    assertEquals(1, events.size)
-    val event = events.single()
-    assertTrue(event is FileMessageEvent, "Expected FileMessageEvent, got ${event.javaClass.name}")
-    event as FileMessageEvent
+    val event = parseSingleFileMessageEvent(output)
 
-    assertEquals(MessageEvent.Kind.ERROR, event.kind)
-    assertEquals("unexpected token: static", event.message)
-    assertEquals(path, event.filePosition.path)
-    assertEquals(6, event.filePosition.startLine)
-    assertEquals(0, event.filePosition.startColumn)
-  }
-
-  private fun parseEvents(output: String): List<BuildEvent> {
-    val events = mutableListOf<BuildEvent>()
-    val buildId = Any()
-    BuildOutputInstantReaderImpl(
-      buildId, buildId,
-      BuildProgressListener { _, event -> events += event },
-      listOf(GroovycOutputParser())
-    ).append(output).close()
-    return events
+    assertMessageEvent(event, MessageEvent.Kind.ERROR, message, description)
+    assertFilePosition(event, path, 6, 0)
   }
 }
