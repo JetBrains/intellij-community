@@ -567,9 +567,9 @@
       delombokFieldNameCostants
       delombokUtilityClass
       delombokStandardException
+    I18nize
     ConvertGroovyToJava
     ConvertToCompileStatic
-    I18nize
     AdditionalRefactoringsMenu
       RemoveMiddleman
       ReplaceTempWithQuery
@@ -799,10 +799,10 @@
           ShowWslSatisfactionDialog
           OnboardingKotlin
             org.jetbrains.kotlin.onboarding.ShowKotlinOnboardingFeedbackDialogAction
-          MavenBuildProcessSatisfaction
-            org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction
           BuildProcessSatisfaction
             org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction
+          MavenBuildProcessSatisfaction
+            org.jetbrains.kotlin.onboarding.maven.ShowMavenBuildProcessSatisfactionDialogAction
         UiInspectorGroup
           UiInspector
           UiThemeColorPickerAction
@@ -852,8 +852,6 @@
         PruneEmptyDirectories
         FixLineSeparators
         <separator>
-        MarkFileDirty
-        ValidateLocalHistory
         LoadAllContent
         LoadAllVFSContent
         ComputeVFStatistics
@@ -861,6 +859,8 @@
         DumpVfsInfoForFsRoot
         DumpWatchedRoots
         CountVfsFileChildren
+        MarkFileDirty
+        ValidateLocalHistory
       Internal.Dump
         DumpCodeStyleCache
         DumpPluginDescriptorsAction
@@ -885,22 +885,6 @@
         CollectFUStatisticsAction
       PythonPsiInternalGroup
         PyTypeBenchmarkAction
-      Vcs.Internal
-        Vcs.Log.Internal
-          Vcs.Log.InvalidateCaches
-          Vcs.Log.CheckFirstCommitsIndexData
-          Vcs.Log.CheckSelectedCommitsIndexData
-          Vcs.Log.ShowBigRepositories
-          Git.Log.Internal
-            Git.Log.Show.Command
-        Git.Cleanup.Branches
-      IFTInternalActions
-        DumpFeaturesTrainerText
-        AutorunAllLessons
-        AutorunCurrentLesson
-        SetCurrentLessonAsPassed
-        ResetOnboardingFeedbackState
-        ShowDemoAltClickPromoter
       Internal.Ex
         ClearIDEStatistics
         ShowMainMenu
@@ -929,6 +913,22 @@
       ShowSearchEverywhereItemInfo
       CompletionQualityStats
       ShowControlFlow
+      Vcs.Internal
+        Vcs.Log.Internal
+          Vcs.Log.InvalidateCaches
+          Vcs.Log.CheckFirstCommitsIndexData
+          Vcs.Log.CheckSelectedCommitsIndexData
+          Vcs.Log.ShowBigRepositories
+          Git.Log.Internal
+            Git.Log.Show.Command
+        Git.Cleanup.Branches
+      IFTInternalActions
+        DumpFeaturesTrainerText
+        AutorunAllLessons
+        AutorunCurrentLesson
+        SetCurrentLessonAsPassed
+        ResetOnboardingFeedbackState
+        ShowDemoAltClickPromoter
       PythonGenerateDictionaries
       Internal.Python
         PyUpdateProjectSdk
@@ -1004,8 +1004,8 @@
       ShowKotlinBytecode
       ConfigureKotlinInProject
       DecompileKotlinToJava
-    WorkspaceModelGeneration
     Groovy.Console
+    WorkspaceModelGeneration
   VcsGroups
     Vcs.MainMenu
       Start.Use.Vcs
@@ -1078,6 +1078,38 @@
           Github.Sync.Fork
           Github.Create.Pull.Request
           Github.View.Pull.Request
+        hg4idea.file.menu
+          CheckinFiles
+          hg4idea.add
+          Hg.Ignore.File
+          ChangesView.Revert
+          ChangesView.RevertFiles
+          <separator>
+          Compare.SameVersion
+          Compare.Selected
+          hg4idea.CompareWithBranch
+          Vcs.ShowTabbedFileHistory
+          Vcs.ShowHistoryForBlock
+          Annotate
+          <separator>
+          hg4idea.pull
+          Vcs.Push
+          <separator>
+          hg4idea.run.conflict.resolver
+          hg4idea.merge.files
+          <separator>
+          hg4idea.branches
+          hg4idea.tag
+          hg4idea.updateTo
+          hg4idea.resolve.mark
+          <separator>
+          hg4idea.Graft.Continue
+          hg4idea.Rebase.Abort
+          hg4idea.Rebase.Continue
+          <separator>
+          hg4idea.mq.ShowUnAppliedPatches
+          ChangesView.Browse
+          <separator>
         SubversionFilePopupGroup
           SubversionGroup
             Subversion.Share
@@ -1114,38 +1146,6 @@
             <separator>
             ChangesView.Browse
             <separator>
-        hg4idea.file.menu
-          CheckinFiles
-          hg4idea.add
-          Hg.Ignore.File
-          ChangesView.Revert
-          ChangesView.RevertFiles
-          <separator>
-          Compare.SameVersion
-          Compare.Selected
-          hg4idea.CompareWithBranch
-          Vcs.ShowTabbedFileHistory
-          Vcs.ShowHistoryForBlock
-          Annotate
-          <separator>
-          hg4idea.pull
-          Vcs.Push
-          <separator>
-          hg4idea.run.conflict.resolver
-          hg4idea.merge.files
-          <separator>
-          hg4idea.branches
-          hg4idea.tag
-          hg4idea.updateTo
-          hg4idea.resolve.mark
-          <separator>
-          hg4idea.Graft.Continue
-          hg4idea.Rebase.Abort
-          hg4idea.Rebase.Continue
-          <separator>
-          hg4idea.mq.ShowUnAppliedPatches
-          ChangesView.Browse
-          <separator>
         <separator>
         ChangesView.CreatePatch
         ChangesView.ApplyPatch
@@ -1158,9 +1158,9 @@
         Git.Log
       <separator>
       Vcs.Import
-        Hg.Init
         Subversion.ImportToSVNRepository
         Subversion.ShareWholeProject
+        Hg.Init
         Git.Init
     Git.MainMenu
       CheckinProject
@@ -1876,9 +1876,9 @@
   CompareClipboardWithSelection
   Code.Review.Editor.Show.Diff
   Code.Review.Editor.New.Comment
-  XmlGenerateToolsGroup
   OpenInSceneBuilder
   Maven.GlobalProjectMenu
+  XmlGenerateToolsGroup
   Git.Stage.Index.File.Menu
   GitLab.Create.Snippet
   Github.Create.Gist
@@ -1886,8 +1886,8 @@
   Mermaid.ExportDiagram
   JsonPathEvaluateAction
   ChangeTemplateDataLanguage
-  XPathView.EditorPopup
   PackageFile
+  XPathView.EditorPopup
   AddAntBuildFile
 [group EditorPopupMenu.GoTo]
   Console.TableResult.Navigate.Group
@@ -2220,24 +2220,24 @@
 [group GenerateFromTestCreatorsGroup]
 [group GenerateGroup]
   Maven.GenerateGroup
+  GenerateXmlTag
   KotlinGenerateGroup
   JavaGenerateGroup1
   GroovyGenerateGroup1
-  GenerateXmlTag
-  Gradle.GenerateGroup
   ShGenerateGroup
+  Gradle.GenerateGroup
   OverrideMethods
   ImplementMethods
   DelegateMethods
   GenerateFromTestCreatorsGroup
   Markdown.InsertGroup
-  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GenerateCopyright
   JavaGenerateGroup2
-  KotlinMavenGenerate
-  GenerateExternalization
   HtmlAddTableColumnBefore
   HtmlAddTableColumnAfter
+  KotlinMavenGenerate
+  GenerateExternalization
+  org.editorconfig.configmanagement.generate.EditorConfigGenerateLanguagePropertiesAction
   GuiDesigner.GenerateMain
 [group GoToCodeGroup]
   <separator>
@@ -2581,8 +2581,8 @@
   WelcomeNewEmptyFile
   NewScratchFile
   NewDir
-  compose.newVectorAsset
   JavaFxCreateActions
+  compose.newVectorAsset
   NewJavaSpecialFile
   AddPyProject
   NewPythonPackage
@@ -2591,9 +2591,9 @@
   NewWebDevelopment
   NewMicroservices
   NewFromTemplate
+  CreateEditorConfigFile
   DevkitNewActions
   CreateResourceBundle
-  CreateEditorConfigFile
   Markdown.NewFile
   NewXmlDescriptor
   DevkitObsoleteNewActions
@@ -2728,16 +2728,16 @@
   ExternalToolsGroup
   <separator>
   ProjectViewPopupMenuSettingsGroup
-  XmlGenerateToolsGroup
   UpdateCopyright
   ConvertJavaToKotlin
   ConvertJavaToKotlinGroup
-  OpenInSceneBuilder
   DissociateResourceBundleAction
   CombinePropertiesFilesAction
+  Images.SetBackgroundImage
+  OpenInSceneBuilder
   Maven.AddFileAsMavenProject
   Maven.GlobalProjectMenu
-  Images.SetBackgroundImage
+  XmlGenerateToolsGroup
   AddAntBuildFile
   XPathView.XSLT.Associations
   GitLab.Create.Snippet
@@ -2745,10 +2745,10 @@
   Mermaid.ExportDiagram
   Gradle.ProjectViewDependencyAnalyzer
   PackageFile
-  Maven.ProjectViewDependencyAnalyzer
-  PluginDeployActions
   Images.EditExternally
   Images.ConvertSvgToPng
+  Maven.ProjectViewDependencyAnalyzer
+  PluginDeployActions
 [group ProjectViewPopupMenuModifyGroup]
   ProjectViewAnalysisGroup
   ReformatCode
@@ -2814,9 +2814,9 @@
   PyConvertPackageToModuleAction
   LombokActionGroup
   DelombokActionGroup
+  I18nize
   ConvertGroovyToJava
   ConvertToCompileStatic
-  I18nize
   AdditionalRefactoringsMenu
 [group RemoveBom.Group]
   RemoveBom
@@ -3122,8 +3122,8 @@
   PyPackagingMenu
   DevKit.Bootstrap
   KotlinToolsGroup
-  WorkspaceModelGeneration
   Groovy.Console
+  WorkspaceModelGeneration
 [group ToolsMenu.Services]
 [group TopStripeActionGroup]
 [group TouchBar]
