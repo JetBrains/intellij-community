@@ -11,10 +11,6 @@ import it.unimi.dsi.fastutil.longs.LongSet
 import java.time.Duration
 import java.time.ZonedDateTime
 
-typealias TimeMillis = Long
-typealias TimeNano = Long
-typealias NumberOfBytes = Long
-
 /**
  * Extend this extension point to receive project scanning & indexing statistics
  * (e.g.: indexed file count, indexation speed, etc.) after each scanning or a **dumb** indexation task was performed.

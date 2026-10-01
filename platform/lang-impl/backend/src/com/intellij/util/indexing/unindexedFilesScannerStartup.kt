@@ -41,18 +41,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
-
-/** Key in [Project]: `null` before first scanning => [FirstScanningState.REQUESTED] => [FirstScanningState.PERFORMED] */
-@JvmField
-internal val FIRST_SCANNING_REQUESTED: Key<FirstScanningState> = Key.create("FIRST_SCANNING_REQUESTED")
-
-internal enum class FirstScanningState {
-  REQUESTED, PERFORMED
-}
 
 private val initialScanningLock = ReentrantLock()
 
@@ -114,15 +105,6 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   }
 }
 
-
-internal fun isFirstProjectScanningRequested(project: Project): Boolean {
-  return project.getUserData(FIRST_SCANNING_REQUESTED) != null
-}
-
-@ApiStatus.Internal
-fun isFirstProjectScanningPerformed(project: Project): Boolean {
-  return project.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.PERFORMED
-}
 
 internal fun invalidateProjectFilterIfFirstScanningNotRequested(project: Project): Boolean {
   return initialScanningLock.withLock {

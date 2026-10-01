@@ -116,9 +116,6 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
       get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
 
-    @TestOnly
-    var shouldDumpInUnitTestMode: Boolean = false
-
     val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions: Boolean =
       SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
                                           ApplicationManagerEx.isInIntegrationTest())

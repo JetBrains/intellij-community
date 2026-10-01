@@ -52,7 +52,7 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.shouldDumpInUnitTestMode
+import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.isFirstProjectScanningRequested
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.IndexableFileVisitor

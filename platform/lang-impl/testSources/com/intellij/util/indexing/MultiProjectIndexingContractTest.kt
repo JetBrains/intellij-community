@@ -34,6 +34,7 @@ import com.intellij.util.application
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.readJsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
@@ -381,8 +382,8 @@ internal class MultiProjectIndexingContractTest {
         "The open project must retire all global requests before the closed project reopens",
       )
 
-      val previousDiagnosticMode = IndexDiagnosticDumper.shouldDumpInUnitTestMode
-      IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
+      val previousDiagnosticMode = shouldDumpInUnitTestMode
+      shouldDumpInUnitTestMode = true
       try {
         projectA = openProject("A")
         awaitIndexesReady(projectA, projectB)
@@ -390,7 +391,7 @@ internal class MultiProjectIndexingContractTest {
         assertReopenedWithoutFullScan(projectA)
       }
       finally {
-        IndexDiagnosticDumper.shouldDumpInUnitTestMode = previousDiagnosticMode
+        shouldDumpInUnitTestMode = previousDiagnosticMode
       }
     }
 

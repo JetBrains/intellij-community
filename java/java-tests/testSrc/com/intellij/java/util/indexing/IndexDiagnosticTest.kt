@@ -13,6 +13,7 @@ import com.intellij.util.application
 import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
 import com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener
@@ -59,7 +60,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     try {
       val tempDirectory = createTempDirectory()
       TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, tempDirectory, testRootDisposable)
-      IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
+      shouldDumpInUnitTestMode = true
 
       val externalDir = myFixture.tempDirFixture.createFile("dir/A.java", "class A { void m() { } }").parent
       PsiTestUtil.addContentRoot(myFixture.module, externalDir)
@@ -86,7 +87,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
       }
     }
     finally {
-      IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
+      shouldDumpInUnitTestMode = false
     }
   }
 

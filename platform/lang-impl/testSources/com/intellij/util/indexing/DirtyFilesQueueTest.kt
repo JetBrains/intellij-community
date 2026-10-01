@@ -52,6 +52,7 @@ import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueuesDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.readJsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.shouldDumpInUnitTestMode
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
@@ -928,7 +929,7 @@ class DirtyFilesQueueTest {
     @Suppress("DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING")
     val options = createTestOpenProjectOptions().copy(projectName = name)
     SystemProperties.setProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", "true")
-    IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
+    shouldDumpInUnitTestMode = true
     WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
     val project = ProjectUtil.openOrImportAsync(projectFile, options)!!
     val module = when {
@@ -942,7 +943,7 @@ class DirtyFilesQueueTest {
         IndexingTestUtil.suspendUntilIndexesAreReady(project)
       }
       IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
-      IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
+      shouldDumpInUnitTestMode = false
       FileUtil.deleteRecursively(project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir))
       SystemProperties.setProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", "false")
       res
