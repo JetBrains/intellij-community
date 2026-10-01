@@ -194,7 +194,7 @@ options, so the IDE's Bazel plugin can debug it. See `community/build/dev-dist-t
         "data": attr.label_list(allow_files = True, doc = "Extra runfiles of the launcher."),
         "before_run": attr.label(executable = True, cfg = "target", doc = "An executable the launcher runs in the workspace before the IDE, and fails with."),
         "home": attr.string(mandatory = True, doc = "The workspace-relative directory under which each launch links its home, under `out/dev-data`."),
-        "_launcher": attr.label(default = Label("//build/dev-dist-tools/bins/dev-launcher"), executable = True, cfg = "target"),
+        "_launcher": attr.label(default = Label("//build/dev-dist-tools/bins/dev-launcher:dev-launcher_opt"), executable = True, cfg = "target"),
         "_windows": attr.label(default = Label("@platforms//os:windows")),
     },
 )

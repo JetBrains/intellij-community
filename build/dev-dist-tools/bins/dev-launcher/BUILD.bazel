@@ -1,3 +1,15 @@
 load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
+load("//build/rust-tools:defs.bzl", "optimized_binary")
 
 dev_dist_rust_crate(name = "dev-launcher")
+
+# `intellij_dev_launcher` and the `local_home_tool` of `PreBuiltDevMain` run this file, `dev-launcher_opt/dev-launcher`:
+# the binary, always optimized. The rule links its own `<row>` to this file and writes `<row>.launch.json` beside that
+# link, so the launcher finds its manifest and runfiles by the path that `bazel run` starts. The unit test stays on
+# `:dev-launcher`.
+optimized_binary(
+    name = "dev-launcher_opt",
+    binary = ":dev-launcher",
+    binary_name = "dev-launcher",
+    visibility = ["//visibility:public"],
+)

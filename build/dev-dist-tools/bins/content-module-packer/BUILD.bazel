@@ -1,6 +1,17 @@
 load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
+load("//build/rust-tools:defs.bzl", "optimized_binary")
 
 dev_dist_rust_crate(
     name = "content-module-packer",
     closure = True,
+)
+
+# `./build/dev-dist.cmd replay` runs this file, `content-module-packer_opt/content-module-packer`: the binary in `opt`,
+# the compilation mode of the exec configuration in which the build runs the packer. The unit test stays on
+# `:content-module-packer`.
+optimized_binary(
+    name = "content-module-packer_opt",
+    binary = ":content-module-packer",
+    binary_name = "content-module-packer",
+    visibility = ["//visibility:public"],
 )

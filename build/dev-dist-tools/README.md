@@ -66,8 +66,9 @@ cd community && ./bazel.cmd test //build/dev-dist-tools/...
   `bazel test` reports them as skipped. The clippy tests of the ultimate tools run from the ultimate root.
 - The fingerprint of `//build:idea_air_dist` and `./build/dev-dist.cmd snapshot diff` guard a change of the composed
   bytes. The validation spec states them.
-- `./build/dev-dist.cmd` runs `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`, the binary built in `opt`. The
-  unit test of `dev-dist` stays on the `rust_binary`.
+- `./build/dev-dist.cmd` runs `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`, the binary built in `opt`. A row
+  launcher and `PreBuiltDevMain` run `bins/dev-launcher:dev-launcher_opt`, and `replay` runs
+  `bins/content-module-packer:content-module-packer_opt`. The unit test of each binary stays on the `rust_binary`.
 
 ### The Windows gate
 
