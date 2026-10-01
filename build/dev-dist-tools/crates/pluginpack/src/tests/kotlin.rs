@@ -73,7 +73,6 @@ pub(crate) struct KotlinPreparedManifest {
 pub(crate) struct KotlinJarWriter {
     pub(crate) manifest: String,
     pub(crate) merge_entities: bool,
-    pub(crate) directory_entries: bool,
 }
 
 #[derive(Clone, Default)]
@@ -175,9 +174,6 @@ fn asset_json(asset: &KotlinPlanAsset) -> Value {
             writer["manifest"] = json!(recipe.writer.manifest);
         }
         writer["mergeEntities"] = json!(recipe.writer.merge_entities);
-        if recipe.writer.directory_entries {
-            writer["directoryEntries"] = json!(true);
-        }
         let sources: Vec<Value> = recipe.sources.iter().map(source_json).collect();
         value["recipe"] = json!({"sources": sources, "writer": writer});
     }
@@ -440,7 +436,8 @@ pub(crate) fn kotlin_layout_signature(plan: &KotlinPlanFile) -> String {
             };
             stream.put_string(manifest);
             stream.put_boolean(recipe.writer.merge_entities);
-            stream.put_boolean(recipe.writer.directory_entries);
+            // The slot of the retired directory-entries flag, as the Kotlin signature keeps it.
+            stream.put_boolean(false);
             stream.put_boolean(false);
             stream.put_string("");
         }
@@ -823,7 +820,6 @@ fn kotlin_layout_materialization_matches_the_transforms() {
                         writer: KotlinJarWriter {
                             manifest: "drop".to_owned(),
                             merge_entities: true,
-                            ..KotlinJarWriter::default()
                         },
                     }),
                     ..KotlinPlanAsset::default()

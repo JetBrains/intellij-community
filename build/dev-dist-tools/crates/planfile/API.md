@@ -31,8 +31,7 @@ generated catalogue does. A plan author who needs a new shape updates the corpus
 | a tree `native-tree:<module>` whose module has no reused natives jar | requires its reused natives jar |
 | a jar source of the kind `zip`, or a kind with another filter than its one filter | the kind, or the filter |
 | a source option other than `patch`, and a `file` source without `patch` and an entry | the entry and the options |
-| `preparedManifest`, and the writer keys `rewriteBootClassPath` and `outputName` | unknown field |
-| the writer key `directoryEntries` with `true`; `false`, `null` and an absent key pass | the destination and `directoryEntries` |
+| `preparedManifest`, and the writer keys `rewriteBootClassPath`, `outputName` and `directoryEntries` | unknown field |
 | a writer manifest other than `single-meaningful-source`, `keep` and `drop` | unknown variant |
 | `preparationRoots`, `alwaysRun`, and every field of a Kotlin-executed operation | unknown field |
 | an operation kind other than `layout-assets`, for example the retired `module-filter` | the kind |

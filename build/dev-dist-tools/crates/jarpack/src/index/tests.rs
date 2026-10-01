@@ -2,7 +2,6 @@
 
 use crate::MANIFEST_ENTRY_NAME;
 use crate::index::{IkvEntry, IndexBuilder};
-use crate::writer::DirectoryMode;
 use xxh3::hash_bytes;
 
 #[test]
@@ -98,12 +97,12 @@ fn payload_size_matches_what_payload_writes() {
 }
 
 #[test]
-fn all_directories_include_class_ancestors_in_java_order() {
+fn sorted_directories_skip_class_ancestors_and_use_java_order() {
     let mut builder = IndexBuilder::new();
-    builder.directory_mode = DirectoryMode::All;
     for name in [
-        "z/\u{fffd}/Value.class",
-        "z/\u{10437}/Value.class",
+        "z/\u{fffd}/value.txt",
+        "z/\u{10437}/value.txt",
+        "classes/Value.class",
         "META-INF/MANIFEST.MF",
         "ignored/package.html",
     ] {

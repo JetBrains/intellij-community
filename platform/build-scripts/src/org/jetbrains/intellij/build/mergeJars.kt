@@ -40,17 +40,16 @@ internal interface NativeFileHandler {
 }
 
 fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
-  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, addDirEntries = false, compress = compress)
+  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, compress = compress)
 }
 
 internal fun buildJar(
   targetFile: Path,
   sources: Collection<Source>,
   nativeFileHandler: NativeFileHandler?,
-  addDirEntries: Boolean,
   compress: Boolean = false,
 ) {
-  val packageIndexBuilder = if (compress) null else PackageIndexBuilder(if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
+  val packageIndexBuilder = if (compress) null else PackageIndexBuilder(AddDirEntriesMode.NONE)
   Files.createDirectories(targetFile.parent)
   ZipFileWriter(
     zipWriter(targetFile, packageIndexBuilder),

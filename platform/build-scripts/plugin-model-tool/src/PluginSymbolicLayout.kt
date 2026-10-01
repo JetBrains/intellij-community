@@ -278,7 +278,7 @@ class PluginSymbolicJarAssembly {
         val asset = PluginPackingAsset(
           destination = destination,
           inputs = sources.map { it.input }.distinct(),
-          recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true, directoryEntries = jar.testOutput)),
+          recipe = CanonicalJarRecipe(sources = sources, writer = JarWriterRecipe(mergeEntities = true)),
         )
         listOf(resolvePluginSymbolicManifest(asset, preparedSourceManifests, libraryFileCounts, reportGap))
       }

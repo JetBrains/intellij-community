@@ -42,7 +42,6 @@ DevPluginInputsInfo = provider(
     doc = "The compiled inputs of one simple plugin, resolved in the neutral product configuration.",
     fields = {
         "module_jars": "dict of JPS module name to its output jar `File`. A test-only module maps to its test jar.",
-        "test_modules": "tuple of the JPS module names `test_module_jars` names. A jar that merges one has directory entries.",
         "libraries": "dict of library token to `struct(label, jars)`. The token is the label string the plugin's `BUILD.bazel` writes.",
         "content_jars": """dict of JPS module name to `struct(jar, metadata, member_modules, library_jars)`: the jar a
         `content_module_jar` target packed, and what it merges, see `ContentModuleJarInfo`.""",
@@ -63,7 +62,6 @@ def _dev_plugin_inputs_impl(ctx):
 
     # A test jar label is a `.jar` output, as the complex chain names it in `artifact_inputs`. `module_output_jar` looks
     # for `<label name>.jar` and misses it, so the rule reads the one file of the label, as `libraries` does for a jar file.
-    test_modules = []
     for target, name in ctx.attr.test_module_jars.items():
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1 or not files[0].basename.endswith(".jar"):
@@ -71,7 +69,6 @@ def _dev_plugin_inputs_impl(ctx):
         if name in module_jars:
             fail("module '%s' is named twice" % name, attr = "test_module_jars")
         module_jars[name] = files[0]
-        test_modules.append(name)
 
     libraries = {}
     for target, token in ctx.attr.libraries.items():
@@ -118,7 +115,6 @@ def _dev_plugin_inputs_impl(ctx):
         DefaultInfo(files = depset()),
         DevPluginInputsInfo(
             module_jars = module_jars,
-            test_modules = tuple(test_modules),
             libraries = libraries,
             content_jars = content_jars,
             files = files,
@@ -334,10 +330,7 @@ def _dev_plugin_impl(ctx):
         library_jars = merge_order_jars(library_entries)
         has_main = main_module in module_names
 
-        # `JarPackager` adds directory entries to a jar that merges a test-only module, and the legacy bytes stay.
         extra_flags = ["merge-entities=true"]
-        if any([name in inputs.test_modules for name in module_names]):
-            extra_flags.append("directory-entries=true")
         output = ctx.actions.declare_file(ctx.label.name + "/" + destination)
         metadata = ctx.actions.declare_file(ctx.label.name + ".metadata/" + destination + ".json")
         jar_spans = declare_spans(ctx, ctx.label.name + "/" + destination[:-len(".jar")])
@@ -550,8 +543,7 @@ def dev_plugin(
         plugin_directory: `plugins/<directory>`.
         modules: dict of module target to JPS module name, every module a jar merges except a test-only one.
         test_module_jars: dict of test jar label to JPS module name, every test-only module a jar merges. The label is
-            the `_test_lib.jar` output, so the component does not become `testonly`. A jar that merges such a module
-            has directory entries.
+            the `_test_lib.jar` output, so the component does not become `testonly`.
         libraries: the library container and jar file labels `jars` names, as the same strings.
         content_module_jars: the `content_module_jar` targets of the content modules no jar merges.
         jars: destination to source tokens, see `_dev_plugin`.

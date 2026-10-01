@@ -9,7 +9,6 @@ use anyhow::{Context as _, Result, anyhow, bail};
 use crate::merge::{ManifestMode, MergeSpec, Source};
 use crate::nativelib;
 use crate::natives::{NativeSpec, NativeTree};
-use crate::writer::DirectoryMode;
 
 /// A parsed flag file: the groups in file order, and the span file of the run.
 #[derive(Clone, Debug, Default)]
@@ -38,10 +37,7 @@ pub struct FlagFile {
 ///
 /// The parser takes only the forms that the Starlark rules and the recipe replay write:
 ///
-/// - `keep-manifest=`, `merge-entities=`, `reject-native-entries=` and `directory-entries=` take only `true`. A
-///   producer omits a false flag.
-/// - `directory-entries=true` writes a directory entry for every directory, as [`DirectoryMode::All`] does. `dev_plugin`
-///   states it for a jar that merges a test-only module.
+/// - `keep-manifest=`, `merge-entities=` and `reject-native-entries=` take only `true`. A producer omits a false flag.
 /// - `source-manifest=` takes only `coverage-agent`.
 /// - A path has no `.` and no `..` component, so the parser compares the paths as they are written. See
 ///   [`resolve_path`].
@@ -83,10 +79,6 @@ pub fn parse_flag_file(path: &Path, base_dir: &Path) -> Result<FlagFile> {
         match option {
             "keep-manifest" => spec.keep_manifest = parse_true(option, value)?,
             "merge-entities" => spec.merge_entities = parse_true(option, value)?,
-            "directory-entries" => {
-                parse_true(option, value)?;
-                spec.directory_mode = DirectoryMode::All;
-            }
             "trace-file" => {
                 // A run writes one trace, so two groups with different destinations have no answer. The flag file of
                 // an action holds one group. A flag file made by hand from many command lines can hold two. If every

@@ -47,7 +47,6 @@ fn module_filter_plan(manifest: &str, prepared_manifest: Option<KotlinPreparedMa
                 writer: KotlinJarWriter {
                     manifest: manifest.to_owned(),
                     merge_entities: true,
-                    ..KotlinJarWriter::default()
                 },
             }),
             ..KotlinPlanAsset::default()
@@ -185,7 +184,6 @@ fn layout_assets_beside_a_raw_copy_tree_plan() -> KotlinPlanFile {
                     writer: KotlinJarWriter {
                         manifest: "drop".to_owned(),
                         merge_entities: true,
-                        ..KotlinJarWriter::default()
                     },
                 }),
                 ..KotlinPlanAsset::default()

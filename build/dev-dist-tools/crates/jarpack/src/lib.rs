@@ -26,4 +26,4 @@ pub use merge::{ManifestMode, MergeOptions, MergeReport, MergeSpec, Source};
 pub use natives::{NativeSpec, NativeTree};
 pub use pack::duplicate_line;
 pub use reader::{Entry, Jar};
-pub use writer::{DirectoryMode, Writer};
+pub use writer::Writer;

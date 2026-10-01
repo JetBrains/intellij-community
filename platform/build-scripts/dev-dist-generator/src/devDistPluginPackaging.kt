@@ -74,7 +74,7 @@ internal class DevDistSimplePackaging(
   @JvmField val executableFiles: List<String>,
   /**
    * The module tokens that name a test-only module, in token order. The jar of such a module is its `_test_lib.jar`
-   * output, and a jar that merges one has directory entries.
+   * output.
    */
   @JvmField val testModules: List<String>,
 ) {
@@ -100,12 +100,6 @@ internal fun derivedPluginDirectoryName(mainModule: String): String = mainModule
 private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
 
 /**
- * The writer of a jar that merges a test-only module: the default writer with directory entries. `JarPackager` adds
- * directory entries to such a jar, and the dev distribution keeps its bytes.
- */
-private val TEST_OUTPUT_WRITER = JarWriterRecipe(mergeEntities = true, directoryEntries = true)
-
-/**
  * Classifies one folded plan as simple, or returns `null` for a plugin that keeps its plan file.
  *
  * Simple means: one neutral record, no preparation, every asset a jar of mode 420 on the classpath or a plain copy, the
@@ -115,8 +109,8 @@ private val TEST_OUTPUT_WRITER = JarWriterRecipe(mergeEntities = true, directory
  * A plain copy is a `withResource*` file or directory, or a one-file layout callback, see [plainCopy].
  * No destination sits below another, because the rule refuses a copy that overlaps a jar or another copy.
  *
- * A jar that merges a test-only module of the catalogue takes [TEST_OUTPUT_WRITER] instead of the default writer. The
- * index must name the test jar of that module. A plugin with such a module is cross-half.
+ * A jar can merge a test-only module of the catalogue. The index must name the test jar of that module. A plugin with
+ * such a module is cross-half.
  *
  * [baseline] says whether the product is in the baseline residue class of the plugin. A divergent product states its
  * packaging in its product package, which lists every reused jar, so its reuse set may cover fewer content modules than
@@ -208,8 +202,7 @@ internal fun classifySimplePluginPackaging(
       }
     }
     if (tokens.isEmpty()) return null
-    val writer = if (tokens.any { it in testModules }) TEST_OUTPUT_WRITER else DEFAULT_WRITER
-    if (recipe.writer != writer) return null
+    if (recipe.writer != DEFAULT_WRITER) return null
     if (hasDescriptor) descriptorJars++
     jars.put(asset.destination, tokens)
   }

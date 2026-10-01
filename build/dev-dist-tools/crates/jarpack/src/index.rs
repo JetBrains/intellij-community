@@ -6,12 +6,11 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
 use crate::MANIFEST_ENTRY_NAME;
-use crate::writer::DirectoryMode;
 use anyhow::{Result, bail};
 use xxh3::{hash_bytes, hash_chars};
 
-/// Collects the `__index__` entry. It follows `PackageIndexBuilder` and `IkvIndexBuilder` in `zip/src`. The default
-/// mode puts the directories into the index and writes no zip entry for them.
+/// Collects the `__index__` entry. It follows `PackageIndexBuilder` and `IkvIndexBuilder` in `zip/src`. It puts the
+/// directories into the index, and the writer writes no zip entry for them.
 ///
 /// Two things here decide bytes, and each use site states them. One is the hash form of each field. The other is the
 /// sort order of the arrays.
@@ -30,7 +29,6 @@ pub(crate) struct IndexBuilder {
     pub(crate) resource_packages: HashSet<i64>,
     pub(crate) dirs_to_register: HashSet<String>,
     pub(crate) dir_order: Vec<String>,
-    pub(crate) directory_mode: DirectoryMode,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -51,7 +49,6 @@ impl IndexBuilder {
             resource_packages: HashSet::new(),
             dirs_to_register: HashSet::new(),
             dir_order: Vec::new(),
-            directory_mode: DirectoryMode::None,
         }
     }
 
@@ -84,11 +81,8 @@ impl IndexBuilder {
             None => 0,
         };
         if name.ends_with(".class") {
-            self.class_packages.insert(package_hash);
-            if self.directory_mode == DirectoryMode::All {
-                self.register_dirs(name);
-            }
             // `AddDirEntriesMode.NONE` never registers a class directory, so there is nothing else to do.
+            self.class_packages.insert(package_hash);
             return;
         }
         self.resource_packages.insert(package_hash);

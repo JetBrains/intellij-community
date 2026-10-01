@@ -12,13 +12,13 @@
 
 use zip::{CompressionMethod, HasZipMetadata};
 
+use crate::Writer;
 use crate::index::IndexBuilder;
 use crate::tests::testjar::{entry_names, open_packed};
 use crate::writer::LOCAL_HEADER_SIZE;
-use crate::{DirectoryMode, Writer};
 
-fn write(mode: DirectoryMode, names: &[&str]) -> (IndexBuilder, Vec<u8>) {
-    let mut writer = Writer::with_directory_mode(Vec::new(), mode);
+fn write(names: &[&str]) -> (IndexBuilder, Vec<u8>) {
+    let mut writer = Writer::new(Vec::new());
     for name in names {
         writer.add(name, name.as_bytes(), crc32fast::hash(name.as_bytes()), true).unwrap();
     }
@@ -86,7 +86,7 @@ fn writer_points_the_end_record_comment_into_the_index() {
     // Both entries are classes on purpose: a resource also registers its directory, and a registered directory takes an
     // entry-table slot of its own. See the index tests.
     let names = ["com/example/Service.class", "com/example/Other.class"];
-    let (_, data) = write(DirectoryMode::None, &names);
+    let (_, data) = write(&names);
     let pointer = index_pointer_of(&data);
     assert!(
         pointer > 0 && (pointer as usize) < data.len(),
@@ -99,47 +99,22 @@ fn writer_points_the_end_record_comment_into_the_index() {
 }
 
 #[test]
-fn writer_directory_modes_match_kotlin_index_records() {
-    for mode in [DirectoryMode::None, DirectoryMode::All] {
-        let (index, data) = write(mode, &["classes/Value.class", "resources/nested/value.txt"]);
-        let directories: Vec<String> = entry_names(&data).into_iter().filter(|name| name.ends_with('/')).collect();
-        let want: Vec<&str> = match mode {
-            DirectoryMode::None => vec![],
-            DirectoryMode::All => vec!["classes/", "resources/", "resources/nested/"],
-        };
-        assert_eq!(directories, want, "{mode:?}");
-        for (position, entry) in index.entries.iter().enumerate() {
-            let name = index.name(position);
-            if ![b"classes".as_slice(), b"resources", b"resources/nested"].contains(&name) {
-                continue;
-            }
-            if mode == DirectoryMode::None {
-                assert!(
-                    entry.offset == 0 && entry.size == -1,
-                    "{mode:?}: a virtual directory record {entry:?}"
-                );
-            } else {
-                assert!(entry.offset == -1 && entry.size == 0, "{mode:?}: a real directory record {entry:?}");
-            }
+fn writer_writes_no_directory_record_and_indexes_resource_directories() {
+    let (index, data) = write(&["classes/Value.class", "resources/nested/value.txt"]);
+    let directories: Vec<String> = entry_names(&data).into_iter().filter(|name| name.ends_with('/')).collect();
+    assert!(directories.is_empty(), "the archive holds directory records {directories:?}");
+    let mut indexed: Vec<&[u8]> = Vec::new();
+    for (position, entry) in index.entries.iter().enumerate() {
+        let name = index.name(position);
+        if entry.size != -1 {
+            continue;
         }
-        assert_eq!(pointer_count(&data), index.entries.len() as u32, "{mode:?}");
-        let mut archive = open_packed(&data);
-        for i in 0..archive.len() {
-            let file = archive.by_index(i).unwrap();
-            if !file.name().ends_with('/') {
-                continue;
-            }
-            let data_offset = file.data_start().expect("a data offset") as usize;
-            let header = &data[data_offset - LOCAL_HEADER_SIZE - file.name().len()..];
-            assert!(
-                header[4..26].iter().all(|&byte| byte == 0),
-                "{mode:?}: a directory header is not zero"
-            );
-            assert_eq!(file.get_metadata().external_attributes, 0);
-            assert_eq!(file.get_metadata().flags, 0);
-            assert_eq!(file.crc32(), 0);
-        }
+        assert_eq!(entry.offset, 0, "a virtual directory record {entry:?}");
+        indexed.push(name);
     }
+    // The class directory gets no record. Each directory of the resource gets a virtual record.
+    assert_eq!(indexed, [b"resources".as_slice(), b"resources/nested"]);
+    assert_eq!(pointer_count(&data), index.entries.len() as u32);
 }
 
 #[test]
@@ -151,7 +126,7 @@ fn writer_rejects_long_names() {
 
 #[test]
 fn writer_writes_an_end_record_with_no_index_for_no_entry() {
-    let (_, data) = write(DirectoryMode::None, &[]);
+    let (_, data) = write(&[]);
     assert_eq!(data.len(), 27);
     assert_eq!(index_pointer_of(&data), -1);
 }

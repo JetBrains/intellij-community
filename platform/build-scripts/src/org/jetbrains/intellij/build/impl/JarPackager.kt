@@ -18,7 +18,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.NativeFileHandler
@@ -103,7 +102,6 @@ class JarPackager private constructor(
         isCodesignEnabled = false,
         dryRun = false,
         layout = null,
-        helper = packager.helper,
         context = context
       )
     }
@@ -159,7 +157,6 @@ class JarPackager private constructor(
         isCodesignEnabled = isCodesignEnabled,
         dryRun = dryRun,
         layout = layout,
-        helper = packager.helper,
         context = context,
       )
 
@@ -687,7 +684,6 @@ private fun buildJars(
   isCodesignEnabled: Boolean,
   dryRun: Boolean,
   layout: BaseLayout?,
-  helper: JarPackagerDependencyHelper,
   context: BuildContext,
 ): BuildAssetResult {
   checkAssetUniqueness(assets)
@@ -703,7 +699,6 @@ private fun buildJars(
       context = context,
       cache = cache,
       layout = layout,
-      helper = helper,
     )
   }
 
@@ -777,7 +772,6 @@ private fun buildAsset(
   context: BuildContext,
   cache: JarCacheManager,
   layout: BaseLayout?,
-  helper: JarPackagerDependencyHelper,
 ): BuildAssetResult {
   val includedModules = asset.includedModules
   val sources = assembleOrderedJarSources(
@@ -833,8 +827,7 @@ private fun buildAsset(
           }
 
           override fun produce(targetFile: Path) {
-            val addDirEntries = includedModules.any { helper.isTestPluginModule(moduleName = it.key.moduleName, module = null) }
-            buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = nativeFileHandler, addDirEntries = addDirEntries)
+            buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = nativeFileHandler)
           }
 
           override fun consumeInfo(source: Source, size: Int, hash: Long) {

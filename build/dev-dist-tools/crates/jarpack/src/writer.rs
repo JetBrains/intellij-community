@@ -19,18 +19,10 @@ const MAX_ENTRIES: usize = 65535;
 pub(crate) const INDEX_FORMAT_VERSION: u8 = 4;
 const BUFFER_SIZE: usize = 1 << 20;
 
-/// Controls which directories get archive records, and which get index records.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub enum DirectoryMode {
-    /// No directory record in the archive. The index holds a record for each directory of a non-class file.
-    #[default]
-    None,
-    /// An archive record and an index record for each directory of any file.
-    All,
-}
-
-/// Writes a distribution-shaped jar with STORED entries and a generated `__index__` as the last entry. The default mode
-/// writes no directory entry. A 5-byte end-record comment points into the index.
+/// Writes a distribution-shaped jar with STORED entries and a generated `__index__` as the last entry. A 5-byte
+/// end-record comment points into the index.
+///
+/// The archive holds no directory record. The index holds a record for each directory of a non-class file.
 ///
 /// It is not a general zip writer, and it must not become one. Each entry is known before it is written. So the layout
 /// is a pure function of the name, the size and the CRC of each entry. Every header field that a general writer fills
@@ -63,18 +55,12 @@ struct CdEntry {
 
 impl<W: Write> Writer<W> {
     pub fn new(out: W) -> Self {
-        Self::with_directory_mode(out, DirectoryMode::None)
-    }
-
-    pub fn with_directory_mode(out: W, mode: DirectoryMode) -> Self {
-        let mut index = IndexBuilder::new();
-        index.directory_mode = mode;
         Self {
             out: Some(BufWriter::with_capacity(BUFFER_SIZE, out)),
             offset: 0,
             names: Vec::new(),
             entries: Vec::new(),
-            index,
+            index: IndexBuilder::new(),
         }
     }
 
@@ -142,30 +128,7 @@ impl<W: Write> Writer<W> {
         reason = "the offsets stay below 4 GiB through `advance`, the count below `MAX_ENTRIES`, and the index pointer -1 is the u32 the reader expects"
     )]
     pub(crate) fn finish(mut self) -> Result<(W, u64, IndexBuilder)> {
-        if self.index.directory_mode == DirectoryMode::None {
-            self.index.finish()?;
-        } else {
-            for directory in self.index.sorted_directories() {
-                let name_start = self.names.len();
-                self.names.extend_from_slice(directory.as_bytes());
-                self.names.push(b'/');
-                let header_offset = self.offset;
-                self.write_local_header(name_start, directory.len() + 1, 0, 0)?;
-                let entry = IkvEntry {
-                    key: hash_bytes(directory.as_bytes()),
-                    offset: -1,
-                    size: 0,
-                };
-                self.index.add(entry, directory.as_bytes())?;
-                self.entries.push(CdEntry {
-                    name_start,
-                    name_len: directory.len() + 1,
-                    crc: 0,
-                    size: 0,
-                    header_offset,
-                });
-            }
-        }
+        self.index.finish()?;
 
         let mut index_data_end: i32 = -1;
         if !self.entries.is_empty() {

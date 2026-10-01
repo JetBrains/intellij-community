@@ -55,7 +55,6 @@ data class JarSourceRecipe(
 data class JarWriterRecipe(
   @JvmField val manifest: String = "single-meaningful-source",
   @JvmField val mergeEntities: Boolean = false,
-  @JvmField val directoryEntries: Boolean = false,
   @JvmField val rewriteBootClassPath: Boolean = false,
   @JvmField val outputName: String = "",
   /**
@@ -355,7 +354,8 @@ fun pluginPackingLayoutSignature(
         }
         putString(recipe.writer.manifest)
         putBoolean(recipe.writer.mergeEntities)
-        putBoolean(recipe.writer.directoryEntries)
+        // The slot of the retired directory-entries flag. It keeps every checked-in plan signature stable.
+        putBoolean(false)
         putBoolean(recipe.writer.rewriteBootClassPath)
         putString(recipe.writer.outputName)
       }

@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context as _, Result, bail};
 use distpath::path_identity;
 use filemeta::{Entry, EntryType};
-use jarpack::{DirectoryMode, ManifestMode, MergeOptions, MergeSpec};
+use jarpack::{ManifestMode, MergeOptions, MergeSpec};
 use planfile::contract::{ArtifactKind, Asset, AssetKind, Manifest, Operation, Producer, Reference, Source};
 
 use crate::layout::LayoutScratch;
@@ -231,8 +231,6 @@ impl Execution {
                 } => {
                     let mut spec = MergeSpec {
                         merge_entities: *merge_entities,
-                        // The simple tier writes the directory entries of a test jar through the flag file.
-                        directory_mode: DirectoryMode::None,
                         validate_entry_names: true,
                         ..MergeSpec::default()
                     };

@@ -22,9 +22,9 @@ them. The table lists what the Go packer supported and this crate refuses.
 | a remainder entry at the name of an independent file or native tree, at a parent of it, or below it | `conflicting output destination` or `conflicting output directory` |
 | a gzip resource source that is not a `.zip` or a `.jar` | `a gzip resource source is a zip or jar archive` |
 | a gzip resource entry that is not an `.xml` file, or that is a link | `unexpected file` |
-| a jar writer with `directoryEntries: true` | the `planfile` error `a jar writer states directoryEntries` |
+| a jar writer with `directoryEntries` | the `planfile` error ``unknown field `directoryEntries` `` |
 
-A jar operation writes no directory entries. The simple tier writes them for a test jar through the flag file.
+A jar operation writes no directory record. A directory of a non-class file is an index row of `__index__`.
 
 The Go distribution transport root `.distribution-root/` does not exist. Every asset is below the plugin directory,
 and the remainder writes only plugin files.

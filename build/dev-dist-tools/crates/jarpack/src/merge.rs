@@ -11,7 +11,7 @@ use anyhow::{Context as _, Result, bail};
 use crate::nativelib::{self, extension};
 use crate::natives::{NativeMerge, NativeSpec, file_name};
 use crate::reader::Jar;
-use crate::writer::{DirectoryMode, Writer};
+use crate::writer::Writer;
 use crate::{EntryFilter, MANIFEST_ENTRY_NAME};
 
 const ENTITIES_ENTRY_NAME: &str = "META-INF/listOfEntities.txt";
@@ -129,7 +129,6 @@ pub struct MergeSpec {
     pub merge_entities: bool,
     pub reject_native_entries: bool,
     pub metadata_file: Option<PathBuf>,
-    pub directory_mode: DirectoryMode,
     pub validate_entry_names: bool,
     /// The natives mode of the group, or `None`. See [`NativeSpec`].
     pub native: Option<NativeSpec>,
@@ -199,7 +198,7 @@ impl MergeSpec {
         };
         let file = HashingWrite::new(File::create(output).with_context(|| output.display().to_string())?);
 
-        let mut writer = Writer::with_directory_mode(file, self.directory_mode);
+        let mut writer = Writer::new(file);
         let mut seen: HashSet<&str> = HashSet::new();
         let mut duplicates: Vec<String> = Vec::new();
         let mut entities: Vec<String> = Vec::new();

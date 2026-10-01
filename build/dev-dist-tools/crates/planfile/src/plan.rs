@@ -183,8 +183,6 @@ struct RawJarSource {
 struct RawJarWriter {
     manifest: Option<ManifestPolicy>,
     merge_entities: Option<bool>,
-    /// The reader keeps the key to refuse `true`. No plan file states it.
-    directory_entries: Option<bool>,
     native_lib: Option<String>,
 }
 
@@ -326,9 +324,6 @@ impl RawJarRecipe {
             bail!("a jar recipe requires ordered sources");
         }
         let writer = self.writer.unwrap_or_default();
-        if writer.directory_entries == Some(true) {
-            bail!("a jar writer states directoryEntries; the packer writes no directory entries into a plan jar");
-        }
         let native_lib = match writer.native_lib {
             Some(native_lib) if native_lib.is_empty() => bail!("a jar writer states an empty native library"),
             native_lib => native_lib.unwrap_or_default(),

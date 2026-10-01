@@ -380,7 +380,12 @@ fn read_refuses_malformed_forms() {
         (
             "directory entries",
             writer(r#"{"directoryEntries": true}"#),
-            "lib/x.jar: a jar writer states directoryEntries; the packer writes no directory entries into a plan jar",
+            "unknown field `directoryEntries`",
+        ),
+        (
+            "false directory entries",
+            writer(r#"{"directoryEntries": false}"#),
+            "unknown field `directoryEntries`",
         ),
         (
             "a Kotlin operation kind",
@@ -529,7 +534,7 @@ fn read_treats_null_as_absent_for_an_optional_field() {
       "recipe": {"sources": [{"input": "x", "kind": "module", "filter": "module-v1", "entry": null}], "writer": null},
       "mode": null, "kind": null, "classPath": null},
     {"destination": "lib/y.jar", "recipe": {"sources": [{"input": "y", "kind": "module", "filter": "module-v1"}],
-      "writer": {"manifest": null, "mergeEntities": null, "directoryEntries": null, "nativeLib": null}}}"#,
+      "writer": {"manifest": null, "mergeEntities": null, "nativeLib": null}}}"#,
         &[
             r#""operations": [{"id": "n", "kind": "layout-assets", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep",
           "layoutAssets": {"format": "tree", "root": null, "assets": [{"destination": "", "sources": [0], "transform": null}]}}]"#,

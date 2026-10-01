@@ -17,7 +17,7 @@ plan files through pluginpack. Each other input fails with an error that names i
 
 | Input | Accepted | Refused |
 | --- | --- | --- |
-| `keep-manifest=`, `merge-entities=`, `reject-native-entries=`, `directory-entries=` | `true` | `false` and every other value |
+| `keep-manifest=`, `merge-entities=`, `reject-native-entries=` | `true` | `false` and every other value |
 | `source-manifest=` | `coverage-agent`, after a `module=` or a `library=` line | `keep`, `drop`, `rewrite-boot-class-path` |
 | A flag-file path | a path without a `.` or `..` component | a path with one. The Go parser cleaned it. |
 | `file=<entry name>=<path>` | a nonempty name and path. The recipe replay writes it for a single-file source. | no `=` after the name, or an empty part |
@@ -27,6 +27,9 @@ plan files through pluginpack. Each other input fails with an error that names i
 | `META-INF/listOfEntities.txt` with `merge_entities` | UTF-8 text | other bytes. The Go trim stopped at the first bad byte. |
 | A native entry in `nativelib::select` | ASCII | other names. The family match folds ASCII case only. |
 | The native tree before the pack | an empty directory | an absent directory, or a directory that holds an entry |
+
+The packer writes no directory record, and it refuses `directory-entries=` as an unknown option. A directory of a
+non-class file is an index row of `__index__`.
 
 The one-shot mode with many `output=` groups stays, because the profiling method of the README uses it. No Starlark rule
 writes a `file=` line. The recipe replay of `build/dev-dist` writes one, so the form stays.
