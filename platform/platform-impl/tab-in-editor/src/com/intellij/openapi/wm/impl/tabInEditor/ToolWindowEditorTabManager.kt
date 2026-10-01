@@ -321,6 +321,7 @@ class ToolWindowEditorTabManager(
    *
    * @param editorsWithProviders the editors of [file] and the providers that created them
    */
+  @ApiStatus.Internal
   fun scheduleBackendMirrorSync(file: ToolWindowEditorTabFile, editorsWithProviders: List<FileEditorWithProvider>) {
     val editorWithProvider = editorsWithProviders.firstOrNull { it.fileEditor is ToolWindowEditorTabFileEditor } ?: return
     coroutineScope.launch {

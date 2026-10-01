@@ -322,6 +322,7 @@ object CoreModuleSets {
     module("intellij.platform.ide.fileChooser.universal")
     // intellij.platform.ide.impl opens tool window tabs in the editor through the service of this module
     module("intellij.platform.ide.tabInEditor")
+    module("intellij.platform.ide.tabInEditor.frontend")
     module("intellij.platform.threadDumpParser")
     module("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin
