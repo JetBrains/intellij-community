@@ -7,11 +7,13 @@ import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
-import java.io.IOError
+import java.nio.file.Files
 import java.util.function.Consumer
+import kotlin.io.path.extension
+import kotlin.io.path.pathString
 
 /**
  * Parses javac's output.
@@ -67,16 +69,16 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
         val note = line.substring(colonIndex1 + 1).trim()
         val javaFileExtensionIndex = note.indexOf(JAVA_EXTENSION)
         if (javaFileExtensionIndex > 0) {
-          val file = File(note.substring(0, javaFileExtensionIndex + JAVA_EXTENSION.length))
-          if (isFileSafely(file)) {
+          val path = note.substring(0, javaFileExtensionIndex + JAVA_EXTENSION.length).toNioPathOrNull()
+          if (path != null && Files.isRegularFile(path)) {
             val message = note.substring(javaFileExtensionIndex + JAVA_EXTENSION.length + 1)
-            val detailedMessage = amendNextInfoLinesIfNeeded("${file.path}:\n$message", reader)
+            val detailedMessage = amendNextInfoLinesIfNeeded("${path.pathString}:\n$message", reader)
             messageConsumer.accept(
               MessageEvent.builder(message, MessageEvent.Kind.INFO)
                 .withParentId(reader.parentEventId)
                 .withGroup(COMPILER_MESSAGES_GROUP)
                 .withDescription(detailedMessage)
-                .withFilePosition(FilePosition(file, 0, 0))
+                .withFilePosition(FilePosition(path, 0, 0))
                 .build()
             )
             return true
@@ -86,8 +88,8 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
 
       val colonIndex2 = line.indexOf(COLON, colonIndex1 + 1)
       if (colonIndex2 >= 0) {
-        val file = File(part1)
-        if (!isFileSafely(file)) {
+        val path = part1.toNioPathOrNull() ?: return false
+        if (!Files.isRegularFile(path)) {
           // the part one is not a file path.
           return false
         }
@@ -110,7 +112,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           }
 
           // Only slurp up line pointer (^) information if this is required source files
-          if (!isRelatedFile(file)) {
+          if (!fileExtensions.any { FileUtil.namesEqual(path.extension, it) }) {
             return false
           }
 
@@ -148,7 +150,7 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
                 .withParentId(reader.parentEventId)
                 .withGroup(COMPILER_MESSAGES_GROUP)
                 .withDescription(detailedMessage)
-                .withFilePosition(FilePosition(file, lineNumber - 1, column))
+                .withFilePosition(FilePosition(path, lineNumber - 1, column))
                 .build()
             )
             return true
@@ -171,11 +173,6 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
     return false
   }
 
-  private fun isRelatedFile(file: File): Boolean {
-    val filePath = file.path
-    return fileExtensions.any { FileUtilRt.extensionEquals(filePath, it) }
-  }
-
   private companion object {
     private const val COLON = ':'
 
@@ -188,16 +185,6 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
 
     private val COMPILER_MESSAGES_GROUP: @BuildEventsNls.Title String
       get() = LangBundle.message("build.event.title.compiler")
-
-    private fun isFileSafely(file: File): Boolean {
-      return try {
-        file.isFile
-      }
-      catch (_: IOError) {
-        // e.g. "java.io.IOException: Unable to get working directory of drive 'W'"
-        false
-      }
-    }
 
     private fun amendNextInfoLinesIfNeeded(str: String, reader: BuildOutputInstantReader): @NlsSafe String = buildString {
       append(str)
