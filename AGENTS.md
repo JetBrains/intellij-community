@@ -12,6 +12,7 @@
 ## Language
 
 - Read [Code Style](./.agents/skills/code-style/SKILL.md) before writing or reviewing Kotlin or Java.
+- Read [Rust Code Style](./.agents/skills/rust-code-style/SKILL.md) before writing or reviewing Rust.
 
 ## Writing
 

@@ -129,6 +129,11 @@ has the copy.
    the ultimate root.
 7. Run `cargo fmt` once over the workspace, in a commit without other changes.
 
+## The idioms
+
+The [Rust Code Style](../../.agents/skills/rust-code-style/SKILL.md) skill states how the code of a workspace is
+written: the error model and the command line by audience, the crate rule, the test layout, and the versions.
+
 ## The rules of the table
 
 - `clippy::pedantic` is on as a group. A pedantic lint the workspaces do not follow gets an `allow` with a
