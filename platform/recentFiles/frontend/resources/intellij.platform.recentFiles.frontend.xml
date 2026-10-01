@@ -45,6 +45,7 @@
                  description="A time period to skip typing events before requesting a switcher/recent files model update, measured in millis"/>
 
     <postStartupActivity implementation="com.intellij.platform.recentFiles.frontend.model.RecentFileModelSynchronizer"/>
+    <recentFiles.excluder implementation="com.intellij.platform.recentFiles.frontend.ToolWindowEditorTabRecentFilesExcluder"/>
   </extensions>
   <actions resource-bundle="messages.ActionsBundle">
     <group id="SwitcherAndRecentFiles">
