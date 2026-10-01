@@ -478,7 +478,7 @@
     <!-- endregion -->
 
     <!-- region nested: duplicates -->
-    <module name="intellij.platform.duplicates.analysis" loading="embedded"/>
+    <module name="intellij.platform.duplicates.analysis"/>
     <!-- endregion -->
 
     <!-- region direct modules -->

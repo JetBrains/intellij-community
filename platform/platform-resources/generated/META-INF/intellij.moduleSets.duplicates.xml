@@ -4,6 +4,6 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <module name="intellij.platform.duplicates.analysis" loading="embedded"/>
+    <module name="intellij.platform.duplicates.analysis"/>
   </content>
 </idea-plugin>

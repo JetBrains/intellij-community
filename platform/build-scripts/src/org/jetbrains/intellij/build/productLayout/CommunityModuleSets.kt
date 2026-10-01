@@ -274,7 +274,7 @@ object CommunityModuleSets {
    * Duplicates analysis modules.
    */
   fun duplicates(): ModuleSet = moduleSet("duplicates") {
-    embeddedModule("intellij.platform.duplicates.analysis")
+    module("intellij.platform.duplicates.analysis")
   }
 
   /**

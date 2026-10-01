@@ -408,6 +408,9 @@ DEV_DIST_MODULE_SETS = {
         packed = {
             "intellij.platform.duplicates.analysis": "//platform/duplicates-analysis:duplicates-analysis_content_module_jar",
         },
+        module_system_loaded = [
+            "intellij.platform.duplicates.analysis",
+        ],
     ),
     "intellij.moduleSets.essential": struct(
         modules = [
