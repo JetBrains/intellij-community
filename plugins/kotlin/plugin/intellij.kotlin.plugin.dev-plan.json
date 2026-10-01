@@ -572,6 +572,26 @@
             }
         },
         {
+            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.compiler.common",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "destination": "lib/intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin.jar",
             "recipe": {
                 "sources": [
@@ -1082,26 +1102,6 @@
             }
         },
         {
-            "destination": "lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.kotlinc.kotlin.compiler.common",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
             "destination": "lib/kotlin-plugin.jar",
             "recipe": {
                 "sources": [
@@ -1113,11 +1113,6 @@
                         "options": [
                             "patch"
                         ]
-                    },
-                    {
-                        "input": "layout-assets:layout-patcher:0:output",
-                        "kind": "prepared",
-                        "filter": "prepared"
                     },
                     {
                         "input": "intellij.kotlin.plugin",
@@ -1146,7 +1141,6 @@
                     }
                 ],
                 "writer": {
-                    "manifest": "drop",
                     "mergeEntities": true
                 }
             }
@@ -1206,36 +1200,6 @@
         }
     ],
     "operations": [
-        {
-            "id": "layout-assets:layout-patcher:0",
-            "kind": "layout-assets",
-            "inputs": [
-                {
-                    "artifact": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"
-                }
-            ],
-            "output": "layout-assets:layout-patcher:0:output",
-            "manifest": "keep",
-            "layoutAssets": {
-                "format": "entries",
-                "assets": [
-                    {
-                        "destination": "",
-                        "sources": [
-                            0
-                        ],
-                        "transform": {
-                            "kind": "archive-tree",
-                            "mappings": [
-                                {
-                                    "pattern": "META-INF/extensions/**"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
         {
             "id": "layout-assets:resource-generator:0",
             "kind": "layout-assets",

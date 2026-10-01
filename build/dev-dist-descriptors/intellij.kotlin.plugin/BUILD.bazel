@@ -195,7 +195,6 @@ dev_dist_plugin_descriptor(
         "@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base": "META-INF/analysis-api/analysis-api-impl-base.xml",
         "@lib//:libraries-kotlinc-analysis-api-k2-kotlinc-analysis-api-k2": "META-INF/analysis-api/analysis-api-fir.xml",
         "@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface": "META-INF/analysis-api/analysis-api-platform-interface.xml",
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common": "META-INF/extensions/compiler.xml",
         "@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir": "META-INF/analysis-api/low-level-api-fir.xml",
         "@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes": "META-INF/analysis-api/symbol-light-classes.xml",
     },

@@ -184,6 +184,7 @@ dev_dist_plugin(
 
 dev_dist_complex_plugin(
     artifact_inputs = {
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common.jar": "intellij.libraries.kotlinc.kotlin.compiler.common",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin.jar": "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
         "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin.jar": "intellij.libraries.kotlinc.scripting.compiler.plugin",
         "//libraries/kotlinc/assignment-compiler-plugin:libraries-kotlinc-assignment-compiler-plugin.jar": "intellij.libraries.kotlinc.assignment.compiler.plugin",
@@ -206,7 +207,6 @@ dev_dist_complex_plugin(
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common.jar": "intellij.libraries.kotlinc.kotlin.scripting.common",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm.jar": "intellij.libraries.kotlinc.kotlin.scripting.jvm",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime.jar": "intellij.libraries.kotlinc.kotlin.script.runtime",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common.jar": "intellij.libraries.kotlinc.kotlin.compiler.common",
         "//plugins/kotlin/plugin:plugin.jar": "intellij.kotlin.plugin",
     },
     descriptor = "//build/dev-dist-descriptors/intellij.kotlin.plugin:intellij.kotlin.plugin_dev_descriptor",
@@ -363,6 +363,7 @@ dev_dist_complex_plugin(
         "//plugins/kotlin/jsr223:jsr223_content_module_jar",
     ],
     libraries = {
+        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
         "@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin": "@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin",
         "@lib//:libraries-kotlinc-scripting-compiler-plugin-kotlinc-scripting-compiler-plugin": "@lib//:libraries-kotlinc-scripting-compiler-plugin-kotlinc-scripting-compiler-plugin",
         "@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin": "@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin",
@@ -385,7 +386,6 @@ dev_dist_complex_plugin(
         "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common": "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
         "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm": "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
         "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime": "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-build-tools-api": "@lib//:kotlinc-kotlin-build-tools-api",
         "@lib//:kotlinc-kotlin-build-tools-cri-impl": "@lib//:kotlinc-kotlin-build-tools-cri-impl",
         "@lib//:kotlinc-kotlin-build-tools-impl": "@lib//:kotlinc-kotlin-build-tools-impl",
