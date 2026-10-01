@@ -293,6 +293,7 @@ fun deduceFast(deletes: String, inserts: String): List<Op> {
   return result
 }
 
+/** Deduce changes, and use the common suffix as the fallback resynchronization point. */
 @Suppress("NAME_SHADOWING")
 fun deduce(deletes: String, inserts: String): List<Op> {
   val result = ArrayList<Op>()
@@ -336,14 +337,11 @@ private fun commonChar(s1: String, s2: String): Pair<Int, Int> {
   if (nearestSimilarity != null)
     return nearestSimilarity
 
-  s2.withIndex().filter { (i, _) -> i % 10 == 0 }.forEach { (i2, c2) ->
-    val found = s1.withIndex().firstOrNull { (i1, c1) -> c1 == c2 && similarFromThere(s1, i1, s2, i2) }
-    if (found != null) {
-      return Pair(found.index, i2)
-    }
-  }
+  val commonSuffix = s1.commonSuffixWith(s2).length
+  if (commonSuffix == 0)
+    return Pair(s1.length, s2.length)
 
-  return Pair(s1.length, s2.length)
+  return Pair(s1.length - commonSuffix, s2.length - commonSuffix)
 }
 
 
