@@ -427,7 +427,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.pluginManager.shared.base",
             "intellij.platform.scopes",
             "intellij.platform.scopes.backend",
-            "intellij.platform.util.commonsLangV2Shim",
         ],
         nested = [
             "intellij.moduleSets.builtInServer",
@@ -455,7 +454,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.pluginManager.shared.base": "//platform/pluginManager/shared.base:shared.base_content_module_jar",
             "intellij.platform.scopes": "//platform/scopes:scopes_content_module_jar",
             "intellij.platform.scopes.backend": "//platform/scopes/backend:backend_content_module_jar",
-            "intellij.platform.util.commonsLangV2Shim": "//platform/util/commons-lang-v2-shim:commons-lang-v2-shim_content_module_jar",
         },
         module_system_loaded = [
             "intellij.platform.completion.backend",
@@ -478,7 +476,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.pluginManager.shared.base",
             "intellij.platform.scopes",
             "intellij.platform.scopes.backend",
-            "intellij.platform.util.commonsLangV2Shim",
         ],
         mode_refused = {
             "frontend": [

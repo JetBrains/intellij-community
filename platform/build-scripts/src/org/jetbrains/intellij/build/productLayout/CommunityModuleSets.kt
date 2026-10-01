@@ -153,8 +153,6 @@ object CommunityModuleSets {
     module("intellij.platform.completion.backend")
 
     moduleSet(builtInServer())
-
-    module("intellij.platform.util.commonsLangV2Shim")
   }
 
   /**

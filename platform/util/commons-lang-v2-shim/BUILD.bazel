@@ -1,12 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
-
-### auto-generated section `dev intellij.platform.util.commonsLangV2Shim` start
-content_module_jar(
-    libraries = ["@lib//:platform-util-commons_lang_v2_shim-commons-collections"],
-    module = ":commons-lang-v2-shim",
-)
-### auto-generated section `dev intellij.platform.util.commonsLangV2Shim` end
 
 ### auto-generated section `build intellij.platform.util.commonsLangV2Shim` start
 jvm_library(

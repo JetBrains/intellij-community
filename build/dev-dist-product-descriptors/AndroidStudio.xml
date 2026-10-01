@@ -69,7 +69,6 @@
     <module name="intellij.platform.completion.common"/>
     <module name="intellij.platform.completion.frontend"/>
     <module name="intellij.platform.completion.backend"/>
-    <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
 
     <!-- region essential.minimal -->
