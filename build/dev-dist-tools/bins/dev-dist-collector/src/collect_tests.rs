@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::collect::{explicit_files, platform_jars, validate_destinations};
-use crate::inventory::SourcedFile;
+use crate::inventory::{Classpath, JarRecord, SourcedFile};
 use crate::test_support::*;
 
 #[track_caller]
@@ -18,6 +18,10 @@ fn jar(source: &str, relative_path: &str) -> SourcedFile {
     SourcedFile::new(source, relative_path)
 }
 
+fn jar_record(source: &str, relative_path: &str) -> JarRecord {
+    JarRecord::Jar(jar(source, relative_path))
+}
+
 #[test]
 fn platform_jars_go_below_lib() {
     let _directory = WorkDir::new();
@@ -30,7 +34,7 @@ fn platform_jars_go_below_lib() {
     );
     assert_eq!(
         platform_jars("jars.json").unwrap(),
-        [jar("inputs/z.jar", "lib/z.jar"), jar("inputs/a.jar", "lib/ext/a.jar")]
+        [jar_record("inputs/z.jar", "lib/z.jar"), jar_record("inputs/a.jar", "lib/ext/a.jar")]
     );
     // The same jar name below two destinations is what the nested destinations are for, so it stays legal.
     write_file(
@@ -55,12 +59,12 @@ fn platform_jars_go_below_lib() {
     assert_eq!(
         platform_jars("jars.json").unwrap(),
         [
-            jar("inputs/intellij.libraries.jna.jar", "lib/intellij.libraries.jna.jar"),
-            SourcedFile {
-                tree: true,
-                ..jar("inputs/native", "lib/jna")
+            jar_record("inputs/intellij.libraries.jna.jar", "lib/intellij.libraries.jna.jar"),
+            JarRecord::Tree {
+                source: "inputs/native".into(),
+                relative_path: "lib/jna".into()
             },
-            jar("inputs/other.jar", "lib/other.jar"),
+            jar_record("inputs/other.jar", "lib/other.jar"),
         ]
     );
     // A jar of the core classpath says so, and the manifest lists it below `coreClassPath`.
@@ -74,11 +78,11 @@ fn platform_jars_go_below_lib() {
     assert_eq!(
         platform_jars("jars.json").unwrap(),
         [
-            SourcedFile {
-                core_class_path: true,
+            JarRecord::Jar(SourcedFile {
+                classpath: Classpath::Core,
                 ..jar("inputs/app.jar", "lib/app.jar")
-            },
-            jar("inputs/content.jar", "lib/content.jar"),
+            }),
+            jar_record("inputs/content.jar", "lib/content.jar"),
         ]
     );
 }
@@ -375,10 +379,10 @@ fn tree_destinations_are_validated_after_expansion() {
 /// The byte lengths of the reference jars: the edges of the 256 KiB blocks of the content hash.
 const REFERENCE_SIZES: [usize; 10] = [0, 1, 3, 240, 241, 262_143, 262_144, 262_145, 524_288, 524_301];
 
-/// The whole manifest of the jar mode, byte for byte. The fixture is the Kotlin v9 manifest of ten jars of the
-/// reference sizes.
+/// The whole manifest of the jar mode, byte for byte. The fixture is the manifest of ten jars of the reference sizes,
+/// with the Kotlin content hash of each jar.
 #[test]
-fn the_jar_mode_writes_the_kotlin_manifest_bytes() {
+fn the_jar_mode_writes_the_manifest_bytes() {
     let directory = WorkDir::new();
     let expected = String::from_utf8(directory.read_testdata("platform.json")).unwrap();
     let mut jars = Vec::with_capacity(REFERENCE_SIZES.len());

@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
-use component::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
+use component::manifest::{ComponentEntry, ComponentManifest, MANIFEST_VERSION};
 use component::paths;
 
 use crate::compose::{self, ComposeOptions, ComposedBuild, DevBuildComponent};
@@ -79,7 +79,7 @@ impl Drop for WorkingDirectory {
 
 pub(crate) fn test_manifest(kind: &str) -> ComponentManifest {
     ComponentManifest {
-        version: Some(MANIFEST_VERSION),
+        version: MANIFEST_VERSION,
         kind: kind.to_owned(),
         platform_prefix: "idea".to_owned(),
         os: "linux".to_owned(),
@@ -94,38 +94,37 @@ pub(crate) fn with_entries(mut manifest: ComponentManifest, entries: Vec<Compone
     manifest
 }
 
+/// A file entry with the hash 1 and a source below `inputs/`, for a composition that copies nothing.
 pub(crate) fn file_entry(relative_path: &str) -> ComponentEntry {
-    ComponentEntry {
-        relative_path: relative_path.to_owned(),
-        entry_type: ComponentEntryType::ComponentFile,
-        hash: Some(1),
-        ..ComponentEntry::default()
-    }
+    sourced_entry(relative_path, &format!("inputs/{relative_path}"))
 }
 
 pub(crate) fn sourced_entry(relative_path: &str, source: &str) -> ComponentEntry {
-    ComponentEntry {
-        source: Some(source.to_owned()),
-        ..file_entry(relative_path)
+    file_with_mode(relative_path, source, false, None)
+}
+
+pub(crate) fn file_with_mode(relative_path: &str, source: &str, executable: bool, mode: Option<u32>) -> ComponentEntry {
+    ComponentEntry::ComponentFile {
+        relative_path: relative_path.to_owned(),
+        hash: 1,
+        executable,
+        source: source.to_owned(),
+        mode,
     }
 }
 
 pub(crate) fn link_entry(relative_path: &str, target: &str) -> ComponentEntry {
-    ComponentEntry {
+    ComponentEntry::Symlink {
         relative_path: relative_path.to_owned(),
-        entry_type: ComponentEntryType::Symlink,
-        hash: Some(filemeta::hash_symlink_target(target)),
-        symlink_target: Some(target.to_owned()),
-        ..ComponentEntry::default()
+        hash: filemeta::hash_symlink_target(target),
+        symlink_target: target.to_owned(),
     }
 }
 
 pub(crate) fn directory_entry(relative_path: &str, mode: u32) -> ComponentEntry {
-    ComponentEntry {
+    ComponentEntry::Directory {
         relative_path: relative_path.to_owned(),
-        entry_type: ComponentEntryType::Directory,
-        mode: Some(mode),
-        ..ComponentEntry::default()
+        mode,
     }
 }
 
@@ -136,7 +135,10 @@ pub(crate) fn bound(directory: &TempDir, manifest: ComponentManifest) -> DevBuil
     let sources: Vec<&str> = manifest
         .entries
         .iter()
-        .filter_map(|entry| entry.source.as_deref())
+        .filter_map(|entry| match entry {
+            ComponentEntry::ComponentFile { source, .. } => Some(source.as_str()),
+            _ => None,
+        })
         .filter(|source| paths::host_path(source).is_ok() && Path::new(source).exists())
         .collect();
     let bindings = bind_files(directory, &manifest.kind, &sources);

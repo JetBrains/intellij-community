@@ -5,10 +5,30 @@ use std::path::PathBuf;
 
 use super::*;
 
+use crate::test_support::{TempDir, WorkDir, reference_bytes, require_error, write_file};
+
 fn decode_component_manifest(data: &[u8]) -> serde_json::Result<ComponentManifest> {
     serde_json::from_slice(data)
 }
-use crate::test_support::{TempDir, WorkDir, reference_bytes, require_error, write_file};
+
+fn source(entry: &ComponentEntry) -> Option<&str> {
+    match entry {
+        ComponentEntry::ComponentFile { source, .. } => Some(source),
+        _ => None,
+    }
+}
+
+fn mode(entry: &ComponentEntry) -> Option<u32> {
+    match entry {
+        ComponentEntry::ComponentFile { mode, .. } => *mode,
+        ComponentEntry::Directory { mode, .. } => Some(*mode),
+        ComponentEntry::Symlink { .. } => None,
+    }
+}
+
+fn packed_jar(source: &str, relative_path: &str) -> JarRecord {
+    JarRecord::Jar(SourcedFile::new(source, relative_path))
+}
 
 const REFERENCE_SIZES: [usize; 10] = [0, 1, 3, 240, 241, 262143, 262144, 262145, 524288, 524301];
 
@@ -46,18 +66,18 @@ fn tree_record(source: &str, metadata: &str, relative_path: &str) -> MetadataRec
 }
 
 #[cfg(unix)]
-fn tree_file(source: &str, relative_path: &str) -> SourcedFile {
-    SourcedFile {
-        tree: true,
-        ..SourcedFile::new(source, relative_path)
+fn tree_file(source: &str, relative_path: &str) -> JarRecord {
+    JarRecord::Tree {
+        source: source.into(),
+        relative_path: relative_path.into(),
     }
 }
 
-/// The manifest of the Go collector for ten packed jars matches the Kotlin v9 manifest byte for byte. The sources
-/// stay relative and never exist: the collector takes every hash from the inventory. The [`WorkDir`] keeps the
-/// working directory of the relative sources fixed.
+/// The manifest of ten packed jars matches the fixture byte for byte. Its hashes are the Kotlin content hashes of the
+/// reference vectors. The sources stay relative and never exist: the collector takes every hash from the inventory.
+/// The [`WorkDir`] keeps the working directory of the relative sources fixed.
 #[test]
-fn platform_manifest_kotlin_parity() {
+fn platform_manifest_bytes() {
     let working_directory = WorkDir::new();
     let golden = working_directory.read_testdata("platform.json");
     let directory = TempDir::new();
@@ -71,7 +91,7 @@ fn platform_manifest_kotlin_parity() {
         filemeta::write(Path::new(&metadata), &[filemeta::inspect(&jar, &name).unwrap()]).unwrap();
         let source = format!("inputs/{name}");
         records.push(record(&source, &metadata, &name));
-        files.push(SourcedFile::new(source, format!("lib/{name}")));
+        files.push(packed_jar(&source, &format!("lib/{name}")));
     }
     let files = attach_metadata(&files, &write_catalogue(&directory, &records)).unwrap();
     let (manifest, stats) = build_manifest(&header("platform"), &files).unwrap();
@@ -103,12 +123,12 @@ fn inventory_source_identity_and_mode() {
     ];
     let (entries, stats) = inventory(&files).unwrap();
     assert_eq!(entries.len(), 2);
-    assert_eq!(entries[0].relative_path, "bin/ijent");
-    assert_eq!(entries[0].source.as_deref(), Some(shared.as_str()));
-    assert!(entries[0].executable);
-    assert!(!entries[1].executable);
-    assert_eq!(entries[0].hash, Some(-737883702129266468));
-    assert_eq!(entries[0].hash, entries[1].hash);
+    assert_eq!(entries[0].relative_path(), "bin/ijent");
+    assert_eq!(source(&entries[0]), Some(shared.as_str()));
+    assert!(entries[0].executable());
+    assert!(!entries[1].executable());
+    assert_eq!(entries[0].hash(), -737883702129266468);
+    assert_eq!(entries[0].hash(), entries[1].hash());
     assert_eq!(
         stats,
         InventoryStats {
@@ -164,19 +184,22 @@ fn inventory_emits_logical_component_modes() {
         })
         .collect();
     let (entries, _) = inventory(&files).unwrap();
-    let by_path: HashMap<&str, &ComponentEntry> = entries.iter().map(|entry| (entry.relative_path.as_str(), entry)).collect();
+    let by_path: HashMap<&str, &ComponentEntry> = entries.iter().map(|entry| (entry.relative_path(), entry)).collect();
     for name in ["source-data", "source-tool"] {
         assert_eq!(
-            by_path[format!("plugins/demo/{name}").as_str()].mode,
+            mode(by_path[format!("plugins/demo/{name}").as_str()]),
             None,
             "{name} keeps the conventional mode implicit"
         );
     }
-    assert_eq!(by_path["plugins/demo/source-special"].mode, Some(0o550));
-    let directory = by_path["plugins/demo/source-directory"];
-    assert_eq!(directory.mode, Some(0o755));
-    assert_eq!(directory.hash, None);
-    assert_eq!(directory.entry_type, ComponentEntryType::Directory);
+    assert_eq!(mode(by_path["plugins/demo/source-special"]), Some(0o550));
+    assert_eq!(
+        *by_path["plugins/demo/source-directory"],
+        ComponentEntry::Directory {
+            relative_path: "plugins/demo/source-directory".into(),
+            mode: 0o755
+        }
+    );
 }
 
 #[cfg(unix)]
@@ -187,8 +210,8 @@ fn inventory_follows_staging_links() {
     let staged = directory.join("staged.jar");
     crate::test_support::symlink("source.jar", &staged);
     let (entries, _) = inventory(&[SourcedFile::new(&staged, "lib/staged.jar")]).unwrap();
-    assert_eq!(entries[0].hash, Some(-737883702129266468));
-    assert_eq!(entries[0].source.as_deref(), Some(staged.as_str()));
+    assert_eq!(entries[0].hash(), -737883702129266468);
+    assert_eq!(source(&entries[0]), Some(staged.as_str()));
 }
 
 #[cfg(unix)]
@@ -217,11 +240,14 @@ fn inventory_cleans_link_targets_without_payload() {
             };
             let (entries, _) = inventory(&[file]).unwrap_or_else(|error| panic!("inventory requires a payload: {error}"));
             let entry = &entries[0];
-            assert_eq!(entry.entry_type, ComponentEntryType::Symlink);
-            assert_eq!(entry.symlink_target.as_deref(), Some(expected));
-            assert_eq!(entry.hash, Some(expected_metadata.hash));
-            assert_eq!(entry.mode, None);
-            assert!(!entry.executable);
+            assert_eq!(
+                *entry,
+                ComponentEntry::Symlink {
+                    relative_path: "bin/current".into(),
+                    hash: expected_metadata.hash,
+                    symlink_target: expected.into()
+                }
+            );
             let json = serde_json::to_string(entry).unwrap();
             assert!(
                 !json.contains(r#""source""#) && !json.contains(r#""symlinkSource""#),
@@ -272,8 +298,9 @@ fn manifest_ordering_and_escaping() {
     write_file(&source, "bytes");
     let manifest_file = directory.path().join("component.json");
     let files = [
-        SourcedFile::new(&source, "lib/\u{e000}.jar"),
-        SourcedFile::new(&source, "lib/\u{1f600}.jar"),
+        SourcedFile::new(&source, "lib/b.jar"),
+        SourcedFile::new(&source, "lib/B.jar"),
+        SourcedFile::new(&source, "lib/a-b.jar"),
     ];
     let mut header = header("files");
     header.platform_prefix = "idea<test>".into();
@@ -283,7 +310,9 @@ fn manifest_ordering_and_escaping() {
         text.contains("inputs/a&b.jar") && text.contains("idea<test>"),
         "wrong escaping: {text}"
     );
-    assert!(text.find('\u{1f600}') < text.find('\u{e000}'), "wrong order: {text}");
+    let manifest = decode_component_manifest(text.as_bytes()).unwrap();
+    let names: Vec<&str> = manifest.entries.iter().map(ComponentEntry::relative_path).collect();
+    assert_eq!(names, ["lib/B.jar", "lib/a-b.jar", "lib/b.jar"]);
 }
 
 // The manifest lists the packed jars of the core classpath in record order. The composer orders the whole core
@@ -297,12 +326,12 @@ fn manifest_lists_the_core_class_path() {
     let input = |name: &str| directory.join(&format!("inputs/{name}.jar"));
     let files = [
         SourcedFile {
-            core_class_path: true,
+            classpath: Classpath::Core,
             ..SourcedFile::new(input("util"), "lib/util.jar")
         },
         SourcedFile::new(input("content"), "lib/content.jar"),
         SourcedFile {
-            core_class_path: true,
+            classpath: Classpath::Core,
             ..SourcedFile::new(input("app"), "lib/app.jar")
         },
     ];
@@ -339,7 +368,7 @@ fn manifest_declares_the_main_class() {
 }
 
 #[test]
-fn a_plugin_component_states_the_version_and_one_plugin() {
+fn every_manifest_states_the_version_and_a_plugin_component_states_its_plugin() {
     let (manifest, _) = build_manifest(
         &ManifestHeader {
             plugin_component: true,
@@ -348,11 +377,9 @@ fn a_plugin_component_states_the_version_and_one_plugin() {
         &[],
     )
     .unwrap();
-    assert_eq!(manifest.version, Some(9));
-    assert_eq!(manifest.plugin_count, 1);
+    assert_eq!((manifest.version, manifest.plugin), (10, true));
     let (manifest, _) = build_manifest(&header("files"), &[]).unwrap();
-    assert_eq!(manifest.version, None);
-    assert_eq!(manifest.plugin_count, 0);
+    assert_eq!((manifest.version, manifest.plugin), (10, false));
 }
 
 #[cfg(unix)]
@@ -378,7 +405,7 @@ fn packed_collector_does_not_read_or_stat_payload() {
     fs::remove_file(&shared).unwrap();
     // The link names itself, so every read of the payload fails.
     crate::test_support::symlink("shared.jar", &shared);
-    let files = attach_metadata(&[SourcedFile::new(&shared, "lib/shared.jar")], &catalogue).unwrap();
+    let files = attach_metadata(&[packed_jar(&shared, "lib/shared.jar")], &catalogue).unwrap();
     let (_, stats) = build_manifest(&header("files"), &files).unwrap();
     assert_eq!(
         stats,
@@ -410,8 +437,8 @@ fn metadata_catalogue_rejects_conflicts_and_stale_ownership() {
         metadata: two,
         ..first.clone()
     };
-    let files = [SourcedFile::new(&first.source, "lib/shared.jar")];
-    let attach = |files: &[SourcedFile], records: &[MetadataRecord]| attach_metadata(files, &write_catalogue(&directory, records));
+    let files = [packed_jar(&first.source, "lib/shared.jar")];
+    let attach = |files: &[JarRecord], records: &[MetadataRecord]| attach_metadata(files, &write_catalogue(&directory, records));
     require_error(attach(&files, &[first.clone(), second]), "conflicting metadata");
     require_error(attach(&files, &[]), "missing metadata");
     require_error(attach(&[], std::slice::from_ref(&first)), "stale metadata ownership");
@@ -471,41 +498,39 @@ fn tree_records_expand_to_the_inventory_files() {
         ],
     );
     let files = [
-        SourcedFile::new(&jar_source, "lib/intellij.libraries.pty4j.jar"),
+        packed_jar(&jar_source, "lib/intellij.libraries.pty4j.jar"),
         tree_file(&native, "lib/pty4j"),
     ];
     let (manifest, stats) = build_manifest(&header("files"), &attach_metadata(&files, &catalogue).unwrap()).unwrap();
     // The Kotlin fragment writes this shape for the same files. Each native is a component file, with the executable
     // bit where the tree has it. There is no directory, and a conventional mode is absent.
-    let by_path: HashMap<&str, &ComponentEntry> = manifest.entries.iter().map(|entry| (entry.relative_path.as_str(), entry)).collect();
+    let by_path: HashMap<&str, &ComponentEntry> = manifest.entries.iter().map(|entry| (entry.relative_path(), entry)).collect();
     assert_eq!(by_path.len(), 3, "{manifest:?}");
     assert!(by_path.contains_key("lib/intellij.libraries.pty4j.jar"));
     let library = by_path["lib/pty4j/darwin/libpty.dylib"];
     let helper = by_path["lib/pty4j/darwin/pty4j-unix-spawn-helper"];
     for entry in [library, helper] {
-        assert_eq!(entry.entry_type, ComponentEntryType::ComponentFile);
-        assert_eq!(entry.mode, None);
+        assert_eq!(entry.type_name(), "component-file");
+        assert_eq!(mode(entry), None);
         let expected = tree.iter().find(|expected| {
             expected
                 .relative_path
                 .strip_prefix("native/")
                 .map(|path| format!("lib/pty4j/{path}"))
-                == Some(entry.relative_path.clone())
+                .as_deref()
+                == Some(entry.relative_path())
         });
         assert_eq!(
-            entry.hash,
+            Some(entry.hash()),
             expected.map(|expected| expected.hash),
             "{} hashes as the inventory says",
-            entry.relative_path
+            entry.relative_path()
         );
     }
-    assert_eq!(library.source.as_deref(), Some(format!("{native}/darwin/libpty.dylib").as_str()));
-    assert!(!library.executable);
-    assert_eq!(
-        helper.source.as_deref(),
-        Some(format!("{native}/darwin/pty4j-unix-spawn-helper").as_str())
-    );
-    assert!(helper.executable);
+    assert_eq!(source(library), Some(format!("{native}/darwin/libpty.dylib").as_str()));
+    assert!(!library.executable());
+    assert_eq!(source(helper), Some(format!("{native}/darwin/pty4j-unix-spawn-helper").as_str()));
+    assert!(helper.executable());
     // And nothing of the payload was read: the tree is gone, and the counters say so.
     assert_eq!(
         stats,
@@ -534,10 +559,9 @@ fn tree_records_place_unconventional_modes() {
         files[0].metadata.as_ref().map(|metadata| metadata.relative_path.as_str()),
         Some(files[0].relative_path.as_str())
     );
-    assert!(!files[0].tree);
     let (entries, _) = inventory(&files).unwrap();
     assert_eq!(entries.len(), 1);
-    assert_eq!(entries[0].mode, Some(0o600));
+    assert_eq!(mode(&entries[0]), Some(0o600));
 }
 
 #[cfg(unix)]
@@ -559,7 +583,7 @@ fn an_empty_tree_contributes_nothing() {
         ],
     );
     let files = [
-        SourcedFile::new(&jar_source, "lib/intellij.libraries.jna.jar"),
+        packed_jar(&jar_source, "lib/intellij.libraries.jna.jar"),
         tree_file(&native, "lib/jna"),
     ];
     let attached = attach_metadata(&files, &catalogue).unwrap();
@@ -591,9 +615,9 @@ fn tree_records_must_agree_with_the_catalogue() {
     filemeta::write(Path::new(&linked_metadata), &linked).unwrap();
     let jar_record = record(&jar_source, &metadata, "a.jar");
     let native_record = tree_record(&native, &metadata, "native");
-    let jar_file = SourcedFile::new(&jar_source, "lib/a.jar");
+    let jar_file = packed_jar(&jar_source, "lib/a.jar");
     let native_file = tree_file(&native, "lib/jna");
-    let cases: Vec<(&str, Vec<MetadataRecord>, Vec<SourcedFile>, String)> = vec![
+    let cases: Vec<(&str, Vec<MetadataRecord>, Vec<JarRecord>, String)> = vec![
         (
             "a tree record with file metadata",
             vec![jar_record.clone(), record(&native, &metadata, "native")],
@@ -603,7 +627,7 @@ fn tree_records_must_agree_with_the_catalogue() {
         (
             "a file record with tree metadata",
             vec![jar_record.clone(), native_record.clone()],
-            vec![jar_file.clone(), SourcedFile::new(&native, "lib/native")],
+            vec![jar_file.clone(), packed_jar(&native, "lib/native")],
             format!("file record {native} has tree metadata"),
         ),
         (
@@ -669,16 +693,21 @@ fn directory_entries_and_explicit_links_need_no_payload() {
         &[record(&a, &metadata, "lib/a.jar"), record(&link, &metadata, "lib/link.jar")],
     );
     let files = [
-        SourcedFile::new(&a, "plugins/test/lib/a.jar"),
-        SourcedFile::new(&link, "plugins/test/lib/link.jar"),
+        packed_jar(&a, "plugins/test/lib/a.jar"),
+        packed_jar(&link, "plugins/test/lib/link.jar"),
     ];
     let (manifest, _) = build_manifest(&header("files"), &attach_metadata(&files, &catalogue).unwrap()).unwrap();
     assert_eq!(manifest.entries.len(), 2);
-    assert_eq!(manifest.entries[0].source.as_deref(), Some(a.as_str()));
-    assert_eq!(manifest.entries[0].hash, Some(entries[1].hash));
-    assert_eq!(manifest.entries[1].source, None);
-    assert_eq!(manifest.entries[1].symlink_target.as_deref(), Some("a.jar"));
-    assert_eq!(manifest.entries[1].hash, Some(entries[2].hash));
+    assert_eq!(source(&manifest.entries[0]), Some(a.as_str()));
+    assert_eq!(manifest.entries[0].hash(), entries[1].hash);
+    assert_eq!(
+        manifest.entries[1],
+        ComponentEntry::Symlink {
+            relative_path: "plugins/test/lib/link.jar".into(),
+            hash: entries[2].hash,
+            symlink_target: "a.jar".into()
+        }
+    );
 }
 
 #[cfg(unix)]
@@ -698,10 +727,7 @@ fn collector_rejects_links_combined_across_inventories() {
     }
     fs::remove_dir_all(&payload).unwrap();
     let catalogue = write_catalogue(&directory, &records);
-    let files = [
-        SourcedFile::new(format!("{payload}/a"), "a"),
-        SourcedFile::new(format!("{payload}/b"), "b"),
-    ];
+    let files = [packed_jar(&format!("{payload}/a"), "a"), packed_jar(&format!("{payload}/b"), "b")];
     let manifest_file = directory.path().join("component.json");
     let result = write_manifest(&manifest_file, &header("files"), &attach_metadata(&files, &catalogue).unwrap());
     require_error(result, "unsupported symbolic link chain");

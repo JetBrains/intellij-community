@@ -1,7 +1,7 @@
 #![allow(clippy::cast_possible_truncation, reason = "a fixture writes small lengths into record fields")]
 
 use super::*;
-use crate::inventory::SourcedFile;
+use crate::inventory::{Classpath, SourcedFile};
 use crate::test_support::require_error;
 
 /// The record that the Java writer gives for the plugin `plugin` with the descriptor `<idea-plugin/>\n`.
@@ -23,7 +23,7 @@ fn plugin_class_path_fixture(plugin: &str, names: &[&str]) -> Vec<u8> {
 
 fn class_path_file(relative_path: &str, class_path: bool) -> SourcedFile {
     SourcedFile {
-        class_path,
+        classpath: if class_path { Classpath::Plugin } else { Classpath::None },
         ..SourcedFile::new("", relative_path)
     }
 }

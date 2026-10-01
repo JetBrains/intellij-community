@@ -6,8 +6,8 @@ use component::manifest::ComponentEntry;
 
 use super::*;
 use crate::test_support::{
-    TempDir, directory_entry, file_entry, link_entry, no_merge, require_absent, require_error, runfiles, skip_merge, sourced_entry,
-    test_manifest, with_entries, write_file,
+    TempDir, directory_entry, file_entry, file_with_mode, link_entry, no_merge, require_absent, require_error, runfiles, skip_merge,
+    sourced_entry, test_manifest, with_entries, write_file,
 };
 
 const NO_MODULES: &[&str] = &[];
@@ -118,7 +118,7 @@ fn composer_builds_plugin_classpath_from_the_prefix_and_every_components_records
     let target = directory.path().join("target");
     let plugin = |name: &str, part: &[u8]| {
         let mut manifest = test_manifest(&format!("plugins_{name}"));
-        manifest.plugin_count = 1;
+        manifest.plugin = true;
         let file = directory.join(&format!("{name}.part"));
         write_file(&file, part);
         let jar = format!("plugins/{name}/lib/{name}.jar");
@@ -146,7 +146,7 @@ fn composer_builds_plugin_classpath_from_the_prefix_and_every_components_records
 fn composer_rejects_plugin_records_without_a_prefix() {
     let directory = TempDir::new();
     let mut air = test_manifest("plugins_air");
-    air.plugin_count = 1;
+    air.plugin = true;
     let part = directory.join("air.part");
     write_file(&part, [10]);
     let components = [with_part(
@@ -163,7 +163,7 @@ fn composer_rejects_plugin_records_without_a_prefix() {
 fn composer_rejects_a_positive_plugin_count_without_records_before_writing_output() {
     let directory = TempDir::new();
     let mut air = test_manifest("plugins_air");
-    air.plugin_count = 1;
+    air.plugin = true;
     let target = directory.path().join("target");
     let components = [sourced_component(&directory, "air", "plugins/air-plugin/lib/air.jar", air)];
     require_error(
@@ -205,10 +205,6 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
     let mut mac = test_manifest("platform_resources");
     mac.os = "mac".into();
     mac.arch = "aarch64".into();
-    let mut many = test_manifest("plugins_many");
-    many.plugin_count = 2;
-    let mut modules = test_manifest("plugins_modules");
-    modules.additional_modules = vec!["intellij.devkit".into()];
     let core = || test_manifest("platform_core");
     let cases: Vec<(Vec<ComponentManifest>, Vec<&str>, &str)> = vec![
         (
@@ -250,16 +246,6 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
             vec![neutral, core(), mac],
             vec![],
             "different target platforms: 'linux/x64' and 'mac/aarch64'",
-        ),
-        (
-            vec![core(), many],
-            vec![],
-            "Dev-build component 'plugins_many' reports 2 plugins, and a component holds at most one",
-        ),
-        (
-            vec![core(), modules],
-            vec![],
-            "Dev-build component 'plugins_modules' lists additional modules",
         ),
         (vec![], vec![], "At least one dev-build component is required"),
     ];
@@ -403,17 +389,10 @@ fn composer_requires_an_absent_or_empty_target() {
 #[test]
 fn the_fingerprint_follows_the_declared_executable_flag() {
     let directory = TempDir::new();
-    let mut entry = sourced_entry("bin/ijent", &directory.join("ijent"));
-    entry.executable = true;
-    let manifest = with_entries(test_manifest("ijent"), vec![entry.clone()]);
+    let source = directory.join("ijent");
+    let manifest = with_entries(test_manifest("ijent"), vec![file_with_mode("bin/ijent", &source, true, None)]);
     let composed = compose(&[DevBuildComponent::new(manifest.clone())], &directory.path().join("target")).unwrap();
-    let non_executable = with_entries(
-        test_manifest("ijent"),
-        vec![ComponentEntry {
-            executable: false,
-            ..entry
-        }],
-    );
+    let non_executable = with_entries(test_manifest("ijent"), vec![sourced_entry("bin/ijent", &source)]);
     let fingerprint =
         |manifest: &ComponentManifest| fingerprint::compute_ide_fingerprint_from_components(&[manifest], None, NO_MODULES).unwrap();
     assert_eq!(composed.fingerprint, fingerprint(&manifest));

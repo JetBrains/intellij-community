@@ -120,8 +120,7 @@ fn composer_honors_the_declared_executable_flag_without_changing_the_source() {
     let source = directory.join("ijent");
     write_file(&source, "binary bytes");
     set_mode(&source, 0o400);
-    let mut entry = sourced_entry("bin/ijent", &source);
-    entry.executable = true;
+    let entry = file_with_mode("bin/ijent", &source, true, None);
     let target = directory.path().join("target");
     compose(&[bound(&directory, with_entries(test_manifest("ijent"), vec![entry]))], &target).unwrap();
     let copied = target.join("bin/ijent");
@@ -159,9 +158,7 @@ fn composer_preserves_exact_modes_without_modifying_shared_sources() {
     let source = directory.join("shared-tool");
     write_file(&source, "tool");
     set_mode(&source, 0o400);
-    let mut file = sourced_entry("plugins/demo/bin/tool", &source);
-    file.executable = true;
-    file.mode = Some(0o750);
+    let file = file_with_mode("plugins/demo/bin/tool", &source, true, Some(0o750));
     let target = directory.path().join("target");
     compose(&[bound(&directory, with_entries(test_manifest("plugin"), vec![file]))], &target).unwrap();
     require_mode(target.join("plugins/demo/bin/tool"), 0o750);
@@ -232,20 +229,10 @@ fn composer_rejects_invalid_tree_less_entries() {
     let directory = TempDir::new();
     let source = directory.join("packed.jar");
     write_file(&source, "packed bytes");
-    let mut sourced_link = link_entry("lib/packed.jar", "other.jar");
-    sourced_link.source = Some(source.clone());
     let unsafe_source = format!("{}/./packed.jar", directory.path().display());
     let directory_source = directory.join("classes");
     fs::create_dir(&directory_source).unwrap();
     for (entry, message) in [
-        (
-            file_entry("lib/packed.jar"),
-            "declares no tree, so 'lib/packed.jar' must name where its bytes are",
-        ),
-        (
-            sourced_link,
-            "must declare the symbolic link 'lib/packed.jar' without a file source",
-        ),
         (
             sourced_entry("../outside.jar", &source),
             "invalid relative path: \"../outside.jar\"",
@@ -426,9 +413,7 @@ fn mode_of(path: &Path) -> u32 {
 fn composer_consumes_bound_sandbox_members_and_genuine_links() {
     let directory = TempDir::new();
     let tree = BoundTree::new(directory.path(), &["lib/native.jar"]);
-    let mut file = sourced_entry("plugins/demo/lib/native.jar", &tree.staged("lib/native.jar"));
-    file.mode = Some(0o751);
-    file.executable = true;
+    let file = file_with_mode("plugins/demo/lib/native.jar", &tree.staged("lib/native.jar"), true, Some(0o751));
     let manifest = with_entries(
         test_manifest("plugin"),
         vec![file, link_entry("plugins/demo/current", "lib/native.jar")],
@@ -497,25 +482,15 @@ fn directory_components_preserve_modes_in_a_full_layout() {
     let manifest = with_entries(test_manifest("plugin"), entries.to_vec());
     let target = directory.path().join("home");
     compose(&[unbound_files(manifest)], &target).unwrap();
-    for entry in &entries {
-        require_mode(target.join(&entry.relative_path), entry.mode.unwrap());
+    for (relative_path, mode) in [("resources/empty", 0o710), ("resources", 0o700)] {
+        require_mode(target.join(relative_path), mode);
     }
     set_mode(target.join("resources"), 0o755);
-    let changes: [fn(&mut component::ComponentEntry); 4] = [
-        |entry| entry.hash = Some(0),
-        |entry| entry.source = Some("tree".into()),
-        |entry| entry.executable = true,
-        |entry| entry.symlink_target = Some("other".into()),
-    ];
-    for change in changes {
-        let mut invalid = entries[0].clone();
-        change(&mut invalid);
-        let manifest = with_entries(test_manifest("invalid"), vec![invalid]);
-        require_error(
-            compose(&[unbound_files(manifest)], directory.path().join("invalid")),
-            "Invalid directory",
-        );
-    }
+    let manifest = with_entries(test_manifest("invalid"), vec![directory_entry("resources", 0o1700)]);
+    require_error(
+        compose(&[unbound_files(manifest)], directory.path().join("invalid")),
+        "Invalid directory",
+    );
 }
 
 #[test]
@@ -529,7 +504,7 @@ fn local_and_exported_compositions_have_the_same_metadata() {
     write_file(&part, [4, 5, 6]);
     let mut manifest = with_entries(test_manifest("platform"), vec![sourced_entry("lib/app.jar", &app)]);
     manifest.core_class_path = vec!["lib/app.jar".into()];
-    manifest.plugin_count = 1;
+    manifest.plugin = true;
     let mut platform = bound(&directory, manifest);
     platform.plugin_classpath_part = Some(part);
     let exported = compose_with(

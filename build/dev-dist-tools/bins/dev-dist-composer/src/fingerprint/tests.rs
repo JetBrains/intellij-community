@@ -1,12 +1,13 @@
 // The expected values in this file come from the Kotlin code. A throwaway Java program read the same manifests with
 // readDevBuildComponentManifest and called computeIdeFingerprintFromComponents, the private
-// computeDevBuildLaunchMetadataHash, and orderCoreClasspathEntries.
+// computeDevBuildLaunchMetadataHash, and orderCoreClasspathEntries. The Kotlin manifests had the version 9 shape. The
+// version 10 shape states the same entries with a source for each file, and the fingerprint reads no source.
 
 #![allow(clippy::unreadable_literal, reason = "the hash values are copied from the Kotlin output")]
 
 use std::path::Path;
 
-use component::manifest::{ComponentEntry, ComponentEntryType, validate_manifest};
+use component::manifest::{ComponentEntry, validate_manifest};
 
 use super::*;
 use crate::test_support::{TempDir, reference_bytes, test_manifest, write_file};
@@ -15,11 +16,33 @@ use crate::test_support::{TempDir, reference_bytes, test_manifest, write_file};
 // spec now, so the manifests list none, and each case passes the list that Kotlin summed. The expected values are
 // unchanged.
 
-/// The neutral manifest names a supplementary character and U+FF21, whose UTF-16 order differs from the UTF-8 order.
-const GOLDEN_NEUTRAL_MANIFEST: &str = r#"{"version":9,"kind":"plugins_json","platformPrefix":"idea","os":"","arch":"","additionalModules":[],"mainClass":null,"coreClassPath":["plugins/json/lib/json.jar"],"pluginCount":1,"entries":[{"relativePath":"plugins/json/lib/json.jar","type":"component-file","hash":-5,"source":"inputs/json.jar"},{"relativePath":"plugins/json/lib/ünïcode.jar","type":"component-file","hash":1234567890123},{"relativePath":"plugins/json/lib/😀.jar","type":"component-file","hash":7},{"relativePath":"plugins/json/lib/Ａ.jar","type":"component-file","hash":8},{"relativePath":"plugins/json/bin/tool","type":"component-file","hash":9,"executable":true,"mode":488},{"relativePath":"plugins/json/bin/run","type":"component-file","hash":10,"executable":true,"mode":493},{"relativePath":"plugins/json/bin/plain","type":"component-file","hash":12,"mode":420},{"relativePath":"plugins/json/resources","type":"directory","mode":448},{"relativePath":"plugins/json/current","type":"symlink","hash":11,"symlinkTarget":"lib"}]}"#;
+/// The neutral manifest names a path that is not ASCII, so the hash stream holds more UTF-16 code units than the path
+/// has characters. The Kotlin manifest also named `😀.jar` and `Ａ.jar` to pin the UTF-16 order, which differs from the
+/// order of `str::cmp` for them. Every real path is ASCII, so this manifest leaves them out. The three expected values
+/// with this manifest come from the UTF-16 order of the earlier code on this manifest.
+const GOLDEN_NEUTRAL_MANIFEST: &str = concat!(
+    r#"{"version":10,"kind":"plugins_json","platformPrefix":"idea","os":"","arch":"","plugin":true,"mainClass":null,"#,
+    r#""coreClassPath":["plugins/json/lib/json.jar"],"entries":["#,
+    r#"{"type":"component-file","relativePath":"plugins/json/lib/json.jar","hash":-5,"source":"inputs/json.jar"},"#,
+    r#"{"type":"component-file","relativePath":"plugins/json/lib/ünïcode.jar","hash":1234567890123,"source":"inputs/unicode.jar"},"#,
+    r#"{"type":"component-file","relativePath":"plugins/json/bin/tool","hash":9,"executable":true,"source":"inputs/tool","mode":488},"#,
+    r#"{"type":"component-file","relativePath":"plugins/json/bin/run","hash":10,"executable":true,"source":"inputs/run","mode":493},"#,
+    r#"{"type":"component-file","relativePath":"plugins/json/bin/plain","hash":12,"source":"inputs/plain","mode":420},"#,
+    r#"{"type":"directory","relativePath":"plugins/json/resources","mode":448},"#,
+    r#"{"type":"symlink","relativePath":"plugins/json/current","hash":11,"symlinkTarget":"lib"}]}"#
+);
 
 /// The platform manifest repeats a path with other hashes and executable flags, so the sort needs every key.
-const GOLDEN_PLATFORM_MANIFEST: &str = r#"{"kind":"platform_core","platformPrefix":"idea","os":"mac","arch":"aarch64","additionalModules":[],"mainClass":"com.intellij.idea.Main","coreClassPath":["lib/app-backend.jar","lib/util.jar","lib/a/b.jar","lib/a-b.jar","lib/platform-loader.jar","lib/product-backend.jar","lib/util-8.jar","lib/Z.jar","lib/é.jar","lib/util.jar"],"entries":[{"relativePath":"lib/app-backend.jar","type":"component-file","hash":-9223372036854775808},{"relativePath":"lib/util.jar","type":"component-file","hash":9223372036854775807},{"relativePath":"lib/util.jar","type":"component-file","hash":3},{"relativePath":"lib/util.jar","type":"component-file","hash":3,"executable":true},{"relativePath":"bin/idea.sh","type":"component-file","hash":42,"executable":true}]}"#;
+const GOLDEN_PLATFORM_MANIFEST: &str = concat!(
+    r#"{"version":10,"kind":"platform_core","platformPrefix":"idea","os":"mac","arch":"aarch64","plugin":false,"#,
+    r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/app-backend.jar","lib/util.jar","lib/a/b.jar","lib/a-b.jar","#,
+    r#""lib/platform-loader.jar","lib/product-backend.jar","lib/util-8.jar","lib/Z.jar","lib/é.jar","lib/util.jar"],"entries":["#,
+    r#"{"type":"component-file","relativePath":"lib/app-backend.jar","hash":-9223372036854775808,"source":"inputs/app-backend.jar"},"#,
+    r#"{"type":"component-file","relativePath":"lib/util.jar","hash":9223372036854775807,"source":"inputs/util.jar"},"#,
+    r#"{"type":"component-file","relativePath":"lib/util.jar","hash":3,"source":"inputs/util.jar"},"#,
+    r#"{"type":"component-file","relativePath":"lib/util.jar","hash":3,"executable":true,"source":"inputs/util.jar"},"#,
+    r#"{"type":"component-file","relativePath":"bin/idea.sh","hash":42,"executable":true,"source":"inputs/idea.sh"}]}"#
+);
 
 /// Decodes a manifest and applies the checks of the reader, so that the version and mode checks apply as in the Go test.
 /// The Kotlin inputs list core classpath jars that no entry names, so the core classpath check does not apply.
@@ -59,14 +82,14 @@ fn kotlin_fingerprint_golden() {
             vec![&neutral, &platform],
             Some(&plugin_classpath),
             &["intellij.shared", "intellij.json", "intellij.extra"],
-            "v5:2xgglqepbv7hj",
+            "v5:1mi8fetozs9w2",
         ),
         (
             "summed modules",
             vec![&neutral, &platform],
             None,
             &["intellij.json", "intellij.shared", "intellij.extra"],
-            "v5:3sgxji0bgzbkr",
+            "v5:1dlyt2g7ft0t3",
         ),
         ("no modules", vec![&platform], None, NO_MODULES, "v5:1r4g1pf8wm6az"),
         (
@@ -74,7 +97,7 @@ fn kotlin_fingerprint_golden() {
             vec![&platform, &neutral],
             Some(&plugin_classpath),
             &["intellij.extra", "intellij.json", "intellij.shared"],
-            "v5:25umy5wjndqig",
+            "v5:18zwy2x3g1pbj",
         ),
     ];
     for (name, components, plugin_classpath, declared, expected) in cases {
@@ -141,30 +164,22 @@ fn sourced_manifest_hashes_and_source_independence() {
         write_file(&content, reference_bytes(size));
         assert_eq!(xxh3::hash_file(&content).unwrap(), hash, "hash of {size} bytes");
         let sourced = read_golden_manifest(&format!(
-            r#"{{"kind": "files", "platformPrefix": "idea", "os": "linux", "arch": "x64",
-            "additionalModules": [], "mainClass": null, "coreClassPath": [],
-            "entries": [{{"relativePath": "lib/content.jar", "type": "component-file", "hash": {hash}, "source": "inputs/content.jar"}}]}}"#
+            r#"{{"version": 10, "kind": "files", "platformPrefix": "idea", "os": "linux", "arch": "x64", "plugin": false,
+            "mainClass": null, "coreClassPath": [],
+            "entries": [{{"type": "component-file", "relativePath": "lib/content.jar", "hash": {hash}, "source": "inputs/content.jar"}}]}}"#
         ));
-        assert_eq!(sourced.effective_version(), 9);
-        assert!(!sourced.entries[0].executable);
-        let mut tree = sourced.clone();
-        tree.entries = vec![ComponentEntry {
-            relative_path: "lib/content.jar".to_owned(),
-            entry_type: ComponentEntryType::ComponentFile,
-            hash: Some(hash),
-            ..ComponentEntry::default()
-        }];
+        assert!(!sourced.entries[0].executable());
         let mut relocated = sourced.clone();
-        relocated.entries[0].source = Some("other/content.jar".to_owned());
-        let expected = must_fingerprint(&[&launch, &tree]);
-        assert_eq!(
-            must_fingerprint(&[&launch, &sourced]),
-            expected,
-            "a sourced manifest fingerprints as a tree manifest"
-        );
+        relocated.entries = vec![ComponentEntry::ComponentFile {
+            relative_path: "lib/content.jar".to_owned(),
+            hash,
+            executable: false,
+            source: "other/content.jar".to_owned(),
+            mode: None,
+        }];
         assert_eq!(
             must_fingerprint(&[&launch, &relocated]),
-            expected,
+            must_fingerprint(&[&launch, &sourced]),
             "the source changed the fingerprint"
         );
     }
@@ -172,12 +187,12 @@ fn sourced_manifest_hashes_and_source_independence() {
 
 fn single_file(hash: i64, executable: bool) -> ComponentManifest {
     let mut manifest = test_manifest("plugins_air");
-    manifest.entries = vec![ComponentEntry {
+    manifest.entries = vec![ComponentEntry::ComponentFile {
         relative_path: "plugins/air/lib/air.jar".to_owned(),
-        entry_type: ComponentEntryType::ComponentFile,
-        hash: Some(hash),
+        hash,
         executable,
-        ..ComponentEntry::default()
+        source: "inputs/air.jar".to_owned(),
+        mode: None,
     }];
     manifest
 }
@@ -223,13 +238,12 @@ fn component_fingerprint_covers_generated_launch_and_classpath_data() {
 fn fingerprint_of_exact_modes() {
     let with_mode = |mode: Option<u32>| {
         let mut manifest = test_manifest("plugin");
-        manifest.entries = vec![ComponentEntry {
+        manifest.entries = vec![ComponentEntry::ComponentFile {
             relative_path: "plugins/demo/bin/tool".to_owned(),
-            entry_type: ComponentEntryType::ComponentFile,
-            hash: Some(1),
+            hash: 1,
             executable: true,
+            source: "inputs/tool".to_owned(),
             mode,
-            ..ComponentEntry::default()
         }];
         manifest
     };
@@ -268,9 +282,15 @@ fn the_platform_comes_from_the_first_component_that_names_one() {
 #[test]
 fn the_decoder_reads_the_golden_bytes() {
     let manifest: ComponentManifest = serde_json::from_str(GOLDEN_NEUTRAL_MANIFEST).unwrap();
-    assert_eq!(manifest.entries.len(), 9);
-    assert_eq!(manifest.plugin_count, 1);
-    assert_eq!(manifest.entries[7].mode, Some(0o700));
+    assert_eq!(manifest.entries.len(), 7);
+    assert!(manifest.plugin);
+    assert_eq!(
+        manifest.entries[5],
+        ComponentEntry::Directory {
+            relative_path: "plugins/json/resources".to_owned(),
+            mode: 0o700
+        }
+    );
 }
 
 #[test]

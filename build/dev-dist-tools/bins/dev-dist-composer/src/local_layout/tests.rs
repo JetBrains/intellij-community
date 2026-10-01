@@ -10,7 +10,7 @@ use component::plugin_classpath::PLUGIN_CLASSPATH;
 use crate::compose::{ComposeOptions, ComposedBuild, DevBuildComponent, compose_with_merge};
 use crate::fingerprint::compute_ide_fingerprint_from_components;
 use crate::test_support::{
-    TempDir, directory_entry, file_entry, link_entry, no_merge, read_text, require_absent, require_error, runfiles, skip_merge,
+    TempDir, directory_entry, file_with_mode, link_entry, no_merge, read_text, require_absent, require_error, runfiles, skip_merge,
     sourced_entry, test_manifest, with_entries, write_file,
 };
 
@@ -47,32 +47,21 @@ fn directory_components_preserve_modes_in_the_local_layout_without_payload_trees
     require_layout(&metadata, &[r#""kind":"directory""#, r#""mode":456"#, r#""mode":448"#]);
     require_absent(metadata.join("resources"));
     let mut conventional = plugin.manifest.clone();
-    for entry in &mut conventional.entries {
-        entry.mode = Some(0o755);
-    }
+    conventional.entries = entries.iter().map(|entry| directory_entry(entry.relative_path(), 0o755)).collect();
     let fingerprint = |manifest| compute_ide_fingerprint_from_components(&[manifest], None, NO_MODULES).unwrap();
     assert_ne!(
         fingerprint(&plugin.manifest),
         fingerprint(&conventional),
         "the fingerprint ignores directory modes"
     );
-    for change in [
-        |entry: &mut ComponentEntry| entry.hash = Some(0),
-        |entry: &mut ComponentEntry| entry.source = Some("tree".into()),
-        |entry: &mut ComponentEntry| entry.executable = true,
-        |entry: &mut ComponentEntry| entry.symlink_target = Some("other".into()),
-    ] {
-        let mut invalid = entries[0].clone();
-        change(&mut invalid);
-        let target = directory.path().join("invalid");
-        let result = compose_with_merge(
-            &[layout_component("invalid", vec![invalid])],
-            &target,
-            &ComposeOptions::default(),
-            no_merge,
-        );
-        require_error(result, "Invalid directory");
-    }
+    let target = directory.path().join("invalid");
+    let result = compose_with_merge(
+        &[layout_component("invalid", vec![directory_entry("resources/empty", 0o1710)])],
+        &target,
+        &ComposeOptions::default(),
+        no_merge,
+    );
+    require_error(result, "Invalid directory");
 }
 
 #[test]
@@ -92,9 +81,7 @@ fn a_manifest_only_link_reaches_the_local_layout_without_a_payload() {
 fn exact_modes_remain_in_launch_metadata_without_reading_payloads() {
     let directory = TempDir::new();
     let source = directory.join("absent-tool");
-    let mut file = sourced_entry("plugins/demo/bin/tool", &source);
-    file.executable = true;
-    file.mode = Some(0o750);
+    let file = file_with_mode("plugins/demo/bin/tool", &source, true, Some(0o750));
     let target = directory.path().join("metadata");
     compose_local(
         &[layout_component("plugin", vec![file])],
@@ -110,11 +97,8 @@ fn exact_modes_remain_in_launch_metadata_without_reading_payloads() {
 fn canonical_modes_retain_the_existing_local_linking_policy() {
     let directory = TempDir::new();
     let (jar, executable) = (directory.join("absent.jar"), directory.join("absent-tool"));
-    let mut jar_entry = sourced_entry("plugins/demo/lib/main.jar", &jar);
-    jar_entry.mode = Some(0o644);
-    let mut tool_entry = sourced_entry("plugins/demo/bin/tool", &executable);
-    tool_entry.mode = Some(0o755);
-    tool_entry.executable = true;
+    let jar_entry = file_with_mode("plugins/demo/lib/main.jar", &jar, false, Some(0o644));
+    let tool_entry = file_with_mode("plugins/demo/bin/tool", &executable, true, Some(0o755));
     let target = directory.path().join("metadata");
     let source_runfiles = runfiles(&[(&jar, "_main/absent.jar"), (&executable, "_main/absent-tool")]);
     compose_local(&[layout_component("plugin", vec![jar_entry, tool_entry])], &target, source_runfiles).unwrap();
@@ -129,9 +113,7 @@ fn canonical_modes_retain_the_existing_local_linking_policy() {
 fn invalid_or_conflicting_modes_fail_before_creating_launch_metadata() {
     let directory = TempDir::new();
     for (index, (mode, executable)) in [(512, false), (0o755, false), (0o644, true)].into_iter().enumerate() {
-        let mut file = file_entry("bin/tool");
-        file.mode = Some(mode);
-        file.executable = executable;
+        let file = file_with_mode("bin/tool", "inputs/tool", executable, Some(mode));
         let target = directory.path().join(format!("metadata-{index}"));
         require_error(
             compose_local(&[layout_component("plugin", vec![file])], &target, runfiles(&[])),
@@ -139,14 +121,6 @@ fn invalid_or_conflicting_modes_fail_before_creating_launch_metadata() {
         );
         require_absent(&target);
     }
-    let mut link = link_entry("bin/link", "tool");
-    link.mode = Some(0);
-    let target = directory.path().join("metadata-link");
-    require_error(
-        compose_local(&[layout_component("plugin", vec![link])], &target, runfiles(&[])),
-        "file mode",
-    );
-    require_absent(&target);
 }
 
 #[test]
@@ -183,7 +157,7 @@ fn local_and_exported_compositions_have_the_same_metadata() {
     write_file(&prefix, [1, 2, 3]);
     write_file(&part, [4, 5, 6]);
     let mut platform = layout_component("platform", vec![sourced_entry("lib/app.jar", &app)]);
-    platform.manifest.plugin_count = 1;
+    platform.manifest.plugin = true;
     platform.plugin_classpath_part = Some(part.into());
     let components = [platform];
     let exported_options = ComposeOptions {
@@ -326,18 +300,15 @@ fn manifest_only_links_reject_a_target_with_an_empty_segment() {
 }
 
 #[test]
-fn manifest_only_links_reject_file_sources_and_escapes() {
+fn manifest_only_links_reject_escapes() {
     let directory = TempDir::new();
-    let mut with_source = link_entry("plugins/demo/current", "lib/plugin.jar");
-    with_source.source = Some("ambiguous".into());
-    for entry in [with_source, link_entry("plugins/demo/current", "../../../outside")] {
-        let result = compose_local(
-            &[layout_component("plugin", vec![entry.clone()])],
-            &directory.path().join("metadata"),
-            runfiles(&[]),
-        );
-        assert!(result.is_err(), "accepted {entry:?}");
-    }
+    let entry = link_entry("plugins/demo/current", "../../../outside");
+    let result = compose_local(
+        &[layout_component("plugin", vec![entry.clone()])],
+        &directory.path().join("metadata"),
+        runfiles(&[]),
+    );
+    assert!(result.is_err(), "accepted {entry:?}");
 }
 
 // No payload has a link chain, so the inventory rules refuse one. A refused chain cannot escape or cycle.
@@ -416,9 +387,7 @@ fn local_composition_rejects_unsafe_and_conflicting_paths() {
 fn local_layout_bytes() {
     let directory = TempDir::new();
     let (app, packed) = (directory.join("tree/lib/app.jar"), directory.join("packed.jar"));
-    let mut file = sourced_entry("plugins/demo/lib/demo \"quoted\"\t.jar", &packed);
-    file.mode = Some(0o750);
-    file.executable = true;
+    let file = file_with_mode("plugins/demo/lib/demo \"quoted\"\t.jar", &packed, true, Some(0o750));
     let target = directory.path().join("metadata");
     let components = [
         layout_component(
@@ -455,7 +424,7 @@ fn a_plugin_classpath_joins_the_metadata_list() {
     write_file(&prefix, [3, 1]);
     write_file(&part, [7]);
     let mut plugins = layout_component("plugins", vec![]);
-    plugins.manifest.plugin_count = 1;
+    plugins.manifest.plugin = true;
     plugins.plugin_classpath_part = Some(part.into());
     let target = directory.path().join("metadata");
     let options = ComposeOptions {

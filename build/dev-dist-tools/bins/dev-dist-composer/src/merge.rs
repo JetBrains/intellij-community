@@ -1,8 +1,8 @@
 //! The copy step of a full distribution, which [`compose_components`] calls.
 //!
 //! [`compose_components`] checks every destination and the link graph of all components before it calls this step.
-//! [`ComponentSources::resolve`] checks every source. So this step only refuses the entry shapes that those checks
-//! accept and that no collector writes.
+//! [`ComponentSources::resolve`] checks every source. So this step refuses only a component file of a component without
+//! source bindings, which the Starlark caller never writes.
 //!
 //! For each component in order, the step creates each entry below the target and the missing parents. It accepts a
 //! directory that exists, and it refuses anything else at a destination, so it never replaces a file. After all
@@ -15,7 +15,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail};
-use component::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest};
+use component::manifest::{ComponentEntry, ComponentManifest};
 use component::paths;
 use rayon::prelude::*;
 
@@ -53,14 +53,17 @@ pub(crate) fn merge_components(components: &[DevBuildComponent], target: &Path, 
         create_link(&link, link_target)?;
     }
     // A directory mode can remove the write permission, so the deepest directory gets its mode first.
-    let mut directories: Vec<&ComponentEntry> = components
+    let mut directories: Vec<(&str, u32)> = components
         .iter()
         .flat_map(|component| &component.manifest.entries)
-        .filter(|entry| entry.entry_type == ComponentEntryType::Directory)
+        .filter_map(|entry| match entry {
+            ComponentEntry::Directory { relative_path, mode } => Some((relative_path.as_str(), *mode)),
+            _ => None,
+        })
         .collect();
-    directories.sort_by(|first, second| paths::compare_utf16(&second.relative_path, &first.relative_path));
-    for entry in directories {
-        fscopy::set_distribution_file_mode(&destination(target, &entry.relative_path), false, entry.mode)?;
+    directories.sort_by(|first, second| second.0.cmp(first.0));
+    for (relative_path, mode) in directories {
+        fscopy::set_distribution_file_mode(&destination(target, relative_path), false, Some(mode))?;
     }
     Ok(())
 }
@@ -88,26 +91,14 @@ fn copy_component<'a>(
     let mut jobs = Vec::new();
     let mut parents = HashSet::new();
     for entry in &manifest.entries {
-        let name = &entry.relative_path;
+        let name = entry.relative_path();
         let destination = destination(target, name);
-        match entry.entry_type {
-            ComponentEntryType::Directory => create_directory_entry(&destination)?,
-            ComponentEntryType::Symlink => {
-                let (None, Some(link_target)) = (&entry.source, &entry.symlink_target) else {
-                    bail!(
-                        "Dev-build component '{}' must declare the symbolic link '{name}' without a file source",
-                        manifest.kind
-                    );
-                };
-                links.push((destination, link_target.as_str()));
-            }
-            ComponentEntryType::ComponentFile => {
-                let Some(source) = &entry.source else {
-                    bail!(
-                        "Dev-build component '{}' declares no tree, so '{name}' must name where its bytes are",
-                        manifest.kind
-                    );
-                };
+        match entry {
+            ComponentEntry::Directory { .. } => create_directory_entry(&destination)?,
+            ComponentEntry::Symlink { symlink_target, .. } => links.push((destination, symlink_target.as_str())),
+            ComponentEntry::ComponentFile {
+                source, executable, mode, ..
+            } => {
                 let Some(bindings) = bindings else {
                     bail!(
                         "Dev-build component '{}' has no source bindings, so the composer cannot copy '{name}'",
@@ -125,8 +116,8 @@ fn copy_component<'a>(
                 jobs.push(CopyJob {
                     source: source.into(),
                     destination,
-                    executable: entry.executable,
-                    mode: entry.mode,
+                    executable: *executable,
+                    mode: *mode,
                 });
             }
         }

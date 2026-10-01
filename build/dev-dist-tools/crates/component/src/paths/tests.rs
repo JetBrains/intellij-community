@@ -2,13 +2,6 @@ use super::*;
 use crate::test_support::require_error;
 
 #[test]
-fn compare_utf16_is_the_java_string_order() {
-    let mut values = vec!["Ａ", "\u{1F600}", "b", "a", "ab", "", "é"];
-    values.sort_by(|first, second| compare_utf16(first, second));
-    assert_eq!(values, ["", "a", "ab", "b", "é", "\u{1F600}", "Ａ"]);
-}
-
-#[test]
 fn host_path_accepts_the_bazel_spelling() {
     for value in ["a", "bazel-out/k8-fastbuild/bin/lib.jar", "external/+repo+name/a b.jar"] {
         assert_eq!(host_path(value).unwrap(), from_slash(value), "{value:?}");

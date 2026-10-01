@@ -6,7 +6,7 @@ use std::path::Path;
 use anyhow::{Context, bail};
 use serde::Deserialize;
 
-use crate::inventory::SourcedFile;
+use crate::inventory::{Classpath, JarRecord, SourcedFile};
 
 /// One record of `--jars-file` or `--files-file`. A jar record states no `executable`, and a file record states it.
 /// Only a jar record can state `tree`, which names a native tree directory in place of a jar.
@@ -29,8 +29,8 @@ fn read_records(file: &str) -> anyhow::Result<Vec<Record>> {
     planfile::json::read(Path::new(file))
 }
 
-/// The packed jars of `intellij_dev_packed_jars_component`, each at `lib/<relativePath>`.
-pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
+/// The packed jars and the native trees of `intellij_dev_packed_jars_component`, each at `lib/<relativePath>`.
+pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<JarRecord>> {
     let records = read_records(file)?;
     let mut files = Vec::with_capacity(records.len());
     for (index, record) in records.into_iter().enumerate() {
@@ -48,12 +48,17 @@ pub(crate) fn platform_jars(file: &str) -> anyhow::Result<Vec<SourcedFile>> {
         // The destination of the jar, not the name of its file: a platform jar can name a subdirectory of `lib/`. A
         // tree record names the directory of the library below `lib/`, as the Kotlin packer places `lib/jna/`.
         distpath::validate_path(&record.relative_path).with_context(|| format!("{file}: record {number}"))?;
-        files.push(SourcedFile {
-            source: record.source,
-            relative_path: format!("lib/{}", record.relative_path),
-            tree: record.tree,
-            core_class_path: record.core_class_path,
-            ..SourcedFile::default()
+        let relative_path = format!("lib/{}", record.relative_path);
+        files.push(if record.tree {
+            JarRecord::Tree {
+                source: record.source,
+                relative_path,
+            }
+        } else {
+            JarRecord::Jar(SourcedFile {
+                classpath: if record.core_class_path { Classpath::Core } else { Classpath::None },
+                ..SourcedFile::new(record.source, relative_path)
+            })
         });
     }
     if files.is_empty() {

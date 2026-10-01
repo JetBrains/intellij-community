@@ -33,19 +33,19 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/core.json",
         concat!(
-            r#"{"kind":"platform_core","platformPrefix":"idea","os":"linux","arch":"x64","#,
-            r#""additionalModules":[],"mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":["#,
-            r#"{"relativePath":"bin/idea.properties","type":"component-file","hash":1,"source":"fragments/core/bin/idea.properties"},"#,
-            r#"{"relativePath":"lib/app.jar","type":"component-file","hash":4,"source":"fragments/core/lib/app.jar"},"#,
-            r#"{"relativePath":"lib/util.jar","type":"component-file","hash":2,"source":"fragments/core/lib/util.jar"}]}"#
+            r#"{"version":10,"kind":"platform_core","platformPrefix":"idea","os":"linux","arch":"x64","plugin":false,"#,
+            r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":["#,
+            r#"{"type":"component-file","relativePath":"bin/idea.properties","hash":1,"source":"fragments/core/bin/idea.properties"},"#,
+            r#"{"type":"component-file","relativePath":"lib/app.jar","hash":4,"source":"fragments/core/lib/app.jar"},"#,
+            r#"{"type":"component-file","relativePath":"lib/util.jar","hash":2,"source":"fragments/core/lib/util.jar"}]}"#
         ),
     );
     write_file(
         "fragments/plugins.json",
         concat!(
-            r#"{"kind":"plugins","platformPrefix":"idea","os":"","arch":"","#,
-            r#""additionalModules":[],"mainClass":null,"coreClassPath":[],"pluginCount":1,"entries":["#,
-            r#"{"relativePath":"plugins/packed/lib/packed.jar","type":"component-file","hash":3,"source":"inputs/packed.jar"}]}"#
+            r#"{"version":10,"kind":"plugins","platformPrefix":"idea","os":"","arch":"","plugin":true,"#,
+            r#""mainClass":null,"coreClassPath":[],"entries":["#,
+            r#"{"type":"component-file","relativePath":"plugins/packed/lib/packed.jar","hash":3,"source":"inputs/packed.jar"}]}"#
         ),
     );
     let bindings = [
@@ -240,4 +240,28 @@ fn compose_cli_rejects_a_full_distribution_without_source_bindings() {
     // The span file names the failure.
     let trace = read_text("out/spans.json");
     assert!(trace.contains(r#""key":"error.message""#), "trace = {trace}");
+}
+
+// Only the composer reads a manifest, so a manifest of another version is a stale input. The composer names its version
+// before any other key of the old shape.
+#[test]
+fn compose_cli_refuses_a_version_9_manifest() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(false);
+    write_file(
+        "fragments/plugins.json",
+        concat!(
+            r#"{"version":9,"kind":"plugins","platformPrefix":"idea","os":"","arch":"","additionalModules":[],"#,
+            r#""mainClass":null,"coreClassPath":[],"pluginCount":1,"entries":["#,
+            r#"{"relativePath":"plugins/packed/lib/packed.jar","type":"component-file","hash":3,"source":"inputs/packed.jar"}]}"#
+        ),
+    );
+    let (code, errors) = run_cli(&cli_args(&[]));
+    assert_eq!(code, 1);
+    let message = format!(
+        "{}: Unsupported dev-build component manifest version 9\n",
+        component::paths::from_slash("fragments/plugins.json")
+    );
+    assert!(errors.starts_with("ERROR: ") && errors.ends_with(&message), "errors = {errors:?}");
+    require_absent("out/dist");
 }

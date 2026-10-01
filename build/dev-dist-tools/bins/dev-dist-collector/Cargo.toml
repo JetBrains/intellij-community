@@ -14,7 +14,6 @@ component.workspace = true
 distpath.workspace = true
 planfile.workspace = true
 filemeta.workspace = true
-fscopy.workspace = true
 trace.workspace = true
 xxh3.workspace = true
 cli.workspace = true
@@ -22,5 +21,6 @@ anyhow.workspace = true
 serde.workspace = true
 
 [dev-dependencies]
+fscopy.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true

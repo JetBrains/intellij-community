@@ -17,7 +17,7 @@ use filemeta::{Entry, EntryType};
 use planfile::contract::{self, Asset, AssetKind, Producer, TREE_VERSION};
 use serde::Deserialize;
 
-use crate::inventory::SourcedFile;
+use crate::inventory::{Classpath, SourcedFile};
 
 /// The spec as the file states it. [`PluginComponentSpec::read`] checks that the keys form one of the two shapes.
 #[derive(Debug, Deserialize)]
@@ -605,7 +605,9 @@ fn collect_prepared(spec: &PreparedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             }
         };
         file.relative_path = component_destination(&spec.plugin_directory, &asset.destination);
-        file.class_path = asset.class_path.unwrap_or(true) && is_plugin_lib_jar(&asset.destination);
+        if asset.class_path.unwrap_or(true) && is_plugin_lib_jar(&asset.destination) {
+            file.classpath = Classpath::Plugin;
+        }
         let entry = file.metadata.clone().expect("every asset file has metadata");
         if entry.entry_type != EntryType::Symlink {
             file.mode = Some(entry.mode);
@@ -655,7 +657,11 @@ fn collect_packed(spec: &PackedSpec) -> anyhow::Result<Vec<SourcedFile>> {
         let file = SourcedFile {
             mode: Some(entry.mode),
             metadata: Some(entry.clone()),
-            class_path: is_plugin_lib_jar(&jar.destination),
+            classpath: if is_plugin_lib_jar(&jar.destination) {
+                Classpath::Plugin
+            } else {
+                Classpath::None
+            },
             ..SourcedFile::new(&jar.source, format!("{}/{}", spec.plugin_directory, jar.destination))
         };
         entry.relative_path.clone_from(&file.relative_path);

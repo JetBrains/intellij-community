@@ -11,7 +11,7 @@ pub mod manifest;
 pub mod paths;
 pub mod plugin_classpath;
 
-pub use manifest::{ComponentEntry, ComponentEntryType, ComponentManifest};
+pub use manifest::{ComponentEntry, ComponentManifest};
 
 #[cfg(test)]
 mod test_support;

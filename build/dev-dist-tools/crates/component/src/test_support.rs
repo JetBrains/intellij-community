@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::manifest::{ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
+use crate::manifest::{ComponentEntry, ComponentManifest, MANIFEST_VERSION};
 
 /// A test directory without symbolic links in its path, as `toRealPath` would give it.
 pub(crate) struct TempDir {
@@ -28,7 +28,7 @@ impl TempDir {
 
 pub(crate) fn test_manifest(kind: &str) -> ComponentManifest {
     ComponentManifest {
-        version: Some(MANIFEST_VERSION),
+        version: MANIFEST_VERSION,
         kind: kind.to_owned(),
         platform_prefix: "idea".to_owned(),
         os: "linux".to_owned(),
@@ -38,32 +38,34 @@ pub(crate) fn test_manifest(kind: &str) -> ComponentManifest {
     }
 }
 
+/// A file entry with the hash 1 and a source below `inputs/`.
 pub(crate) fn file_entry(relative_path: &str) -> ComponentEntry {
-    ComponentEntry {
+    file_with_mode(relative_path, false, None)
+}
+
+pub(crate) fn file_with_mode(relative_path: &str, executable: bool, mode: Option<u32>) -> ComponentEntry {
+    ComponentEntry::ComponentFile {
         relative_path: relative_path.to_owned(),
-        entry_type: ComponentEntryType::ComponentFile,
-        hash: Some(1),
-        ..ComponentEntry::default()
+        hash: 1,
+        executable,
+        source: format!("inputs/{relative_path}"),
+        mode,
     }
 }
 
 /// A link entry with the hash that the collector writes for its target.
 pub(crate) fn link_entry(relative_path: &str, target: &str) -> ComponentEntry {
-    ComponentEntry {
+    ComponentEntry::Symlink {
         relative_path: relative_path.to_owned(),
-        entry_type: ComponentEntryType::Symlink,
-        hash: Some(filemeta::hash_symlink_target(target)),
-        symlink_target: Some(target.to_owned()),
-        ..ComponentEntry::default()
+        hash: filemeta::hash_symlink_target(target),
+        symlink_target: target.to_owned(),
     }
 }
 
 pub(crate) fn directory_entry(relative_path: &str, mode: u32) -> ComponentEntry {
-    ComponentEntry {
+    ComponentEntry::Directory {
         relative_path: relative_path.to_owned(),
-        entry_type: ComponentEntryType::Directory,
-        mode: Some(mode),
-        ..ComponentEntry::default()
+        mode,
     }
 }
 

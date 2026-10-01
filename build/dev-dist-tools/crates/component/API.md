@@ -1,8 +1,7 @@
 # `component` API
 
 The component contract that the collector, the composer and the launcher share. Each line names one `pub` item of
-`src/`, with its module path. The crate root also exports `ComponentManifest`, `ComponentEntry` and
-`ComponentEntryType`.
+`src/`, with its module path. The crate root also exports `ComponentManifest` and `ComponentEntry`.
 
 The crate implements only the inputs that the repository produces. Every other input fails with an error that names
 it. The collector writes the manifests, and the composer reads them. `intellij_dev_dist.bzl` writes the metadata
@@ -40,36 +39,36 @@ the field order, where Go refuses it. No producer writes such an array.
 - `paths::from_slash(value) -> Cow<str>`: changes each slash to a native separator.
 - `paths::absolute_path(value) -> Result<String>`: the absolute path of a host path. A relative path starts at the
   working directory.
-- `paths::compare_utf16(first, second) -> Ordering`: Java `String.compareTo`. The manifest entries and the
-  fingerprint use this order.
 
-## Component manifest v9 (`manifest`)
+## Component manifest v10 (`manifest`)
 
-- `manifest::MANIFEST_VERSION: i32`: 9.
-- `ComponentEntryType { ComponentFile, Directory, Symlink }`: the JSON `type`, which is `component-file`,
-  `directory` or `symlink`. Another type fails.
-- `ComponentEntryType::as_str() -> &'static str`: the JSON text of the type.
-- `ComponentManifest { version, kind, platform_prefix, os, arch, additional_modules, main_class, core_class_path,
-  entries, plugin_count }`: one manifest, in the field order of the Go collector. `version: Option<i32>` is absent
-  except for a plugin component. `main_class` is an `Option<String>`. `plugin_count: u32` is 0 or 1, and JSON omits
-  0. `additional_modules` is always empty.
-- `ComponentEntry { relative_path, entry_type, hash, executable, source, symlink_target, mode }`: one entry.
-  `hash: Option<i64>`, `source: Option<String>`, `symlink_target: Option<String>` and `mode: Option<u32>`. JSON omits
-  a `None`, an empty `source` or `symlink_target`, and a `false` `executable`.
+Only the composer reads a manifest. Every path of a manifest is ASCII after `distpath::validate_path`, so `str::cmp`
+gives the order of Java `String.compareTo` for the entries and the fingerprint.
+
+- `manifest::MANIFEST_VERSION: i32`: 10.
+- `ComponentManifest { version, kind, platform_prefix, os, arch, plugin, main_class, core_class_path, entries }`: one
+  manifest. JSON states every key. `main_class` is an `Option<String>`. `plugin: bool` is true for a plugin
+  component.
+- `ComponentEntry`: one entry, with the JSON `type` first. `ComponentFile { relative_path, hash, executable, source,
+  mode }` is `component-file`. JSON omits a `false` `executable` and a `None` `mode`. `Directory { relative_path,
+  mode }` is `directory`, and `Symlink { relative_path, hash, symlink_target }` is `symlink`. Another type, a missing
+  key and a key of another type fail.
+- `ComponentEntry::relative_path() -> &str`, `type_name() -> &'static str`, `hash() -> i64` (0 for a directory),
+  `executable() -> bool`: the fields that the fingerprint reads.
 - `ComponentManifest::platform_neutral() -> bool`: `os` and `arch` are empty.
-- `ComponentManifest::effective_version() -> i32`: the version, or 9 when it is absent.
-- `ComponentManifest::to_json() -> Vec<u8>`: the bytes of the Go collector: two-space indent, no HTML escape, no
-  trailing newline.
+- `ComponentManifest::to_json() -> Vec<u8>`: two-space indent, no trailing newline.
 - `ComponentEntry::to_metadata() -> filemeta::Entry`: the inventory entry for `filemeta::merge`. A file without a
   mode gets the conventional mode.
-- `manifest::read_component_manifest(path) -> Result<ComponentManifest>`: decodes, then applies `validate_manifest`.
-- `manifest::validate_manifest(manifest) -> Result<()>`: checks the version, a plugin count of at most 1, no
-  additional modules, and `validate_entry_mode` for each entry. Each `core_class_path` value must be a
-  `component-file` entry of the same manifest.
+- `manifest::conventional_mode(executable: bool) -> u32`: 0o755 or 0o644. A file without a mode has this mode.
+- `manifest::read_component_manifest(path) -> Result<ComponentManifest>`: checks the version first, then decodes and
+  applies `validate_manifest`. A manifest of another version fails with its version, and a manifest without a version
+  is version 9.
+- `manifest::validate_manifest(manifest) -> Result<()>`: checks the version and `validate_entry_mode` for each
+  entry. Each `core_class_path` value must be a `component-file` entry of the same manifest.
 - `manifest::write_component_manifest(path, manifest) -> Result<()>`: writes the `to_json` bytes and creates the
   parent directory.
-- `manifest::validate_entry_mode(entry) -> Result<()>`: the Kotlin `validateDevBuildEntryMode`. A directory has a
-  mode and nothing else. A file with a mode has the executable flag of that mode.
+- `manifest::validate_entry_mode(entry) -> Result<()>`: the value rules of the Kotlin `validateDevBuildEntryMode`. A
+  directory mode is at most 0o777. A file with a mode has the executable flag of that mode.
 - `manifest::logical_component_mode(mode: u32) -> u32`: maps `0o444` to `0o644` and `0o555` to `0o755`. It keeps
   every other mode.
 

@@ -6,7 +6,6 @@
 //! `distpath::validate_path` checks it.
 
 use std::borrow::Cow;
-use std::cmp::Ordering;
 use std::path::PathBuf;
 
 use anyhow::{Context as _, Result, bail};
@@ -48,12 +47,6 @@ pub fn absolute_path(value: &str) -> Result<String> {
     let native = host_path(value)?;
     let absolute = std::path::absolute(&native).with_context(|| value.to_owned())?;
     text(absolute)
-}
-
-/// Java `String.compareTo`. It compares UTF-16 code units, so a supplementary character sorts before U+E000 to
-/// U+FFFF. The manifest entries and the fingerprint use this order.
-pub fn compare_utf16(first: &str, second: &str) -> Ordering {
-    first.encode_utf16().cmp(second.encode_utf16())
 }
 
 fn text(path: PathBuf) -> Result<String> {

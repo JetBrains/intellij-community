@@ -4,8 +4,7 @@ use std::path::Path;
 
 use anyhow::{Context as _, Result, bail};
 use component::classpath;
-use component::manifest::{self, ComponentEntryType, ComponentManifest};
-use component::paths::compare_utf16;
+use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::plugin_classpath::PLUGIN_CLASSPATH;
 
 /// The version prefix of a fingerprint.
@@ -72,11 +71,16 @@ impl HashStream {
 }
 
 /// Hashes the sorted entries and renders the unsigned hash in base 36 after the version.
+///
+/// Kotlin sorts the paths and the types with `String.compareTo`. Each path and each type is ASCII, and for ASCII text
+/// `str::cmp` gives the same order.
 pub(crate) fn compute_ide_fingerprint(entries: &[FingerprintEntry]) -> String {
     let mut sorted: Vec<&FingerprintEntry> = entries.iter().collect();
     sorted.sort_by(|first, second| {
-        compare_utf16(&first.relative_path, &second.relative_path)
-            .then_with(|| compare_utf16(&first.entry_type, &second.entry_type))
+        first
+            .relative_path
+            .cmp(&second.relative_path)
+            .then_with(|| first.entry_type.cmp(&second.entry_type))
             .then_with(|| first.hash.cmp(&second.hash))
             .then_with(|| first.executable.cmp(&second.executable))
     });
@@ -141,23 +145,29 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     for component in components {
         for entry in &component.entries {
             entries.push(FingerprintEntry::new(
-                &entry.relative_path,
-                entry.entry_type.as_str(),
-                entry.hash.unwrap_or(0),
-                entry.executable,
+                entry.relative_path(),
+                entry.type_name(),
+                entry.hash(),
+                entry.executable(),
             ));
         }
     }
     for component in components {
         for entry in &component.entries {
             manifest::validate_entry_mode(entry)?;
-            let Some(mode) = entry.mode else {
-                continue;
-            };
-            if entry.entry_type == ComponentEntryType::Directory {
-                entries.push(FingerprintEntry::new(&entry.relative_path, "directory-mode", mode.into(), false));
-            } else if mode != fscopy::conventional_mode(entry.executable) {
-                entries.push(FingerprintEntry::new(&entry.relative_path, "file-mode", mode.into(), false));
+            match entry {
+                ComponentEntry::Directory { relative_path, mode } => {
+                    entries.push(FingerprintEntry::new(relative_path, "directory-mode", (*mode).into(), false));
+                }
+                ComponentEntry::ComponentFile {
+                    relative_path,
+                    executable,
+                    mode: Some(mode),
+                    ..
+                } if *mode != manifest::conventional_mode(*executable) => {
+                    entries.push(FingerprintEntry::new(relative_path, "file-mode", (*mode).into(), false));
+                }
+                _ => {}
             }
         }
     }

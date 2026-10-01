@@ -104,8 +104,8 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
 
     let missing_parts: Vec<String> = components
         .iter()
-        .filter(|component| component.manifest.plugin_count > 0 && component.plugin_classpath_part.is_none())
-        .map(|component| format!("{} ({})", component.manifest.kind, component.manifest.plugin_count))
+        .filter(|component| component.manifest.plugin && component.plugin_classpath_part.is_none())
+        .map(|component| format!("{} (1)", component.manifest.kind))
         .collect();
     if !missing_parts.is_empty() {
         bail!(
@@ -157,14 +157,14 @@ pub(crate) fn validate_destinations(manifests: &[&ComponentManifest]) -> Result<
         .iter()
         .map(|name| filemeta::Entry {
             relative_path: (*name).to_owned(),
-            mode: fscopy::conventional_mode(false),
+            mode: manifest::conventional_mode(false),
             ..filemeta::Entry::default()
         })
         .collect();
     for entry in manifests.iter().flat_map(|manifest| &manifest.entries) {
         manifest::validate_entry_mode(entry)?;
-        if !destinations.insert(&entry.relative_path) {
-            bail!("Dev-build components both provide '{}'", entry.relative_path);
+        if !destinations.insert(entry.relative_path()) {
+            bail!("Dev-build components both provide '{}'", entry.relative_path());
         }
         entries.push(entry.to_metadata());
     }
@@ -252,14 +252,14 @@ where
 }
 
 /// Writes `plugins/plugin-classpath.txt` from the prefix and the records of all components. The plugin count between
-/// the two covers the whole distribution. The result is `None` when no component has records.
+/// the two is the number of plugin components. The result is `None` when no component has records.
 pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &Path, prefix: Option<&Path>) -> Result<Option<PathBuf>> {
     let kinds: Vec<&str> = components
         .iter()
         .filter(|component| component.plugin_classpath_part.is_some())
         .map(|component| component.manifest.kind.as_str())
         .collect();
-    let plugin_count: u32 = components.iter().map(|component| component.manifest.plugin_count).sum();
+    let plugin_count = components.iter().filter(|component| component.manifest.plugin).count();
     let Ok(plugin_count) = u16::try_from(plugin_count) else {
         bail!("The dev-build components report {plugin_count} plugins, and the plugin classpath holds at most 65535");
     };

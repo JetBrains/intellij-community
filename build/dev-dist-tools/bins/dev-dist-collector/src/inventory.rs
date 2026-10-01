@@ -6,14 +6,25 @@ use std::path::Path;
 
 use anyhow::{Context as _, Result, bail};
 use component::json;
-use component::manifest::{self, ComponentEntry, ComponentEntryType, ComponentManifest, MANIFEST_VERSION};
-use component::paths::{self, compare_utf16};
+use component::manifest::{self, ComponentEntry, ComponentManifest, MANIFEST_VERSION};
+use component::paths;
 use filemeta::{Entry, EntryType};
 use serde::Deserialize;
 
+/// The classpath that a file of a component joins.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) enum Classpath {
+    /// The file joins no classpath.
+    #[default]
+    None,
+    /// A jar of the plugin classpath record.
+    Plugin,
+    /// A packed jar of the core classpath. The manifest lists it under `coreClassPath`.
+    Core,
+}
+
 /// One file that the collector places in a component.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-#[expect(clippy::struct_excessive_bools, reason = "each field is a boolean column of the inventory record")]
 pub(crate) struct SourcedFile {
     /// Where the bytes are, relative to the working directory of the action.
     pub(crate) source: String,
@@ -24,12 +35,7 @@ pub(crate) struct SourcedFile {
     pub(crate) metadata: Option<Entry>,
     /// The mode of the source in its inventory.
     pub(crate) mode: Option<u32>,
-    /// Marks a file of the plugin classpath record.
-    pub(crate) class_path: bool,
-    /// Marks a packed jar of the core classpath. The manifest lists it under `coreClassPath`.
-    pub(crate) core_class_path: bool,
-    /// Marks a directory record, which [`attach_metadata`] replaces with one file per inventory entry below it.
-    pub(crate) tree: bool,
+    pub(crate) classpath: Classpath,
 }
 
 impl SourcedFile {
@@ -40,6 +46,14 @@ impl SourcedFile {
             ..Self::default()
         }
     }
+}
+
+/// One record of `--jars-file`: a packed jar, or the directory of a native tree, which [`attach_metadata`] replaces
+/// with one file per inventory entry below it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum JarRecord {
+    Jar(SourcedFile),
+    Tree { source: String, relative_path: String },
 }
 
 /// The counters of the inventory span. `file_count` counts placements. `hashed_file_count` and `byte_count` count the
@@ -60,11 +74,11 @@ pub(crate) struct ManifestHeader {
     pub(crate) arch: String,
     /// The IDE main class, or `None` for a component that declares none.
     pub(crate) main_class: Option<String>,
-    /// A plugin component states the version and one plugin.
+    /// A plugin component holds one plugin.
     pub(crate) plugin_component: bool,
 }
 
-/// The entries of the files, sorted in Java string order.
+/// The entries of the files, sorted by their destination. A destination is ASCII, so this is the Java string order.
 ///
 /// A file with an inventory entry takes the hash, the type and the mode of that entry. The collector reads nothing
 /// from its source. Any other file must be a regular file, and the inventory hashes it once per absolute source path.
@@ -78,39 +92,39 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             let mut metadata = metadata.clone();
             metadata.relative_path.clone_from(&file.relative_path);
             filemeta::merge(std::iter::once(&metadata))?;
-            let mut entry = ComponentEntry {
-                relative_path: file.relative_path.clone(),
-                entry_type: ComponentEntryType::ComponentFile,
-                hash: Some(metadata.hash),
-                ..ComponentEntry::default()
-            };
-            match metadata.entry_type {
-                EntryType::Directory => {
-                    entry.entry_type = ComponentEntryType::Directory;
-                    entry.hash = None;
-                    entry.mode = Some(manifest::logical_component_mode(metadata.mode));
-                }
+            let relative_path = file.relative_path.clone();
+            let entry = match metadata.entry_type {
+                EntryType::Directory => ComponentEntry::Directory {
+                    relative_path,
+                    mode: manifest::logical_component_mode(metadata.mode),
+                },
                 EntryType::Symlink => {
                     if file.executable {
                         bail!("symbolic link has an executable override: {}", file.relative_path);
                     }
                     let target = distpath::clean_link_target(&metadata.symlink_target);
-                    entry.entry_type = ComponentEntryType::Symlink;
-                    entry.hash = Some(filemeta::hash_symlink_target(&target));
-                    links.insert(entry.relative_path.clone(), target.clone());
-                    entry.symlink_target = Some(target);
-                }
-                EntryType::File => {
-                    entry.executable = file.executable || metadata.executable;
-                    entry.source = Some(file.source.clone());
-                    if let Some(mode) = file.mode {
-                        let mode = manifest::logical_component_mode(mode);
-                        if mode != fscopy::conventional_mode(entry.executable) {
-                            entry.mode = Some(mode);
-                        }
+                    links.insert(relative_path.clone(), target.clone());
+                    ComponentEntry::Symlink {
+                        relative_path,
+                        hash: filemeta::hash_symlink_target(&target),
+                        symlink_target: target,
                     }
                 }
-            }
+                EntryType::File => {
+                    let executable = file.executable || metadata.executable;
+                    let mode = file
+                        .mode
+                        .map(manifest::logical_component_mode)
+                        .filter(|&mode| mode != manifest::conventional_mode(executable));
+                    ComponentEntry::ComponentFile {
+                        relative_path,
+                        hash: metadata.hash,
+                        executable,
+                        source: file.source.clone(),
+                        mode,
+                    }
+                }
+            };
             entries.push(entry);
             continue;
         }
@@ -127,17 +141,16 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             byte_count += source_metadata.len();
             hash
         };
-        entries.push(ComponentEntry {
+        entries.push(ComponentEntry::ComponentFile {
             relative_path: file.relative_path.clone(),
-            entry_type: ComponentEntryType::ComponentFile,
-            hash: Some(hash),
+            hash,
             executable: file.executable,
-            source: Some(file.source.clone()),
-            ..ComponentEntry::default()
+            source: file.source.clone(),
+            mode: None,
         });
     }
     distpath::validate_links(&links)?;
-    entries.sort_by(|first, second| compare_utf16(&first.relative_path, &second.relative_path));
+    entries.sort_by(|first, second| first.relative_path().cmp(second.relative_path()));
     let stats = InventoryStats {
         file_count: entries.len(),
         hashed_file_count: hashes.len(),
@@ -151,20 +164,19 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
 pub(crate) fn build_manifest(header: &ManifestHeader, files: &[SourcedFile]) -> Result<(ComponentManifest, InventoryStats)> {
     let (entries, stats) = inventory(files)?;
     let manifest = ComponentManifest {
-        version: header.plugin_component.then_some(MANIFEST_VERSION),
+        version: MANIFEST_VERSION,
         kind: header.kind.clone(),
         platform_prefix: header.platform_prefix.clone(),
         os: header.os.clone(),
         arch: header.arch.clone(),
-        additional_modules: Vec::new(),
+        plugin: header.plugin_component,
         main_class: header.main_class.clone().filter(|main_class| !main_class.is_empty()),
         core_class_path: files
             .iter()
-            .filter(|file| file.core_class_path)
+            .filter(|file| file.classpath == Classpath::Core)
             .map(|file| file.relative_path.clone())
             .collect(),
         entries,
-        plugin_count: u32::from(header.plugin_component),
     };
     Ok((manifest, stats))
 }
@@ -200,13 +212,13 @@ struct TreeMetadata {
 }
 
 impl TreeMetadata {
-    /// Places the regular files of the tree below the destination of `record`, one file each. It places no
-    /// directory, because the composer creates the parents of a file.
-    fn files(&self, record: &SourcedFile) -> Vec<SourcedFile> {
+    /// Places the regular files of the tree below `destination`, one file each. It places no directory, because the
+    /// composer creates the parents of a file.
+    fn files(&self, source: &str, destination: &str) -> Vec<SourcedFile> {
         let mut files = Vec::with_capacity(self.entries.len());
         for entry in self.entries.iter().filter(|entry| entry.entry_type == EntryType::File) {
-            let source = format!("{}/{}", record.source, entry.relative_path);
-            let relative_path = format!("{}/{}", record.relative_path, entry.relative_path);
+            let source = format!("{source}/{}", entry.relative_path);
+            let relative_path = format!("{destination}/{}", entry.relative_path);
             let mut metadata = entry.clone();
             metadata.relative_path.clone_from(&relative_path);
             files.push(SourcedFile {
@@ -222,14 +234,14 @@ impl TreeMetadata {
     }
 }
 
-/// Pairs every file with its inventory entry, and replaces every tree record with the files that its inventory names.
+/// Pairs every jar with its inventory entry, and replaces every tree record with the files that its inventory names.
 /// The result is what the manifest lists, so a tree without a file contributes nothing.
-pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result<Vec<SourcedFile>> {
-    let records: Vec<MetadataRecord> = json::read(catalogue)?;
+pub(crate) fn attach_metadata(records: &[JarRecord], catalogue: &Path) -> Result<Vec<SourcedFile>> {
+    let catalogue_records: Vec<MetadataRecord> = json::read(catalogue)?;
     let mut by_source: HashMap<String, Entry> = HashMap::new();
     let mut trees: HashMap<String, TreeMetadata> = HashMap::new();
     let mut cache: HashMap<String, HashMap<String, Entry>> = HashMap::new();
-    for record in &records {
+    for record in &catalogue_records {
         if record.source.is_empty() || record.metadata.is_empty() || distpath::validate_path(&record.relative_path).is_err() {
             bail!(
                 "{}: metadata records require source, metadata and a safe relativePath",
@@ -265,20 +277,27 @@ pub(crate) fn attach_metadata(files: &[SourcedFile], catalogue: &Path) -> Result
     }
 
     let mut used = std::collections::HashSet::new();
-    let mut attached = Vec::with_capacity(files.len());
-    for file in files {
+    let mut attached = Vec::with_capacity(records.len());
+    for record in records {
+        let file = match record {
+            JarRecord::Jar(file) => file,
+            JarRecord::Tree {
+                source: tree_source,
+                relative_path,
+            } => {
+                let source = paths::absolute_path(tree_source)?;
+                let Some(tree) = trees.get(&source) else {
+                    if by_source.contains_key(&source) {
+                        bail!("tree record {tree_source} has file metadata");
+                    }
+                    bail!("missing metadata for tree {tree_source}");
+                };
+                attached.extend(tree.files(tree_source, relative_path));
+                used.insert(source);
+                continue;
+            }
+        };
         let source = paths::absolute_path(&file.source)?;
-        if file.tree {
-            let Some(tree) = trees.get(&source) else {
-                if by_source.contains_key(&source) {
-                    bail!("tree record {} has file metadata", file.source);
-                }
-                bail!("missing metadata for tree {}", file.source);
-            };
-            attached.extend(tree.files(file));
-            used.insert(source);
-            continue;
-        }
         let Some(entry) = by_source.get(&source) else {
             if trees.contains_key(&source) {
                 bail!("file record {} has tree metadata", file.source);

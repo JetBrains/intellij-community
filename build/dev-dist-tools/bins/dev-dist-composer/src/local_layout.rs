@@ -8,7 +8,7 @@ use anyhow::{Context as _, Result, bail};
 use component::layout::{
     CORE_CLASSPATH_FILE, FINGERPRINT_FILE, LOCAL_LAYOUT_FILE, LOCAL_LAYOUT_VERSION, LocalFileKind, LocalLayout, LocalLayoutFile,
 };
-use component::manifest::{ComponentEntryType, ComponentManifest};
+use component::manifest::{self, ComponentEntry, ComponentManifest};
 use component::paths;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
 
@@ -27,32 +27,28 @@ pub(crate) fn encode_local_layout(
     validate_destinations(components)?;
     let mut files = Vec::new();
     for entry in components.iter().flat_map(|component| &component.entries) {
-        let name = entry.relative_path.as_str();
-        let mut runfile = None;
-        match entry.entry_type {
-            ComponentEntryType::Directory => {}
-            ComponentEntryType::Symlink => {
-                if entry.source.is_some() {
-                    bail!("Dev-build component must declare the symbolic link '{name}' without a file source");
-                }
-            }
-            ComponentEntryType::ComponentFile => {
-                let Some(source) = &entry.source else {
-                    bail!("Dev-build component entry '{name}' has no source");
-                };
-                runfile = Some(resolve_source_runfile(source, source_runfiles, source_directory_runfiles, name)?);
-            }
-        }
-        let directory = entry.entry_type == ComponentEntryType::Directory;
-        files.push(LocalLayoutFile {
-            path: name.to_owned(),
-            runfile,
-            symlink_target: entry.symlink_target.clone(),
-            executable: entry.executable,
-            mode: entry
-                .mode
-                .filter(|&mode| directory || mode != fscopy::conventional_mode(entry.executable)),
-            kind: directory.then_some(LocalFileKind::Directory),
+        let path = entry.relative_path().to_owned();
+        files.push(match entry {
+            ComponentEntry::Directory { mode, .. } => LocalLayoutFile {
+                path,
+                mode: Some(*mode),
+                kind: Some(LocalFileKind::Directory),
+                ..LocalLayoutFile::default()
+            },
+            ComponentEntry::Symlink { symlink_target, .. } => LocalLayoutFile {
+                path,
+                symlink_target: Some(symlink_target.clone()),
+                ..LocalLayoutFile::default()
+            },
+            ComponentEntry::ComponentFile {
+                source, executable, mode, ..
+            } => LocalLayoutFile {
+                runfile: Some(resolve_source_runfile(source, source_runfiles, source_directory_runfiles, &path)?),
+                path,
+                executable: *executable,
+                mode: mode.filter(|&mode| mode != manifest::conventional_mode(*executable)),
+                ..LocalLayoutFile::default()
+            },
         });
     }
     let mut metadata = vec![CORE_CLASSPATH_FILE.to_owned(), FINGERPRINT_FILE.to_owned()];

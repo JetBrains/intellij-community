@@ -6,7 +6,6 @@ distpath
 equivalent
 filemeta
 foldhash
-fscopy
 getrandom
 hashbrown
 httpdate
