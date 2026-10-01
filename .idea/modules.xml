@@ -1546,6 +1546,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/consoleView/intellij.platform.consoleView.iml" filepath="$PROJECT_DIR$/platform/consoleView/intellij.platform.consoleView.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/consoleView/impl/intellij.platform.consoleView.impl.iml" filepath="$PROJECT_DIR$/platform/consoleView/impl/intellij.platform.consoleView.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/intellij.platform.core.iml" filepath="$PROJECT_DIR$/platform/core-api/intellij.platform.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.tests.iml" filepath="$PROJECT_DIR$/platform/core-impl/intellij.platform.core.impl.tests.iml" />

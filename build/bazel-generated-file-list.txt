@@ -764,6 +764,7 @@ platform/compose/plugin
 platform/compose/swing-ui
 platform/configuration-store-impl
 platform/consoleView
+platform/consoleView/impl
 platform/core-api
 platform/core-impl
 platform/core-nio-fs
