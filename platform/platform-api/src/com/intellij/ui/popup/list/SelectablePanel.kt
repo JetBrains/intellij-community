@@ -17,7 +17,6 @@ import javax.swing.JPanel
 /**
  * Allows to paint selection according to [selectionArc], [selectionColor] and [selectionInsets]
  */
-@ApiStatus.Experimental
 open class SelectablePanel(background: Color? = null) : JPanel() {
 
   internal enum class Side {

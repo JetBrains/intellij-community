@@ -9689,6 +9689,48 @@ c:com.intellij.ui.popup.list.GroupedItemsListRenderer
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 - getNextStepLabel():javax.swing.JLabel
 - p:layoutComponent(javax.swing.JComponent):javax.swing.JComponent
+c:com.intellij.ui.popup.list.SelectablePanel
+- javax.swing.JPanel
+- sf:Companion:com.intellij.ui.popup.list.SelectablePanel$Companion
+- <init>():V
+- <init>(java.awt.Color):V
+- b:<init>(java.awt.Color,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- f:getPreferredHeight():java.lang.Integer
+- getPreferredSize():java.awt.Dimension
+- f:getPreferredWidth():java.lang.Integer
+- f:getSelectionArc():I
+- f:getSelectionArcCorners():com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- f:getSelectionColor():java.awt.Color
+- f:getSelectionInsets():java.awt.Insets
+- p:paintComponent(java.awt.Graphics):V
+- f:setPreferredHeight(java.lang.Integer):V
+- f:setPreferredWidth(java.lang.Integer):V
+- f:setSelectionArc(I):V
+- f:setSelectionArcCorners(com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners):V
+- f:setSelectionColor(java.awt.Color):V
+- f:setSelectionInsets(java.awt.Insets):V
+- sf:wrap(java.awt.Component):com.intellij.ui.popup.list.SelectablePanel
+- sf:wrap(java.awt.Component,java.awt.Color):com.intellij.ui.popup.list.SelectablePanel
+f:com.intellij.ui.popup.list.SelectablePanel$Companion
+- f:wrap(java.awt.Component):com.intellij.ui.popup.list.SelectablePanel
+- f:wrap(java.awt.Component,java.awt.Color):com.intellij.ui.popup.list.SelectablePanel
+- bs:wrap$default(com.intellij.ui.popup.list.SelectablePanel$Companion,java.awt.Component,java.awt.Color,I,java.lang.Object):com.intellij.ui.popup.list.SelectablePanel
+e:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- java.lang.Enum
+- sf:ALL:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:BOTTOM:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:BOTTOM_LEFT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:BOTTOM_RIGHT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:LEFT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:NONE:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:RIGHT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:TOP:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:TOP_LEFT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:TOP_RIGHT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- s:values():com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners[]
 c:com.intellij.ui.popup.util.PopupState
 - com.intellij.openapi.ui.popup.JBPopupListener
 - javax.swing.event.PopupMenuListener
