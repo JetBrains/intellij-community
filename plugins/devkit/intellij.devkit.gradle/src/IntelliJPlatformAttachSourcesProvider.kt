@@ -332,7 +332,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     GradleNotification.gradleNotificationGroup
       .createNotification(
         title = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.title"),
-        content = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.content", notation, gradleProject),
+        content = DevKitGradleBundle.message("attachSources.intellijPlatform.failed.content", notation, gradleProject, REPOSITORIES_DOCUMENTATION_URL),
         type = NotificationType.WARNING
       )
       .setDisplayId("devkit.gradle.attachSources.intellijPlatform.failed")
