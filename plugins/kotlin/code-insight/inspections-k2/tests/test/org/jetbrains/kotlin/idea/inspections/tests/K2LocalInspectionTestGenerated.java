@@ -28549,6 +28549,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/customComponentDestructuringMigration/fullValueClass.kt");
         }
 
+        @TestMetadata("fullValueObject.kt")
+        public void testFullValueObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/customComponentDestructuringMigration/fullValueObject.kt");
+        }
+
         @TestMetadata("jvmInlineValueClass.kt")
         public void testJvmInlineValueClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/customComponentDestructuringMigration/jvmInlineValueClass.kt");

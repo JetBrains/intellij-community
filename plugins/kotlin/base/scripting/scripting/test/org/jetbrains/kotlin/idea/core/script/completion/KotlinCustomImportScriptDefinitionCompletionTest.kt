@@ -31,6 +31,7 @@ import kotlin.script.experimental.api.ScriptConfigurationRefinementContext
 import kotlin.script.experimental.api.acceptedLocations
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.collectedAnnotations
+import kotlin.script.experimental.api.defaultImports
 import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.api.importScripts
@@ -113,6 +114,7 @@ class KotlinCustomImportScriptDefinitionCompletionTest : KotlinLightCodeInsightF
             defaultJvmScriptingHostConfiguration,
             compilation = {
                 fileExtension("imports.kts")
+                defaultImports(CustomImport::class)
                 ide { acceptedLocations(ScriptAcceptedLocation.Everywhere) }
                 refineConfiguration {
                     onAnnotations(CustomImport::class) { context -> resolveImportedScripts(context) }

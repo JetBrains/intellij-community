@@ -207,3 +207,7 @@ private val KtTypeReference.isSafeToResolve: Boolean
             else -> true
         }
     }
+
+/** Returns whether this symbol represents a full value class or a value object. */
+@ApiStatus.Internal
+fun KaNamedClassSymbol.isFullValueClass(): Boolean = isValue && !isInline

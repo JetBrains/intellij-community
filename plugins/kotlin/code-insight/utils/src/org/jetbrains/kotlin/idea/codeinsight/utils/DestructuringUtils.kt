@@ -14,14 +14,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtParameter
@@ -48,7 +43,7 @@ fun extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>?
     if (type.isMarkedNullable) return null
     val classSymbol = type.expandedSymbol as? KaNamedClassSymbol ?: return null
 
-    return if (classSymbol.isData || classSymbol.isValue) {
+    return if (classSymbol.isData || classSymbol.isFullValueClass()) {
         val constructorSymbol = classSymbol.declaredMemberScope
             .constructors
             .find { it.isPrimary }
@@ -57,15 +52,6 @@ fun extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>?
         constructorSymbol.valueParameters
     } else null
 }
-
-// TODO: Has to be dropped when KTIJ-40105 is fixed
-private val KaNamedClassSymbol.isValue: Boolean
-    get() {
-        val ktClass = psi as? KtClass ?: return false
-        return ktClass.isValue() &&
-                ktClass.languageVersionSettings.supportsFeature(LanguageFeature.FullValueClasses) &&
-                KotlinPsiHeuristics.findAnnotation(ktClass, StandardKotlinNames.Jvm.JvmInline) == null
-    }
 
 /**
  * Returns true for a full value class destructuring declaration.
@@ -78,7 +64,7 @@ fun KtDestructuringDeclaration.isFullValueClassDestructuring(): Boolean {
     val type = getDestructuredClassType() ?: return false
     if (type.isMarkedNullable) return false
     val classSymbol = type.expandedSymbol as? KaNamedClassSymbol ?: return false
-    return classSymbol.isValue
+    return classSymbol.isFullValueClass()
 }
 
 /**
