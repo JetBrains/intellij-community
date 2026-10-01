@@ -165,6 +165,7 @@ public final class MainPassesRunner {
         //retry if one of the daemonIndicators was canceled by started write action
       }
       finally {
+        daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel("main passes attempt finished"));
         Disposer.dispose(disposable);
       }
       WriteAction.runAndWait(() -> {}); // wait until the current write action is finished
