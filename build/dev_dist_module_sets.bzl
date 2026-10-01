@@ -229,6 +229,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.zip.signer",
             "intellij.platform.backend.workspace.impl",
             "intellij.platform.discoverability",
+            "intellij.platform.ide.designer",
             "intellij.platform.ide.favoritesTreeView",
             "intellij.platform.ide.osCertificates",
             "intellij.platform.ide.pluginSignatureVerifier",

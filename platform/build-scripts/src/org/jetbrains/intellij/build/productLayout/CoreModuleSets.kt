@@ -303,7 +303,7 @@ object CoreModuleSets {
     module("intellij.platform.threadDumpParser")
     module("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin
-    embeddedModule("intellij.platform.ide.designer")
+    module("intellij.platform.ide.designer")
 
     embeddedModule("intellij.platform.ide.bootstrap")
     embeddedModule("intellij.platform.bootstrap")

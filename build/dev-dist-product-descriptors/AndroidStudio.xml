@@ -134,7 +134,7 @@
     <module name="intellij.platform.ide.remote" loading="embedded"/>
     <module name="intellij.platform.threadDumpParser"/>
     <module name="intellij.platform.ide.favoritesTreeView"/>
-    <module name="intellij.platform.ide.designer" loading="embedded"/>
+    <module name="intellij.platform.ide.designer"/>
     <module name="intellij.platform.ide.bootstrap" loading="embedded"/>
     <module name="intellij.platform.bootstrap" loading="embedded"/>
     <module name="intellij.platform.backend.workspace.impl"/>
