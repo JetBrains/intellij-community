@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Computable
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.sdk.backend.asItem
 import com.intellij.python.sdk.backend.findSdk
@@ -25,8 +26,10 @@ import java.util.function.Consumer
  * It holds [PyInterpreterItem]s rather than SDKs: a row states whether its interpreter can be used, and only the
  * interpreter can answer that. The items are read under a progress, off the EDT.
  */
-class PySdkComboBox(private val addDefault: Boolean,
-                    private val moduleProvider: Computable<out Module?>) : ComboBox<PyInterpreterItem?>(), PyInterpreterModeNotifier {
+class PySdkComboBox(
+  private val addDefault: Boolean,
+  private val moduleProvider: Computable<out Module?>,
+) : ComboBox<PyInterpreterItem?>(), PyInterpreterModeNotifier {
   private val interpreterModeListeners: MutableList<Consumer<Boolean>> = mutableListOf()
 
   fun reset(config: AbstractPythonRunConfigurationParams) {
@@ -45,7 +48,7 @@ class PySdkComboBox(private val addDefault: Boolean,
     if (addDefault) {
       items.add(0, null)
     }
-    removeAllItems() // initList is called at least twice: on creation and on reset, so we need to clean it up 
+    removeAllItems() // initList is called at least twice: on creation and on reset, so we need to clean it up
     for (item in items) {
       addItem(item)
     }
@@ -108,7 +111,11 @@ class PySdkComboBox(private val addDefault: Boolean,
   private fun itemFor(sdk: Sdk): PyInterpreterItem = readInterpreters { listOf(sdk.pythonInterpreterAsync().asItem()) }.single()
 
   private fun <T> readInterpreters(read: suspend () -> T): T =
-    runWithModalProgressBlocking(ModalTaskOwner.component(this), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
+    // Before the combo box is in a window, the progress cannot use it as the owner.
+    // An incomplete list of interpreters is not usable, so the user cannot cancel the read.
+    runWithModalProgressBlocking(if (isShowing) ModalTaskOwner.component(this) else ModalTaskOwner.guess(),
+                                 PyBundle.message("python.interpreters.reading.interpreters.progress"),
+                                 TaskCancellation.nonCancellable()) {
       read()
     }
 }
