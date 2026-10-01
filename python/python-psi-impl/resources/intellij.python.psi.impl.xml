@@ -1079,10 +1079,13 @@
     <pyDataclassParametersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTransformParametersProvider" id="dataclass_transform"/>
 
     <!-- typing -->
-    <typeProvider id="pyTypingTypeProvider" implementation="com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider" order="before pythonDocstringTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypingNewTypeTypeProvider"/>
+    <typeProvider id="pyTypingTypeProvider" implementation="com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider"
+                  order="after pyDataclassTypeProvider, before pythonDocstringTypeProvider"/>
+    <typeProvider id="pyiTypeProvider" implementation="com.jetbrains.python.pyi.PyiTypeProvider" order="after pyStdlibTypeProvider"/>
+    <typeProvider id="pyTypedDictTypeProvider" implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider"
+                  order="after pyiTypeProvider"/>
+    <typeProvider id="pyTypingNewTypeTypeProvider" implementation="com.jetbrains.python.codeInsight.typing.PyTypingNewTypeTypeProvider"
+                  order="after pyTypedDictTypeProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
@@ -1098,17 +1101,18 @@
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PythonOverridingBuiltinReferenceResolveProvider"/>
 
     <!-- PyDocstring -->
-    <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider" id="pythonDocstringTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider" id="pythonDocstringTypeProvider"
+                  order="after numpyDocStringTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.documentation.doctest.PyDoctestTokenSetContributor"/>
 
     <!-- PyTypeRepresentation -->
     <dialectsTokenSetContributor implementation="com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationTokenSetContributor"/>
 
     <!-- Type from ancestors -->
-    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider" order="last"/>
+    <typeProvider id="pyAncestorTypeProvider" implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider" order="last"/>
 
     <!-- NumPy -->
-    <typeProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyDocStringTypeProvider"
+    <typeProvider id="numpyDocStringTypeProvider" implementation="com.jetbrains.python.numpy.codeInsight.NumpyDocStringTypeProvider"
                   order="before pythonDocstringTypeProvider, after pyTypingTypeProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.numpy.codeInsight.NumpyClassMembersProvider"/>
     <resolveResultRater implementation="com.jetbrains.python.numpy.codeInsight.NumpyResolveRater"/>
@@ -1117,16 +1121,18 @@
     <!--stdlib-->
     <canonicalPathProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibCanonicalPathProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.stdlib.PyStdlibInspectionExtension"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"
-                  order="before pyTypingTypeProvider"
+    <typeProvider id="pyDataclassTypeProvider" implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"
+                  order="after pyTypingNewTypeTypeProvider, before pyTypingTypeProvider"
     />
     <typeProvider implementation="com.jetbrains.python.codeInsight.decorator.PyDecoratedFunctionTypeProvider"
-                  id="pyDecoratedFunctionTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider"
-                  order="before pyDecoratedFunctionTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider"/>
+                  id="pyDecoratedFunctionTypeProvider" order="after pyFunctoolsWrapsDecoratedFunctionTypeProvider"/>
+    <typeProvider id="pyFunctoolsWrapsDecoratedFunctionTypeProvider"
+                  implementation="com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider"
+                  order="after pythonDocstringTypeProvider, before pyDecoratedFunctionTypeProvider"/>
+    <typeProvider id="pyNamedTupleTypeProvider" implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider"
+                  order="after pyDecoratedFunctionTypeProvider"/>
     <!-- This provider should be able to override the results on anything else, including types coming from .pyi stubs -->
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider" order="first"/>
+    <typeProvider id="pyStdlibTypeProvider" implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider" order="first"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyOverridingClassDunderMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>

@@ -780,7 +780,8 @@
                             order="after CondaEvoProvider"
                             implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
 
-    <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
+    <typeProvider id="pyCallSignatureTypeProvider" implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"
+                  order="after pyMockerFixtureTypeProvider"/>
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>

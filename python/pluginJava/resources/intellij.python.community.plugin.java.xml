@@ -40,7 +40,8 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaImportResolver"/>
-    <typeProvider implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaTypeProvider"/>
+    <typeProvider id="pyJavaTypeProvider" implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaTypeProvider"
+                  order="after pyCallSignatureTypeProvider"/>
     <pySuperMethodsSearch implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
     <importCandidateProvider implementation="com.intellij.python.community.plugin.java.psi.impl.PyJavaImportCandidateProvider"/>
   </extensions>

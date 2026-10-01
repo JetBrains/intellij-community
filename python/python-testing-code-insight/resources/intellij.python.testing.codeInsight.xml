@@ -67,10 +67,15 @@
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyMock.PyMockInspectionExtension"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.testing.pyMock.PyMockerFixtureTypeProvider"/>
+    <typeProvider id="pyTestParametrizedTypeProvider"
+                  implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"
+                  order="after pyNamedTupleTypeProvider"/>
+    <typeProvider id="pyTestFixtureTypeProvider" implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"
+                  order="after pyTestParametrizedTypeProvider"/>
+    <typeProvider id="pyMockTypeProvider" implementation="com.jetbrains.python.testing.pyMock.PyMockTypeProvider"
+                  order="after pyTestFixtureTypeProvider"/>
+    <typeProvider id="pyMockerFixtureTypeProvider" implementation="com.jetbrains.python.testing.pyMock.PyMockerFixtureTypeProvider"
+                  order="after pyMockTypeProvider"/>
     <typeCheckerExtension implementation="com.jetbrains.python.testing.pyMock.PyMockTypeCheckerExtension"/>
   </extensions>
 </idea-plugin>
