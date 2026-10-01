@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCompanionBlock
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -25,6 +27,9 @@ internal class MoveMemberToCompanionBlockIntention : MoveMemberIntention(
         if (!isApplicableForMoveMember(element)) return null
         val containingClassOrObject = element.containingClassOrObject
         if (containingClassOrObject is KtObjectDeclaration && !containingClassOrObject.isCompanion()) return null
+        if (PsiTreeUtil.getParentOfType(element, KtCompanionBlock::class.java, true, KtClassOrObject::class.java) != null) {
+            return null
+        }
         return findTextRangeForMoveMemberIntention(element)
     }
 
