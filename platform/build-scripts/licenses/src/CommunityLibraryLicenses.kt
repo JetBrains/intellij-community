@@ -87,9 +87,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/apache/commons-compress/blob/master/LICENSE.txt")
     .suppliedByOrganizations(Suppliers.APACHE),
 
-  LibraryLicense("Apache Commons CSV", libraryName = "commons-csv", url = "https://commons.apache.org/proper/commons-csv/")
-    .apache("https://github.com/apache/commons-csv/blob/master/LICENSE.txt"),
-
   LibraryLicense("Apache Commons Discovery", libraryName = "commons-discovery", url = "https://commons.apache.org/dormant/commons-discovery/")
     .apache("https://commons.apache.org/dormant/commons-discovery/license.html")
     .copyrightText("Copyright © 2002-2011 The Apache Software Foundation. All Rights Reserved.")
