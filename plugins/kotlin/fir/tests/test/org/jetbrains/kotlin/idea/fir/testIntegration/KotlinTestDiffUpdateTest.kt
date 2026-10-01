@@ -48,6 +48,26 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         change: (Document) -> Unit
     ) = checkPhysicalDiff(before, after, diffAfter, testClass, testName, expected, actual, stackTrace, fileExt, change)
 
+    fun `test the diff numbers its lines as the lines of the expected literal`() {
+        checkFirstLineNumber(
+            """
+            import org.junit.Assert
+            import org.junit.Test
+
+            class MyJUnitTest {
+                @Test
+                fun testFoo() {
+                    Assert.assertEquals("expected", "actual")
+                }
+            }
+        """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+            at org.junit.Assert.assertEquals(Assert.java:117)
+            at org.junit.Assert.assertEquals(Assert.java:146)
+            at MyJUnitTest.testFoo(MyJUnitTest.kt:7)
+        """.trimIndent(), fileExt, 6
+        )
+    }
+
     fun `test accept string literal diff`() {
         checkAcceptFullDiff(
             """
