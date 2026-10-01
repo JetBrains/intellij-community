@@ -40,12 +40,15 @@ import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.getOrCreateFrameContentPaintedDeferred
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -70,6 +73,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -82,6 +86,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<StartupManagerImpl>()
 private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("startup")) }
@@ -93,6 +98,8 @@ private val BACKGROUND_POST_STARTUP_ACTIVITY: ExtensionPointName<Any> = Extensio
 
 private const val DUMB_AWARE_PASSED = 1
 private const val ALL_PASSED = 2
+
+private val FRAME_CONTENT_PAINTED_TIMEOUT = 2.seconds
 
 @ApiStatus.Internal
 open class StartupManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope) : StartupManagerEx() {
@@ -232,9 +239,30 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           }
         }
 
+        if (!app.isHeadlessEnvironment) {
+          awaitFrameContentPainted()
+        }
+
         withContext(tracer.span("runPostStartupActivities")) {
           doRunPostStartupActivities()
         }
+      }
+    }
+  }
+
+  /**
+   * Waits until the frame content of a project with [ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES] first paints.
+   * The wait stops after [FRAME_CONTENT_PAINTED_TIMEOUT].
+   * A project without the capability does not wait.
+   */
+  private suspend fun awaitFrameContentPainted() {
+    if (!serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)) {
+      return
+    }
+
+    withContext(tracer.span("post-startup activities waiting for the frame content")) {
+      withTimeoutOrNull(FRAME_CONTENT_PAINTED_TIMEOUT) {
+        project.getOrCreateFrameContentPaintedDeferred().join()
       }
     }
   }

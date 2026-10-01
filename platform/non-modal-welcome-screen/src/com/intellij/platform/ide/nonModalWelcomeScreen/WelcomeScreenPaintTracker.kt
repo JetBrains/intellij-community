@@ -5,6 +5,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.getOrCreateFrameContentPaintedDeferred
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.IntelliJTracer
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -23,6 +24,7 @@ internal val welcomeScreenStartupSpanTracer: IJTracer by lazy { TelemetryManager
  * Records the first paint of the welcome screen.
  *
  * The left panel calls [leftPainted] when it first paints its actions.
+ * [leftPainted] also completes [getOrCreateFrameContentPaintedDeferred], so the post-startup activities of the project can start.
  * The right tab calls [rightPainted] when it first paints its body.
  * When both sides painted, the tracker adds the instant event `welcome screen painted`.
  * It also adds the span `welcome screen painted` from the IDE start to that time.
@@ -30,7 +32,7 @@ internal val welcomeScreenStartupSpanTracer: IJTracer by lazy { TelemetryManager
  * Call both functions on the EDT.
  */
 @Service(Service.Level.PROJECT)
-internal class WelcomeScreenPaintTracker {
+internal class WelcomeScreenPaintTracker(private val project: Project) {
   @Volatile
   private var isLeftPainted = false
 
@@ -42,6 +44,7 @@ internal class WelcomeScreenPaintTracker {
       return
     }
     isLeftPainted = true
+    project.getOrCreateFrameContentPaintedDeferred().complete(Unit)
     if (isRightPainted) {
       reportPainted()
     }

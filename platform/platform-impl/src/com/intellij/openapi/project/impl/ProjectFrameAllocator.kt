@@ -78,6 +78,7 @@ class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
 
 private val IDE_FRAME_DEFERRED_KEY = Key.create<CompletableDeferred<IdeFrame?>>("Project.IdeFrameDeferred")
 private val POST_OPEN_EDITORS_DEFERRED_KEY = Key.create<CompletableDeferred<Unit>>("Project.PostOpenEditorsDeferred")
+private val FRAME_CONTENT_PAINTED_DEFERRED_KEY = Key.create<CompletableDeferred<Unit>>("Project.FrameContentPaintedDeferred")
 
 internal fun Project.getOrCreateIdeFrameDeferred(): CompletableDeferred<IdeFrame?> {
   return getOrCreateDeferred(IDE_FRAME_DEFERRED_KEY)
@@ -85,6 +86,19 @@ internal fun Project.getOrCreateIdeFrameDeferred(): CompletableDeferred<IdeFrame
 
 internal fun Project.getOrCreatePostOpenEditorsDeferred(): CompletableDeferred<Unit> {
   return getOrCreateDeferred(POST_OPEN_EDITORS_DEFERRED_KEY)
+}
+
+/**
+ * Completes when the frame content of the project first paints.
+ *
+ * Only a project that owns such frame content completes it, for example the non-modal welcome screen.
+ * The start-up manager waits for it before the post-startup activities of a project with
+ * [com.intellij.openapi.wm.ex.ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES].
+ * The wait has a time limit, so a project that never completes it starts its activities later.
+ */
+@Internal
+fun Project.getOrCreateFrameContentPaintedDeferred(): CompletableDeferred<Unit> {
+  return getOrCreateDeferred(FRAME_CONTENT_PAINTED_DEFERRED_KEY)
 }
 
 private fun <T> Project.getOrCreateDeferred(key: Key<CompletableDeferred<T>>): CompletableDeferred<T> {
