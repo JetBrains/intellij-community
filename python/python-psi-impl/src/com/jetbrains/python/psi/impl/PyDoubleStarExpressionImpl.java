@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyDoubleStarExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyInstantTypeProvider;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,8 @@ public class PyDoubleStarExpressionImpl extends PyElementImpl implements PyDoubl
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return null;
+    // A `**mapping` unpacking is not a value, so it has no type of its own.
+    return PyAnyType.getUnknown();
   }
 
   @Override
