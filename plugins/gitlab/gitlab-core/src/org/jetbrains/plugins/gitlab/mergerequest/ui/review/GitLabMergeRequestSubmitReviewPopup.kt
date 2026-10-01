@@ -13,10 +13,15 @@ import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JButton
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal object GitLabMergeRequestSubmitReviewPopup : CodeReviewSubmitPopupHandler<GitLabMergeRequestSubmitReviewViewModel>() {
@@ -68,8 +73,17 @@ internal object GitLabMergeRequestSubmitReviewPopup : CodeReviewSubmitPopupHandl
       bindDisabledIn(cs, vm.isBusy)
       addActionListener { vm.setDeleteWorktreeAfterSubmit(isSelected) }
     }
-    return VerticalListPanel(DELETE_WORKTREE_GAP).apply {
+    val deleteWorktreeComment = JLabel(GitBundle.message("Git.WorkingTrees.delete.current.worktree.project.will.be.closed")).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      font = JBFont.small()
+      border = JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(deleteWorktreeCheckBox))
+    }
+    val deleteWorktreePanel = VerticalListPanel().apply {
       add(deleteWorktreeCheckBox)
+      add(deleteWorktreeComment)
+    }
+    return VerticalListPanel(DELETE_WORKTREE_GAP).apply {
+      add(deleteWorktreePanel)
       add(buttonsPanel)
     }
   }

@@ -296,17 +296,6 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     // Runs on the application scope, not the closing project's scope, and removes the worktree through the still-open
     // main project so the git command and notifications don't target the disposed worktree project.
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-      val confirmed = withContext(Dispatchers.UiWithModelAccess) {
-        MessageDialogBuilder.yesNo(
-          GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
-          GitBundle.message("Git.WorkingTrees.delete.current.worktree.confirm.message", currentWorktree.path.name)
-        )
-          .yesText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.close.delete"))
-          .noText(GitBundle.message("Git.WorkingTrees.delete.worktrees.button.do.not.delete"))
-          .ask(currentProject)
-      }
-      if (!confirmed) return@launch
-
       closeProject(currentProject)
 
       val mainProject = ProjectUtil.findProject(Path(mainWorktreePath)) ?: return@launch
