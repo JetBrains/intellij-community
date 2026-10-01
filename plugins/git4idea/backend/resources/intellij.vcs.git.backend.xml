@@ -730,6 +730,8 @@
                  restartRequired="false"/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
                  description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
+    <registryKey key="git.stop.fsmonitor.on.project.close" defaultValue="true"
+                 description="Stop Git fsmonitor daemons when a project closes." restartRequired="false"/>
     <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"
                  description="Show dedicated toolwindow for git merge conflicts"/>
     <registryKey key="git.update.project.info.as.log" defaultValue="true"
@@ -1112,6 +1114,9 @@
   </extensionPoints>
 
   <projectListeners>
+    <listener class="git4idea.repo.GitFsMonitorProjectCloseListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyStagingAreaListener"
               topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
               activeInHeadlessMode="false"/>
