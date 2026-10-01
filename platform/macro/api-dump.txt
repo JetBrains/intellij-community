@@ -1,3 +1,9 @@
+f:com.intellij.ide.macro.CommonMacroFilters
+- sf:ALL:java.util.function.Predicate
+- sf:ANY_PATH:java.util.function.Predicate
+- sf:DIRECTORY_PATH:java.util.function.Predicate
+- sf:FILE_PATH:java.util.function.Predicate
+- sf:NONE:java.util.function.Predicate
 f:com.intellij.ide.macro.CompilerContextMakeMacro
 - com.intellij.ide.macro.Macro
 a:com.intellij.ide.macro.Macro
