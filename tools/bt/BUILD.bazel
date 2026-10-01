@@ -27,11 +27,24 @@ optimized_binary(
     visibility = ["//visibility:public"],
 )
 
+# `startup-bench`, one file, always optimized. `community/tools/startup-bench.cmd` runs it.
+optimized_binary(
+    name = "startup-bench",
+    binary = "//tools/bt/bins/startup-bench",
+    visibility = ["//visibility:public"],
+)
+
 # Compile checks and Windows clippy. `:bt-windows-x86_64` and `:bt-windows-arm64` are `bt` built for each Windows
 # host by hand (`manual`), so a macOS or Linux host checks that it builds. `:clippy-windows-x86_64` and
 # `:clippy-windows-arm64` lint the `cfg(windows)` code a Unix host never compiles. Like every clippy test of this
 # workspace they run from the community root only.
 windows_clippy_tests(
-    compile_checks = {"bt": "//tools/bt/bins/bt"},
-    targets = ["//tools/bt/bins/bt"],
+    compile_checks = {
+        "bt": "//tools/bt/bins/bt",
+        "startup-bench": "//tools/bt/bins/startup-bench",
+    },
+    targets = [
+        "//tools/bt/bins/bt",
+        "//tools/bt/bins/startup-bench",
+    ],
 )

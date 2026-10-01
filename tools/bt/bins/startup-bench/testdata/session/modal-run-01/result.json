@@ -1,0 +1,108 @@
+{
+  "arm": "modal",
+  "kind": "measured",
+  "index": 1,
+  "dir": "modal-run-01",
+  "launch": {
+    "failure": null,
+    "terminated": false,
+    "ideExit": 0,
+    "waitedMs": 9120,
+    "openRequestUs": null
+  },
+  "valid": true,
+  "reason": null,
+  "notes": [
+    "no startup-stats.json"
+  ],
+  "metrics": {
+    "pluginClasses": 4135.0,
+    "welcomeBecameVisible": 2336.0
+  },
+  "topPlugins": [
+    {
+      "name": "com.intellij.air",
+      "classes": 1514
+    },
+    {
+      "name": "com.intellij",
+      "classes": 401
+    },
+    {
+      "name": "com.intellij.platform.daemon",
+      "classes": 267
+    },
+    {
+      "name": "com.intellij.java",
+      "classes": 207
+    },
+    {
+      "name": "org.jetbrains.kotlin",
+      "classes": 195
+    },
+    {
+      "name": "JavaScript",
+      "classes": 168
+    },
+    {
+      "name": "org.jetbrains.plugins.textmate",
+      "classes": 163
+    },
+    {
+      "name": "com.jetbrains.station",
+      "classes": 132
+    },
+    {
+      "name": "training",
+      "classes": 104
+    },
+    {
+      "name": "AngularJS",
+      "classes": 95
+    }
+  ],
+  "topModules": [
+    {
+      "name": "intellij.air.backend.session.runtime",
+      "classes": 315
+    },
+    {
+      "name": "intellij.libraries.daemon.client",
+      "classes": 195
+    },
+    {
+      "name": "intellij.air.backend.acp.runtime",
+      "classes": 153
+    },
+    {
+      "name": "intellij.textmate.core",
+      "classes": 135
+    },
+    {
+      "name": "intellij.station.core",
+      "classes": 107
+    },
+    {
+      "name": "intellij.angular.backend",
+      "classes": 94
+    },
+    {
+      "name": "intellij.air.backend.codex.threads",
+      "classes": 91
+    },
+    {
+      "name": "intellij.kotlin.base.indices",
+      "classes": 89
+    },
+    {
+      "name": "intellij.air.backend.claude.threads",
+      "classes": 82
+    },
+    {
+      "name": "intellij.air.backend.session.api",
+      "classes": 78
+    }
+  ],
+  "edtSamples": null,
+  "edtFrames": []
+}

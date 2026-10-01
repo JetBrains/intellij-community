@@ -1,0 +1,23 @@
+[package]
+name = "startup-bench"
+description = "`startup-bench`: the agent-facing controller that measures the start-up of an IDE from the Bazel dev distribution."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+bt-core.workspace = true
+clap.workspace = true
+jiff.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile.workspace = true

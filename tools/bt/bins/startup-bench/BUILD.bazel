@@ -1,0 +1,6 @@
+load("//tools/bt:defs.bzl", "bt_rust_crate")
+
+bt_rust_crate(
+    name = "startup-bench",
+    testdata_env = "BT_TESTDATA_DIR",
+)

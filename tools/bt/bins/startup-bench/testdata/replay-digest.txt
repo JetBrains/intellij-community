@@ -1,0 +1,48 @@
+startup-bench welcome: //build:idea at 3f337093836d, warm, hold 3000 ms
+                                                                     modal 1/1 valid     non-modal 1/1 valid
+metric (ms or count)                                          median     min     max  median     min     max
+events and report:
+  welcomeBecameVisible                                          2336    2336    2336    2718    2718    2718
+  frameBecameVisible                                               -                    1714    1714    1714
+  frameBecameInteractive                                           -                    2528    2528    2528
+  totalDuration                                                    -                    3195    3195    3195
+  classLoading.count                                               -                  267427  267427  267427
+  classLoading.time                                                -                    8317    8317    8317
+  classLoading.edtTime                                             -                      42      42      42
+  pluginClasses                                                  157     157     157     159     159     159
+platform spans:
+  bootstrap                                                        -                      44      44      44
+  app initialization                                               -                     967     967     967
+  ProjectManager.openAsync                                         -                    1007    1007    1007
+  project frame creating                                           -                     218     218     218
+  toolwindow creating                                              -                      62      62      62
+  toolwindow init pending tasks processing                         -                       0       0       0
+  restoreEditors                                                   -                     211     211     211
+  project post-startup dumb-aware activities                       -                     681     681     681
+welcome spans:
+  welcome screen painted                                           -                    3225    3225    3225
+  welcome screen project opening                                   -                    1123    1123    1123
+  welcome left panel creating                                      -                      73      73      73
+  welcome recent projects collecting                               -                      60      60      60
+  welcome left toolbar first fill                                  -                     780     780     780
+  welcome right tab creating                                       -                      24      24      24
+  welcome right tab body: feature ids                              -                      20      20      20
+  welcome right tab body: createContent trial.started.banner       -                     0.1     0.1     0.1
+  welcome right tab body: EDT build                                -                      14      14      14
+  readme opening check                                             -                     0.5     0.5     0.5
+not measured: post open editors
+no delta: modal has 1 valid runs and non-modal has 1; a delta needs 3 per arm
+modal note: no startup-stats.json (1 of 1 runs)
+non-modal EDT, top Java frames by samples (61 EDT samples):
+   18.0%     11  jdk/internal/misc/Unsafe.park
+   13.1%      8  sun/nio/fs/UnixNativeDispatcher.mkdir0
+    8.2%      5  java/lang/ClassLoader.defineClass2
+    8.2%      5  java/lang/Math.round
+    4.9%      3  C1 Runtime slow_subtype_check_blob
+    4.9%      3  I2C/C2I adapters(0xbb)
+    4.9%      3  java/awt/MultipleGradientPaintContext.indexIntoGradientsArrays
+    3.3%      2  SharedRuntime::dpow
+    3.3%      2  com/github/weisj/jsvg/util/ColorUtil.<clinit>
+    3.3%      2  com/intellij/diagnostic/OtelReportingEventWatcher.edtEventFinishedExt
+warning: the profile adds the async-profiler agent; its runs are slower than a run without it
+session: <session>  summary: <session>/summary.json
