@@ -13,7 +13,6 @@ import java.awt.Component;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
-@ApiStatus.Experimental
 public abstract class TreeHoverListener extends HoverListener {
   public abstract void onHover(@NotNull JTree tree, int row);
 

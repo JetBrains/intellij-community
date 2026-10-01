@@ -9315,9 +9315,42 @@ c:com.intellij.ui.dualView.TreeTableView$CellRendererWrapper
 - <init>(javax.swing.table.TableCellRenderer):V
 - getBaseRenderer():javax.swing.table.TableCellRenderer
 - getTableCellRendererComponent(javax.swing.JTable,java.lang.Object,Z,Z,I,I):java.awt.Component
+a:com.intellij.ui.hover.HoverListener
+- <init>():V
+- f:addTo(javax.swing.JComponent):V
+- f:addTo(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- a:mouseEntered(java.awt.Component,I,I):V
+- a:mouseExited(java.awt.Component):V
+- a:mouseMoved(java.awt.Component,I,I):V
+- f:removeFrom(javax.swing.JComponent):V
+a:com.intellij.ui.hover.HoverStateListener
+- com.intellij.ui.hover.HoverListener
+- <init>():V
+- pa:hoverChanged(java.awt.Component,Z):V
+- mouseEntered(java.awt.Component,I,I):V
+- mouseExited(java.awt.Component):V
+- mouseMoved(java.awt.Component,I,I):V
 f:com.intellij.ui.hover.HoverUtilsKt
 - sf:addHoverAndPressStateListener(javax.swing.JComponent,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):V
 - bs:addHoverAndPressStateListener$default(javax.swing.JComponent,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+a:com.intellij.ui.hover.ListHoverListener
+- com.intellij.ui.hover.HoverListener
+- sf:DEFAULT:com.intellij.ui.hover.HoverListener
+- <init>():V
+- s:getHoveredIndex(javax.swing.JList):I
+- f:mouseEntered(java.awt.Component,I,I):V
+- f:mouseExited(java.awt.Component):V
+- f:mouseMoved(java.awt.Component,I,I):V
+- a:onHover(javax.swing.JList,I):V
+a:com.intellij.ui.hover.TreeHoverListener
+- com.intellij.ui.hover.HoverListener
+- sf:DEFAULT:com.intellij.ui.hover.HoverListener
+- <init>():V
+- s:getHoveredRow(javax.swing.JTree):I
+- f:mouseEntered(java.awt.Component,I,I):V
+- f:mouseExited(java.awt.Component):V
+- f:mouseMoved(java.awt.Component,I,I):V
+- a:onHover(javax.swing.JTree,I):V
 f:com.intellij.ui.layout.AdvancedSettingsPredicate
 - com.intellij.ui.layout.ComponentPredicate
 - <init>(java.lang.String,com.intellij.openapi.Disposable):V

@@ -14,7 +14,6 @@ import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
-@ApiStatus.Experimental
 public abstract class HoverListener {
   private static final Key<List<HoverListener>> HOVER_LISTENER_LIST_KEY = Key.create("HoverListenerList");
 

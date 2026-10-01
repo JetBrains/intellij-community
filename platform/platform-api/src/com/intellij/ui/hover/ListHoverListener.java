@@ -13,7 +13,6 @@ import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
-@ApiStatus.Experimental
 public abstract class ListHoverListener extends HoverListener {
   public abstract void onHover(@NotNull JList<?> list, int index);
 
@@ -29,9 +28,8 @@ public abstract class ListHoverListener extends HoverListener {
 
   @Override
   public final void mouseExited(@NotNull Component component) {
-    update(component, list -> -1);
+    update(component, _ -> -1);
   }
-
 
   private final AtomicInteger indexHolder = new AtomicInteger(-1);
 
@@ -42,7 +40,6 @@ public abstract class ListHoverListener extends HoverListener {
       if (indexNew != indexOld) onHover(list, indexNew);
     }
   }
-
 
   private static final Key<Integer> HOVERED_INDEX_KEY = Key.create("ListHoveredIndex");
   public static final HoverListener DEFAULT = new ListHoverListener() {
@@ -69,7 +66,7 @@ public abstract class ListHoverListener extends HoverListener {
    */
   public static int getHoveredIndex(@NotNull JList<?> list) {
     Object property = list.getClientProperty(HOVERED_INDEX_KEY);
-    return property instanceof Integer ? (Integer)property : -1;
+    return property instanceof Integer i ? i : -1;
   }
 
   private static void repaintIndex(@NotNull JList<?> list, int index) {
