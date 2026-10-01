@@ -84,8 +84,8 @@ object CommunityModuleSets {
 
     module("intellij.platform.buildScripts.downloader")
 
-    embeddedModule("intellij.platform.credentialStore.ui")
-    embeddedModule("intellij.platform.credentialStore.impl")
+    module("intellij.platform.credentialStore.ui")
+    module("intellij.platform.credentialStore.impl")
 
     // Core platform backend/frontend split
     module("intellij.platform.settings.local")

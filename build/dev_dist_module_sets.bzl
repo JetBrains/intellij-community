@@ -545,6 +545,8 @@ DEV_DIST_MODULE_SETS = {
         module_system_loaded = [
             "intellij.platform.backend",
             "intellij.platform.buildScripts.downloader",
+            "intellij.platform.credentialStore.impl",
+            "intellij.platform.credentialStore.ui",
             "intellij.platform.editor",
             "intellij.platform.editor.backend",
             "intellij.platform.frontend",

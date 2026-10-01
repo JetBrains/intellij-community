@@ -347,8 +347,8 @@
     <module name="intellij.libraries.download.pgp.verifier" loading="embedded"/>
     <module name="intellij.remoteDev.util" loading="embedded"/>
     <module name="intellij.platform.buildScripts.downloader"/>
-    <module name="intellij.platform.credentialStore.ui" loading="embedded"/>
-    <module name="intellij.platform.credentialStore.impl" loading="embedded"/>
+    <module name="intellij.platform.credentialStore.ui"/>
+    <module name="intellij.platform.credentialStore.impl"/>
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.project.backend"/>
