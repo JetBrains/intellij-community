@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.impl.local.withPrefetchForRemoteRoots
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.gist.GistManager

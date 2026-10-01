@@ -11,7 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 const val ANALYSIS_IGNORE_FILE_NAME: String = ".analysisignore"
 
-internal const val ANALYSIS_IGNORE_ENABLED_KEY: String = "ide.analysisignore.file.enabled"
+@ApiStatus.Internal
+const val ANALYSIS_IGNORE_ENABLED_KEY: String = "ide.analysisignore.file.enabled"
 
 private val analysisIgnoreFileNameId: Int = VirtualFileManager.getInstance().storeName(ANALYSIS_IGNORE_FILE_NAME)
 

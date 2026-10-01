@@ -11,9 +11,12 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
-internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String?,
-                                                            private val rootsToIndex: Collection<VirtualFile>,
-                                                            val libraryNameForDebug: String) : IndexableFilesIterator {
+@Internal
+class AdditionalLibraryIndexableAddedFilesIterator(
+  val presentableLibraryName: @Nls String?,
+  private val rootsToIndex: Collection<VirtualFile>,
+  val libraryNameForDebug: String,
+) : IndexableFilesIterator {
   override fun getDebugName(): String = "${libDebugDescription()} ${rootsDebugDescription()} roots"
 
   private fun libDebugDescription() = "Additional library change reindexing iterator for ${presentableLibraryName ?: libraryNameForDebug} library"

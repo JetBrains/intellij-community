@@ -11,6 +11,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,14 +19,15 @@ import java.util.List;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
-final class PushingUtil {
+@ApiStatus.Internal
+public final class PushingUtil {
   private final List<FilePropertyPusher<?>> pushers;
   private final List<FilePropertyPusherEx<?>> pusherExs;
   private final Object[] moduleValues;
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
   private final boolean mayBeUsed;
 
-  PushingUtil(Project project, IndexableFilesIterator provider) {
+  public PushingUtil(Project project, IndexableFilesIterator provider) {
 
     pushedFilePropertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
 
@@ -65,7 +67,7 @@ final class PushingUtil {
    * Introduced to check if providers are still not obviously broken to the level they should not be used, as they didn't spend their life
    * under read lock
    */
-  boolean mayBeUsed() {
+  public boolean mayBeUsed() {
     return mayBeUsed;
   }
 

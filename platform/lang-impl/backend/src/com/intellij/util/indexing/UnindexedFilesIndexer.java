@@ -181,7 +181,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     else {
       sourceQueue = myProject.getService(PerProjectIndexingQueue.class);
     }
-    return sourceQueue.getAndResetQueuedFiles$intellij_platform_lang_impl();
+    return sourceQueue.getAndResetQueuedFiles$intellij_platform_lang_impl_backend();
   }
 
   private IndexUpdateRunner.@NotNull FileSet getExplicitlyRequestedFilesSets(@NotNull Function0<@NotNull Boolean> pauseCondition,
@@ -226,7 +226,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       indicator.setText(IndexingBundle.message("progress.indexing.waiting.for.scanning.to.complete"));
 
       PerProjectIndexingQueue indexingQueue = myProject.getService(PerProjectIndexingQueue.class);
-      indexingQueue.wrapIndexing$intellij_platform_lang_impl(() -> {
+      indexingQueue.wrapIndexing$intellij_platform_lang_impl_backend(() -> {
         doPerformInDumbMode(indicator);
       });
       return null;

@@ -6,9 +6,10 @@ import com.intellij.ide.actions.cache.CacheInconsistencyProblem
 import com.intellij.ide.actions.cache.FilesRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.actions.cache.RecoveryScope
-import com.intellij.lang.LangBundle
+import com.intellij.lang.LangBackendBundle
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -25,7 +26,7 @@ class RefreshIndexableFilesAction : RecoveryAction {
   override val performanceRate: Int
     get() = 9999
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
-    get() = LangBundle.message("refresh.indexable.files.recovery.action.name")
+    get() = LangBackendBundle.message("refresh.indexable.files.recovery.action.name")
   override val actionKey: String
     get() = "refresh"
 

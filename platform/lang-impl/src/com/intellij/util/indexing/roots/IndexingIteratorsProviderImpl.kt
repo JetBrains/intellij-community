@@ -136,7 +136,8 @@ class IndexingIteratorsProviderImpl(
   }
 }
 
-internal fun processModuleRoot(
+@ApiStatus.Internal
+fun processModuleRoot(
   fileSet: WorkspaceFileSetWithCustomData<*>,
   project: Project,
   includeNestedRoots: Boolean = false,
@@ -157,7 +158,8 @@ internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileS
   return processLibrary(entity.name, fileSet)
 }
 
-internal fun processLibrary(libraryName: String, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
+@ApiStatus.Internal
+fun processLibrary(libraryName: String, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
   val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
   val origin = if (sourceRoot) {
     LibraryOriginImpl(emptyList(), listOf(fileSet.root))

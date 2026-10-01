@@ -3,12 +3,14 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class PoweredProgressIndicator extends DelegatingProgressIndicator {
+@ApiStatus.Internal
+public final class PoweredProgressIndicator extends DelegatingProgressIndicator {
   private final double myPower;
 
-  static ProgressIndicator wrap(@NotNull ProgressIndicator indicator, double power) {
+  public static ProgressIndicator wrap(@NotNull ProgressIndicator indicator, double power) {
     return new PoweredProgressIndicator(indicator, power);
   }
 

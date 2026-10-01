@@ -32,7 +32,7 @@ public enum RebuildStatus {
     return ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
   }
 
-  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<StorageException> clearAction) throws StorageException {
+  public static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<StorageException> clearAction) throws StorageException {
     AtomicReference<RebuildStatus> rebuildStatus = ourRebuildStatus.get(indexId);
     if (rebuildStatus == null) {
       throw new StorageException("Problem updating " + indexId);
