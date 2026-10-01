@@ -157,6 +157,7 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.elevation.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.essential.minimal.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.essential.xml", "intellij.platform.resources"),
+    ("platform/platform-resources/generated/META-INF/intellij.moduleSets.externalSystem.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.fleet.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.ide.common.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.libraries.dap.xml", "intellij.platform.resources"),

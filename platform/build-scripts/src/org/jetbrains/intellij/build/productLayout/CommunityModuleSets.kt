@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp
  * - **debugger**: Debugger platform
  * - **vcs**: Version control support
  * - **xml**: XML support
+ * - **externalSystem**: the external system platform, for a product that bundles a build-tool plugin
  * - **composeRuntime**: Compose runtime and Compose Swing, for a product that bundles the Compose plugin
  * - **spellchecker/settingsSync/ml**: one feature with the library it needs
  * - **ideCommon**: Full IDE common modules
@@ -153,12 +154,8 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.polySymbols")
     module("intellij.platform.polySymbols.web")
 
-    // Platform language modules (moved from platformLangBase for consolidation)
-    // These provide core IDE functionality needed by all full IDE products
     moduleSet(builtInServer())
-    module("intellij.platform.externalSystem")
-    module("intellij.platform.externalSystem.dependencyUpdater")
-    module("intellij.platform.externalSystem.impl")
+    // the process auth helper for the git askpass and SSH
     module("intellij.platform.externalProcessAuthHelper")
 
     module("intellij.platform.util.commonsLangV2Shim")
@@ -195,6 +192,21 @@ object CommunityModuleSets {
   fun builtInServer(): ModuleSet = moduleSet("builtInServer") {
     module("intellij.libraries.netty.codec.compression")
     module("intellij.platform.builtInServer.impl")
+  }
+
+  /**
+   * The external system platform: the API, the implementation, and the dependency updater.
+   * The build-tool plugins (Gradle, Maven, Amper), the Java and Kotlin plugins, Docker, and the
+   * split execution frontend depend on it.
+   *
+   * [ideCommon] nests this set. A lean product that bundles one of these plugins adds the set itself.
+   * `intellij.platform.externalProcessAuthHelper` is not part of this set. It is the process auth
+   * helper, and it stays in [essential].
+   */
+  fun externalSystem(): ModuleSet = moduleSet("externalSystem") {
+    module("intellij.platform.externalSystem")
+    module("intellij.platform.externalSystem.impl")
+    module("intellij.platform.externalSystem.dependencyUpdater")
   }
 
   /**
@@ -397,7 +409,7 @@ object CommunityModuleSets {
 
   /**
    * IDE common modules.
-   * Nests essential, debugger, spellchecker, settings.sync, ml, vcs, lsp, duplicates, and the
+   * Nests essential, debugger, spellchecker, settings.sync, ml, externalSystem, vcs, lsp, duplicates, and the
    * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    * No Compose module is in this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds [composeRuntime].
    */
@@ -411,6 +423,7 @@ object CommunityModuleSets {
     moduleSet(spellchecker())
     moduleSet(settingsSync())
     moduleSet(ml())
+    moduleSet(externalSystem())
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")

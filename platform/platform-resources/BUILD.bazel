@@ -55,6 +55,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.elevation.xml",
         "generated/META-INF/intellij.moduleSets.essential.minimal.xml",
         "generated/META-INF/intellij.moduleSets.essential.xml",
+        "generated/META-INF/intellij.moduleSets.externalSystem.xml",
         "generated/META-INF/intellij.moduleSets.fleet.xml",
         "generated/META-INF/intellij.moduleSets.ide.common.xml",
         "generated/META-INF/intellij.moduleSets.libraries.dap.xml",

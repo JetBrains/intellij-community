@@ -414,9 +414,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
             "intellij.platform.externalProcessAuthHelper",
-            "intellij.platform.externalSystem",
-            "intellij.platform.externalSystem.dependencyUpdater",
-            "intellij.platform.externalSystem.impl",
             "intellij.platform.feedback",
             "intellij.platform.find",
             "intellij.platform.find.backend",
@@ -448,9 +445,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.execution.impl.backend": "//platform/execution-impl/backend:backend_content_module_jar",
             "intellij.platform.execution.impl.frontend": "//platform/execution-impl/frontend:frontend_content_module_jar",
             "intellij.platform.externalProcessAuthHelper": "//platform/external-process-auth-helper:external-process-auth-helper_content_module_jar",
-            "intellij.platform.externalSystem": "//platform/external-system-api:externalSystem_content_module_jar",
-            "intellij.platform.externalSystem.dependencyUpdater": "//platform/external-system-api/dependency-updater:dependency-updater_content_module_jar",
-            "intellij.platform.externalSystem.impl": "//platform/external-system-impl:externalSystem-impl_content_module_jar",
             "intellij.platform.feedback": "//platform/feedback:feedback_content_module_jar",
             "intellij.platform.find": "//platform/find:find_content_module_jar",
             "intellij.platform.find.backend": "//platform/find/backend:backend_content_module_jar",
@@ -478,9 +472,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
             "intellij.platform.externalProcessAuthHelper",
-            "intellij.platform.externalSystem",
-            "intellij.platform.externalSystem.dependencyUpdater",
-            "intellij.platform.externalSystem.impl",
             "intellij.platform.find",
             "intellij.platform.find.backend",
             "intellij.platform.ide.internal",
@@ -593,6 +584,25 @@ DEV_DIST_MODULE_SETS = {
             ],
         },
     ),
+    "intellij.moduleSets.externalSystem": struct(
+        modules = [
+            "intellij.platform.externalSystem",
+            "intellij.platform.externalSystem.dependencyUpdater",
+            "intellij.platform.externalSystem.impl",
+        ],
+        nested = [
+        ],
+        packed = {
+            "intellij.platform.externalSystem": "//platform/external-system-api:externalSystem_content_module_jar",
+            "intellij.platform.externalSystem.dependencyUpdater": "//platform/external-system-api/dependency-updater:dependency-updater_content_module_jar",
+            "intellij.platform.externalSystem.impl": "//platform/external-system-impl:externalSystem-impl_content_module_jar",
+        },
+        module_system_loaded = [
+            "intellij.platform.externalSystem",
+            "intellij.platform.externalSystem.dependencyUpdater",
+            "intellij.platform.externalSystem.impl",
+        ],
+    ),
     "intellij.moduleSets.fleet": struct(
         modules = [
             "fleet.bifurcan",
@@ -670,6 +680,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.moduleSets.debugger",
             "intellij.moduleSets.duplicates",
             "intellij.moduleSets.essential",
+            "intellij.moduleSets.externalSystem",
             "intellij.moduleSets.libraries.grpc",
             "intellij.moduleSets.libraries.ide.common",
             "intellij.moduleSets.lsp",

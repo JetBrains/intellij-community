@@ -393,9 +393,6 @@
     <module name="intellij.platform.completion.backend"/>
     <module name="intellij.platform.polySymbols" loading="embedded"/>
     <module name="intellij.platform.polySymbols.web"/>
-    <module name="intellij.platform.externalSystem"/>
-    <module name="intellij.platform.externalSystem.dependencyUpdater"/>
-    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.externalProcessAuthHelper"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
