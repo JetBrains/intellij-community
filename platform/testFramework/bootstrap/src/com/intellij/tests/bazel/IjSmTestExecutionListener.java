@@ -26,7 +26,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -85,10 +84,6 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
     } catch (Throwable ignore) {
       // fail-safe: keep originals
     }
-
-    // Signal start of testing to IDE
-    serviceMessage("enteredTheMatrix", Collections.emptyMap());
-    serviceMessage("testingStarted", Collections.emptyMap());
 
     // Pre-emit full test tree disabled for Bazel SM converter compatibility
     // Previously emitted testTreeStarted/testTreeNode/testTreeEnded which some converters don't handle and spam console.
@@ -278,7 +273,6 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
     startedTests.clear();
     startedSuites.clear();
 
-    serviceMessage("testingFinished", Collections.emptyMap());
     this.testPlan = null;
 
     // Restore streams
@@ -506,9 +500,6 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
         serviceMessage("testSuiteFinished", fin);
       }
       startedSuites.clear();
-
-      // Ensure closing marker
-      serviceMessage("testingFinished", Collections.emptyMap());
     } catch (Throwable ignore) {
       // best-effort
     } finally {
