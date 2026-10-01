@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -171,6 +172,11 @@ internal class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
+    val project = e.project
+    if (project != null && WelcomeUtils.isWelcomeProject(project)) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
   }
 
