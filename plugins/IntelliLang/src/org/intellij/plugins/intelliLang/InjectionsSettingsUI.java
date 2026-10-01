@@ -58,6 +58,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -111,12 +112,12 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   private final Project myProject;
   private final CfgInfo[] myInfos;
 
-  private final JPanel myRoot;
-  private final InjectionsTable myInjectionsTable;
+  private JPanel myRoot;
+  private InjectionsTable myInjectionsTable;
   private final Map<String, LanguageInjectionSupport> mySupports = new LinkedHashMap<>();
   private final Map<String, AnAction> myEditActions = new LinkedHashMap<>();
   private final List<AnAction> myAddActions = new ArrayList<>();
-  private final JLabel myCountLabel;
+  private JLabel myCountLabel;
 
   private final Configuration myConfiguration;
 
@@ -128,25 +129,12 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     myInfos = myConfiguration instanceof Configuration.Prj ?
               new CfgInfo[]{new CfgInfo(((Configuration.Prj)myConfiguration).getParentConfiguration(), "IDE"), currentInfo}
                                                            : new CfgInfo[]{currentInfo};
-
-    myRoot = new JPanel(new BorderLayout());
-
-    myInjectionsTable = new InjectionsTable(getInjInfoList(myInfos));
-    myInjectionsTable.getEmptyText().setText(IntelliLangBundle.message("table.empty.text.no.injections.configured2"));
-
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myInjectionsTable);
-    createActions(decorator);
-
-    //myRoot.add(new TitledSeparator("Languages injection places"), BorderLayout.NORTH);
-    myRoot.add(decorator.createPanel(), BorderLayout.CENTER);
-    myCountLabel = new JLabel();
-    myCountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-    myCountLabel.setForeground(SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES.getFgColor());
-    myRoot.add(myCountLabel, BorderLayout.SOUTH);
-    updateCountLabel();
   }
 
   private void createActions(ToolbarDecorator decorator) {
+    mySupports.clear();
+    myEditActions.clear();
+    myAddActions.clear();
     final Consumer<BaseInjection> consumer = this::addInjection;
     final Factory<BaseInjection> producer = (NullableFactory<BaseInjection>)() -> {
       final InjInfo info = getSelectedInjection();
@@ -412,7 +400,37 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
   @Override
   public JComponent createComponent() {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (myRoot != null) {
+      return myRoot;
+    }
+
+    myRoot = new JPanel(new BorderLayout());
+
+    myInjectionsTable = new InjectionsTable(getInjInfoList(myInfos));
+    myInjectionsTable.getEmptyText().setText(IntelliLangBundle.message("table.empty.text.no.injections.configured2"));
+
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myInjectionsTable);
+    createActions(decorator);
+
+    myRoot.add(decorator.createPanel(), BorderLayout.CENTER);
+    myCountLabel = new JLabel();
+    myCountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+    myCountLabel.setForeground(SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES.getFgColor());
+    myRoot.add(myCountLabel, BorderLayout.SOUTH);
+    updateCountLabel();
     return myRoot;
+  }
+
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myRoot = null;
+    myInjectionsTable = null;
+    myCountLabel = null;
+    mySupports.clear();
+    myEditActions.clear();
+    myAddActions.clear();
   }
 
   @Override
@@ -420,8 +438,10 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     for (CfgInfo info : myInfos) {
       info.reset();
     }
-    myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
-    updateCountLabel();
+    if (myInjectionsTable != null) {
+      myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
+      updateCountLabel();
+    }
   }
 
   @Override
