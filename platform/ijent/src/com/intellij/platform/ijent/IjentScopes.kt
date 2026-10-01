@@ -85,7 +85,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
       val unwrappedCause = error?.let { error ->
         error.causeSequence().find { it !is CancellationException }
         ?: run {
-          // A cancelled tricky scope means that the parent is cancelled. It is a normal shutdown, not a bug.
+          // A cancelled session boundary scope means that the parent is cancelled. It is a normal shutdown, not a bug.
           if (!sessionBoundaryScope.coroutineContext.job.isCancelled) {
             IjentLogger.LIFETIME_LOG.error(
               IllegalStateException("Cancelling IjentScope is prohibited, use IjentScope.destroy() instead", error))
@@ -101,7 +101,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
 
     sessionBoundaryScope.launch(start = CoroutineStart.UNDISPATCHED) {
       // It is safe to wait here without cancellation, also when the parent of IJent scopes is cancelled.
-      // The cancellation reaches the IJent scope and its children directly from the tricky supervisor scope, not through
+      // The cancellation reaches the IJent scope and its children directly from the session boundary scope, not through
       // this watcher. The parent cannot complete before the IJent scope completes anyway, so the wait adds no delay.
       // The wait stops when the exit reason is known or when the IJent scope completes. The rest is local work.
       withContext(NonCancellable) {
