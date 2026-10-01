@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
@@ -112,6 +112,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
          * @return
          */
         public abstract String sampleMethod3();
+      }
       """;
   }
 
@@ -120,8 +121,8 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     c.setEnabled(enabled);
     Component[] children = c.getComponents();
     for (Component child : children) {
-      if (child instanceof JComponent) {
-        setEnabled((JComponent)child, enabled);
+      if (child instanceof JComponent component) {
+        setEnabled(component, enabled);
       }
     }
   }
@@ -133,7 +134,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     super.resetImpl(settings);
     myEnableCheckBox.setSelected(settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING);
     update();
