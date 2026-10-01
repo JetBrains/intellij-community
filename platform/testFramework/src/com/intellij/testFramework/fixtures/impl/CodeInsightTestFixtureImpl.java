@@ -251,6 +251,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -2456,6 +2457,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     VirtualFile vFile = requireNonNull(InjectedLanguageManager.getInstance(project).getTopLevelFile(file)).getVirtualFile();
     withReadOnlyFile(vFile, project, () -> {
       try {
+        CompletableFuture<Void> barrier = new CompletableFuture<>();
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
             //PsiFile may be invalidated by any WA executed in between -> needs to be re-resolved
@@ -2471,8 +2473,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           catch (StubTextInconsistencyException e) {
             PsiTestUtil.compareStubTexts(e);
           }
+          finally {
+            // FIFO barrier: completes after every runnable that the intention queued with Application.invokeLater. Relies on:
+            // - NonBlockingFlushQueue runs runnables with the same metadata (modality state, write-intent flag) in scheduling order;
+            // - Application.invokeLater on the EDT schedules with the current modality state and the write-intent flag.
+            ApplicationManager.getApplication().invokeLater(() -> barrier.complete(null));
+          }
         });
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        PlatformTestUtil.waitForFuture(barrier);
         checkPsiTextConsistency(project, vFile);
       }
       catch (AssertionError e) {
