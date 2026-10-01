@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -16,41 +16,41 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     return TestUtils.getTestDataPath() + "groovy/completion/smart";
   }
 
-  public void testSmartCompletionAfterNewInDeclaration() throws Throwable {
+  public void testSmartCompletionAfterNewInDeclaration() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
     UsefulTestCase.assertOrderedEquals(myFixture.getLookupElementStrings(), "Bar", "Foo");
   }
 
-  public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
+  public void testCaretAfterSmartCompletionAfterNewInDeclaration() { doSmartTest(); }
 
-  public void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest(); }
+  public void testSmartCompletionAfterNewInDeclarationWithArray() { doSmartTest(); }
 
-  public void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable { doSmartTest(); }
+  public void testSmartCompletionAfterNewInDeclarationWithIntArray() { doSmartTest(); }
 
-  public void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
+  public void testShortenNamesInSmartCompletionAfterNewInDeclaration() { doSmartTest(); }
 
-  public void testSmartAfterNewInCall() throws Throwable { doSmartTest(); }
+  public void testSmartAfterNewInCall() { doSmartTest(); }
 
-  public void testInnerClassInStaticMethodCompletion() throws Throwable {
+  public void testInnerClassInStaticMethodCompletion() {
     doVariantableTest(null, "", CompletionType.SMART, CompletionResult.notContain, "Inner");
   }
 
-  public void testSmartCompletionInAssignmentExpression() throws Throwable { doSmartTest(); }
+  public void testSmartCompletionInAssignmentExpression() { doSmartTest(); }
 
-  public void testSimpleMethodParameter() throws Throwable {
+  public void testSimpleMethodParameter() {
     doSmartCompletion("d1", "d2");
   }
 
-  public void testReturnStatement() throws Exception {
+  public void testReturnStatement() {
     doSmartCompletion("b", "b1", "b2", "foo");
   }
 
-  public void testIncSmartCompletion() throws Exception {
+  public void testIncSmartCompletion() {
     doSmartCompletion("a", "b");
   }
 
-  public void testInheritConstructorsAnnotation() throws Throwable {
+  public void testInheritConstructorsAnnotation() {
     myFixture.addFileToProject("groovy/transform/InheritConstructors.java", """
       package groovy.transform;
       
