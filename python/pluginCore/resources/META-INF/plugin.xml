@@ -104,7 +104,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.plugin.minorRider"/> <!-- Python special support for Rider -->
     <module name="intellij.python.community.communityOnly" loading="optional"/> <!-- Community-specific code-->
     <module name="intellij.commandInterface"/> <!-- used by Django in Prof, by some plugins in community -->
-    <module name="intellij.python.community.impl.huggingFace"/>
     <module name="intellij.python.community.plugin.impl"/><!--Python for any IDE except PyCharm -->
     <module name="intellij.python.community.plugin.java"/><!-- Python for Java IDE -->
     <module name="intellij.python.copyright"/>

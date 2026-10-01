@@ -1833,7 +1833,6 @@ python/common
 python/conda
 python/conda/common
 python/conda/frontend
-python/huggingFace
 python/ide-common/ide-customization
 python/ide/customization.backend
 python/ide/customization.frontend
