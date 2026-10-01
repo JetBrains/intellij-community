@@ -155,8 +155,6 @@ object CommunityModuleSets {
     module("intellij.platform.polySymbols.web")
 
     moduleSet(builtInServer())
-    // the process auth helper for the git askpass and SSH
-    module("intellij.platform.externalProcessAuthHelper")
 
     module("intellij.platform.util.commonsLangV2Shim")
   }
@@ -188,10 +186,15 @@ object CommunityModuleSets {
    * The API module `intellij.platform.builtInServer` stays in [CoreModuleSets.coreLang], because the core
    * resolves the server through it. The implementation loads in its own class loader.
    * The netty compression codec is a dependency of `intellij.platform.builtInServer.impl` only.
+   *
+   * `intellij.platform.externalProcessAuthHelper` is the askpass bridge. The helper app that git, ssh, or sudo
+   * starts calls the IDE through a REST endpoint of this server, and the module registers that endpoint.
+   * Git4Idea, GitHub, Subversion, Docker SSH, the SSH plugin UI, and the split frontend depend on it.
    */
   fun builtInServer(): ModuleSet = moduleSet("builtInServer") {
     module("intellij.libraries.netty.codec.compression")
     module("intellij.platform.builtInServer.impl")
+    module("intellij.platform.externalProcessAuthHelper")
   }
 
   /**
@@ -200,8 +203,8 @@ object CommunityModuleSets {
    * split execution frontend depend on it.
    *
    * [ideCommon] nests this set. A lean product that bundles one of these plugins adds the set itself.
-   * `intellij.platform.externalProcessAuthHelper` is not part of this set. It is the process auth
-   * helper, and it stays in [essential].
+   * `intellij.platform.externalProcessAuthHelper` is not part of this set. It is the askpass bridge,
+   * and it lives in [builtInServer].
    */
   fun externalSystem(): ModuleSet = moduleSet("externalSystem") {
     module("intellij.platform.externalSystem")

@@ -27,16 +27,19 @@ DEV_DIST_MODULE_SETS = {
         modules = [
             "intellij.libraries.netty.codec.compression",
             "intellij.platform.builtInServer.impl",
+            "intellij.platform.externalProcessAuthHelper",
         ],
         nested = [
         ],
         packed = {
             "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
             "intellij.platform.builtInServer.impl": "//platform/built-in-server:builtInServer-impl_content_module_jar",
+            "intellij.platform.externalProcessAuthHelper": "//platform/external-process-auth-helper:external-process-auth-helper_content_module_jar",
         },
         module_system_loaded = [
             "intellij.libraries.netty.codec.compression",
             "intellij.platform.builtInServer.impl",
+            "intellij.platform.externalProcessAuthHelper",
         ],
     ),
     "intellij.moduleSets.compose.runtime": struct(
@@ -413,7 +416,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.eel.tcp",
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
-            "intellij.platform.externalProcessAuthHelper",
             "intellij.platform.feedback",
             "intellij.platform.find",
             "intellij.platform.find.backend",
@@ -444,7 +446,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.eel.tcp": "//platform/eel-tcp:eel-tcp_content_module_jar",
             "intellij.platform.execution.impl.backend": "//platform/execution-impl/backend:backend_content_module_jar",
             "intellij.platform.execution.impl.frontend": "//platform/execution-impl/frontend:frontend_content_module_jar",
-            "intellij.platform.externalProcessAuthHelper": "//platform/external-process-auth-helper:external-process-auth-helper_content_module_jar",
             "intellij.platform.feedback": "//platform/feedback:feedback_content_module_jar",
             "intellij.platform.find": "//platform/find:find_content_module_jar",
             "intellij.platform.find.backend": "//platform/find/backend:backend_content_module_jar",
@@ -471,7 +472,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.eel.tcp",
             "intellij.platform.execution.impl.backend",
             "intellij.platform.execution.impl.frontend",
-            "intellij.platform.externalProcessAuthHelper",
             "intellij.platform.find",
             "intellij.platform.find.backend",
             "intellij.platform.ide.internal",

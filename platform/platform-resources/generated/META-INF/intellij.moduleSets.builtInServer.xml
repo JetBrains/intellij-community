@@ -6,5 +6,6 @@
   <content namespace="jetbrains">
     <module name="intellij.libraries.netty.codec.compression"/>
     <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.externalProcessAuthHelper"/>
   </content>
 </idea-plugin>
