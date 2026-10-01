@@ -4,6 +4,7 @@ package com.intellij.python.pyproject.model.internal.workspaceBridge
 import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.community.common.tools.ToolId
@@ -35,8 +36,12 @@ data class ToolWorkspaceLayout internal constructor(
  * Returns null if the module doesn't participate in a workspace for this tool.
  */
 @ApiStatus.Internal
-fun Module.getToolWorkspaceLayout(toolId: ToolId): ToolWorkspaceLayout? {
-  val storage = project.workspaceModel.currentSnapshot
+fun Module.getToolWorkspaceLayout(toolId: ToolId): ToolWorkspaceLayout? =
+  getToolWorkspaceLayout(toolId, project.workspaceModel.currentSnapshot)
+
+/** [getToolWorkspaceLayout], read from [storage]. */
+@ApiStatus.Internal
+fun Module.getToolWorkspaceLayout(toolId: ToolId, storage: EntityStorage): ToolWorkspaceLayout? {
   val myModuleEntity = findModuleEntity(storage) ?: return null
   val myEntity = myModuleEntity.pyProjectTomlEntity ?: return null
 
@@ -83,8 +88,11 @@ fun VersionedStorageChange.affectsWorkspaceLayout(): Boolean =
  * not a configuration we support, so the first tool wins.
  */
 @ApiStatus.Internal
-fun Module.getWorkspaceLayout(): ToolWorkspaceLayout? {
-  val storage = project.workspaceModel.currentSnapshot
+fun Module.getWorkspaceLayout(): ToolWorkspaceLayout? = getWorkspaceLayout(project.workspaceModel.currentSnapshot)
+
+/** [getWorkspaceLayout], read from [storage]. */
+@ApiStatus.Internal
+fun Module.getWorkspaceLayout(storage: EntityStorage): ToolWorkspaceLayout? {
   val entity = findModuleEntity(storage)?.pyProjectTomlEntity ?: return null
-  return entity.participatedTools.keys.firstNotNullOfOrNull { getToolWorkspaceLayout(it) }
+  return entity.participatedTools.keys.firstNotNullOfOrNull { getToolWorkspaceLayout(it, storage) }
 }

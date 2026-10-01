@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestMethodInfo
 import com.intellij.testFramework.EditorTestUtil
@@ -131,6 +132,8 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
         FileDocumentManager.getInstance().saveDocument(document)
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
+      // The Python project structure follows the module in the background. Its restart cancels a pass that is already running.
+      EvoPyProjectModel.getInstance(project).awaitCurrentInterpreters()
     }
 
     IndexingTestUtil.waitUntilIndexesAreReady(project)

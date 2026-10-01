@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.toolwindow.ui
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -33,6 +35,8 @@ object PyInstallPackageDialogLauncher {
     preselectModuleName: String? = null,
     preselectGroupName: String? = null,
   ) {
+    // Taken on the caller's thread, so the dialog opens over a modal Settings window instead of waiting for it to close.
+    val modality = ModalityState.current().asContextElement()
     val service = project.service<PyPackagingToolWindowService>()
     if (interpreter == null || service.currentInterpreter == interpreter) {
       PyInstallPackageDialog(project).show(
@@ -44,7 +48,7 @@ object PyInstallPackageDialogLauncher {
     }
     service.serviceScope.launch {
       service.initForInterpreter(interpreter)
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + modality) {
         PyInstallPackageDialog(project).show(
           initialSearchText = initialSearchText,
           preselectModuleName = preselectModuleName,

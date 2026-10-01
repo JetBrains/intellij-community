@@ -1,12 +1,15 @@
 package com.intellij.python.junit5Tests.framework.env
 
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.sdkFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -24,10 +27,18 @@ class SdkFixture<ENV : Any>(val sdk: Sdk, val env: ENV) {
 }
 
 /**
- * Create mock (not a real python, but with [homePath]) SDK
+ * Create mock (not a real python, but with [homePath]) SDK.
+ * The SDK has [PythonSdkAdditionalData], because the product treats a Python SDK without it as broken.
  */
-fun TestFixture<Project>.pyMockSdkFixture(homePath: TestFixture<Path>) =
-  sdkFixture("PyMockSDK" + System.currentTimeMillis().toString(), PyMockSdkTypeId, homePath)
+fun TestFixture<Project>.pyMockSdkFixture(homePath: TestFixture<Path>): TestFixture<Sdk> = testFixture {
+  val sdk = this@pyMockSdkFixture.sdkFixture("PyMockSDK" + System.currentTimeMillis().toString(), PyMockSdkTypeId, homePath).init()
+  edtWriteAction {
+    val modificator = sdk.sdkModificator
+    modificator.sdkAdditionalData = PythonSdkAdditionalData(null)
+    modificator.commitChanges()
+  }
+  initialized(sdk) {}
+}
 
 private object PyMockSdkTypeId : SdkTypeId {
   override fun getName(): String = PyNames.PYTHON_SDK_ID_NAME

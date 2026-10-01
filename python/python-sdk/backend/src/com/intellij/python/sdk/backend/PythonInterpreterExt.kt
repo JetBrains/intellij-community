@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
+import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.intellij.openapi.application.ApplicationManager
@@ -140,11 +141,7 @@ fun PyInterpreterItem.findSdk(): Sdk? {
   return PythonSdkUtil.findSdkByKey(ref.sdkName)
 }
 
-/**
- * The flavor this interpreter was set up with, or `null` when its SDK records none.
- *
- * An SDK built outside the creation path has no additional data, so it has no flavor either.
- */
+/** The flavor this interpreter was set up with. */
 val PythonInterpreter.flavor: PythonSdkFlavor<*>
   get() = sdk.pySdkAdditionalData.flavor
 
@@ -154,6 +151,10 @@ fun PythonInterpreter.asInterpreterRef(): PyInterpreterRef = sdk.asInterpreterRe
 /** The target data of this interpreter, or `null` for an interpreter that runs on no target. */
 val PythonInterpreter.targetAdditionalData: PyTargetAwareAdditionalData?
   get() = sdk.targetAdditionalData
+
+/** Whether this interpreter runs on a target, such as WSL, SSH or Docker. */
+val PythonInterpreter.isTargetBased: Boolean
+  get() = sdk.isTargetBased()
 
 /** The requirements file path stored for this interpreter, or `null` when none is stored. */
 val PythonInterpreter.requirementsPath: Path?

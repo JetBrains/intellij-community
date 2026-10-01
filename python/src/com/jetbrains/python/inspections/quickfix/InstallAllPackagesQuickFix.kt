@@ -16,7 +16,7 @@ class InstallAllPackagesQuickFix(private val packageNames: List<String>) : Local
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
-    val file = element.containingFile.virtualFile
+    val file = element.containingFile?.originalFile?.virtualFile ?: return
     val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
 
     PyPackageCoroutine.launch(project) {

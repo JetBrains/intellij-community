@@ -17,7 +17,9 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
+import com.jetbrains.python.fixtures.PyModuleLightProjectDescriptor
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.jetbrains.python.inspections.PyAbstractClassInspection
 import com.jetbrains.python.inspections.PyArgumentEqualDefaultInspection
 import com.jetbrains.python.inspections.PyArgumentListInspection
@@ -61,13 +63,14 @@ import org.mockito.Mockito
 @Subsystems.QuickFixes
 @Layers.Functional
 class Py2QuickFixTest : PyTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy2Descriptor
+  override fun getProjectDescriptor(): LightProjectDescriptor = PY2_MODULE_DESCRIPTOR
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
     InspectionProfileImpl.INIT_INSPECTIONS = true
     myFixture.setCaresAboutInjection(false)
+    awaitPythonInterpreters(myFixture.project)
     PyRenameElementQuickFixTest.registerTestNameSuggestionProvider(testRootDisposable)
   }
 
@@ -1507,3 +1510,6 @@ class Py2QuickFixTest : PyTestCase() {
     }
   }
 }
+
+/** Python 2, in a Python module, so the install fixes find the interpreter. */
+private val PY2_MODULE_DESCRIPTOR = PyModuleLightProjectDescriptor(LanguageLevel.PYTHON27)

@@ -16,7 +16,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiManager
-import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyFile
@@ -47,6 +48,8 @@ private val VirtualFile.isUpToDate: Boolean
 internal class PackageDaemonTaskExecutor(private val project: Project, private val cs: CoroutineScope) {
   fun execute(vFile: VirtualFile): Job {
     return cs.launch {
+      // Wait for the Python project structure, so a file opened before it is ready is still counted.
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
       constrainedReadAction(ReadConstraint.inSmartMode(project)) readAction@{
         val fileIndex = ProjectFileIndex.getInstance(project)
         if (!fileIndex.isInProject(vFile) || fileIndex.isInLibrary(vFile)) {
@@ -59,17 +62,17 @@ internal class PackageDaemonTaskExecutor(private val project: Project, private v
           viewProvider.allFiles.firstOrNull { it is PyFile }
         } else psiFile
         if (pyPsiFile !is PyFile) return@readAction emptyList()
-        val evoPyProject = pyPsiFile.findEvoPyProjectIfReady(mainForOrphans = false) ?: return@readAction emptyList()
-        val packageManager = evoPyProject.interpreter?.let { PythonPackageManager.forPythonInterpreter(project, it) }
-        val sdk = packageManager?.sdk
+        val evoPyProject = snapshot.forFile(vFile, mainForOrphans = false) ?: return@readAction emptyList()
+        val interpreter = evoPyProject.interpreter
+        @Suppress("DEPRECATION") // The statistics read the SDK type and target.
+        val sdk = interpreter?.getSdkAPI()
         val interpreterType = sdk?.interpreterType ?: InterpreterType.REGULAR
         val interpreterTarget = sdk?.executionType ?: InterpreterTarget.LOCAL
-        val packages2Versions = packageManager?.let { manager ->
-          // it's mock sdk
-          if (manager.sdk.sdkAdditionalData == null) return@let emptyMap()
-          val packagesFromPackageManager = manager.listInstalledPackagesSnapshot()
-          packagesFromPackageManager.associate { it.name to it.version }
-        } ?: emptyMap()
+        // A mock SDK has no additional data, and the package manager cannot be built for it.
+        val packages2Versions = if (interpreter == null || sdk?.sdkAdditionalData == null) emptyMap()
+        else {
+          PythonPackageManager.forPythonInterpreter(project, interpreter).listInstalledPackagesSnapshot().associate { it.name to it.version }
+        }
 
         pyPsiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->
           // all imports from the same statement should start with the same module

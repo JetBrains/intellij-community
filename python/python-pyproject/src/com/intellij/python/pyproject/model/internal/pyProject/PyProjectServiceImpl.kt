@@ -17,6 +17,12 @@ internal class PyProjectServiceImpl : PyProjectService {
   }
 }
 
+/** Every `PyProject` of [this] project, and the storage they were read from. Read more data from the same storage. */
+internal suspend fun Project.getPyProjectsWithStorage(): Pair<List<PyProjectImpl>, ImmutableEntityStorage> {
+  val storage = getSnapshot()
+  return modules.mapNotNull { PyProjectImpl.create(it, storage) } to storage
+}
+
 private suspend fun Project.getSnapshot(): ImmutableEntityStorage {
   @Suppress("UnsafeOpenServiceCast") // See IJPL-249625
   val workspaceModel = WorkspaceModel.getInstance(this) as WorkspaceModelInternal

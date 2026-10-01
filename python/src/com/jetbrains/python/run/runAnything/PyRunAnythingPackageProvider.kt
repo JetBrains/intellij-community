@@ -16,7 +16,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
-import com.jetbrains.python.sdk.isTargetBased
+import com.intellij.python.sdk.backend.isTargetBased
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -97,7 +97,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
   protected fun getInterpreter(dataContext: DataContext): PythonInterpreter? =
     dataContext.project.findMainEvoPyProjectIfReady()?.interpreter
 
-  private fun isTargetBased(dataContext: DataContext): Boolean = getPackageManager(dataContext)?.sdk.isTargetBased()
+  private fun isTargetBased(dataContext: DataContext): Boolean = getInterpreter(dataContext)?.isTargetBased == true
 
   /**
    * Complete package name if it's not a command flag or a package version

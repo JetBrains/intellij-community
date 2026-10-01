@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.service
 
-import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
+import com.intellij.python.pyproject.model.evolution.pythonInterpreters
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -41,10 +41,8 @@ class HuggingFaceLibrariesTracker(
   private fun setupSdkListener() {
     connection?.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(interpreter: PythonInterpreter) {
-        if (interpreter == getProjectInterpreter()) {
-          coroutineScope.launch(Dispatchers.IO) {
-            updateHFLibraryInstallStatus()
-          }
+        coroutineScope.launch(Dispatchers.IO) {
+          updateHFLibraryInstallStatus(interpreter)
         }
       }
     })
@@ -55,13 +53,11 @@ class HuggingFaceLibrariesTracker(
     connection = null
   }
 
-  /** The interpreter of the main Python project, or `null` while the model has no snapshot yet. */
-  private fun getProjectInterpreter(): PythonInterpreter? = project.findMainEvoPyProjectIfReady()?.interpreter
-
-  private suspend fun updateHFLibraryInstallStatus() {
+  /** Checks [interpreter] if a Python project of this project uses it. Waits for the first snapshot. */
+  private suspend fun updateHFLibraryInstallStatus(interpreter: PythonInterpreter) {
     if (isAnyHFLibraryInstalled) return  // assuming that if was found once - always relevant
 
-    val interpreter = getProjectInterpreter() ?: return
+    if (interpreter !in project.pythonInterpreters()) return
 
     if (isAnyHFLibraryInstalledIn(interpreter)) {
       isAnyHFLibraryInstalled = true

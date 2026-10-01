@@ -319,6 +319,9 @@ abstract class PyCodeInsightTestCase {
       val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
       fixture.testDataPath = PythonTestUtil.getTestDataPath()
       fixture.setUp()
+      // The setup registers a new SDK, and the Python project structure follows it in the background. A test that
+      // highlights before that lands sees the old structure, and the restart that follows cancels its highlighting.
+      awaitPythonInterpreters(fixture.project)
       InspectionProfileImpl.INIT_INSPECTIONS = true
       Registry.get(PyAnyType.REGISTRY_KEY).setValue(testCaseOptions.enablePyAnyType)
       return fixture

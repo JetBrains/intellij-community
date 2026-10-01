@@ -47,7 +47,9 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     get() = project.service<PyPackagingToolWindowService>()
 
   /** Every interpreter a Python project of the structure uses, in the order the list shows them. */
-  private suspend fun allInterpreters(): List<PythonInterpreter> = project.pythonInterpreters().sortedBy { it.asItem().name }
+  /** Every interpreter of the Python projects with its list item, sorted by name. Builds each item once. */
+  private suspend fun allInterpreters(): List<Pair<PythonInterpreter, PyInterpreterItem>> =
+    project.pythonInterpreters().map { it to it.asItem() }.sortedBy { (_, item) -> item.name }
 
   private val sdkListRenderer = object : SimpleListCellRenderer<PyInterpreterItem>() {
     override fun customize(list: JList<out PyInterpreterItem>, value: PyInterpreterItem, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -97,7 +99,7 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
   }
 
   /** The interpreters of every Python project, as the list holds them. */
-  private suspend fun loadItems(): List<PyInterpreterItem> = allInterpreters().map { it.asItem() }
+  private suspend fun loadItems(): List<PyInterpreterItem> = allInterpreters().map { (_, item) -> item }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   private fun refreshModuleList(items: List<PyInterpreterItem>) {
@@ -146,7 +148,7 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
       if (!event.valueIsAdjusting) {
         val selected = sdkList.selectedValue ?: return@ListSelectionListener
         packagingScope.launch {
-          val interpreter = allInterpreters().firstOrNull { it.asInterpreterRef() == selected.ref } ?: return@launch
+          val interpreter = allInterpreters().firstOrNull { (_, item) -> item.ref == selected.ref }?.first ?: return@launch
           toolWindowService.initForInterpreter(interpreter)
         }
       }

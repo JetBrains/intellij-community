@@ -1,6 +1,5 @@
 package com.intellij.python.typeEngine
 
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -16,19 +15,20 @@ import com.intellij.python.lsp.core.listener.PyLspListener
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
-import com.intellij.python.lsp.core.pyLspServedInterpreters
-import com.intellij.python.lsp.core.pyLspToolVersionOf
+import com.intellij.python.lsp.core.pyLspServedModules
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.lsp.core.getInstalledToolPackage
 import com.jetbrains.python.packaging.PythonVersionValue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
 import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.sdk.PySdkListener
+import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,7 +48,7 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     updateModules()
   }
 
-  override fun packagesChanged(interpreter: PythonInterpreter) {
+  override fun packagesChanged(sdk: Sdk) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -60,7 +60,10 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     project.service<TypeInferenceCoroutine>().coroutineScope.launch {
       // Ask every served interpreter, not only the one that changed. One module of a multi-module
       // project that loses pyrefly must not turn the engine off for the modules that still hold it.
-      val isInstalledSomewhere = pyLspServedInterpreters(project).any { pyLspToolVersionOf(it, project, PyreflyPyTool.getInstance()) != null }
+      val isInstalledSomewhere = pyLspServedModules(project).any { served ->
+        val servedSdk = served.pythonSdk ?: return@any false
+        PythonPackageManager.forSdk(project, servedSdk).getInstalledToolPackage(PyreflyPyTool.getInstance()) != null
+      }
       if (isInstalledSomewhere) {
         return@launch
       }

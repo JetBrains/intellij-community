@@ -6,13 +6,11 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Hears package changes in an environment. The package manager calls the forms that take a [PythonInterpreter].
- * By default they forward to the older forms that take an [Sdk], so a listener that overrides only those keeps working.
- */
+/** Package changes of an environment. The interpreter forms forward to the [Sdk] forms by default. */
 @ApiStatus.Experimental
 interface PythonPackageManagementListener {
   /** The installed packages of [interpreter] changed. */
+  @ApiStatus.Internal
   fun packagesChanged(interpreter: PythonInterpreter) {
     @Suppress("DEPRECATION") // The forward to the older form, see there.
     packagesChanged(interpreter.getSdkAPI())
@@ -25,10 +23,10 @@ interface PythonPackageManagementListener {
     outdatedPackagesChanged(interpreter.getSdkAPI())
   }
 
-  /** The older form of [packagesChanged]. A new listener overrides the form that takes a [PythonInterpreter]. */
+  /** The old form. Override the [PythonInterpreter] form instead. */
   fun packagesChanged(sdk: Sdk) {}
 
-  /** The older form of [outdatedPackagesChanged]. A new listener overrides the form that takes a [PythonInterpreter]. */
+  /** The old form. Override the [PythonInterpreter] form instead. */
   @ApiStatus.Internal
   fun outdatedPackagesChanged(sdk: Sdk) {
   }

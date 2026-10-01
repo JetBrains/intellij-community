@@ -12,7 +12,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.codeInsight.stubs.PyStubPackagesAdvertiser
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
-import com.jetbrains.python.sdk.pythonSdk
 
 @TestDataPath("\$CONTENT_ROOT/../testData/requirements/inspections")
 @Subsystems.PackagingRequirements
@@ -82,7 +81,6 @@ class PyStubPackagesAdvertiserTest : PythonDependencyTestCase() {
   override fun setUp() {
     super.setUp()
     InspectionProfileImpl.INIT_INSPECTIONS = true
-    myFixture.project.pythonSdk = projectDescriptor.sdk
   }
 
   override fun tearDown() {

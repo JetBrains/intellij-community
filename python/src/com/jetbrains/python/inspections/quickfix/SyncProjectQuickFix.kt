@@ -19,7 +19,7 @@ internal class SyncProjectQuickFix : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
-    val file = element.containingFile.virtualFile
+    val file = element.containingFile?.originalFile?.virtualFile ?: return
     PyPackageCoroutine.launch(project) {
       val interpreter = project.findPythonInterpreter(file, mainForOrphans = false) ?: return@launch
       val packageManager = PythonPackageManager.forPythonInterpreter(project, interpreter)

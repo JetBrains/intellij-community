@@ -9,7 +9,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import javax.swing.Icon
 
-class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
+internal class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
   override fun getHelpCommand() = "pip"
 
   override fun getHelpGroupTitle(): String = "Python"  // NON-NLS

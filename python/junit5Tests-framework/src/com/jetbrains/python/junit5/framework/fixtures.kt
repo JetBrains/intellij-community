@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.internal.platformBridge.rebuildPyProjectModelForTest
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
@@ -34,6 +35,9 @@ fun TestFixture<Project>.pyMockSdkFixture(module: TestFixture<Module>, sdkProvid
     ProjectJdkTable.getInstance().addJdk(sdk)
     ModuleRootModificationUtil.setModuleSdk(module.get(), sdk)
   }
+  // The Python project structure follows the new SDK in the background. A test that highlights before it lands has its
+  // pass cancelled by the restart that follows.
+  EvoPyProjectModel.getInstance(this@pyMockSdkFixture.get()).awaitCurrentInterpreters()
   initialized(sdk) {
     edtWriteAction {
       ModuleRootModificationUtil.setModuleSdk(module.get(), null)

@@ -20,7 +20,7 @@ open class InstallPackageQuickFix(val packageName: String) : LocalQuickFix, High
   override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val file = descriptor.psiElement.containingFile.virtualFile
+    val file = descriptor.psiElement?.containingFile?.originalFile?.virtualFile ?: return
     PyPackageCoroutine.launch(project) {
       val evoPyProject = project.findEvoPyProject(file, mainForOrphans = false) ?: return@launch
       val interpreter = evoPyProject.interpreter ?: return@launch

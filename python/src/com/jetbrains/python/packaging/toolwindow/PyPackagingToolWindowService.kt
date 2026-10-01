@@ -107,7 +107,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   // time. Listeners are project/UI-scoped and fire on the EDT.
   private val installStateListeners = java.util.concurrent.CopyOnWriteArrayList<Runnable>()
 
-  /** `true` while an install keyed by exactly [key] is running on [interpreter] (verbatim key — see [packageKey]). */
+  /** `true` while an install with the exact [key] runs on [interpreter]. See [packageKey]. */
   fun isInstalling(interpreter: PythonInterpreter, key: String): Boolean = PyActiveInstalls.of(interpreter).isInstalling(key)
 
   /** `true` while a package named [packageName] (any version) is being installed on [interpreter]. */

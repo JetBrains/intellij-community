@@ -542,10 +542,6 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget
     // shows, and the dependency file is resolved from the module.
     val item = interpreter.asItem()
-    // `PythonPackageManager.forSdk` reads `sdk.pySdkAdditionalData`, which throws on an SDK created without any —
-    // "buggy code" per its own message. Test the precondition instead of catching: an IllegalStateException cannot be
-    // caught safely here, since ProcessCanceledException is one. Such an SDK has no dependency file to offer anyway.
-    // A null flavor means no additional data.
     val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
     return PyInterpreterDto(
       title = item.shortName,
@@ -1083,7 +1079,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       val actionId = actionManager.getId(action) ?: return@mapNotNull null
       val presentation = action.templatePresentation.clone()
       val event = AnActionEvent.createEvent(context, presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
-      ActionUtil.updateAction(action, event)
+      // A BGT update runs in a read action, and `update()` relies on it.
+      readAction { ActionUtil.updateAction(action, event) }
       if (!presentation.isVisible) return@mapNotNull null
       EvoLeafDto(
         title = presentation.text ?: actionId,
@@ -1298,7 +1295,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val context = dependencyFileContext() ?: return failed()
     val presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(context, presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
-    ActionUtil.updateAction(action, event)
+    readAction { ActionUtil.updateAction(action, event) }
     if (!presentation.isVisible || !presentation.isEnabled) return failed()
     withContext(Dispatchers.EDT) { ActionUtil.performAction(action, event) }
     PyEvoWidgetCollector.backendActionPerformed(project, stats, PyEvoWidgetCollector.Outcome.OK)

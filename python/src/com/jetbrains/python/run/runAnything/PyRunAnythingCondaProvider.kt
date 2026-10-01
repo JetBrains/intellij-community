@@ -11,7 +11,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
+internal class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
   override fun getHelpCommand(): String = "conda"
 
   override fun getHelpGroupTitle(): String = "Python"  // NON-NLS

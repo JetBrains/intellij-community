@@ -16,6 +16,7 @@ import com.intellij.python.pytools.common.PyToolSdkOperationResultDto
 import com.intellij.python.pytools.common.PyToolSdkRequest
 import com.intellij.python.pytools.common.PyToolSdkStateDto
 import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.python.sdk.backend.findToolExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
@@ -23,10 +24,10 @@ import com.intellij.python.pyproject.model.evolution.pythonInterpreters
 
 internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
   override suspend fun getStates(project: Project, tool: PyTool): List<PyToolSdkStateDto> =
-    projectInterpreters(project).map { interpreter -> interpreterState(tool, interpreter) }
+    projectInterpreters(project).map { (interpreter, item) -> interpreterState(tool, interpreter, item) }
 
   override suspend fun getDependencyGroups(project: Project, request: PyToolSdkRequest): List<PyToolDependencyGroupDto> {
-    val interpreter = requireInterpreter(project, request.sdk)
+    val (interpreter, _) = requireInterpreter(project, request.sdk)
     return PythonPackageManager.forPythonInterpreter(project, interpreter).workspaceSupport
       ?.getDependencyGroups(ProjectName(project.name))
       ?.values?.flatten()?.distinct().orEmpty().map { it.toDto() }
@@ -37,17 +38,17 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
     tool: PyTool,
     request: PyToolSdkInstallRequest,
   ): PyToolSdkOperationResultDto {
-    val interpreter = requireInterpreter(project, request.target.sdk)
+    val (interpreter, item) = requireInterpreter(project, request.target.sdk)
     return when (val result = PythonPackageManager.forPythonInterpreter(project, interpreter).installPackages(
       tool.packageName.name,
       dependencyGroup = request.dependencyGroup?.toModel(),
     )) {
-      is Result.Success -> PyToolSdkOperationResultDto.Success(interpreterState(tool, interpreter))
+      is Result.Success -> PyToolSdkOperationResultDto.Success(interpreterState(tool, interpreter, item))
       is Result.Failure -> PyToolSdkOperationResultDto.Failure(result.error.toString())
     }
   }
 
-  private suspend fun interpreterState(tool: PyTool, interpreter: PythonInterpreter): PyToolSdkStateDto {
+  private suspend fun interpreterState(tool: PyTool, interpreter: PythonInterpreter, item: PyInterpreterItem): PyToolSdkStateDto {
     val path = interpreter.findToolExecutable(tool)
     val version = path?.let {
       when (val result = tool.validateCustomPath(it)) {
@@ -55,17 +56,18 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
         is Result.Failure -> null
       }
     }
-    return PyToolSdkStateDto(interpreter.toDto(), path?.toString(), version)
+    return PyToolSdkStateDto(item.toDto(), path?.toString(), version)
   }
 
-  private suspend fun projectInterpreters(project: Project): List<PythonInterpreter> =
-    project.pythonInterpreters().sortedBy { it.asItem().name }
+  /** Every interpreter of the Python projects with its list item, sorted by name. Builds each item once. */
+  private suspend fun projectInterpreters(project: Project): List<Pair<PythonInterpreter, PyInterpreterItem>> =
+    project.pythonInterpreters().map { it to it.asItem() }.sortedBy { (_, item) -> item.name }
 
   /** The token is the interpreter name, as the list shows it. */
-  private fun PythonInterpreter.toDto(): PyToolSdkDto = asItem().let { PyToolSdkDto(it.name, it.shortName) }
+  private fun PyInterpreterItem.toDto(): PyToolSdkDto = PyToolSdkDto(name, shortName)
 
-  private suspend fun requireInterpreter(project: Project, dto: PyToolSdkDto): PythonInterpreter =
-    projectInterpreters(project).firstOrNull { it.asItem().name == dto.token } ?: error("Unknown Python interpreter: " + dto.token)
+  private suspend fun requireInterpreter(project: Project, dto: PyToolSdkDto): Pair<PythonInterpreter, PyInterpreterItem> =
+    projectInterpreters(project).firstOrNull { (_, item) -> item.name == dto.token } ?: error("Unknown Python interpreter: " + dto.token)
 
   private fun PyDependencyGroup.toDto() = PyToolDependencyGroupDto(
     name,

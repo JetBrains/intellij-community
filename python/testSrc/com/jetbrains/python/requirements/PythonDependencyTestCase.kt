@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
@@ -21,6 +22,7 @@ import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonSdk
 
 abstract class PythonDependencyTestCase : BasePlatformTestCase() {
@@ -63,12 +65,16 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myFixture.project.pythonSdk = projectDescriptor.sdk
+    // The inspections read the interpreter from the Python project structure, which follows the new SDK in the background.
+    awaitPythonInterpreters(myFixture.project)
   }
 
   final override fun getProjectDescriptor(): LightProjectDescriptor {
     val languageLevel = LanguageLevel.getLatest()
     return object : PyLightProjectDescriptor(this@PythonDependencyTestCase.name, languageLevel) {
+      // A Python module, so the Python project structure holds a project for it.
+      override fun getModuleTypeId(): String = PYTHON_MODULE_ID
+
       override fun getSdk(): Sdk =
         PythonMockSdk.create("Mock ${PyNames.PYTHON_SDK_ID_NAME} ${languageLevel.toPythonVersion()}",
                              "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel)
@@ -79,7 +85,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
   override fun getBasePath(): String = "/community/python/testData/requirements/"
 
   fun setDependencyRoot(providerType: RequirementsProviderType) {
-    val sdk = myFixture.project.pythonSdk!!
+    val sdk = myFixture.module.pythonSdk!!
     sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, providerType)
     val moduleDir = myFixture.findFileInTempDir(providerType.filename).parent
     ApplicationManager.getApplication().runWriteAction {
