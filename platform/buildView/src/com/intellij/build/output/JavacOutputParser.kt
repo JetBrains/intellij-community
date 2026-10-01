@@ -5,8 +5,6 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.FileMessageEventImpl
-import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
@@ -34,17 +32,35 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
       if (part1.equals("error", ignoreCase = true) /* jikes */ || part1.equals("Caused by", ignoreCase = true)) {
         // +1 so we don't include the colon
         val text = line.substring(colonIndex1 + 1).trim()
-        messageConsumer.accept(MessageEventImpl(reader.parentEventId, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, text, line))
+        messageConsumer.accept(
+          MessageEvent.builder(text, MessageEvent.Kind.ERROR)
+            .withParentId(reader.parentEventId)
+            .withGroup(COMPILER_MESSAGES_GROUP)
+            .withDescription(line)
+            .build()
+        )
         return true
       }
       if (part1.equals("warning", ignoreCase = true)) {
         // +1 so we don't include the colon
         val text = line.substring(colonIndex1 + 1).trim()
-        messageConsumer.accept(MessageEventImpl(reader.parentEventId, MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP, text, line))
+        messageConsumer.accept(
+          MessageEvent.builder(text, MessageEvent.Kind.WARNING)
+            .withParentId(reader.parentEventId)
+            .withGroup(COMPILER_MESSAGES_GROUP)
+            .withDescription(line)
+            .build()
+        )
         return true
       }
       if (part1.equals("javac", ignoreCase = true)) {
-        messageConsumer.accept(MessageEventImpl(reader.parentEventId, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line, line))
+        messageConsumer.accept(
+          MessageEvent.builder(line, MessageEvent.Kind.ERROR)
+            .withParentId(reader.parentEventId)
+            .withGroup(COMPILER_MESSAGES_GROUP)
+            .withDescription(line)
+            .build()
+        )
         return true
       }
       if (part1.equals("Note", ignoreCase = true)) {
@@ -55,8 +71,14 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           if (isFileSafely(file)) {
             val message = note.substring(javaFileExtensionIndex + JAVA_EXTENSION.length + 1)
             val detailedMessage = amendNextInfoLinesIfNeeded("${file.path}:\n$message", reader)
-            messageConsumer.accept(FileMessageEventImpl(reader.parentEventId, MessageEvent.Kind.INFO, COMPILER_MESSAGES_GROUP,
-                                                        message, detailedMessage, FilePosition(file, 0, 0)))
+            messageConsumer.accept(
+              MessageEvent.builder(message, MessageEvent.Kind.INFO)
+                .withParentId(reader.parentEventId)
+                .withGroup(COMPILER_MESSAGES_GROUP)
+                .withDescription(detailedMessage)
+                .withFilePosition(FilePosition(file, 0, 0))
+                .build()
+            )
             return true
           }
         }
@@ -121,8 +143,14 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
           if (column >= 0) {
             val message = convertMessages(messageList).joinToString("\n")
             val detailedMessage = "$line\n${outputCollector.getOutput()}".trimIndent()
-            messageConsumer.accept(FileMessageEventImpl(reader.parentEventId, kind, COMPILER_MESSAGES_GROUP,
-                                                        message, detailedMessage, FilePosition(file, lineNumber - 1, column)))
+            messageConsumer.accept(
+              MessageEvent.builder(message, kind)
+                .withParentId(reader.parentEventId)
+                .withGroup(COMPILER_MESSAGES_GROUP)
+                .withDescription(detailedMessage)
+                .withFilePosition(FilePosition(file, lineNumber - 1, column))
+                .build()
+            )
             return true
           }
         }
@@ -130,8 +158,13 @@ class JavacOutputParser(private vararg val fileExtensions: String) : BuildOutput
     }
 
     if (line.endsWith("java.lang.OutOfMemoryError")) {
-      messageConsumer.accept(MessageEventImpl(reader.parentEventId, MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP,
-                                              LangBundle.message("build.event.message.out.memory"), line))
+      messageConsumer.accept(
+        MessageEvent.builder(LangBundle.message("build.event.message.out.memory"), MessageEvent.Kind.ERROR)
+          .withParentId(reader.parentEventId)
+          .withGroup(COMPILER_MESSAGES_GROUP)
+          .withDescription(line)
+          .build()
+      )
       return true
     }
 
