@@ -4,7 +4,6 @@ package com.intellij.build.output
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -55,10 +54,14 @@ class GroovycOutputParser : BuildOutputParser {
 
     val row = rowText.toIntOrNull() ?: return false
     val column = location.groupValues[2].toIntOrNull() ?: return false
-    messageConsumer.accept(FileMessageEventImpl(null, reader.parentEventId, null, message, null, detailedMessage,
-                                                MessageEvent.Kind.ERROR, LangBundle.message("build.event.title.compiler"), null,
-                                                emptyList(),
-                                                FilePosition(path, row - 1, column - 1)))
+    messageConsumer.accept(
+      MessageEvent.builder(message, MessageEvent.Kind.ERROR)
+        .withParentId(reader.parentEventId)
+        .withDescription(detailedMessage)
+        .withGroup(LangBundle.message("build.event.title.compiler"))
+        .withFilePosition(FilePosition(path, row - 1, column - 1))
+        .build()
+    )
     return true
   }
 }
