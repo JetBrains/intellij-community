@@ -168,7 +168,7 @@ class IjentSessionProcessMediator private constructor(
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
       exitsOnStdinEof: Boolean = true,
     ): IjentSessionProcessMediator {
-      val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
+        val ijentProcessScope = parentScope.createIjentScope(ijentLabel)
       return create(
         parentScope,
         ijentProcessScope,

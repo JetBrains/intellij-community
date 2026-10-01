@@ -13,7 +13,6 @@ import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
-import com.intellij.platform.ijent.ParentOfIjentScopes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -38,9 +37,6 @@ import kotlin.time.toKotlinDuration
 
 @ApiStatus.Internal
 object IjentSessionMediatorUtils {
-  fun createProcessScope(parentScope: ParentOfIjentScopes, ijentLabel: String): IjentScope =
-    parentScope.createIjentScope(ijentLabel)
-
   suspend fun ijentProcessStderrLogger(
     errorStream: EelReceiveChannel,
     ijentLabel: String,

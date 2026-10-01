@@ -163,7 +163,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
   /** Non-null while the deployer owns cleanup; cleared on close or when the session takes ownership. */
   private var createdShellProcess: ShellProcessWrapper? = null
 
-  private val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel)
+    private val ijentProcessScope = parentScope.createIjentScope(ijentLabel)
 
   private val myContext: SafeDeferred<ShellSession> = ijentProcessScope.asyncSafe(currentDispatcher, start = CoroutineStart.LAZY) {
     val processFacade = createShellProcessFacade(ijentProcessScope)

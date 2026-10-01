@@ -30,7 +30,7 @@ class IjentSessionMediatorUtilsTest {
   @Test
   fun `a low-level failure that loses the shutdown race is not propagated to the parent scope`(): Unit = runBlocking {
     withParentScope { parent, uncaught ->
-      val ijentScope = IjentSessionMediatorUtils.createProcessScope(ParentOfIjentScopes(parent), "test-session")
+        val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
 
       val inFlight = CompletableDeferred<Unit>()
       // Imitates a call that is in flight when the transport gets shut down: cancelling the session scope closes the
@@ -58,7 +58,7 @@ class IjentSessionMediatorUtilsTest {
   @Test
   fun `a low-level failure in a live session is still propagated to the parent scope`(): Unit = runBlocking {
     withParentScope { parent, uncaught ->
-      val ijentScope = IjentSessionMediatorUtils.createProcessScope(ParentOfIjentScopes(parent), "test-session")
+        val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
 
       // Nobody asked to close this session, so the failure is a real one and must reach the application.
       ijentScope.s.launch {
@@ -74,7 +74,7 @@ class IjentSessionMediatorUtilsTest {
   @Test
   fun `a failure the IDE has already named to the user is not propagated to the parent scope`(): Unit = runBlocking {
     withParentScope { parent, uncaught ->
-      val ijentScope = IjentSessionMediatorUtils.createProcessScope(ParentOfIjentScopes(parent), "test-session")
+        val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
 
       // The deployer could tell what went wrong — "authentication failed" — and has shown it: a condition of the
       // environment, not a defect. Ending the session is all that is left to do.
