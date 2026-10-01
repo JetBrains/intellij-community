@@ -5,11 +5,14 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.DuplicateMessageAware
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
-import com.intellij.build.output.BuildOutputInstantReader
-import com.intellij.build.output.BuildOutputParser
+import com.intellij.build.output.BuildOutputInstantReaderImpl.BuildOutputLineParserBridge
+import com.intellij.build.output.BuildOutputMulticaster
+import com.intellij.build.output.BuildOutputReplayableLineReader
+import com.intellij.build.output.BuildOutputText
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
@@ -20,21 +23,27 @@ import java.util.function.Consumer
 /**
  * @author Vladislav.Soroka
  */
-class GradleBuildScriptErrorParser : BuildOutputParser {
+class GradleBuildScriptErrorParser : BuildOutputLineParserBridge() {
 
-  override fun parse(line: String, reader: BuildOutputInstantReader, messageConsumer: Consumer<in BuildEvent>): Boolean {
-    if (!line.startsWith("FAILURE: Build failed with an exception.")) return false
-    if (!reader.readLine().isNullOrBlank()) return false
+  override suspend fun parse(
+    line: BuildOutputText,
+    reader: BuildOutputReplayableLineReader,
+    taskId: StartId,
+    multicaster: BuildOutputMulticaster,
+    isSingleFlow: Boolean,
+  ): Boolean {
+    if (!line.text.startsWith("FAILURE: Build failed with an exception.")) return false
+    if (!reader.readLine()?.text.isNullOrBlank()) return false
 
     val location: String?
     val filter: GradleConsoleFilter?
-    var whereOrWhatLine = reader.readLine()
+    var whereOrWhatLine = reader.readLine()?.text
     if (whereOrWhatLine == "* Where:") {
-      location = reader.readLine() ?: return false
+      location = reader.readLine()?.text ?: return false
       filter = GradleConsoleFilter(null)
       filter.applyFilter(location, location.length) ?: return false
-      if (!reader.readLine().isNullOrBlank()) return false
-      whereOrWhatLine = reader.readLine()
+      if (!reader.readLine()?.text.isNullOrBlank()) return false
+      whereOrWhatLine = reader.readLine()?.text
     }
     else {
       location = null
@@ -47,7 +56,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     if (location != null) {
       description.appendLine(location).appendLine()
     }
-    @NlsSafe var reason = reader.readLine() ?: return false
+    @NlsSafe var reason = reader.readLine()?.text ?: return false
     val parentId: Any
     if (reason.startsWith("Execution failed for task '")) {
       val taskName = reason.substringAfter("Execution failed for task '").substringBefore("'.")
@@ -56,12 +65,12 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       parentId = GradleOutputDispatcherFactory.TaskNameId(taskName)
     }
     else {
-      parentId = reader.parentEventId
+      parentId = taskId
     }
 
     description.appendLine(reason)
     loop@ while (true) {
-      val nextLine = reader.readLine() ?: return false
+      val nextLine = reader.readLine()?.text ?: return false
       if (nextLine.isBlank()) break
       description.appendLine(nextLine)
       val trimStart = nextLine.trimStart()
@@ -71,7 +80,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       when {
         nextLine.isEmpty() -> break@loop
         nextLine == "* Try:" -> {
-          reader.pushBack()
+          reader.pushBack(1)
           break@loop
         }
       }
@@ -80,7 +89,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     var trySuggestions: StringBuilder? = null
     var exception: StringBuilder? = null
     while (true) {
-      val nextLine = reader.readLine() ?: break
+      val nextLine = reader.readLine()?.text ?: break
       if (nextLine == "BUILD FAILED" || nextLine == "* Get more help at https://help.gradle.org" || nextLine.startsWith(
           "CONFIGURE FAILED")) break
       if (nextLine == "* Exception is:") {
@@ -115,7 +124,13 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
 
     val errorText = description.toString()
     for (issueChecker in GradleIssueChecker.getKnownIssuesCheckList()) {
-      if (issueChecker.consumeBuildOutputFailureMessage(errorText, reason, exception.toString(), filePosition, parentId, messageConsumer)) {
+      if (issueChecker.consumeBuildOutputFailureMessage(errorText,
+                                                        reason,
+                                                        exception.toString(),
+                                                        filePosition,
+                                                        parentId,
+                                                        Consumer<BuildEvent> { t -> multicaster.notifyBuildEvent(t) })
+      ) {
         return true
       }
     }
@@ -130,18 +145,18 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     }
     if (filePosition != null) {
       //TODO: Used english suggestions and exceptions:
-      messageConsumer.accept(object : FileMessageEventImpl(
+      multicaster.notifyBuildEvent(object : FileMessageEventImpl(
         parentId, MessageEvent.Kind.ERROR, null, reason, detailedMessage.toString(), filePosition), DuplicateMessageAware {} //NON-NLS
       )
     }
     else {
       val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, errorText, parentId)
       if (unresolvedMessageEvent != null) {
-        messageConsumer.accept(unresolvedMessageEvent)
+        multicaster.notifyBuildEvent(unresolvedMessageEvent)
       }
       else {
         //TODO: Used english suggestions and exceptions:
-        messageConsumer.accept(object : MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason,
+        multicaster.notifyBuildEvent(object : MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason,
                                                          detailedMessage.toString()), DuplicateMessageAware {}) //NON-NLS
       }
     }
