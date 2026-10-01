@@ -5,8 +5,6 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.FileMessageEventImpl
-import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -58,7 +56,7 @@ class KotlincOutputParser : BuildOutputParser {
     if (!severity.startsWithSeverityPrefix()) return false
 
     val lineWoSeverity = line.substringAfterAndTrim(colonIndex1)
-    var path = extractPath(lineWoSeverity) ?: return false
+    val path = extractPath(lineWoSeverity) ?: return false
 
 
     val file = if (path.startsWith("file:")) {
@@ -72,10 +70,15 @@ class KotlincOutputParser : BuildOutputParser {
     }
 
     val fileExtension = file.extension.lowercase(Locale.getDefault())
-    if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) { //NON-NLS
-      @NlsSafe
-      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
+    if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) {
+      consumer.notifyMessageEvent(
+        MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
+          .withParentId(reader.parentEventId)
+          .withGroup(COMPILER_MESSAGES_GROUP)
+          .withDescription(lineWoSeverity.amendNextLinesIfNeeded(reader))
+          .build()
+      )
+      return true
     }
 
     val lineWoPath = lineWoSeverity.substringAfterAndTrim(path.length)
@@ -119,17 +122,36 @@ class KotlincOutputParser : BuildOutputParser {
         val symbolNumber = if (matcher.groupCount() >= 2) matcher.group(2) else "1"
         if (lineNumber != null) {
           val symbolNumberText = symbolNumber.toInt()
-          return addMessage(createMessageWithLocation(
-            reader.parentEventId, getMessageKind(severity), message, file, lineNumber.toInt(), symbolNumberText, details), consumer)
+          consumer.notifyMessageEvent(
+            MessageEvent.builder(message.trim(), getMessageKind(severity)) //NON-NLS
+              .withParentId(reader.parentEventId)
+              .withGroup(COMPILER_MESSAGES_GROUP)
+              .withDescription(details)
+              .withFilePosition(FilePosition(file, lineNumber.toInt() - 1, symbolNumberText - 1))
+              .build()
+          )
+          return true
         }
       }
 
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), message, details), consumer)
+      consumer.notifyMessageEvent(
+        MessageEvent.builder(message.trim(), getMessageKind(severity)) //NON-NLS
+          .withParentId(reader.parentEventId)
+          .withGroup(COMPILER_MESSAGES_GROUP)
+          .withDescription(details)
+          .build()
+      )
+      return true
     }
     else {
-      @NlsSafe
-      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
+      consumer.notifyMessageEvent(
+        MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
+          .withParentId(reader.parentEventId)
+          .withGroup(COMPILER_MESSAGES_GROUP)
+          .withDescription(lineWoSeverity.amendNextLinesIfNeeded(reader))
+          .build()
+      )
+      return true
     }
   }
 
@@ -139,7 +161,7 @@ class KotlincOutputParser : BuildOutputParser {
   private val JAVAC_POSITION_PATTERN = Pattern.compile("([0-9]+)")
   private val LINE_COLON_COLUMN_POSITION_PATTERN = Pattern.compile("([0-9]*):([0-9]*)")
 
-  private fun String.amendNextLinesIfNeeded(reader: BuildOutputInstantReader): String {
+  private fun String.amendNextLinesIfNeeded(reader: BuildOutputInstantReader): @NlsSafe String {
     var nextLine = reader.readLine()
 
     val builder = StringBuilder(this)
@@ -206,31 +228,10 @@ class KotlincOutputParser : BuildOutputParser {
            && messageText.contains(KAPT_ERROR_WHILE_ANNOTATION_PROCESSING_MARKER_TEXT)
   }
 
-  private fun addMessage(message: MessageEvent, consumer: Consumer<in MessageEvent>): Boolean {
+  private fun Consumer<in MessageEvent>.notifyMessageEvent(message: MessageEvent) {
     // Ignore KaptError.ERROR_RAISED message from kapt. We already processed all errors from annotation processing
-    if (isKaptErrorWhileAnnotationProcessing(message)) return true
-    consumer.accept(message)
-    return true
+    if (!isKaptErrorWhileAnnotationProcessing(message)) {
+      accept(message)
+    }
   }
-
-  private fun createMessage(parentId: Any,
-                            messageKind: MessageEvent.Kind,
-                            text: @BuildEventsNls.Message String,
-                            detail: @BuildEventsNls.Description String): MessageEvent {
-    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail) //NON-NLS
-  }
-
-  private fun createMessageWithLocation(
-    parentId: Any,
-    messageKind: MessageEvent.Kind,
-    text: @BuildEventsNls.Message String,
-    file: File,
-    lineNumber: Int,
-    columnIndex: Int,
-    detail: @BuildEventsNls.Description String
-  ): FileMessageEventImpl {
-    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail, //NON-NLS
-                                FilePosition(file, lineNumber - 1, columnIndex - 1))
-  }
-
 }

@@ -2,6 +2,7 @@
 package com.intellij.build.output
 
 import com.intellij.build.events.MessageEvent
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.io.createFile
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
+@TestApplication
 class KotlincOutputParserTest : CompilerOutputParserTestCase() {
 
   override fun createParser() = KotlincOutputParser()
