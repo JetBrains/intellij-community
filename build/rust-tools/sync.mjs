@@ -32,12 +32,7 @@ export const manifestPaths = [
  * `skip`, and the reason. The script writes the tables and every other copy of such a workspace, and names each
  * skipped copy with the reason. A skipped copy that exists is left as it is.
  */
-export const skippedCopies = {
-  "plugins/air/tests/integration/vm-lane/Cargo.toml": {
-    skip: ["clippy.toml"],
-    reason: "clippy.toml joins in V0b with the banned-call replacements",
-  },
-}
+export const skippedCopies = {}
 
 const scriptPath = fileURLToPath(import.meta.url)
 const sharedDir = dirname(scriptPath)

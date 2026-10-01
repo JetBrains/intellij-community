@@ -52,7 +52,7 @@ equal to the sources.
 |---|---|
 | dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
-| Air UI-lane tooling | `sync.mjs` writes its tables and its `rustfmt.toml`. `skippedCopies` holds back its `clippy.toml`, because the code calls the banned methods at about 30 sites. |
+| Air UI-lane tooling | None. |
 
 ## The Bazel macro core
 
@@ -112,10 +112,9 @@ of each workspace.
 text of the copies. `lints_equal_test` wraps each check in a `build_test`, so a `bazel test --build_tests_only` run
 analyzes it too.
 
-`community/.bazelrc` gives `clippy.toml` to the Bazel clippy aspect of the community root. The ultimate root sets no
-clippy configuration, because the setting applies to every clippy test there, and the Air UI-lane tooling calls the
-banned methods. So the bans apply under Bazel to the community crates only, and under cargo to every workspace that
-has the copy.
+`community/.bazelrc` gives `clippy.toml` to the Bazel clippy aspect of the community root, and the root `.bazelrc` of
+the ultimate root gives it the same file. So the bans apply under Bazel to every clippy test of the Rust tool
+workspaces, and under cargo to every workspace that has the copy.
 
 ## How a workspace joins
 

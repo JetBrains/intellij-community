@@ -9,7 +9,7 @@ import %workspace%/common.bazelrc
 common --@rules_go//go/config:pure
 
 # The clippy configuration of the Rust tool workspaces. Their community crates run their clippy tests only from this
-# root. The ultimate root does not set it, because it applies to every clippy test, and vm-lane needs the calls it bans.
+# root. The ultimate root `.bazelrc` sets the same file for the ultimate workspaces.
 common --@rules_rust//rust/settings:clippy.toml=//build/rust-tools:clippy.toml
 
 try-import %workspace%/../build/remote_cache.bazelrc
