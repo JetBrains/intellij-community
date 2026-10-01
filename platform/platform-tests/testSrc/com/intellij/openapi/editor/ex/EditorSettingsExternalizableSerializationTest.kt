@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * A corrupted `editor.xml` must never break editor creation.
+ * A 2026.2 build must read every caret easing value that this build saves.
  *
  * `EditorSettingsState` reads these settings eagerly in its constructor, which runs inside
  * `SettingsImpl.<init>` -> `EditorImpl.<init>`, so a `null` here means no editor can be opened at all.
@@ -73,6 +74,21 @@ internal class EditorSettingsExternalizableSerializationTest {
   }
 
   @Test
+  fun `caret easing is saved with the names that an older build reads`() {
+    assertThat(savedCaretEasing(EditorSettings.CaretEasing.SNAPPY)).isEqualTo("NINJA")
+    assertThat(savedCaretEasing(EditorSettings.CaretEasing.GLIDING)).isEqualTo("EASE")
+  }
+
+  @Test
+  fun `a current caret easing name is saved back with the older name`() {
+    val settings = load("""<state><option name="CARET_EASING" value="GLIDING" /></state>""")
+
+    val saved = JDOMUtil.write(XmlSerializer.serialize(settings.state, SkipDefaultsSerializationFilter()))
+
+    assertThat(saved).contains("""<option name="CARET_EASING" value="EASE" />""")
+  }
+
+  @Test
   fun `setting null falls back to the default instead of persisting null`() {
     val settings = EditorSettingsExternalizable(EditorSettingsExternalizable.OsSpecificState())
 
@@ -86,5 +102,13 @@ internal class EditorSettingsExternalizableSerializationTest {
   private fun load(xml: String): EditorSettingsExternalizable {
     val options = XmlSerializer.deserialize(JDOMUtil.load(xml), EditorSettingsExternalizable.OptionSet::class.java)
     return EditorSettingsExternalizable(EditorSettingsExternalizable.OsSpecificState()).also { it.loadState(options) }
+  }
+
+  private fun savedCaretEasing(easing: EditorSettings.CaretEasing): String? {
+    val settings = EditorSettingsExternalizable(EditorSettingsExternalizable.OsSpecificState())
+    settings.setCaretEasing(easing)
+    return XmlSerializer.serialize(settings.state).getChildren("option")
+      .firstOrNull { it.getAttributeValue("name") == "CARET_EASING" }
+      ?.getAttributeValue("value")
   }
 }
