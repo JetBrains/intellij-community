@@ -38,8 +38,8 @@ public class Maven40WorkspaceMapReader implements WorkspaceReader, MavenWorkspac
 
   @Override
   public File findArtifact(Artifact artifact) {
-    MavenWorkspaceMap.Data resolved =
-      myWorkspaceMap.findFileAndOriginalId(new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()));
+    MavenId id = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+    MavenWorkspaceMap.Data resolved = myWorkspaceMap.findFileAndOriginalIdWithRevisionFallback(id);
     if (resolved == null) return null;
 
     return resolved.getFile(artifact.getExtension());
