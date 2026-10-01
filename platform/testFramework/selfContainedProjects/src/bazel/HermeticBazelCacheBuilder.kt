@@ -65,6 +65,7 @@ class HermeticBazelCacheBuilder(
     (workspace / ".bazelignore").writeText("$SELF_CONTAINED\n")
     platforms.forEach { downloadBazelBinary(cache, it) }
     (workspace / ".bazelrc").writeText(generationBazelRc(workspace, cache, outputBase, outputUserRoot))
+    writeJavaToolchainPackage(workspace, javaLanguageVersion)
     return cache
   }
 

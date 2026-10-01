@@ -157,6 +157,10 @@ copy next to the cache; commit it into the fixture and run the regeneration agai
   repository cache by sha256. `--lockfile_mode=error` is no guard here: the `file://` URLs are not in the lockfile.
 - The cache holds only the remote JDK, so the `.bazelrc` forces `--java_runtime_version=remotejdk_21`. `local_jdk`
   does not help: the aspect build still analyses the registered remote JDK toolchains and fetches them.
+- That flag picks the runtime the program runs on, not the one javac runs on: rules_java registers its compile
+  toolchains with javac on `remotejdk_25`. The workspace gets a generated `hermetic_java_toolchain` package with a
+  `default_java_toolchain` whose javac runs on `remotejdk_21`, registered first through `--extra_toolchains`, so the
+  cache needs no second JDK per platform.
 - The consumer copies the bundled binary to where the code under test looks for Bazel (`installBazelBinary`). The
   IntelliJ Bazel plugin reads `<system>/bazel-plugin/bazelisk`, but only when `forceBazeliskDownload` is on;
   otherwise a `bazel` on `PATH` wins. The LS sets the flag; the plugin's own tests do not.

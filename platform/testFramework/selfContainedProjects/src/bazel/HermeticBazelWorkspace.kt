@@ -59,6 +59,7 @@ class HermeticBazelWorkspace private constructor(
       val outputBase = (outputRoot / "bazel-output-base").also { Files.createDirectories(it) }
       val outputUserRoot = (outputRoot / "bazel-output-user-root").also { Files.createDirectories(it) }
       (workspace / ".bazelrc").writeText(offlineBazelRc(cache, outputBase, outputUserRoot, javaRuntimeVersion, javaLanguageVersion))
+      writeJavaToolchainPackage(workspace, javaLanguageVersion)
       return HermeticBazelWorkspace(workspace, cache, bazelVersion)
     }
 

@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.selfContainedProjects.bazel
 
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.div
+import kotlin.io.path.writeText
 
 /**
  * A path as a `.bazelrc` argument: single-quoted only when it holds whitespace or a quote, so a plain path stays
@@ -19,14 +22,46 @@ internal fun bazelRcPath(path: Path): String {
  *
  * The cache holds only the remote JDK, so the flags force it instead of a local JDK detection. `local_jdk` does not
  * work: the aspect build still analyses the registered remote JDK toolchains and fetches them.
+ *
+ * The flags pick the runtime the program runs on, not the one javac runs on. rules_java registers its compile
+ * toolchains with javac on `remotejdk_25`, so `--extra_toolchains` puts the toolchain of [writeJavaToolchainPackage]
+ * first: javac then runs on the default `remotejdk_21`, and the cache needs no second JDK per platform. The tool
+ * language version follows the target one, so a Java tool built in the exec configuration matches that toolchain too
+ * instead of `toolchain_java11`.
  */
 internal fun javaToolchainBazelRc(javaRuntimeVersion: String, javaLanguageVersion: String): List<String> = listOf(
   "common --java_runtime_version=$javaRuntimeVersion",
   "common --java_language_version=$javaLanguageVersion",
   "common --tool_java_runtime_version=$javaRuntimeVersion",
+  "common --tool_java_language_version=$javaLanguageVersion",
+  "common --extra_toolchains=//$JAVA_TOOLCHAIN_PACKAGE:${JAVA_TOOLCHAIN_NAME}_definition",
   "common --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=0",
   "common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=0",
 )
+
+/**
+ * Writes the package of the `--extra_toolchains` entry of [javaToolchainBazelRc] into [workspace]: a
+ * `default_java_toolchain` with the default configuration, whose javac runs on `remotejdk_21`.
+ *
+ * The macro is loaded through `@bazel_tools`, so a fixture needs no `rules_java` dependency of its own.
+ */
+internal fun writeJavaToolchainPackage(workspace: Path, javaLanguageVersion: String) {
+  val dir = Files.createDirectories(workspace / JAVA_TOOLCHAIN_PACKAGE)
+  (dir / "BUILD").writeText(
+    """
+    |load("@bazel_tools//tools/jdk:default_java_toolchain.bzl", "default_java_toolchain")
+    |
+    |default_java_toolchain(
+    |    name = "$JAVA_TOOLCHAIN_NAME",
+    |    source_version = "$javaLanguageVersion",
+    |    target_version = "$javaLanguageVersion",
+    |)
+    |""".trimMargin()
+  )
+}
+
+internal const val JAVA_TOOLCHAIN_PACKAGE = "hermetic_java_toolchain"
+private const val JAVA_TOOLCHAIN_NAME = "javac_on_default_jdk"
 
 internal fun outputBazelRc(outputBase: Path, outputUserRoot: Path): List<String> = listOf(
   "startup --output_base=${bazelRcPath(outputBase)}",

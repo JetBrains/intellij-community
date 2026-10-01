@@ -68,6 +68,8 @@ class HermeticBazelFixtureTest {
       common --java_runtime_version=remotejdk_21
       common --java_language_version=21
       common --tool_java_runtime_version=remotejdk_21
+      common --tool_java_language_version=21
+      common --extra_toolchains=//hermetic_java_toolchain:javac_on_default_jdk_definition
       common --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=0
       common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=0
       startup --output_base=${outputBase.toAbsolutePath()}
