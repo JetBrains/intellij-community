@@ -5,6 +5,8 @@ import com.intellij.build.FileNavigatable
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.issue.BuildIssue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -14,20 +16,24 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.pom.Navigatable
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.GradleIssueData
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
+import org.jetbrains.plugins.gradle.issue.GradleIssueMerger
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionReporter.GradleExecutionFailureReport
 import org.jetbrains.plugins.gradle.service.project.BaseProjectImportErrorHandler.getErrorFilePosition
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector.FailureGroup
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
-import kotlin.io.path.isRegularFile
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.isRegularFile
 
 private val LOG = logger<GradleExecutionReporter>()
 
@@ -36,7 +42,7 @@ class GradleExecutionReporterImpl(
   private val projectPath: String,
   private val taskId: ExternalSystemTaskId,
   private val listener: ExternalSystemTaskNotificationListener,
-) : GradleExecutionReporter {
+) : GradleExecutionReporter, Disposable {
 
   var buildEnvironment: BuildEnvironment? = null
 
@@ -47,11 +53,18 @@ class GradleExecutionReporterImpl(
 
   private val processedMessageKeys = HashSet<MessageKey>()
   private val processedIssueKeys = HashSet<IssueKey>()
+  private val pendingIssues = ArrayList<Pair<BuildIssue, FilePosition?>>()
 
   fun hasFailures(): Boolean = hasFailures.get()
 
   override fun failure(failure: GradleIssueFailure): GradleExecutionFailureReport =
     GradleExecutionFailureReportImpl(this, failure)
+
+  override fun issue(issue: BuildIssue) {
+    if (processedIssueKeys.add(IssueKey(issue.title, issue.description, null))) {
+      pendingIssues += issue to null
+    }
+  }
 
   private fun reportFailure(report: GradleExecutionFailureReportImpl) {
     if (report.severity == GradleExecutionFailureReport.Severity.ERROR) {
@@ -125,11 +138,7 @@ class GradleExecutionReporterImpl(
     val issues = GradleIssueChecker.getKnownIssuesCheckList().mapNotNull { it.check(issueData) }
     for (issue in issues) {
       if (processedIssueKeys.add(IssueKey(issue.title, issue.description, filePosition))) {
-        val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
-          .withParentId(taskId)
-          .withFilePosition(filePosition)
-          .build()
-        listener.onStatusChange(ExternalSystemBuildEvent(taskId, issueEvent))
+        pendingIssues += issue to filePosition
       }
     }
     return issues.isNotEmpty()
@@ -147,6 +156,35 @@ class GradleExecutionReporterImpl(
                       .firstOrNull { it.isRegularFile() }
                     ?: return null
     return FileNavigatable(taskId.project, FilePosition(buildFile, 0, 0))
+  }
+
+  override fun dispose() {
+    flushPendingIssues()
+  }
+
+  private fun flushPendingIssues() {
+    pendingIssues.groupBy { it.second }
+      .forEach { (position, issuesByPosition) ->
+        var nonMergedIssues = issuesByPosition
+        GradleIssueMerger.EP_NAME.forEachExtensionSafe { merger ->
+          val (applicableIssues, nonApplicableIssues) = nonMergedIssues.partition { merger.isApplicable(it.first) }
+          if (applicableIssues.isNotEmpty()) {
+            applicableIssues.map { it.first }
+              .let { merger.merge(it) }
+              .forEach { reportIssue(it, position) }
+          }
+          nonMergedIssues = nonApplicableIssues
+        }
+        nonMergedIssues.forEach { reportIssue(it.first, position) }
+      }
+  }
+
+  private fun reportIssue(issue: BuildIssue, position: FilePosition?) {
+    val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
+      .withParentId(taskId)
+      .withFilePosition(position)
+      .build()
+    listener.onStatusChange(ExternalSystemBuildEvent(taskId, issueEvent))
   }
 
   private fun BuildEnvironment?.getProjectRootPath(): Path? {

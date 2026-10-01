@@ -1202,12 +1202,13 @@ public final class GradleProjectResolverUtil {
   private static void reportUnresolvedDependencyError(@NotNull ProjectResolverContext resolverCtx,
                                                       UnresolvedExternalDependency unresolvedDep,
                                                       String ownerModuleId) {
-    final String libraryName =  unresolvedDep.getId().getPresentableName();
-    final String failureMessage = unresolvedDep.getFailureMessage();
-    boolean isOfflineWork = resolverCtx.getSettings().isOfflineWork();
-    BuildIssue buildIssue = new UnresolvedDependencySyncIssue(
-      libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork, ownerModuleId);
-    resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);
+    resolverCtx.getReporter().issue(new UnresolvedDependencySyncIssue(
+      unresolvedDep.getId().getPresentableName(),
+      unresolvedDep.getFailureMessage(),
+      resolverCtx.getProjectPath(),
+      resolverCtx.getSettings().isOfflineWork(),
+      ownerModuleId
+    ));
   }
 
   private static @NotNull ModuleData getOwnerModule(@NotNull DataNode<? extends ExternalEntityData> ownerDataNode) {

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.build.events.MessageEvent
+import com.intellij.build.issue.BuildIssue
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
@@ -31,6 +31,9 @@ interface GradleExecutionReporter {
    * Creates a configurable report for [failure]. The report is immutable; each `with...` method returns an updated report instance.
    */
   fun failure(failure: GradleIssueFailure): GradleExecutionFailureReport
+
+  @Internal
+  fun issue(issue: BuildIssue)
 
   /**
    * Configures how a single [GradleIssueFailure] should be reported.
@@ -69,7 +72,7 @@ interface GradleExecutionReporter {
     /**
      * Sets the statistics group for Gradle failure reporting, or disables statistics reporting when `null`.
      */
-    @ApiStatus.Internal
+    @Internal
     fun withGroup(group: GradleModelBuilderMessageCollector.FailureGroup?): GradleExecutionFailureReport
 
     /**

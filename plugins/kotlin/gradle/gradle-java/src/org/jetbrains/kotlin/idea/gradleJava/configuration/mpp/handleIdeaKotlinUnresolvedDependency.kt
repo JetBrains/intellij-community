@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
-import com.intellij.build.events.MessageEvent
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue
@@ -12,13 +11,13 @@ internal fun reportIdeaKotlinUnresolvedDependency(
     context: KotlinMppGradleProjectResolver.Context,
     sourceSetModuleId: KotlinSourceSetModuleId,
 ) {
-    val unresolvedDependencyIssue = UnresolvedDependencySyncIssue(
-        dependencyName = dependency.coordinates?.toString() ?: "<unknown coordinates>",
-        failureMessage = dependency.cause,
-        projectPath = context.resolverCtx.projectPath,
-        isOfflineMode = context.resolverCtx.settings.isOfflineWork == true,
-        dependencyOwner = sourceSetModuleId.toString(),
+    context.resolverCtx.reporter.issue(
+        UnresolvedDependencySyncIssue(
+            dependencyName = dependency.coordinates?.toString() ?: "<unknown coordinates>",
+            failureMessage = dependency.cause,
+            projectPath = context.resolverCtx.projectPath,
+            isOfflineMode = context.resolverCtx.settings.isOfflineWork,
+            dependencyOwner = sourceSetModuleId.toString(),
+        )
     )
-
-    context.resolverCtx.report(MessageEvent.Kind.ERROR, unresolvedDependencyIssue)
 }

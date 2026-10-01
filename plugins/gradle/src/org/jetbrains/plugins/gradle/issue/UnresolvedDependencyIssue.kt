@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue.DisableOfflineAndRerun
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -22,28 +23,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.runAsync
 
 @ApiStatus.Internal
-abstract class UnresolvedDependencyIssue(
-  dependencyName: String,
-  private val dependencyOwner: String? = null,
-) : ConfigurableGradleBuildIssue() {
-
-  init {
-    val title =
-      if (dependencyOwner == null) GradleBundle.message("gradle.build.issue.unresolved.dependency.title", dependencyName)
-      else GradleBundle.message("gradle.build.issue.unresolved.dependency.for.owner.title", dependencyName, dependencyOwner)
-    setTitle(title)
-  }
-
-  fun buildDescription(failureMessage: String?): @NlsSafe String {
-    val issueDescription = StringBuilder()
-    if(dependencyOwner != null) {
-      issueDescription.append(dependencyOwner)
-      issueDescription.append(": ")
-    }
-
-    issueDescription.append(failureMessage?.trim())
-    return issueDescription.toString()
-  }
+abstract class UnresolvedDependencyIssue : ConfigurableGradleBuildIssue() {
 
   fun configureQuickFix(
     failureMessage: String?,
@@ -88,13 +68,56 @@ abstract class UnresolvedDependencyIssue(
 }
 
 @ApiStatus.Experimental
-data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
-  private val dependencyName: String,
+class UnresolvedGroupedDependencyIssue(
+  title: @NlsSafe String,
+  description: @NlsSafe String,
+  isOfflineMode: Boolean,
+) : UnresolvedDependencyIssue() {
+
+  init {
+    setTitle(title)
+    addDescription(description)
+    configureQuickFix(
+      null,
+      isOfflineMode,
+      DisableOfflineAndRerun(),
+      "gradle.build.quick.fix.disable.offline.mode.rebuild"
+    )
+  }
+}
+
+abstract class UnresolvedSingleDependencyIssue(
+  dependencyName: String,
+  private val dependencyOwner: String? = null,
+) : UnresolvedDependencyIssue() {
+
+  init {
+    val title =
+      if (dependencyOwner == null) GradleBundle.message("gradle.build.issue.unresolved.dependency.title", dependencyName)
+      else GradleBundle.message("gradle.build.issue.unresolved.dependency.for.owner.title", dependencyName, dependencyOwner)
+    setTitle(title)
+  }
+
+  fun buildDescription(failureMessage: String?): @NlsSafe String {
+    val issueDescription = StringBuilder()
+    if (dependencyOwner != null) {
+      issueDescription.append(dependencyOwner)
+      issueDescription.append(": ")
+    }
+
+    issueDescription.append(failureMessage?.trim())
+    return issueDescription.toString()
+  }
+}
+
+@ApiStatus.Experimental
+data class UnresolvedDependencySyncIssue(
+  val dependencyName: String,
   private val failureMessage: String?,
   private val projectPath: String,
-  private val isOfflineMode: Boolean,
-  private val dependencyOwner: String? = null,
-) : UnresolvedDependencyIssue(dependencyName, dependencyOwner) {
+  val isOfflineMode: Boolean,
+  val dependencyOwner: String? = null,
+) : UnresolvedSingleDependencyIssue(dependencyName, dependencyOwner) {
 
   init {
     val jvmIssueInfo = GradleJVMIssuePatternMatcher.analyzeFailureMessage(failureMessage)
@@ -121,9 +144,11 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
 }
 
 @ApiStatus.Experimental
-class UnresolvedDependencyBuildIssue(dependencyName: String,
-                                     failureMessage: String?,
-                                     isOfflineMode: Boolean) : UnresolvedDependencyIssue(dependencyName) {
+class UnresolvedDependencyBuildIssue(
+  dependencyName: String,
+  failureMessage: String?,
+  isOfflineMode: Boolean,
+) : UnresolvedSingleDependencyIssue(dependencyName) {
   init {
     addDescription(buildDescription(failureMessage))
     configureQuickFix(

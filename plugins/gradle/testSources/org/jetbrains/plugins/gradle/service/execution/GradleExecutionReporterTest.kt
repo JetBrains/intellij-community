@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertion
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertion.Companion.assertCollectionOrdered
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
@@ -71,8 +72,10 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
   fun `test failure handler reports message event`() {
     val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
-    reporterFixture.reporter.failure(failure)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent("title", "description")
@@ -83,9 +86,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
   fun `test failure handler uses configured title for message event`() {
     val failure = GradleIssueFailure.createIssueFailure("failure message", "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withTitle("event title")
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withTitle("event title")
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent("event title", "description")
@@ -96,9 +101,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
   fun `test failure handler uses configured text for message event`() {
     val failure = GradleIssueFailure.createIssueFailure("title", "failure description")
 
-    reporterFixture.reporter.failure(failure)
-      .withText("event text")
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withText("event text")
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent("title", "event text")
@@ -113,8 +120,10 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val description = stackTrace("description", filePosition)
     val failure = GradleIssueFailure.createIssueFailure(message, description)
 
-    reporterFixture.reporter.failure(failure)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent(message, description, filePosition)
@@ -129,9 +138,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
       .createFile()
     val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withTargetPath(targetPath)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withTargetPath(targetPath)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent("title", "description", navigatableFile = buildFile)
@@ -143,9 +154,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     LoggedErrorProcessor.executeAndReturnLoggedError {
       val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
-      reporterFixture.reporter.failure(failure)
-        .withInternal(true)
-        .report()
+      reporterFixture.reporter.use {
+        it.failure(failure)
+          .withInternal(true)
+          .report()
+      }
 
       assertCollectionOrdered(reporterFixture.events) {
         messageEvent("title", "description")
@@ -158,9 +171,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
   fun `test failure handler reports suppressed failure events when registry is enabled`() {
     val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withSuppressed(true)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withSuppressed(true)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent("title", "description")
@@ -171,9 +186,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
   fun `test failure handler hides suppressed failure events by default`() {
     val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withSuppressed(true)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withSuppressed(true)
+        .report()
+    }
 
     assertEmpty(reporterFixture.events)
   }
@@ -183,9 +200,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val message = issueChecker.markFailureMessage("title", "message")
     val failure = GradleIssueFailure.createIssueFailure(message, "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withSuppressed(true)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withSuppressed(true)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message")
@@ -198,8 +217,10 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val message = issueChecker.markFailureMessage("title", "message")
     val failure = GradleIssueFailure.createIssueFailure(message, "description")
 
-    reporterFixture.reporter.failure(failure)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent(message, "description")
@@ -213,9 +234,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val message = issueChecker.markFailureMessage("title", "message")
     val failure = GradleIssueFailure.createIssueFailure(message, "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withSuppressed(true)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withSuppressed(true)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent(message, "description")
@@ -227,9 +250,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
   fun `test failure handler reports warning message as warning`() {
     val failure = GradleIssueFailure.createIssueFailure("title", "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withSeverity(GradleExecutionFailureReport.Severity.WARNING)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withSeverity(GradleExecutionFailureReport.Severity.WARNING)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       messageEvent("title", "description", kind = MessageEvent.Kind.WARNING)
@@ -241,9 +266,11 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val message = issueChecker.markFailureMessage("title", "message")
     val failure = GradleIssueFailure.createIssueFailure(message, "description")
 
-    reporterFixture.reporter.failure(failure)
-      .withSeverity(GradleExecutionFailureReport.Severity.WARNING)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .withSeverity(GradleExecutionFailureReport.Severity.WARNING)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message")
@@ -259,10 +286,12 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure1 = GradleIssueFailure.createIssueFailure(message, description)
     val failure2 = GradleIssueFailure.createIssueFailure(message, description)
 
-    reporterFixture.reporter.failure(failure1)
-      .report()
-    reporterFixture.reporter.failure(failure2)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure1)
+        .report()
+      it.failure(failure2)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message", filePosition)
@@ -279,10 +308,12 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure1 = GradleIssueFailure.createIssueFailure(message1, description)
     val failure2 = GradleIssueFailure.createIssueFailure(message2, description)
 
-    reporterFixture.reporter.failure(failure1)
-      .report()
-    reporterFixture.reporter.failure(failure2)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure1)
+        .report()
+      it.failure(failure2)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title (1)", "message", filePosition)
@@ -300,10 +331,12 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure1 = GradleIssueFailure.createIssueFailure(message1, description)
     val failure2 = GradleIssueFailure.createIssueFailure(message2, description)
 
-    reporterFixture.reporter.failure(failure1)
-      .report()
-    reporterFixture.reporter.failure(failure2)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure1)
+        .report()
+      it.failure(failure2)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message (1)", filePosition)
@@ -321,10 +354,12 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure1 = GradleIssueFailure.createIssueFailure(message, description1)
     val failure2 = GradleIssueFailure.createIssueFailure(message, description2)
 
-    reporterFixture.reporter.failure(failure1)
-      .report()
-    reporterFixture.reporter.failure(failure2)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure1)
+        .report()
+      it.failure(failure2)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message", filePosition)
@@ -342,10 +377,12 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val failure1 = GradleIssueFailure.createIssueFailure(message, description1)
     val failure2 = GradleIssueFailure.createIssueFailure(message, description2)
 
-    reporterFixture.reporter.failure(failure1)
-      .report()
-    reporterFixture.reporter.failure(failure2)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure1)
+        .report()
+      it.failure(failure2)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message", filePosition1)
@@ -363,8 +400,10 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
     val nestedFailure = GradleIssueFailure.createIssueFailure("nested message", nestedDescription)
     val failure = GradleIssueFailure.createIssueFailure(message, description, listOf(nestedFailure))
 
-    reporterFixture.reporter.failure(failure)
-      .report()
+    reporterFixture.reporter.use {
+      it.failure(failure)
+        .report()
+    }
 
     assertCollectionOrdered(reporterFixture.events) {
       issueEvent("title", "message", nestedFilePosition)
@@ -431,7 +470,7 @@ class GradleExecutionReporterTest(gradleVersion: GradleVersion) {
 
     val events = ArrayList<BuildEvent>()
 
-    val reporter: GradleExecutionReporter
+    val reporter: GradleExecutionReporterImpl
 
     init {
       val listener = object : ExternalSystemTaskNotificationListener {

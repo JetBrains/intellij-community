@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.use
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.lang.JavaVersion
@@ -129,14 +130,16 @@ object GradleExecutionHelper {
       // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
       setupProjectDirectory(context)
 
-      val gradleVersion = guessGradleVersion(context)
-      val connectorService = GradleConnectorService.getInstance(context.project)
-      return connectorService.withGradleConnection(context) { connection ->
-        SystemPropertiesAdjuster.executeAdjusted(context.projectPath, gradleVersion) {
-          buildEnvironment = getModel(connection, context, BuildEnvironment::class.java)
-          context.buildEnvironment = buildEnvironment
-          checkExecutionEnvironment(context)
-          action.apply(connection)
+      context.reporter.use {
+        val gradleVersion = guessGradleVersion(context)
+        val connectorService = GradleConnectorService.getInstance(context.project)
+        return connectorService.withGradleConnection(context) { connection ->
+          SystemPropertiesAdjuster.executeAdjusted(context.projectPath, gradleVersion) {
+            buildEnvironment = getModel(connection, context, BuildEnvironment::class.java)
+            context.buildEnvironment = buildEnvironment
+            checkExecutionEnvironment(context)
+            action.apply(connection)
+          }
         }
       }
     }

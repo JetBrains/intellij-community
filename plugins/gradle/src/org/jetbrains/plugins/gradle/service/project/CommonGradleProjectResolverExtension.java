@@ -1017,11 +1017,15 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       library.addPath(LibraryPathType.BINARY, binaryPath.getPath());
     }
     else {
-      boolean isOfflineWork = resolverCtx.getSettings().isOfflineWork();
-      String message = String.format("Could not resolve %s.", libraryName);
-      BuildIssue buildIssue = new UnresolvedDependencySyncIssue(
-        libraryName, message, resolverCtx.getProjectPath(), isOfflineWork, ownerModule.getData().getId());
-      resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);
+      resolverCtx.getReporter().issue(
+        new UnresolvedDependencySyncIssue(
+          libraryName,
+          String.format("Could not resolve %s.", libraryName),
+          resolverCtx.getProjectPath(),
+          resolverCtx.getSettings().isOfflineWork(),
+          ownerModule.getData().getId()
+        )
+      );
     }
 
     File sourcePath = dependency.getSource();
