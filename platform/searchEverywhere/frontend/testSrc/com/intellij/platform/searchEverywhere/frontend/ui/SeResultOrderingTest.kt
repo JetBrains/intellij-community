@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.platform.searchEverywhere.SeComposedWeight
+import com.intellij.platform.searchEverywhere.SeWeightComponent
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -35,16 +37,37 @@ class SeResultOrderingTest {
     assertFalse(insert(newProvider = 0, newExact = false, newWeight = 100, itemProvider = 0, itemExact = false, itemWeight = 100))
   }
 
+  @Test
+  fun nextWeightComponentBreaksTieOfFirstComponent() {
+    // Recent files: the same matching degree, so the recency decides.
+    assertTrue(insertComposed(newWeight = composed(100, 7), itemWeight = composed(100, 3)))
+    assertFalse(insertComposed(newWeight = composed(100, 3), itemWeight = composed(100, 7)))
+    // The first component wins over every next component.
+    assertFalse(insertComposed(newWeight = composed(50, 999), itemWeight = composed(100, 0)))
+  }
+
   private fun insert(
     newProvider: Int, newExact: Boolean, newWeight: Int,
     itemProvider: Int, itemExact: Boolean, itemWeight: Int,
   ): Boolean = shouldInsertAbove(
     newProviderPriority = newProvider,
     newIsExactMatch = newExact,
-    newWeight = newWeight,
+    newWeight = SeComposedWeight(newWeight),
     itemProviderPriority = itemProvider,
     itemIsExactMatch = itemExact,
+    itemWeight = SeComposedWeight(itemWeight),
+    prioritizeExactMatch = true
+  )
+
+  private fun insertComposed(newWeight: SeComposedWeight, itemWeight: SeComposedWeight): Boolean = shouldInsertAbove(
+    newProviderPriority = 0,
+    newIsExactMatch = false,
+    newWeight = newWeight,
+    itemProviderPriority = 0,
+    itemIsExactMatch = false,
     itemWeight = itemWeight,
     prioritizeExactMatch = true
   )
+
+  private fun composed(vararg weights: Int): SeComposedWeight = SeComposedWeight(weights.map { SeWeightComponent(it) })
 }

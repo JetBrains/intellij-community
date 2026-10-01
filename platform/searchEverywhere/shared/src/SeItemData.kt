@@ -26,7 +26,7 @@ import kotlin.coroutines.cancellation.CancellationException
 sealed interface SeItemData {
   val uuid: String
   val providerId: SeProviderId
-  val weight: Int
+  val weight: SeComposedWeight
   val presentation: SeItemPresentation
   val uuidsToReplace: List<String>
   val additionalInfo: Map<String, String>
@@ -77,7 +77,7 @@ class SeItemDataFactory {
       additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
     }
 
-    return SeItemDataImpl(uuid, providerId, item.weight(), item.presentation(), emptyList(), additionalInfo, entityRef)
+    return SeItemDataImpl(uuid, providerId, SeComposedWeight.from(item), item.presentation(), emptyList(), additionalInfo, entityRef)
   }
 }
 
@@ -86,7 +86,7 @@ class SeItemDataFactory {
 class SeItemDataImpl internal constructor(
   override val uuid: String,
   override val providerId: SeProviderId,
-  override val weight: Int,
+  override val weight: SeComposedWeight,
   override val presentation: SeItemPresentation,
   override val uuidsToReplace: List<String>,
   override val additionalInfo: Map<String, String>,
@@ -118,6 +118,10 @@ class SeItemDataImpl internal constructor(
   }
 
   fun withWeight(weight: Int): SeItemDataImpl {
+    return SeItemDataImpl(uuid, providerId, SeComposedWeight(weight), presentation, uuidsToReplace, additionalInfo, itemRef)
+  }
+
+  fun withWeight(weight: SeComposedWeight): SeItemDataImpl {
     return SeItemDataImpl(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
   }
 
@@ -149,3 +153,6 @@ fun SeItemData.withPresentation(presentation: SeItemPresentation): SeItemData = 
 
 @ApiStatus.Internal
 fun SeItemData.withWeight(weight: Int): SeItemData = (this as SeItemDataImpl).withWeight(weight)
+
+@ApiStatus.Internal
+fun SeItemData.withWeight(weight: SeComposedWeight): SeItemData = (this as SeItemDataImpl).withWeight(weight)

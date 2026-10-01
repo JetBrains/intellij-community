@@ -39,6 +39,7 @@ class SeDefaultTargetItemSelectionProcessorTest {
       extendedInfo = SeExtendedInfoBuilder().build(),
       isMultiSelectionSupported = false,
       isExactMatch = false,
+      composedWeight = null,
     )
 
     val closePopup = runBlocking {

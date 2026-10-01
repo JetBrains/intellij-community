@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.searchEverywhere.SeComposedWeight
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultAddedEvent
@@ -155,10 +156,10 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, 
 internal fun shouldInsertAbove(
   newProviderPriority: Int,
   newIsExactMatch: Boolean,
-  newWeight: Int,
+  newWeight: SeComposedWeight,
   itemProviderPriority: Int,
   itemIsExactMatch: Boolean,
-  itemWeight: Int,
+  itemWeight: SeComposedWeight,
   prioritizeExactMatch: Boolean
 ): Boolean {
   if (newProviderPriority != itemProviderPriority) return newProviderPriority > itemProviderPriority
