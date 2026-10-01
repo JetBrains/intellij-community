@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeTooltipManager
-import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
@@ -166,7 +165,11 @@ class RecentProjectFilteringTree internal constructor(
     searchModel.updateStructure()
   }
 
+  /**
+   * Collects the projects again and rebuilds the tree.
+   */
   fun updateTree() {
+    rootItem.invalidate()
     searchModel.updateStructure()
     expandGroups()
   }
@@ -209,10 +212,16 @@ class RecentProjectFilteringTree internal constructor(
 
   override fun useIdentityHashing(): Boolean = false
 
+  private val rootItem: RootItem
+    get() = searchModel.rootObject as RootItem
+
+  /**
+   * Creates the checker for the paths of the recent projects in the tree.
+   * The checker and the first structure update share one collection of the projects.
+   */
   private fun createFilePathChecker(): RecentProjectPanel.FilePathChecker {
-    val recentProjectTreeItems = RecentProjectListActionProvider.getInstance().collectProjects()
     val recentProjects = mutableListOf<RecentProjectItem>()
-    for (item in recentProjectTreeItems) {
+    for (item in rootItem.children()) {
       when (item) {
         is RecentProjectItem -> recentProjects.add(item)
         is ProjectsGroupItem -> recentProjects.addAll(item.children)

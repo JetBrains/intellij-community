@@ -38,8 +38,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import java.awt.event.HierarchyEvent
-import java.awt.event.HierarchyListener
 import javax.swing.BoxLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -111,9 +109,7 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       border = JBUI.Borders.empty()
     }
-    val actionsComponent = WelcomeScreenLeftPanelActions(project).createButtonsComponent(scope)
-    reportNonModalWelcomeScreenWhenShown(actionsComponent)
-
+    val actionsComponent = WelcomeScreenLeftPanelActions(project).createButtonsComponent(scope, createShownReporter())
     topPanel.add(actionsComponent)
     topPanel.add(separator { customize(UnscaledGapsY(top = 17)) })
     topPanel.add(searchPanel(projectFilteringTree))
@@ -126,24 +122,18 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
     return mainPanel
   }
 
-  private fun reportNonModalWelcomeScreenWhenShown(component: JComponent) {
-    if (component.isShowing) {
-      FUSProjectHotStartUpMeasurer.reportNonModalWelcomeScreenShown()
-      return
-    }
-
-    val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: return
-    component.addHierarchyListener(object : HierarchyListener {
-      override fun hierarchyChanged(e: HierarchyEvent) {
-        if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) == 0L || !component.isShowing) {
-          return
-        }
-        component.removeHierarchyListener(this)
-        scope.launch(Dispatchers.IO + startUpContextElementToPass) {
-          FUSProjectHotStartUpMeasurer.reportNonModalWelcomeScreenShown()
-        }
+  /**
+   * Returns the callback for the first paint of the left toolbar with its actions.
+   * The callback reports the non-modal welcome screen as shown in the captured start-up context.
+   * Without a start-up context, the callback does nothing.
+   */
+  private fun createShownReporter(): () -> Unit {
+    val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: return {}
+    return {
+      scope.launch(Dispatchers.IO + startUpContextElementToPass) {
+        FUSProjectHotStartUpMeasurer.reportNonModalWelcomeScreenShown()
       }
-    })
+    }
   }
 
   override fun getComponentToFocus(): JComponent? {
