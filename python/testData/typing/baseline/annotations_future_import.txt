@@ -1,0 +1,6 @@
+missed 37: circular reference
+missed 39: Refers to the local int function, which isn't a valid type
+missed 44: Refers to the local int function, which isn't a valid type
+missed 46: Refers to the local int function, which isn't a valid type
+unexpected 56: PyAssertTypeInspection: Expected type 'ClassInner', got 'Unknown' instead
+unexpected 58: PyAssertTypeInspection: Expected type 'ClassInner', got 'Unknown' instead

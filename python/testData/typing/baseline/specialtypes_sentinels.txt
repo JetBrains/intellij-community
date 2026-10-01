@@ -1,0 +1,5 @@
+unexpected 22: PyAssertTypeInspection: Expected type 'Unknown', got 'int | Unknown' instead
+unexpected 28: PyAssertTypeInspection: Expected type 'Unknown', got 'int | Unknown' instead
+unexpected 30: PyAssertTypeInspection: Expected type 'int', got 'int | Unknown' instead
+missed 36: incompatible argument
+missed 39: incompatible argument

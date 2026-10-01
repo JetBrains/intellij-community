@@ -1,0 +1,3 @@
+group return_type at 25: no error
+unexpected 108: PyOverloadsInspection: Signature of this @overload-decorated function is not compatible with the implementation
+unexpected 112: PyOverloadsInspection: Signature of this @overload-decorated function is not compatible with the implementation

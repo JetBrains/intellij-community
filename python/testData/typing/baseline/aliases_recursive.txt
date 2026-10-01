@@ -1,0 +1,11 @@
+missed 19: incompatible type
+missed 20: incompatible type
+missed 38
+missed 39
+missed 50
+missed 51
+missed 52
+missed 63
+missed 69
+missed 72: cyclical reference
+missed 75: cyclical reference

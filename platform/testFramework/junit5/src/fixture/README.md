@@ -352,8 +352,8 @@ Confirmed usages:
 
 - Python default bootstrap:
   `community/python/junit5Tests-framework/src/com/intellij/python/junit5Tests/framework/PyDefaultTestApplication.kt`
-- Python typing conformance tests:
-  `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTest.kt`
+- Python typing conformance test base:
+  `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTestBase.kt`
 
 Rule of thumb:
 
@@ -445,7 +445,7 @@ Representative usages:
 - community-root-relative path:
   `community/plugins/devkit/intellij.devkit.workspaceModel/tests/testSrc/AbstractEntityCodeGenTest.kt`
 - repository home via test class:
-  `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTest.kt`
+  `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTestBase.kt`
 
 Typical examples:
 
@@ -523,7 +523,7 @@ private val pyModule = project.moduleFixture(moduleType = PyNames.PYTHON_MODULE_
 Representative usages:
 
 - `community/python/testSrc/com/intellij/python/junit5Tests/unit/PyInterpreterInspectionTest.kt`
-- `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTest.kt`
+- `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTestBase.kt`
 
 ### `moduleFixture(pathFixture, addPathToSourceRoot, moduleTypeId)`
 
@@ -562,7 +562,7 @@ Representative usages:
 
 - simple root: `community/platform/testFramework/junit5/test/showcase/JUnit5PsiFileFixtureTest.kt`
 - project base dir as source root: `community/python/testSrc/com/intellij/python/junit5Tests/unit/PyInterpreterInspectionTest.kt`
-- large testdata tree copied into project root: `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTest.kt`
+- large testdata tree copied into project root: `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTestBase.kt`
 
 ### `pathInProjectFixture(...)`
 
@@ -1101,7 +1101,7 @@ Cross-language and subsystem examples:
 - Java: `community/java/java-tests/testSrc/com/siyeh/ig/migration/ForCanBeForeachInspectionTest.java`
 - Java with multiverse plus manual JDK: `community/java/java-tests/testSrc/com/intellij/java/psi/resolve/MultiverseSdkResolveTest.kt`
 - Python env: `community/python/testSrc/com/intellij/python/junit5Tests/env/venv/showCase/PyEnvWithVenvShowCaseTest.kt`
-- Python large source-tree bootstrap: `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTest.kt`
+- Python large source-tree bootstrap: `python/junit5Tests/tests/com/intellij/python/junit5Tests/env/tests/PyTypingConformanceTestBase.kt`
 - JS debugger wrapper: `plugins/JavaScriptDebugger/testSrc/testFramework/junit5/projectFixtures.kt`
 - EEL-backed project: `community/platform/testFramework/junit5/eel/test/showcase/EelProjectShowcase.kt`
 - LSP plus code insight: `platform/lsp-impl/tests/testSrc/LspClientTest.kt`

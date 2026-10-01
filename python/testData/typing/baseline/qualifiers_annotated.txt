@@ -1,0 +1,17 @@
+missed 39: invalid type expression
+missed 42: invalid type expression
+missed 43: invalid type expression
+missed 44: invalid type expression
+missed 46: invalid type expression
+missed 47: invalid type expression
+missed 48: invalid type expression
+missed 49: invalid type expression
+missed 71
+missed 72
+missed 79
+missed 80
+missed 87
+missed 88
+unexpected 95: PyFinalInspection: 'Final' can only be used as the outermost type
+unexpected 100: PyStdlibDataclassInspection: Attribute 'a' is useless until '__post_init__' is declared
+unexpected 101: PyStdlibDataclassInspection: Attribute 'b' is useless until '__post_init__' is declared

@@ -1,0 +1,2 @@
+unexpected 85: PyTypeCheckerInspection: Expected type 'Literal[Answer.Yes, Answer.No]', got 'Answer' instead
+unexpected 86: PyAssertTypeInspection: Expected type 'Literal[Answer.Yes, Answer.No]', got 'Answer' instead

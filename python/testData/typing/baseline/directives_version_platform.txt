@@ -1,0 +1,3 @@
+unexpected 18: PyAssertTypeInspection: Expected type 'int', got 'int | str' instead
+unexpected 51: PyUnboundLocalVariableInspection: Local variable 'val7' might be referenced before assignment
+unexpected 58: PyUnboundLocalVariableInspection: Local variable 'val8' might be referenced before assignment

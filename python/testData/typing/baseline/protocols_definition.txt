@@ -1,0 +1,5 @@
+missed 67: use of self variables not allowed
+missed 160
+missed 339
+missed 340: named tuple is immutable
+missed 341: dataclass is frozen

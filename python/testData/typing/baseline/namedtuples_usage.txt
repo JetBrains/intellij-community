@@ -1,0 +1,4 @@
+missed 40
+missed 42
+unexpected 60: PyTypeCheckerInspection: Expected type 'Iterable[tuple[str, Any]]', got 'Literal[1]' instead
+unexpected 60: PyTypeCheckerInspection: Expected type 'str', got 'Literal[1]' instead

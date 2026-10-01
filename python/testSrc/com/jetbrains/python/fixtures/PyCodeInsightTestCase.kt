@@ -566,14 +566,15 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
-  private fun withInspections(body: () -> Unit) {
+  /** Runs [body] with the inspections of the test enabled: [defaultInspections] and the [TestInspections] annotation. */
+  protected fun <T> withInspections(body: () -> T): T {
     val testInspections =
       defaultInspections - myTestInspections.disableInspectionsAsClasses() + myTestInspections.enableInspectionsAsClasses()
 
     val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
     myFixture.enableInspections(*inspectionInstances)
     try {
-      body()
+      return body()
     }
     finally {
       myFixture.disableInspections(*inspectionInstances)

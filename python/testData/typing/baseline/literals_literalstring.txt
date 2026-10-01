@@ -1,0 +1,2 @@
+unexpected 63: PyAssertTypeInspection: Expected type 'LiteralString', got 'str' instead
+unexpected 129: PyTypeCheckerInspection: Expected type 'Container[LiteralString]', got 'Container[str]' instead

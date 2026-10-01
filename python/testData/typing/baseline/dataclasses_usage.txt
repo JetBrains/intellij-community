@@ -1,0 +1,3 @@
+unexpected 36: PyTypeCheckerInspection: Expected type 'InventoryItemInitProto', got '() -> None' instead
+unexpected 159: PyStdlibDataclassInspection: 'init' is ignored if the class already defines '__init__' method
+unexpected 206: PyTypeCheckerInspection: Expected type 'DataclassProto', got 'DC15' instead

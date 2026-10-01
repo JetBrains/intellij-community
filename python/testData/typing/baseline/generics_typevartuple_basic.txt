@@ -1,0 +1,5 @@
+missed 53: not unpacked
+missed 67: bound is unavailable in Python 3.12
+unexpected 86: PyTypeCheckerInspection: Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[float]' instead
+unexpected 90: PyTypeCheckerInspection: Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal["0"]]' instead
+missed 111

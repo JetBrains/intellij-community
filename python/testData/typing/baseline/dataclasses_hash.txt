@@ -1,0 +1,5 @@
+unexpected 14: PyAssertTypeInspection: Expected type 'None', got '(self: DC1) -> int' instead
+missed 17
+unexpected 36: PyAssertTypeInspection: Expected type 'None', got '(self: DC3) -> int' instead
+missed 39
+unexpected 80: PyMethodOverridingInspection: Signature of method 'DC7.__eq__()' does not match signature of the base method in class 'object'

@@ -1,0 +1,13 @@
+missed 70
+missed 76
+unexpected 99: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 100: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 103: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 104: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 107: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 108: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 111: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 112: PyUnresolvedReferencesInspection: Unresolved attribute reference 'unknown' for class 'type'
+unexpected 130: PyTypeCheckerInspection: Expected type 'type[type]', got '_SpecialForm' instead
+unexpected 169: PyTypeCheckerInspection: Expected type 'type[int]', got 'type' instead
+unexpected 175: PyTypeCheckerInspection: Expected type 'type[T]', got 'type' instead

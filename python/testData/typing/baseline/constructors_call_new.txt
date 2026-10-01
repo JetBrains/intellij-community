@@ -1,0 +1,8 @@
+unexpected 40: PyInitNewSignatureInspection: Signature is not compatible to '__init__'
+unexpected 45: PyInitNewSignatureInspection: Signature is not compatible to '__new__'
+unexpected 57: PyInitNewSignatureInspection: Signature is not compatible to '__init__'
+unexpected 60: PyInitNewSignatureInspection: Signature is not compatible to '__new__'
+unexpected 68: PyInitNewSignatureInspection: Signature is not compatible to '__init__'
+unexpected 71: PyInitNewSignatureInspection: Signature is not compatible to '__new__'
+unexpected 82: PyInitNewSignatureInspection: Signature is not compatible to '__init__'
+unexpected 85: PyInitNewSignatureInspection: Signature is not compatible to '__new__'

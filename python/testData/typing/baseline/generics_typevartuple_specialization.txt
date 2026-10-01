@@ -1,0 +1,5 @@
+unexpected 77: PyTypeCheckerInspection: Expected type 'Array2[float | int]', got 'Array2[float | int, Height, Width]' instead
+unexpected 85: PyTypeCheckerInspection: Expected type 'Array2[float | int, Height, Width]', got 'Array2[float | int]' instead
+missed 110
+missed 121
+missed 122

@@ -1,0 +1,2 @@
+missed 111: Invalid type annotation
+missed 112: Invalid type annotation

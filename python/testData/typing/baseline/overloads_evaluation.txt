@@ -1,0 +1,15 @@
+unexpected 106: PyTypeCheckerInspection: No overload of 'example2' matches the arguments. Argument types: (Literal[1], int | str, Literal[1]). Expected one of: (x: int, y: str, z: int), (x: int, y: int, z: int)
+unexpected 107: PyAssertTypeInspection: Expected type 'int | str', got 'UnsafeUnion[str, int]' instead
+unexpected 135: PyTypeCheckerInspection: No overload of 'expand_bool' matches the arguments. Argument types: (bool). Expected one of: (x: Literal[False]), (x: Literal[True])
+unexpected 136: PyAssertTypeInspection: Expected type 'Literal[0, 1]', got 'UnsafeUnion[Literal[0], Literal[1]]' instead
+unexpected 161: PyTypeCheckerInspection: No overload of 'expand_enum' matches the arguments. Argument types: (Color). Expected one of: (x: Literal[Color.RED]), (x: Literal[Color.BLUE])
+unexpected 162: PyAssertTypeInspection: Expected type 'Literal[0, 1]', got 'UnsafeUnion[Literal[0], Literal[1]]' instead
+unexpected 181: PyTypeCheckerInspection: No overload of 'expand_type_union' matches the arguments. Argument types: (type[int | str]). Expected one of: (x: type[int]), (x: type[str])
+unexpected 182: PyAssertTypeInspection: Expected type 'int | str', got 'UnsafeUnion[int, str]' instead
+unexpected 193: PyOverloadsInspection: Signature of this @overload-decorated function is not compatible with the implementation
+unexpected 197: PyOverloadsInspection: Signature of this @overload-decorated function is not compatible with the implementation
+unexpected 205: PyTypeCheckerInspection: No overload of 'expand_tuple' matches the arguments. Argument types: (tuple[Literal[1], int | str]). Expected one of: (x: tuple[int, int]), (x: tuple[int, str])
+unexpected 206: PyAssertTypeInspection: Expected type 'int | str', got 'UnsafeUnion[int, str]' instead
+unexpected 235: PyAssertTypeInspection: Expected type 'int', got 'UnsafeUnion[str, int]' instead
+unexpected 290: PyTypeCheckerInspection: Expected type 'list[str]', got 'list[int]' instead
+unexpected 318: PyAssertTypeInspection: Expected type 'float | int', got 'UnsafeUnion[float | int, Any]' instead

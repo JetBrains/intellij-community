@@ -1,0 +1,11 @@
+exception logged: A Python type was `null` while `Any`/`Unknown` support was enabled.
+unexpected 18: PyTypeCheckerInspection: Expected type 'TypeForm[str | None]', got 'type[None]' instead
+unexpected 46: PyTypeCheckerInspection: Expected type 'UnionType', got 'UnionType | type[str]' instead
+unexpected 49: PyTypeCheckerInspection: Expected type 'GenericAlias', got 'type[list[int]]' instead
+missed 71
+missed 72
+missed 73
+missed 86
+missed 88
+missed 98
+missed 108

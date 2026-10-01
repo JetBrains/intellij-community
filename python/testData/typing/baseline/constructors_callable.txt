@@ -1,0 +1,13 @@
+unexpected 80: PyAssertTypeInspection: Expected type 'int', got 'Class4' instead
+unexpected 102: PyAssertTypeInspection: Expected type 'NoReturn', got 'Class5' instead
+unexpected 107: PyAssertTypeInspection: Expected type 'NoReturn', got 'Class5' instead
+unexpected 118: PyInitNewSignatureInspection: Signature is not compatible to '__init__'
+unexpected 121: PyInitNewSignatureInspection: Signature is not compatible to '__new__'
+unexpected 128: PyAssertTypeInspection: Expected type 'Class6Proxy', got 'Class6' instead
+unexpected 135: PyInitNewSignatureInspection: Signature is not compatible to '__init__'
+unexpected 138: PyInitNewSignatureInspection: Signature is not compatible to '__new__'
+unexpected 145: PyAssertTypeInspection: Expected type 'Any', got 'Class6Any' instead
+unexpected 166: PyAssertTypeInspection: Expected type 'Class7[int]', got 'Class7' instead
+unexpected 167: PyAssertTypeInspection: Expected type 'Class7[str]', got 'Class7' instead
+unexpected 167: PyTypeCheckerInspection: Expected type 'int', got 'Literal[""]' instead
+unexpected 186: PyAssertTypeInspection: Expected type 'Class8[str]', got 'Class8' instead

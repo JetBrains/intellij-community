@@ -1,0 +1,2 @@
+missed 89: ClassVar not allowed in a TypedDict
+missed 94: ClassVar not allowed in a NamedTuple

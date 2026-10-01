@@ -1,0 +1,1 @@
+unexpected 71: PyAssertTypeInspection: Expected type 'Matrix[Literal[2], Literal[7]]', got 'Matrix[Literal[2], int]' instead

@@ -1,0 +1,1 @@
+unexpected 76: PyTypeCheckerInspection: Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[Literal["1"]]' instead

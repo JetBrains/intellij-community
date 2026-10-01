@@ -1,0 +1,17 @@
+missed 30
+unexpected 31: PyTypeCheckerInspection: Expected type 'CovariantParamSpec[[object]]', got 'CovariantParamSpec[[int]]' instead
+missed 61
+missed 63
+unexpected 67: PyTypeCheckerInspection: Expected type 'InitP[[a: int]]', got 'InitP[[a: int]]' instead
+unexpected 84: PyTypeCheckerInspection: Expected type 'OutitP[[a: int]]', got 'OutitP[[*, a: int]]' instead
+unexpected 86: PyTypeCheckerInspection: Expected type 'OutitP[[a: int]]', got 'OutitP[[a: int, /]]' instead
+missed 90
+missed 100
+missed 101
+missed 102
+missed 117
+missed 126
+missed 132
+unexpected 133: PyTypeCheckerInspection: Expected type 'CovariantParamSpecOld[[object]]', got 'CovariantParamSpecOld[[int]]' instead
+missed 151
+unexpected 152: PyTypeCheckerInspection: Expected type 'InferredCovariantParamSpecOld[[object]]', got 'InferredCovariantParamSpecOld[[int]]' instead

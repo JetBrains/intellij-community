@@ -1,0 +1,6 @@
+missed 93
+unexpected 152: PyTypeCheckerInspection: Expected type 'Proto2', got '(Concatenate(int, ...)) -> None' instead
+unexpected 157: PyTypeCheckerInspection: Expected type 'Proto6', got 'Proto7' instead
+missed 159
+missed 172
+missed 189

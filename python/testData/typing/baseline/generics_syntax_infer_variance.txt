@@ -1,0 +1,3 @@
+missed 15: cannot use covariant with infer_variance
+missed 17: cannot use contravariant with infer_variance
+missed 154

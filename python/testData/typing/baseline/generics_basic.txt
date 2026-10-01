@@ -1,0 +1,2 @@
+missed 232: because lists are invariant, no assignment of T makes both arguments valid
+missed 251: because lists are invariant, no assignment of T makes both arguments valid

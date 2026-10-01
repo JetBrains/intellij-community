@@ -1,0 +1,7 @@
+missed 34
+missed 58: signatures don't match
+unexpected 59: PyTypeCheckerInspection: Expected type 'ProtoA2', got 'type[ConcreteA]' instead
+missed 74
+missed 104
+unexpected 105: PyTypeCheckerInspection: Expected type 'ProtoC2', got 'type[ConcreteC1]' instead
+missed 107

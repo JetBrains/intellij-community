@@ -1,0 +1,6 @@
+unexpected 25: PyTypeCheckerInspection: Expected type 'Self@Class1', got 'object' instead
+missed 30
+missed 64
+missed 72
+missed 81
+missed 82

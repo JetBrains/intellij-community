@@ -1,0 +1,14 @@
+unexpected 30: PyAssertTypeInspection: Expected type 'tuple[int, int]', got 'tuple' instead
+unexpected 31: PyAssertTypeInspection: Expected type 'tuple[int, int, str]', got 'tuple' instead
+missed 77: illegal field name
+unexpected 86: PyNamedTupleInspection: Fields with a default value must come after any fields without a default.
+missed 87: previous field has a default value
+unexpected 100: PyArgumentListInspection: Unexpected argument
+unexpected 100: PyTypeCheckerInspection: Expected type 'Iterable[tuple[str, Any]]', got 'Literal[2]' instead
+unexpected 100: PyTypeCheckerInspection: Expected type 'str', got 'Literal[1]' instead
+unexpected 101: PyTypeCheckerInspection: Expected type 'tuple[int, int, str]', got 'PointWithName' instead
+missed 107
+unexpected 136: PyAssertTypeInspection: Expected type 'Property', got 'Property' instead
+unexpected 137: PyAssertTypeInspection: Expected type 'float | int', got 'T' instead
+unexpected 138: PyAssertTypeInspection: Expected type 'float | int', got 'T' instead
+missed 147
