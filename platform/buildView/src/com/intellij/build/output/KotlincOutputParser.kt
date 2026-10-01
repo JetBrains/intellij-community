@@ -7,16 +7,18 @@ import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
-import java.io.File
 import java.net.URI
 import java.util.Locale
 import java.util.function.Consumer
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.toPath
 
 
@@ -58,19 +60,13 @@ class KotlincOutputParser : BuildOutputParser {
     val lineWoSeverity = line.substringAfterAndTrim(colonIndex1)
     val path = extractPath(lineWoSeverity) ?: return false
 
-
-    val file = if (path.startsWith("file:")) {
-      try {
-        URI(path).toPath().toFile()
-      } catch (_: Exception) {
-        File(path)
-      }
-    } else {
-      File(path)
+    val file = when (path.startsWith("file:")) {
+      true -> runCatching { URI(path).toPath() }.getOrNull()
+      else -> path.toNioPathOrNull()
     }
 
-    val fileExtension = file.extension.lowercase(Locale.getDefault())
-    if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) {
+    val fileExtension = file?.extension?.lowercase(Locale.getDefault())
+    if (file == null || !file.isRegularFile() || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) {
       consumer.notifyMessageEvent(
         MessageEvent.builder(lineWoSeverity.trim(), getMessageKind(severity)) //NON-NLS
           .withParentId(reader.parentEventId)
