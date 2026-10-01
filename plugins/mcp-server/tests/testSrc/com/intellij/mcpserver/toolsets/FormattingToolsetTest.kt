@@ -122,6 +122,20 @@ class FormattingToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun optimize_imports_sees_class_created_next_to_file(): Unit = runBlocking(Dispatchers.Default) {
+    writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
+    writeProjectFile("src/two/Holder.java", "package two;\n\nimport one.*;\n\npublic class Holder {\n    Helper helper;\n}\n")
+    // The agent creates the class past the VFS. It belongs to the package of Holder, so it wins over the
+    // on-demand import, and the import becomes unused. A stale VFS turns it into `import one.Helper;` instead.
+    project.projectDirectory.resolve("src/two/Helper.java").writeText("package two;\n\npublic class Helper {\n}\n")
+
+    testMcpTool(FormattingToolset::optimize_imports.name, filesInput("src/two/Holder.java")) { result ->
+      assertThat(result.textContent.text).contains("-import one.*;")
+    }
+    assertThat(project.projectDirectory.resolve("src/two/Holder.java").readText()).doesNotContain("import")
+  }
+
+  @Test
   fun optimize_imports_never_adds_missing_import(): Unit = runBlocking(Dispatchers.Default) {
     writeProjectFile("src/one/Helper.java", "package one;\n\npublic class Helper {\n}\n")
     val missingImport = "public class MissingImport {\n    Helper helper;\n}\n"

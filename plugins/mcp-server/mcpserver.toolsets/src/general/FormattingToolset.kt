@@ -16,6 +16,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
@@ -92,12 +93,16 @@ class FormattingToolset : McpToolset {
 }
 
 private suspend fun optimizeImports(project: Project, requestedFiles: List<RequestedFormattingFile>) {
-  // The processor silently does nothing in dumb mode, and a file that the agent has just created starts indexing.
+  val directories = requestedFiles.mapNotNull { it.virtualFile.parent }.distinct()
+  RefreshQueue.getInstance().refresh(recursive = false, files = directories)
   awaitExternalChangesAndIndexing(project)
   val psiFiles = Array(requestedFiles.size) { requestedFiles[it].psiFile }
   val commandName = McpServerBundle.message("command.action.optimize.imports", requestedFiles.size)
   val processor = OptimizeImportsProcessor(project, psiFiles, commandName, null, false)
   withContext(Dispatchers.EDT) {
+    if (DumbService.isDumb(project)) {
+      mcpFail("The indexes were not ready, so the unused imports cannot be found. Nothing changed. Retry when indexing finishes.")
+    }
     processor.run()
   }
 }

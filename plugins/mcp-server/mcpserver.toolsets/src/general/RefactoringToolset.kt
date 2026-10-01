@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -114,6 +115,7 @@ class RefactoringToolset : McpToolset {
     val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(resolvedPath)
                       ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedPath)
                       ?: mcpFail("File not found: $pathInProject")
+    RefreshQueue.getInstance().refresh(recursive = false, files = listOf(virtualFile))
     awaitExternalChangesAndIndexing(project)
     // The wait above ends when the indexes are ready. They can go back to work at once, because the
     // IDE indexes in the background. A rename on a partial index misses a usage, and a rename that
@@ -125,12 +127,18 @@ class RefactoringToolset : McpToolset {
 
     val request = RenameTargetRequest(symbolName, contextSnippet, line, column, targetIndex)
     val (result, partialResultReason) = checkIndexingInProgress(project) {
-      rename(project, virtualFile, pathInProject, request, newName, preview, applyAutomaticRenamers)
+      renameFromDisk(project, virtualFile, pathInProject, request, newName, preview, applyAutomaticRenamers)
     }
     return result.copy(partialResultReason = partialResultReason)
   }
 
-  private suspend fun rename(
+  /**
+   * Plans the rename again while a file of the plan turns out to differ from the disk.
+   *
+   * The files of the plan are known only after the analysis, so they are reloaded then. A file
+   * that nothing connects to the plan stays with the file watcher.
+   */
+  private suspend fun renameFromDisk(
     project: Project,
     virtualFile: VirtualFile,
     pathInProject: String,
@@ -139,6 +147,31 @@ class RefactoringToolset : McpToolset {
     preview: Boolean,
     applyAutomaticRenamers: Boolean,
   ): RenameResult {
+    repeat(MAX_RELOAD_ATTEMPTS) {
+      rename(project, virtualFile, pathInProject, request, newName, preview, applyAutomaticRenamers)?.let { return it }
+      awaitExternalChangesAndIndexing(project)
+    }
+    val kind = HeadlessRenameFailure.PLAN_STALE
+    return failed(errorKind(kind), failureHint(kind, null))
+  }
+
+  /** Reloads [files] from the disk, and answers true when one of them changed there. */
+  private suspend fun reloadChangedFiles(files: List<VirtualFile>): Boolean {
+    val stamps = files.map { it.modificationStamp }
+    RefreshQueue.getInstance().refresh(recursive = false, files = files)
+    return files.indices.any { !files[it].isValid || files[it].modificationStamp != stamps[it] }
+  }
+
+  /** Returns null when a file of the plan changed on the disk, and the plan has to be made again. */
+  private suspend fun rename(
+    project: Project,
+    virtualFile: VirtualFile,
+    pathInProject: String,
+    request: RenameTargetRequest,
+    newName: String,
+    preview: Boolean,
+    applyAutomaticRenamers: Boolean,
+  ): RenameResult? {
     val preparation = readAction { prepare(project, virtualFile, pathInProject, request, newName) }
     val ready = when (preparation) {
       is Preparation.Stop -> return preparation.result
@@ -176,6 +209,7 @@ class RefactoringToolset : McpToolset {
         }
       else -> return outcomeResult(project, analysis, ready.resolvedSymbol)
     }
+    if (reloadChangedFiles((plan.affectedFiles + virtualFile).distinct())) return null
     val resolvedSymbol = readAction { plan.primaryElement?.let { getElementSymbolInfo(it) } } ?: ready.resolvedSymbol
 
     if (preview) {
@@ -514,6 +548,8 @@ class RefactoringToolset : McpToolset {
 
   private companion object {
     private const val MAX_ANALYSIS_ATTEMPTS: Int = 10
+
+    private const val MAX_RELOAD_ATTEMPTS: Int = 3
 
     private const val LEGACY_HINT: String =
       "This language has no headless rename support, so the rename ran on the legacy path. " +
