@@ -1644,7 +1644,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       Collection<Object> cached = contributors.stream()
         .flatMap(contributor -> myListModel.getFoundItems(contributor).stream())
         .collect(Collectors.toSet());
-      fillUsages(cached, usages, targets);
+      fillUsages(myProject, cached, usages, targets);
 
       Collection<SearchEverywhereContributor<?>> contributorsForAdditionalSearch;
       contributorsForAdditionalSearch = ContainerUtil.filter(contributors, contributor -> myListModel.hasMoreElements(contributor));
@@ -1671,7 +1671,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                 LOG.warn("ShowInFindToolWindowAction: Contributor " + contributor.getSearchProviderId() +" threw and exception during search:", e);
               }
             }
-            fillUsages(foundElements, usages, targets);
+            fillUsages(myProject, foundElements, usages, targets);
           }
 
           <Item> void fetch(SearchEverywhereContributor<Item> contributor,
@@ -1721,7 +1721,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       closePopup();
     }
 
-    private static void fillUsages(Collection<Object> foundElements,
+    private static void fillUsages(Project project,
+                                   Collection<Object> foundElements,
                                    Collection<? super Usage> usages,
                                    Collection<? super PsiElement> targets) {
       for (Object element : foundElements) {
@@ -1735,7 +1736,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       }
 
       ReadAction.runBlocking(() -> foundElements.stream()
-        .map(o -> toPsi(o))
+        .map(o -> toPsi(o, project))
         .filter(Objects::nonNull)
         .forEach(element -> {
           if (element.getTextRange() != null) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -20,6 +21,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.PaintUtil;
@@ -493,6 +495,14 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     if (o instanceof ItemWithPresentation<?> wp) return toPsi(wp.getItem());
     if (o instanceof PsiElementNavigationItem en) return en.getTargetElement();
     return null;
+  }
+
+  /** {@link #toPsi(Object)}, or the element of a {@link PsiAwareObject} item (an item that is no PSI wrapper). Call it in a read action. */
+  @ApiStatus.Internal
+  public static @Nullable PsiElement toPsi(Object o, @NotNull Project project) {
+    PsiElement psi = toPsi(o);
+    if (psi != null) return psi;
+    return getItem(o) instanceof PsiAwareObject aware ? aware.findElement(project) : null;
   }
 
   public WeightedSearchEverywhereContributor<Object> getDelegate() {

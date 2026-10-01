@@ -88,7 +88,7 @@ class SeFindToolWindowManager(private val project: Project) {
               is UsageInfo2UsageAdapter -> usages.add(element)
               is SearchEverywhereItem -> usages.add(element.usage)
               else -> {
-                val psi = toPsi(element)
+                val psi = readAction { toPsi(element, project) }
                 if (psi == null) {
                   skippedItemClasses.add(item.javaClass.name)
                 }
