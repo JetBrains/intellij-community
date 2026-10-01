@@ -31,8 +31,8 @@ class ProjectViewToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data)
 
   override fun waitReady(timeout: Duration) {
     super.waitReady(timeout)
-    waitFor("The project tree is present", timeout) {
-      projectViewTree.present()
+    waitFor("The project tree has at least one node", timeout) {
+      projectViewTree.collectExpandedPaths().isNotEmpty()
     }
   }
 
