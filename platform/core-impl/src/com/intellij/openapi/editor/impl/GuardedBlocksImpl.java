@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -52,7 +53,7 @@ final class GuardedBlocksImpl implements GuardedBlocks {
   @Override
   public @NotNull @UnmodifiableView List<RangeMarker> getGuardedBlocks() {
     List<RangeMarker> cachedBlocks = myCachedGuardedBlocks;
-    if (cachedBlocks != null && cachedBlocks.stream().allMatch(block -> block.isValid())) {
+    if (cachedBlocks != null && ContainerUtil.all(cachedBlocks, block -> block.isValid())) {
       return cachedBlocks;
     }
     List<RangeMarker> blocks = collectAllGuardedBlocks();

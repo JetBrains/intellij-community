@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,48 @@ public class GuardedBlocksIndexTest extends AbstractEditorTest {
       index(4, 6, r(2, 4), r(6, 8)),
       index(0, 10, r(2, 4), r(6, 8), r(2, 2), r(6, 6), r(8, 8))
     );
+  }
+
+  public void testOverlappingRanges() {
+    var index = index(0, 10, r(3, 7), r(1, 5), r(2, 9), r(1, 5));
+    assertEquals("[1+)[2+)[3+)[5+)[7+)[9-)", index.toString());
+    assertTrue(index.isGuarded(5));
+    assertTrue(index.isGuarded(7));
+    assertFalse(index.isGuarded(9));
+  }
+
+  public void testSharedBoundaries() {
+    var index = index(0, 10, r(4, 7), r(4, 4), r(1, 4), r(7, 7), r(7, 9));
+    assertEquals("[1+)[4+)[7+)[9-)", index.toString());
+    assertTrue(index.isGuarded(4));
+    assertTrue(index.isGuarded(7));
+    assertFalse(index.isGuarded(9));
+  }
+
+  public void testEmptyRanges() {
+    var index = index(0, 6, r(4, 4), r(2, 2), r(2, 2));
+    assertEquals("[2-)[4-)", index.toString());
+    assertEquals(2, index.nearestRight(1));
+    assertEquals(4, index.nearestLeft(5));
+    assertFalse(index.isGuarded(2));
+    assertFalse(index.isGuarded(4));
+  }
+
+  public void testRangeFiltering() {
+    assertEquals("[7+)[9-)[11+)[13-)[21+)[24-)",
+                 index(10, 20, r(0, 8), r(22, 25), r(21, 24), r(11, 13), r(7, 9)).toString());
+  }
+
+  public void testSurrogatePairAlignment() {
+    var document = new DocumentImpl("a\uD83D\uDE00b");
+    var builder = new GuardedBlocksIndex.DocumentBuilder(document);
+    assertEquals("[1+)[3-)", builder.build(0, 4, List.of(r(2, 2), r(1, 2), r(2, 3))).toString());
+  }
+
+  public void testSurrogatePairAlignmentAtDocumentEnd() {
+    var document = new DocumentImpl("a\uD83D\uDE00");
+    var builder = new GuardedBlocksIndex.DocumentBuilder(document);
+    assertEquals("[1-)", builder.build(0, 3, List.of(r(2, 2))).toString());
   }
 
   public void testNearestRight1() {

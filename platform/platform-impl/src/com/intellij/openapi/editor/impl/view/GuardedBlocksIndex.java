@@ -3,16 +3,20 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.SweepProcessor;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class GuardedBlocksIndex {
@@ -104,42 +108,40 @@ public final class GuardedBlocksIndex {
     @VisibleForTesting
     public @NotNull GuardedBlocksIndex build(int start, int end, @NotNull List<? extends RangeMarker> guardedBlocks) {
       assert 0 <= start && start <= end;
-      List<Offset> offsetList = guardedBlocks.stream().flatMap(r -> {
+      List<TextRange> intervals = new ArrayList<>(guardedBlocks.size());
+      for (RangeMarker r : guardedBlocks) {
         int rangeStart = r.getStartOffset();
         int rangeEnd = r.getEndOffset();
         assert rangeStart <= rangeEnd;
         if (start - 1 <= rangeEnd && rangeStart <= end + 1) {
-          Offset o1 = new Offset(alignOffset(rangeStart, true), true);
-          Offset o2 = new Offset(alignOffset(rangeEnd, false), false);
-          return Stream.of(o1, o2);
+          intervals.add(new TextRange(alignOffset(rangeStart, true), alignOffset(rangeEnd, false)));
         }
-        return Stream.empty();
-      }).sorted().toList();
-      int size = offsetList.size();
-      assert size % 2 == 0;
-      int[] offsets = new int[size];
-      boolean[] guards = new boolean[size];
-      int i = 0, j = 0, stack = 0;
-      while (j < size) {
-        Offset current = offsetList.get(j);
-        stack = current.push(stack);
-        for (int k = j + 1; k < size; k++) {
-          Offset next = offsetList.get(k);
-          if (current.value() == next.value()) {
-            current = next;
-            stack = current.push(stack);
-            j++;
-          } else {
-            break;
-          }
-        }
-        offsets[i] = current.value();
-        guards[i] = stack > 0;
-        i++; j++;
       }
-      assert stack == 0;
-      assert i == 0 || !guards[i-1];
-      return new GuardedBlocksIndex(offsets, guards, i);
+      intervals.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
+      int[] offsets = new int[intervals.size() * 2];
+      boolean[] guards = new boolean[offsets.length];
+      var sweepProcessor = new SweepProcessor<TextRange>() {
+        private int length;
+        private int stack;
+
+        @Override
+        public boolean process(int offset,
+                               @NotNull TextRange interval,
+                               boolean atStart,
+                               @NotNull Collection<? extends TextRange> overlappingIntervals) {
+          stack += atStart ? 1 : -1;
+          assert stack >= 0;
+          if (length == 0 || offsets[length - 1] != offset) {
+            offsets[length++] = offset;
+          }
+          guards[length - 1] = stack > 0;
+          return true;
+        }
+      };
+      SweepProcessor.sweep(processor -> intervals.stream().allMatch(processor::process), sweepProcessor);
+      assert sweepProcessor.stack == 0;
+      assert sweepProcessor.length == 0 || !guards[sweepProcessor.length - 1];
+      return new GuardedBlocksIndex(offsets, guards, sweepProcessor.length);
     }
 
     protected int alignOffset(int offset, boolean isStart) {
@@ -167,32 +169,6 @@ public final class GuardedBlocksIndex {
         return offset - 1;
       }
       return offset;
-    }
-  }
-
-  private record Offset(int value, boolean isStart) implements Comparable<Offset> {
-    int push(int stack) {
-      int result = isStart ? stack + 1 : stack - 1;
-      assert result >= 0;
-      return result;
-    }
-
-    @Override
-    public int compareTo(@NotNull GuardedBlocksIndex.Offset o) {
-      int compare = Integer.compare(value(), o.value());
-      if (compare != 0) {
-        return compare;
-      }
-      if (isStart() == o.isStart()) {
-        return 0;
-      }
-      return isStart() ? -1 : 1;
-    }
-
-    @Override
-    public @NotNull String toString() {
-      String s = isStart ? "start" : "end";
-      return s + "[" + value + "]";
     }
   }
 }
