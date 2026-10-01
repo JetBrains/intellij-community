@@ -33,7 +33,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -133,13 +132,15 @@ class IjentScopeTest {
     bodyLimitedCoroutineScope {
       val ijentScope = ParentOfIjentScopes(this).createIjentScope("IjentScopeTest")
       val firstChildCanFinish = CompletableDeferred<Unit>()
-      val firstChild = ijentScope.s.launch {
+      // The children run in `IjentThreadPool`. The failing child can cancel them before they start,
+      // and then a child with `CoroutineStart.DEFAULT` never runs its body.
+      val firstChild = ijentScope.s.launch(start = CoroutineStart.ATOMIC) {
         withContext(NonCancellable) {
           firstChildCanFinish.await()
         }
       }
       val expected = ClosedByApplication("The session closed", null)
-      ijentScope.s.launch {
+      ijentScope.s.launch(start = CoroutineStart.ATOMIC) {
         try {
           awaitCancellation()
         }

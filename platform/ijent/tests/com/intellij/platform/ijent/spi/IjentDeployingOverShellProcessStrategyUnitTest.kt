@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.eel.EelDescriptor
@@ -23,6 +23,7 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.tcp.MutualTlsCertificates
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.testFramework.common.timeoutRunBlocking
 import io.kotest.assertions.throwables.shouldThrow
@@ -63,6 +64,7 @@ import java.nio.file.Path
 import java.util.Base64
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.writeBytes
 import kotlin.time.Duration.Companion.seconds
 
@@ -186,37 +188,33 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     strategy.shellProcess.destroyed.await()
   }
 
-  //@Test
-  //fun `cancelling deployment during shell command closes the owned shell process`(): Unit = timeoutRunBlocking(10.seconds) {
-  //  val parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-  //  val strategy = TestShellStrategy(
-  //    parentScope,
-  //    blockPlatformProbe = true,
-  //    binaryProvider = { _, _ -> error("Binary provider must not be reached while the platform probe is blocked") },
-  //  )
-  //
-  //  try {
-  //    supervisorScope {
-  //      val deployment = async {
-  //        strategy.createIjentSession(failingProvider("Connection must not be attempted while the platform probe is blocked"))
-  //      }
-  //      strategy.shellCreated.await()
-  //      strategy.shellProcess.platformProbeStarted.await()
-  //      val cancellation = CancellationException("Test cancellation during shell command")
-  //      parentScope.cancel(cancellation)
-  //
-  //      val error = shouldThrow<Exception> { deployment.await() }
-  //      val reason = IjentUnavailableException.resolveDeadSessionReason(error, strategy.shellProcess.ijentProcessScope, 1.seconds)
-  //      reason.shouldBeInstanceOf<IjentUnavailableException.ClosedByApplication>().cause?.message shouldBe cancellation.message
-  //
-  //      strategy.shellProcess.destroyed.await()
-  //      strategy.shellProcess.isAlive shouldBe false
-  //    }
-  //  }
-  //  finally {
-  //    parentScope.cancel()
-  //  }
-  //}
+  @Test
+  fun `cancelling deployment during shell command closes the owned shell process`(): Unit = timeoutRunBlocking(10.seconds) {
+    val parentScope = childScope("ParentOfIjentScope", Dispatchers.Default, supervisor = true)
+    val strategy = TestShellStrategy(
+      parentScope,
+      blockPlatformProbe = true,
+      binaryProvider = { _, _ -> error("Binary provider must not be reached while the platform probe is blocked") },
+    )
+
+    try {
+      supervisorScope {
+        val deployment = async {
+          strategy.createIjentSession(failingProvider("Connection must not be attempted while the platform probe is blocked"))
+        }
+        strategy.shellCreated.await()
+        strategy.shellProcess.platformProbeStarted.await()
+        val cancellation = CancellationException("Test cancellation during shell command")
+        parentScope.cancel(cancellation)
+
+        strategy.shellProcess.destroyed.await()
+        strategy.shellProcess.isAlive shouldBe false
+      }
+    }
+    finally {
+      parentScope.cancel()
+    }
+  }
 
   @Test
   fun `binary provider failure after platform probe closes the owned shell process`(): Unit = timeoutRunBlocking(10.seconds) {
@@ -276,31 +274,31 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     }
   }
 
-  //@Test
-  //@ExtendWith(LoggedErrorProcessorEnabler.DoNoRethrowErrors::class)
-  //fun `unexpected process exit still fails the parent`(): Unit = timeoutRunBlocking(10.seconds) {
-  //  val parentFailure = CompletableDeferred<Throwable>()
-  //  val parentScope = CoroutineScope(
-  //    SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, error -> parentFailure.complete(error) }
-  //  )
-  //  val remotePath = "C:\\remote\\ijent.exe"
-  //  val strategy = TestShellStrategy(parentScope, usePowerShell = true, pathMapper = { remotePath })
-  //  val session = strategy.createIjentSession(strategy.successfulProvider(remotePath))
-  //  val completion = CompletableDeferred<Throwable?>()
-  //  session.sessionCoroutineScope.s.coroutineContext.job.invokeOnCompletion { completion.complete(it) }
-  //
-  //  try {
-  //    strategy.shellProcess.exitUnexpectedly()
-  //
-  //    val completionError = completion.await().shouldBeInstanceOf<Throwable>()
-  //    IjentUnavailableException.resolveDeadSessionReason(completionError, session.sessionCoroutineScope, 1.seconds)
-  //      .shouldBeInstanceOf<IjentUnavailableException.CommunicationFailure>()
-  //    parentFailure.await().shouldBeInstanceOf<IjentUnavailableException.CommunicationFailure>()
-  //  }
-  //  finally {
-  //    parentScope.cancel()
-  //  }
-  //}
+  @OptIn(DelicateCoroutinesApi::class)
+  @Test
+  @ExtendWith(LoggedErrorProcessorEnabler.DoNoRethrowErrors::class)
+  fun `unexpected process exit still fails the parent`(): Unit = timeoutRunBlocking(10.seconds) {
+    val parentFailure = CompletableDeferred<Throwable>()
+    val parentScope = childScope(
+      "ParentOfIjentScope",
+      Dispatchers.Default + CoroutineExceptionHandler { _, error -> parentFailure.complete(error) },
+      supervisor = true,
+    )
+    val remotePath = "C:\\remote\\ijent.exe"
+    val strategy = TestShellStrategy(parentScope, usePowerShell = true, pathMapper = { remotePath })
+    val session = strategy.createIjentSession(strategy.successfulProvider(remotePath))
+    val completion = CompletableDeferred<Throwable?>()
+    session.sessionCoroutineScope.s.coroutineContext.job.invokeOnCompletion { completion.complete(it) }
+
+    try {
+      strategy.shellProcess.exitUnexpectedly()
+
+      parentFailure.await().shouldBeInstanceOf<IjentUnavailableException.CommunicationFailure>()
+    }
+    finally {
+      parentScope.cancel()
+    }
+  }
 
   @Test
   fun `cancellation while publishing connection completion keeps process cleanup with deployer`(): Unit = timeoutRunBlocking(10.seconds) {
