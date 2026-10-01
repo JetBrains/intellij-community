@@ -136,6 +136,9 @@ object LibraryModuleSets {
     embeddedModule("intellij.libraries.mvstore")
 
     embeddedModule("intellij.libraries.netty.buffer")
+    // embedded: netty-codec-http is embedded and resolves the Brotli, Zstd and Snappy decoders of this jar through its own class loader.
+    // The netty-codec-http wrapper depends on this module, because its library excludes the netty-codec-compression artifact.
+    embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
     embeddedModule("intellij.libraries.netty.codec.protobuf")
     module("intellij.libraries.netty.handler.proxy")

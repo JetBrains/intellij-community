@@ -25,19 +25,16 @@
 DEV_DIST_MODULE_SETS = {
     "intellij.moduleSets.builtInServer": struct(
         modules = [
-            "intellij.libraries.netty.codec.compression",
             "intellij.platform.builtInServer.impl",
             "intellij.platform.externalProcessAuthHelper",
         ],
         nested = [
         ],
         packed = {
-            "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
             "intellij.platform.builtInServer.impl": "//platform/built-in-server:builtInServer-impl_content_module_jar",
             "intellij.platform.externalProcessAuthHelper": "//platform/external-process-auth-helper:external-process-auth-helper_content_module_jar",
         },
         module_system_loaded = [
-            "intellij.libraries.netty.codec.compression",
             "intellij.platform.builtInServer.impl",
             "intellij.platform.externalProcessAuthHelper",
         ],
@@ -1056,6 +1053,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.markdown",
             "intellij.libraries.mvstore",
             "intellij.libraries.netty.buffer",
+            "intellij.libraries.netty.codec.compression",
             "intellij.libraries.netty.codec.http",
             "intellij.libraries.netty.codec.protobuf",
             "intellij.libraries.netty.handler.proxy",
@@ -1139,6 +1137,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.markdown": "//libraries/markdown:markdown_content_module_jar",
             "intellij.libraries.mvstore": "//libraries/mvstore:mvstore_content_module_jar",
             "intellij.libraries.netty.buffer": "//libraries/netty/buffer:buffer_content_module_jar",
+            "intellij.libraries.netty.codec.compression": "//libraries/netty/codec-compression:libraries-netty-codec-compression_content_module_jar",
             "intellij.libraries.netty.codec.http": "//libraries/netty/codec-http:libraries-netty-codec-http_content_module_jar",
             "intellij.libraries.netty.codec.protobuf": "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_content_module_jar",
             "intellij.libraries.netty.handler.proxy": "//libraries/netty/handler-proxy:libraries-netty-handler-proxy_content_module_jar",
