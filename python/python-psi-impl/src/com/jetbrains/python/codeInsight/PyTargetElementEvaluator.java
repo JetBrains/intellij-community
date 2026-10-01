@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.codeInsight.TargetElementEvaluator;
+import com.intellij.codeInsight.TargetElementEvaluatorEx2;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyReferenceOwner;
@@ -29,10 +31,23 @@ import java.util.Set;
  * Go to declaration gets its targets from {@link com.jetbrains.python.psi.impl.PyGotoDeclarationHandler} first.
  * That handler also uses a user-initiated context.
  */
-public final class PyTargetElementEvaluator implements TargetElementEvaluator {
+public final class PyTargetElementEvaluator extends TargetElementEvaluatorEx2 {
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return false;
+  }
+
+  /**
+   * A keyword argument that maps to a parameter is a usage of that parameter, so it is not a declaration.
+   * A keyword argument that maps to no parameter declares a name, e.g. a key of {@code dict(a=1)}.
+   */
+  @Override
+  public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
+    if (parent instanceof PyKeywordArgument keywordArgument &&
+        keywordArgument.getReference() instanceof PsiPolyVariantReference reference) {
+      return reference.multiResolve(false).length == 0;
+    }
+    return true;
   }
 
   @Override
