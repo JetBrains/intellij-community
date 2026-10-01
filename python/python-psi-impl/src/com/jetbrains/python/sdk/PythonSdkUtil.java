@@ -5,12 +5,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import com.intellij.python.sdk.backend.PythonEnvironment;
 import com.intellij.python.sdk.backend.PythonEnvironmentExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +35,6 @@ public final class PythonSdkUtil {
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks();
-  }
-
-  public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
-    return PySkeletonUtil.isStdLib(vFile, pythonSdk);
   }
 
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
