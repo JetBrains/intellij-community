@@ -300,7 +300,7 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.remote.core")
     embeddedModule("intellij.platform.ide.remote")
-    embeddedModule("intellij.platform.threadDumpParser")
+    module("intellij.platform.threadDumpParser")
     embeddedModule("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin
     embeddedModule("intellij.platform.ide.designer")

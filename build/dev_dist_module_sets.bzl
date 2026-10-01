@@ -231,6 +231,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.osCertificates",
             "intellij.platform.ide.pluginSignatureVerifier",
             "intellij.platform.ide.util.io.native",
+            "intellij.platform.threadDumpParser",
             "intellij.platform.wsl.impl",
         ],
         mode_refused = {

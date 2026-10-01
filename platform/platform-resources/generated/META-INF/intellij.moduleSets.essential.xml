@@ -308,7 +308,7 @@
     <module name="intellij.platform.rd.community" loading="embedded"/>
     <module name="intellij.platform.remote.core" loading="embedded"/>
     <module name="intellij.platform.ide.remote" loading="embedded"/>
-    <module name="intellij.platform.threadDumpParser" loading="embedded"/>
+    <module name="intellij.platform.threadDumpParser"/>
     <module name="intellij.platform.ide.favoritesTreeView" loading="embedded"/>
     <module name="intellij.platform.ide.designer" loading="embedded"/>
     <module name="intellij.platform.ide.bootstrap" loading="embedded"/>
