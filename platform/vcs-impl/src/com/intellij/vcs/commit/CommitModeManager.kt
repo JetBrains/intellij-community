@@ -98,6 +98,11 @@ class CommitModeManager(private val project: Project, private val coroutineScope
       return CommitMode.ModalCommitMode
     }
 
+    // The non-modal commit interface lives in a tool window, which a project that was loaded without being opened has nowhere to show
+    if (!project.isOpen) {
+      return CommitMode.ModalCommitMode
+    }
+
     val commitMode = if (canSetNonModal()) {
       CommitMode.NonModalCommitMode(isCommitTwEnabled, isToggleCommitUi)
     }

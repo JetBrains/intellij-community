@@ -101,8 +101,14 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
     }
   }
 
+  /**
+   * Arms the manager, from the startup activity that runs once version control is initialized.
+   *
+   * The caller already establishes that initialization ran, and [isReady] is cleared again when the project is torn down, so a live project
+   * is enough - see [tracksChanges] for the project that is not open.
+   */
   private fun startListenForChanges(): Boolean {
-    val ready = !project.isDisposed() && project.isOpen()
+    val ready = !project.isDisposed() && project.tracksChanges
     synchronized(LOCK) {
       isReady = ready
     }
@@ -110,7 +116,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
   }
 
   override fun markEverythingDirty() {
-    if ((!project.isOpen()) || project.isDisposed() || ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().isEmpty()) {
+    if (!project.tracksChanges || project.isDisposed() || ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().isEmpty()) {
       return
     }
 
@@ -314,6 +320,19 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
       get() = VcsInitObject.DIRTY_SCOPE_MANAGER.order
   }
 }
+
+/** Declared in VcsExtensions.xml. Also read by the Git branches popup, which hides its Commit action while this is off. */
+private const val RECENT_PROJECT_COMMIT = "vcs.recent.project.commit"
+
+/**
+ * Whether [this] project computes its changes.
+ *
+ * An open project always does. A project that was only loaded does so behind [RECENT_PROJECT_COMMIT], because the welcome screen loads
+ * recent projects that way and its Commit action is the thing that needs their changes: that action and this tracking are the same feature,
+ * so they are turned on together.
+ */
+private val Project.tracksChanges: Boolean
+  get() = isOpen || `is`(RECENT_PROJECT_COMMIT)
 
 private fun toString(filesByVcs: Map<VcsRoot, Set<FilePath>>): String {
   return filesByVcs.keys.joinToString("\n") { vcs ->
