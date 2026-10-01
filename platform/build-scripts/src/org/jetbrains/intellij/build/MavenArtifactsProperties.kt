@@ -99,6 +99,14 @@ class MavenArtifactsProperties {
   @ApiStatus.Internal
   var isJavadocJarRequired: (JpsModule) -> Boolean = { false }
 
+  /**
+   * Returns `true` for a module published as a POM-only artifact. The `pom.xml` gets `packaging=pom`, and the build generates no JAR,
+   * no sources JAR and no Javadoc JAR for it. The module must have no source roots: the artifact only aggregates its dependencies.
+   * [org.jetbrains.intellij.build.impl.maven.IntellijModulesPublication] deploys such an artifact as a POM without a JAR.
+   */
+  @ApiStatus.Internal
+  var isPomOnlyArtifact: (JpsModule) -> Boolean = { false }
+
   @ApiStatus.Internal
   var validate: (BuildContext, Collection<GeneratedMavenArtifacts>) -> Unit = { _, _ -> }
 }

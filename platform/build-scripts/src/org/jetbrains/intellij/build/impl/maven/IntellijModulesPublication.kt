@@ -162,6 +162,10 @@ class IntellijModulesPublication(
     if (jar.exists()) {
       deployJar(jar, pom, coordinates)
     }
+    else if (isPomOnlyArtifact(pom)) {
+      deployFile(pom, coordinates, "", "-DpomFile=${pom.absolutePathString()}")
+      return
+    }
     else {
       context.messages.warning("$coordinates $jar is not found")
     }
@@ -171,6 +175,17 @@ class IntellijModulesPublication(
     else {
       context.messages.warning("$coordinates $sources is not found")
     }
+  }
+
+  /**
+   * A POM-only artifact has `packaging=pom` and no JAR, see [org.jetbrains.intellij.build.MavenArtifactsProperties.isPomOnlyArtifact].
+   */
+  private fun isPomOnlyArtifact(pom: Path): Boolean {
+    if (!pom.exists()) {
+      return false
+    }
+    val model = Files.newInputStream(pom).use { MavenXpp3Reader().read(it) }
+    return model.packaging == MavenPackaging.POM.id
   }
 
   private fun transitiveModuleDependencies(module: JpsModule, result: MutableCollection<JpsModule>) {

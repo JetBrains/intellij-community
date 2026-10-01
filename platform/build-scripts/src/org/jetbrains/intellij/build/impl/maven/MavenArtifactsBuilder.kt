@@ -40,6 +40,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
@@ -187,21 +188,24 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
 
   /**
    * @param outputDir path relative to [org.jetbrains.intellij.build.BuildPaths.artifactDir]
+   * @return the generated artifacts
    */
   fun generateMavenArtifacts(
     moduleNamesToPublish: Collection<String>,
     moduleNamesToSquashAndPublish: List<String> = emptyList(),
     outputDir: String,
     validate: Boolean = false,
-  ) {
+  ): Collection<GeneratedMavenArtifacts> {
+    val builtArtifacts = LinkedHashMap<MavenArtifactData, List<Path>>()
     generateMavenArtifacts(
       moduleNamesToPublish,
       moduleNamesToSquashAndPublish,
       outputDir,
       ignoreNonMavenizable = false,
-      builtArtifacts = mutableMapOf(),
+      builtArtifacts = builtArtifacts,
       validate = validate,
     )
+    return builtArtifacts.map { (data, files) -> GeneratedMavenArtifacts(data.module, data.coordinates, files) }
   }
 
   /**
@@ -229,6 +233,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
           includeTransitiveDeps = true,
           excludedDependencies = emptyList(),
           scope = DependencyScope.RUNTIME,
+          packaging = data.packaging,
         )
       }
       .toList()
@@ -397,7 +402,15 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
               "A library module ${depArtifact.module.name} is expected to have some library dependencies"
             }
             if (context.productProperties.mavenArtifacts.publishLibraryModules) {
-              dependencies.add(MavenArtifactDependency(coordinates = depArtifact.coordinates, includeTransitiveDeps = true, excludedDependencies = emptyList(), scope = scope))
+              dependencies.add(
+                MavenArtifactDependency(
+                  coordinates = depArtifact.coordinates,
+                  includeTransitiveDeps = true,
+                  excludedDependencies = emptyList(),
+                  scope = scope,
+                  packaging = depArtifact.packaging
+                )
+              )
             }
             else {
               dependencies += depArtifact.dependencies
@@ -407,7 +420,15 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
             dependencies += depArtifact.dependencies
           }
           else {
-            dependencies.add(MavenArtifactDependency(coordinates = depArtifact.coordinates, includeTransitiveDeps = true, excludedDependencies = emptyList(), scope = scope))
+            dependencies.add(
+              MavenArtifactDependency(
+                coordinates = depArtifact.coordinates,
+                includeTransitiveDeps = true,
+                excludedDependencies = emptyList(),
+                scope = scope,
+                packaging = depArtifact.packaging
+              )
+            )
           }
         }
       }
@@ -435,7 +456,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       return null
     }
 
-    val artifactData = MavenArtifactData(module, generateMavenCoordinatesForModule(module), patchedDependencies)
+    val packaging = if (context.productProperties.mavenArtifacts.isPomOnlyArtifact(module)) MavenPackaging.POM else MavenPackaging.JAR
+    val artifactData = MavenArtifactData(module, generateMavenCoordinatesForModule(module), patchedDependencies, packaging)
     if (!module.isLibraryModule() || context.productProperties.mavenArtifacts.publishLibraryModules) {
       results[module] = artifactData
     }
@@ -504,6 +526,17 @@ enum class DependencyScope {
   COMPILE, RUNTIME
 }
 
+/**
+ * The Maven packaging of an artifact: `jar`, or `pom` for an artifact without a JAR,
+ * see [org.jetbrains.intellij.build.MavenArtifactsProperties.isPomOnlyArtifact].
+ *
+ * @property id the value of the `packaging` element in `pom.xml`
+ */
+enum class MavenPackaging(@JvmField val id: String) {
+  JAR("jar"),
+  POM("pom"),
+}
+
 data class MavenCoordinates(
   @JvmField val groupId: String,
   @JvmField val artifactId: String,
@@ -526,13 +559,18 @@ internal data class MavenArtifactData(
   @JvmField val module: JpsModule,
   @JvmField val coordinates: MavenCoordinates,
   @JvmField val dependencies: List<MavenArtifactDependency>,
+  @JvmField val packaging: MavenPackaging = MavenPackaging.JAR,
 )
 
+/**
+ * @property packaging the packaging of the dependency artifact. A `pom` dependency gets `<type>pom</type>`, because Maven assumes `jar`.
+ */
 data class MavenArtifactDependency(
   @JvmField val coordinates: MavenCoordinates,
   @JvmField val includeTransitiveDeps: Boolean,
   @JvmField val excludedDependencies: List<String>,
   @JvmField val scope: DependencyScope?,
+  @JvmField val packaging: MavenPackaging = MavenPackaging.JAR,
 )
 
 private fun Model.setOrFailIfAlreadySet(name: String, value: String, getter: Model.() -> String?, setter: Model.(String) -> Unit) {
@@ -543,6 +581,21 @@ private fun Model.setOrFailIfAlreadySet(name: String, value: String, getter: Mod
 }
 
 private fun generatePomXmlData(artifactData: MavenArtifactData, file: Path, context: BuildContext) {
+  Files.newBufferedWriter(file).use {
+    MavenXpp3Writer().write(it, createPomModel(artifactData, context))
+  }
+}
+
+/**
+ * Renders the `pom.xml` of [artifactData] as text, for a test or a report.
+ */
+internal fun renderPom(artifactData: MavenArtifactData, context: BuildContext): String {
+  val writer = StringWriter()
+  MavenXpp3Writer().write(writer, createPomModel(artifactData, context))
+  return writer.toString()
+}
+
+private fun createPomModel(artifactData: MavenArtifactData, context: BuildContext): Model {
   val pomModel = Model()
   pomModel.organization = Organization().apply {
     name = "JetBrains"
@@ -567,16 +620,16 @@ private fun generatePomXmlData(artifactData: MavenArtifactData, file: Path, cont
   pomModel.setOrFailIfAlreadySet("GroupId", value = artifactData.coordinates.groupId, { groupId }, { groupId = it })
   pomModel.setOrFailIfAlreadySet("ArtifactId", value = artifactData.coordinates.artifactId, { artifactId }, { artifactId = it })
   pomModel.setOrFailIfAlreadySet("Version", value = artifactData.coordinates.version, { version }) { version = it }
+  if (artifactData.packaging != MavenPackaging.JAR) {
+    pomModel.packaging = artifactData.packaging.id
+  }
   // From https://central.sonatype.org/publish/requirements/#project-name-description-and-url:
   // A common and acceptable practice for name is to assemble it from the coordinates using Maven properties
   pomModel.name = "${pomModel.groupId}:${pomModel.artifactId}"
   artifactData.dependencies.forEach {
     pomModel.addDependency(createDependencyTag(it))
   }
-
-  Files.newBufferedWriter(file).use {
-    MavenXpp3Writer().write(it, pomModel)
-  }
+  return pomModel
 }
 
 private fun createDependencyTag(dep: MavenArtifactDependency): Dependency {
@@ -584,6 +637,9 @@ private fun createDependencyTag(dep: MavenArtifactDependency): Dependency {
   dependency.groupId = dep.coordinates.groupId
   dependency.artifactId = dep.coordinates.artifactId
   dependency.version = dep.coordinates.version
+  if (dep.packaging != MavenPackaging.JAR) {
+    dependency.type = dep.packaging.id
+  }
   if (dep.scope == DependencyScope.RUNTIME) {
     dependency.scope = "runtime"
   }
@@ -665,6 +721,12 @@ private fun layoutMavenArtifacts(
         file = pom,
       )
       artifacts.add(pom)
+      if (artifactData.packaging == MavenPackaging.POM) {
+        check(modulesWithSources.isEmpty()) {
+          "The POM-only artifact ${artifactData.coordinates} must have no sources, but these modules have source roots: ${modulesWithSources.map { it.name }}"
+        }
+        return@mapConcurrent artifactData to artifacts
+      }
       val jar = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "jar"))
       buildJar(
         targetFile = jar,
