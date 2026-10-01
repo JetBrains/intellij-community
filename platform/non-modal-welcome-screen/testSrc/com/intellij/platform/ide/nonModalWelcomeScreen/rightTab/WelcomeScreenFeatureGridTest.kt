@@ -3,16 +3,24 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI.Content
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import javax.swing.Icon
+import javax.swing.JPanel
 
 @TestApplication
 internal class WelcomeScreenFeatureGridTest {
@@ -87,6 +95,69 @@ internal class WelcomeScreenFeatureGridTest {
 
     assertEquals(listOf(TERMINAL, NEW_FILE), models.map { it.text })
   }
+
+  /** The first section waits for the second one, so a sequential call would never finish. */
+  @Test
+  fun sectionsAreCreatedTogetherAndKeepTheContentOrder(): Unit = timeoutRunBlocking {
+    val secondStarted = CompletableDeferred<Unit>()
+    val features = listOf(
+      TestFeature(TERMINAL, contentOrder = 2) {
+        secondStarted.complete(Unit)
+        Content(JPanel())
+      },
+      TestFeature(AGENT_SESSIONS, contentOrder = 1) {
+        secondStarted.await()
+        Content(JPanel())
+      },
+    )
+
+    val sections = createFeatureSections(project, features, offerAll(features))
+
+    assertEquals(listOf(AGENT_SESSIONS, TERMINAL), sections.map { it.featureKey })
+  }
+
+  @Test
+  fun aFailingFeatureDoesNotStopTheOtherSections() {
+    val features = listOf(
+      TestFeature(AGENT_SESSIONS, contentOrder = 1) { throw IllegalStateException("broken section") },
+      TestFeature(TERMINAL, contentOrder = 2) { Content(JPanel()) },
+    )
+    lateinit var sections: List<FeatureSection>
+
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      sections = timeoutRunBlocking { createFeatureSections(project, features, offerAll(features)) }
+    }
+
+    assertEquals("broken section", error.message)
+    assertEquals(listOf(TERMINAL), sections.map { it.featureKey })
+  }
+
+  /**
+   * On the `runBlocking` event loop, the second feature starts only after the first feature returned its section, because the first
+   * feature does not suspend.
+   */
+  @Test
+  fun cancellationDisposesTheCreatedSections(): Unit = timeoutRunBlocking {
+    val disposable = Disposer.newCheckedDisposable()
+    val secondStarted = CompletableDeferred<Unit>()
+    val features = listOf(
+      TestFeature(TERMINAL, contentOrder = 1) { Content(JPanel(), disposable = disposable) },
+      TestFeature(AGENT_SESSIONS, contentOrder = 2) {
+        secondStarted.complete(Unit)
+        awaitCancellation()
+      },
+    )
+
+    val job = launch { createFeatureSections(project, features, offerAll(features)) }
+    secondStarted.await()
+    job.cancelAndJoin()
+
+    assertTrue(disposable.isDisposed)
+  }
+}
+
+private fun offerAll(features: List<WelcomeScreenFeatureUI>): OfferedFeatures {
+  return OfferedFeatures(registeredFeatureIds = features.mapTo(HashSet()) { it.featureKey }, withdrawnFeatureKeys = emptySet())
 }
 
 private const val AGENT_SESSIONS = "air.sessions"
@@ -102,8 +173,15 @@ private fun keyedButton(featureKey: String): FeatureButtonModel {
   return FeatureButtonModelWithBackend(featureKey = featureKey, text = featureKey, icon = EmptyIcon.ICON_16)
 }
 
-private class TestFeature(override val featureKey: String, private val available: Boolean) : WelcomeScreenFeatureUI() {
+private class TestFeature(
+  override val featureKey: String,
+  private val available: Boolean = true,
+  override val contentOrder: Int = 0,
+  private val content: (suspend () -> Content?)? = null,
+) : WelcomeScreenFeatureUI() {
   override val icon: Icon get() = EmptyIcon.ICON_16
 
   override suspend fun isAvailable(project: Project): Boolean = available
+
+  override suspend fun createContent(project: Project): Content? = content?.invoke()
 }

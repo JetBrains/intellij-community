@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenPaintTracker
@@ -42,6 +43,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageColl
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
+import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupSpanTracer
 import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupTracer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DisclosureButton
@@ -61,6 +63,10 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Container
@@ -76,6 +82,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -89,15 +96,22 @@ import kotlin.math.max
 
 private val LOG = fileLogger()
 
+/**
+ * The welcome right tab. Construct it on the UI thread.
+ *
+ * @param body the default body that [prepareDefaultBody] prepared, or `null` when the preparation failed. The constructor places it,
+ * and the tab then owns its sections. Without a body, the tab shows its footer only.
+ */
 internal class WelcomeScreenRightTabImpl(
   project: Project,
   contentProvider: WelcomeRightTabContentProvider,
+  body: PreparedBody?,
 ) : WelcomeScreenRightTab(project, contentProvider) {
 
   private val paintTracker = WelcomeScreenPaintTracker.getInstance(project)
 
   /**
-   * Tells if the default content holds its body. The first paint after that calls [WelcomeScreenPaintTracker.rightPainted].
+   * Tells if the tab holds its default body. The first paint after that calls [WelcomeScreenPaintTracker.rightPainted].
    * Read and written on the EDT only.
    */
   private var isBodyPlaced = false
@@ -117,13 +131,6 @@ internal class WelcomeScreenRightTabImpl(
 
   private var featureContents: List<WelcomeScreenFeatureUI.Content> = emptyList()
   private var singleBanner: Any? = null
-  private var disposed: Boolean = false
-
-  /**
-   * Which content the tab shows now. [createContent] bumps it, and the default-content fill drops a result
-   * that a later switch already replaced. Read and written on the EDT only.
-   */
-  private var contentGeneration: Int = 0
 
   init {
     contentPanel.isOpaque = false
@@ -193,10 +200,11 @@ internal class WelcomeScreenRightTabImpl(
     }
     component.add(contentPanel)
 
-    createDefaultContent {
-      component.doLayout()
-      component.revalidate()
-      component.repaint()
+    if (body != null) {
+      welcomeScreenStartupSpanTracer.spanBuilder("welcome right tab body: EDT build").use {
+        placeDefaultBody(body)
+      }
+      isBodyPlaced = true
     }
 
     createFooter()
@@ -239,7 +247,6 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   override fun dispose() {
-    disposed = true
     disposeFeatureContents()
   }
 
@@ -253,93 +260,15 @@ internal class WelcomeScreenRightTabImpl(
     disposeSingleBanner()
   }
 
-  /** Disposes each section that states a disposable. A section that fails does not stop the others. */
-  private fun disposeContents(contents: List<WelcomeScreenFeatureUI.Content>) {
-    val disposeCalls = contents.mapNotNull { content ->
-      val disposable = content.disposable ?: return@mapNotNull null
-      { Disposer.dispose(disposable) }
-    }
-    runSuppressing(*disposeCalls.toTypedArray())
-  }
-
   private fun disposeSingleBanner() {
     (singleBanner as? Disposable)?.let(Disposer::dispose)
     singleBanner = null
   }
 
-  private fun createDefaultContent(finish: () -> Unit) {
-    val generation = contentGeneration
-    contentProvider.coroutineScope.launch {
-      try {
-        val offeredFeatures = withContext(welcomeScreenStartupTracer.span("welcome right tab body: feature ids")) {
-          offeredFeatures(
-            project = project,
-            registeredFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds(),
-            features = WelcomeScreenFeatureUI.features(),
-          )
-        }
-        val sections = createFeatureContents(offeredFeatures)
-
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          disposeSingleBanner()
-          // The tab can go while the sections build, and a switch to custom content can replace what this fill
-          // was built for. A section holds an editor and a scope, so a fill that no tab takes must release it
-          // here. Both checks and the disposal run on the EDT, and so does [dispose].
-          if (disposed || generation != contentGeneration) {
-            disposeContents(sections.map { it.content })
-            return@withContext
-          }
-          withContext(welcomeScreenStartupTracer.span("welcome right tab body: EDT build")) {
-            createDefaultContent(offeredFeatures, sections, finish)
-          }
-          isBodyPlaced = true
-        }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        thisLogger().error("Cannot fill the default content of the welcome right tab", e)
-      }
-    }
-  }
-
-  /**
-   * Asks each offered feature for its section. A feature that fails does not stop the other features.
-   */
-  private suspend fun createFeatureContents(offeredFeatures: OfferedFeatures): List<FeatureSection> {
-    return WelcomeScreenFeatureUI.features()
-      .filter { offeredFeatures.isOffered(it.featureKey, it.isAlwaysAvailable) }
-      .sortedBy { it.contentOrder }
-      .mapNotNull { feature ->
-        try {
-          withContext(welcomeScreenStartupTracer.span("welcome right tab body: createContent ${feature.featureKey}")) {
-            feature.createContent(project)
-          }?.let { FeatureSection(feature.featureKey, it) }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          thisLogger().error("Cannot create the welcome right tab section of the feature ${feature.featureKey}", e)
-          null
-        }
-      }
-  }
-
-  private fun createDefaultContent(
-    offeredFeatures: OfferedFeatures,
-    sections: List<FeatureSection>,
-    finish: () -> Unit,
-  ) {
-    val featureModels = visibleFeatureButtonModels(
-      models = contentProvider.getFeatureButtonModels(project),
-      offeredFeatures = offeredFeatures,
-      sectionFeatureKeys = sections.mapTo(HashSet()) { it.featureKey },
-      featureKeysReplacingFeatureGrid = contentProvider.featureKeysReplacingFeatureGrid,
-    )
+  private fun placeDefaultBody(body: PreparedBody) {
+    val sections = body.sections
     if (sections.isEmpty()) {
-      createDefaultContent(contentPanel, featureModels, false)
+      createDefaultContent(contentPanel, body.featureModels, false)
     }
     else {
       val contentsPanel = JPanel(VerticalLayout(0))
@@ -350,11 +279,9 @@ internal class WelcomeScreenRightTabImpl(
 
       val bottomPanel = BorderLayoutPanel()
       bottomPanel.isOpaque = false
-      createDefaultContent(bottomPanel, featureModels, true)
+      createDefaultContent(bottomPanel, body.featureModels, true)
       contentPanel.addToBottom(bottomPanel)
     }
-
-    finish()
   }
 
   private fun createFeatureSections(parentPanel: JPanel, contents: List<WelcomeScreenFeatureUI.Content>) {
@@ -555,7 +482,139 @@ internal class WelcomeScreenRightTabImpl(
 }
 
 /** A section of the tab, and the key of the feature that stated it. */
-private class FeatureSection(@JvmField val featureKey: String, @JvmField val content: WelcomeScreenFeatureUI.Content)
+internal class FeatureSection(@JvmField val featureKey: String, @JvmField val content: WelcomeScreenFeatureUI.Content)
+
+/**
+ * The default body of the tab: the sections and the feature buttons.
+ *
+ * [prepareDefaultBody] prepares it before the tab exists. The tab that gets the body owns its sections.
+ * Call [dispose] on the EDT for a body that no tab gets.
+ */
+internal class PreparedBody(
+  @JvmField val sections: List<FeatureSection>,
+  @JvmField val featureModels: List<WelcomeRightTabContentProvider.FeatureButtonModel>,
+) {
+  /** Disposes the sections. A section that fails does not stop the others. */
+  fun dispose() {
+    disposeContents(sections.map { it.content })
+  }
+}
+
+/**
+ * Prepares the default body of the tab off the EDT.
+ *
+ * Returns `null` when the preparation fails. The failure is logged.
+ */
+internal suspend fun prepareDefaultBody(project: Project, contentProvider: WelcomeRightTabContentProvider): PreparedBody? {
+  try {
+    val features = WelcomeScreenFeatureUI.features()
+    val offeredFeatures = withContext(welcomeScreenStartupTracer.span("welcome right tab body: feature ids")) {
+      offeredFeatures(
+        project = project,
+        registeredFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds(),
+        features = features,
+      )
+    }
+    val sections = createFeatureSections(project, features, offeredFeatures)
+    try {
+      val featureModels = visibleFeatureButtonModels(
+        models = contentProvider.getFeatureButtonModels(project),
+        offeredFeatures = offeredFeatures,
+        sectionFeatureKeys = sections.mapTo(HashSet()) { it.featureKey },
+        featureKeysReplacingFeatureGrid = contentProvider.featureKeysReplacingFeatureGrid,
+      )
+      return PreparedBody(sections, featureModels)
+    }
+    catch (e: Throwable) {
+      disposeSectionsOnEdt(sections)
+      throw e
+    }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot prepare the default content of the welcome right tab", e)
+    return null
+  }
+}
+
+/**
+ * Asks each offered feature of [features] for its section. The features answer at the same time.
+ *
+ * The sections keep the [WelcomeScreenFeatureUI.contentOrder] of their features. A feature that fails does not stop the
+ * other features. A section that a feature returned before the call fails or is cancelled is disposed on the EDT.
+ */
+internal suspend fun createFeatureSections(
+  project: Project,
+  features: List<WelcomeScreenFeatureUI>,
+  offeredFeatures: OfferedFeatures,
+): List<FeatureSection> {
+  val offered = features
+    .filter { offeredFeatures.isOffered(it.featureKey, it.isAlwaysAvailable) }
+    .sortedBy { it.contentOrder }
+  val created = ConcurrentLinkedQueue<FeatureSection>()
+  var handedOver = false
+  try {
+    val sections = coroutineScope {
+      offered.map { feature ->
+        async {
+          withContext(welcomeScreenStartupTracer.span("welcome right tab body: createContent ${feature.featureKey}")) {
+            // No suspension point between `createContent` and the record, so a cancellation cannot lose the section.
+            val content = createContentOrLog(project, feature) ?: return@withContext null
+            FeatureSection(feature.featureKey, content).also(created::add)
+          }
+        }
+      }.awaitAll()
+    }.filterNotNull()
+    handedOver = true
+    return sections
+  }
+  finally {
+    if (!handedOver) {
+      disposeSectionsOnEdt(created.toList())
+    }
+  }
+}
+
+private suspend fun createContentOrLog(project: Project, feature: WelcomeScreenFeatureUI): WelcomeScreenFeatureUI.Content? {
+  return try {
+    feature.createContent(project)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot create the welcome right tab section of the feature ${feature.featureKey}", e)
+    null
+  }
+}
+
+/**
+ * Disposes [sections] on the EDT, also when the caller is cancelled.
+ *
+ * The function reads the EDT dispatcher inside [NonCancellable], because the first read creates a service.
+ * A cancelled coroutine cannot create a service.
+ */
+private suspend fun disposeSectionsOnEdt(sections: List<FeatureSection>) {
+  if (sections.isEmpty()) {
+    return
+  }
+  withContext(NonCancellable) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      disposeContents(sections.map { it.content })
+    }
+  }
+}
+
+/** Disposes each section that states a disposable. A section that fails does not stop the others. */
+private fun disposeContents(contents: List<WelcomeScreenFeatureUI.Content>) {
+  val disposeCalls = contents.mapNotNull { content ->
+    val disposable = content.disposable ?: return@mapNotNull null
+    { Disposer.dispose(disposable) }
+  }
+  runSuppressing(*disposeCalls.toTypedArray())
+}
 
 /**
  * Which features the tab offers while it fills its content. The feature buttons and the sections read this one rule.

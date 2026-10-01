@@ -61,6 +61,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -1018,8 +1019,7 @@ private fun focusProjectViewIfOpened(project: Project) {
 }
 
 private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
-  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup") ||
-      FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(project)) {
+  if (!isReadmeLookupOnStartupEnabled(project)) {
     return
   }
 
@@ -1041,6 +1041,16 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
       FUSProjectHotStartUpMeasurer.openedReadme(readme, System.nanoTime())
     }
   }
+}
+
+/**
+ * Tells if the project open looks for a README of [project] to open.
+ * A project with [ProjectFrameCapability.WELCOME_EXPERIENCE] gets no lookup.
+ */
+internal suspend fun isReadmeLookupOnStartupEnabled(project: Project): Boolean {
+  return AdvancedSettings.getBoolean("ide.open.readme.md.on.startup") &&
+         !FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(project) &&
+         !serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)
 }
 
 private class MutableLoadingState(override val done: Job) : FrameLoadingState

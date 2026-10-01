@@ -20,10 +20,16 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.finishEmptyEditorStartupBeforeProjectView
+import com.intellij.openapi.project.impl.isReadmeLookupOnStartupEnabled
 import com.intellij.openapi.project.impl.presentProjectViewOnStartup
 import com.intellij.openapi.project.impl.shouldRestoreStartupEditorFocus
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -953,6 +959,20 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
+  fun startupReadmeLookupIsSkippedForWelcomeExperienceProject(@TestDisposable disposable: Disposable) {
+    maskProjectFrameCapabilities(setOf(ProjectFrameCapability.WELCOME_EXPERIENCE), disposable)
+
+    assertThat(runBlocking { isReadmeLookupOnStartupEnabled(manager.project) }).isFalse()
+  }
+
+  @Test
+  fun startupReadmeLookupRunsForRegularProject(@TestDisposable disposable: Disposable) {
+    maskProjectFrameCapabilities(setOf(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES), disposable)
+
+    assertThat(runBlocking { isReadmeLookupOnStartupEnabled(manager.project) }).isTrue()
+  }
+
+  @Test
   fun startupProjectViewIsShownWithoutActivationWhenTheEditorKeepsFocus() {
     val events = mutableListOf<String>()
 
@@ -1154,6 +1174,14 @@ internal class EditorEmptyTextPainterTest {
     assertThat(focusRequests).isEmpty()
     assertThat(handedBack).hasValue(0)
     assertThat(splitters.isEmptyStateFocusRequestPending()).isFalse()
+  }
+
+  private fun maskProjectFrameCapabilities(capabilities: Set<ProjectFrameCapability>, disposable: Disposable) {
+    ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(object : ProjectFrameCapabilitiesProvider {
+      override fun getCapabilities(project: Project): Set<ProjectFrameCapability> = capabilities
+
+      override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
+    }), disposable)
   }
 
   private fun registerDefaultEmptyTextProvider(disposable: Disposable) {
