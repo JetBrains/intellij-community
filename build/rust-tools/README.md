@@ -52,7 +52,7 @@ equal to the sources.
 |---|---|
 | dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
-| Air UI-lane tooling | `sync.mjs` writes its tables and its `rustfmt.toml`. `skippedCopies` holds back its `clippy.toml`, because the code calls the banned methods at about 30 sites. `avl_lints` is a copy of `rust_lints_as_errors`, `avl_crate` does not bind the macro core, and `avl.bzl` loads `optimized_binary` through the BT `defs.bzl`. |
+| Air UI-lane tooling | `sync.mjs` writes its tables and its `rustfmt.toml`. `skippedCopies` holds back its `clippy.toml`, because the code calls the banned methods at about 30 sites. |
 
 ## The Bazel macro core
 
@@ -83,6 +83,7 @@ Each workspace keeps a thin binding with its own signature:
 | `dev_dist_rust_crate(name, test_data, closure)` | `rust_tool_crate` | the `@ddt` hub, `:lints`, `bins_prefix = "build/dev-dist-tools/bins/"`, `testdata_env = "DDT_TESTDATA_DIR"` |
 | `bt_rust_crate(name, compile_data)` | `rust_tool_crate` | the `@bt` hub, `:lints`, `bins_prefix = "tools/bt/bins/"`, `test_sharding = True` |
 | `dev_dist_rust_binary(name, deps, test_deps)` | `rust_tool_binary` | the community `:lints`, `edition = "2024"`, `testdata_env = "DDT_TESTDATA_DIR"` |
+| `avl_crate(portable, closure, compile_data, test_data, test_env, test_size, test_tags, visibility)` | `rust_tool_crate` | the `@avl` hub with its `DEP_DATA`, `:lints`, the BT crates as `cross_module_crates`, `rust_test_junit` as the test rule with `-test`, `AVL_PACKAGE` as `rustc_env`, `NOT_ON_WINDOWS` for a crate that is not portable, and the closure for x86_64 Linux |
 
 ## The checks
 
