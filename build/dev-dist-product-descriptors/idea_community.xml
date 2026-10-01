@@ -42,7 +42,6 @@
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
     <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
-    <module name="intellij.platform.polySymbols.backend"/>
     <module name="intellij.regexp"/>
     <module name="intellij.platform.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
@@ -72,8 +71,6 @@
     <module name="intellij.platform.completion.common"/>
     <module name="intellij.platform.completion.frontend"/>
     <module name="intellij.platform.completion.backend"/>
-    <module name="intellij.platform.polySymbols" loading="embedded"/>
-    <module name="intellij.platform.polySymbols.web"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
 
@@ -474,6 +471,12 @@
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.externalSystem.dependencyUpdater"/>
+    <!-- endregion -->
+
+    <!-- region polySymbols -->
+    <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.polySymbols.backend"/>
+    <module name="intellij.platform.polySymbols.web"/>
     <!-- endregion -->
 
     <!-- region vcs -->

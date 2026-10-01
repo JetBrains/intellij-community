@@ -395,8 +395,6 @@
     <module name="intellij.platform.completion.common"/>
     <module name="intellij.platform.completion.frontend"/>
     <module name="intellij.platform.completion.backend"/>
-    <module name="intellij.platform.polySymbols" loading="embedded"/>
-    <module name="intellij.platform.polySymbols.web"/>
     <module name="intellij.platform.util.commonsLangV2Shim"/>
     <!-- endregion -->
   </content>

@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.productLayout.LibraryModuleSets.librariesLsp
  * - **externalSystem**: the external system platform, for a product that bundles a build-tool plugin
  * - **composeRuntime**: Compose runtime and Compose Swing, for a product that bundles the Compose plugin
  * - **spellchecker/settingsSync/ml**: one feature with the library it needs
+ * - **polySymbols**: the PolySymbols framework, for a product that bundles the XML or the VCS plugin
  * - **ideCommon**: Full IDE common modules
  *
  * Has a one-way dependency on CoreModuleSets (platform infrastructure, RPC) and LibraryModuleSets (library wrappers).
@@ -150,9 +151,6 @@ object CommunityModuleSets {
     module("intellij.platform.completion.common")
     module("intellij.platform.completion.frontend")
     module("intellij.platform.completion.backend")
-
-    embeddedModule("intellij.platform.polySymbols")
-    module("intellij.platform.polySymbols.web")
 
     moduleSet(builtInServer())
 
@@ -409,8 +407,22 @@ object CommunityModuleSets {
   }
 
   /**
+   * The PolySymbols framework: the API, the backend, and the web-types support.
+   * The XML plugin, the VCS plugin (`intellij.platform.vcs.impl` resolves issue links in a commit message),
+   * CSS, JavaScript and the web framework plugins depend on it.
+   *
+   * [ideCommon] nests this set. A lean product that bundles one of these plugins adds the set itself.
+   * No module is embedded: no embedded module depends on it, and every consumer declares the dependency.
+   */
+  fun polySymbols(): ModuleSet = moduleSet("polySymbols") {
+    module("intellij.platform.polySymbols")
+    module("intellij.platform.polySymbols.backend")
+    module("intellij.platform.polySymbols.web")
+  }
+
+  /**
    * IDE common modules.
-   * Nests essential, debugger, spellchecker, settings.sync, ml, externalSystem, vcs, lsp, duplicates, and the
+   * Nests essential, debugger, spellchecker, settings.sync, ml, externalSystem, polySymbols, vcs, lsp, duplicates, and the
    * libraries.ide.common and libraries.grpc sets from [LibraryModuleSets].
    * No Compose module is in this set. A product that bundles the plugin [COMPOSE_PLUGIN_MODULE] adds [composeRuntime].
    */
@@ -425,6 +437,7 @@ object CommunityModuleSets {
     moduleSet(settingsSync())
     moduleSet(ml())
     moduleSet(externalSystem())
+    moduleSet(polySymbols())
 
     // Additional IDE-specific modules
     module("intellij.platform.lvcs.impl")
@@ -450,8 +463,6 @@ object CommunityModuleSets {
     module("intellij.emojipicker")
     module("intellij.platform.ide.impl.wsl")
     module("intellij.platform.diagnostic.telemetry.agent.extension")
-    // todo: move to essential modules when not embedded
-    module("intellij.platform.polySymbols.backend")
     module("intellij.regexp")
     module("intellij.platform.langInjection")
     module("intellij.platform.langInjection.backend")

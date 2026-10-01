@@ -176,6 +176,7 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.platform.resources.defaults.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.platform.testFrameworks.core.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.platform.testFrameworks.junit5.xml", "intellij.platform.resources"),
+    ("platform/platform-resources/generated/META-INF/intellij.moduleSets.polySymbols.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.rd.common.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.rpc.backend.extended.xml", "intellij.platform.resources"),
     ("platform/platform-resources/generated/META-INF/intellij.moduleSets.settings.sync.xml", "intellij.platform.resources"),
