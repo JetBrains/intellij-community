@@ -17,17 +17,22 @@ pub mod descriptorxml; // the element tree, `read` and `write`, byte for byte as
 pub const APPLICATION_INFO_NAMESPACE: &str;
 
 pub struct Replacement { pub key: String, pub value: String } // Clone + Debug + PartialEq + Eq
-impl Replacement { pub fn new(key: &str, value: &str) -> Replacement; }
+impl Replacement {
+    pub fn new(key: &str, value: &str) -> Replacement;
+    pub fn parse(value: &str) -> anyhow::Result<Replacement>;
+    pub fn parse_all(values: &[String]) -> anyhow::Result<Vec<Replacement>>;
+}
 pub fn replace_markers(text: &str, replacements: &[Replacement]) -> String;
 
-pub struct ApplicationInfoElements { pub root: Element, pub names: usize, pub version: usize, pub build: usize }
+pub struct ApplicationInfoElements { /* private */ }
 impl ApplicationInfoElements {
-    pub fn parse(content: &str, file: &str) -> anyhow::Result<ApplicationInfoElements>;
-    pub fn element(&self, index: usize) -> &Element;
-    pub fn element_mut(&mut self, index: usize) -> &mut Element;
+    pub fn parse(content: &str, file: &Path) -> anyhow::Result<ApplicationInfoElements>;
+    pub fn root(&self) -> &Element;
+    pub fn names(&self) -> &Element;      // and names_mut
+    pub fn version(&self) -> &Element;    // and version_mut
+    pub fn build(&self) -> &Element;      // and build_mut
 }
-pub fn merge_host_application_info(client: &mut ApplicationInfoElements, host: &ApplicationInfoElements, host_file: &str) -> anyhow::Result<()>;
-pub fn copy_application_info_attribute(target: &mut Element, source: &Element, name: &str);
+pub fn merge_host_application_info(client: &mut ApplicationInfoElements, host: &ApplicationInfoElements, host_file: &Path) -> anyhow::Result<()>;
 
 pub struct ApplicationInfo { // Clone + Debug + PartialEq + Eq
     pub full_product_name: String,
@@ -42,8 +47,7 @@ pub struct ApplicationInfo { // Clone + Debug + PartialEq + Eq
     pub major_release_date: String,
 }
 impl ApplicationInfo {
-    pub fn read(content: &str, file: &str, pinned_build_date_seconds: i64) -> anyhow::Result<ApplicationInfo>;
-    pub fn read_frontend(content: &str, file: &str, host_content: &str, host_file: &str, pinned_build_date_seconds: i64) -> anyhow::Result<ApplicationInfo>;
+    pub fn load(path: &Path, replacements: &[Replacement], host: Option<&Path>, pinned_build_date_seconds: i64) -> anyhow::Result<ApplicationInfo>;
     pub fn release_version_for_licensing(&self) -> String;
     pub fn product_name_with_edition(&self) -> String;
 }
@@ -54,15 +58,22 @@ pub fn shorten_company_name(name: &str) -> &str;
 ```
 
 - `descriptorxml::read` lists the XML constructs that it refuses.
+- `Replacement::parse` reads one `KEY=VALUE` of a `--replacement` option. The value keeps every `=` after the first
+  one and can be empty. It refuses a value without `=` or with an empty key: `a replacement is '<key>=<value>', and
+  "VALUE" is not`. `Replacement::parse_all` reads the values of every option in order and refuses a key that occurs
+  twice: `the replacement "A" is stated more than once`. The descriptor writer and the product files tool both read
+  their options with it.
 - `replace_markers` replaces each `__KEY__` in order. A marker without a replacement stays in the text.
 - `ApplicationInfoElements::parse` refuses a document without exactly one `names`, `version` and `build` element in
-  the application-info namespace.
-- `merge_host_application_info` is the XML of the frontend override. `ApplicationInfo::read_frontend` reads the facts
-  of that override: a value of the host takes precedence, and a value that the host does not state falls back to the
-  frontend.
-- `ApplicationInfo::read` finds an element and an attribute by the local name, as `readXmlAsModel` does. It refuses
+  the application-info namespace. The positions of the three elements are private, so an accessor always gives the
+  element that the parse found.
+- `ApplicationInfo::load` is the one reader of the facts. It reads the file, replaces the markers, then reads the XML.
+  An I/O error reads `cannot read <path>: <io::Error>`. With `host`, it reads the facts of the frontend override,
+  whose XML `merge_host_application_info` writes: a value of the host takes precedence, and a value that the host does
+  not state falls back to the frontend. The host text gets no marker replacement, as the override reads the raw file.
+- `ApplicationInfo::load` finds an element and an attribute by the local name, as `readXmlAsModel` does. It refuses
   an element with two attributes of one local name.
-- `ApplicationInfo::read` refuses a release product without a `majorReleaseDate`, and an application info without
+- `ApplicationInfo::load` refuses a release product without a `majorReleaseDate`, and an application info without
   `version`, `names`, `company`, a `major` version, a `product` name or a company `name`.
 - `format_version` accepts only literal text and the elements `{0}` to `{3}`. It refuses a quote and every other
   `{` or `}`.
@@ -73,9 +84,9 @@ pub fn shorten_company_name(name: &str) -> &str;
 
 | Kotlin | Rust |
 |---|---|
-| `ApplicationInfoPropertiesImpl` of `ApplicationInfoPropertiesImpl.kt` | `ApplicationInfo::read` |
+| `ApplicationInfoPropertiesImpl` of `ApplicationInfoPropertiesImpl.kt` | `ApplicationInfo::load` |
 | `ApplicationInfoProperties.releaseVersionForLicensing` | `ApplicationInfo::release_version_for_licensing` |
-| `JetBrainsClientPropertiesForLaunchers.applicationInfoOverride` | `ApplicationInfo::read_frontend`, `merge_host_application_info` |
+| `JetBrainsClientPropertiesForLaunchers.applicationInfoOverride` | `ApplicationInfo::load` with a host, `merge_host_application_info` |
 | `BuildUtils.replaceAll(text, map, "__")` | `replace_markers` |
 | `formatMajorReleaseDate` | `format_major_release_date` |
 | `linuxFrameClass` of `BuildTasksImpl.kt` | `linux_frame_class` |

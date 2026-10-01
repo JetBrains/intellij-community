@@ -48,15 +48,17 @@ pub(crate) const XINCLUDE_NAMESPACE: &str = "http://www.w3.org/2001/XInclude";
 /// precedence between two answers exists.
 #[derive(Debug, Default)]
 pub(crate) struct Cache {
-    content: BTreeMap<String, Vec<u8>>,
+    content: BTreeMap<String, String>,
 }
 
 impl Cache {
-    /// Adds the descriptor of one load path. A load path that the cache already holds fails.
+    /// Adds the descriptor of one load path. A load path that the cache already holds fails. So does a descriptor that
+    /// is not UTF-8, because the platform reads every descriptor as UTF-8.
     pub(crate) fn insert(&mut self, load_path: String, data: Vec<u8>) -> Result<()> {
         match self.content.entry(load_path) {
             btree_map::Entry::Vacant(entry) => {
-                entry.insert(data);
+                let text = String::from_utf8(data).with_context(|| format!("{} is not valid UTF-8", entry.key()))?;
+                entry.insert(text);
                 Ok(())
             }
             btree_map::Entry::Occupied(entry) => bail!("the load path '{}' is declared twice", entry.key()),
@@ -64,8 +66,8 @@ impl Cache {
     }
 
     /// `ScopedCachedDescriptorContainer.getCachedFileData`.
-    pub(crate) fn get(&self, load_path: &str) -> Option<&[u8]> {
-        self.content.get(load_path).map(Vec::as_slice)
+    pub(crate) fn get(&self, load_path: &str) -> Option<&str> {
+        self.content.get(load_path).map(String::as_str)
     }
 
     /// `resolveElement` (`contentModuleEmbedding.kt:405-488`) over the cache alone.
@@ -81,8 +83,7 @@ impl Cache {
         }
 
         let load_path = to_load_path(relative_path);
-        if let Some(data) = self.get(&load_path) {
-            let text = std::str::from_utf8(data).with_context(|| format!("{load_path} is not valid UTF-8"))?;
+        if let Some(text) = self.get(&load_path) {
             return descriptorxml::read(text).map(Some);
         }
         // The refusal names every declared load path, because the fix for an include that no declaration answers is

@@ -522,8 +522,7 @@ dependencies = [
  "anyhow",
  "appinfo",
  "cli",
- "flate2",
- "memmap2",
+ "jarpack",
  "tempfile",
  "zip",
 ]

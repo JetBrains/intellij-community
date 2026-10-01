@@ -3,6 +3,7 @@
 //! The `--product-descriptor` mode: the executor of `dev_dist_product_descriptor`.
 
 use std::collections::BTreeSet;
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
@@ -27,9 +28,9 @@ pub(crate) struct ProductDescriptorRequest {
     pub refused: Vec<String>,
     pub scrambled: BTreeSet<String>,
     /// Receives the prefix of `plugins/plugin-classpath.txt`.
-    pub plugin_class_path_prefix: String,
+    pub plugin_class_path_prefix: PathBuf,
     /// Receives the descriptor of that prefix alone, with no header.
-    pub classpath_descriptor: String,
+    pub classpath_descriptor: PathBuf,
 }
 
 pub(crate) fn run(options: cli::Options) -> i32 {
@@ -59,9 +60,9 @@ pub(crate) fn run(options: cli::Options) -> i32 {
         }
     };
     let outputs = [
-        (parsed.content.output.as_str(), content.text.into_bytes()),
-        (parsed.plugin_class_path_prefix.as_str(), prefix),
-        (parsed.classpath_descriptor.as_str(), descriptor.into_bytes()),
+        (&parsed.content.output, content.text.into_bytes()),
+        (&parsed.plugin_class_path_prefix, prefix),
+        (&parsed.classpath_descriptor, descriptor.into_bytes()),
     ];
     for (file, content) in outputs {
         if let Err(error) = write_output(file, &content) {
@@ -119,8 +120,8 @@ pub(crate) fn parse_product_descriptor_request(mut options: cli::Options) -> Res
         refused: options.take_all("--refused-content-module")?,
         scrambled: options.take_all("--scrambled-content-module")?.into_iter().collect(),
         main_module: options.require("--main-module")?,
-        plugin_class_path_prefix: options.require("--plugin-classpath-prefix")?,
-        classpath_descriptor: options.require("--classpath-descriptor")?,
+        plugin_class_path_prefix: options.require("--plugin-classpath-prefix")?.into(),
+        classpath_descriptor: options.require("--classpath-descriptor")?.into(),
     };
     options.finish()?;
     Ok(request)

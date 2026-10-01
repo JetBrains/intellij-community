@@ -4,7 +4,8 @@
 
 use std::path::Path;
 
-use crate::application_info::Replacement;
+use appinfo::Replacement;
+
 use crate::stamp_application_info::{StampApplicationInfoRequest, parse_stamp_application_info_request, stamp_application_info};
 use crate::test_support::{assert_absent, lines, mode_request, path_string, read, run_request, temp_dir, testdata, write};
 
@@ -113,7 +114,7 @@ fn stamp_application_info_rejects_invalid_requests() {
         (
             "duplicate replacement",
             with(&["--replacement=A=2"]),
-            "the replacement 'A' is stated more than once",
+            r#"the replacement "A" is stated more than once"#,
         ),
         ("repeated source", with(&["--source=t"]), "--source must be specified at most once"),
     ] {

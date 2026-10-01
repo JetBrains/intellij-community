@@ -4,9 +4,9 @@
 
 use std::path::Path;
 
-use crate::application_info::{
-    APPLICATION_INFO_NAMESPACE, ApplicationInfoRequest, parse_application_info_request, resolve_application_info,
-};
+use appinfo::APPLICATION_INFO_NAMESPACE;
+
+use crate::application_info::{ApplicationInfoRequest, parse_application_info_request, resolve_application_info};
 use crate::test_support::{assert_absent, mode_request, path_string, read, run_request, temp_dir, testdata, write};
 
 fn application_info_request(output: &Path, client: &str, product: &str) -> Vec<String> {

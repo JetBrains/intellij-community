@@ -2,12 +2,10 @@
 
 //! The `--application-info` mode: the executor of `dev_dist_frontend_application_info`.
 
-use anyhow::Result;
-use appinfo::{ApplicationInfoElements, descriptorxml, merge_host_application_info};
+use std::path::PathBuf;
 
-#[cfg(test)]
-pub(crate) use appinfo::APPLICATION_INFO_NAMESPACE;
-pub(crate) use appinfo::{Replacement, replace_markers};
+use anyhow::Result;
+use appinfo::{ApplicationInfoElements, Replacement, descriptorxml, merge_host_application_info, replace_markers};
 
 use crate::{read_text, report, write_output};
 
@@ -18,9 +16,9 @@ use crate::{read_text, report, write_output};
 /// options. The rule states no build number either, so this mode refuses `--build-number` too.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub(crate) struct ApplicationInfoRequest {
-    pub output: String,
-    pub client_application_info: String,
-    pub product_application_info: String,
+    pub output: PathBuf,
+    pub client_application_info: PathBuf,
+    pub product_application_info: PathBuf,
 }
 
 pub(crate) fn run(options: cli::Options) -> i32 {
@@ -46,7 +44,7 @@ pub(crate) fn resolve_application_info(parsed: &ApplicationInfoRequest) -> Resul
     let product = ApplicationInfoElements::parse(&product_content, &parsed.product_application_info)?;
     let mut client = ApplicationInfoElements::parse(&replaced, &parsed.client_application_info)?;
     merge_host_application_info(&mut client, &product, &parsed.product_application_info)?;
-    Ok(descriptorxml::write(&client.root))
+    Ok(descriptorxml::write(client.root()))
 }
 
 /// The replacement map of `computeAppInfoXml` for the client template of a dev distribution.
@@ -59,9 +57,9 @@ pub(crate) fn application_info_replacements() -> [Replacement; 1] {
 
 pub(crate) fn parse_application_info_request(mut options: cli::Options) -> Result<ApplicationInfoRequest> {
     let request = ApplicationInfoRequest {
-        output: options.require("--out")?,
-        client_application_info: options.require("--client-application-info")?,
-        product_application_info: options.require("--product-application-info")?,
+        output: options.require("--out")?.into(),
+        client_application_info: options.require("--client-application-info")?.into(),
+        product_application_info: options.require("--product-application-info")?.into(),
     };
     options.finish()?;
     Ok(request)

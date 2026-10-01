@@ -2,10 +2,12 @@
 
 //! The `--stamp-application-info` mode: the executor of `dev_dist_product_application_info`.
 
-use anyhow::{Result, bail};
+use std::path::PathBuf;
 
-use crate::application_info::{Replacement, replace_markers};
-use crate::{parse_replacement, read_text, report, write_output};
+use anyhow::{Result, bail};
+use appinfo::{Replacement, replace_markers};
+
+use crate::{read_text, report, write_output};
 
 /// The declared inputs of the application info of a product. The application-info module ships it as
 /// `idea/<prefix>ApplicationInfo.xml`.
@@ -14,8 +16,8 @@ use crate::{parse_replacement, read_text, report, write_output};
 /// unknown options.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub(crate) struct StampApplicationInfoRequest {
-    pub output: String,
-    pub source: String,
+    pub output: PathBuf,
+    pub source: PathBuf,
     /// `ProductProperties.appInfoXmlReplacements`, in their order. The request states at least one.
     pub replacements: Vec<Replacement>,
 }
@@ -28,7 +30,10 @@ pub(crate) fn run(options: cli::Options) -> i32 {
     let content = match stamp_application_info(&parsed) {
         Ok(content) => content,
         Err(error) => {
-            let error = error.context(format!("could not replace the markers of the application info ({})", parsed.source));
+            let error = error.context(format!(
+                "could not replace the markers of the application info ({})",
+                parsed.source.display()
+            ));
             return report(1, &error);
         }
     };
@@ -50,13 +55,10 @@ pub(crate) fn stamp_application_info(parsed: &StampApplicationInfoRequest) -> Re
 }
 
 pub(crate) fn parse_stamp_application_info_request(mut options: cli::Options) -> Result<StampApplicationInfoRequest> {
-    let mut replacements = Vec::new();
-    for value in options.take_all("--replacement")? {
-        replacements.push(parse_replacement(&value, &replacements)?);
-    }
+    let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
     let request = StampApplicationInfoRequest {
-        output: options.require("--out")?,
-        source: options.require("--source")?,
+        output: options.require("--out")?.into(),
+        source: options.require("--source")?.into(),
         replacements,
     };
     options.finish()?;

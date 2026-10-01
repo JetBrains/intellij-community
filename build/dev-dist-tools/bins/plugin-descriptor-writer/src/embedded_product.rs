@@ -3,12 +3,13 @@
 //! The `--embedded-product` mode: the executor of `dev_dist_embedded_product_descriptor`.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::PathBuf;
 
 use anyhow::Result;
 
 use crate::descriptorxml;
 use crate::structural::{self, Cache, ContentRequest};
-use crate::{append_descriptor_jar, put_descriptor, read_text, report, seed_cache, write_output};
+use crate::{Jars, append_descriptor_jar, put_descriptor, read_text, report, seed_cache, write_output};
 
 /// The declared inputs of `dev_dist_embedded_product_descriptor`.
 ///
@@ -16,10 +17,10 @@ use crate::{append_descriptor_jar, put_descriptor, read_text, report, seed_cache
 /// mode refuses `--module` as an unknown option.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub(crate) struct EmbeddedProductRequest {
-    pub output: String,
-    pub source: String,
-    pub descriptors: BTreeMap<String, String>,
-    pub descriptors_in_jar: BTreeMap<String, Vec<String>>,
+    pub output: PathBuf,
+    pub source: PathBuf,
+    pub descriptors: BTreeMap<String, PathBuf>,
+    pub descriptors_in_jar: BTreeMap<String, Vec<PathBuf>>,
     pub separate_jar: BTreeSet<String>,
 }
 
@@ -31,7 +32,10 @@ pub(crate) fn run(options: cli::Options) -> i32 {
     let content = match resolve_embedded_product(&parsed) {
         Ok(content) => content,
         Err(error) => {
-            let error = error.context(format!("could not resolve the embedded product descriptor ({})", parsed.source));
+            let error = error.context(format!(
+                "could not resolve the embedded product descriptor ({})",
+                parsed.source.display()
+            ));
             return report(1, &error);
         }
     };
@@ -43,7 +47,7 @@ pub(crate) fn run(options: cli::Options) -> i32 {
 
 pub(crate) fn resolve_embedded_product(parsed: &EmbeddedProductRequest) -> Result<String> {
     let request = ContentRequest {
-        main_module: parsed.source.clone(),
+        main_module: parsed.source.display().to_string(),
         separate_jar: parsed.separate_jar.clone(),
         embeds: true,
         ..ContentRequest::default()
@@ -61,7 +65,7 @@ pub(crate) struct ProductContent {
 ///
 /// The embedded product descriptor and the product descriptor share this body. Only the content request differs.
 pub(crate) fn resolve_product_content(parsed: &EmbeddedProductRequest, request: &ContentRequest) -> Result<ProductContent> {
-    let cache = seed_cache(&parsed.descriptors, &parsed.descriptors_in_jar)?;
+    let cache = seed_cache(&parsed.descriptors, &parsed.descriptors_in_jar, &mut Jars::default())?;
     let source = read_text(&parsed.source)?;
     let mut element = descriptorxml::read(&source)?;
     structural::resolve_includes(&mut element, &cache)?;
@@ -90,8 +94,8 @@ pub(crate) fn parse_product_content(options: &mut cli::Options) -> Result<Embedd
         append_descriptor_jar(&mut descriptors_in_jar, &value)?;
     }
     Ok(EmbeddedProductRequest {
-        output: options.require("--out")?,
-        source: options.require("--source")?,
+        output: options.require("--out")?.into(),
+        source: options.require("--source")?.into(),
         descriptors,
         descriptors_in_jar,
         separate_jar: BTreeSet::new(),

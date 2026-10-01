@@ -88,10 +88,7 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         Some(value) if value.is_empty() => anyhow::bail!("--host-application-info must not be empty"),
         value => value.map(PathBuf::from),
     };
-    let mut replacements = Vec::new();
-    for value in options.take_all("--replacement")? {
-        replacements.push(parse_replacement(&value, &replacements)?);
-    }
+    let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
     options.finish()?;
     let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
         anyhow::bail!("--build-date-seconds is not a number of seconds: {build_date_seconds:?}");
@@ -113,17 +110,6 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
     })
 }
 
-/// Parses one `--replacement=KEY=VALUE`. The key must be new and not empty. The value can be empty.
-fn parse_replacement(text: &str, stated: &[Replacement]) -> anyhow::Result<Replacement> {
-    let Some((key, replacement)) = text.split_once('=').filter(|(key, _)| !key.is_empty()) else {
-        anyhow::bail!("a replacement is '<key>=<value>', and {text:?} is not");
-    };
-    if stated.iter().any(|stated| stated.key == key) {
-        anyhow::bail!("the replacement {key:?} is stated more than once");
-    }
-    Ok(Replacement::new(key, replacement))
-}
-
 fn read_text(file: &Path) -> anyhow::Result<String> {
     std::fs::read_to_string(file).with_context(|| format!("cannot read {}", file.display()))
 }
@@ -137,30 +123,16 @@ fn read_build_number(file: &Path) -> anyhow::Result<String> {
     Ok(build_number)
 }
 
-/// Reads the facts of the application info: the markers first, then the XML. A frontend reads its host too.
-fn read_application_info(options: &Options) -> anyhow::Result<ApplicationInfo> {
-    let file = options.application_info.display().to_string();
-    let content = appinfo::replace_markers(&read_text(&options.application_info)?, &options.replacements);
-    match &options.host_application_info {
-        Some(host) => {
-            let host_content = read_text(host)?;
-            ApplicationInfo::read_frontend(
-                &content,
-                &file,
-                &host_content,
-                &host.display().to_string(),
-                options.build_date_seconds,
-            )
-        }
-        None => ApplicationInfo::read(&content, &file, options.build_date_seconds),
-    }
-}
-
 fn render_to_files(options: &Options) -> anyhow::Result<()> {
     let model_text = std::fs::read(&options.model).with_context(|| format!("cannot read {}", options.model.display()))?;
     let model = model::parse_launch_model(&model_text).with_context(|| options.model.display().to_string())?;
     let target = render::parse_platform(&options.platform)?;
-    let application_info = read_application_info(options)?;
+    let application_info = ApplicationInfo::load(
+        &options.application_info,
+        &options.replacements,
+        options.host_application_info.as_deref(),
+        options.build_date_seconds,
+    )?;
     let build_number = read_build_number(&options.build_number)?;
     let opened_packages = read_text(&options.opened_packages)?;
     // The base file that the model names by `languageServerBase`. The caller passes it, so an action reads only its

@@ -3,7 +3,7 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use appinfo::{ApplicationInfo, Replacement, replace_markers};
+use appinfo::{ApplicationInfo, Replacement};
 use serde_json::Value;
 
 use crate::model::{JvmArguments, LaunchModel, parse_launch_model};
@@ -104,12 +104,8 @@ impl Fixture {
 
     fn read_application_info(&self) -> ApplicationInfo {
         let replacements: Vec<Replacement> = self.replacements.iter().map(|(key, value)| Replacement::new(key, value)).collect();
-        let file = self.application_info_file();
-        let content = replace_markers(
-            &read_testdata(&format!("application-info/{}.xml", self.application_info)),
-            &replacements,
-        );
-        ApplicationInfo::read(&content, &file, PINNED_BUILD_DATE_SECONDS).unwrap_or_else(|error| panic!("{error:#}"))
+        let file = testdata(&format!("application-info/{}.xml", self.application_info));
+        ApplicationInfo::load(&file, &replacements, None, PINNED_BUILD_DATE_SECONDS).unwrap_or_else(|error| panic!("{error:#}"))
     }
 
     fn build_number(&self) -> String {

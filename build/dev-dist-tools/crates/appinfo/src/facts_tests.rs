@@ -2,6 +2,8 @@
 
 //! One case per rule of `ApplicationInfoPropertiesImpl.kt`. Each test names the Kotlin line that it ports.
 
+use std::path::Path;
+
 use crate::{ApplicationInfo, format_major_release_date, format_version, linux_frame_class, shorten_company_name};
 
 /// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
@@ -23,11 +25,11 @@ fn xml(version: &str, names: &str, build: &str) -> String {
 }
 
 fn read(content: &str) -> ApplicationInfo {
-    ApplicationInfo::read(content, "test.xml", PINNED).unwrap_or_else(|error| panic!("{error:#}\n{content}"))
+    ApplicationInfo::read(content, Path::new("test.xml"), PINNED).unwrap_or_else(|error| panic!("{error:#}\n{content}"))
 }
 
 fn read_error(content: &str) -> String {
-    match ApplicationInfo::read(content, "test.xml", PINNED) {
+    match ApplicationInfo::read(content, Path::new("test.xml"), PINNED) {
         Ok(info) => panic!("accepted {info:?}:\n{content}"),
         Err(error) => format!("{error:#}"),
     }
@@ -269,7 +271,7 @@ fn a_frontend_takes_the_facts_of_its_host() {
   <version major="2026" minor="4" suffix="EAP 6 D" full="{0}.{1}.{2}"/>
   <build majorReleaseDate="20261001"/>
 </component>"#;
-    let info = ApplicationInfo::read_frontend(&client, "client.xml", host, "host.xml", PINNED).unwrap();
+    let info = ApplicationInfo::read_frontend(&client, Path::new("client.xml"), host, Path::new("host.xml"), PINNED).unwrap();
     assert_eq!(
         info,
         ApplicationInfo {
@@ -286,14 +288,14 @@ fn a_frontend_takes_the_facts_of_its_host() {
         }
     );
     let product_only = host.replace(r#" fullname="JetBrains Rider""#, "");
-    let info = ApplicationInfo::read_frontend(&client, "client.xml", &product_only, "host.xml", PINNED).unwrap();
+    let info = ApplicationInfo::read_frontend(&client, Path::new("client.xml"), &product_only, Path::new("host.xml"), PINNED).unwrap();
     assert_eq!(info.full_product_name, "Rider");
 
     let nameless = host.replace(r#"product="Rider" fullname="JetBrains Rider""#, "");
-    let error = ApplicationInfo::read_frontend(&client, "client.xml", &nameless, "host.xml", PINNED).unwrap_err();
+    let error = ApplicationInfo::read_frontend(&client, Path::new("client.xml"), &nameless, Path::new("host.xml"), PINNED).unwrap_err();
     assert_eq!(error.to_string(), "the product application info has no product name: host.xml");
     let unqualified = host.replace(" xmlns=\"http://jetbrains.org/intellij/schema/application-info\"", "");
-    let error = ApplicationInfo::read_frontend(&client, "client.xml", &unqualified, "host.xml", PINNED).unwrap_err();
+    let error = ApplicationInfo::read_frontend(&client, Path::new("client.xml"), &unqualified, Path::new("host.xml"), PINNED).unwrap_err();
     assert_eq!(error.to_string(), "the application info has no unique names element: host.xml");
 }
 

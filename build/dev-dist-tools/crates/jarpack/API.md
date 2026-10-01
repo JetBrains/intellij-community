@@ -6,7 +6,8 @@ golden digests in `src/tests/golden.rs` and the `./build/dev-dist.cmd jars` gate
 
 It is the port of the Go packages `internal/jarpack` and `internal/nativelib`. The public items are at the crate root,
 except the items of `jarpack::nativelib`, `jarpack::reader` and `jarpack::writer`, and rustdoc states each signature.
-The packer binary writes the inventory of a spec.
+The packer binary writes the inventory of a spec. The descriptor writer reads the declared library jars with
+`reader::Jar`.
 
 ## Supported subset
 

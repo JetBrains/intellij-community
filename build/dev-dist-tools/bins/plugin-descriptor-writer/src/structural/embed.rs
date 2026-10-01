@@ -193,13 +193,12 @@ fn apply_separate_jar(descriptor: &mut Element, module_name: &str, request: &Con
 /// this action does not have. So a miss is an incomplete plan, and the error says so.
 fn resolve_content_module_descriptor(module_name: &str, cache: &Cache) -> Result<Element> {
     let descriptor_filename = content_module_descriptor_file_name(module_name);
-    let Some(data) = cache.get(&descriptor_filename) else {
+    let Some(text) = cache.get(&descriptor_filename) else {
         bail!(
             "cannot find file {descriptor_filename} of the content module {module_name}: no declared descriptor \
              answers it. The plan of this plugin is incomplete: add the descriptor the patch asked for"
         );
     };
-    let text = std::str::from_utf8(data).with_context(|| format!("{descriptor_filename} is not valid UTF-8"))?;
     let mut element = descriptorxml::read(text).with_context(|| descriptor_filename.clone())?;
     resolve_includes(&mut element, cache).with_context(|| descriptor_filename.clone())?;
     Ok(element)

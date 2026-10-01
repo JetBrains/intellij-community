@@ -6,10 +6,12 @@
 //! distribution. A line reference below names a line of that file. The port supports no system-property override,
 //! because a dev distribution sets none.
 
+use std::path::Path;
+
 use anyhow::{Context, Result, bail};
 
 use crate::descriptorxml::{self, Element, Node};
-use crate::document::ApplicationInfoElements;
+use crate::document::{ApplicationInfoElements, Replacement, replace_markers};
 
 /// The facts of one application info.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -52,13 +54,13 @@ struct HostOverride {
 }
 
 impl HostOverride {
-    fn parse(content: &str, file: &str) -> Result<Self> {
+    fn parse(content: &str, file: &Path) -> Result<Self> {
         let host = ApplicationInfoElements::parse(content, file)?;
-        let names = host.element(host.names);
+        let names = host.names();
         let Some(full_product_name) = names.attribute("fullname").or_else(|| names.attribute("product")) else {
-            bail!("the product application info has no product name: {file}");
+            bail!("the product application info has no product name: {}", file.display());
         };
-        let version = host.element(host.version);
+        let version = host.version();
         let value = |name: &str| version.attribute(name).map(str::to_owned);
         Ok(Self {
             full_product_name: full_product_name.to_owned(),
@@ -69,18 +71,28 @@ impl HostOverride {
             patch: value("patch"),
             full: value("full"),
             suffix: value("suffix"),
-            major_release_date: host.element(host.build).attribute("majorReleaseDate").map(str::to_owned),
+            major_release_date: host.build().attribute("majorReleaseDate").map(str::to_owned),
         })
     }
 }
 
 impl ApplicationInfo {
+    /// Reads the facts of the application info `path` of a product: the markers first, then the XML.
+    ///
+    /// A frontend passes the application info of its host product as `host`. A value of the host takes precedence, and
+    /// the host text gets no marker replacement. `pinned_build_date_seconds` is the build date that the dev distribution
+    /// pins. An EAP product without a `majorReleaseDate` takes the date of it.
+    pub fn load(path: &Path, replacements: &[Replacement], host: Option<&Path>, pinned_build_date_seconds: i64) -> Result<Self> {
+        let content = replace_markers(&read_text(path)?, replacements);
+        match host {
+            Some(host) => Self::read_frontend(&content, path, &read_text(host)?, host, pinned_build_date_seconds),
+            None => Self::read(&content, path, pinned_build_date_seconds),
+        }
+    }
+
     /// Reads the facts of a product. `content` is the application info after the marker replacement, and `file` names
     /// it in an error.
-    ///
-    /// `pinned_build_date_seconds` is the build date that the dev distribution pins. An EAP product without a
-    /// `majorReleaseDate` takes the date of it.
-    pub fn read(content: &str, file: &str, pinned_build_date_seconds: i64) -> Result<Self> {
+    pub(crate) fn read(content: &str, file: &Path, pinned_build_date_seconds: i64) -> Result<Self> {
         read_facts(content, file, None, pinned_build_date_seconds)
     }
 
@@ -90,7 +102,13 @@ impl ApplicationInfo {
     /// (`platform/buildScripts/src/JetBrainsClientPropertiesForLaunchers.kt:118-165`). A value of the host takes
     /// precedence, and a value that the host does not state falls back to the frontend. The host text is the raw file,
     /// because the override reads the file without a marker replacement.
-    pub fn read_frontend(content: &str, file: &str, host_content: &str, host_file: &str, pinned_build_date_seconds: i64) -> Result<Self> {
+    pub(crate) fn read_frontend(
+        content: &str,
+        file: &Path,
+        host_content: &str,
+        host_file: &Path,
+        pinned_build_date_seconds: i64,
+    ) -> Result<Self> {
         let host = HostOverride::parse(host_content, host_file)?;
         read_facts(content, file, Some(&host), pinned_build_date_seconds)
     }
@@ -109,10 +127,16 @@ impl ApplicationInfo {
     }
 }
 
-fn read_facts(content: &str, file: &str, host: Option<&HostOverride>, pinned_build_date_seconds: i64) -> Result<ApplicationInfo> {
-    let root = descriptorxml::read(content).with_context(|| file.to_owned())?;
+/// Reads a declared application info. The error names the file.
+fn read_text(path: &Path) -> Result<String> {
+    std::fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))
+}
+
+fn read_facts(content: &str, file: &Path, host: Option<&HostOverride>, pinned_build_date_seconds: i64) -> Result<ApplicationInfo> {
+    let root = descriptorxml::read(content).with_context(|| file.display().to_string())?;
     let child = |name: &str| first_child(&root, name);
-    let required_child = |name: &str| child(name).with_context(|| format!("the application info has no {name} element: {file}"));
+    let required_child =
+        |name: &str| child(name).with_context(|| format!("the application info has no {name} element: {}", file.display()));
 
     let version = required_child("version")?;
     let version_value = |name: &str, host_value: Option<&Option<String>>| -> Result<Option<String>> {
@@ -123,13 +147,13 @@ fn read_facts(content: &str, file: &str, host: Option<&HostOverride>, pinned_bui
     };
     // Lines 72-76.
     let Some(major) = version_value("major", host.map(|host| &host.major))? else {
-        bail!("the version element has no major attribute: {file}");
+        bail!("the version element has no major attribute: {}", file.display());
     };
     let minor = version_value("minor", host.map(|host| &host.minor))?.unwrap_or_else(|| "0".to_owned());
     let micro = version_value("micro", host.map(|host| &host.micro))?.unwrap_or_else(|| "0".to_owned());
     let patch = version_value("patch", host.map(|host| &host.patch))?.unwrap_or_else(|| "0".to_owned());
     let full = version_value("full", host.map(|host| &host.full))?.unwrap_or_else(|| "{0}.{1}".to_owned());
-    let version_text = format_version(&full, [&major, &minor, &micro, &patch]).with_context(|| file.to_owned())?;
+    let version_text = format_version(&full, [&major, &minor, &micro, &patch]).with_context(|| file.display().to_string())?;
     // Line 83.
     let minor_version_main_part = minor.split('.').next().unwrap_or_default().to_owned();
     // Lines 77-79: Kotlin's `String?.toBoolean()` is a case-insensitive comparison with `true`.
@@ -140,7 +164,7 @@ fn read_facts(content: &str, file: &str, host: Option<&HostOverride>, pinned_bui
     // Lines 84-85 and 124-125. The product name is required even when a full name is stated.
     let names = required_child("names")?;
     let Some(product) = attribute(names, "product", file)? else {
-        bail!("the names element has no product attribute: {file}");
+        bail!("the names element has no product attribute: {}", file.display());
     };
     let full_product_name = match host {
         Some(host) => host.full_product_name.clone(),
@@ -158,15 +182,15 @@ fn read_facts(content: &str, file: &str, host: Option<&HostOverride>, pinned_bui
     }
     .filter(|value| !value.is_empty());
     if !is_eap && raw_release_date.as_ref().is_none_or(|value| value.starts_with("__")) {
-        bail!("majorReleaseDate may be omitted only for EAP: {file}");
+        bail!("majorReleaseDate may be omitted only for EAP: {}", file.display());
     }
     let major_release_date =
-        format_major_release_date(raw_release_date.as_deref(), pinned_build_date_seconds).with_context(|| file.to_owned())?;
+        format_major_release_date(raw_release_date.as_deref(), pinned_build_date_seconds).with_context(|| file.display().to_string())?;
 
     // Lines 128-130.
     let company = required_child("company")?;
     let Some(company_name) = attribute(company, "name", file)? else {
-        bail!("the company element has no name attribute: {file}");
+        bail!("the company element has no name attribute: {}", file.display());
     };
     let short_company_name = match attribute(company, "shortName", file)? {
         Some(short_name) => short_name.to_owned(),
@@ -210,14 +234,18 @@ fn first_child<'a>(root: &'a Element, name: &str) -> Option<&'a Element> {
 ///
 /// The Kotlin map keeps the last of two attributes with one local name, such as `edition` and `other:edition`. No
 /// application info states such a pair, so the reader refuses it.
-fn attribute<'a>(element: &'a Element, name: &str, file: &str) -> Result<Option<&'a str>> {
+fn attribute<'a>(element: &'a Element, name: &str, file: &Path) -> Result<Option<&'a str>> {
     let mut matches = element
         .attributes
         .iter()
         .filter(|attribute| attribute.name.rsplit(':').next() == Some(name));
     let found = matches.next();
     if matches.next().is_some() {
-        bail!("the {} element has two attributes with the local name {name}: {file}", element.name);
+        bail!(
+            "the {} element has two attributes with the local name {name}: {}",
+            element.name,
+            file.display()
+        );
     }
     Ok(found.map(|attribute| attribute.value.as_str()))
 }
