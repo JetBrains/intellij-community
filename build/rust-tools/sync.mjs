@@ -24,15 +24,19 @@ export const manifestPaths = [
   "community/build/dev-dist-tools/Cargo.toml",
   "build/dev-dist-tools/Cargo.toml",
   "community/tools/bt/Cargo.toml",
+  "plugins/air/tests/integration/vm-lane/Cargo.toml",
 ]
 
 /**
- * The workspaces that the script does not touch yet, by manifest, with the reason. The Air UI-lane tooling keeps its
- * hand copy of the tables until its rework. `//build/dev-dist-tools:lints_equal_test` of the ultimate root still
- * compares that copy with the others.
+ * The copies that a workspace of `manifestPaths` does not carry yet, by manifest: the names of `configFiles` in
+ * `skip`, and the reason. The script writes the tables and every other copy of such a workspace, and names each
+ * skipped copy with the reason. A skipped copy that exists is left as it is.
  */
-export const optedOutManifests = {
-  "plugins/air/tests/integration/vm-lane/Cargo.toml": "opted out until the vm lane rework",
+export const skippedCopies = {
+  "plugins/air/tests/integration/vm-lane/Cargo.toml": {
+    skip: ["clippy.toml"],
+    reason: "clippy.toml joins in V0b with the banned-call replacements",
+  },
 }
 
 const scriptPath = fileURLToPath(import.meta.url)
@@ -164,9 +168,6 @@ export function runCli(argv = process.argv.slice(2), options = {}) {
       io.stdout(`updated ${relative(displayRoot, file)}`)
     }
   }
-  for (const [path, reason] of Object.entries(optedOutManifests)) {
-    io.stderr(`skipped ${path}: ${reason}`)
-  }
   for (const {path, file} of resolveManifests(roots)) {
     if (file === null || !exists(file)) {
       io.stderr(`skipped ${path}: not in this checkout`)
@@ -174,8 +175,13 @@ export function runCli(argv = process.argv.slice(2), options = {}) {
     }
     const manifest = readText(file)
     sync(file, manifest, applyBlock(manifest, block), "differs from lints.toml")
+    const skipped = skippedCopies[path]
     for (const {name, text} of copies) {
       const copy = join(dirname(file), name)
+      if (skipped?.skip.includes(name)) {
+        io.stderr(`skipped ${relative(displayRoot, copy)}: ${skipped.reason}`)
+        continue
+      }
       sync(copy, exists(copy) ? readText(copy) : null, text, `differs from ${name}`)
     }
   }

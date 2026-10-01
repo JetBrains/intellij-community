@@ -19,7 +19,7 @@ workspaces follow it. The Air UI-lane tooling joins at the vm lane rework.
 - `sync.mjs`: writes the tables into every workspace `Cargo.toml` of `manifestPaths`, and writes a copy of
   `rustfmt.toml` and `clippy.toml` into the directory of each such manifest. The first line of a copy names its
   source. `--check` names a copy that differs or is missing, and writes nothing. A manifest outside the checkout is
-  skipped with a note, and so is a workspace of `optedOutManifests`.
+  skipped with a note, and so is a copy that `skippedCopies` names, with its reason.
 - `defs.bzl`: the lint rules and the macro core. `rust_lints_as_errors` appends `-Dwarnings` to the clippy flags of a
   rendered table. `rust_lints_equal_check` fails when two crate hubs render different tables. The macro core is the
   next section.
@@ -52,7 +52,7 @@ equal to the sources.
 |---|---|
 | dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
-| Air UI-lane tooling | Opted out of `sync.mjs` until the vm lane rework. Its tables are a hand copy, which `lints_equal_test` of the ultimate root compares with the others. It has no `rustfmt.toml` or `clippy.toml` copy, the sources use the width of 100 columns, and the code calls the banned methods at about 30 sites. `avl_lints` is a copy of `rust_lints_as_errors`, `avl_crate` does not bind the macro core, and `avl.bzl` loads `optimized_binary` through the BT `defs.bzl`. |
+| Air UI-lane tooling | `sync.mjs` writes its tables and its `rustfmt.toml`. `skippedCopies` holds back its `clippy.toml`, because the code calls the banned methods at about 30 sites. `avl_lints` is a copy of `rust_lints_as_errors`, `avl_crate` does not bind the macro core, and `avl.bzl` loads `optimized_binary` through the BT `defs.bzl`. |
 
 ## The Bazel macro core
 
@@ -113,7 +113,8 @@ has the copy.
 
 1. Put the two marker lines from `sync.mjs` into the workspace `Cargo.toml` where the tables belong, add the
    manifest to `manifestPaths`, and run the script. It writes the tables, `rustfmt.toml` and `clippy.toml`. A workspace
-   of `optedOutManifests` leaves that list in the same change.
+   that cannot take a copy yet names it in `skippedCopies`, with the reason. The change that writes the copy removes
+   the entry.
 2. Give every member `Cargo.toml` a `[lints]` table with `workspace = true`.
 3. Set `generate_lint_config = True` on the `crate.from_cargo` tag of the workspace hub.
 4. Declare `rust_lints_as_errors(name = "lints", cargo = "@<hub>//:workspace_cargo_lints")` in the workspace
