@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle
 
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
