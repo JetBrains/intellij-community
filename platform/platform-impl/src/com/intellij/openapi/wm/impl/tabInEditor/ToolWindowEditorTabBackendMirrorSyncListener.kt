@@ -23,7 +23,6 @@ internal class ToolWindowEditorTabBackendMirrorSyncListener(private val project:
   ) {
     if (file !is ToolWindowEditorTabFile) return
 
-    val editorWithProvider = editorsWithProviders.firstOrNull { it.fileEditor is ToolWindowEditorTabFileEditor } ?: return
-    ToolWindowEditorTabManager.getInstance(project).scheduleBackendMirrorSync(file, editorWithProvider)
+    ToolWindowEditorTabManager.getInstance(project).scheduleBackendMirrorSync(file, editorsWithProviders)
   }
 }
